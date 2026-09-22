@@ -24,7 +24,7 @@ public class AssistantPluginTests
         Loaded.Assistants.Single(a => a.Id == "rehearsed");
 
     [Fact]
-    public void An_assistant_in_a_plugin_reaches_the_catalogue()
+    public void An_assistant_in_a_plugin_reaches_the_catalog()
     {
         Loaded.Assistants.Select(a => a.Id).ShouldContain("rehearsed");
     }
@@ -89,7 +89,7 @@ public class AssistantPluginTests
         using var session = Rehearsed.Start(workbench, AssistantConfig.Unset);
 
         var events = new List<PatchEvent>();
-        await foreach (var happened in session.Ask("something grey", CancellationToken.None))
+        await foreach (var happened in session.Ask("something gray", CancellationToken.None))
             events.Add(happened);
 
         events.ShouldNotContain(e => e is PatchEvent.Failed);
@@ -97,7 +97,7 @@ public class AssistantPluginTests
 
         var proposed = events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
 
-        proposed.Summary.ShouldBe("a flat grey field");
+        proposed.Summary.ShouldBe("a flat gray field");
         proposed.Patch.Nodes.Count.ShouldBe(2);
         proposed.Patch.CompileForVideo(NodeCatalog.BuiltIn).Issues.ShouldBeEmpty();
     }
@@ -108,7 +108,7 @@ public class AssistantPluginTests
         Loaded.Assistants.Single(a => a.Id == "openai");
 
     [Fact]
-    public void The_chat_completions_assistant_reaches_the_catalogue()
+    public void The_chat_completions_assistant_reaches_the_catalog()
     {
         var assistant = OpenAi;
 
@@ -156,7 +156,7 @@ public class AssistantPluginTests
         Loaded.Assistants.Single(a => a.Id == "gemini");
 
     [Fact]
-    public void The_generate_content_assistant_reaches_the_catalogue()
+    public void The_generate_content_assistant_reaches_the_catalog()
     {
         var assistant = Gemini;
 

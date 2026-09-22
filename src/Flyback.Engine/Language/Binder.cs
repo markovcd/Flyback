@@ -8,7 +8,7 @@ namespace Flyback.Core.Language;
 /// the instrument is here.
 /// </summary>
 /// <remarks>
-/// The catalogue is the language: short names, socket names, arities and which
+/// The catalog is the language: short names, socket names, arities and which
 /// literals a socket takes are read out of <see cref="ModuleCatalog"/> as the
 /// tree is walked, so a plugin's modules are usable the moment it loads.
 /// Nothing is compiled or evaluated — a <c>def</c> is expanded, a number between
@@ -1486,7 +1486,7 @@ public sealed class Binder
     }
 
     /// <summary>
-    /// A socket by name, with a space in the catalogue's spelling standing for an
+    /// A socket by name, with a space in the catalog's spelling standing for an
     /// underscore in the language's — <c>gate length</c> is <c>gate_length</c>.
     /// </summary>
     private static int Find(IReadOnlyList<PortSpec> ports, string name)

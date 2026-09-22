@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// A letter is advanced by its width and one empty column, and the advance is
-/// even, so a short line centred under a long one lands on whole pixels.
+/// even, so a short line centered under a long one lands on whole pixels.
 /// </para>
 /// </remarks>
 internal sealed partial class BitmapFont

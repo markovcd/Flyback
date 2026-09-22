@@ -9,7 +9,7 @@ namespace Flyback.Plugins.Picture;
 /// them as soft as it is asked to be.
 /// </summary>
 /// <remarks>
-/// The hard versions are already in the catalogue — union is Minimum, intersection
+/// The hard versions are already in the catalog — union is Minimum, intersection
 /// is Maximum, difference is the maximum of a and the negative of b — which is the
 /// argument for the distance convention rather than a fact about this module.
 /// <para>

@@ -20,7 +20,7 @@ public static partial class Presets
 
     /// <summary>The wiring Whole band says a hundred times, said once.</summary>
     /// <remarks>
-    /// Every method adds exactly the catalogue module its name stands for, so what
+    /// Every method adds exactly the catalog module its name stands for, so what
     /// is built with these is what <see cref="PatchBuilder.Add(string, ValueTuple{int, float}[])"/>
     /// and <see cref="PatchBuilder.Wire"/> would have built by hand, module for module.
     /// </remarks>

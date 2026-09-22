@@ -509,7 +509,7 @@ public sealed class Usage
 
     /// <summary>
     /// A module's type as it may be sent. The engine's own are asked of its
-    /// catalogue, because nothing in their ids says whose they are: a plugin's
+    /// catalog, because nothing in their ids says whose they are: a plugin's
     /// module carries its plugin's id in front and "osc.sine" carries nothing, so
     /// read as <see cref="Known"/> reads a plugin's, every module the engine ships
     /// would be one nobody shipped.

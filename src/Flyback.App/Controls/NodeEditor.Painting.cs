@@ -374,7 +374,7 @@ public sealed partial class NodeEditor
     /// How far the quieter columns are pulled back into the background — the step
     /// from a name to a number and from a number to a normal, at the spacing
     /// <see cref="CanvasText.LabelBrush"/>, <see cref="CanvasText.ValueBrush"/> and
-    /// <see cref="NormalBrush"/> already stand at over the node grey.
+    /// <see cref="NormalBrush"/> already stand at over the node gray.
     /// </summary>
     private const double ValueFade = 0.35, NormalFade = 0.55;
 
@@ -390,11 +390,11 @@ public sealed partial class NodeEditor
         // it is colored from the background that line covers instead.
         var follow = ModuleSkins.Of(def) is { ContrastText: true };
 
-        IBrush Ink(double centre, double height, double fade, IBrush plain) => follow
+        IBrush Ink(double center, double height, double fade, IBrush plain) => follow
             ? NodeSkin.Ink(
-                backdrop.At(bounds, centre - height / 2),
-                backdrop.At(bounds, centre + height / 2),
-                backdrop.Lift(bounds, centre),
+                backdrop.At(bounds, center - height / 2),
+                backdrop.At(bounds, center + height / 2),
+                backdrop.Lift(bounds, center),
                 fade)
             : plain;
 
@@ -404,7 +404,7 @@ public sealed partial class NodeEditor
         if (backdrop.Picture is { } picture)
         {
             // A picture rarely covers the body edge to edge, and ADR-0118 counts
-            // what it leaves transparent as the node grey rather than the canvas
+            // what it leaves transparent as the node gray rather than the canvas
             // behind it.
             context.DrawRectangle(NodeSkin.GroundFill(isSelected), null, body);
             DrawArtwork(context, picture, body);
@@ -460,23 +460,23 @@ public sealed partial class NodeEditor
         for (var i = 0; i < def.Outputs.Count; i++)
         {
             var port = def.Outputs[i];
-            var centre = NodeGeometry.OutputPort(node, i);
-            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
+            var center = NodeGeometry.OutputPort(node, i);
+            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
 
-            context.DrawText(label, new Point(bounds.Right - 14 - label.Width, centre.Y - label.Height / 2));
-            NodeSkin.DrawPort(context, centre, port.Kind);
+            context.DrawText(label, new Point(bounds.Right - 14 - label.Width, center.Y - label.Height / 2));
+            NodeSkin.DrawPort(context, center, port.Kind);
         }
 
         for (var i = 0; i < def.Inputs.Count; i++)
         {
             var port = def.Inputs[i];
-            var centre = NodeGeometry.InputPort(node, def, i);
+            var center = NodeGeometry.InputPort(node, def, i);
             var connected = patch.IncomingTo(node.Id, i) is not null;
 
-            var linked = DrawLinkedRow(context, node, port, i, bounds, centre, connected, follow, Ink);
+            var linked = DrawLinkedRow(context, node, port, i, bounds, center, connected, follow, Ink);
 
-            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(centre.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
-            context.DrawText(label, new Point(bounds.X + 14, centre.Y - label.Height / 2));
+            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
+            context.DrawText(label, new Point(bounds.X + 14, center.Y - label.Height / 2));
 
             // An unconnected input shows what it will compile to: the module
             // normalled to it where there is one — no wire is drawn for a wire
@@ -487,8 +487,8 @@ public sealed partial class NodeEditor
                 // name and a qualified one at that — "Coordinates x" does not
                 // fit where "0.25" does, and trimmed to "Coordinates…" it would
                 // stop telling x from y.
-                var name = CanvasText.Text(source, CanvasText.RowSize, Ink(centre.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
-                context.DrawText(name, new Point(bounds.Right - 12 - name.Width, centre.Y - name.Height / 2));
+                var name = CanvasText.Text(source, CanvasText.RowSize, Ink(center.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
+                context.DrawText(name, new Point(bounds.Right - 12 - name.Width, center.Y - name.Height / 2));
             }
             else if (!linked && !connected && i < node.InputValues.Length && (formula is null || FormulaLayout.Reads(formula, i)))
             {
@@ -498,10 +498,10 @@ public sealed partial class NodeEditor
                 var value = CanvasText.Text(
                     said,
                     CanvasText.RowSize,
-                    flagged ? FlagBrush : Ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush),
+                    flagged ? FlagBrush : Ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush),
                     bounds.Width * 0.4,
                     true);
-                var spot = new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2);
+                var spot = new Point(bounds.Right - 12 - value.Width, center.Y - value.Height / 2);
 
                 context.DrawText(value, spot);
 
@@ -509,7 +509,7 @@ public sealed partial class NodeEditor
                     context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
             }
 
-            NodeSkin.DrawPort(context, centre, port.Kind);
+            NodeSkin.DrawPort(context, center, port.Kind);
         }
 
         if (FormulaLayout.FormulaBlock(patch, node, def, bounds, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))

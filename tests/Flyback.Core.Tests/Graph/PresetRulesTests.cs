@@ -10,7 +10,7 @@ namespace Flyback.Core.Tests.Graph;
 /// <remarks>
 /// A preset is written to teach something, and the failure mode is always the same
 /// shape: a second half at the other sink that is not what it is teaching. Checked
-/// against the engine's own catalogue, which is also the promise a shipped preset
+/// against the engine's own catalog, which is also the promise a shipped preset
 /// makes — it must never need a plugin installed.
 /// </remarks>
 public class PresetRulesTests

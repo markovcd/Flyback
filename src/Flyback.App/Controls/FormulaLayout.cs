@@ -35,7 +35,7 @@ internal static class FormulaLayout
     /// </summary>
     /// <param name="ink">
     /// The value column's own ink for the module — see
-    /// <see cref="NodeSkin.Ink"/> — asked at the block's own centre so a module
+    /// <see cref="NodeSkin.Ink"/> — asked at the block's own center so a module
     /// with <see cref="ModuleSkin.ContrastText"/> on reads its formula the same
     /// as it reads a knob.
     /// </param>

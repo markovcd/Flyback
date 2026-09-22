@@ -34,7 +34,7 @@ and everything else in the repository either builds that graph, runs that
 program, or shows the result.
 
 ```text
-Flyback.Core      the patch model, the module catalogue, the opcodes, the Emitter
+Flyback.Core      the patch model, the module catalog, the opcodes, the Emitter
    ^              what a plugin is compiled against; references nothing
 Flyback.Engine    the compiler, the three backends, the renderers, the language, file I/O
    ^              free to change between releases; no third-party packages
@@ -84,7 +84,7 @@ All of it is in `src/Flyback.Core/Graph`.
 - **`Connection`** is its two ends. A wire has no id.
 - **`NodeDef`** is a module: type id, name, category, input and output
   `PortSpec`s, an emit function and a description. Modules are data in one
-  catalogue, not classes ([0008](adr/0008-modules-as-data-in-one-catalogue.md)).
+  catalog, not classes ([0008](adr/0008-modules-as-data-in-one-catalogue.md)).
 - **`PortSpec`** is a socket. `PortKind` is `Scalar`, `Color` (three registers)
   or `Any`, and `Any` is what lets one Multiply work on both
   ([0010](adr/0010-any-typed-ports-for-polymorphic-maths.md)). Every input
@@ -353,7 +353,7 @@ why every plugin references Core and Plugins with `Private="false"
 ExcludeAssets="runtime"`.
 
 **Nothing throws.** A bad folder, a duplicate id or a refused module becomes a
-`PluginProblem` in the catalogue. First registration wins for every kind, and
+`PluginProblem` in the catalog. First registration wins for every kind, and
 folders are read in ordinal order so two runs agree.
 
 **Module refusals** are `ModuleCatalog`'s, in Core. A provider is refused for a
@@ -446,7 +446,7 @@ and encodes with ffmpeg where it is found, Motion JPEG AVI where it is not
 ([0089](adr/0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md)).
 
 **Startup** is in `Startup.Load`: tidy a pending update, `PluginHost.Load()`,
-`NodeCatalog.Install`, then the first window. The catalogue is final before any
+`NodeCatalog.Install`, then the first window. The catalog is final before any
 palette is built.
 
 **What it writes**, all JSON under `%APPDATA%/Flyback`
@@ -469,7 +469,7 @@ never to a file.
 ### The viewer and the CLI
 
 Both parse with `System.CommandLine` and both load plugins and install the
-catalogue before building their command tree. The viewer is `ViewerPlayer` (the
+catalog before building their command tree. The viewer is `ViewerPlayer` (the
 transport, with no window type in it) and `ViewerWindow`; `--hidden` runs the
 player with no preview at all. The CLI declares each command's options in
 `Program.cs` and runs each in its own file (`RenderCommand`, `CheckCommand`…).

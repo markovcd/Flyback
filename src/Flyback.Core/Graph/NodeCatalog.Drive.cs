@@ -7,7 +7,7 @@ public partial class NodeCatalog
     public const string DriveTypeId = "audio.drive";
 
     /// <summary>
-    /// The least drive the curve is evaluated at. At zero the normalisation is
+    /// The least drive the curve is evaluated at. At zero the normalization is
     /// zero over zero, and the whole module would be the one thing worse than
     /// wrong on a video path: black.
     /// </summary>
@@ -20,7 +20,7 @@ public partial class NodeCatalog
     /// </summary>
     /// <remarks>
     /// The curve is <c>x / (1 + |x|)</c>: slope one at the origin, an asymptote at full
-    /// scale, and no transcendental function in it. Peak-normalised as it saturates, so
+    /// scale, and no transcendental function in it. Peak-normalized as it saturates, so
     /// turning drive up makes the signal dirtier and never louder — what it does make is
     /// denser, the quiet parts coming up as the loud ones stop moving.
     /// </remarks>
@@ -34,7 +34,7 @@ public partial class NodeCatalog
         DriveEmit,
         "Soft saturation. Rounds the peaks off a signal instead of folding them back, which "
         + "is the difference between a tone that thickens and one that changes shape. "
-        + "Normalised as it goes, so more drive is dirtier and never louder — and because "
+        + "Normalized as it goes, so more drive is dirtier and never louder — and because "
         + "the quiet parts come up while the loud ones stop moving, it doubles as a "
         + "compressor. Untyped, and on the screen it reads as contrast that never clips.");
 

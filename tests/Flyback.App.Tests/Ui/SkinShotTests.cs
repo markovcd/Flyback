@@ -28,13 +28,13 @@ namespace Flyback.App.Tests.Ui;
 public class SkinShotTests : UiTest
 {
     /// <summary>
-    /// ADR-0118 counts a picture's transparency as the node grey behind it. That
+    /// ADR-0118 counts a picture's transparency as the node gray behind it. That
     /// is true of the bands a skinned module's ink is worked out from; it was not
     /// true of what the canvas actually drew, which left a transparent picture
     /// showing the canvas through it instead.
     /// </summary>
     [AvaloniaFact]
-    public void A_transparent_picture_is_backed_by_the_node_grey()
+    public void A_transparent_picture_is_backed_by_the_node_gray()
     {
         var empty = Encoding.UTF8.GetBytes(
             """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>""");

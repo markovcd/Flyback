@@ -11,7 +11,7 @@ namespace Flyback.Plugins.OpenAi.Tests;
 /// </summary>
 /// <remarks>
 /// Most of this is the same shape as the Gemini adapter's, and the interesting part is
-/// where it is not: the catalogue here carries no capabilities, so the filter is doing
+/// where it is not: the catalog here carries no capabilities, so the filter is doing
 /// real work, and the models this adapter listens with refuse a turn with no sound in
 /// it.
 /// </remarks>
@@ -71,7 +71,7 @@ public class SurveyTests
     }
 
     /// <summary>
-    /// The catalogue is a list of ids and nothing else here, so the filter is
+    /// The catalog is a list of ids and nothing else here, so the filter is
     /// the only thing keeping a survey of a large provider down to the models
     /// that could build a patch.
     /// </summary>
@@ -115,7 +115,7 @@ public class SurveyTests
     /// the server somebody actually has.
     /// </summary>
     [Fact]
-    public async Task An_endpoint_with_no_catalogue_says_so_rather_than_failing()
+    public async Task An_endpoint_with_no_catalog_says_so_rather_than_failing()
     {
         using var endpoint = new Endpoint([]) { Listless = true };
         var said = new Transcript();
@@ -127,7 +127,7 @@ public class SurveyTests
     }
 
     [Fact]
-    public async Task Naming_the_models_asks_the_catalogue_nothing()
+    public async Task Naming_the_models_asks_the_catalog_nothing()
     {
         using var endpoint = new Endpoint([]) { Listless = true };
 
@@ -177,7 +177,7 @@ public class SurveyTests
     /// </summary>
     private sealed class Endpoint(string[] listed) : HttpMessageHandler
     {
-        /// <summary>Whether anybody asked for the catalogue.</summary>
+        /// <summary>Whether anybody asked for the catalog.</summary>
         public bool Listed { get; private set; }
 
         /// <summary>Has no <c>/models</c> at all, as a good many of these do not.</summary>
@@ -202,7 +202,7 @@ public class SurveyTests
 
                 return Listless
                     ? Reply(HttpStatusCode.NotFound, Refusal("no such endpoint"))
-                    : Reply(HttpStatusCode.OK, Catalogue());
+                    : Reply(HttpStatusCode.OK, Catalog());
             }
 
             var body = await request.Content!.ReadAsStringAsync(cancel).ConfigureAwait(false);
@@ -233,7 +233,7 @@ public class SurveyTests
         private static string Refusal(string said) =>
             new JsonObject { ["error"] = new JsonObject { ["message"] = said } }.ToJsonString();
 
-        private string Catalogue()
+        private string Catalog()
         {
             var models = new JsonArray();
 

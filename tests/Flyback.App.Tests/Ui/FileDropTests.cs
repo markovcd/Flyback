@@ -218,7 +218,7 @@ public sealed class FileDropTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Cancelling_the_question_leaves_the_dropped_file_unopened()
+    public void Canceling_the_question_leaves_the_dropped_file_unopened()
     {
         var window = Open();
         var editor = Editor(window);
@@ -238,7 +238,7 @@ public sealed class FileDropTests : UiTest
         Settle(window);
         Dispatcher.UIThread.RunJobs();
 
-        editor.Patch.Nodes.Count.ShouldBe(nodes, "cancelling should have left the edited patch alone");
+        editor.Patch.Nodes.Count.ShouldBe(nodes, "canceling should have left the edited patch alone");
     }
 
     /// <summary>

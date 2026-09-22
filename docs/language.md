@@ -74,7 +74,7 @@ This is the whole language in one paragraph.
 > 2. otherwise **a position — a leading `x` and `y` — takes the first two**;
 > 3. otherwise **the first free socket takes the first output**.
 
-**Rule 1 is load-bearing.** Three modules in the catalogue do not put their
+**Rule 1 is load-bearing.** Three modules in the catalog do not put their
 signal input first:
 
 | Module | Ports |
@@ -98,7 +98,7 @@ rotate(angle: t * 0.15)          # outputs (x, y)
 
 A position is what the engine itself calls one — the `x` and `y` that
 [0050](adr/0050-normalled-sockets-carry-a-signal-with-no-wire.md) normals to
-Coordinates together — so it is a fact about the catalogue rather than a list
+Coordinates together — so it is a fact about the catalog rather than a list
 kept here. Names need not agree across the join: To polar hands back
 `(radius, angle)` and Checker takes `(x, y)`, and the Grid preset joins them,
 because what matches is that both are a position.
@@ -176,7 +176,7 @@ keyed to the label would break every text patch the next time somebody improved
 a caption. Keyed to the type id, it inherits the guarantee the file format
 already has.
 
-It also means **the catalogue is the language**: a plugin's modules are usable
+It also means **the catalog is the language**: a plugin's modules are usable
 the moment it loads, and there is no alias table to keep in step.
 
 **Ambiguity is an error, resolved by writing the type id in full.** Across all
@@ -199,7 +199,7 @@ unnamed inputs left to right, after the pipe has taken its own.
 
 ## 5. Sugar
 
-Everything above falls out of the catalogue. This is the short list that does
+Everything above falls out of the catalog. This is the short list that does
 not.
 
 | Written | Means |
@@ -334,7 +334,7 @@ binding to be said by, including the `x` and `t` of section 5.
 
 ## 8. What a module carries that is not a knob
 
-A sequencer's notes, a quantiser's scale, a player's file
+A sequencer's notes, a Quantiser's scale, a Sample's file
 ([0061](adr/0061-what-a-module-carries-is-kept-in-one-store.md)) go in a
 trailing block:
 
@@ -511,7 +511,7 @@ four calls here.
 
 A group is a box drawn round nodes on the canvas. The compiler is never told
 about it, so it is presentation — but the largest preset in the box uses ten of
-them as its primary organising device, and a text form that dropped them would
+them as its primary organizing device, and a text form that dropped them would
 be unreadable at that size.
 
 ```
@@ -618,7 +618,7 @@ would have to be opened and closed and opened again, which is not a group. It is
 worth fixing and it is not fixed.
 
 A `let` name becomes the node's rename label, so a patch built from text opens
-in the editor already labelled, and printing recovers the names somebody chose.
+in the editor already labeled, and printing recovers the names somebody chose.
 Nodes inlined into a chain stay anonymous, which is right — they had no name to
 lose.
 
@@ -688,7 +688,7 @@ outputs of its own.
 
 ## 15. Every shipped preset, transliterated
 
-This is the proof that the syntax reaches the catalogue. Each patch is read out
+This is the proof that the syntax reaches the catalog. Each patch is read out
 of [`Presets.cs`](../src/Flyback.Core/Graph/Presets.cs) and written here. Where
 the language cannot say something the preset says, that is a hole and it is
 marked as one.
@@ -1447,7 +1447,7 @@ holes would show up while the design was still cheap to move. Four did.
   macros, and a voice hands back a tone, a tint and one fader shared between
   them. A single-pipeline body could not say it without duplicating the fader
   and changing the graph.
-- **Groups had to be expressible.** Whole band organises a hundred and sixty-six modules
+- **Groups had to be expressible.** Whole band organizes a hundred and sixty-six modules
   into fifteen of them. Dropping groups on `print` would have made the one patch
   that most needs reading the one least able to be read.
 - **Literal arithmetic has to fold.** In key sets a knob to `1 / 12`. Without

@@ -48,7 +48,7 @@ public static class PatchPrinter
 
     /// <summary>
     /// The patch as source, against <paramref name="against"/> or the installed
-    /// catalogue.
+    /// catalog.
     /// </summary>
     /// <param name="called">
     /// What to call each module, where the caller has names the text must agree

@@ -6,7 +6,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Image module: the one thing in the catalogue that is not arithmetic.
+/// The Image module: the one thing in the catalog that is not arithmetic.
 /// </summary>
 /// <remarks>
 /// Everything else here computes what it draws, and this reads it off a disk. So

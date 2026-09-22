@@ -36,7 +36,7 @@ public sealed partial class OpenAiAssistant : IModelSurvey
 /// </summary>
 /// <remarks>
 /// Shaped like the Gemini adapter's and deliberately not shared with it: there the
-/// catalogue says which models can hold a conversation, and here it says nothing beyond
+/// catalog says which models can hold a conversation, and here it says nothing beyond
 /// a list of ids, so the gate that decides whether a model is present has to be
 /// conditional — see <see cref="Run"/>. Nothing here measures a thinking budget, since
 /// this adapter sends no effort at all.
@@ -83,11 +83,11 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
         CancellationToken cancel)
     {
         // Only asked for when it is needed. A run naming its models wants
-        // nothing from the catalogue, and a local runtime that has no /models is
+        // nothing from the catalog, and a local runtime that has no /models is
         // then a server this works against rather than one it refuses.
         var chosen = options.Only is { Count: > 0 } named
             ? named
-            : (await Catalogue(said, cancel).ConfigureAwait(false))
+            : (await Catalog(said, cancel).ConfigureAwait(false))
                 .Where(m => options.All || Candidate(m))
                 .ToList();
 
@@ -159,12 +159,12 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
     /// Every id the endpoint lists, or nothing where it does not list any.
     /// </summary>
     /// <remarks>
-    /// A missing catalogue is not a failure. Plenty of things that speak this
+    /// A missing catalog is not a failure. Plenty of things that speak this
     /// format do not answer <c>/models</c>, and the honest response is to say so
     /// and let somebody name what they wanted — not to refuse to work against
     /// the server they actually have.
     /// </remarks>
-    private async Task<List<string>> Catalogue(IProgress<string>? said, CancellationToken cancel)
+    private async Task<List<string>> Catalog(IProgress<string>? said, CancellationToken cancel)
     {
         var found = new List<string>();
 

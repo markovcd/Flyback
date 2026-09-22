@@ -45,7 +45,7 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <remarks>
     /// Public because the canvas is no longer the only thing that points at a module:
-    /// a caret in the code view names one too (ADR-0068). It draws as well as selects,
+    /// a caret in the text view names one too (ADR-0068). It draws as well as selects,
     /// which a caller from outside cannot.
     /// </remarks>
     public void Select(Guid? id)

@@ -63,7 +63,7 @@ public static class PatchCompiler
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
     /// <param name="modules">
-    /// Which catalogue the type ids mean, defaulting to the installed one. Naming
+    /// Which catalog the type ids mean, defaulting to the installed one. Naming
     /// another is what makes a plugin's modules testable.
     /// </param>
     /// <param name="probe">
@@ -360,9 +360,9 @@ public static class PatchCompiler
                     // which is the trouble — the patch is silent, or a flat field,
                     // with nothing to say why.
                     //
-                    // Every domain in the catalogue is normalled to Time, so
+                    // Every domain in the catalog is normalled to Time, so
                     // reaching here means a domain normalled to nothing or to a
-                    // module this catalogue does not hold.
+                    // module this catalog does not hold.
                     if (spec.Domain)
                     {
                         issues.Add(new CompileIssue(
@@ -492,7 +492,7 @@ public static class PatchCompiler
 
         // The one hidden instance of a module sockets are normalled to, emitted the
         // first time something asks for it — see PortSpec.NormalledTo. Null where
-        // the catalogue does not hold it, which drops the socket back to its knob
+        // the catalog does not hold it, which drops the socket back to its knob
         // rather than to silence.
         //
         // Its inputs are the definition's defaults: there is no node to have
@@ -527,7 +527,7 @@ public static class PatchCompiler
         // Resolve, because its callers are a cycle breaker and a swept input,
         // which are none of the cases that loop handles.
         //
-        // A normal is honoured here, since a socket that read its module in one
+        // A normal is honored here, since a socket that read its module in one
         // place and its knob in the other would be a difference nothing states.
         Slot ResolveInput(NodeInstance node, NodeDef def, int port)
         {

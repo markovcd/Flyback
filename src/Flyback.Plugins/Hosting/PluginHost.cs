@@ -303,7 +303,7 @@ public static class PluginHost
 
         /// <summary>
         /// Built up as plugins register, starting from the engine's own modules.
-        /// The catalogue itself decides what it will accept; refusals become
+        /// The catalog itself decides what it will accept; refusals become
         /// problems here so a plugin author sees them next to everything else
         /// that went wrong.
         /// </summary>

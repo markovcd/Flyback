@@ -5,7 +5,7 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// The synth as a model should be told it: the conventions the catalogue cannot
+/// The synth as a model should be told it: the conventions the catalog cannot
 /// state, and then every module in it.
 /// </summary>
 /// <remarks>
@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Assist;
 internal static class Handbook
 {
     /// <summary>
-    /// What the catalogue cannot say about itself. Hand-written, and the place
+    /// What the catalog cannot say about itself. Hand-written, and the place
     /// to state a convention that lives in an ADR rather than in a type.
     /// </summary>
     private const string Conventions = """
@@ -40,7 +40,7 @@ internal static class Handbook
           the **Time** module, or through a socket normalled to it — see
           below.
         - What reaches the screen is 0..1 per channel, clamped, with no gamma. A
-          value of 0.5 is mid grey; 4 and 1 are the same white; -1 is black.
+          value of 0.5 is mid gray; 4 and 1 are the same white; -1 is black.
           There is no headroom to pull back down later.
 
         ## The language
@@ -593,7 +593,7 @@ internal static class Handbook
 
         if (undescribed.Count > 0) text.Append(Unexplained);
 
-        // Catalogue order, not sorted: it is already deterministic (built-ins in
+        // Catalog order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here
         // would be one more thing that could quietly stop matching itself.
         // The Maths modules an Expression stands for are left out: asked for, they

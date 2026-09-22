@@ -94,7 +94,7 @@ public sealed class ConversationLogTests : IDisposable
     /// A folder that cannot be created — a file sitting where a directory
     /// belongs — is no worse than logging being off. Starting a conversation
     /// must not be the thing that fails because a setting nobody is looking at
-    /// right now could not be honoured.
+    /// right now could not be honored.
     /// </summary>
     [Fact]
     public void A_folder_that_cannot_be_made_degrades_to_writing_nothing()

@@ -240,10 +240,10 @@ public partial class NodeCatalog
 
         var total = starts[count];
 
-        // How far the input has travelled, counted in steps. Modulo is floored,
+        // How far the input has traveled, counted in steps. Modulo is floored,
         // so an input running backwards runs the sequence backwards rather than
         // falling off the front of it.
-        var travelled = em.Mul(node[0], node[1]);
+        var traveled = em.Mul(node[0], node[1]);
 
         // Every note the same length is the ordinary case and the cheap one.
         // There the sequence can be counted in whole notes, so the edges fall on
@@ -269,8 +269,8 @@ public partial class NodeCatalog
             // length at all.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             var counted = unit == 1f
-                ? travelled
-                : em.Binary(OpCode.Div, travelled, em.Constant(unit));
+                ? traveled
+                : em.Binary(OpCode.Div, traveled, em.Constant(unit));
 
             var index = em.Unary(OpCode.Floor,
                 em.Binary(OpCode.Mod, counted, em.Constant(count)));
@@ -282,7 +282,7 @@ public partial class NodeCatalog
         }
         else
         {
-            cursor = em.Binary(OpCode.Mod, travelled, em.Constant(total));
+            cursor = em.Binary(OpCode.Mod, traveled, em.Constant(total));
             thresholds = starts;
             within = default;
             which = default;

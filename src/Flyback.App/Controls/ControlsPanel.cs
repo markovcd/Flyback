@@ -339,7 +339,7 @@ internal sealed class ControlsPanel : Border
             Knob.Released += () => panel.TurnEnded?.Invoke(control.Id);
 
             // A click links and a drag moves, so which it was is only known once the
-            // button comes up or the pointer has travelled.
+            // button comes up or the pointer has traveled.
             name.PointerPressed += (_, e) =>
             {
                 if (!e.GetCurrentPoint(name).Properties.IsLeftButtonPressed) return;

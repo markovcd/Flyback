@@ -24,7 +24,7 @@ public sealed class LogoMark : Control
     private static readonly IBrush Core = new SolidColorBrush(Colors.BeamCore);
 
     /// <summary>
-    /// Draws the largest square that fits, centred in whatever it is given. The
+    /// Draws the largest square that fits, centered in whatever it is given. The
     /// control can then simply fill its parent and follow the splitter, rather
     /// than being pinned to a size that is only right at one panel width.
     /// </summary>

@@ -520,7 +520,7 @@ public sealed class Emitter
         return Slot.Color(first);
     }
 
-    // --- convenience wrappers used all over the node catalogue ---
+    // --- convenience wrappers used all over the node catalog ---
 
     public Slot Add(Slot a, Slot b) => Binary(OpCode.Add, a, b);
 

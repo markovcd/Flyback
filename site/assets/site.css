@@ -188,7 +188,7 @@ pre {
 }
 pre code { background: none; padding: 0; font-size: inherit; color: inherit; border-radius: 0; }
 
-/* The code view's colors, from Flyback.xshd. */
+/* The text view's colors, from Flyback.xshd. */
 .t-com { color: #6C7482; font-style: italic; }
 .t-key { color: #3FC8C8; font-weight: 700; }
 .t-pipe { color: #E06AB8; font-weight: 700; }

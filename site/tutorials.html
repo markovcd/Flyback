@@ -332,7 +332,7 @@ out.volume = 0.6</code></pre>
       <div class="window">
         <a class="zoom" href="assets/shots/tutorial-text.webp" target="_blank" rel="noopener">
           <img loading="lazy" src="assets/shots/tutorial-text.webp" width="1600" height="863"
-               alt="The code view with the patch above as colored text, the preview of red rings, and the inspector showing the module named slow with its in reading Time without a wire.">
+               alt="The text view with the patch above as colored text, the preview of red rings, and the inspector showing the module named slow with its in reading Time without a wire.">
         </a>
       </div>
       <figcaption>The text view. Put the cursor in a module's call and the inspector edits that module; letting
@@ -481,7 +481,7 @@ out.volume = 0.5</code></pre>
     <figure>
       <a class="zoom" href="assets/shots/settings.webp" target="_blank" rel="noopener">
         <img class="shot" loading="lazy" src="assets/shots/settings.webp" width="1600" height="863"
-             alt="The Settings window over the dimmed main window, on the Graphics tab: Size 2560 by 1440, Preview rate 30 fps, Render GPU, Full screen Same monitor, Startup patch Dodge. Tabs for Canvas, Recording, Sound, MIDI, Agent, Files, Updates and Usage are on the left.">
+             alt="The Settings window over the dimmed main window, on the Graphics tab: Size 2560 by 1440, Preview rate 30 fps, Render GPU, Full screen Same monitor, Startup patch Empty. Tabs for Canvas, Recording, Sound, MIDI, Assistant, Files, Updates and Usage are on the left.">
       </a>
     </figure>
 
@@ -541,7 +541,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     or with Gemini, whose models can also listen to what the patch sounds like.</p>
 
     <ol class="steps">
-      <li>Open <strong>Settings → Agent</strong>, choose a provider, fill in what it asks for, and paste an API
+      <li>Open <strong>Settings → Assistant</strong>, choose a provider, fill in what it asks for, and paste an API
       key. Tick <strong>Keep this key</strong> to store it in the operating system's secret store.</li>
       <li>Open <strong>Assistant</strong> on the toolbar, describe what you want, for example <em>"a slow kick
       drum that makes the rings flash"</em>, and press <kbd>Enter</kbd>.</li>
@@ -559,7 +559,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     script gets past the question.</p>
 
     <p>Every request tells the model what each module does, up to the <strong>Briefing budget</strong> in
-    <strong>Settings → Agent</strong>, 100,000 characters by default. With many plugins installed that can run
+    <strong>Settings → Assistant</strong>, 100,000 characters by default. With many plugins installed that can run
     out. The modules in <code>priority-modules.txt</code> are always described, and the settings show where
     that file is so you can edit it. A module left out gets a small dotted tag on its header. The assistant can
     still look it up.</p>

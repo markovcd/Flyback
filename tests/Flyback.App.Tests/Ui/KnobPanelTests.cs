@@ -62,8 +62,8 @@ public class KnobPanelTests : UiTest
     {
         var editor = Editor(window);
         var def = NodeCatalog.BuiltIn.Require(node.TypeId);
-        var centre = NodeGeometry.InputPort(node, def, port);
-        var graph = new Point(centre.X + NodeGeometry.Width / 2, centre.Y);
+        var center = NodeGeometry.InputPort(node, def, port);
+        var graph = new Point(center.X + NodeGeometry.Width / 2, center.Y);
 
         Click(window, OnWindow(window, editor, editor.GraphToScreen.Transform(graph)));
     }

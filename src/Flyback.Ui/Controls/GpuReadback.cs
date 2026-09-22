@@ -108,7 +108,7 @@ internal sealed class GpuReadback
     /// </summary>
     /// <param name="resolution"></param>
     /// <param name="eightBit">
-    /// Whether the frame is already a normalised eight-bit surface. When it is
+    /// Whether the frame is already a normalized eight-bit surface. When it is
     /// not, and it cannot be blitted to one, it cannot be read as bytes at all.
     /// </param>
     /// <param name="gl"></param>

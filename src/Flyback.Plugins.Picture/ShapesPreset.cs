@@ -45,7 +45,7 @@ internal static class ShapesPreset
 
         // Softly, so the hole's rim meets the star's edges in a fillet rather
         // than in a corner — which is the whole difference between this and the
-        // Maximum that was always in the catalogue.
+        // Maximum that was always in the catalog.
         var cut = b.Add(CombineModule.TypeId, (2, 0.04f));
 
         var ink = b.Add(FillModule.TypeId, (1, 0.008f), (2, 0.02f));

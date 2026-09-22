@@ -74,7 +74,7 @@ internal static class PolygonModule
             em.Mul(em.Unary(OpCode.Fract, em.Binary(OpCode.Div, bearing, segment)), segment),
             half);
 
-        // How far the edge itself stands from the centre: the radius is to the
+        // How far the edge itself stands from the center: the radius is to the
         // corners, and the flats are nearer by the cosine of half a wedge.
         var flat = em.Mul(node[2], em.Unary(OpCode.Cos, half));
 

@@ -23,7 +23,7 @@ namespace Flyback.Plugins.Assist;
 /// or to count a Sequencer's twenty-one inputs, will get it wrong.
 /// </para>
 /// <para>
-/// The catalogue arrives explicitly and <see cref="NodeCatalog.Current"/> is never
+/// The catalog arrives explicitly and <see cref="NodeCatalog.Current"/> is never
 /// read (ADR-0026), which is also what lets the tests run against
 /// <see cref="NodeCatalog.BuiltIn"/>.
 /// </para>
@@ -38,8 +38,8 @@ public sealed partial class PatchWorkbench
     private readonly WorkbenchLimits limits;
     private readonly string startingPoint;
 
-    /// <summary>The lookups that read the catalogue and the presets rather than the patch.</summary>
-    private readonly CatalogReference catalogue;
+    /// <summary>The lookups that read the catalog and the presets rather than the patch.</summary>
+    private readonly CatalogReference catalog;
 
     private readonly Dictionary<string, NodeInstance> byHandle = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Guid, string> handleOf = [];
@@ -67,7 +67,7 @@ public sealed partial class PatchWorkbench
     /// <param name="modules"></param>
     /// <param name="pictures"></param>
     /// <param name="prose">
-    /// How much of the catalogue's prose the briefing carries, and <see cref="ProsePolicy.Default"/>
+    /// How much of the catalog's prose the briefing carries, and <see cref="ProsePolicy.Default"/>
     /// where nobody said.
     /// </param>
     /// <param name="presets">
@@ -94,7 +94,7 @@ public sealed partial class PatchWorkbench
         // Everything but the blank ones, which have nothing in them to learn from.
         IReadOnlyList<PatchPreset> readable = [.. (presets ?? Presets.All).Where(preset => preset.Kind != PresetKind.Blank)];
 
-        catalogue = new CatalogReference(modules, readable);
+        catalog = new CatalogReference(modules, readable);
 
         // Kept as text so Reset cannot hand back something an earlier edit
         // reached into, and so the starting point is provably reloadable.
@@ -118,7 +118,7 @@ public sealed partial class PatchWorkbench
         bodies = vocabulary.ToDictionary(tool => tool.Spec.Name, tool => tool.Run, StringComparer.Ordinal);
     }
 
-    /// <summary>The conventions and the catalogue, as a model should be told them.</summary>
+    /// <summary>The conventions and the catalog, as a model should be told them.</summary>
     public string Briefing { get; }
 
     /// <summary>The type ids whose descriptions <see cref="Briefing"/> leaves out.</summary>
@@ -225,7 +225,7 @@ public sealed partial class PatchWorkbench
             return ToolOutcome.Refused("'type_id' is required and must be a string.");
 
         if (modules.Get(typeId) is not { } def)
-            return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {catalogue.Nearest(typeId)}");
+            return ToolOutcome.Refused($"there is no module with type id '{typeId}'. {catalog.Nearest(typeId)}");
 
         // Every patch already has its Output and cannot have a second. The
         // second sink is the mistake that hides itself — compilation roots at
@@ -1261,7 +1261,7 @@ public sealed partial class PatchWorkbench
                 """,
                 offered: hearing is not Listener.None),
 
-            Does("describe_module", catalogue.DescribeModule,
+            Does("describe_module", catalog.DescribeModule,
                 "Everything about one module: its ports, their defaults and ranges, and what it is "
                 + "for.",
                 """
@@ -1269,14 +1269,14 @@ public sealed partial class PatchWorkbench
                 """,
                 offered: lookups),
 
-            Does("find_modules", catalogue.FindModules,
+            Does("find_modules", catalog.FindModules,
                 "Searches the module list by type id, name, category or description.",
                 """
                 { "properties": { "query": { "type": "string" } }, "required": ["query"] }
                 """,
                 offered: lookups),
 
-            Does("describe_preset", catalogue.DescribePreset,
+            Does("describe_preset", catalog.DescribePreset,
                 "Reads one of the presets in the list at the end of the briefing, written in the "
                 + "Flyback language, to see how it is built. It does not touch the patch on the bench.",
                 """

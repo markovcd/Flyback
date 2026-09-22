@@ -26,7 +26,7 @@ public readonly record struct WireDrop(Point At, Guid Node, int Port, bool FromO
     /// <see cref="PortSpec.Swept"/> are the socket the module exists to have
     /// something in, which is what the compiler already warns about. Then an exact
     /// match of kind, which tells a Scan's <c>view</c> from its <c>out</c>. Then the
-    /// first socket, which is where this would land anyway — the catalogue is
+    /// first socket, which is where this would land anyway — the catalog is
     /// written with the principal one first.
     /// </remarks>
     public int? SocketOn(NodeDef def)

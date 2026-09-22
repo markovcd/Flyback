@@ -46,7 +46,7 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>
     /// The real window, on the preset it opens with. Nothing is stubbed: with no
-    /// plugins loaded the catalogue is empty and the audio device is silent,
+    /// plugins loaded the catalog is empty and the audio device is silent,
     /// which is the same path a machine with no sound backend takes.
     /// </summary>
     private static MainWindow Open(string? settingsPath = null)
@@ -90,7 +90,7 @@ public class OutputSettingsTests : UiTest
         where T : Control =>
         All<T>(within).Single(c => c.Name == name);
 
-    /// <summary>What every button in the window is labelled, in tree order.</summary>
+    /// <summary>What every button in the window is labeled, in tree order.</summary>
     private static IEnumerable<string?> Buttons(MainWindow window) =>
         All<Button>(window).Select(b => b.Content as string);
 
@@ -139,7 +139,7 @@ public class OutputSettingsTests : UiTest
     /// <summary>What <see cref="CloseSettings(MainWindow, ModalOverlay, string)"/> takes to mean the frame's cross.</summary>
     private const string Cross = "dismiss";
 
-    /// <summary>Answers the settings window by the button labelled <paramref name="by"/>, or by its cross.</summary>
+    /// <summary>Answers the settings window by the button labeled <paramref name="by"/>, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, string by)
     {
         All<Button>(dialog)
@@ -183,7 +183,7 @@ public class OutputSettingsTests : UiTest
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Agent", "Files", "Updates", "Usage"]);
+            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Assistant", "Files", "Updates", "Usage"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         tabs.Items.Cast<TabItem>().Select(t => t.Bounds.X).Distinct().Count()
@@ -706,7 +706,7 @@ public class OutputSettingsTests : UiTest
     /// disk are what open and save look like everywhere, and neither is a
     /// character any font here can be relied on to have — the code points exist,
     /// and on Windows they resolve to the color emoji font, which would put
-    /// full-color pictures in a bar of thin grey strokes. Tidy is drawn for the
+    /// full-color pictures in a bar of thin gray strokes. Tidy is drawn for the
     /// opposite reason: no character means what it does, so it is a patch in
     /// miniature instead.
     /// </summary>
@@ -722,7 +722,7 @@ public class OutputSettingsTests : UiTest
         icon.Data.ShouldNotBeNull();
 
         // Taken from the button rather than set here, so that hovering, pressing
-        // and grey-out all reach it. A binding that failed to resolve leaves this
+        // and gray-out all reach it. A binding that failed to resolve leaves this
         // null and draws nothing at all.
         icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
     }
@@ -779,18 +779,18 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// A row picked in the size picker before it was greyed out is not what Save
+    /// A row picked in the size picker before it was grayed out is not what Save
     /// takes.
     /// </summary>
     /// <remarks>
-    /// The picker is greyed out for the length of a take, whose file has
+    /// The picker is grayed out for the length of a take, whose file has
     /// committed to a size and drops every frame that arrives at another.
-    /// Greying a box does not take back a row already picked in it — during the
-    /// count-in, say — so Save does not read the box while it is grey, and puts
+    /// Graying a box does not take back a row already picked in it — during the
+    /// count-in, say — so Save does not read the box while it is gray, and puts
     /// its row back.
     /// </remarks>
     [AvaloniaFact]
-    public void A_size_picked_while_the_picker_is_greyed_out_is_not_saved()
+    public void A_size_picked_while_the_picker_is_grayed_out_is_not_saved()
     {
         var window = Open(settingsPath);
         var preview = All<PreviewHost>(window).Single();
@@ -800,13 +800,13 @@ public class OutputSettingsTests : UiTest
         var size = Size(dialog);
         var row = size.SelectedIndex;
 
-        // As a take finds it: grey, with a row picked that was never saved.
+        // As a take finds it: gray, with a row picked that was never saved.
         size.IsEnabled = false;
         size.SelectedIndex = row == 0 ? 1 : 0;
         Settle(window);
 
         size.IsEnabled.ShouldBeFalse();
-        size.SelectedIndex.ShouldNotBe(row, "a grey box still holds whatever row it is given");
+        size.SelectedIndex.ShouldNotBe(row, "a gray box still holds whatever row it is given");
 
         CloseSettings(window, dialog, save: true);
 
@@ -1037,11 +1037,11 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>
     /// Nothing wired into either half of the Output means nothing to record, and
-    /// the button says so by being greyed rather than by opening a dialog with
+    /// the button says so by being grayed rather than by opening a dialog with
     /// an empty list of file types.
     /// </summary>
     [AvaloniaFact]
-    public void The_record_button_is_greyed_out_when_the_patch_reaches_nothing()
+    public void The_record_button_is_grayed_out_when_the_patch_reaches_nothing()
     {
         var window = Open();
         var editor = Editor(window);
@@ -1246,9 +1246,9 @@ public class OutputSettingsTests : UiTest
         Said(window).ShouldContain(line => line.Contains("Turn the Output's Volume up"), "the take was tried");
     }
 
-    /// <summary>A greyed control that will not say why is worse than no control.</summary>
+    /// <summary>A grayed control that will not say why is worse than no control.</summary>
     [AvaloniaFact]
-    public void The_greyed_record_button_says_why()
+    public void The_grayed_record_button_says_why()
     {
         var window = Open();
         var editor = Editor(window);

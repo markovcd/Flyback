@@ -8,7 +8,7 @@ internal static class ModuleInit
     /// Snapshots are compared as decoded pixels, not as file bytes. Two things
     /// make byte comparison the wrong choice here: PngWriter compresses through
     /// DeflateStream, whose output may change across runtime versions, and MathF
-    /// results can differ slightly across architectures. Neither is a behaviour
+    /// results can differ slightly across architectures. Neither is a behavior
     /// change, and neither should fail a test.
     /// </summary>
     [ModuleInitializer]

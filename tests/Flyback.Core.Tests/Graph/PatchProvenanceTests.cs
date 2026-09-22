@@ -17,7 +17,7 @@ public class PatchProvenanceTests
         [new PortSpec("out")],
         (em, i) => [em.Mul(i[0], 2f)]);
 
-    /// <summary>A catalogue with the plugin, and one without — the two machines.</summary>
+    /// <summary>A catalog with the plugin, and one without — the two machines.</summary>
     private static ModuleCatalog With() => NodeCatalog.BuiltIn.With(Extras, [Doubler]).Catalog;
 
     private static ModuleCatalog Without() => NodeCatalog.BuiltIn;

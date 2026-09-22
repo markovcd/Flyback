@@ -20,7 +20,7 @@ public class TempoTests
     /// <summary>
     /// The one module that knows a tempo is written in beats a minute while
     /// everything downstream of it counts in beats a second. Nothing else in the
-    /// catalogue would let 120 be typed as 120.
+    /// catalog would let 120 be typed as 120.
     /// </summary>
     [Theory]
     [InlineData(120f, 2f)]

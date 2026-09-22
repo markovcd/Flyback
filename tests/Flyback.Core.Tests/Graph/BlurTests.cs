@@ -150,10 +150,10 @@ public class BlurTests
     /// <summary>How many pixels are neither black nor white, which is the width of the edge.</summary>
     private static int Between(byte[] frame)
     {
-        var grey = 0;
+        var gray = 0;
         for (var at = 0; at < frame.Length; at += 4)
-            if (frame[at] > 8 && frame[at] < 247) grey++;
-        return grey;
+            if (frame[at] > 8 && frame[at] < 247) gray++;
+        return gray;
     }
 
     private static int Darkest(byte[] frame)

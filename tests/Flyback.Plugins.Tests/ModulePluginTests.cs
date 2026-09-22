@@ -8,7 +8,7 @@ namespace Flyback.Plugins.Tests;
 
 /// <summary>
 /// The whole path for a module that came from outside the engine: loaded from a
-/// separate assembly on disk, folded into the catalogue, compiled, and named in
+/// separate assembly on disk, folded into the catalog, compiled, and named in
 /// a saved patch. None of it is stubbed.
 /// </summary>
 public class ModulePluginTests
@@ -19,7 +19,7 @@ public class ModulePluginTests
     private static ModuleCatalog Shipped() => PluginHost.Load().Modules;
 
     [Fact]
-    public void A_plugins_modules_reach_the_catalogue()
+    public void A_plugins_modules_reach_the_catalog()
     {
         var catalog = Shipped();
 

@@ -25,13 +25,13 @@ public class ScanTests
     private const string Time = "time";
 
     // Sockets on the Scan, named for the same reason the Probe's are: a shifted
-    // one would otherwise be a silent change of meaning here and in the catalogue.
+    // one would otherwise be a silent change of meaning here and in the catalog.
     private const int In = 0;
     private const int Clock = 1;
     private const int Rate = 2;
     private const int Radius = 3;
-    private const int CentreX = 4;
-    private const int CentreY = 5;
+    private const int CenterX = 4;
+    private const int CenterY = 5;
 
     private const int Out = 0;
     private const int View = 1;
@@ -164,7 +164,7 @@ public class ScanTests
 
     /// <summary>
     /// The pitch is the loop rate and nothing else. A field with eightfold
-    /// structure round the centre puts eight cycles in one turn, so the tone it
+    /// structure round the center puts eight cycles in one turn, so the tone it
     /// makes is the eighth harmonic of the sweep rather than the sweep.
     /// </summary>
     [Fact]
@@ -175,7 +175,7 @@ public class ScanTests
         var clock = b.Add(Time, 0, 0, (0, 1f));
         var coord = b.Add(Coordinates, 300, 0);
 
-        // Sine of eight times the bearing: eight lobes round any circle centred
+        // Sine of eight times the bearing: eight lobes round any circle centered
         // on the origin, whatever its radius.
         var lobes = b.Add("math.mul", 500, 0, (1, 8f));
         var wave = b.Add("math.sin", 700, 0);
@@ -198,7 +198,7 @@ public class ScanTests
     /// <summary>
     /// A loop that follows the field's own contours reads a constant, and a
     /// constant is not a sound. Rings are circles about the origin, so a scan
-    /// centred there sits on one of them for the whole turn.
+    /// centered there sits on one of them for the whole turn.
     /// </summary>
     [Fact]
     public void A_loop_along_a_contour_is_silent_and_moving_it_off_is_not()
@@ -206,12 +206,12 @@ public class ScanTests
         var concentric = Scanning(
             Rings,
             overCoordinates: true,
-            knobs: [(Rate, 220f), (Radius, 0.5f), (CentreX, 0f)]).Patch;
+            knobs: [(Rate, 220f), (Radius, 0.5f), (CenterX, 0f)]).Patch;
 
         var offset = Scanning(
             Rings,
             overCoordinates: true,
-            knobs: [(Rate, 220f), (Radius, 0.5f), (CentreX, 0.7f)]).Patch;
+            knobs: [(Rate, 220f), (Radius, 0.5f), (CenterX, 0.7f)]).Patch;
 
         // Not merely quiet: the reading never changes over the turn, so the DC
         // blocker takes the whole of it.
@@ -223,7 +223,7 @@ public class ScanTests
     /// <summary>
     /// The eye reads the loop at the pixel's own bearing, so the value at a
     /// pixel is the field at the point of the loop that pixel is looking at.
-    /// Straight out to the right of the centre, that point is the far side of
+    /// Straight out to the right of the center, that point is the far side of
     /// the loop on the x axis.
     /// </summary>
     [Fact]
@@ -235,7 +235,7 @@ public class ScanTests
             sinkPort: NodeCatalog.OutputColorPort,
             knobs: [(Radius, 0.6f)]);
 
-        // Due east of the centre: the loop point is (0.6, 0), so scanning x
+        // Due east of the center: the loop point is (0.6, 0), so scanning x
         // reads 0.6 — however far out the pixel itself is. The tolerance is a
         // knob's worth: the radius arrives as a float and is read as a double.
         Pixel(patch, 0.3, 0d).R.ShouldBe(0.6d, 1e-6d);
@@ -257,7 +257,7 @@ public class ScanTests
             Coordinates,
             scanOutput: View,
             sinkPort: NodeCatalog.OutputColorPort,
-            knobs: [(Radius, 0.6f), (CentreX, 0f), (CentreY, 0f)]);
+            knobs: [(Radius, 0.6f), (CenterX, 0f), (CenterY, 0f)]);
 
         // Green is the phosphor, so it carries the most of whatever ink is here.
         Pixel(patch, 0d, 0.6).G.ShouldBeGreaterThan(0.5d);

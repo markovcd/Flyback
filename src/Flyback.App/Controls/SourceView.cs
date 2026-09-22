@@ -27,7 +27,7 @@ namespace Flyback.App.Controls;
 /// complaint is about and color to tell a module from a socket are what a surface
 /// somebody types a patch into while it plays needs, and a
 /// <see cref="TextBox"/> has no rich text at all. Avalonia's own RichTextEditor
-/// is a word processor with a Pro licence, so this is AvalonEdit.
+/// is a word processor with a Pro license, so this is AvalonEdit.
 /// </para>
 /// </remarks>
 internal sealed class SourceView : UserControl

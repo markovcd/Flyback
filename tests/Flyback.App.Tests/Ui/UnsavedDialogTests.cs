@@ -73,9 +73,9 @@ public sealed class UnsavedDialogTests : UiTest
         All<TextBlock>(root).Select(t => t.Text ?? string.Empty).ToArray();
 
     /// <summary>Presses the button with this label, the way the mouse would.</summary>
-    private static void Press(Visual dialog, string labelled)
+    private static void Press(Visual dialog, string labeled)
     {
-        var button = All<Button>(dialog).Single(b => b.Content as string == labelled);
+        var button = All<Button>(dialog).Single(b => b.Content as string == labeled);
 
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Dispatcher.UIThread.RunJobs();
@@ -144,15 +144,15 @@ public sealed class UnsavedDialogTests : UiTest
     [AvaloniaTheory]
     [InlineData("Discard changes")]
     [InlineData("Cancel")]
-    public void Every_answer_closes_the_dialog(string labelled)
+    public void Every_answer_closes_the_dialog(string labeled)
     {
         var window = OpenAndEdit();
 
         window.Close();
 
-        Press(Asking(window), labelled);
+        Press(Asking(window), labeled);
 
-        All<ModalOverlay>(window).ShouldBeEmpty($"'{labelled}' should have taken the dialog down");
+        All<ModalOverlay>(window).ShouldBeEmpty($"'{labeled}' should have taken the dialog down");
     }
 
     /// <summary>
@@ -174,17 +174,17 @@ public sealed class UnsavedDialogTests : UiTest
     }
 
     /// <summary>
-    /// Cancelling keeps the window and the work in it.
+    /// Canceling keeps the window and the work in it.
     /// </summary>
     [AvaloniaFact]
-    public void Cancelling_keeps_the_window_and_the_edit()
+    public void Canceling_keeps_the_window_and_the_edit()
     {
         var window = OpenAndEdit();
 
         window.Close();
         Press(Asking(window), "Cancel");
 
-        window.IsVisible.ShouldBeTrue("cancelling should have kept the window");
+        window.IsVisible.ShouldBeTrue("canceling should have kept the window");
         All<NodeEditor>(window).Single().IsModified.ShouldBeTrue("and the work in it");
     }
 
@@ -265,14 +265,14 @@ public sealed class UnsavedDialogTests : UiTest
 
         All<ModalOverlay>(window).ShouldHaveSingleItem("the second close should have been ignored");
 
-        // And the one question still answers for the whole thing: cancelling
+        // And the one question still answers for the whole thing: canceling
         // leaves the window up rather than leaving a second close pending.
         Press(All<ModalOverlay>(window).Single(), "Cancel");
 
         for (var attempt = 0; attempt < 20 && window.IsVisible; attempt++)
             Dispatcher.UIThread.RunJobs();
 
-        window.IsVisible.ShouldBeTrue("cancelling should have kept the window");
+        window.IsVisible.ShouldBeTrue("canceling should have kept the window");
         All<ModalOverlay>(window).ShouldBeEmpty();
     }
 

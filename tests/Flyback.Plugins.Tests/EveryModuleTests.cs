@@ -8,10 +8,10 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// Every module the shipped catalogue holds, run rather than only lowered.
+/// Every module the shipped catalog holds, run rather than only lowered.
 /// </summary>
 /// <remarks>
-/// <c>CompilerInvariants</c> does this for the built-in catalogue, which is the
+/// <c>CompilerInvariants</c> does this for the built-in catalog, which is the
 /// half a plugin is not in: most of the Form, Voice, Effects and Mastering
 /// modules are reached here and by their own tests and nowhere else, and their
 /// emit code is where a module indexes past the ports it declared.

@@ -5,7 +5,7 @@ using Xunit;
 namespace Flyback.App.Tests.Capture;
 
 /// <summary>
-/// One frame deep and newest wins. The behaviour worth pinning is the discarding:
+/// One frame deep and newest wins. The behavior worth pinning is the discarding:
 /// the preview draws far more frames than the file wants, and the ones in between
 /// have to go somewhere cheaper than an encoder.
 /// </summary>

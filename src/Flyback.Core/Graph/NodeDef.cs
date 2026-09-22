@@ -142,7 +142,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// <summary>
     /// What a plugin's own kinds of extra folded onto this context, keyed by
     /// <see cref="NodeExtra.Key"/>. Empty for every module in the engine's own
-    /// catalogue, which read the typed properties above.
+    /// catalog, which read the typed properties above.
     /// </summary>
     /// <remarks>
     /// <c>object</c> because the engine does not know the shape: what goes in is
@@ -159,7 +159,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// <summary>
     /// What the extra called <paramref name="key"/> folded on, or null where it
     /// folded nothing or folded something else. Null rather than a throw, so a
-    /// module compiled against a catalogue that has moved under it lowers to
+    /// module compiled against a catalog that has moved under it lowers to
     /// something rather than taking the compilation down.
     /// </summary>
     public T? Extra<T>(string key) where T : class =>
@@ -222,7 +222,7 @@ public sealed record NodeDef(
     /// The socket called <c>in</c>, which is the signal input wherever it sits
     /// in the list; failing that the one the output is named after, so a
     /// geometry module off hands its <c>x</c> to its <c>x</c>; failing that the
-    /// first, the catalogue being written with the principal socket at the top.
+    /// first, the catalog being written with the principal socket at the top.
     /// The same ladder the language's pipe rule climbs, for the same reason: it
     /// is which socket a signal passing through this module travels on.
     /// <para>
@@ -321,7 +321,7 @@ public sealed record NodeDef(
 /// </summary>
 /// <remarks>
 /// Every module is compiled for both sinks — a patch is one graph (ADR-0022) —
-/// so this changes nothing about what is emitted. It names what the catalogue
+/// so this changes nothing about what is emitted. It names what the catalog
 /// only ever said in prose: a Filter is a wire on the video path because it has
 /// no memory to run in, a Meter reads nothing where no sound is running, and a
 /// Quantiser's hold cannot hold across an evaluation the screen does not have.

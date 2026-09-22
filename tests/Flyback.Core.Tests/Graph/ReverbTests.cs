@@ -255,7 +255,7 @@ public class ReverbTests
         ThroughAt(Rate, signal, knobs);
 
     /// <summary>
-    /// The same at a rate of its own, for the one test whose behaviour is written
+    /// The same at a rate of its own, for the one test whose behavior is written
     /// in hertz and so cannot be seen at 1 kHz at all.
     /// </summary>
     private static float[] ThroughAt(int rate, float[] signal, params (int Port, float Value)[] knobs)

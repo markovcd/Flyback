@@ -8,7 +8,7 @@ namespace Flyback.Core.Graph;
 public sealed record ModuleProvider(string Id, string Name);
 
 /// <summary>
-/// A catalogue with a provider folded in, and anything that provider was
+/// A catalog with a provider folded in, and anything that provider was
 /// refused. Refusals are values rather than exceptions: one bad module in a
 /// plugin should cost that module, not the plugin and not the program.
 /// </summary>
@@ -16,7 +16,7 @@ public sealed record ModuleAddition(ModuleCatalog Catalog, IReadOnlyList<string>
 
 /// <summary>
 /// The set of modules that exist. Immutable: adding a provider produces a new
-/// catalogue rather than mutating this one, so what a patch was compiled against
+/// catalog rather than mutating this one, so what a patch was compiled against
 /// cannot change underneath it.
 /// </summary>
 /// <remarks>
@@ -49,7 +49,7 @@ public sealed class ModuleCatalog
     public IReadOnlyList<ModuleProvider> Providers { get; }
 
     /// <summary>
-    /// Which sections this catalogue has, in the order they should be shown.
+    /// Which sections this catalog has, in the order they should be shown.
     /// </summary>
     /// <remarks>
     /// Ordered here rather than left in registration order, so installing a plugin
@@ -65,7 +65,7 @@ public sealed class ModuleCatalog
 
     /// <remarks>
     /// Falls back to <see cref="NodeCatalog.LegacyTypeIds"/> where the exact id is
-    /// not one this catalogue has, so an id a module answered to before it moved
+    /// not one this catalog has, so an id a module answered to before it moved
     /// still resolves — from a file <c>PatchIO</c> has not yet rewritten, from the
     /// text language written out in full, or from an assistant's tool call.
     /// </remarks>
@@ -85,7 +85,7 @@ public sealed class ModuleCatalog
     /// </summary>
     /// <remarks>
     /// One place, because the node on the canvas, the row in the inspector and the
-    /// line an assistant reads have to agree. Asked of a catalogue rather than the
+    /// line an assistant reads have to agree. Asked of a catalog rather than the
     /// running one, because a socket normalled to a plugin's module is on its knob
     /// wherever that plugin is not loaded.
     /// </remarks>

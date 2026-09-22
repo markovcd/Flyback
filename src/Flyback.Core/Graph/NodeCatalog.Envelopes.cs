@@ -9,7 +9,7 @@ public partial class NodeCatalog
     /// <summary>
     /// Where the gate counts as open. A gate is a switch rather than a level —
     /// the sequencer's own is shaped, so it spends a little time between the two
-    /// — and halfway is the one threshold that does not favour either edge.
+    /// — and halfway is the one threshold that does not favor either edge.
     /// </summary>
     private const float GateOpen = 0.5f;
 
@@ -80,7 +80,7 @@ public partial class NodeCatalog
 
         // The knobs are exponents, the way the Probe's window is: one control
         // reaching from a click to half a minute has to be marked in decades or
-        // the whole of the useful end is in its first millimetre.
+        // the whole of the useful end is in its first millimeter.
         var attack = Duration(node[1]);
         var decay = Duration(node[2]);
         var release = Duration(node[4]);

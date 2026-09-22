@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Picture;
 /// <para>
 /// What comes out of a shape is not something to look at until a
 /// <see cref="FillModule"/> has turned it into ink: patched straight into a color
-/// it reads as a gradient centred on the form.
+/// it reads as a gradient centered on the form.
 /// </para>
 /// </remarks>
 internal static class Field

@@ -45,7 +45,7 @@ public class AboutTests : UiTest
         said.ShouldContain(About.Description);
         said.ShouldContain($"Version {About.Version}");
         said.ShouldContain($"by {About.Author}");
-        said.ShouldContain(t => t.Contains(About.Licence) && t.Contains(About.Copyright));
+        said.ShouldContain(t => t.Contains(About.License) && t.Contains(About.Copyright));
     }
 
     /// <summary>The site is a click away rather than a URL somebody has to retype.</summary>

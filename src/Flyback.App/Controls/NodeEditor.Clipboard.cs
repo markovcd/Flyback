@@ -57,7 +57,7 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Reads a patch off the clipboard and merges it in, centred on the view, with
+    /// Reads a patch off the clipboard and merges it in, centered on the view, with
     /// what arrived left selected so it can be dragged into place.
     /// </summary>
     /// <remarks>
@@ -180,9 +180,9 @@ public sealed partial class NodeEditor
 
         var taken = Scene.OnCanvas().ToArray();
 
-        var centre = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
-        var dx = centre.X - group.Center.X;
-        var dy = centre.Y - group.Center.Y;
+        var center = ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
+        var dx = center.X - group.Center.X;
+        var dy = center.Y - group.Center.Y;
 
         for (var s = 0; s < tries; s++)
         {
@@ -311,9 +311,9 @@ public sealed partial class NodeEditor
 
         zoom = Math.Clamp(Math.Min(scaleX, scaleY), MinZoom, 1.4);
 
-        // Centred on what it is framing, and then held inside the canvas — so a
-        // patch built hard against an edge is pushed off centre rather than
-        // being centred over ground the view is not allowed to be on. It stays
+        // Centered on what it is framing, and then held inside the canvas — so a
+        // patch built hard against an edge is pushed off center rather than
+        // being centered over ground the view is not allowed to be on. It stays
         // wholly in sight either way: the view is wider than what it frames,
         // and holding it only ever slides it back towards the middle.
         PanTo(new Point(
@@ -345,11 +345,11 @@ public sealed partial class NodeEditor
     /// <remarks>
     /// Every pan goes through here, the one a zoom performs included: zooming out in
     /// a corner walks the view outwards as surely as dragging does. What it holds is
-    /// the view rather than its centre, and the reach is a little wider than
+    /// the view rather than its center, and the reach is a little wider than
     /// <see cref="NodeInstance.Across"/> and <see cref="NodeInstance.Down"/>,
     /// because those hold a corner and the body hangs below and right of it.
     /// <para>
-    /// A view wider than the canvas is centred on it instead, which is a real case:
+    /// A view wider than the canvas is centered on it instead, which is a real case:
     /// past about two thousand pixels the whole canvas fits at the zoom's floor, and
     /// there is then nowhere to pan to.
     /// </para>

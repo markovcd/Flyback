@@ -18,7 +18,7 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
 
     /// <summary>
     /// Every module below is named <c>flyback.sample.…</c> after this id. The
-    /// catalogue enforces that, and it is what lets a saved patch say which
+    /// catalog enforces that, and it is what lets a saved patch say which
     /// plugin a module came from without having the plugin to ask.
     /// </summary>
     private static readonly ModuleProvider Provider = new("flyback.sample", "Sample modules");
@@ -48,7 +48,7 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
         {
             // A background of its own, which a plugin's category gets none of:
             // "Sample" is nothing the shell has an accent for, so these would
-            // otherwise both be grey. A grain over the color, and a mark on the
+            // otherwise both be gray. A grain over the color, and a mark on the
             // same twenty-four unit box the engine's own are drawn on.
             Skin = new ModuleSkin.Grain(new Swatch(0x4A, 0x7E, 0xC8), GrainCut.Beaded)
             {

@@ -340,10 +340,10 @@ public static class PngReader
     {
         channels = header.Color switch
         {
-            0 => 1, // grey
+            0 => 1, // gray
             2 => 3, // truecolor
             3 => 1, // palette index
-            4 => 2, // grey and alpha
+            4 => 2, // gray and alpha
             6 => 4, // truecolor and alpha
             _ => 0,
         };

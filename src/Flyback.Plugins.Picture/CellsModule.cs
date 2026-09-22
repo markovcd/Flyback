@@ -20,7 +20,7 @@ namespace Flyback.Plugins.Picture;
 /// a different answer at every precision, so the interpreter and the shader would
 /// draw different cells. Noise is the only agreed randomness there is — sampled
 /// far apart, so squares next door land in unrelated parts of the field. That
-/// makes this the dearest module in the catalogue: eighteen noise lookups a pixel
+/// makes this the dearest module in the catalog: eighteen noise lookups a pixel
 /// against a Fractal's eight, which on the interpreter is seconds rather than
 /// milliseconds for a still.
 /// </para>
@@ -76,7 +76,7 @@ internal static class CellsModule
         + "one next door, which is a flat mosaic and the only value here that jumps at a "
         + "border. 'jitter' at 1 scatters the points and at 0 pins them to the middle of a "
         + "square grid, so a patch can slide between organic and mechanical. 'z' drifts the "
-        + "points. It is the most expensive module in the catalogue — eighteen noise lookups a "
+        + "points. It is the most expensive module in the catalog — eighteen noise lookups a "
         + "pixel, which is what measuring nine squares costs — so it is a joy on the GPU and "
         + "slow on the interpreter, which is what a command-line render uses.")
     {

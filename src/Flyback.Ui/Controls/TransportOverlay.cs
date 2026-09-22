@@ -52,7 +52,7 @@ public sealed class TransportOverlay : TuckedAway
         buttons.Children.Add(rewind);
 
         // The theme paints a hovered or pressed button a fill; over a picture that
-        // is a grey box, so the glyph brightens instead.
+        // is a gray box, so the glyph brightens instead.
         foreach (var state in new[] { ":pointerover", ":pressed" })
         {
             var lit = new Style(x => x

@@ -517,7 +517,7 @@ public class CommandTests
             .ShouldContain("color");
     }
 
-    /// <summary>Whatever the document lists, the prose lists — it is one catalogue.</summary>
+    /// <summary>Whatever the document lists, the prose lists — it is one catalog.</summary>
     [Fact]
     public void The_prose_and_the_json_say_the_same_modules()
     {
@@ -596,10 +596,10 @@ public class CommandTests
         // frame is placed at its own shape and the corners are the black beside
         // it. That is the module's rule, not a shortcoming of the bundle.
         var drawn = PngReader.Read(frame.FullName, out _).ShouldNotBeNull();
-        var centre = (drawn.Height / 2 * drawn.Width + drawn.Width / 2) * 3;
+        var center = (drawn.Height / 2 * drawn.Width + drawn.Width / 2) * 3;
 
-        drawn.Pixels[centre].ShouldBe(1f, 0.02f);
-        drawn.Pixels[centre + 1].ShouldBe(0f, 0.02f);
+        drawn.Pixels[center].ShouldBe(1f, 0.02f);
+        drawn.Pixels[center + 1].ShouldBe(0f, 0.02f);
 
         // And a corner is the black beside it, which is the same rule said the
         // other way round.

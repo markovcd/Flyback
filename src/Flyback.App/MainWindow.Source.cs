@@ -20,7 +20,7 @@ namespace Flyback.App;
 /// <para>
 /// The two are not symmetrical: building text into a patch is exact, printing a
 /// patch back out drops the groups and lays the canvas out afresh (ADR-0065). So
-/// a printing is offered and labelled, never adopted behind somebody's back.
+/// a printing is offered and labeled, never adopted behind somebody's back.
 /// </para>
 /// </remarks>
 public sealed partial class MainWindow
@@ -572,7 +572,7 @@ public sealed partial class MainWindow
     /// </summary>
     /// <remarks>
     /// Here once because two things ask it and they have to agree: the gesture,
-    /// which acts on the answer, and the toolbar, which greys the button when there
+    /// which acts on the answer, and the toolbar, which grays the button when there
     /// is none.
     /// </remarks>
     private enum Landing
@@ -1084,7 +1084,7 @@ public sealed partial class MainWindow
     /// </summary>
     /// <remarks>
     /// A gesture that can only be made in one direction is a trap however well it
-    /// is labelled: without this, somebody who applied a printing to try something
+    /// is labeled: without this, somebody who applied a printing to try something
     /// and then wanted to drag one wire would have to save the patch as a
     /// <c>.fbk</c> to be allowed to. Nothing is built and nothing rewound — the
     /// canvas already holds what the text made, and what changes hands is who owns

@@ -95,7 +95,7 @@ public class ClipFormatTests
         ClipFormats.ByExtension(name).ShouldBeNull();
 
     [Fact]
-    public void An_id_saved_into_the_wrong_list_is_not_honoured()
+    public void An_id_saved_into_the_wrong_list_is_not_honored()
     {
         ClipFormats.Wanted(ClipFormats.Mp3.Id, picture: true).ShouldBe(ClipFormats.MotionJpegAvi);
         ClipFormats.Wanted(ClipFormats.H264Mp4.Id, picture: false).ShouldBe(ClipFormats.Wav);

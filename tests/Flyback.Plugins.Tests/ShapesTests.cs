@@ -27,7 +27,7 @@ public class ShapesTests
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 
-    // --- the catalogue ---------------------------------------------------------
+    // --- the catalog ---------------------------------------------------------
 
     [Fact]
     public void The_plugin_offers_all_six_modules_from_one_assembly()
@@ -294,7 +294,7 @@ public class ShapesTests
 
     /// <summary>
     /// The edge case the module is written round: at no softness the two ends of
-    /// the ramp meet, and the tie has to break in favour of the inside. Written
+    /// the ramp meet, and the tie has to break in favor of the inside. Written
     /// the other way — a ramp with its edges swapped rather than one subtracted
     /// from one — it breaks the other way, and every shape in the patch is a hole.
     /// </summary>
@@ -334,7 +334,7 @@ public class ShapesTests
     // --- the combine -----------------------------------------------------------
 
     /// <summary>
-    /// At no smoothness the three outputs are exactly the arithmetic the catalogue
+    /// At no smoothness the three outputs are exactly the arithmetic the catalog
     /// always had, which is the claim the distance convention rests on.
     /// <para>
     /// Near enough rather than exactly: the tolerance is the module's own floor under

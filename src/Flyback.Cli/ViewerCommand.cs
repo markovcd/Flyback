@@ -5,7 +5,7 @@ using Flyback.Core;
 namespace Flyback.Cli;
 
 /// <summary>
-/// <c>flyback-cli viewer</c>: the player, reached from where a person or an agent looks
+/// <c>flyback-cli viewer</c>: the viewer, reached from where a person or an agent looks
 /// to find out what Flyback can do.
 /// </summary>
 /// <remarks>

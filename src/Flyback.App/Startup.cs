@@ -10,7 +10,7 @@ namespace Flyback.App;
 
 /// <summary>
 /// Everything that has to happen before there is a window. Plugins are read
-/// once here rather than by the window, because the module catalogue must be
+/// once here rather than by the window, because the module catalog must be
 /// final before a palette is built or a patch is opened — and because a second
 /// window must never get a second answer.
 /// </summary>

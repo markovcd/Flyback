@@ -152,7 +152,7 @@ public sealed class NodeInstance
     /// <param name="to">
     /// The new name. Blank puts it back, and so does the definition's own name:
     /// storing that would leave a file claiming a name that changes under it the
-    /// day the module is renamed in the catalogue.
+    /// day the module is renamed in the catalog.
     /// </param>
     public void Rename(NodeDef def, string? to)
     {
@@ -707,7 +707,7 @@ public sealed class Patch
     }
 
     /// <summary>
-    /// Where a freshly made Output lands. To the right of centre, because the
+    /// Where a freshly made Output lands. To the right of center, because the
     /// editor frames the whole patch and a sink is what everything else points at.
     /// </summary>
     private const double OutputX = 1100;

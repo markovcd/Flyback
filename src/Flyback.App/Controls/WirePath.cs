@@ -7,7 +7,7 @@ namespace Flyback.App.Controls;
 internal static class WirePath
 {
     /// <summary>
-    /// How far below the lower of two modules a wire travelling leftwards runs
+    /// How far below the lower of two modules a wire traveling leftwards runs
     /// back, where there is no gap between them to run through. Also the least
     /// gap that counts as one. Far enough to clear a box rather than hide behind
     /// it — resting wires are drawn under the modules — and no further.
@@ -23,7 +23,7 @@ internal static class WirePath
     private const double ReturnWireReach = 60;
 
     /// <summary>
-    /// The height a wire travelling leftwards runs back at, between the two
+    /// The height a wire traveling leftwards runs back at, between the two
     /// modules it joins.
     /// </summary>
     /// <remarks>

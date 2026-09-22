@@ -149,19 +149,19 @@ public class SavedGroupTests : UiTest
     /// that is not there answers no questions about why.
     /// </summary>
     [AvaloniaFact]
-    public void A_group_with_no_name_is_offered_the_button_greyed()
+    public void A_group_with_no_name_is_offered_the_button_grayed()
     {
         var window = Open(out var group, named: null);
 
-        var greyed = Button(window, Keep);
+        var grayed = Button(window, Keep);
 
-        greyed.IsEnabled.ShouldBeFalse();
+        grayed.IsEnabled.ShouldBeFalse();
 
         // And it still explains itself. A tip that will not show on a disabled
-        // control explains it to nobody, and the greyed button is the one with
+        // control explains it to nobody, and the grayed button is the one with
         // something to explain.
-        ToolTip.GetShowOnDisabled(greyed).ShouldBeTrue();
-        ToolTip.GetTip(greyed).ShouldNotBeNull();
+        ToolTip.GetShowOnDisabled(grayed).ShouldBeTrue();
+        ToolTip.GetTip(grayed).ShouldNotBeNull();
 
         group.Rename("Voice");
         Editor(window).NotifyPatchChanged();
@@ -275,7 +275,7 @@ public class SavedGroupTests : UiTest
 
         Press(window, palette, "✕");
 
-        Captions(palette).ShouldContain("Voice", "cancelling leaves it exactly where it was");
+        Captions(palette).ShouldContain("Voice", "canceling leaves it exactly where it was");
         Directory.GetFiles(folder).Length.ShouldBe(1);
     }
 

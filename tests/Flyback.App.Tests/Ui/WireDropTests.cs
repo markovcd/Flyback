@@ -153,7 +153,7 @@ public class WireDropTests : UiTest
         wire.SourceNode.ShouldBe(time.Id);
         wire.SourcePort.ShouldBe(0);
 
-        // Centred where it was let go, the same as a module picked after a
+        // Centered where it was let go, the same as a module picked after a
         // right-click.
         var def = NodeCatalog.BuiltIn.Require("osc.sine");
         var at = editor.GraphToScreen.Invert().Transform(
@@ -225,7 +225,7 @@ public class WireDropTests : UiTest
 
     /// <summary>
     /// With no port to be read across, an exact match of kind decides — so a
-    /// scalar goes to a Blend's <c>t</c> rather than being broadcast to grey
+    /// scalar goes to a Blend's <c>t</c> rather than being broadcast to gray
     /// down its <c>a</c>.
     /// </summary>
     [AvaloniaFact]

@@ -188,7 +188,7 @@ public static class ClipFormats
     /// </param>
     /// <remarks>
     /// Whether ffmpeg is actually on the machine is deliberately not asked here.
-    /// A saved choice that this launch cannot honour is still the choice, and
+    /// A saved choice that this launch cannot honor is still the choice, and
     /// quietly rewriting it to the built-in format would lose it for good the
     /// next time anything was saved.
     /// </remarks>

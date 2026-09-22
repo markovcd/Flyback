@@ -89,7 +89,7 @@ internal readonly struct ModuleBackdrop
     /// Taken from the whole surface the line of text sits on rather than from the
     /// line itself, so every label down a body agrees and a word is never dark at
     /// one end and light at the other. A painted module has two surfaces — a pale
-    /// accent makes a pale header band over a body that is nearly all node grey,
+    /// accent makes a pale header band over a body that is nearly all node gray,
     /// and the title and the labels then want opposite answers.
     /// </remarks>
     public bool Lift(Rect bounds, double y)

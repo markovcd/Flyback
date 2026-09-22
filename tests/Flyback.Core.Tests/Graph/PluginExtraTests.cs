@@ -171,7 +171,7 @@ public class PluginExtraTests
     [Fact]
     public void A_copy_of_a_module_this_build_has_no_definition_for_keeps_its_state()
     {
-        // Cloning never consults a catalogue, which is what makes a fragment from
+        // Cloning never consults a catalog, which is what makes a fragment from
         // an unloaded plugin survive a copy rather than lose what it carried.
         var orphan = new NodeInstance { Id = Guid.NewGuid(), TypeId = "test.absent.thing" };
         orphan.SetState("whatever", new JsonObject { ["kept"] = 4f });

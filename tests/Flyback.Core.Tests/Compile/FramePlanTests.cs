@@ -22,7 +22,7 @@ public class FramePlanTests
     /// </summary>
     /// <remarks>
     /// The presets rather than a hand-built program, because what has to hold is
-    /// that no module in the catalogue lowers to something the sort gets wrong —
+    /// that no module in the catalog lowers to something the sort gets wrong —
     /// and between them they reach every op the compiler emits.
     /// </remarks>
     [Fact]

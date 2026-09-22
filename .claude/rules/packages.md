@@ -24,7 +24,7 @@ straight to. Take it, in a commit of its own, before the real work starts.
 
 An upgrade is expensive when it wants a decision rather than a fix:
 
-- a licence or a fee (Verify 33 wants one of its maintenance-fee exemptions
+- a license or a fee (Verify 33 wants one of its maintenance-fee exemptions
   claimed, which is the user's declaration to make, not yours)
 - a package that has to be vendored, replaced or dropped, because nothing
   downstream of it has been rebuilt yet

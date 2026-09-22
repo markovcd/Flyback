@@ -32,7 +32,7 @@ internal sealed class ProbeSection : StackPanel
     private readonly Button probe = new() { Name = "probe", FontSize = Text.Body };
 
     /// <summary>
-    /// What a probe costs, said in amber above the button rather than in the grey
+    /// What a probe costs, said in amber above the button rather than in the gray
     /// paragraph over it.
     /// </summary>
     /// <remarks>

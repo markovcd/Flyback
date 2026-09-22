@@ -67,7 +67,7 @@ public class PhaseAccumulatorInvariants
     /// below one to just above zero is a small step forward, not a large one
     /// back, and only the small reading is the one the ear agrees with.
     /// </summary>
-    private static float Travelled(float from, float to)
+    private static float Traveled(float from, float to)
     {
         var difference = to - from + 0.5f;
         return difference - MathF.Floor(difference) - 0.5f;
@@ -168,7 +168,7 @@ public class PhaseAccumulatorInvariants
         var ceiling = high * Step * 1.001f;
 
         for (var i = 1; i < length; i++)
-            MathF.Abs(Travelled(phases[i - 1], phases[i])).ShouldBeLessThan(ceiling);
+            MathF.Abs(Traveled(phases[i - 1], phases[i])).ShouldBeLessThan(ceiling);
     }
 
     /// <summary>
@@ -213,7 +213,7 @@ public class PhaseAccumulatorInvariants
             [.. Enumerable.Range(0, 100).Select(i => -i * Step)],
             Constant(100, 7f));
 
-        for (var i = 1; i < 100; i++) Travelled(reversed[i - 1], reversed[i]).ShouldBeLessThan(0f);
+        for (var i = 1; i < 100; i++) Traveled(reversed[i - 1], reversed[i]).ShouldBeLessThan(0f);
     }
 
     /// <summary>
@@ -259,7 +259,7 @@ public class PhaseAccumulatorInvariants
         // And it recovers rather than sticking: a bad frequency loses its one
         // step, a bad domain reading loses nothing at all — the next good one is
         // measured against where the input was before it went wrong.
-        Travelled(phases[^2], phases[^1]).ShouldBe(5f * Step, 0.0001f);
+        Traveled(phases[^2], phases[^1]).ShouldBe(5f * Step, 0.0001f);
     }
 
     /// <summary>

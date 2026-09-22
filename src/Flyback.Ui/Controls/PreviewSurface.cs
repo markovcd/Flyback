@@ -276,7 +276,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         context.DrawImage(bitmap, new Rect(bitmap.Size), Letterbox(area, bitmap.Size));
     }
 
-    /// <summary>Largest rect of the image's aspect that fits in <paramref name="area"/>, centred.</summary>
+    /// <summary>Largest rect of the image's aspect that fits in <paramref name="area"/>, centered.</summary>
     private static Rect Letterbox(Rect area, Size image)
     {
         if (image.Width <= 0 || image.Height <= 0 || area.Width <= 0 || area.Height <= 0) return area;

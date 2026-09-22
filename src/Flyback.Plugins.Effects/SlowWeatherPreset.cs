@@ -107,7 +107,7 @@ internal sealed class SlowWeatherPreset : PresetBench
     /// at its longest and softest, which makes it a hump a note rather than a
     /// switch: the voices below use it as their swell.
     /// </summary>
-    private NodeInstance Quantised(NodeInstance voltage, float[] notes, int from = 0)
+    private NodeInstance Quantized(NodeInstance voltage, float[] notes, int from = 0)
     {
         var steps = b.Add("seq.notes", (1, notes.Length), (2, 1f), (3, 0.5f));
         StepsExtra.Set(steps, [.. notes.Select(n => new Step(n))]);
@@ -183,9 +183,9 @@ internal sealed class SlowWeatherPreset : PresetBench
         // D minor pentatonic over three octaves, split into three lists of
         // coprime length: eight notes for the pad, seven for the bell, five for
         // the root.
-        var padSteps = Quantised(wander, [57f, 60f, 62f, 65f, 67f, 69f, 72f, 74f]);
-        var bellSteps = Quantised(flutter, [60f, 62f, 65f, 67f, 69f, 72f, 74f]);
-        var rootSteps = Quantised(tide, [38f, 43f, 45f, 41f, 36f]);
+        var padSteps = Quantized(wander, [57f, 60f, 62f, 65f, 67f, 69f, 72f, 74f]);
+        var bellSteps = Quantized(flutter, [60f, 62f, 65f, 67f, 69f, 72f, 74f]);
+        var rootSteps = Quantized(tide, [38f, 43f, 45f, 41f, 36f]);
 
         Box("Three Quantisers");
 
@@ -321,7 +321,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         var boxHere = Presence(0.037f, 6f, 0.56f, 0.68f);
         var boxStroke = Stroke(clock, 2.4f, 4f);
         var boxOdds = Dice(2.4f, 11f);
-        var boxSteps = Quantised(Dice(2.4f, 10f, 0.5f, 0.5f), [74f, 77f, 79f, 81f, 84f, 86f, 89f], Held);
+        var boxSteps = Quantized(Dice(2.4f, 10f, 0.5f, 0.5f), [74f, 77f, 79f, 81f, 84f, 86f, 89f], Held);
         var boxPluck = Formula("step(0.5, a) * step(0.15, b)", boxStroke, new Read(boxOdds, Held));
         var boxHz = b.Add(NodeCatalog.HoldTypeId);
         var box = b.Add(NodeCatalog.StringTypeId, (3, 0.35f), (4, 0.3f));
@@ -341,7 +341,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         var callOdds = Dice(0.21f, 12f);
         var callSwell = Formula(
             "sin(a * pi) * sin(a * pi) * step(-0.3, b)", new Read(phrase, StrokePhase), new Read(callOdds, Held));
-        var callSteps = Quantised(Dice(1.3f, 13f, 0.5f, 0.5f), [53f, 55f, 57f, 60f, 62f, 65f, 67f], Held);
+        var callSteps = Quantized(Dice(1.3f, 13f, 0.5f, 0.5f), [53f, 55f, 57f, 60f, 62f, 65f, 67f], Held);
         var glide = b.Add(SlewType, (1, -0.45f), (2, -0.45f));
         var vibrato = b.Add("osc.sine", (1, 5.3f));
 
@@ -413,7 +413,7 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         // --- wind ------------------------------------------------------------
 
-        // A Hiss set to pink, on a band whose centre is a voltage, which is wind;
+        // A Hiss set to pink, on a band whose center is a voltage, which is wind;
         // the resonance is what makes it whistle in the distance rather than
         // hiss. Its level is the third loop: a follower on the melody desk's bus,
         // turned upside down, so the wind comes up when the pad and the bell are

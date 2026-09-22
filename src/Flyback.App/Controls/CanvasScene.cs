@@ -453,7 +453,7 @@ internal readonly struct CanvasScene(Patch patch)
     /// (<see cref="NodeInstance.Across"/>), but what it holds is a corner, and how
     /// far the body reaches past it is the view's arithmetic. So a paste, a layout
     /// or a file may leave a module standing half off, and this is where it is
-    /// known enough to be put right. A module the catalogue does not have is left
+    /// known enough to be put right. A module the catalog does not have is left
     /// where it is, since nothing here can measure one.
     /// </remarks>
     public void HoldInside()

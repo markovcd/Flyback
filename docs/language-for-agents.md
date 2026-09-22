@@ -44,7 +44,7 @@ something absent from the line.
 ## 2. What the evidence says
 
 Four unsteered agents wrote about 1400 lines of Flyback text from the website
-alone, and a fifth reading was taken from the shipped catalogue.
+alone, and a fifth reading was taken from the shipped catalog.
 
 **Validated, and kept unchanged.** `|>` with nesting-as-wiring, and
 `call(socket: value)`. All four wrote them fluently from a handful of examples
@@ -56,7 +56,7 @@ the reason to keep them and not a reason to think them optimal.
 - Meaning that depends on which sockets you happened to name (§3 below).
 - Vocabulary that must be recalled rather than fetched. The specimens invented
   `phase`, `window` and `stripes`, and reached for `divide`, `smooth`,
-  `lowpass`, `above`, `wrap` and `previous` where the catalogue has `div`,
+  `lowpass`, `above`, `wrap` and `previous` where the catalog has `div`,
   `slew`, `filter`, `step`, `mod` and `feedback`.
 - Nesting. Every specimen bound short pipelines to names and combined the names;
   none wrote the deep chains `print` emits.
@@ -65,7 +65,7 @@ the reason to keep them and not a reason to think them optimal.
 
 ---
 
-## 3. The pipe lands where the catalogue says, and nowhere else
+## 3. The pipe lands where the catalog says, and nowhere else
 
 Today's rule has three clauses, and the third is the problem:
 
@@ -89,7 +89,7 @@ position pair — and a pipe always lands there.
 
 - Naming that socket in the same call is an error that says so.
 - A module that declares none cannot be piped into; write it as a call.
-- Clauses 1 and 2 survive as *declarations in the catalogue* rather than
+- Clauses 1 and 2 survive as *declarations in the catalog* rather than
   inferences at parse time. Clause 3 is deleted.
 
 `osc.sine` declares `in`, `math.smoothstep` declares `in` (its third port),
@@ -116,7 +116,7 @@ edit rather than a change of shape.
 
 **Modules are full type ids.** `color.hsv`, `osc.sine`, `math.remap`. The
 ambiguity table disappears, `midi.in` stops shortening to `in`, and a name in
-the text matches a name in the catalogue exactly. Short names stay legal input.
+the text matches a name in the catalog exactly. Short names stay legal input.
 
 The cost is verbosity, which is the trade being asked for. Plasma, whole:
 
@@ -132,7 +132,7 @@ level |> color.hsv(saturation: 0.85, value: 1) |> out.color
 One binding per nesting that had to be lifted, and longer lines. Against the
 form in §1 of the reference it is the same program — nine modules, nine wires,
 twenty-nine picture ops, thirty-six registers — and every line of it builds
-today, since only §3 needs a change to the catalogue.
+today, since only §3 needs a change to the catalog.
 
 ## 5. `print` emits the canonical form
 
@@ -200,7 +200,7 @@ never parses prose.
 
 And a crash is a diagnostic that did not get written. There should be none.
 
-## 10. The catalogue is fetchable, and complete
+## 10. The catalog is fetchable, and complete
 
 The cheapest item here, and not a language change at all.
 
@@ -239,7 +239,7 @@ type ids rather than labels
 ## What it costs
 
 A `NodeDef` field for the pipe socket and a pass over every module in the
-catalogue — though the existing rule computes the right answer for most, and those where
+catalog — though the existing rule computes the right answer for most, and those where
 it differs are the ones that are silently wrong now. Every `.fbks` in the tree
 and every snippet in `site/` rewrites to the canonical form. Sections 3, 4, 5 and
 13 of `docs/language.md` are rewritten. The preset corpus test — build the text,

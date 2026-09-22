@@ -1227,11 +1227,11 @@ public class PatchWorkbenchTests
     {
         var bench = await Lit(0.5f);
 
-        var offered = await Call(bench, "propose", """{"summary":"a flat grey field"}""");
+        var offered = await Call(bench, "propose", """{"summary":"a flat gray field"}""");
 
         offered.Ok.ShouldBeTrue(offered.Text);
         bench.HasProposal.ShouldBeTrue();
-        bench.ProposalSummary.ShouldBe("a flat grey field");
+        bench.ProposalSummary.ShouldBe("a flat gray field");
     }
 
     // --- writing a patch whole ------------------------------------------------

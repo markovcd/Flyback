@@ -8,7 +8,7 @@ namespace Flyback.Plugins.Picture;
 /// backwards.
 /// </summary>
 /// <remarks>
-/// The catalogue could build a color out of a hue and never read one back, which
+/// The catalog could build a color out of a hue and never read one back, which
 /// costs anything depending on the color a patch already has: rotating a hue,
 /// keying on one, or feeding a Feedback loop's own color back in.
 /// <para>
@@ -19,16 +19,16 @@ namespace Flyback.Plugins.Picture;
 /// green.
 /// </para>
 /// <para>
-/// The two divisions are by the chroma and the value, both nought for a grey.
+/// The two divisions are by the chroma and the value, both nought for a gray.
 /// Neither is guarded here because <see cref="OpCode.Div"/> is guarded everywhere
-/// (ADR-0013), so a grey comes back with no saturation and a hue of nought.
+/// (ADR-0013), so a gray comes back with no saturation and a hue of nought.
 /// </para>
 /// </remarks>
 internal static class HsvModule
 {
     public const string TypeId = "flyback.picture.hsv";
 
-    /// <summary>Sixths of the wheel, which is how the hue falls out before it is normalised.</summary>
+    /// <summary>Sixths of the wheel, which is how the hue falls out before it is normalized.</summary>
     private const float Sectors = 6f;
 
     public static NodeDef Definition { get; } = new(
@@ -41,10 +41,10 @@ internal static class HsvModule
         ],
         Emit,
         "Pulls a color apart into hue, saturation and value — the HSV module backwards, and "
-        + "the half of it the catalogue was missing. It is what anything depending on the "
+        + "the half of it the catalog was missing. It is what anything depending on the "
         + "color a patch already has needs: rotate a hue by adding to this and building the "
         + "color again, key on one by thresholding it, or take the saturation out of a "
-        + "picture without touching what color it was. All three come out 0 to 1. A grey has "
+        + "picture without touching what color it was. All three come out 0 to 1. A gray has "
         + "no hue to report and says nought, which is red — threshold the saturation if that "
         + "matters.");
 
@@ -63,7 +63,7 @@ internal static class HsvModule
         var chroma = em.Sub(value, least);
 
         // Which channel reached the maximum, as a one and two noughts. Red is
-        // taken first and green second, so a grey — where all three reach it —
+        // taken first and green second, so a gray — where all three reach it —
         // answers with red's expression, which is nought over nought and
         // therefore nought.
         var isRed = em.Binary(OpCode.Step, value, red);

@@ -52,7 +52,7 @@ public class RandomTests
     }
 
     [Fact]
-    public void White_is_bounded_centred_and_uncorrelated()
+    public void White_is_bounded_centered_and_uncorrelated()
     {
         var white = Samples(White, 40_000);
 

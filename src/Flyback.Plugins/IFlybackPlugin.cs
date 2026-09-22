@@ -40,7 +40,7 @@ public interface IPluginRegistry
     void AddAudioOutput(IAudioOutput output);
 
     /// <summary>
-    /// Adds modules to the catalogue. Every type id must begin with
+    /// Adds modules to the catalog. Every type id must begin with
     /// <c>provider.Id</c> and a dot; ones that do not are refused, because that
     /// prefix is what a saved patch relies on to know which plugin a module it
     /// contains came from.
@@ -50,7 +50,7 @@ public interface IPluginRegistry
     /// <summary>
     /// Adds patches to start from. A preset is built when it is chosen, not when
     /// it is registered, so it may freely use modules this plugin added — by
-    /// then the catalogue is complete.
+    /// then the catalog is complete.
     /// </summary>
     void AddPresets(IReadOnlyList<PatchPreset> presets);
 

@@ -58,14 +58,14 @@ internal static class EuclidModule
         var steps = em.Ternary(OpCode.Clamp, Whole(node[2]), one, em.Constant(MostSteps));
         var hits = em.Ternary(OpCode.Clamp, Whole(node[3]), zero, steps);
 
-        var travelled = em.Mul(node[0], node[1]);
-        var index = em.Binary(OpCode.Mod, em.Add(em.Unary(OpCode.Floor, travelled), Whole(node[4])), steps);
+        var traveled = em.Mul(node[0], node[1]);
+        var index = em.Binary(OpCode.Mod, em.Add(em.Unary(OpCode.Floor, traveled), Whole(node[4])), steps);
 
         var spread = em.Binary(OpCode.Mod, em.Mul(index, hits), steps);
         var hit = em.Sub(one, em.Binary(OpCode.Step, hits, spread));
 
         // Ramped like the sequencers' gate, so patched straight into a level it does not click.
-        var within = em.Unary(OpCode.Fract, travelled);
+        var within = em.Unary(OpCode.Fract, traveled);
         var length = em.Ternary(OpCode.Clamp, node[5], zero, one);
         var opening = em.Ternary(OpCode.Smoothstep, zero, em.Constant(Edge), within);
         var closing = em.Sub(one, em.Ternary(OpCode.Smoothstep, em.Sub(length, em.Constant(Edge)), length, within));

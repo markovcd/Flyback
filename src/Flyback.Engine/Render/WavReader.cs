@@ -48,7 +48,7 @@ public static class WavReader
     /// <summary>Uncompressed integer PCM, which is what the format tag 1 means.</summary>
     private const int FormatPcm = 1;
 
-    /// <summary>IEEE float, tag 3 — what an editor writes when it does not want to quantise.</summary>
+    /// <summary>IEEE float, tag 3 — what an editor writes when it does not want to quantize.</summary>
     private const int FormatFloat = 3;
 
     /// <summary>

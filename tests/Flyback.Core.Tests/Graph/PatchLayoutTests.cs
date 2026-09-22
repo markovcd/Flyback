@@ -432,7 +432,7 @@ public class PatchLayoutTests
     /// exactly where the file put it rather than moved to a guessed size.
     /// </summary>
     [Fact]
-    public void A_module_that_is_not_in_the_catalogue_is_left_alone()
+    public void A_module_that_is_not_in_the_catalog_is_left_alone()
     {
         var patch = Preset("Drone");
         // Somewhere arbitrary, and inside the canvas: a coordinate outside it
@@ -631,7 +631,7 @@ public class PatchLayoutTests
 
         // A column of two where there were two scattered: the middle moves by
         // the room the drawing took back, and not by the half-canvas that
-        // landing it in the centre would have cost.
+        // landing it in the center would have cost.
         Math.Abs(x - was.X).ShouldBeLessThan(Size.Width);
         Math.Abs(y - was.Y).ShouldBeLessThan(Size.Height(NodeCatalog.BuiltIn.Require("coord")));
     }

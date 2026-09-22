@@ -28,7 +28,7 @@ public class NoiseTests
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 
-    // --- the catalogue ---------------------------------------------------------
+    // --- the catalog ---------------------------------------------------------
 
     [Fact]
     public void The_plugin_offers_both_fields_from_one_assembly()
@@ -63,7 +63,7 @@ public class NoiseTests
 
     /// <summary>
     /// One octave is the module it is built out of, exactly — which is what says
-    /// the sum, the signing and the normalising all cancel where there is nothing
+    /// the sum, the signing and the normalizing all cancel where there is nothing
     /// to sum. Read where z is nothing, because that is the one place the two
     /// agree about it: this scales z with the picture and the Noise does not.
     /// </summary>
@@ -166,7 +166,7 @@ public class NoiseTests
     /// <summary>
     /// More octaves is more detail, measured as the field disagreeing with itself
     /// over a short step. A sum that had gone flat or been washed out by
-    /// normalising would fail this and pass everything above it.
+    /// normalizing would fail this and pass everything above it.
     /// </summary>
     [Fact]
     public void More_octaves_puts_more_detail_in()
@@ -179,7 +179,7 @@ public class NoiseTests
 
     /// <summary>
     /// With the scatter turned off every point sits in the middle of its square,
-    /// so the field is the distance to the nearest centre of a unit grid — which
+    /// so the field is the distance to the nearest center of a unit grid — which
     /// is a number this test can work out for itself rather than measure.
     /// </summary>
     [Theory]
@@ -203,17 +203,17 @@ public class NoiseTests
     {
         var edge = Field(Cells, 1, 0, (Scale, 1f), (Jitter, 0f));
 
-        // Halfway between the centres of two neighbouring squares.
+        // Halfway between the centers of two neighbouring squares.
         edge(1f, 0.5f).ShouldBe(0d, 1e-5);
         edge(0.5f, 1f).ShouldBe(0d, 1e-5);
 
-        // And is at its largest at a centre, where the runner-up is furthest.
+        // And is at its largest at a center, where the runner-up is furthest.
         edge(0.5f, 0.5f).ShouldBeGreaterThan(0.9d);
     }
 
     /// <summary>
     /// The one value here that is flat across a region and jumps at its border,
-    /// which is what nothing else in the catalogue can make.
+    /// which is what nothing else in the catalog can make.
     /// </summary>
     [Fact]
     public void A_cell_reads_the_same_everywhere_inside_it_and_differently_next_door()

@@ -23,7 +23,7 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `site-screenshots`: retaking `site/assets/shots` from the real app.
 - `site-audio-tracks`: rebuilding the website's listening-row MP3s.
 
-`vibe-check`, which finds what the catalogue is missing by reading what an unchecked agent reaches for, lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
+`vibe-check`, which finds what the catalog is missing by reading what an unchecked agent reaches for, lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
 
 Commands in `.claude/commands/` are run by name rather than matched:
 

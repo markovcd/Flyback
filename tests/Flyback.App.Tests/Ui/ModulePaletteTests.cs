@@ -106,7 +106,7 @@ public class ModulePaletteTests : UiTest
 
         palette.Bounds.Width.ShouldBeGreaterThan(100);
         palette.Bounds.Height.ShouldBeGreaterThan(100);
-        All<Button>(palette).Count().ShouldBeGreaterThan(10, "the catalogue should be in it");
+        All<Button>(palette).Count().ShouldBeGreaterThan(10, "the catalog should be in it");
     }
 
     /// <summary>
@@ -350,7 +350,7 @@ public class ModulePaletteTests : UiTest
         var added = editor.Patch.Nodes.LastOrDefault(n => n.TypeId == "osc.sine").ShouldNotBeNull();
         var def = NodeCatalog.BuiltIn.Require("osc.sine");
 
-        // Centred on the click, which is what "lands here" means for a block
+        // Centered on the click, which is what "lands here" means for a block
         // that has a width and a height.
         (added.X + NodeGeometry.Width / 2).ShouldBe(spot.X, 1);
         (added.Y + NodeGeometry.Height(def) / 2).ShouldBe(spot.Y, 1);

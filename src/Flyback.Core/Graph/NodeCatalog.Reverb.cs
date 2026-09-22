@@ -73,7 +73,7 @@ public partial class NodeCatalog
     /// None of these combs is ideal — every line is read at a fractional sample
     /// and interpolated, which is a gentle lowpass applied on every pass; the
     /// allpasses stop being exactly allpass for it; the highpass takes its corner
-    /// off the bottom. Each is small and none is worth modelling to recover a
+    /// off the bottom. Each is small and none is worth modeling to recover a
     /// number that can be measured.
     /// </remarks>
     private const float ReverbMakeup = 1.7f;

@@ -104,7 +104,7 @@ public class MidiTests
             ignoreOrder: true);
     }
 
-    /// <summary>Every other patch in the catalogue is played by nothing at all.</summary>
+    /// <summary>Every other patch in the catalog is played by nothing at all.</summary>
     [Fact]
     public void A_patch_without_one_asks_for_nothing()
     {

@@ -4,7 +4,7 @@ namespace Flyback.Core.Graph;
 /// The sections the palette has, and the order they appear in.
 /// </summary>
 /// <remarks>
-/// A curated set rather than whatever strings happen to be in the catalogue. Two
+/// A curated set rather than whatever strings happen to be in the catalog. Two
 /// providers meant different things by one word — the engine's Rotate and a
 /// plugin's Reverb both said "Space" — and two meant nearly the same thing by
 /// different ones, neither of which a reader of either file could have caught.

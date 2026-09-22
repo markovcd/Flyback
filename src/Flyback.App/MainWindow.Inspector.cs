@@ -98,7 +98,7 @@ public sealed partial class MainWindow
         // recording, and what would follow is the same frame for ever.
         preview.CaptureLost += Stop;
 
-        // Shown while it is greyed out too, because a disabled control that will
+        // Shown while it is grayed out too, because a disabled control that will
         // not say why is the most annoying thing a panel can contain.
         ToolTip.SetShowOnDisabled(recordButton, true);
 
@@ -124,7 +124,7 @@ public sealed partial class MainWindow
     {
         resolution.SelectedIndex = SizeRow(settings);
 
-        // A box greyed out by a GPU that failed shows what is running, which
+        // A box grayed out by a GPU that failed shows what is running, which
         // the BackendChanged handler above already set.
         if (gpuButton.IsEnabled) gpuButton.SelectedIndex = settings.Gpu ? 0 : 1;
 
@@ -246,10 +246,10 @@ public sealed partial class MainWindow
     /// </summary>
     private void SaveOutputSettings()
     {
-        // Greyed out for the length of a take, whose file has committed to a size
-        // and drops every frame that arrives at another. Greying a box does not
+        // Grayed out for the length of a take, whose file has committed to a size
+        // and drops every frame that arrives at another. Graying a box does not
         // take back a row already picked in it — during the count-in, say — so
-        // what it holds is not read while it is grey, and the row is put back.
+        // what it holds is not read while it is gray, and the row is put back.
         if (!resolution.IsEnabled) resolution.SelectedIndex = SizeRow(outputSettings);
 
         var size = Resolutions.All[Math.Max(resolution.SelectedIndex, 0)].Size;
@@ -260,7 +260,7 @@ public sealed partial class MainWindow
         {
             Width = size.Width,
             Height = size.Height,
-            // A box greyed out by a GPU that failed says nothing about what
+            // A box grayed out by a GPU that failed says nothing about what
             // was wanted, so the last answer is kept for a launch that has one.
             Gpu = gpuButton.IsEnabled ? gpuButton.SelectedIndex == 0 : outputSettings.Gpu,
 
@@ -780,7 +780,7 @@ public sealed partial class MainWindow
         // Keeping one is not an edit to the patch, so it sits with the one that is
         // not either and ahead of the two that are. What the module list will call
         // it is its name and nothing else — so a group with none is offered the
-        // button greyed rather than a button that saves "3 modules" under a heading
+        // button grayed rather than a button that saves "3 modules" under a heading
         // full of other things called "3 modules". The way out is one gesture up:
         // the title at the top of this panel renames on a double-click.
         var named = !string.IsNullOrWhiteSpace(group.Name);
@@ -797,9 +797,9 @@ public sealed partial class MainWindow
 
         keep.IsEnabled = named;
 
-        // The greyed one is precisely the one with something to explain, and a
+        // The grayed one is precisely the one with something to explain, and a
         // tip that will not show on a disabled control explains it to nobody.
-        // The two buttons in the toolbar above that grey themselves out do the
+        // The two buttons in the toolbar above that gray themselves out do the
         // same for the same reason.
         ToolTip.SetShowOnDisabled(keep, true);
 

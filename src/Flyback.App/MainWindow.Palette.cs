@@ -57,7 +57,7 @@ public sealed partial class MainWindow
         };
 
         // Where the last one was asked for, so that what is picked lands where
-        // the canvas was clicked rather than wherever the view is centred. Held
+        // the canvas was clicked rather than wherever the view is centered. Held
         // here rather than passed through the flyout, which has no room for it.
         void Add(string typeId)
         {
@@ -106,7 +106,7 @@ public sealed partial class MainWindow
 
 
     /// <summary>
-    /// The groups somebody kept, listed above the catalogue in the module list.
+    /// The groups somebody kept, listed above the catalog in the module list.
     /// Built once beside the palette, because the palette is what shows it.
     /// </summary>
     private GroupLibrary? groups;

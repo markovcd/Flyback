@@ -34,7 +34,7 @@ namespace Flyback.Plugins.Picture;
 /// CPU for as long as the patch is loaded.
 /// <para>
 /// The three gaps are three different kinds of missing. There was nothing to draw
-/// — every field in the catalogue is infinite, so a patch could make a texture of
+/// — every field in the catalog is infinite, so a patch could make a texture of
 /// any kind and not a circle. There was no way to choose a color well. And there
 /// was no noise but the one, when the two everybody reaches for are the fractal
 /// sum and the cell field.

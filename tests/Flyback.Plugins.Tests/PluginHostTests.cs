@@ -246,7 +246,7 @@ public class PluginHostTests
 
     /// <summary>
     /// Asked about something it never saw registered — a backend from another
-    /// catalogue, or one a test made up — it says so rather than guessing.
+    /// catalog, or one a test made up — it says so rather than guessing.
     /// </summary>
     [Fact]
     public void Something_no_plugin_registered_has_no_provider()

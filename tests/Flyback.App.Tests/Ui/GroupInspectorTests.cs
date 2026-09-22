@@ -197,7 +197,7 @@ public class GroupInspectorTests : UiTest
         icon.Data.ShouldNotBeNull();
 
         // Taken from the button rather than set here, so that hovering, pressing
-        // and grey-out all reach it.
+        // and gray-out all reach it.
         icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
 
         Tip(window, name).Length.ShouldBeGreaterThan(8);

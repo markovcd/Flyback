@@ -594,7 +594,7 @@ public sealed partial class MainWindow
         }
     }
 
-    /// <returns>Whether the document was saved. A cancelled picker is not a save, and nor is a copy.</returns>
+    /// <returns>Whether the document was saved. A canceled picker is not a save, and nor is a copy.</returns>
     private async Task<bool> SavePatchAsync()
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions

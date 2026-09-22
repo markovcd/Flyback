@@ -201,7 +201,7 @@ public sealed class AssistantPanel : UserControl
         TextWrapping = TextWrapping.Wrap,
 
         // As the declared rows above it: a fixed width in a wider column is
-        // centred unless it says otherwise, and a key block indented past the
+        // centered unless it says otherwise, and a key block indented past the
         // form it sits under reads as a mistake.
         HorizontalAlignment = HorizontalAlignment.Left,
     };
@@ -268,7 +268,7 @@ public sealed class AssistantPanel : UserControl
         "The assistant is not told what this module does. Every module's description "
         + "together would run past its budget, and this one is not on the priority list. "
         + "It can still look the module up when it needs to. The budget and the list are "
-        + "in Settings → Agent.";
+        + "in Settings → Assistant.";
 
     /// <summary>
     /// Type ids whose descriptions the assistant's briefing leaves out, for the

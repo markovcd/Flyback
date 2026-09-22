@@ -1,7 +1,7 @@
 # Modules whose descriptions the assistant is always given.
 #
 # When every module's description would run past the budget set under
-# Settings → Agent, these keep theirs, the rest keep theirs in module-list order
+# Settings → Assistant, these keep theirs, the rest keep theirs in module-list order
 # for as long as there is room, and every one left out is marked on the canvas.
 # The assistant can still look up any module it was not told about.
 #

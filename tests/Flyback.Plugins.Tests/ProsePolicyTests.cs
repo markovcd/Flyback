@@ -7,7 +7,7 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// How much of the catalogue's prose the assistant is told, and the list of
+/// How much of the catalog's prose the assistant is told, and the list of
 /// modules that are told about whatever it costs.
 /// </summary>
 public sealed class ProsePolicyTests : IDisposable
@@ -32,7 +32,7 @@ public sealed class ProsePolicyTests : IDisposable
 
     /// <summary>
     /// Room enough for the built-ins without their descriptions and a few thousand
-    /// characters of them, which is a catalogue past its budget.
+    /// characters of them, which is a catalog past its budget.
     /// </summary>
     private static readonly ProsePolicy Tight = new(Floor + Handbook.PresetsReserve + 3_000, Listed);
 
@@ -99,7 +99,7 @@ public sealed class ProsePolicyTests : IDisposable
     /// <summary>
     /// A module five or more of the shipped presets use is common enough that the
     /// assistant is told what it is whatever the budget, so the list keeps up with
-    /// the presets rather than with the catalogue it was written against.
+    /// the presets rather than with the catalog it was written against.
     /// </summary>
     [Fact]
     public void Every_module_the_presets_lean_on_is_on_the_shipped_list()

@@ -6,7 +6,7 @@ namespace Flyback.Core.Tests.Properties;
 
 /// <summary>
 /// Properties that must hold for every patch the compiler can be handed, rather
-/// than for one worked example. The behaviour of individual compiler features
+/// than for one worked example. The behavior of individual compiler features
 /// (dead code, cycles, port coercion) is specified in the Gherkin suite.
 /// </summary>
 public class CompilerInvariants

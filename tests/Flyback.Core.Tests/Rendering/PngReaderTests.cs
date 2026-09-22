@@ -77,11 +77,11 @@ public class PngReaderTests
     /// landed where they belong rather than that something came back.
     /// </summary>
     [Theory]
-    [InlineData(0, 8)]   // grey
+    [InlineData(0, 8)]   // gray
     [InlineData(0, 16)]
     [InlineData(2, 8)]   // truecolor
     [InlineData(2, 16)]
-    [InlineData(4, 8)]   // grey and alpha
+    [InlineData(4, 8)]   // gray and alpha
     [InlineData(6, 8)]   // truecolor and alpha
     [InlineData(6, 16)]
     public void Every_color_type_reads(int color, int depth)
@@ -92,7 +92,7 @@ public class PngReaderTests
         picture.Height.ShouldBe(2);
 
         // Whatever the file said, the first pixel is a full-strength red where
-        // it has color and a mid grey where it does not.
+        // it has color and a mid gray where it does not.
         if (color is 2 or 6)
         {
             picture.Pixels[0].ShouldBe(1f, 1e-4f);
@@ -328,7 +328,7 @@ public class PngReaderTests
             for (var x = 0; x < width; x++)
             for (var channel = 0; channel < channels; channel++)
             {
-                // The first pixel is a red, or a mid grey where there is no
+                // The first pixel is a red, or a mid gray where there is no
                 // color to be red in; everything else is whatever is left.
                 var value = samples is { } given
                     ? given[(x + y * width) * channels % given.Length + channel % given.Length]

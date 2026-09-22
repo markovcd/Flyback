@@ -190,7 +190,7 @@ public sealed record AssistantSchema(
 
         // A model that takes a sound itself is played the clip directly, so
         // there is no second model and no question to put. The field goes rather
-        // than greying out; what it held is still in the settings and comes back
+        // than graying out; what it held is still in the settings and comes back
         // the moment a model that cannot hear is chosen.
         if (ears.Count > 0 && known?.Hearing != true)
             fields.Add(new SettingField.Pick(EarKey, "Ear", ears, ears[0].Id)
@@ -399,7 +399,7 @@ public interface IPatchAssistant
     /// <paramref name="values"/> on it.
     /// </summary>
     /// <remarks>
-    /// Asked again after every change, so a field may appear, grey out or change
+    /// Asked again after every change, so a field may appear, gray out or change
     /// what it says in answer to another. The App draws what comes back and knows
     /// nothing about any of it. A credential is not among them, and there is no
     /// shape one could go in.

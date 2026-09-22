@@ -167,7 +167,7 @@ public class SourceMapTests
 
     /// <summary>
     /// A printing is text nobody wrote, and it has to be as clickable as text
-    /// somebody did — that is what the code view of a patch built on the canvas
+    /// somebody did — that is what the text view of a patch built on the canvas
     /// is showing.
     /// </summary>
     [Theory]

@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Picture;
 /// <para>
 /// 'size' is the height of a capital, the number a person means by how big text
 /// is, in whichever font is chosen — so changing the font changes the letters
-/// and not how big they are. The tails of g and y hang below it, and the line is centred on its
+/// and not how big they are. The tails of g and y hang below it, and the line is centered on its
 /// capitals rather than on its tails, so a caption does not jump when a y
 /// arrives.
 /// </para>

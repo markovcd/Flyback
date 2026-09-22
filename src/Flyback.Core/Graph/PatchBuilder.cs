@@ -2,8 +2,8 @@ namespace Flyback.Core.Graph;
 
 /// <summary>Small helper for assembling patches in code, used by the presets and by tests.</summary>
 /// <param name="modules">
-/// Which catalogue the type ids mean, defaulting to the installed one. A preset
-/// that uses a plugin's modules must be handed the catalogue containing them,
+/// Which catalog the type ids mean, defaulting to the installed one. A preset
+/// that uses a plugin's modules must be handed the catalog containing them,
 /// rather than relying on what happens to be installed.
 /// </param>
 public sealed class PatchBuilder(ModuleCatalog? modules = null)

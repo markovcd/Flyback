@@ -70,7 +70,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     /// </remarks>
     internal static Grid KnobRow(bool reading) => Row(reading ? "*,60,84" : "*,84");
 
-    /// <summary>A labelled row in the settings window, on the gutter its declared rows use too.</summary>
+    /// <summary>A labeled row in the settings window, on the gutter its declared rows use too.</summary>
     internal static Control Field(string name, Control control)
     {
         var row = Row("*", SettingsGutter);
@@ -369,7 +369,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
             Margin = new Thickness(4, 0),
 
             // Dragging a note or a count lands on whole numbers. The module
-            // quantises whatever it is given anyway, so a slider that stopped
+            // quantizes whatever it is given anyway, so a slider that stopped
             // between two would only be showing a distinction the patch does
             // not have.
             IsSnapToTickEnabled = whole,

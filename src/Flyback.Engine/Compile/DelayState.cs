@@ -118,7 +118,7 @@ public sealed class DelayState
     }
 
     /// <summary>
-    /// Memory for one program, sized and labelled from the program itself.
+    /// Memory for one program, sized and labeled from the program itself.
     /// </summary>
     /// <param name="program">What is about to be run, which knows both how many cells it needs and whose they are.</param>
     /// <param name="sampleRate">Evaluations per second — the oversampled rate on the audio path.</param>

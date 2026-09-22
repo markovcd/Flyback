@@ -19,7 +19,7 @@ public readonly record struct MidiSource(string Id, string Name);
 /// A static, the way <see cref="NodeCatalog.Current"/> is one: what needs the list
 /// is <c>MidiExtra.Fields</c>, which hangs off a <see cref="NodeDef"/> built in a
 /// static constructor long before there is a window or a device, so there is
-/// nowhere to hand it in. Unlike the catalogue it is asked afresh every time,
+/// nowhere to hand it in. Unlike the catalog it is asked afresh every time,
 /// because devices are plugged in and pulled out while the program runs; what is
 /// frozen is the choice a patch stores, which is a string.
 /// </remarks>

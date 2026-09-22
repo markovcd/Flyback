@@ -141,7 +141,7 @@ public class LegacyTypeIdTests
     }
 
     /// <summary>
-    /// The text language resolves an exact type id straight off the catalogue
+    /// The text language resolves an exact type id straight off the catalog
     /// (ADR-0065), and the alias sits under that lookup, so a full old id typed
     /// out by hand still builds.
     /// </summary>

@@ -188,7 +188,7 @@ public class PanBoundsTests : UiTest
     /// Reachable rather than defensive: the zoom stops at about an eighth, which
     /// puts nearly eight windows' worth of graph units across the view, so
     /// anything past about two thousand pixels wide is already there. Panning at
-    /// all in that state must not drag the canvas off centre.
+    /// all in that state must not drag the canvas off center.
     /// </remarks>
     [AvaloniaFact]
     public void A_window_wider_than_the_canvas_holds_it_in_the_middle()
@@ -224,7 +224,7 @@ public class PanBoundsTests : UiTest
             editor.GraphToScreen.Invert().Transform(new Point(0, 0)),
             editor.GraphToScreen.Invert().Transform(new Point(veryWide, Tall)));
 
-        after.Center.X.ShouldBe(0, 0.001, "the canvas should still be centred");
+        after.Center.X.ShouldBe(0, 0.001, "the canvas should still be centered");
     }
 
     /// <summary>

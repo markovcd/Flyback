@@ -25,11 +25,11 @@ internal static class ChorusModule
     /// back is heard as thickening rather than as a repeat, and never near zero,
     /// where two nearly-aligned copies would comb rather than chorus.
     /// </summary>
-    private const float Centre = 0.014f;
+    private const float Center = 0.014f;
 
     private const float Swing = 0.008f;
 
-    private const float Longest = Centre + Swing;
+    private const float Longest = Center + Swing;
 
     public static NodeDef Definition { get; } = new(
         TypeId, "Chorus", ModuleCategories.TimeEffects,
@@ -62,8 +62,8 @@ internal static class ChorusModule
         var swing = em.Mul(em.Ternary(OpCode.Clamp, inputs[2], em.Constant(0f), em.Constant(1f)), Swing);
         var offset = em.Mul(lfo, swing);
 
-        var near = em.Add(em.Constant(Centre), offset);
-        var far = em.Sub(em.Constant(Centre), offset);
+        var near = em.Add(em.Constant(Center), offset);
+        var far = em.Sub(em.Constant(Center), offset);
 
         // No feedback on either line. A chorus with feedback in it is a flanger,
         // and there is one of those next door.

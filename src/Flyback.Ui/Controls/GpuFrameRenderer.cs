@@ -469,7 +469,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             if (patchPrevious >= 0) gl.Uniform1i(patchPrevious, 0);
 
             // The whole of CompiledPatch.Sample's mapping, reduced to two scales:
-            // patch coordinates to texel centres, and the flip between a picture
+            // patch coordinates to texel centers, and the flip between a picture
             // indexed downwards and a texture stored upwards. The offset is 0.5
             // on both axes and so is baked into the shader.
             if (patchFeedbackX >= 0)
@@ -532,7 +532,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// <summary>
     /// The largest rectangle of the picture's aspect that fits in the control, as
     /// a fraction of the control on each axis. Scaling about the origin in clip
-    /// space centres it, so there is no offset to carry.
+    /// space centers it, so there is no offset to carry.
     /// </summary>
     private static (float X, float Y) Letterbox(PixelSize control, PixelSize image)
     {
@@ -630,10 +630,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// surface, which hands the patch to the processor.
     /// </summary>
     /// <remarks>
-    /// Full floats first and half floats after. A colour tolerates ten bits of
+    /// Full floats first and half floats after. A color tolerates ten bits of
     /// mantissa — ADR-0012 argues that case for the history — but a plane is
-    /// usually an accumulator, and an accumulator quantised on every pass drifts
-    /// where a colour merely bands. Eight-bit is not offered at all: it cannot
+    /// usually an accumulator, and an accumulator quantized on every pass drifts
+    /// where a color merely bands. Eight-bit is not offered at all: it cannot
     /// hold what a plane is allowed to carry, let alone hold it still.
     /// </remarks>
     private string? Attach(GlInterface gl, PixelSize resolution)

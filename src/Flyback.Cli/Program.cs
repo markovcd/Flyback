@@ -35,12 +35,12 @@ internal static class Program
             // No console. Whatever is reading this can have the default.
         }
 
-        // The player is a program of its own, so it is handed the rest of the line
+        // The viewer is a program of its own, so it is handed the rest of the line
         // before there is anything to load or parse: its --help is its own.
         if (ViewerCommand.Claims(args)) return ViewerCommand.Run(args[1..], Console.Error);
 
         // Before anything reads a patch: a file may name modules that only a
-        // plugin defines, and a catalogue settled after the fact would have let
+        // plugin defines, and a catalog settled after the fact would have let
         // it compile against the wrong one.
         var plugins = PluginHost.Load();
 
@@ -86,7 +86,7 @@ internal static class Program
         return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
     }
 
-    /// <summary>Lists the installed catalogue, which is what a plugin adds to.</summary>
+    /// <summary>Lists the installed catalog, which is what a plugin adds to.</summary>
     private static Command Modules(Option<bool> json)
     {
         var command = new Command("modules", "Say what modules this build has.")
@@ -102,7 +102,7 @@ internal static class Program
 
     /// <summary>
     /// A command about an assistant rather than about a patch, which is why it
-    /// needs the plugin catalogue rather than the engine: what it asks and what
+    /// needs the plugin catalog rather than the engine: what it asks and what
     /// it writes both belong to a plugin.
     /// </summary>
     private static Command Probe(PluginCatalog plugins, Option<bool> json)

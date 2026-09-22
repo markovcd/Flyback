@@ -174,7 +174,7 @@ public class WireTests
     {
         JsonArray answers =
         [
-            Wire.FunctionResponse("render", "a grey field"),
+            Wire.FunctionResponse("render", "a gray field"),
             Wire.FunctionResponse("listen", "peak -6 dBFS"),
         ];
 

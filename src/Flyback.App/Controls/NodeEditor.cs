@@ -66,7 +66,7 @@ public sealed partial class NodeEditor : Control
     /// </summary>
     /// <remarks>
     /// In the separator color at half strength rather than the outline one: a
-    /// box's border is drawn on a module, where a grey darker than the canvas
+    /// box's border is drawn on a module, where a gray darker than the canvas
     /// reads as an edge, and this is drawn on the canvas itself. Half strength and
     /// dashed because an open group is furniture marking a region, and furniture
     /// that shouts is furniture in the way.
@@ -353,7 +353,7 @@ public sealed partial class NodeEditor : Control
     /// <summary>
     /// Raised by a right-click on empty canvas, carrying the point in graph space
     /// that was clicked — what is picked from the palette belongs there rather than
-    /// wherever the view is centred.
+    /// wherever the view is centered.
     /// </summary>
     /// <remarks>
     /// A click and not a drag, since the right button still pans: this waits for

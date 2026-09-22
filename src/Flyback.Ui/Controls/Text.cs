@@ -59,7 +59,7 @@ internal static class Text
     /// </summary>
     /// <remarks>
     /// A color rather than an opacity: opacity composites against whatever is
-    /// behind it, so one figure means four different greys across a toolbar, a
+    /// behind it, so one figure means four different grays across a toolbar, a
     /// panel, a canvas and a flyout — which is how the four sites that dimmed this
     /// way drifted to four different figures. A brush here rather than in
     /// <see cref="Colors"/>, which keeps values, because it is always the same

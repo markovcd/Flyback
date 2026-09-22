@@ -58,7 +58,7 @@ This produces a self-contained folder with the app, the CLI and the viewer, plus
 ```text
 Flyback.exe          the app
 flyback-cli.exe      the command line tool
-flyback-viewer.exe   the player: opens a patch and plays it, and writes nothing
+flyback-viewer.exe   the viewer: opens a patch and plays it, and writes nothing
 Flyback.Core.dll     the patch model and the module API, which plugins are built against
 Flyback.Engine.dll   the compiler, the language and the renderers
 Flyback.Plugins.dll  shared plugin host
@@ -172,7 +172,7 @@ what that means and waits for a yes; `--yes` answers for a script, which has nob
 `--keys` says where each key would come from and asks nothing of anybody, and `--dry-run` prints
 what was found and leaves the settings alone.
 
-Settings → Agent runs the same survey from a button, about the one model the form is set to.
+Settings → Assistant runs the same survey from a button, about the one model the form is set to.
 It goes out with the provider, the form and the key as they stand on the settings window rather
 than with what was last saved, which is how a model, a key or an endpoint can be tried before
 any of them is kept. What it finds is written over that model's line in the list this command
@@ -236,7 +236,7 @@ src/
   Flyback.Engine    compiler, text language, renderers and file formats
   Flyback.Plugins   plugin host and built-in plugin logic
   Flyback.Ui        the preview, sound device and look the app and the viewer share
-  Flyback.Viewer    the player: opens a patch and plays it
+  Flyback.Viewer    the viewer: opens a patch and plays it
 
 tests/
   Flyback.Core.Tests      core engine tests

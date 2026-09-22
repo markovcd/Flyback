@@ -158,7 +158,7 @@ public static class PatchLayout
     /// old coordinates and the old boxes back.
     /// </summary>
     /// <param name="patch">The patch to place. Modified in place.</param>
-    /// <param name="modules">Which catalogue the type ids mean, defaulting to the installed one.</param>
+    /// <param name="modules">Which catalog the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
     /// <param name="only">
     /// The modules to place, or null for every one of them. Given a few, the rest of
@@ -291,7 +291,7 @@ public static class PatchLayout
     }
 
     /// <summary>
-    /// Which modules a pass places: the ones the catalogue knows, and of those the
+    /// Which modules a pass places: the ones the catalog knows, and of those the
     /// ones <paramref name="only"/> names where it names any.
     /// </summary>
     /// <remarks>

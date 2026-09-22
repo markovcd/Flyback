@@ -18,15 +18,15 @@ namespace Flyback.Plugins.Voice;
 internal static class SupersawModule
 {
     /// <summary>
-    /// Where each voice sits relative to the centre, from a full step flat to a
-    /// full step sharp. Symmetric, so the perceived pitch is the centre voice's
+    /// Where each voice sits relative to the center, from a full step flat to a
+    /// full step sharp. Symmetric, so the perceived pitch is the center voice's
     /// whatever the detune is set to.
     /// </summary>
     private static readonly float[] Spread = [-1f, -0.62f, -0.24f, 0f, 0.24f, 0.62f, 1f];
 
     /// <summary>
     /// Fixed starting phases, so the voices do not all begin aligned and snap
-    /// out of it. The centre voice starts at zero, which is what lets the whole
+    /// out of it. The center voice starts at zero, which is what lets the whole
     /// module collapse to exactly one <c>Saw</c> when mix is 0.
     /// </summary>
     private static readonly float[] Offsets = [0.13f, 0.27f, 0.41f, 0f, 0.58f, 0.72f, 0.89f];
@@ -41,7 +41,7 @@ internal static class SupersawModule
 
     private static readonly int[] Quiet = [1, 4, 6];
 
-    private const int Centre = 3;
+    private const int Center = 3;
 
     private const float QuietGain = 0.55f;
 
@@ -72,7 +72,7 @@ internal static class SupersawModule
         [new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("wide", PortKind.Scalar, 0f, -1f, 1f)],
         Emit,
         "Seven detuned saws in one module. 'detune' spreads them apart, 'mix' fades the "
-        + "six outer voices in against the centre — at 0 it is exactly a plain Saw. "
+        + "six outer voices in against the center — at 0 it is exactly a plain Saw. "
         + "Patch 'out' and 'wide' to the two channels for stereo, or use 'out' alone.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
@@ -82,7 +82,7 @@ internal static class SupersawModule
     };
 
     /// <summary>
-    /// Everything is peak-normalised as it is mixed, so the output stays inside
+    /// Everything is peak-normalized as it is mixed, so the output stays inside
     /// -1..1 at every setting and 'amp' means the same here as on every other
     /// oscillator. Turning mix up makes it wider, never louder.
     /// </summary>
@@ -97,9 +97,9 @@ internal static class SupersawModule
         // divide by whatever the weights happened to cancel to.
         var mix = em.Ternary(OpCode.Clamp, inputs[3], em.Constant(0f), em.Constant(1f));
 
-        var centre = em.Add(em.Mul(mix, -0.5f), 1f);
+        var center = em.Add(em.Mul(mix, -0.5f), 1f);
         var sides = mix;
-        var norm = em.Binary(OpCode.Div, em.Constant(1f), em.Add(centre, em.Mul(sides, SideTotal)));
+        var norm = em.Binary(OpCode.Div, em.Constant(1f), em.Add(center, em.Mul(sides, SideTotal)));
 
         var voices = new Slot[Spread.Length];
 
@@ -125,7 +125,7 @@ internal static class SupersawModule
             var far = em.Add(em.Add(voices[quiet[0]], voices[quiet[1]]), voices[quiet[2]]);
 
             var mixed = em.Add(
-                em.Mul(voices[Centre], centre),
+                em.Mul(voices[Center], center),
                 em.Mul(em.Add(near, em.Mul(far, QuietGain)), sides));
 
             return em.Add(em.Mul(em.Mul(mixed, norm), inputs[5]), inputs[6]);

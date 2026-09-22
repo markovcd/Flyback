@@ -14,8 +14,8 @@ namespace Flyback.Plugins.Tests;
 /// <remarks>
 /// Positions are worked in font pixels and turned into the picture's units by
 /// <see cref="Pixel"/>: at the default size a capital is seven of them tall, the
-/// middle of the capitals is at nought, and the widest line's ink is centred
-/// across. Row r of a glyph is centred at 3 - r, and column c of letter k of an
+/// middle of the capitals is at nought, and the widest line's ink is centered
+/// across. Row r of a glyph is centered at 3 - r, and column c of letter k of an
 /// n-letter line at 6k + c - (6n - 1) / 2 + 0.5.
 /// </remarks>
 public class TextTests
@@ -31,7 +31,7 @@ public class TextTests
     /// <summary>One font pixel at the default size, in the picture's units.</summary>
     private const float Pixel = 0.2f / 7f;
 
-    // --- the catalogue ---------------------------------------------------------
+    // --- the catalog ---------------------------------------------------------
 
     [Fact]
     public void Text_is_a_form_that_sits_in_the_middle_of_the_picture()
@@ -136,11 +136,11 @@ public class TextTests
     }
 
     /// <summary>
-    /// A shorter line is centred under a longer one, so a page of captions reads
+    /// A shorter line is centered under a longer one, so a page of captions reads
     /// as a column rather than as a ragged left edge.
     /// </summary>
     [Fact]
-    public void A_short_line_is_centred_in_the_widest()
+    public void A_short_line_is_centered_in_the_widest()
     {
         var text = Shape("-\n---", (LinePort, 0f));
 

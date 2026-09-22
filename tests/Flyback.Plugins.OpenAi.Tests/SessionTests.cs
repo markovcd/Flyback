@@ -12,14 +12,14 @@ namespace Flyback.Plugins.OpenAi.Tests;
 /// </summary>
 /// <remarks>
 /// A turn ends with a patch proposed, with the model having stopped talking, or with
-/// the person having cancelled — all three ordinary. The workbench is a copy, so the
+/// the person having canceled — all three ordinary. The workbench is a copy, so the
 /// two that reach no proposal have changed nothing anyone can see, which is why
 /// nothing here answers one by asking again.
 /// </remarks>
 public class SessionTests
 {
     /// <summary>
-    /// A grey field — the smallest patch that compiles cleanly, and so the
+    /// A gray field — the smallest patch that compiles cleanly, and so the
     /// smallest one that may be proposed.
     /// </summary>
     private static readonly (string Name, string Arguments)[] Building =
@@ -85,7 +85,7 @@ public class SessionTests
     {
         var (events, _) = await Run(
             Asking(Building),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
 
         events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
         events.OfType<PatchEvent.Did>().ShouldNotContain(d => d.Summary.Contains("canvas still shows"));
@@ -96,11 +96,11 @@ public class SessionTests
     {
         var (events, _) = await Run(
             Asking(Building),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
 
         var proposed = events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
 
-        proposed.Summary.ShouldBe("a flat grey field");
+        proposed.Summary.ShouldBe("a flat gray field");
         proposed.Patch.Nodes.Count.ShouldBe(2);
         events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
     }
@@ -114,8 +114,8 @@ public class SessionTests
     {
         var canned = new Canned(
             new Answer(Asking(Building)),
-            new Answer(Prose("Done. Grey enough?")),
-            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))));
+            new Answer(Prose("Done. Gray enough?")),
+            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
 
@@ -126,7 +126,7 @@ public class SessionTests
             "https://nowhere.invalid/v1",
             canned);
 
-        await Drain(session, "make a grey field");
+        await Drain(session, "make a gray field");
         var second = await Drain(session, "yes, propose it");
 
         second.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
@@ -136,8 +136,8 @@ public class SessionTests
         // them. A session that started over would have sent one.
         var sent = canned.Sent[^1].ToJsonString();
 
-        sent.ShouldContain("make a grey field");
-        sent.ShouldContain("Grey enough?");
+        sent.ShouldContain("make a gray field");
+        sent.ShouldContain("Gray enough?");
         sent.ShouldContain("yes, propose it");
     }
 
@@ -152,7 +152,7 @@ public class SessionTests
     {
         var canned = new Canned(
             new Answer(Asking(Building)),
-            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))),
+            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))),
             new Answer(Prose("It is the one I just offered you.")));
 
         var workbench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false);
@@ -164,7 +164,7 @@ public class SessionTests
             "https://nowhere.invalid/v1",
             canned);
 
-        (await Drain(session, "make a grey field")).OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        (await Drain(session, "make a gray field")).OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
 
         var second = await Drain(session, "what did you build?");
 
@@ -189,7 +189,7 @@ public class SessionTests
     {
         var (events, sent) = await Run(
             Asking(Building),
-            Prose("Should the field be grey, or did you want it to move?"));
+            Prose("Should the field be gray, or did you want it to move?"));
 
         events.OfType<PatchEvent.Said>().Select(s => s.Text)
             .ShouldContain(text => text.Contains("did you want it to move", StringComparison.Ordinal));
@@ -243,7 +243,7 @@ public class SessionTests
     {
         var (events, sent) = await Run(
             Talking("Adding the field now.", Building),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
 
         events.OfType<PatchEvent.Said>().ShouldHaveSingleItem();
         events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
@@ -280,12 +280,12 @@ public class SessionTests
         var canned = new Canned(
             Limited("Rate limit reached for gpt-4o ... Please try again in 916ms."),
             new Answer(Asking(Building)),
-            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))));
+            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         var events = await Drive(canned);
 
         events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem()
-            .Summary.ShouldBe("a flat grey field");
+            .Summary.ShouldBe("a flat gray field");
 
         events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
 
@@ -535,7 +535,7 @@ public class SessionTests
         var messages = new JsonArray
         {
             Wire.System("the handbook"),
-            Wire.User("a grey field"),
+            Wire.User("a gray field"),
             Wire.UserWithPictures("Here is what that looked like.", [new byte[] { 1, 2, 3 }]),
         };
 

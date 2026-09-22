@@ -40,7 +40,7 @@ public partial class NodeCatalog
         yield return Unary("math.cos", "Cos", OpCode.Cos, "Cosine, in radians.");
         yield return Unary("math.tan", "Tan", OpCode.Tan, "Tangent, in radians.");
         yield return Unary("math.sqrt", "Square root", OpCode.Sqrt, "Square root, and 0 for negatives.");
-        yield return Unary("math.floor", "Floor", OpCode.Floor, "Rounds down. Quantises a smooth signal into steps.");
+        yield return Unary("math.floor", "Floor", OpCode.Floor, "Rounds down. Quantizes a smooth signal into steps.");
         yield return Unary("math.fract", "Fraction", OpCode.Fract, "Just the part after the decimal point. Wraps to 0..1.");
         yield return Unary("math.sign", "Sign", OpCode.Sign, "-1, 0 or 1.");
         yield return Unary("math.exp", "Exp", OpCode.Exp, "e raised to the input.");

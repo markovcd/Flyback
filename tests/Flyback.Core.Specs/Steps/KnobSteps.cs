@@ -4,21 +4,21 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Core.Specs.Steps;
 
-/// <summary>How a module's knob turns in the editor, read from the catalogue.</summary>
+/// <summary>How a module's knob turns in the editor, read from the catalog.</summary>
 [Binding]
 public sealed class KnobSteps
 {
     private PortSpec knob;
     private ControlLink link;
 
-    [Given("a {word} from the catalogue")]
+    [Given("a {word} from the catalog")]
     public void GivenAModule(string name)
     {
         var def = NodeCatalog.All.Single(d => d.Name == name);
         knob = def.Inputs.Single(p => p.Name == "freq");
     }
 
-    [Given("the {word} knob of a {word} from the catalogue")]
+    [Given("the {word} knob of a {word} from the catalog")]
     public void GivenAKnob(string socket, string name) =>
         knob = NodeCatalog.All.Single(d => d.Name == name).Inputs.Single(p => p.Name == socket);
 

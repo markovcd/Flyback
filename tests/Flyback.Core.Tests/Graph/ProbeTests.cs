@@ -22,7 +22,7 @@ public class ProbeTests
     private const string Coordinates = "coord";
 
     // Sockets on the probe, named because a shifted one would otherwise be a
-    // silent change of meaning here as much as in the catalogue.
+    // silent change of meaning here as much as in the catalog.
     private const int In = 0;
     private const int Window = 1;
     private const int Scale = 2;

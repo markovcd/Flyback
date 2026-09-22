@@ -767,7 +767,7 @@ public sealed partial class MainWindow : Window
         assistant.ConversationChanged += (_, _) => RefreshEditState();
 
         // Which modules the assistant is not told about is a question about the
-        // catalogue and the settings, so it moves only when settings are saved.
+        // catalog and the settings, so it moves only when settings are saved.
         editor.Undescribed = assistant.Undescribed;
         assistant.UndescribedChanged += (_, _) =>
         {
@@ -1312,7 +1312,7 @@ public sealed partial class MainWindow : Window
         tabs.Items.Add(SectionTab("Recording", recordingSection));
         tabs.Items.Add(SectionTab("Sound", soundSection));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
-        tabs.Items.Add(SectionTab("Agent", panel.SettingsSection()));
+        tabs.Items.Add(SectionTab("Assistant", panel.SettingsSection()));
         tabs.Items.Add(SectionTab("Files", filesSection.View));
         tabs.Items.Add(SectionTab("Updates", updatesSection.View));
         tabs.Items.Add(SectionTab("Usage", usageSection.View));

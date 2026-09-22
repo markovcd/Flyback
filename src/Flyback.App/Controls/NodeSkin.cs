@@ -18,7 +18,7 @@ namespace Flyback.App.Controls;
 /// The tint is deliberately slight. A body in the accent at full strength is a
 /// patch of fourteen colored rectangles with the labels lost in them; what is
 /// wanted is the difference being legible at a glance and at a zoom where no
-/// label is, which a few percent of hue over the node grey gives.
+/// label is, which a few percent of hue over the node gray gives.
 /// </para>
 /// </remarks>
 internal static class NodeSkin
@@ -80,7 +80,7 @@ internal static class NodeSkin
 
     /// <summary>
     /// The plain node color, with no accent mixed in — what shows through a
-    /// transparent picture, since ADR-0118 counts transparency as the node grey.
+    /// transparent picture, since ADR-0118 counts transparency as the node gray.
     /// </summary>
     public static IBrush GroundFill(bool selected) => selected ? groundSelected : ground;
 
@@ -220,7 +220,7 @@ internal static class NodeSkin
         new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.5);
 
     /// <summary>
-    /// A box's body, which is the node grey lifted a little rather than tinted: the
+    /// A box's body, which is the node gray lifted a little rather than tinted: the
     /// same statement its header makes, that a box belongs to no category.
     /// </summary>
     public static IBrush Box(bool selected) => selected ? boxSelected : box;
@@ -298,11 +298,11 @@ internal static class NodeSkin
 
     // --- sockets and marks ---------------------------------------------------
 
-    public static void DrawPort(DrawingContext context, Point centre, PortKind kind) =>
+    public static void DrawPort(DrawingContext context, Point center, PortKind kind) =>
         context.DrawEllipse(
             PortFill(kind),
             PortOutline,
-            centre,
+            center,
             NodeGeometry.PortRadius,
             NodeGeometry.PortRadius);
 
@@ -310,15 +310,15 @@ internal static class NodeSkin
     /// A socket filled clockwise from the top in <paramref name="fill"/> as far as
     /// <paramref name="share"/> of the way round, and in its kind's color beyond.
     /// </summary>
-    public static void DrawPort(DrawingContext context, Point centre, PortKind kind, double share, IBrush fill)
+    public static void DrawPort(DrawingContext context, Point center, PortKind kind, double share, IBrush fill)
     {
         var radius = NodeGeometry.PortRadius;
 
-        context.DrawEllipse(PortFill(kind), null, centre, radius, radius);
+        context.DrawEllipse(PortFill(kind), null, center, radius, radius);
 
         if (share >= 0.999)
         {
-            context.DrawEllipse(fill, null, centre, radius, radius);
+            context.DrawEllipse(fill, null, center, radius, radius);
         }
         else if (share > 0.001)
         {
@@ -327,10 +327,10 @@ internal static class NodeSkin
 
             using (var sink = geometry.Open())
             {
-                sink.BeginFigure(centre, true);
-                sink.LineTo(new Point(centre.X, centre.Y - radius));
+                sink.BeginFigure(center, true);
+                sink.LineTo(new Point(center.X, center.Y - radius));
                 sink.ArcTo(
-                    new Point(centre.X + radius * Math.Sin(angle), centre.Y - radius * Math.Cos(angle)),
+                    new Point(center.X + radius * Math.Sin(angle), center.Y - radius * Math.Cos(angle)),
                     new Size(radius, radius),
                     0,
                     share > 0.5,
@@ -341,7 +341,7 @@ internal static class NodeSkin
             context.DrawGeometry(fill, null, geometry);
         }
 
-        context.DrawEllipse(null, PortOutline, centre, radius, radius);
+        context.DrawEllipse(null, PortOutline, center, radius, radius);
     }
 
     /// <summary>Cached per kind, since a socket is drawn several times a frame.</summary>

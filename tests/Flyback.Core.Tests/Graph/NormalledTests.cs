@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Graph;
 /// <remarks>
 /// The rack's normalled jack, with the same rules the Output's <c>right</c> already
 /// had. What is new is where the signal comes from: a module that is not in the
-/// patch, held once for the whole program. Everything here runs against a catalogue
+/// patch, held once for the whole program. Everything here runs against a catalog
 /// passed by hand, so a plugin on this machine cannot change what it means.
 /// </remarks>
 public class NormalledTests
@@ -145,7 +145,7 @@ public class NormalledTests
     }
 
     /// <summary>
-    /// A socket normalled to a module the catalogue does not hold falls back to
+    /// A socket normalled to a module the catalog does not hold falls back to
     /// its knob rather than to silence — and the complaint about a domain that
     /// never moves, which every built-in has outgrown, means what it always did
     /// there.
@@ -216,7 +216,7 @@ public class NormalledTests
     }
 
     /// <summary>
-    /// Named by the catalogue that is being compiled against rather than by the
+    /// Named by the catalog that is being compiled against rather than by the
     /// installed one: the same socket is on its knob wherever the module it
     /// names is not loaded, and the editor has to say so.
     /// </summary>

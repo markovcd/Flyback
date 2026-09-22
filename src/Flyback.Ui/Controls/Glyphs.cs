@@ -15,7 +15,7 @@ namespace Flyback.App.Controls;
 /// A folder and a floppy disk are what open and save look like everywhere, and
 /// neither is a character any font here can be relied on to have: on Windows the code
 /// points resolve to the color emoji font, which puts two full-color pictures in a bar
-/// of thin grey strokes. Drawn on a sixteen-unit box and left at that size, so the
+/// of thin gray strokes. Drawn on a sixteen-unit box and left at that size, so the
 /// strokes land on whole pixels at the scale the toolbar uses.
 /// </remarks>
 internal static class Glyphs
@@ -144,7 +144,7 @@ internal static class Glyphs
     /// <summary>
     /// Outlined rather than filled, to sit at the weight of the glyphs beside
     /// it, and colored from whatever holds it so that hovering, pressing and
-    /// grey-out all reach it without being handled here.
+    /// gray-out all reach it without being handled here.
     /// </summary>
     private static Control Stroked(string data)
     {

@@ -446,13 +446,13 @@ public class ViewerWindowTests : UiTest
     {
         var window = Open(Plasma(), Options());
 
-        var centre = window.Preview!.TranslatePoint(
+        var center = window.Preview!.TranslatePoint(
             new Point(window.Preview!.Bounds.Width / 2, window.Preview!.Bounds.Height / 2), window)!.Value;
 
-        window.MouseDown(centre, MouseButton.Left);
-        window.MouseUp(centre, MouseButton.Left);
-        window.MouseDown(centre, MouseButton.Left);
-        window.MouseUp(centre, MouseButton.Left);
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
         Settle(window);
 
         window.WindowState.ShouldBe(WindowState.FullScreen);
@@ -471,9 +471,9 @@ public class ViewerWindowTests : UiTest
         Point At(double away)
         {
             var dots = window.Overlay!.Dots;
-            var centre = dots.TranslatePoint(new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2), window)!.Value;
+            var center = dots.TranslatePoint(new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2), window)!.Value;
 
-            return new Point(centre.X - away, centre.Y);
+            return new Point(center.X - away, center.Y);
         }
 
         window.MouseMove(At(600));

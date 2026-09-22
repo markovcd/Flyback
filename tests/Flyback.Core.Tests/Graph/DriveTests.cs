@@ -4,7 +4,7 @@ using Shouldly;
 
 namespace Flyback.Core.Tests.Graph;
 
-/// <summary>The Drive module: soft saturation, peak-normalised as it goes.</summary>
+/// <summary>The Drive module: soft saturation, peak-normalized as it goes.</summary>
 public class DriveTests
 {
     private static ModuleCatalog Modules => NodeCatalog.BuiltIn;
@@ -21,7 +21,7 @@ public class DriveTests
     }
 
     /// <summary>
-    /// What the normalisation is for: the curve is divided by what it does to a
+    /// What the normalization is for: the curve is divided by what it does to a
     /// full-scale input, so drive changes the shape of a signal and never the
     /// height of it.
     /// </summary>

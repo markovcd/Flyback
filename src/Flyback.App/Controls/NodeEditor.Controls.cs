@@ -49,9 +49,9 @@ public sealed partial class NodeEditor
         {
             for (var i = 0; i < def.Inputs.Count; i++)
             {
-                var centre = NodeGeometry.InputPort(node, def, i);
+                var center = NodeGeometry.InputPort(node, def, i);
 
-                if (Math.Abs(graph.Y - centre.Y) > NodeGeometry.RowHeight / 2) continue;
+                if (Math.Abs(graph.Y - center.Y) > NodeGeometry.RowHeight / 2) continue;
 
                 (nodeId, port) = (node.Id, i);
                 return true;
@@ -84,7 +84,7 @@ public sealed partial class NodeEditor
     /// module asks for one.
     /// </param>
     private bool DrawLinkedRow(
-        DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point centre,
+        DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
         bool connected, bool follow, Func<double, double, double, IBrush, IBrush> ink)
     {
         var link = ControlMap.Of(node, index);
@@ -92,19 +92,19 @@ public sealed partial class NodeEditor
 
         if (LinkingControl is { } linking && !connected && Linkable(port))
         {
-            var row = new Rect(bounds.X, centre.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight);
+            var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight);
             context.FillRectangle(link?.Control == linking ? LinkedWash : LinkableWash, row);
         }
 
         if (connected || control is null || link is not { } found) return false;
 
-        var brush = follow ? ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush) : LinkedBrush;
+        var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : LinkedBrush;
 
         var value = CanvasText.Text(port.Format(found.At(control.Value)), CanvasText.RowSize, brush, bounds.Width * 0.4, true);
         var right = bounds.Right - 12;
 
-        context.DrawText(value, new Point(right - value.Width, centre.Y - value.Height / 2));
-        context.DrawEllipse(brush, null, new Point(right - value.Width - 6, centre.Y), 2.5, 2.5);
+        context.DrawText(value, new Point(right - value.Width, center.Y - value.Height / 2));
+        context.DrawEllipse(brush, null, new Point(right - value.Width - 6, center.Y), 2.5, 2.5);
 
         return true;
     }

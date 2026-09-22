@@ -104,7 +104,7 @@ public class PatchFuzzTests
     /// modules would pass everything above while testing almost nothing.
     /// </summary>
     [Fact]
-    public void The_generator_reaches_every_module_in_the_catalogue()
+    public void The_generator_reaches_every_module_in_the_catalog()
     {
         var seen = new ConcurrentDictionary<string, byte>();
 

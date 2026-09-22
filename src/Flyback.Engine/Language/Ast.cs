@@ -46,7 +46,7 @@ public sealed record Argument(string? Name, Expr Value, int Line, int Column);
 /// </summary>
 /// <param name="Target">
 /// A short name, a type id written in full, or the name of a def. Which it is
-/// cannot be known until the catalogue and the defs are both in hand, so the
+/// cannot be known until the catalog and the defs are both in hand, so the
 /// parser records what was written and leaves it.
 /// </param>
 /// <param name="Block">

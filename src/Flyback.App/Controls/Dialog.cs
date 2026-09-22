@@ -297,7 +297,7 @@ internal sealed class ModalOverlay : Border
                 Color = Colors.DialogShadow,
             }),
 
-            // Centred and no bigger than it has to be, unless asked to hold its size.
+            // Centered and no bigger than it has to be, unless asked to hold its size.
             HorizontalAlignment = fill ? HorizontalAlignment.Stretch : HorizontalAlignment.Center,
             VerticalAlignment = fill ? VerticalAlignment.Stretch : VerticalAlignment.Center,
             Margin = new Thickness(Inset),

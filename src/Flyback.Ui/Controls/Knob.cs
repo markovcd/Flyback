@@ -77,19 +77,19 @@ internal class Knob : Control
     public override void Render(DrawingContext context)
     {
         var size = Math.Min(Bounds.Width, Bounds.Height);
-        var centre = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var radius = size / 2 - 3;
 
-        context.DrawEllipse(Lit ? LitFace : Face, null, centre, radius - 5, radius - 5);
-        context.DrawGeometry(null, Track, ArcGeometry(centre, radius, Start, Sweep));
+        context.DrawEllipse(Lit ? LitFace : Face, null, center, radius - 5, radius - 5);
+        context.DrawGeometry(null, Track, ArcGeometry(center, radius, Start, Sweep));
 
-        if (Value > 0.001) context.DrawGeometry(null, Arc, ArcGeometry(centre, radius, Start, Sweep * Value));
+        if (Value > 0.001) context.DrawGeometry(null, Arc, ArcGeometry(center, radius, Start, Sweep * Value));
 
         var angle = Radians(Start + Sweep * Value);
         context.DrawLine(
             Pointer,
-            Along(centre, radius * 0.25, angle),
-            Along(centre, radius - 6, angle));
+            Along(center, radius * 0.25, angle),
+            Along(center, radius - 6, angle));
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -191,15 +191,15 @@ internal class Knob : Control
         if (Value != before) Turned?.Invoke(Value);
     }
 
-    protected static Geometry ArcGeometry(Point centre, double radius, double from, double sweep)
+    protected static Geometry ArcGeometry(Point center, double radius, double from, double sweep)
     {
         var geometry = new StreamGeometry();
 
         using var sink = geometry.Open();
 
-        sink.BeginFigure(Along(centre, radius, Radians(from)), false);
+        sink.BeginFigure(Along(center, radius, Radians(from)), false);
         sink.ArcTo(
-            Along(centre, radius, Radians(from + sweep)),
+            Along(center, radius, Radians(from + sweep)),
             new Size(radius, radius),
             0,
             sweep > 180,
@@ -211,6 +211,6 @@ internal class Knob : Control
 
     protected static double Radians(double degrees) => degrees * Math.PI / 180;
 
-    protected static Point Along(Point centre, double distance, double angle) =>
-        new(centre.X + distance * Math.Cos(angle), centre.Y + distance * Math.Sin(angle));
+    protected static Point Along(Point center, double distance, double angle) =>
+        new(center.X + distance * Math.Cos(angle), center.Y + distance * Math.Sin(angle));
 }

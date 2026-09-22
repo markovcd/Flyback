@@ -92,7 +92,7 @@ public sealed class UsageTests
     /// <remarks>
     /// A plugin's module is named when its id starts with a shipped plugin's.
     /// The engine's own ids carry no such prefix — "osc.sine", "output" — so
-    /// they are asked of its catalogue instead. The ids fed above are invented
+    /// they are asked of its catalog instead. The ids fed above are invented
     /// ones that do carry a prefix, so this feeds a preset's.
     /// </remarks>
     [Fact]

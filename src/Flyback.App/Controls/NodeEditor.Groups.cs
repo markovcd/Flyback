@@ -393,7 +393,7 @@ public sealed partial class NodeEditor
     /// "filter.cutoff" rather than a name of its own, so renaming a module inside
     /// relabels the box for nothing.
     /// </summary>
-    private void DrawBoxSocket(DrawingContext context, GroupSocket socket, Point centre, Rect bounds)
+    private void DrawBoxSocket(DrawingContext context, GroupSocket socket, Point center, Rect bounds)
     {
         if (Scene.Named(socket) is not var (label, spec)) return;
 
@@ -403,10 +403,10 @@ public sealed partial class NodeEditor
         context.DrawText(
             text,
             socket.IsOutput
-                ? new Point(bounds.Right - 14 - text.Width, centre.Y - text.Height / 2)
-                : new Point(bounds.X + 14, centre.Y - text.Height / 2));
+                ? new Point(bounds.Right - 14 - text.Width, center.Y - text.Height / 2)
+                : new Point(bounds.X + 14, center.Y - text.Height / 2));
 
-        NodeSkin.DrawPort(context, centre, spec.Kind);
+        NodeSkin.DrawPort(context, center, spec.Kind);
     }
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>

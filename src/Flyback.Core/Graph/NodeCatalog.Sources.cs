@@ -64,7 +64,7 @@ public partial class NodeCatalog
         // an oscillator divides its pitch by five while the freq knob goes on
         // saying otherwise, and nothing about the patch shows where the fifth
         // went. Multiply is how you scale a signal here, as it is for every
-        // other signal in the catalogue.
+        // other signal in the catalog.
         yield return new NodeDef(
             TimeTypeId, "Time", ModuleCategories.Sources,
             [], [Num("t")],

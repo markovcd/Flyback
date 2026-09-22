@@ -6,7 +6,7 @@ namespace Flyback.Core.Language;
 /// <remarks>
 /// Nothing here knows what a module is: the parser's job is shape, and every question
 /// about whether a name exists or which socket a pipe lands on belongs to
-/// <see cref="Binder"/> — which is what lets the catalogue be the language without the
+/// <see cref="Binder"/> — which is what lets the catalog be the language without the
 /// grammar depending on it. Recovery is by statement, so a file with three mistakes
 /// says three things.
 /// </remarks>
@@ -584,7 +584,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     /// <summary>
     /// A dotted name, which is either a module to place or a binding to read —
     /// and the parser does not decide which. <c>space.rotate(...)</c> and
-    /// <c>riff.gate</c> are the same shape until the catalogue is consulted.
+    /// <c>riff.gate</c> are the same shape until the catalog is consulted.
     /// </summary>
     private Expr? NameOrCall(int line, int column)
     {

@@ -48,7 +48,7 @@ public class WavReaderTests
         clip.SampleRate.ShouldBe(44100);
         clip.Samples.Length.ShouldBe(4);
 
-        // 16-bit PCM, so the values come back quantised rather than exact.
+        // 16-bit PCM, so the values come back quantized rather than exact.
         clip.Samples[1].ShouldBe(0.5f, 0.001f);
         clip.Samples[2].ShouldBe(-0.5f, 0.001f);
     }

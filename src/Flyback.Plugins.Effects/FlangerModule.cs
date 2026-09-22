@@ -23,11 +23,11 @@ internal static class FlangerModule
     /// express is one evaluation (ADR-0027), so through-zero flanging is not
     /// something this can do however the numbers are arranged.
     /// </summary>
-    private const float Centre = 0.0027f;
+    private const float Center = 0.0027f;
 
     private const float Swing = 0.0024f;
 
-    private const float Longest = Centre + Swing;
+    private const float Longest = Center + Swing;
 
     public static NodeDef Definition { get; } = new(
         TypeId, "Flanger", ModuleCategories.TimeEffects,
@@ -58,7 +58,7 @@ internal static class FlangerModule
         var lfo = Sweep.Of(em, inputs[1]);
 
         var swing = em.Mul(em.Ternary(OpCode.Clamp, inputs[2], em.Constant(0f), em.Constant(1f)), Swing);
-        var time = em.Add(em.Constant(Centre), em.Mul(lfo, swing));
+        var time = em.Add(em.Constant(Center), em.Mul(lfo, swing));
 
         var wet = em.DelayLine(OpCode.Delay, dry, inputs[3], time, Longest);
 

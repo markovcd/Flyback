@@ -6,7 +6,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Note module is the one place the catalogue does arithmetic that has a
+/// The Note module is the one place the catalog does arithmetic that has a
 /// right answer outside the program: a note number is a pitch whether or not
 /// anyone renders it. These check the emitted ops against
 /// <see cref="Pitch"/> rather than against themselves.

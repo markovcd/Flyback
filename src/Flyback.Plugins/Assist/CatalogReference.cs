@@ -7,7 +7,7 @@ using static Flyback.Plugins.Assist.ToolArguments;
 
 namespace Flyback.Plugins.Assist;
 
-/// <summary>The lookup tools that answer from the catalogue and the presets, never from the patch on the bench.</summary>
+/// <summary>The lookup tools that answer from the catalog and the presets, never from the patch on the bench.</summary>
 internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<PatchPreset> presets)
 {
     public ToolOutcome DescribeModule(JsonElement arguments)

@@ -81,7 +81,7 @@ public static class PatchLanguage
 
     /// <summary>
     /// The patch <paramref name="source"/> describes, against
-    /// <paramref name="against"/> or the installed catalogue. Never throws: every way
+    /// <paramref name="against"/> or the installed catalog. Never throws: every way
     /// a source file can be wrong is a <see cref="LanguageIssue"/> with a line and a
     /// column, because the thing reading it is usually an editor.
     /// </summary>

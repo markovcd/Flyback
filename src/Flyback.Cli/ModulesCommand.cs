@@ -3,7 +3,7 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Cli;
 
-/// <summary>One module of the installed catalogue, as this command writes it out.</summary>
+/// <summary>One module of the installed catalog, as this command writes it out.</summary>
 internal sealed record Module(
     string TypeId,
     string Name,
@@ -64,7 +64,7 @@ internal static class ModulesCommand
             output.WriteLine($"  {provider.Id,-20} {provider.Name,-20} {Writing.Count(count, "module")}");
         }
 
-        // By category and in the catalogue's own order, which is the order the
+        // By category and in the catalog's own order, which is the order the
         // palette shows them in.
         foreach (var category in catalog.Categories)
         {

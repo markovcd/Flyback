@@ -10,7 +10,7 @@ namespace Flyback.App.Controls;
 /// </summary>
 public sealed partial class NodeEditor
 {
-    /// <summary>How far from a mark's centre a click or a hover still lands on it, in graph units.</summary>
+    /// <summary>How far from a mark's center a click or a hover still lands on it, in graph units.</summary>
     private const double MarkReach = 9;
 
     private const double MarkRadius = 7.5;
@@ -108,7 +108,7 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// Puts an Auto remap into <paramref name="wire"/>, centred on its mark and
+    /// Puts an Auto remap into <paramref name="wire"/>, centered on its mark and
     /// selected, as one edit.
     /// </summary>
     internal NodeInstance SpliceRemap(Connection wire, Point at)

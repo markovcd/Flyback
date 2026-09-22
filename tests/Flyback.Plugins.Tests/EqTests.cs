@@ -40,12 +40,12 @@ public class EqTests
         heard.Right.ShouldBe(right);
     }
 
-    /// <summary>A bell's gain at its own centre is the gain asked for, whatever its width.</summary>
+    /// <summary>A bell's gain at its own center is the gain asked for, whatever its width.</summary>
     [Theory]
     [InlineData(6f, 0.7f)]
     [InlineData(-9f, 2f)]
     [InlineData(12f, 0.3f)]
-    public void A_bell_has_its_gain_at_its_centre(float gain, float q)
+    public void A_bell_has_its_gain_at_its_center(float gain, float q)
     {
         var heard = Play(Type, Sine(1000d, 0.25f, 0.5), knobs: [(MidFreq, 1000f), (MidGain, gain), (MidQ, q)]);
 

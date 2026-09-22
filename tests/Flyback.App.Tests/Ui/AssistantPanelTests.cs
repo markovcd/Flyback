@@ -65,7 +65,7 @@ public sealed class AssistantPanelTests : UiTest
     }
 
     /// <summary>
-    /// A catalogue holding one provider, which is the only way to see the half
+    /// A catalog holding one provider, which is the only way to see the half
     /// of this panel that reacts to what a provider can do.
     /// </summary>
     private static PluginCatalog With(IPatchAssistant assistant) =>
@@ -603,7 +603,7 @@ public sealed class AssistantPanelTests : UiTest
             Configured("both")));
 
         // Row 0 is "None", so a real provider sits one row below its own place
-        // in the catalogue — "both" is the second provider offered.
+        // in the catalog — "both" is the second provider offered.
         All<ComboBox>(host).Single(c => c.Name == "provider").SelectedIndex.ShouldBe(2);
     }
 
@@ -755,7 +755,7 @@ public sealed class AssistantPanelTests : UiTest
     /// again.
     /// </summary>
     /// <remarks>
-    /// The bug this was written for: the ear sat greyed out under a ticked box, and
+    /// The bug this was written for: the ear sat grayed out under a ticked box, and
     /// came right the instant the tick was touched. The form is now asked for afresh
     /// with everything already on it, so there is no order for the two to be
     /// restored in.
@@ -808,7 +808,7 @@ public sealed class AssistantPanelTests : UiTest
     /// <summary>
     /// A model that takes a sound itself is played the clip directly, so there
     /// is no second model and no question to put. The row goes rather than
-    /// greying out — a disabled control asks somebody to work out why it is
+    /// graying out — a disabled control asks somebody to work out why it is
     /// there, and this one has stopped meaning anything at all.
     /// </summary>
     [AvaloniaFact]
@@ -1484,7 +1484,7 @@ public sealed class AssistantPanelTests : UiTest
         Settle(window);
 
         // Nothing left to excuse, so the footer drops out rather than standing
-        // in grey over stale amber text.
+        // in gray over stale amber text.
         footer.IsVisible.ShouldBeFalse();
     }
 

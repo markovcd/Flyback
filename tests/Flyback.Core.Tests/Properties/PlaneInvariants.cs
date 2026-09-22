@@ -154,7 +154,7 @@ public class PlaneInvariants
     /// <summary>
     /// A patch with no loop in it asks for no plane, and so pays none of this in
     /// memory. The presets are the check because between them they reach every
-    /// module in the catalogue, filters and envelopes included — a cell is not a
+    /// module in the catalog, filters and envelopes included — a cell is not a
     /// plane, and nothing but a cycle may claim one.
     /// </summary>
     [Fact]

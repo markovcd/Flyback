@@ -71,7 +71,7 @@ public class MidiInputTests : UiTest
         All<PreviewHost>(window).Single().Program.LiveInputs;
 
     [AvaloniaFact]
-    public void The_module_is_in_the_catalogue_under_Sources()
+    public void The_module_is_in_the_catalog_under_Sources()
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiTypeId);
 
@@ -435,7 +435,7 @@ public class MidiInputTests : UiTest
     }
 
     /// <summary>
-    /// Letters are notes on the canvas and words in the code, and the code view
+    /// Letters are notes on the canvas and words in the code, and the text view
     /// is what decides between them. Applying the printing makes the text the
     /// document (ADR-0068), and from there a Z is spelling rather than a pitch —
     /// AvalonEdit is not a <see cref="TextBox"/>, so nothing but the mode itself

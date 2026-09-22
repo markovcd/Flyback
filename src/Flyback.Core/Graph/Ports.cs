@@ -38,7 +38,7 @@ public enum PortKind
     /// <summary>A single value that varies over x, y and t — the audio-rate signal of a video synth.</summary>
     Scalar,
 
-    /// <summary>Three signals travelling together as red, green and blue.</summary>
+    /// <summary>Three signals traveling together as red, green and blue.</summary>
     Color,
 
     /// <summary>
@@ -57,7 +57,7 @@ public enum PortKind
 /// <remarks>
 /// Named by type id rather than held as a definition, so a plugin can normal one
 /// of its sockets to <c>time</c> without the engine knowing that plugin exists. A
-/// type id the running catalogue does not hold falls back to the knob.
+/// type id the running catalog does not hold falls back to the knob.
 /// <para>
 /// What is patched in is one hidden instance shared by every socket normalled to
 /// it, carrying no knobs of its own: there is no node on the canvas for anybody
@@ -95,7 +95,7 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// it uses. A constant is never sensible on one: an oscillator that does not move
 /// produces a fixed value and a sequencer sits on one step, both of which compile
 /// perfectly, which is what made a domain left alone the one mistake nothing
-/// could catch. Every domain in the catalogue is <paramref name="NormalledTo"/>
+/// could catch. Every domain in the catalog is <paramref name="NormalledTo"/>
 /// Time; the complaint survives for one normalled to nothing.
 /// </param>
 /// <param name="Swept">
@@ -115,7 +115,7 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// socket does instead — see <c>MainWindow.BuildInputRow</c>. Every
 /// <see cref="PortKind.Color"/> input qualifies on its kind alone, per
 /// <c>docs/adr/0009-editable-defaults-on-every-input.md</c>: a single float
-/// cannot hold a color, so an unwired one is a broadcast grey nothing chose.
+/// cannot hold a color, so an unwired one is a broadcast gray nothing chose.
 /// </param>
 public readonly record struct PortSpec(
     string Name,

@@ -154,7 +154,7 @@ internal static class Colors
     /// What color a module's category is drawn in — its header on the canvas and its
     /// heading in the palette. Named against <see cref="ModuleCategories"/> rather
     /// than loose strings, so a category renamed there is a compile error here
-    /// rather than a section that quietly turns grey.
+    /// rather than a section that quietly turns gray.
     /// </summary>
     public static Color Accent(string category) => category switch
     {
@@ -258,7 +258,7 @@ internal static class Colors
     /// </summary>
     /// <remarks>
     /// The inverse alone is the obvious rule and it fails in the middle: a
-    /// mid-grey inverts to itself, and anything near one inverts to something
+    /// mid-gray inverts to itself, and anything near one inverts to something
     /// barely off it. So the inverse is the hue and the drive is the contrast,
     /// and the drive is solved for rather than picked — <c>Luma</c> is linear in
     /// each channel, so the amount that buys exactly the separation wanted is an
@@ -317,7 +317,7 @@ internal static class Colors
 
     // --- the mark -----------------------------------------------------------
 
-    /// <summary>The hot centre of the beam, the only near-white in the palette.</summary>
+    /// <summary>The hot center of the beam, the only near-white in the palette.</summary>
     public static Color BeamCore { get; } = Color.FromRgb(0xFF, 0xF3, 0xDC);
 
     /// <summary>The sweep behind the mark, which is three of the module accents.</summary>

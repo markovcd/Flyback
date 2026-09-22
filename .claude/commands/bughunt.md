@@ -52,7 +52,7 @@ The same rig run through `IlProgram.Compile` is the IL backend against the
 interpreter on values no preset reaches. See `Compile/TotalityTests.cs`.
 
 **Every module, run rather than lowered.** `CompilerInvariants` compiles one of
-each; evaluating one of each is a different question, and the plugin catalogue —
+each; evaluating one of each is a different question, and the plugin catalog —
 Forms, Voice, Effects, Mastering — is most of the modules and none of that test.
 See `Properties/CompilerInvariants.cs` and `Plugins.Tests/EveryModuleTests.cs`.
 

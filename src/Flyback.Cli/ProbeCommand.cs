@@ -7,7 +7,7 @@ namespace Flyback.Cli;
 /// <summary>
 /// What to ask, and where the answer goes.
 /// </summary>
-/// <param name="Provider">Which assistant, or null for whichever the settings or the catalogue prefer.</param>
+/// <param name="Provider">Which assistant, or null for whichever the settings or the catalog prefer.</param>
 /// <param name="Only">Models to ask about by name, or empty for the provider's own shortlist.</param>
 /// <param name="Dry">Print what was found and write none of it down.</param>
 /// <param name="Keys">
@@ -88,7 +88,7 @@ internal static class ProbeCommand
         }
 
         // The named one, then the one this machine was left on, then whichever
-        // the catalogue would put in front of somebody. The middle is what makes
+        // the catalog would put in front of somebody. The middle is what makes
         // a bare `probe` mean "the one I am using" — deliberately not "every one
         // I have a key for", because every question here is billed and a bare
         // command should not fan out across providers on its own.

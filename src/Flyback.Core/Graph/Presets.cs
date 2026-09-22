@@ -39,7 +39,7 @@ public enum PresetKind
 
 /// <summary>
 /// A patch to start from, and how it is offered. Built on demand, because a
-/// preset from a plugin needs that plugin's modules in the catalogue.
+/// preset from a plugin needs that plugin's modules in the catalog.
 /// </summary>
 /// <param name="Description">
 /// One line saying what the patch is for, written into the patch it builds
@@ -603,7 +603,7 @@ public static partial class Presets
     /// <summary>
     /// Everything the video side can do, in one patch: coordinates turned, folded
     /// into wedges, bent by a noise field read from inside the fold, taken as
-    /// travelling rings, and laid over a trail of its own previous frames.
+    /// traveling rings, and laid over a trail of its own previous frames.
     /// </summary>
     public static Patch Nebula(ModuleCatalog modules)
     {
@@ -728,7 +728,7 @@ public static partial class Presets
         var b = new PatchBuilder(modules);
 
         // For 'radius', which makes the eye's half of each voice a standing
-        // field rather than a travelling tone. Everything else is normalled.
+        // field rather than a traveling tone. Everything else is normalled.
         var coord = b.Add("coord");
 
         var chord = b.Add("math.mixer");
@@ -767,8 +767,8 @@ public static partial class Presets
             var tone = b.Add("osc.sine");
 
             // Eye: the same oscillator run over the radius instead of over the
-            // clock, so it stands still as bands out from the centre rather than
-            // travelling as a tone.
+            // clock, so it stands still as bands out from the center rather than
+            // traveling as a tone.
             var band = b.Add("osc.sine", (1, bands), (3, 0.5f), (4, 0.5f));
             var tint = b.Add("color.hsv", (0, hue));
 
@@ -1127,7 +1127,7 @@ public static partial class Presets
         var smaller = b.Add("math.sub", (0, 1f));
 
         // The plane all three read: folded, and then pushed off the middle so
-        // the rings are centred six times round it rather than once.
+        // the rings are centered six times round it rather than once.
         var turn = b.Add("space.rotate");
         var fold = b.Add("space.kaleidoscope", (2, 6f));
         var aside = b.Add("space.translate", (2, 0.55f));

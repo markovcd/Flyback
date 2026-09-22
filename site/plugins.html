@@ -357,7 +357,7 @@
 
     <h3>How a module is drawn</h3>
 
-    <p>By default a module is drawn as its category, and a category the engine does not know draws grey
+    <p>By default a module is drawn as its category, and a category the engine does not know draws gray
     (ADR-0116). <code>Skin</code>, an init property on the <code>NodeDef</code>, gives a module a background
     of its own instead. <strong>Only the background changes.</strong> The block keeps its shape, its header,
     where its title sits, its sockets and its description — a canvas of modules that each laid themselves
@@ -459,7 +459,7 @@ Skin = <span class="k">new</span> ModuleSkin.Artwork(block) { Panel = tall }</co
     the normalled module names — is <strong>derived from the background that line covers</strong>, by one
     rule with no table in it. The ink is the <em>inverse</em> of what is behind it, driven toward whichever
     pole the background is not until the two are half the luminance range apart. Inverting alone is the
-    obvious rule and it fails silently in the middle: a mid-grey inverts to itself. The drive is solved for
+    obvious rule and it fails silently in the middle: a mid-gray inverts to itself. The drive is solved for
     rather than stepped, so text over a gradient stays continuous instead of breaking where a threshold would
     have been, and the direction is decided once for a whole surface, so a word is never dark at one end and
     light at the other. Over a picture the same rule reads the artwork's own horizontal bands in place of the
@@ -469,7 +469,7 @@ Skin = <span class="k">new</span> ModuleSkin.Artwork(block) { Panel = tall }</co
 
     <p>A socket carries a number a patch can drive. Some decisions are not that — they are decisions
     <em>about</em> the piece rather than signals <em>in</em> it, and no arrangement of sockets expresses one.
-    The engine carries three of its own that way: a sequencer's notes, a quantizer's scale, a player's file.
+    The engine carries three of its own that way: a sequencer's notes, a Quantiser's scale, a Sample's file.
     Your module can carry its own by declaring a <code>NodeExtra</code>.</p>
 
     <p>You declare a key and the values it holds. Everything else — seeding a fresh instance, storing it in

@@ -13,10 +13,10 @@ public sealed class ScreenSteps(PatchContext context)
     private const float Tolerance = 1.5f / 255f;
 
     [Then("the screen shows {float}")]
-    public void ThenAGrey(float level) => ShouldShow(context.Render().Centre, level, level, level, "center");
+    public void ThenAGray(float level) => ShouldShow(context.Render().Center, level, level, level, "center");
 
     [Then("the screen shows {float}, {float}, {float}")]
-    public void ThenAColor(float r, float g, float b) => ShouldShow(context.Render().Centre, r, g, b, "center");
+    public void ThenAColor(float r, float g, float b) => ShouldShow(context.Render().Center, r, g, b, "center");
 
     [Then("the screen is black")]
     public void ThenBlack() => context.Render().IsBlack.ShouldBeTrue();
@@ -42,12 +42,12 @@ public sealed class ScreenSteps(PatchContext context)
         var expected = list.Split(',').Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
 
         for (var i = 0; i < expected.Length; i++)
-            ShouldShow(context.Render(i + 1).Centre, expected[i], expected[i], expected[i], $"frame {i + 1}");
+            ShouldShow(context.Render(i + 1).Center, expected[i], expected[i], expected[i], $"frame {i + 1}");
     }
 
     [Then("after {int} frames and a rewind the next frame is back at {float}")]
     public void ThenRewound(int frames, float level) =>
-        ShouldShow(context.RenderAfterRewind(frames, 1).Centre, level, level, level, "after rewind");
+        ShouldShow(context.RenderAfterRewind(frames, 1).Center, level, level, level, "after rewind");
 
     [Then("the picture gets brighter towards the top")]
     public void ThenBrighterUpwards()

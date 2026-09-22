@@ -213,7 +213,7 @@ public sealed partial class NodeEditor
     /// </summary>
     /// <param name="typeId">Which module to add.</param>
     /// <param name="at">
-    /// Where to centre it, in graph space. The middle of the view when nothing says
+    /// Where to center it, in graph space. The middle of the view when nothing says
     /// otherwise, which is what a module added from anywhere but the canvas gets.
     /// </param>
     public NodeInstance? AddNode(string typeId, Point? at = null)
@@ -228,9 +228,9 @@ public sealed partial class NodeEditor
             return null;
         }
 
-        var centre = at ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
+        var center = at ?? ToGraph(new Point(Bounds.Width / 2, Bounds.Height / 2));
 
-        var node = Created(ref def, centre);
+        var node = Created(ref def, center);
         patch.Nodes.Add(node);
         Select(node.Id);
         NotifyPatchChanged();
@@ -272,22 +272,22 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
-    /// A new module centred on <paramref name="centre"/>, and for a Maths module an
+    /// A new module centered on <paramref name="center"/>, and for a Maths module an
     /// Expression stands for, the Expression it is instead (ADR-0109).
     /// </summary>
-    private static NodeInstance Created(ref NodeDef def, Point centre)
+    private static NodeInstance Created(ref NodeDef def, Point center)
     {
-        var x = centre.X - NodeGeometry.Width / 2;
+        var x = center.X - NodeGeometry.Width / 2;
 
         if (ExpressionFusion.Standing(def, NodeCatalog.Current, 0, 0) is { } standing)
         {
             def = NodeCatalog.Require(NodeCatalog.ExpressionTypeId);
             standing.X = x;
-            standing.Y = centre.Y - NodeGeometry.Height(def) / 2;
+            standing.Y = center.Y - NodeGeometry.Height(def) / 2;
             return standing;
         }
 
-        return NodeInstance.Create(def, x, centre.Y - NodeGeometry.Height(def) / 2);
+        return NodeInstance.Create(def, x, center.Y - NodeGeometry.Height(def) / 2);
     }
 
     /// <summary>

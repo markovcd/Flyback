@@ -16,7 +16,7 @@ namespace Flyback.Core.Graph;
 /// </para>
 /// </remarks>
 /// <param name="modules">
-/// Which catalogue a restored patch's type ids mean, defaulting to the installed
+/// Which catalog a restored patch's type ids mean, defaulting to the installed
 /// one.
 /// </param>
 public sealed class PatchHistory(ModuleCatalog? modules = null)

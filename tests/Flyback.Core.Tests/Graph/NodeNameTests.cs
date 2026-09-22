@@ -12,7 +12,7 @@ namespace Flyback.Core.Tests.Graph;
 /// The name is a label: nothing is found by it, so there is no uniqueness to keep.
 /// What there is instead is one meaning of "no name" — null, never an empty string
 /// and never a copy of the definition's — which is what makes a module follow its
-/// definition when the catalogue renames it.
+/// definition when the catalog renames it.
 /// </remarks>
 public class NodeNameTests
 {
@@ -74,7 +74,7 @@ public class NodeNameTests
     /// <summary>
     /// Typing out what it is already called is not a rename. Storing it would
     /// leave a file asserting a name that would then stop following the module
-    /// the day the catalogue renames it.
+    /// the day the catalog renames it.
     /// </summary>
     [Fact]
     public void The_definitions_own_name_is_not_a_rename()

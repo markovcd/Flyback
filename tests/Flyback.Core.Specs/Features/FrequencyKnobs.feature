@@ -4,7 +4,7 @@ Feature: A frequency knob reaches from a slow wobble to the top of hearing
   picture or an LFO wants get as much of its travel as the pitches do.
 
   Scenario Outline: An oscillator's knob covers LFO rates and audio pitches
-    Given a <module> from the catalogue
+    Given a <module> from the catalog
     Then its frequency knob turns from standing still to 20 kHz
     And the lower half of its travel is slower than 20 Hz
     And the upper half of its travel is audible
@@ -19,7 +19,7 @@ Feature: A frequency knob reaches from a slow wobble to the top of hearing
 
 
   Scenario Outline: A knob in hertz gives every octave the same turn
-    Given the <socket> knob of a <module> from the catalogue
+    Given the <socket> knob of a <module> from the catalog
     Then each half of its travel covers the same number of octaves
 
     Examples:
@@ -28,7 +28,7 @@ Feature: A frequency knob reaches from a slow wobble to the top of hearing
       | String | freq   |
 
   Scenario: A panel knob linked to an oscillator's frequency sweeps it as the slider does
-    Given a Sine from the catalogue
+    Given a Sine from the catalog
     When a panel knob is linked to its frequency
     Then the panel knob halfway round sets it to 20 Hz
 

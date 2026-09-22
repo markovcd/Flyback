@@ -277,7 +277,7 @@ public sealed class AudioRenderer
             var x = n - middle;
 
             // x is an integer minus (taps-1)/2, so it is exactly representable
-            // and reaches zero exactly — at the centre tap, when taps is odd.
+            // and reaches zero exactly — at the center tap, when taps is odd.
             // At the current even Taps it never does, so this branch is there to
             // keep the sinc singularity handled if that constant ever changes.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
@@ -293,7 +293,7 @@ public sealed class AudioRenderer
             sum += h[n];
         }
 
-        // Normalise to unity gain at DC.
+        // Normalize to unity gain at DC.
         for (var n = 0; n < taps; n++) h[n] = (float)(h[n] / sum);
 
         return h;

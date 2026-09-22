@@ -36,7 +36,7 @@ public class SecretStoreTests
 
     [Theory]
     [MemberData(nameof(PlatformStores))]
-    public void A_store_in_a_plugin_reaches_the_catalogue(string id)
+    public void A_store_in_a_plugin_reaches_the_catalog(string id)
     {
         var catalog = Shipped();
 

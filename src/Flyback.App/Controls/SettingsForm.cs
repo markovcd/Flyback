@@ -183,7 +183,7 @@ public sealed class SettingsForm : UserControl
 
         // Left rather than stretched, which every fixed-width thing here has to
         // say: a row is as wide as the caption above it, and a narrower child
-        // in it is centred otherwise — which reads as a stray indent.
+        // in it is centered otherwise — which reads as a stray indent.
         HorizontalAlignment = HorizontalAlignment.Left,
     };
 

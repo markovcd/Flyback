@@ -24,7 +24,7 @@ public class SequencerTests
     private readonly record struct Reading(float Value, float Gate, float Index);
 
     /// <summary>
-    /// Emits one sequencer straight out of the catalogue and runs it over a
+    /// Emits one sequencer straight out of the catalog and runs it over a
     /// domain, on its own default notes unless another list is given and with
     /// every knob at its default except the ones named.
     /// </summary>
@@ -425,7 +425,7 @@ public class SequencerTests
         program.DelayLengths.ShouldBeEmpty();
     }
 
-    /// <summary>A module placed from the catalogue arrives playing its default tune.</summary>
+    /// <summary>A module placed from the catalog arrives playing its default tune.</summary>
     [Fact]
     public void A_freshly_placed_sequencer_carries_its_notes()
     {

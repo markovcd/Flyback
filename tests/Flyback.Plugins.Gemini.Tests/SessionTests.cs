@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Gemini.Tests;
 public class SessionTests
 {
     /// <summary>
-    /// A grey field — the smallest patch that compiles cleanly, and so the
+    /// A gray field — the smallest patch that compiles cleanly, and so the
     /// smallest one that may be proposed.
     /// </summary>
     private static readonly (string Name, string Arguments)[] Building =
@@ -98,11 +98,11 @@ public class SessionTests
     {
         var (events, _) = await Run(
             Asking(Building),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
 
         var proposed = events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
 
-        proposed.Summary.ShouldBe("a flat grey field");
+        proposed.Summary.ShouldBe("a flat gray field");
         proposed.Patch.Nodes.Count.ShouldBe(2);
         events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
     }
@@ -117,7 +117,7 @@ public class SessionTests
     {
         var (_, sent) = await Run(
             Asking(Building),
-            Asking(("propose", """{"summary":"a flat grey field"}""")));
+            Asking(("propose", """{"summary":"a flat gray field"}""")));
 
         var answers = sent[1]["contents"]!.AsArray()
             .Last(content => content!["role"]!.GetValue<string>() == "user")!["parts"]!
@@ -138,19 +138,19 @@ public class SessionTests
     {
         var canned = new Canned(
             new Answer(Asking(Building)),
-            new Answer(Prose("Done. Grey enough?")),
-            new Answer(Asking(("propose", """{"summary":"a flat grey field"}"""))));
+            new Answer(Prose("Done. Gray enough?")),
+            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
 
         using var session = Session(canned);
 
-        await Drain(session, "make a grey field");
+        await Drain(session, "make a gray field");
         await Drain(session, "yes, propose it");
 
         var last = canned.Sent[^1];
         var turns = last["contents"]!.AsArray();
 
         turns.Count.ShouldBeGreaterThan(4);
-        turns[0]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("make a grey field");
+        turns[0]!["parts"]![0]!["text"]!.GetValue<string>().ShouldBe("make a gray field");
         last["systemInstruction"]!["parts"]![0]!["text"]!.GetValue<string>().ShouldNotBeNullOrEmpty();
     }
 

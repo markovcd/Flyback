@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// A patch that was read, and whether the catalogue can actually build it.
+/// A patch that was read, and whether the catalog can actually build it.
 /// Separating the two lets the caller decide what an incomplete patch means —
 /// the editor refuses it, where a batch renderer might report and carry on.
 /// </summary>
@@ -129,7 +129,7 @@ public static class PatchIO
     }
 
     /// <summary>
-    /// Reads a patch and checks it against the catalogue. Both halves matter: the
+    /// Reads a patch and checks it against the catalog. Both halves matter: the
     /// stamp names plugins that are missing entirely, and the module ids catch a
     /// file hand-edited or saved before its plugin was renamed.
     /// </summary>

@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Gemini.Tests;
 /// one.
 /// </summary>
 /// <remarks>
-/// The two facts under test are the two the catalogue cannot supply: whether a
+/// The two facts under test are the two the catalog cannot supply: whether a
 /// model answers at all, and what it takes being handed. Both are only ever
 /// known by asking, so every test here is about what the asking concluded from
 /// a particular set of refusals.
@@ -45,7 +45,7 @@ public class SurveyTests
     }
 
     /// <summary>
-    /// The whole reason for asking: a model the catalogue lists and the endpoint
+    /// The whole reason for asking: a model the catalog lists and the endpoint
     /// refuses is not a model with no senses, it is not a model here.
     /// </summary>
     [Fact]
@@ -95,7 +95,7 @@ public class SurveyTests
     }
 
     /// <summary>
-    /// A model named by hand is asked whether or not the catalogue mentions it,
+    /// A model named by hand is asked whether or not the catalog mentions it,
     /// because a listing and an endpoint disagree often enough to be worth
     /// checking.
     /// </summary>
@@ -183,7 +183,7 @@ public class SurveyTests
         {
             var url = request.RequestUri!.ToString();
 
-            if (request.Method == HttpMethod.Get) return Reply(HttpStatusCode.OK, Catalogue());
+            if (request.Method == HttpMethod.Get) return Reply(HttpStatusCode.OK, Catalog());
 
             var model = url.Split("/models/")[1].Split(':')[0];
 
@@ -206,7 +206,7 @@ public class SurveyTests
         private static string Refusal(string said) =>
             new JsonObject { ["error"] = new JsonObject { ["message"] = said } }.ToJsonString();
 
-        private string Catalogue()
+        private string Catalog()
         {
             var models = new JsonArray();
 

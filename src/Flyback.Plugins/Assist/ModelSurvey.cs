@@ -87,7 +87,7 @@ public interface IModelSurvey
     /// Asks the endpoint about each candidate and answers with what it accepted.
     /// </summary>
     /// <remarks>
-    /// Only models that answered at all come back. A model the catalogue lists
+    /// Only models that answered at all come back. A model the catalog lists
     /// and the endpoint refuses is not a model with no senses — it is not a
     /// model here — and the difference is the whole reason for asking.
     /// </remarks>

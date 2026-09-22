@@ -42,7 +42,7 @@ public sealed partial class MainWindow
     /// <summary>
     /// Asks whether to install <paramref name="package"/> and does so if told to.
     /// </summary>
-    /// <returns>What became of it, or null where the question was cancelled or Flyback is restarting.</returns>
+    /// <returns>What became of it, or null where the question was canceled or Flyback is restarting.</returns>
     private async Task<string?> InstallPackageAsync(PluginPackage package)
     {
         var platform = PluginPackage.ThisPlatform;
@@ -241,7 +241,7 @@ public sealed partial class MainWindow
     /// <summary>
     /// Closes the window, asking about unsaved work as any close does, and starts
     /// Flyback again behind it. False where the window stays: the question was
-    /// cancelled, or a recording is running, which only its own button should end.
+    /// canceled, or a recording is running, which only its own button should end.
     /// </summary>
     private async Task<bool> RestartAsync()
     {

@@ -257,7 +257,7 @@ public class StepListTests : UiTest
     private static void DragBy(Window window, int from, double dy)
     {
         var handle = Rows(window)[from].Children.OfType<TextBlock>().First();
-        var start = Centre(handle, window);
+        var start = Center(handle, window);
         var end = start + new Vector(0, dy);
 
         window.MouseDown(start, MouseButton.Left);
@@ -266,17 +266,17 @@ public class StepListTests : UiTest
         Settle(window);
     }
 
-    private static Point Centre(Visual target, Window window) =>
+    private static Point Center(Visual target, Window window) =>
         target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), window)
         ?? throw new InvalidOperationException("the control is not in this window");
 
     /// <summary>A real click, through the window, the way a person makes one.</summary>
     private static void Click(Window window, Visual target)
     {
-        var centre = Centre(target, window);
+        var center = Center(target, window);
 
-        window.MouseDown(centre, MouseButton.Left);
-        window.MouseUp(centre, MouseButton.Left);
+        window.MouseDown(center, MouseButton.Left);
+        window.MouseUp(center, MouseButton.Left);
         Settle(window);
     }
 
@@ -284,7 +284,7 @@ public class StepListTests : UiTest
 
     /// <summary>
     /// The volume is the one control here drawn by hand rather than composed,
-    /// so it is the one with no theme behind it to get the behaviour right.
+    /// so it is the one with no theme behind it to get the behavior right.
     /// </summary>
     [AvaloniaTheory]
     [InlineData(0.25)]

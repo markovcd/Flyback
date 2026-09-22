@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Picture;
 /// </summary>
 /// <remarks>
 /// The reason the plugin ships no module for it: warping one noise field by
-/// another is a Fractal into the Warp the catalogue has always had, into a second
+/// another is a Fractal into the Warp the catalog has always had, into a second
 /// Fractal. What it buys is flow — the veins stop running where the noise happens
 /// to and start running where they were pushed. The folded output is what the
 /// picture is drawn from, because a crease is a vein, remapped backwards so the

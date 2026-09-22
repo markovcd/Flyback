@@ -4,7 +4,7 @@ Feature: Single values and colors share the same wires
 
   Specified by ADR-0007 and ADR-0010.
 
-  Scenario: A single value on a color input is a grey
+  Scenario: A single value on a color input is a gray
     Given a level of 0.5 on the screen
     Then the screen shows 0.5, 0.5, 0.5
 

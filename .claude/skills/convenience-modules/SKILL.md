@@ -18,7 +18,7 @@ ADR-0095 (Stroke, Fade, Wander, Drum in Voice; Desk, Trails in the engine) and A
 - **A Hiss's private noise equals a shared Random's** because white is a stateless hash of clock and seed, but match the seed (Fracture's Random was seed 1). Hiss was first built and removed the same day: unread ops became free (ADR-0096), so use Random's white.
 - **Tune's `note` output equals a Quantiser's** only with a non-empty scale (integers survive the Note's floor).
 - **Tempo `beats` is in no preset**: `PresetBench` helpers wire output 0, and ~18 call sites a track read the count. Left for hand-made patches.
-- **The engine catalogue's assistant briefing is 85 characters under `Handbook.ProseBudget`** (40,000). The next engine module must raise the budget or trim prose; `PatchWorkbenchTests.The_briefing_carries_what_each_module_is_for` is what fails.
+- **The engine catalog's assistant briefing is 85 characters under `Handbook.ProseBudget`** (40,000). The next engine module must raise the budget or trim prose; `PatchWorkbenchTests.The_briefing_carries_what_each_module_is_for` is what fails.
 - Appending ports (Tempo `in`, Euclid `curve`) is safe for saved patches; old JSON dumps loaded and played identically. It renumbers GLSL snapshot registers, which is a re-approve, not a regression.
 - Choice settings in the text language are quoted strings (`order: "turn"`), not bare words.
 

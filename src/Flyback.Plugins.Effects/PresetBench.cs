@@ -9,7 +9,7 @@ namespace Flyback.Plugins.Effects;
 /// arithmetic it is rather than as three statements about sockets.
 /// </summary>
 /// <remarks>
-/// Nothing here is a new kind of module. Every method adds exactly the catalogue
+/// Nothing here is a new kind of module. Every method adds exactly the catalog
 /// module its name stands for and returns it, so what a preset builds with these
 /// is what it would have built with <see cref="PatchBuilder.Add(string, ValueTuple{int, float}[])"/>
 /// and <see cref="PatchBuilder.Wire"/> by hand, module for module.

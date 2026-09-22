@@ -23,7 +23,7 @@ public class VocabularyTests
         [.. new PatchWorkbench(NodeCatalog.BuiltIn, new Patch()).Tools.Select(t => t.Name)];
 
     /// <summary>
-    /// Every kind in the built-in catalogue, which is every kind the engine
+    /// Every kind in the built-in catalog, which is every kind the engine
     /// ships and every kind a preset can use.
     /// </summary>
     private static IEnumerable<NodeExtra> Carried =>
@@ -34,7 +34,7 @@ public class VocabularyTests
     [Fact]
     public void Every_kind_of_carried_state_names_a_tool_that_exists()
     {
-        Carried.ShouldNotBeEmpty("the catalogue should carry something, or this checks nothing");
+        Carried.ShouldNotBeEmpty("the catalog should carry something, or this checks nothing");
 
         foreach (var extra in Carried)
             Offered.ShouldContain(

@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Voice;
 /// The pitch falls faster than the level because it is the level to a power, so the
 /// beater is over long before the shell is and there is one envelope to get right
 /// rather than two to keep in step. The saturation is the engine's own Drive's
-/// curve and its normalisation, so a 'drive' here is the same number as one there;
+/// curve and its normalization, so a 'drive' here is the same number as one there;
 /// at nought it is skipped rather than evaluated at the curve's floor, which is
 /// nearly clean and not quite.
 /// </remarks>

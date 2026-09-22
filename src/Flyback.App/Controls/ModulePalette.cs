@@ -14,7 +14,7 @@ namespace Flyback.App.Controls;
 /// The list of modules that can be added, with a filter and a tick per plugin.
 /// </summary>
 /// <remarks>
-/// A loop over the catalogue rather than markup, so a module added by the engine
+/// A loop over the catalog rather than markup, so a module added by the engine
 /// or a plugin appears here without shell changes. A control of its own because
 /// it is shown where it is asked for: right-clicking the canvas opens it at the
 /// pointer, and what is picked lands there.
@@ -106,7 +106,7 @@ public sealed class ModulePalette : UserControl
 
     /// <param name="catalog">Every module that may be added, and which plugin each came from.</param>
     /// <param name="chosen">Called with the type id of whatever is picked.</param>
-    /// <param name="groups">The groups somebody kept, which are listed above the catalogue.</param>
+    /// <param name="groups">The groups somebody kept, which are listed above the catalog.</param>
     /// <param name="adding">Called with the kept group that was picked.</param>
     public ModulePalette(
         ModuleCatalog catalog,
@@ -341,7 +341,7 @@ public sealed class ModulePalette : UserControl
             return;
         }
 
-        // Above the catalogue rather than below it. There are a handful of these
+        // Above the catalog rather than below it. There are a handful of these
         // and hundreds of modules, they are the only things in the list somebody
         // made themselves, and a section of one's own things under a screenful
         // of everything else is a section nobody scrolls to. The heading takes
@@ -354,7 +354,7 @@ public sealed class ModulePalette : UserControl
             foreach (var entry in kept) modules.Children.Add(Kept(entry));
         }
 
-        // The catalogue's order rather than the order the matches happen to be in,
+        // The catalog's order rather than the order the matches happen to be in,
         // so the sections sit where they always sit however the filter narrows
         // them — see ModuleCatalog.Categories.
         var sections = catalog.Categories.Where(c => matches.Any(d => d.Category == c));
@@ -583,7 +583,7 @@ public sealed class ModulePalette : UserControl
     /// <summary>
     /// Text matches name, category and type id, but deliberately not the
     /// description: every module has a sentence of prose, and matching it turns a
-    /// search for a common word into most of the catalogue. The ticks narrow
+    /// search for a common word into most of the catalog. The ticks narrow
     /// separately, so the two combine rather than compete.
     /// </summary>
     private bool Matches(NodeDef def, string text)

@@ -34,7 +34,7 @@ public sealed partial class MainWindow
     private LiveRecorder? recorder;
 
     /// <summary>
-    /// Live while a take is being counted in, and cancelled to call the count
+    /// Live while a take is being counted in, and canceled to call the count
     /// off. Null otherwise, which is the only thing that says no count is
     /// running — a take counted in is not yet a take.
     /// </summary>
@@ -415,7 +415,7 @@ public sealed partial class MainWindow
         // time it is awaited — a take that failed on its own has nothing left to
         // write — runs this to its end before it returns, and its last act is to
         // clear the field: assigned regardless, the finished task would go back
-        // in after that and stay, with Record greyed out behind it for good.
+        // in after that and stay, with Record grayed out behind it for good.
         var closing = FinishAsync(running, closingFile, name, said: because is not null);
 
         finishing = closing.IsCompleted ? null : closing;

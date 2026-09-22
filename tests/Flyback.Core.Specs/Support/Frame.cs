@@ -14,7 +14,7 @@ public sealed record Frame(byte[] Buffer, int Width, int Height)
 {
     private int Stride => Width * 4;
 
-    public (float R, float G, float B) Centre => At(Width / 2, Height / 2);
+    public (float R, float G, float B) Center => At(Width / 2, Height / 2);
 
     public bool IsBlack
     {

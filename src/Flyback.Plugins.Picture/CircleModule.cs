@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Picture;
 /// <summary>
 /// The distance to a circle: how far this point is from the rim, negative inside
 /// it. Two ops, and here anyway — everything else in the plugin is a harder
-/// version of this one line, and a catalogue whose simplest form has to be
+/// version of this one line, and a catalog whose simplest form has to be
 /// assembled by hand is one where nobody finds the rest.
 /// </summary>
 internal static class CircleModule

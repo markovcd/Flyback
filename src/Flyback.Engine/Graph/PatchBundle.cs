@@ -50,7 +50,7 @@ public readonly record struct LoadedBundle(
 /// A patch names its sounds and pictures rather than carrying them (ADR-0052,
 /// ADR-0059), which leaves a <c>.fbk</c> full of paths that mean nothing on
 /// somebody else's machine. A bundle is the other file: the document as it always
-/// was, with the things it points at travelling beside it.
+/// was, with the things it points at traveling beside it.
 /// <para>
 /// A zip, and deliberately nothing cleverer: the format is in the framework
 /// (ADR-0019), every operating system opens one, and the zip's own directory is
@@ -101,7 +101,7 @@ public static class PatchBundle
     /// picture four times reads it once and carries it once.
     /// </param>
     /// <param name="against">
-    /// Which catalogue the type ids mean, for the copy this makes of the patch —
+    /// Which catalog the type ids mean, for the copy this makes of the patch —
     /// it is written and read back through <see cref="PatchIO"/>, so a module
     /// from a plugin has to be nameable.
     /// </param>

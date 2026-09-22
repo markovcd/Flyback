@@ -91,12 +91,12 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
 
     <!--
-      The code view's editor — the AvaloniaUI org's port of AvalonEdit, MIT.
+      The text view's editor — the AvaloniaUI org's port of AvalonEdit, MIT.
       The one package here that is not the framework itself, and it earns that:
       a gutter, line numbers and highlighting are what a surface somebody types
       a patch into while it plays needs, and none of them can be had from a
       TextBox, which has no rich text in it at all. Avalonia's own
-      RichTextEditor is a word processor and wants a Pro licence besides.
+      RichTextEditor is a word processor and wants a Pro license besides.
 
       ADR-0019's rule is the engine's, and Core still answers to it: this is the
       shell, which already carries Avalonia, Skia and a font.

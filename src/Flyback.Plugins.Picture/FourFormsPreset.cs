@@ -13,7 +13,7 @@ namespace Flyback.Plugins.Picture;
 /// shapes overlapping. Swept from nothing to a quarter of the picture, the seam
 /// walks the whole way from four separate things to one — a topology changing on a
 /// knob. The hole left in the middle is the arrangement rather than an accident:
-/// the ring is set so the four close on their neighbours and not on the centre.
+/// the ring is set so the four close on their neighbours and not on the center.
 /// <para>
 /// A ring rather than a row because a row would need the whole width of the frame.
 /// It rocks rather than spins: through a whole revolution the four would swap

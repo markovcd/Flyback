@@ -78,7 +78,7 @@ internal static class ModuleGlyphs
     /// The modules that are the only one of themselves, keyed by type id.
     /// </summary>
     /// <remarks>
-    /// A type id that is not in the catalogue costs nothing: the lookup falls to
+    /// A type id that is not in the catalog costs nothing: the lookup falls to
     /// the category, which is where a module whose drawing was dropped belongs
     /// anyway.
     /// </remarks>

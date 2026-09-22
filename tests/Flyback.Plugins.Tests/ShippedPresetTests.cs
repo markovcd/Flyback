@@ -7,13 +7,13 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// Every patch that ships, built and compiled from the catalogue the app actually
+/// Every patch that ships, built and compiled from the catalog the app actually
 /// runs with.
 /// </summary>
 /// <remarks>
 /// The engine's own presets are covered in <c>PresetRulesTests</c>; these are the
 /// ones a plugin registers, so building every one here catches a preset naming a
-/// module id the catalogue does not hold — a failure nothing else would notice until
+/// module id the catalog does not hold — a failure nothing else would notice until
 /// somebody picked it. Slow weather is the concrete case: it guards on a provider id
 /// for its Filter, and a rename left the guard looking for a plugin nobody ships.
 /// </remarks>
@@ -46,7 +46,7 @@ public class ShippedPresetTests
     }
 
     /// <summary>
-    /// And every preset names modules the catalogue actually holds, which is the
+    /// And every preset names modules the catalog actually holds, which is the
     /// half of the above that a guard clause can hide: a preset that throws its
     /// own "that plugin is missing" is not the same as one that works.
     /// </summary>
@@ -59,7 +59,7 @@ public class ShippedPresetTests
 
         foreach (var node in patch.Nodes)
             loaded.Modules.Get(node.TypeId).ShouldNotBeNull(
-                $"'{name}' places a '{node.TypeId}', which is not in the catalogue");
+                $"'{name}' places a '{node.TypeId}', which is not in the catalog");
     }
 
     /// <summary>

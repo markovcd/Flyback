@@ -16,7 +16,7 @@ namespace Flyback.App.Tests.Ui;
 /// <remarks>
 /// The contrast rule is the part worth testing rather than looking at. Inverting
 /// a color is the obvious way to write on it and it fails silently in the middle
-/// of the range — invisible text on a mid-grey, which nobody would catch by
+/// of the range — invisible text on a mid-gray, which nobody would catch by
 /// opening one patch, because it needs the one background a plugin happened not
 /// to pick.
 /// </remarks>
@@ -59,7 +59,7 @@ public class ModuleSkinTests
     /// </summary>
     /// <remarks>
     /// An ordinary color somebody would pick, not a corner: the failure is the
-    /// whole mid-luminance shell of the cube, and a grey is only its most obvious
+    /// whole mid-luminance shell of the cube, and a gray is only its most obvious
     /// member.
     /// </remarks>
     [Fact]
@@ -88,9 +88,9 @@ public class ModuleSkinTests
     [InlineData(0x80)]
     public void Both_sides_of_the_middle_are_written_on(byte level)
     {
-        var grey = Color.FromRgb(level, level, level);
+        var gray = Color.FromRgb(level, level, level);
 
-        Math.Abs(Colors.Luma(Colors.Contrast(grey, lift: !Colors.Light(grey))) - Colors.Luma(grey))
+        Math.Abs(Colors.Luma(Colors.Contrast(gray, lift: !Colors.Light(gray))) - Colors.Luma(gray))
             .ShouldBeGreaterThan(0.45);
     }
 

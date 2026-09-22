@@ -10,7 +10,7 @@ namespace Flyback.Core.Graph;
 /// <remarks>
 /// A plugin may add more, so the lookups here read through <see cref="Current"/>
 /// — installed once at startup and never changed after. Anything reasoning about
-/// a catalogue that is not the running one should take a
+/// a catalog that is not the running one should take a
 /// <see cref="ModuleCatalog"/> instead.
 /// </remarks>
 public static partial class NodeCatalog
@@ -55,14 +55,14 @@ public static partial class NodeCatalog
     /// <summary>Just the modules that ship in the engine, with nothing added.</summary>
     public static ModuleCatalog BuiltIn { get; }
 
-    /// <summary>The catalogue the running program uses.</summary>
+    /// <summary>The catalog the running program uses.</summary>
     public static ModuleCatalog Current { get; private set; }
 
     /// <summary>
-    /// Puts a composed catalogue in place. Called once during startup, after
+    /// Puts a composed catalog in place. Called once during startup, after
     /// plugins have been read and before any patch exists — a module appearing
     /// or vanishing later would leave already-compiled programs describing a
-    /// catalogue that no longer matches.
+    /// catalog that no longer matches.
     /// </summary>
     public static void Install(ModuleCatalog catalog) => Current = catalog;
 
@@ -105,7 +105,7 @@ public static partial class NodeCatalog
     /// <remarks>
     /// Normalled to Time, because a domain resting on a knob is a module that does
     /// not move — see <see cref="PortSpec.NormalledTo"/>. Every domain in the
-    /// catalogue is built through here, so this one line is the whole of "an
+    /// catalog is built through here, so this one line is the whole of "an
     /// oscillator runs unless you say otherwise".
     /// </remarks>
     private static PortSpec Domain(string name) =>

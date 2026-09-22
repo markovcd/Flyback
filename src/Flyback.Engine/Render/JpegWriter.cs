@@ -2,7 +2,7 @@ namespace Flyback.Core.Render;
 
 /// <summary>
 /// Baseline JPEG encoder for BGRA8888 frames: 4:2:0 chroma, the standard
-/// quantisation and Huffman tables from the specification's Annex K, and no
+/// quantization and Huffman tables from the specification's Annex K, and no
 /// restart markers.
 /// </summary>
 /// <remarks>
@@ -192,7 +192,7 @@ public sealed class JpegWriter
     /// <summary>
     /// Reads an 8x8 block out of a plane, level-shifted by -128. A frame is
     /// almost never a whole number of macroblocks, so the edges are replicated
-    /// rather than padded with a color — a hard edge against grey is a step the
+    /// rather than padded with a color — a hard edge against gray is a step the
     /// transform then has to spend its coefficients describing.
     /// </summary>
     private void Gather(byte[] plane, int width, int height, int left, int top)
@@ -206,7 +206,7 @@ public sealed class JpegWriter
         }
     }
 
-    /// <summary>Transforms, quantises and codes the block now in <see cref="samples"/>.</summary>
+    /// <summary>Transforms, quantizes and codes the block now in <see cref="samples"/>.</summary>
     /// <returns>The DC coefficient, which the next block of this component predicts from.</returns>
     private int Encode(BitWriter bits, byte[] quant, HuffmanCode[] dc, HuffmanCode[] ac, int previousDc)
     {
@@ -229,7 +229,7 @@ public sealed class JpegWriter
         bits.Write(dc[size]);
         bits.WriteValue(difference, size);
 
-        // Runs of zeroes are what makes this small: after quantisation most of
+        // Runs of zeroes are what makes this small: after quantization most of
         // the high frequencies are gone, and everything past the last survivor
         // is said once as end-of-block.
         var run = 0;

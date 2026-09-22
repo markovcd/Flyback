@@ -28,7 +28,7 @@ public sealed partial class GeminiAssistant : IModelSurvey
 }
 
 /// <summary>
-/// One survey of one endpoint, from the catalogue down to what each model took.
+/// One survey of one endpoint, from the catalog down to what each model took.
 /// </summary>
 /// <remarks>
 /// Separate from <see cref="GeminiSession"/> despite speaking the same format, because
@@ -69,13 +69,13 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
         IProgress<string>? said,
         CancellationToken cancel)
     {
-        var catalogue = await Catalogue(cancel).ConfigureAwait(false);
+        var catalog = await Catalog(cancel).ConfigureAwait(false);
 
         var chosen = options.Only is { Count: > 0 } named
             ? named
-            : catalogue.Where(m => options.All || Candidate(m)).ToList();
+            : catalog.Where(m => options.All || Candidate(m)).ToList();
 
-        said?.Report($"{catalogue.Count} models claim generateContent; asking {chosen.Count}.");
+        said?.Report($"{catalog.Count} models claim generateContent; asking {chosen.Count}.");
 
         var found = new List<ModelReport>();
 
@@ -85,7 +85,7 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
 
             // Nothing else is worth asking once the model itself is refused, and
             // a refused model is not a model with no senses — it is not a model
-            // here, which is the difference the catalogue could not tell us.
+            // here, which is the difference the catalog could not tell us.
             if (await Ask(model, Turn(), cancel).ConfigureAwait(false) is not Verdict.Took)
             {
                 said?.Report($"{model}: no");
@@ -117,11 +117,11 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
     }
 
     /// <summary>
-    /// Every id in the catalogue that claims generateContent. Claiming it is not
+    /// Every id in the catalog that claims generateContent. Claiming it is not
     /// the same as answering it, which is why this is where a survey starts
     /// rather than where it stops.
     /// </summary>
-    private async Task<List<string>> Catalogue(CancellationToken cancel)
+    private async Task<List<string>> Catalog(CancellationToken cancel)
     {
         var found = new List<string>();
         string? page = null;

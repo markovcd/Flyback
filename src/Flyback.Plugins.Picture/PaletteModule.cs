@@ -8,7 +8,7 @@ namespace Flyback.Plugins.Picture;
 /// wheel.
 /// </summary>
 /// <remarks>
-/// The catalogue could already turn a signal into a color one way — into HSV's
+/// The catalog could already turn a signal into a color one way — into HSV's
 /// hue, which walks the whole wheel at full saturation — and that is why so much
 /// of what this machine draws looks the same: rainbow is the absence of a palette.
 /// <para>
@@ -22,7 +22,7 @@ namespace Flyback.Plugins.Picture;
 /// 'spread' is the step between those phases and changes the family rather than
 /// the position in it: a third is the rainbow, below that the channels move nearly
 /// together and the palette runs through tints of one color, and at nothing it is
-/// grey. Nothing is clamped — turning 'contrast' past 'brightness' pushes the
+/// gray. Nothing is clamped — turning 'contrast' past 'brightness' pushes the
 /// palette outside 0 to 1, which the screen clips and a Multiply downstream does
 /// not.
 /// </para>
@@ -36,7 +36,7 @@ internal static class PaletteModule
     /// <summary>
     /// The phase step that makes a rainbow, and the default. Three channels a
     /// third of a cycle apart is what a hue sweep is, so the module starts where
-    /// the catalogue already was and every other setting is a departure from it.
+    /// the catalog already was and every other setting is a departure from it.
     /// </summary>
     private const float Rainbow = 1f / 3f;
 
@@ -56,7 +56,7 @@ internal static class PaletteModule
         + "passes through a handful that go together. 't' is where in the palette to look, 0 to "
         + "1. 'spread' is the knob to reach for — it is how far apart the three channels are, "
         + "so a third is the rainbow, small values are tints of one color, and nothing at all "
-        + "is grey. 'cycles' repeats the palette across 't', which bands a gradient. "
+        + "is gray. 'cycles' repeats the palette across 't', which bands a gradient. "
         + "'brightness' and 'contrast' are the middle of the palette and how far either side of "
         + "it, so contrast at nothing is one flat color. Sweep 'spread' or 'cycles' from an "
         + "oscillator and the picture changes its mind about what it is colored with rather "

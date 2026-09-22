@@ -764,7 +764,7 @@ public partial class NodeCatalog
     /// Where on the loop an evaluation sits is the one thing the sinks cannot
     /// agree on, so the bearing is chosen on <see cref="Emitter.HasMemory"/>: the
     /// speakers take the accumulated phase, the screen takes the pixel's own
-    /// angle from the centre. One lowering serves both (ADR-0043).
+    /// angle from the center. One lowering serves both (ADR-0043).
     /// </para>
     /// </remarks>
     private static NodeDef Scan()
@@ -791,13 +791,13 @@ public partial class NodeCatalog
                 var one = em.Constant(1f);
 
                 var radius = node[3];
-                var centreX = node[4];
-                var centreY = node[5];
+                var centerX = node[4];
+                var centerY = node[5];
 
                 // Where this pixel stands relative to the loop, which is the
                 // eye's only way of asking where on the loop it is looking.
-                var awayX = em.Sub(em.Load(OpCode.LoadX), centreX);
-                var awayY = em.Sub(em.Load(OpCode.LoadY), centreY);
+                var awayX = em.Sub(em.Load(OpCode.LoadX), centerX);
+                var awayY = em.Sub(em.Load(OpCode.LoadY), centerY);
 
                 // Accumulated rather than multiplied out, for ADR-0030's reason:
                 // a rate that steps then bends the waveform instead of breaking
@@ -815,8 +815,8 @@ public partial class NodeCatalog
                 var now = em.Load(OpCode.LoadT);
 
                 em.PushDomain(
-                    em.Add(centreX, em.Mul(radius, em.Unary(OpCode.Cos, angle))),
-                    em.Add(centreY, em.Mul(radius, em.Unary(OpCode.Sin, angle))),
+                    em.Add(centerX, em.Mul(radius, em.Unary(OpCode.Cos, angle))),
+                    em.Add(centerY, em.Mul(radius, em.Unary(OpCode.Sin, angle))),
                     now);
                 var value = em.Coerce(node.Resolve(0), 1);
                 em.PopDomain();
@@ -865,7 +865,7 @@ public partial class NodeCatalog
             + "its own. 'out' is the sample; 'view' is the loop drawn where it runs with the "
             + "value swinging the trace off it, which is the X-Y display to the Probe's chart. "
             + "A loop that follows the picture's own contours reads a constant and is silent — "
-            + "a circle centred on Rings is the way to hear nothing, and moving it off centre "
+            + "a circle centered on Rings is the way to hear nothing, and moving it off center "
             + "is the way to hear everything. At 'radius' 0 the loop is a point, and 'x' and "
             + "'y' are the path: a sawtooth into 'x' scaled by Coordinates' 'aspect' crosses "
             + "the whole width, and a slow one into 'y' walks it down the picture a line at a "

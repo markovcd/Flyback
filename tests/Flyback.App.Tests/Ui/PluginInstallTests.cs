@@ -175,7 +175,7 @@ public sealed class PluginInstallTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Cancelling_installs_nothing()
+    public void Canceling_installs_nothing()
     {
         var window = Open();
         var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));

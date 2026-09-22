@@ -176,7 +176,7 @@ public static class GlslEmitter
     /// <summary>
     /// Draws the finished frame into whatever the compositor handed us, scaled to
     /// the largest rectangle of the picture's aspect that fits — the GPU-side
-    /// PreviewSurface.Letterbox, centred for free because the scale is applied
+    /// PreviewSurface.Letterbox, centered for free because the scale is applied
     /// about the origin in clip space.
     /// </summary>
     /// <remarks>
@@ -334,7 +334,7 @@ public static class GlslEmitter
 
     /// <summary>
     /// The previous frame, read the way CompiledPatch.Sample reads it. The scales
-    /// carry the whole mapping — patch coordinates to texel centres, and the y
+    /// carry the whole mapping — patch coordinates to texel centers, and the y
     /// flip between a picture indexed downwards and a texture stored upwards — so
     /// the shader needs no width or height of its own.
     /// </summary>
@@ -486,7 +486,7 @@ public static class GlslEmitter
         text.AppendLine("{");
 
         // The same two lines SynthRenderer computes per pixel, against a vUv the
-        // rasteriser has already centred.
+        // rasteriser has already centered.
         text.AppendLine("    float px = (vUv.x * 2.0 - 1.0) * uAspect;");
         text.AppendLine("    float py = vUv.y * 2.0 - 1.0;");
 

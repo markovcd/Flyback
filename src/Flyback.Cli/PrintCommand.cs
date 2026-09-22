@@ -47,7 +47,7 @@ internal static class PrintCommand
     }
 
     /// <summary>
-    /// Says which of a patch's modules the catalogue cannot define, and whether there
+    /// Says which of a patch's modules the catalog cannot define, and whether there
     /// were any.
     /// </summary>
     /// <remarks>

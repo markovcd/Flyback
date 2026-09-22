@@ -1,4 +1,4 @@
-# Normalise line endings on commit, check out native on each platform.
+# Normalize line endings on commit, check out native on each platform.
 * text=auto
 
 *.cs      text diff=csharp
@@ -18,7 +18,7 @@
 *.mp4  binary
 *.mp3  binary
 
-# A bundle is a zip archive, so it must not be normalised on the way in.
+# A bundle is a zip archive, so it must not be normalized on the way in.
 *.fbkb binary
 
 # Verify snapshots: the comparer rejects any \r in a *.verified.* baseline, so

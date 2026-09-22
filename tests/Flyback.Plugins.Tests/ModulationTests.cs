@@ -163,10 +163,10 @@ public class ModulationTests
     public void A_flanger_cancels_and_reinforces_at_the_delay_it_is_set_to()
     {
         var reinforced = Through(FlangerType, Tone(370f, 24_000), 0, (Depth, 0f), (3, 0f), (4, 0.5f));
-        var cancelled = Through(FlangerType, Tone(185f, 24_000), 0, (Depth, 0f), (3, 0f), (4, 0.5f));
+        var canceled = Through(FlangerType, Tone(185f, 24_000), 0, (Depth, 0f), (3, 0f), (4, 0.5f));
 
         Peak(reinforced, 12_000, 24_000).ShouldBeGreaterThan(0.9f);
-        Peak(cancelled, 12_000, 24_000).ShouldBeLessThan(0.1f);
+        Peak(canceled, 12_000, 24_000).ShouldBeLessThan(0.1f);
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public class ModulationTests
         var negative = Peak(Through(FlangerType, tone, 0, (Depth, 0f), (3, -0.8f), (4, 0.5f)), 12_000, 24_000);
 
         // The tone the positive setting reinforces is the one the negative
-        // setting is busy cancelling.
+        // setting is busy canceling.
         positive.ShouldBeGreaterThan(negative * 3f);
     }
 

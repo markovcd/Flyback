@@ -45,7 +45,7 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// Set once the question about unsaved work has been asked and answered, so
-    /// the second Close does not ask it again. A close has to be cancelled to
+    /// the second Close does not ask it again. A close has to be canceled to
     /// put a dialog up at all — nothing may block inside OnClosing — so the way
     /// back out is to close again once there is an answer.
     /// </summary>
@@ -177,7 +177,7 @@ public sealed partial class MainWindow
         {
             return await AskAboutUnsavedAsync(about, question) switch
             {
-                // A cancelled save picker is a cancelled close: somebody who asked
+                // A canceled save picker is a canceled close: somebody who asked
                 // to save and then thought better of where has not agreed to lose
                 // the patch, and the safe reading of that is to stay put.
                 Unsaved.Save => await SavePatchAsync(),
@@ -255,7 +255,7 @@ public sealed partial class MainWindow
     /// </summary>
     /// <summary>
     /// Closes without asking about unsaved work, for a test tearing its window
-    /// down: there is nobody to answer the question, and a cancelled close would
+    /// down: there is nobody to answer the question, and a canceled close would
     /// leave the window and its engine running for the rest of the assembly.
     /// </summary>
     internal void CloseWithoutAsking()
@@ -529,7 +529,7 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Greys the two out when there is nothing behind or ahead — the same
+    /// Grays the two out when there is nothing behind or ahead — the same
     /// question a button would answer by doing nothing, asked where it can be
     /// seen instead — and says in the title what the patch is and whether there
     /// is unsaved work in it.

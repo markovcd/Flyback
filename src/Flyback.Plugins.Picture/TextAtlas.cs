@@ -108,7 +108,7 @@ internal sealed record TextAtlas(LoadedImage Image, BitmapFont Font, int Lines, 
         {
             var line = lines[index];
 
-            // Centred in the band by whole letters' worth of half-advances, which
+            // Centered in the band by whole letters' worth of half-advances, which
             // is a whole number of font pixels since an advance is even.
             var indent = Margin + (columns - line.Length) * font.Advance / 2;
 

@@ -5,7 +5,7 @@ namespace Flyback.Core.Render;
 
 /// <summary>What an export is asked for.</summary>
 /// <param name="Seconds">
-/// How long the clip runs. The one number this whole file exists to honour:
+/// How long the clip runs. The one number this whole file exists to honor:
 /// everything else has a defensible default and this does not, because a patch
 /// is an endless function of time and only a person can say where to stop.
 /// </param>

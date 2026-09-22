@@ -51,9 +51,9 @@ public class FullScreenPreviewTests : UiTest
     private static Point Middle(MainWindow window)
     {
         var preview = Preview(window);
-        var centre = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
+        var center = new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2);
 
-        return preview.TranslatePoint(centre, window)
+        return preview.TranslatePoint(center, window)
             ?? throw new InvalidOperationException("the preview is not in this window");
     }
 

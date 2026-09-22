@@ -158,20 +158,20 @@ internal sealed class StageKnob : Knob
 
     public override void Render(DrawingContext context)
     {
-        var centre = new Point(Bounds.Width / 2, Bounds.Height / 2);
+        var center = new Point(Bounds.Width / 2, Bounds.Height / 2);
         var radius = Math.Min(Bounds.Width, Bounds.Height) / 2 - 3;
 
         // Filled with nothing, so a press on the middle still lands on the knob.
-        context.DrawEllipse(Brushes.Transparent, null, centre, radius, radius);
+        context.DrawEllipse(Brushes.Transparent, null, center, radius, radius);
 
-        var track = ArcGeometry(centre, radius, Start, Sweep);
+        var track = ArcGeometry(center, radius, Start, Sweep);
 
         context.DrawGeometry(null, TrackUnder, track);
         context.DrawGeometry(null, Track, track);
 
         var angle = Radians(Start + Sweep * Value);
-        var pointer = new LineGeometry(Along(centre, radius * 0.2, angle), Along(centre, radius, angle));
-        var travel = Value > 0.001 ? ArcGeometry(centre, radius, Start, Sweep * Value) : null;
+        var pointer = new LineGeometry(Along(center, radius * 0.2, angle), Along(center, radius, angle));
+        var travel = Value > 0.001 ? ArcGeometry(center, radius, Start, Sweep * Value) : null;
 
         // Every dark stroke before any light one, so no halo cuts across a line.
         context.DrawGeometry(null, ArcUnder, pointer);

@@ -33,7 +33,7 @@ public sealed class PluginCatalog
     /// </param>
     /// <param name="plugins">Everything that loaded, whether or not it registered anything.</param>
     /// <param name="audioOutputs">The sound backends offered, in no particular order — priority is asked for later.</param>
-    /// <param name="modules">The engine's catalogue with every plugin's modules added to it.</param>
+    /// <param name="modules">The engine's catalog with every plugin's modules added to it.</param>
     /// <param name="presets">Patches to start from: the engine's own first, then each plugin's.</param>
     /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
     /// <param name="midiInputs">The ways of hearing what is plugged in, or none where there is no such way.</param>
@@ -99,7 +99,7 @@ public sealed class PluginCatalog
 
     /// <summary>
     /// The plugin that registered a backend, an assistant or a secret store, or
-    /// null for anything this catalogue did not see registered.
+    /// null for anything this catalog did not see registered.
     /// </summary>
     /// <remarks>
     /// What the settings window names on the tab that configures a backend: which
@@ -131,7 +131,7 @@ public sealed class PluginCatalog
     /// <remarks>
     /// Deliberately not filtered by whether it can actually run, unlike
     /// <see cref="PreferredAudioOutput"/>: that depends on a configuration this
-    /// catalogue has never seen, and an assistant with no key yet is still the one to
+    /// catalog has never seen, and an assistant with no key yet is still the one to
     /// put in front of somebody.
     /// </remarks>
     public IPatchAssistant? PreferredAssistant => Assistants

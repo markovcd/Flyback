@@ -45,7 +45,7 @@ internal static class LayerModule
             Mode.Add => em.Add(a, b),
             Mode.Multiply => em.Mul(a, b),
             Mode.Screen => Screen(a, b),
-            // Multiply below mid-grey on the base, screen above it, both doubled so they meet at 0.5.
+            // Multiply below mid-gray on the base, screen above it, both doubled so they meet at 0.5.
             Mode.Overlay => em.Ternary(
                 OpCode.Mix,
                 em.Mul(em.Mul(a, b), 2f),

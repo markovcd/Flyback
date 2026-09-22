@@ -11,7 +11,7 @@ namespace Flyback.Cli;
 /// <remarks>
 /// The command that makes a patch portable: a <c>.fbk</c> is full of paths that mean
 /// something on the machine it was made on, and a <c>.fbkb</c> is that document with
-/// the things it points at travelling beside it.
+/// the things it points at traveling beside it.
 /// <para>
 /// There is no unpack command, which is the format doing its job: a bundle is an
 /// ordinary zip, and what comes out is a patch and a <c>files</c> folder beside it —

@@ -8,14 +8,14 @@ namespace Flyback.Plugins.Picture;
 /// contrasty, how dark in the middle.
 /// </summary>
 /// <remarks>
-/// The catalogue's Gain is a multiply and an add, and what it cannot do is
+/// The catalog's Gain is a multiply and an add, and what it cannot do is
 /// anything that treats the three channels as a color: taking the color out of one
 /// is not a multiply, and neither is deepening its shadows without moving its
 /// highlights.
 /// <para>
 /// Saturation is a mix between the picture and its own brightness — the weighted
 /// one the eye uses, since green is most of what brightness means. Contrast leans
-/// about the middle grey rather than about black, which is the whole difference
+/// about the middle gray rather than about black, which is the whole difference
 /// between contrast and gain. Gamma is the exponent, so above one deepens
 /// everything below the middle and leaves white alone.
 /// </para>
@@ -55,7 +55,7 @@ internal static class GradeModule
         Emit,
         "Color, contrast and gamma, in the order a grading desk has them, and a wire when all "
         + "three are 1. 'saturation' mixes towards the picture's own brightness — 0 is a proper "
-        + "greyscale and past 1 keeps going. 'contrast' leans on the middle grey rather than on "
+        + "grayscale and past 1 keeps going. 'contrast' leans on the middle gray rather than on "
         + "black, which is what makes it contrast rather than gain: white and black stay where "
         + "they are. 'gamma' above 1 deepens everything under the middle and leaves the "
         + "highlights alone, which is the knob for a picture that is nearly right and too pale. "

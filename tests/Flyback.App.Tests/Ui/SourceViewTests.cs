@@ -1335,7 +1335,7 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// The caret is the code view's pointer, and the panel follows it exactly as
+    /// The caret is the text view's pointer, and the panel follows it exactly as
     /// it follows a click on the canvas.
     /// </summary>
     [AvaloniaFact]
@@ -1366,7 +1366,7 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
-    /// A printing is what the code view shows for a patch built on the canvas,
+    /// A printing is what the text view shows for a patch built on the canvas,
     /// and it has to be as clickable as text somebody wrote.
     /// </summary>
     [AvaloniaFact]
@@ -1611,7 +1611,7 @@ public class SourceViewTests : UiTest
     /// </summary>
     /// <remarks>
     /// Nothing here lets go of a pointer or moves the focus, which were the two things
-    /// the write-back waited for — so somebody typing a note saw a code view showing
+    /// the write-back waited for — so somebody typing a note saw a text view showing
     /// the number the patch had already stopped playing.
     /// </remarks>
     [AvaloniaFact]
@@ -1713,7 +1713,7 @@ public class SourceViewTests : UiTest
         Editor(window).Patch.Nodes.Count.ShouldBe(before, "the module just added is what came back");
         text.Text.ShouldStartWith("# a note to myself", customMessage: "and the typing was left alone");
 
-        // With nothing left on the canvas's stack the button goes grey, rather
+        // With nothing left on the canvas's stack the button goes gray, rather
         // than offering a press that would land where nobody is looking.
         Undo(window).IsEnabled.ShouldBeFalse();
 

@@ -193,7 +193,7 @@ public class InspectorWiringTests : UiTest
 
     /// <summary>
     /// The Output's 'color' and 'left' have no fallback to name — an unwired
-    /// color is a broadcast grey nobody chose, and 'left' fed a constant is a
+    /// color is a broadcast gray nobody chose, and 'left' fed a constant is a
     /// speaker humming rather than a setting — so they say plainly that
     /// nothing is patched instead of offering a slider that would mislead.
     /// 'right' falls back to 'left' and says so, the same as any other

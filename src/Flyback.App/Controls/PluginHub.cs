@@ -34,7 +34,7 @@ internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool L
 /// </summary>
 /// <remarks>
 /// The installed run is narrowed here and the site's is asked of the site, a quarter of
-/// a second after typing stops, with any earlier question cancelled. A site plugin is
+/// a second after typing stops, with any earlier question canceled. A site plugin is
 /// matched to an installed one by its assembly, which is what an update replaces.
 /// </remarks>
 internal sealed class PluginHub : IDisposable

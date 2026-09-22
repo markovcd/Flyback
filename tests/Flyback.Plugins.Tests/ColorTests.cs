@@ -27,7 +27,7 @@ public class ColorTests
 
     private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
 
-    // --- the catalogue ---------------------------------------------------------
+    // --- the catalog ---------------------------------------------------------
 
     [Fact]
     public void The_plugin_offers_all_four_from_one_assembly()
@@ -63,18 +63,18 @@ public class ColorTests
     /// <summary>
     /// The knob that changes the family rather than the position in it. At
     /// nothing the three channels are the same wave with no phase between them,
-    /// which is a grey — and every value of it is a palette somebody could have
+    /// which is a gray — and every value of it is a palette somebody could have
     /// meant, which is the property worth having.
     /// </summary>
     [Fact]
-    public void No_spread_is_a_grey_ramp_and_a_third_is_the_rainbow()
+    public void No_spread_is_a_gray_ramp_and_a_third_is_the_rainbow()
     {
-        var grey = Color(Palette, (2, 0f));
+        var gray = Color(Palette, (2, 0f));
         var rainbow = Color(Palette);
 
         foreach (var t in Along())
         {
-            var (r, g, b) = grey(t);
+            var (r, g, b) = gray(t);
 
             g.ShouldBe(r, 1e-6f);
             b.ShouldBe(r, 1e-6f);
@@ -156,7 +156,7 @@ public class ColorTests
     [InlineData(0f, 0f, 1f, 2f / 3f, 1f, 1f)]
     [InlineData(0f, 1f, 1f, 0.5f, 1f, 1f)]          // cyan, opposite red
     [InlineData(1f, 0f, 0.5f, 0.9166667f, 1f, 1f)]  // between magenta and red, where the maths goes negative
-    [InlineData(0.5f, 0.5f, 0.5f, 0f, 0f, 0.5f)]    // a grey has no hue to report
+    [InlineData(0.5f, 0.5f, 0.5f, 0f, 0f, 0.5f)]    // a gray has no hue to report
     [InlineData(0f, 0f, 0f, 0f, 0f, 0f)]            // and black divides by nothing twice
     public void Every_corner_of_the_wheel_reads_as_it_should(
         float r, float g, float b, float hue, float saturation, float value)
@@ -193,19 +193,19 @@ public class ColorTests
     /// <summary>
     /// Saturation mixes towards the picture's own brightness, which is the
     /// weighted one the eye uses rather than the average of the channels — so a
-    /// pure green greys to something bright and a pure blue to something dark.
+    /// pure green grays to something bright and a pure blue to something dark.
     /// </summary>
     [Fact]
-    public void No_saturation_is_a_proper_greyscale()
+    public void No_saturation_is_a_proper_grayscale()
     {
-        var grey = Through(Grade, (1, 0f));
+        var gray = Through(Grade, (1, 0f));
 
-        grey(0f, 1f, 0f).ShouldBe((0.7152f, 0.7152f, 0.7152f), 1e-4f);
-        grey(0f, 0f, 1f).ShouldBe((0.0722f, 0.0722f, 0.0722f), 1e-4f);
+        gray(0f, 1f, 0f).ShouldBe((0.7152f, 0.7152f, 0.7152f), 1e-4f);
+        gray(0f, 0f, 1f).ShouldBe((0.0722f, 0.0722f, 0.0722f), 1e-4f);
 
         foreach (var (r, g, b) in Swatches())
         {
-            var (red, green, blue) = grey(r, g, b);
+            var (red, green, blue) = gray(r, g, b);
 
             green.ShouldBe(red, 1e-5f);
             blue.ShouldBe(red, 1e-5f);
@@ -214,7 +214,7 @@ public class ColorTests
 
     /// <summary>
     /// Contrast about the middle rather than about black, which is the whole
-    /// difference between it and the Gain that was already here: the middle grey
+    /// difference between it and the Gain that was already here: the middle gray
     /// is the one color no amount of it moves.
     /// </summary>
     [Theory]

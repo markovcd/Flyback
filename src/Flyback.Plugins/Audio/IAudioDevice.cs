@@ -14,7 +14,7 @@ namespace Flyback.Plugins.Audio;
 public delegate void AudioCallback(Span<float> interleavedStereo);
 
 /// <summary>
-/// What the host asks a backend to open. A backend that cannot honour the
+/// What the host asks a backend to open. A backend that cannot honor the
 /// request exactly is free to open the nearest thing it can and report the
 /// truth through <see cref="IAudioDevice.SampleRate"/>.
 /// </summary>

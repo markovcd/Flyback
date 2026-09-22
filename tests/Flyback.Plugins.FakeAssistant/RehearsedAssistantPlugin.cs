@@ -62,7 +62,7 @@ public sealed class RehearsedAssistant : IPatchAssistant
 internal sealed class Rehearsal(PatchWorkbench workbench) : IPatchSession
 {
     /// <summary>
-    /// A grey field on the screen. Small on purpose: what is being proved is
+    /// A gray field on the screen. Small on purpose: what is being proved is
     /// that the vocabulary reaches across the plugin boundary intact, not that
     /// anything clever can be built with it.
     /// </summary>
@@ -74,7 +74,7 @@ internal sealed class Rehearsal(PatchWorkbench workbench) : IPatchSession
         // under the handle the workbench gave it.
         ("connect", """{"from":"knob1","to":"output1","to_port":"color"}"""),
         ("render", """{"times":[0.5]}"""),
-        ("propose", """{"summary":"a flat grey field"}"""),
+        ("propose", """{"summary":"a flat gray field"}"""),
     ];
 
     public async IAsyncEnumerable<PatchEvent> Ask(

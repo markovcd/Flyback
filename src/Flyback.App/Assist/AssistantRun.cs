@@ -57,7 +57,7 @@ public sealed class AssistantRun : IDisposable
     /// <param name="samples"></param>
     /// <param name="pictures"></param>
     /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
-    /// <param name="prose">How much of the catalogue's prose the briefing carries.</param>
+    /// <param name="prose">How much of the catalog's prose the briefing carries.</param>
     /// <param name="presets">The presets the model may read for ideas, and the shipped ones where nobody said.</param>
     public AssistantRun(
         IPatchAssistant assistant,

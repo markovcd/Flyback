@@ -59,7 +59,7 @@ internal static class PatchFileKinds
     /// One kind each rather than every format there is. The two the settings
     /// window is set to are what this offers, since a picker listing nine
     /// extensions would be a second place to choose a format and a slower way to
-    /// do it — and an extension typed over the suggestion is honoured anyway
+    /// do it — and an extension typed over the suggestion is honored anyway
     /// (ADR-0089).
     /// </para>
     /// </remarks>

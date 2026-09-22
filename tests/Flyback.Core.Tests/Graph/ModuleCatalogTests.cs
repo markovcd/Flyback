@@ -5,7 +5,7 @@ namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
 /// The rules that make modules-from-plugins safe. Everything here runs on
-/// catalogue instances rather than the installed one, so nothing leaks between
+/// catalog instances rather than the installed one, so nothing leaks between
 /// tests and none of it depends on what is on this machine.
 /// </summary>
 public class ModuleCatalogTests
@@ -39,12 +39,12 @@ public class ModuleCatalogTests
     }
 
     /// <summary>
-    /// A catalogue is what a compiled program was built against. If adding a
+    /// A catalog is what a compiled program was built against. If adding a
     /// plugin could change one that already exists, a running patch and the
-    /// catalogue it came from could disagree.
+    /// catalog it came from could disagree.
     /// </summary>
     [Fact]
-    public void Adding_to_a_catalogue_leaves_it_alone()
+    public void Adding_to_a_catalog_leaves_it_alone()
     {
         var original = NodeCatalog.BuiltIn;
         var before = original.All.Count;

@@ -33,7 +33,7 @@ public class ModuleGlyphsTests : UiTest
     public void Every_mark_of_its_own_names_a_module_that_exists()
     {
         foreach (var typeId in ModuleGlyphs.Named)
-            NodeCatalog.BuiltIn.Get(typeId).ShouldNotBeNull($"nothing in the catalogue is called '{typeId}'");
+            NodeCatalog.BuiltIn.Get(typeId).ShouldNotBeNull($"nothing in the catalog is called '{typeId}'");
     }
 
     /// <summary>

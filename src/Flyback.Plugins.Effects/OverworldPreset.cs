@@ -202,7 +202,7 @@ internal sealed class OverworldPreset : PresetBench
     }
 
     /// <summary>
-    /// A pulse at a frequency, with its width a number or a wire, and centred on nought.
+    /// A pulse at a frequency, with its width a number or a wire, and centered on nought.
     /// </summary>
     /// <remarks>
     /// A pulse an eighth wide sits three quarters of the way down on average, and an

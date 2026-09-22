@@ -108,10 +108,10 @@ public class InkTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var vignette = b.Add(Vignette);
-        var grey = b.Add("color.rgb");
+        var gray = b.Add("color.rgb");
         var sink = b.Add(NodeCatalog.OutputTypeId);
 
-        b.Wire(vignette, 1, grey, 0).Wire(grey, 0, sink, NodeCatalog.OutputColorPort);
+        b.Wire(vignette, 1, gray, 0).Wire(gray, 0, sink, NodeCatalog.OutputColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         var registers = program.AllocateRegisters();

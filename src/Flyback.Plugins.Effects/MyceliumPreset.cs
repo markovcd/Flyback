@@ -762,7 +762,7 @@ internal static class MyceliumPreset
 
         // Tints of one color in the intro and the whole spectrum at the peak. It is
         // the palette's 'spread' rather than a saturation, so a quiet section is not a
-        // grey one.
+        // gray one.
         var tint = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.08f), (4, 0.36f));
         var ground = b.Add(PaletteType, (1, 1.5f), (3, 0.45f));
 

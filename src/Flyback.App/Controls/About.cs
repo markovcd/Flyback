@@ -20,7 +20,7 @@ namespace Flyback.App.Controls;
 /// </summary>
 /// <remarks>
 /// The facts live here rather than in the window that shows them, because there is
-/// one right answer to each. The licence text is not reproduced — a name and a
+/// one right answer to each. The license text is not reproduced — a name and a
 /// copyright line are what a person reads, and the file beside the source is what a
 /// lawyer does.
 /// </remarks>
@@ -37,7 +37,7 @@ internal static class About
     /// <summary>Where the screenshots, the tutorials and the plugin guide live.</summary>
     public const string Website = "https://markovcd.github.io/Flyback/";
 
-    public const string Licence = "MIT";
+    public const string License = "MIT";
 
     public const string Copyright = "Copyright © 2026 Arkadiusz Markowski";
 
@@ -102,8 +102,8 @@ internal static class About
 
         page.Children.Add(heading);
         page.Children.Add(Rule());
-        page.Children.Add(Caption("Licence"));
-        page.Children.Add(new TextBlock { Text = $"{Licence} licence.  {Copyright}", TextWrapping = TextWrapping.Wrap });
+        page.Children.Add(Caption("License"));
+        page.Children.Add(new TextBlock { Text = $"{License} license.  {Copyright}", TextWrapping = TextWrapping.Wrap });
         page.Children.Add(Rule());
         page.Children.Add(Caption("Support"));
         page.Children.Add(Donation());

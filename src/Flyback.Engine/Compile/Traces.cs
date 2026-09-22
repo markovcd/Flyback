@@ -52,7 +52,7 @@ public static class Traces
     /// shows.
     /// </summary>
     /// <remarks>
-    /// That normalisation keeps the window knob out of the program: the buffer
+    /// That normalization keeps the window knob out of the program: the buffer
     /// always holds exactly the stretch being shown, so the module only says how
     /// far across the picture it is.
     /// </remarks>

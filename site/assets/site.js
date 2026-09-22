@@ -1,4 +1,4 @@
-// Colors the text language the way the app's code view does. The rules are
+// Colors the text language the way the app's text view does. The rules are
 // Flyback.xshd's, in the same order, so a snippet here reads like the F2 view.
 (function () {
   var rules = [

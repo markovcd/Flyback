@@ -28,7 +28,7 @@ public enum EvaluationStage
 /// </summary>
 /// <remarks>
 /// A patch says far more about a frame than about a pixel: of the largest preset
-/// in the catalogue, 598 ops, eleven per cent depend on where you are and the rest
+/// in the catalog, 598 ops, eleven per cent depend on where you are and the rest
 /// is a frame's worth of arithmetic done once.
 /// <para>
 /// A reordering rather than three programs. A stage is the greatest of its

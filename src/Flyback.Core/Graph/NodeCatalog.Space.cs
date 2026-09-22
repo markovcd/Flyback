@@ -76,7 +76,7 @@ public partial class NodeCatalog
                     em.Mul(em.Unary(OpCode.Sin, folded), radius),
                 ];
             },
-            "Folds the plane into wedges around the centre.");
+            "Folds the plane into wedges around the center.");
 
         yield return new NodeDef(
             "space.warp", "Warp", ModuleCategories.Geometry,

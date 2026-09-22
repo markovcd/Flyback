@@ -85,7 +85,7 @@ public class SupersawTests
                 }
     }
 
-    /// <summary>Out of range on a patched input must not divide by a cancelled sum.</summary>
+    /// <summary>Out of range on a patched input must not divide by a canceled sum.</summary>
     [Fact]
     public void A_mix_outside_its_range_is_held_at_the_edge()
     {
