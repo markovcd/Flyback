@@ -318,12 +318,13 @@ internal sealed class PluginHub : IDisposable
         }
     }
 
-    /// <summary>What a site plugin's row offers: Install where it is not installed, else how it stands against what is.</summary>
+    /// <summary>What a site plugin's row offers: a click to install where it is not installed, else how it stands against what is.</summary>
     private void Offer(Control row, SitePlugin plugin)
     {
         if (row is not Grid grid || grid.Children.OfType<StackPanel>().FirstOrDefault(c => Grid.GetColumn(c) == 2) is not { } actions) return;
 
         actions.Children.Clear();
+        ToolTip.SetTip(grid, null);
 
         if (fetching.Contains(plugin.Id))
         {
@@ -351,12 +352,7 @@ internal sealed class PluginHub : IDisposable
             return;
         }
 
-        var button = new Button { Name = "install", Content = "Install", MinWidth = 84, FontSize = Text.Body, Tag = plugin };
-
-        ToolTip.SetTip(button, $"Download {plugin.Plugin.Name} {plugin.Plugin.Version} and see what it is before installing it.");
-        button.Click += (_, _) => _ = FetchAsync(plugin);
-
-        actions.Children.Add(button);
+        ToolTip.SetTip(grid, $"Download {plugin.Plugin.Name} {plugin.Plugin.Version} and see what it is before installing it.");
         actions.Children.Add(ReportButton(plugin));
     }
 

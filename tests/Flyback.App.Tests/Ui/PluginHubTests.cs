@@ -190,7 +190,7 @@ public sealed class PluginHubTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_site_plugin_is_offered_as_an_install_an_update_or_nothing()
+    public void A_site_plugin_is_offered_as_a_click_to_install_an_update_or_nothing()
     {
         using var site = new FakePluginSite(
             new Shared("n1", "Ripple"),
@@ -198,12 +198,11 @@ public sealed class PluginHubTests : UiTest
             new Shared("g2", "Grain", Assembly: "flyback.plugins.grain", Version: "2.0.0"));
         var (hub, _) = Open(site);
 
-        string Offered(string id) => All<Grid>(hub.View).Single(g => g.Tag is SitePlugin p && p.Id == id) is var row
-            && All<Button>(row).FirstOrDefault(b => b.Name == "install") is { } button
-                ? (string)button.Content!
-                : All<TextBlock>(row).Single(t => t.Name == "siteState").Text!;
+        Grid RowFor(string id) => All<Grid>(hub.View).Single(g => g.Tag is SitePlugin p && p.Id == id);
+        string? Offered(string id) => All<TextBlock>(RowFor(id)).SingleOrDefault(t => t.Name == "siteState")?.Text;
 
-        Offered("n1").ShouldBe("Install");
+        Offered("n1").ShouldBeNull("nothing is installed, so a click on the row installs it");
+        ((string)ToolTip.GetTip(RowFor("n1"))!).ShouldContain("Download Ripple");
         Offered("e2").ShouldBe("Update available");
         Offered("g2").ShouldBe("Installed");
     }
@@ -240,12 +239,12 @@ public sealed class PluginHubTests : UiTest
         Settle(window);
 
         Press(All<Button>(window).Single(b => b.Name == "plugins"));
-        Pump(() => All<Button>(window).Any(b => b.Name == "install" && b.Tag is SitePlugin), window);
+        Pump(() => All<Grid>(window).Any(g => g.Tag is SitePlugin), window);
         Settle(window);
 
-        var install = All<Button>(window).Single(b => b.Name == "install" && b.Tag is SitePlugin);
+        var row = All<Grid>(window).Single(g => g.Tag is SitePlugin);
 
-        Press(install);
+        Click(window, row);
         Pump(() => All<Border>(window).Any(b => b.Name == "pluginWarning"), window);
         Settle(window);
 
@@ -257,7 +256,7 @@ public sealed class PluginHubTests : UiTest
         // What is installed is read again once it is.
         Pump(() => All<TextBlock>(window).Any(t => t.Name == "pluginState" && t.Text == "Loads at the next start"), window);
 
-        All<Button>(window).ShouldNotContain(b => b.Name == "install" && b.Tag is SitePlugin);
+        All<TextBlock>(window).ShouldContain(t => t.Name == "siteState" && t.Text == "Installed");
 
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
         All<TextBlock>(window).Single(t => t.Name == "pluginNotice").Text.ShouldEndWith("loads the next time Flyback starts.");
