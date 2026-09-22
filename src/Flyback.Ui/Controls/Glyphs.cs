@@ -55,6 +55,12 @@ internal static class Glyphs
     public static Control Presets() => Stroked(
         "M2,4 L14,4 M2,8 L14,8 M2,12 L10,12");
 
+    /// <summary>A mains plug, prongs up, with its cable trailing down: what a plugin is.</summary>
+    public static Control Plug() => Stroked(
+        "M6,2 L6,5 M10,2 L10,5 "
+        + "M4,5 L12,5 L12,8 Q12,11 8,11 Q4,11 4,8 Z "
+        + "M8,11 L8,14");
+
     /// <summary>A plain dot, filled — the record light on every deck and camera.</summary>
     public static Control Record() => Filled(new EllipseGeometry(new Rect(3, 3, 10, 10)));
 

@@ -74,6 +74,15 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     public InstalledPlugin? Replacing(string name) =>
         Installed(Path.Combine(Pending, name)) ?? Installed(Path.Combine(folder, name));
 
+    /// <summary>The plugins waiting to be moved into place at the next start.</summary>
+    public IReadOnlyList<InstalledPlugin> Waiting() =>
+        Directory.Exists(Pending)
+            ? [.. Directory.EnumerateDirectories(Pending)
+                .Where(staged => !Path.GetFileName(staged).StartsWith('.'))
+                .Select(Installed)
+                .OfType<InstalledPlugin>()]
+            : [];
+
     /// <summary>Unpacks the build for <paramref name="platform"/> to be moved into place at the next start.</summary>
     public void Stage(PluginPackage package, string platform)
     {

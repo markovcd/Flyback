@@ -40,10 +40,14 @@ refused.
 `platform` (`win`, `osx`, `linux`, counting a build for `any`), and each plugin
 carries its `assembly`, `version`, `contract`, `modules` and `sha256`. `module`
 finds the plugin declaring a type id, which is how a patch naming a module nobody
-has installed will find its plugin. The editor is to
-check the downloaded bytes against that hash and then open them with the same
-dialog as a file on disk: the listing is for choosing, and the dialog stays the
-only place a plugin is agreed to. `count=false` fetches without counting a
+has installed will find its plugin. The editor's plugins window lists what is
+installed beside what the site offers for this system, narrowing both with the
+site's own search: every word somewhere in the name, author, description,
+assembly, tags or modules, and a tag whole. It checks the downloaded bytes
+against that hash and then opens them with the same dialog as a file on disk:
+the listing is for choosing, and the dialog stays the only place a plugin is
+agreed to. The window asks the site running locally, on `localhost:8790`, until
+the site has a public address. `count=false` fetches without counting a
 download, as for presets.
 
 **A package may be 64 MB**, half what the editor accepts, since the site holds

@@ -510,6 +510,10 @@ public sealed partial class MainWindow : Window
     /// just installed. Null offers no restart, which is what every test gets unless it
     /// is watching for one.
     /// </param>
+    /// <param name="pluginSite">
+    /// The site the plugins window lists shared plugins from. Null lists none, so no
+    /// test reaches the network unless it asks to.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
@@ -527,11 +531,13 @@ public sealed partial class MainWindow : Window
         string? fileTypeSettingsPath = null,
         FileTypes? fileTypes = null,
         string? pluginFolder = null,
-        Action? relaunch = null)
+        Action? relaunch = null,
+        Uri? pluginSite = null)
     {
         this.groupFolder = groupFolder;
         this.pluginFolder = pluginFolder;
         this.relaunch = relaunch;
+        this.pluginSite = pluginSite;
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
@@ -1178,6 +1184,9 @@ public sealed partial class MainWindow : Window
         var settings = ToolbarButtons.Glyph("settings", "⚙", "Open the settings.");
         settings.Click += async (_, _) => await ShowSettingsAsync();
 
+        var pluginsButton = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.");
+        pluginsButton.Click += async (_, _) => await ShowPluginsAsync();
+
         var about = ToolbarButtons.Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
         about.Click += async (_, _) => await ShowAboutAsync();
 
@@ -1188,6 +1197,7 @@ public sealed partial class MainWindow : Window
 
         program.Children.Add(assistantButton);
         program.Children.Add(settings);
+        program.Children.Add(pluginsButton);
         program.Children.Add(about);
 
         // One row, left to right, rather than the program group docked to the
