@@ -108,29 +108,8 @@ internal static class Startup
         // settings point at is there to open before anybody has used it.
         PriorityModules.Install();
 
-        Announce(Plugins);
-    }
-
-    /// <summary>
-    /// What the scan found, on the terminal.
-    /// </summary>
-    /// <remarks>
-    /// The window says as much in a tooltip, which is no use to somebody who started
-    /// the program from a shell to find out why their plugin is missing — and a plugin
-    /// that failed to load failed before there was a window. Where it looked is said
-    /// whatever the answer was, because an empty folder and the wrong folder read
-    /// identically from a list of nothing.
-    /// </remarks>
-    private static void Announce(PluginCatalog catalog)
-    {
-        Trace.WriteLine($"plugins: {PluginHost.DefaultDirectory}");
-
-        if (catalog.Plugins.Count == 0) Trace.WriteLine("  nothing loaded");
-
-        foreach (var plugin in catalog.Plugins)
-            Trace.WriteLine($"  loaded {plugin.Info.Name}  ({plugin.Info.Id})");
-
-        foreach (var problem in catalog.Problems)
-            Trace.WriteLine($"  problem: {problem}");
+        // The window says as much in a tooltip, which is no use to somebody who started
+        // the program from a shell to find out why their plugin is missing.
+        foreach (var line in PluginReport.Lines(Plugins, PluginHost.DefaultDirectory)) Trace.WriteLine(line);
     }
 }

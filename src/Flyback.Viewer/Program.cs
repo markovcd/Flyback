@@ -57,6 +57,8 @@ internal static class Program
 
         NodeCatalog.Install(plugins.Modules);
 
+        foreach (var line in PluginReport.Lines(plugins, PluginHost.DefaultDirectory)) Trace.WriteLine(line);
+
         var root = ViewerArguments.Build(settings, options => Play(options, settings, plugins), Console.Error);
 
         var parsed = root.Parse(args);

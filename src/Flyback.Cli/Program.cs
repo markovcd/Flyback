@@ -46,6 +46,11 @@ internal static class Program
 
         NodeCatalog.Install(plugins.Modules);
 
+        // Only where somebody is watching, the way the editor keeps it to a terminal it inherited:
+        // a script reading stderr wants the command's complaint and nothing else.
+        if (!Console.IsErrorRedirected)
+            foreach (var line in PluginReport.Lines(plugins, PluginHost.DefaultDirectory)) Console.Error.WriteLine(line);
+
         var patch = new Argument<FileInfo>("patch")
         {
             Description = "The patch to read: a document, a bundle, or one written as text. "
