@@ -81,7 +81,7 @@ public class ViewerWindowTests : UiTest
 
     private static Opened Files(Patch patch) => new(patch, new SampleLibrary(), new ImageLibrary());
 
-    /// <summary>A sine into the speakers at the Output's own Volume.</summary>
+    /// <summary>A sine into the speakers at the Output's own Volume, and onto the screen.</summary>
     private static Patch Tone()
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -93,6 +93,7 @@ public class ViewerWindowTests : UiTest
         return builder
             .Wire(time, 0, osc, 0)
             .Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort)
+            .Wire(osc, 0, speaker, NodeCatalog.OutputColorPort)
             .Patch;
     }
 
@@ -128,6 +129,42 @@ public class ViewerWindowTests : UiTest
 
         window.Preview.ShouldBeNull();
         window.GetVisualDescendants().OfType<PreviewHost>().ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void A_patch_with_no_picture_is_its_toolbar_alone_even_asked_for_full_screen()
+    {
+        var empty = Files(Presets.All.Single(p => p.Name == "Empty").Build(NodeCatalog.BuiltIn));
+        var window = Open(empty, Options() with { FullScreen = true });
+
+        window.Preview.ShouldBeNull();
+        window.GetVisualDescendants().OfType<PreviewHost>().ShouldBeEmpty();
+        window.WindowState.ShouldBe(WindowState.Normal);
+        window.SizeToContent.ShouldBe(SizeToContent.Height);
+
+        window.Overlay!.IsOpen.ShouldBeTrue();
+        window.Overlay!.Dots.IsVisible.ShouldBeFalse();
+        window.Height.ShouldBeLessThan(100);
+
+        window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
+        Settle(window);
+
+        window.WindowState.ShouldBe(WindowState.Normal);
+        // Centered: as far in from the left as from the right.
+        var left = window.Overlay!.TranslatePoint(default, window)!.Value.X;
+        (window.Bounds.Width - left - window.Overlay!.Bounds.Width).ShouldBe(left, 1);
+    }
+
+    [AvaloniaFact]
+    public void The_toolbar_alone_stays_out_when_the_pointer_leaves()
+    {
+        var window = Open(Files(Tone()), Options() with { NoVideo = true });
+
+        window.MouseMove(new Point(window.Bounds.Width / 2, window.Bounds.Height / 2));
+        window.MouseMove(new Point(-50, -50));
+        Settle(window);
+
+        window.Overlay!.IsOpen.ShouldBeTrue();
     }
 
     [AvaloniaFact]

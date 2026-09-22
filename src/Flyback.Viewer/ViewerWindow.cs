@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
@@ -17,15 +18,22 @@ namespace Flyback.Viewer;
 /// toolbar that shows itself when the pointer comes near.
 /// </summary>
 /// <remarks>
+/// A patch with no picture, or a run with no video, is the toolbar alone: the window
+/// fits it, and there is no surface to draw and no full screen to take.
+/// <para>
 /// Handed an already-opened patch, a device and settled options, and never a path: the
 /// program reads the file and opens the device, so the window can be built headless.
 /// Nothing here is written anywhere.
+/// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The player is disposed when the window closes.")]
 internal sealed partial class ViewerWindow : Window
 {
     /// <summary>The largest a window opens at when it was not told a size.</summary>
     private static readonly PixelSize LargestStart = new(1280, 720);
+
+    /// <summary>How wide a window of buttons alone is, so its title bar has room for the title.</summary>
+    private const double ToolbarWidth = 360;
 
     private readonly PreviewHost? preview;
     private readonly Border previewBox;
@@ -45,20 +53,33 @@ internal sealed partial class ViewerWindow : Window
         Background = Brushes.Black;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
-        var start = options.Window ?? Fitted(options.Size);
+        var pictured = options.Video && opened.Patch.Reaches().Picture;
+        var toolbar = !pictured && !options.NoOverlay;
 
-        Width = start.Width;
-        Height = start.Height;
+        if (toolbar)
+        {
+            SizeToContent = SizeToContent.Height;
+            Width = ToolbarWidth;
+            CanResize = false;
+        }
+        else
+        {
+            var start = options.Window ?? Fitted(options.Size);
 
-        if (options.Maximized) WindowState = WindowState.Maximized;
-        if (options.FullScreen) WindowState = WindowState.FullScreen;
+            Width = start.Width;
+            Height = start.Height;
+
+            if (options.Maximized) WindowState = WindowState.Maximized;
+            if (options.FullScreen && pictured) WindowState = WindowState.FullScreen;
+        }
+
         if (options.Top) Topmost = true;
 
         // Focus stays where it was: the window is shown without being activated.
         ShowActivated = !options.Background;
 
         // No surface at all without a picture: a PreviewHost in the tree renders on a timer.
-        if (options.Video) preview = new PreviewHost();
+        if (pictured) preview = new PreviewHost();
 
         player = new ViewerPlayer(opened, device, options, preview, instruments, takeover);
 
@@ -68,23 +89,44 @@ internal sealed partial class ViewerWindow : Window
         // again, or Escape, puts it back. The editor does the same with its own
         // preview, but that one zeroes grid tracks around a control that must not be reparented, and this
         // window has no tracks — so nothing is shared with it.
-        previewBox.DoubleTapped += (_, e) =>
+        if (pictured)
         {
-            ToggleFullScreen();
-            e.Handled = true;
-        };
-
-        var layout = new Panel();
-
-        layout.Children.Add(previewBox);
-
-        if (!options.NoOverlay)
-        {
-            layout.Children.Add(BuildKnobs());
-            layout.Children.Add(BuildOverlay());
+            previewBox.DoubleTapped += (_, e) =>
+            {
+                ToggleFullScreen();
+                e.Handled = true;
+            };
         }
 
-        Content = layout;
+        if (toolbar)
+        {
+            var knobs = BuildKnobs();
+            var overlay = BuildOverlay();
+
+            knobs.Pin();
+            overlay.Pin();
+
+            Content = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Children = { knobs, overlay },
+            };
+        }
+        else
+        {
+            var layout = new Panel();
+
+            layout.Children.Add(previewBox);
+
+            if (!options.NoOverlay)
+            {
+                layout.Children.Add(BuildKnobs());
+                layout.Children.Add(BuildOverlay());
+            }
+
+            Content = layout;
+        }
 
         KeyDown += (_, e) =>
         {
@@ -93,7 +135,7 @@ internal sealed partial class ViewerWindow : Window
 
             if (e.Key == Key.Escape && WindowState == WindowState.FullScreen) ToggleFullScreen();
 
-            else if (bare && e.Key == Key.F11) ToggleFullScreen();
+            else if (bare && e.Key == Key.F11 && preview is not null) ToggleFullScreen();
 
             // Space, which no layout plays, and the editor's Ctrl+P.
             else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();

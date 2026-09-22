@@ -40,6 +40,7 @@ public abstract class TuckedAway : Border
 
     private TopLevel? host;
     private bool held;
+    private bool pinned;
 
     /// <param name="contents">What the dots open to, in their place.</param>
     /// <param name="side">Where along the bottom both sit.</param>
@@ -77,7 +78,7 @@ public abstract class TuckedAway : Border
 
         dots.PointerEntered += (_, _) => Shown();
         PointerEntered += (_, _) => tuck.Stop();
-        PointerExited += (_, _) => { if (!held) tuck.Start(); };
+        PointerExited += (_, _) => { if (!held && !pinned) tuck.Start(); };
 
         // A knob dragged past the edge keeps its place until it is let go.
         AddHandler(PointerPressedEvent, (_, _) => held = true, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -108,6 +109,19 @@ public abstract class TuckedAway : Border
 
     /// <summary>Whether the contents are showing.</summary>
     internal bool IsOpen => contents.IsHitTestVisible;
+
+    /// <summary>Whether the contents are out for good, with no dots.</summary>
+    public bool IsPinned => pinned;
+
+    /// <summary>Opens the contents for good and drops the dots, for a window with no picture to keep clear of.</summary>
+    public void Pin()
+    {
+        pinned = true;
+        Shown();
+        dots.IsVisible = false;
+        contents.Transitions = null;
+        contents.Opacity = 1;
+    }
 
     /// <summary>
     /// How solid the dots are for a pointer <paramref name="distance"/> from them.
@@ -173,11 +187,13 @@ public abstract class TuckedAway : Border
         if (!held) return;
 
         held = false;
-        if (!IsPointerOver) tuck.Start();
+        if (!IsPointerOver && !pinned) tuck.Start();
     }
 
     private void Hidden()
     {
+        if (pinned) return;
+
         contents.Opacity = 0;
         contents.IsHitTestVisible = false;
         dots.Opacity = Floor;

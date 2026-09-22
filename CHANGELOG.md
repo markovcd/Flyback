@@ -8,6 +8,7 @@
 - Saving a preset under a name already saved asks first, in place.
 - Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.
 - A patch's knobs can be played over the full-screen picture, in the editor and the viewer.
+- The viewer opens a patch with no picture as just its buttons and knobs.
 - Dragging the right button on an unpatched input turns its value.
 - Frequency and delay-time knobs sweep in decades, and an oscillator's `freq` reaches from a slow wobble up to 20 kHz.
 - A panel knob can sweep its sockets logarithmically, from its menu.

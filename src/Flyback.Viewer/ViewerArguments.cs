@@ -87,7 +87,7 @@ internal static class ViewerArguments
 
         var noVideo = new Option<bool>("--no-video")
         {
-            Description = "Compile no picture and draw none; the window stays, black.",
+            Description = "Compile no picture and draw none; the window is just its buttons.",
         };
 
         var window = new Option<string>("--window")
