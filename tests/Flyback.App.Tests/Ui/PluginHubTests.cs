@@ -1,7 +1,9 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
 using Flyback.App.Tests.PluginPackages;
@@ -51,22 +53,37 @@ public sealed class PluginHubTests : UiTest
         return (hub, window);
     }
 
-    /// <summary>The site answers on the thread pool, and a search waits a quarter of a second for typing to stop.</summary>
-    private static void Pump(Func<bool> until)
+    /// <summary>
+    /// The site answers on the thread pool, and a search waits a quarter of a second for
+    /// typing to stop. Lays out <paramref name="window"/> as it goes, which is what builds the site's rows.
+    /// </summary>
+    private static void Pump(Func<bool> until, Window? window = null)
     {
         var deadline = DateTime.UtcNow.AddSeconds(2);
 
         while (!until() && DateTime.UtcNow < deadline)
         {
             Dispatcher.UIThread.RunJobs();
+            window?.UpdateLayout();
             Thread.Sleep(5);
         }
     }
 
-    private static IEnumerable<string?> Names(Control view, string list) =>
-        All<StackPanel>(view).Single(p => p.Name == list).Children
-            .SelectMany(row => All<TextBlock>(row).Where(t => t.Name == "pluginName"))
-            .Select(t => t.Text);
+    /// <summary>The names on a list's rows, in order; for the site's, only the rows built.</summary>
+    private static IEnumerable<string?> Names(Control view, string list)
+    {
+        // The site's rows are built by layout, which pumping the dispatcher does not run.
+        view.UpdateLayout();
+
+        IEnumerable<Control> rows = All<Control>(view).Single(c => c.Name == list) switch
+        {
+            ItemsControl site => site.GetRealizedContainers().OrderBy(site.IndexFromContainer),
+            Panel installed => installed.Children,
+            var other => throw new InvalidOperationException(other.GetType().Name),
+        };
+
+        return rows.SelectMany(row => All<TextBlock>(row).Where(t => t.Name == "pluginName")).Select(t => t.Text);
+    }
 
     private static string? Status(PluginHub hub, string name) => All<TextBlock>(hub.View).Single(t => t.Name == name).Text;
 
@@ -116,6 +133,7 @@ public sealed class PluginHubTests : UiTest
         Pump(() => Names(hub.View, "sitePlugins").Count() == 2);
 
         Names(hub.View, "installedPlugins").ShouldBe(["Echoes", "Grain"]);
+        Names(hub.View, "sitePlugins").ShouldBe(["Ripple", "Shimmer"]);
     }
 
     [AvaloniaFact]
@@ -136,6 +154,37 @@ public sealed class PluginHubTests : UiTest
         Names(hub.View, "sitePlugins").ShouldBe(["Aurora", "Bloom", "Cinder"]);
         site.Asked[^1].Query.ShouldContain("page=2");
         more.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_long_list_from_the_site_builds_only_the_rows_in_view()
+    {
+        using var site = new FakePluginSite([.. Enumerable.Range(0, 200).Select(i => new Shared($"p{i}", $"Plugin {i:000}"))]) { PageSize = 200 };
+
+        var window = Owned(new MainWindow(pluginFolder: Plugins, pluginSite: FakePluginSite.Root) { SiteHttp = new HttpClient(site) });
+
+        window.Show();
+        Settle(window);
+
+        Press(All<Button>(window).Single(b => b.Name == "plugins"));
+        Pump(() => All<ItemsControl>(window).Any(l => l.Name == "sitePlugins" && l.ItemCount == 200), window);
+        Settle(window);
+
+        var list = All<ItemsControl>(window).Single(l => l.Name == "sitePlugins");
+        var built = list.GetRealizedContainers().Count();
+
+        built.ShouldBeGreaterThan(0);
+        built.ShouldBeLessThan(40, "only what fits the window is built");
+
+        var scroller = list.FindAncestorOfType<ScrollViewer>()!;
+
+        scroller.Offset = new Vector(0, scroller.Extent.Height);
+        Settle(window);
+        scroller.Offset = new Vector(0, scroller.Extent.Height);
+        Settle(window);
+
+        Names(list, "sitePlugins").ShouldContain("Plugin 199");
+        list.GetRealizedContainers().Count().ShouldBeLessThan(40);
     }
 
     [AvaloniaFact]
@@ -189,13 +238,13 @@ public sealed class PluginHubTests : UiTest
         Settle(window);
 
         Press(All<Button>(window).Single(b => b.Name == "plugins"));
-        Pump(() => All<StackPanel>(window).Any(p => p.Name == "sitePlugins" && p.Children.Count > 0));
+        Pump(() => All<Button>(window).Any(b => b.Name == "install" && b.Tag is SitePlugin), window);
         Settle(window);
 
         var install = All<Button>(window).Single(b => b.Name == "install" && b.Tag is SitePlugin);
 
         Press(install);
-        Pump(() => All<Border>(window).Any(b => b.Name == "pluginWarning"));
+        Pump(() => All<Border>(window).Any(b => b.Name == "pluginWarning"), window);
         Settle(window);
 
         All<ModalOverlay>(window).Count().ShouldBe(2, "the install question sits over the plugins window");
@@ -204,7 +253,7 @@ public sealed class PluginHubTests : UiTest
         Press(All<Button>(All<ModalOverlay>(window).Last()).Single(b => b.Name == "install"));
 
         // The row stops offering it once what is installed has been read again.
-        Pump(() => !All<Button>(window).Any(b => b.Name == "install" && b.Tag is SitePlugin));
+        Pump(() => !All<Button>(window).Any(b => b.Name == "install" && b.Tag is SitePlugin), window);
 
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
         All<TextBlock>(window).Single(t => t.Name == "pluginNotice").Text.ShouldEndWith("loads the next time Flyback starts.");

@@ -1,5 +1,7 @@
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -37,7 +39,19 @@ internal sealed class PluginHub : IDisposable
     private readonly Func<SitePlugin, Task<string?>> install;
 
     private readonly StackPanel installedRows = new() { Name = "installedPlugins", Spacing = 6 };
-    private readonly StackPanel siteRows = new() { Name = "sitePlugins", Spacing = 6 };
+    /// <summary>What the site has listed so far, of which only the rows scrolled to are built.</summary>
+    private readonly ObservableCollection<SitePlugin> listed = [];
+
+    private readonly ItemsControl siteRows;
+
+    /// <summary>The site's rows built now, which a reread tells what is installed.</summary>
+    private readonly HashSet<Grid> realized = [];
+
+    /// <summary>Each preview asked for, kept so a row scrolled back to is not fetched again.</summary>
+    private readonly Dictionary<string, Task<byte[]?>> previews = [];
+
+    /// <summary>Ends the preview fetches with the window.</summary>
+    private readonly CancellationTokenSource closing = new();
     private readonly TextBlock installedStatus = Status("installedStatus");
     private readonly TextBlock siteStatus = Status("siteStatus");
     private readonly Button more = new() { Name = "moreSite", Content = "More", FontSize = Text.Body, IsVisible = false, Margin = new Thickness(0, 4, 0, 0) };
@@ -66,6 +80,15 @@ internal sealed class PluginHub : IDisposable
         this.site = site;
         readInstalled = installed;
         this.install = install;
+
+        siteRows = new ItemsControl
+        {
+            Name = "sitePlugins",
+            ItemsSource = listed,
+            ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel()),
+            // A container being emptied is handed no plugin, and shows nothing.
+            ItemTemplate = new FuncDataTemplate<SitePlugin?>((plugin, _) => plugin is null ? new Panel() : SiteRow(plugin), supportsRecycling: false),
+        };
 
         Search.TextChanged += (_, _) =>
         {
@@ -114,6 +137,8 @@ internal sealed class PluginHub : IDisposable
         asking?.Cancel();
         asking?.Dispose();
         asking = null;
+        closing.Cancel();
+        closing.Dispose();
     }
 
     public TextBox Search { get; } = new()
@@ -146,7 +171,7 @@ internal sealed class PluginHub : IDisposable
         ShowInstalled();
 
         // The site's buttons say Install, Update or Installed by what is installed now.
-        foreach (var row in siteRows.Children.OfType<Control>())
+        foreach (var row in realized)
             if (row.Tag is SitePlugin plugin) Offer(row, plugin);
     }
 
@@ -219,7 +244,7 @@ internal sealed class PluginHub : IDisposable
         }
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
         {
-            if (fresh) siteRows.Children.Clear();
+            if (fresh) listed.Clear();
 
             siteStatus.Text = $"The plugin site at {site.Root} did not answer.";
             siteStatus.IsVisible = true;
@@ -231,33 +256,44 @@ internal sealed class PluginHub : IDisposable
 
         page = found.Page;
 
-        if (fresh) siteRows.Children.Clear();
+        if (fresh) listed.Clear();
 
-        foreach (var plugin in found.Items)
-        {
-            var picture = Picture(null);
-            var row = Row(plugin.Plugin, picture, new StackPanel());
-
-            row.Tag = plugin;
-            Offer(row, plugin);
-            siteRows.Children.Add(row);
-
-            _ = ShowPreviewAsync(plugin, picture, cancel);
-        }
+        foreach (var plugin in found.Items) listed.Add(plugin);
 
         siteStatus.Text = "Nothing on the plugin site matches.";
-        siteStatus.IsVisible = siteRows.Children.Count == 0;
+        siteStatus.IsVisible = listed.Count == 0;
         more.IsVisible = found.More;
         more.IsEnabled = true;
     }
 
-    private async Task ShowPreviewAsync(SitePlugin plugin, Border into, CancellationToken cancel)
+    /// <summary>A site plugin's row, built as it is scrolled to.</summary>
+    private Grid SiteRow(SitePlugin plugin)
     {
-        if (site is null || plugin.Preview is null) return;
+        var picture = Picture(null);
+        var row = Row(plugin.Plugin, picture, new StackPanel());
+
+        // The panel has no spacing, so the gap the installed rows get is margin here.
+        row.Margin = new Thickness(0, 7);
+        row.Tag = plugin;
+        row.AttachedToVisualTree += (_, _) => realized.Add(row);
+        row.DetachedFromVisualTree += (_, _) => realized.Remove(row);
+
+        Offer(row, plugin);
+        _ = ShowPreviewAsync(plugin, picture);
+
+        return row;
+    }
+
+    private async Task ShowPreviewAsync(SitePlugin plugin, Border into)
+    {
+        if (site is null || plugin.Preview is null || closing.IsCancellationRequested) return;
+
+        if (!previews.TryGetValue(plugin.Id, out var fetching))
+            previews[plugin.Id] = fetching = site.PreviewAsync(plugin, closing.Token);
 
         try
         {
-            if (await site.PreviewAsync(plugin, cancel) is { } bytes) into.Child = Image(bytes);
+            if (await fetching is { } bytes && Image(bytes) is { } image) into.Child = image;
         }
         catch (OperationCanceledException)
         {
