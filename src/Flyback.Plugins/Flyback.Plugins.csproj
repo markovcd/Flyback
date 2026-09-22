@@ -31,6 +31,9 @@
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+
+    <!-- A plugin package is checked against the contract before it is installed. -->
+    <InternalsVisibleTo Include="Flyback" />
   </ItemGroup>
 
   <ItemGroup>

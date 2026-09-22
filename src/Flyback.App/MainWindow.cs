@@ -11,6 +11,7 @@ using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Midi;
+using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
@@ -501,6 +502,10 @@ public sealed partial class MainWindow : Window
     /// looked for (ADR-0103). Null keeps nothing and offers nothing, for the reason
     /// <paramref name="outputSettingsPath"/> reads nothing.
     /// </param>
+    /// <param name="pluginFolder">
+    /// Where a plugin package opened in the window is installed. Null installs
+    /// nothing, for the reason <paramref name="outputSettingsPath"/> reads nothing.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
@@ -516,9 +521,11 @@ public sealed partial class MainWindow : Window
         string? canvasSettingsPath = null,
         string? layoutPath = null,
         string? fileTypeSettingsPath = null,
-        FileTypes? fileTypes = null)
+        FileTypes? fileTypes = null,
+        string? pluginFolder = null)
     {
         this.groupFolder = groupFolder;
+        this.pluginFolder = pluginFolder;
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
@@ -709,7 +716,9 @@ public sealed partial class MainWindow : Window
 
             RestoreLeftover();
 
-            if (openPath is { } path && await MayReplaceThePatchAsync()) await OpenPathAsync(path);
+            // A plugin package replaces nothing, so it asks about nothing unsaved.
+            if (openPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
+                await OpenPathAsync(path);
         };
     }
 

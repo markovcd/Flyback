@@ -42,6 +42,12 @@ internal static class Program
             // No console. Whatever is reading this can have the default.
         }
 
+        // A plugin package is the editor's to install (ADR-0132), whichever program the
+        // system opens it with.
+        if (args.FirstOrDefault(a => !a.StartsWith('-')) is { } first
+            && first.EndsWith(".fbkp", StringComparison.OrdinalIgnoreCase))
+            return HandToEditor(first);
+
         // Read before the command is built, so --help says what this machine is set to.
         var settings = OutputSettings.Load(ViewerArguments.SettingsPath(args) ?? OutputSettings.File);
 
@@ -90,6 +96,22 @@ internal static class Program
             .WithInterFont()
             .LogToTrace()
             .StartWithClassicDesktopLifetime([]);
+    }
+
+    private static int HandToEditor(string package)
+    {
+        var editor = Path.Combine(AppContext.BaseDirectory, OperatingSystem.IsWindows() ? "Flyback.exe" : "Flyback");
+
+        try
+        {
+            using var _ = Process.Start(new ProcessStartInfo(editor) { ArgumentList = { package }, UseShellExecute = false });
+            return Exit.Ok;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or FileNotFoundException)
+        {
+            Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {Path.GetFileName(package)} is a plugin, and the editor that installs it did not start: {ex.Message}");
+            return Exit.Failed;
+        }
     }
 
     /// <summary>The device to play through, or null where none was asked for or none could be had.</summary>

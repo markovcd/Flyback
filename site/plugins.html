@@ -796,10 +796,45 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     saying which side needs replacing, rather than failing later on whichever thread first reached for what
     had gone.</p>
 
+    <h3>Shipping it as a package</h3>
+
+    <p>To hand a plugin to somebody else, zip it as a <code>.fbkp</code>. Opening one with Flyback shows what
+    it says it is and installs it only when asked, copying just the build for the system it is on. At the
+    top of the zip is a <code>plugin.json</code>, and beside it a folder per system with that system's build
+    output in it: <code>win</code>, <code>osx</code>, <code>linux</code>, or <code>any</code> for a plugin
+    that is the same everywhere, which is used where there is no folder for the system itself.</p>
+
+    <pre><code>ripple.fbkp
+  plugin.json
+  win/     Flyback.Plugins.Ripple.dll, .deps.json, dependencies
+  linux/   …
+  osx/     …</code></pre>
+
+    <pre><code>{
+  <span class="s">"id"</span>: <span class="s">"acme.ripple"</span>,
+  <span class="s">"name"</span>: <span class="s">"Ripple"</span>,
+  <span class="s">"version"</span>: <span class="s">"1.2.0"</span>,
+  <span class="s">"author"</span>: <span class="s">"Acme"</span>,
+  <span class="s">"description"</span>: <span class="s">"Rings on water."</span>,
+  <span class="s">"website"</span>: <span class="s">"https://example.com/ripple"</span>
+}</code></pre>
+
+    <p><code>id</code>, <code>name</code> and <code>version</code> are required. The id names the folder the
+    plugin goes into, <code>plugins/acme.ripple</code>, so it is letters, digits, dots, dashes and
+    underscores. A second package with the same id replaces the first whole, at the next start. A package
+    never replaces a plugin it did not install, and never takes the id of one already loaded.</p>
+
+    <p>Flyback refuses a package outright if a file in it could land outside the plugin's folder
+    (<code>..</code>, a drive, a backslash, a name Windows keeps for a device), if two of its files differ
+    only in case, or if it is larger than 128 MB, or 512 MB unpacked. The Install button is off, with the
+    reason under it, when there is no build for this system or the build was compiled against a contract this
+    Flyback does not offer. Nothing in a package is signed or checked: the dialog shows its SHA-256, and says
+    that what it describes is only what the package says about itself.</p>
+
     <div class="note">
       <span class="tag">Two things that catch people out</span>
       <p><strong>Plugins are read once, at startup.</strong> Installing one means restarting the
-      application.</p>
+      application, and a package's plugin is moved into place at that restart.</p>
       <p><strong>The command line and the viewer have no plugins of their own.</strong> All three programs share
       one folder beside them, and the shell is what lays it out — so either run from its own build output,
       rather than from a publish, will not find your modules.</p>
@@ -830,6 +865,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
           <tr><td>A preset name already offered</td><td>The later preset is ignored</td></tr>
           <tr><td>A sound backend, MIDI input, assistant or secret store id already registered</td><td>The later one is ignored</td></tr>
           <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
+          <tr><td>A folder under <code>plugins/</code> whose name starts with a dot</td><td>Never scanned</td></tr>
           <tr><td>Built against an earlier major of the contract</td><td>The plugin is ignored, and About says it needs rebuilding</td></tr>
           <tr><td>Built against a later contract than this release offers</td><td>The plugin is ignored, and About says it needs a newer Flyback</td></tr>
           <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>

@@ -32,36 +32,50 @@ internal static class ContractVersion
     /// <summary>
     /// Why <paramref name="plugin"/> cannot be loaded, or null where it can.
     /// </summary>
-    public static string? Refusal(Assembly plugin)
+    public static string? Refusal(Assembly plugin) =>
+        Reason(plugin.GetReferencedAssemblies()) is { } reason ? Ignored(reason) : null;
+
+    /// <summary>The same question about one reference.</summary>
+    public static string? Refusal(AssemblyName reference, Version offered) =>
+        Reason(reference, offered) is { } reason ? Ignored(reason) : null;
+
+    /// <summary>
+    /// Why an assembly referencing <paramref name="references"/> could not be loaded,
+    /// as a sentence of its own, or null where it could. Asked of a plugin before it
+    /// is installed, when all there is to read is its metadata.
+    /// </summary>
+    public static string? Reason(IEnumerable<AssemblyName> references)
     {
-        foreach (var reference in plugin.GetReferencedAssemblies())
+        foreach (var reference in references)
         {
             var offered = Offered.FirstOrDefault(o =>
                 string.Equals(o.Name, reference.Name, StringComparison.OrdinalIgnoreCase));
 
-            if (offered is not null && Refusal(reference, offered.Version!) is { } refusal) return refusal;
+            if (offered is not null && Reason(reference, offered.Version!) is { } reason) return reason;
         }
 
         return null;
     }
 
     /// <summary>
-    /// The same question about one reference. A different major is a contract
-    /// with something taken away, in one direction or the other; a newer minor
-    /// is one with something added that this host does not have.
+    /// A different major is a contract with something taken away, in one direction
+    /// or the other; a newer minor is one with something added that this host does
+    /// not have.
     /// </summary>
-    public static string? Refusal(AssemblyName reference, Version offered)
+    private static string? Reason(AssemblyName reference, Version offered)
     {
         if (reference.Version is not { } built) return null;
 
         var (against, here) = ($"{reference.Name} {built.ToString(3)}", offered.ToString(3));
 
         if (built.Major < offered.Major)
-            return $"ignored — built against {against}, and this Flyback offers {here}. The plugin needs rebuilding.";
+            return $"Built against {against}, and this Flyback offers {here}. The plugin needs rebuilding.";
 
         if (built.Major > offered.Major || built.Minor > offered.Minor)
-            return $"ignored — built against {against}, and this Flyback only offers {here}. It needs a newer Flyback.";
+            return $"Built against {against}, and this Flyback only offers {here}. It needs a newer Flyback.";
 
         return null;
     }
+
+    private static string Ignored(string reason) => $"ignored — {char.ToLowerInvariant(reason[0])}{reason[1..]}";
 }

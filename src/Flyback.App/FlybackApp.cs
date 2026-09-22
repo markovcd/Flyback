@@ -6,8 +6,10 @@ using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Flyback.App.Files;
+using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
@@ -70,7 +72,7 @@ public sealed class FlybackApp : Application
                 outputSettingsPath: OutputSettings.File,
                 updateSettingsPath: UpdateSettings.File,
                 interpreted: Startup.Interpreted,
-                updateNote: Startup.UpdateNote,
+                updateNote: string.Join("  ", new[] { Startup.UpdateNote, Startup.PluginNote }.OfType<string>()) is { Length: > 0 } note ? note : null,
                 whatsNew: Startup.WhatsNew,
                 usageSettingsPath: UsageSettings.File,
                 usage: usage,
@@ -79,7 +81,8 @@ public sealed class FlybackApp : Application
                 canvasSettingsPath: CanvasSettings.File,
                 layoutPath: WindowLayout.File,
                 fileTypeSettingsPath: FileTypeSettings.File,
-                fileTypes: FileTypes.ForThisCopy());
+                fileTypes: FileTypes.ForThisCopy(),
+                pluginFolder: PluginHost.DefaultDirectory);
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.
@@ -100,6 +103,7 @@ public sealed class FlybackApp : Application
 
                     if (OperatingSystem.IsMacOS()
                         && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
+                        && !PluginPackage.Named(file.Name)
                         && file.TryGetLocalPath() is { } path)
                     {
                         PassToViewer(path, desktop, window);

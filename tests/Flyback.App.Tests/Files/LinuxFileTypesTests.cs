@@ -71,7 +71,7 @@ public sealed class LinuxFileTypesTests : IDisposable
     {
         var package = System.Xml.Linq.XDocument.Parse(LinuxFileTypes.MimePackage());
 
-        package.Root!.Elements().Count().ShouldBe(3);
+        package.Root!.Elements().Count().ShouldBe(4);
     }
 
     /// <summary>

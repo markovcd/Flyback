@@ -1,10 +1,11 @@
+using Flyback.App.PluginPackages;
 using Flyback.App.Updates;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 
 namespace Flyback.App.Files;
 
-/// <summary>One of the three kinds of file Flyback opens, as the operating system is told about it.</summary>
+/// <summary>One of the kinds of file Flyback opens, as the operating system is told about it.</summary>
 /// <param name="Extension">With its dot.</param>
 /// <param name="ProgId">What Windows files it under.</param>
 /// <param name="MimeType">What a Linux desktop files it under.</param>
@@ -21,6 +22,9 @@ public abstract class FileTypes
         new($".{PatchIO.FileExtension}", "Flyback patch", "Flyback.Patch", "application/x-flyback-patch"),
         new(PatchBundle.Extension, "Flyback bundle", "Flyback.Bundle", "application/x-flyback-bundle"),
         new($".{PatchLanguage.FileExtension}", "Flyback text", "Flyback.Text", "application/x-flyback-source"),
+
+        // Whichever program opens it, the editor installs it: the viewer passes it on.
+        new(PluginPackage.Extension, "Flyback plugin", "Flyback.Plugin", "application/x-flyback-plugin"),
     ];
 
     /// <summary>Makes <paramref name="opener"/> the program that opens them. Throws if it cannot.</summary>

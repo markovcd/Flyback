@@ -61,7 +61,7 @@ public sealed class WindowsFileTypesTests : IDisposable
 
         types.Apply(FileOpener.Viewer);
 
-        foreach (var (extension, id) in new[] { (".fbk", "Flyback.Patch"), (".fbkb", "Flyback.Bundle"), (".fbks", "Flyback.Text") })
+        foreach (var (extension, id) in new[] { (".fbk", "Flyback.Patch"), (".fbkb", "Flyback.Bundle"), (".fbks", "Flyback.Text"), (".fbkp", "Flyback.Plugin") })
         {
             Default(classes, extension).ShouldBe(id);
             Default(classes, $@"{id}\shell\open\command").ShouldBe($"\"{Viewer}\" \"%1\"");

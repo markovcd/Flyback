@@ -37,8 +37,11 @@ public static class PluginHost
 
         // Ordered so that two runs on the same machine see the same plugins in
         // the same order, and therefore break priority ties the same way.
+        // A folder whose name starts with a dot is an installation in progress, never a plugin.
         foreach (var folder in Directory.EnumerateDirectories(directory).Order(StringComparer.Ordinal))
-            LoadFolder(folder, plugins, registry, problems);
+        {
+            if (!Path.GetFileName(folder).StartsWith('.')) LoadFolder(folder, plugins, registry, problems);
+        }
 
         return new PluginCatalog(
             plugins,

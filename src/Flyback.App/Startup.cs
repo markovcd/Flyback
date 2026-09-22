@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Flyback.App.PluginPackages;
 using Flyback.App.Updates;
 using Flyback.Core;
 using Flyback.Core.Graph;
@@ -61,6 +62,9 @@ internal static class Startup
     /// </summary>
     public static bool FirstRun { get; private set; }
 
+    /// <summary>The plugins a package installed since the last launch, for the window to say once, or null.</summary>
+    public static string? PluginNote { get; private set; }
+
     /// <summary>Whether a release Flyback downloaded itself installed just before this launch.</summary>
     public static bool Updated { get; private set; }
 
@@ -83,6 +87,13 @@ internal static class Startup
         if (Updated) WhatsNew = ReleaseNotes.Of(running!, since: replaced);
 
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
+
+        // Before the scan, which is the first moment nothing has a plugin open.
+        var (installed, refused) = PluginInstaller.Finish(PluginHost.DefaultDirectory);
+
+        if (installed.Count > 0) PluginNote = $"Installed {string.Join(", ", installed)}.";
+
+        foreach (var problem in refused) Trace.WriteLine($"plugins: {problem}");
 
         Plugins = PluginHost.Load();
         NodeCatalog.Install(Plugins.Modules);

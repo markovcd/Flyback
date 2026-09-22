@@ -38,7 +38,8 @@ internal sealed class FilesSection
 
         ToolTip.SetTip(opener,
             "What a double-click on a .fbk, .fbkb or .fbks file starts: nothing of Flyback's, "
-            + "the editor with the patch open, or the viewer playing it.");
+            + "the editor with the patch open, or the viewer playing it. A .fbkp plugin always "
+            + "reaches the editor, which asks before installing it.");
 
         View.Children.Add(InspectorRows.Field("Open with", opener));
 

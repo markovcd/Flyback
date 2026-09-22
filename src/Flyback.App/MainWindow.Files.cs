@@ -2,6 +2,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
+using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Graph;
@@ -156,6 +157,12 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task OpenFileAsync(IStorageFile file)
     {
+        if (PluginPackage.Named(file.Name))
+        {
+            await InstallPluginAsync(file);
+            return;
+        }
+
         if (PatchFileKinds.Bundled(file.Name))
         {
             await OpenBundleAsync(file);
@@ -290,7 +297,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        if (await MayReplaceThePatchAsync()) await OpenFileAsync(file);
+        if (PluginPackage.Named(file.Name) || await MayReplaceThePatchAsync()) await OpenFileAsync(file);
     }
 
     /// <summary>
