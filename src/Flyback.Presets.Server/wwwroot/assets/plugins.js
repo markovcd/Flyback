@@ -198,8 +198,6 @@
 
     admin.then(function (state) {
       signed = state.signedIn;
-      if (signed) document.querySelector(".shelf-head .actions")
-        .appendChild(make("a", { class: "button", href: "admin.html" }, "Admin"));
       load();
     });
   }
