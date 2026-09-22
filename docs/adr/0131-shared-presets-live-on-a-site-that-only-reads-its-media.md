@@ -29,13 +29,15 @@ the app shows cannot disagree.
 **Metadata and the preset file go in SQLite. Media goes in a folder.** An MP3
 in a blob would bloat the database and could not be streamed with seeking.
 
-**The render app, `Flyback.Presets.Renderer`, runs on the other machine and
-writes into the site's media folder over a share.** It finds work through the
-site's public read API (`?pending=true`) and renders by running an installed
-`flyback-cli` and ffmpeg. The pictures and sounds are exactly what the CLI
-makes, plugins included. Each file is written under a temporary name and
-renamed, `{id}.done` goes last, and `{id}.failed` holds why a render could not
-be made. The site mounts the folder read-only.
+**`flyback-cli render-presets` runs on the other machine and writes into the
+site's media folder over a share.** It finds work through the site's public
+read API (`?pending=true`) and renders in-process with the same code as
+`flyback-cli render`, plugins included, so the render machine needs only a
+Flyback install and ffmpeg. A patch that does not open whole, one short of a
+plugin there, is refused rather than rendered without its missing modules.
+Each file is written under a temporary name and renamed, `{id}.done` goes last,
+and `{id}.failed` holds why a render could not be made. The site mounts the
+folder read-only.
 
 **The site has no API that writes media.** The only write is a submission,
 which is rate-limited per address. The API is versioned (`/api/v1`) so the app

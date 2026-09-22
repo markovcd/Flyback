@@ -8,5 +8,5 @@ services:
     volumes:
       # The database, which only this container writes.
       - ./data:/data
-      # The shared folder the render app writes into; the site only reads it.
+      # The shared folder flyback-cli render-presets writes into; the site only reads it.
       - ./media:/media:ro

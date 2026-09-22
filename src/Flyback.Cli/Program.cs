@@ -64,6 +64,7 @@ internal static class Program
             Modules(json),
             Probe(plugins, json),
             ViewerCommand.Build(),
+            RenderPresetsCommand.Build(),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the

@@ -1,12 +1,12 @@
 # The preset site
 
-People submit presets to a small site on the NAS, and a render app on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render app writes files into a shared folder, and the site only reads that folder.
+People submit presets to a small site on the NAS, and `flyback-cli render-presets` on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render machine writes files into a shared folder, and the site only reads that folder.
 
 ```
 browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
                         │  reads
                         ▼
-                    media/  ◀── writes ── render app (render PC, over SMB)
+                    media/  ◀── writes ── flyback-cli render-presets (render PC, over SMB)
                         ▲
                         └── polls /api/v1/presets?pending=true
 ```
@@ -41,16 +41,33 @@ Settings, all optional, as environment variables:
 | Variable | Default | |
 |---|---|---|
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
-| `Presets__Media` | `/media` | the folder the render app writes |
+| `Presets__Media` | `/media` | the folder the render machine writes |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
 
 ## Sharing the media folder
 
 Share `media/` over SMB so the render PC can write into it, for example as `\\nas\flyback-media`. Only the render PC's account needs write access.
 
-## The render app
+## Rendering
 
-See `src/Flyback.Presets.Renderer/README.md`.
+On the render PC, with Flyback installed (so `flyback-cli` has its plugins), ffmpeg on PATH (any full build: it needs libwebp, libvpx and libmp3lame) and the share mounted:
+
+```bash
+flyback-cli render-presets --server https://presets.example.org/ --media \\nas\flyback-media
+```
+
+It renders every preset still waiting, then checks again every 5 minutes. `--once` makes one pass and stops, `--poll-minutes` and `--timeout-minutes` change the waits, and `--ffmpeg` points at an ffmpeg that is not on PATH.
+
+| File | What it is |
+|---|---|
+| `{id}.webp` | a 1280x720 still, four seconds in |
+| `{id}.webm` | six silent seconds at 640x360 |
+| `{id}.mp3` | the first thirty seconds at -16 LUFS, with a 4 s fade |
+| `{id}.peaks.json` | the player's 96 bars |
+| `{id}.done` | written last, once the rest are in place |
+| `{id}.failed` | written instead, holding what went wrong |
+
+A patch that wires only a picture gets no track, one that wires only a sound gets no still or loop, and a silent one gets no track. A patch using a plugin the render PC does not have is marked failed.
 
 ## Looking after it
 
@@ -63,4 +80,4 @@ See `src/Flyback.Presets.Renderer/README.md`.
   ```
 
   The id is in the preset's page address.
-- **Render a preset again**: delete `media/<id>.done` or `media/<id>.failed`. The render app will pick it up on its next pass.
+- **Render a preset again**: delete `media/<id>.done` or `media/<id>.failed`. `render-presets` picks it up on its next pass.

@@ -91,7 +91,7 @@ api.MapGet("/presets", (string? q, string? tag, int? page, bool? pending) =>
 api.MapGet("/presets/{id}", (string id) =>
     store.Find(id) is { } preset ? Results.Ok(View(preset)) : Results.NotFound());
 
-// The render app fetches with count=false, so its fetches are not downloads.
+// render-presets fetches with count=false, so its fetches are not downloads.
 api.MapGet("/presets/{id}/file", (string id, bool? count) =>
     store.Download(id, count != false) is { } download
         ? Results.File(download.File, "application/octet-stream", download.Preset.FileName)

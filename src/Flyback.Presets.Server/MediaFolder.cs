@@ -2,11 +2,11 @@ using System.Text.Json;
 
 namespace Flyback.Presets.Server;
 
-/// <summary>What the render app has made of a preset so far.</summary>
+/// <summary>What <c>flyback-cli render-presets</c> has made of a preset so far.</summary>
 internal sealed record Media(string? Still, string? Loop, string? Audio, IReadOnlyList<double>? Peaks, string State);
 
 /// <summary>
-/// The folder the render app writes into and this server only reads.
+/// The folder <c>flyback-cli render-presets</c> writes into and this server only reads.
 /// </summary>
 /// <remarks>
 /// A preset's files are named by its id: <c>{id}.webp</c>, <c>{id}.webm</c>,
