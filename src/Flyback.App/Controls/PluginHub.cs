@@ -47,6 +47,9 @@ internal sealed class PluginHub : IDisposable
     private readonly Func<SitePlugin, Task<string?>> install;
     private readonly Func<HubInstalled, Task<string?>>? show;
 
+    /// <summary>What a patch was short of, shown first until the search box is typed in.</summary>
+    private readonly IReadOnlyList<SitePlugin> needed;
+
     /// <summary>The site plugins being downloaded, whose rows say so.</summary>
     private readonly HashSet<string> fetching = [];
 
@@ -88,16 +91,23 @@ internal sealed class PluginHub : IDisposable
 
     /// <param name="install">Downloads and installs a site plugin, asking first, and says how that went, or null where nothing was done.</param>
     /// <param name="show">Shows what an installed plugin is, when its row is clicked, and says what became of it, or null where nothing did.</param>
+    /// <param name="needed">
+    /// Plugins to put at the top of the site's list and say why: what a patch was
+    /// short of (ADR-0135). One search box cannot ask for two plugins at once — every
+    /// word of it has to match — so they are pinned rather than searched for.
+    /// </param>
     public PluginHub(
         PluginSite? site,
         Func<Task<IReadOnlyList<HubInstalled>>> installed,
         Func<SitePlugin, Task<string?>> install,
-        Func<HubInstalled, Task<string?>>? show = null)
+        Func<HubInstalled, Task<string?>>? show = null,
+        IReadOnlyList<SitePlugin>? needed = null)
     {
         this.site = site;
         readInstalled = installed;
         this.install = install;
         this.show = show;
+        this.needed = needed ?? [];
 
         siteRows = new ItemsControl
         {
@@ -181,6 +191,9 @@ internal sealed class PluginHub : IDisposable
 
     /// <summary>Asks the site for the first page of what matches.</summary>
     public Task AskSiteAsync() => AskAsync(fresh: true);
+
+    /// <summary>Whether the list is still the one the patch was opened for: nothing typed, no tag picked.</summary>
+    private bool Pinning => needed.Count > 0 && string.IsNullOrWhiteSpace(Search.Text) && tag is null;
 
     /// <summary>Reads what is installed again, and says so on the site's plugins.</summary>
     public async Task RereadAsync()
@@ -275,7 +288,24 @@ internal sealed class PluginHub : IDisposable
 
         if (fresh) listed.Clear();
 
-        foreach (var plugin in found.Items) listed.Add(plugin);
+        // What the patch wanted stays at the top of an unnarrowed list, and is not
+        // listed twice where the site's own page holds it as well.
+        IReadOnlyList<SitePlugin> pinned = fresh && Pinning ? needed : Array.Empty<SitePlugin>();
+
+        foreach (var plugin in pinned) listed.Add(plugin);
+
+        foreach (var plugin in found.Items)
+            if (!pinned.Any(w => w.Id == plugin.Id)) listed.Add(plugin);
+
+        if (fresh && needed.Count > 0)
+        {
+            Say(pinned.Count switch
+            {
+                0 => null,
+                1 => $"{pinned[0].Plugin.Name} is the plugin the patch needs, listed first.",
+                _ => $"{string.Join(" and ", pinned.Select(p => p.Plugin.Name))} are the plugins the patch needs, listed first.",
+            });
+        }
 
         siteStatus.Text = "Nothing on the plugin site matches.";
         siteStatus.IsVisible = listed.Count == 0;

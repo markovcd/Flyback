@@ -36,9 +36,17 @@ public sealed class PluginHubTests : UiTest
         new ListedPlugin("Flyback.Plugins.Grain", "Grain", "2.0.0", "Bob", "Film grain.", ["picture"], ["Noise"]),
         Waiting: null, Loaded: true, Picture: null);
 
-    private (PluginHub Hub, Window Window) Open(FakePluginSite site, Func<SitePlugin, Task<string?>>? install = null)
+    private (PluginHub Hub, Window Window) Open(
+        FakePluginSite site,
+        Func<SitePlugin, Task<string?>>? install = null,
+        IReadOnlyList<SitePlugin>? needed = null)
     {
-        var hub = new PluginHub(site.Site(), () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes, Grain]), install ?? (_ => Task.FromResult<string?>(null)));
+        var hub = new PluginHub(
+            site.Site(),
+            () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes, Grain]),
+            install ?? (_ => Task.FromResult<string?>(null)),
+            show: null,
+            needed);
 
         var content = new DockPanel();
 
@@ -90,6 +98,29 @@ public sealed class PluginHubTests : UiTest
     private static string? Status(PluginHub hub, string name) => All<TextBlock>(hub.View).Single(t => t.Name == name).Text;
 
     private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+    /// <summary>What a patch was short of, which one search box could not ask for.</summary>
+    [AvaloniaFact]
+    public async Task The_plugins_a_patch_needs_are_listed_first_and_said_to_be_why()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"), new Shared("s1", "Shimmer"), new Shared("t1", "Tape"));
+
+        var found = (await site.Site().SearchAsync(null, null, 1, CancellationToken.None)).Items;
+        var needed = found.Where(p => p.Plugin.Name is "Tape" or "Shimmer").ToList();
+
+        var (hub, window) = Open(site, needed: needed);
+
+        Names(hub.View, "sitePlugins").ShouldBe(["Shimmer", "Tape", "Ripple"], "the two wanted first, each once");
+        // The notice is in the header, which stays put while the lists scroll.
+        All<TextBlock>(hub.Header).Single(t => t.Name == "pluginNotice").Text
+            .ShouldBe("Shimmer and Tape are the plugins the patch needs, listed first.");
+
+        // Typing is asking for something else, so the two stop being pinned.
+        hub.Search.Text = "Ripple";
+        Pump(() => Names(hub.View, "sitePlugins").Count() == 1, window);
+
+        Names(hub.View, "sitePlugins").ShouldBe(["Ripple"]);
+    }
 
     [AvaloniaFact]
     public void It_lists_what_is_installed_and_what_the_site_offers()

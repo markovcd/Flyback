@@ -28,8 +28,6 @@ public sealed partial class MainWindow
 
         if (!await this.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
 
-        // One names itself; several have no search in common, so the window opens on
-        // everything the site offers and the rows are all there.
-        await ShowPluginsAsync(found.Count == 1 ? found[0].Plugin.Name : null);
+        await ShowPluginsAsync(found);
     }
 }

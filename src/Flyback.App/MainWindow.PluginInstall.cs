@@ -80,13 +80,11 @@ public sealed partial class MainWindow
     /// The plugins window: what is installed, and what the plugin site offers, to
     /// search and install from.
     /// </summary>
-    /// <param name="search">What the filter opens on, or null for everything.</param>
-    private async Task ShowPluginsAsync(string? search = null)
+    /// <param name="wanted">What a patch was short of, listed first, or null for an ordinary opening.</param>
+    private async Task ShowPluginsAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin), plugin => ShowInstalledAsync(site, plugin));
-
-        if (search is { Length: > 0 }) hub.Search.Text = search;
+        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin), plugin => ShowInstalledAsync(site, plugin), wanted);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
