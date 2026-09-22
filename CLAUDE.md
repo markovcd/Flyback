@@ -28,5 +28,6 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 Commands in `.claude/commands/` are run by name rather than matched:
 
 - `/bughunt`: hunt for bugs, confirm each as a failing test, fix it, and file the test where it belongs.
+- `/release`: check the changelog and the plugin contract, land the release commit on main, and fire the Release workflow.
 
 `.claude/settings.json` turns on the `Flyback Vibe` output style (`.claude/output-styles/vibe.md`) for every session in this repo. It governs wording only: what gets checked, weighed and recommended is unchanged.
