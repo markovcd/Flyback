@@ -142,6 +142,27 @@ public sealed class LetterTests : UiTest
     }
 
     /// <summary>
+    /// The bar reads left to right as what the patch costs and then what is not
+    /// about the patch at all, and the rule is what says so.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_rule_sets_the_letter_apart_from_the_count()
+    {
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        var letter = All<Button>(window).Single(b => b.Name == "letter");
+        var rule = All<TextBlock>(window).Single(b => b.Name == "statusRule");
+
+        rule.Text.ShouldBe("|", "the same bar the count divides itself with");
+
+        Grid.GetColumn(rule).ShouldBe(Grid.GetColumn(letter) - 1);
+        rule.Bounds.Right.ShouldBeLessThanOrEqualTo(letter.Bounds.Left);
+    }
+
+    /// <summary>
     /// Drawn rather than typed, which is not a preference: the shipped font has
     /// no envelope, and neither has it the gear or the ringed i the toolbar
     /// types — those fall through to whatever the platform puts up instead.

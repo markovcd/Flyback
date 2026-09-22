@@ -1451,16 +1451,18 @@ public sealed partial class MainWindow : Window
     /// gives up width the count is actually using. Which sound backend is open
     /// and which assistant is chosen are said in the About window, not here.
     /// <para>
-    /// The letter is last, at the far edge: it is the one thing on the bar that is
-    /// not about the patch, and it is reached for rarely enough that being out of
-    /// the way is the point (ADR-0136).
+    /// The letter is last, at the far edge, behind a rule: it is the one thing on
+    /// the bar that is not about the patch, and it is reached for rarely enough
+    /// that being out of the way is the point (ADR-0136). The rule is the
+    /// toolbar's, which divides the patch's buttons from the program's for the
+    /// same reason.
     /// </para>
     /// </remarks>
     private Control BuildStatusBar()
     {
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
             Margin = new Thickness(12, 5),
         };
 
@@ -1480,12 +1482,25 @@ public sealed partial class MainWindow : Window
 
         letter.Click += async (_, _) => await WriteToTheAuthorAsync();
 
+        // The same bar the count divides itself with, at the same size and color:
+        // a drawn rule here would be a second kind of separator on one line.
+        var rule = new TextBlock
+        {
+            Name = "statusRule",
+            Text = "|",
+            FontSize = Text.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(10, 0, 0, 0),
+        };
+
         Grid.SetColumn(report, 0);
         Grid.SetColumn(status, 1);
-        Grid.SetColumn(letter, 2);
+        Grid.SetColumn(rule, 2);
+        Grid.SetColumn(letter, 3);
 
         bar.Children.Add(report);
         bar.Children.Add(status);
+        bar.Children.Add(rule);
         bar.Children.Add(letter);
 
         return new Border
@@ -1519,7 +1534,7 @@ public sealed partial class MainWindow : Window
             MinWidth = 0,
             MinHeight = 0,
             Padding = new Thickness(0),
-            Margin = new Thickness(10, 0, 0, 0),
+            Margin = new Thickness(8, 0, 0, 0),
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             Foreground = Text.Muted,

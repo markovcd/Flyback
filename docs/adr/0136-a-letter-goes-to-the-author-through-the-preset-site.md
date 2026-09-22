@@ -49,9 +49,11 @@ what goes with it is read on the way out. That is also why the patch is not
 attached, however useful it would be for a bug: it is the person's work, and
 sending it is a separate thing to ask for.
 
-**The button is the last thing on the status bar,** right of the module count.
-The toolbar is what is done to the patch and to the program; a letter is
-neither, and it is reached for once in a year. Its envelope is drawn rather
+**The button is the last thing on the status bar,** right of the module count
+and behind the same upright bar the count already divides itself with. The
+toolbar is what is done to the patch and to the program; a letter is neither,
+and it is reached for once in a year. One kind of separator to a line: a drawn
+rule beside four typed bars would read as two different dividers. Its envelope is drawn rather
 than typed, because Inter has no envelope — nor a gear nor a ringed i, which
 the toolbar types anyway and which the platform's emoji font answers for.
 
