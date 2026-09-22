@@ -119,7 +119,7 @@ internal static class PresetGallery
             var tiles = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
 
             foreach (var preset in run)
-                tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt));
+                tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt, search));
 
             gallery.Children.Add(tiles);
             search.Add((TextBlock)gallery.Children[^2], tiles);
@@ -185,7 +185,7 @@ internal static class PresetGallery
 
             foreach (var preset in yours.All())
             {
-                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt);
+                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt, search);
 
                 if (!yours.PickOnly) Removable(tile, preset, () =>
                 {
@@ -393,7 +393,8 @@ internal static class PresetGallery
         bool showing,
         Color accent,
         PresetThumbnails thumbnails,
-        Action<PointedTile?>? pointedAt)
+        Action<PointedTile?>? pointedAt,
+        Search search)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
@@ -441,6 +442,16 @@ internal static class PresetGallery
             IsVisible = false,
         };
 
+        // What it is tagged, once the patch is open and says.
+        var tags = new TextBlock
+        {
+            Name = "tags",
+            FontSize = Text.Caption,
+            Foreground = new SolidColorBrush(accent),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            IsVisible = false,
+        };
+
         var picture = new Border
         {
             Name = "thumbnail",
@@ -473,6 +484,7 @@ internal static class PresetGallery
                     new TextBlock { Text = preset.Name, FontSize = Text.Body, FontWeight = FontWeight.SemiBold },
                     description,
                     credit,
+                    tags,
                 },
             },
         };
@@ -486,7 +498,7 @@ internal static class PresetGallery
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
-        _ = Fill(image, words, speaker, description, credit, thumbnails.Of(preset));
+        _ = Fill(image, words, speaker, description, credit, tags, thumbnails.Of(preset), said => search.Credit(tile, said));
 
         return tile;
     }
@@ -496,9 +508,18 @@ internal static class PresetGallery
     /// so what follows the wait is on it too.
     /// </summary>
     private static async Task Fill(
-        Image image, TextBlock words, Control speaker, TextBlock description, TextBlock credit, Task<Thumbnail> drawing)
+        Image image,
+        TextBlock words,
+        Control speaker,
+        TextBlock description,
+        TextBlock credit,
+        TextBlock tags,
+        Task<Thumbnail> drawing,
+        Action<Thumbnail> drawn)
     {
         var thumbnail = await drawing;
+
+        drawn(thumbnail);
 
         if (thumbnail.Description is { } said)
         {
@@ -510,6 +531,12 @@ internal static class PresetGallery
         {
             credit.Text = "by " + author;
             credit.IsVisible = true;
+        }
+
+        if (thumbnail.Tags is { Count: > 0 } tagged)
+        {
+            tags.Text = string.Join(" · ", tagged);
+            tags.IsVisible = true;
         }
 
         if (thumbnail.Pixels is null && thumbnail.Words == Thumbnail.SoundOnly.Words)
@@ -549,6 +576,9 @@ internal static class PresetGallery
 
         /// <summary>What the highlighted tile was painted before it was highlighted, to be put back.</summary>
         private IBrush? unhighlighted;
+
+        /// <summary>Who made each tile's patch and what it is tagged, known once the patch is open.</summary>
+        private readonly Dictionary<Button, string[]> credits = [];
 
         public TextBox Box { get; } = new()
         {
@@ -609,10 +639,32 @@ internal static class PresetGallery
         public void Add(TextBlock heading, Panel tiles) => runs.Add((heading, tiles));
 
         /// <summary>
-        /// Shows what matches the box. A preset matches on its name or on the
-        /// heading it is under, but not on its description: every preset has a
-        /// sentence of prose, and matching it turns a search for a common word
-        /// into most of the gallery.
+        /// Makes <paramref name="tile"/> findable by its author and its tags, and
+        /// narrows again if something is typed, since it may match now.
+        /// </summary>
+        public void Credit(Button tile, Thumbnail said)
+        {
+            string[] words = [.. said.Tags ?? [], .. said.Author is { } author ? [author] : Array.Empty<string>()];
+
+            if (words.Length == 0) return;
+
+            credits[tile] = words;
+
+            if (Box.Text is not { Length: > 0 }) return;
+
+            // The highlight stays on the tile the arrows left it on.
+            var reached = highlighted >= 0 && highlighted < listed.Count ? listed[highlighted] : null;
+
+            Apply();
+
+            if (reached is not null && listed.IndexOf(reached) is > 0 and var index) Highlight(index);
+        }
+
+        /// <summary>
+        /// Shows what matches the box. A preset matches on its name, the heading it
+        /// is under, its author or a tag, but not on its description: every preset
+        /// has a sentence of prose, and matching it turns a search for a common
+        /// word into most of the gallery.
         /// </summary>
         public void Apply()
         {
@@ -632,8 +684,8 @@ internal static class PresetGallery
                 {
                     // Anything that is not a preset is the card that saves one,
                     // which nobody is looking for by name.
-                    var shown = child is Button { Tag: PatchPreset preset }
-                        ? headed || Has(preset.Name, text)
+                    var shown = child is Button { Tag: PatchPreset preset } button
+                        ? headed || Has(preset.Name, text) || Credited(button, text)
                         : text.Length == 0 || headed;
 
                     child.IsVisible = shown;
@@ -653,6 +705,9 @@ internal static class PresetGallery
             // after without an arrow key.
             Highlight(0);
         }
+
+        private bool Credited(Button tile, string text) =>
+            text.Length > 0 && credits.TryGetValue(tile, out var words) && words.Any(word => Has(word, text));
 
         private static bool Has(string? said, string text) =>
             text.Length == 0 || (said?.Contains(text, StringComparison.OrdinalIgnoreCase) ?? false);

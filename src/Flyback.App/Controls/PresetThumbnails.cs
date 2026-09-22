@@ -15,7 +15,9 @@ namespace Flyback.App.Controls;
 /// <param name="Words">What the tile says instead. Empty when there are pixels, or nothing to say.</param>
 /// <param name="Description">What the patch says it is for, and null where it says nothing or would not open.</param>
 /// <param name="Author">Who the patch says made it, and null where it says nobody or would not open.</param>
-internal sealed record Thumbnail(byte[]? Pixels, string Words, string? Description = null, string? Author = null)
+/// <param name="Tags">What the patch is tagged, and null where it has no tags or would not open.</param>
+internal sealed record Thumbnail(
+    byte[]? Pixels, string Words, string? Description = null, string? Author = null, IReadOnlyList<string>? Tags = null)
 {
     /// <summary>
     /// A patch that is heard and never seen, which has no frame to take. Shown as a
@@ -105,13 +107,14 @@ internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compil
             var (picture, sound) = patch.Reaches();
             var described = patch.Description;
             var author = patch.Author;
+            var tags = patch.Tags;
 
             if (!picture)
-                return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described, Author = author };
+                return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described, Author = author, Tags = tags };
 
             var video = patch.CompileForVideo(samples: samples, pictures: pictures);
 
-            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described, Author = author };
+            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described, Author = author, Tags = tags };
 
             compiler?.Compile(video.Program, IlLane.AuditionPicture);
 
@@ -122,7 +125,7 @@ internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compil
             for (var step = 0; step * Step <= Settle; step++)
                 renderer.Render(video.Program, step * Step, Width, Height, pixels, stride);
 
-            return new Thumbnail(pixels, "", described, author);
+            return new Thumbnail(pixels, "", described, author, tags);
         }
         catch (Exception)
         {

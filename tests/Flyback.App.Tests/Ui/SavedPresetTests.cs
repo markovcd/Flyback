@@ -363,6 +363,48 @@ public class SavedPresetTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_saved_preset_is_found_by_its_tags_and_its_author()
+    {
+        var window = Open();
+        var patch = All<NodeEditor>(window).Single().Patch;
+
+        patch.Credit("Wendelin");
+        patch.Tag(["drone", "quokka"]);
+
+        OpenGallery(window);
+        SaveAs(window, "Mine");
+
+        var tile = All<Button>(Yours(window)).Single(b => b.Name == "tile");
+        var tags = All<TextBlock>(tile).Single(t => t.Name == "tags");
+        var deadline = DateTime.UtcNow.AddSeconds(60);
+
+        while (!tags.IsVisible && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            Thread.Sleep(20);
+        }
+
+        tags.Text.ShouldBe("drone · quokka");
+
+        var filter = All<TextBox>(window).Single(b => b.Name == "preset-filter");
+
+        foreach (var typed in (string[])["quokk", "wendel"])
+        {
+            filter.Text = typed;
+            Settle(window);
+
+            All<Button>(window).Where(b => b is { Name: "tile", IsVisible: true })
+                .Select(b => ((PatchPreset)b.Tag!).Name)
+                .ShouldBe(["Mine"], typed);
+        }
+
+        filter.Text = "nobody-tagged-this";
+        Settle(window);
+
+        tile.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void A_window_given_no_folder_has_no_saved_run()
     {
         var window = NewMainWindow();
