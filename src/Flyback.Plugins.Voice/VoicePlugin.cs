@@ -1,4 +1,19 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins;
+using Flyback.Plugins.Voice;
+
+// Every module Register adds, so it can be listed before the plugin runs.
+[assembly: FlybackModule(SupersawModule.TypeId, "Supersaw")]
+[assembly: FlybackModule(FoldModule.TypeId, "Fold")]
+[assembly: FlybackModule(DecayModule.TypeId, "Decay")]
+[assembly: FlybackModule(EuclidModule.TypeId, "Euclid")]
+[assembly: FlybackModule(StrokeModule.TypeId, "Stroke")]
+[assembly: FlybackModule(FadeModule.TypeId, "Fade")]
+[assembly: FlybackModule(WanderModule.TypeId, "Wander")]
+[assembly: FlybackModule(DrumModule.TypeId, "Drum")]
+[assembly: FlybackModule(BellModule.TypeId, "Bell")]
+[assembly: FlybackModule(FmModule.TypeId, "FM")]
+[assembly: FlybackModule(HissModule.TypeId, "Hiss")]
 
 namespace Flyback.Plugins.Voice;
 

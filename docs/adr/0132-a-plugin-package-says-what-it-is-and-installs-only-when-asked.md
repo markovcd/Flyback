@@ -31,7 +31,9 @@ everywhere, used where the system has no folder of its own. A folder is a build 
 exactly one plugin assembly sits at its top: one with a public, concrete type
 implementing `IFlybackPlugin` as `Flyback.Plugins` defines it, not an interface of
 that name from anywhere else. There is no manifest. A description written beside
-the plugin is a second account of it that can disagree with the first.
+the plugin is a second account of it that can disagree with the first; the one list
+a plugin writes of itself, its modules, lives in the assembly and is held to what it
+registers ([0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md)).
 
 **What the dialog shows is read from the plugin's metadata, and none of its code
 runs.** Its name, version, author and description come from the assembly's own
@@ -44,6 +46,8 @@ refuses the package, since each is a mistake in the project rather than somethin
 to show around. Everything a package says about itself is in the assembly, so a
 plugin copied in by hand says the same. What it adds comes from which `IPluginRegistry` methods its code
 calls: modules, presets, a sound output, a MIDI input, an assistant, a secret store.
+Which modules, by name, come from its `FlybackModule` declarations, or are said to be
+unlisted for a plugin built before there were any.
 What it reaches comes from what any assembly in the build names: the network, files,
 other programs, the registry, native code (a P/Invoke, or a binary with no metadata),
 and code it loads while running (reflection, `Emit`, a load context). The dialog
@@ -57,7 +61,8 @@ do anything the user can. Install is off, with the reason written under it, wher
 there is no build for this system, or where any assembly in the build — the plugin
 or a helper it carries — was compiled against a contract this Flyback does not
 offer by [0102](0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)'s
-rule. A helper is named, since the host only asks the plugin itself and would miss
+rule, or where a plugin that knew to declare its modules adds some and declares none.
+A helper is named, since the host only asks the plugin itself and would miss
 it until it was first called. Escape, the cross and Cancel install nothing.
 
 **Only this system's build is installed**, into `plugins/<plugin assembly>`, with

@@ -13,8 +13,8 @@ namespace Flyback.Plugins.Hosting;
 /// <c>EnableDynamicLoading</c> — without it the file is not produced and
 /// nothing but the entry assembly resolves.
 /// </remarks>
-internal sealed class PluginLoadContext(string entryAssemblyPath)
-    : AssemblyLoadContext(Path.GetFileNameWithoutExtension(entryAssemblyPath))
+internal sealed class PluginLoadContext(string entryAssemblyPath, bool collectible = false)
+    : AssemblyLoadContext(Path.GetFileNameWithoutExtension(entryAssemblyPath), collectible)
 {
     /// <summary>
     /// Assemblies the host owns. These must resolve to the host's copy or the same type

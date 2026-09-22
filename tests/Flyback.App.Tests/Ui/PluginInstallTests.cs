@@ -108,7 +108,7 @@ public sealed class PluginInstallTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_package_shows_the_plugins_preview_author_and_tags()
+    public void A_package_shows_the_plugins_preview_author_tags_and_modules()
     {
         var window = Open();
         var dialog = Dropped(window, Write(Packages.ForSample()));
@@ -116,6 +116,7 @@ public sealed class PluginInstallTests : UiTest
         Texts(dialog).ShouldContain("Sample modules");
         Texts(dialog).ShouldContain(t => t != null && t.EndsWith(", by Flyback", StringComparison.Ordinal));
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginTags").Text.ShouldBe("example, ripple, test-fixture");
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginModules").Text.ShouldBe("Ripple, Halve");
 
         var preview = All<Image>(dialog).Single(i => i.Name == "pluginPreview");
 

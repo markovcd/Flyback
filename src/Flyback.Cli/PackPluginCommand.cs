@@ -46,12 +46,12 @@ internal static class PackPluginCommand
         try
         {
             if (Project(source) is { } project)
-                return Built(project, building, dotnet, error) is { } built ? Pack(built, new HashSet<string>(), output, writer, error) : Exit.Failed;
+                return Built(project, building, dotnet, error) is { } built ? Pack(built, new HashSet<string>(), output, writer, error, building) : Exit.Failed;
 
             if (source is not DirectoryInfo { Exists: true } folder)
                 return Fail(error, $"{source.Name}: there is no such project or folder.");
 
-            return Found(folder.FullName, error) is var (builds, leave) ? Pack(builds, leave, output, writer, error) : Exit.Failed;
+            return Found(folder.FullName, error) is var (builds, leave) ? Pack(builds, leave, output, writer, error, building) : Exit.Failed;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -276,7 +276,8 @@ internal static class PackPluginCommand
         IReadOnlySet<string> leave,
         FileInfo output,
         TextWriter writer,
-        TextWriter error)
+        TextWriter error,
+        string building)
     {
         foreach (var (_, folder) in builds)
         {
@@ -305,11 +306,66 @@ internal static class PackPluginCommand
                 return Fail(error, $"{output.Name} would be refused. {refusal}");
         }
 
+        var tried = Tried(builds, leave, building, writer, error);
+
+        if (tried != Exit.Ok) return tried;
+
         File.WriteAllBytes(output.FullName, bytes);
 
         Describe(output, package, writer);
 
         return Exit.Ok;
+    }
+
+    /// <summary>
+    /// Loads the build this system would install and has it register, failing on
+    /// anything Flyback would complain of — above all a module it does not declare.
+    /// </summary>
+    /// <remarks>
+    /// This runs the plugin, which is the author's own code on the author's machine. A
+    /// build for another system is not run, and says so. It runs from a copy, so the
+    /// author's build folder is never held open.
+    /// </remarks>
+    private static int Tried(
+        List<(string Platform, string Folder)> builds,
+        IReadOnlySet<string> leave,
+        string building,
+        TextWriter writer,
+        TextWriter error)
+    {
+        var here = builds.FirstOrDefault(b => b.Platform == PluginPackage.ThisPlatform);
+
+        if (here.Folder is null) here = builds.FirstOrDefault(b => b.Platform == PluginPackage.AnyPlatform);
+
+        if (here.Folder is null)
+        {
+            writer.WriteLine($"Not run: there is no build for {PluginPackage.Describe(PluginPackage.ThisPlatform)}, so its modules are checked when it is first loaded.");
+            return Exit.Ok;
+        }
+
+        var copy = Path.Combine(building, "tried");
+        Copy(here.Folder, copy, leave);
+
+        var (problems, loaded) = PluginHost.Try(copy);
+
+        if (problems is [var problem, ..])
+            return Fail(error, $"The {PluginPackage.Describe(here.Platform)} build would be refused when loaded. {problem.Source}: {problem.Message}");
+
+        return loaded > 0 ? Exit.Ok : Fail(error, $"The {PluginPackage.Describe(here.Platform)} build loaded no plugin.");
+    }
+
+    private static void Copy(string from, string to, IReadOnlySet<string> leave)
+    {
+        foreach (var file in Directory.EnumerateFiles(from, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(from, file);
+
+            if (leave.Contains(relative.Split(Path.DirectorySeparatorChar)[0])) continue;
+
+            var target = Path.Combine(to, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(file, target);
+        }
     }
 
     /// <summary>What the install dialog will show, as lines.</summary>
@@ -325,6 +381,9 @@ internal static class PackPluginCommand
         writer.WriteLine($"  tags      {(plugin.Tags.Count > 0 ? string.Join(", ", plugin.Tags) : "none")}");
         writer.WriteLine($"  preview   {(plugin.Preview is { } preview ? $"{preview.MediaType}, {Math.Max(1, preview.Bytes.Length >> 10)} KB" : "none")}");
         writer.WriteLine($"  adds      {(plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find")}");
+
+        if (plugin.Modules.Count > 0)
+            writer.WriteLine($"  modules   {string.Join(", ", plugin.Modules.Select(m => $"{m.Name} ({m.TypeId})"))}");
         writer.WriteLine($"  reaches   {(plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names")}");
         writer.WriteLine($"  assembly  {plugin.Assembly}.dll");
         writer.WriteLine($"  against   {plugin.BuiltAgainst}");

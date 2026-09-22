@@ -17,6 +17,7 @@ namespace Flyback.Plugins.Hosting;
 /// <param name="Adds">The kinds of thing it can register, from the registry methods it calls.</param>
 /// <param name="Reaches">What outside Flyback its code names: the network, files, other programs.</param>
 /// <param name="Previews">The resources it embeds under a preview's name.</param>
+/// <param name="Modules">The modules it declares with <see cref="FlybackModuleAttribute"/>.</param>
 internal sealed record AssemblyFacts(
     string Name,
     bool IsPlugin,
@@ -26,7 +27,8 @@ internal sealed record AssemblyFacts(
     IReadOnlySet<string> Adds,
     IReadOnlySet<string> Reaches,
     IReadOnlyList<AssemblyName> References,
-    IReadOnlyList<EmbeddedPreview> Previews)
+    IReadOnlyList<EmbeddedPreview> Previews,
+    IReadOnlyList<DeclaredModule> Modules)
 {
     /// <summary>The facts of a managed assembly, or null for anything else — a native library, a text file.</summary>
     public static AssemblyFacts? Of(Stream image)
@@ -83,7 +85,8 @@ internal sealed record AssemblyFacts(
                 reaches,
                 [.. metadata.AssemblyReferences.Select(h => metadata.GetAssemblyReference(h)).Select(r =>
                     new AssemblyName(metadata.GetString(r.Name)) { Version = r.Version })],
-                PreviewsOf(reader, metadata));
+                PreviewsOf(reader, metadata),
+                ModulesOf(metadata, assembly));
         }
         catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
         {
@@ -93,12 +96,14 @@ internal sealed record AssemblyFacts(
 
     public const string NativeCode = "native code";
 
+    public const string ModulesAdded = "modules";
+
     public const string LoadedCode = "code it loads while running";
 
     /// <summary>What each registry method adds, as the dialog says it.</summary>
     private static readonly Dictionary<string, string> Registered = new(StringComparer.Ordinal)
     {
-        [nameof(IPluginRegistry.AddModules)] = "modules",
+        [nameof(IPluginRegistry.AddModules)] = ModulesAdded,
         [nameof(IPluginRegistry.AddPresets)] = "presets",
         [nameof(IPluginRegistry.AddAudioOutput)] = "a sound output",
         [nameof(IPluginRegistry.AddMidiInput)] = "a MIDI input",
@@ -211,6 +216,43 @@ internal sealed record AssemblyFacts(
         return (found, pairs);
     }
 
+    /// <summary>The most modules one plugin may declare, for the dialog's sake.</summary>
+    public const int ModuleLimit = 1000;
+
+    /// <summary>Its <see cref="FlybackModuleAttribute"/>s, in the order written, each cleaned for showing.</summary>
+    private static List<DeclaredModule> ModulesOf(MetadataReader metadata, AssemblyDefinition assembly)
+    {
+        var found = new List<DeclaredModule>();
+
+        foreach (var handle in assembly.GetCustomAttributes())
+        {
+            var attribute = metadata.GetCustomAttribute(handle);
+
+            if (attribute.Constructor.Kind != HandleKind.MemberReference) continue;
+
+            var constructor = metadata.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
+
+            if (constructor.Parent.Kind != HandleKind.TypeReference) continue;
+
+            var type = metadata.GetTypeReference((TypeReferenceHandle)constructor.Parent);
+
+            if (metadata.GetString(type.Namespace) != "Flyback.Plugins" || metadata.GetString(type.Name) != nameof(FlybackModuleAttribute)) continue;
+
+            try
+            {
+                if (attribute.DecodeValue(StringsOnly.Instance).FixedArguments is [{ Value: string id }, { Value: string name }]
+                    && found.Count < ModuleLimit)
+                    found.Add(new DeclaredModule(PluginDescription.Line(id, 128), PluginDescription.Line(name, 64)));
+            }
+            catch (Exception ex) when (ex is BadImageFormatException or NotSupportedException)
+            {
+                // Not the attribute's shape, so not a declaration.
+            }
+        }
+
+        return found;
+    }
+
     /// <summary><c>AssemblyProductAttribute</c> as <c>Product</c>.</summary>
     private static string ShortName(string type)
     {
@@ -311,6 +353,7 @@ internal sealed record PluginPreview(string MediaType, byte[] Bytes)
 /// names. Every string is cleaned for showing.
 /// </summary>
 /// <param name="Assembly">The plugin assembly's name, which is also the folder it is installed into.</param>
+/// <param name="Modules">The modules the plugin assembly declares, which are all it may register.</param>
 /// <param name="Tags">Its <c>AssemblyMetadata("Tags", …)</c>, tidied as a patch's tags are.</param>
 /// <param name="Adds">What it can register: modules, presets, a sound output and so on.</param>
 /// <param name="Reaches">What outside Flyback its code names, from any assembly in the build.</param>
@@ -330,8 +373,26 @@ internal sealed partial record PluginDescription(
     IReadOnlyList<string> Adds,
     IReadOnlyList<string> Reaches,
     PluginPreview? Preview,
-    IReadOnlyList<(string Assembly, IReadOnlyList<AssemblyName> References)> Compiled)
+    IReadOnlyList<(string Assembly, IReadOnlyList<AssemblyName> References)> Compiled,
+    IReadOnlyList<DeclaredModule> Modules)
 {
+    /// <summary>
+    /// Whether it adds modules and was compiled before a plugin declared them, so which
+    /// ones cannot be known until it runs.
+    /// </summary>
+    public bool ModulesUnlisted => Adds.Contains(AssemblyFacts.ModulesAdded) && Modules.Count == 0 && !ModuleDeclarations.Required(Compiled[0].References);
+
+    /// <summary>
+    /// Why this build would not be loaded, or null where it would: an assembly compiled
+    /// against a contract this Flyback does not offer, or a plugin that knew to declare its
+    /// modules adding some without declaring one.
+    /// </summary>
+    public string? Refusal() =>
+        ContractRefusal()
+        ?? (Adds.Contains(AssemblyFacts.ModulesAdded) && Modules.Count == 0 && ModuleDeclarations.Required(Compiled[0].References)
+            ? "It adds modules without declaring any with [assembly: FlybackModule(id, name)], so Flyback would refuse it."
+            : null);
+
     /// <summary>
     /// The versions of <c>Flyback.Plugins</c> and <c>Flyback.Core</c> the plugin assembly
     /// was compiled against, as the dialog shows them, or an empty string for neither.
@@ -418,7 +479,8 @@ internal sealed partial record PluginDescription(
             [.. adds],
             [.. reaches],
             PluginPreview.Of(entry.Previews),
-            [.. compiled.OrderBy(facts => facts == entry ? 0 : 1).Select(facts => (facts.Name, facts.References))]);
+            [.. compiled.OrderBy(facts => facts == entry ? 0 : 1).Select(facts => (facts.Name, facts.References))],
+            entry.Modules);
     }
 
     /// <summary>The <c>Tags</c> pair split at commas and semicolons.</summary>

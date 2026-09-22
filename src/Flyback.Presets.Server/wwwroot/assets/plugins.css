@@ -37,3 +37,4 @@ dl.said dd { margin: 0; color: var(--label); min-width: 0; }
 .card.plugin.unpublished { border-style: dashed; }
 .plugin-page .badge { margin: 20px 0 0; }
 .plugin-page .admin-tools { margin-top: 16px; padding-top: 16px; }
+.card.plugin p.modules { font-size: 13.5px; color: var(--muted); }

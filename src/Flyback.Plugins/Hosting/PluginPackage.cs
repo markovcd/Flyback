@@ -122,7 +122,7 @@ internal sealed class PluginPackage
     /// <summary>
     /// Why this package cannot be installed on <paramref name="platform"/>, or null
     /// where it can: there is no build for it, or an assembly in the build was compiled
-    /// against a contract this Flyback does not offer.
+    /// against a contract this Flyback does not offer, or the plugin adds modules it does not declare.
     /// </summary>
     public string? Refusal(string platform)
     {
@@ -133,7 +133,7 @@ internal sealed class PluginPackage
                 : $"It has no build for {Describe(platform)}, only for {string.Join(", ", Builds.Select(Describe))}.";
         }
 
-        return descriptions[build].ContractRefusal();
+        return descriptions[build].Refusal();
     }
 
     /// <summary>Reads a package already in memory.</summary>

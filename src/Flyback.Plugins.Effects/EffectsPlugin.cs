@@ -1,4 +1,12 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins;
+using Flyback.Plugins.Effects;
+
+// Every module Register adds, so it can be listed before the plugin runs.
+[assembly: FlybackModule(EchoModule.TypeId, "Echo")]
+[assembly: FlybackModule(ChorusModule.TypeId, "Chorus")]
+[assembly: FlybackModule(FlangerModule.TypeId, "Flanger")]
+[assembly: FlybackModule(PhaserModule.TypeId, "Phaser")]
 
 namespace Flyback.Plugins.Effects;
 

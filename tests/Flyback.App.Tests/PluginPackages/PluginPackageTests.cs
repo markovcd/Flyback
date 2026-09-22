@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Flyback.Plugins.Hosting;
@@ -42,6 +43,36 @@ public sealed class PluginPackageTests : IDisposable
 
         plugin.Preview.ShouldNotBeNull().MediaType.ShouldBe("image/png");
         plugin.Preview.Bytes.ShouldBe(expected.ToArray());
+    }
+
+    [Fact]
+    public void The_modules_a_plugin_declares_are_listed_without_running_it()
+    {
+        var plugin = PluginPackage.Read(Packages.ForSample()).Description("win");
+
+        plugin.Modules.ShouldBe([new DeclaredModule("flyback.sample.ripple", "Ripple"), new DeclaredModule("flyback.sample.halve", "Halve")]);
+        plugin.ModulesUnlisted.ShouldBeFalse();
+    }
+
+    private static PluginDescription Adding(string contract, params DeclaredModule[] modules) => new(
+        "Ripple", "Ripple", "1.0.0", "", "", [], [AssemblyFacts.ModulesAdded], [], null,
+        [("Ripple", [new AssemblyName(AssemblyFacts.Contract) { Version = Version.Parse(contract) }])],
+        modules);
+
+    [Fact]
+    public void A_plugin_built_before_modules_were_declared_has_them_unlisted_and_still_installs()
+    {
+        var plugin = Adding("1.1.0.0");
+
+        plugin.ModulesUnlisted.ShouldBeTrue();
+        plugin.Refusal().ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_plugin_that_knew_to_declare_its_modules_and_declares_none_is_refused()
+    {
+        Adding(Packages.Contract.ToString()).Refusal().ShouldNotBeNull().ShouldContain("without declaring");
+        Adding(Packages.Contract.ToString(), new DeclaredModule("flyback.ripple.ring", "Ring")).Refusal().ShouldBeNull();
     }
 
     [Fact]

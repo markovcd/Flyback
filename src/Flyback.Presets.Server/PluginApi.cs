@@ -16,13 +16,13 @@ internal static class PluginApi
 
     public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, Func<HttpContext, bool> reviewing)
     {
-        api.MapGet("/plugins", (HttpContext http, string? q, string? tag, string? platform, int? page) =>
+        api.MapGet("/plugins", (HttpContext http, string? q, string? tag, string? platform, string? module, int? page) =>
         {
             if (!string.IsNullOrEmpty(platform) && !PluginPackage.Platforms.Contains(platform))
                 return Results.BadRequest(new { Error = $"A platform is one of {string.Join(", ", PluginPackage.Platforms)}." });
 
             var at = Math.Max(1, page ?? 1);
-            var found = store.List(q, platform, at, PageSize, reviewing(http), tag);
+            var found = store.List(q, platform, at, PageSize, reviewing(http), tag, module);
 
             return Results.Ok(new { Items = found.Items.Select(View), found.Total, Page = at, PageSize });
         });
@@ -108,6 +108,7 @@ internal static class PluginApi
         plugin.Reaches,
         plugin.Builds,
         plugin.Contract,
+        Modules = plugin.Modules.Select(m => new { Id = m.TypeId, m.Name }),
         plugin.Sha256,
         plugin.FileName,
         plugin.Size,

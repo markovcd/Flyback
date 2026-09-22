@@ -92,6 +92,7 @@ public sealed class PackPluginCommandTests : IDisposable
         output.ShouldContain("tags      example, ripple, test-fixture");
         output.ShouldContain("preview   image/png, 12 KB");
         output.ShouldContain("adds      modules");
+        output.ShouldContain("modules   Ripple (flyback.sample.ripple), Halve (flyback.sample.halve)");
         output.ShouldContain("against   Flyback.");
         output.ShouldContain("Flyback.Plugins ");
         output.ShouldContain($"sha256    {Written.Sha256}");

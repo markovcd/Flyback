@@ -1,4 +1,23 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins;
+using Flyback.Plugins.Picture;
+
+// Every module Register adds, so it can be listed before the plugin runs.
+[assembly: FlybackModule(CircleModule.TypeId, "Circle")]
+[assembly: FlybackModule(BoxModule.TypeId, "Box")]
+[assembly: FlybackModule(PolygonModule.TypeId, "Polygon")]
+[assembly: FlybackModule(StarModule.TypeId, "Star")]
+[assembly: FlybackModule(LineModule.TypeId, "Line")]
+[assembly: FlybackModule(TextModule.TypeId, "Text")]
+[assembly: FlybackModule(CombineModule.TypeId, "Combine")]
+[assembly: FlybackModule(FillModule.TypeId, "Fill")]
+[assembly: FlybackModule(PaletteModule.TypeId, "Palette")]
+[assembly: FlybackModule(HsvModule.TypeId, "To HSV")]
+[assembly: FlybackModule(GradeModule.TypeId, "Grade")]
+[assembly: FlybackModule(PosteriseModule.TypeId, "Posterise")]
+[assembly: FlybackModule(LayerModule.TypeId, "Layer")]
+[assembly: FlybackModule(FractalModule.TypeId, "Fractal")]
+[assembly: FlybackModule(CellsModule.TypeId, "Cells")]
 
 namespace Flyback.Plugins.Picture;
 

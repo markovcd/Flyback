@@ -27,6 +27,12 @@
       : words.slice(0, -1).join(", ") + " and " + words[words.length - 1];
   }
 
+  /** The first few module names, and how many more. */
+  function moduleNames(modules) {
+    var shown = modules.slice(0, 6).map(function (m) { return m.name; });
+    return modules.length > 6 ? shown.join(", ") + " and " + (modules.length - 6) + " more" : list(shown);
+  }
+
   function builtFor(plugin) {
     return list(plugin.builds.map(function (b) { return systems[b] || b; }));
   }
@@ -97,7 +103,7 @@
 
   function shelf() {
     var params = new URLSearchParams(location.search);
-    var state = { q: params.get("q") || "", tag: params.get("tag") || "", platform: params.get("platform") || "", page: +params.get("page") || 1 };
+    var state = { q: params.get("q") || "", tag: params.get("tag") || "", platform: params.get("platform") || "", module: params.get("module") || "", page: +params.get("page") || 1 };
     var search = document.getElementById("search");
     var grid = document.getElementById("shelf");
     var pager = document.getElementById("pager");
@@ -111,6 +117,7 @@
       if (state.q) query.set("q", state.q);
       if (state.tag) query.set("tag", state.tag);
       if (state.platform) query.set("platform", state.platform);
+      if (state.module) query.set("module", state.module);
       if (state.page > 1) query.set("page", state.page);
       var text = query.toString();
       history.replaceState(null, "", text ? "?" + text : "plugins.html");
@@ -130,6 +137,7 @@
       body.appendChild(facts(plugin));
       if (plugin.description) body.appendChild(make("p", null, plugin.description));
       if (plugin.adds.length) chips(plugin.adds, body, false);
+      if (plugin.modules.length) body.appendChild(make("p", { class: "modules" }, moduleNames(plugin.modules)));
       if (plugin.tags.length) tagged(plugin.tags, body);
 
       var foot = make("div", { class: "foot" });
@@ -148,6 +156,7 @@
       if (state.q) query.set("q", state.q);
       if (state.tag) query.set("tag", state.tag);
       if (state.platform) query.set("platform", state.platform);
+      if (state.module) query.set("module", state.module);
 
       fetch(api + "plugins?" + query).then(function (r) { return r.json(); }).then(function (found) {
         grid.replaceChildren.apply(grid, found.items.map(card));
@@ -219,6 +228,14 @@
     if (plugin.adds.length) chips(plugin.adds, adds, false);
     else adds.textContent = "Nothing it registers";
     row("Adds", adds);
+
+    if (plugin.modules.length) {
+      var modules = make("div", { class: "chips" });
+      plugin.modules.forEach(function (m) { modules.appendChild(make("span", { class: "chip", title: m.id }, m.name)); });
+      row("Modules", modules);
+    } else if (plugin.adds.indexOf("modules") >= 0) {
+      row("Modules", "Not listed: it was built before a plugin declared them");
+    }
 
     var reaches = make("div");
     if (plugin.reaches.length) chips(plugin.reaches, reaches, true);

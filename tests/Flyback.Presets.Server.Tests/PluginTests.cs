@@ -234,6 +234,26 @@ public sealed class PluginTests : IDisposable
     }
 
     [Fact]
+    public async Task A_plugin_lists_the_modules_it_declares_and_is_found_by_one()
+    {
+        var sample = (await Submit(Zip(("any/Flyback.Plugins.Sample.dll", Sample)))).GetProperty("id").GetString()!;
+        var picture = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+        await Publish(sample);
+        await Publish(picture);
+
+        var modules = (await Get($"/api/v1/plugins/{sample}")).GetProperty("modules").EnumerateArray()
+            .Select(m => (m.GetProperty("id").GetString(), m.GetProperty("name").GetString()));
+        modules.ShouldBe([("flyback.sample.ripple", "Ripple"), ("flyback.sample.halve", "Halve")]);
+
+        var found = (await Get("/api/v1/plugins?module=flyback.picture.circle")).GetProperty("items");
+        found.GetArrayLength().ShouldBe(1);
+        found[0].GetProperty("id").GetString().ShouldBe(picture);
+
+        (await Get("/api/v1/plugins?module=flyback.picture")).GetProperty("total").GetInt32().ShouldBe(0, "a module is found by its whole id");
+        (await Get("/api/v1/plugins?q=Halve")).GetProperty("items")[0].GetProperty("id").GetString().ShouldBe(sample);
+    }
+
+    [Fact]
     public async Task Plugins_are_found_by_the_system_they_install_on()
     {
         await Publish((await Submit(Package("win"))).GetProperty("id").GetString()!);

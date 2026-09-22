@@ -1,6 +1,10 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
+// Every module Register adds, so it can be listed before the plugin runs.
+[assembly: Flyback.Plugins.FlybackModule("flyback.sample.ripple", "Ripple")]
+[assembly: Flyback.Plugins.FlybackModule("flyback.sample.halve", "Halve")]
+
 namespace Flyback.Plugins.Sample;
 
 /// <summary>

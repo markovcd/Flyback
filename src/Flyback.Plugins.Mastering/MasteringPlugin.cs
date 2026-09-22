@@ -1,4 +1,15 @@
 using Flyback.Core.Graph;
+using Flyback.Plugins;
+using Flyback.Plugins.Mastering;
+
+// Every module Register adds, so it can be listed before the plugin runs.
+[assembly: FlybackModule(EqModule.TypeId, "EQ")]
+[assembly: FlybackModule(WidthModule.TypeId, "Width")]
+[assembly: FlybackModule(CrossoverModule.TypeId, "Crossover")]
+[assembly: FlybackModule(CompressorModule.TypeId, "Compressor")]
+[assembly: FlybackModule(LimiterModule.TypeId, "Limiter")]
+[assembly: FlybackModule(MaximizerModule.TypeId, "Maximizer")]
+[assembly: FlybackModule(LoudnessModule.TypeId, "Loudness")]
 
 namespace Flyback.Plugins.Mastering;
 

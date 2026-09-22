@@ -361,6 +361,14 @@ blank id, the reserved built-in id, an id already loaded, or an id that would
 claim existing module ids. A module is refused unless its type id starts with
 `<provider id>.`, or if it is defined twice.
 
+**A plugin declares its modules**
+([0134](adr/0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md))
+with `[assembly: FlybackModule(id, name)]`, which the install dialog and the
+shared plugins site read from metadata. After `Register`, a plugin compiled
+against contract 1.2 or later that registered a module it did not declare is
+rolled back whole and becomes a `PluginProblem`. `pack-plugin` runs the same load
+before writing a package.
+
 **The contract has its own version**
 ([0102](adr/0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)).
 `PluginContractVersion` in `Directory.Build.props` is the `AssemblyVersion` of

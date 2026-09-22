@@ -4,6 +4,7 @@ namespace Flyback.Presets.Server;
 
 /// <summary>A submitted plugin package, with what its assemblies say about it.</summary>
 /// <param name="Contract">Each contract assembly the plugin was compiled against, and its version.</param>
+/// <param name="Modules">The modules its builds declare, each once.</param>
 internal sealed record PluginSubmission(
     string Assembly,
     string Name,
@@ -16,6 +17,7 @@ internal sealed record PluginSubmission(
     IReadOnlyList<string> Reaches,
     IReadOnlyList<string> Builds,
     IReadOnlyDictionary<string, string> Contract,
+    IReadOnlyList<DeclaredModule> Modules,
     string Sha256,
     byte[] File)
 {
@@ -59,6 +61,7 @@ internal static class PluginSubmissions
             first.Compiled[0].References
                 .Where(r => ContractVersion.IsContract(r.Name))
                 .ToDictionary(r => r.Name!, r => r.Version?.ToString(3) ?? "", StringComparer.Ordinal),
+            [.. descriptions.SelectMany(d => d.Modules).DistinctBy(m => m.TypeId)],
             package.Sha256,
             file);
     }

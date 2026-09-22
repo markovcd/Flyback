@@ -38,7 +38,9 @@ refused.
 
 **The API is shaped for the editor to download from.** The listing filters by
 `platform` (`win`, `osx`, `linux`, counting a build for `any`), and each plugin
-carries its `assembly`, `version`, `contract` and `sha256`. The editor is to
+carries its `assembly`, `version`, `contract`, `modules` and `sha256`. `module`
+finds the plugin declaring a type id, which is how a patch naming a module nobody
+has installed will find its plugin. The editor is to
 check the downloaded bytes against that hash and then open them with the same
 dialog as a file on disk: the listing is for choosing, and the dialog stays the
 only place a plugin is agreed to. `count=false` fetches without counting a

@@ -1,1 +1,5 @@
 #nullable enable
+Flyback.Plugins.FlybackModuleAttribute
+Flyback.Plugins.FlybackModuleAttribute.FlybackModuleAttribute(string! id, string! name) -> void
+Flyback.Plugins.FlybackModuleAttribute.Name.get -> string!
+Flyback.Plugins.FlybackModuleAttribute.Id.get -> string!

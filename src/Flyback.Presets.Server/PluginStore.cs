@@ -1,4 +1,5 @@
 using System.Globalization;
+using Flyback.Plugins.Hosting;
 using Microsoft.Data.Sqlite;
 
 namespace Flyback.Presets.Server;
@@ -22,7 +23,8 @@ internal sealed record StoredPlugin(
     DateTimeOffset Submitted,
     long Downloads,
     bool Published,
-    string? PreviewType);
+    string? PreviewType,
+    IReadOnlyList<DeclaredModule> Modules);
 
 /// <summary>A page of plugins and how many match in all.</summary>
 internal sealed record PluginPage(IReadOnlyList<StoredPlugin> Items, int Total);
@@ -37,11 +39,14 @@ internal sealed record PluginPage(IReadOnlyList<StoredPlugin> Items, int Total);
 /// </remarks>
 internal sealed class PluginStore
 {
-    private const char Separator = '';
+    private const char Separator = '\u001F';
+
+    /// <summary>Between a module's id and its name, inside one entry of <c>modules</c>.</summary>
+    private const char Pair = '\u001E';
 
     private const string Columns = """
         p.id, p.assembly, p.name, p.version, p.author, p.description, p.adds, p.reaches, p.builds, p.contract,
-        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published, p.tags, p.preview_type
+        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published, p.tags, p.preview_type, p.modules
         """;
 
     private readonly string connection;
@@ -75,26 +80,43 @@ internal sealed class PluginStore
                 published INTEGER NOT NULL DEFAULT 0,
                 tags TEXT NOT NULL,
                 preview BLOB,
-                preview_type TEXT
+                preview_type TEXT,
+                modules TEXT NOT NULL DEFAULT ''
             );
             CREATE INDEX IF NOT EXISTS plugins_submitted ON plugins(submitted_at);
             """);
 
-        using var columns = db.CreateCommand();
-        columns.CommandText = "SELECT count(*) FROM pragma_table_info('plugins') WHERE name = 'tags'";
+        var reread = false;
 
-        if (Convert.ToInt32(columns.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
+        if (!Has(db, "tags"))
         {
             Run(db, """
                 ALTER TABLE plugins ADD COLUMN tags TEXT NOT NULL DEFAULT '';
                 ALTER TABLE plugins ADD COLUMN preview BLOB;
                 ALTER TABLE plugins ADD COLUMN preview_type TEXT;
                 """);
-            Reread(db);
+            reread = true;
         }
+
+        if (!Has(db, "modules"))
+        {
+            Run(db, "ALTER TABLE plugins ADD COLUMN modules TEXT NOT NULL DEFAULT ''");
+            reread = true;
+        }
+
+        if (reread) Reread(db);
     }
 
-    /// <summary>Fills in the tags and preview of packages stored before either was read.</summary>
+    private static bool Has(SqliteConnection db, string column)
+    {
+        using var query = db.CreateCommand();
+        query.CommandText = "SELECT count(*) FROM pragma_table_info('plugins') WHERE name = $column";
+        query.Parameters.AddWithValue("$column", column);
+
+        return Convert.ToInt32(query.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
+    }
+
+    /// <summary>Fills in what packages stored before it was read say: tags, preview and modules.</summary>
     private static void Reread(SqliteConnection db)
     {
         var stored = new List<(string Id, string Name, byte[] File)>();
@@ -122,11 +144,12 @@ internal sealed class PluginStore
             }
 
             using var update = db.CreateCommand();
-            update.CommandText = "UPDATE plugins SET tags = $tags, preview = $preview, preview_type = $preview_type WHERE id = $id";
+            update.CommandText = "UPDATE plugins SET tags = $tags, preview = $preview, preview_type = $preview_type, modules = $modules WHERE id = $id";
             update.Parameters.AddWithValue("$id", id);
             update.Parameters.AddWithValue("$tags", Joined(read.Tags));
             update.Parameters.AddWithValue("$preview", (object?)read.Preview?.Bytes ?? DBNull.Value);
             update.Parameters.AddWithValue("$preview_type", (object?)read.Preview?.MediaType ?? DBNull.Value);
+            update.Parameters.AddWithValue("$modules", Modules(read.Modules));
             update.ExecuteNonQuery();
         }
     }
@@ -141,9 +164,9 @@ internal sealed class PluginStore
         insert.CommandText = """
             INSERT OR IGNORE INTO plugins
                 (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at,
-                 tags, preview, preview_type)
+                 tags, preview, preview_type, modules)
             VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at,
-                 $tags, $preview, $preview_type)
+                 $tags, $preview, $preview_type, $modules)
             """;
         insert.Parameters.AddWithValue("$id", id);
         insert.Parameters.AddWithValue("$assembly", submission.Assembly);
@@ -163,6 +186,7 @@ internal sealed class PluginStore
         insert.Parameters.AddWithValue("$tags", Joined(submission.Tags));
         insert.Parameters.AddWithValue("$preview", (object?)submission.Preview?.Bytes ?? DBNull.Value);
         insert.Parameters.AddWithValue("$preview_type", (object?)submission.Preview?.MediaType ?? DBNull.Value);
+        insert.Parameters.AddWithValue("$modules", Modules(submission.Modules));
 
         return insert.ExecuteNonQuery() == 0 ? null : Find(id, unpublished: true);
     }
@@ -182,9 +206,9 @@ internal sealed class PluginStore
     /// <summary>
     /// Newest first, matching all of <paramref name="search"/>'s words, tagged <paramref name="tag"/>
     /// where it is given, and only those with a build that would install on <paramref name="platform"/>
-    /// where it is given.
+    /// where it is given, and only the one declaring <paramref name="module"/>'s type id where that is.
     /// </summary>
-    public PluginPage List(string? search, string? platform, int page, int size, bool unpublished = false, string? tag = null)
+    public PluginPage List(string? search, string? platform, int page, int size, bool unpublished = false, string? tag = null, string? module = null)
     {
         var where = new List<string>();
 
@@ -197,7 +221,7 @@ internal sealed class PluginStore
 
         for (var i = 0; i < words.Length && i < 8; i++)
         {
-            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\' OR p.assembly LIKE $w{i} ESCAPE '\\' OR p.tags LIKE $w{i} ESCAPE '\\')");
+            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\' OR p.assembly LIKE $w{i} ESCAPE '\\' OR p.tags LIKE $w{i} ESCAPE '\\' OR p.modules LIKE $w{i} ESCAPE '\\')");
             query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i]) + "%");
         }
 
@@ -205,6 +229,12 @@ internal sealed class PluginStore
         {
             where.Add("instr(char(31) || p.tags || char(31), char(31) || $tag || char(31)) > 0");
             query.Parameters.AddWithValue("$tag", tag);
+        }
+
+        if (!string.IsNullOrEmpty(module))
+        {
+            where.Add("instr(char(31) || p.modules, char(31) || $module || char(30)) > 0");
+            query.Parameters.AddWithValue("$module", module);
         }
 
         if (!string.IsNullOrEmpty(platform))
@@ -244,7 +274,7 @@ internal sealed class PluginStore
         {
             if (!reader.Read()) return null;
 
-            found = (Row(reader), (byte[])reader.GetValue(18));
+            found = (Row(reader), (byte[])reader.GetValue(19));
         }
 
         if (counted)
@@ -309,6 +339,8 @@ internal sealed class PluginStore
 
     private static string Joined(IEnumerable<string> values) => string.Join(Separator, values);
 
+    private static string Modules(IEnumerable<DeclaredModule> modules) => Joined(modules.Select(m => m.TypeId + Pair + m.Name));
+
     private static string[] Split(string joined) =>
         joined.Length == 0 ? [] : joined.Split(Separator);
 
@@ -335,5 +367,6 @@ internal sealed class PluginStore
         DateTimeOffset.Parse(reader.GetString(13), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
         reader.GetInt64(14),
         reader.GetInt64(15) != 0,
-        reader.IsDBNull(17) ? null : reader.GetString(17));
+        reader.IsDBNull(17) ? null : reader.GetString(17),
+        [.. Split(reader.GetString(18)).Select(m => m.Split(Pair, 2)).Select(m => new DeclaredModule(m[0], m.Length > 1 ? m[1] : m[0]))]);
 }

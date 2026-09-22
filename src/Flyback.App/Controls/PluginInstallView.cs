@@ -67,6 +67,8 @@ internal static class PluginInstallView
 
             if (plugin.Tags.Count > 0) Fact(facts, "Tags", string.Join(", ", plugin.Tags), "pluginTags");
             Fact(facts, "Adds", plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find", "pluginAdds");
+            if (plugin.Modules.Count > 0) Fact(facts, "Modules", string.Join(", ", plugin.Modules.Select(m => m.Name)), "pluginModules");
+            else if (plugin.ModulesUnlisted) Fact(facts, "Modules", "not listed: it was built before a plugin declared them", "pluginModules");
             Fact(facts, "Reaches", plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names", "pluginReaches");
             Fact(facts, "Assembly", $"{plugin.Assembly}.dll");
 

@@ -37,7 +37,55 @@ public static class PluginHost
 
         foreach (var folder in Folders(directory)) LoadFolder(folder, plugins, registry, problems);
 
-        return new PluginCatalog(
+        return Catalog(plugins, registry, problems);
+    }
+
+    /// <summary>
+    /// Loads the plugins in one folder alone and unloads them again, as <c>pack-plugin</c>
+    /// tries a build: what went wrong, and how many plugins loaded.
+    /// </summary>
+    internal static (IReadOnlyList<PluginProblem> Problems, int Loaded) Try(string folder)
+    {
+        var contexts = new List<PluginLoadContext>();
+        var result = Tried(folder, contexts);
+
+        foreach (var context in contexts) context.Unload();
+
+        for (var i = 0; i < 3; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        return result;
+    }
+
+    /// <summary>Kept apart from <see cref="Try"/> so nothing it loaded is still referenced once it returns.</summary>
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static (IReadOnlyList<PluginProblem> Problems, int Loaded) Tried(string folder, List<PluginLoadContext> contexts)
+    {
+        var plugins = new List<LoadedPlugin>();
+        var problems = new List<PluginProblem>();
+
+        LoadFolder(folder, plugins, new Registry(problems), problems, contexts);
+
+        return (problems, plugins.Count);
+    }
+
+    /// <summary>Loads plugin types already in this process, for the tests.</summary>
+    internal static PluginCatalog LoadTypes(params Type[] types)
+    {
+        var plugins = new List<LoadedPlugin>();
+        var problems = new List<PluginProblem>();
+        var registry = new Registry(problems);
+
+        foreach (var type in types) Instantiate(type, type.Assembly.Location, plugins, registry, problems);
+
+        return Catalog(plugins, registry, problems);
+    }
+
+    private static PluginCatalog Catalog(List<LoadedPlugin> plugins, Registry registry, List<PluginProblem> problems) =>
+        new(
             plugins,
             registry.AudioOutputs,
             registry.Modules,
@@ -47,7 +95,6 @@ public static class PluginHost
             registry.SecretStores,
             registry.MidiInputs,
             registry.Providers);
-    }
 
     /// <summary>
     /// The plugin folders in the order they load: the same on every run, so priority
@@ -64,14 +111,16 @@ public static class PluginHost
         string folder,
         List<LoadedPlugin> plugins,
         Registry registry,
-        List<PluginProblem> problems)
+        List<PluginProblem> problems,
+        List<PluginLoadContext>? collectible = null)
     {
         var entries = EntryAssemblies(folder);
         if (entries.Count == 0) return;
 
         // One context for the whole folder: its dependencies are shared by
         // everything in it, and isolation is wanted *between* plugins.
-        var context = new PluginLoadContext(entries[0]);
+        var context = new PluginLoadContext(entries[0], collectible is not null);
+        collectible?.Add(context);
 
         foreach (var entry in entries)
         {
@@ -172,7 +221,17 @@ public static class PluginHost
             }
 
             registry.Source = info;
+            var mark = registry.Mark();
             plugin.Register(registry);
+
+            // Its code has run by now, but nothing it registered is kept unless it was declared.
+            if (ModuleDeclarations.Required(type.Assembly.GetReferencedAssemblies())
+                && ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(mark)) is { } mismatch)
+            {
+                registry.Restore(mark);
+                problems.Add(new PluginProblem(Path.GetFileName(path), mismatch));
+                return;
+            }
 
             plugins.Add(new LoadedPlugin(info, path));
         }
@@ -210,6 +269,38 @@ public static class PluginHost
 
         public IReadOnlyList<IMidiInput> MidiInputs => midiInputs;
 
+        /// <summary>Every module offered, accepted or not, in order.</summary>
+        private readonly List<NodeDef> offered = [];
+
+        /// <summary>How far everything had got, to undo a plugin's registration back to.</summary>
+        public readonly record struct Checkpoint(
+            ModuleCatalog Modules, int Offered, int Presets, int AudioOutputs, int Assistants, int SecretStores, int MidiInputs, int Problems);
+
+        public Checkpoint Mark() => new(
+            Modules, offered.Count, presets.Count, audioOutputs.Count, assistants.Count, secretStores.Count, midiInputs.Count, problems.Count);
+
+        public IEnumerable<NodeDef> OfferedSince(Checkpoint mark) => offered.Skip(mark.Offered);
+
+        /// <summary>Forgets everything registered since <paramref name="mark"/>, and the problems it caused.</summary>
+        public void Restore(Checkpoint mark)
+        {
+            Modules = mark.Modules;
+            offered.RemoveRange(mark.Offered, offered.Count - mark.Offered);
+            presets.RemoveRange(mark.Presets, presets.Count - mark.Presets);
+            Trim(audioOutputs, mark.AudioOutputs);
+            Trim(assistants, mark.Assistants);
+            Trim(secretStores, mark.SecretStores);
+            Trim(midiInputs, mark.MidiInputs);
+            problems.RemoveRange(mark.Problems, problems.Count - mark.Problems);
+        }
+
+        private void Trim<T>(List<T> list, int count) where T : notnull
+        {
+            foreach (var removed in list.Skip(count)) providers.Remove(removed);
+
+            list.RemoveRange(count, list.Count - count);
+        }
+
         /// <summary>
         /// Built up as plugins register, starting from the engine's own modules.
         /// The catalogue itself decides what it will accept; refusals become
@@ -243,6 +334,8 @@ public static class PluginHost
 
         public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
         {
+            offered.AddRange(modules);
+
             var added = Modules.With(provider, modules);
 
             Modules = added.Catalog;
