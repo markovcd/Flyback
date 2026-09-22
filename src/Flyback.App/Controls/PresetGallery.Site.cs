@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -41,13 +42,22 @@ internal static partial class PresetGallery
             {
                 Children =
                 {
-                    new TextBlock
+                    new StackPanel
                     {
-                        Text = SiteHeading,
-                        FontSize = Text.Caption,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = new SolidColorBrush(Colors.Note),
+                        Orientation = Orientation.Horizontal,
+                        Spacing = 8,
                         Margin = new Thickness(0, 10, 0, 2),
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = SiteHeading,
+                                FontSize = Text.Caption,
+                                FontWeight = FontWeight.SemiBold,
+                                Foreground = new SolidColorBrush(Colors.Note),
+                            },
+                            Link("Open", site.Root),
+                        },
                     },
                     status,
                     tiles,
@@ -216,6 +226,27 @@ internal static partial class PresetGallery
             catch (Exception ex) when (ex is OperationCanceledException or ArgumentException or InvalidOperationException or IOException or NotSupportedException)
             {
             }
+        }
+
+        /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
+        private static TextBlock Link(string text, Uri uri)
+        {
+            var link = new TextBlock
+            {
+                Text = text,
+                FontSize = Text.Caption,
+                Foreground = new SolidColorBrush(Colors.Attention),
+                TextDecorations = TextDecorations.Underline,
+                Cursor = new Cursor(StandardCursorType.Hand),
+            };
+
+            link.PointerPressed += async (_, _) =>
+            {
+                if (TopLevel.GetTopLevel(link)?.Launcher is { } launcher)
+                    await launcher.LaunchUriAsync(uri);
+            };
+
+            return link;
         }
     }
 }

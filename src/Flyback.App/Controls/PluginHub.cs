@@ -140,7 +140,7 @@ internal sealed class PluginHub : IDisposable
                 Heading("INSTALLED"),
                 installedStatus,
                 installedRows,
-                Heading("ON THE PLUGIN SITE"),
+                SiteHeadingRow("ON THE PLUGIN SITE", site?.Root),
                 siteStatus,
                 siteRows,
                 more,
@@ -609,6 +609,45 @@ internal sealed class PluginHub : IDisposable
         Foreground = new SolidColorBrush(Colors.Feedback),
         Margin = new Thickness(0, 10, 0, 2),
     };
+
+    /// <summary>A heading with an "Open" link beside it to the site, or the heading alone where there is none.</summary>
+    private static Control SiteHeadingRow(string text, Uri? site)
+    {
+        var heading = Heading(text);
+
+        if (site is null) return heading;
+
+        heading.Margin = new Thickness(0);
+
+        return new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            Margin = new Thickness(0, 10, 0, 2),
+            Children = { heading, Link("Open", site) },
+        };
+    }
+
+    /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>
+    private static TextBlock Link(string text, Uri uri)
+    {
+        var link = new TextBlock
+        {
+            Text = text,
+            FontSize = Text.Caption,
+            Foreground = new SolidColorBrush(Colors.Attention),
+            TextDecorations = TextDecorations.Underline,
+            Cursor = new Cursor(StandardCursorType.Hand),
+        };
+
+        link.PointerPressed += async (_, _) =>
+        {
+            if (TopLevel.GetTopLevel(link)?.Launcher is { } launcher)
+                await launcher.LaunchUriAsync(uri);
+        };
+
+        return link;
+    }
 
     private static TextBlock Status(string name)
     {
