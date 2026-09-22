@@ -118,7 +118,17 @@ internal sealed record AssemblyFacts(
         _ => false,
     };
 
-    /// <summary>Whether a public, concrete type in it implements <see cref="IFlybackPlugin"/>, which is what the host looks for.</summary>
+    /// <summary>The contract assembly, which is where <see cref="IFlybackPlugin"/> must come from.</summary>
+    public static readonly string Contract = typeof(IFlybackPlugin).Assembly.GetName().Name!;
+
+    /// <summary>Whether it was compiled against <see cref="Contract"/>.</summary>
+    public bool ReferencesContract => References.Any(r => string.Equals(r.Name, Contract, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Whether a public, concrete type in it implements <see cref="IFlybackPlugin"/> as
+    /// <see cref="Contract"/> defines it, which is what the host looks for. An interface
+    /// of that name from anywhere else is not the one.
+    /// </summary>
     private static bool ImplementsPlugin(MetadataReader metadata)
     {
         foreach (var handle in metadata.TypeDefinitions)
@@ -135,7 +145,13 @@ internal sealed record AssemblyFacts(
 
                 var reference = metadata.GetTypeReference((TypeReferenceHandle)face);
 
-                if (metadata.GetString(reference.Namespace) == "Flyback.Plugins" && metadata.GetString(reference.Name) == nameof(IFlybackPlugin))
+                if (metadata.GetString(reference.Namespace) == "Flyback.Plugins"
+                    && metadata.GetString(reference.Name) == nameof(IFlybackPlugin)
+                    && reference.ResolutionScope.Kind == HandleKind.AssemblyReference
+                    && string.Equals(
+                        metadata.GetString(metadata.GetAssemblyReference((AssemblyReferenceHandle)reference.ResolutionScope).Name),
+                        Contract,
+                        StringComparison.OrdinalIgnoreCase))
                     return true;
             }
         }

@@ -27,9 +27,9 @@ public sealed class PluginInstallTests : UiTest
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open()
+    private MainWindow Open(Action? relaunch = null)
     {
-        var window = Owned(new MainWindow(pluginFolder: Plugins));
+        var window = Owned(new MainWindow(pluginFolder: Plugins, relaunch: relaunch));
 
         window.Show();
         Settle(window);
@@ -104,6 +104,47 @@ public sealed class PluginInstallTests : UiTest
         Pump(() => !All<ModalOverlay>(window).Any());
 
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Installing_with_restart_ticked_starts_Flyback_again_and_closes_this_window()
+    {
+        var relaunched = 0;
+        var window = Open(() => relaunched++);
+        var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
+
+        All<CheckBox>(dialog).Single(c => c.Name == "restart").IsChecked.ShouldBe(true, "a plugin does nothing until Flyback starts again");
+
+        Press(Named(dialog, "install"));
+        Pump(() => relaunched > 0);
+
+        relaunched.ShouldBe(1);
+        window.IsVisible.ShouldBeFalse();
+        Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Installing_with_restart_unticked_leaves_the_window_open()
+    {
+        var relaunched = 0;
+        var window = Open(() => relaunched++);
+        var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
+
+        All<CheckBox>(dialog).Single(c => c.Name == "restart").IsChecked = false;
+        Press(Named(dialog, "install"));
+        Pump(() => !All<ModalOverlay>(window).Any());
+
+        relaunched.ShouldBe(0);
+        window.IsVisible.ShouldBeTrue();
+        All<ReportLine>(window).Single().History.ShouldContain(h => h.EndsWith("loads the next time Flyback starts."));
+    }
+
+    [AvaloniaFact]
+    public void A_window_that_cannot_restart_offers_no_restart()
+    {
+        var dialog = Dropped(Open(), Write(Packages.For("win", "osx", "linux")));
+
+        All<CheckBox>(dialog).ShouldNotContain(c => c.Name == "restart");
     }
 
     [AvaloniaFact]

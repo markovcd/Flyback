@@ -81,7 +81,8 @@ public sealed class FlybackApp : Application
                 layoutPath: WindowLayout.File,
                 fileTypeSettingsPath: FileTypeSettings.File,
                 fileTypes: FileTypes.ForThisCopy(),
-                pluginFolder: PluginHost.DefaultDirectory);
+                pluginFolder: PluginHost.DefaultDirectory,
+                relaunch: Restart.Launch);
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.

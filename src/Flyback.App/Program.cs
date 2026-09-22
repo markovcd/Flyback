@@ -28,6 +28,10 @@ internal static class Program
             Terminal.Release();
         }
 
+        // A launch that restarts one closing now waits for it first, before the
+        // plugins it has open are looked at.
+        args = Restart.Awaited(args);
+
         // A new version started by the old one to install itself, which is all
         // this launch is for — see Updater. It opens no window, and starts the
         // installed copy on its way out.

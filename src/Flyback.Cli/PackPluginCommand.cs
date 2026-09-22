@@ -180,7 +180,38 @@ internal static class PackPluginCommand
 
         if (builds.Count > 0) return (builds, leave);
 
-        Fail(error, $"{Path.GetFileName(root)} holds no plugin build. Point it at the folder the SDK built into, such as bin/Release/net10.0, or at the project.");
+        Fail(error, (Missing(Path.Combine(root, PublishFolder)) ?? Missing(root)) is { } why
+            ? why
+            : $"{Path.GetFileName(root)} holds no plugin build. Point it at the folder the SDK built into, such as bin/Release/net10.0, or at the project.");
+        return null;
+    }
+
+    /// <summary>
+    /// Why the assemblies at the top of a folder hold no plugin, or null where there
+    /// are none to ask: none compiled against <c>Flyback.Plugins</c>, or one that was and
+    /// has no class implementing <c>IFlybackPlugin</c>.
+    /// </summary>
+    internal static string? Missing(string folder)
+    {
+        if (!Directory.Exists(folder)) return null;
+
+        var assemblies = Directory.EnumerateFiles(folder, "*.dll")
+            .Order(StringComparer.Ordinal)
+            .Select(dll =>
+            {
+                using var stream = File.OpenRead(dll);
+                return (File: Path.GetFileName(dll), Facts: AssemblyFacts.Of(stream));
+            })
+            .Where(a => a.Facts is not null && !PluginLoadContext.IsHostOwned(a.Facts.Name))
+            .ToList();
+
+        if (assemblies.FirstOrDefault(a => a.Facts!.ReferencesContract && !a.Facts.IsPlugin) is { File: { } unfinished })
+            return $"{unfinished} references {AssemblyFacts.Contract} but no public class in it implements IFlybackPlugin.";
+
+        if (assemblies.Count > 0 && assemblies.All(a => !a.Facts!.ReferencesContract))
+            return $"{string.Join(", ", assemblies.Select(a => a.File))}: none of them references {AssemblyFacts.Contract}, "
+                + "so none has an IFlybackPlugin to load. Reference it as the plugin guide's project file does.";
+
         return null;
     }
 
@@ -267,7 +298,8 @@ internal static class PackPluginCommand
         foreach (var (platform, _) in builds)
         {
             if (package.BuildFor(platform) != platform)
-                return Fail(error, $"The {PluginPackage.Describe(platform)} build has no plugin assembly at its top.");
+                return Fail(error, Missing(builds.First(b => b.Platform == platform).Folder)
+                    ?? $"The {PluginPackage.Describe(platform)} build has no plugin assembly at its top.");
 
             if (package.Refusal(platform) is { } refusal)
                 return Fail(error, $"{output.Name} would be refused. {refusal}");

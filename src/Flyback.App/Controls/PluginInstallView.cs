@@ -6,9 +6,17 @@ using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.Controls;
 
+/// <summary>What the install dialog was answered with. Closing it without an answer is <see cref="Cancel"/>.</summary>
+internal enum PluginAnswer
+{
+    Cancel,
+    Install,
+    InstallAndRestart,
+}
+
 /// <summary>
 /// The dialog a <c>.fbkp</c> opens: what the plugin is, what it can do, and Install.
-/// It answers true only for Install; closing it any other way installs nothing.
+/// Only Install answers with anything but <see cref="PluginAnswer.Cancel"/>.
 /// </summary>
 /// <remarks>
 /// Everything shown is read from the plugin's own assemblies without running them:
@@ -25,7 +33,13 @@ internal static class PluginInstallView
     /// <param name="platform">The system this is, whose build would be installed.</param>
     /// <param name="refusal">Why Install is off, or null where it is on.</param>
     /// <param name="replacing">The plugin installed in the same folder now, where there is one.</param>
-    public static Control View(PluginPackage package, string platform, string? refusal, PluginDescription? replacing)
+    /// <param name="offerRestart">Whether to offer starting Flyback again, which is what loads the plugin.</param>
+    public static Control View(
+        PluginPackage package,
+        string platform,
+        string? refusal,
+        PluginDescription? replacing,
+        bool offerRestart = false)
     {
         var page = new StackPanel { Name = "pluginInstall", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
 
@@ -98,20 +112,40 @@ internal static class PluginInstallView
             page.Children.Add(reason);
         }
 
+        // On by default: a plugin does nothing until Flyback starts again, and the
+        // close asks about unsaved work like any other.
+        var restart = new CheckBox
+        {
+            Name = "restart",
+            Content = "Restart Flyback to load it",
+            IsChecked = true,
+            FontSize = Text.Body,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
         var install = new Button { Name = "install", Content = "Install", MinWidth = 96, IsEnabled = refusal is null };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };
 
-        install.Click += (_, _) => Dialog.Close(install, true);
-        cancel.Click += (_, _) => Dialog.Close(cancel, false);
+        install.Click += (_, _) => Dialog.Close(install,
+            offerRestart && restart.IsChecked == true ? PluginAnswer.InstallAndRestart : PluginAnswer.Install);
+        cancel.Click += (_, _) => Dialog.Close(cancel, PluginAnswer.Cancel);
 
-        page.Children.Add(new StackPanel
+        var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Margin = new Thickness(0, 6, 0, 0),
             Children = { install, cancel },
-        });
+        };
+
+        var row = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
+
+        DockPanel.SetDock(buttons, Dock.Right);
+        row.Children.Add(buttons);
+
+        if (offerRestart && refusal is null) row.Children.Add(restart);
+
+        page.Children.Add(row);
 
         return page;
     }

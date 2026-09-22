@@ -505,6 +505,11 @@ public sealed partial class MainWindow : Window
     /// Where a plugin package opened in the window is installed. Null installs
     /// nothing, for the reason <paramref name="outputSettingsPath"/> reads nothing.
     /// </param>
+    /// <param name="relaunch">
+    /// Starts Flyback again once this window has closed, which is what loads a plugin
+    /// just installed. Null offers no restart, which is what every test gets unless it
+    /// is watching for one.
+    /// </param>
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
@@ -521,10 +526,12 @@ public sealed partial class MainWindow : Window
         string? layoutPath = null,
         string? fileTypeSettingsPath = null,
         FileTypes? fileTypes = null,
-        string? pluginFolder = null)
+        string? pluginFolder = null,
+        Action? relaunch = null)
     {
         this.groupFolder = groupFolder;
         this.pluginFolder = pluginFolder;
+        this.relaunch = relaunch;
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);

@@ -29,7 +29,8 @@ answers the question.
 runtime identifiers begin — `win`, `osx`, `linux` — and `any` for a build that runs
 everywhere, used where the system has no folder of its own. A folder is a build if
 exactly one plugin assembly sits at its top: one with a public, concrete type
-implementing `IFlybackPlugin`. There is no manifest. A description written beside
+implementing `IFlybackPlugin` as `Flyback.Plugins` defines it, not an interface of
+that name from anywhere else. There is no manifest. A description written beside
 the plugin is a second account of it that can disagree with the first.
 
 **What the dialog shows is read from the plugin's metadata, and none of its code
@@ -78,6 +79,12 @@ could not run sooner anyway; and a plugin being replaced is one this process has
 loaded, which Windows will not let go of. A folder under `plugins/` whose name
 starts with a dot is never scanned for plugins.
 
+**The dialog offers to restart Flyback, ticked by default.** The window closes the
+way any close does, asking about unsaved work, and a cancelled question or a
+recording still running leaves it open, installed for the next start. The new
+process is started with `--after <pid>` and waits for the old one to exit before it
+looks at a plugin, since until then the one being replaced is still loaded.
+
 **`flyback-cli pack-plugin` makes one**, and asks nothing the build already says. A
 project is published with the SDK once for each runtime its `RuntimeIdentifiers`
 names, or once portably where it names none. A folder the SDK built into needs no
@@ -87,7 +94,9 @@ are refused, since a package holds one build for each. A build is held to the
 project file the plugin guide asks for, as the build shows it: a plugin without the
 `runtimeconfig.json` that `EnableDynamicLoading` writes was built without its own
 dependencies, and a copy of `Flyback.Core` or `Flyback.Plugins` is a reference that
-was copied or left unnamed. Either is refused, naming the property to set. Then it
+was copied or left unnamed. Either is refused, naming the property to set. A build
+with no plugin in it says why: none of its assemblies references `Flyback.Plugins`,
+or one does and has no class implementing `IFlybackPlugin`. Then it
 reads the package back the way the editor will, writes nothing if the editor would
 refuse it, and prints what the dialog will show.
 

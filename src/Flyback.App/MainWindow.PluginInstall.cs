@@ -11,6 +11,9 @@ public sealed partial class MainWindow
     /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
     private readonly string? pluginFolder;
 
+    /// <summary>Starts Flyback again once this window has closed, or null where a restart is not offered.</summary>
+    private readonly Action? relaunch;
+
     /// <summary>
     /// Shows what the package says it is and installs it if asked. Leaves the patch
     /// alone, so nothing unsaved is asked about.
@@ -35,7 +38,10 @@ public sealed partial class MainWindow
         var refusal = installer is null ? "This window has no plugins folder." : installer.Refusal(package, platform);
         var replacing = package.DescriptionFor(platform) is { } plugin ? installer?.Replacing(plugin.Assembly) : null;
 
-        if (!await this.ShowDialog<bool>(PluginInstallView.Title, PluginInstallView.View(package, platform, refusal, replacing))) return;
+        var view = PluginInstallView.View(package, platform, refusal, replacing, offerRestart: relaunch is not null);
+        var answer = await this.ShowDialog<PluginAnswer>(PluginInstallView.Title, view);
+
+        if (answer == PluginAnswer.Cancel) return;
 
         var described = package.DescriptionFor(platform)!;
         var name = $"{described.Name} {described.Version}";
@@ -43,11 +49,32 @@ public sealed partial class MainWindow
         try
         {
             installer!.Stage(package, platform);
-            Report($"{name} is installed, and loads the next time Flyback starts.");
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
             Report($"{name} was not installed: {ex.Message}");
+            return;
         }
+
+        if (answer == PluginAnswer.InstallAndRestart && await RestartAsync()) return;
+
+        Report($"{name} is installed, and loads the next time Flyback starts.");
+    }
+
+    /// <summary>
+    /// Closes the window, asking about unsaved work as any close does, and starts
+    /// Flyback again behind it. False where the window stays: the question was
+    /// cancelled, or a recording is running, which only its own button should end.
+    /// </summary>
+    private async Task<bool> RestartAsync()
+    {
+        if (TakeInHand || !await MayReplaceThePatchAsync()) return false;
+
+        relaunch!();
+
+        leaving = true;
+        Close();
+
+        return true;
     }
 }

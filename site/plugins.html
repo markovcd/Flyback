@@ -844,7 +844,8 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     <div class="note">
       <span class="tag">Two things that catch people out</span>
       <p><strong>Plugins are read once, at startup.</strong> Installing one means restarting the
-      application, and a package's plugin is moved into place at that restart.</p>
+      application, and a package's plugin is moved into place at that restart. The install dialog offers to
+      restart for you.</p>
       <p><strong>The command line and the viewer have no plugins of their own.</strong> All three programs share
       one folder beside them, and the shell is what lays it out — so either run from its own build output,
       rather than from a publish, will not find your modules.</p>

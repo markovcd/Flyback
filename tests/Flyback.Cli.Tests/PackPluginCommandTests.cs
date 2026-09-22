@@ -147,6 +147,30 @@ public sealed class PackPluginCommandTests : IDisposable
     }
 
     [Fact]
+    public void An_assembly_that_does_not_reference_the_contract_is_named()
+    {
+        var build = Directory.CreateDirectory(Path.Combine(folder, "net10.0")).FullName;
+        File.Copy(typeof(System.Net.Http.HttpClient).Assembly.Location, Path.Combine(build, "Ripple.dll"));
+
+        var (code, _, error) = Run(new DirectoryInfo(build));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("Ripple.dll: none of them references Flyback.Plugins");
+    }
+
+    [Fact]
+    public void An_assembly_that_references_the_contract_but_has_no_plugin_is_named()
+    {
+        var build = Directory.CreateDirectory(Path.Combine(folder, "net10.0")).FullName;
+        File.Copy(typeof(PackPluginCommand).Assembly.Location, Path.Combine(build, "Ripple.dll"));
+
+        var (code, _, error) = Run(new DirectoryInfo(build));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("Ripple.dll references Flyback.Plugins but no public class in it implements IFlybackPlugin.");
+    }
+
+    [Fact]
     public void A_folder_with_no_plugin_in_it_writes_nothing()
     {
         var empty = Directory.CreateDirectory(Path.Combine(folder, "empty"));
