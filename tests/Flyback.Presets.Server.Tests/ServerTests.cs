@@ -17,13 +17,15 @@ public sealed class ServerTests : IDisposable
 
     public ServerTests() : this(20) { }
 
-    private ServerTests(int postsPerHour)
+    private ServerTests(int postsPerHour, string adminPassword = "hunter2")
     {
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
             web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
             web.UseSetting("Presets:Media", Media);
             web.UseSetting("Presets:PostsPerHour", postsPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            web.UseSetting("Presets:Admin:User", "admin");
+            web.UseSetting("Presets:Admin:Password", adminPassword);
         });
         client = host.CreateClient();
     }
@@ -68,6 +70,47 @@ public sealed class ServerTests : IDisposable
 
     private async Task<JsonElement> Get(string path) =>
         await client.GetFromJsonAsync<JsonElement>(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+
+    private async Task<HttpStatusCode> Status(string path)
+    {
+        using var response = await client.GetAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
+
+    private static IEnumerable<string?> Names(JsonElement list) =>
+        list.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("name").GetString());
+
+    /// <summary>A client of its own, signed in as the admin.</summary>
+    private async Task<HttpClient> Admin()
+    {
+        var admin = host.CreateClient();
+        (await SignIn(admin, "hunter2")).ShouldBe(HttpStatusCode.NoContent);
+
+        return admin;
+    }
+
+    private static async Task<HttpStatusCode> SignIn(HttpClient to, string password)
+    {
+        using var response = await to.PostAsJsonAsync(
+            new Uri("/api/v1/admin/session", UriKind.Relative), new { user = "admin", password }, TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
+
+    private static async Task<HttpStatusCode> Change(HttpClient by, string id, object change)
+    {
+        using var response = await by.PatchAsJsonAsync(new Uri("/api/v1/presets/" + id, UriKind.Relative), change, TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
+
+    private static async Task<HttpStatusCode> Delete(HttpClient by, string path)
+    {
+        using var response = await by.DeleteAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
 
     [Fact]
     public async Task A_submitted_preset_is_listed_with_what_the_patch_says_about_itself()
@@ -187,6 +230,102 @@ public sealed class ServerTests : IDisposable
     {
         (await client.GetStringAsync(new Uri("/", UriKind.Relative), TestContext.Current.CancellationToken)).ShouldContain("Submit a preset");
         (await client.GetStringAsync(new Uri("/assets/site.css", UriKind.Relative), TestContext.Current.CancellationToken)).ShouldContain("--attention");
+    }
+
+    [Fact]
+    public async Task An_unpublished_preset_is_hidden_from_everyone_but_the_admin()
+    {
+        var id = (await Submit(PatchFile("Rain.", "Ada", "ambient"), "Rain.fbk")).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        (await Change(admin, id, new { published = false })).ShouldBe(HttpStatusCode.OK);
+
+        Names(await Get("/api/v1/presets")).ShouldBeEmpty();
+        (await Get("/api/v1/tags")).GetArrayLength().ShouldBe(0);
+        (await Status("/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NotFound);
+        (await Status($"/api/v1/presets/{id}/file")).ShouldBe(HttpStatusCode.NotFound);
+
+        var seen = await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/presets", UriKind.Relative), TestContext.Current.CancellationToken);
+        seen.GetProperty("items")[0].GetProperty("published").GetBoolean().ShouldBeFalse();
+
+        (await Change(admin, id, new { published = true })).ShouldBe(HttpStatusCode.OK);
+
+        Names(await Get("/api/v1/presets")).ShouldBe(["Rain"]);
+    }
+
+    [Fact]
+    public async Task An_unpublished_preset_waits_for_its_render_until_it_is_published_again()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        await Change(admin, id, new { published = false });
+
+        (await Get("/api/v1/presets?pending=true")).GetProperty("items").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task The_admin_renames_a_preset()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        (await Change(admin, id, new { name = "  Night   bus " })).ShouldBe(HttpStatusCode.OK);
+
+        Names(await Get("/api/v1/presets")).ShouldBe(["Night bus"]);
+        (await Change(admin, id, new { name = "   " })).ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task The_admin_deletes_a_preset()
+    {
+        var id = (await Submit(PatchFile("Rain.", "Ada", "ambient"))).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        (await Delete(admin, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NoContent);
+
+        (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+        (await Get("/api/v1/tags")).GetArrayLength().ShouldBe(0);
+        (await Delete(admin, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Nobody_else_changes_or_deletes_a_preset()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await SignIn(client, "wrong")).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Change(client, id, new { name = "Mine now", published = false })).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Delete(client, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.Unauthorized);
+
+        Names(await Get("/api/v1/presets")).ShouldBe(["Drone"]);
+    }
+
+    [Fact]
+    public async Task Signing_out_ends_admin_mode()
+    {
+        using var admin = await Admin();
+        var state = new Uri("/api/v1/admin", UriKind.Relative);
+
+        (await admin.GetFromJsonAsync<JsonElement>(state, TestContext.Current.CancellationToken)).GetProperty("signedIn").GetBoolean().ShouldBeTrue();
+
+        (await Delete(admin, "/api/v1/admin/session")).ShouldBe(HttpStatusCode.NoContent);
+
+        (await admin.GetFromJsonAsync<JsonElement>(state, TestContext.Current.CancellationToken)).GetProperty("signedIn").GetBoolean().ShouldBeFalse();
+    }
+
+    public sealed class WithoutAnAdmin : IDisposable
+    {
+        private readonly ServerTests server = new(20, adminPassword: "");
+
+        public void Dispose() => server.Dispose();
+
+        [Fact]
+        public async Task Admin_mode_is_off_until_a_password_is_configured()
+        {
+            (await server.Get("/api/v1/admin")).GetProperty("enabled").GetBoolean().ShouldBeFalse();
+            (await SignIn(server.client, "")).ShouldBe(HttpStatusCode.NotFound);
+        }
     }
 
     public sealed class Flooding : IDisposable

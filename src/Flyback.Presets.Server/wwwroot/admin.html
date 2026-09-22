@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Flyback Presets</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/presets.css">
+</head>
+<body data-page="admin">
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="https://markovcd.github.io/Flyback/"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="https://markovcd.github.io/Flyback/" class="optional">Overview</a>
+      <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
+      <a href="https://markovcd.github.io/Flyback/plugins.html">Plugins</a>
+      <a href="./" aria-current="page">Presets</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="shelf-head">
+    <span class="eyebrow">Presets</span>
+    <h1>Admin.</h1>
+    <p class="lede" id="admin-lede">Signed in, the shelf shows unpublished presets too, and every preset can be
+      renamed, unpublished or deleted.</p>
+  </div>
+
+  <div class="submit">
+    <form id="sign-in" hidden>
+      <label>User
+        <input type="text" name="user" id="user" autocomplete="username" required>
+      </label>
+      <label>Password
+        <input type="password" name="password" id="password" autocomplete="current-password" required>
+      </label>
+      <div>
+        <button type="submit" class="button primary" id="enter">Sign in</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </form>
+
+    <div class="actions" id="signed-in" hidden>
+      <a class="button primary" href="./">To the presets</a>
+      <button type="button" class="button" id="sign-out">Sign out</button>
+    </div>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="https://markovcd.github.io/Flyback/">Overview</a>
+    <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+  </div>
+</footer>
+
+<script src="assets/presets.js"></script>
+</body>
+</html>

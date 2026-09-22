@@ -10,7 +10,7 @@ People want to share the patches they make. The GitHub Pages site is static,
 so it cannot take a submission. The user's NAS can run a container but has no
 power to spare, and a render of a picture, a loop and a track is minutes of
 CPU. A more powerful machine is on the same network. Submissions come from the
-website first and from Flyback later, and nothing is reviewed yet.
+website first and from Flyback later, and go up without review.
 
 ## Decision
 
@@ -39,9 +39,17 @@ Each file is written under a temporary name and renamed, `{id}.done` goes last,
 and `{id}.failed` holds why a render could not be made. The site mounts the
 folder read-only.
 
-**The site has no API that writes media.** The only write is a submission,
-which is rate-limited per address. The API is versioned (`/api/v1`) so the app
-can submit through the same endpoint later.
+**The site has no API that writes media.** The only public write is a
+submission, which is rate-limited per address. The API is versioned (`/api/v1`)
+so the app can submit through the same endpoint later.
+
+**One admin, named in the container's configuration, moderates after the
+fact.** `Presets__Admin__User` and `Presets__Admin__Password` in the compose
+file are the whole account; there is no user table, and admin mode is off while
+either is blank. Signing in sets a cookie whose keys sit beside the database.
+The admin renames, unpublishes and deletes presets on the same pages everyone
+sees. An unpublished preset stays in the database but is gone from the shelf,
+its page, its download and the render queue for everyone else.
 
 ## Consequences
 
@@ -49,7 +57,7 @@ can submit through the same endpoint later.
   cannot reach as a file system.
 - A preset whose plugin is missing on the render machine is marked failed
   rather than retried forever. Deleting the marker renders it again.
-- Taking a preset down means deleting its row and its files by hand until
-  there is moderation.
+- Deleting a preset leaves its media behind, since the site cannot write the
+  folder. The files are orphans until removed by hand.
 - The Pages top bar links to the site. The site's pages copy the Pages header,
   so a change to one header is a change to both.

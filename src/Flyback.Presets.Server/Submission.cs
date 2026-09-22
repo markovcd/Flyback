@@ -37,19 +37,21 @@ internal static class Submissions
 
         if (patch is null) return null;
 
-        var stem = Path.GetFileNameWithoutExtension(fileName);
-        var called = Patch.Tidied(string.IsNullOrWhiteSpace(name) ? stem : name) ?? "Untitled";
-
-        if (called.Length > NameLimit) called = called[..NameLimit].TrimEnd();
-
         return new Submission(
-            called,
+            Named(name) ?? Named(Path.GetFileNameWithoutExtension(fileName)) ?? "Untitled",
             Patch.TidiedAuthor(patch.Author),
             Patch.Tidied(patch.Description),
             Patch.TidiedTags(patch.Tags) ?? [],
             Path.GetFileName(fileName),
             file);
     }
+
+    /// <summary>A preset name held to one line and <see cref="NameLimit"/>, or null where it is blank.</summary>
+    public static string? Named(string? name) => Patch.Tidied(name) switch
+    {
+        { Length: > NameLimit } called => called[..NameLimit].TrimEnd(),
+        var called => called,
+    };
 
     private static Patch? Loose(byte[] file)
     {

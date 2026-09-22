@@ -1,12 +1,14 @@
 /* The preset site's own bits, in site.css's tokens. */
 
+[hidden] { display: none !important; }
+
 .shelf-head { padding: 56px 0 28px; }
 .shelf-head .lede { margin-top: 16px; }
 .shelf-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
 
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0 24px; }
 
-input[type="search"], input[type="text"], input[type="file"] {
+input[type="search"], input[type="text"], input[type="password"], input[type="file"] {
   font: 400 15px/1.4 var(--sans);
   color: var(--bright);
   background: var(--canvas);
@@ -81,3 +83,15 @@ button.button { cursor: pointer; }
 .submit dd { margin: 0; color: var(--label); }
 .status { min-height: 1.5em; font-size: 14.5px; }
 .status.bad { color: var(--sink); }
+
+/* Admin mode. */
+.badge {
+  display: inline-block; margin-left: 10px; vertical-align: middle;
+  font: 700 11px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase;
+  color: #16181B; background: var(--attention); border-radius: 3px; padding: 4px 6px;
+}
+.preset-page .badge { margin: 12px 0 0; }
+.card.preset.unpublished .frame { opacity: 0.45; }
+.admin-tools { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--edge); }
+.preset-page .admin-tools { margin-top: 20px; padding-top: 16px; }
+.button.danger { color: var(--sink); }

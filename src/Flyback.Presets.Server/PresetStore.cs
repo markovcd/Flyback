@@ -13,7 +13,8 @@ internal sealed record StoredPreset(
     string FileName,
     long Size,
     DateTimeOffset Submitted,
-    long Downloads);
+    long Downloads,
+    bool Published);
 
 /// <summary>A page of presets and how many match in all.</summary>
 internal sealed record PresetPage(IReadOnlyList<StoredPreset> Items, int Total);
@@ -26,7 +27,7 @@ internal sealed class PresetStore
     private const string Columns = """
         p.id, p.name, p.author, p.description,
         (SELECT group_concat(t.tag, char(31)) FROM preset_tags t WHERE t.preset_id = p.id),
-        p.file_name, p.size, p.submitted_at, p.downloads
+        p.file_name, p.size, p.submitted_at, p.downloads, p.published
         """;
 
     private readonly string connection;
@@ -59,6 +60,12 @@ internal sealed class PresetStore
             CREATE INDEX IF NOT EXISTS preset_tags_tag ON preset_tags(tag);
             CREATE INDEX IF NOT EXISTS presets_submitted ON presets(submitted_at);
             """);
+
+        using var columns = db.CreateCommand();
+        columns.CommandText = "SELECT count(*) FROM pragma_table_info('presets') WHERE name = 'published'";
+
+        if (Convert.ToInt32(columns.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
+            Run(db, "ALTER TABLE presets ADD COLUMN published INTEGER NOT NULL DEFAULT 1");
     }
 
     public StoredPreset Add(Submission submission, DateTimeOffset at)
@@ -99,11 +106,12 @@ internal sealed class PresetStore
         return Find(id)!;
     }
 
-    public StoredPreset? Find(string id)
+    /// <summary>The preset, where it is published or <paramref name="unpublished"/> are wanted too.</summary>
+    public StoredPreset? Find(string id, bool unpublished = false)
     {
         using var db = Open();
         using var query = db.CreateCommand();
-        query.CommandText = $"SELECT {Columns} FROM presets p WHERE p.id = $id";
+        query.CommandText = $"SELECT {Columns} FROM presets p WHERE p.id = $id {Visible(unpublished)}";
         query.Parameters.AddWithValue("$id", id);
 
         using var reader = query.ExecuteReader();
@@ -112,9 +120,11 @@ internal sealed class PresetStore
     }
 
     /// <summary>Newest first, matching all of <paramref name="search"/>'s words and <paramref name="tag"/>.</summary>
-    public PresetPage List(string? search, string? tag, int page, int size)
+    public PresetPage List(string? search, string? tag, int page, int size, bool unpublished = false)
     {
         var where = new List<string>();
+
+        if (!unpublished) where.Add("p.published = 1");
 
         using var db = Open();
         using var query = db.CreateCommand();
@@ -150,12 +160,12 @@ internal sealed class PresetStore
         return new PresetPage(items, total);
     }
 
-    /// <summary>Every preset, oldest first, for finding the ones still to render.</summary>
+    /// <summary>Every published preset, oldest first, for finding the ones still to render.</summary>
     public IEnumerable<StoredPreset> Oldest()
     {
         using var db = Open();
         using var query = db.CreateCommand();
-        query.CommandText = $"SELECT {Columns} FROM presets p ORDER BY p.submitted_at, p.id";
+        query.CommandText = $"SELECT {Columns} FROM presets p WHERE p.published = 1 ORDER BY p.submitted_at, p.id";
 
         using var reader = query.ExecuteReader();
 
@@ -163,35 +173,41 @@ internal sealed class PresetStore
     }
 
     /// <summary>The preset's file, counted as a download where <paramref name="counted"/>.</summary>
-    public (StoredPreset Preset, byte[] File)? Download(string id, bool counted)
+    public (StoredPreset Preset, byte[] File)? Download(string id, bool counted, bool unpublished = false)
     {
         using var db = Open();
+        using var query = db.CreateCommand();
+        query.CommandText = $"SELECT {Columns}, p.file FROM presets p WHERE p.id = $id {Visible(unpublished)}";
+        query.Parameters.AddWithValue("$id", id);
+
+        (StoredPreset Preset, byte[] File) found;
+
+        using (var reader = query.ExecuteReader())
+        {
+            if (!reader.Read()) return null;
+
+            found = (Row(reader), (byte[])reader.GetValue(10));
+        }
 
         if (counted)
         {
             using var count = db.CreateCommand();
             count.CommandText = "UPDATE presets SET downloads = downloads + 1 WHERE id = $id";
             count.Parameters.AddWithValue("$id", id);
-
-            if (count.ExecuteNonQuery() == 0) return null;
+            count.ExecuteNonQuery();
         }
 
-        using var query = db.CreateCommand();
-        query.CommandText = $"SELECT {Columns}, p.file FROM presets p WHERE p.id = $id";
-        query.Parameters.AddWithValue("$id", id);
-
-        using var reader = query.ExecuteReader();
-
-        if (!reader.Read()) return null;
-
-        return (Row(reader), (byte[])reader.GetValue(9));
+        return found;
     }
 
-    public IReadOnlyList<(string Tag, int Count)> Tags(int limit)
+    public IReadOnlyList<(string Tag, int Count)> Tags(int limit, bool unpublished = false)
     {
         using var db = Open();
         using var query = db.CreateCommand();
-        query.CommandText = "SELECT tag, count(*) AS n FROM preset_tags GROUP BY tag ORDER BY n DESC, tag LIMIT $limit";
+        query.CommandText = $"""
+            SELECT t.tag, count(*) AS n FROM preset_tags t JOIN presets p ON p.id = t.preset_id
+            WHERE 1 = 1 {Visible(unpublished)} GROUP BY t.tag ORDER BY n DESC, t.tag LIMIT $limit
+            """;
         query.Parameters.AddWithValue("$limit", limit);
 
         var tags = new List<(string, int)>();
@@ -202,6 +218,31 @@ internal sealed class PresetStore
 
         return tags;
     }
+
+    /// <summary>Renames the preset, false where there is no such preset.</summary>
+    public bool Rename(string id, string name) =>
+        Change("UPDATE presets SET name = $value WHERE id = $id", id, name);
+
+    /// <summary>Shows or hides the preset, false where there is no such preset.</summary>
+    public bool Publish(string id, bool published) =>
+        Change("UPDATE presets SET published = $value WHERE id = $id", id, published ? 1 : 0);
+
+    /// <summary>Deletes the preset and its tags, false where there is no such preset.</summary>
+    public bool Delete(string id) =>
+        Change("DELETE FROM presets WHERE id = $id", id, null);
+
+    private bool Change(string sql, string id, object? value)
+    {
+        using var db = Open();
+        using var command = db.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("$id", id);
+        if (value is not null) command.Parameters.AddWithValue("$value", value);
+
+        return command.ExecuteNonQuery() > 0;
+    }
+
+    private static string Visible(bool unpublished) => unpublished ? string.Empty : "AND p.published = 1";
 
     private SqliteConnection Open()
     {
@@ -233,5 +274,6 @@ internal sealed class PresetStore
         reader.GetString(5),
         reader.GetInt64(6),
         DateTimeOffset.Parse(reader.GetString(7), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
-        reader.GetInt64(8));
+        reader.GetInt64(8),
+        reader.GetInt64(9) != 0);
 }

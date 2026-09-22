@@ -1,6 +1,9 @@
-// The preset site: a shelf of presets, one preset, and the form that submits one.
+// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in.
 (function () {
   var api = "api/v1/";
+
+  var admin = fetch(api + "admin").then(function (r) { return r.json(); })
+    .catch(function () { return { enabled: false, signedIn: false }; });
 
   function make(tag, attrs, text) {
     var node = document.createElement(tag);
@@ -60,6 +63,47 @@
     into.appendChild(row);
   }
 
+  // ---- admin tools ----------------------------------------------------------
+
+  function change(preset, body) {
+    return fetch(api + "presets/" + preset.id, body
+      ? { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+      : { method: "DELETE" }).then(function (r) {
+      if (r.status === 401) throw new Error("You are signed out.");
+      if (!r.ok) throw new Error("That did not work.");
+      return body ? "changed" : "deleted";
+    });
+  }
+
+  /** Rename, unpublish or publish, and delete; done hears "changed" or "deleted". */
+  function tools(preset, done) {
+    var row = make("div", { class: "admin-tools" });
+
+    function button(label, act, danger) {
+      var node = make("button", { type: "button", class: "button small" + (danger ? " danger" : "") }, label);
+      node.addEventListener("click", function () {
+        var doing = act();
+        if (!doing) return;
+        node.disabled = true;
+        doing.then(done, function (problem) { alert(problem.message); node.disabled = false; });
+      });
+      row.appendChild(node);
+    }
+
+    button("Rename", function () {
+      var name = prompt("Rename the preset", preset.name);
+      return name && name.trim() && name !== preset.name ? change(preset, { name: name }) : null;
+    });
+    button(preset.published ? "Unpublish" : "Publish", function () {
+      return change(preset, { published: !preset.published });
+    });
+    button("Delete", function () {
+      return confirm("Delete \u201C" + preset.name + "\u201D for good?") ? change(preset, null) : null;
+    }, true);
+
+    return row;
+  }
+
   // ---- the shelf ----------------------------------------------------------
 
   function shelf() {
@@ -69,6 +113,7 @@
     var grid = document.getElementById("shelf");
     var pager = document.getElementById("pager");
     var timer = 0;
+    var signed = false;
 
     search.value = state.q;
 
@@ -83,11 +128,12 @@
 
     function card(preset) {
       var href = "preset.html?id=" + preset.id;
-      var article = make("article", { class: "card preset" });
+      var article = make("article", { class: "card preset" + (preset.published ? "" : " unpublished") });
       article.appendChild(frame(preset, href));
 
       var header = make("header");
       header.appendChild(make("a", { href: href }, preset.name));
+      if (!preset.published) header.appendChild(make("span", { class: "badge" }, "Unpublished"));
       article.appendChild(header);
 
       var body = make("div", { class: "body" });
@@ -99,6 +145,8 @@
       foot.appendChild(make("span", null, day(preset.submitted)));
       foot.appendChild(make("a", { class: "button small", href: preset.file, download: preset.fileName }, "Download"));
       body.appendChild(foot);
+
+      if (signed) body.appendChild(tools(preset, function () { tags(); load(); }));
 
       article.appendChild(body);
       return article;
@@ -149,8 +197,13 @@
     document.getElementById("previous").addEventListener("click", function () { state.page--; load(); scrollTo(0, 0); });
     document.getElementById("next").addEventListener("click", function () { state.page++; load(); scrollTo(0, 0); });
 
-    tags();
-    load();
+    admin.then(function (state) {
+      signed = state.signedIn;
+      if (signed) document.querySelector(".shelf-head .actions")
+        .appendChild(make("a", { class: "button", href: "admin.html" }, "Admin"));
+      tags();
+      load();
+    });
   }
 
   // ---- one preset -----------------------------------------------------------
@@ -158,8 +211,12 @@
   function one() {
     var id = new URLSearchParams(location.search).get("id");
     var page = document.getElementById("preset");
+    var signed = false;
 
-    fetch(api + "presets/" + encodeURIComponent(id || "")).then(function (r) {
+    admin.then(function (state) {
+      signed = state.signedIn;
+      return fetch(api + "presets/" + encodeURIComponent(id || ""));
+    }).then(function (r) {
       if (!r.ok) throw new Error();
       return r.json();
     }).then(function (preset) {
@@ -171,6 +228,7 @@
       var text = make("div");
       text.appendChild(make("span", { class: "eyebrow" }, "Preset"));
       text.appendChild(make("h1", null, preset.name));
+      if (!preset.published) text.appendChild(make("span", { class: "badge" }, "Unpublished"));
       if (preset.description) text.appendChild(make("p", { class: "lede" }, preset.description));
 
       var facts = make("div", { class: "facts" });
@@ -190,6 +248,11 @@
       actions.appendChild(make("a", { class: "button primary", href: preset.file, download: preset.fileName }, "Download"));
       actions.appendChild(make("a", { class: "button", href: "./" }, "All presets"));
       text.appendChild(actions);
+
+      if (signed) text.appendChild(tools(preset, function (what) {
+        if (what === "deleted") location.href = "./";
+        else location.reload();
+      }));
 
       if (preset.media.audio && preset.media.peaks) {
         var track = make("article", { class: "card track" });
@@ -271,8 +334,62 @@
     });
   }
 
+  // ---- signing in ----------------------------------------------------------
+
+  function signIn() {
+    var form = document.getElementById("sign-in");
+    var inside = document.getElementById("signed-in");
+    var status = document.getElementById("status");
+
+    function show(signed) {
+      form.hidden = signed;
+      inside.hidden = !signed;
+    }
+
+    function tell(text) {
+      status.textContent = text;
+      status.classList.toggle("bad", !!text);
+    }
+
+    admin.then(function (state) {
+      if (!state.enabled) {
+        document.getElementById("admin-lede").textContent = "Admin mode is off. Set Presets__Admin__User and " +
+          "Presets__Admin__Password in the container's configuration to turn it on.";
+        return;
+      }
+      show(state.signedIn);
+    });
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var enter = document.getElementById("enter");
+      enter.disabled = true;
+      tell("");
+
+      fetch(api + "admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: form.user.value, password: form.password.value }),
+      }).then(function (r) {
+        if (r.status === 429) throw new Error("Too many tries. Wait a quarter of an hour.");
+        if (!r.ok) throw new Error("That user and password are not the admin's.");
+        form.password.value = "";
+        show(true);
+      }).catch(function (problem) {
+        tell(problem.message);
+      }).then(function () {
+        enter.disabled = false;
+      });
+    });
+
+    document.getElementById("sign-out").addEventListener("click", function () {
+      fetch(api + "admin/session", { method: "DELETE" }).then(function () { show(false); });
+    });
+  }
+
   var which = document.body.getAttribute("data-page");
   if (which === "shelf") shelf();
   else if (which === "preset") one();
   else if (which === "submit") submit();
+  else if (which === "admin") signIn();
 })();

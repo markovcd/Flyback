@@ -43,6 +43,14 @@ Settings, all optional, as environment variables:
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
 | `Presets__Media` | `/media` | the folder the render machine writes |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
+| `Presets__Admin__User` | | the admin's user name |
+| `Presets__Admin__Password` | | the admin's password; admin mode is off while either is blank |
+
+## Admin mode
+
+Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`. Signed in, the shelf shows unpublished presets too, and every preset has Rename, Unpublish (or Publish) and Delete. An unpublished preset is gone from the shelf, its page and its download for everyone else, and is not rendered until it is published again.
+
+Sign-in is a cookie, kept for two weeks. Its keys live in `data/keys/`, so restarting the container does not sign the admin out. Serve the site over HTTPS, since the password crosses the wire at sign-in. Ten wrong tries from one address lock that address out for a quarter of an hour.
 
 ## Sharing the media folder
 
@@ -72,10 +80,9 @@ A patch that wires only a picture gets no track, one that wires only a sound get
 ## Looking after it
 
 - **Back up** by copying `data/presets.db` (with the site stopped, or with `sqlite3 presets.db ".backup copy.db"`) and `media/`.
-- **Take a preset down** until there is moderation:
+- **Take a preset down** from admin mode: Unpublish hides it, Delete removes it. The site cannot write `media/`, so a deleted preset's files stay there until removed by hand:
 
   ```bash
-  sqlite3 data/presets.db "DELETE FROM presets WHERE id = '<id>'"
   rm media/<id>.*
   ```
 
