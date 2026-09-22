@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -41,7 +41,7 @@ public sealed class FileTypeSettingsTests : UiTest
 
     private MainWindow Open()
     {
-        var window = new MainWindow(fileTypeSettingsPath: settingsPath, fileTypes: system);
+        var window = Owned(new MainWindow(fileTypeSettingsPath: settingsPath, fileTypes: system));
 
         window.Show();
         Settle(window);

@@ -29,9 +29,9 @@ public class RecoveryWindowTests : UiTest
         GC.SuppressFinalize(this);
     }
 
-    private static MainWindow Open(string? recoveryFolder = null)
+    private MainWindow Open(string? recoveryFolder = null)
     {
-        var window = new MainWindow(recoveryFolder: recoveryFolder);
+        var window = Owned(new MainWindow(recoveryFolder: recoveryFolder));
 
         window.Show();
         window.UpdateLayout();

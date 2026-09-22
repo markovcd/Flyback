@@ -30,9 +30,9 @@ public sealed class UpdateSettingsTests : UiTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private static MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
+    private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
     {
-        var window = new MainWindow(updateSettingsPath: settingsPath, updateNote: note, whatsNew: whatsNew);
+        var window = Owned(new MainWindow(updateSettingsPath: settingsPath, updateNote: note, whatsNew: whatsNew));
 
         window.Show();
         Settle(window);

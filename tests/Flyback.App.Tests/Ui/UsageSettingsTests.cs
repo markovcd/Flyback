@@ -39,9 +39,9 @@ public sealed class UsageSettingsTests : UiTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private static MainWindow Open(string? settingsPath = null, Usage? usage = null)
+    private MainWindow Open(string? settingsPath = null, Usage? usage = null)
     {
-        var window = new MainWindow(usageSettingsPath: settingsPath, usage: usage);
+        var window = Owned(new MainWindow(usageSettingsPath: settingsPath, usage: usage));
 
         window.Show();
         Settle(window);

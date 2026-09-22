@@ -49,9 +49,9 @@ public class OutputSettingsTests : UiTest
     /// plugins loaded the catalog is empty and the audio device is silent,
     /// which is the same path a machine with no sound backend takes.
     /// </summary>
-    private static MainWindow Open(string? settingsPath = null)
+    private MainWindow Open(string? settingsPath = null)
     {
-        var window = new MainWindow(outputSettingsPath: settingsPath);
+        var window = Owned(new MainWindow(outputSettingsPath: settingsPath));
 
         window.Show();
         window.UpdateLayout();
@@ -909,7 +909,7 @@ public class OutputSettingsTests : UiTest
     [AvaloniaFact]
     public void A_run_started_interpreted_stays_interpreted_and_says_so()
     {
-        var window = new MainWindow(interpreted: true);
+        var window = Owned(new MainWindow(interpreted: true));
 
         window.Show();
         Settle(window);

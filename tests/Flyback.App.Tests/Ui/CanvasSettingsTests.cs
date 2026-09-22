@@ -43,9 +43,9 @@ public sealed class CanvasSettingsTests : UiTest
         ModuleSkins.Animated = true;
     }
 
-    private static MainWindow Open(string? settingsPath = null)
+    private MainWindow Open(string? settingsPath = null)
     {
-        var window = new MainWindow(canvasSettingsPath: settingsPath);
+        var window = Owned(new MainWindow(canvasSettingsPath: settingsPath));
 
         window.Show();
         Settle(window);
