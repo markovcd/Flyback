@@ -1,6 +1,6 @@
 /* The shared plugins' own bits, on top of presets.css. */
 
-.shelf-head + .note { max-width: var(--measure); margin: 0 0 24px; }
+main > .note:first-child { max-width: var(--measure); margin: 0 0 24px; }
 
 .card.plugin { display: flex; flex-direction: column; overflow: hidden; }
 .card.plugin > .frame { margin: -16px -18px 14px; }

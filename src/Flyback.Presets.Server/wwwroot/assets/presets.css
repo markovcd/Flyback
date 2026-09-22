@@ -2,8 +2,8 @@
 
 [hidden] { display: none !important; }
 
-.shelf-head { padding: 56px 0 28px; }
-.shelf-head .lede { margin-top: 16px; }
+/* The page head sits on the canvas band, as the Pages site's do. */
+.canvas + main { padding-top: 32px; }
 .shelf-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
 
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0 24px; }
