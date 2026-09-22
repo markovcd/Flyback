@@ -228,10 +228,7 @@ internal sealed class PluginPackage
         return Read(memory.ToArray(), limits);
     }
 
-    /// <summary>
-    /// Zips each build folder under its platform's name, leaving out the host's own
-    /// assemblies, which the host always supplies itself.
-    /// </summary>
+    /// <summary>Zips each build folder under its platform's name.</summary>
     /// <param name="builds">Each platform's name, and the folder holding its build output.</param>
     /// <param name="leave">Folders at the top of a build that are not part of it: the SDK puts other runtimes' builds inside the portable one.</param>
     public static byte[] Pack(IEnumerable<(string Platform, string Folder)> builds, IReadOnlySet<string>? leave = null)
@@ -246,8 +243,6 @@ internal sealed class PluginPackage
                 {
                     var path = Path.GetRelativePath(folder, file).Replace('\\', '/');
 
-                    if (!path.Contains('/') && PluginLoadContext.IsHostOwned(HostName(path))) continue;
-
                     if (leave is not null && path.Split('/') is [var top, _, ..] && leave.Contains(top)) continue;
 
                     zip.CreateEntryFromFile(file, $"{platform}/{path}", CompressionLevel.Optimal);
@@ -257,13 +252,6 @@ internal sealed class PluginPackage
 
         return memory.ToArray();
     }
-
-    /// <summary>The assembly a file at a build's top belongs to: <c>Flyback.Core</c> for its dll, pdb and xml alike.</summary>
-    private static string HostName(string file) => file.Split('.') switch
-    {
-        [.. var name, _] => string.Join('.', name),
-        _ => file,
-    };
 
     /// <summary>
     /// Writes <paramref name="build"/>'s files into <paramref name="folder"/>, which

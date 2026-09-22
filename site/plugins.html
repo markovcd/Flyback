@@ -809,8 +809,10 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     needs the .NET SDK. Given the folder the SDK already built into, it needs nothing: <code>publish/</code>,
     or the folder itself, is the build for any system, and each <code>win-x64/publish/</code>,
     <code>osx-arm64/</code> and so on is that system's. Two runtimes for one system are refused, since a package
-    holds one build for each. It leaves out the host's own assemblies, checks the package the way the editor
-    will, and prints what the install dialog is going to show.</p>
+    holds one build for each. It holds each build to <a href="#project">the project file</a> above, refusing
+    one without the <code>runtimeconfig.json</code> that <code>EnableDynamicLoading</code> writes, or one
+    carrying a copy of <code>Flyback.Core</code> or <code>Flyback.Plugins</code>. Then it checks the package
+    the way the editor will, and prints what the install dialog is going to show.</p>
 
     <p>The package is a zip with a folder per system — <code>win</code>, <code>osx</code>,
     <code>linux</code>, or <code>any</code> for a build that is the same everywhere, used where there is no

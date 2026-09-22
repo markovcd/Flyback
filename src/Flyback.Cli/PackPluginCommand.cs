@@ -20,6 +20,11 @@ internal sealed record Published(int Code, string Output);
 /// and each <c>&lt;rid&gt;/publish/</c> or <c>&lt;rid&gt;/</c> is that runtime's. The
 /// package carries nothing but the builds: the editor reads what the plugin is from
 /// the plugin itself, so what this prints is what the install dialog will show.
+/// <para>
+/// A build is held to the project file the plugin guide asks for: built with
+/// <c>EnableDynamicLoading</c>, and compiled against the host's assemblies without
+/// carrying a copy of them.
+/// </para>
 /// </remarks>
 internal static class PackPluginCommand
 {
@@ -188,6 +193,43 @@ internal static class PackPluginCommand
             return AssemblyFacts.Of(stream) is { IsPlugin: true } facts && !PluginLoadContext.IsHostOwned(facts.Name);
         }));
 
+    /// <summary>
+    /// Why a build is not what the plugin guide's project file makes, or null where it is.
+    /// </summary>
+    /// <remarks>
+    /// Both are read off the build. Only <c>EnableDynamicLoading</c> gives a library a
+    /// <c>runtimeconfig.json</c>, and without it the SDK leaves the plugin's own
+    /// dependencies behind. A host assembly in the build is a reference that was copied,
+    /// or one left unnamed and brought in by the other: the host loads its own copy
+    /// either way, so it is a sign of the project, not a danger in the package.
+    /// </remarks>
+    internal static string? Unfit(string build, IReadOnlySet<string> leave)
+    {
+        var plugin = Directory.EnumerateFiles(build, "*.dll").FirstOrDefault(dll =>
+        {
+            using var stream = File.OpenRead(dll);
+            return AssemblyFacts.Of(stream) is { IsPlugin: true } facts && !PluginLoadContext.IsHostOwned(facts.Name);
+        });
+
+        if (plugin is not null && !File.Exists(Path.ChangeExtension(plugin, ".runtimeconfig.json")))
+            return $"{Path.GetFileName(plugin)} was not built to be loaded as a plugin. "
+                + "Set <EnableDynamicLoading>true</EnableDynamicLoading> in its project.";
+
+        var copied = Directory.EnumerateFiles(build, "*.dll", SearchOption.AllDirectories)
+            .Where(dll => !leave.Contains(Path.GetRelativePath(build, dll).Split(Path.DirectorySeparatorChar)[0]))
+            .Select(Path.GetFileNameWithoutExtension)
+            .Where(PluginLoadContext.IsHostOwned)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (copied.Count > 0)
+            return $"The build carries {string.Join(" and ", copied.Select(c => $"{c}.dll"))}, which Flyback supplies itself. "
+                + "Reference both Flyback.Core and Flyback.Plugins with Private=\"false\" and ExcludeAssets=\"runtime\".";
+
+        return null;
+    }
+
     /// <summary>Whether a second runtime is for a system that already has a build, which a package holds one of.</summary>
     private static bool Twice(List<(string Platform, string Folder)> builds, string platform, string runtime, TextWriter error)
     {
@@ -205,6 +247,11 @@ internal static class PackPluginCommand
         TextWriter writer,
         TextWriter error)
     {
+        foreach (var (_, folder) in builds)
+        {
+            if (Unfit(folder, leave) is { } unfit) return Fail(error, unfit);
+        }
+
         var bytes = PluginPackage.Pack(builds, leave);
         PluginPackage package;
 

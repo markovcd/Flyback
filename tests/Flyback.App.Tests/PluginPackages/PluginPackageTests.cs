@@ -245,17 +245,17 @@ public sealed class PluginPackageTests : IDisposable
     }
 
     [Fact]
-    public void Packing_leaves_out_the_hosts_own_assemblies_and_writes_forward_slashes()
+    public void Packing_writes_forward_slashes_and_leaves_out_the_folders_it_is_told_to()
     {
         var build = Path.Combine(folder, "build");
 
         Directory.CreateDirectory(Path.Combine(build, "runtimes", "win-x64"));
+        Directory.CreateDirectory(Path.Combine(build, "linux-x64"));
         File.WriteAllBytes(Path.Combine(build, Packages.AssemblyName), Packages.Assembly);
-        File.WriteAllBytes(Path.Combine(build, "Flyback.Core.dll"), [1]);
-        File.WriteAllBytes(Path.Combine(build, "Flyback.Plugins.pdb"), [1]);
         File.WriteAllBytes(Path.Combine(build, "runtimes", "win-x64", "readme.txt"), [1]);
+        File.WriteAllBytes(Path.Combine(build, "linux-x64", Packages.AssemblyName), Packages.Assembly);
 
-        var package = PluginPackage.Read(PluginPackage.Pack([("any", build)]));
+        var package = PluginPackage.Read(PluginPackage.Pack([("any", build)], new HashSet<string> { "linux-x64" }));
 
         package.Files("any").Select(f => f.Path).Order(StringComparer.Ordinal)
             .ShouldBe([Packages.AssemblyName, "runtimes/win-x64/readme.txt"]);

@@ -19,13 +19,14 @@ public sealed class PackPluginCommandTests : IDisposable
 
     private PluginPackage Written => PluginPackage.Read(File.ReadAllBytes(Output.FullName));
 
-    /// <summary>Puts the sample plugin where a build of it would be, with a copy of the host's own beside it.</summary>
-    private string Build(string at)
-    {
-        var build = Directory.CreateDirectory(Path.Combine(folder, at)).FullName;
+    /// <summary>Puts the sample plugin where a build of it would be, as the guide's project file builds it.</summary>
+    private string Build(string at) => Write(Directory.CreateDirectory(Path.Combine(folder, at)).FullName);
 
+    /// <summary>The sample plugin and the runtimeconfig.json that EnableDynamicLoading writes beside it.</summary>
+    private static string Write(string build)
+    {
         File.Copy(Plugin, Path.Combine(build, Path.GetFileName(Plugin)));
-        File.Copy(typeof(PluginHost).Assembly.Location, Path.Combine(build, "Flyback.Plugins.dll"));
+        File.WriteAllText(Path.Combine(build, Path.ChangeExtension(Path.GetFileName(Plugin), ".runtimeconfig.json")), "{}");
 
         return build;
     }
@@ -57,8 +58,7 @@ public sealed class PackPluginCommandTests : IDisposable
 
             if (publishCode != 0) return new Published(publishCode, "error CS1002: ; expected");
 
-            Directory.CreateDirectory(into);
-            File.Copy(Plugin, Path.Combine(into, Path.GetFileName(Plugin)));
+            Write(Directory.CreateDirectory(into).FullName);
 
             return new Published(0, "");
         }
@@ -88,7 +88,6 @@ public sealed class PackPluginCommandTests : IDisposable
         code.ShouldBe(Exit.Ok);
         Written.Builds.ShouldBe(["win", "linux", "any"]);
         Written.Files("any").ShouldNotContain(f => f.Path.Contains('/'), "the other runtimes' builds are not part of the portable one");
-        Written.Files("any").ShouldNotContain(f => f.Path == "Flyback.Plugins.dll", "the host supplies its own");
         output.ShouldContain("adds      modules");
         output.ShouldContain($"sha256    {Written.Sha256}");
     }
@@ -111,6 +110,39 @@ public sealed class PackPluginCommandTests : IDisposable
 
         code.ShouldBe(Exit.Failed);
         error.ShouldContain("win-x64 is a second build for Windows");
+        Output.Exists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_plugin_not_built_with_dynamic_loading_is_refused()
+    {
+        var build = Build("net10.0");
+        File.Delete(Directory.GetFiles(build, "*.runtimeconfig.json").Single());
+
+        var (code, _, error) = Run(new DirectoryInfo(build));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("Set <EnableDynamicLoading>true</EnableDynamicLoading> in its project.");
+        Output.Exists.ShouldBeFalse();
+    }
+
+    [Theory]
+    [InlineData("Flyback.Core.dll")]
+    [InlineData("Flyback.Plugins.dll")]
+    [InlineData("runtimes/win-x64/lib/net10.0/Flyback.Core.dll")]
+    public void A_build_carrying_the_hosts_own_assemblies_is_refused(string copy)
+    {
+        var build = Build("net10.0");
+        var path = Path.Combine(build, copy);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.Copy(typeof(PluginHost).Assembly.Location, path);
+
+        var (code, _, error) = Run(new DirectoryInfo(build));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain($"The build carries {Path.GetFileName(copy)}, which Flyback supplies itself.");
+        error.ShouldContain("Private=\"false\" and ExcludeAssets=\"runtime\"");
         Output.Exists.ShouldBeFalse();
     }
 
