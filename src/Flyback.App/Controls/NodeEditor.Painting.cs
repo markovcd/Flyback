@@ -237,7 +237,11 @@ public sealed partial class NodeEditor
 
             var from = Scene.OutputAnchor(source, connection.SourcePort);
             var to = Scene.InputAnchor(target, targetDef, connection.TargetPort);
-            var color = Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind);
+            // A wire swinging past the range its socket takes is drawn in the
+            // accent, which is where the status bar's warning about it points.
+            var color = AutoRemap.Overflow(patch, connection) is null
+                ? Colors.PortColor(sourceDef.Outputs[connection.SourcePort].Kind)
+                : Colors.Attention;
 
             // A wire onto or off a module that is switched off is drawn as faintly
             // as the module is: what it shows is where the patch runs again once

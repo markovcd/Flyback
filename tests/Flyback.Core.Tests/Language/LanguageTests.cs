@@ -104,6 +104,7 @@ public class LanguageTests
         sine(freq: 110) * slow |> out.left
 
         rings(freq: 3, offset: t)
+          |> autoremap()
           |> hsv(hue: slow, saturation: 0.85)
           |> out.color
 

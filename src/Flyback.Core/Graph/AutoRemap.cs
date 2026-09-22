@@ -126,6 +126,41 @@ public static class AutoRemap
             && (given.Min, given.Max, given.Knee) != (taken.Min, taken.Max, taken.Knee);
     }
 
+    /// <summary>
+    /// What to say about <paramref name="wire"/> where what its source puts out
+    /// reaches past either end of the range its socket takes, and null where it
+    /// stays inside or either end has no range.
+    /// </summary>
+    public static string? Overflow(Patch patch, Connection wire, ModuleCatalog? catalog = null)
+    {
+        ArgumentNullException.ThrowIfNull(patch);
+        ArgumentNullException.ThrowIfNull(wire);
+
+        catalog ??= NodeCatalog.Current;
+
+        if (patch.Find(wire.SourceNode) is not { } source || catalog.Get(source.TypeId) is not { } from) return null;
+        if (patch.Find(wire.TargetNode) is not { } target || catalog.Get(target.TypeId) is not { } into) return null;
+        if (wire.SourcePort >= from.Outputs.Count || wire.TargetPort >= into.Inputs.Count) return null;
+
+        // A color past 0..1 is clamped by the screen, which is how colors are meant.
+        if (into.Inputs[wire.TargetPort] is { Lenient: true } or { Kind: PortKind.Color }) return null;
+
+        if (Emitted(patch, source, from, wire.SourcePort).Span is not { } given) return null;
+        if (Declared(into.Inputs[wire.TargetPort]) is not { } taken) return null;
+
+        var (low, high) = (MathF.Min(taken.Min, taken.Max), MathF.Max(taken.Min, taken.Max));
+        var (lowest, highest) = (MathF.Min(given.Min, given.Max), MathF.Max(given.Min, given.Max));
+
+        if (lowest >= low && highest <= high) return null;
+
+        var spec = into.Inputs[wire.TargetPort];
+        var socket = new PortSpec("", Min: low, Max: high, Display: spec.Display);
+        var output = new PortSpec("", Min: lowest, Max: highest, Display: given.Display);
+
+        return $"{source.Title(from)}'s '{from.Outputs[wire.SourcePort].Name}' swings {output.Format(lowest)} to {output.Format(highest)}, "
+            + $"past the {socket.Format(low)} to {socket.Format(high)} {target.Title(into)}'s '{spec.Name}' takes";
+    }
+
     /// <summary>The range output <paramref name="port"/> of <paramref name="source"/> puts out, or why it has none.</summary>
     private static (RemapSpan? Span, string? Why) Emitted(Patch patch, NodeInstance source, NodeDef def, int port)
     {

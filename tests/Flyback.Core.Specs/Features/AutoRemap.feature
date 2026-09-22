@@ -15,6 +15,14 @@ Feature: An Auto remap takes its ranges from what it is wired between
     Given a sine wired into a filter's cutoff
     Then Flyback offers to fit the ranges on the wire
 
+  Scenario: A wave swinging past what its socket takes is pointed out
+    Given a sine wired into a color's brightness
+    Then Flyback points out that the sine swings past what the brightness takes
+
+  Scenario: A gate reads a threshold, so a wave into one is not pointed out
+    Given a pulse wired into an envelope's gate
+    Then the patch is accepted without complaint
+
   Scenario: A wire between matching ranges is left alone
     Given a sine wired into a filter's input
     Then Flyback offers nothing on the wire

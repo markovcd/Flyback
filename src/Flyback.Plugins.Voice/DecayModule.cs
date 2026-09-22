@@ -26,7 +26,7 @@ internal static class DecayModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Decay", ModuleCategories.Timing,
         [
-            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
             new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration),
             new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration),
             new PortSpec("curve", PortKind.Scalar, 0.6f, 0f, 1f),

@@ -93,7 +93,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             HoldTypeId, "Sample & Hold", ModuleCategories.Timing,
-            [Num("in"), Num("trigger", 0f, 0f, 1f)],
+            [Num("in"), Num("trigger", 0f, 0f, 1f) with { Lenient = true }],
             [Num("out")],
             EmitHold,
             "Captures the value on 'in' when 'trigger' rises, and holds it until the next trigger. "

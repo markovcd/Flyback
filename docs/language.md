@@ -889,6 +889,7 @@ let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 sine(freq: 110) * slow |> out.left
 
 rings(freq: 3, offset: t)
+  |> autoremap()
   |> hsv(hue: slow, saturation: 0.85)
   |> out.color
 

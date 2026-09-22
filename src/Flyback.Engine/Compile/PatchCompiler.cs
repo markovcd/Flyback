@@ -111,6 +111,10 @@ public static class PatchCompiler
                 issues.Add(new CompileIssue(remap, $"{title}'s 'out low' and 'out high' are plain numbers: {outWhy}.", IssueSeverity.Warning));
         }
 
+        foreach (var wire in patch.Connections)
+            if (AutoRemap.Overflow(patch, wire, catalog) is { } overflow)
+                issues.Add(new CompileIssue(wire.TargetNode, $"{overflow}. An Auto remap in the wire fits it.", IssueSeverity.Warning));
+
         // What every Scope in the patch contributes, which is opposite things to
         // the two programs — a tap to the one that plays, a buffer to the one
         // that draws. See TapSpec.

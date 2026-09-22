@@ -11,6 +11,7 @@
 - A panel knob can sweep its sockets logarithmically, from its menu.
 - Added Auto remap, a Remap whose ranges are read off its wires and set as fractions of each end.
 - A wire between two different ranges has a mark that puts an Auto remap into it.
+- A wire swinging past the range its socket takes is drawn in orange and warned about.
 - The Frequency module is gone: an oscillator's own `freq` knob reaches audible pitches, and a patch that still holds one no longer opens.
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.

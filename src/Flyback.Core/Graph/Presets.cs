@@ -424,6 +424,10 @@ public static partial class Presets
         var rings = b.Add("pattern.rings", (2, 3f));
         var tint = b.Add("color.hsv", (1, 0.85f));
 
+        // Rings swing -1..1 and 'value' takes 0..1, so the whole swing is fitted
+        // to it rather than its lower half falling off the bottom as black.
+        var fit = b.Add(NodeCatalog.AutoRemapTypeId);
+
         // Both halves land on the one block, which is what makes the shared
         // oscillator legible: two wires into the same module, from the same sine.
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.6f));
@@ -433,7 +437,8 @@ public static partial class Presets
          .Wire(tremolo, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(time, 0, rings, 3)
          .Wire(slow, 0, tint, 0)
-         .Wire(rings, 0, tint, 2)
+         .Wire(rings, 0, fit, AutoRemap.In)
+         .Wire(fit, 0, tint, 2)
          .Wire(tint, 0, output, NodeCatalog.OutputColorPort);
 
         return b.Build();

@@ -25,7 +25,7 @@ public partial class NodeCatalog
         yield return new NodeDef(
             AdsrTypeId, "ADSR", ModuleCategories.Timing,
             [
-                Num("gate", 0f, 0f, 1f),
+                Num("gate", 0f, 0f, 1f) with { Lenient = true },
                 Seconds("attack", -2f),
                 Seconds("decay", -1f),
                 Num("sustain", 0.7f, 0f, 1f),

@@ -65,7 +65,7 @@ internal static class SupersawModule
             NodeCatalog.Freq,
             new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f),
             new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f),
-            new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],

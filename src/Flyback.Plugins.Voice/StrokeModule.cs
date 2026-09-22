@@ -24,7 +24,7 @@ internal static class StrokeModule
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("rate", PortKind.Scalar, 1f, 0f, 32f),
-            new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
             new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
         ],
         [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f)],

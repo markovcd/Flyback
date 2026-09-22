@@ -100,6 +100,14 @@ public sealed class CompilerSteps(PatchContext context)
         context.Picture.HasErrors.ShouldBeFalse(Said(context.Picture));
     }
 
+    /// <summary>A remark, not an error: the wire carries what it carries.</summary>
+    [Then("Flyback points out that the sine swings past what the brightness takes")]
+    public void ThenTheSineSwingsPast()
+    {
+        ShouldMention(context.Picture, "swings -1 to 1, past the 0 to 1 HSV's 'value' takes");
+        context.Picture.HasErrors.ShouldBeFalse(Said(context.Picture));
+    }
+
     [Then("Flyback offers to fit the ranges on the wire")]
     public void ThenOffered() => AutoRemap.Offered(context.Patch, context.Patch.Connections.Single()).ShouldBeTrue();
 

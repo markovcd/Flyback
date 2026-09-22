@@ -563,6 +563,29 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire("wave", "out", "filter", socket == "cutoff" ? "cutoff" : "in");
     }
 
+    [Given("a sine wired into a color's brightness")]
+    public void GivenASineIntoBrightness()
+    {
+        context.Add("wave", "osc.sine");
+        context.Add("tint", "color.hsv");
+        context.Wire("wave", "out", "tint", "value");
+        Show("tint", "color");
+    }
+
+    [Given("a pulse wired into an envelope's gate")]
+    public void GivenAPulseIntoAGate()
+    {
+        context.Add("clock", "osc.pulse");
+        context.Add("envelope", "env.adsr");
+        context.Add("tone", "osc.sine");
+        context.Add("level", "math.mul");
+        context.Add("speakers", "output");
+        context.Wire("clock", "out", "envelope", "gate");
+        context.Wire("tone", "out", "level", "a");
+        context.Wire("envelope", "out", "level", "b");
+        context.Wire("level", "out", "speakers", "left");
+    }
+
     /// <summary>An Auto remap from <paramref name="source"/> into the red of a color that has no green or blue, on the screen.</summary>
     private void OntoRed(string source)
     {

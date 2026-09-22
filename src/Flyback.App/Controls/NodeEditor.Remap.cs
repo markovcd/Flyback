@@ -80,14 +80,14 @@ public sealed partial class NodeEditor
         return null;
     }
 
-    /// <summary>Faint on every wire that has one, and bright under the pointer.</summary>
+    /// <summary>Faint on every wire that has one, and bright under the pointer or on a wire that overflows.</summary>
     private void DrawRemapMarks(DrawingContext context)
     {
         if (Locked || drag != Drag.None) return;
 
         foreach (var (wire, at) in RemapMarks())
         {
-            var ink = wire == markHovered ? MarkInk : MarkFaint;
+            var ink = wire == markHovered || AutoRemap.Overflow(patch, wire) is not null ? MarkInk : MarkFaint;
 
             context.DrawEllipse(MarkFill, new Pen(ink, 1.2), at, MarkRadius, MarkRadius);
 

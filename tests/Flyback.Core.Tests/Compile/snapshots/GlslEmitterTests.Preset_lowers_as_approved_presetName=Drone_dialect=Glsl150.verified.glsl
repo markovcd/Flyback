@@ -2,7 +2,7 @@
 
 uniform float uTime;
 uniform float uAspect;
-uniform float uK[6];
+uniform float uK[7];
 
 in vec2 vUv;
 out vec4 fragColor;
@@ -125,8 +125,17 @@ void main()
     float r19 = r18 + r0;
     float r20 = r19 * r5;
     float r21 = sin(r20);
-    vec3 t22 = hsv(r9, r10, r21);
-    float r22 = t22.x; float r23 = t22.y; float r24 = t22.z;
+    float r22 = uK[6];
+    float r23 = r21 + r22;
+    float r24 = r23 * r3;
+    float r25 = r24 - r2;
+    float r26 = r22 - r2;
+    float r27 = dv(r25, r26);
+    float r28 = r2 + (r22 - r2) * r27;
+    float r29 = r28 * r22;
+    float r30 = r29 + r2;
+    vec3 t31 = hsv(r9, r10, r30);
+    float r31 = t31.x; float r32 = t31.y; float r33 = t31.z;
 
-    fragColor = vec4(sat(r22), sat(r23), sat(r24), 1.0);
+    fragColor = vec4(sat(r31), sat(r32), sat(r33), 1.0);
 }

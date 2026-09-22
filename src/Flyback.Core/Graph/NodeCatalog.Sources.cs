@@ -74,7 +74,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             SampleTypeId, "Sample", ModuleCategories.Sources,
-            [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f)],
+            [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f) with { Lenient = true }],
             [Num("out"), Num("length")],
             EmitSample,
             "Plays a WAV file. 'in' is playback position in seconds; 'trigger' restarts from zero. "

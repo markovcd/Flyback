@@ -22,7 +22,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "color.hsv", "HSV", ModuleCategories.Color,
-            [Num("hue", 0f, 0f, 1f), Num("saturation", 1f, 0f, 1f), Num("value", 1f, 0f, 1f)], [Col("color")],
+            [Num("hue", 0f, 0f, 1f) with { Lenient = true }, Num("saturation", 1f, 0f, 1f), Num("value", 1f, 0f, 1f)], [Col("color")],
             (em, i) => [em.Triple(OpCode.HsvToRgb, i[0], i[1], i[2])],
             "Hue, saturation, value. Sweeping hue is the fastest route to rainbows.");
 

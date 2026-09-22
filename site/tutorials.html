@@ -195,6 +195,10 @@
       <li>Add an <strong>HSV</strong> module (it is in the Color family). Rewire Rings' <code>out</code> into
       HSV's <code>value</code>, and HSV's <code>color</code> into the Output's <code>color</code>. Dragging a
       connected input picks its wire up, so you can move the wire rather than drawing a new one.</li>
+      <li>The new wire turns orange, and the status bar says why: Rings swings from −1 to 1, and HSV's
+      <code>value</code> takes 0 to 1, so the lower half of every ring falls off the bottom as black. Click the
+      <strong>⇄</strong> mark on the wire. An <strong>Auto remap</strong> goes into it and fits the whole swing
+      into what <code>value</code> takes.</li>
       <li>Add an <strong>Expression</strong> (it is in the Maths family), type <code>a * 0.1</code> as its
       formula in the inspector, wire <code>t</code> into its <code>a</code>, and wire its <code>out</code> into
       HSV's <code>hue</code>. The hue now goes round the color wheel once every ten seconds. Typing
@@ -204,17 +208,16 @@
 
     <figure class="patch-fig">
       <a class="zoom" href="assets/shots/patch-rings-moving.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/patch-rings-moving.webp" width="1599" height="479"
-             alt="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings sets HSV's value, and HSV's color goes to the Output.">
+        <img class="shot" loading="lazy" src="assets/shots/patch-rings-moving.webp" width="2024" height="507"
+             alt="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings goes through an Auto remap into HSV's value, and HSV's color goes to the Output.">
       </a>
     </figure>
 
     <div class="result">
-      <p style="margin: 0">The rings now travel and slowly change color. HSV takes
-      <code>value</code> from a signal that swings between −1 and 1, so the troughs of each ring are simply
-      black. There is no special "animation" feature: everything that moves in Flyback is a signal wired into a
+      <p style="margin: 0">The rings now travel and slowly change color, each one fading to black and back.
+      There is no special "animation" feature: everything that moves in Flyback is a signal wired into a
       socket.</p>
-      <figure><img loading="lazy" src="assets/shots/preview-tut-t3.webp" width="640" height="360" alt="Red rings on black."></figure>
+      <figure><img loading="lazy" src="assets/shots/preview-tut-t3.webp" width="640" height="360" alt="Purple rings, each fading to black and back."></figure>
     </div>
   </section>
 
@@ -274,7 +277,7 @@
       <div class="window">
         <a class="zoom" href="assets/shots/tutorial-canvas.webp" target="_blank" rel="noopener">
           <img loading="lazy" src="assets/shots/tutorial-canvas.webp" width="1600" height="863"
-               alt="The finished patch on the canvas: a Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
+               alt="The finished patch on the canvas: a Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset through an Auto remap into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
         </a>
       </div>
       <figcaption>The finished patch. As the tone swells, the rings move through the color wheel with it, because
@@ -296,6 +299,7 @@ let slow = sine(freq: 0.15, amp: 0.5, bias: 0.5)
 sine(freq: 110) * slow |> out.left
 
 rings(freq: 3, offset: t)
+  |> autoremap()
   |> color.hsv(hue: slow, saturation: 0.85)
   |> out.color
 

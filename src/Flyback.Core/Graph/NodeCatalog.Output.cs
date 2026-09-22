@@ -321,7 +321,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Quantiser() => new(
         QuantiserTypeId, "Quantiser", ModuleCategories.Pitch,
-        [Pitched("in", 57f), Num("hold", 0f, 0f, 1f)],
+        [Pitched("in", 57f), Num("hold", 0f, 0f, 1f) with { Lenient = true }],
         [Num("note")],
         EmitQuantiser,
         "Snaps what arrives to the nearest note the scale has switched on, in whatever "
@@ -367,7 +367,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Tune() => new(
         "audio.tune", "Tune", ModuleCategories.Pitch,
-        [Pitched("in", 57f), Num("transpose", 0f, -48f, 48f), Num("hold", 0f, 0f, 1f)],
+        [Pitched("in", 57f), Num("transpose", 0f, -48f, 48f), Num("hold", 0f, 0f, 1f) with { Lenient = true }],
         [Num("hz"), Num("note")],
         (em, i) =>
         {

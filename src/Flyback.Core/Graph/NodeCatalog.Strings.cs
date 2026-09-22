@@ -21,7 +21,7 @@ public partial class NodeCatalog
             StringTypeId, "String", ModuleCategories.Oscillators,
             [
                 Num("in", 0f, -1f, 1f),
-                Num("trigger", 0f, 0f, 1f),
+                Num("trigger", 0f, 0f, 1f) with { Lenient = true },
                 Num("freq", 220f, LowestString, 2_000f) with { Knee = LowestString },
                 Seconds("decay", 0.3f),
                 Num("brightness", 0.5f, 0f, 1f),

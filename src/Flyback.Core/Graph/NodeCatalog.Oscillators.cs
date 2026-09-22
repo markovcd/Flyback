@@ -29,7 +29,7 @@ public partial class NodeCatalog
         yield return new NodeDef(
             PulseTypeId, "Pulse", ModuleCategories.Oscillators,
             [
-                Domain("in"), Freq, Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
+                Domain("in"), Freq, Num("phase", 0f, 0f, 1f) with { Lenient = true }, Num("width", 0.5f, 0f, 1f),
                 Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)
             ],
             [Num("out", 0f, -1f, 1f)],
@@ -58,7 +58,7 @@ public partial class NodeCatalog
         [
             Domain("in"),
             Freq,
-            Num("phase", 0f, 0f, 1f),
+            Num("phase", 0f, 0f, 1f) with { Lenient = true },
             Num("amp", 1f, 0f, 2f),
             Num("bias", 0f, -2f, 2f),
         ],

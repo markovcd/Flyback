@@ -47,6 +47,16 @@ that pair in the accent color, and shows every fraction as the value it comes
 to. An output feeding one socket with a range and one without follows the one
 with. An unwired side is fractions of 0..1, which are the numbers themselves.
 
+**A wire swinging past its socket's range is pointed out.** Where what a
+source puts out reaches below or above the range its socket takes, the
+compiler warns and the canvas draws the wire in the accent color, with its
+remap mark lit. A socket marked `Lenient` is left alone, since a value past
+its range still means something there: a phase or a hue wraps round, a gate or
+a trigger reads a threshold. So is a color, which the screen clamps. The Drone,
+which let the lower half of its rings fall off the bottom of `value` as black,
+now fits them through an Auto remap, and the tutorial that builds it teaches
+the orange wire.
+
 **Nothing is saved but the knobs.** The ranges are worked out before each
 compile by a pass beside the one that joins buses, and handed to the module on
 its `EmitContext`. Rewiring changes what the fractions mean. It does not

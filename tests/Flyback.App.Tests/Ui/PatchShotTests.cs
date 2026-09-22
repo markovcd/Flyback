@@ -44,6 +44,7 @@ public class PatchShotTests : UiTest
         Shoot(folder, "rings-moving", Built(
             """
             rings(freq: 4, offset: t)
+              |> autoremap()
               |> color.hsv(hue: t * 0.1, saturation: 0.85)
               |> out.color
             out.volume = 0.5

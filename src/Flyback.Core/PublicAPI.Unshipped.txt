@@ -70,3 +70,6 @@ static Flyback.Core.Graph.RemapSpans.operator ==(Flyback.Core.Graph.RemapSpans? 
 Flyback.Core.Graph.RemapSpans.Narrow.get -> bool
 Flyback.Core.Graph.RemapSpans.Narrow.init -> void
 static Flyback.Core.Graph.AutoRemap.Offered(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.Connection! wire, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> bool
+static Flyback.Core.Graph.AutoRemap.Overflow(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.Connection! wire, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> string?
+Flyback.Core.Graph.PortSpec.Lenient.get -> bool
+Flyback.Core.Graph.PortSpec.Lenient.init -> void

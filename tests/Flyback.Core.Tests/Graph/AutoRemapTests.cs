@@ -239,6 +239,36 @@ public class AutoRemapTests
         AutoRemap.Offered(b.Patch, b.Patch.Connections.Single(), Catalog).ShouldBe(offered);
     }
 
+    [Theory]
+    [InlineData(NodeCatalog.SineTypeId, "color.hsv", 2, true)]
+    [InlineData(NodeCatalog.SineTypeId, "color.hsv", 0, false)]
+    [InlineData(NodeCatalog.PulseTypeId, "env.adsr", 0, false)]
+    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 0, false)]
+    [InlineData("env.adsr", NodeCatalog.SineTypeId, 1, false)]
+    [InlineData(NodeCatalog.ValueTypeId, "color.hsv", 2, false)]
+    public void A_wire_is_warned_about_only_where_its_source_swings_past_either_end_of_its_socket(
+        string from, string into, int port, bool warned)
+    {
+        var b = new PatchBuilder(Catalog);
+        var source = b.Add(from, 0, 0);
+        var target = b.Add(into, 200, 0);
+        b.Wire(source, 0, target, port);
+
+        (AutoRemap.Overflow(b.Patch, b.Patch.Connections.Single(), Catalog) is not null).ShouldBe(warned);
+    }
+
+    [Fact]
+    public void A_wire_swinging_past_its_socket_is_said_when_the_patch_is_compiled()
+    {
+        var b = new PatchBuilder(Catalog);
+        var sine = b.Add(NodeCatalog.SineTypeId, 0, 0);
+        var tint = b.Add("color.hsv", 200, 0);
+        b.Wire(sine, 0, tint, 2);
+
+        b.Patch.CompileForVideo(Catalog).Issues.ShouldContain(i => i.NodeId == tint.Id
+            && i.Message == "Sine's 'out' swings -1 to 1, past the 0 to 1 HSV's 'value' takes. An Auto remap in the wire fits it.");
+    }
+
     [Fact]
     public void Travel_undoes_at_across_a_tapered_range()
     {

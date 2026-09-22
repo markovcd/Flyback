@@ -104,7 +104,7 @@ public class PatchIoTests
         var expected = before.CompileForVideo(NodeCatalog.BuiltIn);
         var actual = after.CompileForVideo(NodeCatalog.BuiltIn);
 
-        actual.Issues.ShouldBeEmpty();
+        actual.Issues.ShouldBe(expected.Issues);
         actual.Program.Ops.ShouldBe(expected.Program.Ops);
         actual.Program.RegisterCount.ShouldBe(expected.Program.RegisterCount);
         actual.Program.OutputBase.ShouldBe(expected.Program.OutputBase);

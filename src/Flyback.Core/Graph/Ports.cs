@@ -196,6 +196,13 @@ public readonly record struct PortSpec(
     /// </remarks>
     public float Knee { get; init; }
 
+    /// <summary>
+    /// Whether a value past either end of the range still means something here: a
+    /// phase or a hue wraps round, and a gate reads a threshold. Such a socket is
+    /// not warned about when a wire into it swings past its range.
+    /// </summary>
+    public bool Lenient { get; init; }
+
     /// <summary>How far along a control spanning <paramref name="min"/> to <paramref name="max"/> <paramref name="value"/> sits, 0 to 1.</summary>
     public double Travel(float value, float min, float max) => Taper.Travel(value, min, max, Knee);
 
