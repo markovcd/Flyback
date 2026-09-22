@@ -9,6 +9,7 @@
 *.md      text
 *.fbk     text
 *.fbks    text
+*.sh      text eol=lf
 
 *.png  binary
 *.ico  binary
