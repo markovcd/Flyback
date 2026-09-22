@@ -29,7 +29,7 @@ internal static class Sweep
 
     /// <summary>Cycles per second, and slow: past a few hertz all three stop being effects and start being tremolo.</summary>
     public static PortSpec Rate(float value, float most) =>
-        new("rate", PortKind.Scalar, value, 0.02f, most);
+        new("rate", PortKind.Scalar, value, 0.02f, most) { Knee = 0.02f };
 
     /// <summary>How far the sweep swings, as a fraction of what the module allows.</summary>
     public static PortSpec Depth(float value) => new("depth", PortKind.Scalar, value, 0f, 1f);

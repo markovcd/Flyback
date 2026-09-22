@@ -33,8 +33,8 @@ internal static class DrumModule
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f),
-            new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f),
+            new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f) { Knee = 20f },
+            new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f) { Knee = 10f },
             new PortSpec("bend", PortKind.Scalar, 4f, 0.5f, 8f),
             new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f),
         ],

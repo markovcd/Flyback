@@ -27,7 +27,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "pattern.rings", "Rings", ModuleCategories.Patterns,
-            [..Position(), Num("freq", 4f, 0f, 32f), Num("offset")], [Num("out")],
+            [..Position(), Num("freq", 4f, 0f, 32f), Num("offset", 0f, 0f, 1f)], [Num("out")],
             (em, i) =>
             {
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);

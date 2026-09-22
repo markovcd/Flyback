@@ -41,7 +41,7 @@ internal static class HissModule
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("cutoff", PortKind.Scalar, 8000f, 20f, 12_000f),
+            new PortSpec("cutoff", PortKind.Scalar, 8000f, 20f, 12_000f) { Knee = 20f },
             new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f),
             new PortSpec("gain", PortKind.Scalar, 1f, 0f),
             new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),

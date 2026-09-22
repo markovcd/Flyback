@@ -29,7 +29,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.translate", "Translate", ModuleCategories.Geometry,
-            [..Position(), Num("dx"), Num("dy")], [Num("x"), Num("y")],
+            [..Position(), Num("dx", 0f, -2f, 2f), Num("dy", 0f, -2f, 2f)], [Num("x"), Num("y")],
             (em, i) => [em.Binary(OpCode.Sub, i[0], i[2]), em.Binary(OpCode.Sub, i[1], i[3])],
             "Slides the coordinate system, moving the pattern by (dx, dy).");
 
@@ -80,7 +80,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.warp", "Warp", ModuleCategories.Geometry,
-            [..Position(), Num("by"), Num("amount", 0.5f)], [Num("x"), Num("y")],
+            [..Position(), Num("by"), Num("amount", 0.5f, 0f, 2f)], [Num("x"), Num("y")],
             (em, i) =>
             {
                 var push = em.Mul(i[2], i[3]);
@@ -117,7 +117,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Transform() => new(
         "space.transform", "Transform", ModuleCategories.Geometry,
-        [..Position(), Num("zoom", 1f, 0f, 16f), Num("angle", 0f, -Tau, Tau), Num("dx"), Num("dy")],
+        [..Position(), Num("zoom", 1f, 0f, 16f), Num("angle", 0f, -Tau, Tau), Num("dx", 0f, -2f, 2f), Num("dy", 0f, -2f, 2f)],
         [Num("x"), Num("y")],
         (em, i) =>
         {

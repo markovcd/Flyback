@@ -25,7 +25,7 @@ internal static class BellModule
         TypeId, "Bell", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f),
+            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
             new PortSpec("ratio", PortKind.Scalar, 2.76f, 0.25f, 16f),
             new PortSpec("index", PortKind.Scalar, 0.3f, 0f, 2f),

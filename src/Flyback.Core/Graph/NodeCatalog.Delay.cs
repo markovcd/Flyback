@@ -22,7 +22,7 @@ public partial class NodeCatalog
         DelayTypeId, "Delay", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest),
+            new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest) { Knee = 0.001f },
             new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f),
             new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f),
         ],

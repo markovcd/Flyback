@@ -779,10 +779,10 @@ public partial class NodeCatalog
             [
                 Swept("in"),
                 Domain("clock"),
-                Num("rate", 220f, 0f, 4000f),
+                Num("rate", 220f, 0f, 4000f) with { Knee = 0.02f },
                 Num("radius", 0.5f, 0f),
-                Num("x"),
-                Num("y"),
+                Num("x", 0f, -2f, 2f),
+                Num("y", 0f, -2f, 2f),
                 Num("scale", 1f, 0.01f, 16f),
             ],
             [Num("out"), Col("view")],

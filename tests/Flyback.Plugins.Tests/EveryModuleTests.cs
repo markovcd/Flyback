@@ -75,6 +75,18 @@ public class EveryModuleTests
         }
     }
 
+    /// <summary>
+    /// A knob reaching from under 100 Hz into the kilohertz swept evenly would
+    /// leave everything below a few hundred hertz in the first sliver of its turn.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ModuleTypeIds))]
+    public void A_knob_reaching_into_the_kilohertz_sweeps_in_decades(string typeId)
+    {
+        foreach (var port in Catalog.Require(typeId).Inputs.Where(p => !p.NeedsAWire && p.Min < 100f && p.Max >= 2000f))
+            port.Knee.ShouldBeGreaterThan(0f, $"{typeId}.{port.Name} spans {port.Min}..{port.Max} evenly");
+    }
+
     /// <summary>One module, wired to the Output, with nothing else in the patch.</summary>
     private static Patch Alone(string typeId)
     {

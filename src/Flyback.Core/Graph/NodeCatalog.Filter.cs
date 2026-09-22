@@ -45,7 +45,7 @@ public partial class NodeCatalog
         FilterTypeId, "Filter", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f),
+            new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f) { Knee = 20f },
             new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f),
         ],
         [new PortSpec("low"), new PortSpec("band"), new PortSpec("high")],

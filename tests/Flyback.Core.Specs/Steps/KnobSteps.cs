@@ -18,6 +18,14 @@ public sealed class KnobSteps
         knob = def.Inputs.Single(p => p.Name == "freq");
     }
 
+    [Given("the {word} knob of a {word} from the catalogue")]
+    public void GivenAKnob(string socket, string name) =>
+        knob = NodeCatalog.All.Single(d => d.Name == name).Inputs.Single(p => p.Name == socket);
+
+    [Then("each half of its travel covers the same number of octaves")]
+    public void ThenOctavesAreEven() =>
+        At(0.5).ShouldBe(MathF.Sqrt(knob.Min * knob.Max), knob.Min * 1e-3f);
+
     [Then("its frequency knob turns from standing still to 20 kHz")]
     public void ThenStillToTheTopOfHearing() => Spans(0f, 20_000f);
 

@@ -30,8 +30,8 @@ internal static class CrossoverModule
         TypeId, "Crossover", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("low", PortKind.Scalar, 200f, 20f, 2_000f),
-            new PortSpec("high", PortKind.Scalar, 2_000f, 200f, 16_000f),
+            new PortSpec("low", PortKind.Scalar, 200f, 20f, 2_000f) { Knee = 20f },
+            new PortSpec("high", PortKind.Scalar, 2_000f, 200f, 16_000f) { Knee = 200f },
         ],
         [new PortSpec("low"), new PortSpec("mid"), new PortSpec("high")],
         Emit,

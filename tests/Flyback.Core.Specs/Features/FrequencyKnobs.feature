@@ -18,6 +18,15 @@ Feature: A frequency knob reaches from a slow wobble to the top of hearing
       | Pulse    |
 
 
+  Scenario Outline: A knob in hertz gives every octave the same turn
+    Given the <socket> knob of a <module> from the catalogue
+    Then each half of its travel covers the same number of octaves
+
+    Examples:
+      | module | socket |
+      | Filter | cutoff |
+      | String | freq   |
+
   Scenario: A panel knob linked to an oscillator's frequency sweeps it as the slider does
     Given a Sine from the catalogue
     When a panel knob is linked to its frequency

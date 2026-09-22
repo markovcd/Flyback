@@ -30,7 +30,7 @@ internal static class WidthModule
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
             new PortSpec("width", PortKind.Scalar, 1f, 0f, 2f),
-            new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f),
+            new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f) { Knee = 20f },
         ],
         [new PortSpec("left"), new PortSpec("right"), new PortSpec("mid"), new PortSpec("side")],
         Emit,
