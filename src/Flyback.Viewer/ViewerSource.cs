@@ -16,6 +16,21 @@ internal static class ViewerSource
     public static (Opened Opened, string Name)? Resolve(
         ViewerOptions options, OutputSettings settings, PluginCatalog plugins, PresetLibrary library, TextWriter error)
     {
+        if (Find(options, settings, plugins, library, error) is not var (opened, name)) return null;
+
+        if (options.FullScreen && !opened.Patch.Reaches().Picture)
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {name} has no picture to fill the screen with; --full-screen needs one.");
+
+            return null;
+        }
+
+        return (opened, name);
+    }
+
+    private static (Opened Opened, string Name)? Find(
+        ViewerOptions options, OutputSettings settings, PluginCatalog plugins, PresetLibrary library, TextWriter error)
+    {
         if (options.Patch is { } path) return OpenFile(path, error);
 
         var ordered = PresetLibrary.Ordered(plugins.Presets, library);

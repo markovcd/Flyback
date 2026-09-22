@@ -464,6 +464,22 @@ public class ViewerWindowTests : UiTest
     }
 
     [AvaloniaFact]
+    public void F11_takes_the_screen_and_gives_it_back()
+    {
+        var window = Open(Plasma(), Options());
+
+        window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
+        Settle(window);
+
+        window.WindowState.ShouldBe(WindowState.FullScreen);
+
+        window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
+        Settle(window);
+
+        window.WindowState.ShouldBe(WindowState.Normal);
+    }
+
+    [AvaloniaFact]
     public void The_dots_come_up_as_the_pointer_comes_near_and_fall_back_when_it_leaves()
     {
         var window = Open(Plasma(), Options());

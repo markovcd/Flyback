@@ -64,9 +64,9 @@ internal sealed partial class ViewerWindow : Window
 
         previewBox = new Border { Background = Brushes.Black, Child = preview };
 
-        // Double-click the picture and it takes the screen; double-click or Escape
-        // puts it back. The editor does the same with its own preview, but that one
-        // zeroes grid tracks around a control that must not be reparented, and this
+        // Double-click the picture or press F11 and it takes the screen; either
+        // again, or Escape, puts it back. The editor does the same with its own
+        // preview, but that one zeroes grid tracks around a control that must not be reparented, and this
         // window has no tracks — so nothing is shared with it.
         previewBox.DoubleTapped += (_, e) =>
         {
@@ -92,6 +92,8 @@ internal sealed partial class ViewerWindow : Window
             var bare = !command && (e.KeyModifiers & KeyModifiers.Alt) == 0;
 
             if (e.Key == Key.Escape && WindowState == WindowState.FullScreen) ToggleFullScreen();
+
+            else if (bare && e.Key == Key.F11) ToggleFullScreen();
 
             // Space, which no layout plays, and the editor's Ctrl+P.
             else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();

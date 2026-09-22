@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Avalonia;
+using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer;
 using Shouldly;
@@ -213,6 +214,45 @@ public class ViewerOptionsTests
         }
 
         Run(Machine, "--hidden", "--window", "800x450").Error.ShouldContain("--window");
+    }
+
+    [Fact]
+    public void Full_screen_with_no_video_is_refused()
+    {
+        var ran = Run(Machine, "--full-screen", "--no-video");
+
+        ran.Code.ShouldBe(Exit.Failed);
+        ran.Options.ShouldBeNull();
+        ran.Error.ShouldContain("--no-video");
+    }
+
+    [Fact]
+    public void Full_screen_is_refused_for_a_patch_with_no_picture()
+    {
+        var error = new StringWriter();
+        var library = new PresetLibrary(Path.Combine(Path.GetTempPath(), "flyback-viewer-none-" + Guid.NewGuid().ToString("N")));
+        var path = Path.Combine(Path.GetTempPath(), $"flyback-viewer-heard-{Guid.NewGuid():N}.{PatchIO.FileExtension}");
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var osc = builder.Add("osc.sine", 0, 0);
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+
+        File.WriteAllText(path, PatchIO.ToJson(builder.Wire(osc, 0, speaker, NodeCatalog.OutputLeftPort).Patch));
+
+        try
+        {
+            ViewerSource.Resolve(new ViewerOptions { Patch = path }, Machine, PluginCatalog.Empty, library, error)
+                .ShouldNotBeNull();
+
+            ViewerSource.Resolve(new ViewerOptions { Patch = path, FullScreen = true }, Machine, PluginCatalog.Empty, library, error)
+                .ShouldBeNull();
+
+            error.ToString().ShouldContain("--full-screen");
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Theory]

@@ -104,7 +104,7 @@ internal static class ViewerArguments
         });
 
         var maximized = new Option<bool>("--maximized") { Description = "Open maximized." };
-        var fullScreen = new Option<bool>("--full-screen") { Description = "Open full screen." };
+        var fullScreen = new Option<bool>("--full-screen") { Description = "Open full screen; refused for a patch with no picture." };
 
         var noAudio = new Option<bool>("--no-audio") { Description = "Open no sound device at all." };
 
@@ -202,7 +202,7 @@ internal static class ViewerArguments
         var root = new RootCommand(
             "Flyback Viewer — open a patch and play it, picture and sound, and write nothing. "
             + "A patch made to be played takes the computer's keys and its MIDI devices; "
-            + "Space, or Ctrl+P, pauses it.")
+            + "Space, or Ctrl+P, pauses it, and F11 gives it the whole screen.")
         {
             patch, preset, presets,
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
@@ -252,6 +252,9 @@ internal static class ViewerArguments
 
             if (settled.Hidden && Windowed(settled) is { } flag)
                 return Refuse(error, $"{flag} shapes a window, and --hidden opens none.");
+
+            if (settled.FullScreen && settled.NoVideo)
+                return Refuse(error, "--full-screen fills the screen with the picture, and --no-video draws none.");
 
             return run(settled);
         });
