@@ -27,7 +27,7 @@ internal static class StrokeModule
             new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f),
             new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
         ],
-        [new PortSpec("out"), new PortSpec("phase")],
+        [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
         "A drum hit without a trigger. 'in' times 'rate' is a count of strokes — patch a "
         + "count of beats in, and a 'rate' of 4 is a hit on every sixteenth. 'out' jumps to 1 "

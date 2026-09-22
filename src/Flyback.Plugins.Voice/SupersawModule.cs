@@ -69,7 +69,7 @@ internal static class SupersawModule
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
-        [new PortSpec("out"), new PortSpec("wide")],
+        [new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("wide", PortKind.Scalar, 0f, -1f, 1f)],
         Emit,
         "Seven detuned saws in one module. 'detune' spreads them apart, 'mix' fades the "
         + "six outer voices in against the centre — at 0 it is exactly a plain Saw. "

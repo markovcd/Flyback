@@ -32,7 +32,7 @@ public partial class NodeCatalog
                 Domain("in"), Freq, Num("phase", 0f, 0f, 1f), Num("width", 0.5f, 0f, 1f),
                 Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)
             ],
-            [Num("out")],
+            [Num("out", 0f, -1f, 1f)],
             (em, i) =>
             {
                 var phase = em.Phase(i[0], i[1], i[2]);
@@ -62,7 +62,7 @@ public partial class NodeCatalog
             Num("amp", 1f, 0f, 2f),
             Num("bias", 0f, -2f, 2f),
         ],
-        [Num("out")],
+        [Num("out", 0f, -1f, 1f)],
         (em, i) =>
         {
             var phase = em.Phase(i[0], i[1], i[2]);

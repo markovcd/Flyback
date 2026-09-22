@@ -534,6 +534,37 @@ public sealed class PatchSteps(PatchContext context)
 
     private static string Number(float value) => value.ToString(CultureInfo.InvariantCulture);
 
+    // --- auto remap ----------------------------------------------------------
+
+    [Given(@"^a sine at its (peak|trough) remapped onto red, from ([\d.]+) to ([\d.]+) of red's range$")]
+    public void GivenASineRemappedOntoRed(string where, float low, float high)
+    {
+        context.Add("wave", "osc.sine");
+        context.SetInput("wave", "freq", 0f);
+        context.SetInput("wave", "phase", where == "peak" ? 0.25f : 0.75f);
+
+        OntoRed("wave");
+        context.SetInput("remap", "out low", low);
+        context.SetInput("remap", "out high", high);
+    }
+
+    [Given("a level of {float} remapped onto red")]
+    public void GivenALevelRemappedOntoRed(float level)
+    {
+        Level("level", level);
+        OntoRed("level");
+    }
+
+    /// <summary>An Auto remap from <paramref name="source"/> into the red of a color that has no green or blue, on the screen.</summary>
+    private void OntoRed(string source)
+    {
+        context.Add("remap", "math.autoremap");
+        Rgb("red", 0f, 0f, 0f);
+        context.Wire(source, 0, "remap", "in");
+        context.Wire("remap", "out", "red", "r");
+        Show("red", "color");
+    }
+
     private void Level(string name, float level)
     {
         context.Add(name, "value");

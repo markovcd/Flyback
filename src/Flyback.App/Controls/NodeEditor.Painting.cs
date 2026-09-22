@@ -449,6 +449,7 @@ public sealed partial class NodeEditor
         if (Tagged(def)) DrawTag(context, bounds, follow ? titleBrush : null);
 
         var formula = NodeCatalog.FormulaOf(node);
+        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(patch, node) : null;
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {
@@ -487,13 +488,19 @@ public sealed partial class NodeEditor
             {
                 // A socket its formula never reads has a knob that turns nothing,
                 // so an Expression shows the values of the ones it does and no more.
+                var (said, flagged) = RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
                 var value = CanvasText.Text(
-                    port.Format(node.InputValues[i]),
+                    said,
                     CanvasText.RowSize,
-                    Ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush),
+                    flagged ? FlagBrush : Ink(centre.Y, RowInk, ValueFade, CanvasText.ValueBrush),
                     bounds.Width * 0.4,
                     true);
-                context.DrawText(value, new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2));
+                var spot = new Point(bounds.Right - 12 - value.Width, centre.Y - value.Height / 2);
+
+                context.DrawText(value, spot);
+
+                if (flagged)
+                    context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
             }
 
             NodeSkin.DrawPort(context, centre, port.Kind);
@@ -501,5 +508,21 @@ public sealed partial class NodeEditor
 
         if (FormulaLayout.FormulaBlock(patch, node, def, bounds, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
             context.DrawText(text, at);
+    }
+
+    private static readonly IBrush FlagBrush = new SolidColorBrush(Colors.Attention);
+    private static readonly Pen FlagPen = new(FlagBrush, 1);
+
+    /// <summary>
+    /// What an Auto remap's range knob comes to at the far end of its wire, or, flagged,
+    /// its plain number where that end has no range; null for every other socket.
+    /// </summary>
+    private static (string, bool)? RemapValue(RemapSpans? spans, int port, float value)
+    {
+        if (spans is null || port == AutoRemap.In) return null;
+
+        return (port is AutoRemap.InLow or AutoRemap.InHigh ? spans.In : spans.Out) is { } span
+            ? (span.Format(value), false)
+            : (value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture), true);
     }
 }

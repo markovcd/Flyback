@@ -133,6 +133,14 @@ public readonly record struct PortSpec(
     public int Width => Kind == PortKind.Color ? 3 : 1;
 
     /// <summary>
+    /// Whether <see cref="Min"/> and <see cref="Max"/> say what the socket takes or
+    /// gives, rather than being the −4..4 a slider gets when nothing was declared.
+    /// </summary>
+    // ReSharper disable CompareOfFloatsByEqualityOperator
+    public bool Ranged => Kind != PortKind.Color && (Min != -4f || Max != 4f);
+    // ReSharper restore CompareOfFloatsByEqualityOperator
+
+    /// <summary>
     /// Whether the socket has nothing worth a knob: declared <see cref="PatchOnly"/>,
     /// or a color, which is <see cref="PatchOnly"/> for free — see its doc for why.
     /// </summary>

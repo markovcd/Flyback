@@ -91,6 +91,14 @@ public sealed class CompilerSteps(PatchContext context)
     private static void Silent(CompileResult compiled, string sink) =>
         compiled.Issues.ShouldBeEmpty($"for {sink}: {Said(compiled)}");
 
+    /// <summary>A remark, not an error: the pair rests on the numbers its knobs hold.</summary>
+    [Then("Flyback points out that the Auto remap's input range has to be typed in")]
+    public void ThenTheInputRangeIsTyped()
+    {
+        ShouldMention(context.Picture, "'in low' and 'in high' are plain numbers");
+        context.Picture.HasErrors.ShouldBeFalse(Said(context.Picture));
+    }
+
     private static void ShouldMention(CompileResult compiled, string fragment) =>
         compiled.Issues.Any(i => i.Message.Contains(fragment, StringComparison.OrdinalIgnoreCase))
             .ShouldBeTrue($"issues were: {Said(compiled)}");

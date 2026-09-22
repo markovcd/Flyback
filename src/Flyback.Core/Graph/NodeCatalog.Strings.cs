@@ -26,7 +26,7 @@ public partial class NodeCatalog
                 Seconds("decay", 0.3f),
                 Num("brightness", 0.5f, 0f, 1f),
             ],
-            [Num("out")],
+            [Num("out", 0f, -1f, 1f)],
             EmitString,
             "A plucked string. Each rise of 'trigger' plucks it with a burst of noise one "
             + "period long, and it rings at 'freq' in hertz for about 'decay' before it is gone. "

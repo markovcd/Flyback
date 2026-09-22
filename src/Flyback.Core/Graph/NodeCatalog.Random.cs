@@ -40,7 +40,7 @@ public partial class NodeCatalog
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
-        [new PortSpec("white"), new PortSpec("pink"), new PortSpec("random"), new PortSpec("drift")],
+        [new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("pink", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("random", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f)],
         RandomEmit,
         "Noise and chance, each -1 to 1 before 'amp' and 'bias'. 'white' is bright hiss for "
         + "hats and snares; 'pink' is darker, like rain. 'random' jumps to a new value 'rate' "

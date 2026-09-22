@@ -26,7 +26,7 @@ internal static class FadeModule
             new PortSpec("from", PortKind.Scalar, 0f, 0f, 1f),
             new PortSpec("to", PortKind.Scalar, 1f, 0f, 1f),
         ],
-        [new PortSpec("out", PortKind.Any), new PortSpec("gate")],
+        [new PortSpec("out", PortKind.Any), new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
         "Brings a part in. 'in' is silent while 'level' is under 'from', at full once it is "
         + "over 'to', and fades smoothly between. Drive 'level' from one Sequencer that says "

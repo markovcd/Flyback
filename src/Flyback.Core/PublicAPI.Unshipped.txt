@@ -13,3 +13,59 @@ Flyback.Core.Graph.ControlLink.Knee.get -> float
 Flyback.Core.Graph.ControlLink.Knee.init -> void
 static Flyback.Core.Graph.ControlLink.For(System.Guid control, Flyback.Core.Graph.PortSpec socket, float resting) -> Flyback.Core.Graph.ControlLink
 Flyback.Core.Graph.ControlLink.Swept(bool inDecades, Flyback.Core.Graph.PortSpec socket) -> Flyback.Core.Graph.ControlLink
+
+Flyback.Core.Graph.AutoRemap
+Flyback.Core.Graph.EmitContext.Spans.get -> Flyback.Core.Graph.RemapSpans?
+Flyback.Core.Graph.EmitContext.Spans.init -> void
+Flyback.Core.Graph.PortSpec.Ranged.get -> bool
+Flyback.Core.Graph.RemapSpan
+Flyback.Core.Graph.RemapSpan.At(float travel) -> float
+Flyback.Core.Graph.RemapSpan.Deconstruct(out float Min, out float Max, out float Knee, out Flyback.Core.Graph.PortDisplay Display) -> void
+Flyback.Core.Graph.RemapSpan.Display.get -> Flyback.Core.Graph.PortDisplay
+Flyback.Core.Graph.RemapSpan.Display.init -> void
+Flyback.Core.Graph.RemapSpan.Equals(Flyback.Core.Graph.RemapSpan other) -> bool
+Flyback.Core.Graph.RemapSpan.Format(float travel) -> string!
+Flyback.Core.Graph.RemapSpan.Knee.get -> float
+Flyback.Core.Graph.RemapSpan.Knee.init -> void
+Flyback.Core.Graph.RemapSpan.Max.get -> float
+Flyback.Core.Graph.RemapSpan.Max.init -> void
+Flyback.Core.Graph.RemapSpan.Min.get -> float
+Flyback.Core.Graph.RemapSpan.Min.init -> void
+Flyback.Core.Graph.RemapSpan.RemapSpan() -> void
+Flyback.Core.Graph.RemapSpan.RemapSpan(float Min, float Max, float Knee = 0, Flyback.Core.Graph.PortDisplay Display = Flyback.Core.Graph.PortDisplay.Number) -> void
+Flyback.Core.Graph.RemapSpan.Travel(float value) -> float
+Flyback.Core.Graph.RemapSpans
+Flyback.Core.Graph.RemapSpans.<Clone>$() -> Flyback.Core.Graph.RemapSpans!
+Flyback.Core.Graph.RemapSpans.Deconstruct(out Flyback.Core.Graph.RemapSpan? In, out Flyback.Core.Graph.RemapSpan? Out, out string? InWhy, out string? OutWhy) -> void
+Flyback.Core.Graph.RemapSpans.Equals(Flyback.Core.Graph.RemapSpans? other) -> bool
+Flyback.Core.Graph.RemapSpans.In.get -> Flyback.Core.Graph.RemapSpan?
+Flyback.Core.Graph.RemapSpans.In.init -> void
+Flyback.Core.Graph.RemapSpans.InWhy.get -> string?
+Flyback.Core.Graph.RemapSpans.InWhy.init -> void
+Flyback.Core.Graph.RemapSpans.Out.get -> Flyback.Core.Graph.RemapSpan?
+Flyback.Core.Graph.RemapSpans.Out.init -> void
+Flyback.Core.Graph.RemapSpans.OutWhy.get -> string?
+Flyback.Core.Graph.RemapSpans.OutWhy.init -> void
+Flyback.Core.Graph.RemapSpans.RemapSpans(Flyback.Core.Graph.RemapSpan? In, Flyback.Core.Graph.RemapSpan? Out, string? InWhy = null, string? OutWhy = null) -> void
+const Flyback.Core.Graph.AutoRemap.In = 0 -> int
+const Flyback.Core.Graph.AutoRemap.InHigh = 2 -> int
+const Flyback.Core.Graph.AutoRemap.InLow = 1 -> int
+const Flyback.Core.Graph.AutoRemap.OutHigh = 4 -> int
+const Flyback.Core.Graph.AutoRemap.OutLow = 3 -> int
+const Flyback.Core.Graph.NodeCatalog.AutoRemapTypeId = "math.autoremap" -> string!
+override Flyback.Core.Graph.RemapSpan.GetHashCode() -> int
+override Flyback.Core.Graph.RemapSpans.Equals(object? obj) -> bool
+override Flyback.Core.Graph.RemapSpans.GetHashCode() -> int
+override Flyback.Core.Graph.RemapSpans.ToString() -> string!
+static Flyback.Core.Graph.AutoRemap.Of(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> Flyback.Core.Graph.RemapSpans!
+static Flyback.Core.Graph.AutoRemap.Resolve(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> System.Collections.Generic.IReadOnlyDictionary<System.Guid, Flyback.Core.Graph.RemapSpans!>!
+static Flyback.Core.Graph.RemapSpan.Unit.get -> Flyback.Core.Graph.RemapSpan
+static Flyback.Core.Graph.RemapSpan.operator !=(Flyback.Core.Graph.RemapSpan left, Flyback.Core.Graph.RemapSpan right) -> bool
+static Flyback.Core.Graph.RemapSpan.operator ==(Flyback.Core.Graph.RemapSpan left, Flyback.Core.Graph.RemapSpan right) -> bool
+static Flyback.Core.Graph.RemapSpans.Unwired.get -> Flyback.Core.Graph.RemapSpans!
+static Flyback.Core.Graph.RemapSpans.operator !=(Flyback.Core.Graph.RemapSpans? left, Flyback.Core.Graph.RemapSpans? right) -> bool
+static Flyback.Core.Graph.RemapSpans.operator ==(Flyback.Core.Graph.RemapSpans? left, Flyback.Core.Graph.RemapSpans? right) -> bool
+~override Flyback.Core.Graph.RemapSpan.Equals(object obj) -> bool
+~override Flyback.Core.Graph.RemapSpan.ToString() -> string
+Flyback.Core.Graph.RemapSpans.Narrow.get -> bool
+Flyback.Core.Graph.RemapSpans.Narrow.init -> void

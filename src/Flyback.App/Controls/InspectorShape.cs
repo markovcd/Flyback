@@ -70,6 +70,10 @@ internal static class InspectorShape
         // that does it says which way it goes.
         var switched = editor.SelectionIsOff ? '-' : '+';
 
-        return $"{node.Id:N}{new string(patched)}{groups}{linked}{switched}";
+        // An Auto remap's rows read the ranges at the far ends of its wires, which
+        // move when its output is patched or the module feeding it is turned.
+        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.Patch, node).ToString() : "";
+
+        return $"{node.Id:N}{new string(patched)}{groups}{linked}{switched}{spans}";
     }
 }

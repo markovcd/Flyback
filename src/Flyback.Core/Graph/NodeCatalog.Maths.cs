@@ -80,6 +80,63 @@ public partial class NodeCatalog
                 return [em.Ternary(OpCode.Mix, i[3], i[4], t)];
             },
             "Rescales one range onto another. Bipolar -1..1 into 0..1 is the common one.");
+
+        yield return new NodeDef(
+            AutoRemapTypeId, "Auto remap", ModuleCategories.Maths,
+            [Any("in"), Num("in low", 0f, 0f, 1f), Num("in high", 1f, 0f, 1f), Num("out low", 0f, 0f, 1f), Num("out high", 1f, 0f, 1f)],
+            [Any("out")],
+            EmitAutoRemap,
+            "A Remap that reads its ranges off its wires. 'in low' and 'in high' are how far along "
+            + "the range of whatever feeds it, 'out low' and 'out high' how far along the range of "
+            + "the socket it feeds, 0 to 1 each, swept the way that socket's own knob sweeps. Where "
+            + "a wire's far end has no range, that pair is plain numbers, as on Remap.");
+    }
+
+    public const string AutoRemapTypeId = "math.autoremap";
+
+    /// <summary>
+    /// Remap's arithmetic in travel rather than in value: the input is first read as
+    /// how far along its source's range it is, and the result is turned into the
+    /// destination's range the way that socket's own knob would turn it, so a sweep
+    /// into a cutoff moves in octaves all the way along rather than only at its ends.
+    /// </summary>
+    private static Slot[] EmitAutoRemap(Emitter em, EmitContext node)
+    {
+        var spans = node.Spans ?? RemapSpans.Unwired;
+
+        // A color bound for a single number is its brightness first, so a sweep
+        // follows how light it is rather than an average of three sweeps.
+        var input = spans.Narrow ? em.Coerce(node[AutoRemap.In], 1) : node[AutoRemap.In];
+        var travel = spans.In is { } from ? Travel(em, input, from) : input;
+        var low = node[AutoRemap.InLow];
+
+        var t = em.Binary(OpCode.Div, em.Binary(OpCode.Sub, travel, low), em.Binary(OpCode.Sub, node[AutoRemap.InHigh], low));
+        var along = em.Ternary(OpCode.Mix, node[AutoRemap.OutLow], node[AutoRemap.OutHigh], t);
+
+        return [spans.Out is { } into ? At(em, along, into) : along];
+    }
+
+    /// <summary><see cref="RemapSpan.Travel"/> as ops.</summary>
+    private static Slot Travel(Emitter em, Slot value, RemapSpan span)
+    {
+        if (span.Knee <= 0f) return em.Mul(em.Add(value, -span.Min), 1f / (span.Max - span.Min));
+
+        var low = MathF.Min(span.Min, span.Max);
+        var decades = em.Unary(OpCode.Log, em.Add(em.Mul(em.Add(value, -low), 1f / span.Knee), 1f));
+        var up = em.Mul(decades, 1f / MathF.Log(1f + MathF.Abs(span.Max - span.Min) / span.Knee));
+
+        return span.Max < span.Min ? em.Add(em.Mul(up, -1f), 1f) : up;
+    }
+
+    /// <summary><see cref="RemapSpan.At"/> as ops.</summary>
+    private static Slot At(Emitter em, Slot travel, RemapSpan span)
+    {
+        if (span.Knee <= 0f) return em.Add(em.Mul(travel, span.Max - span.Min), span.Min);
+
+        var up = span.Max < span.Min ? em.Add(em.Mul(travel, -1f), 1f) : travel;
+        var rise = em.Unary(OpCode.Exp, em.Mul(up, MathF.Log(1f + MathF.Abs(span.Max - span.Min) / span.Knee)));
+
+        return em.Add(em.Mul(em.Add(rise, -1f), span.Knee), MathF.Min(span.Min, span.Max));
     }
 
     private static NodeDef Unary(string id, string name, OpCode code, string description) => new(

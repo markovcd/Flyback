@@ -524,7 +524,7 @@ public sealed partial class MainWindow
         // bar is the same width down the entire module: a module where nothing
         // has a reading gives every slider the column back, and a module where
         // even one socket does reserves it for all of them, named or not.
-        var reading = InspectorRows.ShowsReading(def);
+        var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
             inspector.Children.Add(BuildInputRow(def, node, def.Inputs[i], i, reading));
@@ -1726,6 +1726,7 @@ public sealed partial class MainWindow
             return LinkedRow(node, spec, index, link, knob);
 
         var value = index < node.InputValues.Length ? node.InputValues[index] : spec.Default;
+        var (reads, flag) = RemapReading(def, node, index);
 
         // Named after the socket, so a slider dragged across its range is one
         // step to undo rather than one per frame of the drag.
@@ -1736,6 +1737,26 @@ public sealed partial class MainWindow
             // Noted rather than written. A drag is a knob turned a hundred times
             // and the text should be edited once, when the hand comes off it.
             Turned(node.Id, index);
-        }, reading);
+        }, reading, reads, flag);
+    }
+
+    /// <summary>
+    /// For one of an Auto remap's range knobs, what its fraction comes to at the
+    /// far end of the wire, or why the pair is plain numbers; nothing for any other socket.
+    /// </summary>
+    private (Func<float, string>? Reads, string? Flag) RemapReading(NodeDef def, NodeInstance node, int index)
+    {
+        if (def.TypeId != NodeCatalog.AutoRemapTypeId || index == AutoRemap.In) return (null, null);
+
+        var spans = AutoRemap.Of(editor.Patch, node);
+        var input = index is AutoRemap.InLow or AutoRemap.InHigh;
+
+        // Fractions of 0..1 are the numbers themselves, so an unwired side says nothing more.
+        return (input ? spans.In : spans.Out) switch
+        {
+            { } span when span == RemapSpan.Unit => (null, null),
+            { } span => (travel => span.Format(travel), null),
+            null => (_ => "", $"Plain numbers: {(input ? spans.InWhy : spans.OutWhy)}."),
+        };
     }
 }

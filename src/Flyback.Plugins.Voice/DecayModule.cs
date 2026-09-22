@@ -31,7 +31,7 @@ internal static class DecayModule
             new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration),
             new PortSpec("curve", PortKind.Scalar, 0.6f, 0f, 1f),
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
         "A percussive envelope. Each rise of 'trigger' — a Sequencer's gate, a MIDI trigger, "
         + "a Euclid — sends it up over 'attack' and back to silence over 'decay', without "

@@ -140,7 +140,7 @@ public partial class NodeCatalog
             Num("gate length", 0.5f, 0f, 1f),
             Num("shape", 0.02f, 0f, WidestGateEdge),
         ],
-        [Num("out"), Num("gate"), Num("index")],
+        [Num("out"), Num("gate", 0f, 0f, 1f), Num("index", 0f, 0f, 1f)],
         EmitSequence,
         description)
     {

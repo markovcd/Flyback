@@ -31,7 +31,7 @@ public partial class NodeCatalog
                 Num("sustain", 0.7f, 0f, 1f),
                 Seconds("release", -0.6f),
             ],
-            [Num("out")],
+            [Num("out", 0f, 0f, 1f)],
             EmitAdsr,
             "ADSR envelope. Gate in, shaped level out. Attack, decay, sustain, and release define the note contour.")
         {

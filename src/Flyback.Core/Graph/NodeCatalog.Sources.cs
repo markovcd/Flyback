@@ -40,7 +40,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             CoordTypeId, "Coordinates", ModuleCategories.Sources,
-            [], [Num("x"), Num("y"), Num("radius"), Num("angle"), Num("aspect")],
+            [], [Num("x"), Num("y", 0f, -1f, 1f), Num("radius"), Num("angle", 0f, -MathF.PI, MathF.PI), Num("aspect")],
             (em, _) =>
             {
                 var x = em.Load(OpCode.LoadX);

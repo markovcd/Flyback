@@ -9,6 +9,7 @@
 - Dragging the right button on an unpatched input turns its value.
 - Frequency and delay-time knobs sweep in decades, and an oscillator's `freq` reaches from a slow wobble up to 20 kHz.
 - A panel knob can sweep its sockets logarithmically, from its menu.
+- Added Auto remap, a Remap whose ranges are read off its wires and set as fractions of each end.
 - The Frequency module is gone: an oscillator's own `freq` knob reaches audible pitches, and a patch that still holds one no longer opens.
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.

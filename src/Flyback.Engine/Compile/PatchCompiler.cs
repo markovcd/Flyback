@@ -96,6 +96,21 @@ public static class PatchCompiler
         // Buses first, so everything below sees them as the wires they stand for.
         patch = Buses.Joined(patch, (node, message) => issues.Add(new CompileIssue(node, message, IssueSeverity.Warning)));
 
+        // An Auto remap's knobs are fractions of whatever its wires reach, and plain
+        // numbers where a wire reaches something with no range, which is said.
+        var spans = AutoRemap.Resolve(patch, catalog);
+
+        foreach (var (remap, span) in spans)
+        {
+            var title = patch.Find(remap)!.Title(catalog.Require(NodeCatalog.AutoRemapTypeId));
+
+            if (span.InWhy is { } inWhy)
+                issues.Add(new CompileIssue(remap, $"{title}'s 'in low' and 'in high' are plain numbers: {inWhy}.", IssueSeverity.Warning));
+
+            if (span.OutWhy is { } outWhy)
+                issues.Add(new CompileIssue(remap, $"{title}'s 'out low' and 'out high' are plain numbers: {outWhy}.", IssueSeverity.Warning));
+        }
+
         // What every Scope in the patch contributes, which is opposite things to
         // the two programs — a tap to the one that plays, a buffer to the one
         // that draws. See TapSpec.
@@ -368,6 +383,7 @@ public static class PatchCompiler
                 {
                     Node = node.Id,
                     Trace = Watched(node, def),
+                    Spans = spans.GetValueOrDefault(node.Id),
                     Resolver = def.AsksForItsInputs ? Asked(node, def) : port => Sweep(node, def, port),
                 },
                 node,

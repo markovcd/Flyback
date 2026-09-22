@@ -32,7 +32,7 @@ internal static class EuclidModule
             new PortSpec("gate length", PortKind.Scalar, 0.5f, 0f, 1f),
             new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
         ],
-        [new PortSpec("gate"), new PortSpec("hit"), new PortSpec("index"), new PortSpec("stroke")],
+        [new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("hit", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("index", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("stroke", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
         "A rhythm from two numbers: 'hits' spread as evenly as possible over 'steps', moving at "
         + "'rate' steps a second — 3 in 8 is the tresillo, 5 in 8 the cinquillo. 'rotate' "

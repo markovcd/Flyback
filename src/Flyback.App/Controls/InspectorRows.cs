@@ -330,15 +330,20 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     /// <see cref="ShowsReading"/>. A row whose socket has nothing to say there
     /// still gets the column when a neighbor needs it.
     /// </param>
+    /// <param name="reads">What the value means where the socket's own display cannot say, as an Auto remap's fraction does.</param>
+    /// <param name="flag">Why the number box is outlined, or null to leave it plain.</param>
     internal Control ValueRow(
         string label,
         PortSpec spec,
         float value,
         string because,
         Action<float> store,
-        bool reading)
+        bool reading,
+        Func<float, string>? reads = null,
+        string? flag = null)
     {
-        var named = Named(spec);
+        var named = Named(spec) || reads is not null;
+        var said = reads ?? spec.Format;
         var whole = spec.Stepped;
 
         var row = KnobRow(reading);
@@ -383,7 +388,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
 
         var name = new TextBlock
         {
-            Text = spec.Format(value),
+            Text = said(value),
             FontSize = Text.Body,
             Opacity = 0.75,
             Margin = new Thickness(6, 0, 6, 0),
@@ -406,6 +411,13 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
 
         Boxed.NeverBlank(numeric);
 
+        if (flag is not null)
+        {
+            numeric.BorderBrush = new SolidColorBrush(Colors.Attention);
+            numeric.BorderThickness = new Thickness(1.5);
+            ToolTip.SetTip(numeric, flag);
+        }
+
         Grid.SetColumn(slider, 1);
         Grid.SetColumn(numeric, reading ? 3 : 2);
         row.Children.Add(slider);
@@ -427,7 +439,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
             store(next);
             slider.Value = Place(next);
             numeric.Value = Boxed.Of(next);
-            name.Text = spec.Format(next);
+            name.Text = said(next);
             updating = false;
 
             changed(because);

@@ -60,6 +60,7 @@ context, decision, consequences.
 | [0105](0105-text-is-a-shape-baked-into-a-picture.md) | Text is a shape, baked into a picture *(user-directed)* |
 | [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md); its "the engine's own presets may not need a plugin" reused for six primitives by [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md))* |
 | [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md) | A wrapping module carries a setting where what it wraps differed *(user-directed)* |
+| [0130](0130-an-auto-remap-reads-its-ranges-off-its-wires.md) | An Auto remap reads its ranges off its wires *(user-directed)* |
 | [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) | A formula is one block, and exactly the modules it names *(user-directed)* |
 | [0106](0106-a-sum-in-the-text-is-one-expression.md) | A sum in the text is one Expression *(user-directed; its printing of every Expression as a call replaced by [0107](0107-an-expression-is-printed-as-the-sum-it-is.md))* |
 | [0107](0107-an-expression-is-printed-as-the-sum-it-is.md) | An Expression is printed as the sum it is *(user-directed; a sum with a pipeline for an operand made a call by [0108](0108-a-preset-arrives-with-its-arithmetic-folded.md))* |
