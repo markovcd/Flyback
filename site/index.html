@@ -538,6 +538,8 @@ let slowly = t * 0.2
         latest release for your platform, check its signature and put it in place, with the command line tool and the
         viewer on your <code>PATH</code>. It runs in a terminal on Linux and macOS and in Git Bash on Windows:</p>
 <pre><code>curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash</code></pre>
+        <p>Run it again to update. <code>bash -s -- --uninstall</code> in place of <code>bash</code> removes Flyback and
+        everything the script added.</p>
         <p>After that it keeps itself up to date: a new release is downloaded in the background and installed the
         next time Flyback starts, and only if it is signed with Flyback's release key. The window that opens then
         shows what changed since the version it replaced. Turn it off under <strong>Settings → Updates</strong>.</p>

@@ -2,9 +2,11 @@
 # Installs the latest Flyback release for this machine, or updates a copy it installed.
 #
 #   curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/markovcd/Flyback/main/install.sh | bash -s -- --uninstall
 #
 # FLYBACK_VERSION=0.4.0 installs that release instead. FLYBACK_DIR is where the copy
-# goes: a folder on Linux and Windows, the .app on macOS.
+# goes: a folder on Linux and Windows, the .app on macOS. --uninstall removes the copy
+# and everything this script put beside it.
 
 set -euo pipefail
 
@@ -20,9 +22,20 @@ say() { printf '%s\n' "$*" >&2; }
 die() { say "flyback: $*"; exit 1; }
 need() { command -v "$1" >/dev/null 2>&1 || die "this needs $1, which is not installed"; }
 
-need curl
-need unzip
-need openssl
+uninstall=false
+
+for argument in "$@"; do
+  case "$argument" in
+    --uninstall) uninstall=true ;;
+    -h | --help)
+      say "usage: install.sh [--uninstall]"
+      say "  FLYBACK_VERSION  the release to install, rather than the latest"
+      say "  FLYBACK_DIR      where the copy goes (the .app on macOS)"
+      exit 0
+      ;;
+    *) die "unknown option $argument" ;;
+  esac
+done
 
 case "$(uname -s)" in
   Linux) os=linux ;;
@@ -43,6 +56,121 @@ if [ "$os" = osx ] && [ "$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)" =
 fi
 
 rid=$os-$arch
+bin=$HOME/.local/bin
+applications=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+
+case "$os" in
+  linux)
+    plugins=plugins
+    dest=${FLYBACK_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/flyback}
+    programs=$dest
+    shell=Flyback
+    ;;
+  osx)
+    plugins=Contents/MacOS/plugins
+    if [ -n "${FLYBACK_DIR:-}" ]; then
+      dest=$FLYBACK_DIR
+    elif [ -w /Applications ] || [ -d /Applications/Flyback.app ]; then
+      dest=/Applications/Flyback.app
+    else
+      dest=$HOME/Applications/Flyback.app
+    fi
+    programs=$dest/Contents/MacOS
+    shell=Flyback
+    ;;
+  win)
+    plugins=plugins
+    dest=${FLYBACK_DIR:-$(cygpath -u "$LOCALAPPDATA")/Programs/Flyback}
+    programs=$dest
+    shell=Flyback.exe
+    windows=$(cygpath -w "$dest")
+    ;;
+esac
+
+commands=(flyback-cli flyback-viewer)
+[ "$os" = linux ] && commands+=(flyback)
+
+# What a command in $bin links to.
+target() { case "$1" in flyback) echo "$programs/Flyback" ;; *) echo "$programs/$1" ;; esac; }
+
+# Files a running copy has open cannot be replaced or removed on Windows, and elsewhere
+# it would go on running the old version beside the new one.
+refuse_if_running() {
+  [ -d "$dest" ] || return 0
+
+  if [ "$os" = win ]; then
+    running=$(powershell.exe -NoProfile -Command \
+      "(Get-Process | Where-Object { \$_.Path -like '$windows\\*' }).Count" | tr -d '\r')
+    [ "${running:-0}" = 0 ] || die "Flyback is running from $dest; close it first"
+  elif [ "$os" = linux ]; then
+    # By executable, since a command started through its link in $bin names the link.
+    for exe in /proc/[0-9]*/exe; do
+      case "$(readlink "$exe" 2>/dev/null)" in
+        "$programs"/*) die "Flyback is running from $dest; close it first" ;;
+      esac
+    done
+  elif pgrep -f "$programs/" >/dev/null; then
+    die "Flyback is running from $dest; close it first"
+  fi
+}
+
+if $uninstall; then
+  refuse_if_running
+
+  removed=false
+
+  # Only a folder holding Flyback is removed, so a mistyped FLYBACK_DIR takes nothing with it.
+  if [ -d "$dest" ]; then
+    [ -f "$programs/$shell" ] || die "$dest does not hold Flyback, so it is left alone"
+    rm -rf "${dest:?}"
+    say "Removed $dest"
+    removed=true
+  fi
+
+  # A link, desktop entry or shortcut is only this script's if it points into this copy.
+  if [ "$os" = win ]; then
+    report=$(powershell.exe -NoProfile -Command "
+      \$ErrorActionPreference = 'Stop'
+      \$link = [Environment]::GetFolderPath('Programs') + '\\Flyback.lnk'
+      if ((Test-Path \$link) -and (New-Object -ComObject WScript.Shell).CreateShortcut(\$link).TargetPath -eq '$windows\\Flyback.exe') {
+        Remove-Item \$link
+        'Removed ' + \$link
+      }
+      \$path = @([Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { \$_ })
+      if (\$path -contains '$windows') {
+        [Environment]::SetEnvironmentVariable('Path', (@(\$path | Where-Object { \$_ -ne '$windows' }) -join ';'), 'User')
+        'Removed $windows from PATH'
+      }" | tr -d '\r') || die "could not remove the Start menu shortcut or the PATH entry"
+
+    if [ -n "$report" ]; then
+      say "$report"
+      removed=true
+    fi
+  else
+    for command in "${commands[@]}"; do
+      link=$bin/$command
+      if [ -L "$link" ] && [ "$(readlink "$link")" = "$(target "$command")" ]; then
+        rm -f "$link"
+        say "Removed $link"
+        removed=true
+      fi
+    done
+
+    entry=$applications/flyback.desktop
+    if [ "$os" = linux ] && [ -f "$entry" ] && grep -qF "Exec=\"$programs/Flyback\"" "$entry"; then
+      rm -f "$entry"
+      say "Removed $entry"
+      removed=true
+    fi
+  fi
+
+  $removed || say "Flyback is not installed in $dest."
+  exit 0
+fi
+
+need curl
+need unzip
+need openssl
 
 case "$rid" in
   linux-x64 | osx-arm64 | win-x64) ;;
@@ -81,43 +209,11 @@ actual=$(openssl dgst -sha256 -r "$tmp/$package" | cut -d' ' -f1)
 
 unzip -q "$tmp/$package" -d "$tmp/unpacked"
 
-case "$os" in
-  linux)
-    payload=$tmp/unpacked/$rid
-    plugins=plugins
-    dest=${FLYBACK_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/flyback}
-    ;;
-  osx)
-    payload=$tmp/unpacked/$rid/Flyback.app
-    plugins=Contents/MacOS/plugins
-    if [ -n "${FLYBACK_DIR:-}" ]; then
-      dest=$FLYBACK_DIR
-    elif [ -w /Applications ]; then
-      dest=/Applications/Flyback.app
-    else
-      dest=$HOME/Applications/Flyback.app
-    fi
-    ;;
-  win)
-    payload=$tmp/unpacked/$rid
-    plugins=plugins
-    dest=${FLYBACK_DIR:-$(cygpath -u "$LOCALAPPDATA")/Programs/Flyback}
-    ;;
-esac
-
+payload=$tmp/unpacked/$rid
+[ "$os" = osx ] && payload=$payload/Flyback.app
 [ -d "$payload" ] || die "$package does not hold $rid"
 
-# Files a running copy has open cannot be replaced on Windows, and elsewhere it would
-# go on running the old version beside the new one.
-if [ -d "$dest" ]; then
-  if [ "$os" = win ]; then
-    running=$(powershell.exe -NoProfile -Command \
-      "(Get-Process | Where-Object { \$_.Path -like '$(cygpath -w "$dest")\\*' }).Count" | tr -d '\r')
-    [ "${running:-0}" = 0 ] || die "Flyback is running from $dest; close it first"
-  elif command -v pgrep >/dev/null 2>&1 && pgrep -f "$dest/" >/dev/null; then
-    die "Flyback is running from $dest; close it first"
-  fi
-fi
+refuse_if_running
 
 # Replaced over what is there, so a plugin somebody added stays; a plugin the release
 # ships is replaced whole, so none of its old assemblies load beside the new ones.
@@ -131,14 +227,10 @@ on_path() { case ":$PATH:" in *":$1:"*) return 0 ;; esac; return 1; }
 
 case "$os" in
   linux | osx)
-    bin=$HOME/.local/bin
     mkdir -p "$bin"
+    for command in "${commands[@]}"; do ln -sf "$(target "$command")" "$bin/$command"; done
 
     if [ "$os" = linux ]; then
-      programs=$dest
-      ln -sf "$programs/Flyback" "$bin/flyback"
-
-      applications=${XDG_DATA_HOME:-$HOME/.local/share}/applications
       mkdir -p "$applications"
       cat > "$applications/flyback.desktop" <<EOF
 [Desktop Entry]
@@ -149,17 +241,11 @@ Exec="$programs/Flyback" %f
 Terminal=false
 Categories=AudioVideo;Audio;Graphics;
 EOF
-    else
-      programs=$dest/Contents/MacOS
     fi
-
-    ln -sf "$programs/flyback-cli" "$bin/flyback-cli"
-    ln -sf "$programs/flyback-viewer" "$bin/flyback-viewer"
 
     on_path "$bin" || say "Add $bin to PATH for flyback-cli and flyback-viewer."
     ;;
   win)
-    windows=$(cygpath -w "$dest")
     powershell.exe -NoProfile -Command "
       \$ErrorActionPreference = 'Stop'
       \$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Programs') + '\\Flyback.lnk')
