@@ -17,13 +17,14 @@ public sealed class ServerTests : IDisposable
 
     public ServerTests() : this(20) { }
 
-    private ServerTests(int postsPerHour, string adminPassword = "hunter2")
+    private ServerTests(int postsPerHour, string adminPassword = "hunter2", int lettersPerHour = 20)
     {
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
             web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
             web.UseSetting("Presets:Media", Media);
             web.UseSetting("Presets:PostsPerHour", postsPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            web.UseSetting("Presets:LettersPerHour", lettersPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
             web.UseSetting("Presets:Admin:User", "admin");
             web.UseSetting("Presets:Admin:Password", adminPassword);
         });
@@ -346,6 +347,22 @@ public sealed class ServerTests : IDisposable
         }
     }
 
+    public sealed class TooManyLetters : IDisposable
+    {
+        private readonly ServerTests server = new(postsPerHour: 20, lettersPerHour: 2);
+
+        public void Dispose() => server.Dispose();
+
+        [Fact]
+        public async Task A_flood_of_letters_is_turned_away()
+        {
+            (await server.Write(new { mood = "good", message = "One." })).ShouldBe(HttpStatusCode.NoContent);
+            (await server.Write(new { mood = "good", message = "Two." })).ShouldBe(HttpStatusCode.NoContent);
+
+            (await server.Write(new { mood = "good", message = "Three." })).ShouldBe(HttpStatusCode.TooManyRequests);
+        }
+    }
+
     private async Task<HttpStatusCode> Report(string id, object report)
     {
         using var response = await client.PostAsJsonAsync(new Uri($"/api/v1/presets/{id}/reports", UriKind.Relative), report, TestContext.Current.CancellationToken);
@@ -488,5 +505,72 @@ public sealed class ServerTests : IDisposable
         count.CommandText = "SELECT COUNT(*) FROM ratings";
 
         ((long)count.ExecuteScalar()!).ShouldBe(0);
+    }
+
+    private async Task<HttpStatusCode> Write(object letter)
+    {
+        using var response = await client.PostAsJsonAsync(new Uri("/api/v1/letters", UriKind.Relative), letter, TestContext.Current.CancellationToken);
+
+        return response.StatusCode;
+    }
+
+    [Fact]
+    public async Task Anyone_can_write_to_the_author_and_only_the_admin_reads_the_letters()
+    {
+        (await Write(new
+        {
+            mood = "good",
+            message = "  The canvas is lovely.  ",
+            contact = "  ada@example.org  ",
+            version = "1.4.0",
+            platform = "Microsoft Windows 10.0.26200",
+            plugins = "WinIO, Picture; sound: WASAPI",
+        })).ShouldBe(HttpStatusCode.NoContent);
+
+        (await Write(new { mood = "bad", message = "The delay clicks." })).ShouldBe(HttpStatusCode.NoContent);
+
+        (await Status("/api/v1/letters")).ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var admin = await Admin();
+        var letters = (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/letters", UriKind.Relative), TestContext.Current.CancellationToken))
+            .EnumerateArray().ToList();
+
+        letters.Select(l => l.GetProperty("mood").GetString()).ShouldBe(["bad", "good"]);
+        letters[1].GetProperty("message").GetString().ShouldBe("The canvas is lovely.");
+        letters[1].GetProperty("contact").GetString().ShouldBe("ada@example.org");
+        letters[1].GetProperty("version").GetString().ShouldBe("1.4.0");
+        letters[1].GetProperty("plugins").GetString().ShouldBe("WinIO, Picture; sound: WASAPI");
+
+        letters[0].GetProperty("contact").ValueKind.ShouldBe(JsonValueKind.Null, "an address left blank is no address");
+        letters[0].GetProperty("version").ValueKind.ShouldBe(JsonValueKind.Null);
+
+        (await Delete(client, "/api/v1/letters/" + letters[0].GetProperty("id").GetString())).ShouldBe(HttpStatusCode.Unauthorized);
+        (await Delete(admin, "/api/v1/letters/" + letters[0].GetProperty("id").GetString())).ShouldBe(HttpStatusCode.NoContent);
+
+        (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/letters", UriKind.Relative), TestContext.Current.CancellationToken))
+            .GetArrayLength().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_letter_needs_a_known_mood_and_something_in_it()
+    {
+        (await Write(new { mood = "cross", message = "Hello." })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Write(new { message = "No mood given." })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Write(new { mood = "other" })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Write(new { mood = "other", message = "   " })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Write(new { mood = "other", message = new string('x', 2001) })).ShouldBe(HttpStatusCode.BadRequest);
+        (await Write(new { mood = "other", message = "Fine.", contact = new string('x', 201) })).ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task What_the_editor_says_about_itself_is_cut_rather_than_refused()
+    {
+        (await Write(new { mood = "bad", message = "It will not start.", plugins = new string('p', 900) })).ShouldBe(HttpStatusCode.NoContent);
+
+        using var admin = await Admin();
+        var letters = (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/letters", UriKind.Relative), TestContext.Current.CancellationToken))
+            .EnumerateArray().ToList();
+
+        letters[0].GetProperty("plugins").GetString()!.Length.ShouldBe(600);
     }
 }

@@ -61,6 +61,11 @@ internal static class Glyphs
         + "M4,5 L12,5 L12,8 Q12,11 8,11 Q4,11 4,8 Z "
         + "M8,11 L8,14");
 
+    /// <summary>An envelope, flap down: writing to whoever wrote the program.</summary>
+    public static Control Letter() => Stroked(
+        "M2,4.5 L14,4.5 L14,11.5 L2,11.5 Z "
+        + "M2,4.5 L8,9 L14,4.5");
+
     /// <summary>A plain dot, filled — the record light on every deck and camera.</summary>
     public static Control Record() => Filled(new EllipseGeometry(new Rect(3, 3, 10, 10)));
 

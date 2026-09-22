@@ -1450,12 +1450,17 @@ public sealed partial class MainWindow : Window
     /// sized to its own text rather than a share of the bar, so the report only
     /// gives up width the count is actually using. Which sound backend is open
     /// and which assistant is chosen are said in the About window, not here.
+    /// <para>
+    /// The letter is last, at the far edge: it is the one thing on the bar that is
+    /// not about the patch, and it is reached for rarely enough that being out of
+    /// the way is the point (ADR-0136).
+    /// </para>
     /// </remarks>
     private Control BuildStatusBar()
     {
         var bar = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
             Margin = new Thickness(12, 5),
         };
 
@@ -1470,11 +1475,18 @@ public sealed partial class MainWindow : Window
         // starts at the margin and the last one keeps every pixel it is given.
         status.Margin = new Thickness(8, 0, 0, 0);
 
+        var letter = StatusGlyph(
+            "letter", Glyphs.Letter(), "Write to Flyback's author. Anything you like, good or bad.");
+
+        letter.Click += async (_, _) => await WriteToTheAuthorAsync();
+
         Grid.SetColumn(report, 0);
         Grid.SetColumn(status, 1);
+        Grid.SetColumn(letter, 2);
 
         bar.Children.Add(report);
         bar.Children.Add(status);
+        bar.Children.Add(letter);
 
         return new Border
         {
@@ -1483,5 +1495,41 @@ public sealed partial class MainWindow : Window
             BorderThickness = new Thickness(0, 1, 0, 0),
             Child = bar,
         };
+    }
+
+    /// <summary>
+    /// A button for the status bar: the same quiet flat square the dialog frame
+    /// closes with, sized so the bar stays as tall as its one line of prose.
+    /// </summary>
+    /// <remarks>
+    /// Not <see cref="ToolbarButtons.Glyph"/>, which is a toolbar's 34 by 30 and
+    /// would make the bar half again as tall. The theme's own minimum has to be
+    /// undone for that, which is what the two zeroes are. Drawn rather than
+    /// typed, since the shipped font has no envelope and what stands in for one
+    /// is the platform's emoji face.
+    /// </remarks>
+    private static Button StatusGlyph(string name, Control glyph, string tip)
+    {
+        var button = new Button
+        {
+            Name = name,
+            Content = glyph,
+            Width = 22,
+            Height = 18,
+            MinWidth = 0,
+            MinHeight = 0,
+            Padding = new Thickness(0),
+            Margin = new Thickness(10, 0, 0, 0),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Foreground = Text.Muted,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(button, tip);
+
+        return button;
     }
 }

@@ -1,4 +1,4 @@
-// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in and reports.
+// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in, reports and letters.
 (function () {
   var api = "api/v1/";
 
@@ -342,12 +342,17 @@
     var inside = document.getElementById("signed-in");
     var status = document.getElementById("status");
     var reports = document.getElementById("reports");
+    var letters = document.getElementById("letters");
 
     function show(signed) {
       form.hidden = signed;
       inside.hidden = !signed;
       reports.hidden = !signed;
-      if (signed) FlybackReports.list(reports);
+      letters.hidden = !signed;
+      if (signed) {
+        FlybackReports.list(reports);
+        FlybackLetters.list(letters);
+      }
     }
 
     function tell(text) {

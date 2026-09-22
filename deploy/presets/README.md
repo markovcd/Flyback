@@ -53,6 +53,7 @@ Settings, all optional, as environment variables:
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
 | `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__RatingsPerHour` | `60` | ratings one address may give in an hour |
+| `Presets__LettersPerHour` | `5` | letters one address may write in an hour |
 | `Presets__Admin__User` | | the admin's user name |
 | `Presets__Admin__Password` | | the admin's password; admin mode is off while either is blank |
 
@@ -63,6 +64,8 @@ Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`
 Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. Plugins are never rendered, and have nothing in `media/`.
 
 Anyone can report a published preset or plugin, from its page or from the editor, with a reason and a line of detail. Reports are listed at `/admin.html` once signed in, each linking to what it is about, where it can be unpublished or deleted; Dismiss clears one, and deleting a preset or plugin clears its reports.
+
+Letters written from inside Flyback are listed at `/admin.html` too, newest first: a mood, what was typed, an address where one was left, and the version, operating system and plugins the letter was written from. Dismiss clears one. There is no reply from here; an address is answered by mail or not at all.
 
 A published preset or plugin is rated with one to five stars on its page, one rating per address, and rating again replaces it. Every card and the editor show the average. Only the site's own pages can rate: the endpoint takes a rating only where the browser marks the request same-origin, which the editor never does. Addresses are kept as an HMAC under a key in the database, and deleting a preset or plugin clears its ratings.
 

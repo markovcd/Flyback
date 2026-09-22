@@ -54,6 +54,13 @@ builder.Services.AddRateLimiter(limits =>
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:ReportsPerHour", 10),
             Window = TimeSpan.FromHours(1),
         }));
+    limits.AddPolicy("letter", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:LettersPerHour", 5),
+            Window = TimeSpan.FromHours(1),
+        }));
     limits.AddPolicy("rate", http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
@@ -86,6 +93,7 @@ Directory.CreateDirectory(media.Root);
 var plugins = new PluginStore(database);
 var reports = new ReportStore(database);
 var ratings = new RatingStore(database);
+var letters = new LetterStore(database);
 
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
@@ -129,6 +137,7 @@ var api = app.MapGroup("/api/v1");
 
 api.MapPlugins(plugins, reports, ratings, reviewing: Signed);
 api.MapReports(reports, reviewing: Signed);
+api.MapLetters(letters, reviewing: Signed);
 api.MapReport("/presets/{id}/reports", ReportStore.Preset, reports, id => store.Find(id) is not null);
 api.MapRating("/presets/{id}/rating", ReportStore.Preset, ratings, id => store.Find(id) is not null);
 
