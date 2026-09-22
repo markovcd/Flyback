@@ -411,4 +411,32 @@ public sealed class PluginTests : IDisposable
         (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
             .GetArrayLength().ShouldBe(0);
     }
+
+    [Fact]
+    public async Task A_published_plugin_is_rated_from_the_site_and_listed_with_its_average()
+    {
+        var id = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+
+        HttpRequestMessage Rate(int stars)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Put, new Uri($"/api/v1/plugins/{id}/rating", UriKind.Relative)) { Content = JsonContent.Create(new { stars }) };
+            request.Headers.Add("Sec-Fetch-Site", "same-origin");
+            return request;
+        }
+
+        using (var unpublished = await client.SendAsync(Rate(3), TestContext.Current.CancellationToken))
+            unpublished.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        await Publish(id);
+
+        using (var rated = await client.SendAsync(Rate(3), TestContext.Current.CancellationToken))
+            rated.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var rating = (await Get("/api/v1/plugins?platform=win")).GetProperty("items").EnumerateArray().Single().GetProperty("rating");
+
+        rating.GetProperty("average").GetDouble().ShouldBe(3);
+        rating.GetProperty("count").GetInt32().ShouldBe(1);
+
+        (await Status(HttpMethod.Put, $"/api/v1/plugins/{id}/rating", JsonContent.Create(new { stars = 5 }))).ShouldBe(HttpStatusCode.Forbidden);
+    }
 }

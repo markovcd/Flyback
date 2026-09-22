@@ -135,6 +135,7 @@
 
       var body = make("div", { class: "body" });
       body.appendChild(facts(plugin));
+      body.appendChild(FlybackRatings.stars(plugin.rating));
       if (plugin.description) body.appendChild(make("p", null, plugin.description));
       if (plugin.adds.length) chips(plugin.adds, body, false);
       if (plugin.modules.length) body.appendChild(make("p", { class: "modules" }, moduleNames(plugin.modules)));
@@ -276,6 +277,7 @@
       more.appendChild(make("span", null, size(plugin.size)));
       more.appendChild(make("span", null, plugin.downloads + (plugin.downloads === 1 ? " download" : " downloads")));
       text.appendChild(more);
+      if (plugin.published) text.appendChild(FlybackRatings.widget("plugin", plugin.id));
 
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: plugin.file, download: plugin.fileName }, "Download"));

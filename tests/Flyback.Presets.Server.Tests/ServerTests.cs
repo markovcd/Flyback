@@ -408,4 +408,85 @@ public sealed class ServerTests : IDisposable
         (await admin.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/reports", UriKind.Relative), TestContext.Current.CancellationToken))
             .GetArrayLength().ShouldBe(0);
     }
+
+    /// <summary>Puts the stars as the site's own page does, from <paramref name="address"/>.</summary>
+    private async Task<(HttpStatusCode Status, JsonElement Said)> Rate(string id, object rating, string? address = "203.0.113.1", bool fromTheSite = true)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Put, new Uri($"/api/v1/presets/{id}/rating", UriKind.Relative)) { Content = JsonContent.Create(rating) };
+
+        if (fromTheSite) request.Headers.Add("Sec-Fetch-Site", "same-origin");
+        if (address is not null) request.Headers.Add("X-Forwarded-For", address);
+
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        return (response.StatusCode, response.IsSuccessStatusCode
+            ? await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken)
+            : default);
+    }
+
+    [Fact]
+    public async Task A_preset_is_rated_once_per_address_and_listed_with_its_average()
+    {
+        var id = (await Submit(PatchFile(), name: "Drone")).GetProperty("id").GetString()!;
+
+        (await Rate(id, new { stars = 2 }, "203.0.113.1")).Status.ShouldBe(HttpStatusCode.OK);
+        (await Rate(id, new { stars = 5 }, "203.0.113.2")).Status.ShouldBe(HttpStatusCode.OK);
+
+        var (_, again) = await Rate(id, new { stars = 4 }, "203.0.113.1");
+
+        again.GetProperty("average").GetDouble().ShouldBe(4.5);
+        again.GetProperty("count").GetInt32().ShouldBe(2);
+        again.GetProperty("mine").GetInt32().ShouldBe(4);
+
+        var listed = (await Get("/api/v1/presets")).GetProperty("items").EnumerateArray().Single().GetProperty("rating");
+
+        listed.GetProperty("average").GetDouble().ShouldBe(4.5);
+        listed.GetProperty("count").GetInt32().ShouldBe(2);
+        (await Get("/api/v1/presets/" + id)).GetProperty("rating").GetProperty("count").GetInt32().ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task A_preset_nobody_rated_says_so()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+        var rating = await Get($"/api/v1/presets/{id}/rating");
+
+        rating.GetProperty("count").GetInt32().ShouldBe(0);
+        rating.GetProperty("mine").ValueKind.ShouldBe(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task A_rating_is_taken_only_from_the_site_and_only_one_to_five_stars()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await Rate(id, new { stars = 5 }, fromTheSite: false)).Status.ShouldBe(HttpStatusCode.Forbidden, "the editor reads ratings and never gives them");
+        (await Rate(id, new { stars = 0 })).Status.ShouldBe(HttpStatusCode.BadRequest);
+        (await Rate(id, new { stars = 6 })).Status.ShouldBe(HttpStatusCode.BadRequest);
+        (await Rate(id, new { })).Status.ShouldBe(HttpStatusCode.BadRequest);
+        (await Rate("nothing-here", new { stars = 3 })).Status.ShouldBe(HttpStatusCode.NotFound);
+
+        using var admin = await Admin();
+        (await Change(admin, id, new { published = false })).ShouldBe(HttpStatusCode.OK);
+
+        (await Rate(id, new { stars = 3 })).Status.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Deleting_a_preset_takes_its_ratings_with_it()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await Rate(id, new { stars = 1 })).Status.ShouldBe(HttpStatusCode.OK);
+
+        using var admin = await Admin();
+        (await Delete(admin, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NoContent);
+
+        using var db = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=" + Path.Combine(folder, "presets.db"));
+        db.Open();
+        using var count = db.CreateCommand();
+        count.CommandText = "SELECT COUNT(*) FROM ratings";
+
+        ((long)count.ExecuteScalar()!).ShouldBe(0);
+    }
 }

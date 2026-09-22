@@ -39,6 +39,7 @@ internal sealed record ListedPlugin(
 }
 
 /// <summary>A plugin the site lists.</summary>
+/// <param name="Rating">Its stars on the site, which only the site gives.</param>
 internal sealed record SitePlugin(
     string Id,
     ListedPlugin Plugin,
@@ -47,7 +48,8 @@ internal sealed record SitePlugin(
     long Size,
     int Downloads,
     Uri File,
-    Uri? Preview);
+    Uri? Preview,
+    SiteRating Rating);
 
 /// <summary>One page of what the site found, and how many it found in all.</summary>
 internal sealed record SitePage(IReadOnlyList<SitePlugin> Items, int Total, int Page, int PageSize)
@@ -150,7 +152,8 @@ internal sealed class PluginSite(HttpClient http, Uri root)
                     Number(item, "size"),
                     (int)Number(item, "downloads"),
                     fileUri,
-                    Text(item, "preview") is { } preview && Uri.TryCreate(root, preview, out var previewUri) ? previewUri : null));
+                    Text(item, "preview") is { } preview && Uri.TryCreate(root, preview, out var previewUri) ? previewUri : null,
+                    SiteRating.Read(item)));
             }
         }
 

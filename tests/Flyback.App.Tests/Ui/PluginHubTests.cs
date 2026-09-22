@@ -436,4 +436,19 @@ public sealed class PluginHubTests : UiTest
         All<TextBlock>(window).Single(t => t.Name == "reportStatus").Text!.ShouldStartWith("The report was not sent.");
         send.IsEnabled.ShouldBeTrue();
     }
+
+    [AvaloniaFact]
+    public void A_site_plugin_shows_its_stars_and_offers_no_way_to_give_them()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple", Average: 4.4, Ratings: 7), new Shared("n1", "Newt"));
+        var (hub, _) = Open(site);
+
+        string Said(string id) => All<TextBlock>(All<Grid>(hub.View).Single(g => g.Tag is SitePlugin p && p.Id == id))
+            .Single(t => t.Name == "siteRating").Inlines!.Text!;
+
+        Said("r1").ShouldBe("★★★★★  4.4 (7 ratings)");
+        Said("n1").ShouldBe("★★★★★  Not rated yet");
+        ((SitePlugin)All<Grid>(hub.View).First(g => g.Tag is SitePlugin).Tag!).Rating.Stars.ShouldBe(4);
+        site.Asked.ShouldNotContain(u => u.AbsolutePath.EndsWith("/rating", StringComparison.Ordinal), "ratings are given on the site");
+    }
 }

@@ -118,3 +118,17 @@ textarea:focus-visible { outline: 2px solid var(--attention); outline-offset: 1p
 .report-card p { margin: 0; color: var(--label); }
 .report-card .details { white-space: pre-wrap; color: var(--muted); }
 .report-card .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+
+/* Stars: read on every card, given on a preset's or plugin's own page. */
+.stars { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.stars .row, .rate .row { color: var(--separator); letter-spacing: 1px; }
+.stars .on, .rate .on { color: var(--attention); }
+.rate { margin-top: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.rate .row { display: inline-flex; }
+.rate button {
+  font: 400 24px/1 var(--sans); color: inherit; background: none; border: 0;
+  padding: 2px; cursor: pointer;
+}
+.rate button:focus-visible { outline: 2px solid var(--attention); outline-offset: 1px; border-radius: 3px; }
+.rate button[disabled] { cursor: default; }
+.rate .said { margin: 0; font-size: 14px; color: var(--muted); }

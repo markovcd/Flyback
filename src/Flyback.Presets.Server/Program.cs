@@ -54,6 +54,13 @@ builder.Services.AddRateLimiter(limits =>
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:ReportsPerHour", 10),
             Window = TimeSpan.FromHours(1),
         }));
+    limits.AddPolicy("rate", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:RatingsPerHour", 60),
+            Window = TimeSpan.FromHours(1),
+        }));
 });
 
 // Kept beside the database, so a restarted container does not sign the admin out.
@@ -78,6 +85,7 @@ Directory.CreateDirectory(media.Root);
 
 var plugins = new PluginStore(database);
 var reports = new ReportStore(database);
+var ratings = new RatingStore(database);
 
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
@@ -92,7 +100,7 @@ app.UseAuthentication();
 
 bool Signed(HttpContext http) => admin.Enabled && http.User.Identity?.IsAuthenticated == true;
 
-object View(StoredPreset preset) => new
+object View(StoredPreset preset, Rating rating) => new
 {
     preset.Id,
     preset.Name,
@@ -106,31 +114,41 @@ object View(StoredPreset preset) => new
     preset.Published,
     File = $"/api/v1/presets/{preset.Id}/file",
     Media = media.Of(preset.Id),
+    Rating = new { rating.Average, rating.Count },
 };
+
+IEnumerable<object> Views(IEnumerable<StoredPreset> presets)
+{
+    var listed = presets.ToList();
+    var rated = ratings.Of(ReportStore.Preset, listed.Select(p => p.Id));
+
+    return listed.Select(p => View(p, rated.GetValueOrDefault(p.Id, Rating.None)));
+}
 
 var api = app.MapGroup("/api/v1");
 
-api.MapPlugins(plugins, reports, reviewing: Signed);
+api.MapPlugins(plugins, reports, ratings, reviewing: Signed);
 api.MapReports(reports, reviewing: Signed);
 api.MapReport("/presets/{id}/reports", ReportStore.Preset, reports, id => store.Find(id) is not null);
+api.MapRating("/presets/{id}/rating", ReportStore.Preset, ratings, id => store.Find(id) is not null);
 
 api.MapGet("/presets", (HttpContext http, string? q, string? tag, int? page, bool? pending) =>
 {
     if (pending == true)
     {
-        var waiting = store.Oldest().Where(p => media.Pending(p.Id)).Take(PendingLimit).Select(View).ToList();
+        var waiting = store.Oldest().Where(p => media.Pending(p.Id)).Take(PendingLimit).ToList();
 
-        return Results.Ok(new { Items = waiting, Total = waiting.Count, Page = 1, PageSize = PendingLimit });
+        return Results.Ok(new { Items = Views(waiting), Total = waiting.Count, Page = 1, PageSize = PendingLimit });
     }
 
     var at = Math.Max(1, page ?? 1);
     var found = store.List(q, tag, at, PageSize, Signed(http));
 
-    return Results.Ok(new { Items = found.Items.Select(View), found.Total, Page = at, PageSize });
+    return Results.Ok(new { Items = Views(found.Items), found.Total, Page = at, PageSize });
 });
 
 api.MapGet("/presets/{id}", (HttpContext http, string id) =>
-    store.Find(id, Signed(http)) is { } preset ? Results.Ok(View(preset)) : Results.NotFound());
+    store.Find(id, Signed(http)) is { } preset ? Results.Ok(View(preset, ratings.Of(ReportStore.Preset, id))) : Results.NotFound());
 
 // render-presets fetches with count=false, so its fetches are not downloads.
 api.MapGet("/presets/{id}/file", (HttpContext http, string id, bool? count) =>
@@ -157,7 +175,7 @@ api.MapPost("/presets", async (HttpRequest request) =>
 
     var stored = store.Add(submission, DateTimeOffset.UtcNow);
 
-    return Results.Created($"/api/v1/presets/{stored.Id}", View(stored));
+    return Results.Created($"/api/v1/presets/{stored.Id}", View(stored, Rating.None));
 })
 .DisableAntiforgery()
 .RequireRateLimiting("submit");
@@ -195,7 +213,7 @@ api.MapPatch("/presets/{id}", (HttpContext http, string id, PresetChange change)
 
     if (change.Published is { } published && !store.Publish(id, published)) return Results.NotFound();
 
-    return store.Find(id, unpublished: true) is { } preset ? Results.Ok(View(preset)) : Results.NotFound();
+    return store.Find(id, unpublished: true) is { } preset ? Results.Ok(View(preset, ratings.Of(ReportStore.Preset, id))) : Results.NotFound();
 });
 
 api.MapDelete("/presets/{id}", (HttpContext http, string id) =>
@@ -204,6 +222,7 @@ api.MapDelete("/presets/{id}", (HttpContext http, string id) =>
     if (!store.Delete(id)) return Results.NotFound();
 
     reports.Forget(ReportStore.Preset, id);
+    ratings.Forget(ReportStore.Preset, id);
 
     return Results.NoContent();
 });

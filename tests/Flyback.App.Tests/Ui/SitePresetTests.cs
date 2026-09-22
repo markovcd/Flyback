@@ -217,4 +217,19 @@ public sealed class SitePresetTests : UiTest
         Status(parts).ShouldBe("Reported “Aurora” to the preset site's admin.");
         All<TextBlock>(parts.Tiles).Single(t => t.Name == "site-status").IsVisible.ShouldBeTrue();
     }
+
+    [AvaloniaFact]
+    public void A_shared_preset_shows_its_stars_to_read()
+    {
+        using var site = new FakePresetSite(new Posted("a", "Aurora", Average: 2.6, Ratings: 1), new Posted("b", "Bloom"));
+        var (_, parts) = Gallery(site);
+
+        TextBlock Stars(string id) => All<TextBlock>(All<Button>(parts.Tiles).Single(b => b.Tag is SitePreset p && p.Id == id))
+            .Single(t => t.Name == "siteRating");
+
+        ((SitePreset)All<Button>(parts.Tiles).Single(b => b.Tag is SitePreset { Id: "a" }).Tag!).Rating.Stars.ShouldBe(3);
+        Stars("a").Inlines!.Text.ShouldBe("★★★★★  2.6 (1 rating)");
+        Stars("b").Inlines!.Text.ShouldBe("★★★★★  Not rated yet");
+        site.Asked.ShouldNotContain(u => u.AbsolutePath.EndsWith("/rating", StringComparison.Ordinal), "ratings are given on the site");
+    }
 }

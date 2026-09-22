@@ -287,7 +287,7 @@ internal sealed class PluginHub : IDisposable
     private Grid SiteRow(SitePlugin plugin)
     {
         var picture = Picture(null);
-        var row = Row(plugin.Plugin, picture, new StackPanel());
+        var row = Row(plugin.Plugin, picture, new StackPanel(), plugin.Rating);
 
         // The panel has no spacing, so the gap the installed rows get is margin here.
         row.Margin = new Thickness(0, 7);
@@ -470,8 +470,8 @@ internal sealed class PluginHub : IDisposable
         return new StackPanel { Children = { line } };
     }
 
-    /// <summary>A plugin's picture, name, byline, description, tags and modules, and what can be done about it.</summary>
-    private Grid Row(ListedPlugin plugin, Border picture, Control actions)
+    /// <summary>A plugin's picture, name, byline, site rating, description, tags and modules, and what can be done about it.</summary>
+    private Grid Row(ListedPlugin plugin, Border picture, Control actions, SiteRating? rating = null)
     {
         var text = new StackPanel { Spacing = 3, Margin = new Thickness(12, 0) };
 
@@ -489,6 +489,8 @@ internal sealed class PluginHub : IDisposable
         if (plugin.Author.Length > 0) byline += $", by {plugin.Author}";
 
         text.Children.Add(Text.Quiet(byline));
+
+        if (rating is not null) text.Children.Add(RatingLine.Of(rating));
 
         if (plugin.Description.Length > 0)
         {

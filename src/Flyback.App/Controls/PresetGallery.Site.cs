@@ -141,6 +141,7 @@ internal static partial class PresetGallery
                 {
                     picture,
                     new TextBlock { Text = preset.Name, FontSize = Text.Body, FontWeight = FontWeight.SemiBold },
+                    RatingLine.Of(preset.Rating),
                 },
             };
 

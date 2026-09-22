@@ -15,7 +15,9 @@ internal sealed record Shared(
     string Author = "",
     string[]? Tags = null,
     string[]? Modules = null,
-    byte[]? Package = null);
+    byte[]? Package = null,
+    double Average = 0,
+    int Ratings = 0);
 
 /// <summary>
 /// <c>/api/v1/plugins</c> answered in memory: narrowed the way the site narrows,
@@ -96,6 +98,7 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
                 downloads = 0,
                 file = $"/api/v1/plugins/{p.Shared.Id}/file",
                 preview = (string?)null,
+                rating = new { average = p.Shared.Average, count = p.Shared.Ratings },
             }),
             total = found.Count,
             page,

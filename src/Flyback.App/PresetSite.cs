@@ -6,6 +6,7 @@ namespace Flyback.App;
 /// <summary>A preset the site lists.</summary>
 /// <param name="FileName">What it was shared as, whose extension says whether it is a bundle.</param>
 /// <param name="Still">A frame of it, once the site has rendered one.</param>
+/// <param name="Rating">Its stars on the site, which only the site gives.</param>
 internal sealed record SitePreset(
     string Id,
     string Name,
@@ -14,7 +15,8 @@ internal sealed record SitePreset(
     IReadOnlyList<string> Tags,
     string FileName,
     Uri File,
-    Uri? Still);
+    Uri? Still,
+    SiteRating Rating);
 
 /// <summary>One page of the presets the site found, and how many it found in all.</summary>
 internal sealed record SitePresetPage(IReadOnlyList<SitePreset> Items, int Total, int Page, int PageSize)
@@ -102,7 +104,8 @@ internal sealed class PresetSite(HttpClient http, Uri root)
                         : [],
                     Text(item, "fileName") ?? string.Empty,
                     fileUri,
-                    still));
+                    still,
+                    SiteRating.Read(item)));
             }
         }
 

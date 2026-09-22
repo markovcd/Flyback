@@ -30,6 +30,7 @@
 - The shipped plugins have a name, author, description and tags, and the module plugins a preview of their modules.
 - A plugin declares its modules, so the install dialog and the shared plugins site list them by name, and one that registers a module it did not declare is refused.
 - Shared presets and plugins can be reported to the preset site's admin, from the site, the preset gallery and the plugins window, and the admin lists the reports.
+- Shared presets and plugins are rated with stars on the preset site, and the preset gallery and the plugins window show them.
 
 ## 0.4.0 — 2026-09-21
 

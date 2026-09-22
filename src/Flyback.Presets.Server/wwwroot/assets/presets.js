@@ -138,6 +138,7 @@
 
       var body = make("div", { class: "body" });
       if (preset.author) body.appendChild(make("span", { class: "by" }, "by " + preset.author));
+      body.appendChild(FlybackRatings.stars(preset.rating));
       if (preset.description) body.appendChild(make("p", null, preset.description));
       if (preset.tags.length) chips(preset.tags, body, true);
 
@@ -235,6 +236,7 @@
       facts.appendChild(make("span", null, size(preset.size)));
       facts.appendChild(make("span", null, preset.downloads + (preset.downloads === 1 ? " download" : " downloads")));
       text.appendChild(facts);
+      if (preset.published) text.appendChild(FlybackRatings.widget("preset", preset.id));
 
       if (preset.tags.length) {
         var tagged = make("div", { style: "margin-top: 16px" });

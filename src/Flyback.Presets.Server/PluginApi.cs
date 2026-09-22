@@ -14,7 +14,7 @@ internal static class PluginApi
 {
     public const int PageSize = 24;
 
-    public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, ReportStore reports, Func<HttpContext, bool> reviewing)
+    public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, ReportStore reports, RatingStore ratings, Func<HttpContext, bool> reviewing)
     {
         api.MapGet("/plugins", (HttpContext http, string? q, string? tag, string? platform, string? module, int? page) =>
         {
@@ -24,11 +24,13 @@ internal static class PluginApi
             var at = Math.Max(1, page ?? 1);
             var found = store.List(q, platform, at, PageSize, reviewing(http), tag, module);
 
-            return Results.Ok(new { Items = found.Items.Select(View), found.Total, Page = at, PageSize });
+            var rated = ratings.Of(ReportStore.Plugin, found.Items.Select(p => p.Id));
+
+            return Results.Ok(new { Items = found.Items.Select(p => View(p, rated.GetValueOrDefault(p.Id, Rating.None))), found.Total, Page = at, PageSize });
         });
 
         api.MapGet("/plugins/{id}", (HttpContext http, string id) =>
-            store.Find(id, reviewing(http)) is { } plugin ? Results.Ok(View(plugin)) : Results.NotFound());
+            store.Find(id, reviewing(http)) is { } plugin ? Results.Ok(View(plugin, ratings.Of(ReportStore.Plugin, id))) : Results.NotFound());
 
         api.MapGet("/plugins/{id}/file", (HttpContext http, string id, bool? count) =>
             store.Download(id, count != false, reviewing(http)) is { } download
@@ -77,7 +79,7 @@ internal static class PluginApi
             if (store.Add(submission, DateTimeOffset.UtcNow) is not { } stored)
                 return Results.Conflict(new { Error = "That package has been sent already." });
 
-            return Results.Accepted($"/api/v1/plugins/{stored.Id}", View(stored));
+            return Results.Accepted($"/api/v1/plugins/{stored.Id}", View(stored, Rating.None));
         })
         .DisableAntiforgery()
         .RequireRateLimiting("submit")
@@ -95,10 +97,11 @@ internal static class PluginApi
 
             if (change.Published is { } published && !store.Publish(id, published)) return Results.NotFound();
 
-            return store.Find(id, unpublished: true) is { } plugin ? Results.Ok(View(plugin)) : Results.NotFound();
+            return store.Find(id, unpublished: true) is { } plugin ? Results.Ok(View(plugin, ratings.Of(ReportStore.Plugin, id))) : Results.NotFound();
         });
 
         api.MapReport("/plugins/{id}/reports", ReportStore.Plugin, reports, id => store.Find(id) is not null);
+        api.MapRating("/plugins/{id}/rating", ReportStore.Plugin, ratings, id => store.Find(id) is not null);
 
         api.MapDelete("/plugins/{id}", (HttpContext http, string id) =>
         {
@@ -106,12 +109,13 @@ internal static class PluginApi
             if (!store.Delete(id)) return Results.NotFound();
 
             reports.Forget(ReportStore.Plugin, id);
+            ratings.Forget(ReportStore.Plugin, id);
 
             return Results.NoContent();
         });
     }
 
-    private static object View(StoredPlugin plugin) => new
+    private static object View(StoredPlugin plugin, Rating rating) => new
     {
         plugin.Id,
         plugin.Assembly,
@@ -134,6 +138,7 @@ internal static class PluginApi
         plugin.Published,
         File = $"/api/v1/plugins/{plugin.Id}/file",
         Preview = plugin.PreviewType is null ? null : $"/api/v1/plugins/{plugin.Id}/preview",
+        Rating = new { rating.Average, rating.Count },
     };
 }
 

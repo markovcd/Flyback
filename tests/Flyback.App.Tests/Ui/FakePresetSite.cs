@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>A preset as the fake site lists it.</summary>
-internal sealed record Posted(string Id, string Name, string Author = "", string Description = "", string FileName = "", byte[]? File = null);
+internal sealed record Posted(string Id, string Name, string Author = "", string Description = "", string FileName = "", byte[]? File = null, double Average = 0, int Ratings = 0);
 
 /// <summary>
 /// <c>/api/v1/presets</c> answered in memory: narrowed the way the site narrows, on every
@@ -76,6 +76,7 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
                 fileName = p.FileName.Length > 0 ? p.FileName : p.Name + ".fbk",
                 file = $"/api/v1/presets/{p.Id}/file",
                 media = new { still = (string?)null, state = "pending" },
+                rating = new { average = p.Average, count = p.Ratings },
             }),
             total = found.Count,
             page,
