@@ -587,7 +587,9 @@ line count overstates its code.
 ### Names
 
 Domain words, from the instrument rather than the framework: module, socket,
-wire, patch, knob, sink, normalled, take, plane, cell. Test and ADR titles are
+wire, patch, knob, sink, normalled, take, plane, cell. [glossary.md](glossary.md)
+has every one, the code name it hides behind and the words it must not be
+called. Test and ADR titles are
 sentences. A module's type id is `category.name` for built-ins (`osc.sine`,
 `math.add`) and `<provider id>.name` for a plugin's, and once shipped it is never
 changed: saved patches name it.
