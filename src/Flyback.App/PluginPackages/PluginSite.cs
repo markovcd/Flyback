@@ -58,9 +58,6 @@ internal sealed record SitePage(IReadOnlyList<SitePlugin> Items, int Total, int 
 /// <summary>The plugins shared on the preset site, as <c>/api/v1/plugins</c> lists them for this system.</summary>
 internal sealed class PluginSite(HttpClient http, Uri root)
 {
-    /// <summary>The preset site as it runs locally.</summary>
-    public static readonly Uri Local = new("http://localhost:8790/");
-
     public Uri Root { get; } = root;
 
     /// <summary>

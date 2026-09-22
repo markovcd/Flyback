@@ -510,9 +510,9 @@ public sealed partial class MainWindow : Window
     /// just installed. Null offers no restart, which is what every test gets unless it
     /// is watching for one.
     /// </param>
-    /// <param name="pluginSite">
-    /// The site the plugins window lists shared plugins from. Null lists none, so no
-    /// test reaches the network unless it asks to.
+    /// <param name="presetSite">
+    /// The site the gallery lists shared presets from and the plugins window shared
+    /// plugins. Null lists none, so no test reaches the network unless it asks to.
     /// </param>
     public MainWindow(
         string? groupFolder = null,
@@ -532,12 +532,12 @@ public sealed partial class MainWindow : Window
         FileTypes? fileTypes = null,
         string? pluginFolder = null,
         Action? relaunch = null,
-        Uri? pluginSite = null)
+        Uri? presetSite = null)
     {
         this.groupFolder = groupFolder;
         this.pluginFolder = pluginFolder;
         this.relaunch = relaunch;
-        this.pluginSite = pluginSite;
+        this.presetSite = presetSite;
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
@@ -1015,13 +1015,22 @@ public sealed partial class MainWindow : Window
         presetsButton.Click += async (_, _) =>
         {
             var showing = presets.SelectedItem as PatchPreset;
-            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours());
-            var chosen = await this.ShowDialog<PatchPreset?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
+            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours(), PresetSite());
+            var chosen = await this.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
 
             PointedAt(null);
 
-            // Looked up in the list as it is now, which a save in the gallery may have changed.
-            if (chosen is not null) presets.SelectedIndex = offeredPresets.IndexOf(chosen);
+            switch (chosen)
+            {
+                // Looked up in the list as it is now, which a save in the gallery may have changed.
+                case PatchPreset preset:
+                    presets.SelectedIndex = offeredPresets.IndexOf(preset);
+                    break;
+
+                case SitePreset shared:
+                    await OpenSharedPresetAsync(shared);
+                    break;
+            }
         };
 
         // Stacked in one cell so the toolbar keeps the one slot it had.

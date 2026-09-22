@@ -56,7 +56,7 @@ internal sealed record YourPresets(
 /// past. A tile is a button, so the keyboard walks them and Enter picks one; what it
 /// answers with is the preset, and the caller decides what picking it means.
 /// </remarks>
-internal static class PresetGallery
+internal static partial class PresetGallery
 {
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
     private const string Asking = "asking";
@@ -95,15 +95,20 @@ internal static class PresetGallery
     /// The presets somebody saved, headed after all the rest, or null for a gallery
     /// without that section.
     /// </param>
+    /// <param name="site">
+    /// Where shared presets are listed from, headed last, or null for a gallery without
+    /// them. A tile of theirs answers with its <see cref="SitePreset"/>.
+    /// </param>
     public static GalleryParts Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt = null,
-        YourPresets? yours = null)
+        YourPresets? yours = null,
+        PresetSite? site = null)
     {
         var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
-        var search = new Search();
+        var search = new Search { Elsewhere = site is not null };
 
         foreach (var run in ordered.GroupBy(preset => preset.Kind))
         {
@@ -128,6 +133,8 @@ internal static class PresetGallery
         if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search);
 
         search.Apply();
+
+        if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box).View);
 
         // The hint beside the runs rather than among them, so the gallery stays
         // what it has always been: a heading, then its tiles, and again.
@@ -588,6 +595,9 @@ internal static class PresetGallery
             Margin = new Thickness(16, 8, 16, 2),
         };
 
+        /// <summary>Whether presets from elsewhere follow, so the hint says it means the ones here.</summary>
+        public bool Elsewhere { get; init; }
+
         public TextBlock Hint { get; } = new()
         {
             TextWrapping = TextWrapping.Wrap,
@@ -698,7 +708,7 @@ internal static class PresetGallery
                 anything |= any;
             }
 
-            Hint.Text = $"Nothing matches “{text}”.";
+            Hint.Text = Elsewhere ? $"No preset on this machine matches “{text}”." : $"Nothing matches “{text}”.";
             Hint.IsVisible = !anything;
 
             // The first match, so a few letters and Enter picks what you were

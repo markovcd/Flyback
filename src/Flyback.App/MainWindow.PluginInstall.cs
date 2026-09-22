@@ -14,8 +14,8 @@ public sealed partial class MainWindow
     /// <summary>Starts Flyback again once this window has closed, or null where a restart is not offered.</summary>
     private readonly Action? relaunch;
 
-    /// <summary>Where the plugins window lists shared plugins from, or null for nowhere.</summary>
-    private readonly Uri? pluginSite;
+    /// <summary>Where the gallery lists shared presets from and the plugins window shared plugins, or null for nowhere.</summary>
+    private readonly Uri? presetSite;
 
     /// <summary>
     /// Shows what the package says it is and installs it if asked. Leaves the patch
@@ -79,7 +79,7 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task ShowPluginsAsync()
     {
-        var site = pluginSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, pluginSite);
+        var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
         using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin));
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
@@ -89,10 +89,10 @@ public sealed partial class MainWindow
         await this.ShowDialog<object?>("Plugins", hub.View, hub.Header, fill: true);
     }
 
-    /// <summary>Shared by every plugins window, as an <see cref="HttpClient"/> is meant to be.</summary>
+    /// <summary>Shared by every question put to the preset site, as an <see cref="HttpClient"/> is meant to be.</summary>
     private static readonly Lazy<HttpClient> SiteClient = new(() => new HttpClient { Timeout = TimeSpan.FromMinutes(5) });
 
-    /// <summary>What the plugins window asks the site with in place of <see cref="SiteClient"/>, for a test.</summary>
+    /// <summary>What the site is asked with in place of <see cref="SiteClient"/>, for a test.</summary>
     internal HttpClient? SiteHttp { get; init; }
 
     private async Task<string?> InstallFromSiteAsync(PluginSite site, SitePlugin plugin)
