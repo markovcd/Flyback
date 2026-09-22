@@ -53,6 +53,31 @@ public sealed class MissingPluginsTests
     }
 
     [Fact]
+    public async Task Two_plugins_short_are_both_offered_in_the_order_the_patch_names_them()
+    {
+        using var fake = new FakePluginSite(
+            new Shared("a1", "Ripples", Modules: ["ann.ripples.ring"]),
+            new Shared("b1", "Grain", Modules: ["bob.grain.noise"]));
+
+        var found = await MissingPlugins.FoundAsync(
+            fake.Site(), Short([Grain, Ripples], "ann.ripples.ring", "bob.grain.noise"), CancellationToken.None);
+
+        found.Select(f => f.Plugin.Name).ShouldBe(["Grain", "Ripples"]);
+    }
+
+    /// <summary>The site having one of the two is still worth offering; the refusal said both.</summary>
+    [Fact]
+    public async Task The_one_of_them_the_site_has_is_offered_by_itself()
+    {
+        using var fake = new FakePluginSite(new Shared("a1", "Ripples", Modules: ["ann.ripples.ring"]));
+
+        var found = await MissingPlugins.FoundAsync(
+            fake.Site(), Short([Ripples, Grain], "ann.ripples.ring", "bob.grain.noise"), CancellationToken.None);
+
+        found.ShouldHaveSingleItem().Plugin.Name.ShouldBe("Ripples");
+    }
+
+    [Fact]
     public async Task One_plugin_short_twice_over_is_offered_once()
     {
         using var fake = new FakePluginSite(new Shared("a1", "Ripples", Modules: ["ann.ripples.ring", "bob.grain.noise"]));

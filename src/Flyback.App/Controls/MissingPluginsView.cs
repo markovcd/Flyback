@@ -28,9 +28,13 @@ internal static class MissingPluginsView
         page.Children.Add(new SelectableTextBlock
         {
             Name = "missingSummary",
+            // What the site has, never what the patch needs: where a patch is short of
+            // two and the site has one, saying "a plugin you do not have" would offer
+            // the one as though it were both. The refusal has already said what is
+            // missing, in full.
             Text = found.Count == 1
-                ? "This patch needs a plugin you do not have. The plugin site has it:"
-                : $"This patch needs {found.Count} plugins you do not have. The plugin site has them:",
+                ? "The plugin site has a plugin this patch needs:"
+                : $"The plugin site has {found.Count} of the plugins this patch needs:",
             FontSize = Text.Body,
             TextWrapping = TextWrapping.Wrap,
         });

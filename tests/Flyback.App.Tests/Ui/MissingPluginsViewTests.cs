@@ -32,8 +32,22 @@ public sealed class MissingPluginsViewTests : UiTest
 
         Settle(window);
 
-        All<TextBlock>(view).Single(t => t.Name == "missingSummary").Text.ShouldNotBeNull().ShouldContain("2 plugins");
+        All<TextBlock>(view).Single(t => t.Name == "missingSummary").Text.ShouldNotBeNull().ShouldContain("has 2 of the plugins");
         All<StackPanel>(view).Single(p => p.Name == "missingList").Children.Count.ShouldBe(2);
+    }
+
+    /// <summary>It counts what the site has, not what the patch is short of.</summary>
+    [AvaloniaFact]
+    public void One_found_does_not_claim_to_be_all_the_patch_needs()
+    {
+        var view = MissingPluginsView.View([Listed("a1", "Ripples")]);
+        var window = Show(view, width: 520);
+
+        Settle(window);
+
+        var said = All<TextBlock>(view).Single(t => t.Name == "missingSummary").Text.ShouldNotBeNull();
+
+        said.ShouldBe("The plugin site has a plugin this patch needs:");
     }
 
     [AvaloniaFact]
