@@ -22,7 +22,7 @@
 - Opening a signed `.fbkp` plugin package shows what the plugin is, with its preview, author, description and tags, what it adds and reaches and, when asked, installs or updates its build for this system and restarts Flyback; `flyback-cli pack-plugin` makes one, signed with a key from `flyback-cli plugin-key`.
 - Plugin packages can be shared on the preset site, with their preview and tags, listed once the admin has published them.
 - The preset gallery lists the presets shared on the preset site, searched with its filter, and opens one when picked.
-- A plugins window, beside the settings button, searches the installed plugins and the shared ones together, and installs or updates one from the site.
+- A plugins window, beside the settings button, searches the installed plugins and the shared ones together, and a plugin clicked there installs, updates or removes.
 - The shipped plugins have a name, author, description and tags, and the module plugins a preview of their modules.
 - A plugin declares its modules, so the install dialog and the shared plugins site list them by name, and one that registers a module it did not declare is refused.
 

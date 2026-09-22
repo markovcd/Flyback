@@ -30,6 +30,9 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     /// <summary>Starts with a dot, so the host never scans it for plugins.</summary>
     public const string PendingName = ".pending";
 
+    /// <summary>Starts a file in <see cref="PendingName"/> that asks for the plugin it names to be removed at the next start.</summary>
+    private const string RemovePrefix = ".remove-";
+
     private readonly bool checkKeys = checkKeys ?? PackageSigner.Checked;
 
     private string Pending => Path.Combine(folder, PendingName);
@@ -83,6 +86,56 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
                 .OfType<InstalledPlugin>()]
             : [];
 
+    /// <summary>The plugins that will be removed at the next start.</summary>
+    public IReadOnlySet<string> Removing() =>
+        Directory.Exists(Pending)
+            ? Directory.EnumerateFiles(Pending, RemovePrefix + "*").Select(f => Path.GetFileName(f)[RemovePrefix.Length..]).ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>();
+
+    /// <summary>Why the plugin in the folder <paramref name="name"/> may not be removed, or null where it may.</summary>
+    public string? Removal(string name)
+    {
+        var target = Path.Combine(folder, name);
+
+        // A loaded plugin's folder need not be named after its assembly: the shipped ones are not.
+        var running = loaded
+            .Where(p => string.Equals(Path.GetFileNameWithoutExtension(p.AssemblyPath), name, StringComparison.OrdinalIgnoreCase))
+            .Select(p => Path.GetDirectoryName(p.AssemblyPath))
+            .OfType<string>()
+            .FirstOrDefault();
+
+        foreach (var at in new[] { running, target })
+        {
+            if (at is not null && Directory.Exists(at) && !FromPackage(at))
+                return $"It was not installed from a package, so {PluginHost.DirectoryName}/{Path.GetFileName(at)} is left alone.";
+        }
+
+        if (!FromPackage(target) && !FromPackage(Path.Combine(Pending, name))) return "It is not installed.";
+
+        if (!Writable()) return $"You cannot write to the plugins folder, {folder}.";
+
+        return null;
+    }
+
+    /// <summary>
+    /// Removes the plugin in the folder <paramref name="name"/>: one waiting to be installed
+    /// at once, and one installed at the next start, since this run has it loaded.
+    /// </summary>
+    /// <returns>Whether it is gone already.</returns>
+    public bool Remove(string name)
+    {
+        var staged = Path.Combine(Pending, name);
+
+        if (Directory.Exists(staged)) Directory.Delete(staged, recursive: true);
+
+        if (!FromPackage(Path.Combine(folder, name))) return true;
+
+        Directory.CreateDirectory(Pending);
+        File.WriteAllText(Path.Combine(Pending, RemovePrefix + name), string.Empty);
+
+        return false;
+    }
+
     /// <summary>Unpacks the build for <paramref name="platform"/> to be moved into place at the next start.</summary>
     public void Stage(PluginPackage package, string platform)
     {
@@ -108,6 +161,9 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
             if (Directory.Exists(staged)) Directory.Delete(staged, recursive: true);
 
             Directory.Move(unpacking, staged);
+
+            // Installing again takes back a removal.
+            File.Delete(Path.Combine(Pending, RemovePrefix + package.Description(build).Assembly));
         }
         catch
         {
@@ -117,18 +173,46 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     }
 
     /// <summary>
-    /// Moves every plugin waiting in <see cref="PendingName"/> into place. Called
-    /// before plugins are loaded. One that cannot be moved yet — another Flyback has
-    /// the old one open — waits for the start after.
+    /// Removes every plugin asked to be and moves every plugin waiting in
+    /// <see cref="PendingName"/> into place. Called before plugins are loaded. One that
+    /// cannot be moved yet — another Flyback has the old one open — waits for the start after.
     /// </summary>
-    /// <returns>The name and version of each plugin installed, and what went wrong.</returns>
-    public static (IReadOnlyList<string> Installed, IReadOnlyList<string> Problems) Finish(string folder)
+    /// <returns>The name and version of each plugin installed and removed, and what went wrong.</returns>
+    public static (IReadOnlyList<string> Installed, IReadOnlyList<string> Removed, IReadOnlyList<string> Problems) Finish(string folder)
     {
         var pending = Path.Combine(folder, PendingName);
         var installed = new List<string>();
+        var removed = new List<string>();
         var problems = new List<string>();
 
-        if (!Directory.Exists(pending)) return (installed, problems);
+        if (!Directory.Exists(pending)) return (installed, removed, problems);
+
+        foreach (var marker in Directory.EnumerateFiles(pending, RemovePrefix + "*").Order(StringComparer.Ordinal).ToList())
+        {
+            var name = Path.GetFileName(marker)[RemovePrefix.Length..];
+            var target = Path.Combine(folder, name);
+            var old = Path.Combine(pending, $".old-{name}");
+
+            try
+            {
+                // Moved aside first, so a plugin another Flyback has open is left whole.
+                if (PluginDescription.ValidFolder(name) && FromPackage(target))
+                {
+                    var plugin = PluginDescription.OfFolder(target);
+
+                    Delete(old);
+                    Directory.Move(target, old);
+                    Delete(old);
+                    removed.Add(plugin is null ? name : $"{plugin.Name} {plugin.Version}");
+                }
+
+                File.Delete(marker);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                problems.Add($"{name}: not removed yet, {ex.Message}");
+            }
+        }
 
         foreach (var staged in Directory.EnumerateDirectories(pending).Order(StringComparer.Ordinal).ToList())
         {
@@ -185,13 +269,13 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
 
         if (!Directory.EnumerateFileSystemEntries(pending).Any()) Delete(pending);
 
-        return (installed, problems);
+        return (installed, removed, problems);
     }
 
     private static bool FromPackage(string plugin) => File.Exists(Path.Combine(plugin, PluginPackage.MarkerName));
 
     /// <summary>The plugin a package left in <paramref name="plugin"/>, or null for a folder no package filled.</summary>
-    private static InstalledPlugin? Installed(string plugin)
+    public static InstalledPlugin? Installed(string plugin)
     {
         if (!FromPackage(plugin) || PluginDescription.OfFolder(plugin) is not { } description) return null;
 

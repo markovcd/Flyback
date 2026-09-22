@@ -40,7 +40,7 @@ public sealed class PluginInstallerTests : IDisposable
 
         Directory.Exists(Installed()).ShouldBeFalse("nothing is loaded until the next start, so nothing is moved before it");
 
-        var (installed, problems) = PluginInstaller.Finish(plugins);
+        var (installed, _, problems) = PluginInstaller.Finish(plugins);
 
         installed.ShouldHaveSingleItem().ShouldStartWith(Packages.Name);
         problems.ShouldBeEmpty();
@@ -49,6 +49,76 @@ public sealed class PluginInstallerTests : IDisposable
         File.Exists(Installed("runtimes/linux/native/readme.txt")).ShouldBeFalse("only this system's build is installed");
         File.ReadAllText(Installed(PluginPackage.MarkerName)).Trim().ShouldBe(Package().Sha256);
         Directory.Exists(Path.Combine(plugins, PluginInstaller.PendingName)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_removed_plugin_stays_until_the_next_start_and_is_gone_after_it()
+    {
+        InstallNow(Package());
+
+        var installer = Installer();
+
+        installer.Removal(Packages.Folder).ShouldBeNull();
+        installer.Remove(Packages.Folder).ShouldBeFalse("this run has it loaded");
+        installer.Removing().ShouldBe([Packages.Folder]);
+        Directory.Exists(Installed()).ShouldBeTrue();
+
+        var (installed, removed, problems) = PluginInstaller.Finish(plugins);
+
+        installed.ShouldBeEmpty();
+        removed.ShouldHaveSingleItem().ShouldStartWith(Packages.Name);
+        problems.ShouldBeEmpty();
+        Directory.Exists(Installed()).ShouldBeFalse();
+        Directory.Exists(Path.Combine(plugins, PluginInstaller.PendingName)).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_plugin_waiting_to_be_installed_is_removed_at_once()
+    {
+        Installer().Stage(Package(), "win");
+
+        Installer().Remove(Packages.Folder).ShouldBeTrue();
+        Installer().Waiting().ShouldBeEmpty();
+        PluginInstaller.Finish(plugins).Installed.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Installing_again_takes_back_a_removal()
+    {
+        InstallNow(Package());
+        Installer().Remove(Packages.Folder);
+        Installer().Stage(Package(), "win");
+
+        Installer().Removing().ShouldBeEmpty();
+
+        var (installed, removed, _) = PluginInstaller.Finish(plugins);
+
+        installed.ShouldHaveSingleItem();
+        removed.ShouldBeEmpty();
+        Directory.Exists(Installed()).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Only_a_plugin_a_package_installed_can_be_removed()
+    {
+        Directory.CreateDirectory(Installed());
+        File.WriteAllBytes(Installed(Packages.AssemblyName), Packages.Assembly);
+
+        Installer().Removal(Packages.Folder)!.ShouldStartWith("It was not installed from a package");
+        Installer().Removal("Flyback.Plugins.Nowhere").ShouldBe("It is not installed.");
+    }
+
+    [Fact]
+    public void A_shipped_plugin_in_a_folder_of_its_own_name_cannot_be_removed()
+    {
+        var shipped = Path.Combine(plugins, "Picture");
+
+        Directory.CreateDirectory(shipped);
+        File.WriteAllBytes(Path.Combine(shipped, Packages.AssemblyName), Packages.Assembly);
+
+        var loaded = new LoadedPlugin(new PluginInfo("flyback.picture", "Picture"), Path.Combine(shipped, Packages.AssemblyName));
+
+        Installer(loaded).Removal(Packages.Folder).ShouldBe($"It was not installed from a package, so {PluginHost.DirectoryName}/Picture is left alone.");
     }
 
     [Fact]
@@ -87,7 +157,7 @@ public sealed class PluginInstallerTests : IDisposable
         Directory.CreateDirectory(Installed());
         File.WriteAllText(Installed("Shipped.dll"), "");
 
-        var (installed, problems) = PluginInstaller.Finish(plugins);
+        var (installed, _, problems) = PluginInstaller.Finish(plugins);
 
         installed.ShouldBeEmpty();
         problems.ShouldHaveSingleItem().ShouldContain("was not installed from a package");

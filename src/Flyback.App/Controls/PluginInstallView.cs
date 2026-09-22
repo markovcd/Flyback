@@ -14,6 +14,10 @@ internal enum PluginAnswer
     Cancel,
     Install,
     InstallAndRestart,
+    Remove,
+
+    /// <summary>Fetch the newer build the plugin site has, and ask about installing it.</summary>
+    Download,
 }
 
 /// <summary>
@@ -38,45 +42,22 @@ internal static class PluginInstallView
     /// <param name="replacing">The plugin installed in the same folder now, where there is one.</param>
     /// <param name="change">What installing does to <paramref name="replacing"/>.</param>
     /// <param name="offerRestart">Whether to offer starting Flyback again, which is what loads the plugin.</param>
+    /// <param name="removable">Whether the plugin is installed and may be removed.</param>
     public static Control View(
         PluginPackage package,
         string platform,
         string? refusal,
         InstalledPlugin? replacing,
         PluginChange change,
-        bool offerRestart = false)
+        bool offerRestart = false,
+        bool removable = false)
     {
         var page = new StackPanel { Name = "pluginInstall", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
 
         if (package.DescriptionFor(platform) is { } plugin)
         {
-            if (plugin.Preview is { } preview && Picture(preview) is { } picture) page.Children.Add(picture);
+            var facts = Describe(page, ListedPlugin.Of(plugin), plugin);
 
-            page.Children.Add(new SelectableTextBlock
-            {
-                Name = "pluginName",
-                Text = plugin.Name,
-                FontSize = Text.Heading,
-                FontWeight = FontWeight.SemiBold,
-                TextWrapping = TextWrapping.Wrap,
-            });
-
-            var byline = plugin.Author.Length > 0 ? $"Version {plugin.Version}, by {plugin.Author}" : $"Version {plugin.Version}";
-
-            page.Children.Add(Wrapped(byline, Text.Body, Text.Muted));
-
-            if (plugin.Description.Length > 0) page.Children.Add(Wrapped(plugin.Description, Text.Body));
-
-            var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Margin = new Thickness(0, 4, 0, 0) };
-
-            if (plugin.Tags.Count > 0) Fact(facts, "Tags", string.Join(", ", plugin.Tags), "pluginTags");
-            Fact(facts, "Adds", plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find", "pluginAdds");
-            if (plugin.Modules.Count > 0) Fact(facts, "Modules", string.Join(", ", plugin.Modules.Select(m => m.Name)), "pluginModules");
-            else if (plugin.ModulesUnlisted) Fact(facts, "Modules", "not listed: it was built before a plugin declared them", "pluginModules");
-            Fact(facts, "Reaches", plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names", "pluginReaches");
-            Fact(facts, "Assembly", $"{plugin.Assembly}.dll");
-
-            if (plugin.BuiltAgainst.Length > 0) Fact(facts, "Built against", plugin.BuiltAgainst, "pluginContract");
             Fact(facts, "Built for", Builds(package, platform));
 
             if (package.BuildFor(platform) is { } build)
@@ -159,8 +140,12 @@ internal static class PluginInstallView
             Orientation = Orientation.Horizontal,
             Spacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { install, cancel },
+            Children = { install },
         };
+
+        if (removable) buttons.Children.Add(RemoveButton(null));
+
+        buttons.Children.Add(cancel);
 
         var row = new DockPanel { Margin = new Thickness(0, 6, 0, 0) };
 
@@ -172,6 +157,137 @@ internal static class PluginInstallView
         page.Children.Add(row);
 
         return page;
+    }
+
+    /// <summary>
+    /// What an installed plugin is, as the install dialog shows a package, with Update
+    /// where the plugin site has a newer build, Remove, and Close.
+    /// </summary>
+    /// <param name="described">What its folder holds, or null where that cannot be read.</param>
+    /// <param name="fromPackage">The package that put it there, or null where none did.</param>
+    /// <param name="state">Whether it is loaded or waiting for the next start.</param>
+    /// <param name="newer">The newer version the plugin site has, or null for none.</param>
+    /// <param name="removal">Why Remove is off, or null where it is on.</param>
+    public static Control Installed(
+        ListedPlugin listed,
+        PluginDescription? described,
+        InstalledPlugin? fromPackage,
+        string? folder,
+        string state,
+        string? newer = null,
+        string? removal = null)
+    {
+        var page = new StackPanel { Name = "pluginInstalled", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
+        var facts = Describe(page, listed, described);
+
+        Fact(facts, "Installed", fromPackage is null ? "not from a package" : "from a package", "pluginOrigin");
+
+        if (fromPackage is not null)
+            Fact(facts, "Signed by", fromPackage.Signer is { } signer ? $"key {signer.Fingerprint}" : "nobody", "pluginSigner", mono: fromPackage.Signer is not null);
+
+        if (folder is not null) Fact(facts, "Folder", folder, "pluginFolder");
+
+        page.Children.Add(facts);
+
+        var line = Wrapped(state, Text.Body);
+
+        line.Name = "pluginState";
+        page.Children.Add(line);
+
+        if (newer is not null)
+        {
+            var offer = Wrapped($"The plugin site has {newer}.", Text.Body);
+
+            offer.Name = "pluginNewer";
+            page.Children.Add(offer);
+        }
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 6, 0, 0),
+        };
+
+        if (newer is not null)
+        {
+            var update = new Button { Name = "update", Content = "Update", MinWidth = 96 };
+
+            ToolTip.SetTip(update, $"Download {newer} and see what it is before installing it.");
+            update.Click += (_, _) => Dialog.Close(update, PluginAnswer.Download);
+            buttons.Children.Add(update);
+        }
+
+        buttons.Children.Add(RemoveButton(removal));
+
+        var close = new Button { Name = "close", Content = "Close", MinWidth = 96 };
+
+        close.Click += (_, _) => Dialog.Close(close, PluginAnswer.Cancel);
+        buttons.Children.Add(close);
+
+        page.Children.Add(buttons);
+
+        return page;
+    }
+
+    /// <summary>Remove, off with <paramref name="refusal"/> as its tip where that is given.</summary>
+    private static Button RemoveButton(string? refusal)
+    {
+        var remove = new Button { Name = "remove", Content = "Remove", MinWidth = 96, IsEnabled = refusal is null };
+
+        ToolTip.SetTip(remove, refusal ?? "Uninstall it. A plugin this run has loaded goes at the next start.");
+        ToolTip.SetShowOnDisabled(remove, true);
+        remove.Click += (_, _) => Dialog.Close(remove, PluginAnswer.Remove);
+
+        return remove;
+    }
+
+    /// <summary>
+    /// Adds a plugin's preview, name, byline and description to <paramref name="page"/>,
+    /// and returns its facts so far, where <paramref name="described"/> has any.
+    /// </summary>
+    private static Grid Describe(StackPanel page, ListedPlugin listed, PluginDescription? described)
+    {
+        if (described?.Preview is { } preview && Picture(preview) is { } picture) page.Children.Add(picture);
+
+        page.Children.Add(new SelectableTextBlock
+        {
+            Name = "pluginName",
+            Text = listed.Name,
+            FontSize = Text.Heading,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var byline = listed.Version.Length > 0 ? $"Version {listed.Version}" : $"{listed.Assembly}.dll";
+
+        if (listed.Author.Length > 0) byline += $", by {listed.Author}";
+
+        page.Children.Add(Wrapped(byline, Text.Body, Text.Muted));
+
+        if (listed.Description.Length > 0) page.Children.Add(Wrapped(listed.Description, Text.Body));
+
+        var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Margin = new Thickness(0, 4, 0, 0) };
+
+        if (listed.Tags.Count > 0) Fact(facts, "Tags", string.Join(", ", listed.Tags), "pluginTags");
+
+        if (described is not { } plugin)
+        {
+            if (listed.Modules.Count > 0) Fact(facts, "Modules", string.Join(", ", listed.Modules), "pluginModules");
+
+            return facts;
+        }
+
+        Fact(facts, "Adds", plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find", "pluginAdds");
+        if (plugin.Modules.Count > 0) Fact(facts, "Modules", string.Join(", ", plugin.Modules.Select(m => m.Name)), "pluginModules");
+        else if (plugin.ModulesUnlisted) Fact(facts, "Modules", "not listed: it was built before a plugin declared them", "pluginModules");
+        Fact(facts, "Reaches", plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names", "pluginReaches");
+        Fact(facts, "Assembly", $"{plugin.Assembly}.dll");
+
+        if (plugin.BuiltAgainst.Length > 0) Fact(facts, "Built against", plugin.BuiltAgainst, "pluginContract");
+
+        return facts;
     }
 
     /// <summary>The plugin's preview, or null where it will not decode.</summary>

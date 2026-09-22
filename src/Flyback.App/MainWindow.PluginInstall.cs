@@ -52,10 +52,13 @@ public sealed partial class MainWindow
         var replacing = described is null ? null : installer?.Replacing(described.Assembly);
         var change = described is null ? PluginChange.Install : PluginChanges.Of(replacing?.Description, described);
 
-        var view = PluginInstallView.View(package, platform, refusal, replacing, change, offerRestart: relaunch is not null);
+        var removable = described is not null && installer?.Removal(described.Assembly) is null;
+        var view = PluginInstallView.View(package, platform, refusal, replacing, change, offerRestart: relaunch is not null, removable);
         var answer = await this.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
 
         if (answer == PluginAnswer.Cancel) return null;
+
+        if (answer == PluginAnswer.Remove) return Remove(installer!, described!.Assembly, (replacing?.Description ?? described).Name);
 
         var name = $"{described!.Name} {described.Version}";
 
@@ -80,7 +83,7 @@ public sealed partial class MainWindow
     private async Task ShowPluginsAsync()
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin));
+        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin), plugin => ShowInstalledAsync(site, plugin));
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
@@ -114,15 +117,101 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
+    /// What an installed plugin is, read from its folder, with an update where the plugin
+    /// site has a newer build and a way to remove it.
+    /// </summary>
+    /// <returns>What became of it, or null where nothing did.</returns>
+    private async Task<string?> ShowInstalledAsync(PluginSite? site, HubInstalled plugin)
+    {
+        var assembly = plugin.Plugin.Assembly;
+        var loaded = plugins.Plugins.FirstOrDefault(p =>
+            string.Equals(Path.GetFileNameWithoutExtension(p.AssemblyPath), assembly, StringComparison.OrdinalIgnoreCase));
+        var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
+
+        var reading = Task.Run(() =>
+        {
+            if (loaded is not null && Path.GetDirectoryName(loaded.AssemblyPath) is { } running)
+            {
+                var installed = PluginInstaller.Installed(running);
+
+                return (running, installed, installed?.Description ?? PluginDescription.OfFolder(running));
+            }
+
+            // Waiting for the next start, which moves it here.
+            var waiting = installer?.Replacing(assembly);
+
+            return (pluginFolder is null ? null : Path.Combine(pluginFolder, assembly), waiting, waiting?.Description);
+        });
+
+        var newer = await NewerAsync(site, plugin);
+        var (folder, fromPackage, described) = await reading;
+
+        var removal = plugin.Removing ? "It is removed at the next start already."
+            : installer is null ? "This window has no plugins folder."
+            : installer.Removal(assembly);
+
+        var view = PluginInstallView.Installed(
+            plugin.Plugin, described, fromPackage, folder, plugin.State,
+            newer is null ? null : $"{newer.Plugin.Name} {newer.Plugin.Version}", removal);
+
+        return await this.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
+        {
+            PluginAnswer.Download => await InstallFromSiteAsync(site!, newer!),
+            PluginAnswer.Remove => Remove(installer!, assembly, plugin.Plugin.Name),
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// The newest build the plugin site has of <paramref name="plugin"/>, where it is newer
+    /// than the one installed. Asked briefly, and null where the site does not answer.
+    /// </summary>
+    private static async Task<SitePlugin?> NewerAsync(PluginSite? site, HubInstalled plugin)
+    {
+        if (site is null) return null;
+
+        using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+
+        try
+        {
+            var found = await site.SearchAsync(plugin.Plugin.Assembly, tag: null, page: 1, cancel.Token);
+
+            return found.Items
+                .Where(p => string.Equals(p.Plugin.Assembly, plugin.Plugin.Assembly, StringComparison.OrdinalIgnoreCase))
+                .Where(p => PluginChanges.Compare(p.Plugin.Version, plugin.Version) > 0)
+                .OrderDescending(Comparer<SitePlugin>.Create((a, b) => PluginChanges.Compare(a.Plugin.Version, b.Plugin.Version) ?? 0))
+                .FirstOrDefault();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Removes the plugin in the folder <paramref name="assembly"/>, and says what became of it.</summary>
+    private static string Remove(PluginInstaller installer, string assembly, string name)
+    {
+        try
+        {
+            return installer.Remove(assembly)
+                ? $"{name} is removed."
+                : $"{name} is removed the next time Flyback starts.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return $"{name} was not removed: {ex.Message}";
+        }
+    }
+
+    /// <summary>
     /// Every plugin this run loaded, and every one waiting for the next start, read
     /// from its folder. Reads assemblies, so it is kept off the UI thread.
     /// </summary>
     private IReadOnlyList<HubInstalled> InstalledPlugins()
     {
-        var waiting = pluginFolder is null
-            ? []
-            : new PluginInstaller(pluginFolder, plugins.Plugins).Waiting()
-                .ToDictionary(p => p.Description.Assembly, StringComparer.OrdinalIgnoreCase);
+        var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
+        var waiting = installer is null ? [] : installer.Waiting().ToDictionary(p => p.Description.Assembly, StringComparer.OrdinalIgnoreCase);
+        var removing = installer?.Removing() ?? new HashSet<string>();
 
         var listed = new List<HubInstalled>();
 
@@ -140,7 +229,7 @@ public sealed partial class MainWindow
                 plugin = plugin with { Name = loaded.Info.Name, Description = plugin.Description.Length > 0 ? plugin.Description : loaded.Info.Description };
 
             waiting.Remove(plugin.Assembly, out var next);
-            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes));
+            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly)));
         }
 
         listed.AddRange(waiting.Values.Select(p =>

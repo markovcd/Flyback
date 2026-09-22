@@ -89,9 +89,15 @@ internal static class Startup
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 
         // Before the scan, which is the first moment nothing has a plugin open.
-        var (installed, refused) = PluginInstaller.Finish(PluginHost.DefaultDirectory);
+        var (installed, removed, refused) = PluginInstaller.Finish(PluginHost.DefaultDirectory);
 
-        if (installed.Count > 0) PluginNote = $"Installed {string.Join(", ", installed)}.";
+        string?[] said =
+        [
+            installed.Count > 0 ? $"Installed {string.Join(", ", installed)}." : null,
+            removed.Count > 0 ? $"Removed {string.Join(", ", removed)}." : null,
+        ];
+
+        if (said.Any(s => s is not null)) PluginNote = string.Join(' ', said.OfType<string>());
 
         foreach (var problem in refused) Trace.WriteLine($"plugins: {problem}");
 

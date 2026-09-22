@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -202,7 +204,7 @@ public sealed class PluginHubTests : UiTest
                 : All<TextBlock>(row).Last().Text!;
 
         Offered("n1").ShouldBe("Install");
-        Offered("e2").ShouldBe("Update");
+        Offered("e2").ShouldBe("Update available");
         Offered("g2").ShouldBe("Installed");
     }
 
@@ -252,12 +254,137 @@ public sealed class PluginHubTests : UiTest
 
         Press(All<Button>(All<ModalOverlay>(window).Last()).Single(b => b.Name == "install"));
 
-        // The row stops offering it once what is installed has been read again.
-        Pump(() => !All<Button>(window).Any(b => b.Name == "install" && b.Tag is SitePlugin), window);
+        // What is installed is read again once it is.
+        Pump(() => All<TextBlock>(window).Any(t => t.Name == "pluginState" && t.Text == "Loads at the next start"), window);
+
+        All<Button>(window).ShouldNotContain(b => b.Name == "install" && b.Tag is SitePlugin);
 
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
         All<TextBlock>(window).Single(t => t.Name == "pluginNotice").Text.ShouldEndWith("loads the next time Flyback starts.");
         All<TextBlock>(window).ShouldContain(t => t.Name == "pluginState" && t.Text == "Loads at the next start");
+    }
+
+    [AvaloniaFact]
+    public void Clicking_an_installed_plugin_shows_what_it_is()
+    {
+        var package = Picture();
+        var described = package.DescriptionFor(PluginPackage.ThisPlatform)!;
+
+        new PluginInstaller(Plugins, [], checkKeys: false).Stage(package, PluginPackage.ThisPlatform);
+
+        var window = OpenPlugins();
+
+        Click(window, InstalledRow(window));
+        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Settle(window);
+
+        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+
+        All<ModalOverlay>(window).Count().ShouldBe(2, "it sits over the plugins window");
+        All<TextBlock>(shown).Single(t => t.Name == "pluginName").Text.ShouldBe(described.Name);
+        All<TextBlock>(shown).Single(t => t.Name == "pluginAdds").Text.ShouldNotBeNullOrEmpty();
+        All<TextBlock>(shown).Single(t => t.Name == "pluginOrigin").Text.ShouldBe("from a package");
+        All<TextBlock>(shown).Single(t => t.Name == "pluginState").Text.ShouldBe("Loads at the next start");
+
+        Press(All<Button>(shown).Single(b => b.Name == "close"));
+        Settle(window);
+
+        All<ModalOverlay>(window).Count().ShouldBe(1, "closing it leaves the plugins window up");
+    }
+
+    /// <summary>A click on <paramref name="control"/>, clear of anything on it that is a button.</summary>
+    private static void Click(Window window, Control control)
+    {
+        var at = control.TranslatePoint(new Point(20, 20), window)!.Value;
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+    }
+
+    private MainWindow OpenPlugins(FakePluginSite? site = null)
+    {
+        var window = Owned(site is null
+            ? new MainWindow(pluginFolder: Plugins)
+            : new MainWindow(pluginFolder: Plugins, presetSite: FakePluginSite.Root) { SiteHttp = new HttpClient(site) });
+
+        window.Show();
+        Settle(window);
+
+        Press(All<Button>(window).Single(b => b.Name == "plugins"));
+        Pump(() => All<TextBlock>(window).Any(t => t.Name == "pluginState")
+            || All<TextBlock>(window).Any(t => t.Name == "installedStatus" && t.IsVisible), window);
+        Pump(() => site is null || All<Grid>(window).Any(g => g.Tag is SitePlugin), window);
+        Settle(window);
+
+        return window;
+    }
+
+    private static PluginPackage Picture() => PluginPackage.ReadAsync(new MemoryStream(Packages.For("win", "osx", "linux"))).Result;
+
+    private static Grid InstalledRow(Window window) =>
+        All<StackPanel>(window).Single(p => p.Name == "installedPlugins").Children.OfType<Grid>().Single();
+
+    [AvaloniaFact]
+    public void Clicking_a_site_plugin_asks_about_installing_it()
+    {
+        using var site = new FakePluginSite(new Shared("p1", "Picture", Assembly: Packages.Folder, Version: "1.0.0", Package: Packages.For("win", "osx", "linux")));
+        var window = OpenPlugins(site);
+
+        Click(window, All<Grid>(window).Single(g => g.Tag is SitePlugin));
+        Pump(() => All<Border>(window).Any(b => b.Name == "pluginWarning"), window);
+        Settle(window);
+
+        All<ModalOverlay>(window).Count().ShouldBe(2);
+        All<Button>(All<ModalOverlay>(window).Last()).ShouldNotContain(b => b.Name == "remove", "it is not installed");
+    }
+
+    [AvaloniaFact]
+    public void An_installed_plugin_the_site_has_newer_offers_the_update_and_asks_about_it()
+    {
+        var package = Picture();
+        var version = package.DescriptionFor(PluginPackage.ThisPlatform)!.Version;
+
+        new PluginInstaller(Plugins, [], checkKeys: false).Stage(package, PluginPackage.ThisPlatform);
+
+        using var site = new FakePluginSite(new Shared("p2", "Picture", Assembly: Packages.Folder, Version: "99.0.0", Package: Packages.For("win", "osx", "linux")));
+        var window = OpenPlugins(site);
+
+        Click(window, InstalledRow(window));
+        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Settle(window);
+
+        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+
+        All<TextBlock>(shown).Single(t => t.Name == "pluginNewer").Text.ShouldBe("The plugin site has Picture 99.0.0.");
+        version.ShouldNotBe("99.0.0");
+
+        Press(All<Button>(shown).Single(b => b.Name == "update"));
+        Pump(() => All<Border>(window).Any(b => b.Name == "pluginWarning"), window);
+        Settle(window);
+
+        All<ModalOverlay>(window).Count().ShouldBe(2, "the downloaded package is asked about over the plugins window");
+        All<Button>(All<ModalOverlay>(window).Last()).ShouldContain(b => b.Name == "remove", "it is installed");
+    }
+
+    [AvaloniaFact]
+    public void Removing_a_plugin_waiting_to_be_installed_takes_it_away_at_once()
+    {
+        new PluginInstaller(Plugins, [], checkKeys: false).Stage(Picture(), PluginPackage.ThisPlatform);
+
+        var window = OpenPlugins();
+
+        Click(window, InstalledRow(window));
+        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+        Settle(window);
+
+        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+
+        All<TextBlock>(shown).ShouldNotContain(t => t.Name == "pluginNewer");
+        Press(All<Button>(shown).Single(b => b.Name == "remove"));
+        Pump(() => All<TextBlock>(window).Any(t => t.Name == "installedStatus" && t.IsVisible), window);
+
+        All<TextBlock>(window).Single(t => t.Name == "pluginNotice").Text.ShouldEndWith("is removed.");
+        new PluginInstaller(Plugins, [], checkKeys: false).Waiting().ShouldBeEmpty();
     }
 
     private sealed class Unreachable : HttpMessageHandler

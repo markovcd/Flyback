@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.PluginPackages;
 
 namespace Flyback.App.Controls;
@@ -14,10 +15,17 @@ namespace Flyback.App.Controls;
 /// <summary>A plugin this Flyback has, and what state it is in.</summary>
 /// <param name="Waiting">The version waiting to replace it at the next start, or null where nothing is.</param>
 /// <param name="Picture">Its preview, as the image file it carries.</param>
-internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture)
+/// <param name="Removing">Whether it is removed at the next start.</param>
+internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture, bool Removing = false)
 {
     /// <summary>The version that will be running after the next start.</summary>
     public string Version => Waiting ?? Plugin.Version;
+
+    /// <summary>Whether it is loaded, or what waits for the next start.</summary>
+    public string State => Removing ? "Removed at the next start"
+        : Waiting is { } version
+        ? Loaded ? $"{version} loads at the next start" : "Loads at the next start"
+        : "Loaded";
 }
 
 /// <summary>
@@ -37,6 +45,10 @@ internal sealed class PluginHub : IDisposable
     private readonly PluginSite? site;
     private readonly Func<Task<IReadOnlyList<HubInstalled>>> readInstalled;
     private readonly Func<SitePlugin, Task<string?>> install;
+    private readonly Func<HubInstalled, Task<string?>>? show;
+
+    /// <summary>The site plugins being downloaded, whose rows say so.</summary>
+    private readonly HashSet<string> fetching = [];
 
     private readonly StackPanel installedRows = new() { Name = "installedPlugins", Spacing = 6 };
     /// <summary>What the site has listed so far, of which only the rows scrolled to are built.</summary>
@@ -75,11 +87,17 @@ internal sealed class PluginHub : IDisposable
     private CancellationTokenSource? asking;
 
     /// <param name="install">Downloads and installs a site plugin, asking first, and says how that went, or null where nothing was done.</param>
-    public PluginHub(PluginSite? site, Func<Task<IReadOnlyList<HubInstalled>>> installed, Func<SitePlugin, Task<string?>> install)
+    /// <param name="show">Shows what an installed plugin is, when its row is clicked, and says what became of it, or null where nothing did.</param>
+    public PluginHub(
+        PluginSite? site,
+        Func<Task<IReadOnlyList<HubInstalled>>> installed,
+        Func<SitePlugin, Task<string?>> install,
+        Func<HubInstalled, Task<string?>>? show = null)
     {
         this.site = site;
         readInstalled = installed;
         this.install = install;
+        this.show = show;
 
         siteRows = new ItemsControl
         {
@@ -170,9 +188,8 @@ internal sealed class PluginHub : IDisposable
         installed = await readInstalled();
         ShowInstalled();
 
-        // The site's buttons say Install, Update or Installed by what is installed now.
-        foreach (var row in realized)
-            if (row.Tag is SitePlugin plugin) Offer(row, plugin);
+        // The site's rows say Install, Update available or Installed by what is installed now.
+        OfferAgain();
     }
 
     private void Narrow(string? to)
@@ -200,7 +217,7 @@ internal sealed class PluginHub : IDisposable
 
         installedRows.Children.Clear();
 
-        foreach (var plugin in shown) installedRows.Children.Add(Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin)));
+        foreach (var plugin in shown) installedRows.Children.Add(InstalledRow(plugin));
 
         installedStatus.Text = installed.Count == 0 ? "No plugins are installed." : "No installed plugin matches.";
         installedStatus.IsVisible = shown.Count == 0;
@@ -279,6 +296,7 @@ internal sealed class PluginHub : IDisposable
         row.DetachedFromVisualTree += (_, _) => realized.Remove(row);
 
         Offer(row, plugin);
+        Clickable(row, () => FetchAsync(plugin));
         _ = ShowPreviewAsync(plugin, picture);
 
         return row;
@@ -300,60 +318,115 @@ internal sealed class PluginHub : IDisposable
         }
     }
 
-    /// <summary>What a site plugin's row offers: Install, Update, or nothing to do.</summary>
+    /// <summary>What a site plugin's row offers: Install where it is not installed, else how it stands against what is.</summary>
     private void Offer(Control row, SitePlugin plugin)
     {
         if (row is not Grid grid || grid.Children.OfType<StackPanel>().FirstOrDefault(c => Grid.GetColumn(c) == 2) is not { } actions) return;
 
         actions.Children.Clear();
 
-        var have = installed.FirstOrDefault(p => string.Equals(p.Plugin.Assembly, plugin.Plugin.Assembly, StringComparison.OrdinalIgnoreCase));
-        var order = have is null ? null : PluginChanges.Compare(plugin.Plugin.Version, have.Version);
-
-        var verb = have is null ? "Install" : order > 0 ? "Update" : null;
-
-        if (verb is null)
+        if (fetching.Contains(plugin.Id))
         {
-            actions.Children.Add(Text.Quiet(order == 0 ? "Installed" : $"{have!.Version} installed"));
+            actions.Children.Add(Text.Quiet("Downloading…"));
             return;
         }
 
-        var button = new Button { Name = "install", Content = verb, MinWidth = 84, FontSize = Text.Body, Tag = plugin };
+        var have = Have(plugin);
+
+        if (have is not null)
+        {
+            var order = PluginChanges.Compare(plugin.Plugin.Version, have.Version);
+
+            actions.Children.Add(Text.Quiet(order switch
+            {
+                > 0 => "Update available",
+                0 => "Installed",
+                _ => $"{have.Version} installed",
+            }));
+
+            return;
+        }
+
+        var button = new Button { Name = "install", Content = "Install", MinWidth = 84, FontSize = Text.Body, Tag = plugin };
 
         ToolTip.SetTip(button, $"Download {plugin.Plugin.Name} {plugin.Plugin.Version} and see what it is before installing it.");
-
-        button.Click += async (_, _) =>
-        {
-            button.IsEnabled = false;
-            button.Content = "Downloading…";
-
-            try
-            {
-                var said = await install(plugin);
-
-                notice.Text = said;
-                notice.IsVisible = said is not null;
-            }
-            finally
-            {
-                button.Content = verb;
-                button.IsEnabled = true;
-            }
-
-            await RereadAsync();
-        };
+        button.Click += (_, _) => _ = FetchAsync(plugin);
 
         actions.Children.Add(button);
+    }
+
+    /// <summary>The installed plugin <paramref name="plugin"/> would replace, or null for none.</summary>
+    private HubInstalled? Have(SitePlugin plugin) =>
+        installed.FirstOrDefault(p => !p.Removing && string.Equals(p.Plugin.Assembly, plugin.Plugin.Assembly, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Downloads a site plugin and puts the install dialog up for it.</summary>
+    private async Task FetchAsync(SitePlugin plugin)
+    {
+        if (!fetching.Add(plugin.Id)) return;
+
+        OfferAgain();
+
+        try
+        {
+            Say(await install(plugin));
+        }
+        finally
+        {
+            fetching.Remove(plugin.Id);
+        }
+
+        await RereadAsync();
+    }
+
+    private void OfferAgain()
+    {
+        foreach (var row in realized)
+            if (row.Tag is SitePlugin plugin) Offer(row, plugin);
+    }
+
+    private void Say(string? said)
+    {
+        notice.Text = said;
+        notice.IsVisible = said is not null;
+    }
+
+    /// <summary>Makes <paramref name="row"/> run <paramref name="open"/> when clicked anywhere but a button on it.</summary>
+    private static void Clickable(Grid row, Func<Task> open)
+    {
+        // Transparent, so the gaps between its parts take the click too.
+        row.Background = Brushes.Transparent;
+        row.Cursor = new Cursor(StandardCursorType.Hand);
+
+        row.Tapped += async (_, e) =>
+        {
+            if (e.Source is Visual clicked && clicked.FindAncestorOfType<Button>(includeSelf: true) is not null) return;
+
+            e.Handled = true;
+            await open();
+        };
+    }
+
+    /// <summary>An installed plugin's row, which shows what it is when clicked anywhere but a tag.</summary>
+    private Grid InstalledRow(HubInstalled plugin)
+    {
+        var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin));
+
+        if (show is { } showing)
+        {
+            Clickable(row, async () =>
+            {
+                Say(await showing(plugin));
+                await RereadAsync();
+            });
+        }
+
+        return row;
     }
 
     /// <summary>What an installed plugin's row says about it.</summary>
     private static Control Installed(HubInstalled plugin)
     {
-        var state = plugin.Waiting is { } version
-            ? plugin.Loaded ? $"{version} loads at the next start" : "Loads at the next start"
-            : "Loaded";
-
-        var line = Text.Quiet(state);
+        var line = Text.Quiet(plugin.State);
 
         line.Name = "pluginState";
 

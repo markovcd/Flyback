@@ -119,6 +119,11 @@ could not run sooner anyway; and a plugin being replaced is one this process has
 loaded, which Windows will not let go of. A folder under `plugins/` whose name
 starts with a dot is never scanned for plugins.
 
+**Removing is the same, the other way round.** A plugin a package installed is
+removed at the next start, asked for by a `.remove-<plugin assembly>` file in
+`.pending`, and one only waiting there is deleted at once. Installing it again takes
+the removal back. A plugin no package installed is left alone, as it is by an install.
+
 **The dialog offers to restart Flyback, ticked by default.** The window closes the
 way any close does, asking about unsaved work, and a cancelled question or a
 recording still running leaves it open, installed for the next start. The new
@@ -151,7 +156,7 @@ A signature says that a package and every update to it come from one key, not
 whose key it is. The first install of a plugin trusts whatever key signed it, as
 the dialog's warning says; only its updates are checked.
 
-A lost key cannot sign an update. Its plugin is removed by hand and the next build
+A lost key cannot sign an update. Its plugin is removed and the next build
 installed fresh, or shipped under a new assembly name. A plugin installed unsigned
 by a Debug build is removed the same way before a signed build of it will install.
 
