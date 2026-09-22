@@ -51,7 +51,12 @@ internal static class Packages
         {
             foreach (var (name, bytes) in entries)
             {
-                using var stream = zip.CreateEntry(name).Open();
+                var entry = zip.CreateEntry(name);
+
+                // Fixed, so the same entries always zip to the same bytes and the same hash.
+                entry.LastWriteTime = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+                using var stream = entry.Open();
                 stream.Write(bytes);
             }
         }
