@@ -39,17 +39,22 @@ internal static class Program
         // before there is anything to load or parse: its --help is its own.
         if (ViewerCommand.Claims(args)) return ViewerCommand.Run(args[1..], Console.Error);
 
-        // Before anything reads a patch: a file may name modules that only a
-        // plugin defines, and a catalog settled after the fact would have let
-        // it compile against the wrong one.
-        var plugins = PluginHost.Load();
+        var plugins = new Plugins(
+            PluginHost.Load,
+            PluginHost.DefaultDirectory,
 
-        NodeCatalog.Install(plugins.Modules);
+            // The report only where somebody is watching, the way the editor keeps it to a
+            // terminal it inherited: a script reading stderr wants the command's complaint
+            // and nothing else.
+            Console.IsErrorRedirected ? null : Console.Error);
 
-        // Only where somebody is watching, the way the editor keeps it to a terminal it inherited:
-        // a script reading stderr wants the command's complaint and nothing else.
-        if (!Console.IsErrorRedirected)
-            foreach (var line in PluginReport.Lines(plugins, PluginHost.DefaultDirectory)) Console.Error.WriteLine(line);
+        return Run(args, plugins, new InvocationConfiguration());
+    }
+
+    /// <summary>The commands, and what the shell is told the chosen one did.</summary>
+    internal static int Run(string[] args, Plugins plugins, InvocationConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
 
         var patch = new Argument<FileInfo>("patch")
         {
@@ -61,17 +66,17 @@ internal static class Program
 
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
-            Render(patch),
-            Check(patch, json),
-            Info(patch, json),
-            Print(patch),
-            Pack(patch, json),
+            Render(plugins, patch),
+            Check(plugins, patch, json),
+            Info(plugins, patch, json),
+            Print(plugins, patch),
+            Pack(plugins, patch, json),
             PackPlugin(),
             PluginKey(),
-            Modules(json),
+            Modules(plugins, json),
             Probe(plugins, json),
             ViewerCommand.Build(),
-            RenderPresetsCommand.Build(),
+            RenderPresetsCommand.Build(plugins),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the
@@ -81,7 +86,7 @@ internal static class Program
         root.Add(suggest);
 
         var parsed = root.Parse(args);
-        var code = parsed.Invoke();
+        var code = parsed.Invoke(configuration);
 
         // Invoked either way, because that is what prints the complaint and the
         // help beneath it. But an argument nobody could parse is the shell being
@@ -92,15 +97,20 @@ internal static class Program
     }
 
     /// <summary>Lists the installed catalog, which is what a plugin adds to.</summary>
-    private static Command Modules(Option<bool> json)
+    private static Command Modules(Plugins plugins, Option<bool> json)
     {
         var command = new Command("modules", "Say what modules this build has.")
         {
             json,
         };
 
-        command.SetAction(result => ModulesCommand.Run(
-            NodeCatalog.Current, result.GetValue(json), Console.Out));
+        command.SetAction(result =>
+        {
+            plugins.Ready();
+
+            return ModulesCommand.Run(
+                NodeCatalog.Current, result.GetValue(json), result.InvocationConfiguration.Output);
+        });
 
         return command;
     }
@@ -110,7 +120,7 @@ internal static class Program
     /// needs the plugin catalog rather than the engine: what it asks and what
     /// it writes both belong to a plugin.
     /// </summary>
-    private static Command Probe(PluginCatalog plugins, Option<bool> json)
+    private static Command Probe(Plugins plugins, Option<bool> json)
     {
         var provider = new Option<string>("--provider")
         {
@@ -158,7 +168,7 @@ internal static class Program
         };
 
         command.SetAction((result, cancellation) => ProbeCommand.Run(
-            plugins,
+            plugins.Catalog,
             new ProbeOptions(
                 result.GetValue(provider),
                 result.GetValue(model) ?? [],
@@ -168,15 +178,15 @@ internal static class Program
                 result.GetValue(json),
                 result.GetValue(keys),
                 result.GetValue(yes)),
-            Console.Out,
-            Console.Error,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error,
             cancellation,
             asking: Console.IsInputRedirected ? null : Console.In));
 
         return command;
     }
 
-    private static Command Render(Argument<FileInfo> patch)
+    private static Command Render(Plugins plugins, Argument<FileInfo> patch)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -244,13 +254,15 @@ internal static class Program
 
         command.SetAction((result, cancellation) =>
         {
+            plugins.Ready();
+
             var file = result.GetRequiredValue(patch);
 
             // A file named relatively is measured from wherever the patch is, so
             // a patch and the sounds and pictures beside it travel together — and
             // a bundle carries them, so one of those needs nothing beside it at
             // all. Which of the two this is, is settled here and nowhere else.
-            if (Patches.Open(file, Console.Error) is not { } opened)
+            if (Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened)
                 return Task.FromResult(Exit.Failed);
 
             var (loaded, samples, pictures) = opened;
@@ -271,19 +283,24 @@ internal static class Program
 
             return Task.FromResult(
                 RenderCommand.Run(
-                    loaded, options, Console.Error, Progress(), samples, pictures, cancellation: cancellation));
+                    loaded,
+                    options,
+                    result.InvocationConfiguration.Error,
+                    Progress(),
+                    samples,
+                    pictures,
+                    cancellation: cancellation));
         });
 
         return command;
     }
 
     /// <summary>
-    /// Prints a patch as text. Not built on <see cref="Run"/> either, and for
-    /// the opposite reason to <see cref="Pack"/>: what it writes is the patch
-    /// rather than a report about one, so there is nothing for a <c>--json</c>
-    /// to be an alternative to.
+    /// Prints a patch as text. No <c>--json</c>: what it writes is the patch rather
+    /// than a report about one, so there is nothing for a <c>--json</c> to be an
+    /// alternative to.
     /// </summary>
-    private static Command Print(Argument<FileInfo> patch)
+    private static Command Print(Plugins plugins, Argument<FileInfo> patch)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -310,11 +327,13 @@ internal static class Program
             // somebody expecting a file at the end of it.
             if (checking && into is not null)
             {
-                Console.Error.WriteLine(
+                result.InvocationConfiguration.Error.WriteLine(
                     $"{GlobalConstants.ApplicationName}: --check writes nothing, so there is nothing for --out to take.");
 
                 return Exit.Failed;
             }
+
+            plugins.Ready();
 
             var file = result.GetRequiredValue(patch);
 
@@ -322,15 +341,15 @@ internal static class Program
             // the files it carries: a program that loaded a table is a different
             // program from one that could not find it, and comparing the second
             // against itself would prove nothing about the first.
-            return Patches.Open(file, Console.Error) is not { } opened
+            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
                 : PrintCommand.Run(
                     opened.Patch,
                     file,
                     into,
                     checking,
-                    Console.Out,
-                    Console.Error,
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error,
                     opened.Samples,
                     opened.Pictures);
         });
@@ -339,12 +358,11 @@ internal static class Program
     }
 
     /// <summary>
-    /// Packs a patch and its files into a bundle. Not built on
-    /// <see cref="Run"/> like the two below it: those answer questions about a
-    /// patch and this writes a file, so it takes an output path rather than a
-    /// <c>--json</c>.
+    /// Packs a patch and its files into a bundle. It writes a file rather than only
+    /// answering for one, so it takes an output path as well as the <c>--json</c> the
+    /// reports below take.
     /// </summary>
-    private static Command Pack(Argument<FileInfo> patch, Option<bool> json)
+    private static Command Pack(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -359,12 +377,17 @@ internal static class Program
             patch, output, json,
         };
 
-        command.SetAction(result => PackCommand.Run(
-            result.GetRequiredValue(patch),
-            result.GetRequiredValue(output),
-            Console.Error,
-            Console.Out,
-            result.GetValue(json)));
+        command.SetAction(result =>
+        {
+            plugins.Ready();
+
+            return PackCommand.Run(
+                result.GetRequiredValue(patch),
+                result.GetRequiredValue(output),
+                result.InvocationConfiguration.Error,
+                result.InvocationConfiguration.Output,
+                result.GetValue(json));
+        });
 
         return command;
     }
@@ -400,8 +423,8 @@ internal static class Program
         command.SetAction(result => PackPluginCommand.Run(
             result.GetRequiredValue(source),
             result.GetRequiredValue(output),
-            Console.Out,
-            Console.Error,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error,
             key: result.GetValue(key)));
 
         return command;
@@ -423,12 +446,15 @@ internal static class Program
             output,
         };
 
-        command.SetAction(result => PluginKeyCommand.Run(result.GetRequiredValue(output), Console.Out, Console.Error));
+        command.SetAction(result => PluginKeyCommand.Run(
+            result.GetRequiredValue(output),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
 
         return command;
     }
 
-    private static Command Check(Argument<FileInfo> patch, Option<bool> json)
+    private static Command Check(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var strict = new Option<bool>("--strict")
         {
@@ -442,16 +468,18 @@ internal static class Program
 
         command.SetAction(result =>
         {
+            plugins.Ready();
+
             var file = result.GetRequiredValue(patch);
 
-            return Patches.Open(file, Console.Error) is not { } opened
+            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
                 : CheckCommand.Run(
                     opened.Patch,
                     file.Name,
                     result.GetValue(json),
-                    Console.Out,
-                    Console.Error,
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error,
                     opened.Samples,
                     opened.Pictures,
                     result.GetValue(strict));
@@ -460,7 +488,7 @@ internal static class Program
         return command;
     }
 
-    private static Command Info(Argument<FileInfo> patch, Option<bool> json)
+    private static Command Info(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
         {
@@ -469,16 +497,18 @@ internal static class Program
 
         command.SetAction(result =>
         {
+            plugins.Ready();
+
             var file = result.GetRequiredValue(patch);
 
-            return Patches.Open(file, Console.Error) is not { } opened
+            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
                 : InfoCommand.Run(
                     opened.Patch,
                     file.Name,
                     result.GetValue(json),
-                    Console.Out,
-                    Console.Error,
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error,
                     opened.Samples,
                     opened.Pictures);
         });

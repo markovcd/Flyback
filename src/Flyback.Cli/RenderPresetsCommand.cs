@@ -23,7 +23,7 @@ internal static class RenderPresetsCommand
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
-    public static Command Build()
+    public static Command Build(Plugins plugins)
     {
         var server = new Option<string>("--server")
         {
@@ -82,6 +82,8 @@ internal static class RenderPresetsCommand
                 Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: --server {result.GetValue(server)}: give the site's whole address, e.g. https://presets.example.org/.");
                 return Exit.Failed;
             }
+
+            plugins.Ready();
 
             using var site = new HttpClient { BaseAddress = new Uri(address.AbsoluteUri.TrimEnd('/') + "/") };
 
