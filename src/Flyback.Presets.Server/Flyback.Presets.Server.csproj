@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Presets.Server</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The Pages site's own stylesheet, script and logo, so the two sites cannot drift apart. -->
+  <ItemGroup>
+    <Content Include="..\..\site\assets\site.css;..\..\site\assets\site.js;..\..\site\assets\logo.svg;..\..\site\assets\share.jpg;..\..\site\assets\donate-qr.svg"
+             Link="wwwroot\assets\%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

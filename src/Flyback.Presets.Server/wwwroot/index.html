@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flyback Presets — patches people made</title>
+<meta name="description" content="Presets Flyback users made and shared. Download one and open it in Flyback, or submit your own.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Flyback">
+<meta property="og:title" content="Flyback Presets — patches people made">
+<meta property="og:description" content="Presets Flyback users made and shared.">
+<meta property="og:image" content="assets/share.jpg">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/presets.css">
+</head>
+<body data-page="shelf">
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="https://markovcd.github.io/Flyback/"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="https://markovcd.github.io/Flyback/" class="optional">Overview</a>
+      <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
+      <a href="https://markovcd.github.io/Flyback/plugins.html">Plugins</a>
+      <a href="./" aria-current="page">Presets</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="shelf-head">
+    <span class="eyebrow">Presets</span>
+    <h1>Patches people made.</h1>
+    <p class="lede">Presets Flyback users made and shared. Download one and open it in Flyback: it plays the
+      moment it opens, and every wire in it is yours to change.</p>
+    <div class="actions">
+      <a class="button primary" href="submit.html">Submit a preset</a>
+    </div>
+  </div>
+
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors and descriptions" aria-label="Search presets">
+    <div class="chips" id="tags" aria-label="Tags"></div>
+  </div>
+
+  <div class="shelf" id="shelf" aria-live="polite"></div>
+  <p class="empty" id="empty" hidden>No presets match. <a href="submit.html">Submit one?</a></p>
+
+  <nav class="pager" id="pager" aria-label="Pages" hidden>
+    <button type="button" class="button small" id="previous">Newer</button>
+    <span id="where"></span>
+    <button type="button" class="button small" id="next">Older</button>
+  </nav>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="https://markovcd.github.io/Flyback/">Overview</a>
+    <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+  </div>
+</footer>
+
+<script src="assets/presets.js"></script>
+</body>
+</html>

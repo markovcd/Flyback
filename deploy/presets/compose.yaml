@@ -1,0 +1,12 @@
+# The preset site on the NAS. See README.md beside this file.
+services:
+  presets:
+    image: flyback-presets
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      # The database, which only this container writes.
+      - ./data:/data
+      # The shared folder the render app writes into; the site only reads it.
+      - ./media:/media:ro

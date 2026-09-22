@@ -18,6 +18,7 @@
 - A dragged side panel comes back at the width it was left at.
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
+- Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.
 
 ## 0.4.0 — 2026-09-21
 

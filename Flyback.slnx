@@ -25,6 +25,7 @@
     <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
     <Project Path="src/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
     <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
+    <Project Path="src/Flyback.Presets.Server/Flyback.Presets.Server.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />
@@ -37,5 +38,6 @@
     <Project Path="tests/Flyback.Plugins.OpenAi.Tests/Flyback.Plugins.OpenAi.Tests.csproj" />
     <Project Path="tests/Flyback.Plugins.Sample/Flyback.Plugins.Sample.csproj" />
     <Project Path="tests/Flyback.Plugins.Tests/Flyback.Plugins.Tests.csproj" />
+    <Project Path="tests/Flyback.Presets.Server.Tests/Flyback.Presets.Server.Tests.csproj" />
   </Folder>
 </Solution>

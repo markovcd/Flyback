@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "presets": {
+      "commandName": "Project",
+      "applicationUrl": "http://localhost:8790",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

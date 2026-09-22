@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8777", "--directory", "site"],
       "port": 8777
+    },
+    {
+      "name": "presets",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Flyback.Presets.Server"],
+      "port": 8790
     }
   ]
 }
