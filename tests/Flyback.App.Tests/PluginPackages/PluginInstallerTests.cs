@@ -1,4 +1,3 @@
-using System.Text;
 using Flyback.App.PluginPackages;
 using Flyback.Plugins;
 using Flyback.Plugins.Hosting;
@@ -18,13 +17,12 @@ public sealed class PluginInstallerTests : IDisposable
 
     private PluginInstaller Installer(params LoadedPlugin[] loaded) => new(plugins, loaded);
 
-    private static PluginPackage Package(string version = "1.2.0") =>
-        PluginPackage.Read(Packages.Described(Packages.Manifest(version: version), "win", "linux", "osx"));
+    private static PluginPackage Package() => PluginPackage.Read(Packages.For("win", "linux", "osx"));
 
-    private string Installed(string file = "") => Path.Combine(plugins, "acme.ripple", file);
+    private string Installed(string file = "") => Path.Combine(plugins, Packages.Folder, file);
 
     [Fact]
-    public void An_installed_plugin_is_in_its_own_folder_from_the_next_start()
+    public void An_installed_plugin_is_in_a_folder_named_after_its_assembly_from_the_next_start()
     {
         var installer = Installer();
 
@@ -35,42 +33,42 @@ public sealed class PluginInstallerTests : IDisposable
 
         var (installed, problems) = PluginInstaller.Finish(plugins);
 
-        installed.ShouldBe(["Ripple 1.2.0"]);
+        installed.ShouldHaveSingleItem().ShouldStartWith(Packages.Folder);
         problems.ShouldBeEmpty();
         File.ReadAllBytes(Installed(Packages.AssemblyName)).ShouldBe(Packages.Assembly);
-        File.Exists(Installed("runtimes/win/native/lib.bin")).ShouldBeTrue();
-        File.Exists(Installed("runtimes/linux/native/lib.bin")).ShouldBeFalse("only this system's build is installed");
+        File.Exists(Installed("runtimes/win/native/readme.txt")).ShouldBeTrue();
+        File.Exists(Installed("runtimes/linux/native/readme.txt")).ShouldBeFalse("only this system's build is installed");
+        File.ReadAllText(Installed(PluginPackage.MarkerName)).Trim().ShouldBe(Package().Sha256);
         Directory.Exists(Path.Combine(plugins, PluginInstaller.PendingName)).ShouldBeFalse();
     }
 
     [Fact]
-    public void A_new_version_replaces_the_old_one_whole()
+    public void A_new_package_replaces_the_plugin_it_installed_whole()
     {
-        Installer().Stage(Package("1.0.0"), "win");
+        Installer().Stage(Package(), "win");
         PluginInstaller.Finish(plugins);
         File.WriteAllText(Installed("left-behind.dll"), "");
 
         var installer = Installer();
 
-        installer.Replacing("acme.ripple")!.Version.ShouldBe("1.0.0");
-        installer.Refusal(Package("2.0.0"), "win").ShouldBeNull();
-        installer.Stage(Package("2.0.0"), "win");
-        installer.Replacing("acme.ripple")!.Version.ShouldBe("2.0.0", "what waits to be installed is what will be there");
+        installer.Replacing(Packages.Folder)!.Assembly.ShouldBe(Packages.Folder);
+        installer.Refusal(Package(), "win").ShouldBeNull();
+        installer.Stage(Package(), "win");
 
-        PluginInstaller.Finish(plugins).Installed.ShouldBe(["Ripple 2.0.0"]);
+        PluginInstaller.Finish(plugins).Installed.ShouldHaveSingleItem();
 
         File.Exists(Installed("left-behind.dll")).ShouldBeFalse();
-        File.ReadAllText(Installed(PluginPackage.ManifestName)).ShouldContain("2.0.0");
     }
 
     [Fact]
     public void A_plugin_that_did_not_come_from_a_package_is_never_replaced_by_one()
     {
         Directory.CreateDirectory(Installed());
-        File.WriteAllText(Installed("Shipped.dll"), "");
+        File.WriteAllBytes(Installed(Packages.AssemblyName), Packages.Assembly);
 
+        Installer().Replacing(Packages.Folder).ShouldBeNull();
         Installer().Refusal(Package(), "win")
-            .ShouldBe("There is already a plugin in plugins/acme.ripple that was not installed from a package, and it is left alone.");
+            .ShouldBe($"There is already a plugin in plugins/{Packages.Folder} that was not installed from a package, and it is left alone.");
     }
 
     [Fact]
@@ -88,22 +86,22 @@ public sealed class PluginInstallerTests : IDisposable
     }
 
     [Fact]
-    public void A_package_may_not_take_the_id_of_a_plugin_loaded_from_elsewhere()
+    public void A_package_may_not_bring_a_second_copy_of_a_plugin_loaded_from_elsewhere()
     {
-        var loaded = new LoadedPlugin(new PluginInfo("acme.ripple", "Ripple (shipped)"), Path.Combine(plugins, "Ripple", "Ripple.dll"));
+        var loaded = new LoadedPlugin(new PluginInfo("flyback.picture", "Picture"), Path.Combine(plugins, "Picture", Packages.AssemblyName));
 
-        Installer(loaded).Refusal(Package(), "win").ShouldBe("Ripple (shipped) already has the id acme.ripple.");
+        Installer(loaded).Refusal(Package(), "win").ShouldBe($"Picture is already installed from {Packages.AssemblyName}.");
     }
 
     [Fact]
     public void A_package_may_replace_the_plugin_it_installed_while_that_plugin_is_loaded()
     {
-        Installer().Stage(Package("1.0.0"), "win");
+        Installer().Stage(Package(), "win");
         PluginInstaller.Finish(plugins);
 
-        var loaded = new LoadedPlugin(new PluginInfo("acme.ripple", "Ripple"), Installed(Packages.AssemblyName));
+        var loaded = new LoadedPlugin(new PluginInfo("flyback.picture", "Picture"), Installed(Packages.AssemblyName));
 
-        Installer(loaded).Refusal(Package("2.0.0"), "win").ShouldBeNull();
+        Installer(loaded).Refusal(Package(), "win").ShouldBeNull();
     }
 
     [Fact]
@@ -133,7 +131,7 @@ public sealed class PluginInstallerTests : IDisposable
         var planted = Path.Combine(plugins, PluginInstaller.PendingName, "planted");
 
         Directory.CreateDirectory(planted);
-        File.WriteAllText(Path.Combine(planted, "Planted.dll"), "");
+        File.WriteAllBytes(Path.Combine(planted, Packages.AssemblyName), Packages.Assembly);
 
         PluginInstaller.Finish(plugins).Problems.ShouldHaveSingleItem().ShouldStartWith("planted:");
 
@@ -141,29 +139,35 @@ public sealed class PluginInstallerTests : IDisposable
     }
 
     [Fact]
+    public void The_marker_is_what_the_install_wrote_not_what_the_build_carried()
+    {
+        var package = PluginPackage.Read(Packages.Zip(
+        [
+            ($"win/{Packages.AssemblyName}", Packages.Assembly),
+            ($"win/{PluginPackage.MarkerName}", "forged"u8.ToArray()),
+        ]));
+
+        Installer().Stage(package, "win");
+        PluginInstaller.Finish(plugins);
+
+        File.ReadAllText(Installed(PluginPackage.MarkerName)).Trim().ShouldBe(package.Sha256);
+    }
+
+    [Fact]
     public void The_host_never_loads_what_is_waiting_to_be_installed()
     {
         Installer().Stage(Package(), PluginPackage.ThisPlatform);
 
-        var catalog = PluginHost.Load(plugins);
-
-        catalog.Plugins.ShouldBeEmpty();
-        catalog.Problems.ShouldBeEmpty();
+        PluginHost.Folders(plugins).ShouldBeEmpty();
     }
 
     [Fact]
-    public void What_is_installed_is_what_the_package_said_not_what_the_build_carried()
+    public void A_packages_plugin_loads_after_every_plugin_no_package_installed()
     {
-        var bytes = Packages.Zip(
-        [
-            ("plugin.json", Encoding.UTF8.GetBytes(Packages.Manifest(version: "1.0.0"))),
-            ($"win/{Packages.AssemblyName}", Packages.Assembly),
-            ("win/plugin.json", Encoding.UTF8.GetBytes(Packages.Manifest(version: "9.9.9"))),
-        ]);
+        Directory.CreateDirectory(Path.Combine(plugins, "Zeta"));
+        Directory.CreateDirectory(Path.Combine(plugins, "Alpha"));
+        File.WriteAllText(Path.Combine(plugins, "Alpha", PluginPackage.MarkerName), "");
 
-        Installer().Stage(PluginPackage.Read(bytes), "win");
-        PluginInstaller.Finish(plugins);
-
-        Installer().Replacing("acme.ripple")!.Version.ShouldBe("1.0.0");
+        PluginHost.Folders(plugins).Select(Path.GetFileName).ShouldBe(["Zeta", "Alpha"]);
     }
 }

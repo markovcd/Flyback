@@ -19,7 +19,7 @@
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
 - Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.
-- Opening a `.fbkp` plugin package shows what it is and, when asked, installs its build for this system.
+- Opening a `.fbkp` plugin package shows what the plugin is, adds and reaches and, when asked, installs its build for this system; `flyback-cli pack-plugin` makes one.
 
 ## 0.4.0 — 2026-09-21
 

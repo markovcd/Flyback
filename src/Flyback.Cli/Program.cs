@@ -61,6 +61,7 @@ internal static class Program
             Info(patch, json),
             Print(patch),
             Pack(patch, json),
+            PackPlugin(),
             Modules(json),
             Probe(plugins, json),
             ViewerCommand.Build(),
@@ -358,6 +359,58 @@ internal static class Program
             Console.Error,
             Console.Out,
             result.GetValue(json)));
+
+        return command;
+    }
+
+    /// <summary>Makes a plugin package, the file the editor installs a plugin from.</summary>
+    private static Command PackPlugin()
+    {
+        var source = new Argument<FileSystemInfo?>("source")
+        {
+            Description = "The plugin's project, built here with dotnet publish, or a folder it was already built into.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = $"Where to write the package. {PluginPackage.Extension} by convention.",
+            Required = true,
+        };
+
+        var platform = new Option<string[]>("--platform")
+        {
+            Description = "Which builds it carries: any, win, osx or linux. Left out, one build for any system.",
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        platform.CompletionSources.Add(_ =>
+            PluginPackage.Platforms.Append(PluginPackage.AnyPlatform).Select(p => new CompletionItem(p, PluginPackage.Describe(p))));
+
+        // A build per system from folders already built, which needs no SDK.
+        var folders = PluginPackage.Platforms.Append(PluginPackage.AnyPlatform).ToDictionary(
+            p => p,
+            p => new Option<DirectoryInfo>($"--{p}") { Description = $"A folder already built for {PluginPackage.Describe(p)}." });
+
+        var command = new Command(
+            "pack-plugin",
+            "Build a plugin and pack it into one file the editor installs from.")
+        {
+            source, output, platform,
+        };
+
+        foreach (var option in folders.Values) command.Add(option);
+
+        command.SetAction(result => PackPluginCommand.Run(
+            result.GetValue(source),
+            result.GetRequiredValue(output),
+            result.GetValue(platform) ?? [],
+            Console.Out,
+            Console.Error,
+            folders
+                .Select(f => (f.Key, Folder: result.GetValue(f.Value)))
+                .Where(f => f.Folder is not null)
+                .ToDictionary(f => f.Key, f => f.Folder!)));
 
         return command;
     }

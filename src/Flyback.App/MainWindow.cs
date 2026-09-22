@@ -11,7 +11,6 @@ using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Midi;
-using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;

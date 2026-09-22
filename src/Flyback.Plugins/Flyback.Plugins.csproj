@@ -32,8 +32,9 @@
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
 
-    <!-- A plugin package is checked against the contract before it is installed. -->
+    <!-- A plugin package is read, and written, by the editor and the command line. -->
     <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="flyback-cli" />
   </ItemGroup>
 
   <ItemGroup>

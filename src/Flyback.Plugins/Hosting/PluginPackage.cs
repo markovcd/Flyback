@@ -1,12 +1,8 @@
 using System.Buffers;
 using System.IO.Compression;
-using System.Reflection;
-using System.Reflection.Metadata;
-using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
-using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Plugins.Hosting;
 
 /// <summary>One file a package would put into the plugin's folder.</summary>
 /// <param name="Path">Where it goes, relative to the plugin's folder, with forward slashes.</param>
@@ -23,28 +19,35 @@ internal sealed record PackageLimits(long Packed, long Unpacked, int Entries)
 }
 
 /// <summary>
-/// A <c>.fbkp</c>: a zip holding a <c>plugin.json</c> that says what the plugin is,
-/// and a folder of the plugin's files per system it was built for (ADR-0132).
+/// A <c>.fbkp</c>: a zip with a folder per system the plugin was built for, each
+/// holding that system's build (ADR-0132).
 /// </summary>
 /// <remarks>
+/// Nothing in it describes the plugin but the plugin: what it is called and what it
+/// can do are read from its assemblies' metadata (<see cref="PluginDescription"/>), so
+/// what is shown is what is installed.
+/// <para>
 /// Read whole into memory and never again from the disk, so what is installed is
 /// the package that was shown, not whatever is at its path by the time Install is
 /// pressed. A package with one file that would land outside its folder is refused
 /// whole rather than installed without it: nobody packs one by accident.
+/// </para>
 /// </remarks>
 internal sealed class PluginPackage
 {
     public const string Extension = ".fbkp";
 
-    public const string ManifestName = "plugin.json";
-
     /// <summary>The folder holding a build for every system, used where there is none for this one.</summary>
     public const string AnyPlatform = "any";
 
+    /// <summary>
+    /// Written beside a plugin a package installed, holding the package's hash. A folder
+    /// without one was not installed from a package, and no package replaces it.
+    /// </summary>
+    public const string MarkerName = "package.sha256";
+
     /// <summary>The folder names a build is looked for under, as runtime identifiers begin.</summary>
     public static IReadOnlyList<string> Platforms { get; } = ["win", "osx", "linux"];
-
-    private const int LargestManifest = 64 << 10;
 
     private readonly byte[] bytes;
 
@@ -52,18 +55,22 @@ internal sealed class PluginPackage
 
     private readonly Dictionary<string, List<PackedFile>> builds;
 
-    private PluginPackage(byte[] bytes, PackageLimits limits, PluginManifest manifest, Dictionary<string, List<PackedFile>> builds)
+    private readonly Dictionary<string, PluginDescription> descriptions;
+
+    private PluginPackage(
+        byte[] bytes,
+        PackageLimits limits,
+        Dictionary<string, List<PackedFile>> builds,
+        Dictionary<string, PluginDescription> descriptions)
     {
         this.bytes = bytes;
         this.limits = limits;
         this.builds = builds;
+        this.descriptions = descriptions;
 
-        Manifest = manifest;
         Sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes));
         Builds = [.. Platforms.Append(AnyPlatform).Where(builds.ContainsKey)];
     }
-
-    public PluginManifest Manifest { get; }
 
     /// <summary>What the package hashes to, for comparing against what its author publishes.</summary>
     public string Sha256 { get; }
@@ -99,6 +106,19 @@ internal sealed class PluginPackage
 
     public IReadOnlyList<PackedFile> Files(string build) => builds[build];
 
+    /// <summary>What a build says it is and what it can do.</summary>
+    public PluginDescription Description(string build) => descriptions[build];
+
+    /// <summary>
+    /// The plugin as it would be installed on <paramref name="platform"/>, or where
+    /// there is no build for it, as the first build describes it — or null for a
+    /// package with no build at all.
+    /// </summary>
+    public PluginDescription? DescriptionFor(string platform) =>
+        BuildFor(platform) is { } build ? descriptions[build]
+        : Builds.Count > 0 ? descriptions[Builds[0]]
+        : null;
+
     /// <summary>
     /// Why this package cannot be installed on <paramref name="platform"/>, or null
     /// where it can: there is no build for it, or the build was compiled against a
@@ -113,7 +133,7 @@ internal sealed class PluginPackage
                 : $"It has no build for {Describe(platform)}, only for {string.Join(", ", Builds.Select(Describe))}.";
         }
 
-        return ContractVersion.Reason(References(build));
+        return ContractVersion.Reason(descriptions[build].References);
     }
 
     /// <summary>Reads a package already in memory.</summary>
@@ -131,7 +151,6 @@ internal sealed class PluginPackage
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var builds = new Dictionary<string, List<PackedFile>>(StringComparer.Ordinal);
-        PluginManifest? manifest = null;
         long unpacked = 0;
 
         for (var index = 0; index < zip.Entries.Count; index++)
@@ -140,23 +159,17 @@ internal sealed class PluginPackage
             var name = entry.FullName;
 
             if (Unsafe(name) is { } why)
-                throw new InvalidDataException($"It holds a file named \"{PluginManifest.Line(name, 80)}\", {why}.");
+                throw new InvalidDataException($"It holds a file named \"{PluginDescription.Line(name, 80)}\", {why}.");
 
             // Case-blind, because two names one file system tells apart are one file on another.
             if (!seen.Add(name.TrimEnd('/')))
-                throw new InvalidDataException($"It holds \"{PluginManifest.Line(name, 80)}\" twice.");
+                throw new InvalidDataException($"It holds \"{PluginDescription.Line(name, 80)}\" twice.");
 
             if (name.EndsWith('/')) continue;
 
             unpacked += entry.Length;
 
             if (unpacked > limits.Unpacked) throw TooLarge(limits.Unpacked, unpacked: true);
-
-            if (name == ManifestName)
-            {
-                manifest = PluginManifest.Parse(ReadAll(entry, LargestManifest));
-                continue;
-            }
 
             // Anything outside a build's folder — a readme, a license — stays in the package.
             var slash = name.IndexOf('/');
@@ -172,16 +185,28 @@ internal sealed class PluginPackage
             files.Add(new PackedFile(name[(slash + 1)..], index, entry.Length));
         }
 
-        if (manifest is null)
-            throw new InvalidDataException($"It has no {ManifestName} saying what it is.");
+        var descriptions = new Dictionary<string, PluginDescription>(StringComparer.Ordinal);
 
-        // A folder with no assembly of the plugin's own at its top is not a build.
-        foreach (var platform in builds.Keys.ToList())
+        foreach (var (platform, files) in builds.ToList())
         {
-            if (!Entries(builds[platform]).Any()) builds.Remove(platform);
+            PluginDescription? description;
+
+            try
+            {
+                description = PluginDescription.Of(files.Select(f =>
+                    (f.Path, (Func<Stream>)(() => new MemoryStream(ReadAll(zip.Entries[f.Index], limits.Unpacked), writable: false)))));
+            }
+            catch (InvalidDataException ex)
+            {
+                throw new InvalidDataException($"{ex.Message} ({platform})");
+            }
+
+            // A folder with no plugin assembly at its top is not a build.
+            if (description is null) builds.Remove(platform);
+            else descriptions[platform] = description;
         }
 
-        return new PluginPackage(bytes, limits, manifest, builds);
+        return new PluginPackage(bytes, limits, builds, descriptions);
     }
 
     /// <summary>Reads a package from a stream, never holding more of it than a package may be.</summary>
@@ -202,6 +227,40 @@ internal sealed class PluginPackage
 
         return Read(memory.ToArray(), limits);
     }
+
+    /// <summary>
+    /// Zips each build folder under its platform's name, leaving out the host's own
+    /// assemblies, which the host always supplies itself.
+    /// </summary>
+    /// <param name="builds">Each platform's name, and the folder holding its build output.</param>
+    public static byte[] Pack(IEnumerable<(string Platform, string Folder)> builds)
+    {
+        using var memory = new MemoryStream();
+
+        using (var zip = new ZipArchive(memory, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var (platform, folder) in builds)
+            {
+                foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
+                {
+                    var path = Path.GetRelativePath(folder, file).Replace('\\', '/');
+
+                    if (!path.Contains('/') && PluginLoadContext.IsHostOwned(HostName(path))) continue;
+
+                    zip.CreateEntryFromFile(file, $"{platform}/{path}", CompressionLevel.Optimal);
+                }
+            }
+        }
+
+        return memory.ToArray();
+    }
+
+    /// <summary>The assembly a file at a build's top belongs to: <c>Flyback.Core</c> for its dll, pdb and xml alike.</summary>
+    private static string HostName(string file) => file.Split('.') switch
+    {
+        [.. var name, _] => string.Join('.', name),
+        _ => file,
+    };
 
     /// <summary>
     /// Writes <paramref name="build"/>'s files into <paramref name="folder"/>, which
@@ -283,62 +342,6 @@ internal sealed class PluginPackage
         return Devices.Contains(stem, StringComparer.OrdinalIgnoreCase);
     }
 
-    /// <summary>
-    /// The plugin's own assemblies at the top of a build — those with a
-    /// <c>.deps.json</c> beside them, or every one where none has — as
-    /// <see cref="PluginHost"/> picks them.
-    /// </summary>
-    private static IEnumerable<PackedFile> Entries(List<PackedFile> files)
-    {
-        var top = files.Where(f => !f.Path.Contains('/')).ToList();
-
-        var dlls = top
-            .Where(f => f.Path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-            .Where(f => !PluginLoadContext.IsHostOwned(Path.GetFileNameWithoutExtension(f.Path)))
-            .ToList();
-
-        var declared = dlls
-            .Where(d => top.Any(f => string.Equals(f.Path, Path.ChangeExtension(d.Path, ".deps.json"), StringComparison.OrdinalIgnoreCase)))
-            .ToList();
-
-        return declared.Count > 0 ? declared : dlls;
-    }
-
-    /// <summary>What a build's assemblies were compiled against, read from their metadata without loading them.</summary>
-    private IEnumerable<AssemblyName> References(string build)
-    {
-        using var zip = Open(bytes);
-
-        var names = new List<AssemblyName>();
-
-        foreach (var file in Entries(builds[build]))
-        {
-            var image = ReadAll(zip.Entries[file.Index], limits.Unpacked);
-
-            try
-            {
-                using var reader = new PEReader(new MemoryStream(image.ToArray()));
-
-                if (!reader.HasMetadata) continue;
-
-                var metadata = reader.GetMetadataReader();
-
-                foreach (var handle in metadata.AssemblyReferences)
-                {
-                    var reference = metadata.GetAssemblyReference(handle);
-
-                    names.Add(new AssemblyName(metadata.GetString(reference.Name)) { Version = reference.Version });
-                }
-            }
-            catch (BadImageFormatException)
-            {
-                // A native library, which references nothing of ours.
-            }
-        }
-
-        return names;
-    }
-
     private static ZipArchive Open(byte[] bytes)
     {
         try
@@ -351,14 +354,14 @@ internal sealed class PluginPackage
         }
     }
 
-    private static ReadOnlyMemory<byte> ReadAll(ZipArchiveEntry entry, long largest)
+    private static byte[] ReadAll(ZipArchiveEntry entry, long largest)
     {
         using var from = entry.Open();
         using var to = new MemoryStream();
 
         Copy(from, to, largest);
 
-        return to.GetBuffer().AsMemory(0, (int)to.Length);
+        return to.ToArray();
     }
 
     /// <summary>Copies, counting what actually comes out rather than what the zip claimed would.</summary>

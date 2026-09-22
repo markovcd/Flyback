@@ -798,38 +798,43 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 
     <h3>Shipping it as a package</h3>
 
-    <p>To hand a plugin to somebody else, zip it as a <code>.fbkp</code>. Opening one with Flyback shows what
-    it says it is and installs it only when asked, copying just the build for the system it is on. At the
-    top of the zip is a <code>plugin.json</code>, and beside it a folder per system with that system's build
-    output in it: <code>win</code>, <code>osx</code>, <code>linux</code>, or <code>any</code> for a plugin
-    that is the same everywhere, which is used where there is no folder for the system itself.</p>
+    <p>To hand a plugin to somebody else, pack it as a <code>.fbkp</code>. Opening one with Flyback shows
+    what the plugin is and installs it only when asked, copying just the build for the system it is on.</p>
 
-    <pre><code>ripple.fbkp
-  plugin.json
-  win/     Flyback.Plugins.Ripple.dll, .deps.json, dependencies
-  linux/   …
-  osx/     …</code></pre>
+    <pre><code>flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj --platform any -o ripple.fbkp
+flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj --platform win osx linux -o ripple.fbkp
+flyback-cli pack-plugin --win out/win --linux out/linux -o ripple.fbkp</code></pre>
 
-    <pre><code>{
-  <span class="s">"id"</span>: <span class="s">"acme.ripple"</span>,
-  <span class="s">"name"</span>: <span class="s">"Ripple"</span>,
-  <span class="s">"version"</span>: <span class="s">"1.2.0"</span>,
-  <span class="s">"author"</span>: <span class="s">"Acme"</span>,
-  <span class="s">"description"</span>: <span class="s">"Rings on water."</span>,
-  <span class="s">"website"</span>: <span class="s">"https://example.com/ripple"</span>
-}</code></pre>
+    <p>Given a project, it runs <code>dotnet publish</code> once per system, so it needs the .NET SDK.
+    Given folders you already built, it needs nothing. It leaves out the host's own assemblies, checks the
+    package the way the editor will, and prints what the install dialog is going to show.</p>
 
-    <p><code>id</code>, <code>name</code> and <code>version</code> are required. The id names the folder the
-    plugin goes into, <code>plugins/acme.ripple</code>, so it is letters, digits, dots, dashes and
-    underscores. A second package with the same id replaces the first whole, at the next start. A package
-    never replaces a plugin it did not install, and never takes the id of one already loaded.</p>
+    <p>The package is a zip with a folder per system — <code>win</code>, <code>osx</code>,
+    <code>linux</code>, or <code>any</code> for a build that is the same everywhere, used where there is no
+    folder for the system itself — and nothing else. There is no manifest to write. The dialog reads the
+    plugin assembly's own metadata without running any of it:</p>
+
+    <ul>
+      <li>its name, version, author and description, from <code>&lt;Product&gt;</code>,
+      <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and <code>&lt;Description&gt;</code> in your project;</li>
+      <li>what it adds — modules, presets, a sound output, a MIDI input, an assistant, a secret store — from
+      the <code>IPluginRegistry</code> methods your code calls;</li>
+      <li>what it reaches — the network, files, other programs, the registry, native code, code it loads while
+      running — from what any assembly in the build names.</li>
+    </ul>
+
+    <p>Each build holds exactly one plugin assembly at its top, and its name is the folder it installs into:
+    <code>plugins/Flyback.Plugins.Ripple</code>. A second package of the same assembly replaces the first
+    whole, at the next start. A package never replaces a plugin it did not install, never brings a second
+    copy of one already loaded, and loads after every other plugin, so an id it shares with one is its to
+    lose.</p>
 
     <p>Flyback refuses a package outright if a file in it could land outside the plugin's folder
     (<code>..</code>, a drive, a backslash, a name Windows keeps for a device), if two of its files differ
     only in case, or if it is larger than 128 MB, or 512 MB unpacked. The Install button is off, with the
     reason under it, when there is no build for this system or the build was compiled against a contract this
-    Flyback does not offer. Nothing in a package is signed or checked: the dialog shows its SHA-256, and says
-    that what it describes is only what the package says about itself.</p>
+    Flyback does not offer. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
+    what you publish.</p>
 
     <div class="note">
       <span class="tag">Two things that catch people out</span>
@@ -866,6 +871,7 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
           <tr><td>A sound backend, MIDI input, assistant or secret store id already registered</td><td>The later one is ignored</td></tr>
           <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
           <tr><td>A folder under <code>plugins/</code> whose name starts with a dot</td><td>Never scanned</td></tr>
+          <tr><td>A package's plugin sharing an id with one shipped or copied in</td><td>The package's is ignored</td></tr>
           <tr><td>Built against an earlier major of the contract</td><td>The plugin is ignored, and About says it needs rebuilding</td></tr>
           <tr><td>Built against a later contract than this release offers</td><td>The plugin is ignored, and About says it needs a newer Flyback</td></tr>
           <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>

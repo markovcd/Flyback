@@ -6,7 +6,6 @@ using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Flyback.App.Files;
-using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Plugins.Hosting;

@@ -17,57 +17,71 @@ A file that installs a plugin on a double-click is a way to put code on somebody
 machine that looks like opening a document. A plugin runs in-process with full
 trust ([0025](0025-platform-io-behind-loadable-plugins.md)): whatever it is handed,
 it can also read every file the user can and reach any address. So the package
-has to be treated as hostile until someone decides otherwise, and everything it
-says about itself as a claim.
+has to be treated as hostile until someone decides otherwise.
+
+What a plugin calls itself (`PluginInfo`) and what it registers are only known once
+its code has run, and running it to fill in the question of whether to run it
+answers the question.
 
 ## Decision
 
-**A `.fbkp` is a zip.** At its top is `plugin.json` — `id`, `name`, `version`,
-and optionally `author`, `description` and `website` — and beside it a folder per
-system, named as runtime identifiers begin: `win`, `osx`, `linux`, and `any` for a
-build that runs everywhere. A folder counts only if it has a plugin assembly at its
-top, picked the way `PluginHost` picks one.
+**A `.fbkp` is a zip of builds and nothing else.** A folder per system, named as
+runtime identifiers begin — `win`, `osx`, `linux` — and `any` for a build that runs
+everywhere, used where the system has no folder of its own. A folder is a build if
+exactly one plugin assembly sits at its top: one with a public, concrete type
+implementing `IFlybackPlugin`. There is no manifest. A description written beside
+the plugin is a second account of it that can disagree with the first.
 
-**Opening one shows it, and installs nothing.** The editor puts up a dialog with
-what the manifest says, the systems it was built for, what it would add and the
-package's SHA-256, under a warning that a plugin can do anything the user can and
-that nobody has checked what it says. Install is off, with the reason written
-under it, when the package has no build for this system, or when its build was
-compiled against a contract this Flyback does not offer — read from the assembly's
-metadata, never loaded. Escape, the cross and Cancel all install nothing.
+**What the dialog shows is read from the plugin's metadata, and none of its code
+runs.** Its name, version, author and description come from the assembly's own
+attributes (`Product`, `InformationalVersion`, `Company`, `Description`), as its
+project set them. What it adds comes from which `IPluginRegistry` methods its code
+calls: modules, presets, a sound output, a MIDI input, an assistant, a secret store.
+What it reaches comes from what any assembly in the build names: the network, files,
+other programs, the registry, native code (a P/Invoke, or a binary with no metadata),
+and code it loads while running (reflection, `Emit`, a load context). The dialog
+says that native code and loaded code can reach more than they name, and that the
+name and author are whatever the author wrote.
 
-**Only this system's build is installed**, into `plugins/<id>`, with the manifest
-beside it. `any` is used where the system has no folder of its own.
+**The dialog installs nothing on its own.** It shows the above, the systems the
+package has builds for and the package's SHA-256, under a warning that a plugin can
+do anything the user can. Install is off, with the reason written under it, where
+there is no build for this system or its plugin was compiled against a contract this
+Flyback does not offer. Escape, the cross and Cancel install nothing.
+
+**Only this system's build is installed**, into `plugins/<plugin assembly>`, with
+`package.sha256` beside it. That marker is what says a package put the folder there.
+A package never replaces a folder without one — the plugins Flyback ships, or any
+copied in by hand — and never brings a second copy of an assembly already loaded
+from another folder. The host loads every folder with a marker after every folder
+without one, so a package's plugin that claims an id already taken is the one
+ignored.
 
 **It is refused whole, without a dialog, if any entry could land elsewhere.** A
 name that is rooted, climbs with `..`, holds a backslash or a colon (a drive, or an
 NTFS stream), ends in a dot or a space, or is a Windows device name. Two names that
 differ only in case. More than 4096 entries, 128 MB packed or 512 MB unpacked,
 counted as the bytes come out rather than as the zip says. Every path is also
-checked against the target after it is resolved, so the list above is not the only
-thing standing between a package and the disk.
+checked against the target after it is resolved.
 
-**The id is the folder's name**, so it is ASCII letters, digits, dots, dashes and
-underscores, starting and ending with a letter or digit. A package never replaces
-a folder it did not install — the manifest beside the plugin is how that is known —
-so the plugins Flyback ships and any copied in by hand cannot be taken over. It
-may not take the id of a plugin loaded from another folder.
-
-**What the manifest says is cleaned before it is drawn.** Control characters and
+**What the assembly says is cleaned before it is drawn.** Control characters and
 the format characters that change how text around them is drawn — a right-to-left
 override, a zero-width joiner — are dropped, and every field is cut to a length.
-All of it is plain text; nothing in it is a link. A website is kept only as http or
-https with no user name before the host, and the host is shown in ASCII, so a
-lookalike letter shows as `xn--`.
+All of it is plain text.
 
 **The package is read once, into memory.** What is installed is the bytes that
 were shown, not whatever is at the path by the time Install is pressed.
 
-**Installing unpacks into `plugins/.pending/<id>`, and the next start moves it into
-place** before anything is loaded. There is no reload, so a plugin could not run
-sooner anyway; and a plugin being replaced is one this process has loaded, which
-Windows will not let go of. A folder under `plugins/` whose name starts with a dot
-is never scanned for plugins.
+**Installing unpacks into `plugins/.pending/<plugin assembly>`, and the next start
+moves it into place** before anything is loaded. There is no reload, so a plugin
+could not run sooner anyway; and a plugin being replaced is one this process has
+loaded, which Windows will not let go of. A folder under `plugins/` whose name
+starts with a dot is never scanned for plugins.
+
+**`flyback-cli pack-plugin` makes one**, from a project it publishes once per system
+with the SDK, or from folders already built, which needs no SDK. It leaves out the
+host's own assemblies, reads the package back the way the editor will, writes
+nothing if the editor would refuse it, and prints what the dialog will show.
 
 **The viewer passes a `.fbkp` on to the editor**, so it reaches the editor whichever
 program Settings → Files hands Flyback's files to.
@@ -76,8 +90,11 @@ program Settings → Files hands Flyback's files to.
 
 Nothing is signed. A package's SHA-256 can be compared against what its author
 publishes, and that is all. Signing would need somebody to trust a key, and there is
-nobody to be that yet; a later decision could pin a key per id on first install and
-refuse an update signed by another.
+nobody to be that yet; a later decision could pin a key per plugin on first install
+and refuse an update signed by another.
+
+What the dialog says a plugin reaches is what its code names, not what it does.
+Reflection and native code are named themselves, which is as far as reading can go.
 
 The command line and the viewer move nothing into place: an install waits for the
 editor's next start.
@@ -91,4 +108,4 @@ plugin with native assets for one architecture still needs its own
 `runtimes/<rid>` folders, as it would dropped in by hand.
 
 There is no Gherkin scenario: the specs project reaches the engine, and this is the
-editor.
+editor and the command line.

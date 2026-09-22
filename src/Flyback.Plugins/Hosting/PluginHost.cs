@@ -35,13 +35,7 @@ public static class PluginHost
         var problems = new List<PluginProblem>();
         var registry = new Registry(problems);
 
-        // Ordered so that two runs on the same machine see the same plugins in
-        // the same order, and therefore break priority ties the same way.
-        // A folder whose name starts with a dot is an installation in progress, never a plugin.
-        foreach (var folder in Directory.EnumerateDirectories(directory).Order(StringComparer.Ordinal))
-        {
-            if (!Path.GetFileName(folder).StartsWith('.')) LoadFolder(folder, plugins, registry, problems);
-        }
+        foreach (var folder in Folders(directory)) LoadFolder(folder, plugins, registry, problems);
 
         return new PluginCatalog(
             plugins,
@@ -54,6 +48,17 @@ public static class PluginHost
             registry.MidiInputs,
             registry.Providers);
     }
+
+    /// <summary>
+    /// The plugin folders in the order they load: the same on every run, so priority
+    /// ties break the same way, with a package's plugins after every other, so an id
+    /// one shares with a plugin shipped or copied in by hand is the package's to lose.
+    /// A folder whose name starts with a dot is an installation in progress, never a plugin.
+    /// </summary>
+    internal static IEnumerable<string> Folders(string directory) => Directory.EnumerateDirectories(directory)
+        .Where(folder => !Path.GetFileName(folder).StartsWith('.'))
+        .OrderBy(folder => File.Exists(Path.Combine(folder, PluginPackage.MarkerName)))
+        .ThenBy(folder => folder, StringComparer.Ordinal);
 
     private static void LoadFolder(
         string folder,

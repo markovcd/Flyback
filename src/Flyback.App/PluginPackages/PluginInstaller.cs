@@ -4,7 +4,7 @@ namespace Flyback.App.PluginPackages;
 
 /// <summary>
 /// Puts a package's build for this system into the plugins folder, as
-/// <c>plugins/&lt;id&gt;</c> with the package's <c>plugin.json</c> beside it.
+/// <c>plugins/&lt;plugin assembly&gt;</c> with <see cref="PluginPackage.MarkerName"/> beside it.
 /// </summary>
 /// <remarks>
 /// Installing only unpacks into <see cref="PendingName"/>; the plugin is moved into
@@ -12,13 +12,13 @@ namespace Flyback.App.PluginPackages;
 /// There is no reload, so it could not run sooner anyway, and a plugin being
 /// replaced is one this process has loaded and Windows will not let go of.
 /// <para>
-/// A folder is only ever replaced if a package put it there, which its
-/// <c>plugin.json</c> says. The plugins Flyback ships and any somebody copied in by
-/// hand have none, so no package can take their place.
+/// A folder is only ever replaced if a package put it there, which the marker says.
+/// The plugins Flyback ships and any somebody copied in by hand have none, so no
+/// package can take their place.
 /// </para>
 /// </remarks>
 /// <param name="folder">The plugins folder.</param>
-/// <param name="loaded">What this run loaded, whose ids a package may not take.</param>
+/// <param name="loaded">What this run loaded, whose assemblies a package may not bring a second copy of.</param>
 internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin> loaded)
 {
     /// <summary>Starts with a dot, so the host never scans it for plugins.</summary>
@@ -31,17 +31,18 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     {
         if (package.Refusal(platform) is { } refused) return refused;
 
-        var id = package.Manifest.Id;
-        var target = Path.Combine(folder, id);
+        var name = package.Description(package.BuildFor(platform)!).Assembly;
+        var target = Path.Combine(folder, name);
 
-        if (Directory.Exists(target) && Installed(target) is null)
-            return $"There is already a plugin in {PluginHost.DirectoryName}/{id} that was not installed from a package, and it is left alone.";
+        if (Directory.Exists(target) && !FromPackage(target))
+            return $"There is already a plugin in {PluginHost.DirectoryName}/{name} that was not installed from a package, and it is left alone.";
 
         var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
-        if (loaded.FirstOrDefault(p => p.Info.Id == id
+        if (loaded.FirstOrDefault(p =>
+                string.Equals(Path.GetFileNameWithoutExtension(p.AssemblyPath), name, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(Path.GetDirectoryName(p.AssemblyPath), Path.GetFullPath(target), comparison)) is { } other)
-            return $"{other.Info.Name} already has the id {id}.";
+            return $"{other.Info.Name} is already installed from {name}.dll.";
 
         if (!Writable()) return $"You cannot write to the plugins folder, {folder}.";
 
@@ -49,11 +50,11 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     }
 
     /// <summary>
-    /// What <paramref name="id"/> is installed as now, or waiting to be at the next
-    /// start, or null where neither.
+    /// The plugin in the folder <paramref name="name"/> installed now, or waiting to be
+    /// at the next start, or null where neither.
     /// </summary>
-    public PluginManifest? Replacing(string id) =>
-        Installed(Path.Combine(Pending, id)) ?? Installed(Path.Combine(folder, id));
+    public PluginDescription? Replacing(string name) =>
+        Installed(Path.Combine(Pending, name)) ?? Installed(Path.Combine(folder, name));
 
     /// <summary>Unpacks the build for <paramref name="platform"/> to be moved into place at the next start.</summary>
     public void Stage(PluginPackage package, string platform)
@@ -67,10 +68,10 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
         {
             package.Unpack(build, unpacking);
 
-            // Written last, over any plugin.json the build carried.
-            File.WriteAllBytes(Path.Combine(unpacking, PluginPackage.ManifestName), package.Manifest.ToJson());
+            // Written last, over any file of that name the build carried.
+            File.WriteAllText(Path.Combine(unpacking, PluginPackage.MarkerName), package.Sha256 + "\n");
 
-            var staged = Path.Combine(Pending, package.Manifest.Id);
+            var staged = Path.Combine(Pending, package.Description(build).Assembly);
 
             if (Directory.Exists(staged)) Directory.Delete(staged, recursive: true);
 
@@ -99,30 +100,30 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
 
         foreach (var staged in Directory.EnumerateDirectories(pending).Order(StringComparer.Ordinal).ToList())
         {
-            var id = Path.GetFileName(staged);
+            var name = Path.GetFileName(staged);
 
             // An unpacking cut off before it finished.
-            if (id.StartsWith('.'))
+            if (name.StartsWith('.'))
             {
                 Delete(staged);
                 continue;
             }
 
-            if (!PluginManifest.ValidId(id) || Installed(staged) is not { } manifest)
+            if (!PluginDescription.ValidFolder(name) || Installed(staged) is not { } plugin)
             {
-                problems.Add($"{id}: not a package's plugin, and removed.");
+                problems.Add($"{name}: not a package's plugin, and removed.");
                 Delete(staged);
                 continue;
             }
 
-            var target = Path.Combine(folder, id);
-            var old = Path.Combine(pending, $".old-{id}");
+            var target = Path.Combine(folder, name);
+            var old = Path.Combine(pending, $".old-{name}");
 
             try
             {
-                if (Directory.Exists(target) && Installed(target) is null)
+                if (Directory.Exists(target) && !FromPackage(target))
                 {
-                    problems.Add($"{id}: {PluginHost.DirectoryName}/{id} holds a plugin that was not installed from a package, so it was not replaced.");
+                    problems.Add($"{name}: {PluginHost.DirectoryName}/{name} holds a plugin that was not installed from a package, so it was not replaced.");
                     Delete(staged);
                     continue;
                 }
@@ -142,11 +143,11 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
                 }
 
                 Delete(old);
-                installed.Add($"{manifest.Name} {manifest.Version}");
+                installed.Add($"{plugin.Name} {plugin.Version}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                problems.Add($"{id}: not installed yet, {ex.Message}");
+                problems.Add($"{name}: not installed yet, {ex.Message}");
             }
         }
 
@@ -155,20 +156,11 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
         return (installed, problems);
     }
 
-    /// <summary>The <c>plugin.json</c> a package left in <paramref name="plugin"/>, or null for a folder with none.</summary>
-    private static PluginManifest? Installed(string plugin)
-    {
-        var path = Path.Combine(plugin, PluginPackage.ManifestName);
+    private static bool FromPackage(string plugin) => File.Exists(Path.Combine(plugin, PluginPackage.MarkerName));
 
-        try
-        {
-            return File.Exists(path) ? PluginManifest.Parse(File.ReadAllBytes(path)) : null;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            return null;
-        }
-    }
+    /// <summary>The plugin a package left in <paramref name="plugin"/>, or null for a folder no package filled.</summary>
+    private static PluginDescription? Installed(string plugin) =>
+        FromPackage(plugin) ? PluginDescription.OfFolder(plugin) : null;
 
     /// <summary>Asked of the nearest folder that exists, so that asking creates nothing.</summary>
     private bool Writable()

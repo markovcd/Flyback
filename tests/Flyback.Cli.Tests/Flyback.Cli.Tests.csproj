@@ -14,6 +14,9 @@
   -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
+
+    <!-- A real plugin build for pack-plugin to pack. -->
+    <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
   </ItemGroup>
 
   <ItemGroup>

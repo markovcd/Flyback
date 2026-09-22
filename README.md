@@ -128,6 +128,7 @@ flyback-cli check nebula.fbk --strict
 flyback-cli info nebula.fbk
 flyback-cli modules
 flyback-cli pack nebula.fbk -o nebula.fbkb
+flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj --platform win osx linux -o ripple.fbkp
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print nebula.fbk --check
 flyback-cli render nebula.fbks -o nebula.png

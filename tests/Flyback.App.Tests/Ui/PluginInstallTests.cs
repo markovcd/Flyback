@@ -7,6 +7,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
+using Flyback.Plugins.Hosting;
 using Flyback.App.Tests.PluginPackages;
 using Shouldly;
 
@@ -92,9 +93,9 @@ public sealed class PluginInstallTests : UiTest
         var window = Open();
         var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
 
-        Texts(dialog).ShouldContain("Ripple");
-        Texts(dialog).ShouldContain("Version 1.2.0, by Acme");
-        Texts(dialog).ShouldContain("Rings on water.");
+        Texts(dialog).ShouldContain(Packages.Folder);
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginAdds").Text.ShouldBe("modules, presets");
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReaches").Text.ShouldBe("nothing outside Flyback that it names");
         All<Border>(dialog).ShouldContain(b => b.Name == "pluginWarning");
         Named(dialog, "install").IsEnabled.ShouldBeTrue();
         Directory.Exists(Plugins).ShouldBeFalse("nothing is written before Install is pressed");
@@ -102,7 +103,7 @@ public sealed class PluginInstallTests : UiTest
         Press(Named(dialog, "install"));
         Pump(() => !All<ModalOverlay>(window).Any());
 
-        Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, "acme.ripple")).ShouldBeTrue();
+        Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
     }
 
     [AvaloniaFact]

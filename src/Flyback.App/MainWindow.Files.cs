@@ -2,7 +2,7 @@ using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
-using Flyback.App.PluginPackages;
+using Flyback.Plugins.Hosting;
 using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Graph;

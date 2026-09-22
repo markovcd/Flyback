@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
-using Flyback.App.PluginPackages;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
@@ -16,11 +16,42 @@ public sealed class PluginPackageTests : IDisposable
     }
 
     [Fact]
-    public void What_the_package_says_about_itself_is_read_from_its_manifest()
+    public void What_a_plugin_is_comes_from_its_assembly()
     {
-        var package = PluginPackage.Read(Packages.Described(Packages.Manifest(website: "https://example.com/ripple"), "win"));
+        var plugin = PluginPackage.Read(Packages.For("win")).Description("win");
 
-        package.Manifest.ShouldBe(new PluginManifest("acme.ripple", "Ripple", "1.2.0", "Acme", "Rings on water.", "https://example.com/ripple"));
+        plugin.Assembly.ShouldBe(Packages.Folder);
+        plugin.Name.ShouldBe(Packages.Folder, "the picture plugin names no product of its own");
+        plugin.Version.ShouldNotBeNullOrEmpty();
+        plugin.Version.ShouldNotContain("+", customMessage: "the commit the SDK appends is left off");
+    }
+
+    [Fact]
+    public void What_a_plugin_adds_comes_from_the_registry_methods_its_code_calls()
+    {
+        PluginPackage.Read(Packages.For("win")).Description("win").Adds.ShouldBe(["modules", "presets"]);
+    }
+
+    [Fact]
+    public void A_plugin_that_names_nothing_outside_Flyback_reaches_nothing()
+    {
+        PluginPackage.Read(Packages.For("win")).Description("win").Reaches.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void What_an_assembly_carried_beside_the_plugin_reaches_counts_too()
+    {
+        var package = PluginPackage.Read(Packages.With("win/Helper.dll", Packages.Networking));
+
+        package.Description("win").Reaches.ShouldContain("the network");
+    }
+
+    [Fact]
+    public void A_native_library_in_a_build_is_native_code()
+    {
+        var package = PluginPackage.Read(Packages.With("win/runtimes/win-x64/native/sound.dll", Encoding.UTF8.GetBytes("MZ not managed")));
+
+        package.Description("win").Reaches.ShouldBe([AssemblyFacts.NativeCode]);
     }
 
     [Fact]
@@ -49,29 +80,43 @@ public sealed class PluginPackageTests : IDisposable
 
         package.BuildFor("osx").ShouldBeNull();
         package.Refusal("osx").ShouldBe("It has no build for macOS, only for Windows, Linux.");
+        package.DescriptionFor("osx")!.Assembly.ShouldBe(Packages.Folder, "what it is can still be shown");
     }
 
     [Fact]
     public void A_package_with_no_build_at_all_cannot_be_installed_anywhere()
     {
-        var package = PluginPackage.Read(Packages.For());
+        var package = PluginPackage.Read(Packages.Zip([("readme.txt", [1])]));
 
         package.Builds.ShouldBeEmpty();
+        package.DescriptionFor("win").ShouldBeNull();
         package.Refusal("win").ShouldBe("It holds no plugin for any system.");
     }
 
     [Fact]
-    public void A_folder_without_an_assembly_at_its_top_is_not_a_build()
+    public void A_folder_without_a_plugin_assembly_at_its_top_is_not_a_build()
     {
         var package = PluginPackage.Read(Packages.Zip(
         [
-            ("plugin.json", Encoding.UTF8.GetBytes(Packages.Manifest())),
             ("linux/readme.txt", [1]),
             ("linux/deeper/Flyback.Plugins.Picture.dll", Packages.Assembly),
-            ("osx/Flyback.Core.dll", Packages.Assembly),
+            ("osx/Flyback.Core.dll", File.ReadAllBytes(typeof(Flyback.Core.Graph.NodeDef).Assembly.Location)),
+            ("any/Helper.dll", Packages.Networking),
         ]));
 
-        package.Builds.ShouldBeEmpty("a readme, a nested assembly and a copy of the host's own are not a plugin");
+        package.Builds.ShouldBeEmpty("a readme, a nested assembly, the host's own and one that is no plugin are not a build");
+    }
+
+    [Fact]
+    public void A_build_with_two_plugin_assemblies_is_refused()
+    {
+        var copy = Packages.Zip(
+        [
+            ($"win/{Packages.AssemblyName}", Packages.Assembly),
+            ("win/Second.dll", Packages.Assembly),
+        ]);
+
+        Should.Throw<InvalidDataException>(() => PluginPackage.Read(copy)).Message.ShouldContain("2 plugin assemblies");
     }
 
     [Fact]
@@ -110,14 +155,6 @@ public sealed class PluginPackageTests : IDisposable
     }
 
     [Fact]
-    public void A_package_that_does_not_say_what_it_is_is_refused()
-    {
-        var refused = Should.Throw<InvalidDataException>(() => PluginPackage.Read(Packages.Zip([($"win/{Packages.AssemblyName}", Packages.Assembly)])));
-
-        refused.Message.ShouldBe("It has no plugin.json saying what it is.");
-    }
-
-    [Fact]
     public void Something_that_is_not_a_zip_is_refused()
     {
         Should.Throw<InvalidDataException>(() => PluginPackage.Read(Encoding.UTF8.GetBytes("MZ not a zip")))
@@ -127,82 +164,31 @@ public sealed class PluginPackageTests : IDisposable
     [Theory]
     [InlineData("")]
     [InlineData("../plugins")]
-    [InlineData("a/b")]
     [InlineData(".hidden")]
     [InlineData("trailing.")]
     [InlineData("CON")]
     [InlineData("nul.plugin")]
     [InlineData("ripple\u202Egnp")]
-    public void An_id_a_folder_cannot_safely_be_named_after_is_refused(string id)
+    public void A_name_a_folder_cannot_safely_take_is_refused(string name)
     {
-        var refused = Should.Throw<InvalidDataException>(() => PluginPackage.Read(Packages.Described(Packages.Manifest(id: id), "win")));
-
-        refused.Message.ShouldStartWith("Its id is not one a folder");
-    }
-
-    [Theory]
-    [InlineData("{\"id\": \"a\", \"version\": \"1\"}", "name")]
-    [InlineData("{\"id\": \"a\", \"name\": \"A\"}", "version")]
-    [InlineData("{\"name\": \"A\", \"version\": \"1\"}", "id")]
-    [InlineData("{\"id\": \"a\", \"name\": \"\u200B\", \"version\": \"1\"}", "name")]
-    public void A_manifest_missing_a_required_field_is_refused(string manifest, string field)
-    {
-        Should.Throw<InvalidDataException>(() => PluginPackage.Read(Packages.Described(manifest, "win")))
-            .Message.ShouldBe($"Its plugin.json does not say what its {field} is.");
+        PluginDescription.ValidFolder(name).ShouldBeFalse();
     }
 
     [Fact]
-    public void A_manifest_saying_one_thing_twice_is_refused()
+    public void Nothing_an_assembly_says_can_change_how_the_rest_is_drawn()
     {
-        var manifest = "{\"id\": \"a\", \"name\": \"Ripple\", \"name\": \"Flyback update\", \"version\": \"1\"}";
-
-        Should.Throw<InvalidDataException>(() => PluginPackage.Read(Packages.Described(manifest, "win")));
-    }
-
-    [Fact]
-    public void Nothing_in_the_manifest_can_change_how_the_rest_of_it_is_drawn()
-    {
-        var manifest = Packages.Manifest(
-            name: "Ripple\u202Eexe.txt\u200B",
-            author: "Acme\u0007\tInc",
-            description: "One\u2028Two\n\n\n\nThree\u0000");
-
-        var read = PluginPackage.Read(Packages.Described(manifest, "win")).Manifest;
-
-        read.Name.ShouldBe("Rippleexe.txt");
-        read.Author.ShouldBe("Acme Inc");
-        read.Description.ShouldBe("One Two\n\nThree");
+        PluginDescription.Line("Ripple\u202Eexe.txt\u200B", 64).ShouldBe("Rippleexe.txt");
+        PluginDescription.Line("Acme\u0007\tInc", 64).ShouldBe("Acme Inc");
+        PluginDescription.Paragraph("One\u2028Two\n\n\n\nThree\u0000", 1000).ShouldBe("One Two\n\nThree");
     }
 
     [Fact]
     public void Text_longer_than_it_may_be_shown_is_cut()
     {
-        var read = PluginPackage.Read(Packages.Described(Packages.Manifest(name: new string('a', 500)), "win")).Manifest;
+        var cut = PluginDescription.Line(new string('a', 500), 64);
 
-        read.Name.Length.ShouldBe(64);
-        read.Name.ShouldEndWith("…");
-    }
-
-    [Theory]
-    [InlineData("javascript:alert(1)", null)]
-    [InlineData("file:///C:/Windows", null)]
-    [InlineData("https://flyback.example@evil.example/", null)]
-    [InlineData("not an address", null)]
-    [InlineData("http://example.com:8080/a?b=c", "http://example.com:8080/a?b=c")]
-    public void Only_a_plain_web_address_is_kept(string website, string? kept)
-    {
-        PluginPackage.Read(Packages.Described(Packages.Manifest(website: website), "win")).Manifest.Website.ShouldBe(kept);
-    }
-
-    [Fact]
-    public void A_host_that_looks_like_another_is_spelled_out_in_punycode()
-    {
-        // A Cyrillic а in place of the Latin one.
-        var kept = PluginPackage.Read(Packages.Described(Packages.Manifest(website: "https://exаmple.com/x"), "win")).Manifest.Website;
-
-        kept.ShouldNotBeNull();
-        kept.ShouldStartWith("https://xn--");
-        kept.ShouldEndWith(".com/x");
+        cut.Length.ShouldBe(64);
+        cut.ShouldEndWith("…");
     }
 
     [Fact]
@@ -253,9 +239,26 @@ public sealed class PluginPackageTests : IDisposable
         Directory.EnumerateFiles(target, "*", SearchOption.AllDirectories)
             .Select(f => Path.GetRelativePath(target, f).Replace('\\', '/'))
             .Order(StringComparer.Ordinal)
-            .ShouldBe(["Flyback.Plugins.Picture.deps.json", Packages.AssemblyName, "runtimes/linux/native/lib.bin"]);
+            .ShouldBe(["Flyback.Plugins.Picture.deps.json", Packages.AssemblyName, "runtimes/linux/native/readme.txt"]);
 
         File.ReadAllBytes(Path.Combine(target, Packages.AssemblyName)).ShouldBe(Packages.Assembly);
+    }
+
+    [Fact]
+    public void Packing_leaves_out_the_hosts_own_assemblies_and_writes_forward_slashes()
+    {
+        var build = Path.Combine(folder, "build");
+
+        Directory.CreateDirectory(Path.Combine(build, "runtimes", "win-x64"));
+        File.WriteAllBytes(Path.Combine(build, Packages.AssemblyName), Packages.Assembly);
+        File.WriteAllBytes(Path.Combine(build, "Flyback.Core.dll"), [1]);
+        File.WriteAllBytes(Path.Combine(build, "Flyback.Plugins.pdb"), [1]);
+        File.WriteAllBytes(Path.Combine(build, "runtimes", "win-x64", "readme.txt"), [1]);
+
+        var package = PluginPackage.Read(PluginPackage.Pack([("any", build)]));
+
+        package.Files("any").Select(f => f.Path).Order(StringComparer.Ordinal)
+            .ShouldBe([Packages.AssemblyName, "runtimes/win-x64/readme.txt"]);
     }
 
     private sealed class EndlessStream : Stream

@@ -1,6 +1,7 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
@@ -32,11 +33,12 @@ public sealed partial class MainWindow
         var platform = PluginPackage.ThisPlatform;
         var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
         var refusal = installer is null ? "This window has no plugins folder." : installer.Refusal(package, platform);
-        var replacing = installer?.Replacing(package.Manifest.Id);
+        var replacing = package.DescriptionFor(platform) is { } plugin ? installer?.Replacing(plugin.Assembly) : null;
 
         if (!await this.ShowDialog<bool>(PluginInstallView.Title, PluginInstallView.View(package, platform, refusal, replacing))) return;
 
-        var name = $"{package.Manifest.Name} {package.Manifest.Version}";
+        var described = package.DescriptionFor(platform)!;
+        var name = $"{described.Name} {described.Version}";
 
         try
         {

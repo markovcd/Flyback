@@ -1,4 +1,4 @@
-using Flyback.App.PluginPackages;
+using Flyback.Plugins.Hosting;
 using Flyback.App.Updates;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
