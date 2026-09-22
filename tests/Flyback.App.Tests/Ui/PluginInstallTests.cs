@@ -108,6 +108,31 @@ public sealed class PluginInstallTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_package_shows_the_plugins_preview_author_and_tags()
+    {
+        var window = Open();
+        var dialog = Dropped(window, Write(Packages.ForSample()));
+
+        Texts(dialog).ShouldContain("Sample modules");
+        Texts(dialog).ShouldContain(t => t != null && t.EndsWith(", by Flyback", StringComparison.Ordinal));
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginTags").Text.ShouldBe("example, ripple, test-fixture");
+
+        var preview = All<Image>(dialog).Single(i => i.Name == "pluginPreview");
+
+        preview.Source.ShouldNotBeNull().Size.Width.ShouldBe(160);
+    }
+
+    [AvaloniaFact]
+    public void A_package_without_tags_or_a_preview_shows_neither()
+    {
+        var window = Open();
+        var dialog = Dropped(window, Write(Packages.For("win")));
+
+        All<SelectableTextBlock>(dialog).ShouldNotContain(t => t.Name == "pluginTags");
+        All<Image>(dialog).ShouldNotContain(i => i.Name == "pluginPreview");
+    }
+
+    [AvaloniaFact]
     public void Installing_with_restart_ticked_starts_Flyback_again_and_closes_this_window()
     {
         var relaunched = 0;

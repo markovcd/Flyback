@@ -37,6 +37,22 @@
     into.appendChild(row);
   }
 
+  /** Tags, each linking to the shelf of plugins that carry it. */
+  function tagged(tags, into) {
+    var row = make("div", { class: "chips" });
+    tags.forEach(function (tag) {
+      row.appendChild(make("a", { class: "chip", href: "plugins.html?tag=" + encodeURIComponent(tag) }, tag));
+    });
+    into.appendChild(row);
+  }
+
+  /** The plugin's own preview, linking to its page where href is given. */
+  function frame(plugin, href) {
+    var box = make(href ? "a" : "div", href ? { class: "frame", href: href, tabindex: "-1" } : { class: "frame" });
+    box.appendChild(make("img", { src: plugin.preview, alt: "", loading: "lazy" }));
+    return box;
+  }
+
   /** Name, version and author: the lines every view of a plugin starts with. */
   function facts(plugin) {
     var row = make("div", { class: "facts" });
@@ -81,7 +97,7 @@
 
   function shelf() {
     var params = new URLSearchParams(location.search);
-    var state = { q: params.get("q") || "", platform: params.get("platform") || "", page: +params.get("page") || 1 };
+    var state = { q: params.get("q") || "", tag: params.get("tag") || "", platform: params.get("platform") || "", page: +params.get("page") || 1 };
     var search = document.getElementById("search");
     var grid = document.getElementById("shelf");
     var pager = document.getElementById("pager");
@@ -93,6 +109,7 @@
     function remember() {
       var query = new URLSearchParams();
       if (state.q) query.set("q", state.q);
+      if (state.tag) query.set("tag", state.tag);
       if (state.platform) query.set("platform", state.platform);
       if (state.page > 1) query.set("page", state.page);
       var text = query.toString();
@@ -102,6 +119,7 @@
     function card(plugin) {
       var href = "plugin.html?id=" + plugin.id;
       var article = make("article", { class: "card plugin" + (plugin.published ? "" : " unpublished") });
+      if (plugin.preview) article.appendChild(frame(plugin, href));
 
       var header = make("header");
       header.appendChild(make("a", { href: href }, plugin.name));
@@ -112,6 +130,7 @@
       body.appendChild(facts(plugin));
       if (plugin.description) body.appendChild(make("p", null, plugin.description));
       if (plugin.adds.length) chips(plugin.adds, body, false);
+      if (plugin.tags.length) tagged(plugin.tags, body);
 
       var foot = make("div", { class: "foot" });
       foot.appendChild(make("span", null, day(plugin.submitted)));
@@ -127,6 +146,7 @@
       remember();
       var query = new URLSearchParams({ page: state.page });
       if (state.q) query.set("q", state.q);
+      if (state.tag) query.set("tag", state.tag);
       if (state.platform) query.set("platform", state.platform);
 
       fetch(api + "plugins?" + query).then(function (r) { return r.json(); }).then(function (found) {
@@ -153,6 +173,12 @@
       });
       row.appendChild(chip);
     });
+
+    if (state.tag) {
+      var tag = make("button", { type: "button", class: "chip", "aria-pressed": "true", title: "Show every tag" }, state.tag + " ×");
+      tag.addEventListener("click", function () { state.tag = ""; state.page = 1; tag.remove(); load(); });
+      row.appendChild(tag);
+    }
 
     search.addEventListener("input", function () {
       clearTimeout(timer);
@@ -181,6 +207,12 @@
       if (typeof value === "string") dd.textContent = value;
       else dd.appendChild(value);
       dl.appendChild(dd);
+    }
+
+    if (plugin.tags.length) {
+      var tags = make("div");
+      tagged(plugin.tags, tags);
+      row("Tags", tags);
     }
 
     var adds = make("div");
@@ -248,7 +280,11 @@
         "Read from the package without running it. Flyback shows the same when the package is opened, and installs nothing until asked."));
       card.appendChild(body);
 
-      page.replaceChildren(text, card);
+      var side = make("div", { class: "side" });
+      if (plugin.preview) side.appendChild(frame(plugin));
+      side.appendChild(card);
+
+      page.replaceChildren(text, side);
     }).catch(function () {
       page.replaceChildren(make("p", { class: "empty" }, "There is no such plugin."));
     });
@@ -291,6 +327,7 @@
           var card = make("article", { class: "card" });
           card.appendChild(make("header", null, answer.name + " " + answer.version));
           var body = make("div", { class: "body" });
+          if (answer.preview) body.appendChild(frame(answer));
           if (answer.description) body.appendChild(make("p", null, answer.description));
           described(answer, body);
           card.appendChild(body);

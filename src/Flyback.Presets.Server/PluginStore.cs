@@ -11,6 +11,7 @@ internal sealed record StoredPlugin(
     string Version,
     string Author,
     string Description,
+    IReadOnlyList<string> Tags,
     IReadOnlyList<string> Adds,
     IReadOnlyList<string> Reaches,
     IReadOnlyList<string> Builds,
@@ -20,7 +21,8 @@ internal sealed record StoredPlugin(
     long Size,
     DateTimeOffset Submitted,
     long Downloads,
-    bool Published);
+    bool Published,
+    string? PreviewType);
 
 /// <summary>A page of plugins and how many match in all.</summary>
 internal sealed record PluginPage(IReadOnlyList<StoredPlugin> Items, int Total);
@@ -39,7 +41,7 @@ internal sealed class PluginStore
 
     private const string Columns = """
         p.id, p.assembly, p.name, p.version, p.author, p.description, p.adds, p.reaches, p.builds, p.contract,
-        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published
+        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published, p.tags, p.preview_type
         """;
 
     private readonly string connection;
@@ -70,10 +72,63 @@ internal sealed class PluginStore
                 size INTEGER NOT NULL,
                 submitted_at TEXT NOT NULL,
                 downloads INTEGER NOT NULL DEFAULT 0,
-                published INTEGER NOT NULL DEFAULT 0
+                published INTEGER NOT NULL DEFAULT 0,
+                tags TEXT NOT NULL,
+                preview BLOB,
+                preview_type TEXT
             );
             CREATE INDEX IF NOT EXISTS plugins_submitted ON plugins(submitted_at);
             """);
+
+        using var columns = db.CreateCommand();
+        columns.CommandText = "SELECT count(*) FROM pragma_table_info('plugins') WHERE name = 'tags'";
+
+        if (Convert.ToInt32(columns.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
+        {
+            Run(db, """
+                ALTER TABLE plugins ADD COLUMN tags TEXT NOT NULL DEFAULT '';
+                ALTER TABLE plugins ADD COLUMN preview BLOB;
+                ALTER TABLE plugins ADD COLUMN preview_type TEXT;
+                """);
+            Reread(db);
+        }
+    }
+
+    /// <summary>Fills in the tags and preview of packages stored before either was read.</summary>
+    private static void Reread(SqliteConnection db)
+    {
+        var stored = new List<(string Id, string Name, byte[] File)>();
+
+        using (var query = db.CreateCommand())
+        {
+            query.CommandText = "SELECT id, file_name, file FROM plugins";
+
+            using var reader = query.ExecuteReader();
+
+            while (reader.Read()) stored.Add((reader.GetString(0), reader.GetString(1), (byte[])reader.GetValue(2)));
+        }
+
+        foreach (var (id, name, file) in stored)
+        {
+            PluginSubmission read;
+
+            try
+            {
+                read = PluginSubmissions.Read(name, file);
+            }
+            catch (InvalidDataException)
+            {
+                continue;
+            }
+
+            using var update = db.CreateCommand();
+            update.CommandText = "UPDATE plugins SET tags = $tags, preview = $preview, preview_type = $preview_type WHERE id = $id";
+            update.Parameters.AddWithValue("$id", id);
+            update.Parameters.AddWithValue("$tags", Joined(read.Tags));
+            update.Parameters.AddWithValue("$preview", (object?)read.Preview?.Bytes ?? DBNull.Value);
+            update.Parameters.AddWithValue("$preview_type", (object?)read.Preview?.MediaType ?? DBNull.Value);
+            update.ExecuteNonQuery();
+        }
     }
 
     /// <summary>Stores the package unpublished, or returns null where the same package is already here.</summary>
@@ -85,8 +140,10 @@ internal sealed class PluginStore
         using var insert = db.CreateCommand();
         insert.CommandText = """
             INSERT OR IGNORE INTO plugins
-                (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at)
-            VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at)
+                (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at,
+                 tags, preview, preview_type)
+            VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at,
+                 $tags, $preview, $preview_type)
             """;
         insert.Parameters.AddWithValue("$id", id);
         insert.Parameters.AddWithValue("$assembly", submission.Assembly);
@@ -103,6 +160,9 @@ internal sealed class PluginStore
         insert.Parameters.AddWithValue("$file", submission.File);
         insert.Parameters.AddWithValue("$size", submission.File.LongLength);
         insert.Parameters.AddWithValue("$at", at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+        insert.Parameters.AddWithValue("$tags", Joined(submission.Tags));
+        insert.Parameters.AddWithValue("$preview", (object?)submission.Preview?.Bytes ?? DBNull.Value);
+        insert.Parameters.AddWithValue("$preview_type", (object?)submission.Preview?.MediaType ?? DBNull.Value);
 
         return insert.ExecuteNonQuery() == 0 ? null : Find(id, unpublished: true);
     }
@@ -120,10 +180,11 @@ internal sealed class PluginStore
     }
 
     /// <summary>
-    /// Newest first, matching all of <paramref name="search"/>'s words, and only those
-    /// with a build that would install on <paramref name="platform"/> where it is given.
+    /// Newest first, matching all of <paramref name="search"/>'s words, tagged <paramref name="tag"/>
+    /// where it is given, and only those with a build that would install on <paramref name="platform"/>
+    /// where it is given.
     /// </summary>
-    public PluginPage List(string? search, string? platform, int page, int size, bool unpublished = false)
+    public PluginPage List(string? search, string? platform, int page, int size, bool unpublished = false, string? tag = null)
     {
         var where = new List<string>();
 
@@ -136,8 +197,14 @@ internal sealed class PluginStore
 
         for (var i = 0; i < words.Length && i < 8; i++)
         {
-            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\' OR p.assembly LIKE $w{i} ESCAPE '\\')");
+            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\' OR p.assembly LIKE $w{i} ESCAPE '\\' OR p.tags LIKE $w{i} ESCAPE '\\')");
             query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i]) + "%");
+        }
+
+        if (!string.IsNullOrEmpty(tag))
+        {
+            where.Add("instr(char(31) || p.tags || char(31), char(31) || $tag || char(31)) > 0");
+            query.Parameters.AddWithValue("$tag", tag);
         }
 
         if (!string.IsNullOrEmpty(platform))
@@ -177,7 +244,7 @@ internal sealed class PluginStore
         {
             if (!reader.Read()) return null;
 
-            found = (Row(reader), (byte[])reader.GetValue(16));
+            found = (Row(reader), (byte[])reader.GetValue(18));
         }
 
         if (counted)
@@ -189,6 +256,19 @@ internal sealed class PluginStore
         }
 
         return found;
+    }
+
+    /// <summary>The plugin's preview, or null where it has none.</summary>
+    public (string Type, byte[] Bytes)? Preview(string id, bool unpublished = false)
+    {
+        using var db = Open();
+        using var query = db.CreateCommand();
+        query.CommandText = $"SELECT p.preview_type, p.preview FROM plugins p WHERE p.id = $id AND p.preview IS NOT NULL {Visible(unpublished)}";
+        query.Parameters.AddWithValue("$id", id);
+
+        using var reader = query.ExecuteReader();
+
+        return reader.Read() ? (reader.GetString(0), (byte[])reader.GetValue(1)) : null;
     }
 
     /// <summary>Shows or hides the plugin, false where there is no such plugin.</summary>
@@ -244,6 +324,7 @@ internal sealed class PluginStore
         reader.GetString(3),
         reader.GetString(4),
         reader.GetString(5),
+        Split(reader.GetString(16)),
         Split(reader.GetString(6)),
         Split(reader.GetString(7)),
         Split(reader.GetString(8)),
@@ -253,5 +334,6 @@ internal sealed class PluginStore
         reader.GetInt64(12),
         DateTimeOffset.Parse(reader.GetString(13), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
         reader.GetInt64(14),
-        reader.GetInt64(15) != 0);
+        reader.GetInt64(15) != 0,
+        reader.IsDBNull(17) ? null : reader.GetString(17));
 }

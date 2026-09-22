@@ -36,7 +36,13 @@ the plugin is a second account of it that can disagree with the first.
 **What the dialog shows is read from the plugin's metadata, and none of its code
 runs.** Its name, version, author and description come from the assembly's own
 attributes (`Product`, `InformationalVersion`, `Company`, `Description`), as its
-project set them. What it adds comes from which `IPluginRegistry` methods its code
+project set them. Its tags come from `AssemblyMetadata("Tags", …)`, split at commas
+and semicolons and tidied as a patch's tags are. Its preview is the one image it
+embeds as a resource named `preview.png` or `preview.webp`, of up to 1 MB, and its
+first bytes must be the kind its name says; two, a larger one or a mislabelled one
+refuses the package, since each is a mistake in the project rather than something
+to show around. Everything a package says about itself is in the assembly, so a
+plugin copied in by hand says the same. What it adds comes from which `IPluginRegistry` methods its code
 calls: modules, presets, a sound output, a MIDI input, an assistant, a secret store.
 What it reaches comes from what any assembly in the build names: the network, files,
 other programs, the registry, native code (a P/Invoke, or a binary with no metadata),

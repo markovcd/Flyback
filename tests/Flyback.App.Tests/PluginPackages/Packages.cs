@@ -19,6 +19,12 @@ internal static class Packages
     /// <summary>The folder the picture plugin is installed into.</summary>
     public const string Folder = "Flyback.Plugins.Picture";
 
+    /// <summary>The sample plugin, whose project sets its tags and embeds a preview.</summary>
+    public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
+
+    /// <summary>A package with the sample plugin for Windows.</summary>
+    public static byte[] ForSample() => Zip([("win/Flyback.Plugins.Sample.dll", Sample)]);
+
     /// <summary>An assembly a plugin might carry beside it, whose code reaches the network.</summary>
     public static byte[] Networking { get; } = File.ReadAllBytes(typeof(System.Net.Http.HttpClient).Assembly.Location);
 

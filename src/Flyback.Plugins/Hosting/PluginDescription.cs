@@ -5,6 +5,7 @@ using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
+using Flyback.Core.Graph;
 
 namespace Flyback.Plugins.Hosting;
 
@@ -12,16 +13,20 @@ namespace Flyback.Plugins.Hosting;
 /// What one assembly says about itself and what its code can reach, read from its
 /// metadata without running any of it.
 /// </summary>
+/// <param name="Metadata">Its <c>AssemblyMetadata</c> pairs, by key.</param>
 /// <param name="Adds">The kinds of thing it can register, from the registry methods it calls.</param>
 /// <param name="Reaches">What outside Flyback its code names: the network, files, other programs.</param>
+/// <param name="Previews">The resources it embeds under a preview's name.</param>
 internal sealed record AssemblyFacts(
     string Name,
     bool IsPlugin,
     IReadOnlyDictionary<string, string> Attributes,
+    IReadOnlyDictionary<string, string> Metadata,
     Version? Version,
     IReadOnlySet<string> Adds,
     IReadOnlySet<string> Reaches,
-    IReadOnlyList<AssemblyName> References)
+    IReadOnlyList<AssemblyName> References,
+    IReadOnlyList<EmbeddedPreview> Previews)
 {
     /// <summary>The facts of a managed assembly, or null for anything else — a native library, a text file.</summary>
     public static AssemblyFacts? Of(Stream image)
@@ -66,17 +71,21 @@ internal sealed record AssemblyFacts(
                 if ((metadata.GetMethodDefinition(handle).Attributes & MethodAttributes.PinvokeImpl) != 0) reaches.Add(NativeCode);
             }
 
+            var (attributes, pairs) = StringAttributes(metadata, assembly);
+
             return new AssemblyFacts(
                 metadata.GetString(assembly.Name),
                 ImplementsPlugin(metadata),
-                StringAttributes(metadata, assembly),
+                attributes,
+                pairs,
                 assembly.Version,
                 adds,
                 reaches,
                 [.. metadata.AssemblyReferences.Select(h => metadata.GetAssemblyReference(h)).Select(r =>
-                    new AssemblyName(metadata.GetString(r.Name)) { Version = r.Version })]);
+                    new AssemblyName(metadata.GetString(r.Name)) { Version = r.Version })],
+                PreviewsOf(reader, metadata));
         }
-        catch (BadImageFormatException)
+        catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
         {
             return null;
         }
@@ -159,10 +168,15 @@ internal sealed record AssemblyFacts(
         return false;
     }
 
-    /// <summary>The assembly's own string attributes — <c>AssemblyProduct</c>, <c>AssemblyCompany</c> and the rest — by short name.</summary>
-    private static Dictionary<string, string> StringAttributes(MetadataReader metadata, AssemblyDefinition assembly)
+    /// <summary>
+    /// The assembly's own string attributes — <c>AssemblyProduct</c>, <c>AssemblyCompany</c> and the rest — by
+    /// short name, and its <c>AssemblyMetadata</c> pairs by key.
+    /// </summary>
+    private static (Dictionary<string, string> Attributes, Dictionary<string, string> Metadata) StringAttributes(
+        MetadataReader metadata, AssemblyDefinition assembly)
     {
         var found = new Dictionary<string, string>(StringComparer.Ordinal);
+        var pairs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var handle in assembly.GetCustomAttributes())
         {
@@ -183,12 +197,56 @@ internal sealed record AssemblyFacts(
                 var value = attribute.DecodeValue(StringsOnly.Instance);
 
                 if (value.FixedArguments is [{ Value: string text }])
-                    found[metadata.GetString(type.Name).Replace("Attribute", "", StringComparison.Ordinal)] = text;
+                    found[ShortName(metadata.GetString(type.Name))] = text;
+                else if (value.FixedArguments is [{ Value: string key }, { Value: string pair }]
+                    && metadata.GetString(type.Name) == nameof(AssemblyMetadataAttribute))
+                    pairs[key] = pair;
             }
             catch (Exception ex) when (ex is BadImageFormatException or NotSupportedException)
             {
-                // An attribute whose arguments are not a string is not one of these.
+                // An attribute whose arguments are not strings is not one of these.
             }
+        }
+
+        return (found, pairs);
+    }
+
+    /// <summary><c>AssemblyProductAttribute</c> as <c>Product</c>.</summary>
+    private static string ShortName(string type)
+    {
+        var name = type.EndsWith("Attribute", StringComparison.Ordinal) ? type[..^"Attribute".Length] : type;
+
+        return name.StartsWith("Assembly", StringComparison.Ordinal) ? name["Assembly".Length..] : name;
+    }
+
+    /// <summary>The resource names a preview is embedded under, and the kind of image each must be.</summary>
+    public static readonly IReadOnlyDictionary<string, string> PreviewNames =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["preview.png"] = "image/png", ["preview.webp"] = "image/webp" };
+
+    /// <summary>The largest preview a plugin may embed.</summary>
+    public const int PreviewLimit = 1 << 20;
+
+    private static List<EmbeddedPreview> PreviewsOf(PEReader reader, MetadataReader metadata)
+    {
+        var found = new List<EmbeddedPreview>();
+
+        foreach (var handle in metadata.ManifestResources)
+        {
+            var resource = metadata.GetManifestResource(handle);
+            var name = metadata.GetString(resource.Name);
+
+            if (!resource.Implementation.IsNil || !PreviewNames.ContainsKey(name)) continue;
+
+            var directory = reader.PEHeaders.CorHeader!.ResourcesDirectory;
+            var blob = reader.GetSectionData(directory.RelativeVirtualAddress).GetReader(0, directory.Size);
+
+            blob.Offset = (int)Math.Min(resource.Offset, int.MaxValue);
+
+            var length = blob.ReadUInt32();
+
+            found.Add(length > PreviewLimit
+                ? new EmbeddedPreview(name, length, null)
+                : new EmbeddedPreview(name, length, blob.ReadBytes((int)length)));
         }
 
         return found;
@@ -210,14 +268,53 @@ internal sealed record AssemblyFacts(
     }
 }
 
+/// <summary>A resource an assembly embeds under a preview's name, without its bytes where it is too large to be one.</summary>
+internal sealed record EmbeddedPreview(string Name, long Length, byte[]? Bytes);
+
+/// <summary>The one image a plugin shows itself with.</summary>
+/// <param name="MediaType"><c>image/png</c> or <c>image/webp</c>.</param>
+internal sealed record PluginPreview(string MediaType, byte[] Bytes)
+{
+    /// <summary>The one preview an assembly embeds, or null for none.</summary>
+    /// <exception cref="InvalidDataException">Where there are two, or it is too large, or it is not the image its name says.</exception>
+    public static PluginPreview? Of(IReadOnlyList<EmbeddedPreview> previews)
+    {
+        if (previews.Count == 0) return null;
+
+        if (previews.Count > 1)
+            throw new InvalidDataException($"Its plugin assembly embeds {string.Join(" and ", previews.Select(p => p.Name))}, where a plugin has one preview.");
+
+        var (name, length, bytes) = previews[0];
+
+        if (bytes is null)
+            throw new InvalidDataException($"Its preview, {name}, is {length >> 10} KB, larger than the {AssemblyFacts.PreviewLimit >> 20} MB a preview may be.");
+
+        var type = AssemblyFacts.PreviewNames[name];
+
+        if (!Looks(type, bytes))
+            throw new InvalidDataException($"Its preview, {name}, is not a {(type == "image/png" ? "PNG" : "WebP")} image.");
+
+        return new PluginPreview(type, bytes);
+    }
+
+    /// <summary>Whether <paramref name="bytes"/> start the way an image of <paramref name="type"/> does.</summary>
+    private static bool Looks(string type, byte[] bytes) => type == "image/png"
+        ? bytes.AsSpan().StartsWith(PngSignature)
+        : bytes.Length >= 12 && bytes.AsSpan(0, 4).SequenceEqual("RIFF"u8) && bytes.AsSpan(8, 4).SequenceEqual("WEBP"u8);
+
+    private static ReadOnlySpan<byte> PngSignature => [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+}
+
 /// <summary>
 /// What a plugin's build says it is and what it can do, as the install dialog shows it:
 /// the plugin assembly's own attributes, and what the code of every assembly in the build
 /// names. Every string is cleaned for showing.
 /// </summary>
 /// <param name="Assembly">The plugin assembly's name, which is also the folder it is installed into.</param>
+/// <param name="Tags">Its <c>AssemblyMetadata("Tags", …)</c>, tidied as a patch's tags are.</param>
 /// <param name="Adds">What it can register: modules, presets, a sound output and so on.</param>
 /// <param name="Reaches">What outside Flyback its code names, from any assembly in the build.</param>
+/// <param name="Preview">The image it embeds as <c>preview.png</c> or <c>preview.webp</c>, or null for none.</param>
 /// <param name="Compiled">
 /// Every assembly in the build and what it was compiled against, the plugin's first.
 /// A helper the plugin carries is compiled against the contract as much as the plugin
@@ -229,8 +326,10 @@ internal sealed partial record PluginDescription(
     string Version,
     string Author,
     string Description,
+    IReadOnlyList<string> Tags,
     IReadOnlyList<string> Adds,
     IReadOnlyList<string> Reaches,
+    PluginPreview? Preview,
     IReadOnlyList<(string Assembly, IReadOnlyList<AssemblyName> References)> Compiled)
 {
     /// <summary>
@@ -264,7 +363,10 @@ internal sealed partial record PluginDescription(
     /// Describes a build from its files, each by its path inside the build and a way to
     /// open it.
     /// </summary>
-    /// <exception cref="InvalidDataException">Where the build has more than one plugin assembly at its top.</exception>
+    /// <exception cref="InvalidDataException">
+    /// Where the build has more than one plugin assembly at its top, or the plugin's
+    /// preview is not one image of the kind and size a preview may be.
+    /// </exception>
     /// <returns>Null for a build with no plugin assembly at its top.</returns>
     public static PluginDescription? Of(IEnumerable<(string Path, Func<Stream> Open)> files)
     {
@@ -312,10 +414,18 @@ internal sealed partial record PluginDescription(
             Line(VersionOf(entry), 32),
             Line(Named(entry, "Company"), 64),
             Paragraph(Named(entry, "Description"), 1000),
+            TagsOf(entry),
             [.. adds],
             [.. reaches],
+            PluginPreview.Of(entry.Previews),
             [.. compiled.OrderBy(facts => facts == entry ? 0 : 1).Select(facts => (facts.Name, facts.References))]);
     }
+
+    /// <summary>The <c>Tags</c> pair split at commas and semicolons.</summary>
+    private static List<string> TagsOf(AssemblyFacts facts) =>
+        facts.Metadata.TryGetValue("Tags", out var tags)
+            ? Patch.TidiedTags(tags.Split([',', ';']).Select(t => Line(t, 64))) ?? []
+            : [];
 
     /// <summary>Describes a plugin folder already on disk.</summary>
     public static PluginDescription? OfFolder(string folder)

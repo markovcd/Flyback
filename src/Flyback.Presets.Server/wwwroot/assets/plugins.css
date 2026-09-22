@@ -2,7 +2,9 @@
 
 .shelf-head + .note { max-width: var(--measure); margin: 0 0 24px; }
 
-.card.plugin { display: flex; flex-direction: column; }
+.card.plugin { display: flex; flex-direction: column; overflow: hidden; }
+.card.plugin > .frame { margin: -16px -18px 14px; }
+.card.plugin .frame img, .plugin-page .frame img, #received .frame img { object-fit: contain; }
 .card.plugin > header a { color: var(--bright); text-decoration: none; }
 .card.plugin > header a:hover { color: var(--attention); }
 .card.plugin > .body { flex: 1; display: flex; flex-direction: column; gap: 10px; }
@@ -27,6 +29,8 @@ dl.said dd { margin: 0; color: var(--label); min-width: 0; }
 .plugin-page .facts { margin-top: 18px; font-size: 14px; }
 .plugin-page .actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
 .plugin-page .card .quiet { margin: 16px 0 0; font-size: 13.5px; }
+.plugin-page .side { display: grid; gap: 20px; min-width: 0; }
+.plugin-page .frame, #received .frame { border: 1px solid var(--edge); border-radius: 8px; }
 
 #received { margin-top: 24px; }
 

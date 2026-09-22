@@ -88,6 +88,9 @@ public sealed class PackPluginCommandTests : IDisposable
         code.ShouldBe(Exit.Ok);
         Written.Builds.ShouldBe(["win", "linux", "any"]);
         Written.Files("any").ShouldNotContain(f => f.Path.Contains('/'), "the other runtimes' builds are not part of the portable one");
+        output.ShouldContain("Sample modules");
+        output.ShouldContain("tags      example, ripple, test-fixture");
+        output.ShouldContain("preview   image/png, 12 KB");
         output.ShouldContain("adds      modules");
         output.ShouldContain("against   Flyback.");
         output.ShouldContain("Flyback.Plugins ");

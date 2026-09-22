@@ -15,6 +15,8 @@ public sealed class PluginTests : IDisposable
 {
     private static readonly byte[] Assembly = File.ReadAllBytes(typeof(PicturePlugin).Assembly.Location);
 
+    private static readonly byte[] Sample = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
+
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-plugins-").FullName;
     private readonly WebApplicationFactory<Program> host;
     private readonly HttpClient client;
@@ -137,6 +139,81 @@ public sealed class PluginTests : IDisposable
         plugin.GetProperty("contract").GetProperty("Flyback.Plugins").GetString().ShouldNotBeNullOrEmpty();
         plugin.GetProperty("sha256").GetString().ShouldBe(Convert.ToHexStringLower(SHA256.HashData(file)));
         plugin.GetProperty("fileName").GetString().ShouldBe("Flyback.Plugins.Picture.fbkp");
+    }
+
+    [Fact]
+    public async Task A_plugins_author_tags_and_preview_are_shown_and_its_tags_find_it()
+    {
+        var id = (await Submit(Zip(("any/Flyback.Plugins.Sample.dll", Sample)))).GetProperty("id").GetString()!;
+        var picture = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+        await Publish(id);
+        await Publish(picture);
+
+        var plugin = await Get($"/api/v1/plugins/{id}");
+
+        plugin.GetProperty("author").GetString().ShouldBe("Flyback");
+        plugin.GetProperty("description").GetString().ShouldStartWith("Example modules");
+        plugin.GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ShouldBe(["example", "ripple", "test-fixture"]);
+
+        using var preview = await client.GetAsync(new Uri(plugin.GetProperty("preview").GetString()!, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        preview.StatusCode.ShouldBe(HttpStatusCode.OK);
+        preview.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+        (await preview.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken)).Length.ShouldBeGreaterThan(0);
+
+        (await Get($"/api/v1/plugins/{picture}")).GetProperty("preview").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await Status(HttpMethod.Get, $"/api/v1/plugins/{picture}/preview")).ShouldBe(HttpStatusCode.NotFound);
+
+        var tagged = (await Get("/api/v1/plugins?tag=ripple")).GetProperty("items");
+        tagged.GetArrayLength().ShouldBe(1);
+        tagged[0].GetProperty("id").GetString().ShouldBe(id);
+        (await Get("/api/v1/plugins?q=fixture")).GetProperty("total").GetInt32().ShouldBe(1, "a search matches tags too");
+    }
+
+    [Fact]
+    public async Task A_package_stored_before_tags_and_previews_were_read_has_them_read_from_its_file()
+    {
+        var database = Path.Combine(folder, "earlier", "presets.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(database)!);
+
+        using (var db = new SqliteConnection($"Data Source={database};Pooling=false"))
+        {
+            db.Open();
+
+            using var create = db.CreateCommand();
+            create.CommandText = """
+                CREATE TABLE plugins (
+                    id TEXT PRIMARY KEY, assembly TEXT NOT NULL, name TEXT NOT NULL, version TEXT NOT NULL,
+                    author TEXT NOT NULL, description TEXT NOT NULL, adds TEXT NOT NULL, reaches TEXT NOT NULL,
+                    builds TEXT NOT NULL, contract TEXT NOT NULL, sha256 TEXT NOT NULL UNIQUE, file_name TEXT NOT NULL,
+                    file BLOB NOT NULL, size INTEGER NOT NULL, submitted_at TEXT NOT NULL,
+                    downloads INTEGER NOT NULL DEFAULT 0, published INTEGER NOT NULL DEFAULT 0);
+                INSERT INTO plugins VALUES ('earlier', 'Flyback.Plugins.Sample', 'Sample modules', '0.1.0', '', '', 'modules', '',
+                    'any', '', 'hash', 'Flyback.Plugins.Sample.fbkp', $file, 1, '2026-09-22T00:00:00Z', 0, 1);
+                """;
+            create.Parameters.AddWithValue("$file", Zip(("any/Flyback.Plugins.Sample.dll", Sample)));
+            create.ExecuteNonQuery();
+        }
+
+        using var earlier = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
+        {
+            web.UseSetting("Presets:Database", database);
+            web.UseSetting("Presets:Media", Path.Combine(folder, "earlier", "media"));
+        });
+        using var reader = earlier.CreateClient();
+
+        var plugin = await reader.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/plugins/earlier", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        plugin.GetProperty("tags").EnumerateArray().Select(t => t.GetString()).ShouldBe(["example", "ripple", "test-fixture"]);
+        plugin.GetProperty("preview").GetString().ShouldBe("/api/v1/plugins/earlier/preview");
+    }
+
+    [Fact]
+    public async Task An_unpublished_plugins_preview_is_not_served()
+    {
+        var id = (await Submit(Zip(("any/Flyback.Plugins.Sample.dll", Sample)))).GetProperty("id").GetString()!;
+
+        (await Status(HttpMethod.Get, $"/api/v1/plugins/{id}/preview")).ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

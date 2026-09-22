@@ -16,13 +16,13 @@ internal static class PluginApi
 
     public static void MapPlugins(this RouteGroupBuilder api, PluginStore store, Func<HttpContext, bool> reviewing)
     {
-        api.MapGet("/plugins", (HttpContext http, string? q, string? platform, int? page) =>
+        api.MapGet("/plugins", (HttpContext http, string? q, string? tag, string? platform, int? page) =>
         {
             if (!string.IsNullOrEmpty(platform) && !PluginPackage.Platforms.Contains(platform))
                 return Results.BadRequest(new { Error = $"A platform is one of {string.Join(", ", PluginPackage.Platforms)}." });
 
             var at = Math.Max(1, page ?? 1);
-            var found = store.List(q, platform, at, PageSize, reviewing(http));
+            var found = store.List(q, platform, at, PageSize, reviewing(http), tag);
 
             return Results.Ok(new { Items = found.Items.Select(View), found.Total, Page = at, PageSize });
         });
@@ -34,6 +34,16 @@ internal static class PluginApi
             store.Download(id, count != false, reviewing(http)) is { } download
                 ? Results.File(download.File, "application/octet-stream", download.Plugin.FileName)
                 : Results.NotFound());
+
+        api.MapGet("/plugins/{id}/preview", (HttpContext http, string id) =>
+        {
+            if (store.Preview(id, reviewing(http)) is not { } preview) return Results.NotFound();
+
+            http.Response.Headers.XContentTypeOptions = "nosniff";
+            http.Response.Headers.CacheControl = "public, max-age=86400";
+
+            return Results.File(preview.Bytes, preview.Type);
+        });
 
         api.MapPost("/plugins", async (HttpRequest request) =>
         {
@@ -93,6 +103,7 @@ internal static class PluginApi
         plugin.Version,
         plugin.Author,
         plugin.Description,
+        plugin.Tags,
         plugin.Adds,
         plugin.Reaches,
         plugin.Builds,
@@ -104,6 +115,7 @@ internal static class PluginApi
         plugin.Downloads,
         plugin.Published,
         File = $"/api/v1/plugins/{plugin.Id}/file",
+        Preview = plugin.PreviewType is null ? null : $"/api/v1/plugins/{plugin.Id}/preview",
     };
 }
 

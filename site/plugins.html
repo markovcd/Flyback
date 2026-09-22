@@ -822,11 +822,27 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     <ul>
       <li>its name, version, author and description, from <code>&lt;Product&gt;</code>,
       <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and <code>&lt;Description&gt;</code> in your project;</li>
+      <li>its tags, from an <code>AssemblyMetadata</code> item named <code>Tags</code>, split at commas and
+      semicolons;</li>
+      <li>its preview, from a PNG or WebP of up to 1 MB embedded as <code>preview.png</code> or
+      <code>preview.webp</code>;</li>
       <li>what it adds — modules, presets, a sound output, a MIDI input, an assistant, a secret store — from
       the <code>IPluginRegistry</code> methods your code calls;</li>
       <li>what it reaches — the network, files, other programs, the registry, native code, code it loads while
       running — from what any assembly in the build names.</li>
     </ul>
+
+    <pre><code>&lt;<span class="k">PropertyGroup</span>&gt;
+  &lt;Product&gt;Ripple&lt;/Product&gt;
+  &lt;Version&gt;1.2.0&lt;/Version&gt;
+  &lt;Authors&gt;Ada&lt;/Authors&gt;
+  &lt;Description&gt;Rings that spread from wherever a note lands.&lt;/Description&gt;
+&lt;/<span class="k">PropertyGroup</span>&gt;
+
+&lt;<span class="k">ItemGroup</span>&gt;
+  &lt;<span class="k">AssemblyMetadata</span> Include=<span class="s">"Tags"</span> Value=<span class="s">"texture; feedback, generative"</span> /&gt;
+  &lt;<span class="k">EmbeddedResource</span> Include=<span class="s">"preview.webp"</span> LogicalName=<span class="s">"preview.webp"</span> /&gt;
+&lt;/<span class="k">ItemGroup</span>&gt;</code></pre>
 
     <p>Each build holds exactly one plugin assembly at its top, and its name is the folder it installs into:
     <code>plugins/Flyback.Plugins.Ripple</code>. A second package of the same assembly replaces the first
@@ -836,7 +852,8 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
 
     <p>Flyback refuses a package outright if a file in it could land outside the plugin's folder
     (<code>..</code>, a drive, a backslash, a name Windows keeps for a device), if two of its files differ
-    only in case, or if it is larger than 128 MB, or 512 MB unpacked. The Install button is off, with the
+    only in case, if it is larger than 128 MB, or 512 MB unpacked, or if its plugin embeds two previews, one
+    larger than 1 MB, or one that is not the image its name says. The Install button is off, with the
     reason under it, when there is no build for this system, or when the plugin or any assembly it carries
     was compiled against a contract this Flyback does not offer; the dialog shows which versions of
     <code>Flyback.Plugins</code> and <code>Flyback.Core</code> it was built against. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
@@ -847,8 +864,7 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     <p>To offer a package to everyone, <a href="PRESETS_URL/submit-plugin.html">submit it</a> to the
     <a href="PRESETS_URL/plugins.html">shared plugins</a>. The site reads it as the editor does, without running
     it, and refuses what the editor would. What it lists comes from the package alone, so set
-    <code>&lt;Product&gt;</code>, <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and
-    <code>&lt;Description&gt;</code> before packing. A package goes up unpublished and is listed once it has
+    the name, version, author, description, tags and preview above before packing. A package goes up unpublished and is listed once it has
     been reviewed; up to 64 MB is taken.</p>
 
     <div class="note">

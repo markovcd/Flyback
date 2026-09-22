@@ -30,6 +30,9 @@
     <ProjectReference Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+
+    <!-- The worked example, whose project sets everything a package can say about a plugin. -->
+    <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
   </ItemGroup>
 
   <ItemGroup>

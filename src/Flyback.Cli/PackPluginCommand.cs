@@ -322,6 +322,8 @@ internal static class PackPluginCommand
 
         if (plugin.Description.Length > 0) writer.WriteLine($"  {plugin.Description.Replace("\n", "\n  ")}");
 
+        writer.WriteLine($"  tags      {(plugin.Tags.Count > 0 ? string.Join(", ", plugin.Tags) : "none")}");
+        writer.WriteLine($"  preview   {(plugin.Preview is { } preview ? $"{preview.MediaType}, {Math.Max(1, preview.Bytes.Length >> 10)} KB" : "none")}");
         writer.WriteLine($"  adds      {(plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find")}");
         writer.WriteLine($"  reaches   {(plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names")}");
         writer.WriteLine($"  assembly  {plugin.Assembly}.dll");

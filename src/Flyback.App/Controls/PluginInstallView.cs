@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.Controls;
@@ -45,6 +46,8 @@ internal static class PluginInstallView
 
         if (package.DescriptionFor(platform) is { } plugin)
         {
+            if (plugin.Preview is { } preview && Picture(preview) is { } picture) page.Children.Add(picture);
+
             page.Children.Add(new SelectableTextBlock
             {
                 Name = "pluginName",
@@ -62,6 +65,7 @@ internal static class PluginInstallView
 
             var facts = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), Margin = new Thickness(0, 4, 0, 0) };
 
+            if (plugin.Tags.Count > 0) Fact(facts, "Tags", string.Join(", ", plugin.Tags), "pluginTags");
             Fact(facts, "Adds", plugin.Adds.Count > 0 ? string.Join(", ", plugin.Adds) : "nothing Flyback can find", "pluginAdds");
             Fact(facts, "Reaches", plugin.Reaches.Count > 0 ? string.Join(", ", plugin.Reaches) : "nothing outside Flyback that it names", "pluginReaches");
             Fact(facts, "Assembly", $"{plugin.Assembly}.dll");
@@ -150,6 +154,29 @@ internal static class PluginInstallView
         page.Children.Add(row);
 
         return page;
+    }
+
+    /// <summary>The plugin's preview, or null where it will not decode.</summary>
+    private static Image? Picture(PluginPreview preview)
+    {
+        try
+        {
+            using var stream = new MemoryStream(preview.Bytes, writable: false);
+
+            return new Image
+            {
+                Name = "pluginPreview",
+                Source = new Bitmap(stream),
+                Stretch = Stretch.Uniform,
+                MaxHeight = 270,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 4, 0, 0),
+            };
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException or NotSupportedException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Each system the package has a build for, marking the one that would be used here.</summary>

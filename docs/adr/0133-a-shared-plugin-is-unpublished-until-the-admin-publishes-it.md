@@ -28,9 +28,11 @@ admin. The submitter is answered 202 with what the site read, not a link.
 **What is listed is what the editor's dialog shows, read the same way.** The
 server reads a submission with `PluginPackage`, the class the editor opens a
 package with, and so runs none of it and refuses whatever the editor would. The
-name, version, author, description, what it adds, what it reaches, the systems it
-has builds for, the contract versions it was built against and the SHA-256 all
-come from the package. There is no form field for any of them. The file is served
+name, version, author, description, tags, preview, what it adds, what it reaches,
+the systems it has builds for, the contract versions it was built against and the
+SHA-256 all come from the package. There is no form field for any of them. The
+preview is served from `/api/v1/plugins/{id}/preview` with its own image type, and
+a tag filters the listing as it does the presets'. The file is served
 as `<assembly>.fbkp`, whatever it was uploaded as. The same package twice is
 refused.
 

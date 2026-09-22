@@ -27,6 +27,67 @@ public sealed class PluginPackageTests : IDisposable
     }
 
     [Fact]
+    public void Its_author_description_tags_and_preview_come_from_its_project()
+    {
+        var plugin = PluginPackage.Read(Packages.ForSample()).Description("win");
+
+        plugin.Name.ShouldBe("Sample modules");
+        plugin.Author.ShouldBe("Flyback");
+        plugin.Description.ShouldStartWith("Example modules");
+        plugin.Tags.ShouldBe(["example", "ripple", "test-fixture"], "split at commas and semicolons, and tidied as a patch's tags are");
+
+        using var embedded = typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.GetManifestResourceStream("preview.png")!;
+        using var expected = new MemoryStream();
+        embedded.CopyTo(expected);
+
+        plugin.Preview.ShouldNotBeNull().MediaType.ShouldBe("image/png");
+        plugin.Preview.Bytes.ShouldBe(expected.ToArray());
+    }
+
+    [Fact]
+    public void A_plugin_that_sets_no_tags_and_embeds_no_preview_has_neither()
+    {
+        var plugin = PluginPackage.Read(Packages.For("win")).Description("win");
+
+        plugin.Tags.ShouldBeEmpty();
+        plugin.Preview.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_webp_preview_is_one()
+    {
+        byte[] webp = [.. "RIFF"u8, 4, 0, 0, 0, .. "WEBPVP8 "u8];
+
+        PluginPreview.Of([new EmbeddedPreview("preview.webp", webp.Length, webp)]).ShouldNotBeNull().MediaType.ShouldBe("image/webp");
+    }
+
+    [Fact]
+    public void Two_previews_are_refused()
+    {
+        byte[] png = [0x89, .. "PNG"u8, 0x0D, 0x0A, 0x1A, 0x0A];
+
+        Should.Throw<InvalidDataException>(() => PluginPreview.Of(
+            [new EmbeddedPreview("preview.png", png.Length, png), new EmbeddedPreview("preview.webp", 12, null)]))
+            .Message.ShouldContain("where a plugin has one preview");
+    }
+
+    [Fact]
+    public void A_preview_larger_than_a_megabyte_is_refused()
+    {
+        Should.Throw<InvalidDataException>(() => PluginPreview.Of([new EmbeddedPreview("preview.png", (1 << 20) + 1, null)]))
+            .Message.ShouldContain("larger than the 1 MB a preview may be");
+    }
+
+    [Fact]
+    public void A_preview_that_is_not_the_image_its_name_says_is_refused()
+    {
+        byte[] webp = [.. "RIFF"u8, 4, 0, 0, 0, .. "WEBPVP8 "u8];
+
+        Should.Throw<InvalidDataException>(() => PluginPreview.Of([new EmbeddedPreview("preview.png", webp.Length, webp)]))
+            .Message.ShouldContain("is not a PNG image");
+    }
+
+    [Fact]
     public void What_a_plugin_adds_comes_from_the_registry_methods_its_code_calls()
     {
         PluginPackage.Read(Packages.For("win")).Description("win").Adds.ShouldBe(["modules", "presets"]);
