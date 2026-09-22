@@ -448,6 +448,10 @@ public sealed partial class MainWindow : Window
     /// <paramref name="outputSettingsPath"/> gives. The program itself passes
     /// <see cref="PresetLibrary.DefaultFolder"/>.
     /// </param>
+    /// <param name="thumbnailFolder">
+    /// Where the gallery's thumbnails are kept between runs. Null draws them afresh
+    /// each run. The program itself passes <see cref="ThumbnailStore.DefaultFolder"/>.
+    /// </param>
     /// <param name="openPath">
     /// A file to open once there is a window for it, or null for the usual
     /// start on the default preset — see <see cref="Startup.OpenPath"/>.
@@ -526,6 +530,7 @@ public sealed partial class MainWindow : Window
         ReleaseNotes? whatsNew = null,
         string? recoveryFolder = null,
         string? presetFolder = null,
+        string? thumbnailFolder = null,
         string? canvasSettingsPath = null,
         string? layoutPath = null,
         string? fileTypeSettingsPath = null,
@@ -542,7 +547,7 @@ public sealed partial class MainWindow : Window
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
 
-        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler) { Saved = savedPresets };
+        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler, thumbnailFolder) { Saved = savedPresets };
         this.outputSettingsPath = outputSettingsPath;
         this.usage = usage ?? Usage.Off;
 

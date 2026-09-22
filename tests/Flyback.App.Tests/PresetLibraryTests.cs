@@ -78,14 +78,41 @@ public class PresetLibraryTests : IDisposable
 
         opened.Pictures.Find(named).ShouldNotBeNull(opened.Pictures.Explain(named));
 
-        var tile = await new PresetThumbnails(NodeCatalog.BuiltIn) { Saved = library }.Of(saved.Preset);
+        var tile = await new PresetThumbnails(NodeCatalog.BuiltIn) { Saved = library }.Of(saved.Preset, TestContext.Current.CancellationToken);
 
         tile.Pixels.ShouldNotBeNull();
         tile.Pixels.ShouldContain((byte)255);
 
-        var bare = await new PresetThumbnails(NodeCatalog.BuiltIn).Of(saved.Preset);
+        var bare = await new PresetThumbnails(NodeCatalog.BuiltIn).Of(saved.Preset, TestContext.Current.CancellationToken);
 
         bare.Pixels.ShouldBeNull("without its bundle the picture is a file that cannot be found");
+    }
+
+    /// <summary>A thumbnail kept from before is not the one shown for a preset saved over since.</summary>
+    [Fact]
+    public async Task A_preset_saved_over_is_drawn_again_rather_than_found_on_disk()
+    {
+        var patch = new Patch();
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        var sink = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId), 300, 0);
+
+        PictureExtra.Set(shown, "white.png");
+        patch.Nodes.Add(shown);
+        patch.Nodes.Add(sink);
+        patch.Connect(shown.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var library = Library();
+        var kept = Path.Combine(folder, "thumbnails");
+        var first = library.Save("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
+
+        var before = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: kept) { Saved = library }.Of(first.Preset, TestContext.Current.CancellationToken);
+
+        before.Pixels.ShouldNotBeNull();
+
+        var second = library.Save("Shown", Tone(), Nothing, NodeCatalog.BuiltIn);
+        var after = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: kept) { Saved = library }.Of(second.Preset, TestContext.Current.CancellationToken);
+
+        after.Pixels.ShouldBeNull("the preset is a tone now, with nothing to see");
     }
 
     [Fact]

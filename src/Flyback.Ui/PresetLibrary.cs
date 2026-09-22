@@ -45,14 +45,18 @@ public sealed class SavedPreset(string Name, string Path)
     {
         LoadedBundle bundle;
 
+        // Shared for deleting, so a tile reading it in the background never stands
+        // in the way of somebody deleting it.
+        using var file = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+
         if (PatchBundle.Extension.Equals(System.IO.Path.GetExtension(Path), StringComparison.OrdinalIgnoreCase))
         {
-            using var file = File.OpenRead(Path);
             bundle = PatchBundle.Read(file, catalog);
         }
         else
         {
-            var load = PatchIO.Read(File.ReadAllText(Path), catalog);
+            using var reader = new StreamReader(file);
+            var load = PatchIO.Read(reader.ReadToEnd(), catalog);
             bundle = new LoadedBundle(load.Patch, new Dictionary<string, byte[]>(), Load: load);
         }
 

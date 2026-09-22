@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
@@ -78,6 +79,7 @@ public sealed class FlybackApp : Application
                 usage: usage,
                 recoveryFolder: Recovery.Folder,
                 presetFolder: PresetLibrary.DefaultFolder,
+                thumbnailFolder: ThumbnailStore.DefaultFolder,
                 canvasSettingsPath: CanvasSettings.File,
                 layoutPath: WindowLayout.File,
                 fileTypeSettingsPath: FileTypeSettings.File,

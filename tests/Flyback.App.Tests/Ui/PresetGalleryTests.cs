@@ -77,4 +77,22 @@ public class PresetGalleryTests : UiTest
 
         reported.ShouldHaveSingleItem()!.Picture.ShouldBe(All<Image>(tile).Single());
     }
+
+    /// <summary>A gallery of hundreds draws the tiles on screen, and one further down once it is scrolled to.</summary>
+    [AvaloniaFact]
+    public void Only_the_tiles_in_sight_are_drawn()
+    {
+        var thumbnails = new PresetThumbnails(NodeCatalog.BuiltIn);
+        var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
+        var parts = PresetGallery.Build(ordered, showing: null, thumbnails);
+        var window = Show(new ScrollViewer { Height = 400, Content = parts.Tiles }, width: 900);
+
+        thumbnails.IsAsked(ordered[0]).ShouldBeTrue();
+        thumbnails.IsAsked(ordered[^1]).ShouldBeFalse();
+
+        Tile(parts.Tiles, ordered[^1].Name).BringIntoView();
+        Settle(window);
+
+        thumbnails.IsAsked(ordered[^1]).ShouldBeTrue();
+    }
 }

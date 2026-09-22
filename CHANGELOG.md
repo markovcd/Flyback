@@ -19,6 +19,7 @@
 - A dragged side panel comes back at the width it was left at.
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
+- The preset gallery draws only the tiles in sight, and keeps their pictures between runs.
 - Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.
 - Opening a signed `.fbkp` plugin package shows what the plugin is, with its preview, author, description and tags, what it adds and reaches and, when asked, installs or updates its build for this system and restarts Flyback; `flyback-cli pack-plugin` makes one, signed with a key from `flyback-cli plugin-key`.
 - Plugin packages can be shared on the preset site, with their preview and tags, listed once the admin has published them.

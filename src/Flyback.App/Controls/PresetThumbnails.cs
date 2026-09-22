@@ -1,4 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
+using System.Text;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -40,21 +42,42 @@ internal sealed record Thumbnail(
 /// rather than from a file that would have to be re-shot every time a patch changed.
 /// </summary>
 /// <remarks>
-/// Compiled to IL before its frames are drawn, one preset at a time and only when
-/// the gallery is first opened: the window has a live preview and an audio
-/// callback to leave cores for, and a gallery nobody opens costs nothing. The frame is taken after a second and a half of frames rather than
-/// the first, because a patch that reads the frame before is legitimately black
-/// on its first.
+/// Compiled to IL before its frames are drawn, one preset at a time and only once
+/// its tile comes into sight: the window has a live preview and an audio callback
+/// to leave cores for, and a tile nobody scrolls to costs nothing. The frame is
+/// taken after a second and a half of frames rather than the first, because a
+/// patch that reads the frame before is legitimately black on its first.
 /// <para>
 /// Each preset gets a sample folder and a picture folder of its own for the run, not
 /// the window's: those keep a dictionary that the UI thread is also reading.
 /// </para>
+/// <para>
+/// What is drawn is kept on disk under the build that drew it and, for a saved
+/// preset, the file's size and time, so a thumbnail is drawn once per preset per
+/// build rather than once per run.
+/// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "A SemaphoreSlim that never hands out its wait handle holds nothing to free.")]
-internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compiler = null)
+internal sealed class PresetThumbnails
 {
     public const int Width = 320;
     public const int Height = 180;
+
+    private readonly ModuleCatalog modules;
+    private readonly IlCompiler? compiler;
+    private readonly ThumbnailStore? store;
+
+    /// <param name="folder">Where thumbnails are kept between runs, or null to keep them for this run only.</param>
+    public PresetThumbnails(ModuleCatalog modules, IlCompiler? compiler = null, string? folder = null)
+    {
+        this.modules = modules;
+        this.compiler = compiler;
+
+        if (folder is null) return;
+
+        store = new ThumbnailStore(folder);
+        _ = Task.Run(store.Prune);
+    }
 
     /// <summary>Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</summary>
     public PresetLibrary? Saved { get; set; }
@@ -71,30 +94,119 @@ internal sealed class PresetThumbnails(ModuleCatalog modules, IlCompiler? compil
     /// </summary>
     private readonly Dictionary<PatchPreset, Task<Thumbnail>> drawn = new(ReferenceEqualityComparer.Instance);
 
+    /// <summary>What each preset's patch says of itself, kept the same way as <see cref="drawn"/>.</summary>
+    private readonly Dictionary<PatchPreset, Task<Thumbnail>> said = new(ReferenceEqualityComparer.Instance);
+
     private readonly SemaphoreSlim oneAtATime = new(1);
 
+    private readonly SemaphoreSlim oneReadAtATime = new(1);
+
     /// <summary>
-    /// The thumbnail of <paramref name="preset"/>, drawn the first time it is asked
-    /// for and remembered after. Called from the UI thread only, which is what lets
-    /// the cache be a plain dictionary.
+    /// Every Flyback assembly loaded, plugins included, so a thumbnail kept on disk
+    /// is one this very build would draw.
     /// </summary>
-    public Task<Thumbnail> Of(PatchPreset preset)
+    private static readonly Lazy<string> Build = new(() => string.Join(',', AppDomain.CurrentDomain.GetAssemblies()
+        .Where(assembly => assembly.GetName().Name?.StartsWith(nameof(Flyback), StringComparison.Ordinal) ?? false)
+        .Select(assembly => assembly.ManifestModule.ModuleVersionId)
+        .Order()));
+
+    /// <summary>
+    /// The thumbnail of <paramref name="preset"/>, found on disk or drawn the first
+    /// time it is asked for, and remembered after. Called from the UI thread only,
+    /// which is what lets the cache be a plain dictionary.
+    /// </summary>
+    /// <param name="cancel">Gives up waiting behind the others; a drawing already begun finishes.</param>
+    public Task<Thumbnail> Of(PatchPreset preset, CancellationToken cancel = default)
     {
-        if (drawn.TryGetValue(preset, out var known)) return known;
+        if (drawn.TryGetValue(preset, out var known) && !known.IsCanceled) return known;
+
+        var path = Saved?.Holding(preset)?.Path;
 
         return drawn[preset] = Task.Run(async () =>
         {
-            await oneAtATime.WaitAsync();
+            var key = Key(preset, path);
+
+            if (key is not null && store?.Find(key) is { } kept) return kept;
+
+            await oneAtATime.WaitAsync(cancel);
 
             try
             {
-                return Draw(preset);
+                var thumbnail = Draw(preset);
+
+                // One that threw may draw next time, with the plugin back or the file readable.
+                if (key is not null && !ReferenceEquals(thumbnail, Thumbnail.Unavailable)) store?.Keep(key, thumbnail);
+
+                return thumbnail;
             }
             finally
             {
                 oneAtATime.Release();
             }
+        }, cancel);
+    }
+
+    /// <summary>Whether <paramref name="preset"/>'s thumbnail has been asked for.</summary>
+    public bool IsAsked(PatchPreset preset) => drawn.ContainsKey(preset);
+
+    /// <summary>
+    /// What <paramref name="preset"/>'s patch says of itself — its description, author
+    /// and tags — without drawing it: what a tile shows and is found by before it
+    /// has been scrolled to. Its <see cref="Thumbnail.Pixels"/> are not to be relied on.
+    /// </summary>
+    public Task<Thumbnail> Said(PatchPreset preset)
+    {
+        if (drawn.TryGetValue(preset, out var known) && known.IsCompletedSuccessfully) return known;
+
+        if (said.TryGetValue(preset, out var heard)) return heard;
+
+        var path = Saved?.Holding(preset)?.Path;
+
+        return said[preset] = Task.Run(async () =>
+        {
+            if (Key(preset, path) is { } key && store?.Find(key, pixels: false) is { } kept) return kept;
+
+            await oneReadAtATime.WaitAsync();
+
+            try
+            {
+                var (patch, _, _) = PresetLibrary.Open(preset, Saved, modules);
+
+                return new Thumbnail(null, "", patch.Description, patch.Author, patch.Tags);
+            }
+            catch (Exception)
+            {
+                return Thumbnail.Nothing;
+            }
+            finally
+            {
+                oneReadAtATime.Release();
+            }
         });
+    }
+
+    /// <summary>
+    /// What a thumbnail is kept on disk under, or null for a saved preset whose file
+    /// has gone.
+    /// </summary>
+    private string? Key(PatchPreset preset, string? path)
+    {
+        if (store is null) return null;
+
+        var from = "built";
+
+        if (path is not null)
+        {
+            var file = new FileInfo(path);
+
+            if (!file.Exists) return null;
+
+            from = $"{file.FullName}|{file.Length}|{file.LastWriteTimeUtc.Ticks}";
+        }
+
+        var drawnFrom = string.Join('\n', Build.Value, preset.Kind, preset.Name, preset.Description, from);
+
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(drawnFrom)), 0, 16);
     }
 
     private Thumbnail Draw(PatchPreset preset)

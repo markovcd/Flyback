@@ -110,6 +110,9 @@ internal static partial class PresetGallery
         var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
         var search = new Search { Elsewhere = site is not null };
 
+        // Thumbnails still waiting to be drawn when the gallery closes are not drawn.
+        var closing = new CancellationTokenSource();
+
         foreach (var run in ordered.GroupBy(preset => preset.Kind))
         {
             gallery.Children.Add(new TextBlock
@@ -124,13 +127,13 @@ internal static partial class PresetGallery
             var tiles = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
 
             foreach (var preset in run)
-                tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt, search));
+                tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt, search, closing.Token));
 
             gallery.Children.Add(tiles);
             search.Add((TextBlock)gallery.Children[^2], tiles);
         }
 
-        if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search);
+        if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search, closing.Token);
 
         search.Apply();
 
@@ -143,6 +146,8 @@ internal static partial class PresetGallery
             Margin = new Thickness(16, 0, 16, 16),
             Children = { search.Hint, gallery },
         };
+
+        tilesAndHint.DetachedFromVisualTree += (_, _) => closing.Cancel();
 
         return new GalleryParts(search.Box, tilesAndHint);
     }
@@ -159,7 +164,8 @@ internal static partial class PresetGallery
         PatchPreset? showing,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
-        Search search)
+        Search search,
+        CancellationToken closing)
     {
         if (yours.PickOnly && yours.All().Count == 0) return;
 
@@ -192,7 +198,7 @@ internal static partial class PresetGallery
 
             foreach (var preset in yours.All())
             {
-                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt, search);
+                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt, search, closing);
 
                 if (!yours.PickOnly) Removable(tile, preset, () =>
                 {
@@ -401,7 +407,8 @@ internal static partial class PresetGallery
         Color accent,
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
-        Search search)
+        Search search,
+        CancellationToken closing)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
 
@@ -505,32 +512,36 @@ internal static partial class PresetGallery
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);
 
-        _ = Fill(image, words, speaker, description, credit, tags, thumbnails.Of(preset), said => search.Credit(tile, said));
+        _ = Say(description, credit, tags, thumbnails.Said(preset), said => search.Credit(tile, said));
+
+        // Drawn once it is scrolled into sight: a gallery of hundreds draws the
+        // dozen on screen, and never the ones nobody scrolls to.
+        tile.EffectiveViewportChanged += Seen;
 
         return tile;
+
+        void Seen(object? sender, EffectiveViewportChangedEventArgs e)
+        {
+            if (tile.Bounds.Width <= 0 || !e.EffectiveViewport.Intersects(new Rect(tile.Bounds.Size))) return;
+
+            tile.EffectiveViewportChanged -= Seen;
+            _ = Fill(image, words, speaker, () => thumbnails.Of(preset, closing), closing);
+        }
     }
 
     /// <summary>
-    /// Puts the thumbnail on its tile when it is drawn. Awaited from the UI thread,
-    /// so what follows the wait is on it too.
+    /// Puts what the patch says of itself on its tile, and makes the tile findable
+    /// by it. Awaited from the UI thread, so what follows the wait is on it too.
     /// </summary>
-    private static async Task Fill(
-        Image image,
-        TextBlock words,
-        Control speaker,
-        TextBlock description,
-        TextBlock credit,
-        TextBlock tags,
-        Task<Thumbnail> drawing,
-        Action<Thumbnail> drawn)
+    private static async Task Say(TextBlock description, TextBlock credit, TextBlock tags, Task<Thumbnail> saying, Action<Thumbnail> said)
     {
-        var thumbnail = await drawing;
+        var thumbnail = await saying;
 
-        drawn(thumbnail);
+        said(thumbnail);
 
-        if (thumbnail.Description is { } said)
+        if (thumbnail.Description is { } described)
         {
-            description.Text = said;
+            description.Text = described;
             description.IsVisible = true;
         }
 
@@ -544,6 +555,32 @@ internal static partial class PresetGallery
         {
             tags.Text = string.Join(" · ", tagged);
             tags.IsVisible = true;
+        }
+    }
+
+    /// <summary>
+    /// Puts the thumbnail on its tile when it is drawn. Awaited from the UI thread,
+    /// so what follows the wait is on it too.
+    /// </summary>
+    private static async Task Fill(Image image, TextBlock words, Control speaker, Func<Task<Thumbnail>> drawing, CancellationToken closing)
+    {
+        Thumbnail thumbnail;
+
+        while (true)
+        {
+            try
+            {
+                thumbnail = await drawing();
+                break;
+            }
+            catch (OperationCanceledException) when (!closing.IsCancellationRequested)
+            {
+                // Given up by another gallery that closed while it waited: asked again for this one.
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
         }
 
         if (thumbnail.Pixels is null && thumbnail.Words == Thumbnail.SoundOnly.Words)
