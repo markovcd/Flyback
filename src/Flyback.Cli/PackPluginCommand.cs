@@ -1,130 +1,52 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text.Json;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli;
 
-/// <summary>What building a project for one system came to: the SDK's exit code and everything it printed.</summary>
+/// <summary>What one run of the SDK came to: its exit code and everything it printed.</summary>
 internal sealed record Published(int Code, string Output);
 
 /// <summary>
-/// Makes a <c>.fbkp</c> out of a plugin project or a folder it was built into, and
+/// Makes a <c>.fbkp</c> out of a plugin project or the folder it was built into, and
 /// checks it the way the editor will before writing it (ADR-0132).
 /// </summary>
 /// <remarks>
-/// A project is published once per system with the SDK on PATH; folders already built
-/// need no SDK at all. The package carries nothing but the builds: the editor reads
-/// what the plugin is from the plugin itself, so what this prints is what the install
-/// dialog will show.
+/// Nothing is asked that the build already says. A project is published once for each
+/// runtime it names, or once portably where it names none. A folder is read the way
+/// the SDK lays one out: <c>publish/</c> or the folder itself is the portable build,
+/// and each <c>&lt;rid&gt;/publish/</c> or <c>&lt;rid&gt;/</c> is that runtime's. The
+/// package carries nothing but the builds: the editor reads what the plugin is from
+/// the plugin itself, so what this prints is what the install dialog will show.
 /// </remarks>
 internal static class PackPluginCommand
 {
-    /// <summary>The runtime each system's build is published for, as the releases are.</summary>
-    internal static readonly IReadOnlyDictionary<string, string> Runtimes = new Dictionary<string, string>
-    {
-        ["win"] = "win-x64",
-        ["osx"] = "osx-arm64",
-        ["linux"] = "linux-x64",
-    };
+    private const string PublishFolder = "publish";
 
-    /// <param name="source">A project file to build, or a folder already built, or null where <paramref name="folders"/> name the builds.</param>
-    /// <param name="platforms">Which builds the package carries, <see cref="PluginPackage.AnyPlatform"/> where none is named.</param>
-    /// <param name="folders">A folder already built for each system named, in place of a source.</param>
-    /// <param name="publish">Builds a project for one system into a folder. The SDK's own <c>dotnet publish</c> unless a test says otherwise.</param>
+    /// <param name="source">A project file, a folder holding one, or a folder the SDK built a plugin into.</param>
+    /// <param name="dotnet">Runs the SDK with the arguments given. The real <c>dotnet</c> unless a test says otherwise.</param>
     public static int Run(
-        FileSystemInfo? source,
+        FileSystemInfo source,
         FileInfo output,
-        IReadOnlyList<string> platforms,
         TextWriter writer,
         TextWriter error,
-        IReadOnlyDictionary<string, DirectoryInfo>? folders = null,
-        Func<string, string, string, Published>? publish = null)
+        Func<IReadOnlyList<string>, Published>? dotnet = null)
     {
-        folders ??= new Dictionary<string, DirectoryInfo>();
-
-        if (source is not null == folders.Count > 0)
-            return Fail(error, "Name a project or a build folder, or give each system's folder with --win, --osx, --linux or --any, but not both.");
-
-        if (folders.Count > 0 && platforms.Count > 0)
-            return Fail(error, "--platform names the builds of a project or a folder; with --win and the rest, the folders are the builds.");
-
-        if (folders.Values.FirstOrDefault(f => !f.Exists) is { } missing)
-            return Fail(error, $"{missing.FullName}: there is no such folder.");
-
-        if (platforms.Count == 0) platforms = [PluginPackage.AnyPlatform];
-
-        if (platforms.FirstOrDefault(p => p != PluginPackage.AnyPlatform && !PluginPackage.Platforms.Contains(p)) is { } unknown)
-            return Fail(error, $"{unknown} is not a system a package holds a build for: any, win, osx or linux.");
+        dotnet ??= Dotnet;
 
         var building = Path.Combine(Path.GetTempPath(), $"flyback-pack-{Guid.NewGuid():N}");
 
         try
         {
-            IReadOnlyList<(string Platform, string Folder)> builds;
+            if (Project(source) is { } project)
+                return Built(project, building, dotnet, error) is { } built ? Pack(built, new HashSet<string>(), output, writer, error) : Exit.Failed;
 
-            if (folders.Count > 0)
-            {
-                builds = [.. folders.Select(f => (f.Key, f.Value.FullName))];
-            }
-            else if (source is DirectoryInfo { Exists: true } folder)
-            {
-                if (platforms.Count > 1)
-                    return Fail(error, "A folder is one build. Name the one system it is for, or pack the project instead.");
+            if (source is not DirectoryInfo { Exists: true } folder)
+                return Fail(error, $"{source.Name}: there is no such project or folder.");
 
-                builds = [(platforms[0], folder.FullName)];
-            }
-            else if (source is FileInfo { Exists: true } project)
-            {
-                var built = new List<(string, string)>();
-
-                foreach (var platform in platforms.Distinct())
-                {
-                    var into = Path.Combine(building, platform);
-                    var result = (publish ?? Publish)(project.FullName, platform, into);
-
-                    if (result.Code != 0)
-                    {
-                        error.WriteLine(result.Output.TrimEnd());
-                        return Fail(error, $"{project.Name} did not build for {PluginPackage.Describe(platform)}.");
-                    }
-
-                    built.Add((platform, into));
-                }
-
-                builds = built;
-            }
-            else
-            {
-                return Fail(error, $"{source!.Name}: there is no such project or folder.");
-            }
-
-            var bytes = PluginPackage.Pack(builds);
-            PluginPackage package;
-
-            try
-            {
-                package = PluginPackage.Read(bytes);
-            }
-            catch (InvalidDataException ex)
-            {
-                return Fail(error, $"{output.Name} would be refused. {ex.Message}");
-            }
-
-            foreach (var (platform, _) in builds)
-            {
-                if (package.BuildFor(platform) != platform)
-                    return Fail(error, $"The {PluginPackage.Describe(platform)} build has no plugin assembly at its top.");
-
-                if (package.Refusal(platform) is { } refusal)
-                    return Fail(error, $"{output.Name} would be refused. {refusal}");
-            }
-
-            File.WriteAllBytes(output.FullName, bytes);
-
-            Describe(output, package, writer);
-
-            return Exit.Ok;
+            return Found(folder.FullName, error) is var (builds, leave) ? Pack(builds, leave, output, writer, error) : Exit.Failed;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -141,6 +63,174 @@ internal static class PackPluginCommand
                 // A temporary folder the system will clear.
             }
         }
+    }
+
+    /// <summary>Which system a runtime identifier is for, or null for one a package has no place for.</summary>
+    internal static string? PlatformOf(string runtime) =>
+        PluginPackage.Platforms.FirstOrDefault(p => runtime.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The project a source names: the file itself, or the one project in a folder.</summary>
+    private static FileInfo? Project(FileSystemInfo source) => source switch
+    {
+        FileInfo { Exists: true } file => file,
+        DirectoryInfo { Exists: true } folder when folder.GetFiles("*.csproj") is [var only] => only,
+        _ => null,
+    };
+
+    /// <summary>Publishes a project once for each runtime it names, or once portably.</summary>
+    private static List<(string Platform, string Folder)>? Built(
+        FileInfo project,
+        string building,
+        Func<IReadOnlyList<string>, Published> dotnet,
+        TextWriter error)
+    {
+        var asked = dotnet(["msbuild", project.FullName, "-nologo", "-getProperty:RuntimeIdentifiers", "-getProperty:RuntimeIdentifier"]);
+
+        if (asked.Code != 0)
+        {
+            error.WriteLine(asked.Output.TrimEnd());
+            Fail(error, $"{project.Name} could not be read.");
+            return null;
+        }
+
+        var runtimes = Runtimes(asked.Output);
+        var builds = new List<(string Platform, string Folder)>();
+
+        // A project that names no runtime is built once, portably.
+        IEnumerable<string?> each = runtimes.Count > 0 ? runtimes : new string?[] { null };
+
+        foreach (var runtime in each)
+        {
+            var platform = runtime is null ? PluginPackage.AnyPlatform : PlatformOf(runtime);
+
+            if (platform is null)
+            {
+                Fail(error, $"{runtime} is not for Windows, macOS or Linux, so a package has no place for it.");
+                return null;
+            }
+
+            if (Twice(builds, platform, runtime!, error)) return null;
+
+            var into = Path.Combine(building, runtime ?? PluginPackage.AnyPlatform);
+            string[] arguments = runtime is null
+                ? ["publish", project.FullName, "-o", into, "-nologo"]
+                : ["publish", project.FullName, "-r", runtime, "-o", into, "-nologo"];
+
+            var result = dotnet(arguments);
+
+            if (result.Code != 0)
+            {
+                error.WriteLine(result.Output.TrimEnd());
+                Fail(error, $"{project.Name} did not build{(runtime is null ? "" : $" for {runtime}")}.");
+                return null;
+            }
+
+            builds.Add((platform, into));
+        }
+
+        return builds;
+    }
+
+    private static readonly string[] RuntimeProperties = ["RuntimeIdentifiers", "RuntimeIdentifier"];
+
+    /// <summary>The runtimes <c>-getProperty</c> reported, from the plural list and the singular alike.</summary>
+    private static List<string> Runtimes(string reported)
+    {
+        using var document = JsonDocument.Parse(reported[reported.IndexOf('{')..]);
+
+        var properties = document.RootElement.GetProperty("Properties");
+
+        return [.. RuntimeProperties
+            .SelectMany(name => properties.TryGetProperty(name, out var value) ? (value.GetString() ?? "").Split(';') : [])
+            .Select(runtime => runtime.Trim())
+            .Where(runtime => runtime.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)];
+    }
+
+    /// <summary>
+    /// The builds in a folder the SDK built into, and the folders at its top that are
+    /// other builds rather than part of the portable one.
+    /// </summary>
+    private static (List<(string Platform, string Folder)> Builds, HashSet<string> Leave)? Found(string root, TextWriter error)
+    {
+        var builds = new List<(string Platform, string Folder)>();
+        var leave = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { PublishFolder };
+
+        if (First(Path.Combine(root, PublishFolder), root) is { } portable) builds.Add((PluginPackage.AnyPlatform, portable));
+
+        foreach (var folder in Directory.EnumerateDirectories(root).Order(StringComparer.Ordinal))
+        {
+            var runtime = Path.GetFileName(folder);
+
+            if (PlatformOf(runtime) is not { } platform) continue;
+
+            leave.Add(runtime);
+
+            if (First(Path.Combine(folder, PublishFolder), folder) is not { } build) continue;
+
+            if (Twice(builds, platform, runtime, error)) return null;
+
+            builds.Add((platform, build));
+        }
+
+        if (builds.Count > 0) return (builds, leave);
+
+        Fail(error, $"{Path.GetFileName(root)} holds no plugin build. Point it at the folder the SDK built into, such as bin/Release/net10.0, or at the project.");
+        return null;
+    }
+
+    /// <summary>The first of the folders with a plugin assembly at its top, or null for none.</summary>
+    private static string? First(params string[] folders) => folders.FirstOrDefault(folder =>
+        Directory.Exists(folder)
+        && Directory.EnumerateFiles(folder, "*.dll").Any(dll =>
+        {
+            using var stream = File.OpenRead(dll);
+            return AssemblyFacts.Of(stream) is { IsPlugin: true } facts && !PluginLoadContext.IsHostOwned(facts.Name);
+        }));
+
+    /// <summary>Whether a second runtime is for a system that already has a build, which a package holds one of.</summary>
+    private static bool Twice(List<(string Platform, string Folder)> builds, string platform, string runtime, TextWriter error)
+    {
+        if (builds.All(b => b.Platform != platform)) return false;
+
+        Fail(error, $"{runtime} is a second build for {PluginPackage.Describe(platform)}, and a package holds one for each system.");
+        return true;
+    }
+
+    /// <summary>Packs the builds, reads the package back as the editor will, and writes it only if the editor would take it.</summary>
+    private static int Pack(
+        List<(string Platform, string Folder)> builds,
+        IReadOnlySet<string> leave,
+        FileInfo output,
+        TextWriter writer,
+        TextWriter error)
+    {
+        var bytes = PluginPackage.Pack(builds, leave);
+        PluginPackage package;
+
+        try
+        {
+            package = PluginPackage.Read(bytes);
+        }
+        catch (InvalidDataException ex)
+        {
+            return Fail(error, $"{output.Name} would be refused. {ex.Message}");
+        }
+
+        foreach (var (platform, _) in builds)
+        {
+            if (package.BuildFor(platform) != platform)
+                return Fail(error, $"The {PluginPackage.Describe(platform)} build has no plugin assembly at its top.");
+
+            if (package.Refusal(platform) is { } refusal)
+                return Fail(error, $"{output.Name} would be refused. {refusal}");
+        }
+
+        File.WriteAllBytes(output.FullName, bytes);
+
+        Describe(output, package, writer);
+
+        return Exit.Ok;
     }
 
     /// <summary>What the install dialog will show, as lines.</summary>
@@ -160,25 +250,17 @@ internal static class PackPluginCommand
         writer.WriteLine($"  sha256    {package.Sha256}");
     }
 
-    /// <summary>
-    /// <c>dotnet publish</c> of a project for one system: portable for
-    /// <see cref="PluginPackage.AnyPlatform"/>, and for the others framework-dependent,
-    /// since the host brings the runtime.
-    /// </summary>
-    private static Published Publish(string project, string platform, string into)
+    /// <summary>Runs the SDK's <c>dotnet</c>, capturing what it prints.</summary>
+    private static Published Dotnet(IReadOnlyList<string> arguments)
     {
         var start = new ProcessStartInfo("dotnet")
         {
-            ArgumentList = { "publish", project, "-c", "Release", "-o", into, "--nologo" },
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
         };
 
-        if (Runtimes.TryGetValue(platform, out var runtime))
-        {
-            foreach (var argument in new[] { "-r", runtime, "--self-contained", "false" }) start.ArgumentList.Add(argument);
-        }
+        foreach (var argument in arguments) start.ArgumentList.Add(argument);
 
         try
         {
@@ -193,7 +275,7 @@ internal static class PackPluginCommand
         }
         catch (Win32Exception)
         {
-            return new Published(-1, "Building from source needs the .NET SDK's dotnet on PATH. Pack a folder it was built into instead.");
+            return new Published(-1, "Building from source needs the .NET SDK's dotnet on PATH. Pack the folder it was built into instead.");
         }
     }
 

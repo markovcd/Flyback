@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Flyback.Cli.Tests;
 
-/// <summary><c>pack-plugin</c>, with a stand-in for <c>dotnet publish</c> wherever a project is built.</summary>
+/// <summary><c>pack-plugin</c>, with a stand-in for the SDK wherever a project is built.</summary>
 public sealed class PackPluginCommandTests : IDisposable
 {
     private readonly string folder = Directory.CreateDirectory(
@@ -17,90 +17,100 @@ public sealed class PackPluginCommandTests : IDisposable
 
     private FileInfo Output => new(Path.Combine(folder, "sample.fbkp"));
 
-    /// <summary>A folder holding the sample plugin as its build writes it, with a copy of the host's own beside it.</summary>
-    private DirectoryInfo Built(string name = "build")
-    {
-        var build = Directory.CreateDirectory(Path.Combine(folder, name));
+    private PluginPackage Written => PluginPackage.Read(File.ReadAllBytes(Output.FullName));
 
-        File.Copy(Plugin, Path.Combine(build.FullName, Path.GetFileName(Plugin)));
-        File.Copy(typeof(PluginHost).Assembly.Location, Path.Combine(build.FullName, "Flyback.Plugins.dll"));
+    /// <summary>Puts the sample plugin where a build of it would be, with a copy of the host's own beside it.</summary>
+    private string Build(string at)
+    {
+        var build = Directory.CreateDirectory(Path.Combine(folder, at)).FullName;
+
+        File.Copy(Plugin, Path.Combine(build, Path.GetFileName(Plugin)));
+        File.Copy(typeof(PluginHost).Assembly.Location, Path.Combine(build, "Flyback.Plugins.dll"));
 
         return build;
     }
 
-    private static Published Unreachable(string project, string platform, string into) =>
-        throw new InvalidOperationException("a folder is packed without building anything");
+    private FileInfo Project()
+    {
+        var project = new FileInfo(Path.Combine(folder, "project", "Sample.csproj"));
 
-    private static (int Code, string Out, string Error) Run(
-        FileSystemInfo? source,
-        FileInfo output,
-        string[] platforms,
-        Dictionary<string, DirectoryInfo>? folders = null,
-        Func<string, string, string, Published>? publish = null)
+        project.Directory!.Create();
+        File.WriteAllText(project.FullName, "<Project />");
+
+        return project;
+    }
+
+    /// <summary>The SDK as far as this command asks it anything: which runtimes, and a publish that writes the sample plugin.</summary>
+    private sealed class Sdk(string runtimes = "", int publishCode = 0)
+    {
+        public List<string?> Published { get; } = [];
+
+        public Published Run(IReadOnlyList<string> arguments)
+        {
+            if (arguments[0] == "msbuild")
+                return new Published(0, $$"""{ "Properties": { "RuntimeIdentifiers": "{{runtimes}}", "RuntimeIdentifier": "" } }""");
+
+            var runtime = arguments.Contains("-r") ? arguments[arguments.ToList().IndexOf("-r") + 1] : null;
+            var into = arguments[arguments.ToList().IndexOf("-o") + 1];
+
+            Published.Add(runtime);
+
+            if (publishCode != 0) return new Published(publishCode, "error CS1002: ; expected");
+
+            Directory.CreateDirectory(into);
+            File.Copy(Plugin, Path.Combine(into, Path.GetFileName(Plugin)));
+
+            return new Published(0, "");
+        }
+    }
+
+    private static Published NoSdk(IReadOnlyList<string> arguments) =>
+        throw new InvalidOperationException("a folder already built is packed without the SDK");
+
+    private (int Code, string Out, string Error) Run(FileSystemInfo source, Func<IReadOnlyList<string>, Published>? dotnet = null)
     {
         var (writer, error) = (new StringWriter(), new StringWriter());
-        var code = PackPluginCommand.Run(source, output, platforms, writer, error, folders, publish ?? Unreachable);
+        var code = PackPluginCommand.Run(source, Output, writer, error, dotnet ?? NoSdk);
 
         return (code, writer.ToString(), error.ToString());
     }
 
     [Fact]
-    public void A_folder_already_built_is_packed_without_the_sdk()
+    public void A_folder_the_sdk_built_into_is_packed_as_it_lays_its_builds_out()
     {
-        var (code, output, _) = Run(Built(), Output, []);
+        var root = Build("net10.0");
+        Build("net10.0/publish");
+        Build("net10.0/win-x64/publish");
+        Build("net10.0/linux-x64");
+
+        var (code, output, _) = Run(new DirectoryInfo(root));
 
         code.ShouldBe(Exit.Ok);
-
-        var package = PluginPackage.Read(File.ReadAllBytes(Output.FullName));
-
-        package.Builds.ShouldBe([PluginPackage.AnyPlatform]);
-        package.Files("any").ShouldNotContain(f => f.Path == "Flyback.Plugins.dll", "the host supplies its own");
+        Written.Builds.ShouldBe(["win", "linux", "any"]);
+        Written.Files("any").ShouldNotContain(f => f.Path.Contains('/'), "the other runtimes' builds are not part of the portable one");
+        Written.Files("any").ShouldNotContain(f => f.Path == "Flyback.Plugins.dll", "the host supplies its own");
         output.ShouldContain("adds      modules");
-        output.ShouldContain($"sha256    {package.Sha256}");
+        output.ShouldContain($"sha256    {Written.Sha256}");
     }
 
     [Fact]
-    public void Each_systems_folder_becomes_that_systems_build()
+    public void A_folder_with_only_a_portable_build_is_packed_for_any_system()
     {
-        var folders = new Dictionary<string, DirectoryInfo> { ["win"] = Built("win"), ["linux"] = Built("linux") };
+        Run(new DirectoryInfo(Build("net10.0"))).Code.ShouldBe(Exit.Ok);
 
-        Run(null, Output, [], folders).Code.ShouldBe(Exit.Ok);
-
-        PluginPackage.Read(File.ReadAllBytes(Output.FullName)).Builds.ShouldBe(["win", "linux"]);
+        Written.Builds.ShouldBe([PluginPackage.AnyPlatform]);
     }
 
     [Fact]
-    public void A_project_is_built_once_for_each_system_named()
+    public void Two_runtimes_for_one_system_are_refused_by_name()
     {
-        var project = new FileInfo(Path.Combine(folder, "Sample.csproj"));
-        File.WriteAllText(project.FullName, "<Project />");
+        Build("net10.0/win-x64");
+        Build("net10.0/win-arm64");
 
-        var asked = new List<string>();
-
-        var (code, _, _) = Run(project, Output, ["win", "osx"], publish: (_, platform, into) =>
-        {
-            asked.Add(platform);
-            Directory.CreateDirectory(into);
-            File.Copy(Plugin, Path.Combine(into, Path.GetFileName(Plugin)));
-
-            return new Published(0, "");
-        });
-
-        code.ShouldBe(Exit.Ok);
-        asked.ShouldBe(["win", "osx"]);
-        PluginPackage.Read(File.ReadAllBytes(Output.FullName)).Builds.ShouldBe(["win", "osx"]);
-    }
-
-    [Fact]
-    public void A_project_that_does_not_build_writes_nothing_and_says_what_the_sdk_said()
-    {
-        var project = new FileInfo(Path.Combine(folder, "Sample.csproj"));
-        File.WriteAllText(project.FullName, "<Project />");
-
-        var (code, _, error) = Run(project, Output, [], publish: (_, _, _) => new Published(1, "error CS1002: ; expected"));
+        var (code, _, error) = Run(new DirectoryInfo(Path.Combine(folder, "net10.0")));
 
         code.ShouldBe(Exit.Failed);
-        error.ShouldContain("error CS1002");
+        error.ShouldContain("win-x64 is a second build for Windows");
         Output.Exists.ShouldBeFalse();
     }
 
@@ -110,28 +120,61 @@ public sealed class PackPluginCommandTests : IDisposable
         var empty = Directory.CreateDirectory(Path.Combine(folder, "empty"));
         File.WriteAllText(Path.Combine(empty.FullName, "readme.txt"), "");
 
-        var (code, _, error) = Run(empty, Output, []);
+        var (code, _, error) = Run(empty);
 
         code.ShouldBe(Exit.Failed);
-        error.ShouldContain("has no plugin assembly at its top");
+        error.ShouldContain("holds no plugin build");
         Output.Exists.ShouldBeFalse();
     }
 
     [Fact]
-    public void A_source_and_per_system_folders_together_are_refused()
+    public void A_project_is_published_once_for_each_runtime_it_names()
     {
-        var (code, _, error) = Run(Built(), Output, [], new() { ["win"] = Built("win") });
+        var sdk = new Sdk("win-x64;osx-arm64;linux-x64");
 
-        code.ShouldBe(Exit.Failed);
-        error.ShouldContain("but not both");
+        Run(Project(), sdk.Run).Code.ShouldBe(Exit.Ok);
+
+        sdk.Published.ShouldBe(["win-x64", "osx-arm64", "linux-x64"]);
+        Written.Builds.ShouldBe(["win", "osx", "linux"]);
     }
 
     [Fact]
-    public void A_system_no_package_holds_a_build_for_is_refused()
+    public void A_project_that_names_no_runtime_is_published_once_for_any_system()
     {
-        var (code, _, error) = Run(Built(), Output, ["amiga"]);
+        var sdk = new Sdk();
+
+        Run(Project(), sdk.Run).Code.ShouldBe(Exit.Ok);
+
+        sdk.Published.ShouldBe([null]);
+        Written.Builds.ShouldBe([PluginPackage.AnyPlatform]);
+    }
+
+    [Fact]
+    public void A_folder_holding_one_project_is_that_project()
+    {
+        var sdk = new Sdk();
+
+        Run(Project().Directory!, sdk.Run).Code.ShouldBe(Exit.Ok);
+
+        sdk.Published.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public void A_runtime_for_a_system_a_package_has_no_place_for_is_refused()
+    {
+        var (code, _, error) = Run(Project(), new Sdk("android-arm64").Run);
 
         code.ShouldBe(Exit.Failed);
-        error.ShouldContain("amiga is not a system");
+        error.ShouldContain("android-arm64 is not for Windows, macOS or Linux");
+    }
+
+    [Fact]
+    public void A_project_that_does_not_build_writes_nothing_and_says_what_the_sdk_said()
+    {
+        var (code, _, error) = Run(Project(), new Sdk(publishCode: 1).Run);
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("error CS1002");
+        Output.Exists.ShouldBeFalse();
     }
 }

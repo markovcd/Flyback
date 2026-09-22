@@ -801,13 +801,16 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <p>To hand a plugin to somebody else, pack it as a <code>.fbkp</code>. Opening one with Flyback shows
     what the plugin is and installs it only when asked, copying just the build for the system it is on.</p>
 
-    <pre><code>flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj --platform any -o ripple.fbkp
-flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj --platform win osx linux -o ripple.fbkp
-flyback-cli pack-plugin --win out/win --linux out/linux -o ripple.fbkp</code></pre>
+    <pre><code>flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp
+flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
 
-    <p>Given a project, it runs <code>dotnet publish</code> once per system, so it needs the .NET SDK.
-    Given folders you already built, it needs nothing. It leaves out the host's own assemblies, checks the
-    package the way the editor will, and prints what the install dialog is going to show.</p>
+    <p>Given a project, or a folder holding one, it runs <code>dotnet publish</code> once for each runtime
+    the project's <code>&lt;RuntimeIdentifiers&gt;</code> names, or once portably where it names none, so it
+    needs the .NET SDK. Given the folder the SDK already built into, it needs nothing: <code>publish/</code>,
+    or the folder itself, is the build for any system, and each <code>win-x64/publish/</code>,
+    <code>osx-arm64/</code> and so on is that system's. Two runtimes for one system are refused, since a package
+    holds one build for each. It leaves out the host's own assemblies, checks the package the way the editor
+    will, and prints what the install dialog is going to show.</p>
 
     <p>The package is a zip with a folder per system — <code>win</code>, <code>osx</code>,
     <code>linux</code>, or <code>any</code> for a build that is the same everywhere, used where there is no

@@ -78,10 +78,14 @@ could not run sooner anyway; and a plugin being replaced is one this process has
 loaded, which Windows will not let go of. A folder under `plugins/` whose name
 starts with a dot is never scanned for plugins.
 
-**`flyback-cli pack-plugin` makes one**, from a project it publishes once per system
-with the SDK, or from folders already built, which needs no SDK. It leaves out the
-host's own assemblies, reads the package back the way the editor will, writes
-nothing if the editor would refuse it, and prints what the dialog will show.
+**`flyback-cli pack-plugin` makes one**, and asks nothing the build already says. A
+project is published with the SDK once for each runtime its `RuntimeIdentifiers`
+names, or once portably where it names none. A folder the SDK built into needs no
+SDK: `publish/` or the folder itself is the portable build, and each
+`<rid>/publish/` or `<rid>/` is the build for that runtime's system. Two runtimes for one system
+are refused, since a package holds one build for each. It leaves out the host's own
+assemblies, reads the package back the way the editor will, writes nothing if the
+editor would refuse it, and prints what the dialog will show.
 
 **The viewer passes a `.fbkp` on to the editor**, so it reaches the editor whichever
 program Settings → Files hands Flyback's files to.

@@ -233,7 +233,8 @@ internal sealed class PluginPackage
     /// assemblies, which the host always supplies itself.
     /// </summary>
     /// <param name="builds">Each platform's name, and the folder holding its build output.</param>
-    public static byte[] Pack(IEnumerable<(string Platform, string Folder)> builds)
+    /// <param name="leave">Folders at the top of a build that are not part of it: the SDK puts other runtimes' builds inside the portable one.</param>
+    public static byte[] Pack(IEnumerable<(string Platform, string Folder)> builds, IReadOnlySet<string>? leave = null)
     {
         using var memory = new MemoryStream();
 
@@ -246,6 +247,8 @@ internal sealed class PluginPackage
                     var path = Path.GetRelativePath(folder, file).Replace('\\', '/');
 
                     if (!path.Contains('/') && PluginLoadContext.IsHostOwned(HostName(path))) continue;
+
+                    if (leave is not null && path.Split('/') is [var top, _, ..] && leave.Contains(top)) continue;
 
                     zip.CreateEntryFromFile(file, $"{platform}/{path}", CompressionLevel.Optimal);
                 }
