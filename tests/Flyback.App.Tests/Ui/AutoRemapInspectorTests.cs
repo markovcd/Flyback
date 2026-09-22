@@ -14,7 +14,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// An Auto remap's panel says what each fraction comes to at the far end of its
-/// wire, and outlines the pair left as plain numbers where that end has no range.
+/// wire, and outlines the pair left as plain numbers where that end has no range;
+/// a wire between two different ranges has a mark that puts one in.
 /// </summary>
 public class AutoRemapInspectorTests : UiTest
 {
@@ -90,6 +91,41 @@ public class AutoRemapInspectorTests : UiTest
 
         Outlined(window).ShouldBe([false, false, false, false]);
         All<TextBlock>(window).ShouldContain(t => t.Text == "12000");
+    }
+
+    /// <summary>
+    /// The mark in the middle of a sine's wire into a filter's cutoff puts an Auto
+    /// remap there, selected, and one undo puts the plain wire back.
+    /// </summary>
+    [AvaloniaFact]
+    public void Clicking_a_wires_mark_puts_an_auto_remap_into_it_as_one_step()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var sine = b.Add(NodeCatalog.SineTypeId, 40, 40);
+        var filter = b.Add(NodeCatalog.FilterTypeId, 700, 40);
+        b.Wire(sine, 0, filter, 1);
+
+        var window = Open(b.Patch);
+        var editor = Editor(window);
+
+        var from = NodeGeometry.OutputPort(sine, 0);
+        var to = NodeGeometry.InputPort(filter, NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId), 1);
+        var at = OnWindow(window, new Point((from.X + to.X) / 2, (from.Y + to.Y) / 2));
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+
+        var remap = editor.Patch.Nodes.Where(n => n.TypeId == NodeCatalog.AutoRemapTypeId).ShouldHaveSingleItem();
+        editor.Patch.IncomingTo(remap.Id, AutoRemap.In)!.SourceNode.ShouldBe(sine.Id);
+        editor.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(remap.Id);
+        editor.SelectedNode.ShouldBe(remap);
+
+        editor.Undo().ShouldBeTrue();
+        Settle(window);
+
+        editor.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.AutoRemapTypeId);
+        editor.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(sine.Id);
     }
 
     [AvaloniaFact]

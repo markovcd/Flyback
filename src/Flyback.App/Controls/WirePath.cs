@@ -43,7 +43,7 @@ internal static class WirePath
     /// <summary>A horizontal-tangent bezier, so wires leave and enter sockets cleanly.</summary>
     public static void Draw(DrawingContext context, Point from, Point to, IPen pen)
     {
-        var reach = Math.Max(45, Math.Abs(to.X - from.X) * 0.5);
+        var reach = Reach(from, to);
 
         var geometry = new StreamGeometry();
         using (var sink = geometry.Open())
@@ -55,6 +55,18 @@ internal static class WirePath
 
         context.DrawGeometry(null, pen, geometry);
     }
+
+    /// <summary>The point <paramref name="t"/> of the way along the wire <see cref="Draw"/> draws.</summary>
+    public static Point At(Point from, Point to, double t)
+    {
+        var reach = Reach(from, to);
+        var (a, b) = (from.WithX(from.X + reach), to.WithX(to.X - reach));
+        var u = 1 - t;
+
+        return from * (u * u * u) + a * (3 * u * u * t) + b * (3 * u * t * t) + to * (t * t * t);
+    }
+
+    private static double Reach(Point from, Point to) => Math.Max(45, Math.Abs(to.X - from.X) * 0.5);
 
     /// <summary>
     /// A wire whose input is left of its output: out to the right of the socket it

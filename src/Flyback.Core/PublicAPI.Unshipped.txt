@@ -69,3 +69,4 @@ static Flyback.Core.Graph.RemapSpans.operator ==(Flyback.Core.Graph.RemapSpans? 
 ~override Flyback.Core.Graph.RemapSpan.ToString() -> string
 Flyback.Core.Graph.RemapSpans.Narrow.get -> bool
 Flyback.Core.Graph.RemapSpans.Narrow.init -> void
+static Flyback.Core.Graph.AutoRemap.Offered(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.Connection! wire, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> bool

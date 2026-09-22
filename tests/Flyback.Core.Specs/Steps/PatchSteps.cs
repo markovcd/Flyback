@@ -555,6 +555,14 @@ public sealed class PatchSteps(PatchContext context)
         OntoRed("level");
     }
 
+    [Given(@"^a sine wired into a filter's (cutoff|input)$")]
+    public void GivenASineIntoAFilter(string socket)
+    {
+        context.Add("wave", "osc.sine");
+        context.Add("filter", "audio.filter");
+        context.Wire("wave", "out", "filter", socket == "cutoff" ? "cutoff" : "in");
+    }
+
     /// <summary>An Auto remap from <paramref name="source"/> into the red of a color that has no green or blue, on the screen.</summary>
     private void OntoRed(string source)
     {

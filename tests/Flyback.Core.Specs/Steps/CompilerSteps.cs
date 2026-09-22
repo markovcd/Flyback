@@ -1,6 +1,7 @@
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 using Flyback.Core.Specs.Support;
 
 namespace Flyback.Core.Specs.Steps;
@@ -98,6 +99,12 @@ public sealed class CompilerSteps(PatchContext context)
         ShouldMention(context.Picture, "'in low' and 'in high' are plain numbers");
         context.Picture.HasErrors.ShouldBeFalse(Said(context.Picture));
     }
+
+    [Then("Flyback offers to fit the ranges on the wire")]
+    public void ThenOffered() => AutoRemap.Offered(context.Patch, context.Patch.Connections.Single()).ShouldBeTrue();
+
+    [Then("Flyback offers nothing on the wire")]
+    public void ThenNotOffered() => AutoRemap.Offered(context.Patch, context.Patch.Connections.Single()).ShouldBeFalse();
 
     private static void ShouldMention(CompileResult compiled, string fragment) =>
         compiled.Issues.Any(i => i.Message.Contains(fragment, StringComparison.OrdinalIgnoreCase))

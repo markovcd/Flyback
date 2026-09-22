@@ -222,6 +222,23 @@ public class AutoRemapTests
                 && i.Message == "Auto remap's 'in low' and 'in high' are plain numbers: Value's 'out' has no range.");
     }
 
+    [Theory]
+    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 1, true)]
+    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.FilterTypeId, 0, false)]
+    [InlineData(NodeCatalog.ValueTypeId, NodeCatalog.FilterTypeId, 1, false)]
+    [InlineData(NodeCatalog.SineTypeId, "math.add", 0, false)]
+    [InlineData(NodeCatalog.SineTypeId, NodeCatalog.AutoRemapTypeId, 0, false)]
+    public void A_wire_is_offered_a_remap_only_where_both_ends_have_ranges_that_differ(
+        string from, string into, int port, bool offered)
+    {
+        var b = new PatchBuilder(Catalog);
+        var source = b.Add(from, 0, 0);
+        var target = b.Add(into, 200, 0);
+        b.Wire(source, 0, target, port);
+
+        AutoRemap.Offered(b.Patch, b.Patch.Connections.Single(), Catalog).ShouldBe(offered);
+    }
+
     [Fact]
     public void Travel_undoes_at_across_a_tapered_range()
     {

@@ -102,7 +102,34 @@ public static class AutoRemap
         if (patch.Find(wire.SourceNode) is not { } source || catalog.Get(source.TypeId) is not { } def) return (null, "its input comes from nothing it knows");
         if (wire.SourcePort >= def.Outputs.Count) return (null, "its input comes from nothing it knows");
 
-        var spec = def.Outputs[wire.SourcePort];
+        return Emitted(patch, source, def, wire.SourcePort);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="wire"/> joins two sockets whose ranges are both known
+    /// and differ, which is where an Auto remap in the middle of it has work to do.
+    /// </summary>
+    public static bool Offered(Patch patch, Connection wire, ModuleCatalog? catalog = null)
+    {
+        ArgumentNullException.ThrowIfNull(patch);
+        ArgumentNullException.ThrowIfNull(wire);
+
+        catalog ??= NodeCatalog.Current;
+
+        if (patch.Find(wire.SourceNode) is not { } source || catalog.Get(source.TypeId) is not { } from) return false;
+        if (patch.Find(wire.TargetNode) is not { } target || catalog.Get(target.TypeId) is not { } into) return false;
+        if (source.TypeId == NodeCatalog.AutoRemapTypeId || target.TypeId == NodeCatalog.AutoRemapTypeId) return false;
+        if (wire.SourcePort >= from.Outputs.Count || wire.TargetPort >= into.Inputs.Count) return false;
+
+        return Emitted(patch, source, from, wire.SourcePort).Span is { } given
+            && Declared(into.Inputs[wire.TargetPort]) is { } taken
+            && (given.Min, given.Max, given.Knee) != (taken.Min, taken.Max, taken.Knee);
+    }
+
+    /// <summary>The range output <paramref name="port"/> of <paramref name="source"/> puts out, or why it has none.</summary>
+    private static (RemapSpan? Span, string? Why) Emitted(Patch patch, NodeInstance source, NodeDef def, int port)
+    {
+        var spec = def.Outputs[port];
         var name = $"{source.Title(def)}'s '{spec.Name}'";
 
         if (Declared(spec) is not { } declared) return (null, $"{name} has no range");

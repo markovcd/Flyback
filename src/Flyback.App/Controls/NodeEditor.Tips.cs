@@ -47,6 +47,8 @@ public sealed partial class NodeEditor
     {
         if (HitTag(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
 
+        if (RemapMarkAt(graph) is var (wire, _)) return (wire, "Fit the ranges: put an Auto remap in this wire");
+
         // A box's socket row, by the half of the box its label is drawn in.
         foreach (var (_, sockets, bounds) in Scene.Boxes())
         {

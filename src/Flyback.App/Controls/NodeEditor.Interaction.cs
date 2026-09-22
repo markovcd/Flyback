@@ -99,6 +99,13 @@ public sealed partial class NodeEditor
             return;
         }
 
+        if (RemapMarkAt(graph) is var (wire, at))
+        {
+            SpliceRemap(wire, at);
+            e.Handled = true;
+            return;
+        }
+
         // A box before a module, because that is the order they are painted in:
         // a box is drawn at its members' least corner, which need not be where
         // any of them is, and over whatever module happens to be there.
@@ -473,6 +480,7 @@ public sealed partial class NodeEditor
             default:
                 Cursor = CursorOver(graph);
                 TipOver(graph);
+                HoverMark(graph);
                 return;
         }
     }

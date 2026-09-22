@@ -11,6 +11,14 @@ Feature: An Auto remap takes its ranges from what it is wired between
     Given a sine at its trough remapped onto red, from 0.2 to 0.5 of red's range
     Then the screen shows 0.2, 0, 0
 
+  Scenario: A wire between two different ranges is offered an Auto remap
+    Given a sine wired into a filter's cutoff
+    Then Flyback offers to fit the ranges on the wire
+
+  Scenario: A wire between matching ranges is left alone
+    Given a sine wired into a filter's input
+    Then Flyback offers nothing on the wire
+
   Scenario: An Auto remap fed by something with no range asks for its numbers
     Given a level of 0.5 remapped onto red
     Then Flyback points out that the Auto remap's input range has to be typed in

@@ -58,6 +58,8 @@ public sealed partial class NodeEditor
 
             DrawConnections(context, lifted, theirs: false);
 
+            DrawRemapMarks(context);
+
             foreach (var node in patch.Nodes)
                 if (!Scene.Shut(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
