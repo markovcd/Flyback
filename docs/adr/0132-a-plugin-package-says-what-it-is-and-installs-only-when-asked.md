@@ -23,6 +23,11 @@ What a plugin calls itself (`PluginInfo`) and what it registers are only known o
 its code has run, and running it to fill in the question of whether to run it
 answers the question.
 
+A second package of the same assembly is either the next build of that plugin or
+somebody else's code under its name. The name alone cannot tell them apart, and
+neither can anything else the assembly says about itself, since its author wrote
+all of it.
+
 ## Decision
 
 **A `.fbkp` is a zip of builds and nothing else.** A folder per system, named as
@@ -34,6 +39,18 @@ that name from anywhere else. There is no manifest. A description written beside
 the plugin is a second account of it that can disagree with the first; the one list
 a plugin writes of itself, its modules, lives in the assembly and is held to what it
 registers ([0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md)).
+
+**A package is signed, and a plugin is its assembly's name and its signer's key.**
+`signature.json` at the package's top holds a P-256 public key and an ECDSA
+signature over every other entry, each as its SHA-256 and its name, in name order.
+A signature that cannot be read, or does not match what the package holds, refuses
+it whole. An unsigned package is shown but cannot be installed. The key that
+signed an installed plugin is kept beside it, and a package of the same assembly is
+that plugin's update only where the same key signed it; signed by any other, it is
+a different plugin with a name already taken, and is refused. A plugin installed
+unsigned takes no update. A Debug build checks no keys: it installs unsigned
+packages and lets any signer replace any plugin, so a plugin can be tried without
+one. Which keys a machine trusts for a first install is a later decision.
 
 **What the dialog shows is read from the plugin's metadata, and none of its code
 runs.** Its name, version, author and description come from the assembly's own
@@ -56,7 +73,8 @@ name and author are whatever the author wrote.
 
 **The dialog installs nothing on its own.** It shows the above, the versions of
 `Flyback.Plugins` and `Flyback.Core` the plugin was compiled against, the systems the
-package has builds for and the package's SHA-256, under a warning that a plugin can
+package has builds for, the fingerprint of the key that signed it (the SHA-256 of
+the public key) and the package's SHA-256, under a warning that a plugin can
 do anything the user can. Install is off, with the reason written under it, where
 there is no build for this system, or where any assembly in the build — the plugin
 or a helper it carries — was compiled against a contract this Flyback does not
@@ -65,8 +83,15 @@ rule, or where a plugin that knew to declare its modules adds some and declares 
 A helper is named, since the host only asks the plugin itself and would miss
 it until it was first called. Escape, the cross and Cancel install nothing.
 
+**Where the plugin is installed already, the same dialog updates it.** Its button
+and title say Update, Reinstall or Downgrade as the package's version orders
+against the installed one by Semantic Versioning, and Replace where either is not
+a version; a line says which version is replaced by which.
+
 **Only this system's build is installed**, into `plugins/<plugin assembly>`, with
-`package.sha256` beside it. That marker is what says a package put the folder there.
+`package.sha256` beside it, and `package.key` holding the signer's public key. The
+first is what says a package put the folder there; both are written over any file of
+those names the build carried, and an unsigned package's build keeps no key.
 A package never replaces a folder without one — the plugins Flyback ships, or any
 copied in by hand — and never brings a second copy of an assembly already loaded
 from another folder. The host loads every folder with a marker after every folder
@@ -100,7 +125,9 @@ recording still running leaves it open, installed for the next start. The new
 process is started with `--after <pid>` and waits for the old one to exit before it
 looks at a plugin, since until then the one being replaced is still loaded.
 
-**`flyback-cli pack-plugin` makes one**, and asks nothing the build already says. A
+**`flyback-cli plugin-key` makes a key**, a PKCS#8 PEM it never writes over, and
+**`flyback-cli pack-plugin --key` makes a package signed with it**, refusing to pack
+without one, and asks nothing the build already says. A
 project is published with the SDK once for each runtime its `RuntimeIdentifiers`
 names, or once portably where it names none. A folder the SDK built into needs no
 SDK: `publish/` or the folder itself is the portable build, and each
@@ -120,10 +147,13 @@ program Settings → Files hands Flyback's files to.
 
 ## Consequences
 
-Nothing is signed. A package's SHA-256 can be compared against what its author
-publishes, and that is all. Signing would need somebody to trust a key, and there is
-nobody to be that yet; a later decision could pin a key per plugin on first install
-and refuse an update signed by another.
+A signature says that a package and every update to it come from one key, not
+whose key it is. The first install of a plugin trusts whatever key signed it, as
+the dialog's warning says; only its updates are checked.
+
+A lost key cannot sign an update. Its plugin is removed by hand and the next build
+installed fresh, or shipped under a new assembly name. A plugin installed unsigned
+by a Debug build is removed the same way before a signed build of it will install.
 
 What the dialog says a plugin reaches is what its code names, not what it does.
 Reflection and native code are named themselves, which is as far as reading can go.

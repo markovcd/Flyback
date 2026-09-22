@@ -248,6 +248,7 @@
     if (contract.length) row("Built against", contract.join(", "));
 
     row("Assembly", plugin.assembly);
+    if (plugin.signer) row("Signed by", make("code", { class: "hash" }, plugin.signer));
     row("SHA-256", make("code", { class: "hash" }, plugin.sha256));
 
     into.appendChild(dl);

@@ -5,7 +5,7 @@ using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
-/// <summary>Installing a plugin from a <c>.fbkp</c> opened with Flyback (ADR-0132).</summary>
+/// <summary>Installing or updating a plugin from a <c>.fbkp</c> opened with Flyback (ADR-0132).</summary>
 public sealed partial class MainWindow
 {
     /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
@@ -36,15 +36,16 @@ public sealed partial class MainWindow
         var platform = PluginPackage.ThisPlatform;
         var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
         var refusal = installer is null ? "This window has no plugins folder." : installer.Refusal(package, platform);
-        var replacing = package.DescriptionFor(platform) is { } plugin ? installer?.Replacing(plugin.Assembly) : null;
+        var described = package.DescriptionFor(platform);
+        var replacing = described is null ? null : installer?.Replacing(described.Assembly);
+        var change = described is null ? PluginChange.Install : PluginChanges.Of(replacing?.Description, described);
 
-        var view = PluginInstallView.View(package, platform, refusal, replacing, offerRestart: relaunch is not null);
-        var answer = await this.ShowDialog<PluginAnswer>(PluginInstallView.Title, view);
+        var view = PluginInstallView.View(package, platform, refusal, replacing, change, offerRestart: relaunch is not null);
+        var answer = await this.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
 
         if (answer == PluginAnswer.Cancel) return;
 
-        var described = package.DescriptionFor(platform)!;
-        var name = $"{described.Name} {described.Version}";
+        var name = $"{described!.Name} {described.Version}";
 
         try
         {
@@ -58,7 +59,7 @@ public sealed partial class MainWindow
 
         if (answer == PluginAnswer.InstallAndRestart && await RestartAsync()) return;
 
-        Report($"{name} is installed, and loads the next time Flyback starts.");
+        Report($"{name} is {(change == PluginChange.Update ? "updated" : "installed")}, and loads the next time Flyback starts.");
     }
 
     /// <summary>

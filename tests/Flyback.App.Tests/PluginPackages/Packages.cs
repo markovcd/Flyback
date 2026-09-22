@@ -1,9 +1,12 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
+using System.Security.Cryptography;
 using System.Text;
+using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Picture;
 
 namespace Flyback.App.Tests.PluginPackages;
@@ -22,20 +25,37 @@ internal static class Packages
     /// <summary>The sample plugin, whose project sets its tags and embeds a preview.</summary>
     public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
 
-    /// <summary>A package with the sample plugin for Windows.</summary>
-    public static byte[] ForSample() => Zip([("win/Flyback.Plugins.Sample.dll", Sample)]);
+    /// <summary>The key test packages are signed with.</summary>
+    public static ECDsa Key { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    /// <summary>Somebody else's key.</summary>
+    public static ECDsa OtherKey { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    /// <summary>A signature is different every time, so each package is signed once and kept.</summary>
+    private static readonly ConcurrentDictionary<string, byte[]> Signed = new();
+
+    /// <summary>A package with the sample plugin for Windows, signed with <see cref="Key"/>.</summary>
+    public static byte[] ForSample() => Signed.GetOrAdd("sample", _ => Sign(Zip([("win/Flyback.Plugins.Sample.dll", Sample)])));
+
+    public static byte[] Sign(byte[] package, ECDsa? key = null) => PackageSigner.Sign(package, key ?? Key);
 
     /// <summary>An assembly a plugin might carry beside it, whose code reaches the network.</summary>
     public static byte[] Networking { get; } = File.ReadAllBytes(typeof(System.Net.Http.HttpClient).Assembly.Location);
 
-    /// <summary>A package with the picture plugin built for each of <paramref name="platforms"/>.</summary>
-    public static byte[] For(params string[] platforms)
+    /// <summary>A package with the picture plugin built for each of <paramref name="platforms"/>, signed with <see cref="Key"/>.</summary>
+    public static byte[] For(params string[] platforms) =>
+        Signed.GetOrAdd(string.Join(",", platforms), _ => Sign(Unsigned(platforms)));
+
+    /// <summary>A package with the picture plugin built for each of <paramref name="platforms"/>, signed by nobody.</summary>
+    public static byte[] Unsigned(params string[] platforms) => Unsigned(Assembly, platforms);
+
+    public static byte[] Unsigned(byte[] assembly, params string[] platforms)
     {
         var entries = new List<(string, byte[])>();
 
         foreach (var platform in platforms)
         {
-            entries.Add(($"{platform}/{AssemblyName}", Assembly));
+            entries.Add(($"{platform}/{AssemblyName}", assembly));
             entries.Add(($"{platform}/Flyback.Plugins.Picture.deps.json", Encoding.UTF8.GetBytes("{}")));
             entries.Add(($"{platform}/runtimes/{platform}/native/readme.txt", [1, 2, 3]));
         }
@@ -95,6 +115,32 @@ internal static class Packages
         }
 
         throw new InvalidOperationException($"it does not reference {reference}");
+    }
+
+    /// <summary>The picture plugin as an older release of it: every digit of its version a nought.</summary>
+    public static byte[] Older { get; } = Versioned(Assembly, '0');
+
+    /// <summary>The picture plugin as a newer release of it: every digit of its version a nine.</summary>
+    public static byte[] Newer { get; } = Versioned(Assembly, '9');
+
+    /// <summary>
+    /// A copy of <paramref name="image"/> with every digit of its informational
+    /// version turned to <paramref name="digit"/>, which keeps the attribute's length.
+    /// </summary>
+    private static byte[] Versioned(byte[] image, char digit)
+    {
+        var version = PluginDescription.Of([(AssemblyName, () => new MemoryStream(image))])!.Version;
+        var current = Encoding.UTF8.GetBytes(version);
+        var wanted = Encoding.UTF8.GetBytes(new string([.. version.Select(c => char.IsAsciiDigit(c) ? digit : c)]));
+
+        var copy = (byte[])image.Clone();
+        var at = copy.AsSpan().IndexOf(current);
+
+        if (at < 0) throw new InvalidOperationException("it has no informational version");
+
+        wanted.CopyTo(copy.AsSpan(at));
+
+        return copy;
     }
 
     /// <summary>The contract version this Flyback offers.</summary>

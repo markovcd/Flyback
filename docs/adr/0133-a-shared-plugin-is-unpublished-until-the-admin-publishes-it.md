@@ -54,9 +54,10 @@ request limit.
 
 - Publishing is not an audit. The pages say so, and send the reader to the
   dialog.
-- Nothing ties a package to its author. A second package of the same assembly by
-  somebody else is listed beside the first once published, and the admin is the
-  one who tells them apart.
+- A package is tied to its key, not to a person. An unsigned package is refused as
+  the editor refuses it, and once a plugin is published its assembly name is its
+  key's: a submission of that assembly signed by another is refused, and so is
+  publishing one. Each plugin carries its key's fingerprint as `signer`.
 - An update is a new submission, reviewed again. The listing has no notion of
   one package replacing another.
 - The specs project cannot host the site, so the requirement lives in the

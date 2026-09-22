@@ -62,6 +62,7 @@ internal static class Program
             Print(patch),
             Pack(patch, json),
             PackPlugin(),
+            PluginKey(),
             Modules(json),
             Probe(plugins, json),
             ViewerCommand.Build(),
@@ -378,18 +379,46 @@ internal static class Program
             Required = true,
         };
 
+        var key = new Option<FileInfo>("--key", "-k")
+        {
+            Description = "The private key to sign it with, as plugin-key writes it. "
+                + "An update installs only when signed with the key that signed what it replaces.",
+        };
+
         var command = new Command(
             "pack-plugin",
-            "Build a plugin and pack it into one file the editor installs from.")
+            "Build a plugin and pack it into one signed file the editor installs from.")
         {
-            source, output,
+            source, output, key,
         };
 
         command.SetAction(result => PackPluginCommand.Run(
             result.GetRequiredValue(source),
             result.GetRequiredValue(output),
             Console.Out,
-            Console.Error));
+            Console.Error,
+            key: result.GetValue(key)));
+
+        return command;
+    }
+
+    /// <summary>Makes the key a plugin's packages are signed with.</summary>
+    private static Command PluginKey()
+    {
+        var output = new Option<FileInfo>("--out", "-o")
+        {
+            Description = "Where to write the private key. Keep it, and keep it to yourself.",
+            Required = true,
+        };
+
+        var command = new Command(
+            "plugin-key",
+            "Make the key that signs a plugin's packages, and that every update must be signed with.")
+        {
+            output,
+        };
+
+        command.SetAction(result => PluginKeyCommand.Run(result.GetRequiredValue(output), Console.Out, Console.Error));
 
         return command;
     }

@@ -15,7 +15,16 @@ public sealed class PluginInstallerTests : IDisposable
         if (Directory.Exists(plugins)) Directory.Delete(plugins, recursive: true);
     }
 
-    private PluginInstaller Installer(params LoadedPlugin[] loaded) => new(plugins, loaded);
+    private PluginInstaller Installer(params LoadedPlugin[] loaded) => new(plugins, loaded, checkKeys: true);
+
+    /// <summary>As a Debug build installs, checking no keys.</summary>
+    private PluginInstaller Unchecked() => new(plugins, [], checkKeys: false);
+
+    private void InstallNow(PluginPackage package, PluginInstaller? installer = null)
+    {
+        (installer ?? Installer()).Stage(package, "win");
+        PluginInstaller.Finish(plugins);
+    }
 
     private static PluginPackage Package() => PluginPackage.Read(Packages.For("win", "linux", "osx"));
 
@@ -51,7 +60,7 @@ public sealed class PluginInstallerTests : IDisposable
 
         var installer = Installer();
 
-        installer.Replacing(Packages.Folder)!.Assembly.ShouldBe(Packages.Folder);
+        installer.Replacing(Packages.Folder)!.Description.Assembly.ShouldBe(Packages.Folder);
         installer.Refusal(Package(), "win").ShouldBeNull();
         installer.Stage(Package(), "win");
 
@@ -169,5 +178,88 @@ public sealed class PluginInstallerTests : IDisposable
         File.WriteAllText(Path.Combine(plugins, "Alpha", PluginPackage.MarkerName), "");
 
         PluginHost.Folders(plugins).Select(Path.GetFileName).ShouldBe(["Zeta", "Alpha"]);
+    }
+
+    [Fact]
+    public void An_unsigned_package_is_not_installed()
+    {
+        Installer().Refusal(PluginPackage.Read(Packages.Unsigned("win")), "win")
+            .ShouldBe("It is not signed, and Flyback installs only signed plugins.");
+    }
+
+    [Fact]
+    public void A_debug_build_installs_an_unsigned_package()
+    {
+        Unchecked().Refusal(PluginPackage.Read(Packages.Unsigned("win")), "win").ShouldBeNull();
+    }
+
+    [Fact]
+    public void The_key_that_signed_a_plugin_is_kept_beside_it()
+    {
+        InstallNow(Package());
+
+        File.ReadAllText(Installed(PluginPackage.KeyMarkerName)).Trim().ShouldBe(PackageSigner.Of(Packages.Key).Key);
+        Installer().Replacing(Packages.Folder)!.Signer.ShouldBe(PackageSigner.Of(Packages.Key));
+    }
+
+    [Fact]
+    public void An_update_signed_with_the_same_key_may_replace_the_plugin()
+    {
+        InstallNow(PluginPackage.Read(Packages.Sign(Packages.Unsigned(Packages.Older, "win"))));
+
+        Installer().Refusal(Package(), "win").ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_package_signed_with_another_key_is_a_different_plugin_and_replaces_nothing()
+    {
+        InstallNow(Package());
+
+        var impostor = PluginPackage.Read(Packages.Sign(Packages.Unsigned(Packages.Newer, "win"), Packages.OtherKey));
+
+        Installer().Refusal(impostor, "win").ShouldBe(
+            $"{Packages.Folder} in plugins/{Packages.Folder} was signed with another key, so this is a different plugin with the same assembly name.");
+    }
+
+    [Fact]
+    public void A_package_signed_with_another_key_replaces_nothing_waiting_to_be_installed_either()
+    {
+        Installer().Stage(Package(), "win");
+
+        var impostor = PluginPackage.Read(Packages.Sign(Packages.Unsigned("win"), Packages.OtherKey));
+
+        Installer().Refusal(impostor, "win").ShouldNotBeNull().ShouldContain("another key");
+    }
+
+    [Fact]
+    public void A_plugin_installed_unsigned_takes_no_signed_update()
+    {
+        InstallNow(PluginPackage.Read(Packages.Unsigned("win")), Unchecked());
+
+        Installer().Refusal(Package(), "win").ShouldBe(
+            $"{Packages.Folder} in plugins/{Packages.Folder} was installed unsigned, so nothing shows this is its update.");
+    }
+
+    [Fact]
+    public void A_debug_build_lets_another_key_replace_a_plugin()
+    {
+        InstallNow(Package());
+
+        Unchecked().Refusal(PluginPackage.Read(Packages.Sign(Packages.Unsigned("win"), Packages.OtherKey)), "win").ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_key_the_build_carried_is_not_kept_for_an_unsigned_package()
+    {
+        var package = PluginPackage.Read(Packages.Zip(
+        [
+            ($"win/{Packages.AssemblyName}", Packages.Assembly),
+            ($"win/{PluginPackage.KeyMarkerName}", System.Text.Encoding.UTF8.GetBytes(PackageSigner.Of(Packages.Key).Key)),
+        ]));
+
+        InstallNow(package, Unchecked());
+
+        File.Exists(Installed(PluginPackage.KeyMarkerName)).ShouldBeFalse();
+        Installer().Refusal(Package(), "win").ShouldNotBeNull().ShouldContain("installed unsigned");
     }
 }

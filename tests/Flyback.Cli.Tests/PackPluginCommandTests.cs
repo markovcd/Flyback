@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Sample;
 using Shouldly;
@@ -67,10 +68,25 @@ public sealed class PackPluginCommandTests : IDisposable
     private static Published NoSdk(IReadOnlyList<string> arguments) =>
         throw new InvalidOperationException("a folder already built is packed without the SDK");
 
-    private (int Code, string Out, string Error) Run(FileSystemInfo source, Func<IReadOnlyList<string>, Published>? dotnet = null)
+    private FileInfo Key => new(Path.Combine(folder, "author.key"));
+
+    private PackageSigner Signer()
     {
+        using var key = ECDsa.Create();
+        key.ImportFromPem(File.ReadAllText(Key.FullName));
+
+        return PackageSigner.Of(key);
+    }
+
+    private (int Code, string Out, string Error) Run(
+        FileSystemInfo source,
+        Func<IReadOnlyList<string>, Published>? dotnet = null,
+        bool signed = true)
+    {
+        if (signed && !Key.Exists) File.WriteAllText(Key.FullName, PackageSigner.NewKey());
+
         var (writer, error) = (new StringWriter(), new StringWriter());
-        var code = PackPluginCommand.Run(source, Output, writer, error, dotnet ?? NoSdk);
+        var code = PackPluginCommand.Run(source, Output, writer, error, dotnet ?? NoSdk, signed ? Key : null, checkKeys: true);
 
         return (code, writer.ToString(), error.ToString());
     }
@@ -96,6 +112,44 @@ public sealed class PackPluginCommandTests : IDisposable
         output.ShouldContain("against   Flyback.");
         output.ShouldContain("Flyback.Plugins ");
         output.ShouldContain($"sha256    {Written.Sha256}");
+        output.ShouldContain($"signed    key {Signer().Fingerprint}");
+        Written.Signer.ShouldBe(Signer());
+    }
+
+    [Fact]
+    public void A_package_is_not_packed_without_a_key()
+    {
+        var (code, _, error) = Run(new DirectoryInfo(Build("net10.0")), signed: false);
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("--key");
+        Output.Exists.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_key_that_is_not_one_is_refused()
+    {
+        File.WriteAllText(Key.FullName, "not a key");
+
+        var (code, _, error) = Run(new DirectoryInfo(Build("net10.0")));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("author.key: It holds no P-256 private key");
+    }
+
+    [Fact]
+    public void A_new_key_is_written_once_and_never_over_another()
+    {
+        var (writer, error) = (new StringWriter(), new StringWriter());
+
+        PluginKeyCommand.Run(Key, writer, error).ShouldBe(Exit.Ok);
+        writer.ToString().ShouldContain($"key       {Signer().Fingerprint}");
+
+        var kept = File.ReadAllText(Key.FullName);
+
+        PluginKeyCommand.Run(Key, writer, error).ShouldBe(Exit.Failed);
+        error.ToString().ShouldContain("there is a file there already");
+        File.ReadAllText(Key.FullName).ShouldBe(kept);
     }
 
     [Fact]

@@ -2,6 +2,9 @@ using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.PluginPackages;
 
+/// <summary>A plugin a package installed, and who signed that package.</summary>
+internal sealed record InstalledPlugin(PluginDescription Description, PackageSigner? Signer);
+
 /// <summary>
 /// Puts a package's build for this system into the plugins folder, as
 /// <c>plugins/&lt;plugin assembly&gt;</c> with <see cref="PluginPackage.MarkerName"/> beside it.
@@ -14,15 +17,20 @@ namespace Flyback.App.PluginPackages;
 /// <para>
 /// A folder is only ever replaced if a package put it there, which the marker says.
 /// The plugins Flyback ships and any somebody copied in by hand have none, so no
-/// package can take their place.
+/// package can take their place. A plugin is the same plugin only where its assembly's
+/// name and its signer's key both match, so an update is signed by the key that
+/// signed what it replaces.
 /// </para>
 /// </remarks>
 /// <param name="folder">The plugins folder.</param>
 /// <param name="loaded">What this run loaded, whose assemblies a package may not bring a second copy of.</param>
-internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin> loaded)
+/// <param name="checkKeys">Whether to refuse unsigned packages and another signer's update; <see cref="PackageSigner.Checked"/> unless a test says otherwise.</param>
+internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin> loaded, bool? checkKeys = null)
 {
     /// <summary>Starts with a dot, so the host never scans it for plugins.</summary>
     public const string PendingName = ".pending";
+
+    private readonly bool checkKeys = checkKeys ?? PackageSigner.Checked;
 
     private string Pending => Path.Combine(folder, PendingName);
 
@@ -31,11 +39,21 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     {
         if (package.Refusal(platform) is { } refused) return refused;
 
+        if (checkKeys && package.Signer is null)
+            return "It is not signed, and Flyback installs only signed plugins.";
+
         var name = package.Description(package.BuildFor(platform)!).Assembly;
         var target = Path.Combine(folder, name);
 
         if (Directory.Exists(target) && !FromPackage(target))
             return $"There is already a plugin in {PluginHost.DirectoryName}/{name} that was not installed from a package, and it is left alone.";
+
+        if (checkKeys && Replacing(name) is { } installed && installed.Signer != package.Signer)
+        {
+            return installed.Signer is null
+                ? $"{installed.Description.Name} in {PluginHost.DirectoryName}/{name} was installed unsigned, so nothing shows this is its update."
+                : $"{installed.Description.Name} in {PluginHost.DirectoryName}/{name} was signed with another key, so this is a different plugin with the same assembly name.";
+        }
 
         var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
@@ -53,7 +71,7 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     /// The plugin in the folder <paramref name="name"/> installed now, or waiting to be
     /// at the next start, or null where neither.
     /// </summary>
-    public PluginDescription? Replacing(string name) =>
+    public InstalledPlugin? Replacing(string name) =>
         Installed(Path.Combine(Pending, name)) ?? Installed(Path.Combine(folder, name));
 
     /// <summary>Unpacks the build for <paramref name="platform"/> to be moved into place at the next start.</summary>
@@ -68,8 +86,13 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
         {
             package.Unpack(build, unpacking);
 
-            // Written last, over any file of that name the build carried.
+            // Written last, over any file of those names the build carried.
             File.WriteAllText(Path.Combine(unpacking, PluginPackage.MarkerName), package.Sha256 + "\n");
+
+            var key = Path.Combine(unpacking, PluginPackage.KeyMarkerName);
+
+            if (package.Signer is { } signer) File.WriteAllText(key, signer.Key + "\n");
+            else File.Delete(key);
 
             var staged = Path.Combine(Pending, package.Description(build).Assembly);
 
@@ -109,7 +132,7 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
                 continue;
             }
 
-            if (!PluginDescription.ValidFolder(name) || Installed(staged) is not { } plugin)
+            if (!PluginDescription.ValidFolder(name) || Installed(staged)?.Description is not { } plugin)
             {
                 problems.Add($"{name}: not a package's plugin, and removed.");
                 Delete(staged);
@@ -159,8 +182,14 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
     private static bool FromPackage(string plugin) => File.Exists(Path.Combine(plugin, PluginPackage.MarkerName));
 
     /// <summary>The plugin a package left in <paramref name="plugin"/>, or null for a folder no package filled.</summary>
-    private static PluginDescription? Installed(string plugin) =>
-        FromPackage(plugin) ? PluginDescription.OfFolder(plugin) : null;
+    private static InstalledPlugin? Installed(string plugin)
+    {
+        if (!FromPackage(plugin) || PluginDescription.OfFolder(plugin) is not { } description) return null;
+
+        var key = Path.Combine(plugin, PluginPackage.KeyMarkerName);
+
+        return new InstalledPlugin(description, File.Exists(key) ? PackageSigner.Parse(File.ReadAllText(key)) : null);
+    }
 
     /// <summary>Asked of the nearest folder that exists, so that asking creates nothing.</summary>
     private bool Writable()

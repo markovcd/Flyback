@@ -71,6 +71,9 @@ internal static class PluginApi
                 return Results.BadRequest(new { Error = refused.Message });
             }
 
+            if (PackageSigner.Checked && store.TakenByAnother(submission.Assembly, submission.Signer))
+                return Results.Conflict(new { Error = $"A published plugin is already called {submission.Assembly}, and was signed with another key." });
+
             if (store.Add(submission, DateTimeOffset.UtcNow) is not { } stored)
                 return Results.Conflict(new { Error = "That package has been sent already." });
 
@@ -83,6 +86,12 @@ internal static class PluginApi
         api.MapPatch("/plugins/{id}", (HttpContext http, string id, PluginChange change) =>
         {
             if (!reviewing(http)) return Results.Unauthorized();
+
+            if (change.Published is true
+                && PackageSigner.Checked
+                && store.Find(id, unpublished: true) is { } publishing
+                && store.TakenByAnother(publishing.Assembly, publishing.Signer is null ? null : new PackageSigner(publishing.Signer), except: id))
+                return Results.Conflict(new { Error = $"A published plugin is already called {publishing.Assembly}, and was signed with another key." });
 
             if (change.Published is { } published && !store.Publish(id, published)) return Results.NotFound();
 
@@ -110,6 +119,7 @@ internal static class PluginApi
         plugin.Contract,
         Modules = plugin.Modules.Select(m => new { Id = m.TypeId, m.Name }),
         plugin.Sha256,
+        Signer = plugin.Signer is null ? null : new PackageSigner(plugin.Signer).Fingerprint,
         plugin.FileName,
         plugin.Size,
         plugin.Submitted,

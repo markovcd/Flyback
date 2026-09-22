@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Flyback.App.PluginPackages;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.Controls;
@@ -16,8 +17,9 @@ internal enum PluginAnswer
 }
 
 /// <summary>
-/// The dialog a <c>.fbkp</c> opens: what the plugin is, what it can do, and Install.
-/// Only Install answers with anything but <see cref="PluginAnswer.Cancel"/>.
+/// The dialog a <c>.fbkp</c> opens: what the plugin is, what it can do, what it
+/// replaces, and Install, or Update where it is a newer build of a plugin installed
+/// already. Only that button answers with anything but <see cref="PluginAnswer.Cancel"/>.
 /// </summary>
 /// <remarks>
 /// Everything shown is read from the plugin's own assemblies without running them:
@@ -27,19 +29,21 @@ internal enum PluginAnswer
 /// </remarks>
 internal static class PluginInstallView
 {
-    public const string Title = "Install plugin";
+    public static string Title(PluginChange change) => $"{change.Verb()} plugin";
 
     private static readonly FontFamily Code = new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
     /// <param name="platform">The system this is, whose build would be installed.</param>
     /// <param name="refusal">Why Install is off, or null where it is on.</param>
     /// <param name="replacing">The plugin installed in the same folder now, where there is one.</param>
+    /// <param name="change">What installing does to <paramref name="replacing"/>.</param>
     /// <param name="offerRestart">Whether to offer starting Flyback again, which is what loads the plugin.</param>
     public static Control View(
         PluginPackage package,
         string platform,
         string? refusal,
-        PluginDescription? replacing,
+        InstalledPlugin? replacing,
+        PluginChange change,
         bool offerRestart = false)
     {
         var page = new StackPanel { Name = "pluginInstall", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
@@ -82,6 +86,7 @@ internal static class PluginInstallView
                 Fact(facts, "Adds files", $"{files.Count}, {Size(files.Sum(f => f.Length))}");
             }
 
+            Fact(facts, "Signed by", package.Signer is { } signer ? $"key {signer.Fingerprint}" : "nobody", "pluginSigner", mono: package.Signer is not null);
             Fact(facts, "SHA-256", package.Sha256, mono: true);
 
             page.Children.Add(facts);
@@ -94,8 +99,19 @@ internal static class PluginInstallView
             page.Children.Add(note);
         }
 
-        if (replacing is not null)
-            page.Children.Add(Wrapped($"Replaces {replacing.Name} {replacing.Version}, which is installed now.", Text.Body));
+        if (replacing?.Description is { } old && package.DescriptionFor(platform) is { } incoming)
+        {
+            var line = Wrapped(change switch
+            {
+                PluginChange.Update => $"Updates {old.Name} {old.Version}, which is installed now, to {incoming.Version}.",
+                PluginChange.Reinstall => $"{old.Name} {old.Version} is installed already, and this installs it again.",
+                PluginChange.Downgrade => $"Replaces {old.Name} {old.Version}, which is installed now, with the older {incoming.Version}.",
+                _ => $"Replaces {old.Name} {old.Version}, which is installed now.",
+            }, Text.Body);
+
+            line.Name = "pluginReplacing";
+            page.Children.Add(line);
+        }
 
         page.Children.Add(new Border
         {
@@ -131,7 +147,7 @@ internal static class PluginInstallView
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var install = new Button { Name = "install", Content = "Install", MinWidth = 96, IsEnabled = refusal is null };
+        var install = new Button { Name = "install", Content = change.Verb(), MinWidth = 96, IsEnabled = refusal is null };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };
 
         install.Click += (_, _) => Dialog.Close(install,

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Picture;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -41,7 +42,14 @@ public sealed class PluginTests : IDisposable
         Directory.Delete(folder, recursive: true);
     }
 
-    private static byte[] Zip(params (string Name, byte[] Bytes)[] entries)
+    private static readonly ECDsa Key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    private static readonly ECDsa OtherKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    /// <summary>A package of <paramref name="entries"/>, signed with <see cref="Key"/>.</summary>
+    private static byte[] Zip(params (string Name, byte[] Bytes)[] entries) => PackageSigner.Sign(Unsigned(entries), Key);
+
+    private static byte[] Unsigned(params (string Name, byte[] Bytes)[] entries)
     {
         using var memory = new MemoryStream();
 
@@ -327,5 +335,49 @@ public sealed class PluginTests : IDisposable
     {
         foreach (var page in new[] { "/plugins.html", "/plugin.html", "/submit-plugin.html", "/assets/plugins.js" })
             (await Status(HttpMethod.Get, page)).ShouldBe(HttpStatusCode.OK, page);
+    }
+
+    [Fact]
+    public async Task An_unsigned_package_is_refused()
+    {
+        using var response = await Post(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("error").GetString()!.ShouldContain("not signed");
+    }
+
+    [Fact]
+    public async Task A_plugin_shows_the_key_that_signed_it()
+    {
+        var sent = await Submit(Package("win"));
+
+        sent.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(Key).Fingerprint);
+    }
+
+    [Fact]
+    public async Task A_published_plugins_name_is_not_taken_by_another_key()
+    {
+        await Publish((await Submit(Package("win"))).GetProperty("id").GetString()!);
+
+        using var impostor = await Post(PackageSigner.Sign(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)), OtherKey));
+
+        impostor.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+        (await impostor.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken))
+            .GetProperty("error").GetString()!.ShouldContain("signed with another key");
+
+        (await Submit(Package("win", "linux"))).GetProperty("published").GetBoolean().ShouldBeFalse("the same key may send its next build");
+    }
+
+    [Fact]
+    public async Task Two_keys_waiting_under_one_name_cannot_both_be_published()
+    {
+        var first = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+        var second = (await Submit(PackageSigner.Sign(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)), OtherKey))).GetProperty("id").GetString()!;
+        using var admin = await Admin();
+
+        await Publish(first);
+
+        (await Status(HttpMethod.Patch, $"/api/v1/plugins/{second}", JsonContent.Create(new { published = true }), admin)).ShouldBe(HttpStatusCode.Conflict);
     }
 }

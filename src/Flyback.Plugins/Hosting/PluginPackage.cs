@@ -46,6 +46,9 @@ internal sealed class PluginPackage
     /// </summary>
     public const string MarkerName = "package.sha256";
 
+    /// <summary>Written beside a plugin a signed package installed, holding its signer's key.</summary>
+    public const string KeyMarkerName = "package.key";
+
     /// <summary>The folder names a build is looked for under, as runtime identifiers begin.</summary>
     public static IReadOnlyList<string> Platforms { get; } = ["win", "osx", "linux"];
 
@@ -61,9 +64,11 @@ internal sealed class PluginPackage
         byte[] bytes,
         PackageLimits limits,
         Dictionary<string, List<PackedFile>> builds,
-        Dictionary<string, PluginDescription> descriptions)
+        Dictionary<string, PluginDescription> descriptions,
+        PackageSigner? signer)
     {
         this.bytes = bytes;
+        Signer = signer;
         this.limits = limits;
         this.builds = builds;
         this.descriptions = descriptions;
@@ -76,6 +81,9 @@ internal sealed class PluginPackage
     public string Sha256 { get; }
 
     public long Size => bytes.LongLength;
+
+    /// <summary>Whoever signed it, or null for a package nobody signed.</summary>
+    public PackageSigner? Signer { get; }
 
     /// <summary>The systems it holds a plugin for, <see cref="AnyPlatform"/> last.</summary>
     public IReadOnlyList<string> Builds { get; }
@@ -185,6 +193,7 @@ internal sealed class PluginPackage
             files.Add(new PackedFile(name[(slash + 1)..], index, entry.Length));
         }
 
+        var signer = PackageSigner.Verify(zip, limits.Unpacked);
         var descriptions = new Dictionary<string, PluginDescription>(StringComparer.Ordinal);
 
         foreach (var (platform, files) in builds.ToList())
@@ -206,7 +215,7 @@ internal sealed class PluginPackage
             else descriptions[platform] = description;
         }
 
-        return new PluginPackage(bytes, limits, builds, descriptions);
+        return new PluginPackage(bytes, limits, builds, descriptions, signer);
     }
 
     /// <summary>Reads a package from a stream, never holding more of it than a package may be.</summary>

@@ -19,7 +19,7 @@
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
 - Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.
-- Opening a `.fbkp` plugin package shows what the plugin is, with its preview, author, description and tags, what it adds and reaches and, when asked, installs its build for this system and restarts Flyback; `flyback-cli pack-plugin` makes one.
+- Opening a signed `.fbkp` plugin package shows what the plugin is, with its preview, author, description and tags, what it adds and reaches and, when asked, installs or updates its build for this system and restarts Flyback; `flyback-cli pack-plugin` makes one, signed with a key from `flyback-cli plugin-key`.
 - Plugin packages can be shared on the preset site, with their preview and tags, listed once the admin has published them.
 - A plugin declares its modules, so the install dialog and the shared plugins site list them by name, and one that registers a module it did not declare is refused.
 

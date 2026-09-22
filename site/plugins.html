@@ -808,11 +808,19 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 
     <h3>Shipping it as a package</h3>
 
-    <p>To hand a plugin to somebody else, pack it as a <code>.fbkp</code>. Opening one with Flyback shows
-    what the plugin is and installs it only when asked, copying just the build for the system it is on.</p>
+    <p>To hand a plugin to somebody else, pack it as a <code>.fbkp</code>, signed with your key. Opening one
+    with Flyback shows what the plugin is and installs it only when asked, copying just the build for the
+    system it is on.</p>
 
-    <pre><code>flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp
-flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
+    <pre><code>flyback-cli plugin-key -o ripple.key
+flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
+flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</code></pre>
+
+    <p>Make the key once and keep it, out of the repository. Every package of the plugin is signed with it,
+    because Flyback takes a package as an update to the plugin installed only when the same key signed both;
+    signed with another, it is a different plugin under a name already taken, and is refused. A lost key
+    means your users remove the plugin before the next build will install. A package nobody signed is
+    shown, but not installed, except by a Debug build of Flyback, which checks no keys.</p>
 
     <p>Given a project, or a folder holding one, it runs <code>dotnet publish</code> once for each runtime
     the project's <code>&lt;RuntimeIdentifiers&gt;</code> names, or once portably where it names none, so it
@@ -856,8 +864,9 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
 &lt;/<span class="k">ItemGroup</span>&gt;</code></pre>
 
     <p>Each build holds exactly one plugin assembly at its top, and its name is the folder it installs into:
-    <code>plugins/Flyback.Plugins.Ripple</code>. A second package of the same assembly replaces the first
-    whole, at the next start. A package never replaces a plugin it did not install, never brings a second
+    <code>plugins/Flyback.Plugins.Ripple</code>. A second package of the same assembly, signed with the same
+    key, replaces the first whole at the next start: the dialog offers it as an update, a reinstall or a
+    downgrade by comparing its <code>&lt;Version&gt;</code> with the installed one. A package never replaces a plugin it did not install, never brings a second
     copy of one already loaded, and loads after every other plugin, so an id it shares with one is its to
     lose.</p>
 
@@ -868,14 +877,16 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     reason under it, when there is no build for this system, or when the plugin or any assembly it carries
     was compiled against a contract this Flyback does not offer, or when it adds modules and declares none;
     the dialog shows which versions of
-    <code>Flyback.Plugins</code> and <code>Flyback.Core</code> it was built against. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
-    what you publish.</p>
+    <code>Flyback.Plugins</code> and <code>Flyback.Core</code> it was built against. It also shows the
+    fingerprint of the key that signed it and the package's SHA-256, for comparing with what you publish.
+    A package changed after it was signed is refused.</p>
 
     <h3>Sharing it</h3>
 
     <p>To offer a package to everyone, <a href="PRESETS_URL/submit-plugin.html">submit it</a> to the
     <a href="PRESETS_URL/plugins.html">shared plugins</a>. The site reads it as the editor does, without running
-    it, and refuses what the editor would. What it lists comes from the package alone, so set
+    it, and refuses what the editor would. Once your plugin is published, its assembly name is your key's:
+    a package of it signed with any other is turned away. What it lists comes from the package alone, so set
     the name, version, author, description, tags and preview above before packing. A package goes up unpublished and is listed once it has
     been reviewed; up to 64 MB is taken.</p>
 

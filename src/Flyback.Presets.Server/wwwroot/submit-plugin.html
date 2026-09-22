@@ -36,7 +36,7 @@
   <div class="shelf-head">
     <span class="eyebrow">Shared plugins</span>
     <h1>Submit a plugin.</h1>
-    <p class="lede">Pack it with <code>flyback-cli pack-plugin</code> and send the <code>.fbkp</code>. It is
+    <p class="lede">Pack it with <code>flyback-cli pack-plugin --key</code> and send the <code>.fbkp</code>. It is
       listed once it has been reviewed.</p>
   </div>
 
@@ -50,7 +50,7 @@
     </div>
 
     <form id="submit">
-      <label>Plugin package <span class="quiet">A .fbkp made by flyback-cli pack-plugin, up to 64 MB</span>
+      <label>Plugin package <span class="quiet">A signed .fbkp made by flyback-cli pack-plugin, up to 64 MB</span>
         <input type="file" name="file" id="file" accept=".fbkp" required>
       </label>
 

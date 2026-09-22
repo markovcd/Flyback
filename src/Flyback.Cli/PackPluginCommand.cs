@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
@@ -10,8 +11,9 @@ namespace Flyback.Cli;
 internal sealed record Published(int Code, string Output);
 
 /// <summary>
-/// Makes a <c>.fbkp</c> out of a plugin project or the folder it was built into, and
-/// checks it the way the editor will before writing it (ADR-0132).
+/// Makes a <c>.fbkp</c> out of a plugin project or the folder it was built into, signs
+/// it with the author's key, and checks it the way the editor will before writing it
+/// (ADR-0132).
 /// </summary>
 /// <remarks>
 /// Nothing is asked that the build already says. A project is published once for each
@@ -32,26 +34,51 @@ internal static class PackPluginCommand
 
     /// <param name="source">A project file, a folder holding one, or a folder the SDK built a plugin into.</param>
     /// <param name="dotnet">Runs the SDK with the arguments given. The real <c>dotnet</c> unless a test says otherwise.</param>
+    /// <param name="key">The author's private key, as <c>plugin-key</c> writes it.</param>
+    /// <param name="checkKeys">Whether a package must be signed; <see cref="PackageSigner.Checked"/> unless a test says otherwise.</param>
     public static int Run(
         FileSystemInfo source,
         FileInfo output,
         TextWriter writer,
         TextWriter error,
-        Func<IReadOnlyList<string>, Published>? dotnet = null)
+        Func<IReadOnlyList<string>, Published>? dotnet = null,
+        FileInfo? key = null,
+        bool? checkKeys = null)
     {
         dotnet ??= Dotnet;
+
+        ECDsa? signing = null;
+
+        if (key is null)
+        {
+            if (checkKeys ?? PackageSigner.Checked)
+                return Fail(error, "A package must be signed. Make a key once with plugin-key, keep it, and pass it with --key.");
+        }
+        else
+        {
+            try
+            {
+                signing = PackageSigner.Load(File.ReadAllText(key.FullName));
+            }
+            catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+            {
+                return Fail(error, $"{key.Name}: {ex.Message}");
+            }
+        }
+
+        using var signs = signing;
 
         var building = Path.Combine(Path.GetTempPath(), $"flyback-pack-{Guid.NewGuid():N}");
 
         try
         {
             if (Project(source) is { } project)
-                return Built(project, building, dotnet, error) is { } built ? Pack(built, new HashSet<string>(), output, writer, error, building) : Exit.Failed;
+                return Built(project, building, dotnet, error) is { } built ? Pack(built, new HashSet<string>(), signing, output, writer, error, building) : Exit.Failed;
 
             if (source is not DirectoryInfo { Exists: true } folder)
                 return Fail(error, $"{source.Name}: there is no such project or folder.");
 
-            return Found(folder.FullName, error) is var (builds, leave) ? Pack(builds, leave, output, writer, error, building) : Exit.Failed;
+            return Found(folder.FullName, error) is var (builds, leave) ? Pack(builds, leave, signing, output, writer, error, building) : Exit.Failed;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -270,10 +297,11 @@ internal static class PackPluginCommand
         return true;
     }
 
-    /// <summary>Packs the builds, reads the package back as the editor will, and writes it only if the editor would take it.</summary>
+    /// <summary>Packs and signs the builds, reads the package back as the editor will, and writes it only if the editor would take it.</summary>
     private static int Pack(
         List<(string Platform, string Folder)> builds,
         IReadOnlySet<string> leave,
+        ECDsa? key,
         FileInfo output,
         TextWriter writer,
         TextWriter error,
@@ -285,6 +313,8 @@ internal static class PackPluginCommand
         }
 
         var bytes = PluginPackage.Pack(builds, leave);
+
+        if (key is not null) bytes = PackageSigner.Sign(bytes, key);
         PluginPackage package;
 
         try
@@ -388,6 +418,7 @@ internal static class PackPluginCommand
         writer.WriteLine($"  assembly  {plugin.Assembly}.dll");
         writer.WriteLine($"  against   {plugin.BuiltAgainst}");
         writer.WriteLine($"  builds    {string.Join(", ", package.Builds)}");
+        writer.WriteLine($"  signed    {(package.Signer is { } signer ? $"key {signer.Fingerprint}" : "no")}");
         writer.WriteLine($"  sha256    {package.Sha256}");
     }
 

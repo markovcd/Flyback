@@ -128,7 +128,8 @@ flyback-cli check nebula.fbk --strict
 flyback-cli info nebula.fbk
 flyback-cli modules
 flyback-cli pack nebula.fbk -o nebula.fbkb
-flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp
+flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
+flyback-cli plugin-key -o ripple.key
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print nebula.fbk --check
 flyback-cli render nebula.fbks -o nebula.png
@@ -143,6 +144,8 @@ flyback-cli viewer nebula.fbk
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references
+- `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
+- `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
 - `modules`: lists the modules this build has, and which plugin defines each

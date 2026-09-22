@@ -212,4 +212,48 @@ public sealed class PluginInstallTests : UiTest
         All<ModalOverlay>(window).ShouldBeEmpty();
         All<ReportLine>(window).Single().History.ShouldContain(h => h.StartsWith("ripple.fbkp was not installed. It holds a file named"));
     }
+
+    [AvaloniaFact]
+    public void A_package_says_which_key_signed_it()
+    {
+        var dialog = Dropped(Open(), Write(Packages.For("win", "osx", "linux")));
+
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginSigner").Text
+            .ShouldBe($"key {PackageSigner.Of(Packages.Key).Fingerprint}");
+    }
+
+    [AvaloniaFact]
+    public void A_newer_build_of_an_installed_plugin_is_offered_as_an_update()
+    {
+        var older = PluginPackage.Read(Packages.Sign(Packages.Unsigned(Packages.Older, "win", "osx", "linux")));
+
+        new PluginInstaller(Plugins, [], checkKeys: true).Stage(older, PluginPackage.ThisPlatform);
+        PluginInstaller.Finish(Plugins);
+
+        var window = Open();
+        var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
+        var installed = older.DescriptionFor(PluginPackage.ThisPlatform)!.Version;
+        var incoming = PluginPackage.Read(Packages.For("win")).Description("win").Version;
+
+        Named(dialog, "install").Content.ShouldBe("Update");
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReplacing").Text
+            .ShouldBe($"Updates {Packages.Folder} {installed}, which is installed now, to {incoming}.");
+
+        Press(Named(dialog, "install"));
+        Pump(() => !All<ModalOverlay>(window).Any());
+
+        All<ReportLine>(window).Single().History.ShouldContain($"{Packages.Folder} {incoming} is updated, and loads the next time Flyback starts.");
+    }
+
+    [AvaloniaFact]
+    public void An_older_build_of_an_installed_plugin_is_offered_as_a_downgrade()
+    {
+        new PluginInstaller(Plugins, [], checkKeys: true).Stage(PluginPackage.Read(Packages.For("win", "osx", "linux")), PluginPackage.ThisPlatform);
+        PluginInstaller.Finish(Plugins);
+
+        var dialog = Dropped(Open(), Write(Packages.Sign(Packages.Unsigned(Packages.Older, "win", "osx", "linux"))));
+
+        Named(dialog, "install").Content.ShouldBe("Downgrade");
+        All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReplacing").Text!.ShouldContain("with the older");
+    }
 }

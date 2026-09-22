@@ -18,6 +18,7 @@ internal sealed record StoredPlugin(
     IReadOnlyList<string> Builds,
     IReadOnlyDictionary<string, string> Contract,
     string Sha256,
+    string? Signer,
     string FileName,
     long Size,
     DateTimeOffset Submitted,
@@ -46,7 +47,7 @@ internal sealed class PluginStore
 
     private const string Columns = """
         p.id, p.assembly, p.name, p.version, p.author, p.description, p.adds, p.reaches, p.builds, p.contract,
-        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published, p.tags, p.preview_type, p.modules
+        p.sha256, p.file_name, p.size, p.submitted_at, p.downloads, p.published, p.tags, p.preview_type, p.modules, p.signer
         """;
 
     private readonly string connection;
@@ -81,7 +82,8 @@ internal sealed class PluginStore
                 tags TEXT NOT NULL,
                 preview BLOB,
                 preview_type TEXT,
-                modules TEXT NOT NULL DEFAULT ''
+                modules TEXT NOT NULL DEFAULT '',
+                signer TEXT
             );
             CREATE INDEX IF NOT EXISTS plugins_submitted ON plugins(submitted_at);
             """);
@@ -103,6 +105,8 @@ internal sealed class PluginStore
             Run(db, "ALTER TABLE plugins ADD COLUMN modules TEXT NOT NULL DEFAULT ''");
             reread = true;
         }
+
+        if (!Has(db, "signer")) Run(db, "ALTER TABLE plugins ADD COLUMN signer TEXT");
 
         if (reread) Reread(db);
     }
@@ -136,7 +140,7 @@ internal sealed class PluginStore
 
             try
             {
-                read = PluginSubmissions.Read(name, file);
+                read = PluginSubmissions.Read(name, file, checkKeys: false);
             }
             catch (InvalidDataException)
             {
@@ -164,9 +168,9 @@ internal sealed class PluginStore
         insert.CommandText = """
             INSERT OR IGNORE INTO plugins
                 (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at,
-                 tags, preview, preview_type, modules)
+                 tags, preview, preview_type, modules, signer)
             VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at,
-                 $tags, $preview, $preview_type, $modules)
+                 $tags, $preview, $preview_type, $modules, $signer)
             """;
         insert.Parameters.AddWithValue("$id", id);
         insert.Parameters.AddWithValue("$assembly", submission.Assembly);
@@ -187,6 +191,7 @@ internal sealed class PluginStore
         insert.Parameters.AddWithValue("$preview", (object?)submission.Preview?.Bytes ?? DBNull.Value);
         insert.Parameters.AddWithValue("$preview_type", (object?)submission.Preview?.MediaType ?? DBNull.Value);
         insert.Parameters.AddWithValue("$modules", Modules(submission.Modules));
+        insert.Parameters.AddWithValue("$signer", (object?)submission.Signer?.Key ?? DBNull.Value);
 
         return insert.ExecuteNonQuery() == 0 ? null : Find(id, unpublished: true);
     }
@@ -274,7 +279,7 @@ internal sealed class PluginStore
         {
             if (!reader.Read()) return null;
 
-            found = (Row(reader), (byte[])reader.GetValue(19));
+            found = (Row(reader), (byte[])reader.GetValue(20));
         }
 
         if (counted)
@@ -299,6 +304,26 @@ internal sealed class PluginStore
         using var reader = query.ExecuteReader();
 
         return reader.Read() ? (reader.GetString(0), (byte[])reader.GetValue(1)) : null;
+    }
+
+    /// <summary>
+    /// Whether a published plugin has <paramref name="assembly"/>'s name and was signed
+    /// by anybody but <paramref name="signer"/>: the name is that plugin's. The plugin
+    /// <paramref name="except"/> is not counted.
+    /// </summary>
+    public bool TakenByAnother(string assembly, PackageSigner? signer, string? except = null)
+    {
+        using var db = Open();
+        using var query = db.CreateCommand();
+        query.CommandText = """
+            SELECT count(*) FROM plugins
+            WHERE published = 1 AND assembly = $assembly COLLATE NOCASE AND (signer IS NULL OR signer <> $signer) AND id <> $except
+            """;
+        query.Parameters.AddWithValue("$except", except ?? "");
+        query.Parameters.AddWithValue("$assembly", assembly);
+        query.Parameters.AddWithValue("$signer", (object?)signer?.Key ?? "");
+
+        return Convert.ToInt32(query.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
     }
 
     /// <summary>Shows or hides the plugin, false where there is no such plugin.</summary>
@@ -362,6 +387,7 @@ internal sealed class PluginStore
         Split(reader.GetString(8)),
         Split(reader.GetString(9)).Select(c => c.Split(' ', 2)).ToDictionary(c => c[0], c => c.Length > 1 ? c[1] : "", StringComparer.Ordinal),
         reader.GetString(10),
+        reader.IsDBNull(19) ? null : reader.GetString(19),
         reader.GetString(11),
         reader.GetInt64(12),
         DateTimeOffset.Parse(reader.GetString(13), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),

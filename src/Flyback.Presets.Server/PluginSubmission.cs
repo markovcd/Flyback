@@ -19,6 +19,7 @@ internal sealed record PluginSubmission(
     IReadOnlyDictionary<string, string> Contract,
     IReadOnlyList<DeclaredModule> Modules,
     string Sha256,
+    PackageSigner? Signer,
     byte[] File)
 {
     /// <summary>Named after the plugin rather than whatever the upload was called.</summary>
@@ -31,8 +32,9 @@ internal static class PluginSubmissions
     public static PackageLimits Limits { get; } = new(64L << 20, 256L << 20, 4096);
 
     /// <summary>The package in <paramref name="file"/>, read the way the editor reads it and without running it.</summary>
+    /// <param name="checkKeys">Whether to refuse an unsigned package; <see cref="PackageSigner.Checked"/> unless said otherwise.</param>
     /// <exception cref="InvalidDataException">Where the editor would refuse it, saying why.</exception>
-    public static PluginSubmission Read(string fileName, byte[] file)
+    public static PluginSubmission Read(string fileName, byte[] file, bool? checkKeys = null)
     {
         if (!PluginPackage.Named(fileName))
             throw new InvalidDataException($"That is not a plugin package. Send a {PluginPackage.Extension} file.");
@@ -40,6 +42,9 @@ internal static class PluginSubmissions
         var package = PluginPackage.Read(file, Limits);
 
         if (package.Builds.Count == 0) throw new InvalidDataException("It holds no plugin for any system.");
+
+        if (package.Signer is null && (checkKeys ?? PackageSigner.Checked))
+            throw new InvalidDataException("It is not signed, and Flyback installs only signed plugins. Pack it with flyback-cli pack-plugin --key.");
 
         var descriptions = package.Builds.Select(package.Description).ToList();
         var first = descriptions[0];
@@ -63,6 +68,7 @@ internal static class PluginSubmissions
                 .ToDictionary(r => r.Name!, r => r.Version?.ToString(3) ?? "", StringComparer.Ordinal),
             [.. descriptions.SelectMany(d => d.Modules).DistinctBy(m => m.TypeId)],
             package.Sha256,
+            package.Signer,
             file);
     }
 }
