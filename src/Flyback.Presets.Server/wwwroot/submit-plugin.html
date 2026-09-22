@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Submit a preset — Flyback Presets</title>
-<meta name="description" content="Share a Flyback patch with everyone else who plays it.">
+<title>Submit a plugin — Flyback</title>
+<meta name="description" content="Share a Flyback plugin with everyone else who plays it.">
 <meta name="theme-color" content="#22252A">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,8 +12,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/presets.css">
+<link rel="stylesheet" href="assets/plugins.css">
 </head>
-<body data-page="submit">
+<body data-page="submit-plugin">
 
 <header class="toolbar">
   <div class="wrap">
@@ -22,8 +23,8 @@
       <a href="https://markovcd.github.io/Flyback/" class="optional">Overview</a>
       <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
       <a href="https://markovcd.github.io/Flyback/plugins.html">Plugins</a>
-      <a href="./" aria-current="page">Presets</a>
-      <a href="plugins.html">Shared plugins</a>
+      <a href="./">Presets</a>
+      <a href="plugins.html" aria-current="page">Shared plugins</a>
       <span class="sep" aria-hidden="true"></span>
       <a href="https://github.com/markovcd/Flyback">GitHub</a>
       <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
@@ -33,33 +34,24 @@
 
 <main class="wrap">
   <div class="shelf-head">
-    <span class="eyebrow">Presets</span>
-    <h1>Submit a preset.</h1>
-    <p class="lede">Save the patch in Flyback and send the file. It goes up straight away, and a picture and a
-      sound of it follow once it has been rendered.</p>
+    <span class="eyebrow">Shared plugins</span>
+    <h1>Submit a plugin.</h1>
+    <p class="lede">Pack it with <code>flyback-cli pack-plugin</code> and send the <code>.fbkp</code>. It is
+      listed once it has been reviewed.</p>
   </div>
 
   <div class="submit">
     <div class="note">
-      <span class="tag">Said by the patch</span>
-      <p>The description, the author and the tags come from the patch itself. Set them in Flyback's panel with
-        nothing selected, or with <code>description</code>, <code>author</code> and <code>tags</code> in the text,
-        then save.</p>
+      <span class="tag">Said by the plugin</span>
+      <p>The name, version, author and description come from the plugin assembly's own metadata:
+        <code>&lt;Product&gt;</code>, <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and
+        <code>&lt;Description&gt;</code> in its project. What it adds and what it reaches are read from its code.
+        The site runs none of it, and refuses a package the editor would refuse.</p>
     </div>
 
     <form id="submit">
-      <label>Preset file <span class="quiet">A .fbk, or a .fbkb bundle with its sounds and pictures</span>
-        <input type="file" name="file" id="file" accept=".fbk,.fbkb" required>
-      </label>
-
-      <dl id="said" hidden>
-        <dt>Description</dt><dd id="said-description"></dd>
-        <dt>Author</dt><dd id="said-author"></dd>
-        <dt>Tags</dt><dd id="said-tags"></dd>
-      </dl>
-
-      <label>Name <span class="quiet">The file's name where left blank</span>
-        <input type="text" name="name" id="name" maxlength="60" autocomplete="off">
+      <label>Plugin package <span class="quiet">A .fbkp made by flyback-cli pack-plugin, up to 64 MB</span>
+        <input type="file" name="file" id="file" accept=".fbkp" required>
       </label>
 
       <div>
@@ -67,6 +59,8 @@
       </div>
       <p class="status" id="status" role="status"></p>
     </form>
+
+    <div id="received" hidden></div>
   </div>
 </main>
 
@@ -82,6 +76,6 @@
   </div>
 </footer>
 
-<script src="assets/presets.js"></script>
+<script src="assets/plugins.js"></script>
 </body>
 </html>

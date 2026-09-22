@@ -35,6 +35,7 @@
     <!-- A plugin package is read, and written, by the editor and the command line. -->
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="Flyback.Presets.Server" />
   </ItemGroup>
 
   <ItemGroup>

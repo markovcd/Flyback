@@ -842,6 +842,15 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp</code></pre>
     <code>Flyback.Plugins</code> and <code>Flyback.Core</code> it was built against. Nothing in a package is signed: the dialog shows its SHA-256 for comparing with
     what you publish.</p>
 
+    <h3>Sharing it</h3>
+
+    <p>To offer a package to everyone, <a href="PRESETS_URL/submit-plugin.html">submit it</a> to the
+    <a href="PRESETS_URL/plugins.html">shared plugins</a>. The site reads it as the editor does, without running
+    it, and refuses what the editor would. What it lists comes from the package alone, so set
+    <code>&lt;Product&gt;</code>, <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and
+    <code>&lt;Description&gt;</code> before packing. A package goes up unpublished and is listed once it has
+    been reviewed; up to 64 MB is taken.</p>
+
     <div class="note">
       <span class="tag">Two things that catch people out</span>
       <p><strong>Plugins are read once, at startup.</strong> Installing one means restarting the

@@ -16,6 +16,7 @@ COPY .editorconfig Directory.Build.props Directory.Build.targets global.json ./
 COPY site/assets site/assets
 COPY src/Flyback.Core src/Flyback.Core
 COPY src/Flyback.Engine src/Flyback.Engine
+COPY src/Flyback.Plugins src/Flyback.Plugins
 COPY src/Flyback.Presets.Server src/Flyback.Presets.Server
 
 RUN --mount=type=cache,target=/root/.nuget/packages \

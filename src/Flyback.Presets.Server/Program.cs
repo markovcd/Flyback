@@ -69,6 +69,8 @@ var media = new MediaFolder(Setting("Presets:Media", "/media"));
 
 Directory.CreateDirectory(media.Root);
 
+var plugins = new PluginStore(database);
+
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -99,6 +101,8 @@ object View(StoredPreset preset) => new
 };
 
 var api = app.MapGroup("/api/v1");
+
+api.MapPlugins(plugins, reviewing: Signed);
 
 api.MapGet("/presets", (HttpContext http, string? q, string? tag, int? page, bool? pending) =>
 {

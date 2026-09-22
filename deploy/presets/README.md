@@ -1,6 +1,6 @@
 # The preset site
 
-People submit presets to a small site on the NAS, and `flyback-cli render-presets` on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render machine writes files into a shared folder, and the site only reads that folder.
+People submit presets and plugins to a small site on the NAS, and `flyback-cli render-presets` on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render machine writes files into a shared folder, and the site only reads that folder.
 
 ```
 browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
@@ -49,6 +49,8 @@ Settings, all optional, as environment variables:
 ## Admin mode
 
 Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`. Signed in, the shelf shows unpublished presets too, and every preset has Rename, Unpublish (or Publish) and Delete. An unpublished preset is gone from the shelf, its page and its download for everyone else, and is not rendered until it is published again.
+
+Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. Plugins are never rendered, and have nothing in `media/`.
 
 Sign-in is a cookie, kept for two weeks. Its keys live in `data/keys/`, so restarting the container does not sign the admin out. Serve the site over HTTPS, since the password crosses the wire at sign-in. Ten wrong tries from one address lock that address out for a quarter of an hour.
 
