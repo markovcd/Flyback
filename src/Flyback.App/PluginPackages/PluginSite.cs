@@ -67,12 +67,18 @@ internal sealed class PluginSite(HttpClient http, Uri root)
     /// and match <paramref name="search"/> and <paramref name="tag"/>. Throws where the
     /// site cannot be reached or answers with something else.
     /// </summary>
-    public async Task<SitePage> SearchAsync(string? search, string? tag, int page, CancellationToken cancel)
+    /// <param name="module">
+    /// A module's type id, narrowing it to the plugins that declare that module exactly.
+    /// This is how a patch finds the plugin it names: an id matches one plugin or none,
+    /// where words match whatever reads alike.
+    /// </param>
+    public async Task<SitePage> SearchAsync(string? search, string? tag, int page, CancellationToken cancel, string? module = null)
     {
         var query = new List<string> { $"page={page.ToString(CultureInfo.InvariantCulture)}" };
 
         if (!string.IsNullOrWhiteSpace(search)) query.Add("q=" + Uri.EscapeDataString(search.Trim()));
         if (!string.IsNullOrEmpty(tag)) query.Add("tag=" + Uri.EscapeDataString(tag));
+        if (!string.IsNullOrEmpty(module)) query.Add("module=" + Uri.EscapeDataString(module));
         if (PluginPackage.ThisPlatform is { Length: > 0 } platform) query.Add("platform=" + platform);
 
         using var response = await http.GetAsync(new Uri(Root, "api/v1/plugins?" + string.Join('&', query)), cancel);

@@ -75,9 +75,15 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var page = int.Parse(query["page"] ?? "1");
 
+        var module = query["module"];
+
         var found = plugins
             .Select(p => (Shared: p, Listed: new ListedPlugin(p.Assembly, p.Name, p.Version, p.Author, "", p.Tags ?? [], p.Modules ?? [])))
             .Where(p => p.Listed.Matches(query["q"], query["tag"]))
+            // Narrowed to the plugins declaring that module exactly, as the site's own
+            // module query is: the ids are the names lowered, as the listing writes them.
+            .Where(p => module is null
+                || (p.Shared.Modules ?? []).Any(m => string.Equals(m.ToLowerInvariant(), module, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         return new

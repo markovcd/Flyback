@@ -149,6 +149,7 @@ context, decision, consequences.
 | [0132](0132-a-plugin-package-says-what-it-is-and-installs-only-when-asked.md) | A plugin package says what it is, and installs only when asked *(user-directed)* |
 | [0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md) | A plugin declares its modules, and is refused for one it did not *(user-directed)* |
 | [0133](0133-a-shared-plugin-is-unpublished-until-the-admin-publishes-it.md) | A shared plugin is unpublished until the admin publishes it *(user-directed)* |
+| [0135](0135-a-patch-that-names-a-plugin-you-do-not-have-offers-it.md) | A patch that names a plugin you do not have offers it *(user-directed)* |
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md))* |
 | [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |

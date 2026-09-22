@@ -188,6 +188,7 @@ public sealed partial class MainWindow
             if (!loaded.IsComplete)
             {
                 Report($"Not opened. {loaded.Summary}", loaded.Detail);
+                await OfferMissingPluginsAsync(loaded);
                 return;
             }
 
@@ -561,6 +562,7 @@ public sealed partial class MainWindow
             if (bundle.Load is { IsComplete: false } lacking)
             {
                 Report($"Not opened. {lacking.Summary}", lacking.Detail);
+                await OfferMissingPluginsAsync(lacking);
                 return;
             }
 
