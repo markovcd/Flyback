@@ -168,6 +168,26 @@ public class PresetLibraryTests : IDisposable
         after.Preset.Build(NodeCatalog.BuiltIn).Nodes.Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(440f);
     }
 
+    /// <summary>
+    /// A tile drawing a preset reads its file on a thread of its own, so a save
+    /// over that preset lands while the file is open — see <see cref="SavedPreset.Open"/>,
+    /// which shares it for reading and for deleting.
+    /// </summary>
+    [Fact]
+    public void Saving_over_one_that_is_being_read_replaces_it_anyway()
+    {
+        var library = Library();
+        var saved = library.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn);
+
+        using (new FileStream(saved.Path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+            library.Save("Tone", Tone(440f), Nothing, NodeCatalog.BuiltIn);
+
+        library.All.ShouldHaveSingleItem().Preset.Build(NodeCatalog.BuiltIn)
+            .Nodes.Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(440f);
+
+        Directory.EnumerateFiles(folder).ShouldHaveSingleItem("nothing is left half written");
+    }
+
     [Fact]
     public void A_preset_stays_the_same_preset_across_a_save_of_another()
     {

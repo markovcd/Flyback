@@ -223,7 +223,24 @@ public sealed class PresetLibrary
         // replaced, and two files for one name would be two tiles that read alike.
         if (Named(name) is { } before && before.Path != path) File.Delete(before.Path);
 
-        File.WriteAllBytes(path, packed.ToArray());
+        // Written aside and swapped in whole, because a tile drawing this preset
+        // has its file open on a thread of its own — see SavedPreset.Open, which
+        // shares it for deleting. Replace is the one swap Windows allows over an
+        // open handle; writing over it, and moving over it, are both refused.
+        var writing = $"{path}.{Guid.NewGuid():N}.tmp";
+
+        try
+        {
+            File.WriteAllBytes(writing, packed.ToArray());
+
+            if (File.Exists(path)) File.Replace(writing, path, destinationBackupFileName: null);
+            else File.Move(writing, path);
+        }
+        catch
+        {
+            Forget(writing);
+            throw;
+        }
 
         // Held anew rather than kept, because what it holds has changed: a tile
         // drawn from the old one would show a patch that is not there any more.
@@ -247,6 +264,18 @@ public sealed class PresetLibrary
 
         Reload();
         return went;
+    }
+
+    /// <summary>Deletes a file half written, which is nothing to fail over.</summary>
+    private static void Forget(string file)
+    {
+        try
+        {
+            File.Delete(file);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
     }
 
     private static bool Listed(string file) =>
