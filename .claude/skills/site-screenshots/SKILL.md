@@ -15,6 +15,8 @@ SHOT_DIR=<somewhere> ./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.T
 
 `SkinShotTests` for the other set. Both skip without `SHOT_DIR`. Convert the PNGs to webp at quality 88 and copy them in, keeping the `width`/`height` attributes on the site's `<img>` in step with the new pixel size. A new patch figure is a new `.fbks` in `PatchShotTests`, never a drawing — see ADR-0119.
 
+The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/preview.webp`) come from `PluginPreviewShotTests` the same way: four of each plugin's modules in a row. Retake them when one of those modules gains a port, a glyph or a skin.
+
 ## The full-window shots
 
 The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. A preset dumped with `PatchIO.ToJson` from a scratch test is the `.fbk`; set every `Group.Collapsed` in the dump for the shots that show shut boxes (whole-band, euclid-kit). tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. The website has to stay accurate, so a stale screenshot is retaken in the same commit as the UI change.

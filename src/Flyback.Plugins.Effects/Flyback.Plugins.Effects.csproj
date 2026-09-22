@@ -3,7 +3,18 @@
   <PropertyGroup>
     <RootNamespace>Flyback.Plugins.Effects</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Effects</Product>
+    <Authors>Flyback</Authors>
+    <Description>A tempo echo, chorus, flanger and phaser — built, like the engine's own Delay and Reverb, on a delay line.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="sound; effects; delay; modulation" />
+    <!-- Retaken by PluginPreviewShotTests. -->
+    <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Both are host-owned; shipping either would give its types a second identity. -->

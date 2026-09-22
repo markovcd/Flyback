@@ -93,7 +93,7 @@ public sealed class PluginInstallTests : UiTest
         var window = Open();
         var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
 
-        Texts(dialog).ShouldContain(Packages.Folder);
+        Texts(dialog).ShouldContain(Packages.Name);
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginAdds").Text.ShouldBe("modules, presets");
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReaches").Text.ShouldBe("nothing outside Flyback that it names");
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginContract").Text!.ShouldContain("Flyback.Plugins ");
@@ -127,7 +127,7 @@ public sealed class PluginInstallTests : UiTest
     public void A_package_without_tags_or_a_preview_shows_neither()
     {
         var window = Open();
-        var dialog = Dropped(window, Write(Packages.For("win")));
+        var dialog = Dropped(window, Write(Packages.ForBare()));
 
         All<SelectableTextBlock>(dialog).ShouldNotContain(t => t.Name == "pluginTags");
         All<Image>(dialog).ShouldNotContain(i => i.Name == "pluginPreview");
@@ -237,12 +237,12 @@ public sealed class PluginInstallTests : UiTest
 
         Named(dialog, "install").Content.ShouldBe("Update");
         All<SelectableTextBlock>(dialog).Single(t => t.Name == "pluginReplacing").Text
-            .ShouldBe($"Updates {Packages.Folder} {installed}, which is installed now, to {incoming}.");
+            .ShouldBe($"Updates {Packages.Name} {installed}, which is installed now, to {incoming}.");
 
         Press(Named(dialog, "install"));
         Pump(() => !All<ModalOverlay>(window).Any());
 
-        All<ReportLine>(window).Single().History.ShouldContain($"{Packages.Folder} {incoming} is updated, and loads the next time Flyback starts.");
+        All<ReportLine>(window).Single().History.ShouldContain($"{Packages.Name} {incoming} is updated, and loads the next time Flyback starts.");
     }
 
     [AvaloniaFact]

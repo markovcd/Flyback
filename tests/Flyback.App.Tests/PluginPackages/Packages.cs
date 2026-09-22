@@ -22,8 +22,14 @@ internal static class Packages
     /// <summary>The folder the picture plugin is installed into.</summary>
     public const string Folder = "Flyback.Plugins.Picture";
 
+    /// <summary>The product name the picture plugin's project gives it.</summary>
+    public const string Name = "Picture";
+
     /// <summary>The sample plugin, whose project sets its tags and embeds a preview.</summary>
     public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
+
+    /// <summary>The fake assistant, which sets no tags and embeds no preview.</summary>
+    public static byte[] Bare { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
 
     /// <summary>The key test packages are signed with.</summary>
     public static ECDsa Key { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -36,6 +42,9 @@ internal static class Packages
 
     /// <summary>A package with the sample plugin for Windows, signed with <see cref="Key"/>.</summary>
     public static byte[] ForSample() => Signed.GetOrAdd("sample", _ => Sign(Zip([("win/Flyback.Plugins.Sample.dll", Sample)])));
+
+    /// <summary>A package with the fake assistant for Windows, signed with <see cref="Key"/>.</summary>
+    public static byte[] ForBare() => Signed.GetOrAdd("bare", _ => Sign(Zip([("win/Flyback.Plugins.FakeAssistant.dll", Bare)])));
 
     public static byte[] Sign(byte[] package, ECDsa? key = null) => PackageSigner.Sign(package, key ?? Key);
 

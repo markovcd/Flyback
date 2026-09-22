@@ -10,7 +10,16 @@
       what makes the folder identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Linux keyring</Product>
+    <Authors>Flyback</Authors>
+    <Description>Keeps API keys in the desktop keyring, through the Secret Service — GNOME Keyring, KWallet, or whatever else answers.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="secrets; linux" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

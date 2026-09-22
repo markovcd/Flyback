@@ -9,6 +9,12 @@
       and NAudio would not be found.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Windows sound and MIDI</Product>
+    <Authors>Flyback</Authors>
+    <Description>Sound out through WASAPI, and a patch played from a MIDI keyboard through the multimedia library Windows already has.</Description>
+
     <!--
       The MIDI driver callback is a function pointer and a device name is a fixed
       buffer. Sound needs none of it — NAudio does the marshalling — but a
@@ -16,6 +22,10 @@
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="sound; midi; windows" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

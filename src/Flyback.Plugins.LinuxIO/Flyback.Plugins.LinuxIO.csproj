@@ -10,6 +10,12 @@
       folder identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Linux sound and MIDI</Product>
+    <Authors>Flyback</Authors>
+    <Description>Sound and MIDI through libasound, which is what PipeWire and PulseAudio answer to as well.</Description>
+
     <!--
       Both halves need it: the block is written to the device from a pinned
       pointer, and the sequencer's info blocks are stack buffers with an event
@@ -17,6 +23,10 @@
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="sound; midi; linux" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

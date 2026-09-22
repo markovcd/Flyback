@@ -31,7 +31,7 @@ public class PluginGlyphsTests : UiTest
     /// </summary>
     private static IReadOnlyList<NodeDef> ShippedPluginModules()
     {
-        var registry = new Collector();
+        var registry = new ModuleCollector();
 
         new PicturePlugin().Register(registry);
         new VoicePlugin().Register(registry);
@@ -116,27 +116,5 @@ public class PluginGlyphsTests : UiTest
         foreach (var shared in drawn.GroupBy(d => d.Glyph).Where(g => g.Count() > 1))
             throw new ShouldAssertException(
                 $"{string.Join(" and ", shared.Select(s => s.TypeId))} are drawn with the same mark");
-    }
-
-    /// <summary>
-    /// A collector rather than a fake registry with every method stubbed:
-    /// nothing here reads a preset, an audio output or an assistant, only the
-    /// modules a plugin offers.
-    /// </summary>
-    private sealed class Collector : IPluginRegistry
-    {
-        public List<NodeDef> Modules { get; } = [];
-
-        public void AddModules(ModuleProvider provider, IReadOnlyList<NodeDef> modules) => Modules.AddRange(modules);
-
-        public void AddAudioOutput(IAudioOutput output) { }
-
-        public void AddPresets(IReadOnlyList<PatchPreset> presets) { }
-
-        public void AddPatchAssistant(IPatchAssistant assistant) { }
-
-        public void AddSecretStore(ISecretStore store) { }
-
-        public void AddMidiInput(IMidiInput input) { }
     }
 }

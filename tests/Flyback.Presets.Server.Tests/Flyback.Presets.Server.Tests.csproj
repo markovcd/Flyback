@@ -12,6 +12,8 @@
     <ProjectReference Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
     <!-- One with tags and a preview. -->
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
+    <!-- One with neither. -->
+    <ProjectReference Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" />
   </ItemGroup>
 
   <ItemGroup>

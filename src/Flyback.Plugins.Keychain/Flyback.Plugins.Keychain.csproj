@@ -10,7 +10,16 @@
       makes the folder identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>macOS Keychain</Product>
+    <Authors>Flyback</Authors>
+    <Description>Keeps API keys in the login keychain, unlocked by the macOS login.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="secrets; macos" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

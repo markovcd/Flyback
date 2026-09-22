@@ -18,6 +18,8 @@ public sealed class PluginTests : IDisposable
 
     private static readonly byte[] Sample = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
 
+    private static readonly byte[] Bare = File.ReadAllBytes(typeof(Flyback.Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
+
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-plugins-").FullName;
     private readonly WebApplicationFactory<Program> host;
     private readonly HttpClient client;
@@ -153,9 +155,9 @@ public sealed class PluginTests : IDisposable
     public async Task A_plugins_author_tags_and_preview_are_shown_and_its_tags_find_it()
     {
         var id = (await Submit(Zip(("any/Flyback.Plugins.Sample.dll", Sample)))).GetProperty("id").GetString()!;
-        var picture = (await Submit(Package("win"))).GetProperty("id").GetString()!;
+        var bare = (await Submit(Zip(("any/Flyback.Plugins.FakeAssistant.dll", Bare)))).GetProperty("id").GetString()!;
         await Publish(id);
-        await Publish(picture);
+        await Publish(bare);
 
         var plugin = await Get($"/api/v1/plugins/{id}");
 
@@ -169,8 +171,8 @@ public sealed class PluginTests : IDisposable
         preview.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
         (await preview.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken)).Length.ShouldBeGreaterThan(0);
 
-        (await Get($"/api/v1/plugins/{picture}")).GetProperty("preview").ValueKind.ShouldBe(JsonValueKind.Null);
-        (await Status(HttpMethod.Get, $"/api/v1/plugins/{picture}/preview")).ShouldBe(HttpStatusCode.NotFound);
+        (await Get($"/api/v1/plugins/{bare}")).GetProperty("preview").ValueKind.ShouldBe(JsonValueKind.Null);
+        (await Status(HttpMethod.Get, $"/api/v1/plugins/{bare}/preview")).ShouldBe(HttpStatusCode.NotFound);
 
         var tagged = (await Get("/api/v1/plugins?tag=ripple")).GetProperty("items");
         tagged.GetArrayLength().ShouldBe(1);

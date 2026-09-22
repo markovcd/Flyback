@@ -33,6 +33,9 @@
 
     <!-- The worked example, whose project sets everything a package can say about a plugin. -->
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />
+
+    <!-- A real plugin that sets no tags and embeds no preview. -->
+    <ProjectReference Include="..\Flyback.Plugins.FakeAssistant\Flyback.Plugins.FakeAssistant.csproj" />
   </ItemGroup>
 
   <ItemGroup>

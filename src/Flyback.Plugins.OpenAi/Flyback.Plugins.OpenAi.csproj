@@ -3,7 +3,16 @@
   <PropertyGroup>
     <RootNamespace>Flyback.Plugins.OpenAi</RootNamespace>
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>OpenAI-compatible</Product>
+    <Authors>Flyback</Authors>
+    <Description>Builds patches through any endpoint that speaks the chat-completions format.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="assistant; ai" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Both are host-owned; shipping either would give its types a second identity. -->

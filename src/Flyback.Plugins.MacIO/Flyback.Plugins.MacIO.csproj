@@ -10,6 +10,12 @@
       identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>macOS sound and MIDI</Product>
+    <Authors>Flyback</Authors>
+    <Description>Sound out through the default output audio unit, and a patch played from a MIDI keyboard through the framework every Mac routes MIDI over.</Description>
+
     <!--
       Both halves need it: the render callback is a function pointer and the
       buffer is a raw one, and the MIDI read callback is a function pointer with
@@ -17,6 +23,10 @@
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="sound; midi; macos" />
+  </ItemGroup>
 
   <ItemGroup>
     <!--

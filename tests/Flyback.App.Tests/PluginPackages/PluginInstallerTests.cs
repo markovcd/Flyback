@@ -42,7 +42,7 @@ public sealed class PluginInstallerTests : IDisposable
 
         var (installed, problems) = PluginInstaller.Finish(plugins);
 
-        installed.ShouldHaveSingleItem().ShouldStartWith(Packages.Folder);
+        installed.ShouldHaveSingleItem().ShouldStartWith(Packages.Name);
         problems.ShouldBeEmpty();
         File.ReadAllBytes(Installed(Packages.AssemblyName)).ShouldBe(Packages.Assembly);
         File.Exists(Installed("runtimes/win/native/readme.txt")).ShouldBeTrue();
@@ -218,7 +218,7 @@ public sealed class PluginInstallerTests : IDisposable
         var impostor = PluginPackage.Read(Packages.Sign(Packages.Unsigned(Packages.Newer, "win"), Packages.OtherKey));
 
         Installer().Refusal(impostor, "win").ShouldBe(
-            $"{Packages.Folder} in plugins/{Packages.Folder} was signed with another key, so this is a different plugin with the same assembly name.");
+            $"{Packages.Name} in plugins/{Packages.Folder} was signed with another key, so this is a different plugin with the same assembly name.");
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public sealed class PluginInstallerTests : IDisposable
         InstallNow(PluginPackage.Read(Packages.Unsigned("win")), Unchecked());
 
         Installer().Refusal(Package(), "win").ShouldBe(
-            $"{Packages.Folder} in plugins/{Packages.Folder} was installed unsigned, so nothing shows this is its update.");
+            $"{Packages.Name} in plugins/{Packages.Folder} was installed unsigned, so nothing shows this is its update.");
     }
 
     [Fact]

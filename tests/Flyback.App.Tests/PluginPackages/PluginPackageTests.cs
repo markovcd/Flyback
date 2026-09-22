@@ -22,7 +22,7 @@ public sealed class PluginPackageTests : IDisposable
         var plugin = PluginPackage.Read(Packages.For("win")).Description("win");
 
         plugin.Assembly.ShouldBe(Packages.Folder);
-        plugin.Name.ShouldBe(Packages.Folder, "the picture plugin names no product of its own");
+        plugin.Name.ShouldBe(Packages.Name);
         plugin.Version.ShouldNotBeNullOrEmpty();
         plugin.Version.ShouldNotContain("+", customMessage: "the commit the SDK appends is left off");
     }
@@ -78,10 +78,23 @@ public sealed class PluginPackageTests : IDisposable
     [Fact]
     public void A_plugin_that_sets_no_tags_and_embeds_no_preview_has_neither()
     {
-        var plugin = PluginPackage.Read(Packages.For("win")).Description("win");
+        var plugin = PluginPackage.Read(Packages.ForBare()).Description("win");
 
         plugin.Tags.ShouldBeEmpty();
         plugin.Preview.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData(typeof(Flyback.Plugins.Picture.PicturePlugin))]
+    [InlineData(typeof(Flyback.Plugins.Voice.VoicePlugin))]
+    [InlineData(typeof(Flyback.Plugins.Effects.EffectsPlugin))]
+    [InlineData(typeof(Flyback.Plugins.Mastering.MasteringPlugin))]
+    public void A_shipped_module_plugin_embeds_a_preview_of_its_modules(Type plugin)
+    {
+        var assembly = plugin.Assembly;
+        var package = Packages.Sign(Packages.Zip([($"win/{assembly.GetName().Name}.dll", File.ReadAllBytes(assembly.Location))]));
+
+        PluginPackage.Read(package).Description("win").Preview.ShouldNotBeNull().MediaType.ShouldBe("image/webp");
     }
 
     [Fact]
