@@ -216,23 +216,30 @@ public class KickTests
         var renderer = new AudioRenderer();
 
         var buffer = new float[Rate / 10 * 2];      // a tenth of a second a block
-        var early = 0f;
-        var late = 0f;
 
-        for (var block = 0; block < 300; block++)   // thirty seconds
+        float Peak()
         {
-            renderer.Render(audio.Program, buffer.AsSpan());
-
             var peak = 0f;
-            for (var i = 0; i < buffer.Length; i += 2) peak = MathF.Max(peak, MathF.Abs(buffer[i]));
 
-            if (block < 100) early = MathF.Max(early, peak);
-            if (block >= 200) late = MathF.Max(late, peak);
+            for (var block = 0; block < 20; block++)   // two seconds, four strikes
+            {
+                renderer.Render(audio.Program, buffer.AsSpan());
+
+                for (var i = 0; i < buffer.Length; i += 2) peak = MathF.Max(peak, MathF.Abs(buffer[i]));
+            }
+
+            return peak;
         }
 
-        early.ShouldBeGreaterThan(0.5f, "it should be loud in the first ten seconds");
+        var early = Peak();
+
+        renderer.SeekTo(20);
+
+        var late = Peak();
+
+        early.ShouldBeGreaterThan(0.5f, "it should be loud in the first two seconds");
         late.ShouldBeGreaterThan(
-            early * 0.9f, "and just as loud in the twenty-first to thirtieth");
+            early * 0.9f, "and just as loud twenty seconds in");
     }
 
     [Fact]

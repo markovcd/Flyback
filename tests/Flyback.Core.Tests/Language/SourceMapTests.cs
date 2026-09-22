@@ -192,16 +192,25 @@ public class SourceMapTests
     /// A knob turned on a printed patch goes back into the number the printing
     /// wrote for it, so the reading stays a true one.
     /// </summary>
+    /// <remarks>
+    /// Read back a round at a time, each module's next knob together, since the
+    /// biggest presets have hundreds of knobs and a read of the whole text apiece
+    /// takes seconds. Only a round that fails is read back a knob at a time, to
+    /// name the one that broke it.
+    /// </remarks>
     [Theory]
     [MemberData(nameof(Names))]
     public void Every_knob_a_printing_writes_can_be_changed_where_it_stands(string name)
     {
         var patch = Preset(name);
         var printing = PatchPrinter.Written(patch, NodeCatalog.BuiltIn);
+        var rounds = new List<List<(string Knob, Change Change)>>();
 
         foreach (var node in patch.Nodes)
         {
             if (NodeCatalog.BuiltIn.Get(node.TypeId) is not { } def) continue;
+
+            var round = 0;
 
             for (var port = 0; port < def.Inputs.Count && port < node.InputValues.Length; port++)
             {
@@ -222,13 +231,41 @@ public class SourceMapTests
 
                 change.ShouldNotBeNull($"{name}: '{socket}' on {node.TypeId} has nowhere to be written");
 
-                var rewritten = PatchLanguage.Build(Applied(printing.Source, change.Value), NodeCatalog.BuiltIn);
+                if (rounds.Count == round) rounds.Add([]);
+                rounds[round++].Add(($"'{socket}' on {node.TypeId}", change.Value));
+            }
+        }
 
-                rewritten.Issues.ShouldBeEmpty($"{name}: {rewritten.Report}");
+        foreach (var round in rounds)
+        {
+            if (Applied(printing.Source, round.Select(k => k.Change)) is { } all
+                && PatchLanguage.Build(all, NodeCatalog.BuiltIn).Issues.Count == 0) continue;
+
+            foreach (var (knob, change) in round)
+            {
+                var rewritten = PatchLanguage.Build(Applied(printing.Source, change), NodeCatalog.BuiltIn);
+
+                rewritten.Issues.ShouldBeEmpty($"{name}: {knob}: {rewritten.Report}");
             }
         }
     }
 
     private static string Applied(string source, Change change) =>
         source[..change.Offset] + change.Text + source[(change.Offset + change.Length)..];
+
+    /// <summary>The source with every change made, or null where two of them touch.</summary>
+    private static string? Applied(string source, IEnumerable<Change> changes)
+    {
+        var end = source.Length + 1;
+
+        foreach (var change in changes.OrderByDescending(c => c.Offset))
+        {
+            if (change.Offset + change.Length >= end) return null;
+
+            source = Applied(source, change);
+            end = change.Offset;
+        }
+
+        return source;
+    }
 }

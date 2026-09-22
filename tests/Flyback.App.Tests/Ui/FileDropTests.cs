@@ -132,6 +132,20 @@ public sealed class FileDropTests : UiTest
         Settle(window);
     }
 
+    /// <summary>
+    /// Pumps until the report line says something starting with <paramref name="start"/>:
+    /// a refused drop changes nothing else there is to wait on.
+    /// </summary>
+    private static void WaitForReport(MainWindow window, string start)
+    {
+        bool Said() => All<TextBlock>(window).Any(t => t.Text?.StartsWith(start, StringComparison.Ordinal) == true);
+
+        Pump(Said);
+        Settle(window);
+
+        Said().ShouldBeTrue($"the drop should have been refused with “{start}…”");
+    }
+
     /// <summary>Pumps until the question a replaced patch asks is up. See <c>UnsavedDialogTests.Asking</c>.</summary>
     private static ModalOverlay Asking(MainWindow window)
     {
@@ -271,7 +285,7 @@ public sealed class FileDropTests : UiTest
         modules.ShouldBeGreaterThan(1, "the window opens on a preset");
 
         Drop(window, Carrying(RealStorageFile(path)));
-        WaitForTitleChange(window, title);
+        WaitForReport(window, "Not opened.");
 
         window.IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
         Editor(window).Patch.Nodes.Count.ShouldBe(modules, "and what was open is still open");
@@ -309,7 +323,7 @@ public sealed class FileDropTests : UiTest
         All<ModalOverlay>(window).ShouldNotBeEmpty("Settings is up");
 
         Drop(window, Carrying(RealStorageFile(path)));
-        WaitForTitleChange(window, title);
+        WaitForReport(window, "dropped.fbks was not opened");
 
         window.Title.ShouldBe(title, "the document behind a dialog is not replaced while the dialog is up");
     }

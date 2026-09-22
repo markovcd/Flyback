@@ -52,13 +52,18 @@ public class LiveRecorderTests : IDisposable
         path + ".wav", ClipFormats.Wav, default, Rate, 60, SampleRate, Channels);
 
     /// <summary>
-    /// One frame's worth of picture and sound, offered the way the two threads
-    /// offer them, until the take has the frames asked for or patience runs out.
+    /// A picture and a stretch of sound, offered the way the two threads offer
+    /// them, until the take has the frames asked for or patience runs out.
     /// </summary>
+    /// <remarks>
+    /// Sound is the take's clock, so it goes in a quarter of a second at a time
+    /// rather than in real time: well inside the ring, and a take of two seconds
+    /// does not take two seconds.
+    /// </remarks>
     private static void Drive(LiveRecorder recorder, int untilFrames, bool picture = true, bool sound = true)
     {
         var frame = new byte[Size.Width * Size.Height * 4];
-        var callback = new float[SampleRate * Channels / 120];   // half a frame at 30 fps
+        var callback = new float[SampleRate * Channels / 4];
         var clock = Stopwatch.StartNew();
         var tint = 0;
 
@@ -229,15 +234,16 @@ public class LiveRecorderTests : IDisposable
     /// Every frame the recorder claims is a chunk in the file. A count that
     /// drifts from this is a take whose length is a guess.
     /// </summary>
+    /// <remarks>Asked once the take is finished, since stopping drains what is still in the ring.</remarks>
     [Fact]
     public void Every_frame_counted_is_a_frame_written()
     {
         var recorder = new LiveRecorder(Video());
 
         Drive(recorder, untilFrames: 30);
+        recorder.Dispose();
 
         var claimed = recorder.Status.Frames;
-        recorder.Dispose();
 
         claimed.ShouldBeGreaterThanOrEqualTo(30);
         Chunks(File.ReadAllBytes(path + ".avi"), "00dc").ShouldBe((int)claimed);
@@ -245,9 +251,7 @@ public class LiveRecorderTests : IDisposable
 
     /// <summary>
     /// The picture is paced against the sound, so a second of samples is a second
-    /// of video whatever the render thread managed. Loose on the upper side only
-    /// because the last drain can carry the take slightly past where it was
-    /// stopped.
+    /// of video whatever the render thread managed.
     /// </summary>
     [Fact]
     public void The_picture_keeps_pace_with_the_sound()
@@ -255,13 +259,12 @@ public class LiveRecorderTests : IDisposable
         var recorder = new LiveRecorder(Video());
 
         Drive(recorder, untilFrames: 60);
-
-        var status = recorder.Status;
         recorder.Dispose();
 
+        var status = recorder.Status;
         var expected = status.Seconds * Rate;
 
-        status.Frames.ShouldBeInRange((long)(expected - 2), (long)(expected + 2));
+        status.Frames.ShouldBeInRange((long)(expected - 1), (long)(expected + 1));
     }
 
     /// <summary>
@@ -276,9 +279,9 @@ public class LiveRecorderTests : IDisposable
         // One frame, then nothing but sound.
         Drive(recorder, untilFrames: 1);
         Drive(recorder, untilFrames: 30, picture: false);
+        recorder.Dispose();
 
         var status = recorder.Status;
-        recorder.Dispose();
 
         status.Frames.ShouldBeGreaterThanOrEqualTo(30);
         status.Duplicated.ShouldBeGreaterThan(0);
@@ -308,11 +311,7 @@ public class LiveRecorderTests : IDisposable
         var recorder = new LiveRecorder(Audio());
         var callback = new float[SampleRate * Channels / 100];
 
-        for (var i = 0; i < 20; i++)
-        {
-            recorder.WriteAudio(callback);
-            Thread.Sleep(2);
-        }
+        for (var i = 0; i < 20; i++) recorder.WriteAudio(callback);
 
         recorder.Dispose();
 
