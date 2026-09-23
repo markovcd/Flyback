@@ -39,6 +39,14 @@ the plain `CC74·3` where the device is not known. A fresh Clock In follows the
 instrument that conducts, which the shell says by a flag on `MidiSource`, since
 the engine's picker is built long before anything can read a file.
 
+**The module list offers the instrument whole.** While a known instrument is
+plugged in it is listed above the groups, and picking it adds a fragment built
+from the profile for the port it is on: a Clock In where it conducts and a MIDI
+In per track on its channel, named after the track, boxed under the
+instrument's name. Built when picked rather than kept as a preset, because the
+one thing a preset could not know is the device id the port has on this
+machine, and every module in the fragment stores it.
+
 **A page belongs to a kind of track.** The Syntakt's FX track reuses controller
 numbers its audio tracks give to other knobs, so a page names the kind of track
 it is on and a track names its kind; a track with no kind has the pages with
@@ -50,7 +58,8 @@ says which instruments are known so the omission is visible.
 
 ## Consequences
 
-A Syntakt patch is set up by picking tracks and knobs from lists. Nothing about
+A Syntakt patch is set up by picking the box from the module list, deleting
+the tracks it will not use, and picking knobs from lists. Nothing about
 it is stored differently, so a patch bound before this reads the same and a
 patch made with it opens on a machine without the profile as numbers.
 

@@ -35,7 +35,7 @@ public sealed partial class MainWindow
     private void BuildPalette()
     {
         groups = new GroupLibrary(plugins.Modules, groupFolder);
-        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup);
+        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup, controlsPanel.Instruments, AddInstrument);
 
         paletteFlyout.Content = palette;
         paletteFlyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
@@ -72,6 +72,22 @@ public sealed partial class MainWindow
 
             // Back to the canvas, or the next keypress would go to a filter box
             // that is no longer on screen.
+            editor.Focus();
+        }
+
+        // An instrument arrives whole: its clock and a module per track, boxed,
+        // built for the port it is on right now. See InstrumentScaffold.
+        void AddInstrument(PanelInstrument instrument)
+        {
+            paletteFlyout.Hide();
+
+            var added = editor.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules), addingAt);
+
+            usage.Count(Used.Added);
+            Report(wiring is null
+                ? $"Added {instrument.Profile.Name} — {added.Count} modules, one per track. Delete the tracks you will not use."
+                : $"Added {instrument.Profile.Name}. The wire was left loose: a box has more than one socket to choose from.");
+
             editor.Focus();
         }
 

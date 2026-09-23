@@ -49,6 +49,14 @@ public sealed class ModulePalette : UserControl
     private readonly Action<SavedGroup> adding;
 
     /// <summary>
+    /// The instruments plugged in that Flyback knows by name, asked on the way
+    /// open because they come and go, and what to do with one that is picked.
+    /// Null where the shell offers none.
+    /// </summary>
+    private readonly Func<IReadOnlyList<PanelInstrument>>? instruments;
+    private readonly Action<PanelInstrument>? addingInstrument;
+
+    /// <summary>
     /// Which kept group has been asked about, and so is showing a confirm in place
     /// of its row.
     /// </summary>
@@ -108,16 +116,22 @@ public sealed class ModulePalette : UserControl
     /// <param name="chosen">Called with the type id of whatever is picked.</param>
     /// <param name="groups">The groups somebody kept, which are listed above the catalog.</param>
     /// <param name="adding">Called with the kept group that was picked.</param>
-    public ModulePalette(
+    /// <param name="instruments">The instruments plugged in and known by name, listed above the groups.</param>
+    /// <param name="addingInstrument">Called with the instrument that was picked.</param>
+    internal ModulePalette(
         ModuleCatalog catalog,
         Action<string> chosen,
         GroupLibrary groups,
-        Action<SavedGroup> adding)
+        Action<SavedGroup> adding,
+        Func<IReadOnlyList<PanelInstrument>>? instruments = null,
+        Action<PanelInstrument>? addingInstrument = null)
     {
         this.catalog = catalog;
         this.chosen = chosen;
         this.groups = groups;
         this.adding = adding;
+        this.instruments = instruments;
+        this.addingInstrument = addingInstrument;
 
         Width = PopupWidth;
         Name = "palette";
@@ -327,12 +341,15 @@ public sealed class ModulePalette : UserControl
         var text = filter.Text?.Trim() ?? string.Empty;
         var matches = catalog.All.Where(d => Matches(d, text)).ToList();
         var kept = groups.All.Where(entry => Matches(entry, text)).ToList();
+        var plugged = (instruments?.Invoke() ?? [])
+            .Where(instrument => text.Length == 0 || instrument.Profile.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
         modules.Children.Clear();
         listed.Clear();
         highlighted = -1;
 
-        if (matches.Count == 0 && kept.Count == 0)
+        if (matches.Count == 0 && kept.Count == 0 && plugged.Count == 0)
         {
             modules.Children.Add(Hint(
                 hidden.Count == catalog.Providers.Count ? "No plugins are ticked."
@@ -347,6 +364,16 @@ public sealed class ModulePalette : UserControl
         // of everything else is a section nobody scrolls to. The heading takes
         // no accent color because a group has no category — the same reason a
         // box's header is the one color on the canvas that means nothing.
+        // Above even the groups: an instrument is here only while it is plugged
+        // in, and the one moment somebody wants it whole is the moment they sat
+        // down to play it.
+        if (plugged.Count > 0)
+        {
+            modules.Children.Add(Heading("INSTRUMENTS", Colors.Muted));
+
+            foreach (var instrument in plugged) modules.Children.Add(Plugged(instrument));
+        }
+
         if (kept.Count > 0)
         {
             modules.Children.Add(Heading("GROUPS", Colors.Muted));
@@ -452,6 +479,28 @@ public sealed class ModulePalette : UserControl
     /// a file and there is no undo out here. An entry this build cannot make is
     /// still listed and dimmed: picking it says which plugin it wants.
     /// </remarks>
+    /// <summary>An instrument's row: its name, and what picking it adds.</summary>
+    private Control Plugged(PanelInstrument instrument)
+    {
+        var add = new Button
+        {
+            Content = instrument.Profile.Name,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(8, 4),
+            FontSize = Text.Body,
+            Margin = new Thickness(0, 0, 0, 1),
+        };
+
+        ToolTip.SetTip(add, InstrumentScaffold.Describe(instrument.Profile));
+
+        add.Click += (_, _) => addingInstrument?.Invoke(instrument);
+
+        listed.Add(add);
+
+        return add;
+    }
+
     private Control Kept(SavedGroup entry)
     {
         if (removing is { } asked && asked.Path == entry.Path)

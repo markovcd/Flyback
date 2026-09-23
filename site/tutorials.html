@@ -361,6 +361,10 @@ out.volume = 0.6</code></pre>
     plugin doing the hearing and sets whether the first MIDI In added to a patch lays the computer keyboard out as a
     piano or as a scale.</p>
 
+    <p>An instrument Flyback knows by name is also at the top of the module list, under <strong>Instruments</strong>,
+    while it is plugged in. Picking it adds the whole box: a Clock In and a MIDI In per track, each on its channel and
+    named after it, grouped as one. Delete the tracks you will not use.</p>
+
     <p>A drum machine or hardware sequencer sending MIDI clock conducts the patch through a <strong>Clock In</strong>,
     under Timing. Its <code>beats</code> count from the machine's Start at the tempo it is sending and hold while it
     is stopped: patch them into a sequencer's <code>in</code> and set the sequencer's rate in steps per beat, and
