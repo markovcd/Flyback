@@ -7,6 +7,7 @@ using Flyback.Plugins.Picture;
 [assembly: FlybackModule(BoxModule.TypeId, "Box")]
 [assembly: FlybackModule(PolygonModule.TypeId, "Polygon")]
 [assembly: FlybackModule(StarModule.TypeId, "Star")]
+[assembly: FlybackModule(ArcModule.TypeId, "Arc")]
 [assembly: FlybackModule(LineModule.TypeId, "Line")]
 [assembly: FlybackModule(TextModule.TypeId, "Text")]
 [assembly: FlybackModule(CombineModule.TypeId, "Combine")]
@@ -41,7 +42,7 @@ namespace Flyback.Plugins.Picture;
 /// </para>
 /// <para>
 /// Three categories rather than one, because a section called "Picture" holding
-/// fifteen modules is a worse palette than three holding eight, five and two.
+/// sixteen modules is a worse palette than three holding nine, five and two.
 /// </para>
 /// </remarks>
 public sealed class PicturePlugin : IFlybackPlugin
@@ -51,7 +52,7 @@ public sealed class PicturePlugin : IFlybackPlugin
     public PluginInfo Info { get; } = new(
         "flyback.picture",
         "Picture",
-        "Shapes, lines and text to fill and combine, palettes, grading and layers, and the two "
+        "Shapes, arcs, lines and text to fill and combine, palettes, grading and layers, and the two "
         + "fractal noises.");
 
     public void Register(IPluginRegistry registry)
@@ -63,6 +64,7 @@ public sealed class PicturePlugin : IFlybackPlugin
                 BoxModule.Definition,
                 PolygonModule.Definition,
                 StarModule.Definition,
+                ArcModule.Definition,
                 LineModule.Definition,
                 TextModule.Definition,
                 CombineModule.Definition,

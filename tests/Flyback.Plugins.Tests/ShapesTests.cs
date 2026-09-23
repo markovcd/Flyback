@@ -7,7 +7,7 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The six Form modules, loaded off disk and read the way the renderer reads them:
+/// The seven Form modules, loaded off disk and read the way the renderer reads them:
 /// one evaluation per point, with no state behind any of it.
 /// </summary>
 /// <remarks>
@@ -22,6 +22,7 @@ public class ShapesTests
     private const string BoxType = "flyback.picture.box";
     private const string PolygonType = "flyback.picture.polygon";
     private const string StarType = "flyback.picture.star";
+    private const string ArcType = "flyback.picture.arc";
     private const string CombineType = "flyback.picture.combine";
     private const string FillType = "flyback.picture.fill";
 
@@ -30,9 +31,9 @@ public class ShapesTests
     // --- the catalog ---------------------------------------------------------
 
     [Fact]
-    public void The_plugin_offers_all_six_modules_from_one_assembly()
+    public void The_plugin_offers_all_seven_modules_from_one_assembly()
     {
-        string[] all = [CircleType, BoxType, PolygonType, StarType, CombineType, FillType];
+        string[] all = [CircleType, BoxType, PolygonType, StarType, ArcType, CombineType, FillType];
 
         foreach (var typeId in all)
         {
@@ -51,7 +52,7 @@ public class ShapesTests
     [Fact]
     public void A_shape_sits_in_the_middle_of_the_picture_with_nothing_patched_in()
     {
-        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType })
+        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, ArcType })
         {
             var def = Catalog.Require(typeId);
 
@@ -278,6 +279,60 @@ public class ShapesTests
         sharp.At(valley.X, valley.Y).ShouldBeGreaterThan(blunt.At(valley.X, valley.Y));
     }
 
+    // --- the arc ---------------------------------------------------------------
+
+    /// <summary>
+    /// Centered on the top and opening both ways, so the band is there straight up
+    /// at any sweep and straight down only once the ring closes.
+    /// </summary>
+    [Fact]
+    public void An_arc_is_a_band_round_the_top_of_its_circle()
+    {
+        var arc = Shape(ArcType, (2, 0.5f), (3, 0.5f), (4, 0.1f));
+
+        arc.At(0f, 0.5f).ShouldBe(-0.05d, 1e-6);
+        arc.At(0f, 0.55f).ShouldBe(0d, 1e-6);
+        arc.At(0.5f, 0.01f).ShouldBeLessThan(0d);
+        arc.At(-0.5f, 0.01f).ShouldBeLessThan(0d);
+
+        // Below the ends it is the distance to a round cap on each.
+        arc.At(0.5f, -0.2f).ShouldBe(0.15d, 1e-6);
+        arc.At(0f, -0.5f).ShouldBeGreaterThan(0.5d);
+    }
+
+    /// <summary>
+    /// The two ends of the sweep are two shapes the rest of the plugin already
+    /// has: a whole band is a Circle outlined, and no sweep is a dot at the top.
+    /// </summary>
+    [Fact]
+    public void A_full_sweep_is_a_ring_and_no_sweep_is_a_dot()
+    {
+        var ring = Shape(ArcType, (2, 0.5f), (3, 1f), (4, 0.1f));
+        var dot = Shape(ArcType, (2, 0.5f), (3, 0f), (4, 0.1f));
+
+        foreach (var (x, y) in Ring(0.3f).Concat(Ring(0.8f)).Append((0f, 0.2f)).Append((0f, -0.9f)))
+        {
+            ring.At(x, y).ShouldBe(MathF.Abs(MathF.Sqrt(x * x + y * y) - 0.5f) - 0.05f, 1e-5);
+            dot.At(x, y).ShouldBe(MathF.Sqrt(x * x + (y - 0.5f) * (y - 0.5f)) - 0.05f, 1e-5);
+        }
+    }
+
+    [Fact]
+    public void An_arcs_field_is_a_true_distance_all_the_way_round_it()
+    {
+        var arc = Shape(ArcType, (2, 0.5f), (3, 0.6f), (4, 0.1f));
+
+        // Clear of the three creases: the axis, and the rays to the two ends.
+        foreach (var radius in new[] { 0.2f, 0.7f, 1.1f })
+        foreach (var (x, y) in Ring(radius, 37))
+        {
+            var bearing = MathF.Abs(MathF.Atan2(x, y));
+            if (bearing < 0.05f || MathF.Abs(bearing - 0.6f * MathF.PI) < 0.05f) continue;
+
+            Slope(arc, x, y).ShouldBe(1d, 0.02);
+        }
+    }
+
     // --- the fill --------------------------------------------------------------
 
     [Fact]
@@ -406,7 +461,7 @@ public class ShapesTests
     {
         var wild = new[] { -1e6f, -3f, -0.4f, 0f, 1e-9f, 0.5f, 7f, 1e6f };
 
-        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, FillType })
+        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, ArcType, FillType })
         {
             var ports = Catalog.Require(typeId).Inputs.Count;
 
@@ -433,7 +488,7 @@ public class ShapesTests
     [Fact]
     public void A_shape_is_the_same_module_at_both_sinks()
     {
-        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType })
+        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, ArcType })
         {
             var seen = Shape(typeId);
             var heard = Heard(typeId);
@@ -447,7 +502,7 @@ public class ShapesTests
     /// The gate a video plugin has and an audio one does not: a table read is the
     /// one thing the shader cannot draw, so a module that reaches for one takes
     /// the preview back to the CPU for as long as the patch is loaded, quietly.
-    /// Nothing here reaches for a table, a cell or a delay line, so all six
+    /// Nothing here reaches for a table, a cell or a delay line, so all seven
     /// survive to the GPU — and this is what would notice if one stopped.
     /// </summary>
     [Theory]
@@ -455,6 +510,7 @@ public class ShapesTests
     [InlineData(BoxType)]
     [InlineData(PolygonType)]
     [InlineData(StarType)]
+    [InlineData(ArcType)]
     [InlineData(CombineType)]
     [InlineData(FillType)]
     public void Every_module_survives_to_the_shader_backend(string typeId)

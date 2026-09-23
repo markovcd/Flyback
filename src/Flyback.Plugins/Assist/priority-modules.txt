@@ -89,6 +89,7 @@ flyback.voice.wander
 flyback.effects.chorus
 flyback.effects.echo
 
+flyback.picture.arc
 flyback.picture.box
 flyback.picture.cells
 flyback.picture.circle
