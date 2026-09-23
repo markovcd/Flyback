@@ -125,6 +125,12 @@ internal static class OvertonesModule
 
         var width = 0.4f / partials;
 
+        // One phase, and each partial the one below it turned by the fundamental's angle.
+        var angle = em.Mul(em.Phase(node[InPort], node[FreqPort], nought), Tau);
+        var turnCos = em.Unary(OpCode.Cos, angle);
+        var turnSin = em.Unary(OpCode.Sin, angle);
+        var (cos, sin) = (turnCos, turnSin);
+
         for (var k = 1; k <= partials; k++)
         {
             var center = (k - 0.5f) / partials;
@@ -133,11 +139,18 @@ internal static class OvertonesModule
             var reading = em.Ternary(OpCode.Clamp, em.Coerce(node.Resolve(SpectrumPort), 1), nought, one);
             em.PopDomain();
 
-            var height = em.Mul(reading, em.Binary(OpCode.Pow, em.Constant(k), slope));
+            // k to the power of the slope, as an exponential: the power is the dearer op.
+            var height = k == 1 ? reading : em.Mul(reading, em.Unary(OpCode.Exp, em.Mul(slope, MathF.Log(k))));
             sum = em.Add(sum, height);
 
-            var turns = em.Phase(node[InPort], em.Mul(node[FreqPort], k), nought);
-            tone = em.Add(tone, em.Mul(height, em.Unary(OpCode.Sin, em.Mul(turns, Tau))));
+            if (k > 1)
+            {
+                (cos, sin) = (
+                    em.Sub(em.Mul(cos, turnCos), em.Mul(sin, turnSin)),
+                    em.Add(em.Mul(sin, turnCos), em.Mul(cos, turnSin)));
+            }
+
+            tone = em.Add(tone, em.Mul(height, sin));
 
             wave = em.Add(wave, em.Mul(height, em.Unary(OpCode.Sin, em.Mul(across, Tau * k))));
 

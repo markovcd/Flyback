@@ -203,7 +203,7 @@ public class PlateTests
         var program = heard ? b.Patch.CompileForAudio(Catalog).Program : b.Patch.CompileForVideo(Catalog).Program;
 
         program.PlaneCount.ShouldBe(3);
-        program.Ops.Count(op => op.Code == OpCode.Exp).ShouldBe(9, "an envelope per mode");
+        program.Ops.Count(op => op.Code == OpCode.Exp).ShouldBe(9 + 7, "an envelope per mode, and the tilt of each partial above the first");
     }
 
     /// <summary>

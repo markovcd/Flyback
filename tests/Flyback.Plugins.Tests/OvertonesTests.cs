@@ -57,7 +57,7 @@ public class OvertonesTests
         var program = b.Patch.CompileForAudio(Catalog).Program;
 
         program.Ops.Count(op => op.Code == OpCode.Noise3).ShouldBe(8);
-        program.PhaseCount.ShouldBe(8);
+        program.PhaseCount.ShouldBe(1, "one phase, turned up the partials");
     }
 
     /// <summary>A partial is a place along the row, so what reads no place is lowered once for all of them.</summary>
@@ -73,7 +73,7 @@ public class OvertonesTests
 
         var program = b.Patch.CompileForAudio(Catalog).Program;
 
-        program.PhaseCount.ShouldBe(8 + 1, "a phase for each partial, and the sine's one");
+        program.PhaseCount.ShouldBe(1 + 1, "the partials' one phase, and the sine's");
     }
 
     /// <summary>
