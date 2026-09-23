@@ -39,6 +39,7 @@
 - Installing a plugin a patch was refused for opens that patch again once Flyback has restarted.
 - The envelope at the end of the status bar writes to Flyback's author, with what build it was written from.
 - Noise read off a fast clock no longer sticks at full level after a day or more of playing.
+- A picture drawn on the graphics card no longer stutters after hours or days of playing.
 
 ## 0.4.0 — 2026-09-21
 

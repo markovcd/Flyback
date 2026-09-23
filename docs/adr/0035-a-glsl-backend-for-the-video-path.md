@@ -179,3 +179,11 @@ golden GLSL per preset per dialect, which is cheap to review by eye in a way a
 rendered frame is not. What none of that reaches is the GPU itself: CI is
 headless, and a test that skips itself everywhere is worse than a documented
 harness. The agreement figures above were measured by hand.
+
+## Amendments
+
+**2026-09-23 — the clock in two floats.** [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md)
+built the deferred fix, and more of it than was named here: the clock, the arithmetic
+on it and the arithmetic feeding it are carried as pairs, and fract, mod, the
+trigonometry and noise reduce them exactly. The table above describes the shader
+before that, and the stairstep after an hour is gone.

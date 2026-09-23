@@ -57,6 +57,49 @@ public class GlslEmitterTests
         source.PatchFragment.ShouldContain("float r3 = ");
     }
 
+    /// <summary>t × 2.5, fract: the clock is two floats until fract takes its size away.</summary>
+    [Fact]
+    public void The_clock_is_carried_in_two_floats_until_something_takes_its_size_away()
+    {
+        var patch = new CompiledPatch(
+            [
+                new Op(OpCode.LoadT, 0),
+                new Op(OpCode.Const, 1, k: 2.5f),
+                new Op(OpCode.Mul, 2, 0, 1),
+                new Op(OpCode.Fract, 3, 2),
+                new Op(OpCode.Sin, 4, 3),
+            ],
+            5,
+            4);
+
+        var fragment = GlslEmitter.Emit(patch, GlslDialect.GlslEs300).PatchFragment;
+
+        fragment.ShouldContain("vec2 w0 = vec2(uTime, uTimeLo);");
+        fragment.ShouldContain("vec2 w2 = dml(w0, vec2(r1, 0.0));");
+        fragment.ShouldContain("float r3 = dfr(w2);");
+        fragment.ShouldContain("float r4 = sin(r3);");
+    }
+
+    [Fact]
+    public void A_picture_with_no_clock_in_it_has_no_two_float_line()
+    {
+        var patch = new CompiledPatch([new Op(OpCode.LoadX, 0), new Op(OpCode.Sin, 1, 0)], 2, 1);
+
+        GlslEmitter.Emit(patch, GlslDialect.GlslEs300).PatchFragment.ShouldNotContain("vec2 w");
+    }
+
+    [Theory]
+    [InlineData(OpCode.Sin, "sin(dtr(w0))")]
+    [InlineData(OpCode.Cos, "cos(dtr(w0))")]
+    [InlineData(OpCode.Floor, "vec2 w1 = dfl(w0)")]
+    [InlineData(OpCode.Noise3, "nzw(w0, w0, w0)")]
+    public void An_op_on_the_clock_itself_is_done_in_two_floats(OpCode code, string line)
+    {
+        var patch = new CompiledPatch([new Op(OpCode.LoadT, 0), new Op(code, 1, 0, 0, 0)], 2, 1);
+
+        GlslEmitter.Emit(patch, GlslDialect.GlslEs300).PatchFragment.ShouldContain(line);
+    }
+
     [Fact]
     public void An_unknown_opcode_is_refused_rather_than_skipped()
     {

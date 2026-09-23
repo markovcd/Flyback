@@ -1,6 +1,8 @@
 ﻿#version 150
 
 uniform float uTime;
+uniform float uTimeLo;
+uniform float uOne;
 uniform float uAspect;
 uniform float uK[85];
 
@@ -82,6 +84,96 @@ float nz(float x, float y, float z)
     return lrp(z0, z1, w);
 }
 
+// Two floats standing for one number, hi + lo, for whatever the clock feeds:
+// a float alone steps by a quarter of a millisecond an hour in and by two
+// seconds a year in. Multiplying by uOne, which is 1, stops a compiler folding
+// (a + b) - a into b, which is the whole of what these helpers compute.
+vec2 qts(float a, float b) { float s = (a + b) * uOne; return vec2(s, b - (s - a) * uOne); }
+
+vec2 tws(float a, float b)
+{
+    float s = (a + b) * uOne;
+    float v = (s - a) * uOne;
+    return vec2(s, (a - (s - v)) * uOne + (b - v));
+}
+
+vec2 spl(float a)
+{
+    float t = a * 4097.0;
+    float h = t * uOne - (t - a);
+    return vec2(h, a * uOne - h);
+}
+
+vec2 twp(float a, float b)
+{
+    float p = a * b;
+    vec2 x = spl(a), y = spl(b);
+    return vec2(p, ((x.x * y.x - p) + x.x * y.y + x.y * y.x) + x.y * y.y);
+}
+
+vec2 dad(vec2 a, vec2 b) { vec2 s = tws(a.x, b.x); return qts(s.x, s.y + a.y + b.y); }
+vec2 dml(vec2 a, vec2 b) { vec2 p = twp(a.x, b.x); return qts(p.x, p.y + a.x * b.y + a.y * b.x); }
+
+vec2 ddv(vec2 a, vec2 b)
+{
+    if (b.x == 0.0) return vec2(0.0);
+
+    float q = a.x / b.x;
+    if (!fin(q)) return vec2(0.0);
+
+    vec2 r = dad(a, -dml(vec2(q, 0.0), b));
+    return tws(q, (r.x + r.y) / b.x);
+}
+
+vec2 dfl(vec2 a) { float h = floor(a.x); return tws(h, floor((a.x - h) + a.y)); }
+float dfr(vec2 a) { float h = a.x - floor(a.x); return fr(h + a.y); }
+
+float dmd(vec2 a, vec2 b)
+{
+    if (b.x == 0.0) return 0.0;
+
+    vec2 r = dad(a, -dml(dfl(ddv(a, b)), b));
+    return gd(r.x + r.y);
+}
+
+// Whole turns taken off before the one float a sine needs, against 2π in two
+// floats of its own.
+float dtr(vec2 a)
+{
+    float k = floor((a.x + a.y) * 0.15915494);
+    vec2 r = dad(a, -dml(vec2(k, 0.0), vec2(6.2831855, -1.7484555e-7)));
+    return r.x + r.y;
+}
+
+// A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
+// a float holds exactly, since converting one past an int is undefined.
+uint wrp(float v)
+{
+    float q = floor(v / 65536.0);
+    float m = q - 65536.0 * floor(q / 65536.0);
+    return (uint(m) << 16) + uint(v - q * 65536.0);
+}
+
+int lat(vec2 n) { return int(wrp(n.x) + wrp(n.y)); }
+
+float nzw(vec2 x, vec2 y, vec2 z)
+{
+    if (!(fin(x.x) && fin(y.x) && fin(z.x))) return 0.0;
+
+    vec2 xf = dfl(x), yf = dfl(y), zf = dfl(z);
+    int xi = lat(xf), yi = lat(yf), zi = lat(zf);
+
+    vec2 fx = dad(x, -xf), fy = dad(y, -yf), fz = dad(z, -zf);
+    float u = fade(fx.x + fx.y), v = fade(fy.x + fy.y), w = fade(fz.x + fz.y);
+
+    float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                   lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+    float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                   lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+    return lrp(z0, z1, w);
+}
+
 vec3 hsv(float h, float s, float v)
 {
     h = fr(h) * 6.0;
@@ -122,18 +214,18 @@ void main()
     float r1 = py;
     float r5 = uK[0];
     float r6 = uK[1];
-    float r7 = uTime;
+    vec2 w7 = vec2(uTime, uTimeLo); float r7 = w7.x + w7.y;
     float r8 = uK[2];
-    float r9 = r6 * r8;
-    float r10 = r7 * r9;
+    vec2 w9 = dml(vec2(r6, 0.0), vec2(r8, 0.0)); float r9 = w9.x + w9.y;
+    vec2 w10 = dml(w7, w9); float r10 = w10.x + w10.y;
     float r11 = uK[3];
     float r12 = uK[4];
     float r13 = uK[5];
-    float r14 = r10 * r11;
+    vec2 w14 = dml(w10, vec2(r11, 0.0)); float r14 = w14.x + w14.y;
     float r15 = uK[6];
-    float r16 = md(r14, r15);
+    float r16 = dmd(w14, vec2(r15, 0.0));
     float r17 = floor(r16);
-    float r18 = fr(r14);
+    float r18 = dfr(w14);
     float r20 = uK[7];
     float r21 = uK[8];
     float r22 = step(r20, r17);
@@ -223,10 +315,10 @@ void main()
     float r137 = r20 - r136;
     float r138 = r130 * r134;
     float r139 = r138 * r137;
-    float r140 = r10 * r11;
-    float r141 = md(r140, r15);
+    vec2 w140 = dml(w10, vec2(r11, 0.0)); float r140 = w140.x + w140.y;
+    float r141 = dmd(w140, vec2(r15, 0.0));
     float r142 = floor(r141);
-    float r143 = fr(r140);
+    float r143 = dfr(w140);
     float r145 = step(r20, r142);
     float r146 = step(r23, r142);
     float r147 = step(r25, r142);
@@ -299,10 +391,10 @@ void main()
     float r245 = r238 * r241;
     float r246 = r245 * r244;
     float r247 = uK[27];
-    float r248 = r10 * r247;
-    float r249 = md(r248, r42);
+    vec2 w248 = dml(w10, vec2(r247, 0.0)); float r248 = w248.x + w248.y;
+    float r249 = dmd(w248, vec2(r42, 0.0));
     float r250 = floor(r249);
-    float r251 = fr(r248);
+    float r251 = dfr(w248);
     float r253 = step(r20, r250);
     float r254 = step(r23, r250);
     float r255 = step(r25, r250);
@@ -314,63 +406,63 @@ void main()
     float r261 = step(r36, r250);
     float r262 = step(r38, r250);
     float r263 = step(r40, r250);
-    float r264 = r20 - r253;
-    float r265 = r264 * r21;
+    vec2 w264 = dad(vec2(r20, 0.0), -vec2(r253, 0.0)); float r264 = w264.x + w264.y;
+    vec2 w265 = dml(w264, vec2(r21, 0.0)); float r265 = w265.x + w265.y;
     float r266 = r264 * r21;
-    float r267 = r253 - r254;
-    float r268 = r267 * r21;
+    vec2 w267 = dad(vec2(r253, 0.0), -vec2(r254, 0.0)); float r267 = w267.x + w267.y;
+    vec2 w268 = dml(w267, vec2(r21, 0.0)); float r268 = w268.x + w268.y;
     float r269 = r267 * r21;
-    float r270 = r265 + r268;
+    vec2 w270 = dad(w265, w268); float r270 = w270.x + w270.y;
     float r271 = r266 + r269;
-    float r272 = r254 - r255;
-    float r273 = r272 * r21;
+    vec2 w272 = dad(vec2(r254, 0.0), -vec2(r255, 0.0)); float r272 = w272.x + w272.y;
+    vec2 w273 = dml(w272, vec2(r21, 0.0)); float r273 = w273.x + w273.y;
     float r274 = r272 * r21;
-    float r275 = r270 + r273;
+    vec2 w275 = dad(w270, w273); float r275 = w275.x + w275.y;
     float r276 = r271 + r274;
-    float r277 = r255 - r256;
-    float r278 = r277 * r21;
+    vec2 w277 = dad(vec2(r255, 0.0), -vec2(r256, 0.0)); float r277 = w277.x + w277.y;
+    vec2 w278 = dml(w277, vec2(r21, 0.0)); float r278 = w278.x + w278.y;
     float r279 = r277 * r20;
-    float r280 = r275 + r278;
+    vec2 w280 = dad(w275, w278); float r280 = w280.x + w280.y;
     float r281 = r276 + r279;
-    float r282 = r256 - r257;
-    float r283 = r282 * r20;
+    vec2 w282 = dad(vec2(r256, 0.0), -vec2(r257, 0.0)); float r282 = w282.x + w282.y;
+    vec2 w283 = dml(w282, vec2(r20, 0.0)); float r283 = w283.x + w283.y;
     float r284 = r282 * r20;
-    float r285 = r280 + r283;
+    vec2 w285 = dad(w280, w283); float r285 = w285.x + w285.y;
     float r286 = r281 + r284;
-    float r287 = r257 - r258;
-    float r288 = r287 * r20;
+    vec2 w287 = dad(vec2(r257, 0.0), -vec2(r258, 0.0)); float r287 = w287.x + w287.y;
+    vec2 w288 = dml(w287, vec2(r20, 0.0)); float r288 = w288.x + w288.y;
     float r289 = r287 * r20;
-    float r290 = r285 + r288;
+    vec2 w290 = dad(w285, w288); float r290 = w290.x + w290.y;
     float r291 = r286 + r289;
-    float r292 = r258 - r259;
-    float r293 = r292 * r21;
+    vec2 w292 = dad(vec2(r258, 0.0), -vec2(r259, 0.0)); float r292 = w292.x + w292.y;
+    vec2 w293 = dml(w292, vec2(r21, 0.0)); float r293 = w293.x + w293.y;
     float r294 = r292 * r20;
-    float r295 = r290 + r293;
+    vec2 w295 = dad(w290, w293); float r295 = w295.x + w295.y;
     float r296 = r291 + r294;
-    float r297 = r259 - r260;
-    float r298 = r297 * r21;
+    vec2 w297 = dad(vec2(r259, 0.0), -vec2(r260, 0.0)); float r297 = w297.x + w297.y;
+    vec2 w298 = dml(w297, vec2(r21, 0.0)); float r298 = w298.x + w298.y;
     float r299 = r297 * r20;
-    float r300 = r295 + r298;
+    vec2 w300 = dad(w295, w298); float r300 = w300.x + w300.y;
     float r301 = r296 + r299;
-    float r302 = r260 - r261;
-    float r303 = r302 * r20;
+    vec2 w302 = dad(vec2(r260, 0.0), -vec2(r261, 0.0)); float r302 = w302.x + w302.y;
+    vec2 w303 = dml(w302, vec2(r20, 0.0)); float r303 = w303.x + w303.y;
     float r304 = r302 * r20;
-    float r305 = r300 + r303;
+    vec2 w305 = dad(w300, w303); float r305 = w305.x + w305.y;
     float r306 = r301 + r304;
-    float r307 = r261 - r262;
-    float r308 = r307 * r20;
+    vec2 w307 = dad(vec2(r261, 0.0), -vec2(r262, 0.0)); float r307 = w307.x + w307.y;
+    vec2 w308 = dml(w307, vec2(r20, 0.0)); float r308 = w308.x + w308.y;
     float r309 = r307 * r20;
-    float r310 = r305 + r308;
+    vec2 w310 = dad(w305, w308); float r310 = w310.x + w310.y;
     float r311 = r306 + r309;
-    float r312 = r262 - r263;
-    float r313 = r312 * r21;
+    vec2 w312 = dad(vec2(r262, 0.0), -vec2(r263, 0.0)); float r312 = w312.x + w312.y;
+    vec2 w313 = dml(w312, vec2(r21, 0.0)); float r313 = w313.x + w313.y;
     float r314 = r312 * r20;
-    float r315 = r310 + r313;
+    vec2 w315 = dad(w310, w313); float r315 = w315.x + w315.y;
     float r316 = r311 + r314;
-    float r317 = r263 - r21;
-    float r318 = r317 * r21;
+    vec2 w317 = dad(vec2(r263, 0.0), -vec2(r21, 0.0)); float r317 = w317.x + w317.y;
+    vec2 w318 = dml(w317, vec2(r21, 0.0)); float r318 = w318.x + w318.y;
     float r319 = r317 * r21;
-    float r320 = r315 + r318;
+    vec2 w320 = dad(w315, w318); float r320 = w320.x + w320.y;
     float r321 = r316 + r319;
     float r322 = clamp(r21, r131, max(r131, r12));
     float r323 = clamp(r20, r21, max(r21, r20));
@@ -382,8 +474,8 @@ void main()
     float r329 = r328 * r327;
     float r330 = r139 + (r246 - r139) * r320;
     float r331 = uK[28];
-    float r332 = r10 * r247;
-    float r333 = md(r332, r42);
+    vec2 w332 = dml(w10, vec2(r247, 0.0)); float r332 = w332.x + w332.y;
+    float r333 = dmd(w332, vec2(r42, 0.0));
     float r334 = floor(r333);
     float r337 = step(r20, r334);
     float r338 = step(r23, r334);
@@ -396,47 +488,47 @@ void main()
     float r345 = step(r36, r334);
     float r346 = step(r38, r334);
     float r347 = step(r40, r334);
-    float r348 = r20 - r337;
+    vec2 w348 = dad(vec2(r20, 0.0), -vec2(r337, 0.0)); float r348 = w348.x + w348.y;
     float r349 = uK[29];
-    float r350 = r348 * r349;
-    float r352 = r337 - r338;
+    vec2 w350 = dml(w348, vec2(r349, 0.0)); float r350 = w350.x + w350.y;
+    vec2 w352 = dad(vec2(r337, 0.0), -vec2(r338, 0.0)); float r352 = w352.x + w352.y;
     float r353 = uK[30];
-    float r354 = r352 * r353;
+    vec2 w354 = dml(w352, vec2(r353, 0.0)); float r354 = w354.x + w354.y;
     float r355 = uK[31];
-    float r357 = r350 + r354;
-    float r359 = r338 - r339;
-    float r360 = r359 * r121;
+    vec2 w357 = dad(w350, w354); float r357 = w357.x + w357.y;
+    vec2 w359 = dad(vec2(r338, 0.0), -vec2(r339, 0.0)); float r359 = w359.x + w359.y;
+    vec2 w360 = dml(w359, vec2(r121, 0.0)); float r360 = w360.x + w360.y;
     float r361 = uK[32];
-    float r363 = r357 + r360;
-    float r365 = r339 - r340;
+    vec2 w363 = dad(w357, w360); float r363 = w363.x + w363.y;
+    vec2 w365 = dad(vec2(r339, 0.0), -vec2(r340, 0.0)); float r365 = w365.x + w365.y;
     float r366 = uK[33];
-    float r367 = r365 * r366;
-    float r369 = r363 + r367;
-    float r371 = r340 - r341;
-    float r372 = r371 * r20;
-    float r374 = r369 + r372;
-    float r376 = r341 - r342;
-    float r377 = r376 * r20;
-    float r379 = r374 + r377;
-    float r381 = r342 - r343;
-    float r382 = r381 * r366;
-    float r384 = r379 + r382;
-    float r386 = r343 - r344;
+    vec2 w367 = dml(w365, vec2(r366, 0.0)); float r367 = w367.x + w367.y;
+    vec2 w369 = dad(w363, w367); float r369 = w369.x + w369.y;
+    vec2 w371 = dad(vec2(r340, 0.0), -vec2(r341, 0.0)); float r371 = w371.x + w371.y;
+    vec2 w372 = dml(w371, vec2(r20, 0.0)); float r372 = w372.x + w372.y;
+    vec2 w374 = dad(w369, w372); float r374 = w374.x + w374.y;
+    vec2 w376 = dad(vec2(r341, 0.0), -vec2(r342, 0.0)); float r376 = w376.x + w376.y;
+    vec2 w377 = dml(w376, vec2(r20, 0.0)); float r377 = w377.x + w377.y;
+    vec2 w379 = dad(w374, w377); float r379 = w379.x + w379.y;
+    vec2 w381 = dad(vec2(r342, 0.0), -vec2(r343, 0.0)); float r381 = w381.x + w381.y;
+    vec2 w382 = dml(w381, vec2(r366, 0.0)); float r382 = w382.x + w382.y;
+    vec2 w384 = dad(w379, w382); float r384 = w384.x + w384.y;
+    vec2 w386 = dad(vec2(r343, 0.0), -vec2(r344, 0.0)); float r386 = w386.x + w386.y;
     float r387 = uK[34];
-    float r388 = r386 * r387;
-    float r390 = r384 + r388;
-    float r392 = r344 - r345;
-    float r393 = r392 * r20;
-    float r395 = r390 + r393;
-    float r397 = r345 - r346;
-    float r398 = r397 * r20;
-    float r400 = r395 + r398;
-    float r402 = r346 - r347;
-    float r403 = r402 * r361;
-    float r405 = r400 + r403;
-    float r407 = r347 - r21;
-    float r408 = r407 * r349;
-    float r410 = r405 + r408;
+    vec2 w388 = dml(w386, vec2(r387, 0.0)); float r388 = w388.x + w388.y;
+    vec2 w390 = dad(w384, w388); float r390 = w390.x + w390.y;
+    vec2 w392 = dad(vec2(r344, 0.0), -vec2(r345, 0.0)); float r392 = w392.x + w392.y;
+    vec2 w393 = dml(w392, vec2(r20, 0.0)); float r393 = w393.x + w393.y;
+    vec2 w395 = dad(w390, w393); float r395 = w395.x + w395.y;
+    vec2 w397 = dad(vec2(r345, 0.0), -vec2(r346, 0.0)); float r397 = w397.x + w397.y;
+    vec2 w398 = dml(w397, vec2(r20, 0.0)); float r398 = w398.x + w398.y;
+    vec2 w400 = dad(w395, w398); float r400 = w400.x + w400.y;
+    vec2 w402 = dad(vec2(r346, 0.0), -vec2(r347, 0.0)); float r402 = w402.x + w402.y;
+    vec2 w403 = dml(w402, vec2(r361, 0.0)); float r403 = w403.x + w403.y;
+    vec2 w405 = dad(w400, w403); float r405 = w405.x + w405.y;
+    vec2 w407 = dad(vec2(r347, 0.0), -vec2(r21, 0.0)); float r407 = w407.x + w407.y;
+    vec2 w408 = dml(w407, vec2(r349, 0.0)); float r408 = w408.x + w408.y;
+    vec2 w410 = dad(w405, w408); float r410 = w410.x + w410.y;
     float r420 = step(r331, r410);
     float r421 = r330 * r420;
     float r422 = uK[35];
@@ -491,11 +583,11 @@ void main()
     float r473 = r470 + r21;
     float r474 = uK[40];
     float r475 = uK[41];
-    float r476 = r10 * r11;
+    vec2 w476 = dml(w10, vec2(r11, 0.0)); float r476 = w476.x + w476.y;
     float r477 = uK[42];
-    float r478 = md(r476, r477);
+    float r478 = dmd(w476, vec2(r477, 0.0));
     float r479 = floor(r478);
-    float r480 = fr(r476);
+    float r480 = dfr(w476);
     float r482 = step(r20, r479);
     float r483 = step(r23, r479);
     float r484 = step(r25, r479);
@@ -634,9 +726,9 @@ void main()
     float r617 = r610 * r613;
     float r618 = r617 * r616;
     float r619 = uK[55];
-    float r620 = r10 * r23;
+    vec2 w620 = dml(w10, vec2(r23, 0.0)); float r620 = w620.x + w620.y;
     float r621 = uK[56];
-    float r622 = md(r620, r621);
+    float r622 = dmd(w620, vec2(r621, 0.0));
     float r623 = step(r25, r622);
     float r624 = step(r11, r622);
     float r625 = step(r30, r622);
@@ -777,7 +869,7 @@ void main()
     float r797 = r796 * r795;
     float r798 = r609 + (r779 - r609) * r320;
     float r799 = uK[60];
-    float r800 = r798 * r799;
+    vec2 w800 = dml(vec2(r798, 0.0), vec2(r799, 0.0)); float r800 = w800.x + w800.y;
     float r801 = uK[61];
     float r802 = uK[62];
     float r803 = r421 - r21;
@@ -785,9 +877,9 @@ void main()
     float r805 = dv(r803, r804);
     float r806 = r801 + (r802 - r801) * r805;
     float r807 = uK[63];
-    float r808 = r7 * r807;
-    float r809 = r10 * r331;
-    float r810 = md(r809, r11);
+    vec2 w808 = dml(w7, vec2(r807, 0.0)); float r808 = w808.x + w808.y;
+    vec2 w809 = dml(w10, vec2(r331, 0.0)); float r809 = w809.x + w809.y;
+    float r810 = dmd(w809, vec2(r11, 0.0));
     float r811 = floor(r810);
     float r814 = step(r20, r811);
     float r815 = step(r23, r811);
@@ -806,8 +898,8 @@ void main()
     float r833 = uK[66];
     float r834 = r832 * r833;
     float r836 = r830 + r834;
-    float r846 = r10 * r331;
-    float r847 = md(r846, r34);
+    vec2 w846 = dml(w10, vec2(r331, 0.0)); float r846 = w846.x + w846.y;
+    float r847 = dmd(w846, vec2(r34, 0.0));
     float r848 = floor(r847);
     float r851 = step(r20, r848);
     float r852 = step(r23, r848);
@@ -841,10 +933,10 @@ void main()
     float r894 = r889 + r892;
     float r904 = r836 + (r894 - r836) * r320;
     float r905 = uK[67];
-    float r906 = r904 * r905;
-    float r907 = r808 + r906;
-    float r908 = cos(r907);
-    float r909 = sin(r907);
+    vec2 w906 = dml(vec2(r904, 0.0), vec2(r905, 0.0)); float r906 = w906.x + w906.y;
+    vec2 w907 = dad(w808, w906); float r907 = w907.x + w907.y;
+    float r908 = cos(dtr(w907));
+    float r909 = sin(dtr(w907));
     float r910 = r0 * r908;
     float r911 = r1 * r909;
     float r912 = r910 - r911;
@@ -872,21 +964,21 @@ void main()
     float r934 = sin(r931);
     float r935 = r934 * r924;
     float r936 = uK[69];
-    float r937 = r7 * r936;
+    vec2 w937 = dml(w7, vec2(r936, 0.0)); float r937 = w937.x + w937.y;
     float r938 = uK[70];
     float r939 = r933 * r938;
     float r940 = r935 * r938;
-    float r941 = nz(r939, r940, r937);
-    float r942 = r941 * r179;
-    float r943 = r800 + r942;
+    float r941 = nzw(vec2(r939, 0.0), vec2(r940, 0.0), w937);
+    vec2 w942 = dml(vec2(r941, 0.0), vec2(r179, 0.0)); float r942 = w942.x + w942.y;
+    vec2 w943 = dad(w800, w942); float r943 = w943.x + w943.y;
     float r944 = uK[71];
-    float r945 = r7 * r944;
-    float r946 = r320 * r361;
-    float r947 = r945 + r946;
-    float r948 = r943 + r947;
-    float r949 = fr(r948);
-    float r950 = r10 * r23;
-    float r951 = md(r950, r34);
+    vec2 w945 = dml(w7, vec2(r944, 0.0)); float r945 = w945.x + w945.y;
+    vec2 w946 = dml(w320, vec2(r361, 0.0)); float r946 = w946.x + w946.y;
+    vec2 w947 = dad(w945, w946); float r947 = w947.x + w947.y;
+    vec2 w948 = dad(w943, w947); float r948 = w948.x + w948.y;
+    float r949 = dfr(w948);
+    vec2 w950 = dml(w10, vec2(r23, 0.0)); float r950 = w950.x + w950.y;
+    float r951 = dmd(w950, vec2(r34, 0.0));
     float r952 = uK[72];
     float r953 = step(r952, r951);
     float r954 = step(r23, r951);
@@ -960,10 +1052,10 @@ void main()
     float r1055 = r20 - r1054;
     float r1056 = r1040 * r1052;
     float r1057 = r1056 * r1055;
-    float r1058 = r10 * r23;
-    float r1059 = md(r1058, r34);
+    vec2 w1058 = dml(w10, vec2(r23, 0.0)); float r1058 = w1058.x + w1058.y;
+    float r1059 = dmd(w1058, vec2(r34, 0.0));
     float r1060 = floor(r1059);
-    float r1061 = fr(r1058);
+    float r1061 = dfr(w1058);
     float r1063 = step(r20, r1060);
     float r1064 = step(r23, r1060);
     float r1065 = step(r25, r1060);
@@ -1011,10 +1103,10 @@ void main()
     float r1122 = r20 - r21;
     float r1123 = dv(r1121, r1122);
     float r1124 = r1120 + (r90 - r1120) * r1123;
-    float r1125 = r10 * r11;
-    float r1126 = md(r1125, r15);
+    vec2 w1125 = dml(w10, vec2(r11, 0.0)); float r1125 = w1125.x + w1125.y;
+    float r1126 = dmd(w1125, vec2(r15, 0.0));
     float r1127 = floor(r1126);
-    float r1128 = fr(r1125);
+    float r1128 = dfr(w1125);
     float r1130 = step(r20, r1127);
     float r1131 = step(r23, r1127);
     float r1132 = step(r25, r1127);
@@ -1087,10 +1179,10 @@ void main()
     float r1230 = r1229 * r1228;
     float r1231 = step(r12, r410);
     float r1232 = r1230 * r1231;
-    float r1233 = r10 * r11;
-    float r1234 = md(r1233, r15);
+    vec2 w1233 = dml(w10, vec2(r11, 0.0)); float r1233 = w1233.x + w1233.y;
+    float r1234 = dmd(w1233, vec2(r15, 0.0));
     float r1235 = floor(r1234);
-    float r1236 = fr(r1233);
+    float r1236 = dfr(w1233);
     float r1238 = step(r20, r1235);
     float r1239 = step(r23, r1235);
     float r1240 = step(r25, r1235);
@@ -1194,11 +1286,11 @@ void main()
     float r1338 = r20 - r1337;
     float r1339 = r1332 * r1335;
     float r1340 = r1339 * r1338;
-    float r1341 = r10 * r247;
-    float r1342 = fr(r1341);
+    vec2 w1341 = dml(w10, vec2(r247, 0.0)); float r1341 = w1341.x + w1341.y;
+    float r1342 = dfr(w1341);
     float r1343 = step(r1043, r1342);
-    float r1344 = r10 * r247;
-    float r1345 = md(r1344, r42);
+    vec2 w1344 = dml(w10, vec2(r247, 0.0)); float r1344 = w1344.x + w1344.y;
+    float r1345 = dmd(w1344, vec2(r42, 0.0));
     float r1346 = floor(r1345);
     float r1349 = step(r20, r1346);
     float r1350 = step(r23, r1346);
@@ -1254,15 +1346,15 @@ void main()
     float r1431 = r20 + (r353 - r20) * r1430;
     float r1432 = r1124 * r1431;
     float r1433 = uK[79];
-    float r1434 = r7 * r1433 + r21;
-    float r1435 = r1434 * r926;
-    float r1436 = sin(r1435);
+    vec2 w1434 = dad(dml(w7, vec2(r1433, 0.0)), vec2(r21, 0.0)); float r1434 = w1434.x + w1434.y;
+    vec2 w1435 = dml(w1434, vec2(r926, 0.0)); float r1435 = w1435.x + w1435.y;
+    float r1436 = sin(dtr(w1435));
     float r1437 = r1436 * r331;
     float r1438 = r1437 + r361;
-    float r1439 = r10 * r23;
-    float r1440 = md(r1439, r34);
+    vec2 w1439 = dml(w10, vec2(r23, 0.0)); float r1439 = w1439.x + w1439.y;
+    float r1440 = dmd(w1439, vec2(r34, 0.0));
     float r1441 = floor(r1440);
-    float r1442 = fr(r1439);
+    float r1442 = dfr(w1439);
     float r1444 = step(r20, r1441);
     float r1445 = step(r23, r1441);
     float r1446 = step(r25, r1441);
@@ -1318,29 +1410,29 @@ void main()
     float r1514 = dv(r1512, r1513);
     float r1515 = r1510 + (r1511 - r1510) * r1514;
     float r1516 = uK[83];
-    float r1517 = r410 * r1516;
-    float r1518 = r1515 + r1517;
-    float r1519 = r7 * r1117;
+    vec2 w1517 = dml(w410, vec2(r1516, 0.0)); float r1517 = w1517.x + w1517.y;
+    vec2 w1518 = dad(vec2(r1515, 0.0), w1517); float r1518 = w1518.x + w1518.y;
+    vec2 w1519 = dml(w7, vec2(r1117, 0.0)); float r1519 = w1519.x + w1519.y;
     float r1520 = sqrt(r1504 * r1504 + r1507 * r1507);
-    float r1521 = r1520 * r1518;
-    float r1522 = r1521 + r1519;
-    float r1523 = r1522 * r926;
-    float r1524 = sin(r1523);
+    vec2 w1521 = dml(vec2(r1520, 0.0), w1518); float r1521 = w1521.x + w1521.y;
+    vec2 w1522 = dad(w1521, w1519); float r1522 = w1522.x + w1522.y;
+    vec2 w1523 = dml(w1522, vec2(r926, 0.0)); float r1523 = w1523.x + w1523.y;
+    float r1524 = sin(dtr(w1523));
     float r1525 = sm(r387, r90, r1524);
     float r1526 = uK[84];
     float r1527 = r421 - r21;
     float r1528 = r20 - r21;
     float r1529 = dv(r1527, r1528);
     float r1530 = r79 + (r1526 - r79) * r1529;
-    float r1531 = r10 * r11;
-    float r1532 = fr(r1531);
+    vec2 w1531 = dml(w10, vec2(r11, 0.0)); float r1531 = w1531.x + w1531.y;
+    float r1532 = dfr(w1531);
     float r1533 = r20 - r1532;
     float r1534 = pw(r1533, r38);
     float r1535 = r1534 * r1331;
     float r1536 = step(r331, r410);
     float r1537 = r1535 * r1536;
-    float r1538 = r10 + r12;
-    float r1539 = fr(r1538);
+    vec2 w1538 = dad(w10, vec2(r12, 0.0)); float r1538 = w1538.x + w1538.y;
+    float r1539 = dfr(w1538);
     float r1540 = r20 - r1539;
     float r1541 = pw(r1540, r25);
     float r1542 = r1541 * r320;

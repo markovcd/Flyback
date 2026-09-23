@@ -1,6 +1,8 @@
 ﻿#version 150
 
 uniform float uTime;
+uniform float uTimeLo;
+uniform float uOne;
 uniform float uAspect;
 uniform float uK[13];
 
@@ -82,6 +84,96 @@ float nz(float x, float y, float z)
     return lrp(z0, z1, w);
 }
 
+// Two floats standing for one number, hi + lo, for whatever the clock feeds:
+// a float alone steps by a quarter of a millisecond an hour in and by two
+// seconds a year in. Multiplying by uOne, which is 1, stops a compiler folding
+// (a + b) - a into b, which is the whole of what these helpers compute.
+vec2 qts(float a, float b) { float s = (a + b) * uOne; return vec2(s, b - (s - a) * uOne); }
+
+vec2 tws(float a, float b)
+{
+    float s = (a + b) * uOne;
+    float v = (s - a) * uOne;
+    return vec2(s, (a - (s - v)) * uOne + (b - v));
+}
+
+vec2 spl(float a)
+{
+    float t = a * 4097.0;
+    float h = t * uOne - (t - a);
+    return vec2(h, a * uOne - h);
+}
+
+vec2 twp(float a, float b)
+{
+    float p = a * b;
+    vec2 x = spl(a), y = spl(b);
+    return vec2(p, ((x.x * y.x - p) + x.x * y.y + x.y * y.x) + x.y * y.y);
+}
+
+vec2 dad(vec2 a, vec2 b) { vec2 s = tws(a.x, b.x); return qts(s.x, s.y + a.y + b.y); }
+vec2 dml(vec2 a, vec2 b) { vec2 p = twp(a.x, b.x); return qts(p.x, p.y + a.x * b.y + a.y * b.x); }
+
+vec2 ddv(vec2 a, vec2 b)
+{
+    if (b.x == 0.0) return vec2(0.0);
+
+    float q = a.x / b.x;
+    if (!fin(q)) return vec2(0.0);
+
+    vec2 r = dad(a, -dml(vec2(q, 0.0), b));
+    return tws(q, (r.x + r.y) / b.x);
+}
+
+vec2 dfl(vec2 a) { float h = floor(a.x); return tws(h, floor((a.x - h) + a.y)); }
+float dfr(vec2 a) { float h = a.x - floor(a.x); return fr(h + a.y); }
+
+float dmd(vec2 a, vec2 b)
+{
+    if (b.x == 0.0) return 0.0;
+
+    vec2 r = dad(a, -dml(dfl(ddv(a, b)), b));
+    return gd(r.x + r.y);
+}
+
+// Whole turns taken off before the one float a sine needs, against 2π in two
+// floats of its own.
+float dtr(vec2 a)
+{
+    float k = floor((a.x + a.y) * 0.15915494);
+    vec2 r = dad(a, -dml(vec2(k, 0.0), vec2(6.2831855, -1.7484555e-7)));
+    return r.x + r.y;
+}
+
+// A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
+// a float holds exactly, since converting one past an int is undefined.
+uint wrp(float v)
+{
+    float q = floor(v / 65536.0);
+    float m = q - 65536.0 * floor(q / 65536.0);
+    return (uint(m) << 16) + uint(v - q * 65536.0);
+}
+
+int lat(vec2 n) { return int(wrp(n.x) + wrp(n.y)); }
+
+float nzw(vec2 x, vec2 y, vec2 z)
+{
+    if (!(fin(x.x) && fin(y.x) && fin(z.x))) return 0.0;
+
+    vec2 xf = dfl(x), yf = dfl(y), zf = dfl(z);
+    int xi = lat(xf), yi = lat(yf), zi = lat(zf);
+
+    vec2 fx = dad(x, -xf), fy = dad(y, -yf), fz = dad(z, -zf);
+    float u = fade(fx.x + fx.y), v = fade(fy.x + fy.y), w = fade(fz.x + fz.y);
+
+    float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                   lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+    float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                   lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+    return lrp(z0, z1, w);
+}
+
 vec3 hsv(float h, float s, float v)
 {
     h = fr(h) * 6.0;
@@ -110,11 +202,11 @@ void main()
     float r1 = uK[1];
     float r2 = px;
     float r3 = py;
-    float r7 = uTime;
+    vec2 w7 = vec2(uTime, uTimeLo); float r7 = w7.x + w7.y;
     float r8 = uK[2];
-    float r9 = r7 * r8;
-    float r10 = cos(r9);
-    float r11 = sin(r9);
+    vec2 w9 = dml(w7, vec2(r8, 0.0)); float r9 = w9.x + w9.y;
+    float r10 = cos(dtr(w9));
+    float r11 = sin(dtr(w9));
     float r12 = r2 * r10;
     float r13 = r3 * r11;
     float r14 = r12 - r13;
@@ -140,9 +232,9 @@ void main()
     float r34 = r29 - r32;
     float r35 = r31 - r33;
     float r36 = uK[8];
-    float r37 = r7 * r36 + r33;
-    float r38 = r37 * r21;
-    float r39 = sin(r38);
+    vec2 w37 = dad(dml(w7, vec2(r36, 0.0)), vec2(r33, 0.0)); float r37 = w37.x + w37.y;
+    vec2 w38 = dml(w37, vec2(r21, 0.0)); float r38 = w38.x + w38.y;
+    float r39 = sin(dtr(w38));
     float r40 = r39 * r1;
     float r41 = r40 + r33;
     float r42 = uK[9];
@@ -156,27 +248,27 @@ void main()
     float r50 = r35 * r48;
     float r51 = uK[11];
     float r52 = uK[12];
-    float r53 = r7 * r52;
+    vec2 w53 = dml(w7, vec2(r52, 0.0)); float r53 = w53.x + w53.y;
     float r54 = sqrt(r49 * r49 + r50 * r50);
-    float r55 = r54 * r51;
-    float r56 = r55 + r53;
-    float r57 = r56 * r21;
-    float r58 = sin(r57);
+    vec2 w55 = dml(vec2(r54, 0.0), vec2(r51, 0.0)); float r55 = w55.x + w55.y;
+    vec2 w56 = dad(w55, w53); float r56 = w56.x + w56.y;
+    vec2 w57 = dml(w56, vec2(r21, 0.0)); float r57 = w57.x + w57.y;
+    float r58 = sin(dtr(w57));
     float r59 = sm(r0, r1, r58);
     float r60 = sqrt(r34 * r34 + r35 * r35);
-    float r61 = r60 * r51;
-    float r62 = r61 + r53;
-    float r63 = r62 * r21;
-    float r64 = sin(r63);
+    vec2 w61 = dml(vec2(r60, 0.0), vec2(r51, 0.0)); float r61 = w61.x + w61.y;
+    vec2 w62 = dad(w61, w53); float r62 = w62.x + w62.y;
+    vec2 w63 = dml(w62, vec2(r21, 0.0)); float r63 = w63.x + w63.y;
+    float r64 = sin(dtr(w63));
     float r65 = sm(r0, r1, r64);
     float r66 = r1 - r47;
     float r67 = r34 * r66;
     float r68 = r35 * r66;
     float r69 = sqrt(r67 * r67 + r68 * r68);
-    float r70 = r69 * r51;
-    float r71 = r70 + r53;
-    float r72 = r71 * r21;
-    float r73 = sin(r72);
+    vec2 w70 = dml(vec2(r69, 0.0), vec2(r51, 0.0)); float r70 = w70.x + w70.y;
+    vec2 w71 = dad(w70, w53); float r71 = w71.x + w71.y;
+    vec2 w72 = dml(w71, vec2(r21, 0.0)); float r72 = w72.x + w72.y;
+    float r73 = sin(dtr(w72));
     float r74 = sm(r0, r1, r73);
     float r75 = r59;
     float r76 = r65;

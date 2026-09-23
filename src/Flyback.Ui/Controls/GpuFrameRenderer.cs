@@ -61,6 +61,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private int patchProgram;
     private int patchTime = -1;
+
+    /// <summary>What the clock is past the float <see cref="patchTime"/> rounds it to.</summary>
+    private int patchTimeLow = -1;
+
+    /// <summary>A 1 the shader compiler cannot see, which keeps its two-float sums exact.</summary>
+    private int patchOne = -1;
     private int patchAspect = -1;
     private int patchPrevious = -1;
     private int patchFeedbackX = -1;
@@ -245,6 +251,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         usesFeedback = shaders.UsesFeedback;
 
         patchTime = gl.GetUniformLocationString(compiled, "uTime");
+        patchTimeLow = gl.GetUniformLocationString(compiled, "uTimeLo");
+        patchOne = gl.GetUniformLocationString(compiled, "uOne");
         patchAspect = gl.GetUniformLocationString(compiled, "uAspect");
         patchPrevious = gl.GetUniformLocationString(compiled, "uPrevious");
         patchFeedbackX = gl.GetUniformLocationString(compiled, "uFeedbackScaleX");
@@ -439,7 +447,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         gl.Viewport(0, 0, resolution.Width, resolution.Height);
         gl.UseProgram(patchProgram);
 
-        if (patchTime >= 0) gl.Uniform1f(patchTime, (float)time);
+        var high = (float)time;
+        if (patchTime >= 0) gl.Uniform1f(patchTime, high);
+        if (patchTimeLow >= 0) gl.Uniform1f(patchTimeLow, (float)(time - high));
+        if (patchOne >= 0) gl.Uniform1f(patchOne, 1f);
 
         var aspect = resolution.Height == 0 ? 1f : (float)resolution.Width / resolution.Height;
         if (patchAspect >= 0) gl.Uniform1f(patchAspect, aspect);

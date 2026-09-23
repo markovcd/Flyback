@@ -299,6 +299,96 @@ public static class GlslEmitter
             return lrp(z0, z1, w);
         }
 
+        // Two floats standing for one number, hi + lo, for whatever the clock feeds:
+        // a float alone steps by a quarter of a millisecond an hour in and by two
+        // seconds a year in. Multiplying by uOne, which is 1, stops a compiler folding
+        // (a + b) - a into b, which is the whole of what these helpers compute.
+        vec2 qts(float a, float b) { float s = (a + b) * uOne; return vec2(s, b - (s - a) * uOne); }
+
+        vec2 tws(float a, float b)
+        {
+            float s = (a + b) * uOne;
+            float v = (s - a) * uOne;
+            return vec2(s, (a - (s - v)) * uOne + (b - v));
+        }
+
+        vec2 spl(float a)
+        {
+            float t = a * 4097.0;
+            float h = t * uOne - (t - a);
+            return vec2(h, a * uOne - h);
+        }
+
+        vec2 twp(float a, float b)
+        {
+            float p = a * b;
+            vec2 x = spl(a), y = spl(b);
+            return vec2(p, ((x.x * y.x - p) + x.x * y.y + x.y * y.x) + x.y * y.y);
+        }
+
+        vec2 dad(vec2 a, vec2 b) { vec2 s = tws(a.x, b.x); return qts(s.x, s.y + a.y + b.y); }
+        vec2 dml(vec2 a, vec2 b) { vec2 p = twp(a.x, b.x); return qts(p.x, p.y + a.x * b.y + a.y * b.x); }
+
+        vec2 ddv(vec2 a, vec2 b)
+        {
+            if (b.x == 0.0) return vec2(0.0);
+
+            float q = a.x / b.x;
+            if (!fin(q)) return vec2(0.0);
+
+            vec2 r = dad(a, -dml(vec2(q, 0.0), b));
+            return tws(q, (r.x + r.y) / b.x);
+        }
+
+        vec2 dfl(vec2 a) { float h = floor(a.x); return tws(h, floor((a.x - h) + a.y)); }
+        float dfr(vec2 a) { float h = a.x - floor(a.x); return fr(h + a.y); }
+
+        float dmd(vec2 a, vec2 b)
+        {
+            if (b.x == 0.0) return 0.0;
+
+            vec2 r = dad(a, -dml(dfl(ddv(a, b)), b));
+            return gd(r.x + r.y);
+        }
+
+        // Whole turns taken off before the one float a sine needs, against 2π in two
+        // floats of its own.
+        float dtr(vec2 a)
+        {
+            float k = floor((a.x + a.y) * 0.15915494);
+            vec2 r = dad(a, -dml(vec2(k, 0.0), vec2(6.2831855, -1.7484555e-7)));
+            return r.x + r.y;
+        }
+
+        // A whole number wrapped to 32 bits the way Noise.Lattice wraps it, in steps
+        // a float holds exactly, since converting one past an int is undefined.
+        uint wrp(float v)
+        {
+            float q = floor(v / 65536.0);
+            float m = q - 65536.0 * floor(q / 65536.0);
+            return (uint(m) << 16) + uint(v - q * 65536.0);
+        }
+
+        int lat(vec2 n) { return int(wrp(n.x) + wrp(n.y)); }
+
+        float nzw(vec2 x, vec2 y, vec2 z)
+        {
+            if (!(fin(x.x) && fin(y.x) && fin(z.x))) return 0.0;
+
+            vec2 xf = dfl(x), yf = dfl(y), zf = dfl(z);
+            int xi = lat(xf), yi = lat(yf), zi = lat(zf);
+
+            vec2 fx = dad(x, -xf), fy = dad(y, -yf), fz = dad(z, -zf);
+            float u = fade(fx.x + fx.y), v = fade(fy.x + fy.y), w = fade(fz.x + fz.y);
+
+            float z0 = lrp(lrp(hsh(xi, yi,     zi), hsh(xi + 1, yi,     zi), u),
+                           lrp(hsh(xi, yi + 1, zi), hsh(xi + 1, yi + 1, zi), u), v);
+            float z1 = lrp(lrp(hsh(xi, yi,     zi + 1), hsh(xi + 1, yi,     zi + 1), u),
+                           lrp(hsh(xi, yi + 1, zi + 1), hsh(xi + 1, yi + 1, zi + 1), u), v);
+
+            return lrp(z0, z1, w);
+        }
+
         vec3 hsv(float h, float s, float v)
         {
             h = fr(h) * 6.0;
@@ -414,7 +504,10 @@ public static class GlslEmitter
     {
         var text = new StringBuilder(Header(dialect, fragment: true));
 
+        // The clock as hi + lo: a float alone steps by two seconds a year in.
         text.AppendLine("uniform float uTime;");
+        text.AppendLine("uniform float uTimeLo;");
+        text.AppendLine("uniform float uOne;");
         text.AppendLine("uniform float uAspect;");
 
         // A zero-length array is not a legal declaration, and a patch of nothing
@@ -553,12 +646,64 @@ public static class GlslEmitter
             : "0.0";
     }
 
+    /// <summary>
+    /// Which registers are carried in two floats: the clock, the arithmetic that keeps
+    /// its size, and the arithmetic feeding either, since a rate rounded to one float
+    /// is a beat out after a few months of multiplying by the clock.
+    /// </summary>
+    private static bool[] Widths(CompiledPatch patch, int registers)
+    {
+        var wide = new bool[registers];
+        var arithmetic = new bool[registers];
+
+        bool Wide(int register) => register >= 0 && register < registers && wide[register];
+
+        foreach (var op in patch.Ops)
+        {
+            if (op.Out < 0 || op.Out >= registers || !Carries(op.Code)) continue;
+
+            arithmetic[op.Out] = true;
+            wide[op.Out] = op.Code is OpCode.LoadT || Carried(op).Any(Wide);
+        }
+
+        for (var i = patch.Ops.Length - 1; i >= 0; i--)
+        {
+            var op = patch.Ops[i];
+
+            IEnumerable<int> fed =
+                op.Code is OpCode.Mod && Wide(op.A) ? [op.B]
+                : Wide(op.Out) && Carries(op.Code) ? Carried(op)
+                : [];
+
+            foreach (var register in fed)
+                if (register >= 0 && register < registers && arithmetic[register])
+                    wide[register] = true;
+        }
+
+        return wide;
+
+        static bool Carries(OpCode code) => code is OpCode.LoadT
+            or OpCode.Copy or OpCode.Delay or OpCode.Allpass or OpCode.Neg or OpCode.Abs
+            or OpCode.Floor or OpCode.Ceil or OpCode.Add or OpCode.Sub or OpCode.Mul
+            or OpCode.Div or OpCode.Phase;
+
+        // A delay's time and an allpass's gain decide nothing about the size of what passes.
+        static int[] Carried(Op op) => op.Code switch
+        {
+            OpCode.Add or OpCode.Sub or OpCode.Mul or OpCode.Div => [op.A, op.B],
+            OpCode.Phase => [op.A, op.B, op.C],
+            OpCode.LoadT => [],
+            _ => [op.A],
+        };
+    }
+
     /// <summary>Emits one line per op, and reports which registers ended up declared.</summary>
     private static bool[] Body(CompiledPatch patch, StringBuilder text)
     {
         // A register read before anything wrote it reads as zero, which is what an
         // interpreter walking a freshly allocated register file would have found.
         var written = new bool[Math.Max(patch.RegisterCount, patch.OutputBase + patch.OutputWidth)];
+        var wide = Widths(patch, written.Length);
 
         var constant = 0;
 
@@ -585,12 +730,18 @@ public static class GlslEmitter
 
             string a = Read(op.A), b = Read(op.B), c = Read(op.C);
 
-            var expression = op.Code switch
+            if (IsWide(op.Out))
+            {
+                text.AppendLine($"    vec2 w{op.Out} = {Widened(op)}; float r{op.Out} = w{op.Out}.x + w{op.Out}.y;");
+                written[op.Out] = true;
+                continue;
+            }
+
+            var expression = Reduced(op) ?? op.Code switch
             {
                 OpCode.Const => $"uK[{constant++}]",
                 OpCode.LoadX => "px",
                 OpCode.LoadY => "py",
-                OpCode.LoadT => "uTime",
                 OpCode.LoadAspect => "uAspect",
 
                 // The one load whose value the shader is handed per frame rather
@@ -702,5 +853,44 @@ public static class GlslEmitter
         // unset for SampleFeedback — and reads as zero for the same reason.
         string Read(int register) =>
             register >= 0 && register < written.Length && written[register] ? $"r{register}" : "0.0";
+
+        bool IsWide(int register) => register >= 0 && register < wide.Length && wide[register];
+
+        string Pair(int register) => IsWide(register) ? $"w{register}" : $"vec2({Read(register)}, 0.0)";
+
+        string Widened(Op op)
+        {
+            string a = Pair(op.A), b = Pair(op.B), c = Pair(op.C);
+
+            return op.Code switch
+            {
+                OpCode.LoadT => "vec2(uTime, uTimeLo)",
+                OpCode.Copy or OpCode.Delay or OpCode.Allpass => a,
+                OpCode.Neg => $"-{a}",
+                OpCode.Abs => $"({a}.x < 0.0 ? -{a} : {a})",
+                OpCode.Add => $"dad({a}, {b})",
+                OpCode.Sub => $"dad({a}, -{b})",
+                OpCode.Mul => $"dml({a}, {b})",
+                OpCode.Div => $"ddv({a}, {b})",
+                OpCode.Phase => $"dad(dml({a}, {b}), {c})",
+                OpCode.Floor => $"dfl({a})",
+                OpCode.Ceil => $"-dfl(-{a})",
+                _ => throw new InvalidOperationException($"{op.Code} is never carried in two floats."),
+            };
+        }
+
+        // The ops that take the size away, done in two floats so that what is left
+        // is exact. Everything else reads the pair as the one float it rounds to.
+        string? Reduced(Op op) => op.Code switch
+        {
+            OpCode.Fract when IsWide(op.A) => $"dfr({Pair(op.A)})",
+            OpCode.Mod when IsWide(op.A) => $"dmd({Pair(op.A)}, {Pair(op.B)})",
+            OpCode.Sin when IsWide(op.A) => $"sin(dtr({Pair(op.A)}))",
+            OpCode.Cos when IsWide(op.A) => $"cos(dtr({Pair(op.A)}))",
+            OpCode.Tan when IsWide(op.A) => $"gd(tan(dtr({Pair(op.A)})))",
+            OpCode.Noise3 when IsWide(op.A) || IsWide(op.B) || IsWide(op.C) =>
+                $"nzw({Pair(op.A)}, {Pair(op.B)}, {Pair(op.C)})",
+            _ => null,
+        };
     }
 }

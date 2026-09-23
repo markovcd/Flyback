@@ -38,7 +38,8 @@ context, decision, consequences.
 | [0021](0021-recompile-the-whole-patch-on-every-edit.md) | Recompile the whole patch on every edit |
 | [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md) | A sequencer is eight inputs and no memory *(user-directed)* |
 | [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
-| [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path |
+| [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path *(time carried in two floats by [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md))* |
+| [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md) | The clock reaches the GPU in two floats *(user-directed)* |
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed; its Output knob superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md))* |
 | [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) | A patch can be played, and what plays it is one opcode *(user-directed)* |
