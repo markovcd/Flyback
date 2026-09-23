@@ -125,6 +125,7 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
 flyback-cli render drone.fbk -o drone.mkv --seconds 30 --format mp4 --ffmpeg /opt/bin/ffmpeg
 flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
+flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
 flyback-cli modules
 flyback-cli pack nebula.fbk -o nebula.fbkb
@@ -148,6 +149,7 @@ flyback-cli viewer nebula.fbk
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
+- `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
 - `modules`: lists the modules this build has, and which plugin defines each
 - `probe`: asks an assistant which models it has and what each one accepts
 
@@ -157,7 +159,7 @@ flyback-cli viewer nebula.fbk
 - `1`: patch errors
 - `2`: the job could not run
 
-`--strict` makes a warning fail as well. `check`, `info`, `pack`, `modules` and
+`--strict` makes a warning fail as well. `check`, `compare`, `info`, `pack`, `modules` and
 `probe` each take `--json`, which writes the same answer as a document instead of
 as prose.
 

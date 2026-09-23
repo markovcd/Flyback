@@ -495,6 +495,87 @@ public class CommandTests
         File.ReadAllText(file.FullName).ShouldContain("# mine");
     }
 
+    // --- compare -------------------------------------------------------------
+
+    /// <summary>A picture and a sound, so either half can be turned on its own.</summary>
+    private const string Hello = """
+        let slowly = t * 0.2
+        x |> sine(freq: 0.9, phase: slowly)
+          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> remap(-2..2, 0..1)
+          |> hsv(saturation: 0.85, value: 1)
+          |> out.color
+        t |> sine(freq: 220) |> out.left
+        """;
+
+    private static Opened Written(string source)
+    {
+        var built = Core.Language.PatchLanguage.Build(source);
+        built.Ok.ShouldBeTrue(built.Report);
+
+        return new Opened(built.Patch, new SampleLibrary(), new ImageLibrary());
+    }
+
+    private static (int Code, string Out, string Error) Compare(Opened was, Opened now, bool json = false) =>
+        Run((o, e) => CompareCommand.Run(was, "was.fbks", now, "now.fbks", new CompareOptions(0.5, 64, 36, Json: json), o, e));
+
+    /// <summary>
+    /// A patch and its printing read back, which share no ids and not always a
+    /// register, and still play the same samples and draw the same pixels.
+    /// </summary>
+    [Fact]
+    public void A_patch_and_its_printing_are_the_same_instrument()
+    {
+        var patch = Preset("Whole band");
+        var printed = Core.Language.PatchLanguage.Build(Core.Language.PatchPrinter.Print(patch)).Patch;
+
+        var (code, output, _) = Compare(
+            new Opened(patch, new SampleLibrary(), new ImageLibrary()),
+            new Opened(printed, new SampleLibrary(), new ImageLibrary()));
+
+        code.ShouldBe(Exit.Ok);
+        output.ShouldContain("are the same instrument");
+    }
+
+    /// <summary>Only the half that was turned parts, and a script can read which.</summary>
+    [Fact]
+    public void A_turned_pitch_parts_the_sound_and_leaves_the_picture()
+    {
+        var (code, output, _) = Compare(
+            Written(Hello), Written(Hello.Replace("freq: 220", "freq: 221", StringComparison.Ordinal)), json: true);
+
+        code.ShouldBe(Exit.Problems);
+
+        using var document = JsonDocument.Parse(output);
+        document.RootElement.GetProperty("same").GetBoolean().ShouldBeFalse();
+        document.RootElement.GetProperty("sound").GetProperty("channel").GetString().ShouldBe("left");
+        document.RootElement.TryGetProperty("picture", out _).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_turned_color_parts_the_picture_and_leaves_the_sound()
+    {
+        var (code, output, _) = Compare(
+            Written(Hello), Written(Hello.Replace("saturation: 0.85", "saturation: 0.8", StringComparison.Ordinal)));
+
+        code.ShouldBe(Exit.Problems);
+        output.ShouldContain("picture  parts at 0.000 s in frame 0");
+        output.ShouldNotContain("sound    parts");
+    }
+
+    /// <summary>A stand-in plays, so two broken patches could agree about nothing real.</summary>
+    [Fact]
+    public void A_patch_with_errors_is_not_compared()
+    {
+        var broken = new Opened(Broken(), new SampleLibrary(), new ImageLibrary());
+
+        var (code, output, error) = Compare(broken, broken);
+
+        code.ShouldBe(Exit.Problems);
+        output.ShouldBeEmpty();
+        error.ShouldContain("refusing to compare");
+    }
+
     // --- modules -------------------------------------------------------------
 
     /// <summary>

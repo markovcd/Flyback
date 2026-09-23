@@ -24,6 +24,6 @@ ADR-0095 (Stroke, Fade, Wander, Drum in Voice; Desk, Trails in the engine) and A
 
 ## How a port is verified
 
-Dump every preset with `PatchIO.ToJson` first. Then a throwaway xunit test compares each preset built now against its dump: audio sample by sample with `new DelayState(program, rate)` over six windows, video byte by byte via `SynthRenderer` frames. It needs the `DelayState(CompiledPatch, int)` constructor, or presets with planes throw. Give the test an option to splice the old arithmetic hiss back in, so everything but the noise can be shown exact.
+Dump every preset with `PatchIO.ToJson` first, and save each one built now beside its dump. `flyback-cli compare old.fbk new.fbk --seconds 60` plays both and says whether every sample and every pixel agrees, and where they first part when not; `--json` for a script over all of them. To show everything but a changed noise is exact, compare against a dump with the old noise spliced back in.
 
 See `authoring-presets`.

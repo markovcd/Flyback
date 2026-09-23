@@ -74,6 +74,7 @@ internal static class Program
             PackPlugin(),
             PluginKey(),
             Modules(plugins, json),
+            Compare(plugins, json),
             Probe(plugins, json),
             ViewerCommand.Build(),
             RenderPresetsCommand.Build(plugins),
@@ -94,6 +95,59 @@ internal static class Program
         // come back as the same number. Half-typed input is neither: it is what
         // a completion is asked about.
         return parsed.Errors.Count > 0 && parsed.GetResult(suggest) is null ? Exit.Failed : code;
+    }
+
+    /// <summary>Plays two patches side by side and says whether they are the same instrument.</summary>
+    private static Command Compare(Plugins plugins, Option<bool> json)
+    {
+        var was = new Argument<FileInfo>("was") { Description = "The patch as it was." };
+        var now = new Argument<FileInfo>("now") { Description = "The patch as it is now." };
+
+        var seconds = new Option<double>("--seconds")
+        {
+            Description = "How long to play both.",
+            DefaultValueFactory = _ => 10d,
+        };
+
+        var size = new Option<(int Width, int Height)>("--size")
+        {
+            Description = "The frame both are drawn at, as WIDTHxHEIGHT.",
+            DefaultValueFactory = _ => (320, 180),
+            CustomParser = Size,
+        };
+
+        var command = new Command(
+            "compare",
+            "Play two patches side by side and say whether they are the same instrument, bit for bit.")
+        {
+            was, now, seconds, size, json,
+        };
+
+        command.SetAction((result, cancellation) =>
+        {
+            plugins.Ready();
+
+            var error = result.InvocationConfiguration.Error;
+            var first = result.GetRequiredValue(was);
+            var second = result.GetRequiredValue(now);
+
+            if (Patches.Open(first, error) is not { } before || Patches.Open(second, error) is not { } after)
+                return Task.FromResult(Exit.Failed);
+
+            var (width, height) = result.GetValue(size);
+
+            return Task.FromResult(CompareCommand.Run(
+                before,
+                first.Name,
+                after,
+                second.Name,
+                new CompareOptions(result.GetValue(seconds), width, height, Json: result.GetValue(json)),
+                result.InvocationConfiguration.Output,
+                error,
+                cancellation));
+        });
+
+        return command;
     }
 
     /// <summary>Lists the installed catalog, which is what a plugin adds to.</summary>

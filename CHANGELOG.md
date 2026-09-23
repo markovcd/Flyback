@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `flyback-cli compare` plays two patches side by side and says whether they are the same instrument, bit for bit, or where they part.
 - Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.
 - A MIDI In can listen to one channel of its instrument.
 - A knob's menu learns it and every knob after it in one pass, and a knob learned from an instrument with a track per channel keeps the channel.
