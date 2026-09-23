@@ -87,10 +87,12 @@ public class IlCompilerTests
         compiler.Submit(heard, IlLane.Sound);
         await compiler.Settled();
 
+        // Whole code attached at once would queue no build and stay whole. Whether
+        // the staged build has landed straight after Submit is a race, so not asked.
         compiler.Submit(seen, IlLane.Picture);
-        seen.Il.ShouldBeNull("nothing built in stages yet, so nothing to attach at once");
 
         await compiler.Settled();
+        heard.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Whole);
         seen.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Staged);
     }
 
