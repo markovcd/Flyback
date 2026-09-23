@@ -127,6 +127,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var app = builder.Build();
 
 var store = new PresetStore(database);
+
+Defaults.Seed(store, Setting("Presets:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")), DateTimeOffset.UtcNow);
 var media = new MediaFolder(Setting("Presets:Media", "/media"));
 
 Directory.CreateDirectory(media.Root);

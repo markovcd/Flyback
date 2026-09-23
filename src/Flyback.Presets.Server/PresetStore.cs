@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using Microsoft.Data.Sqlite;
 
 namespace Flyback.Presets.Server;
@@ -59,6 +60,11 @@ internal sealed class PresetStore
             );
             CREATE INDEX IF NOT EXISTS preset_tags_tag ON preset_tags(tag);
             CREATE INDEX IF NOT EXISTS presets_submitted ON presets(submitted_at);
+            CREATE TABLE IF NOT EXISTS defaults (
+                file_name TEXT PRIMARY KEY,
+                preset_id TEXT NOT NULL,
+                hash TEXT NOT NULL
+            );
             """);
 
         using var columns = db.CreateCommand();
@@ -72,9 +78,88 @@ internal sealed class PresetStore
     {
         var id = Guid.CreateVersion7().ToString("N");
 
+        using (var db = Open())
+        using (var transaction = db.BeginTransaction())
+        {
+            Insert(db, id, submission, at);
+            transaction.Commit();
+        }
+
+        return Find(id)!;
+    }
+
+    /// <summary>
+    /// Adds a preset the site starts with, once. The same file again changes nothing, a
+    /// changed one replaces the stored file and what it says about itself under the same
+    /// id, and one the admin deleted stays deleted.
+    /// </summary>
+    public void Seed(Submission submission, DateTimeOffset at)
+    {
+        var hash = Convert.ToHexStringLower(SHA256.HashData(submission.File));
+
         using var db = Open();
         using var transaction = db.BeginTransaction();
 
+        string? seeded = null, was = null;
+
+        using (var query = db.CreateCommand())
+        {
+            query.CommandText = "SELECT preset_id, hash FROM defaults WHERE file_name = $file_name";
+            query.Parameters.AddWithValue("$file_name", submission.FileName);
+
+            using var reader = query.ExecuteReader();
+
+            if (reader.Read()) (seeded, was) = (reader.GetString(0), reader.GetString(1));
+        }
+
+        if (was == hash) return;
+
+        if (seeded is null)
+        {
+            seeded = Guid.CreateVersion7().ToString("N");
+            Insert(db, seeded, submission, at);
+        }
+        else
+        {
+            using var replace = db.CreateCommand();
+            replace.CommandText = """
+                UPDATE presets SET author = $author, description = $description, file = $file, size = $size
+                WHERE id = $id
+                """;
+            replace.Parameters.AddWithValue("$id", seeded);
+            replace.Parameters.AddWithValue("$author", (object?)submission.Author ?? DBNull.Value);
+            replace.Parameters.AddWithValue("$description", (object?)submission.Description ?? DBNull.Value);
+            replace.Parameters.AddWithValue("$file", submission.File);
+            replace.Parameters.AddWithValue("$size", submission.File.LongLength);
+
+            if (replace.ExecuteNonQuery() > 0)
+            {
+                using var untag = db.CreateCommand();
+                untag.CommandText = "DELETE FROM preset_tags WHERE preset_id = $id";
+                untag.Parameters.AddWithValue("$id", seeded);
+                untag.ExecuteNonQuery();
+
+                Tag(db, seeded, submission.Tags);
+            }
+        }
+
+        using (var remember = db.CreateCommand())
+        {
+            remember.CommandText = """
+                INSERT INTO defaults (file_name, preset_id, hash) VALUES ($file_name, $id, $hash)
+                ON CONFLICT (file_name) DO UPDATE SET hash = excluded.hash
+                """;
+            remember.Parameters.AddWithValue("$file_name", submission.FileName);
+            remember.Parameters.AddWithValue("$id", seeded);
+            remember.Parameters.AddWithValue("$hash", hash);
+            remember.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+    }
+
+    private static void Insert(SqliteConnection db, string id, Submission submission, DateTimeOffset at)
+    {
         using (var insert = db.CreateCommand())
         {
             insert.CommandText = """
@@ -92,7 +177,12 @@ internal sealed class PresetStore
             insert.ExecuteNonQuery();
         }
 
-        foreach (var tag in submission.Tags)
+        Tag(db, id, submission.Tags);
+    }
+
+    private static void Tag(SqliteConnection db, string id, IEnumerable<string> tags)
+    {
+        foreach (var tag in tags)
         {
             using var tagged = db.CreateCommand();
             tagged.CommandText = "INSERT OR IGNORE INTO preset_tags (preset_id, tag) VALUES ($id, $tag)";
@@ -100,10 +190,6 @@ internal sealed class PresetStore
             tagged.Parameters.AddWithValue("$tag", tag);
             tagged.ExecuteNonQuery();
         }
-
-        transaction.Commit();
-
-        return Find(id)!;
     }
 
     /// <summary>The preset, where it is published or <paramref name="unpublished"/> are wanted too.</summary>

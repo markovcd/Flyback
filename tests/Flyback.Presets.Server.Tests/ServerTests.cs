@@ -25,6 +25,7 @@ public sealed class ServerTests : IDisposable
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
             web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
+            web.UseSetting("Presets:Defaults", Path.Combine(folder, "no-defaults"));
             web.UseSetting("Presets:Media", Media);
             web.UseSetting("Presets:PostsPerHour", postsPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
             web.UseSetting("Presets:LettersPerHour", lettersPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));

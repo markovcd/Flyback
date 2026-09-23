@@ -44,6 +44,11 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
   </ItemGroup>
 
+  <!-- The preset site's defaults, which have to open and compile against the plugins above (ADR-0138). -->
+  <ItemGroup>
+    <None Include="..\..\src\Flyback.Presets.Server\Defaults\**" LinkBase="Defaults" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Shouldly" />
     <PackageReference Include="xunit.v3" />

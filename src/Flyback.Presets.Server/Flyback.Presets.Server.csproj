@@ -18,6 +18,11 @@
     <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The presets the site starts with (ADR-0138). -->
+  <ItemGroup>
+    <Content Include="Defaults\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The Pages site's own stylesheet, script and logo, so the two sites cannot drift apart. -->
   <ItemGroup>
     <Content Include="..\..\site\assets\site.css;..\..\site\assets\site.js;..\..\site\assets\logo.svg;..\..\site\assets\share.jpg;..\..\site\assets\donate-qr.svg"

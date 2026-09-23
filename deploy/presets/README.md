@@ -50,6 +50,7 @@ Settings, all optional, as environment variables:
 |---|---|---|
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
 | `Presets__Media` | `/media` | the folder the render machine writes |
+| `Presets__Defaults` | `Defaults` beside the site | the presets the site starts with |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
 | `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__RatingsPerHour` | `60` | ratings one address may give in an hour |

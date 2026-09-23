@@ -11,6 +11,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 - `changelog.md`: what CHANGELOG.md may contain.
 - `tests.md`: rank a run by duration, treat an unexplained slow test as a defect, and ship every feature with a Gherkin scenario written as a requirement.
 - `website.md`: a change to anything `site/` describes updates the site in the same commit.
+- `preset-site-defaults.md`: the preset site's default presets are files, migrated by the change that breaks them.
 - `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
 - `looking-at-a-patch.md`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.
 - `running-the-app.md`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.

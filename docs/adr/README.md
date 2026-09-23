@@ -143,6 +143,7 @@ context, decision, consequences.
 | [0060](0060-a-bundle-is-a-patch-and-what-it-names.md) | A bundle is a patch and what it names *(user-directed)* |
 | [0131](0131-shared-presets-live-on-a-site-that-only-reads-its-media.md) | Shared presets live on a site that only reads its media *(user-directed)* |
 | [0136](0136-a-letter-goes-to-the-author-through-the-preset-site.md) | A letter goes to the author through the preset site *(user-directed)* |
+| [0138](0138-the-preset-site-starts-with-presets-kept-as-files.md) | The preset site starts with presets kept as files *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |
