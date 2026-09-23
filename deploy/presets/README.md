@@ -23,6 +23,8 @@ Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if 
 
 `PLUGIN_KEY` is the release signing key, the PEM whose public half is `src/Flyback.App/Updates/release-key.pem`. The build packs the Figures plugin the site starts with and signs it with that key, handed in as a Docker build secret, so the image and the NAS keep no copy of it. A build without the secret starts the site without Figures.
 
+Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), a Debug build lays Figures out beside the site instead, and the site packs and signs it as it starts with a key it makes for itself at `bin/dev-data/plugin.key`, so the plugin is on the local shelf at once and a Flyback pointed at `http://localhost:8790` installs it. That key signs nothing but a developer's own builds; delete it and the next start makes another, which an editor that installed the old build then refuses as an update until the plugin is removed and installed again.
+
 By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
 
 ```bash
@@ -53,6 +55,8 @@ Settings, all optional, as environment variables:
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
 | `Presets__Media` | `/media` | the folder the render machine writes |
 | `Presets__Defaults` | `Defaults` beside the site | the presets and plugins the site starts with |
+| `Presets__Builds` | `plugins` beside the site | plugin builds to pack and sign at start, where no package of them was shipped |
+| `Presets__PluginKey` | `plugin.key` beside the database | the key such a build is signed with, made there the first time |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
 | `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__RatingsPerHour` | `60` | ratings one address may give in an hour |

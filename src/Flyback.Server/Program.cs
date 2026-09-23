@@ -129,7 +129,15 @@ var app = builder.Build();
 var store = new PresetStore(database);
 var plugins = new PluginStore(database);
 
-Defaults.Seed(store, plugins, Setting("Presets:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")), DateTimeOffset.UtcNow);
+// The key is kept beside the database, so a plugin built beside the site keeps its
+// identity across restarts and the editor takes its rebuilds as updates.
+Defaults.Seed(
+    store,
+    plugins,
+    Setting("Presets:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")),
+    Setting("Presets:Builds", Path.Combine(AppContext.BaseDirectory, "plugins")),
+    Setting("Presets:PluginKey", Path.Combine(Path.GetDirectoryName(database)!, "plugin.key")),
+    DateTimeOffset.UtcNow);
 var media = new MediaFolder(Setting("Presets:Media", "/media"));
 
 Directory.CreateDirectory(media.Root);

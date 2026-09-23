@@ -39,6 +39,16 @@ without Figures, for a developer; `deploy.sh` insists on `PLUGIN_KEY`. A
 rebuilt image carries a fresh signature and so a new file, which replaces the
 stored one; the version decides whether the plugins window offers anything.
 
+**A plugin built beside the site stands in for a package nobody shipped.** A
+Debug build of the site lays Figures out under `plugins/Figures/`, and at
+start the site packs any plugin build it finds there as a build for any
+system, signs it with a P-256 key it makes once and keeps beside its database
+(`Presets:PluginKey` names another), and seeds it like a package. A plugin a
+shipped package already covers is left to the package, so the image, which is
+a Release publish with the signed `.fbkp` and no `plugins/` folder, never
+touches the key path. A run from Rider therefore lists Figures at once, signed
+by a key that survives restarts, so the editor takes its rebuilds as updates.
+
 **The Release workflow packs the same package with the same key** in a
 `figures` stage of the root Dockerfile, lists it in `SHA256SUMS` and attaches
 it to the release. A Figures installed from a release and one installed from

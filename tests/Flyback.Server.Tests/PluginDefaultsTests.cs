@@ -32,15 +32,28 @@ public sealed class PluginDefaultsTests : IDisposable
         Directory.Delete(folder, recursive: true);
     }
 
+    private string Builds => Path.Combine(folder, "plugins");
+
+    private string KeyPath => Path.Combine(folder, "plugin.key");
+
     private WebApplicationFactory<Program> Start() =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
             web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
             web.UseSetting("Presets:Media", Path.Combine(folder, "media"));
             web.UseSetting("Presets:Defaults", Shipped);
+            web.UseSetting("Presets:Builds", Builds);
+            web.UseSetting("Presets:PluginKey", KeyPath);
             web.UseSetting("Presets:Admin:User", "admin");
             web.UseSetting("Presets:Admin:Password", "hunter2");
         });
+
+    /// <summary>Figures laid out beside the site the way a Debug build lays it out.</summary>
+    private void Build()
+    {
+        Directory.CreateDirectory(Path.Combine(Builds, "Figures"));
+        File.WriteAllBytes(Path.Combine(Builds, "Figures", "Flyback.Plugins.Figures.dll"), Figures);
+    }
 
     /// <summary>The Figures plugin as a package for every system, signed unless said otherwise.</summary>
     private static byte[] Package(bool signed = true)
@@ -174,6 +187,59 @@ public sealed class PluginDefaultsTests : IDisposable
 
         Should.Throw<InvalidOperationException>(() => site.CreateClient())
             .Message.ShouldContain("Figures.fbkp");
+    }
+
+    /// <summary>A run from the source: the plugin built beside the site is packed and signed with a key the site makes for itself.</summary>
+    [Fact]
+    public async Task A_plugin_built_beside_the_site_is_packed_and_signed_with_the_sites_own_key()
+    {
+        Build();
+
+        using var site = Start();
+        var figures = (await Shelf(site)).ShouldHaveSingleItem();
+
+        figures.GetProperty("name").GetString().ShouldBe("Figures");
+        figures.GetProperty("published").GetBoolean().ShouldBeTrue();
+        figures.GetProperty("builds").EnumerateArray().Select(b => b.GetString()).ShouldBe(["any"]);
+
+        File.Exists(KeyPath).ShouldBeTrue();
+        using var key = PackageSigner.Load(File.ReadAllText(KeyPath));
+        figures.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(key).Fingerprint);
+    }
+
+    /// <summary>The key is kept, so a rebuild is the same plugin to an editor that installed the last one.</summary>
+    [Fact]
+    public async Task A_rebuilt_plugin_beside_the_site_is_signed_with_the_same_key_under_the_same_id()
+    {
+        Build();
+
+        string id, signer;
+        using (var first = Start())
+        {
+            var figures = (await Shelf(first))[0];
+            id = figures.GetProperty("id").GetString()!;
+            signer = figures.GetProperty("signer").GetString()!;
+        }
+
+        using var again = Start();
+        var shelf = await Shelf(again);
+
+        shelf.Length.ShouldBe(1);
+        shelf[0].GetProperty("id").GetString().ShouldBe(id);
+        shelf[0].GetProperty("signer").GetString().ShouldBe(signer);
+    }
+
+    [Fact]
+    public async Task A_shipped_package_takes_precedence_over_a_build_of_the_same_plugin()
+    {
+        Ship("Figures.fbkp");
+        Build();
+
+        using var site = Start();
+        var figures = (await Shelf(site)).ShouldHaveSingleItem();
+
+        figures.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(Key).Fingerprint);
+        File.Exists(KeyPath).ShouldBeFalse();
     }
 
     [Fact]

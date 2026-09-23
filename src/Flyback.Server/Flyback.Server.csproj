@@ -18,9 +18,19 @@
     <Content Update="wwwroot\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- The presets the site starts with (ADR-0138). -->
+  <!-- The presets the site starts with (ADR-0138), and the plugin package its image build adds (ADR-0141). -->
   <ItemGroup>
     <Content Include="Defaults\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    A run from the source has no packed Figures, so a Debug build lays the plugin
+    out beside the site instead, under plugins\Figures\, and the site packs and
+    signs it as it starts with a key it keeps beside its database. Debug only:
+    the image is a Release publish and gets the signed package.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
   </ItemGroup>
 
   <!-- The Pages site's own stylesheet, script and logo, so the two sites cannot drift apart. -->
