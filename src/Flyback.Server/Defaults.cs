@@ -1,4 +1,4 @@
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>
 /// The presets the site starts with: patch files shipped beside it in <c>Defaults</c>,

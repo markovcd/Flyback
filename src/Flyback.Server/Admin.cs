@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>The one admin account, named by the container's configuration.</summary>
 /// <remarks>Admin mode is off unless both a user and a password are set.</remarks>

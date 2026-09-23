@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Presets.Server\Flyback.Presets.Server.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Server\Flyback.Server.csproj" />
     <!-- A real plugin assembly to pack. -->
     <ProjectReference Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
     <!-- One with tags and a preview. -->

@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Presets.Server.Tests;
+namespace Flyback.Server.Tests;
 
 public sealed class ServerTests : IDisposable
 {

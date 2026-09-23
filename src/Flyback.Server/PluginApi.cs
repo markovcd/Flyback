@@ -1,7 +1,7 @@
 using Flyback.Plugins.Hosting;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>What the site and the editor ask about shared plugins, under <c>/api/v1/plugins</c>.</summary>
 /// <remarks>

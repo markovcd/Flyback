@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using Microsoft.Data.Sqlite;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>A stored preset, without its file.</summary>
 internal sealed record StoredPreset(

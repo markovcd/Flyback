@@ -2,7 +2,7 @@
 
 # The preset site, as the NAS runs it. Built from the repository root:
 #
-#   docker build -f src/Flyback.Presets.Server/Dockerfile -t flyback-presets .
+#   docker build -f src/Flyback.Server/Dockerfile -t flyback-presets .
 #
 # Add --platform linux/arm64 for an ARM NAS. See deploy/presets/README.md.
 
@@ -19,10 +19,10 @@ COPY site/assets site/assets
 COPY src/Flyback.Core src/Flyback.Core
 COPY src/Flyback.Engine src/Flyback.Engine
 COPY src/Flyback.Plugins src/Flyback.Plugins
-COPY src/Flyback.Presets.Server src/Flyback.Presets.Server
+COPY src/Flyback.Server src/Flyback.Server
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish src/Flyback.Presets.Server -c Release -o /app
+    dotnet publish src/Flyback.Server -c Release -o /app
 
 FROM ${RUNTIME}
 WORKDIR /app
@@ -36,4 +36,4 @@ VOLUME ["/data"]
 EXPOSE 8080
 
 USER $APP_UID
-ENTRYPOINT ["dotnet", "Flyback.Presets.Server.dll"]
+ENTRYPOINT ["dotnet", "Flyback.Server.dll"]

@@ -10,7 +10,7 @@
     {
       "name": "presets",
       "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "src/Flyback.Presets.Server"],
+      "runtimeArgs": ["run", "--project", "src/Flyback.Server"],
       "port": 8790
     }
   ]

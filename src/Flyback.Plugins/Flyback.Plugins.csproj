@@ -31,14 +31,14 @@
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
-    <InternalsVisibleTo Include="Flyback.Presets.Server.Tests" />
+    <InternalsVisibleTo Include="Flyback.Server.Tests" />
 
     <!-- A plugin package is read, and written, by the editor and the command line,
          and every program prints what it loaded. -->
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="flyback-cli" />
     <InternalsVisibleTo Include="flyback-viewer" />
-    <InternalsVisibleTo Include="Flyback.Presets.Server" />
+    <InternalsVisibleTo Include="Flyback.Server" />
   </ItemGroup>
 
   <ItemGroup>

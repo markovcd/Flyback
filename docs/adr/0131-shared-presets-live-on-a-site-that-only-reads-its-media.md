@@ -14,7 +14,7 @@ website first and from Flyback later, and go up without review.
 
 ## Decision
 
-**The site is an ASP.NET project, `Flyback.Presets.Server`, in a container on
+**The site is an ASP.NET project, `Flyback.Server`, in a container on
 the NAS.** It references Flyback.Engine only, to read a submission with the
 same `PatchIO` the app opens files with. A file that is not a patch is refused.
 A patch with modules this build does not know is taken, because plugin presets

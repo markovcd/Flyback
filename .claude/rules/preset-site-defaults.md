@@ -1,6 +1,6 @@
 # The preset site's defaults are files, and are migrated
 
-`src/Flyback.Presets.Server/Defaults/` holds the presets the preset site starts with (ADR-0138), as `.fbk` and `.fbkb` files rather than C#. A file does not follow the code the way a preset class does, so any change that stops one opening or compiling cleanly rewrites it in the same commit:
+`src/Flyback.Server/Defaults/` holds the presets the preset site starts with (ADR-0138), as `.fbk` and `.fbkb` files rather than C#. A file does not follow the code the way a preset class does, so any change that stops one opening or compiling cleanly rewrites it in the same commit:
 
 - a change to the file format (`PatchIO.FormatVersion` raised, a field renamed or moved);
 - a module removed or renamed, or its sockets reordered, renumbered or given a different meaning;

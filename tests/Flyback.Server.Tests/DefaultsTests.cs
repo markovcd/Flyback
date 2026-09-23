@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Presets.Server.Tests;
+namespace Flyback.Server.Tests;
 
 /// <summary>
 /// The presets the site starts with: files in its defaults folder, added as it

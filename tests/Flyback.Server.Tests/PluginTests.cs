@@ -10,7 +10,7 @@ using Microsoft.Data.Sqlite;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Presets.Server.Tests;
+namespace Flyback.Server.Tests;
 
 public sealed class PluginTests : IDisposable
 {

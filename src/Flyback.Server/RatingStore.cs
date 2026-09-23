@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.Sqlite;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>How a preset or plugin is rated: the mean of its stars, and how many gave them.</summary>
 internal sealed record Rating(double Average, int Count)

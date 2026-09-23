@@ -24,7 +24,7 @@ Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if 
 By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
 
 ```bash
-docker build -f src/Flyback.Presets.Server/Dockerfile -t flyback-presets .
+docker build -f src/Flyback.Server/Dockerfile -t flyback-presets .
 ```
 
 To build on this machine and load the image on the NAS instead:

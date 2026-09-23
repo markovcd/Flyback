@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>A report that somebody made about a shared preset or plugin, and the name it had then.</summary>
 /// <param name="Kind">Whether it is about a preset or a plugin.</param>

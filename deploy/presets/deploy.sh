@@ -22,7 +22,7 @@ case "$arch" in
 esac
 
 echo "Building $image for $platform"
-docker build --platform "$platform" -f src/Flyback.Presets.Server/Dockerfile -t "$image" .
+docker build --platform "$platform" -f src/Flyback.Server/Dockerfile -t "$image" .
 
 echo "Loading $image on $host"
 docker save "$image" | gzip | ssh "$host" "gunzip | $docker load"

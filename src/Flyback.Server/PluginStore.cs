@@ -2,7 +2,7 @@ using System.Globalization;
 using Flyback.Plugins.Hosting;
 using Microsoft.Data.Sqlite;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>A stored plugin package, without its file.</summary>
 internal sealed record StoredPlugin(

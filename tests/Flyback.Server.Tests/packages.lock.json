@@ -576,7 +576,7 @@
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
       },
-      "flyback.presets.server": {
+      "flyback.server": {
         "type": "Project",
         "dependencies": {
           "Flyback.Engine": "[0.1.0-dev, )",

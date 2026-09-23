@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Flyback.Core.Graph;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>A submitted preset file, with what it says about itself.</summary>
 internal sealed record Submission(

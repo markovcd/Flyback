@@ -1,7 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
 
-namespace Flyback.Presets.Server;
+namespace Flyback.Server;
 
 /// <summary>A letter somebody wrote to the author from inside Flyback, and what their copy was.</summary>
 /// <param name="Mood">Whether it is praise, a problem, an idea or something else.</param>
