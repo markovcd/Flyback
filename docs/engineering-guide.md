@@ -481,14 +481,11 @@ testable without a process. `flyback-cli viewer` parses nothing and starts
 
 ## 10. Build, gate and release
 
-`Directory.Build.props` sets the whole solution: `net10.0`, `LangVersion latest`,
-`Nullable enable`, `ImplicitUsings enable`, `InvariantGlobalization true` and
-`TreatWarningsAsErrors true`. `Directory.Packages.props` carries every package
-version, so a `PackageReference` names a package and never a version, and
-restore writes a `packages.lock.json` beside each project pinning the transitive
-graph as well. `.editorconfig` holds nothing but the handful of analyzer rules
-this codebase answers differently, each with the reason above it. `global.json`
-pins no SDK and only selects Microsoft.Testing.Platform as the test runner.
+Four short, commented files decide how everything here builds:
+`Directory.Build.props` for what every project is compiled with,
+`Directory.Packages.props` for every package version, `.editorconfig` for the
+analyzer rules this codebase answers differently, and `global.json` for the test
+runner. The reason for anything surprising in them is written above it.
 
 ```bash
 dotnet test --solution Flyback.slnx -c Release
@@ -499,24 +496,28 @@ docker build --target gate .
 ```
 
 The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-passes.md)).
-The `gate` stage restores, builds and runs every test, and carries the font and
-X11 libraries the headless UI tests rasterize with and the ffmpeg the recording
-tests look for. Without them those tests skip, and a local run can be green about
-code it never ran. Its restore is locked to the committed lock files, so a
-version that moved fails here rather than building. CI runs exactly that stage.
-The `publish` stage is built on top of it and publishes App, CLI and Viewer into
-one folder per runtime, so a release cannot skip the gate. The `measured` stage
-runs the tests a second time under coverage, weekly rather than per change, and
-is read by nothing else.
+The first runs against whatever the machine happens to have, and the tests that
+need something missing skip rather than fail — the headless UI tests want a font
+stack to rasterize with, the recording tests want ffmpeg on `PATH` — so a local
+run can be green about code it never ran. The Dockerfile carries both, which is
+why CI builds it rather than installing an SDK.
 
-The Release workflow checks the signing key against the committed public key
-before it builds anything, then zips each platform, writes `SHA256SUMS` and signs
-it. `pages.yml` publishes `site/` unbuilt on every push to `main` that touches it,
-which is why a site edit goes in the same commit as the change it describes.
+The stages stack, and that is what stops a release skipping anything. `publish`
+builds on `gate`, so per-platform artifacts cannot exist without every test
+having passed. `measured` builds on `gate` too and runs the tests again under
+coverage, weekly rather than per change; nothing else reads it. The gate's
+restore is locked to the committed lock files, so a version that moved fails
+there rather than building.
 
-A plain build reports `0.1.0-dev+<seven-character commit>`, or `0.1.0-dev` where
-there is no checkout to read a commit from, and the suffix is what keeps it from
-updating itself or being counted. A release passes `-p:Version=`.
+`pages.yml` publishes `site/` unbuilt on every push to `main` that touches it.
+There is no build step to catch a stale sentence, which is why a site edit goes
+in the same commit as the change it describes.
+
+A release passes `-p:Version=`; every other build reports a suffixed version,
+which is what keeps it from updating itself or being counted. What the Release
+workflow does with that is its own header, and
+[0088](adr/0088-a-release-installs-itself-at-the-next-start.md) is why an update
+is signed at all.
 
 ---
 
