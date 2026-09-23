@@ -304,9 +304,10 @@ public sealed record MidiExtra : NodeExtra
 /// the same way in a patch file and in the text.
 /// </summary>
 /// <remarks>
-/// A fresh one follows the first instrument plugged in, because the computer's
-/// keyboard has no clock and a module that defaulted to it would be a module that
-/// did nothing until somebody found the field.
+/// A fresh one follows the instrument known to conduct, or else the first one
+/// plugged in, because the computer's keyboard has no clock and a module that
+/// defaulted to it would be a module that did nothing until somebody found the
+/// field.
 /// </remarks>
 public sealed record MidiClockExtra : NodeExtra
 {
@@ -322,8 +323,18 @@ public sealed record MidiClockExtra : NodeExtra
             DeviceField,
             "follows",
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
-            MidiSources.All.FirstOrDefault(source => source.Id != MidiSources.Keyboard).Id ?? MidiSources.Keyboard),
+            Conductor()),
     ];
+
+    private static string Conductor()
+    {
+        var sources = MidiSources.All;
+
+        return (sources.FirstOrDefault(source => source.Conducts) is { Id: not null } conductor
+                ? conductor
+                : sources.FirstOrDefault(source => source.Id != MidiSources.Keyboard)).Id
+            ?? MidiSources.Keyboard;
+    }
 
     /// <summary>
     /// The ordinary fold, and a word where the chosen instrument is gone or is the

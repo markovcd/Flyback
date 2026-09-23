@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.App.Midi;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -84,6 +85,21 @@ internal sealed class ControlsPanel : Border
     /// <summary>What the tip on a knob says, given its id — which sockets follow it.</summary>
     public Func<Guid, string>? Describe { get; set; }
 
+    /// <summary>What a binding is called under its knob: by the instrument's own names where it has them.</summary>
+    public Func<MidiBinding, string>? Label { get; set; }
+
+    /// <summary>
+    /// The instruments plugged in that Flyback knows by name, for binding a knob
+    /// from a list rather than by turning. Asked as the menu opens, because they
+    /// come and go.
+    /// </summary>
+    public Func<IReadOnlyList<PanelInstrument>>? Instruments { get; set; }
+
+    /// <summary>A knob was bound from the list, to this.</summary>
+    public event Action<Guid, MidiBinding>? BindRequested;
+
+    private string LabelOf(MidiBinding binding) => Label?.Invoke(binding) ?? binding.Label;
+
     /// <summary>The knob whose sockets are being linked, tinted so it can be found.</summary>
     public Guid? Linking
     {
@@ -109,7 +125,7 @@ internal sealed class ControlsPanel : Border
     /// <summary>Shows <paramref name="controls"/>, rebuilding only where a knob came, went or was renamed.</summary>
     public void Show(IReadOnlyList<PatchControl> controls)
     {
-        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{c.Midi?.Label}"));
+        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
 
         if (now != shape)
         {
@@ -449,7 +465,7 @@ internal sealed class ControlsPanel : Border
 
         public void Footer(bool learning)
         {
-            midi.Text = learning ? "turn a knob…" : control.Midi?.Label ?? string.Empty;
+            midi.Text = learning ? "turn a knob…" : control.Midi is { } bound ? panel.LabelOf(bound) : string.Empty;
             midi.Foreground = learning ? Heard : Text.Muted;
         }
 
@@ -473,10 +489,36 @@ internal sealed class ControlsPanel : Border
 
             flyout.Items.Add(control.Midi is null
                 ? Item("Learn MIDI controller", () => panel.LearnRequested?.Invoke(control.Id))
-                : Item($"Forget {control.Midi.Label}", () => panel.ForgetRequested?.Invoke(control.Id)));
+                : Item($"Forget {panel.LabelOf(control.Midi)}", () => panel.ForgetRequested?.Invoke(control.Id)));
 
             if (control.Midi is not null)
                 flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
+
+            // Filled as it opens, since which instruments are plugged in changes;
+            // hidden rather than empty where none of them is known by name.
+            var bind = new MenuItem { Header = "Bind to" };
+            flyout.Items.Add(bind);
+
+            flyout.Opening += (_, _) =>
+            {
+                var instruments = panel.Instruments?.Invoke() ?? [];
+
+                bind.IsVisible = instruments.Count > 0;
+                bind.ItemsSource = instruments.Select(instrument => new MenuItem
+                {
+                    Header = instrument.Profile.Name,
+                    ItemsSource = instrument.Profile.Tracks.Select(track => new MenuItem
+                    {
+                        Header = track.Name,
+                        ItemsSource = instrument.Profile.PagesOf(track)
+                            .SelectMany(page => page.Controls.Select(knob => Item(
+                                $"{page.Name} {knob.Name}",
+                                () => panel.BindRequested?.Invoke(
+                                    control.Id, new MidiBinding(instrument.Id, track.Channel, knob.Controller)))))
+                            .ToList(),
+                    }).ToList(),
+                }).ToList();
+            };
 
             // Ticked as it opens: whether it is depends on the links, which change
             // without the cell being rebuilt.
@@ -534,3 +576,6 @@ internal sealed class ControlsPanel : Border
         }
     }
 }
+
+/// <summary>One instrument plugged in and known by name: its device id, which a binding stores, and its profile.</summary>
+internal sealed record PanelInstrument(string Id, InstrumentProfile Profile);

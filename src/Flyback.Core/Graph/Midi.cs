@@ -9,7 +9,14 @@ namespace Flyback.Core.Graph;
 /// same keyboard into the other socket and the patch would point at nothing.
 /// </param>
 /// <param name="Name">What the picker shows.</param>
-public readonly record struct MidiSource(string Id, string Name);
+public readonly record struct MidiSource(string Id, string Name)
+{
+    /// <summary>
+    /// Whether it sends a clock, which is what a fresh Clock In looks for. Said by
+    /// the shell, which knows the instrument; the engine only reads it.
+    /// </summary>
+    public bool Conducts { get; init; }
+}
 
 /// <summary>
 /// What there is to play with. Installed by the shell, because a list of

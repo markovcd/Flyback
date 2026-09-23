@@ -1385,6 +1385,26 @@ public sealed partial class MainWindow
     /// expected. Not shown on a module listening to a device, whose notes are
     /// its own.
     /// </remarks>
+    /// <summary>
+    /// The channels a MIDI In may listen to, as the tracks of the instrument it
+    /// is listening to, or null where that instrument is not one Flyback knows.
+    /// </summary>
+    private IReadOnlyList<ChoiceOption>? TracksOf(NodeInstance node)
+    {
+        var device = new ExtraState(new MidiExtra().Fields, node.StateOf(MidiExtra.StateKey)).Chosen(MidiExtra.DeviceField);
+        var source = midi.Sources.FirstOrDefault(s => s.Id == device);
+
+        if (source.Id is null || instruments.For(source) is not { Tracks.Count: > 0 } profile) return null;
+
+        return
+        [
+            new ChoiceOption("0", "Every channel"),
+            .. profile.Tracks.Select(track => new ChoiceOption(
+                track.Channel.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                $"{track.Name} · channel {track.Channel}")),
+        ];
+    }
+
     private Control? BuildKeyboardSection(NodeInstance node, NodeDef def)
     {
         if (node.TypeId != NodeCatalog.MidiTypeId) return null;
@@ -1491,6 +1511,13 @@ public sealed partial class MainWindow
 
     private Control? BuildFieldRow(NodeInstance node, NodeExtra extra, ExtraField field, bool reading) => field switch
     {
+        // A MIDI In's channel is a list of tracks where its instrument is known by name.
+        ExtraField.Number number when extra is MidiExtra && field.Key == MidiExtra.ChannelField
+            && TracksOf(node) is { } tracks => Rows.ChoiceRow(
+                new ExtraField.Choice(field.Key, field.Label, tracks, "0"),
+                ((int)number.Value(node.StateOf(extra.Key)?[field.Key])).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                next => Store(node, extra, field, JsonValue.Create(float.TryParse(next, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var channel) ? channel : 0f))),
+
         ExtraField.Number number => Rows.ValueRow(
             field.Label,
             number.Spec,
@@ -1512,7 +1539,8 @@ public sealed partial class MainWindow
                 Store(node, extra, field, JsonValue.Create(next));
 
                 // The keyboard's section belongs to a MIDI In on the keyboard,
-                // so it comes and goes with the device.
+                // and the channel row's shape to its instrument, so both come and
+                // go with the device.
                 if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(BuildInspector);
             },
 

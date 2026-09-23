@@ -609,7 +609,7 @@ public sealed partial class MainWindow : Window
         // happens. Installed here rather than in Startup because the list is the
         // window's — the computer's keyboard is only an instrument while there
         // is a window for it to be typed into.
-        MidiSources.Install(() => midi.Sources);
+        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = instruments.For(source)?.Conducts == true })]);
 
         // A key going down while the clock is stopped changes the picture and
         // moves nothing else, so the preview has to be told there is a new frame

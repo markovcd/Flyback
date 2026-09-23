@@ -42,6 +42,9 @@ public sealed partial class MainWindow
     /// <summary>The settings window's MIDI section.</summary>
     private readonly StackPanel midiSection = new() { Spacing = 8, Width = 280 };
 
+    /// <summary>The instruments Flyback knows by name, shipped and the user's own.</summary>
+    private readonly InstrumentLibrary instruments = InstrumentLibrary.Load();
+
     /// <summary>Which backend hears a keyboard, and which plugin it came from.</summary>
     private readonly TextBlock midiNote = new()
     {
@@ -105,6 +108,24 @@ public sealed partial class MainWindow
         controlsButton.IsCheckedChanged += (_, _) => ShowControls(controlsButton.IsChecked == true);
 
         controlsPanel.Reading = (id, value) => StageKnobs.Reading(editor.Patch, id, value);
+
+        controlsPanel.Label = binding => instruments.Describe(binding, Source(binding.Device));
+
+        controlsPanel.Instruments = () => midi.Sources
+            .Select(source => (source, Profile: instruments.For(source)))
+            .Where(pair => pair.Profile is not null)
+            .Select(pair => new PanelInstrument(pair.source.Id, pair.Profile!))
+            .ToList();
+
+        controlsPanel.BindRequested += (id, binding) =>
+        {
+            if (editor.Patch.Control(id) is not { } control) return;
+
+            learning?.Cancel();
+            control.Midi = binding;
+            editor.NotifyPatchChanged();
+            Report($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
+        };
 
         controlsPanel.Describe = id =>
         {
@@ -251,6 +272,19 @@ public sealed partial class MainWindow
         midiSection.Children.Add(midiNote);
         midiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
         midiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
+
+        var known = string.Join(", ", instruments.Profiles.Select(profile => profile.Name));
+        var instrumentsNote = new TextBlock
+        {
+            Text = $"Known by name: {known}. A profile of your own, one .json per instrument, goes in {InstrumentLibrary.UserFolder}.",
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+        };
+        ToolTip.SetTip(instrumentsNote,
+            "An instrument Flyback knows by name offers its tracks on a MIDI In's channel field, binds a knob "
+            + "from the panel's menu without being touched, and names what a learned knob follows.");
+        midiSection.Children.Add(instrumentsNote);
     }
 
     /// <summary>
@@ -403,8 +437,11 @@ public sealed partial class MainWindow
             still.Midi = binding;
             editor.NotifyPatchChanged();
 
-            var device = midi.Sources.FirstOrDefault(s => s.Id == binding.Device).Name ?? binding.Device;
-            Report($"'{still.Name}' follows {binding.Label} on {device}.");
+            var source = Source(binding.Device);
+
+            Report(instruments.For(source ?? default) is not null
+                ? $"'{still.Name}' follows {instruments.Describe(binding, source)}."
+                : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.");
         }
         finally
         {
@@ -419,6 +456,10 @@ public sealed partial class MainWindow
             }
         }
     }
+
+    /// <summary>The instrument with this id as it is plugged in now, or null while it is not.</summary>
+    private MidiSource? Source(string id) =>
+        midi.Sources.FirstOrDefault(s => s.Id == id) is { Id: not null } source ? source : null;
 
     /// <summary>Stops linking and learning, and says whether there was either to stop.</summary>
     private bool StopControlModes()

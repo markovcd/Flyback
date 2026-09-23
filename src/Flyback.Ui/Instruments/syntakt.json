@@ -1,0 +1,50 @@
+{
+  // Elektron Syntakt, at its factory MIDI channels: tracks 1 to 12 on channels
+  // 1 to 12 and the FX track on 13 (MIDI CONFIG › CHANNELS). Controller numbers
+  // are from the manual's MIDI appendix. Copy this file into the instruments
+  // folder under Flyback's data folder and edit it to match a box set up
+  // differently; a file there with the same name replaces this one.
+  "name": "Syntakt",
+  "matches": ["syntakt"],
+  "conducts": true,
+  "tracks": [
+    { "name": "Track 1", "channel": 1 },
+    { "name": "Track 2", "channel": 2 },
+    { "name": "Track 3", "channel": 3 },
+    { "name": "Track 4", "channel": 4 },
+    { "name": "Track 5", "channel": 5 },
+    { "name": "Track 6", "channel": 6 },
+    { "name": "Track 7", "channel": 7 },
+    { "name": "Track 8", "channel": 8 },
+    { "name": "Track 9", "channel": 9 },
+    { "name": "Track 10", "channel": 10 },
+    { "name": "Track 11", "channel": 11 },
+    { "name": "Track 12", "channel": 12 },
+    { "name": "FX track", "channel": 13, "kind": "fx" }
+  ],
+  "pages": [
+    { "name": "Track", "controls": { "Level": 95, "Mute": 94 } },
+    { "name": "Trig", "controls": { "Note": 3, "Velocity": 4, "Length": 5 } },
+    { "name": "Syn", "controls": { "A": 17, "B": 18, "C": 19, "D": 20, "E": 21, "F": 22, "G": 23, "H": 24 } },
+    { "name": "Filter", "controls": {
+        "Frequency": 74, "Resonance": 75, "Type": 76, "Envelope depth": 77,
+        "Attack": 70, "Decay": 71, "Sustain": 72, "Release": 73, "Base": 26, "Width": 27 } },
+    { "name": "Amp", "controls": {
+        "Volume": 7, "Pan": 10, "Attack": 79, "Hold": 80, "Decay": 81, "Sustain": 82, "Release": 83,
+        "Delay send": 84, "Reverb send": 85 } },
+    { "name": "LFO 1", "controls": { "Speed": 102, "Multiplier": 103, "Fade": 104, "Depth": 109 } },
+    { "name": "LFO 2", "controls": { "Speed": 112, "Multiplier": 113, "Fade": 114, "Depth": 119 } },
+    { "name": "Delay", "kind": "fx", "controls": {
+        "Time": 21, "Ping-pong": 22, "Width": 23, "Feedback": 24, "Highpass": 25, "Lowpass": 26,
+        "Reverb send": 27, "Mix": 28 } },
+    { "name": "Reverb", "kind": "fx", "controls": {
+        "Predelay": 29, "Decay": 30, "Shelving frequency": 31, "Shelving gain": 89,
+        "Highpass": 90, "Lowpass": 91, "Mix": 92 } },
+    { "name": "FX filter", "kind": "fx", "controls": {
+        "Frequency": 70, "Resonance": 71, "Type": 72, "Envelope depth": 73,
+        "Attack": 75, "Decay": 76, "Sustain": 77, "Release": 78 } },
+    { "name": "FX amp", "kind": "fx", "controls": {
+        "Volume": 7, "Pan": 10, "Attack": 79, "Hold": 80, "Decay": 81, "Sustain": 82, "Release": 83,
+        "Delay send": 84, "Reverb send": 85, "Drive": 15 } }
+  ]
+}

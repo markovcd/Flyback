@@ -58,6 +58,7 @@ context, decision, consequences.
 | [0099](0099-the-computer-keyboard-can-be-laid-out-by-scale.md) | The computer keyboard can be laid out by scale, and the patch says how *(user-directed)* |
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
 | [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed)* |
+| [0140](0140-an-instrument-is-known-by-a-profile-file.md) | An instrument is known by a profile file *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |
 | [0105](0105-text-is-a-shape-baked-into-a-picture.md) | Text is a shape, baked into a picture *(user-directed)* |
 | [0095](0095-a-module-may-be-a-handful-of-others-if-it-is-exactly-them.md) | A module may be a handful of others, if it is exactly them *(user-directed; the Bell it left out counted again and added by [0097](0097-a-wrapping-module-carries-a-setting-where-what-it-wraps-differed.md); its "the engine's own presets may not need a plugin" reused for six primitives by [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md))* |

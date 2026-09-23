@@ -130,3 +130,5 @@ static Flyback.Core.Graph.MidiSignal.ClockKey(string! source, string! signal) ->
 const Flyback.Core.Graph.MidiExtra.ChannelField = "channel" -> string!
 static Flyback.Core.Graph.MidiSignal.Channeled(string! source, int channel) -> string!
 static Flyback.Core.Graph.MidiSignal.SourceOf(string! key) -> string!
+Flyback.Core.Graph.MidiSource.Conducts.get -> bool
+Flyback.Core.Graph.MidiSource.Conducts.init -> void

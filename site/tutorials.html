@@ -356,7 +356,8 @@ out.volume = 0.6</code></pre>
     <code>gate</code> (high while a key is held), <code>velocity</code> and <code>trigger</code> (a pulse at the
     start of each note). With a MIDI keyboard connected, pick it on the module's <strong>listens to</strong>
     field, and set <strong>channel</strong> to hear one of its channels rather than all of them, which is how
-    each track of a drum machine gets a module of its own. Without one, the computer keyboard plays instead. <strong>Settings → MIDI</strong> names the
+    each track of a drum machine gets a module of its own. For an instrument Flyback knows by name, such as the
+    Elektron Syntakt, the channel is picked as a track. Without a controller, the computer keyboard plays instead. <strong>Settings → MIDI</strong> names the
     plugin doing the hearing and sets whether the first MIDI In added to a patch lays the computer keyboard out as a
     piano or as a scale.</p>
 
@@ -412,8 +413,11 @@ out.volume = 0.5</code></pre>
       knob over its own range, in decades for a frequency. Click a linked row again to let it go, and press
       <kbd>Esc</kbd> when done. <strong>Logarithmic</strong> in the knob's menu sweeps any range in decades.</li>
       <li>To turn it from hardware, open the knob's menu and choose <strong>Learn MIDI controller</strong>, then
-      move a control. <strong>Settings → MIDI</strong> sets whether a controller jumps straight to its
-      position or picks the value up when it passes it.</li>
+      move a control. An instrument Flyback knows by name, such as the Elektron Syntakt, is also under
+      <strong>Bind to</strong> in the same menu, track by track and knob by knob, and a knob bound either way says
+      what it follows in the instrument's own words. <strong>Settings → MIDI</strong> lists the instruments known,
+      says where a profile of your own goes, and sets whether a controller jumps straight to its position or
+      picks the value up when it passes it.</li>
     </ol>
 
     <p>Knobs are renamed, reordered and removed from the same menu, and are saved with the patch.</p>
