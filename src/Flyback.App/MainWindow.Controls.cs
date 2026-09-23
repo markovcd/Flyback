@@ -153,6 +153,7 @@ public sealed partial class MainWindow
         controlsPanel.LinkRequested += id => Link(editor.LinkingControl == id ? null : id);
 
         controlsPanel.LearnRequested += id => _ = LearnAsync(id);
+        controlsPanel.LearnOnwardRequested += id => _ = LearnAsync(id, onward: true);
 
         controlsPanel.ForgetRequested += id =>
         {
@@ -404,10 +405,15 @@ public sealed partial class MainWindow
         Report($"'{socket}' follows '{knob.Name}' from {spec.Format(link.Min)} to {spec.Format(link.Max)}. Esc when done.");
     }
 
-    /// <summary>Waits for a controller to move, and binds the knob to it.</summary>
-    private async Task LearnAsync(Guid id)
+    /// <summary>
+    /// Waits for a controller to move and binds the knob to it, and
+    /// <paramref name="onward"/> goes on to the next knob and the next until the
+    /// panel ends or Escape stops it. The controller just learned is not taken
+    /// again for the knob after, since the hand that turned it is still on it.
+    /// </summary>
+    private async Task LearnAsync(Guid id, bool onward = false)
     {
-        if (editor.Patch.Control(id) is not { } knob) return;
+        if (editor.Patch.Control(id) is null) return;
 
         learning?.Cancel();
 
@@ -419,29 +425,47 @@ public sealed partial class MainWindow
             return;
         }
 
+        var knobs = editor.Patch.Controls ?? [];
+        var from = knobs.FindIndex(knob => knob.Id == id);
+        var run = onward ? knobs.Skip(from).Select(knob => knob.Id).ToList() : [id];
+
         // Only once there is something to wait for: the field is cleared by the
         // finally below, and a source left in it after this method has disposed it
         // throws the next time Escape cancels it.
         using var cancel = learning = new CancellationTokenSource();
+        var showing = id;
 
-        controlsPanel.Learning = id;
         ShowControls(true);
-        Report($"Move a knob or fader on your controller for '{knob.Name}'. Esc to stop.");
 
         try
         {
-            var binding = await controls.LearnAsync(devices, cancel.Token);
+            MidiBinding? last = null;
 
-            if (binding is null || editor.Patch.Control(id) is not { } still) return;
+            for (var i = 0; i < run.Count; i++)
+            {
+                if (editor.Patch.Control(run[i]) is not { } knob) continue;
 
-            still.Midi = binding;
-            editor.NotifyPatchChanged();
+                showing = knob.Id;
+                controlsPanel.Learning = knob.Id;
+                Report(run.Count == 1
+                    ? $"Move a knob or fader on your controller for '{knob.Name}'. Esc to stop."
+                    : $"Move a knob or fader on your controller for '{knob.Name}' ({i + 1} of {run.Count}). Esc to stop.");
 
-            var source = Source(binding.Device);
+                var heard = await controls.LearnAsync(devices, cancel.Token, last);
 
-            Report(instruments.For(source ?? default) is not null
-                ? $"'{still.Name}' follows {instruments.Describe(binding, source)}."
-                : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.");
+                if (heard is null || editor.Patch.Control(knob.Id) is not { } still) return;
+
+                var source = Source(heard.Device);
+                var binding = Settled(heard, source);
+
+                still.Midi = binding;
+                editor.NotifyPatchChanged();
+                last = heard;
+
+                Report(instruments.For(source ?? default) is not null
+                    ? $"'{still.Name}' follows {instruments.Describe(binding, source)}."
+                    : $"'{still.Name}' follows {binding.Label} on {source?.Name ?? binding.Device}.");
+            }
         }
         finally
         {
@@ -452,10 +476,19 @@ public sealed partial class MainWindow
             {
                 learning = null;
 
-                if (controlsPanel.Learning == id) controlsPanel.Learning = null;
+                if (controlsPanel.Learning == showing) controlsPanel.Learning = null;
             }
         }
     }
+
+    /// <summary>
+    /// The binding a learn stores: on the channel the controller moved on where
+    /// the instrument keeps a track per channel, since the same knob on every
+    /// track sends the same number, and on any channel otherwise, so a
+    /// controller moved to another channel goes on turning the knob.
+    /// </summary>
+    private MidiBinding Settled(MidiBinding heard, MidiSource? source) =>
+        instruments.For(source ?? default) is { Tracks.Count: > 0 } ? heard : heard with { Channel = 0 };
 
     /// <summary>The instrument with this id as it is plugged in now, or null while it is not.</summary>
     private MidiSource? Source(string id) =>

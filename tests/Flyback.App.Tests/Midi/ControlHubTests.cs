@@ -163,8 +163,58 @@ public class ControlHubTests
         port.Send(Cc(21, 10));
         port.Send(Cc(21, 20));
 
-        (await learning).ShouldBe(new MidiBinding(Device, 0, 21));
+        (await learning).ShouldBe(new MidiBinding(Device, 1, 21));
         port.IsOpen.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The binding says which channel the controller moved on, since a drum
+    /// machine sends the same number from every track; whether to keep it is the
+    /// window's call.
+    /// </summary>
+    [Fact]
+    public async Task Learning_says_which_channel_the_controller_moved_on()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi);
+
+        hub.Follow(new Patch(), new LiveValues([]));
+
+        var learning = hub.LearnAsync([Device], CancellationToken.None);
+        var port = backend.Opened.Single();
+
+        port.Send(Cc(74, 10, channel: 3));
+        port.Send(Cc(74, 40, channel: 3));
+
+        (await learning).ShouldBe(new MidiBinding(Device, 3, 74));
+    }
+
+    /// <summary>
+    /// Walking a panel, the knob just learned is still under the hand that turned
+    /// it, so its controller going on moving must not be taken for the next knob;
+    /// the same number on another track is another knob and is.
+    /// </summary>
+    [Fact]
+    public async Task Learning_does_not_take_the_controller_it_is_told_to_leave()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi);
+
+        hub.Follow(new Patch(), new LiveValues([]));
+
+        var learning = hub.LearnAsync([Device], CancellationToken.None, except: new MidiBinding(Device, 3, 74));
+        var port = backend.Opened.Single();
+
+        port.Send(Cc(74, 40, channel: 3));
+        port.Send(Cc(74, 80, channel: 3));
+        learning.IsCompleted.ShouldBeFalse();
+
+        port.Send(Cc(74, 10, channel: 4));
+        port.Send(Cc(74, 40, channel: 4));
+
+        (await learning).ShouldBe(new MidiBinding(Device, 4, 74));
     }
 
     [Fact]
@@ -219,7 +269,7 @@ public class ControlHubTests
         var learned = await Task.WhenAny(second, Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken));
 
         learned.ShouldBe(second, "and a controller moving is what it learns");
-        (await second).ShouldBe(new MidiBinding(Device, 0, 21));
+        (await second).ShouldBe(new MidiBinding(Device, 1, 21));
     }
 
     private sealed class FakeInput(params string[] names) : IMidiInput

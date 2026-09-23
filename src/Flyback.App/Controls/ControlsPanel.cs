@@ -61,6 +61,9 @@ internal sealed class ControlsPanel : Border
 
     public event Action<Guid>? LearnRequested;
 
+    /// <summary>Learn this knob, then each one after it in turn.</summary>
+    public event Action<Guid>? LearnOnwardRequested;
+
     public event Action<Guid>? ForgetRequested;
 
     public event Action<Guid, string>? Renamed;
@@ -493,6 +496,9 @@ internal sealed class ControlsPanel : Border
 
             if (control.Midi is not null)
                 flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));
+
+            if (Index < count - 1)
+                flyout.Items.Add(Item("Learn this and every knob after it", () => panel.LearnOnwardRequested?.Invoke(control.Id)));
 
             // Filled as it opens, since which instruments are plugged in changes;
             // hidden rather than empty where none of them is known by name.

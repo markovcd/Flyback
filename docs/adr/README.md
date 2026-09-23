@@ -56,7 +56,7 @@ context, decision, consequences.
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |
 | [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed; a voice can belong to one channel by amendment)* |
 | [0099](0099-the-computer-keyboard-can-be-laid-out-by-scale.md) | The computer keyboard can be laid out by scale, and the patch says how *(user-directed)* |
-| [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed)* |
+| [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed; a learn walks the panel and keeps a drum machine's channel by amendment)* |
 | [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed)* |
 | [0140](0140-an-instrument-is-known-by-a-profile-file.md) | An instrument is known by a profile file *(user-directed)* |
 | [0057](0057-a-shape-is-a-distance-and-one-module-inks-it.md) | A shape is a distance, and one module inks it *(user-directed)* |

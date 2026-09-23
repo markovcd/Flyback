@@ -77,3 +77,19 @@ does not write them, so they are lost when it is saved and reopened.
 
 **A linked socket costs a live read and two arithmetic ops**, per program, in place
 of a constant. Constant folding cannot reach through it.
+
+## Amendment, 2026-09-23: a learned knob keeps its channel on a drum machine
+
+A learn stored the controller on any channel, so a controller moved to another
+channel went on turning the knob. A drum machine sends the same number from
+every track and the channel is the whole of what tells them apart, so a knob
+learned from an instrument whose profile has a track per channel
+([0140](0140-an-instrument-is-known-by-a-profile-file.md)) keeps the channel the
+controller moved on, and one learned from anything else stays on any channel.
+The hub reports the channel either way; the window decides.
+
+A learn can also walk the panel: the knob chosen and every knob after it in
+turn, each waiting for its own controller, until the panel ends or Escape stops
+it. The controller a knob was just learned from is not taken for the knob after,
+because the hand that turned it is still on it when the next knob starts
+waiting.

@@ -4,6 +4,7 @@
 
 - Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.
 - A MIDI In can listen to one channel of its instrument.
+- A knob's menu learns it and every knob after it in one pass, and a knob learned from an instrument with a track per channel keeps the channel.
 - Flyback knows the Elektron Syntakt by name: a MIDI In offers its tracks, a knob binds to one of its knobs from the panel's menu, and a learned knob says what it follows in the box's own words. Other instruments are a `.json` file in the data folder's `instruments`.
 - Settings → Agent is now Settings → Assistant.
 - Patches carry an author and tags, edited in the panel and written as `author "..."` and `tags "..."` in the text, and found by in the preset gallery.

@@ -154,12 +154,16 @@ internal sealed class ControlHub
 
     /// <summary>
     /// Waits for the first controller to move on any device, and hands back a binding
-    /// for it — or null if <paramref name="cancel"/> fires first. Every device is held
-    /// open meanwhile.
+    /// for it on the channel it moved on — or null if <paramref name="cancel"/> fires
+    /// first. Every device is held open meanwhile.
     /// </summary>
-    public async Task<MidiBinding?> LearnAsync(IEnumerable<string> devices, CancellationToken cancel)
+    /// <param name="except">
+    /// A controller not to take: the one the knob before was just learned from,
+    /// which is still moving under the same hand while the next knob waits.
+    /// </param>
+    public async Task<MidiBinding?> LearnAsync(IEnumerable<string> devices, CancellationToken cancel, MidiBinding? except = null)
     {
-        var waiting = new Pending();
+        var waiting = new Pending(except);
 
         lock (gate)
         {
@@ -220,12 +224,14 @@ internal sealed class ControlHub
         {
             if (learning is { } waiting)
             {
-                var key = (device, message.Note);
+                if (waiting.Except is { } except && except.Hears(device, message.Channel, message.Note)) return;
+
+                var key = (device, message.Channel, message.Note);
 
                 if (!waiting.First.TryGetValue(key, out var first))
                     waiting.First[key] = message.Velocity;
                 else if (MathF.Abs(message.Velocity - first) >= LearnDistance)
-                    waiting.Done.TrySetResult(new MidiBinding(device, 0, message.Note));
+                    waiting.Done.TrySetResult(new MidiBinding(device, message.Channel, message.Note));
 
                 return;
             }
@@ -260,12 +266,15 @@ internal sealed class ControlHub
         foreach (var (control, reading) in turned) Turned?.Invoke(control, reading);
     }
 
-    private sealed class Pending
+    private sealed class Pending(MidiBinding? except)
     {
         public TaskCompletionSource<MidiBinding?> Done { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        /// <summary>The controller this learn will not take.</summary>
+        public MidiBinding? Except { get; } = except;
+
         /// <summary>Where each controller was first heard while learning.</summary>
-        public Dictionary<(string Device, int Controller), float> First { get; } = [];
+        public Dictionary<(string Device, int Channel, int Controller), float> First { get; } = [];
     }
 }
