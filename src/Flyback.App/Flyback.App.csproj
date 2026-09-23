@@ -158,6 +158,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Drawn by docs/icons/render.cs. The .icns go into a Mac bundle's Resources instead (MacBundle.targets). -->
+    <None Update="FileIcons\*.ico;FileIcons\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="MainWindow.Editing.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>

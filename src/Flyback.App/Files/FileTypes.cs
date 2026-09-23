@@ -9,7 +9,8 @@ namespace Flyback.App.Files;
 /// <param name="Extension">With its dot.</param>
 /// <param name="ProgId">What Windows files it under.</param>
 /// <param name="MimeType">What a Linux desktop files it under.</param>
-internal sealed record FileKind(string Extension, string Name, string ProgId, string MimeType);
+/// <param name="Icon">Its icon's name in <see cref="FileTypes.IconFolder"/>, without an extension.</param>
+internal sealed record FileKind(string Extension, string Name, string ProgId, string MimeType, string Icon);
 
 /// <summary>
 /// Tells the operating system which of Flyback's programs opens its files, for the
@@ -19,12 +20,12 @@ public abstract class FileTypes
 {
     internal static readonly FileKind[] Kinds =
     [
-        new($".{PatchIO.FileExtension}", "Flyback patch", "Flyback.Patch", "application/x-flyback-patch"),
-        new(PatchBundle.Extension, "Flyback bundle", "Flyback.Bundle", "application/x-flyback-bundle"),
-        new($".{PatchLanguage.FileExtension}", "Flyback text", "Flyback.Text", "application/x-flyback-source"),
+        new($".{PatchIO.FileExtension}", "Flyback patch", "Flyback.Patch", "application/x-flyback-patch", "patch"),
+        new(PatchBundle.Extension, "Flyback bundle", "Flyback.Bundle", "application/x-flyback-bundle", "bundle"),
+        new($".{PatchLanguage.FileExtension}", "Flyback text", "Flyback.Text", "application/x-flyback-source", "text"),
 
         // Whichever program opens it, the editor installs it: the viewer passes it on.
-        new(PluginPackage.Extension, "Flyback plugin", "Flyback.Plugin", "application/x-flyback-plugin"),
+        new(PluginPackage.Extension, "Flyback plugin", "Flyback.Plugin", "application/x-flyback-plugin", "plugin"),
     ];
 
     /// <summary>Makes <paramref name="opener"/> the program that opens them. Throws if it cannot.</summary>
@@ -51,6 +52,13 @@ public abstract class FileTypes
 
     /// <summary>The viewer's executable, which is published beside the editor's.</summary>
     internal static string ViewerName => OperatingSystem.IsWindows() ? "flyback-viewer.exe" : "flyback-viewer";
+
+    /// <summary>The folder beside the editor holding an icon per kind, drawn from <c>docs/icons</c>.</summary>
+    internal const string IconFolder = "FileIcons";
+
+    /// <summary>The icon <paramref name="kind"/> is shown with, in the format named by <paramref name="extension"/>.</summary>
+    private protected static string Icon(string editor, FileKind kind, string extension) =>
+        Path.Combine(Path.GetDirectoryName(editor) ?? "", IconFolder, kind.Icon + extension);
 
     /// <summary>The program a choice names, or null for none.</summary>
     protected static string? Program(FileOpener opener, string editor, string viewer)

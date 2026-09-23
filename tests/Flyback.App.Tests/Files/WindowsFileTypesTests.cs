@@ -71,6 +71,36 @@ public sealed class WindowsFileTypesTests : IDisposable
     }
 
     [Fact]
+    public void Each_kind_shows_its_own_icon()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "the registry is Windows'");
+
+        var icons = Directory.CreateDirectory(Path.Combine(folder, "FileIcons")).FullName;
+        foreach (var name in new[] { "patch", "bundle", "text", "plugin" }) File.WriteAllText(Path.Combine(icons, $"{name}.ico"), "");
+
+        var (types, classes, _) = Build();
+
+        types.Apply(FileOpener.Viewer);
+
+        foreach (var (id, name) in new[] { ("Flyback.Patch", "patch"), ("Flyback.Bundle", "bundle"), ("Flyback.Text", "text"), ("Flyback.Plugin", "plugin") })
+        {
+            Default(classes, $@"{id}\DefaultIcon").ShouldBe($"\"{Path.Combine(icons, $"{name}.ico")}\"");
+        }
+    }
+
+    [Fact]
+    public void Without_its_icons_a_kind_shows_the_programs()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "the registry is Windows'");
+
+        var (types, classes, _) = Build();
+
+        types.Apply(FileOpener.Editor);
+
+        Default(classes, @"Flyback.Patch\DefaultIcon").ShouldBe($"\"{Editor}\",0");
+    }
+
+    [Fact]
     public void Choosing_the_editor_replaces_the_viewer()
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), "the registry is Windows'");

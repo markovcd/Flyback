@@ -4,8 +4,8 @@ using System.Text;
 namespace Flyback.App.Files;
 
 /// <summary>
-/// A desktop entry and a MIME package in the user's own data folder, the two things
-/// a file manager reads to know Flyback's files and what opens them.
+/// A desktop entry, a MIME package and an icon per kind in the user's own data
+/// folder, which a file manager reads to know Flyback's files and what opens them.
 /// </summary>
 /// <param name="data">The XDG data folder, <c>~/.local/share</c> unless the environment says otherwise.</param>
 /// <param name="refresh">Rebuilds a desktop cache from a folder under <paramref name="data"/>.</param>
@@ -19,6 +19,10 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
 
     internal string Package => Path.Combine(data, "mime", "packages", $"{Id}.xml");
 
+    /// <summary>Where the icon theme looks for a MIME type's icon, by the name it derives from the type.</summary>
+    internal string IconOf(FileKind kind) =>
+        Path.Combine(data, "icons", "hicolor", "256x256", "mimetypes", $"{kind.MimeType.Replace('/', '-')}.png");
+
     public override void Apply(FileOpener opener)
     {
         if (Program(opener, editor, viewer) is { } program)
@@ -28,11 +32,21 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
 
             File.WriteAllText(Entry, DesktopEntry(program, opener == FileOpener.Viewer));
             File.WriteAllText(Package, MimePackage());
+
+            foreach (var kind in Kinds)
+            {
+                if (!File.Exists(Icon(editor, kind, ".png"))) continue;
+
+                Directory.CreateDirectory(Path.GetDirectoryName(IconOf(kind))!);
+                File.Copy(Icon(editor, kind, ".png"), IconOf(kind), overwrite: true);
+            }
         }
         else
         {
             File.Delete(Entry);
             File.Delete(Package);
+
+            foreach (var kind in Kinds.Where(kind => File.Exists(IconOf(kind)))) File.Delete(IconOf(kind));
         }
 
         refresh("update-mime-database", Path.Combine(data, "mime"));

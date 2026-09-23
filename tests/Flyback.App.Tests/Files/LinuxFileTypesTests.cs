@@ -67,6 +67,26 @@ public sealed class LinuxFileTypesTests : IDisposable
     }
 
     [Fact]
+    public void Each_kind_gets_its_own_icon_and_nothing_takes_them_back()
+    {
+        var icons = Directory.CreateDirectory(Path.Combine(data, "FileIcons")).FullName;
+        foreach (var name in new[] { "patch", "bundle", "text", "plugin" }) File.WriteAllText(Path.Combine(icons, $"{name}.png"), name);
+
+        var types = Build();
+
+        types.Apply(FileOpener.Editor);
+
+        var installed = Path.Combine(data, "icons", "hicolor", "256x256", "mimetypes");
+        File.ReadAllText(Path.Combine(installed, "application-x-flyback-patch.png")).ShouldBe("patch");
+        File.ReadAllText(Path.Combine(installed, "application-x-flyback-source.png")).ShouldBe("text");
+        Directory.GetFiles(installed).Length.ShouldBe(4);
+
+        types.Apply(FileOpener.None);
+
+        Directory.GetFiles(installed).ShouldBeEmpty();
+    }
+
+    [Fact]
     public void The_package_is_valid_xml()
     {
         var package = System.Xml.Linq.XDocument.Parse(LinuxFileTypes.MimePackage());

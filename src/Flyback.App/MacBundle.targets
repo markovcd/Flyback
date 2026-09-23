@@ -30,6 +30,7 @@
           MacOS/          the whole published payload, plugins included
           Resources/
             flyback.icns
+            patch.icns, bundle.icns, text.icns, plugin.icns
 
     which is what makes the program a Dock icon and a menu bar rather than a
     process with no name. The publish folder itself is left exactly as the SDK
@@ -66,6 +67,7 @@
     <ItemGroup>
       <!-- Enumerated here rather than at evaluation time: the payload does not exist until Publish has run. -->
       <MacBundlePayload Include="$(PublishDir)**\*" />
+      <MacFileIcon Include="$(MSBuildThisFileDirectory)FileIcons\*.icns" />
     </ItemGroup>
 
     <!-- Stale files in a bundle are indistinguishable from current ones, so the previous one goes. -->
@@ -77,6 +79,7 @@
     <Copy SourceFiles="$(MSBuildThisFileDirectory)Info.plist" DestinationFolder="$(MacBundleContents)" />
     <ReplaceInFile Path="$(MacBundleContents)Info.plist" OldValue="__VERSION__" NewValue="$(MacBundleVersion)" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\flyback.icns" DestinationFolder="$(MacBundleContents)Resources" />
+    <Copy SourceFiles="@(MacFileIcon)" DestinationFolder="$(MacBundleContents)Resources" />
 
     <!--
       Only possible when the publishing machine has a file mode to set. Elsewhere

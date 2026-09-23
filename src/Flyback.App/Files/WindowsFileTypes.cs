@@ -37,8 +37,10 @@ internal sealed partial class WindowsFileTypes(RegistryKey classes, string edito
         {
             id.SetValue("", kind.Name);
 
+            var file = Icon(editor, kind, ".ico");
+
             using var icon = id.CreateSubKey("DefaultIcon");
-            icon.SetValue("", $"\"{program}\",0");
+            icon.SetValue("", File.Exists(file) ? $"\"{file}\"" : $"\"{program}\",0");
 
             using var command = id.CreateSubKey(@"shell\open\command");
             command.SetValue("", $"\"{program}\" \"%1\"");
