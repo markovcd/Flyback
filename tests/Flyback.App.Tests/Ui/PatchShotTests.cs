@@ -3,6 +3,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 
@@ -53,6 +54,32 @@ public class PatchShotTests : UiTest
         Shoot(folder, "tone", Built(
             """
             sine(freq: 110) |> out.left
+            out.volume = 0.5
+            """));
+
+        // tutorials/syntakt.html: the box as the module list adds it, and a
+        // sequencer kept to its clock.
+        // With an Output beside the columns rather than where the editor would
+        // put one for a patch without, so the picture is the box and not the
+        // room around it.
+        var box = new PatchBuilder(NodeCatalog.BuiltIn);
+        PatchClipboard.Paste(box.Patch, InstrumentScaffold.Build(
+            "midi:elektron-syntakt",
+            InstrumentLibrary.Shipped().Profiles.Single(profile => profile.Name == "Syntakt")), 0, 0);
+        box.Add(NodeCatalog.OutputTypeId, 2 * (NodeGeometry.Width + 14), 0, (NodeCatalog.OutputVolumePort, 0.5f));
+
+        Shoot(folder, "syntakt-box", box.Patch);
+
+        Shoot(folder, "syntakt-bass", Built(
+            """
+            let box  = midi.clock(device: "midi:elektron-syntakt")
+            let bass = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+
+            saw(freq: bass |> note())
+              * (bass.gate |> adsr(attack: 2ms, decay: 180ms, sustain: 0, release: 60ms))
+              |> filter(cutoff: 900, resonance: 0.4)
+              |> out.left
+
             out.volume = 0.5
             """));
     }

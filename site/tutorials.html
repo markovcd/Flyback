@@ -60,9 +60,22 @@
     <header class="doc-head" style="border: 0">
       <p class="eyebrow" style="color: var(--oscillator)">Tutorials · using Flyback</p>
       <h1>From an empty canvas to a patch you can play.</h1>
-      <p class="lede">These tutorials build one patch step by step: rings that pulse, a color that drifts, a tone
-      underneath, and one slow oscillator that ties the picture and the sound together. Then they cover writing
-      it as text, playing it, and getting it out of the app.</p>
+      <p class="lede">Start with the walkthrough on this page: it builds one patch step by step, then covers writing
+      it as text, playing it, and getting it out of the app. The other tutorials each take one thing you might
+      plug in or want to do, and go all the way through it.</p>
+
+      <div class="tutorials" aria-label="Tutorials">
+        <a class="card" href="#tour" style="--accent: var(--oscillator)">
+          <header>Build your first patch <small>on this page</small></header>
+          <div class="body"><p>A tour of the window, rings that pulse, a tone underneath, the patch as text, a
+          keyboard, knobs, groups, recording and the assistant. Twelve short steps.</p></div>
+        </a>
+        <a class="card" href="tutorials/syntakt.html" style="--accent: var(--note)">
+          <header>Play it from an Elektron Syntakt <small>hardware</small></header>
+          <div class="body"><p>The box's MIDI and USB settings, the whole Syntakt added in one pick, a sequencer kept
+          to its clock, a picture lit by its tracks, and its knobs on the panel.</p></div>
+        </a>
+      </div>
     </header>
   </div>
 </div>
@@ -363,7 +376,7 @@ out.volume = 0.6</code></pre>
 
     <p>An instrument Flyback knows by name is also at the top of the module list, under <strong>Instruments</strong>,
     while it is plugged in. Picking it adds the whole box: a Clock In and a MIDI In per track, each on its channel and
-    named after it, grouped as one. Delete the tracks you will not use.</p>
+    named after it. Delete the tracks you will not use.</p>
 
     <p>A drum machine or hardware sequencer sending MIDI clock conducts the patch through a <strong>Clock In</strong>,
     under Timing. Its <code>beats</code> count from the machine's Start at the tempo it is sending and hold while it

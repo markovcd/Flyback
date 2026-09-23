@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Play Flyback from an Elektron Syntakt — Flyback Tutorials</title>
+<meta name="description" content="Set up an Elektron Syntakt to conduct Flyback: the box's MIDI and USB settings, the whole box added in one pick, a sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel.">
+<link rel="canonical" href="https://markovcd.github.io/Flyback/tutorials/syntakt.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Flyback">
+<meta property="og:url" content="https://markovcd.github.io/Flyback/tutorials/syntakt.html">
+<meta property="og:title" content="Play Flyback from an Elektron Syntakt">
+<meta property="og:description" content="Set up an Elektron Syntakt to conduct Flyback: the box's MIDI and USB settings, the whole box added in one pick, a sequencer kept to its clock, a picture lit by its tracks, and its knobs on the panel.">
+<meta property="og:image" content="https://markovcd.github.io/Flyback/assets/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Flyback logo and the words One patch. A picture and a sound., in front of a wall of pictures Flyback presets make.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .doc-head { border-bottom: 1px solid var(--edge); }
+  .patch-fig { margin: 24px 0 0; }
+  .settings td:first-child { white-space: nowrap; color: var(--bright); }
+  .settings td:nth-child(2) { white-space: nowrap; }
+  .settings code { white-space: normal; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="../" class="optional">Overview</a>
+      <a href="../tutorials.html" aria-current="page">Tutorials</a>
+      <a href="PRESETS_URL/plugins.html">Plugins</a>
+      <a href="PRESETS_URL">Presets</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head" style="border: 0">
+      <p class="eyebrow" style="color: var(--note)"><a href="../tutorials.html">Tutorials</a> · Elektron Syntakt</p>
+      <h1>Play Flyback from an Elektron Syntakt.</h1>
+      <p class="lede">The Syntakt keeps the time, plays the drums and turns the knobs. Flyback follows its clock,
+      hears each of its tracks on its own channel, and puts the picture and the sound on its bar. This tutorial goes
+      from the box's settings menu to a patch you can play from the box, in about ten minutes.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#need">What you need</a></li>
+      <li><a href="#syntakt">Set up the Syntakt</a></li>
+      <li><a href="#hear">Check that Flyback hears it</a></li>
+      <li><a href="#box">Add the whole box</a></li>
+      <li><a href="#clock">Keep to its clock</a></li>
+      <li><a href="#tracks">Light the picture from its tracks</a></li>
+      <li><a href="#knobs">Turn its knobs from the panel</a></li>
+      <li><a href="#play">Play</a></li>
+      <li><a href="#other">Another box</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <section id="need">
+    <h2><span class="num">01</span>What you need</h2>
+
+    <p>A Syntakt, a USB cable, and Flyback on Windows, macOS or Linux. Nothing else: the Syntakt is a class
+    compliant USB device, so no driver is installed, and Flyback ships knowing what a Syntakt is. Its MIDI OUT
+    works too, through any MIDI interface, if you would rather keep USB for something else.</p>
+
+    <p>Everything below assumes the box is at its factory MIDI channels: tracks 1 to 12 on channels 1 to 12 and
+    the FX track on channel 13. If you have changed them, keep reading; <a href="#other">the last section</a> is
+    for you.</p>
+  </section>
+
+  <section id="syntakt">
+    <h2><span class="num">02</span>Set up the Syntakt</h2>
+
+    <p>Eight settings on the box, all under <strong>[SETTINGS]</strong>. Most are already right on a fresh unit;
+    the two that matter most are that it <em>sends</em> its clock and that its knobs <em>send</em> what they do.</p>
+
+    <div class="table-wrap">
+      <table class="settings">
+        <thead><tr><th>Menu</th><th>Setting</th><th>Set it to</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>SYSTEM › USB CONFIG</td><td>USB CONFIG</td><td><code>USB MIDI</code> or <code>USB AUDIO/MIDI</code></td>
+            <td>Either puts the Syntakt on the computer as a plain MIDI device. <code>OVERBRIDGE</code> talks to
+            Elektron's own driver instead, and Flyback does not hear it.</td></tr>
+          <tr><td>MIDI CONFIG › SYNC</td><td>CLOCK SEND</td><td>on</td>
+            <td>The clock is the whole point: Flyback's Clock In follows it.</td></tr>
+          <tr><td>MIDI CONFIG › SYNC</td><td>TRANSPORT SEND</td><td>on</td>
+            <td>Play and Stop on the box start and hold Flyback's beats. <code>PRG CH SEND</code> is up to you.</td></tr>
+          <tr><td>MIDI CONFIG › PORT CONFIG</td><td>OUTPUT TO</td><td><code>USB</code> or <code>MIDI+USB</code></td>
+            <td>Where the clock, the notes and the knobs go. Over a MIDI cable, <code>MIDI</code> and
+            <code>OUT PORT FUNCTIONALITY</code> at <code>MIDI</code>.</td></tr>
+          <tr><td>MIDI CONFIG › PORT CONFIG</td><td>OUTPUT CH</td><td>the track channel</td>
+            <td>Each track's knobs send on that track's channel, so Flyback can tell track 3's filter from track
+            4's. On the auto channel every track sends on one.</td></tr>
+          <tr><td>MIDI CONFIG › PORT CONFIG</td><td>PARAM OUTPUT</td><td><code>CC</code></td>
+            <td>Flyback listens for control changes, not NRPN.</td></tr>
+          <tr><td>MIDI CONFIG › PORT CONFIG</td><td>ENCODER DEST</td><td><code>INT + EXT</code></td>
+            <td>On <code>INT</code> a knob only changes the Syntakt, and nothing reaches the cable.</td></tr>
+          <tr><td>MIDI CONFIG › CHANNELS</td><td>TRACK 1–12, FX CONTROL CH</td><td>1–12, 13</td>
+            <td>The factory layout, and what Flyback's Syntakt profile expects. A track set to <code>OFF</code>
+            sends nothing.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>The MIDI tracks' <em>notes</em> go out on the channel set on each track's SYN page (<code>CHAN</code>),
+    whatever the CHANNELS menu says. Leave those at their track numbers too and everything lines up.</p>
+  </section>
+
+  <section id="hear">
+    <h2><span class="num">03</span>Check that Flyback hears it</h2>
+
+    <ol class="steps">
+      <li>Plug the Syntakt in and open Flyback. Open <strong>Settings → MIDI</strong>. The first line names the
+      plugin doing the hearing, <em>Windows MIDI</em>, <em>CoreMIDI</em> or <em>ALSA MIDI</em>, and the last says
+      <em>Known by name: Syntakt</em>.</li>
+      <li>Press <kbd>Space</kbd> over the canvas and add a <strong>MIDI In</strong>. Its <strong>listens to</strong>
+      field lists the Syntakt beside the computer keyboard. If it does not, the box is in Overbridge mode or
+      <code>OUTPUT TO</code> is off; fix that on the box and add the module again.</li>
+      <li>Press <strong>[PLAY]</strong> on the Syntakt. Add a <strong>Clock In</strong> from the Timing family;
+      it follows the Syntakt on its own. Select it and watch its <code>bpm</code> read the box's tempo.</li>
+    </ol>
+
+    <p>You can delete both modules now. The next step adds them properly.</p>
+  </section>
+
+  <section id="box">
+    <h2><span class="num">04</span>Add the whole box</h2>
+
+    <p>Start a new patch. Press <kbd>Space</kbd> over the canvas: while the Syntakt is plugged in, the module list
+    opens with <strong>Instruments › Syntakt</strong> at the top, above the groups. Pick it.</p>
+
+    <figure class="patch-fig">
+      <a class="zoom" href="../assets/shots/patch-syntakt-box.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="../assets/shots/patch-syntakt-box.webp" width="724" height="1038"
+             alt="A Clock In named Clock and thirteen MIDI Ins named Track 1 to Track 12 and FX track, in two columns of seven, with the Output beside them.">
+      </a>
+      <figcaption>What one pick adds: a Clock In following the Syntakt, and a MIDI In per track, each named after
+      its track and listening on that track's channel. Fourteen modules, wired to nothing yet.</figcaption>
+    </figure>
+
+    <p>They arrive selected. Click the background, then delete the tracks you will not use: a patch that draws
+    from the kick, the hat and a bass needs three. Select <em>Track 1</em> and look at the inspector: <strong>listens
+    to</strong> is the Syntakt, and <strong>channel</strong> is a list of its tracks rather than a number, because
+    Flyback knows the box.</p>
+  </section>
+
+  <section id="clock">
+    <h2><span class="num">05</span>Keep to its clock</h2>
+
+    <p>The Clock In's <code>beats</code> count from the moment you press [PLAY] on the box, at whatever tempo the
+    box is sending, and hold when you press [STOP]. Anything that takes a domain, a sequencer, a Tempo, an LFO,
+    takes <code>beats</code> in place of time and is then on the Syntakt's bar. Press <kbd>F2</kbd> and paste
+    this over the text, then press [PLAY] on the box:</p>
+
+    <pre><code class="fbks"># The Syntakt keeps time; the sequencer steps four times a beat.
+let box  = midi.clock(device: "midi:elektron-syntakt")
+let bass = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+
+saw(freq: bass |> note())
+  * (bass.gate |> adsr(attack: 2ms, decay: 180ms, sustain: 0, release: 60ms))
+  |> filter(cutoff: 900, resonance: 0.4)
+  |> out.left
+
+out.volume = 0.5</code></pre>
+
+    <figure class="patch-fig">
+      <a class="zoom" href="../assets/shots/patch-syntakt-bass.webp" target="_blank" rel="noopener">
+        <img class="shot" loading="lazy" src="../assets/shots/patch-syntakt-bass.webp" width="2144" height="433"
+             alt="A Clock In's beats wired into a Note Sequencer's in; the sequencer's out through Note into a Saw, its gate through an ADSR, the two multiplied, filtered, and into the Output's left.">
+      </a>
+      <figcaption>The same patch on the canvas. The only wire that makes it the Syntakt's is the first one:
+      <code>beats</code> into the sequencer's <code>in</code>.</figcaption>
+    </figure>
+
+    <ul>
+      <li>The <code>device</code> is the port's name as an id: lower case, hyphens for spaces, after
+      <code>midi:</code>. The modules you added in step 04 carry the right one already; if yours is not
+      <code>midi:elektron-syntakt</code>, press <kbd>F2</kbd> on that patch and read it off a MIDI In.</li>
+      <li><code>rate</code> is steps per beat. Four is sixteenths, which is the Syntakt's own grid; one is
+      quarter notes.</li>
+      <li>Change the tempo on the box and the bass follows within a beat. Press [STOP] and it holds; press [PLAY]
+      and it starts from the top, with the box.</li>
+      <li>The Clock In's other outputs: <code>bpm</code> is the tempo as a number, <code>running</code> is high
+      between [PLAY] and [STOP], and <code>reset</code> pulses on [PLAY], for restarting an envelope or an LFO
+      with the pattern.</li>
+    </ul>
+  </section>
+
+  <section id="tracks">
+    <h2><span class="num">06</span>Light the picture from its tracks</h2>
+
+    <p>Each track's MIDI In has <code>pitch</code>, <code>gate</code>, <code>velocity</code> and
+    <code>trigger</code>, and hears only its own track because it is on that track's channel. One thing to know
+    about the box first: a drum track's trigs stay inside it. What leaves over MIDI is what a <em>MIDI machine</em>
+    track sequences, on the channel its SYN page names. So give the picture two MIDI tracks: on track 11 press
+    <strong>[FUNC]</strong> + <strong>[SYN]</strong>, pick the MIDI machine and leave <code>CHAN</code> at 11;
+    the same on track 12. Enter the kick's trigs on 11 and the hat's on 12, beside the drum tracks that make the
+    sound. Then:</p>
+
+    <pre><code class="fbks"># Track 11 doubles the kick, track 12 the hat: each lights its own part of the picture.
+let box  = midi.clock(device: "midi:elektron-syntakt")
+let kick = midi.in(device: "midi:elektron-syntakt", channel: 11)
+let hat  = midi.in(device: "midi:elektron-syntakt", channel: 12)
+
+(rings(freq: 3 + kick.gate * 2, offset: box.beats * 0.25) |> remap(-1..1, 0..1))
+  * (0.25 + hat.gate * 0.75)
+  |> color.hsv(hue: fract(box.beats / 16), saturation: 0.8)
+  |> out.color
+
+out.volume = 0</code></pre>
+
+    <ul>
+      <li>The kick tightens the rings while its gate is open; the hat brightens them. The hue turns once every
+      sixteen beats, which at the box's sixteenths is once a bar of four, and the rings drift with the beat.</li>
+      <li>A trig's gate is as long as its note length on the box, so a short trig is a flash and a long one holds.
+      For a decay that outlasts the trig, put the gate through an ADSR with a release, as the bass does.</li>
+      <li>The knobs and the clock need no MIDI track: every track's knobs go out on its channel whatever machine
+      it runs, and the clock is the box's own.</li>
+      <li>Both patches together are one patch: keep the bass under <code>out.left</code> and the rings under
+      <code>out.color</code>, sharing the one <code>box</code>. Set <code>out.volume</code> back up.</li>
+    </ul>
+  </section>
+
+  <section id="knobs">
+    <h2><span class="num">07</span>Turn its knobs from the panel</h2>
+
+    <p>A panel knob follows a knob on the Syntakt, and because Flyback knows the box, it never has to be learned
+    by ear.</p>
+
+    <ol class="steps">
+      <li>Open the knob panel and add a knob. Click its name, then the filter's <code>cutoff</code> socket, so
+      the knob sweeps it; press <kbd>Esc</kbd>.</li>
+      <li>Open the knob's menu and choose <strong>Bind to › Syntakt › Track 3 › Filter Frequency</strong>. Under
+      the knob it now says <em>Syntakt · Track 3 · Filter Frequency</em>. Turn the filter knob on the box with
+      track 3 active and the panel knob turns with it.</li>
+      <li>Or learn it: choose <strong>Learn MIDI controller</strong> and turn a knob on the box. The binding is
+      named the same way, and it keeps the track's channel, so the same knob on track 4 does not move it.</li>
+      <li>For a panel of several knobs, choose <strong>Learn this and every knob after it</strong> on the first
+      one. The light walks the panel; turn one knob on the box per step, and <kbd>Esc</kbd> when done.</li>
+    </ol>
+
+    <p>A bound knob is saved with the patch. <strong>Settings → MIDI</strong> chooses whether a knob jumps to the
+    box's position or waits to be picked up.</p>
+  </section>
+
+  <section id="play">
+    <h2><span class="num">08</span>Play</h2>
+
+    <p>Double-click the preview for full screen; the panel's knobs come with it. [PLAY] on the Syntakt starts the
+    beats from the top, [STOP] holds them, a pattern change at the box's tempo keeps the picture on its bar, and
+    every trig you enter in the box lands in the patch. Flyback's own play and pause (<kbd>Ctrl</kbd>+<kbd>P</kbd>)
+    stop the picture and the sound, not the box, and on resume the beats jump to wherever the box has got to.</p>
+
+    <p>Save the patch and it remembers the Syntakt by name. Open it on a machine without one and every module says
+    so, and plays again the moment a Syntakt is plugged in.</p>
+  </section>
+
+  <section id="other">
+    <h2><span class="num">09</span>Another box, or a Syntakt set up differently</h2>
+
+    <p>What Flyback knows about the Syntakt is a file: its port name, its tracks and their channels, its knobs by
+    page and the control change each sends, and that it conducts. <strong>Settings → MIDI</strong> lists the
+    instruments known and the folder where a file of your own goes, one <code>.json</code> per instrument.</p>
+
+    <p>A Syntakt on other channels is the shipped file copied there and edited; a file with the same name replaces
+    the shipped one. A Digitakt, a Digitone or a controller with a printed CC chart is a new file of the same
+    shape, and then everything on this page works for it too: the whole box from the module list, tracks by
+    name, knobs from a menu.</p>
+
+    <p style="margin-top: 32px"><a class="button" href="../tutorials.html">All tutorials →</a></p>
+  </section>
+
+  </main>
+</div>
+</div>
+
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="../assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="../">Overview</a>
+    <a href="../plugins.html">Plugin guide</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+  </div>
+  <div class="wrap donate">
+    <button type="button" class="qr" title="Click to copy the address">
+      <img src="../assets/donate-qr.svg" alt="The donation address as a QR code" width="104" height="104">
+    </button>
+    <div class="ask">
+      <span>If this was worth anything to you, a little bitcoin is welcome.</span>
+      <span class="quiet">It buys tokens, which is what Flyback is written with. Strictly non-profit: nothing here is sold and nobody is paid out of it.</span>
+      <code>bc1qdu86tdtksg6mlqspdxmc2de9qppte3a5430lmg</code>
+      <span class="said" role="status">Click the code to copy the address.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

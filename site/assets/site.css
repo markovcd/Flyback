@@ -301,6 +301,17 @@ th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid v
 th { font-size: 11.5px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); border-bottom-color: var(--separator); }
 td code { font-size: 12.8px; white-space: nowrap; }
 
+/* ---- the tutorials, one card each, at the top of the tutorials page ------ */
+
+.tutorials { display: grid; gap: 14px; margin-top: 28px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.tutorials a.card { display: block; color: inherit; text-decoration: none; transition: border-color 120ms, background 120ms; }
+.tutorials a.card:hover { background: var(--node); border-color: var(--separator); }
+.tutorials a.card > header { font-size: 15px; }
+.tutorials a.card p { margin-bottom: 0; }
+.eyebrow a { color: inherit; text-decoration: none; }
+.eyebrow a:hover { text-decoration: underline; }
+
 /* ---- docs layout: contents on the left, a column of prose ---------------- */
 
 .doc-head { padding: 64px 0 36px; }
