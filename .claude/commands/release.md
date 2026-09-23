@@ -37,9 +37,30 @@ Each of these ends the run, says which one and why, and changes no file.
 - **The tag exists**, or `HEAD` is already tagged.
 - **`## Unreleased` is missing or has no bullets.** A release with nothing in it
   is a mistake.
-- **CI is red on the commit.** `gh run list --branch main --limit 5`. ADR-0120
-  put the Dockerfile gate on every push, so a red one is known before the release
-  build spends twenty minutes rediscovering it.
+- **The gate has not passed on this commit.** ADR-0120 put the Dockerfile gate on
+  every push, so its verdict is known before the release build spends twenty
+  minutes rediscovering it:
+
+  ```bash
+  gh run list --commit "$(git rev-parse HEAD)" --json workflowName,conclusion,status
+  ```
+
+  A red run refuses. So does **no run at all**, which is the easier one to walk
+  past: a commit that was never pushed has nothing red about it, and asking
+  whether CI is unhappy answers no. The gate having no opinion is not the gate
+  being happy. Push and wait for it.
+
+- **A locked restore fails.** The gate restores with `--locked-mode`, so a release
+  build dies at restore if `Directory.Packages.props` and the `packages.lock.json`
+  files disagree — which a version bump is exactly the thing to cause:
+
+  ```bash
+  dotnet restore Flyback.slnx --locked-mode
+  ```
+
+  Where it fails, `dotnet restore Flyback.slnx --force-evaluate` regenerates the
+  lock files, and they are committed with whatever moved the versions.
+
 - **`gh auth status` is not signed in**, with rights to run a workflow.
 
 ## The changelog
