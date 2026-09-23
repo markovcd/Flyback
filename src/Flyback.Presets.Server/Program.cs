@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Flyback.Presets.Server;
@@ -26,12 +27,52 @@ var admin = new Admin(builder.Configuration["Presets:Admin:User"], builder.Confi
 
 builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = UploadLimit);
 
-// Behind the NAS's reverse proxy, the client is whoever the proxy says it is.
+// Behind the NAS's reverse proxy, the client is whoever the proxy says it is —
+// and only the proxy is asked. `X-Forwarded-For` is a header anybody can write,
+// and the middleware rewrites `Connection.RemoteIpAddress` from it before the
+// limiters below partition on that address: believed from any connection, it is
+// a fresh allowance for every request, so twenty submissions an hour or ten
+// guesses at the admin password become as many as somebody cares to send.
+//
+// The check only happens when there is something to check against — an empty
+// KnownProxies and KnownIPNetworks is not a proxy nobody matches, it is the
+// test being skipped.
+//
+// The default is the private ranges a container's proxy reaches it from, which
+// is the other half of "nothing but the proxy may reach the port" in
+// deploy/presets/README.md. Presets:KnownProxies replaces it with a
+// comma-separated list of addresses or networks.
+string[] believed =
+    (builder.Configuration["Presets:KnownProxies"] ?? string.Empty)
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+if (believed.Length == 0)
+    believed = ["127.0.0.0/8", "::1/128", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7"];
+
+var knownProxies = new List<IPAddress>();
+var knownNetworks = new List<System.Net.IPNetwork>();
+
+// Eagerly, so a typo in the setting is a container that will not start rather
+// than one whose limiters quietly count every request against one allowance.
+foreach (var proxy in believed)
+{
+    if (IPAddress.TryParse(proxy, out var one)) knownProxies.Add(one);
+    else if (System.Net.IPNetwork.TryParse(proxy, out var range)) knownNetworks.Add(range);
+    else throw new InvalidOperationException($"Presets:KnownProxies holds \"{proxy}\", which is neither an address nor a network.");
+}
+
 builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
 {
     forwarded.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    forwarded.KnownIPNetworks.Clear();
+
+    // One hop: the entry the proxy itself appended, never one a client sent ahead of it.
+    forwarded.ForwardLimit = 1;
+
     forwarded.KnownProxies.Clear();
+    forwarded.KnownIPNetworks.Clear();
+
+    foreach (var proxy in knownProxies) forwarded.KnownProxies.Add(proxy);
+    foreach (var network in knownNetworks) forwarded.KnownIPNetworks.Add(network);
 });
 
 builder.Services.AddRateLimiter(limits =>

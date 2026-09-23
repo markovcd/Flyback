@@ -42,7 +42,7 @@ docker compose up -d
 
 The container runs as user 1654, so `data/` has to be writable by that user. `media/` only needs to be readable.
 
-It listens on port 8080. Put the NAS reverse proxy in front of it for HTTPS. The site trusts `X-Forwarded-For` from the proxy, so only the proxy should be able to reach port 8080.
+It listens on port 8080. Put the NAS reverse proxy in front of it for HTTPS. The site reads the client's address from `X-Forwarded-For`, which is what the per-address rate limits count by, and believes that header only from the private ranges a proxy reaches a container over — so nothing but the proxy may be able to reach port 8080. Set `Presets__KnownProxies` if the proxy is somewhere else; anything reaching the port from an address that is not on the list is counted by the address it actually connected from.
 
 Settings, all optional, as environment variables:
 
@@ -54,6 +54,7 @@ Settings, all optional, as environment variables:
 | `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__RatingsPerHour` | `60` | ratings one address may give in an hour |
 | `Presets__LettersPerHour` | `5` | letters one address may write in an hour |
+| `Presets__KnownProxies` | the private ranges | addresses or networks, comma separated, whose `X-Forwarded-For` is believed |
 | `Presets__Admin__User` | | the admin's user name |
 | `Presets__Admin__Password` | | the admin's password; admin mode is off while either is blank |
 

@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -17,7 +20,7 @@ public sealed class ServerTests : IDisposable
 
     public ServerTests() : this(20) { }
 
-    private ServerTests(int postsPerHour, string adminPassword = "hunter2", int lettersPerHour = 20)
+    private ServerTests(int postsPerHour, string adminPassword = "hunter2", int lettersPerHour = 20, string? connectedFrom = null)
     {
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
@@ -27,8 +30,31 @@ public sealed class ServerTests : IDisposable
             web.UseSetting("Presets:LettersPerHour", lettersPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
             web.UseSetting("Presets:Admin:User", "admin");
             web.UseSetting("Presets:Admin:Password", adminPassword);
+
+            if (connectedFrom is not null)
+                web.ConfigureServices(services =>
+                    services.AddSingleton<IStartupFilter>(new ConnectedFrom(IPAddress.Parse(connectedFrom))));
         });
         client = host.CreateClient();
+    }
+
+    /// <summary>
+    /// The address the test server's connections appear to come from, which it
+    /// otherwise has none of. In front of everything the application adds, so
+    /// the forwarded-headers middleware sees it.
+    /// </summary>
+    private sealed class ConnectedFrom(IPAddress address) : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use(async (context, following) =>
+            {
+                context.Connection.RemoteIpAddress = address;
+                await following(context);
+            });
+
+            next(app);
+        };
     }
 
     private string Media => Path.Combine(folder, "media");
@@ -52,21 +78,25 @@ public sealed class ServerTests : IDisposable
         return Encoding.UTF8.GetBytes(PatchIO.ToJson(patch));
     }
 
-    private async Task<JsonElement> Submit(byte[] file, string fileName = "Drone.fbk", string? name = null)
+    private async Task<JsonElement> Submit(byte[] file, string fileName = "Drone.fbk", string? name = null, string? forwardedFor = null)
     {
-        using var response = await Post(file, fileName, name);
+        using var response = await Post(file, fileName, name, forwardedFor);
         response.StatusCode.ShouldBe(HttpStatusCode.Created);
 
         return await response.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
     }
 
-    private async Task<HttpResponseMessage> Post(byte[] file, string fileName, string? name = null)
+    private async Task<HttpResponseMessage> Post(byte[] file, string fileName, string? name = null, string? forwardedFor = null)
     {
-        using var form = new MultipartFormDataContent();
+        var form = new MultipartFormDataContent();
         form.Add(new ByteArrayContent(file), "file", fileName);
         if (name is not null) form.Add(new StringContent(name), "name");
 
-        return await client.PostAsync(new Uri("/api/v1/presets", UriKind.Relative), form, TestContext.Current.CancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri("/api/v1/presets", UriKind.Relative)) { Content = form };
+
+        if (forwardedFor is not null) request.Headers.Add("X-Forwarded-For", forwardedFor);
+
+        return await client.SendAsync(request, TestContext.Current.CancellationToken);
     }
 
     private async Task<JsonElement> Get(string path) =>
@@ -352,6 +382,50 @@ public sealed class ServerTests : IDisposable
             using var third = await server.Post(PatchFile(), "Third.fbk");
 
             third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        }
+    }
+
+    /// <summary>
+    /// A limiter counts by address, and the address is read from a header where
+    /// the proxy is the one who wrote it. From anywhere else the header is a
+    /// claim, and believing it would hand every request an allowance of its own.
+    /// </summary>
+    public sealed class ClaimingToBeSomebodyElse : IDisposable
+    {
+        private readonly ServerTests server = new(postsPerHour: 2, connectedFrom: "203.0.113.7");
+
+        public void Dispose() => server.Dispose();
+
+        [Fact]
+        public async Task A_flood_is_turned_away_however_it_signs_itself()
+        {
+            await server.Submit(PatchFile(), forwardedFor: "198.51.100.1");
+            await server.Submit(PatchFile(), forwardedFor: "198.51.100.2");
+
+            using var third = await server.Post(PatchFile(), "Third.fbk", forwardedFor: "198.51.100.3");
+
+            third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        }
+    }
+
+    /// <summary>The other half: the proxy's word is what the limiters count by.</summary>
+    public sealed class BehindTheProxy : IDisposable
+    {
+        private readonly ServerTests server = new(postsPerHour: 2, connectedFrom: "10.1.2.3");
+
+        public void Dispose() => server.Dispose();
+
+        [Fact]
+        public async Task Each_client_the_proxy_names_has_an_allowance_of_its_own()
+        {
+            await server.Submit(PatchFile(), forwardedFor: "198.51.100.1");
+            await server.Submit(PatchFile(), forwardedFor: "198.51.100.1");
+
+            using var third = await server.Post(PatchFile(), "Third.fbk", forwardedFor: "198.51.100.1");
+            third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+            using var another = await server.Post(PatchFile(), "Fourth.fbk", forwardedFor: "198.51.100.2");
+            another.StatusCode.ShouldBe(HttpStatusCode.Created);
         }
     }
 
