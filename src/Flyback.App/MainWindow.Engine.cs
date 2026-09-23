@@ -159,7 +159,7 @@ public sealed partial class MainWindow
         // because there is only one line to say them on.
         Report(said.ToList());
 
-        MarkRecordable();
+        Recording.Mark();
         SyncAudioToVolume();
     }
 
@@ -206,7 +206,7 @@ public sealed partial class MainWindow
         // picture and all — at that instant, and fading Volume to nought is how
         // a take is ended. It records the silence instead, and the device is
         // asked about again when the take is over.
-        if (!wanted && recorder is not null) return;
+        if (!wanted && Recording.Running) return;
 
         // Nor while a preset from the gallery is being heard through it, which
         // is what started it if the patch had not.
@@ -282,10 +282,10 @@ public sealed partial class MainWindow
         // waits here for it rather than abandoning it. OnClosing has normally
         // dealt with it already, and this is for the close that could not be
         // put off.
-        FinishTakeNow();
+        Recording.FinishNow();
 
         // Whatever there was to lose has been asked about by now, and answered.
-        StopRecovery();
+        keeper?.Stop();
 
         audio.Dispose();
         compiler.Dispose();

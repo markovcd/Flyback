@@ -22,6 +22,9 @@ public sealed partial class MainWindow
     /// </summary>
     private readonly PresetLibrary? savedPresets;
 
+    /// <summary>Trying a preset from the gallery by resting the pointer on its tile.</summary>
+    private readonly PresetAudition audition;
+
     /// <summary>What <see cref="presetsPicker"/> lists, which is <see cref="OrderedPresets"/> as of the last save.</summary>
     private List<PatchPreset> offeredPresets = [];
 

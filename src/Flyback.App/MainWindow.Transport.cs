@@ -41,7 +41,7 @@ public sealed partial class MainWindow
     private void TogglePause()
     {
         // A take is paced by the samples it is handed, so pausing under one would stop the file.
-        if (TakeInHand || counting is not null) return;
+        if (Recording.InHand || Recording.Counting) return;
 
         if (paused) Resume();
         else Pause();
@@ -89,7 +89,7 @@ public sealed partial class MainWindow
             pauseButton.Content = paused ? Glyphs.Play() : Glyphs.Pause();
         }
 
-        pauseButton.IsEnabled = !TakeInHand && counting is null;
+        pauseButton.IsEnabled = !Recording.InHand && !Recording.Counting;
 
         ToolTip.SetTip(pauseButton, paused ? PlayTip : PauseTip);
 

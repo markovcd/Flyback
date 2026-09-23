@@ -294,7 +294,7 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task<bool> RestartAsync()
     {
-        if (TakeInHand || !await MayReplaceThePatchAsync()) return false;
+        if (Recording.InHand || !await MayReplaceThePatchAsync()) return false;
 
         relaunch!(refused);
 

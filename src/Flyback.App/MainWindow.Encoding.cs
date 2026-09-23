@@ -185,26 +185,4 @@ public sealed partial class MainWindow
         };
     }
 
-    /// <summary>
-    /// The format a take is written as, and the ffmpeg for it. Read from what was
-    /// saved rather than from the pickers, since a settings window left open on a
-    /// row nobody pressed Save on is not a choice yet.
-    /// </summary>
-    /// <param name="path">
-    /// Where the take is going. Its extension decides, so a name typed over the
-    /// picker's suggestion means what it says — see <see cref="Takes.Format"/>.
-    /// </param>
-    /// <returns>
-    /// The format, and null for <c>Ffmpeg</c> where none is needed or none was
-    /// found — which the caller has to tell apart before it starts.
-    /// </returns>
-    private (ClipFormat Format, string? Ffmpeg) Encoder(string path)
-    {
-        var format = Takes.Format(
-            path,
-            ClipFormats.Wanted(outputSettings.VideoFormat, picture: true),
-            ClipFormats.Wanted(outputSettings.SoundFormat, picture: false));
-
-        return (format, format.NeedsFfmpeg ? Ffmpeg.Resolve(outputSettings.FfmpegPath) : null);
-    }
 }

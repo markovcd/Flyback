@@ -1,6 +1,7 @@
 using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
 namespace Flyback.App;
@@ -14,33 +15,68 @@ namespace Flyback.App;
 /// The patch is faded out rather than mixed under it, because two patches at once
 /// is a sound neither of them makes. The picture on the canvas is the patch's
 /// throughout, the preset's own moving on its tile instead.
+/// <para>
+/// Nothing of the window's document is touched, which is what makes this its own
+/// thing: a preset is built from the gallery's own library and played through the
+/// engine, and the one thing handed back is that the patch may have the device to
+/// itself again.
+/// </para>
 /// </remarks>
-public sealed partial class MainWindow
+internal sealed class PresetAudition
 {
     /// <summary>How long the pointer has to rest on a tile, so sweeping across the gallery plays nothing.</summary>
-    private static readonly TimeSpan AuditionDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan Delay = TimeSpan.FromSeconds(1);
+
+    private readonly AudioEngine audio;
+    private readonly IlCompiler compiler;
+    private readonly ModuleCatalog modules;
+
+    /// <summary>The presets somebody saved, whose bundles carry what they play.</summary>
+    private readonly PresetLibrary? saved;
+
+    /// <summary>Whether a preset may be heard at all: there is a device, and no take is reading it.</summary>
+    private readonly Func<bool> audible;
+
+    /// <summary>Hands the device back to the patch, which says for itself whether it should run.</summary>
+    private readonly Action syncAudio;
 
     /// <summary>The tile the pointer is resting on, or null.</summary>
     private PointedTile? pointedAt;
 
-    /// <summary>The wait for <see cref="AuditionDelay"/> to pass, while there is one.</summary>
-    private IDisposable? auditionWait;
+    /// <summary>The wait for <see cref="Delay"/> to pass, while there is one.</summary>
+    private IDisposable? waiting;
 
     /// <summary>The preset's picture playing on its tile, while it is being tried.</summary>
     private PresetMotion? motion;
+
+    internal PresetAudition(
+        AudioEngine audio,
+        IlCompiler compiler,
+        ModuleCatalog modules,
+        PresetLibrary? saved,
+        Func<bool> audible,
+        Action syncAudio)
+    {
+        this.audio = audio;
+        this.compiler = compiler;
+        this.modules = modules;
+        this.saved = saved;
+        this.audible = audible;
+        this.syncAudio = syncAudio;
+    }
 
     /// <summary>
     /// Where the gallery says the pointer is: on a tile, or on none of them for
     /// null — which is also what closing the gallery says.
     /// </summary>
-    private void PointedAt(PointedTile? tile)
+    internal void PointedAt(PointedTile? tile)
     {
         if (tile == pointedAt) return;
 
         pointedAt = tile;
 
-        auditionWait?.Dispose();
-        auditionWait = null;
+        waiting?.Dispose();
+        waiting = null;
 
         motion?.Dispose();
         motion = null;
@@ -48,14 +84,14 @@ public sealed partial class MainWindow
         StopAuditioning();
 
         if (tile is not null)
-            auditionWait = DispatcherTimer.RunOnce(() => _ = AuditionAsync(tile), AuditionDelay);
+            waiting = DispatcherTimer.RunOnce(() => _ = AuditionAsync(tile), Delay);
     }
 
     private async Task AuditionAsync(PointedTile tile)
     {
         // A take records what the speakers play, and a preset tried on the way
         // past is not part of it.
-        var hear = sound.Output is not null && !audioBlocked && recorder is null;
+        var hear = audible();
 
         Opened opened;
         AudioEngine.Audition? audition;
@@ -65,7 +101,7 @@ public sealed partial class MainWindow
             (opened, audition) = await Task.Run(() =>
             {
                 // With what it plays, which for a preset somebody saved is in its bundle.
-                var built = PresetLibrary.Open(tile.Preset, savedPresets, plugins.Modules);
+                var built = PresetLibrary.Open(tile.Preset, saved, modules);
                 return (built, hear ? audio.PrepareAudition(built.Patch, built.Samples) : null);
             });
         }
@@ -122,7 +158,7 @@ public sealed partial class MainWindow
         DispatcherTimer.RunOnce(
             () =>
             {
-                if (!audio.IsAuditioning) SyncAudioToVolume();
+                if (!audio.IsAuditioning) syncAudio();
             },
             AudioEngine.AuditionFadeOut + TimeSpan.FromMilliseconds(200));
     }

@@ -96,7 +96,7 @@ public sealed partial class MainWindow
         // The picture a take was reading has gone. Finishing the file is the only
         // useful thing left to do with it — what is already written is a
         // recording, and what would follow is the same frame for ever.
-        preview.CaptureLost += Stop;
+        preview.CaptureLost += Recording.Stop;
 
         // Shown while it is grayed out too, because a disabled control that will
         // not say why is the most annoying thing a panel can contain.
@@ -179,12 +179,12 @@ public sealed partial class MainWindow
             [.. plugins.Presets.OrderBy(p => p.Kind)],
             showing,
             thumbnails,
-            PointedAt,
+            audition.PointedAt,
             Yours()?.ToPickFrom());
 
         var chosen = await this.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
 
-        PointedAt(null);
+        audition.PointedAt(null);
 
         if (chosen is not null) ShowStartupPatch(chosen.Name);
     }

@@ -1103,7 +1103,7 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var path = TakePath(ClipFormats.MotionJpegAvi.Extension);
 
-        var counting = window.CountInAsync(path, Unhurried);
+        var counting = window.Recording.CountInAsync(path, Unhurried);
         Settle(window);
 
         Said(window)[^1].ShouldBe($"Recording {Path.GetFileName(path)} in 3…");
@@ -1122,7 +1122,7 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var path = TakePath(ClipFormats.MotionJpegAvi.Extension);
 
-        var counting = window.CountInAsync(path, Unhurried);
+        var counting = window.Recording.CountInAsync(path, Unhurried);
         Settle(window);
 
         var button = Record(window);
@@ -1156,7 +1156,7 @@ public class OutputSettingsTests : UiTest
 
         Editor(window).AddNode("value").ShouldNotBeNull();
 
-        var counting = window.CountInAsync(TakePath(ClipFormats.MotionJpegAvi.Extension), Unhurried);
+        var counting = window.Recording.CountInAsync(TakePath(ClipFormats.MotionJpegAvi.Extension), Unhurried);
         Settle(window);
 
         counting.IsCompleted.ShouldBeFalse("the count is under way");
@@ -1186,7 +1186,7 @@ public class OutputSettingsTests : UiTest
 
         preview.Time = 30;
 
-        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
+        await window.Recording.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
 
         Settle(window);
 
@@ -1213,7 +1213,7 @@ public class OutputSettingsTests : UiTest
         CountIn(dialog).SelectedIndex = 0;
         CloseSettings(window, dialog, save: true);
 
-        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), Noticeable);
+        await window.Recording.CountInAsync(TakePath(ClipFormats.Wav.Extension), Noticeable);
 
         Settle(window);
 
@@ -1238,7 +1238,7 @@ public class OutputSettingsTests : UiTest
 
         preview.Time = 30;
 
-        await window.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
+        await window.Recording.CountInAsync(TakePath(ClipFormats.Wav.Extension), TimeSpan.Zero);
 
         Settle(window);
 

@@ -200,9 +200,6 @@
     <Compile Update="Controls\NodeEditor.Tips.cs">
       <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
-    <Compile Update="MainWindow.Audition.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
     <Compile Update="MainWindow.Controls.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>

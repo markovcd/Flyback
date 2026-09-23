@@ -574,6 +574,31 @@ public sealed partial class MainWindow : Window
         this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id, ScreenHeights());
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
 
+        // Before anything recompiles, because a recompile asks the take what the
+        // record button should say and whether the device may be stopped.
+        Recording = new TakeRecording(
+            recordButton,
+            resolution,
+            preview,
+            audio,
+            this.usage,
+            () => editor.Patch,
+            () => outputSettings,
+            (message, progress) => Report(message, progress: progress),
+            SyncTransport,
+            RewindToZero,
+            SyncAudioToVolume);
+
+        audition = new PresetAudition(
+            audio,
+            compiler,
+            plugins.Modules,
+            savedPresets,
+            // A take records what the speakers play, and a preset tried on the
+            // way past is not part of it.
+            () => sound.Output is not null && !audioBlocked && !Recording.Running,
+            SyncAudioToVolume);
+
         // Nothing is opened by this. The backend is asked what is plugged in
         // when a picker is drawn, and asked for a device only once a compiled
         // program is actually reading one — see MidiHub.Listen.
@@ -720,7 +745,7 @@ public sealed partial class MainWindow : Window
         ticker.Tick += (_, _) => UpdateStatus();
         ticker.Start();
 
-        if (recoveryFolder is not null) KeepRecovery(recoveryFolder);
+        if (recoveryFolder is not null) keeper = new WorkKeeper(recoveryFolder, Work);
 
         // Opened rather than called straight away: there is nothing to put a
         // dialog over before, and the platform window behind this one — and the
@@ -733,7 +758,7 @@ public sealed partial class MainWindow : Window
         {
             if (whatsNew is not null) await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
 
-            RestoreLeftover();
+            keeper?.Restore(Recover);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
             if (openPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
@@ -1024,10 +1049,10 @@ public sealed partial class MainWindow : Window
         presetsButton.Click += async (_, _) =>
         {
             var showing = presets.SelectedItem as PatchPreset;
-            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, PointedAt, Yours(), PresetSite());
+            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, audition.PointedAt, Yours(), PresetSite());
             var chosen = await this.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
 
-            PointedAt(null);
+            audition.PointedAt(null);
 
             switch (chosen)
             {
@@ -1155,8 +1180,8 @@ public sealed partial class MainWindow : Window
 
         // The glyph and the tip are set here, alongside every other toolbar
         // button; what the tip actually says is decided per patch by
-        // MarkRecordable, which runs before this is ever shown.
-        ToolbarButtons.Marked(recordButton, "record", Glyphs.Record(), RecordTip);
+        // TakeRecording.Mark, which runs before this is ever shown.
+        ToolbarButtons.Marked(recordButton, "record", Glyphs.Record(), TakeRecording.RecordTip);
 
         ToolbarButtons.Marked(pauseButton, "pause", Glyphs.Pause(), PauseTip);
         pauseButton.Click += (_, _) => TogglePause();

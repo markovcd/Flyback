@@ -290,14 +290,14 @@ public sealed partial class MainWindow
 
         // A take first, since it is the one thing here that cannot be had again:
         // its file is closed, and then the close is tried once more.
-        if (TakeInHand)
+        if (Recording.InHand)
         {
             e.Cancel = true;
 
             if (waitingOnTake) return;
 
             waitingOnTake = true;
-            await FinishTakeAsync();
+            await Recording.FinishAsync();
             waitingOnTake = false;
 
             Close();
@@ -308,7 +308,7 @@ public sealed partial class MainWindow
         // become one under the question below, which can stay up for as long as
         // it likes: the patch rewound and a file opened behind a dialog asking
         // whether to save. Closing calls it off whatever the answer (ADR-0090).
-        CallOffCount();
+        Recording.CallOffCount();
 
         if (!SomethingToLose) return;
 
