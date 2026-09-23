@@ -28,7 +28,7 @@ public class PluginHostTests
     /// </summary>
     public static TheoryData<string> PlatformBackends => ["alsa", "coreaudio", "wasapi"];
 
-    private static PluginCatalog Shipped() => PluginHost.Load();
+    private static PluginCatalog Shipped() => ShippedPlugins.Loaded;
 
     /// <summary>Which plugin each shipped backend was registered by, sound then MIDI.</summary>
     public static TheoryData<string, string> BackendPlugins => new()

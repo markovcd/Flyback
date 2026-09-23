@@ -22,7 +22,7 @@ public class TimbreTests
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void Fold_is_the_plugins_own_while_filter_is_the_engines()
@@ -130,7 +130,7 @@ public class TimbreTests
     [Fact]
     public void The_preset_builds_and_compiles_for_both_sinks()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Filter sweep").Build(loaded.Modules);
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();

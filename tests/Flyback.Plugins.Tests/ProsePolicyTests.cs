@@ -21,7 +21,7 @@ public sealed class ProsePolicyTests : IDisposable
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private static readonly PluginCatalog Everything = PluginHost.Load();
+    private static readonly PluginCatalog Everything = ShippedPlugins.Loaded;
 
     private static ModuleCatalog Shipped => Everything.Modules;
 

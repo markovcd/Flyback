@@ -18,7 +18,7 @@ public class WanderTests
     private const int LowPort = 3;
     private const int HighPort = 4;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_beside_the_oscillators()

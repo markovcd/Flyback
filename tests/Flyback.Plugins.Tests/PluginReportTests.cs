@@ -9,7 +9,7 @@ public class PluginReportTests
     [Fact]
     public void Every_loaded_plugin_is_named_under_the_folder_it_came_from()
     {
-        var catalog = PluginHost.Load();
+        var catalog = ShippedPlugins.Loaded;
 
         var lines = PluginReport.Lines(catalog, PluginHost.DefaultDirectory).ToList();
 

@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Tests;
 /// </summary>
 public class AssistantPluginTests
 {
-    private static PluginCatalog Loaded => PluginHost.Load();
+    private static PluginCatalog Loaded => ShippedPlugins.Loaded;
 
     private static IPatchAssistant Rehearsed =>
         Loaded.Assistants.Single(a => a.Id == "rehearsed");

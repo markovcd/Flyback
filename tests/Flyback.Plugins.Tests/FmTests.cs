@@ -29,7 +29,7 @@ public class FmTests
 
     private static readonly string[] Algorithms = ["stack", "branch", "fan", "pair", "organ"];
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_beside_the_oscillators()

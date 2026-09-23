@@ -16,7 +16,7 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class MidiInputTests
 {
-    private static PluginCatalog Shipped() => PluginHost.Load();
+    private static PluginCatalog Shipped() => ShippedPlugins.Loaded;
 
     [Fact]
     public void The_windows_backend_is_found_and_registers_itself()

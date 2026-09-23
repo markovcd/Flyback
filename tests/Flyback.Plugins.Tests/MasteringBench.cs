@@ -15,7 +15,7 @@ internal static class MasteringBench
 {
     public const int Rate = GlobalConstants.SampleRate;
 
-    public static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    public static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     /// <param name="into">Which of the module's inputs x and y are patched into; -1 leaves one out.</param>
     /// <param name="heard">Which of the module's outputs reach the Output's left and right.</param>

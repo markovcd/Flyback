@@ -113,8 +113,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # Its own stage, so nothing above waits for it: the gate is the first stage and
 # the publishes build on the gate, not on this.
 #
-# The whole run takes about six minutes, so a test host still going at fifteen
-# has hung: the hang dump prints the tests it was in the middle of and ends it.
+# No test takes a minute, so a test host that finishes none for fifteen has hung:
+# the hang dump prints the tests it was in the middle of and ends it.
 FROM gate AS measured
 ARG CONFIGURATION
 

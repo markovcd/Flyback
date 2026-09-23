@@ -26,7 +26,7 @@ public class NoiseTests
     private const int Roughness = 4;
     private const int Jitter = 4;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     // --- the catalog ---------------------------------------------------------
 
@@ -295,7 +295,7 @@ public class NoiseTests
     [Fact]
     public void The_preset_builds_and_compiles_for_both_sinks()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Marble").Build(loaded.Modules);
 
         patch.Nodes.Count(n => n.TypeId == Fractal).ShouldBe(2);

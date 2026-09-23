@@ -27,7 +27,7 @@ public class EuclidTests
 
     private const float Rate = 4f;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_under_timing()

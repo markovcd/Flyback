@@ -25,7 +25,7 @@ public class ModulationTests
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     /// <summary>Port indices are the same shape across the three, apart from the flanger's extra feedback.</summary>
     private const int Rate1 = 1;
@@ -313,7 +313,7 @@ public class ModulationTests
     [Fact]
     public void The_preset_builds_and_reaches_the_speakers_alone()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Moving parts").Build(loaded.Modules);
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();

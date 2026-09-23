@@ -20,7 +20,7 @@ public class StrokeTests
     private const int OffsetPort = 2;
     private const int CurvePort = 3;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_under_timing()

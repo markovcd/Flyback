@@ -25,7 +25,7 @@ public class ShapesTests
     private const string CombineType = "flyback.picture.combine";
     private const string FillType = "flyback.picture.fill";
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     // --- the catalog ---------------------------------------------------------
 
@@ -475,7 +475,7 @@ public class ShapesTests
     [Fact]
     public void The_preset_builds_and_compiles_for_both_sinks()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == ShapesPresetName).Build(loaded.Modules);
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();
@@ -509,7 +509,7 @@ public class ShapesTests
     [Fact]
     public void The_showcase_preset_holds_every_form_and_compiles_for_both_sinks()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();
@@ -542,7 +542,7 @@ public class ShapesTests
     [Fact]
     public void The_showcase_preset_moves_the_picture_from_one_sweep()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
 
         // The only oscillators left are the two sweeps: the rock and the melt.

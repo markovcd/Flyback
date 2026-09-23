@@ -16,7 +16,7 @@ public class SpaceTests
     [Fact]
     public void The_preset_builds_and_compiles_for_both_sinks()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Echo chamber").Build(loaded.Modules);
 
         patch.Nodes.Select(n => n.TypeId).ShouldContain(NodeCatalog.DelayTypeId);

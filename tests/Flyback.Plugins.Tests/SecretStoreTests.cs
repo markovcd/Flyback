@@ -23,7 +23,7 @@ public class SecretStoreTests
     /// <summary>The stores that ship in the box, one per operating system.</summary>
     public static TheoryData<string> PlatformStores => ["dpapi", "keychain", "secret-service"];
 
-    private static PluginCatalog Shipped() => PluginHost.Load();
+    private static PluginCatalog Shipped() => ShippedPlugins.Loaded;
 
     private static ISecretStore Store(string id) => Shipped().SecretStores.Single(s => s.Id == id);
 

@@ -25,7 +25,7 @@ public class ColorTests
     private const string Hsv = "color.hsv";
     private const string Rgb = "color.rgb";
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     // --- the catalog ---------------------------------------------------------
 
@@ -354,7 +354,7 @@ public class ColorTests
     [Fact]
     public void The_preset_builds_and_is_one_gesture()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Spectrum").Build(loaded.Modules);
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();

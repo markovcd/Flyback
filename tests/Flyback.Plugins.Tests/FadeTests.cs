@@ -21,7 +21,7 @@ public class FadeTests
     private const int FromPort = 2;
     private const int ToPort = 3;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_under_timing()

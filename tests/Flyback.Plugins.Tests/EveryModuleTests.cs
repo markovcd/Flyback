@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 public class EveryModuleTests
 {
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     public static TheoryData<string> ModuleTypeIds => [.. Catalog.All.Select(d => d.TypeId)];
 

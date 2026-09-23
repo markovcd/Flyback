@@ -26,7 +26,7 @@ public class TextTests
     private const int LinePort = 3;
     private const int RevealPort = 4;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     /// <summary>One font pixel at the default size, in the picture's units.</summary>
     private const float Pixel = 0.2f / 7f;
@@ -307,7 +307,7 @@ public class TextTests
     [Fact]
     public void Captions_types_each_line_out_and_moves_on()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == CaptionsName).Build(loaded.Modules);
 
         patch.Nodes.ShouldContain(n => n.TypeId == TextType);

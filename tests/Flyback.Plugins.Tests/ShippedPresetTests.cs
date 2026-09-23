@@ -20,14 +20,14 @@ namespace Flyback.Plugins.Tests;
 public class ShippedPresetTests
 {
     public static TheoryData<string> Every =>
-        [.. PluginHost.Load().Presets.Select(p => p.Name)];
+        [.. ShippedPlugins.Loaded.Presets.Select(p => p.Name)];
 
     /// <summary>Every preset in the picker builds and compiles for both sinks.</summary>
     [Theory]
     [MemberData(nameof(Every))]
     public void Every_preset_builds_and_compiles(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var preset = loaded.Presets.Single(p => p.Name == name);
 
         var patch = Should.NotThrow(() => preset.Build(loaded.Modules));
@@ -54,7 +54,7 @@ public class ShippedPresetTests
     [MemberData(nameof(Every))]
     public void Every_preset_names_modules_that_exist(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
         foreach (var node in patch.Nodes)
@@ -77,7 +77,7 @@ public class ShippedPresetTests
     [MemberData(nameof(Every))]
     public void Every_preset_arrives_laid_out(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
         var drawn = patch.Nodes
@@ -108,7 +108,7 @@ public class ShippedPresetTests
     [MemberData(nameof(Every))]
     public void Every_preset_lays_out_clear_of_itself_with_its_groups_taken_off(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
         patch.Groups = null;
@@ -128,7 +128,7 @@ public class ShippedPresetTests
     [MemberData(nameof(Every))]
     public void A_preset_with_every_group_open_is_laid_out_to_fit(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
 
         foreach (var group in patch.Groups ?? []) group.Collapsed = false;
@@ -147,7 +147,7 @@ public class ShippedPresetTests
     [Fact]
     public void Mycelium_with_every_box_open_is_too_wide_for_the_canvas_and_has_boxes_shut()
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == "Mycelium").Build(loaded.Modules);
 
         foreach (var group in patch.Groups ?? []) group.Collapsed = false;
@@ -199,7 +199,7 @@ public class ShippedPresetTests
     [MemberData(nameof(Every))]
     public void A_preset_about_one_idea_reaches_one_sink(string name)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         var preset = loaded.Presets.Single(p => p.Name == name);
 
         if (preset.Kind is not (PresetKind.Idea or PresetKind.Interplay)) return;

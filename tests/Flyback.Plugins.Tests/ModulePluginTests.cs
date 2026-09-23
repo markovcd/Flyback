@@ -16,7 +16,7 @@ public class ModulePluginTests
     private const string Provider = "flyback.sample";
     private const string Ripple = "flyback.sample.ripple";
 
-    private static ModuleCatalog Shipped() => PluginHost.Load().Modules;
+    private static ModuleCatalog Shipped() => ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void A_plugins_modules_reach_the_catalog()
@@ -91,7 +91,7 @@ public class ModulePluginTests
     [Fact]
     public void Every_section_the_engine_names_is_filled_by_something_shipped()
     {
-        var catalog = PluginHost.Load().Modules;
+        var catalog = ShippedPlugins.Loaded.Modules;
 
         foreach (var category in ModuleCategories.All)
             catalog.All.ShouldContain(
@@ -113,7 +113,7 @@ public class ModulePluginTests
     {
         string[] shipped = ["flyback.picture", "flyback.voice", "flyback.effects"];
 
-        var catalog = PluginHost.Load().Modules;
+        var catalog = ShippedPlugins.Loaded.Modules;
 
         var ours = catalog.All.Where(def =>
             catalog.ProviderOf(def.TypeId) is { } from

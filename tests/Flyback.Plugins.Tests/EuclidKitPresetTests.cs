@@ -62,7 +62,7 @@ public class EuclidKitPresetTests
 
     private static Patch Build(out ModuleCatalog modules)
     {
-        var loaded = PluginHost.Load();
+        var loaded = ShippedPlugins.Loaded;
         modules = loaded.Modules;
 
         return loaded.Presets.Single(p => p.Name == Name).Build(loaded.Modules);

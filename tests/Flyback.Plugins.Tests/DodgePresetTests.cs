@@ -19,7 +19,7 @@ public class DodgePresetTests
     /// <summary>When the scripted player strikes its first key, which starts the run.</summary>
     private const double Starts = 1.0;
 
-    private static readonly PluginCatalog Loaded = PluginHost.Load();
+    private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
     private static readonly int[] White = [0, 2, 4, 5, 7, 9, 11];
 

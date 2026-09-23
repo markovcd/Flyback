@@ -127,7 +127,7 @@ public class ModuleDeclarationTests
     public void A_shipped_plugin_declares_exactly_the_modules_it_registers(string folder, string provider)
     {
         var declared = PluginDescription.OfFolder(Path.Combine(PluginHost.DefaultDirectory, folder))!.Modules;
-        var registered = PluginHost.Load().Modules.All.Where(m => m.TypeId.StartsWith(provider + ".", StringComparison.Ordinal));
+        var registered = ShippedPlugins.Loaded.Modules.All.Where(m => m.TypeId.StartsWith(provider + ".", StringComparison.Ordinal));
 
         declared.Select(d => (d.TypeId, d.Name)).OrderBy(d => d.TypeId, StringComparer.Ordinal)
             .ShouldBe(registered.Select(m => (m.TypeId, m.Name)).OrderBy(d => d.TypeId, StringComparer.Ordinal));

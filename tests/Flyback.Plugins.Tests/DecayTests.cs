@@ -20,7 +20,7 @@ public class DecayTests
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_under_timing_for_audio()

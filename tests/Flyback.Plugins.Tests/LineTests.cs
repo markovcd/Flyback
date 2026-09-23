@@ -22,7 +22,7 @@ public class LineTests
     private const int Distance = 0;
     private const int Along = 1;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     /// <summary>From (-0.5, 0) to (0.5, 0), with no width, unless a test says otherwise.</summary>
     private static readonly (int Port, float Value)[] Level =

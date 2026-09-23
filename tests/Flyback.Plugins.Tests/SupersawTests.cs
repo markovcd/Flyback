@@ -16,7 +16,7 @@ public class SupersawTests
 {
     private const string Supersaw = "flyback.voice.osc";
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     // Supersaw ports, in order.
     private const int Freq = 1;
@@ -131,7 +131,7 @@ public class SupersawTests
     [Fact]
     public void The_plugin_offers_a_preset_after_the_engines_own()
     {
-        var presets = PluginHost.Load().Presets;
+        var presets = ShippedPlugins.Loaded.Presets;
 
         presets.Select(p => p.Name).ShouldContain("Supersaw");
         presets.Take(Presets.All.Count).Select(p => p.Name)
@@ -146,7 +146,7 @@ public class SupersawTests
     [Fact]
     public void The_preset_builds_and_compiles_for_both_sinks()
     {
-        var patch = PluginHost.Load().Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
+        var patch = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
 
         patch.Nodes.Select(n => n.TypeId).ShouldContain(Supersaw);
 
@@ -163,7 +163,7 @@ public class SupersawTests
     [Fact]
     public void The_preset_plays_at_an_audible_pitch()
     {
-        var patch = PluginHost.Load().Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
+        var patch = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
 
         patch.Nodes.Single(n => n.TypeId == Supersaw).InputValues[Freq].ShouldBe(110f);
     }
@@ -172,7 +172,7 @@ public class SupersawTests
     [Fact]
     public void The_preset_wires_both_outputs_to_the_speakers()
     {
-        var patch = PluginHost.Load().Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
+        var patch = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
         var sink = patch.Output;
 
         var left = patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
@@ -191,7 +191,7 @@ public class SupersawTests
     [Fact]
     public void The_preset_actually_makes_a_tone()
     {
-        var patch = PluginHost.Load().Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
+        var patch = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Supersaw").Build(Catalog);
         var program = patch.CompileForAudio(Catalog).Program;
         var registers = program.AllocateRegisters();
 

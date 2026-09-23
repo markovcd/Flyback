@@ -19,7 +19,7 @@ public class LayerTests
     private static readonly (float R, float G, float B) Base = (0.2f, 0.5f, 0.8f);
     private static readonly (float R, float G, float B) Top = (0.6f, 0.4f, 0.1f);
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_picture_plugin_offers_it_beside_the_colors()

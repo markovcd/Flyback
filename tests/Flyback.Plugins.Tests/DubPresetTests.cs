@@ -17,7 +17,7 @@ public class DubPresetTests
     private const int Rate = GlobalConstants.SampleRate;
     private const int Voices = 4;
 
-    private static readonly PluginCatalog Loaded = PluginHost.Load();
+    private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
     private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "Dub").Build(Loaded.Modules);
 

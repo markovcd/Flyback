@@ -22,7 +22,7 @@ public class DrumTests
 
     private const int Rate = 48_000;
 
-    private static readonly ModuleCatalog Catalog = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Catalog = ShippedPlugins.Loaded.Modules;
 
     [Fact]
     public void The_voice_plugin_offers_it_beside_the_oscillators()
