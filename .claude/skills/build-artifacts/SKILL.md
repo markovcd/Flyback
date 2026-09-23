@@ -15,14 +15,15 @@ unprompted whenever a feature lands on `main`, so the build of what landed is on
 
 The repo lives in ownCloud, and buildkit refuses the folder's placeholder files (`ERROR:
 invalid file request <path>`, naming a file that is not reliably the culprit). Copy the
-tracked tree out first, which hydrates every file on read, and point `--output` back at the
-repo:
+tracked tree out first, which hydrates every file on read, and point `--output` at the main
+checkout's `artifacts/`, which is where the user looks, whether the session is in a worktree
+or not:
 
 ```bash
-REPO="$(git rev-parse --show-toplevel)"
+MAIN="$(git rev-parse --path-format=absolute --git-common-dir)/.."
 TMP="$(mktemp -d)"
 git ls-files -z -co --exclude-standard | tar --null -cf - -T - | (cd "$TMP" && tar -xf -)
-cd "$TMP" && docker build --output "$REPO/artifacts" . > "$TMP/make.log" 2>&1; echo "exit $?"
+cd "$TMP" && docker build --output "$MAIN/artifacts" . > "$TMP/make.log" 2>&1; echo "exit $?"
 ```
 
 Run it from the worktree after `main` has been fast-forwarded, so the copy is the commit
