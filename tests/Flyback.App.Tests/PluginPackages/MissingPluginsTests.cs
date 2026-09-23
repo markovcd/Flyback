@@ -77,6 +77,25 @@ public sealed class MissingPluginsTests
         found.ShouldHaveSingleItem().Plugin.Name.ShouldBe("Ripples");
     }
 
+    /// <summary>
+    /// One start loads every plugin staged by then, so what is waiting counts as had and
+    /// only what is neither installed nor staged is still to come.
+    /// </summary>
+    [Fact]
+    public async Task What_is_still_to_install_counts_what_is_only_waiting_as_had()
+    {
+        using var fake = new FakePluginSite(
+            new Shared("a1", "Ripples", Assembly: "Flyback.Plugins.Ripples", Modules: ["ann.ripples.ring"]),
+            new Shared("b1", "Grain", Assembly: "Flyback.Plugins.Grain", Modules: ["bob.grain.noise"]));
+
+        var needed = (await fake.Site().SearchAsync(null, null, 1, CancellationToken.None)).Items;
+
+        MissingPlugins.StillNeeded(needed, []).ShouldBe(2);
+        MissingPlugins.StillNeeded(needed, ["Flyback.Plugins.Ripples"]).ShouldBe(1);
+        MissingPlugins.StillNeeded(needed, ["flyback.plugins.ripples", "Flyback.Plugins.Grain"]).ShouldBe(0);
+        MissingPlugins.StillNeeded(needed, ["Flyback.Plugins.Elsewhere"]).ShouldBe(2);
+    }
+
     [Fact]
     public async Task One_plugin_short_twice_over_is_offered_once()
     {

@@ -24,6 +24,12 @@ public sealed partial class MainWindow
     /// </summary>
     private Reopen? refused;
 
+    /// <summary>
+    /// What that patch was short of, so an install can say how many are still to come.
+    /// Empty at every other moment.
+    /// </summary>
+    private IReadOnlyList<SitePlugin> awaited = [];
+
     /// <summary>Where the gallery lists shared presets from and the plugins window shared plugins, or null for nowhere.</summary>
     private readonly Uri? presetSite;
 
@@ -63,7 +69,17 @@ public sealed partial class MainWindow
         var change = described is null ? PluginChange.Install : PluginChanges.Of(replacing?.Description, described);
 
         var removable = described is not null && installer?.Removal(described.Assembly) is null;
-        var view = PluginInstallView.View(package, platform, refusal, replacing, change, offerRestart: relaunch is not null, removable);
+
+        var awaiting = Awaiting(installer, described?.Assembly);
+
+        var view = PluginInstallView.View(
+            package, platform, refusal, replacing, change,
+            // Not offered while the patch is short of others: one start loads everything
+            // installed by then, and a restart before the last of them lands back on the
+            // same refusal with the window it was being installed from thrown away.
+            offerRestart: relaunch is not null && awaiting == 0,
+            removable,
+            awaiting);
         var answer = await this.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
 
         if (answer == PluginAnswer.Cancel) return null;
@@ -101,6 +117,23 @@ public sealed partial class MainWindow
         _ = hub.AskSiteAsync();
 
         await this.ShowDialog<object?>("Plugins", hub.View, hub.Header, fill: true);
+    }
+
+    /// <summary>
+    /// How many of what the patch was short of would still be missing after installing
+    /// <paramref name="installing"/> — counting one waiting for the next start as had,
+    /// since one start loads every plugin staged by then.
+    /// </summary>
+    private int Awaiting(PluginInstaller? installer, string? installing)
+    {
+        if (awaited.Count == 0 || installer is null) return 0;
+
+        var had = plugins.Plugins
+            .Select(plugin => Path.GetFileNameWithoutExtension(plugin.AssemblyPath))
+            .Concat(installer.Waiting().Select(waiting => waiting.Description.Assembly))
+            .Concat(installing is null ? [] : [installing]);
+
+        return MissingPlugins.StillNeeded(awaited, had);
     }
 
     /// <summary>Shared by every question put to the preset site, as an <see cref="HttpClient"/> is meant to be.</summary>

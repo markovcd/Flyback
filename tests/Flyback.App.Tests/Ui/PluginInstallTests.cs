@@ -150,6 +150,29 @@ public sealed class PluginInstallTests : UiTest
         Directory.Exists(Path.Combine(Plugins, PluginInstaller.PendingName, Packages.Folder)).ShouldBeTrue();
     }
 
+    /// <summary>
+    /// Restarting before the last of them lands back on the same refusal, so the offer is
+    /// off until there is nothing left to install.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_still_short_of_others_does_not_offer_the_restart_yet()
+    {
+        var package = PluginPackage.Read(Packages.For("win", "osx", "linux"));
+
+        // What the window itself does when the shell says there is no restart to offer yet.
+        var awaiting = Show(PluginInstallView.View(
+            package, "win", refusal: null, replacing: null, PluginChange.Install, offerRestart: false, awaiting: 2));
+
+        All<CheckBox>(awaiting).ShouldNotContain(c => c.Name == "restart", "no restart to tick while others are still to install");
+        All<TextBlock>(awaiting).ShouldContain(t => t.Name == "pluginAwaiting" && t.Text!.Contains("2 more plugins"));
+
+        var last = Show(PluginInstallView.View(
+            package, "win", refusal: null, replacing: null, PluginChange.Install, offerRestart: true));
+
+        All<CheckBox>(last).Single(c => c.Name == "restart").IsChecked.ShouldBe(true);
+        All<TextBlock>(last).ShouldNotContain(t => t.Name == "pluginAwaiting");
+    }
+
     [AvaloniaFact]
     public void Installing_with_restart_unticked_leaves_the_window_open()
     {

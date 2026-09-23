@@ -36,6 +36,7 @@ public sealed partial class MainWindow
         // Live only while that window is up: coming back from it is nothing having been
         // installed, or something having been that a restart was not asked for.
         refused = open;
+        awaited = found;
 
         try
         {
@@ -44,6 +45,7 @@ public sealed partial class MainWindow
         finally
         {
             refused = null;
+            awaited = [];
         }
     }
 }

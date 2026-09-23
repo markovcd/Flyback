@@ -43,6 +43,10 @@ internal static class PluginInstallView
     /// <param name="change">What installing does to <paramref name="replacing"/>.</param>
     /// <param name="offerRestart">Whether to offer starting Flyback again, which is what loads the plugin.</param>
     /// <param name="removable">Whether the plugin is installed and may be removed.</param>
+    /// <param name="awaiting">
+    /// How many more plugins the patch that asked for this one is still short of, which
+    /// is said here because it is why no restart is offered yet.
+    /// </param>
     public static Control View(
         PluginPackage package,
         string platform,
@@ -50,7 +54,8 @@ internal static class PluginInstallView
         InstalledPlugin? replacing,
         PluginChange change,
         bool offerRestart = false,
-        bool removable = false)
+        bool removable = false,
+        int awaiting = 0)
     {
         var page = new StackPanel { Name = "pluginInstall", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
 
@@ -127,6 +132,18 @@ internal static class PluginInstallView
             FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
+
+        if (awaiting > 0)
+        {
+            var waiting = Wrapped(
+                awaiting == 1
+                    ? "The patch needs one more plugin as well. Install it too, and the restart that loads both is offered then."
+                    : $"The patch needs {awaiting} more plugins as well. Install them too, and the restart that loads them all is offered then.",
+                Text.Body);
+
+            waiting.Name = "pluginAwaiting";
+            page.Children.Add(waiting);
+        }
 
         var install = new Button { Name = "install", Content = change.Verb(), MinWidth = 96, IsEnabled = refusal is null };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };

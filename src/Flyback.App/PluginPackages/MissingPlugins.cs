@@ -43,6 +43,18 @@ internal static class MissingPlugins
         return found;
     }
 
+    /// <summary>
+    /// How many of <paramref name="needed"/> are not among <paramref name="had"/>, by
+    /// assembly: what a patch would still be short of after the installs counted in
+    /// <paramref name="had"/>, which includes the ones only waiting for the next start.
+    /// </summary>
+    public static int StillNeeded(IEnumerable<SitePlugin> needed, IEnumerable<string> had)
+    {
+        var have = new HashSet<string>(had, StringComparer.OrdinalIgnoreCase);
+
+        return needed.Count(plugin => !have.Contains(plugin.Plugin.Assembly));
+    }
+
     /// <summary>A module in the patch that <paramref name="provider"/> is the plugin for, or null where none is left.</summary>
     public static string? ModuleOf(PatchLoad loaded, ModuleProvider provider) =>
         loaded.UnknownModules.FirstOrDefault(m => m.StartsWith(provider.Id + ".", StringComparison.OrdinalIgnoreCase));
