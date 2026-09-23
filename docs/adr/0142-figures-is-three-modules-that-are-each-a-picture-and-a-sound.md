@@ -28,7 +28,8 @@ pen's path is the drawing and the pen at pitch is the chord, from one ratio,
 one twist and one damping. Overtones reads whatever feeds `spectrum` along a
 row of the screen, one place per partial, as the heights of an additive tone,
 and draws the readings back as bars and a wave. Sand, the plugin's preset,
-shows each on its own knobs.
+is a song on all three: the plate plays the melody, the harmonograph the chords,
+Overtones the pad, and a second plate the kick.
 
 **A strike is kept in planes, and the clock in a plane is wrapped at sixteen
 seconds.** A plane write is clamped to ±16 like a cell's, so the clock cannot
@@ -58,8 +59,8 @@ what feeds it depends on the place is lowered that many times
 The count is a setting on the node, and the description says what each
 partial costs. Plate lowers its strike and its ring once however many places
 it is read at, so only where the place sits on the plate is paid per partial.
-A plate read by it in Sand is a four-mode twin of the nine-mode one on the
-screen, off the same strike.
+A plate read by it in Sand is a four-mode twin of the nine-mode melody plate
+on the screen, off the same strikes.
 
 **Each module wears an artwork of what it is**: a nodal figure with sand, a
 harmonograph drawing, a row of partials, as SVGs embedded in the assembly, one
@@ -77,7 +78,7 @@ labels read over them.
   a sixty-fourth of a second near the wrap.
 - Op counts, on the speakers: Plate at nine modes about 280, Harmonograph
   about 130, Overtones about forty a partial reading a four-mode plate. Sand
-  is about 1,100.
+  is about 1,800.
 - There is no Gherkin scenario: the specs project reaches only the engine.
   `PlateTests`, `HarmonographTests` and `OvertonesTests` state the
   requirements in their names.

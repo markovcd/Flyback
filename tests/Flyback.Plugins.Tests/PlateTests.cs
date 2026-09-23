@@ -207,8 +207,9 @@ public class PlateTests
     }
 
     /// <summary>
-    /// Sand as the editor plays it, its knobs live: two plates and a harmonograph,
-    /// eleven planes, however many partials read the plate Overtones hears.
+    /// Sand as the editor plays it, its knobs live: each plate and the harmonograph
+    /// keep their planes once, however many partials read the plate Overtones hears.
+    /// The kick is a third plate, heard and not seen.
     /// </summary>
     [Theory]
     [InlineData(true)]
@@ -221,7 +222,7 @@ public class PlateTests
             ? sand.CompileForAudio(Catalog, played: true).Program
             : sand.CompileForVideo(Catalog, played: true).Program;
 
-        program.PlaneCount.ShouldBe(3 + 3 + 5);
+        program.PlaneCount.ShouldBe(heard ? 3 + 3 + 3 + 5 : 3 + 3 + 5);
     }
 
     private static int Crossings(float[] samples)

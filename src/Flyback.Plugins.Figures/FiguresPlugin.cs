@@ -49,8 +49,8 @@ public sealed class FiguresPlugin : IFlybackPlugin
             new PatchPreset(
                 SandPreset.Name,
                 SandPreset.Build,
-                "A plate struck on the beat, its sand read as the overtones of a drone, and a "
-                + "harmonograph drawing a chord over it: the three Figures, each on its own knobs.",
+                "A song in D minor on the three Figures: the plate plays the melody and its sand "
+                + "dances to it, the harmonograph draws each chord, and the sand is the pad.",
                 PresetKind.Interplay),
         ]);
     }

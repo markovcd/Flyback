@@ -3,18 +3,20 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Figures;
 
 /// <summary>
-/// The three Figures, each doing the thing it is for, on its own knobs: a plate
-/// struck on the beat fills the screen with sand, a harmonograph draws a chord
-/// over it once a phrase, and the sand is read back as the overtones of a drone.
+/// A song in D minor played on the three Figures: the plate is the melody and its
+/// sand dances to it, the harmonograph draws each chord as it sounds it, and the
+/// sand is read back as the pad under both. A second plate is the kick.
 /// </summary>
 /// <remarks>
-/// Every sound is one module heard on its own and every region of the picture
-/// is one module's output, so what a knob does is seen and heard at once.
+/// Four chords a bar each, Dm, B♭, F and C, and a melody of thirty-two eighths over
+/// them. The harmonograph's two pendulums are two notes of the chord, so its ratio
+/// changes with the chord and every bar draws a different figure. The drums come in
+/// on the second time round and the hat on the third.
 /// <para>
 /// Overtones reads the plate's swing once per partial, so it reads a twin of the
-/// plate ringing its four lowest modes off the same strike rather than the
-/// nine-mode one on the screen: the same figure, coarser, at under half the cost
-/// a partial. Engine modules only besides the three, so the preset needs nothing
+/// melody plate ringing its four lowest modes off the same strikes: the same figure,
+/// coarser, at under half the cost a partial. Eight panel knobs, one per encoder on a
+/// Syntakt's page. Engine modules only besides the three, so the preset needs nothing
 /// but Figures.
 /// </para>
 /// </remarks>
@@ -22,104 +24,221 @@ internal static class SandPreset
 {
     public const string Name = "Sand";
 
-    private const int Beats = 84;
+    private const int Beats = 96;
+
+    /// <summary>A rest: a step with no gate, so nothing is struck.</summary>
+    private static Step Rest => new(0f, Volume: 0f);
+
+    private static readonly Step[] Melody =
+    [
+        // Dm
+        new(69f), Rest, new(72f), new(74f), Rest, new(77f), new(76f), new(74f),
+        // B♭
+        new(74f), Rest, new(70f), new(74f), Rest, new(77f), new(81f), new(77f),
+        // F
+        new(72f), Rest, new(77f), new(81f), Rest, new(79f), new(77f), new(72f),
+        // C
+        new(76f), Rest, new(79f), new(76f), new(72f), Rest, new(74f), Rest,
+    ];
+
+    /// <summary>How hard each eighth of a bar is struck: the downbeat, then the backbeat.</summary>
+    private static readonly Step[] Accents =
+        [.. new[] { 1f, 0.45f, 0.7f, 0.5f, 0.85f, 0.45f, 0.7f, 0.55f }.Select(v => new Step(v))];
+
+    private static readonly Step[] Roots = [new(38f), new(34f), new(41f), new(36f)];
+
+    /// <summary>The second pendulum against the first: a minor third, a major third, a fifth, a fourth.</summary>
+    private static readonly Step[] Ratios = [new(1.2f), new(1.25f), new(1.5f), new(4f / 3f)];
+
+    /// <summary>Two bars of kick in eighths, how hard in the value.</summary>
+    private static readonly Step[] Kicks =
+    [
+        new(1f), Rest, Rest, Rest, new(0.8f), Rest, Rest, new(0.6f),
+        new(1f), Rest, Rest, Rest, new(0.8f), Rest, new(0.7f), Rest,
+    ];
+
+    /// <summary>A beat of hat in sixteenths, the offbeat open.</summary>
+    private static readonly Step[] Hats =
+        [new(1f, Volume: 0.2f), new(1f, Volume: 0.35f), new(1f, Volume: 0.9f), new(1f, Volume: 0.35f)];
 
     public static Patch Build(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
 
+        var tone = b.Patch.AddControl("tone", 0.3f);
+        var shape = b.Patch.AddControl("shape", 0.3f);
+        var strike = b.Patch.AddControl("strike", 0.25f);
+        var ring = b.Patch.AddControl("ring", 0.35f);
+        var twist = b.Patch.AddControl("twist", 0.15f);
+        var row = b.Patch.AddControl("row", 0.5f);
+        var drums = b.Patch.AddControl("drums", 0.8f);
+        var space = b.Patch.AddControl("space", 0.5f);
+
         // --- the clock ----------------------------------------------------------
 
         var tempo = b.Add(NodeCatalog.TempoTypeId, (0, Beats));
 
-        // A strike every two beats. How hard, and where down the plate, drift on two
-        // slow sines, so no two strikes are alike.
-        var strikeRate = b.Add("math.mul", (1, 0.5f));
-        var strikes = b.Add(NodeCatalog.PulseTypeId, (3, 0.05f), (4, 0.5f), (5, 0.5f));
-        var force = b.Add(NodeCatalog.SineTypeId, (1, 0.11f), (3, 0.2f), (4, 0.75f));
+        // One step a progression, four bars: what comes in when.
+        var drumsIn = b.Add("seq.values", (1, 1f / 16f));
+        StepsExtra.Set(drumsIn, [new Step(0f), new Step(1f), new Step(1f), new Step(1f)]);
+
+        var hatsIn = b.Add("seq.values", (1, 1f / 16f));
+        StepsExtra.Set(hatsIn, [new Step(0f), new Step(0f), new Step(1f), new Step(1f)]);
+
+        b.Wire(tempo, 1, drumsIn, 0)
+         .Wire(tempo, 1, hatsIn, 0);
+
+        b.Group("Song", tempo, drumsIn, hatsIn);
+
+        // --- the melody ---------------------------------------------------------
+
+        var notes = b.Add("seq.notes", (1, 2f), (2, 0.6f));
+        StepsExtra.Set(notes, Melody);
+
+        var accents = b.Add("seq.values", (1, 2f));
+        StepsExtra.Set(accents, Accents);
+
+        // The pitch held from strike to strike, so a note ringing on is not retuned under it.
+        var pitch = b.Add("audio.note");
+        var held = b.Add(NodeCatalog.HoldTypeId);
+
+        // Where down the plate it is hit drifts on a slow sine, so no two strikes are alike.
         var strikeY = b.Add(NodeCatalog.SineTypeId, (1, 0.023f), (3, 0.3f), (4, 0.5f));
 
-        // A phrase is sixteen beats; the harmonograph is set swinging at the start of each.
-        var phraseRate = b.Add("math.mul", (1, 1f / 16f));
-        var phrases = b.Add("seq.values", (2, 0.05f));
-        StepsExtra.Set(phrases, [new Step(1f), new Step(0.8f), new Step(1f), new Step(0.6f)]);
+        var plate = b.Add(PlateModule.TypeId, (PlateModule.FreqPort, 440f));
+        Follows(plate, PlateModule.BrightnessPort, tone, 0f, 1f);
+        Follows(plate, PlateModule.AspectPort, shape, 1f, 2f);
+        Follows(plate, PlateModule.StrikeXPort, strike, 0.15f, 0.85f);
+        Follows(plate, PlateModule.DecayPort, ring, 0.3f, 4f);
 
-        b.Wire(tempo, 0, strikeRate, 0)
-         .Wire(strikeRate, 0, strikes, 1)
-         .Wire(tempo, 0, phraseRate, 0)
-         .Wire(phraseRate, 0, phrases, 1);
-
-        // --- the plate ----------------------------------------------------------
-
-        var strikeX = b.Patch.AddControl("strike x", 0.25f);
-        var aspect = b.Patch.AddControl("aspect", 0.3f);
-        var brightness = b.Patch.AddControl("brightness", 0.5f);
-
-        var plate = b.Add(PlateModule.TypeId, (PlateModule.FreqPort, 110f), (PlateModule.DecayPort, 3.5f));
-        Follows(plate, PlateModule.StrikeXPort, strikeX, 0.15f, 0.85f);
-        Follows(plate, PlateModule.AspectPort, aspect, 1f, 2f);
-        Follows(plate, PlateModule.BrightnessPort, brightness, 0f, 1f);
-
-        b.Wire(strikes, 0, plate, PlateModule.TriggerPort)
-         .Wire(force, 0, plate, PlateModule.VelocityPort)
+        b.Wire(tempo, 1, notes, 0)
+         .Wire(tempo, 1, accents, 0)
+         .Wire(notes, 0, pitch, 0)
+         .Wire(pitch, 0, held, 0)
+         .Wire(notes, 1, held, 1)
+         .Wire(held, 0, plate, PlateModule.FreqPort)
+         .Wire(notes, 1, plate, PlateModule.TriggerPort)
+         .Wire(accents, 0, plate, PlateModule.VelocityPort)
          .Wire(strikeY, 0, plate, PlateModule.StrikeYPort);
 
         // The same plate at four modes, for Overtones to read its swing off.
-        var heard = PlateModule.WithModes(
-            b.Add(PlateModule.TypeId, (PlateModule.FreqPort, 110f), (PlateModule.DecayPort, 3.5f)), 2);
-        Follows(heard, PlateModule.StrikeXPort, strikeX, 0.15f, 0.85f);
-        Follows(heard, PlateModule.AspectPort, aspect, 1f, 2f);
-        Follows(heard, PlateModule.BrightnessPort, brightness, 0f, 1f);
+        var heard = PlateModule.WithModes(b.Add(PlateModule.TypeId), 2);
+        Follows(heard, PlateModule.BrightnessPort, tone, 0f, 1f);
+        Follows(heard, PlateModule.AspectPort, shape, 1f, 2f);
+        Follows(heard, PlateModule.StrikeXPort, strike, 0.15f, 0.85f);
+        Follows(heard, PlateModule.DecayPort, ring, 0.3f, 4f);
 
-        b.Wire(strikes, 0, heard, PlateModule.TriggerPort)
-         .Wire(force, 0, heard, PlateModule.VelocityPort)
+        b.Wire(notes, 1, heard, PlateModule.TriggerPort)
+         .Wire(accents, 0, heard, PlateModule.VelocityPort)
          .Wire(strikeY, 0, heard, PlateModule.StrikeYPort);
 
-        b.Group("Plate", strikeRate, strikes, force, strikeY, plate, heard);
+        b.Group("Melody", notes, accents, pitch, held, strikeY, plate, heard);
 
-        // --- the harmonograph ---------------------------------------------------
+        // --- the chords ---------------------------------------------------------
 
-        var ratio = b.Patch.AddControl("ratio", 0.5f);
-        var twist = b.Patch.AddControl("twist", 0.15f);
+        // A bar a chord. The root and the ratio are held from one chord's strike to the next.
+        var roots = b.Add("seq.notes", (1, 0.25f), (2, 0.95f));
+        StepsExtra.Set(roots, Roots);
+
+        var ratios = b.Add("seq.values", (1, 0.25f));
+        StepsExtra.Set(ratios, Ratios);
+
+        // Two octaves up for the harmonograph, one down for the pad.
+        var chordPitch = b.Add("audio.note", (1, 2f));
+        var chordHeld = b.Add(NodeCatalog.HoldTypeId);
+        var ratioHeld = b.Add(NodeCatalog.HoldTypeId);
+        var padPitch = b.Add("audio.note");
 
         var harmonograph = b.Add(
             HarmonographModule.TypeId,
-            (HarmonographModule.SpeedPort, 0.35f),
-            (HarmonographModule.PitchPort, 220f),
-            (HarmonographModule.DampingPort, 12f),
-            (HarmonographModule.PersistPort, 0.85f),
+            (HarmonographModule.VelocityPort, 0.7f),
+            (HarmonographModule.SpeedPort, 0.8f),
+            (HarmonographModule.DampingPort, 3f),
+            (HarmonographModule.PersistPort, 0.6f),
             (HarmonographModule.SizePort, 0.85f));
-        Follows(harmonograph, HarmonographModule.RatioPort, ratio, 1f, 2f);
         Follows(harmonograph, HarmonographModule.TwistPort, twist, 0f, 1f);
 
-        b.Wire(phrases, 1, harmonograph, HarmonographModule.TriggerPort)
-         .Wire(phrases, 0, harmonograph, HarmonographModule.VelocityPort);
+        b.Wire(tempo, 1, roots, 0)
+         .Wire(tempo, 1, ratios, 0)
+         .Wire(roots, 0, chordPitch, 0)
+         .Wire(chordPitch, 0, chordHeld, 0)
+         .Wire(roots, 1, chordHeld, 1)
+         .Wire(ratios, 0, ratioHeld, 0)
+         .Wire(roots, 1, ratioHeld, 1)
+         .Wire(roots, 0, padPitch, 0)
+         .Wire(chordHeld, 0, harmonograph, HarmonographModule.PitchPort)
+         .Wire(ratioHeld, 0, harmonograph, HarmonographModule.RatioPort)
+         .Wire(roots, 1, harmonograph, HarmonographModule.TriggerPort);
 
-        b.Group("Harmonograph", phraseRate, phrases, harmonograph);
+        b.Group("Chords", roots, ratios, chordPitch, chordHeld, ratioHeld, padPitch, harmonograph);
 
-        // --- the overtones ------------------------------------------------------
+        // --- the pad ------------------------------------------------------------
 
-        var row = b.Patch.AddControl("row", 0.5f);
-        var sweep = b.Patch.AddControl("sweep", 0.6f);
-
-        // The row read slides up and down the figure; 'row' is its middle, 'sweep' how far it goes.
-        var reading = b.Add(NodeCatalog.SineTypeId, (1, 0.04f));
-        Follows(reading, 3, sweep, 0f, 0.4f);
+        // The row read slides up and down the figure around 'row'.
+        var reading = b.Add(NodeCatalog.SineTypeId, (1, 0.04f), (3, 0.25f));
         Follows(reading, 4, row, 0.1f, 0.9f);
 
         // The bars keep to a band along the bottom of the screen.
         var band = b.Add("math.remap", (1, -1f), (2, -0.6f), (3, -1f), (4, 1f));
         var coord = b.Add(NodeCatalog.CoordTypeId);
 
-        // A fifth below the plate.
-        var overtones = b.Add(OvertonesModule.TypeId, (OvertonesModule.FreqPort, 110f / 1.5f), (OvertonesModule.TiltPort, -3f));
+        var overtones = b.Add(OvertonesModule.TypeId, (OvertonesModule.TiltPort, -4f), (OvertonesModule.AmpPort, 0.8f));
 
-        b.Wire(reading, 0, overtones, OvertonesModule.RowPort)
+        b.Wire(padPitch, 0, overtones, OvertonesModule.FreqPort)
+         .Wire(reading, 0, overtones, OvertonesModule.RowPort)
          .Wire(heard, PlateModule.MotionPort, overtones, OvertonesModule.SpectrumPort)
          .Wire(coord, NodeCatalog.CoordYPort, band, 0)
          .Wire(band, 0, overtones, 7);
 
-        b.Group("Overtones", reading, band, coord, overtones);
+        b.Group("Pad", reading, band, coord, overtones);
+
+        // --- the drums ----------------------------------------------------------
+
+        // A plate struck dead center rings its lowest mode alone: a round, low thump.
+        var kicks = b.Add("seq.values", (1, 2f), (2, 0.3f));
+        StepsExtra.Set(kicks, Kicks);
+
+        var kickGate = b.Add("math.mul");
+        var kick = PlateModule.WithModes(b.Add(
+            PlateModule.TypeId,
+            (PlateModule.FreqPort, 50f),
+            (PlateModule.AspectPort, 1f),
+            (PlateModule.DecayPort, 0.3f),
+            (PlateModule.BrightnessPort, 0f),
+            (PlateModule.StrikeXPort, 0.5f),
+            (PlateModule.StrikeYPort, 0.5f)), 2);
+
+        // White noise above 7 kHz, opened for a moment on each sixteenth.
+        var hats = b.Add("seq.values", (1, 4f), (2, 0.25f), (3, 0.12f));
+        StepsExtra.Set(hats, Hats);
+
+        var hiss = b.Add(NodeCatalog.NoiseTypeId);
+        var bright = b.Add(NodeCatalog.FilterTypeId, (1, 7000f), (2, 0.1f));
+        var hatOpen = b.Add("math.mul");
+        var hat = b.Add("math.mul", (1, 0.25f));
+        var hatLevel = b.Add("math.mul");
+
+        var kit = b.Add("math.add");
+        var drumLevel = b.Add("math.mul");
+        Follows(drumLevel, 1, drums, 0f, 1f);
+
+        b.Wire(tempo, 1, kicks, 0)
+         .Wire(kicks, 1, kickGate, 0)
+         .Wire(drumsIn, 0, kickGate, 1)
+         .Wire(kickGate, 0, kick, PlateModule.TriggerPort)
+         .Wire(kicks, 0, kick, PlateModule.VelocityPort)
+         .Wire(tempo, 1, hats, 0)
+         .Wire(hiss, 0, bright, 0)
+         .Wire(bright, 2, hatOpen, 0)
+         .Wire(hats, 1, hatOpen, 1)
+         .Wire(hatOpen, 0, hat, 0)
+         .Wire(hat, 0, hatLevel, 0)
+         .Wire(hatsIn, 0, hatLevel, 1)
+         .Wire(kick, PlateModule.OutPort, kit, 0)
+         .Wire(hatLevel, 0, kit, 1)
+         .Wire(kit, 0, drumLevel, 0);
+
+        b.Group("Drums", kicks, kickGate, kick, hats, hiss, bright, hatOpen, hat, hatLevel, kit, drumLevel);
 
         // --- the picture --------------------------------------------------------
 
@@ -155,25 +274,32 @@ internal static class SandPreset
 
         // --- the sound ----------------------------------------------------------
 
-        // The plate dry at the front; the drone and the chord in a room behind it.
+        // The melody dry at the front, the drums under it, and everything but the
+        // drums in a room whose share is 'space'. The pad echoes on the dotted eighth.
+        var echo = b.Add(NodeCatalog.DelayTypeId, (1, 60f / Beats * 0.75f), (2, 0.35f), (3, 0.3f));
+        var sent = b.Add("math.add");
         var room = b.Add("math.add");
-        var reverb = b.Add(NodeCatalog.ReverbTypeId, (1, 0.7f), (2, 0.75f), (3, 1f));
-        var echo = b.Add(NodeCatalog.DelayTypeId, (1, 60f / Beats * 1.5f), (2, 0.4f), (3, 0.35f));
+        var reverb = b.Add(NodeCatalog.ReverbTypeId, (1, 0.75f), (2, 0.7f), (3, 1f));
 
-        var desk = b.Add(NodeCatalog.DeskTypeId, (2, 0.6f), (5, 0.55f), (8, 0.3f), (11, 0.28f), (14, 0.9f));
+        var desk = b.Add(NodeCatalog.DeskTypeId, (2, 0.5f), (5, 0.45f), (8, 0.35f), (14, 1.8f));
+        Follows(desk, 11, space, 0f, 0.6f);
 
         b.Wire(plate, PlateModule.OutPort, desk, 0)
+         .Wire(overtones, OvertonesModule.OutPort, echo, 0)
          .Wire(echo, 0, desk, 3)
          .Wire(harmonograph, HarmonographModule.LeftPort, desk, 6)
          .Wire(harmonograph, HarmonographModule.RightPort, desk, 7)
          .Wire(reverb, 0, desk, 9)
          .Wire(reverb, 1, desk, 10)
-         .Wire(overtones, OvertonesModule.OutPort, echo, 0)
-         .Wire(harmonograph, HarmonographModule.LeftPort, room, 0)
-         .Wire(overtones, OvertonesModule.OutPort, room, 1)
+         .Wire(drumLevel, 0, desk, 12)
+         .Wire(drumLevel, 0, desk, 13)
+         .Wire(plate, PlateModule.OutPort, sent, 0)
+         .Wire(harmonograph, HarmonographModule.LeftPort, sent, 1)
+         .Wire(sent, 0, room, 0)
+         .Wire(echo, 0, room, 1)
          .Wire(room, 0, reverb, 0);
 
-        b.Group("Mix", room, reverb, echo, desk);
+        b.Group("Mix", echo, sent, room, reverb, desk);
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.8f));
 
@@ -182,10 +308,11 @@ internal static class SandPreset
          .Wire(desk, 1, output, NodeCatalog.OutputRightPort);
 
         b.Patch.Describe(
-            "A plate struck every two beats fills the screen with sand, a harmonograph draws a chord over "
-            + "it once a phrase, and the sand is read back as the overtones of a drone. Turn the knobs: "
-            + "the strike point and the plate's shape change the figure and the ring together, the ratio "
-            + "changes the drawing and the chord together, and the row is where the drone reads the sand.");
+            "A song in D minor on the three Figures. The plate plays the melody and its sand dances "
+            + "to it, the harmonograph draws each chord as it sounds it, and the sand is read back as "
+            + "the pad under both; a second plate is the kick. 'tone', 'shape', 'strike' and 'ring' "
+            + "are the plate, 'twist' the drawing, 'row' where the pad reads the sand, and 'drums' "
+            + "and 'space' the mix.");
 
         return b.Build();
     }
