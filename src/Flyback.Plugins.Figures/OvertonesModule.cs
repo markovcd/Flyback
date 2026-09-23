@@ -29,6 +29,7 @@ internal static class OvertonesModule
     public const int RowPort = 3;
     public const int TiltPort = 4;
     public const int AmpPort = 5;
+    public const int YPort = 7;
 
     public const int OutPort = 0;
     public const int BarsPort = 1;
@@ -90,6 +91,21 @@ internal static class OvertonesModule
 
         public override string Report(NodeInstance node) =>
             $"It reads {Partials(new ExtraState(Fields, node.StateOf(StateKey)))} partials.";
+    }
+
+    /// <summary>
+    /// Sets how many partials an instance reads, for a preset assembling one in code:
+    /// what the inspector does when somebody picks from the list.
+    /// </summary>
+    public static NodeInstance WithPartials(NodeInstance node, int count)
+    {
+        var extra = Definition.Extra<PartialsExtra>() ?? new PartialsExtra();
+        var held = extra.Stored(node.StateOf(extra.Key));
+
+        held[PartialsExtra.CountKey] = System.Text.Json.Nodes.JsonValue.Create(count.ToString());
+        node.SetState(extra.Key, held);
+
+        return node;
     }
 
     /// <summary>The count this instance carries, held to what the module can build.</summary>

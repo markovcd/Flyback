@@ -79,7 +79,7 @@ labels read over them.
   a sixty-fourth of a second near the wrap.
 - Op counts, on the speakers: Plate at nine modes about 280, Harmonograph
   about 130, Overtones about fifteen a partial besides what it reads. Vigil
-  is about 1,900, a Noise3 of fog in each of its 32 partials.
+  is about 2,150, a Noise3 of fog in each of its 40 partials.
 - There is no Gherkin scenario: the specs project reaches only the engine.
   `PlateTests`, `HarmonographTests` and `OvertonesTests` state the
   requirements in their names.

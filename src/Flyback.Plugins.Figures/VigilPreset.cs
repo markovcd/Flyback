@@ -16,8 +16,9 @@ namespace Flyback.Plugins.Figures;
 /// formula of the clock, so the picture keeps the same sections as the sound.
 /// <para>
 /// The fog is one Clouds field: the screen draws it, and the voices read rows of it as
-/// their partials, so the drone's timbre is the fog drifting. Engine modules only
-/// besides the three.
+/// their partials, so the drone's timbre is the fog drifting. The screen lights the rows
+/// they read and draws their waves along them, and tints the fog by the chord. Engine
+/// modules only besides the three.
 /// </para>
 /// </remarks>
 internal static class VigilPreset
@@ -82,13 +83,14 @@ internal static class VigilPreset
 
         // --- the drone ----------------------------------------------------------
 
-        var (bass, bassLane) = Voice(b, Bass, "Bass", wisps, deep, cents: 0f, glide: 0.8f, tilt: -3f);
-        var (low, _) = Voice(b, Low, "Low", wisps, shallow, cents: 5f, glide: 0.6f, tilt: -6f);
-        var (middle, _) = Voice(b, Middle, "Middle", wisps, shallow, cents: -4f, glide: 0.65f, tilt: -6f);
-        var (high, _) = Voice(b, High, "High", wisps, shallow, cents: 3f, glide: 0.7f, tilt: -7.5f);
+        // The bass takes sixteen partials to reach up into the filter's range; the chord's eight already do.
+        var (bass, bassLane) = Voice(b, Bass, "Bass", wisps, deep, cents: 0f, glide: 0.8f, tilt: -3f, partials: 16);
+        var (low, _) = Voice(b, Low, "Low", wisps, shallow, cents: 5f, glide: 0.6f, tilt: -6f, partials: 8);
+        var (middle, _) = Voice(b, Middle, "Middle", wisps, shallow, cents: -4f, glide: 0.65f, tilt: -6f, partials: 8);
+        var (high, _) = Voice(b, High, "High", wisps, shallow, cents: 3f, glide: 0.7f, tilt: -7.5f, partials: 8);
 
         // The bass is there from the first breath; the chord above it comes up with the middle.
-        var bassLevel = Formula(b, "a * 0.9", (swell, 0));
+        var bassLevel = Formula(b, "a", (swell, 0));
         var upperLevel = Formula(b, "a * (0.12 + 0.4 * b)", (swell, 0), (lift, 0));
 
         b.Wire(bassLevel, 0, bass, OvertonesModule.AmpPort)
@@ -160,9 +162,6 @@ internal static class VigilPreset
         var bells = Formula(b, "step((a + 30) % 110, 0.4) + step(10, (a + 30) % 110) * step((a + 30) % 110, 10.4) * step(a, 305)", (place, 0));
         var bellPitch = Formula(b, "1046.5 + 128.16 * step(10, (a + 30) % 110)", (place, 0));
 
-        // A slow rise and fall after each strike, for how long the bell's figure shows.
-        var shown = Formula(b, "smoothstep(0, 3, (a + 30) % 10) * (1 - smoothstep(4, 10, (a + 30) % 10)) * step((a + 30) % 110, 20) * (1 - step(305, a) * step(10, (a + 30) % 110))", (place, 0));
-
         var bell = b.Add(
             PlateModule.TypeId,
             (PlateModule.VelocityPort, 0.8f),
@@ -178,7 +177,7 @@ internal static class VigilPreset
         b.Wire(bellPitch, 0, bell, PlateModule.FreqPort)
          .Wire(bells, 0, bell, PlateModule.TriggerPort);
 
-        b.Group("Bell", bells, bellPitch, shown, bell);
+        b.Group("Bell", bells, bellPitch, bell);
 
         // --- the dark -----------------------------------------------------------
 
@@ -192,7 +191,7 @@ internal static class VigilPreset
             (PlateModule.DecayPort, 7f),
             (PlateModule.BrightnessPort, 0.9f),
             (PlateModule.StrikeXPort, 0.21f),
-            (PlateModule.StrikeYPort, 0.34f)), 2);
+            (PlateModule.StrikeYPort, 0.34f)), 3);
         var groan = b.Add(NodeCatalog.DriveTypeId, (1, 3f));
 
         b.Wire(knells, 0, knell, PlateModule.TriggerPort)
@@ -231,33 +230,101 @@ internal static class VigilPreset
 
         // --- the picture --------------------------------------------------------
 
-        // Indigo mist, black at the start and the end.
-        var mist = Formula(b, "a * b * 0.3", (wisps, 0), (swell, 0));
-        var dusk = b.Add("color.hsv", (0, 0.69f), (1, 0.65f));
+        var here = b.Add(NodeCatalog.CoordTypeId);
 
-        // The bass's wave laid across it in a dull ember.
-        var ember = Formula(b, "a * b * 0.2", (bass, OvertonesModule.WavePort), (swell, 0));
-        var embers = b.Add("color.ink", (2, 0.55f), (3, 0.09f), (4, 0.05f));
+        // Each chord its own hue, turned over the voices' glide: D indigo, E♭ violet, A a cold blue, A♭ plum.
+        var turn = Formula(b, $"a % {4 * Chord}", (time, 0));
+        var hue = Formula(b, "0.83 - 0.15 * smoothstep(0, 2.5, a) + 0.07 * smoothstep(16, 18.5, a) - 0.17 * smoothstep(32, 34.5, a) + 0.25 * smoothstep(48, 50.5, a)", (turn, 0));
 
-        // The chords' drawing, in bone.
-        var bone = b.Add("color.ink", (1, 0.8f), (2, 0.86f), (3, 0.82f), (4, 0.74f));
+        // The mist, its thick parts leaning to the next hue and paling, black at the start and the end.
+        var mist = Formula(b, "a * (0.4 + 0.6 * a) * b * 0.36", (wisps, 0), (swell, 0));
+        var tint = Formula(b, "a + 0.05 * b", (hue, 0), (wisps, 0));
+        var pale = Formula(b, "0.8 - 0.4 * a", (wisps, 0));
+        var dusk = b.Add("color.hsv");
 
-        // The bell lights the hall while it rings: cold light where it swings and where its sand is thrown.
-        var ringing = Formula(b, "(0.6 * a + 0.35 * (1 - b)) * c", (bell, PlateModule.MotionPort), (bell, PlateModule.FigurePort), (shown, 0));
-        var cold = b.Add("color.ink", (2, 0.62f), (3, 0.74f), (4, 0.95f));
+        // Far behind it, a slower fog in cold blue.
+        var farX = Formula(b, "a * 0.55 + b * 0.012", (here, 0), (time, 0));
+        var farY = Formula(b, "a * 0.55", (here, NodeCatalog.CoordYPort));
+        var farZ = Formula(b, "a * 0.009 + 7", (time, 0));
+        var depths = b.Add(NodeCatalog.CloudsTypeId, (3, 1.2f));
+        var depth = Formula(b, "smoothstep(0.3, 0.9, a) * b * 0.3", (depths, 0), (swell, 0));
+        var behind = b.Add("color.ink", (2, 0.16f), (3, 0.3f), (4, 0.62f));
 
-        var corners = b.Add("color.vignette", (3, 0.55f), (4, 1.6f), (5, 0.9f));
+        // Where the voices listen: each row lit where the fog is heard, and the voice's wave drawn along it.
+        var deepAt = Formula(b, "a - (1 - 2 * b)", (here, NodeCatalog.CoordYPort), (deep, 0));
+        var shallowAt = Formula(b, "a - (1 - 2 * b)", (here, NodeCatalog.CoordYPort), (shallow, 0));
+        var deepRow = Formula(b, "exp(-a * a * 3000) * (0.2 + b) * c * 0.35", (deepAt, 0), (wisps, 0), (swell, 0));
+        var shallowRow = Formula(b, "exp(-a * a * 3000) * (0.2 + b) * c * 0.3", (shallowAt, 0), (wisps, 0), (upperLevel, 0));
+        var rows = Formula(b, "a + b", (deepRow, 0), (shallowRow, 0));
+        var listening = b.Add("color.ink", (2, 0.5f), (3, 0.62f), (4, 0.9f));
 
-        b.Wire(mist, 0, dusk, 2)
-         .Wire(dusk, 0, embers, 0)
+        var ember = Formula(b, "a * b * 0.3", (bass, OvertonesModule.WavePort), (swell, 0));
+        var embers = b.Add("color.ink", (2, 0.85f), (3, 0.22f), (4, 0.08f));
+        var chant = Formula(b, "a * b * 0.4", (middle, OvertonesModule.WavePort), (upperLevel, 0));
+        var chants = b.Add("color.ink", (2, 0.75f), (3, 0.55f), (4, 0.3f));
+
+        b.Wire(deepAt, 0, bass, OvertonesModule.YPort)
+         .Wire(shallowAt, 0, middle, OvertonesModule.YPort);
+
+        // The chords' drawing: amber where the ink is fading, near white where it is fresh.
+        var amber = b.Add("color.ink", (2, 0.95f), (3, 0.55f), (4, 0.25f));
+        var fresh = Formula(b, "smoothstep(0.5, 1, a) * 0.6", (pendulums, HarmonographModule.FigurePort));
+        var bone = b.Add("color.ink", (2, 1f), (3, 0.95f), (4, 0.85f));
+
+        // The bell lights the hall where its sand is thrown: a flash at the strike, closing in as the sand settles.
+        var ringing = Formula(b, "(1 - a) * smoothstep(1.1, 0.3, hypot(b * 0.56, c)) * 0.4", (bell, PlateModule.FigurePort), (here, 0), (here, NodeCatalog.CoordYPort));
+        var cold = b.Add("color.ink", (2, 0.3f), (3, 0.55f), (4, 1f));
+
+        // Each knell a red swell from the floor, and a ring rising through the dark from below.
+        var knellAge = Formula(b, "((a + 16) % 64) * step(100, a) + 64 * step(250, a) + 64 * step(a, 100)", (place, 0));
+        var rising = Formula(
+            b,
+            "smoothstep(0, 0.2, a) * (exp(-a * 0.5) * smoothstep(0.2, -1.1, c) * 0.6 + exp(-a * 0.3) * exp(-pow((hypot(b, c + 1.3) - 0.3 - a * 0.28) * 9, 2)) * 0.45)",
+            (knellAge, 0), (here, 0), (here, NodeCatalog.CoordYPort));
+        var blood = b.Add("color.ink", (2, 0.62f), (3, 0.09f), (4, 0.05f));
+
+        // Bloom: the last frame softened and laid over as light; then the trails drift out into the hall.
+        var soft = b.Add("feedback.blur", (3, 0.018f));
+        var bloom = b.Add("color.gain", (1, 0.28f));
+        var drift = Formula(b, "0.004 * sin(a * 0.05)", (time, 0));
+        var linger = Formula(b, "0.8 + 0.14 * a", (lift, 0));
+        var trails = b.Add("feedback.trails", (3, 0.995f));
+
+        var corners = b.Add("color.vignette", (3, 0.5f), (4, 1.6f), (5, 0.92f));
+
+        b.Wire(tint, 0, dusk, 0)
+         .Wire(pale, 0, dusk, 1)
+         .Wire(mist, 0, dusk, 2)
+         .Wire(farX, 0, depths, 0)
+         .Wire(farY, 0, depths, 1)
+         .Wire(farZ, 0, depths, 2)
+         .Wire(dusk, 0, behind, 0)
+         .Wire(depth, 0, behind, 1)
+         .Wire(behind, 0, listening, 0)
+         .Wire(rows, 0, listening, 1)
+         .Wire(listening, 0, embers, 0)
          .Wire(ember, 0, embers, 1)
-         .Wire(embers, 0, bone, 0)
-         .Wire(pendulums, HarmonographModule.FigurePort, bone, 1)
+         .Wire(embers, 0, chants, 0)
+         .Wire(chant, 0, chants, 1)
+         .Wire(chants, 0, amber, 0)
+         .Wire(pendulums, HarmonographModule.FigurePort, amber, 1)
+         .Wire(amber, 0, bone, 0)
+         .Wire(fresh, 0, bone, 1)
          .Wire(bone, 0, cold, 0)
          .Wire(ringing, 0, cold, 1)
-         .Wire(cold, 0, corners, 0);
+         .Wire(cold, 0, blood, 0)
+         .Wire(rising, 0, blood, 1)
+         .Wire(soft, 1, bloom, 0)
+         .Wire(blood, 0, bloom, 2)
+         .Wire(bloom, 0, trails, 0)
+         .Wire(drift, 0, trails, 4)
+         .Wire(linger, 0, trails, 7)
+         .Wire(trails, 0, corners, 0);
 
-        b.Group("Picture", mist, dusk, ember, embers, bone, ringing, cold, corners);
+        b.Group("Picture", here, turn, hue, mist, tint, pale, dusk, farX, farY, farZ, depths, depth, behind,
+            deepAt, shallowAt, deepRow, shallowRow, rows, listening, ember, embers, chant, chants,
+            amber, fresh, bone, ringing, cold, knellAge, rising, blood,
+            soft, bloom, drift, linger, trails, corners);
 
         // --- the sound ----------------------------------------------------------
 
@@ -306,11 +373,11 @@ internal static class VigilPreset
     }
 
     /// <summary>
-    /// One drone voice: a chord lane gliding into eight partials read off a row of the fog.
+    /// One drone voice: a chord lane gliding into partials read off a row of the fog.
     /// </summary>
     private static (NodeInstance Voice, NodeInstance Lane) Voice(
         PatchBuilder b, Step[] notes, string name, NodeInstance fog, NodeInstance row,
-        float cents, float glide, float tilt)
+        float cents, float glide, float tilt, int partials)
     {
         var lane = b.Add("seq.notes", (1, 1f / Chord), (2, 1f));
         StepsExtra.Set(lane, notes);
@@ -318,7 +385,7 @@ internal static class VigilPreset
         var pitch = b.Add("audio.note", (2, cents));
         var slide = b.Add(NodeCatalog.SlewTypeId, (1, glide), (2, glide));
 
-        var voice = b.Add(OvertonesModule.TypeId, (OvertonesModule.TiltPort, tilt));
+        var voice = OvertonesModule.WithPartials(b.Add(OvertonesModule.TypeId, (OvertonesModule.TiltPort, tilt)), partials);
 
         b.Wire(lane, 0, pitch, 0)
          .Wire(pitch, 0, slide, 0)
