@@ -11,8 +11,18 @@ public sealed partial class MainWindow
     /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
     private readonly string? pluginFolder;
 
-    /// <summary>Starts Flyback again once this window has closed, or null where a restart is not offered.</summary>
-    private readonly Action? relaunch;
+    /// <summary>
+    /// Starts Flyback again once this window has closed, with a patch for it to open,
+    /// or null where a restart is not offered.
+    /// </summary>
+    private readonly Action<Reopen?>? relaunch;
+
+    /// <summary>
+    /// The patch the plugins window was opened for, which a restart from inside it opens
+    /// again — by then Flyback has the plugin it was refused for. Null at every other
+    /// moment, so installing something unrelated reopens nothing.
+    /// </summary>
+    private Reopen? refused;
 
     /// <summary>Where the gallery lists shared presets from and the plugins window shared plugins, or null for nowhere.</summary>
     private readonly Uri? presetSite;
@@ -248,7 +258,7 @@ public sealed partial class MainWindow
     {
         if (TakeInHand || !await MayReplaceThePatchAsync()) return false;
 
-        relaunch!();
+        relaunch!(refused);
 
         leaving = true;
         Close();

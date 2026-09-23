@@ -521,6 +521,7 @@ public sealed partial class MainWindow : Window
     public MainWindow(
         string? groupFolder = null,
         string? openPath = null,
+        string? openShared = null,
         string? outputSettingsPath = null,
         bool interpreted = false,
         string? updateSettingsPath = null,
@@ -536,13 +537,14 @@ public sealed partial class MainWindow : Window
         string? fileTypeSettingsPath = null,
         FileTypes? fileTypes = null,
         string? pluginFolder = null,
-        Action? relaunch = null,
+        Action<Reopen?>? relaunch = null,
         Uri? presetSite = null)
     {
         this.groupFolder = groupFolder;
         this.pluginFolder = pluginFolder;
         this.relaunch = relaunch;
         this.presetSite = presetSite;
+        this.openShared = openShared;
 
         // Before the layout, because the toolbar lists what is saved.
         if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
@@ -736,6 +738,8 @@ public sealed partial class MainWindow : Window
             // A plugin package replaces nothing, so it asks about nothing unsaved.
             if (openPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
                 await OpenPathAsync(path);
+
+            if (openShared is { Length: > 0 } id) await OpenSharedAgainAsync(id);
         };
     }
 

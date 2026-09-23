@@ -7,6 +7,7 @@ using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
+using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 
@@ -64,6 +65,30 @@ public sealed class SitePresetTests : UiTest
         patch.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 100, 100));
 
         return System.Text.Encoding.UTF8.GetBytes(PatchIO.ToJson(patch));
+    }
+
+    /// <summary>
+    /// How a preset opened from the site is found again after a restart, which is what
+    /// installing a plugin it needed costs.
+    /// </summary>
+    [Fact]
+    public async Task One_shared_preset_is_found_by_its_id()
+    {
+        using var site = new FakePresetSite(new Posted("a1", "Nebula", Author: "Ann"), new Posted("b1", "Drift"));
+
+        var found = await site.Site().FindAsync("a1", CancellationToken.None);
+
+        found.ShouldNotBeNull().Name.ShouldBe("Nebula");
+        found.Author.ShouldBe("Ann");
+        site.Asked.ShouldHaveSingleItem().AbsolutePath.ShouldBe("/api/v1/presets/a1");
+    }
+
+    [Fact]
+    public async Task A_preset_the_site_no_longer_has_is_not_found()
+    {
+        using var site = new FakePresetSite(new Posted("a1", "Nebula"));
+
+        (await site.Site().FindAsync("gone", CancellationToken.None)).ShouldBeNull();
     }
 
     [AvaloniaFact]

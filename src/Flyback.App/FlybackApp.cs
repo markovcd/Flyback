@@ -70,6 +70,7 @@ public sealed class FlybackApp : Application
 
             var window = new MainWindow(
                 openPath: Startup.OpenPath,
+                openShared: Startup.OpenShared,
                 outputSettingsPath: OutputSettings.File,
                 updateSettingsPath: UpdateSettings.File,
                 interpreted: Startup.Interpreted,

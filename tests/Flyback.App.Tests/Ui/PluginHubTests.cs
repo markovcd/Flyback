@@ -99,9 +99,9 @@ public sealed class PluginHubTests : UiTest
 
     private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-    /// <summary>What a patch was short of, which one search box could not ask for.</summary>
+    /// <summary>What a patch was short of gets a section of its own, above everything.</summary>
     [AvaloniaFact]
-    public async Task The_plugins_a_patch_needs_are_listed_first_and_said_to_be_why()
+    public async Task The_plugins_a_patch_needs_have_a_section_of_their_own()
     {
         using var site = new FakePluginSite(new Shared("r1", "Ripple"), new Shared("s1", "Shimmer"), new Shared("t1", "Tape"));
 
@@ -110,16 +110,29 @@ public sealed class PluginHubTests : UiTest
 
         var (hub, window) = Open(site, needed: needed);
 
-        Names(hub.View, "sitePlugins").ShouldBe(["Shimmer", "Tape", "Ripple"], "the two wanted first, each once");
-        // The notice is in the header, which stays put while the lists scroll.
-        All<TextBlock>(hub.Header).Single(t => t.Name == "pluginNotice").Text
-            .ShouldBe("Shimmer and Tape are the plugins the patch needs, listed first.");
+        Names(hub.View, "neededPlugins").ShouldBe(["Shimmer", "Tape"], "in the order the patch names them");
+        All<TextBlock>(hub.View).Single(t => t.Name == "neededHeading").Text.ShouldBe("THIS PATCH NEEDS 2");
 
-        // Typing is asking for something else, so the two stop being pinned.
+        // The site's own list is left as the site gave it.
+        Names(hub.View, "sitePlugins").ShouldBe(["Ripple", "Shimmer", "Tape"]);
+
+        // Searching narrows the site's list and leaves the section alone: it is what the
+        // patch needs, not what was looked for.
         hub.Search.Text = "Ripple";
         Pump(() => Names(hub.View, "sitePlugins").Count() == 1, window);
 
         Names(hub.View, "sitePlugins").ShouldBe(["Ripple"]);
+        Names(hub.View, "neededPlugins").ShouldBe(["Shimmer", "Tape"]);
+    }
+
+    [AvaloniaFact]
+    public void A_patch_short_of_nothing_gets_no_section()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        var (hub, _) = Open(site);
+
+        All<TextBlock>(hub.View).ShouldNotContain(t => t.Name == "neededHeading");
+        All<StackPanel>(hub.View).Single(p => p.Name == "neededPlugins").Children.ShouldBeEmpty();
     }
 
     [AvaloniaFact]

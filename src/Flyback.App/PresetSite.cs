@@ -52,6 +52,22 @@ internal sealed class PresetSite(HttpClient http, Uri root)
         return Read(document.RootElement, Root);
     }
 
+    /// <summary>
+    /// The one preset that id names, or null where the site does not have it. This is how
+    /// a preset opened from the site is found again after a restart, which is what
+    /// installing the plugin it needed costs.
+    /// </summary>
+    public async Task<SitePreset?> FindAsync(string id, CancellationToken cancel)
+    {
+        using var response = await http.GetAsync(new Uri(Root, "api/v1/presets/" + Uri.EscapeDataString(id)), cancel);
+
+        if (!response.IsSuccessStatusCode) return null;
+
+        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancel), cancellationToken: cancel);
+
+        return One(document.RootElement, Root);
+    }
+
     /// <summary>The preset's file, as it was shared.</summary>
     public Task<byte[]> DownloadAsync(SitePreset preset, CancellationToken cancel) =>
         http.GetByteArrayAsync(preset.File, cancel);
@@ -84,32 +100,38 @@ internal sealed class PresetSite(HttpClient http, Uri root)
         {
             foreach (var item in listed.EnumerateArray())
             {
-                if (Text(item, "id") is not { Length: > 0 } id
-                    || Text(item, "name") is not { Length: > 0 } name
-                    || Text(item, "file") is not { } file
-                    || !Uri.TryCreate(root, file, out var fileUri))
-                    continue;
-
-                var still = item.TryGetProperty("media", out var media) && Text(media, "still") is { } path && Uri.TryCreate(root, path, out var stillUri)
-                    ? stillUri
-                    : null;
-
-                items.Add(new SitePreset(
-                    id,
-                    name,
-                    Text(item, "author") ?? string.Empty,
-                    Text(item, "description") ?? string.Empty,
-                    item.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array
-                        ? [.. tags.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!)]
-                        : [],
-                    Text(item, "fileName") ?? string.Empty,
-                    fileUri,
-                    still,
-                    SiteRating.Read(item)));
+                if (One(item, root) is { } preset) items.Add(preset);
             }
         }
 
         return new SitePresetPage(items, Number(found, "total"), Math.Max(1, Number(found, "page")), Math.Max(1, Number(found, "pageSize")));
+    }
+
+    /// <summary>One listed preset, or null where it is missing its id, name or file.</summary>
+    internal static SitePreset? One(JsonElement item, Uri root)
+    {
+        if (Text(item, "id") is not { Length: > 0 } id
+            || Text(item, "name") is not { Length: > 0 } name
+            || Text(item, "file") is not { } file
+            || !Uri.TryCreate(root, file, out var fileUri))
+            return null;
+
+        var still = item.TryGetProperty("media", out var media) && Text(media, "still") is { } path && Uri.TryCreate(root, path, out var stillUri)
+            ? stillUri
+            : null;
+
+        return new SitePreset(
+            id,
+            name,
+            Text(item, "author") ?? string.Empty,
+            Text(item, "description") ?? string.Empty,
+            item.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Array
+                ? [.. tags.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.String).Select(t => t.GetString()!)]
+                : [],
+            Text(item, "fileName") ?? string.Empty,
+            fileUri,
+            still,
+            SiteRating.Read(item));
     }
 
     private static string? Text(JsonElement item, string name) =>

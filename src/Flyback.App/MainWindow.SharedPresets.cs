@@ -12,6 +12,40 @@ public sealed partial class MainWindow
     /// <summary>What the gallery asks for shared presets, or null where this window has no site.</summary>
     private PresetSite? PresetSite() => presetSite is null ? null : new PresetSite(SiteHttp ?? SiteClient.Value, presetSite);
 
+    /// <summary>The shared preset this launch was told to open again, or null.</summary>
+    private readonly string? openShared;
+
+    /// <summary>
+    /// Opens the shared preset a restart was carrying, found on the site again by its id.
+    /// Silent where the site no longer has it or cannot be reached: nothing was lost that
+    /// the gallery cannot be asked for again.
+    /// </summary>
+    private async Task OpenSharedAgainAsync(string id)
+    {
+        if (PresetSite() is not { } site) return;
+
+        SitePreset? shared;
+
+        try
+        {
+            using var cancel = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+            shared = await site.FindAsync(id, cancel.Token);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
+        {
+            shared = null;
+        }
+
+        if (shared is null)
+        {
+            Report("The preset this was restarted for could not be fetched from the preset site again.");
+            return;
+        }
+
+        await OpenSharedPresetAsync(shared);
+    }
+
     /// <summary>
     /// Downloads a shared preset and opens it as a document named after it, with no
     /// folder of its own, as a preset is. Asks about unsaved work first.
@@ -46,7 +80,7 @@ public sealed partial class MainWindow
                 if (bundle.Load is { IsComplete: false } lacking)
                 {
                     Report($"Not opened. {lacking.Summary}", lacking.Detail);
-                    await OfferMissingPluginsAsync(lacking);
+                    await OfferMissingPluginsAsync(lacking, new Reopen(Shared: shared.Id));
                     return;
                 }
 
@@ -61,7 +95,7 @@ public sealed partial class MainWindow
                 if (!loaded.IsComplete)
                 {
                     Report($"Not opened. {loaded.Summary}", loaded.Detail);
-                    await OfferMissingPluginsAsync(loaded);
+                    await OfferMissingPluginsAsync(loaded, new Reopen(Shared: shared.Id));
                     return;
                 }
 

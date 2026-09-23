@@ -47,8 +47,10 @@ internal sealed class PluginHub : IDisposable
     private readonly Func<SitePlugin, Task<string?>> install;
     private readonly Func<HubInstalled, Task<string?>>? show;
 
-    /// <summary>What a patch was short of, shown first until the search box is typed in.</summary>
+    /// <summary>What a patch was short of, listed in a section of its own above everything.</summary>
     private readonly IReadOnlyList<SitePlugin> needed;
+
+    private readonly StackPanel neededRows = new() { Name = "neededPlugins", Spacing = 6 };
 
     /// <summary>The site plugins being downloaded, whose rows say so.</summary>
     private readonly HashSet<string> fetching = [];
@@ -92,9 +94,9 @@ internal sealed class PluginHub : IDisposable
     /// <param name="install">Downloads and installs a site plugin, asking first, and says how that went, or null where nothing was done.</param>
     /// <param name="show">Shows what an installed plugin is, when its row is clicked, and says what became of it, or null where nothing did.</param>
     /// <param name="needed">
-    /// Plugins to put at the top of the site's list and say why: what a patch was
-    /// short of (ADR-0135). One search box cannot ask for two plugins at once — every
-    /// word of it has to match — so they are pinned rather than searched for.
+    /// What a patch was short of (ADR-0135), which gets a section of its own above
+    /// everything else. One search box cannot ask for two plugins at once — every word
+    /// of it has to match — and the search is the user's anyway.
     /// </param>
     public PluginHub(
         PluginSite? site,
@@ -137,6 +139,8 @@ internal sealed class PluginHub : IDisposable
 
         more.Click += (_, _) => _ = AskAsync(fresh: false);
 
+        foreach (var plugin in this.needed) neededRows.Children.Add(SiteRow(plugin));
+
         Header = new StackPanel { Children = { Search, filters, notice } };
 
         View = new StackPanel
@@ -147,6 +151,8 @@ internal sealed class PluginHub : IDisposable
             Margin = new Thickness(16, 0, 16, 16),
             Children =
             {
+                NeededHeading(),
+                neededRows,
                 Heading("INSTALLED"),
                 installedStatus,
                 installedRows,
@@ -191,9 +197,6 @@ internal sealed class PluginHub : IDisposable
 
     /// <summary>Asks the site for the first page of what matches.</summary>
     public Task AskSiteAsync() => AskAsync(fresh: true);
-
-    /// <summary>Whether the list is still the one the patch was opened for: nothing typed, no tag picked.</summary>
-    private bool Pinning => needed.Count > 0 && string.IsNullOrWhiteSpace(Search.Text) && tag is null;
 
     /// <summary>Reads what is installed again, and says so on the site's plugins.</summary>
     public async Task RereadAsync()
@@ -288,24 +291,9 @@ internal sealed class PluginHub : IDisposable
 
         if (fresh) listed.Clear();
 
-        // What the patch wanted stays at the top of an unnarrowed list, and is not
-        // listed twice where the site's own page holds it as well.
-        IReadOnlyList<SitePlugin> pinned = fresh && Pinning ? needed : Array.Empty<SitePlugin>();
-
-        foreach (var plugin in pinned) listed.Add(plugin);
-
-        foreach (var plugin in found.Items)
-            if (!pinned.Any(w => w.Id == plugin.Id)) listed.Add(plugin);
-
-        if (fresh && needed.Count > 0)
-        {
-            Say(pinned.Count switch
-            {
-                0 => null,
-                1 => $"{pinned[0].Plugin.Name} is the plugin the patch needs, listed first.",
-                _ => $"{string.Join(" and ", pinned.Select(p => p.Plugin.Name))} are the plugins the patch needs, listed first.",
-            });
-        }
+        // The section above holds what the patch needs, so the site's own list is left
+        // as the site gave it and a plugin may honestly appear in both.
+        foreach (var plugin in found.Items) listed.Add(plugin);
 
         siteStatus.Text = "Nothing on the plugin site matches.";
         siteStatus.IsVisible = listed.Count == 0;
@@ -629,6 +617,22 @@ internal sealed class PluginHub : IDisposable
         ToolTip.SetTip(chip, tip);
 
         return chip;
+    }
+
+    /// <summary>
+    /// The heading over what a patch was short of, and nothing at all where it was short
+    /// of nothing: an empty section is a question nobody asked.
+    /// </summary>
+    private Control NeededHeading()
+    {
+        if (needed.Count == 0) return new Panel();
+
+        var heading = Heading(needed.Count == 1 ? "THIS PATCH NEEDS" : $"THIS PATCH NEEDS {needed.Count}");
+
+        heading.Name = "neededHeading";
+        heading.Margin = new Thickness(0, 4, 0, 2);
+
+        return heading;
     }
 
     private static TextBlock Heading(string text) => new()

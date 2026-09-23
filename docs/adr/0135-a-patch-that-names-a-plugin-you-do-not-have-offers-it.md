@@ -38,10 +38,22 @@ patch actually holds. An id names one plugin or none. A provider with no module 
 its own left in the patch — a stale stamp — is not asked about at all, because
 there is nothing exact to ask with.
 
-**It offers, and installs nothing.** The answer opens the plugins window at what
-was found. A plugin is installed the one way any is: its row, and the dialog that
-says what it adds and reaches (ADR-0132). The site is given three seconds; a site
-that is slow or down leaves the refusal exactly as it was.
+**It offers, and installs nothing.** The answer opens the plugins window, where
+what the patch needs has a section of its own above everything else — one search
+box cannot ask for two plugins at once, since every word of it has to match, and
+the search belongs to the user anyway. A plugin is installed the one way any is:
+its row, and the dialog that says what it adds and reaches (ADR-0132). The site is
+given three seconds; a site that is slow or down leaves the refusal as it was.
+
+**The restart carries the patch back.** Installing means restarting, because
+plugins are read once at startup, and coming back up without the patch that asked
+for the plugin is the user doing the last step by hand. A file travels as the plain
+argument a patch opened with Flyback already arrives as, so the launch that
+receives it needs to know nothing about having been restarted. A preset from the
+site has no file, so it travels as its id and is fetched again — the same code path
+as opening it from the gallery, with the same name and the same absence of a folder
+of its own. Only the window opened from the offer carries one, so installing
+something unrelated reopens nothing.
 
 **Only a deliberate open offers.** The four ways a patch is opened — a file, a
 bundle, and both of those shared — ask. Restoring after a crash does not: it
@@ -52,7 +64,13 @@ start that has the plugin again.
 
 **A shared patch carries its own plugins in practice.** The one thing a patch
 could not do for itself, it now does, without the file having to hold a URL or the
-site having to be trusted for anything but a search.
+site having to be trusted for anything but a search and a fetch.
+
+**A restart costs the preset site one request.** Reopening a shared preset asks the
+site for it again rather than keeping the bytes somewhere across the restart, which
+would need a file with no owner and a document whose next save went somewhere the
+user never chose. Where the site has since dropped it, the window says so and opens
+nothing.
 
 **Declaring modules pays a second time.** [0134](0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md)
 asked plugin authors to declare their modules so a listing could show them without

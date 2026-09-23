@@ -15,7 +15,12 @@ public sealed partial class MainWindow
     /// build of it for this system. Silent where it has none or there is no site: the
     /// refusal has been reported already, and an offer of nothing is worse than none.
     /// </summary>
-    private async Task OfferMissingPluginsAsync(PatchLoad loaded)
+    /// <param name="open">
+    /// What this patch was, so that it can be opened again: a file on disk, or a preset
+    /// the site shared. Installing from the offer restarts Flyback, and this is what it
+    /// opens when it comes back up with the plugin.
+    /// </param>
+    private async Task OfferMissingPluginsAsync(PatchLoad loaded, Reopen? open = null)
     {
         if (loaded.MissingProviders.Count == 0 || presetSite is null) return;
 
@@ -28,6 +33,17 @@ public sealed partial class MainWindow
 
         if (!await this.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
 
-        await ShowPluginsAsync(found);
+        // Live only while that window is up: coming back from it is nothing having been
+        // installed, or something having been that a restart was not asked for.
+        refused = open;
+
+        try
+        {
+            await ShowPluginsAsync(found);
+        }
+        finally
+        {
+            refused = null;
+        }
     }
 }

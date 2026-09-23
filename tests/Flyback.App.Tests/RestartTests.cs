@@ -11,6 +11,52 @@ public sealed class RestartTests
         Restart.Awaited(["--interpreted", Restart.AfterFlag, "2147483645", "nebula.fbk"]).ShouldBe(["--interpreted", "nebula.fbk"]);
     }
 
+    /// <summary>
+    /// What a restart carries survives the wait being taken back out of it, and arrives
+    /// as the plain argument a file opened with Flyback already is.
+    /// </summary>
+    [Fact]
+    public void A_patch_a_restart_carries_is_what_the_launch_opens()
+    {
+        var launched = Restart.Arguments(2147483645, new Reopen(Path: "nebula.fbk"));
+
+        Restart.Awaited(launched).ShouldBe(["nebula.fbk"]);
+        launched.ShouldNotContain(a => a.StartsWith('-') && a != Restart.AfterFlag);
+    }
+
+    /// <summary>
+    /// A preset from the site has no file to name, so it travels as its id — and the id
+    /// has to come back out before what is left is read as a path.
+    /// </summary>
+    [Fact]
+    public void A_shared_preset_a_restart_carries_travels_as_its_id()
+    {
+        var launched = Restart.Arguments(2147483645, new Reopen(Shared: "01a0cad9"));
+        var waited = Restart.Awaited(launched);
+
+        var (shared, without) = Restart.Shared(waited);
+
+        shared.ShouldBe("01a0cad9");
+        without.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_launch_carrying_no_shared_preset_is_left_as_it_was()
+    {
+        var (shared, without) = Restart.Shared(["nebula.fbk"]);
+
+        shared.ShouldBeNull();
+        without.ShouldBe(["nebula.fbk"]);
+    }
+
+    [Fact]
+    public void A_restart_with_nothing_to_open_carries_none()
+    {
+        Restart.Awaited(Restart.Arguments(2147483645, null)).ShouldBeEmpty();
+        Restart.Awaited(Restart.Arguments(2147483645, new Reopen())).ShouldBeEmpty();
+        Restart.Awaited(Restart.Arguments(2147483645, new Reopen(Path: string.Empty))).ShouldBeEmpty();
+    }
+
     [Fact]
     public void A_launch_with_nothing_to_wait_for_is_left_as_it_was()
     {

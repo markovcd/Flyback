@@ -188,7 +188,7 @@ public sealed partial class MainWindow
             if (!loaded.IsComplete)
             {
                 Report($"Not opened. {loaded.Summary}", loaded.Detail);
-                await OfferMissingPluginsAsync(loaded);
+                await OfferMissingPluginsAsync(loaded, new Reopen(Path: file.TryGetLocalPath()));
                 return;
             }
 
@@ -562,7 +562,7 @@ public sealed partial class MainWindow
             if (bundle.Load is { IsComplete: false } lacking)
             {
                 Report($"Not opened. {lacking.Summary}", lacking.Detail);
-                await OfferMissingPluginsAsync(lacking);
+                await OfferMissingPluginsAsync(lacking, new Reopen(Path: file.TryGetLocalPath()));
                 return;
             }
 

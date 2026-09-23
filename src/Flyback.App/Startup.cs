@@ -62,17 +62,29 @@ internal static class Startup
     /// </summary>
     public static bool FirstRun { get; private set; }
 
+    /// <summary>
+    /// The shared preset this launch was told to open again, or null. Set where a restart
+    /// to install a plugin was asked for while one was open, since a preset from the site
+    /// has no file to be named by.
+    /// </summary>
+    public static string? OpenShared { get; private set; }
+
     /// <summary>The plugins a package installed since the last launch, for the window to say once, or null.</summary>
     public static string? PluginNote { get; private set; }
 
     /// <summary>Whether a release Flyback downloaded itself installed just before this launch.</summary>
     public static bool Updated { get; private set; }
 
-    public static void Load(string? openPath = null, bool interpreted = false, UpdateSettings? updates = null)
+    public static void Load(
+        string? openPath = null,
+        bool interpreted = false,
+        UpdateSettings? updates = null,
+        string? shared = null)
     {
         FirstRun = !Directory.Exists(GlobalConstants.DataFolder);
 
         OpenPath = openPath;
+        OpenShared = shared;
         Interpreted = interpreted;
         Updates = updates ?? new UpdateSettings();
 

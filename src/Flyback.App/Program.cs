@@ -52,10 +52,15 @@ internal static class Program
         // program's icon, or opened with it, arrives as the whole of args and
         // nothing else does — so anything that looks like a switch is left for
         // Avalonia's own lifetime to make of what it likes.
+        // Taken out first: its id is a plain argument, and the plain argument is what
+        // a file to open is.
+        var (shared, rest) = Restart.Shared(args);
+
         Startup.Load(
-            args.FirstOrDefault(a => !a.StartsWith('-')),
+            rest.FirstOrDefault(a => !a.StartsWith('-')),
             interpreted: args.Contains(Startup.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
-            updates: updates);
+            updates: updates,
+            shared: shared);
 
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
     }

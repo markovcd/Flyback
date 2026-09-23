@@ -38,6 +38,9 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
         if (uri.AbsolutePath == "/api/v1/presets") return Task.FromResult(Json(List(uri)));
 
+        if (presets.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}") is { } one)
+            return Task.FromResult(Json(Item(one)));
+
         var posted = presets.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}/file");
 
         return Task.FromResult(posted?.File is { } bytes
@@ -66,23 +69,26 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
         return new
         {
-            items = found.Skip((page - 1) * PageSize).Take(PageSize).Select(p => new
-            {
-                id = p.Id,
-                name = p.Name,
-                author = p.Author,
-                description = p.Description,
-                tags = Array.Empty<string>(),
-                fileName = p.FileName.Length > 0 ? p.FileName : p.Name + ".fbk",
-                file = $"/api/v1/presets/{p.Id}/file",
-                media = new { still = (string?)null, state = "pending" },
-                rating = new { average = p.Average, count = p.Ratings },
-            }),
+            items = found.Skip((page - 1) * PageSize).Take(PageSize).Select(Item),
             total = found.Count,
             page,
             pageSize = PageSize,
         };
     }
+
+    /// <summary>One preset as the site lists it, which is the same shape asked for by id.</summary>
+    private static object Item(Posted p) => new
+    {
+        id = p.Id,
+        name = p.Name,
+        author = p.Author,
+        description = p.Description,
+        tags = Array.Empty<string>(),
+        fileName = p.FileName.Length > 0 ? p.FileName : p.Name + ".fbk",
+        file = $"/api/v1/presets/{p.Id}/file",
+        media = new { still = (string?)null, state = "pending" },
+        rating = new { average = p.Average, count = p.Ratings },
+    };
 
     private static HttpResponseMessage Json(object body) => new(HttpStatusCode.OK)
     {

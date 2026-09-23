@@ -27,7 +27,7 @@ public sealed class PluginInstallTests : UiTest
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open(Action? relaunch = null)
+    private MainWindow Open(Action<Reopen?>? relaunch = null)
     {
         var window = Owned(new MainWindow(pluginFolder: Plugins, relaunch: relaunch));
 
@@ -137,7 +137,7 @@ public sealed class PluginInstallTests : UiTest
     public void Installing_with_restart_ticked_starts_Flyback_again_and_closes_this_window()
     {
         var relaunched = 0;
-        var window = Open(() => relaunched++);
+        var window = Open(_ => relaunched++);
         var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
 
         All<CheckBox>(dialog).Single(c => c.Name == "restart").IsChecked.ShouldBe(true, "a plugin does nothing until Flyback starts again");
@@ -154,7 +154,7 @@ public sealed class PluginInstallTests : UiTest
     public void Installing_with_restart_unticked_leaves_the_window_open()
     {
         var relaunched = 0;
-        var window = Open(() => relaunched++);
+        var window = Open(_ => relaunched++);
         var dialog = Dropped(window, Write(Packages.For("win", "osx", "linux")));
 
         All<CheckBox>(dialog).Single(c => c.Name == "restart").IsChecked = false;

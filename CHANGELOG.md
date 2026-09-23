@@ -33,6 +33,7 @@
 - Shared presets and plugins can be reported to the preset site's admin, from the site, the preset gallery and the plugins window, and the admin lists the reports.
 - Shared presets and plugins are rated with stars on the preset site, and the preset gallery and the plugins window show them.
 - A patch that will not open for want of a plugin offers the one the plugin site has, and opens the plugins window at it.
+- Installing a plugin a patch was refused for opens that patch again once Flyback has restarted.
 - The envelope at the end of the status bar writes to Flyback's author, with what build it was written from.
 
 ## 0.4.0 — 2026-09-21
