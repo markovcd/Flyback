@@ -208,7 +208,9 @@ is 0, the root of a negative is 0, `Guard` turns a non-finite value into 0.
 **The IL backend** is built on a background thread at below-normal priority and
 attached to the program through a `Volatile` field that renderers read once per
 frame or buffer. Each op is one inlined method in `IlOps` that calls the
-interpreter's own helpers, so a guard exists once. Every build is run against the
+interpreter's own helpers, so a guard exists once. A stretch longer than 256 ops
+is several methods called in order, because past a few thousand locals the JIT
+stops optimizing a method and every op becomes a call. Every build is run against the
 interpreter before it is trusted, bit for bit, and refused if it differs.
 `--interpreted` keeps a run, or a `flyback-cli render`, on the interpreter.
 

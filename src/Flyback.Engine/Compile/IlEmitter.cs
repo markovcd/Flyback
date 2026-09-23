@@ -56,9 +56,29 @@ internal sealed class IlEmitter
     }
 
     /// <summary>
+    /// How many ops one method holds. Past a few thousand locals the JIT stops
+    /// optimizing a method at all, and every op becomes a call.
+    /// </summary>
+    internal static int ChunkSize = 256;
+
+    /// <summary>
+    /// Ops <paramref name="from"/> to <paramref name="to"/> as methods of at most
+    /// <see cref="ChunkSize"/> ops each, to be called in order.
+    /// </summary>
+    public static DynamicMethod[] EmitChunks(string name, Op[] ops, int from, int to, (int From, int To) outputs)
+    {
+        var chunks = new List<DynamicMethod>();
+
+        for (var start = from; start < to || chunks.Count == 0; start += ChunkSize)
+            chunks.Add(Emit(name, ops, start, Math.Min(to, start + ChunkSize), outputs));
+
+        return [.. chunks];
+    }
+
+    /// <summary>
     /// Ops <paramref name="from"/> to <paramref name="to"/> of <paramref name="ops"/>
     /// as one method. The rest of <paramref name="ops"/> is only looked at to learn
-    /// which registers another stage will read.
+    /// which registers another stretch will read.
     /// </summary>
     public static DynamicMethod Emit(string name, Op[] ops, int from, int to, (int From, int To) outputs)
     {
@@ -94,10 +114,16 @@ internal sealed class IlEmitter
             if (width == 1) scalarWrites.Add(op.Out);
         }
 
-        // Counted per stretch, as the interpreter counts per walk: only a whole
-        // run is handed state, and there the stretch is the whole program.
+        // Counted from the start of the program, as the interpreter counts per walk.
+        // Only a whole run is handed state, so a stage's count reaches nothing.
         var line = 0;
         var cell = 0;
+
+        for (var i = 0; i < from; i++)
+        {
+            if (ops[i].Code is OpCode.Delay or OpCode.Allpass) line++;
+            else if (ops[i].Code is OpCode.Phase) cell++;
+        }
 
         for (var i = from; i < to; i++) One(ops[i], ref line, ref cell);
 

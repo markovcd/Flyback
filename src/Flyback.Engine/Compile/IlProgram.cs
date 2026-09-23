@@ -21,10 +21,10 @@ namespace Flyback.Core.Compile;
 public sealed class IlProgram
 {
     private readonly IlContext context;
-    private readonly IlStage? whole;
-    private readonly IlStage? frame;
-    private readonly IlStage? row;
-    private readonly IlStage? pixel;
+    private readonly IlStage[]? whole;
+    private readonly IlStage[]? frame;
+    private readonly IlStage[]? row;
+    private readonly IlStage[]? pixel;
 
     private IlProgram(IlMethods methods, CompiledPatch source)
     {
@@ -32,11 +32,14 @@ public sealed class IlProgram
         Methods = methods;
         context = IlContext.For(source);
 
-        whole = methods.Whole?.CreateDelegate<IlStage>(context);
-        frame = methods.Frame?.CreateDelegate<IlStage>(context);
-        row = methods.Row?.CreateDelegate<IlStage>(context);
-        pixel = methods.Pixel?.CreateDelegate<IlStage>(context);
+        whole = Bound(methods.Whole);
+        frame = Bound(methods.Frame);
+        row = Bound(methods.Row);
+        pixel = Bound(methods.Pixel);
     }
+
+    private IlStage[]? Bound(DynamicMethod[]? chunks) =>
+        chunks is null ? null : [.. chunks.Select(chunk => chunk.CreateDelegate<IlStage>(context))];
 
     /// <summary>The patch whose constants, clips and pictures this reads.</summary>
     public CompiledPatch Source { get; }
@@ -84,7 +87,8 @@ public sealed class IlProgram
         }
 
         Check(registers);
-        whole(
+        Run(
+            whole,
             ref MemoryMarshal.GetReference(registers),
             x, y, t, aspect,
             ref Unsafe.AsRef(in feedback),
@@ -117,12 +121,27 @@ public sealed class IlProgram
         }
 
         Check(registers);
-
-        run(
+        Run(
+            run,
             ref MemoryMarshal.GetReference(registers),
             x, y, t, aspect,
             ref Unsafe.AsRef(in feedback),
             null, live, planes);
+    }
+
+    private static void Run(
+        IlStage[] chunks,
+        ref double bank,
+        double x,
+        double y,
+        double t,
+        double aspect,
+        ref FeedbackFrame feedback,
+        DelayState? delays,
+        LiveValues? live,
+        Span<float> planes)
+    {
+        foreach (var chunk in chunks) chunk(ref bank, x, y, t, aspect, ref feedback, delays, live, planes);
     }
 
     /// <summary>
@@ -321,10 +340,10 @@ internal sealed class IlMethods
     private IlMethods(
         IlShape shape,
         IlParts parts,
-        DynamicMethod? whole,
-        DynamicMethod? frame,
-        DynamicMethod? row,
-        DynamicMethod? pixel)
+        DynamicMethod[]? whole,
+        DynamicMethod[]? frame,
+        DynamicMethod[]? row,
+        DynamicMethod[]? pixel)
     {
         Shape = shape;
         Parts = parts;
@@ -338,38 +357,38 @@ internal sealed class IlMethods
 
     public IlParts Parts { get; }
 
-    public DynamicMethod? Whole { get; }
+    public DynamicMethod[]? Whole { get; }
 
-    public DynamicMethod? Frame { get; }
+    public DynamicMethod[]? Frame { get; }
 
-    public DynamicMethod? Row { get; }
+    public DynamicMethod[]? Row { get; }
 
-    public DynamicMethod? Pixel { get; }
+    public DynamicMethod[]? Pixel { get; }
 
     public static IlMethods Build(CompiledPatch patch, IlParts parts)
     {
         var outputs = (patch.OutputBase, patch.OutputBase + patch.OutputWidth);
 
         var whole = parts.HasFlag(IlParts.Whole)
-            ? IlEmitter.Emit("Whole", patch.Ops, 0, patch.Ops.Length, outputs)
+            ? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs)
             : null;
 
-        DynamicMethod? frame = null, row = null, pixel = null;
+        DynamicMethod[]? frame = null, row = null, pixel = null;
 
         if (parts.HasFlag(IlParts.Staged))
         {
             if (patch.Plan is { } plan)
             {
-                frame = IlEmitter.Emit("Frame", plan.Ops, 0, plan.RowAt, outputs);
-                row = IlEmitter.Emit("Row", plan.Ops, plan.RowAt, plan.PixelAt, outputs);
-                pixel = IlEmitter.Emit("Pixel", plan.Ops, plan.PixelAt, plan.Ops.Length, outputs);
+                frame = IlEmitter.EmitChunks("Frame", plan.Ops, 0, plan.RowAt, outputs);
+                row = IlEmitter.EmitChunks("Row", plan.Ops, plan.RowAt, plan.PixelAt, outputs);
+                pixel = IlEmitter.EmitChunks("Pixel", plan.Ops, plan.PixelAt, plan.Ops.Length, outputs);
             }
             else
             {
                 // What the interpreter does for a program it cannot sort: the pixel
                 // runs all of it, and the other two stages run nothing.
-                frame = row = IlEmitter.Emit("Nothing", [], 0, 0, outputs);
-                pixel = whole ?? IlEmitter.Emit("Whole", patch.Ops, 0, patch.Ops.Length, outputs);
+                frame = row = IlEmitter.EmitChunks("Nothing", [], 0, 0, outputs);
+                pixel = whole ?? IlEmitter.EmitChunks("Whole", patch.Ops, 0, patch.Ops.Length, outputs);
             }
         }
 

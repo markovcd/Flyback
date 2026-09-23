@@ -205,3 +205,25 @@ where a 1.5-2x saving is felt most. Each of them now builds its programs with
 whole, checked against the interpreter as every build is. A program that will not
 build is rendered interpreted and said so. `flyback-cli render --interpreted` keeps
 a render on the interpreter, for the same reason the launch flag does.
+
+## Amendment, 2026-09-23: a long program is several methods
+
+The sound of a 3,319-op patch (Tranquility, 210 modules) emitted as one method of
+53,891 bytes of IL and about 4,400 locals. Past a few thousand locals the JIT
+stops optimizing a method: it compiled it `switched MinOpts`, inlined none of the
+`IlOps` helpers and kept nothing in the processor's registers, so every op was a
+call and the compiled sound ran only 1.26x faster than the interpreter, at 0.96x
+real time. The shrinking gain in the tables above, from 2.3x on Drone to 1.3x on
+Whole band, was the same thing arriving.
+
+`IlEmitter.EmitChunks` now writes any stretch longer than 256 ops as several
+methods, called in order into the same bank. A register one chunk writes and a
+later one reads goes through the bank, as it already did between stages, and each
+chunk numbers its delay lines and accumulators from where the one before it
+stopped. The ops and their order are unchanged, so the bits are too.
+
+Tranquility's sound runs at 2.27x real time where it ran at 0.96x. Chunks of 128,
+256 and 512 ops measured the same; 1,024 fell back to 1.13x, so 256 keeps well
+clear of the edge. Optimized code costs the JIT more: building Tranquility's sound
+takes 56 ms rather than 20, all of it on the compiler's thread, and the interpreted
+gap after an edit that changes the shape is that much longer.

@@ -200,6 +200,45 @@ public class IlProgramTests
         actual.ShouldBe(expected);
     }
 
+    /// <summary>
+    /// A program longer than one method is several, and each numbers its delay
+    /// lines and accumulators from where the one before it stopped.
+    /// </summary>
+    [Fact]
+    public void A_program_split_across_methods_keeps_its_memory_in_order()
+    {
+        var ops = new List<Op> { new(OpCode.LoadT, 0), new(OpCode.Const, 1, k: 0.5f) };
+        var last = 0;
+
+        for (var i = 0; i < 400; i++)
+        {
+            var next = ops.Count + 1;
+            // A frequency for an accumulator, or a delay of a few samples.
+            ops.Add(new Op(OpCode.Const, next, k: i % 2 == 0 ? 1f + i % 7 : (1f + i % 5) * 1e-5f));
+            ops.Add(i % 2 == 0
+                ? new Op(OpCode.Phase, next + 1, 0, next, last)
+                : new Op(OpCode.Delay, next + 1, last, 1, next, 1e-4f * (1 + i % 3)));
+            last = next + 1;
+        }
+
+        var program = new CompiledPatch([.. ops, new Op(OpCode.Copy, ops.Count + 1, last), new Op(OpCode.Sin, ops.Count + 2, last)], ops.Count + 3, ops.Count + 1, 2);
+        program.Ops.Length.ShouldBeGreaterThan(800);
+
+        var il = IlProgram.Compile(program, IlParts.Whole);
+        var renderer = new AudioRenderer();
+        var expectedMemory = renderer.DelayMemoryFor(program);
+        var actualMemory = renderer.DelayMemoryFor(program);
+        var expected = program.AllocateRegisters();
+        var actual = program.AllocateRegisters();
+
+        for (var i = 0; i < 2_000; i++)
+        {
+            program.Evaluate(0d, 0d, i / 192_000d, expected, default, expectedMemory);
+            il.Evaluate(0d, 0d, i / 192_000d, actual, default, actualMemory);
+            ShouldMatch(program, expected, actual, $"sample {i}");
+        }
+    }
+
     [Fact]
     public void Code_bound_to_one_patch_cannot_be_attached_to_another()
     {
