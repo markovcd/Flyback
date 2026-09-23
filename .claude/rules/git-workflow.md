@@ -6,7 +6,7 @@ Commit straight to `main`. Do not create a branch, and do not ask. When the sess
 
 **Why:** it is a solo project whose entire history is direct-to-main commits, so a branch is friction the user then has to undo. They stated this as a standing rule ("commit to main always"), and after a worktree task ended on a side branch and they had to ask for the merge, restated it for worktrees: always end with a commit on main, don't wait to be asked.
 
-**How to apply:** in a worktree, `main` is checked out in the primary checkout, so rebase the branch onto `main` and fast-forward there. The commit subject is a declarative sentence stating what is now true (not a Conventional Commits prefix). Keep the body short: a paragraph, occasionally two, on what was wrong and what now happens; the repo's older commits run to five long paragraphs, so do not imitate their length. Leave the worktree and branch in place unless asked to delete them, and never touch other worktrees' uncommitted work.
+**How to apply:** in a worktree, `main` is checked out in the primary checkout, so rebase the branch onto `main` and fast-forward there. Once a feature is on `main`, build the artifacts (the `build-artifacts` skill) without being asked. The commit subject is a declarative sentence stating what is now true (not a Conventional Commits prefix). Keep the body short: a paragraph, occasionally two, on what was wrong and what now happens; the repo's older commits run to five long paragraphs, so do not imitate their length. Leave the worktree and branch in place unless asked to delete them, and never touch other worktrees' uncommitted work.
 
 ## Squash the churn while it is still unpushed
 
