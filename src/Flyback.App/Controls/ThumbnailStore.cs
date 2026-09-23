@@ -60,7 +60,7 @@ internal sealed class ThumbnailStore(string folder)
 
             return found;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or FormatException)
         {
             return null;
         }

@@ -91,6 +91,26 @@ public sealed class SitePresetTests : UiTest
         (await site.Site().FindAsync("gone", CancellationToken.None)).ShouldBeNull();
     }
 
+    /// <summary>What a proxy or an older site might answer is a listing with nothing in it, not an error nobody catches.</summary>
+    [Theory]
+    [InlineData("""{"items":[],"total":"5"}""")]
+    [InlineData("""[]""")]
+    [InlineData("""null""")]
+    public void A_listing_of_another_shape_lists_nothing(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+
+        PresetSite.Read(document.RootElement, FakePresetSite.Root).Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_rating_of_another_shape_is_no_rating()
+    {
+        using var document = JsonDocument.Parse("""{"rating":{"count":"3","average":4}}""");
+
+        SiteRating.Read(document.RootElement).ShouldBe(SiteRating.None);
+    }
+
     [AvaloniaFact]
     public void The_gallery_lists_what_the_preset_site_shares_after_the_presets_here()
     {

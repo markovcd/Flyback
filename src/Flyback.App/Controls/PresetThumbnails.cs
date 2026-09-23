@@ -134,8 +134,8 @@ internal sealed class PresetThumbnails
             {
                 var thumbnail = Draw(preset);
 
-                // One that threw may draw next time, with the plugin back or the file readable.
-                if (key is not null && !ReferenceEquals(thumbnail, Thumbnail.Unavailable)) store?.Keep(key, thumbnail);
+                // One that would not draw may next time, with the plugin back or the file readable.
+                if (key is not null && thumbnail.Words != Thumbnail.Unavailable.Words) store?.Keep(key, thumbnail);
 
                 return thumbnail;
             }

@@ -230,10 +230,10 @@ internal sealed class PluginStore
             query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i]) + "%");
         }
 
-        if (!string.IsNullOrEmpty(tag))
+        if (!string.IsNullOrWhiteSpace(tag))
         {
             where.Add("instr(char(31) || p.tags || char(31), char(31) || $tag || char(31)) > 0");
-            query.Parameters.AddWithValue("$tag", tag);
+            query.Parameters.AddWithValue("$tag", tag.Trim().ToLowerInvariant());
         }
 
         if (!string.IsNullOrEmpty(module))
@@ -255,7 +255,7 @@ internal sealed class PluginStore
 
         query.CommandText = $"SELECT {Columns} FROM plugins p {filter} ORDER BY p.submitted_at DESC, p.id DESC LIMIT $size OFFSET $skip";
         query.Parameters.AddWithValue("$size", size);
-        query.Parameters.AddWithValue("$skip", Math.Max(0, page - 1) * size);
+        query.Parameters.AddWithValue("$skip", Math.Max(0L, page - 1L) * size);
 
         var items = new List<StoredPlugin>();
 

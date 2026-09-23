@@ -23,8 +23,8 @@ internal sealed record SiteRating(double Average, int Count)
         if (item.ValueKind != JsonValueKind.Object
             || !item.TryGetProperty("rating", out var rating)
             || rating.ValueKind != JsonValueKind.Object
-            || !rating.TryGetProperty("count", out var count) || !count.TryGetInt32(out var many) || many <= 0
-            || !rating.TryGetProperty("average", out var average) || !average.TryGetDouble(out var mean))
+            || !rating.TryGetProperty("count", out var count) || count.ValueKind != JsonValueKind.Number || !count.TryGetInt32(out var many) || many <= 0
+            || !rating.TryGetProperty("average", out var average) || average.ValueKind != JsonValueKind.Number || !average.TryGetDouble(out var mean))
             return None;
 
         return new SiteRating(Math.Clamp(mean, 1, Most), many);

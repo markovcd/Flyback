@@ -179,6 +179,14 @@ public sealed class ServerTests : IDisposable
     }
 
     [Fact]
+    public async Task A_page_far_past_the_last_is_empty()
+    {
+        await Submit(PatchFile());
+
+        (await Get("/api/v1/presets?page=89478487")).GetProperty("items").GetArrayLength().ShouldBe(0);
+    }
+
+    [Fact]
     public async Task A_preset_shows_its_media_once_the_render_app_has_written_it()
     {
         var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;

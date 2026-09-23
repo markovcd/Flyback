@@ -150,7 +150,7 @@ internal sealed class PresetStore
 
         query.CommandText = $"SELECT {Columns} FROM presets p {filter} ORDER BY p.submitted_at DESC, p.id DESC LIMIT $size OFFSET $skip";
         query.Parameters.AddWithValue("$size", size);
-        query.Parameters.AddWithValue("$skip", Math.Max(0, page - 1) * size);
+        query.Parameters.AddWithValue("$skip", Math.Max(0L, page - 1L) * size);
 
         var items = new List<StoredPreset>();
 

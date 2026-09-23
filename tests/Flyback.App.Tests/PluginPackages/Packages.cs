@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
 using System.IO.Compression;
+using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
@@ -158,4 +159,41 @@ internal static class Packages
     /// <summary>A package with the picture plugin for Windows and one more entry named <paramref name="name"/>.</summary>
     public static byte[] With(string name, byte[]? bytes = null) =>
         Zip([($"win/{AssemblyName}", Assembly), (name, bytes ?? [0])]);
+
+    /// <summary>
+    /// A minimal assembly of <paramref name="name"/>, naming <paramref name="references"/>
+    /// and embedding <paramref name="previews"/> rows named <c>preview.png</c>, all pointing at one
+    /// resource of <paramref name="previewSize"/> bytes: what no compiler would make.
+    /// </summary>
+    public static byte[] Emit(string name, string[]? references = null, int previews = 0, int previewSize = 0)
+    {
+        var metadata = new MetadataBuilder();
+
+        metadata.AddModule(0, metadata.GetOrAddString(name + ".dll"), metadata.GetOrAddGuid(Guid.NewGuid()), default, default);
+        metadata.AddAssembly(metadata.GetOrAddString(name), new Version(1, 0, 0, 0), default, default, default, AssemblyHashAlgorithm.Sha1);
+
+        foreach (var reference in references ?? [])
+            metadata.AddAssemblyReference(metadata.GetOrAddString(reference), new Version(1, 0, 0, 0), default, default, default, default);
+
+        metadata.AddTypeDefinition(default, default, metadata.GetOrAddString("<Module>"), default, MetadataTokens.FieldDefinitionHandle(1), MetadataTokens.MethodDefinitionHandle(1));
+
+        BlobBuilder? resources = null;
+
+        if (previews > 0)
+        {
+            resources = new BlobBuilder();
+            resources.WriteInt32(previewSize);
+            resources.WriteBytes(0, previewSize);
+
+            for (var index = 0; index < previews; index++)
+                metadata.AddManifestResource(ManifestResourceAttributes.Public, metadata.GetOrAddString("preview.png"), default, 0);
+        }
+
+        var image = new BlobBuilder();
+
+        new ManagedPEBuilder(PEHeaderBuilder.CreateLibraryHeader(), new MetadataRootBuilder(metadata), new BlobBuilder(), managedResources: resources)
+            .Serialize(image);
+
+        return image.ToArray();
+    }
 }

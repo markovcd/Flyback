@@ -177,7 +177,16 @@ public sealed class PluginTests : IDisposable
         var tagged = (await Get("/api/v1/plugins?tag=ripple")).GetProperty("items");
         tagged.GetArrayLength().ShouldBe(1);
         tagged[0].GetProperty("id").GetString().ShouldBe(id);
+        (await Get("/api/v1/plugins?tag=%20Ripple")).GetProperty("total").GetInt32().ShouldBe(1, "a tag is found as a preset's is, whatever its case");
         (await Get("/api/v1/plugins?q=fixture")).GetProperty("total").GetInt32().ShouldBe(1, "a search matches tags too");
+    }
+
+    [Fact]
+    public async Task A_page_far_past_the_last_is_empty()
+    {
+        await Publish((await Submit(Package("win"))).GetProperty("id").GetString()!);
+
+        (await Get("/api/v1/plugins?page=89478487")).GetProperty("items").GetArrayLength().ShouldBe(0);
     }
 
     [Fact]
@@ -342,6 +351,8 @@ public sealed class PluginTests : IDisposable
     [Fact]
     public async Task An_unsigned_package_is_refused()
     {
+        Assert.SkipUnless(PackageSigner.Checked, "a Debug build takes a package whoever signed it");
+
         using var response = await Post(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)));
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
@@ -360,6 +371,8 @@ public sealed class PluginTests : IDisposable
     [Fact]
     public async Task A_published_plugins_name_is_not_taken_by_another_key()
     {
+        Assert.SkipUnless(PackageSigner.Checked, "a Debug build takes a package whoever signed it");
+
         await Publish((await Submit(Package("win"))).GetProperty("id").GetString()!);
 
         using var impostor = await Post(PackageSigner.Sign(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)), OtherKey));
@@ -374,6 +387,8 @@ public sealed class PluginTests : IDisposable
     [Fact]
     public async Task Two_keys_waiting_under_one_name_cannot_both_be_published()
     {
+        Assert.SkipUnless(PackageSigner.Checked, "a Debug build takes a package whoever signed it");
+
         var first = (await Submit(Package("win"))).GetProperty("id").GetString()!;
         var second = (await Submit(PackageSigner.Sign(Unsigned(("win/Flyback.Plugins.Picture.dll", Assembly)), OtherKey))).GetProperty("id").GetString()!;
         using var admin = await Admin();

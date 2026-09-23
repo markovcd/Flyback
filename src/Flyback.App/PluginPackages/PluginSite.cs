@@ -128,7 +128,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
     {
         var items = new List<SitePlugin>();
 
-        if (found.TryGetProperty("items", out var listed) && listed.ValueKind == JsonValueKind.Array)
+        if (found.ValueKind == JsonValueKind.Object && found.TryGetProperty("items", out var listed) && listed.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in listed.EnumerateArray())
             {
@@ -136,7 +136,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
                     || Text(item, "name") is not { Length: > 0 } name
                     || Text(item, "sha256") is not { Length: 64 } sha256
                     || Text(item, "file") is not { } file
-                    || !Uri.TryCreate(root, file, out var fileUri))
+                    || !PresetSite.Link(root, file, out var fileUri))
                     continue;
 
                 var plugin = new ListedPlugin(
@@ -158,7 +158,7 @@ internal sealed class PluginSite(HttpClient http, Uri root)
                     Number(item, "size"),
                     (int)Number(item, "downloads"),
                     fileUri,
-                    Text(item, "preview") is { } preview && Uri.TryCreate(root, preview, out var previewUri) ? previewUri : null,
+                    Text(item, "preview") is { } preview && PresetSite.Link(root, preview, out var previewUri) ? previewUri : null,
                     SiteRating.Read(item)));
             }
         }
@@ -177,5 +177,6 @@ internal sealed class PluginSite(HttpClient http, Uri root)
             : [];
 
     private static long Number(JsonElement item, string name) =>
-        item.TryGetProperty(name, out var value) && value.TryGetInt64(out var number) ? number : 0;
+        item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var number) ? number : 0;
 }

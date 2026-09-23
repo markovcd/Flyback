@@ -73,6 +73,29 @@ public class ModuleDeclarationTests
         catalog.Modules.Get("flyback.honest.tone").ShouldNotBeNull();
     }
 
+    private sealed class Thrower : IFlybackPlugin
+    {
+        public PluginInfo Info { get; } = new("thrower", "Thrower");
+
+        public void Register(IPluginRegistry registry)
+        {
+            registry.AddModules(new ModuleProvider("flyback.thrower", "Thrower"), [Module("flyback.thrower.hidden", "Hidden")]);
+            throw new InvalidOperationException("gone wrong");
+        }
+    }
+
+    [Fact]
+    public void A_plugin_that_throws_while_registering_leaves_nothing_behind()
+    {
+        var catalog = PluginHost.LoadTypes(typeof(Honest), typeof(Thrower));
+
+        catalog.Plugins.Select(p => p.Info.Id).ShouldBe(["honest"]);
+        catalog.Modules.Get("flyback.thrower.hidden").ShouldBeNull();
+        catalog.Modules.Providers.Select(p => p.Id).ShouldNotContain("flyback.thrower");
+        catalog.Problems.ShouldHaveSingleItem().Message.ShouldBe("gone wrong");
+        catalog.Modules.Get("flyback.honest.tone").ShouldNotBeNull();
+    }
+
     [Fact]
     public void A_plugin_registering_a_module_under_another_name_than_declared_is_refused()
     {

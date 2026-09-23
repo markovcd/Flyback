@@ -76,4 +76,26 @@ public sealed class PluginSiteTests
         plugin.Matches(null, "water").ShouldBeTrue();
         plugin.Matches(null, "wat").ShouldBeFalse();
     }
+
+    /// <summary>What a proxy or an older site might answer is a listing with nothing in it, not an error nobody catches.</summary>
+    [Theory]
+    [InlineData("""{"items":[],"total":"5"}""")]
+    [InlineData("""[]""")]
+    [InlineData("""null""")]
+    public void A_listing_of_another_shape_lists_nothing(string json)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+
+        PluginSite.Read(document.RootElement, new Uri("http://site.test/")).Items.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("file:///C:/ripple.fbkp")]
+    [InlineData("ftp://site.test/ripple.fbkp")]
+    public void A_plugin_listed_somewhere_other_than_the_web_is_left_out(string file)
+    {
+        using var document = System.Text.Json.JsonDocument.Parse($$"""{"items":[{"id":"a1","name":"Ripple","sha256":"{{new string('0', 64)}}","file":"{{file}}"}]}""");
+
+        PluginSite.Read(document.RootElement, new Uri("http://site.test/")).Items.ShouldBeEmpty();
+    }
 }

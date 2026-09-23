@@ -422,4 +422,28 @@ public sealed class PluginPackageTests : IDisposable
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("a,b=")]
+    public void An_assembly_naming_a_reference_no_assembly_could_have_is_read_as_it_is(string reference)
+    {
+        var package = Packages.Zip([($"win/{Packages.AssemblyName}", Packages.Assembly), ("win/Odd.dll", Packages.Emit("Odd", references: [reference]))]);
+
+        PluginPackage.Read(package).Description("win").Compiled.ShouldContain(c => c.Assembly == "Odd" && c.References.Single().Name == reference);
+    }
+
+    /// <summary>A resource row costs twelve bytes, so what each one is read into has to be bounded by one preview, not by the count.</summary>
+    [Fact]
+    public void Many_preview_rows_cost_what_one_preview_does()
+    {
+        var package = Packages.Zip([($"win/{Packages.AssemblyName}", Packages.Assembly), ("win/Pictures.dll", Packages.Emit("Pictures", previews: 64, previewSize: 1 << 20))]);
+
+        package.Length.ShouldBeLessThan(1 << 20);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        PluginPackage.Read(package);
+
+        (GC.GetAllocatedBytesForCurrentThread() - before).ShouldBeLessThan(16L << 20);
+    }
 }

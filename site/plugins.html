@@ -937,7 +937,8 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</cod
           <tr><td>Built against an earlier major of the contract</td><td>The plugin is ignored, and About says it needs rebuilding</td></tr>
           <tr><td>Built against a later contract than this release offers</td><td>The plugin is ignored, and About says it needs a newer Flyback</td></tr>
           <tr><td>A module registered that was not declared, or under another name</td><td>The plugin is ignored whole, and About names the module</td></tr>
-          <tr><td>A throw from <code>Register</code> or a preset</td><td>Reported; everything else carries on</td></tr>
+          <tr><td>A throw from <code>Register</code></td><td>The plugin is ignored whole, with what it registered before the throw, and reported</td></tr>
+          <tr><td>A throw from a preset</td><td>Reported; everything else carries on</td></tr>
         </tbody>
       </table>
     </div>

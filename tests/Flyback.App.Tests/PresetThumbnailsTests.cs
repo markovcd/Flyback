@@ -97,4 +97,37 @@ public sealed class PresetThumbnailsTests : IDisposable
         drawn.Pixels.ShouldNotBeNull();
         builds.ShouldBe(1);
     }
+
+    /// <summary>The picture it needs may be there next time, so the tile is drawn again rather than kept as it is.</summary>
+    [Fact]
+    public async Task A_patch_that_does_not_compile_is_not_kept_on_disk()
+    {
+        var preset = new PatchPreset("Missing " + Guid.NewGuid().ToString("N"), catalog =>
+        {
+            var patch = new Patch();
+            var image = NodeInstance.Create(catalog.Require(NodeCatalog.PictureTypeId), 0, 0);
+            var output = NodeInstance.Create(catalog.Require(NodeCatalog.OutputTypeId), 0, 0);
+
+            PictureExtra.Set(image, "gone.png");
+            patch.Nodes.Add(image);
+            patch.Nodes.Add(output);
+            patch.Connect(image.Id, 0, output.Id, NodeCatalog.OutputColorPort);
+
+            return patch;
+        }, "");
+
+        var drawn = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Of(preset, TestContext.Current.CancellationToken);
+
+        drawn.Words.ShouldBe(Thumbnail.Unavailable.Words);
+        (Directory.Exists(folder) ? Directory.GetFiles(folder, "*.thumb") : []).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_kept_thumbnail_that_cannot_be_read_is_none()
+    {
+        Directory.CreateDirectory(folder);
+        File.WriteAllBytes(Path.Combine(folder, "abc.thumb"), [1, 0, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]);
+
+        new ThumbnailStore(folder).Find("abc").ShouldBeNull();
+    }
 }

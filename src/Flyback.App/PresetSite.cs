@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.Json;
 
@@ -96,7 +97,7 @@ internal sealed class PresetSite(HttpClient http, Uri root)
     {
         var items = new List<SitePreset>();
 
-        if (found.TryGetProperty("items", out var listed) && listed.ValueKind == JsonValueKind.Array)
+        if (found.ValueKind == JsonValueKind.Object && found.TryGetProperty("items", out var listed) && listed.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in listed.EnumerateArray())
             {
@@ -113,10 +114,10 @@ internal sealed class PresetSite(HttpClient http, Uri root)
         if (Text(item, "id") is not { Length: > 0 } id
             || Text(item, "name") is not { Length: > 0 } name
             || Text(item, "file") is not { } file
-            || !Uri.TryCreate(root, file, out var fileUri))
+            || !Link(root, file, out var fileUri))
             return null;
 
-        var still = item.TryGetProperty("media", out var media) && Text(media, "still") is { } path && Uri.TryCreate(root, path, out var stillUri)
+        var still = item.TryGetProperty("media", out var media) && Text(media, "still") is { } path && Link(root, path, out var stillUri)
             ? stillUri
             : null;
 
@@ -134,11 +135,21 @@ internal sealed class PresetSite(HttpClient http, Uri root)
             SiteRating.Read(item));
     }
 
+    /// <summary>An address the site lists, resolved against it; only http and https, which is all it serves.</summary>
+    internal static bool Link(Uri root, string path, [NotNullWhen(true)] out Uri? link)
+    {
+        if (Uri.TryCreate(root, path, out link) && (link.Scheme == Uri.UriSchemeHttps || link.Scheme == Uri.UriSchemeHttp)) return true;
+
+        link = null;
+        return false;
+    }
+
     private static string? Text(JsonElement item, string name) =>
         item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
 
     private static int Number(JsonElement item, string name) =>
-        item.TryGetProperty(name, out var value) && value.TryGetInt32(out var number) ? number : 0;
+        item.ValueKind == JsonValueKind.Object && item.TryGetProperty(name, out var value)
+        && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) ? number : 0;
 }

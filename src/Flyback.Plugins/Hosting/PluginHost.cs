@@ -207,6 +207,8 @@ public static class PluginHost
         Registry registry,
         List<PluginProblem> problems)
     {
+        Registry.Checkpoint? mark = null;
+
         try
         {
             var plugin = (IFlybackPlugin)Activator.CreateInstance(type)!;
@@ -221,14 +223,15 @@ public static class PluginHost
             }
 
             registry.Source = info;
-            var mark = registry.Mark();
+            var checkpoint = registry.Mark();
+            mark = checkpoint;
             plugin.Register(registry);
 
             // Its code has run by now, but nothing it registered is kept unless it was declared.
             if (ModuleDeclarations.Required(type.Assembly.GetReferencedAssemblies())
-                && ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(mark)) is { } mismatch)
+                && ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(checkpoint)) is { } mismatch)
             {
-                registry.Restore(mark);
+                registry.Restore(checkpoint);
                 problems.Add(new PluginProblem(Path.GetFileName(path), mismatch));
                 return;
             }
@@ -237,6 +240,9 @@ public static class PluginHost
         }
         catch (Exception ex)
         {
+            // A plugin that did not finish registering is not loaded, so nothing it registered is kept.
+            if (mark is { } undo) registry.Restore(undo);
+
             problems.Add(new PluginProblem(type.Name, ex.Message));
         }
     }

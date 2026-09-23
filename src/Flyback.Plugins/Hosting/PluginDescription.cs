@@ -84,7 +84,7 @@ internal sealed record AssemblyFacts(
                 adds,
                 reaches,
                 [.. metadata.AssemblyReferences.Select(h => metadata.GetAssemblyReference(h)).Select(r =>
-                    new AssemblyName(metadata.GetString(r.Name)) { Version = r.Version })],
+                    new AssemblyName { Name = metadata.GetString(r.Name), Version = r.Version })],
                 PreviewsOf(reader, metadata),
                 ModulesOf(metadata, assembly));
         }
@@ -286,7 +286,8 @@ internal sealed record AssemblyFacts(
 
             var length = blob.ReadUInt32();
 
-            found.Add(length > PreviewLimit
+            // Only the first is read: a second is refused whatever it holds.
+            found.Add(length > PreviewLimit || found.Count > 0
                 ? new EmbeddedPreview(name, length, null)
                 : new EmbeddedPreview(name, length, blob.ReadBytes((int)length)));
         }
@@ -324,7 +325,7 @@ internal sealed record PluginPreview(string MediaType, byte[] Bytes)
         if (previews.Count == 0) return null;
 
         if (previews.Count > 1)
-            throw new InvalidDataException($"Its plugin assembly embeds {string.Join(" and ", previews.Select(p => p.Name))}, where a plugin has one preview.");
+            throw new InvalidDataException($"Its plugin assembly embeds {previews.Count} previews, where a plugin has one preview.");
 
         var (name, length, bytes) = previews[0];
 
