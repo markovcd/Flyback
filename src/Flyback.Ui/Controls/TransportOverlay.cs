@@ -8,7 +8,7 @@ using Avalonia.Styling;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Sound, pause and rewind over a full-window picture, tucked behind three
+/// Sound, rewind and pause over a full-window picture, tucked behind three
 /// dots in the bottom right corner. Bare glyphs on no bar, drawn the way the knobs are.
 /// </summary>
 /// <remarks>
@@ -47,9 +47,11 @@ public sealed class TransportOverlay : TuckedAway
 
         var rewind = Tool(Glyphs.Rewind(), "Back to the start", () => RewindClicked?.Invoke());
 
+        // Pause is last: it sits under the three dots, so it is the one a click
+        // aimed at the dots lands on, and a stray pause costs less than a rewind.
         buttons.Children.Add(muteButton);
-        buttons.Children.Add(pauseButton);
         buttons.Children.Add(rewind);
+        buttons.Children.Add(pauseButton);
 
         // The theme paints a hovered or pressed button a fill; over a picture that
         // is a gray box, so the glyph brightens instead.
