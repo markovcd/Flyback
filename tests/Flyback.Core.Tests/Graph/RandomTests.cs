@@ -136,6 +136,23 @@ public class RandomTests
         }
     }
 
+    /// <summary>At this time the white lanes and the 64-a-second steps both count past an int.</summary>
+    [Fact]
+    public void Every_output_is_still_noise_once_its_lattice_counts_past_an_int()
+    {
+        const double Late = 2e8;
+
+        foreach (var port in new[] { White, Pink, Stepped, Drift })
+        {
+            var read = Program(port, (RatePort, 64f)).Read;
+            var values = Enumerable.Range(0, 256).Select(i => read(Late + (i + 0.3) / 64)).ToList();
+
+            values.ShouldAllBe(v => v >= -1f && v <= 1f, $"output {port}");
+            values.Distinct().Count().ShouldBeGreaterThan(200, $"output {port}");
+            values.Average().ShouldBe(0f, 0.2f, $"output {port}");
+        }
+    }
+
     /// <summary>
     /// Thirteen of the sixteen lookups are pink's rows, and a patch that wants
     /// hiss for a hat runs none of them.

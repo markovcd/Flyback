@@ -45,6 +45,19 @@ public sealed class SpeakerSteps(PatchContext context)
             late[i].ShouldBe(first[i], 1e-6, $"sample {i}");
     }
 
+    [Then("a second of it a week in is noise as loud as its first second")]
+    public void ThenAWeekInIsStillNoise()
+    {
+        var first = context.Listen(0, PatchContext.SampleRate);
+        var late = context.Listen(7 * 24 * 3600, PatchContext.SampleRate);
+
+        late.ShouldAllBe(v => Math.Abs(v) <= 1d, "the noise is stuck past the rail");
+        late.Distinct().Count().ShouldBeGreaterThan(PatchContext.SampleRate / 4);
+        (Rms(late) / Rms(first)).ShouldBeInRange(0.9, 1.1);
+    }
+
+    private static double Rms(double[] signal) => Math.Sqrt(signal.Average(v => v * v));
+
     [Then("both speakers play the same sound")]
     public void ThenBothSpeakersMatch()
     {

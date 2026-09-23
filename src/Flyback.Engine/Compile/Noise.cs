@@ -13,13 +13,17 @@ internal static class Noise
     {
         if (!double.IsFinite(x) || !double.IsFinite(y) || !double.IsFinite(z)) return 0d;
 
-        var xi = (int)Math.Floor(x);
-        var yi = (int)Math.Floor(y);
-        var zi = (int)Math.Floor(z);
+        var xf = Math.Floor(x);
+        var yf = Math.Floor(y);
+        var zf = Math.Floor(z);
 
-        var u = Fade(x - xi);
-        var v = Fade(y - yi);
-        var w = Fade(z - zi);
+        var xi = Lattice(xf);
+        var yi = Lattice(yf);
+        var zi = Lattice(zf);
+
+        var u = Fade(x - xf);
+        var v = Fade(y - yf);
+        var w = Fade(z - zf);
 
         var z0 = Lerp(
             Lerp(Hash(xi, yi, zi), Hash(xi + 1, yi, zi), u),
@@ -33,6 +37,13 @@ internal static class Noise
 
         return Lerp(z0, z1, w);
     }
+
+    /// <summary>
+    /// A lattice index wrapped to 32 bits rather than saturated, so noise read off
+    /// a fast clock is still noise days in. Inside an int's range it is the plain cast.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int Lattice(double floored) => unchecked((int)(long)floored);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static double Fade(double t) => t * t * (3d - 2d * t);

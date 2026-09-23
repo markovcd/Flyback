@@ -336,6 +336,20 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
+    /// <summary>Random read off a fast clock, the way Overworld's hats are: 19200 new values a second.</summary>
+    [Given("chip noise is playing")]
+    public void GivenChipNoise()
+    {
+        context.Add("clock", NodeCatalog.TimeTypeId);
+        context.Add("faster", "math.mul");
+        context.SetInput("faster", "b", 300f);
+        context.Add("noise", NodeCatalog.RandomTypeId);
+        context.SetInput("noise", "rate", 64f);
+        context.Wire("clock", "t", "faster", "a");
+        context.Wire("faster", "out", "noise", "in");
+        Hear("noise", "random");
+    }
+
     /// <summary>Filter and Delay are the engine's own (ADR-0128), so this needs no plugin.</summary>
     [Given("a {float} Hz sine through the engine's own filter and delay")]
     public void GivenAFilteredAndDelayedSine(float frequency)
