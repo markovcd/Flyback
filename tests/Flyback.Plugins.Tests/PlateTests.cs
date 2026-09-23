@@ -206,6 +206,24 @@ public class PlateTests
         program.Ops.Count(op => op.Code == OpCode.Exp).ShouldBe(9, "an envelope per mode");
     }
 
+    /// <summary>
+    /// Sand as the editor plays it, its knobs live: two plates and a harmonograph,
+    /// eleven planes, however many partials read the plate Overtones hears.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Sand_played_strikes_each_plate_once(bool heard)
+    {
+        var sand = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Sand").Build(Catalog);
+
+        var program = heard
+            ? sand.CompileForAudio(Catalog, played: true).Program
+            : sand.CompileForVideo(Catalog, played: true).Program;
+
+        program.PlaneCount.ShouldBe(3 + 3 + 5);
+    }
+
     private static int Crossings(float[] samples)
     {
         var count = 0;

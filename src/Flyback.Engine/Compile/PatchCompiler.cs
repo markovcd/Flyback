@@ -178,6 +178,8 @@ public static class PatchCompiler
         // is all a normal names.
         var normals = new Dictionary<string, List<(Slot[] Outputs, DomainRead Read)>>();
 
+        var knobs = new Dictionary<(Guid Node, int Port), Slot>();
+
         var visiting = new HashSet<Guid>();
 
         // The wires that run backwards, and the plane each carries its value
@@ -558,8 +560,12 @@ public static class PatchCompiler
 
         // What an unwired socket rests on: its own knob, or the panel knob it
         // follows. Scaled here rather than by whoever turns the knob, because one
-        // knob may drive several sockets over different ranges.
-        Slot Knob(NodeInstance node, int port, PortSpec spec)
+        // knob may drive several sockets over different ranges. One register per
+        // socket, however many sweeps lower its module: a knob reads no place.
+        Slot Knob(NodeInstance node, int port, PortSpec spec) =>
+            knobs.TryGetValue((node.Id, port), out var slot) ? slot : knobs[(node.Id, port)] = Turned(node, port, spec);
+
+        Slot Turned(NodeInstance node, int port, PortSpec spec)
         {
             if (ControlMap.Of(node, port) is not { } link)
                 return emitter.Constant(DefaultFor(node, port, spec));
