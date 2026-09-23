@@ -78,6 +78,13 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "drawn scene — a slatted sun, a ridge, and a grid that arrives a line to the beat.",
                 PresetKind.Showcase),
             new PatchPreset(
+                IrrationalPreset.Name,
+                IrrationalPreset.Build,
+                "Two pulses whose rates are a ratio of the square root of two: they pass close, "
+                + "flare, and never once land together — a piece with no loop, because it cannot "
+                + "have one.",
+                PresetKind.Showcase),
+            new PatchPreset(
                 PhasePreset.Name,
                 PhasePreset.Build,
                 "Phase music, after Steve Reich: two players on one pattern, the second pulling ahead "
