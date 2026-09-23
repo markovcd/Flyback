@@ -54,8 +54,9 @@ and behind the same upright bar the count already divides itself with. The
 toolbar is what is done to the patch and to the program; a letter is neither,
 and it is reached for once in a year. One kind of separator to a line: a drawn
 rule beside four typed bars would read as two different dividers. Its envelope is drawn rather
-than typed, because Inter has no envelope — nor a gear nor a ringed i, which
-the toolbar types anyway and which the platform's emoji font answers for.
+than typed, because the font Flyback embeds has no envelope — nor a gear nor a
+ringed i, which the toolbar types anyway. What a platform substitutes for one is
+its emoji face, which is a full-color picture in a bar of thin gray strokes.
 
 ## Consequences
 

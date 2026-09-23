@@ -163,9 +163,19 @@ public sealed class LetterTests : UiTest
     }
 
     /// <summary>
-    /// Drawn rather than typed, which is not a preference: the shipped font has
-    /// no envelope, and neither has it the gear or the ringed i the toolbar
-    /// types — those fall through to whatever the platform puts up instead.
+    /// The font Flyback embeds, asked for by the resource it is embedded as.
+    /// </summary>
+    /// <remarks>
+    /// Not <see cref="Typeface.Default"/>, which is whatever the machine puts up:
+    /// Segoe UI on Windows and a fontconfig match on Linux, so a question asked of
+    /// it is answered by the host rather than by anything this repository ships.
+    /// </remarks>
+    private static readonly FontFamily Shipped = new("avares://Avalonia.Fonts.Inter/Assets#Inter");
+
+    /// <summary>
+    /// Drawn rather than typed, which is not a preference: no font here has an
+    /// envelope, and what a platform substitutes for one is its emoji face — a
+    /// full-color picture in a bar of thin gray strokes.
     /// </summary>
     [AvaloniaFact]
     public void The_letter_is_drawn_rather_than_left_to_a_font()
@@ -179,7 +189,7 @@ public sealed class LetterTests : UiTest
 
         letter.Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
 
-        Typeface.Default.GlyphTypeface.CharacterToGlyphMap.TryGetGlyph('✉', out _).ShouldBeFalse(
-            "the shipped font has gained an envelope, so this drawing could be a character again");
+        new Typeface(Shipped).GlyphTypeface.CharacterToGlyphMap.TryGetGlyph('✉', out _).ShouldBeFalse(
+            "the embedded font has gained an envelope, so this drawing could be a character again");
     }
 }
