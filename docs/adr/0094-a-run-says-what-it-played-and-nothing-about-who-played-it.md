@@ -125,3 +125,14 @@ list rather than a chart.
 one that says nothing, which is every test but the ones about this; what is said
 and what is withheld is tested against a sink that collects, and the wire
 against an Aptabase that answers from memory.
+
+## Amendment, 2026-09-24: a build made on a developer's machine counts as debug
+
+A build that is not a release still says nothing, with one exception: a build
+made on a developer's machine, which is one that embeds the public half of the
+local `RELEASE_SIGNING_KEY` ([0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)).
+Its build marks the assembly `LocalBuild`, and its runs are sent under its own
+version, commit and all, with Aptabase's `isDebug` set, which the dashboard keeps
+apart from the releases. The user wanted local runs visible without mixing them
+into the figures. A build on GitHub never carries the mark, so the gate's and
+coverage's builds still say nothing, and the Usage switch turns it off the same way.

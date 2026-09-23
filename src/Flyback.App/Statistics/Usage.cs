@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Flyback.App.Updates;
 using Flyback.Core.Graph;
@@ -171,11 +172,13 @@ public sealed class Usage
 
     /// <summary>
     /// A reporter for this run, or <see cref="Off"/> where there is nothing to
-    /// report to: statistics switched off, a build that is not a release — which is
-    /// somebody working on Flyback rather than using it — or a build carrying no
-    /// application key, which is any fork of this repository.
+    /// report to: statistics switched off, a build that is neither a release nor
+    /// made on a developer's machine, or a build carrying no application key, which
+    /// is any fork of this repository. A build made on a developer's machine reports
+    /// as Aptabase's debug, apart from the releases.
     /// </summary>
-    public static Usage Start(UsageSettings settings, Launch? launch = null) => Start(settings, ReleaseFeed.Running(), launch);
+    public static Usage Start(UsageSettings settings, Launch? launch = null) =>
+        Start(settings, ReleaseFeed.Running(), launch, LocalBuild());
 
     /// <param name="settings"><inheritdoc cref="Start(UsageSettings, Launch?)"/></param>
     /// <param name="running">
@@ -183,23 +186,39 @@ public sealed class Usage
     /// read from the assembly so a test can say which it is.
     /// </param>
     /// <param name="launch">How this run began.</param>
-    internal static Usage Start(UsageSettings settings, Version? running, Launch? launch = null)
+    /// <param name="local">The version of a build made on a developer's machine, or null for any other.</param>
+    internal static Usage Start(UsageSettings settings, Version? running, Launch? launch = null, string? local = null)
     {
         if (!settings.SendUsageStatistics) return Off;
 
-        if (running is null)
+        if (running is null && local is null)
         {
             Trace.WriteLine("usage: not a release build, so nothing is counted");
             return Off;
         }
 
-        if (Aptabase.Open(running) is not { } aptabase)
+        var opened = local is not null ? Aptabase.Open(local, debug: true) : Aptabase.Open(running!);
+
+        if (opened is not { } aptabase)
         {
             Trace.WriteLine("usage: this build carries no application key, so nothing is counted");
             return Off;
         }
 
         return new Usage(aptabase, launch);
+    }
+
+    /// <summary>
+    /// This build's version where the build marked itself made on a developer's
+    /// machine, which one that embeds the local release key does (ReleaseKey.targets).
+    /// </summary>
+    private static string? LocalBuild()
+    {
+        var assembly = typeof(Usage).Assembly;
+
+        return assembly.GetCustomAttributes<AssemblyMetadataAttribute>().Any(a => a is { Key: "LocalBuild", Value: "true" })
+            ? assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            : null;
     }
 
     /// <summary>

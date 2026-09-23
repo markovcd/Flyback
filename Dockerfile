@@ -93,8 +93,10 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 
 # The public key the app trusts updates from, as base64 DER. Only a build on a
 # developer's machine passes one: release.sh and make.sh hand in the local test
-# key's, and on GitHub the committed release-key.pem stands.
+# key's, and on GitHub the committed release-key.pem stands. Kept in the
+# environment, so every stage built on this one knows it is a local build.
 ARG RELEASE_PUBLIC_KEY=""
+ENV RELEASE_PUBLIC_KEY=${RELEASE_PUBLIC_KEY}
 
 RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
       printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' "${RELEASE_PUBLIC_KEY}" \
@@ -212,8 +214,12 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 #
 # The signature is checked against the key's own public half. That half being
 # release-key.pem is release.sh's check, made before anything is built.
+#
+# PACKAGE=folders lays each platform out as a folder to run instead of a zip,
+# which is what release.sh asks for off GitHub; SHA256SUMS then lists every file.
 FROM ${SDK} AS signed
 ARG VERSION
+ARG PACKAGE=zips
 
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends zip \
@@ -226,9 +232,15 @@ WORKDIR /artifacts
 
 RUN --mount=type=secret,id=release-key,required=true \
     set -eu; \
-    for platform in *; do zip -qr /dist/flyback-${VERSION}-${platform}.zip ${platform}; done; \
+    for platform in *; do \
+      case ${PACKAGE} in \
+        zips) zip -qr /dist/flyback-${VERSION}-${platform}.zip ${platform} ;; \
+        folders) cp -a ${platform} /dist/ ;; \
+        *) echo "PACKAGE is zips or folders, not ${PACKAGE}" >&2; exit 1 ;; \
+      esac; \
+    done; \
     cd /dist; \
-    sha256sum *.zip *.fbkp > SHA256SUMS; \
+    find . -type f ! -name 'SHA256SUMS*' | sed 's|^\./||' | sort | xargs -d '\n' sha256sum > SHA256SUMS; \
     openssl dgst -sha256 -sign /run/secrets/release-key -out SHA256SUMS.sig SHA256SUMS; \
     openssl pkey -in /run/secrets/release-key -pubout -out /tmp/release-key.pem; \
     openssl dgst -sha256 -verify /tmp/release-key.pem -signature SHA256SUMS.sig SHA256SUMS

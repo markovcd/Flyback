@@ -65,8 +65,8 @@ local builds, and nothing built locally installs a local release over a real one
 
 **The release is `release.sh`, and it runs off GitHub too.** It checks the key
 and the changelog, then builds the root Dockerfile's `release` stage: the gate,
-the publishes, Figures packed at the release's version, a zip per platform and
-a signed `SHA256SUMS`, into `dist/`. The workflow runs it and publishes `dist/`.
+the publishes, Figures packed at the release's version, a zip per platform (a
+folder to run, off GitHub) and a signed `SHA256SUMS`, into `dist/`. The workflow runs it and publishes `dist/`.
 Run elsewhere it signs with the local test key and publishes nothing, and only
 GitHub stops at a key that does not pair with the committed public key or at a
 missing changelog heading. A Figures installed from a release and one installed

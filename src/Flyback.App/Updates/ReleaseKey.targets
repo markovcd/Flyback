@@ -175,20 +175,28 @@ public class LocalReleaseKey : Task
     </Task>
   </UsingTask>
 
-  <Target Name="EmbedLocalReleaseKey" BeforeTargets="PrepareForBuild" Condition="'$(LocalReleaseKey)' == 'true'">
+  <Target Name="EmbedLocalReleaseKey" BeforeTargets="PrepareForBuild">
 
     <!-- Here rather than above: the project imports this before the SDK sets IntermediateOutputPath. -->
     <PropertyGroup>
       <LocalReleaseKeyFile>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'release-key.pem'))</LocalReleaseKeyFile>
     </PropertyGroup>
 
-    <LocalReleaseKey Into="$(LocalReleaseKeyFile)">
+    <LocalReleaseKey Condition="'$(LocalReleaseKey)' == 'true'" Into="$(LocalReleaseKeyFile)">
       <Output TaskParameter="Written" PropertyName="LocalReleaseKeyWritten" />
     </LocalReleaseKey>
 
     <ItemGroup Condition="'$(LocalReleaseKeyWritten)' == 'true'">
       <EmbeddedResource Remove="Updates\release-key.pem" />
       <EmbeddedResource Include="$(LocalReleaseKeyFile)" LogicalName="release-key.pem" />
+    </ItemGroup>
+
+    <!-- Either way it embeds the local key, it is a local build, and its runs are Aptabase's debug ones (Usage.Start). -->
+    <ItemGroup Condition="'$(LocalReleaseKeyWritten)' == 'true' or '$(RELEASE_PUBLIC_KEY)' != ''">
+      <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+        <_Parameter1>LocalBuild</_Parameter1>
+        <_Parameter2>true</_Parameter2>
+      </AssemblyAttribute>
     </ItemGroup>
 
   </Target>

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -58,14 +57,15 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     /// <summary>Events posted and not yet answered, for <see cref="Drain"/> to wait on.</summary>
     private readonly HashSet<Task> inFlight = [];
 
-    private Aptabase(HttpClient http, Version running)
+    private Aptabase(HttpClient http, string version, bool debug)
     {
         this.http = http;
         info = new Body.Info(
             OsName(),
             Environment.OSVersion.Version.ToString(3),
-            running.ToString(3),
-            $"flyback@{running.ToString(3)}");
+            version,
+            $"flyback@{version}",
+            debug);
     }
 
     /// <summary>
@@ -74,7 +74,12 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     /// counts anything.
     /// </summary>
     /// <param name="transport">The tests' Aptabase. Null is the real one.</param>
-    public static Aptabase? Open(Version running, HttpMessageHandler? transport = null)
+    public static Aptabase? Open(Version running, HttpMessageHandler? transport = null) =>
+        Open(running.ToString(3), debug: false, transport);
+
+    /// <summary>A client whose events are Aptabase's debug ones where <paramref name="debug"/> says so.</summary>
+    /// <param name="transport"><inheritdoc cref="Open(Version, HttpMessageHandler?)"/></param>
+    public static Aptabase? Open(string version, bool debug, HttpMessageHandler? transport = null)
     {
         if (EmbeddedKey() is not { } read) return null;
 
@@ -85,9 +90,9 @@ internal sealed class Aptabase : IUsageSink, IDisposable
         client.BaseAddress = host;
         client.Timeout = TimeSpan.FromSeconds(30);
         client.DefaultRequestHeaders.Add("App-Key", key);
-        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Flyback", running.ToString(3)));
+        client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Flyback", version));
 
-        return new Aptabase(client, running);
+        return new Aptabase(client, version, debug);
     }
 
     /// <summary>The key compiled into this build, or null where there is none.</summary>
@@ -238,14 +243,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
         /// Who is speaking this protocol, which the service asks of every event. It
         /// is Flyback itself rather than any package.
         /// </param>
-        internal sealed record Info(string OsName, string OsVersion, string AppVersion, string SdkVersion)
-        {
-            /// <summary>
-            /// Always false. A build that is not a release never gets this far —
-            /// see <see cref="Usage.Start"/> — so everything counted is a release.
-            /// </summary>
-            [SuppressMessage("Performance", "CA1822", Justification = "Serialized: the service reads it off every event.")]
-            public bool IsDebug => false;
-        }
+        /// <param name="IsDebug">A build made on a developer's machine, which Aptabase keeps apart from releases.</param>
+        internal sealed record Info(string OsName, string OsVersion, string AppVersion, string SdkVersion, bool IsDebug);
     }
 }

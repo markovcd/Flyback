@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Builds a release into dist/: every platform zipped, the Figures package, and a
 # signed SHA256SUMS. The Release workflow runs this and publishes dist/; run here,
-# it is the same build signed with a local test key, and nothing is published.
+# it is the same build signed with a local test key, each platform is a folder to
+# run rather than a zip, and nothing is published.
 #
 #   ./release.sh [version]
 #
@@ -79,12 +80,13 @@ fi
 echo "Building $tag"
 
 # Off GitHub the build trusts the local key, so a release made here installs over
-# builds made here. On GitHub nothing is passed and the committed key stands.
-trust=()
-$github || trust=(--build-arg RELEASE_PUBLIC_KEY)
+# builds made here, and lays each platform out as a folder. On GitHub nothing is
+# passed: the committed key stands and each platform is zipped.
+here=()
+$github || here=(--build-arg RELEASE_PUBLIC_KEY --build-arg PACKAGE=folders)
 
 rm -rf dist
-docker build --build-arg VERSION="$version" "${trust[@]}" --target release \
+docker build --build-arg VERSION="$version" "${here[@]}" --target release \
   --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
 
 # What every copy of Flyback will check it against, before anything is published.

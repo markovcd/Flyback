@@ -47,6 +47,21 @@ public sealed class UsageSettingsFileTests : IDisposable
             .ShouldBeSameAs(Usage.Off);
     }
 
+    /// <summary>Constructed and never sent to: nothing here reaches the network.</summary>
+    [Fact]
+    public void A_build_made_on_a_developers_machine_is_counted()
+    {
+        Usage.Start(new UsageSettings { SendUsageStatistics = true }, ReleaseFeed.Released("0.1.0-dev+37fc87f"), local: "0.1.0-dev+37fc87f")
+            .ShouldNotBeSameAs(Usage.Off);
+    }
+
+    [Fact]
+    public void A_build_made_on_a_developers_machine_is_not_counted_when_switched_off()
+    {
+        Usage.Start(new UsageSettings { SendUsageStatistics = false }, running: null, local: "0.1.0-dev+37fc87f")
+            .ShouldBeSameAs(Usage.Off);
+    }
+
     [Fact]
     public void Switched_off_it_is_never_started()
     {

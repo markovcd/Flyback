@@ -106,6 +106,22 @@ public sealed class AptabaseTests
         about.TryGetProperty("locale", out _).ShouldBeFalse("what language somebody works in is theirs");
     }
 
+    [Fact]
+    public async Task A_build_made_on_a_developers_machine_is_sent_as_debug_under_its_own_version()
+    {
+        var service = new Service();
+
+        using var aptabase = Aptabase.Open("0.1.0-dev+37fc87f", debug: true, service)!;
+
+        await aptabase.SendAsync(Started, CancellationToken.None);
+
+        using var body = JsonDocument.Parse(service.Body);
+        var about = body.RootElement.GetProperty("systemProps");
+
+        about.GetProperty("isDebug").GetBoolean().ShouldBeTrue();
+        about.GetProperty("appVersion").GetString().ShouldBe("0.1.0-dev+37fc87f");
+    }
+
     /// <summary>
     /// The session is the run: the second it began and a random number after it,
     /// which is the shape the service reads and the whole of what joins one event to
