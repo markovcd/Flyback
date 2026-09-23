@@ -35,7 +35,7 @@ jobs:
 
       # buildx, for the layer cache below. The runner's plain docker cannot
       # export one.
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       # The SDK image, the apt packages and the restore are the same on almost
       # every run, and a runner keeps nothing between jobs, so without a cache
