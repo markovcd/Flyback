@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
@@ -65,50 +65,6 @@ public sealed class SitePresetTests : UiTest
         patch.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 100, 100));
 
         return System.Text.Encoding.UTF8.GetBytes(PatchIO.ToJson(patch));
-    }
-
-    /// <summary>
-    /// How a preset opened from the site is found again after a restart, which is what
-    /// installing a plugin it needed costs.
-    /// </summary>
-    [Fact]
-    public async Task One_shared_preset_is_found_by_its_id()
-    {
-        using var site = new FakePresetSite(new Posted("a1", "Nebula", Author: "Ann"), new Posted("b1", "Drift"));
-
-        var found = await site.Site().FindAsync("a1", CancellationToken.None);
-
-        found.ShouldNotBeNull().Name.ShouldBe("Nebula");
-        found.Author.ShouldBe("Ann");
-        site.Asked.ShouldHaveSingleItem().AbsolutePath.ShouldBe("/api/v1/presets/a1");
-    }
-
-    [Fact]
-    public async Task A_preset_the_site_no_longer_has_is_not_found()
-    {
-        using var site = new FakePresetSite(new Posted("a1", "Nebula"));
-
-        (await site.Site().FindAsync("gone", CancellationToken.None)).ShouldBeNull();
-    }
-
-    /// <summary>What a proxy or an older site might answer is a listing with nothing in it, not an error nobody catches.</summary>
-    [Theory]
-    [InlineData("""{"items":[],"total":"5"}""")]
-    [InlineData("""[]""")]
-    [InlineData("""null""")]
-    public void A_listing_of_another_shape_lists_nothing(string json)
-    {
-        using var document = JsonDocument.Parse(json);
-
-        PresetSite.Read(document.RootElement, FakePresetSite.Root).Items.ShouldBeEmpty();
-    }
-
-    [Fact]
-    public void A_rating_of_another_shape_is_no_rating()
-    {
-        using var document = JsonDocument.Parse("""{"rating":{"count":"3","average":4}}""");
-
-        SiteRating.Read(document.RootElement).ShouldBe(SiteRating.None);
     }
 
     [AvaloniaFact]
@@ -276,5 +232,57 @@ public sealed class SitePresetTests : UiTest
         Stars("a").Inlines!.Text.ShouldBe("★★★★★  2.6 (1 rating)");
         Stars("b").Inlines!.Text.ShouldBe("★★★★★  Not rated yet");
         site.Asked.ShouldNotContain(u => u.AbsolutePath.EndsWith("/rating", StringComparison.Ordinal), "ratings are given on the site");
+    }
+}
+
+/// <summary>
+/// What the preset site answers, read without a window: HttpClient and JSON. Apart
+/// from <see cref="SitePresetTests"/> so that it runs off the one UI thread headless
+/// gives the assembly rather than queueing on it.
+/// </summary>
+public sealed class SiteAnswerTests
+{
+    /// <summary>
+    /// How a preset opened from the site is found again after a restart, which is what
+    /// installing a plugin it needed costs.
+    /// </summary>
+    [Fact]
+    public async Task One_shared_preset_is_found_by_its_id()
+    {
+        using var site = new FakePresetSite(new Posted("a1", "Nebula", Author: "Ann"), new Posted("b1", "Drift"));
+
+        var found = await site.Site().FindAsync("a1", CancellationToken.None);
+
+        found.ShouldNotBeNull().Name.ShouldBe("Nebula");
+        found.Author.ShouldBe("Ann");
+        site.Asked.ShouldHaveSingleItem().AbsolutePath.ShouldBe("/api/v1/presets/a1");
+    }
+
+    [Fact]
+    public async Task A_preset_the_site_no_longer_has_is_not_found()
+    {
+        using var site = new FakePresetSite(new Posted("a1", "Nebula"));
+
+        (await site.Site().FindAsync("gone", CancellationToken.None)).ShouldBeNull();
+    }
+
+    /// <summary>What a proxy or an older site might answer is a listing with nothing in it, not an error nobody catches.</summary>
+    [Theory]
+    [InlineData("""{"items":[],"total":"5"}""")]
+    [InlineData("""[]""")]
+    [InlineData("""null""")]
+    public void A_listing_of_another_shape_lists_nothing(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+
+        PresetSite.Read(document.RootElement, FakePresetSite.Root).Items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_rating_of_another_shape_is_no_rating()
+    {
+        using var document = JsonDocument.Parse("""{"rating":{"count":"3","average":4}}""");
+
+        SiteRating.Read(document.RootElement).ShouldBe(SiteRating.None);
     }
 }
