@@ -152,5 +152,51 @@ public sealed class SpeakerSteps(PatchContext context)
                 .ShouldBeLessThanOrEqualTo(steepest, $"between samples {i - 1} and {i}");
     }
 
+    [Then("about half of its notes play")]
+    public void ThenAboutHalfPlay() => ((double)Notes().Count / Offered()).ShouldBeInRange(0.4, 0.6);
+
+    [Then("none of its notes play")]
+    public void ThenNonePlay() => Notes().ShouldBeEmpty();
+
+    [Then("every one of its notes plays")]
+    public void ThenEveryOnePlays() => Notes().Count.ShouldBe(Offered());
+
+    /// <summary>
+    /// As long as the longest, to the sample the step's edges may round to, and as
+    /// loud: a note cut in or out halfway is neither.
+    /// </summary>
+    [Then("every note that plays, plays whole")]
+    public void ThenEveryNoteIsWhole()
+    {
+        var notes = Notes();
+        var longest = notes.Max(note => note.Length);
+
+        notes.ShouldAllBe(note => note.Length >= longest - 1 && note.Max() > 0.99);
+    }
+
+    private int Offered() => (int)Math.Round(context.Now * context.NotesPerSecond);
+
+    /// <summary>Every stretch of sound between two silences.</summary>
+    private List<double[]> Notes()
+    {
+        var notes = new List<double[]>();
+        var note = new List<double>();
+
+        foreach (var sample in context.Heard.Append(0d))
+        {
+            if (sample > 0d)
+            {
+                note.Add(sample);
+            }
+            else if (note.Count > 0)
+            {
+                notes.Add([.. note]);
+                note.Clear();
+            }
+        }
+
+        return notes;
+    }
+
     private static int Samples(float seconds) => (int)Math.Round(seconds * PatchContext.SampleRate);
 }

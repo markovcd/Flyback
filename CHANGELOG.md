@@ -5,6 +5,7 @@
 - `flyback-cli modules <module>` describes one module: its sockets with their defaults and ranges, where a pipe lands, and what it does.
 - Added Crush, a bitcrusher.
 - Added Arc, part of a ring opening from the top, filled like a dial by its `sweep`.
+- Added Chance: each note on a gate plays on its `gate` as often as a knob says, and on its `else` the rest of the time.
 - `flyback-cli compare` plays two patches side by side and says whether they are the same instrument, bit for bit, or where they part.
 - Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.
 - A MIDI In can listen to one channel of its instrument.

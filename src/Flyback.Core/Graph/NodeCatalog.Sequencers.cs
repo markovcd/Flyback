@@ -52,6 +52,9 @@ public partial class NodeCatalog
     /// </summary>
     public const string HoldTypeId = "seq.hold";
 
+    /// <summary>A gate that passes each note or sends it to 'else', on a weighted coin.</summary>
+    public const string ChanceTypeId = "seq.chance";
+
     /// <summary>Seconds in a minute, which is the whole of what a tempo knob converts.</summary>
     private const float Minute = 60f;
 
@@ -98,6 +101,23 @@ public partial class NodeCatalog
             EmitHold,
             "Captures the value on 'in' when 'trigger' rises, and holds it until the next trigger. "
             + "Useful for locking a changing signal to a note or gate.")
+        {
+            Sinks = ModuleSinks.Audio,
+        };
+
+        yield return new NodeDef(
+            ChanceTypeId, "Chance", ModuleCategories.Timing,
+            [
+                Num("gate", 0f, 0f, 1f) with { Lenient = true },
+                Num("chance", 0.5f, 0f, 1f),
+                new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
+            ],
+            [Num("gate", 0f, 0f, 1f), Num("else", 0f, 0f, 1f)],
+            EmitChance,
+            "Flips a coin for each note on 'gate': it plays on 'gate' as often as 'chance' says, "
+            + "and on 'else' the rest of the time, whole from start to end. At 0 nothing gets "
+            + "through, at 1 everything does. Give each Chance its own 'seed'. On the picture "
+            + "it flips a new coin every frame.")
         {
             Sinks = ModuleSinks.Audio,
         };
@@ -176,6 +196,39 @@ public partial class NodeCatalog
     /// worse, whatever nought means to whatever is downstream.
     /// </para>
     /// </remarks>
+    /// <summary>
+    /// The coin is flipped on every evaluation the gate is shut and kept while it is
+    /// open, so a note is decided before its first sample and never changes its
+    /// mind halfway, however soft its edges.
+    /// </summary>
+    private static Slot[] EmitChance(Emitter em, EmitContext node)
+    {
+        var gate = node[0];
+        var chance = node[1];
+        var one = em.Constant(1f);
+        var live = em.HasMemory();
+
+        var cell = em.AllocateUnitSlot();
+        var kept = em.UnitRead(cell);
+
+        var draw = em.Add(em.Mul(White(em, em.Load(OpCode.LoadT), node[2]), 0.5f), 0.5f);
+
+        // Under the knob rather than at it, so 0 never passes; and 1 always does,
+        // because the hash can land on 1 exactly.
+        var heads = em.Binary(
+            OpCode.Max,
+            em.Sub(one, em.Binary(OpCode.Step, chance, draw)),
+            em.Binary(OpCode.Step, one, chance));
+
+        var shut = em.Binary(OpCode.Step, gate, em.Constant(0f));
+        var flipping = em.Binary(OpCode.Max, shut, em.Sub(one, live));
+        var next = em.Ternary(OpCode.Mix, kept, heads, flipping);
+
+        em.UnitWrite(cell, next);
+
+        return [em.Mul(gate, next), em.Mul(gate, em.Sub(one, next))];
+    }
+
     private static Slot[] EmitHold(Emitter em, EmitContext node)
     {
         var one = em.Constant(1f);
@@ -354,4 +407,4 @@ public partial class NodeCatalog
             which,
         ];
     }
-}
+}

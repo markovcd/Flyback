@@ -140,6 +140,11 @@ internal static class ModuleGlyphs
         [NodeCatalog.HoldTypeId] = Path(
             "M2,17 L6,17 L6,10 L10,10 L10,14 L14,14 L14,6 L18,6 L18,12 L22,12"),
 
+        // A die showing three.
+        [NodeCatalog.ChanceTypeId] = Path(
+            "M4,4 L20,4 L20,20 L4,20 Z M7,8 A1,1 0 1 1 9,8 A1,1 0 1 1 7,8 "
+            + "M11,12 A1,1 0 1 1 13,12 A1,1 0 1 1 11,12 M15,16 A1,1 0 1 1 17,16 A1,1 0 1 1 15,16"),
+
         // Four lines meeting in one: what a mixer does to its inputs.
         [NodeCatalog.MixerTypeId] = Path(
             "M3,4 L12,12 M3,9.3 L12,12 M3,14.7 L12,12 M3,20 L12,12 M12,12 L21,12"),

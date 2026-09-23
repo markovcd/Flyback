@@ -55,6 +55,9 @@ public sealed class PatchContext
     /// <summary>Every sample of the left channel played so far, across every edit.</summary>
     public IReadOnlyList<double> Heard => heard;
 
+    /// <summary>How many notes a second the scenario's sequencer offers, whether or not they play.</summary>
+    public int NotesPerSecond { get; set; }
+
     /// <summary>The highest frequency the scenario's tone reaches, which bounds how steeply a smooth wave can move.</summary>
     public double HighestFrequency { get; set; }
 

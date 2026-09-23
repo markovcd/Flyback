@@ -30,6 +30,7 @@ osc.string
 
 seq.tempo
 seq.hold
+seq.chance
 seq.notes
 seq.values
 env.adsr

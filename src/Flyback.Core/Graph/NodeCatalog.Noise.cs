@@ -64,7 +64,7 @@ public partial class NodeCatalog
         var lanes = em.Mul(em.Unary(OpCode.Floor, domain), Lanes);
         var within = em.Unary(OpCode.Fract, domain);
 
-        var white = RandomHash(em, lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)), seed);
+        var white = WhiteAt(em, lanes, within, seed);
 
         var pink = em.Constant(0f);
         for (var row = 0; row < Rows; row++)
@@ -75,6 +75,13 @@ public partial class NodeCatalog
 
         return (white, em.Ternary(OpCode.Clamp, em.Mul(pink, PinkScale), em.Constant(-1f), em.Constant(1f)));
     }
+
+    /// <summary>White noise over a domain, -1 to 1: a new value every sample.</summary>
+    private static Slot White(Emitter em, Slot domain, Slot seed) =>
+        WhiteAt(em, em.Mul(em.Unary(OpCode.Floor, domain), Lanes), em.Unary(OpCode.Fract, domain), seed);
+
+    private static Slot WhiteAt(Emitter em, Slot lanes, Slot within, Slot seed) =>
+        RandomHash(em, lanes, em.Unary(OpCode.Floor, em.Mul(within, Grain)), seed);
 
     /// <summary>The hash at a lattice point, -1 to 1. The seed is the third axis, so a fractional seed crossfades two.</summary>
     private static Slot RandomHash(Emitter em, Slot x, Slot y, Slot seed) =>

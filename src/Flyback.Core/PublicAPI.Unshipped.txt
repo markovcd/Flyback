@@ -64,6 +64,7 @@ const Flyback.Core.Graph.AutoRemap.InLow = 1 -> int
 const Flyback.Core.Graph.AutoRemap.OutHigh = 4 -> int
 const Flyback.Core.Graph.AutoRemap.OutLow = 3 -> int
 const Flyback.Core.Graph.NodeCatalog.AutoRemapTypeId = "math.autoremap" -> string!
+const Flyback.Core.Graph.NodeCatalog.ChanceTypeId = "seq.chance" -> string!
 override Flyback.Core.Graph.RemapSpan.GetHashCode() -> int
 override Flyback.Core.Graph.RemapSpans.Equals(object? obj) -> bool
 override Flyback.Core.Graph.RemapSpans.GetHashCode() -> int

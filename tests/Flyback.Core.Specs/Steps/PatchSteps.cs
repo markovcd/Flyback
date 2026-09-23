@@ -415,6 +415,18 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenASequencersGate(int rate) =>
         Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}s.gate |> out.left");
 
+    [Given("the gate of a sequencer stepping {int} times a second, through a chance of {float}")]
+    public void GivenAGateThroughChance(int rate, float chance) => Chanced(rate, chance, "c.gate");
+
+    [Given("the gate of a sequencer stepping {int} times a second, through a chance of {float}, with both of its gates added together")]
+    public void GivenBothGatesOfChance(int rate, float chance) => Chanced(rate, chance, "c.gate + c.else");
+
+    private void Chanced(int rate, float chance, string heard)
+    {
+        context.NotesPerSecond = rate;
+        Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}let c = s.gate |> chance(chance: {Number(chance)}){(char)10}{heard} |> out.left");
+    }
+
     [Given(@"^a sequencer of ([\d., ]+) stepping once a beat of a drum machine$")]
     public void GivenASequencerOnAClock(string values) =>
         Written(
