@@ -35,22 +35,22 @@ public static class Probe
     /// </remarks>
     public static byte[] Sound()
     {
-        const int Rate = 8000;
-        const int Tenth = Rate / 10;
-        const double Hz = 440;
+        const int rate = 8000;
+        const int tenth = rate / 10;
+        const double hz = 440;
 
         // A quarter of full scale: loud enough to be found, and nowhere near a
         // level anything downstream has to think about.
-        const float Peak = 0.25f;
+        const float peak = 0.25f;
 
-        var samples = new float[Tenth];
+        var samples = new float[tenth];
 
         for (var i = 0; i < samples.Length; i++)
-            samples[i] = (float)Math.Sin(2 * Math.PI * Hz * i / Rate) * Peak;
+            samples[i] = (float)Math.Sin(2 * Math.PI * hz * i / rate) * peak;
 
         using var buffer = new MemoryStream();
 
-        WavWriter.Write(buffer, samples, Rate, channels: 1);
+        WavWriter.Write(buffer, samples, rate, channels: 1);
 
         return buffer.ToArray();
     }

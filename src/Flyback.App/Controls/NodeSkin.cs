@@ -32,19 +32,19 @@ internal static class NodeSkin
     /// <summary>How much light the band has left by the time it meets the body.</summary>
     private const double HeaderFall = 0.72;
 
-    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> bodies = [];
-    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> headers = [];
-    private static readonly Dictionary<Color, IPen> marks = [];
-    private static readonly Dictionary<(Color From, Color To, bool Lift, int Fade), IBrush> inks = [];
+    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> Bodies = [];
+    private static readonly Dictionary<(Color Accent, Color Floor, bool Selected), IBrush> Headers = [];
+    private static readonly Dictionary<Color, IPen> Marks = [];
+    private static readonly Dictionary<(Color From, Color To, bool Lift, int Fade), IBrush> Inks = [];
 
     /// <summary>The wash down a module's body, tinted by what the module does.</summary>
     public static IBrush Body(Color accent, Color floor, bool selected)
     {
-        if (bodies.TryGetValue((accent, floor, selected), out var kept)) return kept;
+        if (Bodies.TryGetValue((accent, floor, selected), out var kept)) return kept;
 
         var made = Down(BodyTop(accent, selected), BodyFloor(floor, selected));
 
-        bodies[(accent, floor, selected)] = made;
+        Bodies[(accent, floor, selected)] = made;
 
         return made;
     }
@@ -52,11 +52,11 @@ internal static class NodeSkin
     /// <summary>The header band. Lit at the top and falling away, so it has a face.</summary>
     public static IBrush Header(Color accent, Color floor, bool selected)
     {
-        if (headers.TryGetValue((accent, floor, selected), out var kept)) return kept;
+        if (Headers.TryGetValue((accent, floor, selected), out var kept)) return kept;
 
         var made = Down(HeaderTop(accent, selected), HeaderFloor(floor));
 
-        headers[(accent, floor, selected)] = made;
+        Headers[(accent, floor, selected)] = made;
 
         return made;
     }
@@ -82,10 +82,10 @@ internal static class NodeSkin
     /// The plain node color, with no accent mixed in — what shows through a
     /// transparent picture, since ADR-0118 counts transparency as the node gray.
     /// </summary>
-    public static IBrush GroundFill(bool selected) => selected ? groundSelected : ground;
+    public static IBrush GroundFill(bool selected) => selected ? SelectedGround : PlainGround;
 
-    private static readonly IBrush ground = new ImmutableSolidColorBrush(Colors.Node);
-    private static readonly IBrush groundSelected = new ImmutableSolidColorBrush(Colors.NodeSelected);
+    private static readonly IBrush PlainGround = new ImmutableSolidColorBrush(Colors.Node);
+    private static readonly IBrush SelectedGround = new ImmutableSolidColorBrush(Colors.NodeSelected);
 
     /// <summary>
     /// What the mark across the body is stroked with — see <see cref="ModuleGlyphs"/>.
@@ -94,7 +94,7 @@ internal static class NodeSkin
     /// </summary>
     public static IPen Mark(Color accent)
     {
-        if (marks.TryGetValue(accent, out var kept)) return kept;
+        if (Marks.TryGetValue(accent, out var kept)) return kept;
 
         var made = new ImmutablePen(
             new ImmutableSolidColorBrush(accent, MarkOpacity),
@@ -102,7 +102,7 @@ internal static class NodeSkin
             lineCap: PenLineCap.Round,
             lineJoin: PenLineJoin.Round);
 
-        marks[accent] = made;
+        Marks[accent] = made;
 
         return made;
     }
@@ -131,11 +131,11 @@ internal static class NodeSkin
     {
         var back = Steps(fade);
 
-        if (inks.TryGetValue((from, to, lift, back), out var kept)) return kept;
+        if (Inks.TryGetValue((from, to, lift, back), out var kept)) return kept;
 
         var made = Down(Written(from, back, lift), Written(to, back, lift));
 
-        inks[(from, to, lift, back)] = made;
+        Inks[(from, to, lift, back)] = made;
 
         return made;
     }
@@ -164,7 +164,7 @@ internal static class NodeSkin
     /// </remarks>
     public static IBrush Cut(GrainCut cut, Color over)
     {
-        if (cuts.TryGetValue((cut, over), out var kept)) return kept;
+        if (CutBrushes.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
         var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
@@ -184,12 +184,12 @@ internal static class NodeSkin
             DestinationRect = new RelativeRect(0, 0, Tile, Tile, RelativeUnit.Absolute),
         };
 
-        cuts[(cut, over)] = made;
+        CutBrushes[(cut, over)] = made;
 
         return made;
     }
 
-    private static readonly Dictionary<(GrainCut Cut, Color Over), IBrush> cuts = [];
+    private static readonly Dictionary<(GrainCut Cut, Color Over), IBrush> CutBrushes = [];
 
     /// <summary>
     /// The paths the tiling cuts are made of, on the tile's own square. The
@@ -223,15 +223,15 @@ internal static class NodeSkin
     /// A box's body, which is the node gray lifted a little rather than tinted: the
     /// same statement its header makes, that a box belongs to no category.
     /// </summary>
-    public static IBrush Box(bool selected) => selected ? boxSelected : box;
+    public static IBrush Box(bool selected) => selected ? SelectedBox : PlainBox;
 
     /// <summary>The two colors a box's body is washed between.</summary>
     public static (Color Top, Color Floor) BoxWash { get; } =
         (Colors.Blend(Colors.Node, Colors.Separator, 0.3), Colors.Node);
 
-    private static readonly IBrush box = Down(BoxWash.Top, BoxWash.Floor);
+    private static readonly IBrush PlainBox = Down(BoxWash.Top, BoxWash.Floor);
 
-    private static readonly IBrush boxSelected =
+    private static readonly IBrush SelectedBox =
         Down(Colors.Blend(Colors.NodeSelected, Colors.Separator, 0.3), Colors.NodeSelected);
 
     /// <summary>
@@ -248,9 +248,9 @@ internal static class NodeSkin
     /// with the selection color standing in for <see cref="Colors.Separator"/> the
     /// way a selected box's body stands its ground in <see cref="Colors.NodeSelected"/>.
     /// </summary>
-    public static IBrush BoxHeaderOf(bool selected) => selected ? boxHeaderSelected : BoxHeader;
+    public static IBrush BoxHeaderOf(bool selected) => selected ? SelectedBoxHeader : BoxHeader;
 
-    private static readonly IBrush boxHeaderSelected =
+    private static readonly IBrush SelectedBoxHeader =
         Down(Colors.Blend(Colors.Outline, Colors.Attention, 0.55), Colors.Outline);
 
     /// <summary>
@@ -280,20 +280,20 @@ internal static class NodeSkin
         var inset = NodeGeometry.CornerRadius;
 
         context.DrawLine(
-            gloss,
+            Gloss,
             new Point(header.X + inset, header.Y + 0.75),
             new Point(header.Right - inset, header.Y + 0.75));
 
         context.DrawLine(
-            seam,
+            Seam,
             new Point(header.X, header.Bottom - 0.5),
             new Point(header.Right, header.Bottom - 0.5));
     }
 
-    private static readonly IPen gloss = new ImmutablePen(
+    private static readonly IPen Gloss = new ImmutablePen(
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.16), 1.2);
 
-    private static readonly IPen seam = new ImmutablePen(
+    private static readonly IPen Seam = new ImmutablePen(
         new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.3));
 
     // --- sockets and marks ---------------------------------------------------
@@ -347,16 +347,16 @@ internal static class NodeSkin
     /// <summary>Cached per kind, since a socket is drawn several times a frame.</summary>
     private static IBrush PortFill(PortKind kind)
     {
-        if (portFills.TryGetValue(kind, out var kept)) return kept;
+        if (PortFills.TryGetValue(kind, out var kept)) return kept;
 
         var made = new ImmutableSolidColorBrush(Colors.PortColor(kind));
 
-        portFills[kind] = made;
+        PortFills[kind] = made;
 
         return made;
     }
 
-    private static readonly Dictionary<PortKind, IBrush> portFills = [];
+    private static readonly Dictionary<PortKind, IBrush> PortFills = [];
 
     private static readonly IPen PortOutline = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline), 1.2);
 
@@ -419,7 +419,7 @@ internal static class NodeSkin
     {
         var key = ((int)Math.Round(bounds.Width), (int)Math.Round(bounds.Height));
 
-        if (fades.TryGetValue(key, out var kept)) return kept;
+        if (FadeBrushes.TryGetValue(key, out var kept)) return kept;
 
         var reach = new Vector(-1, Steep).Normalize()
             * new Vector(bounds.Width / 2, bounds.Height / 2).Length;
@@ -434,7 +434,7 @@ internal static class NodeSkin
             startPoint: new RelativePoint(from, RelativeUnit.Absolute),
             endPoint: new RelativePoint(from + reach, RelativeUnit.Absolute));
 
-        fades[key] = made;
+        FadeBrushes[key] = made;
 
         return made;
     }
@@ -446,7 +446,7 @@ internal static class NodeSkin
     /// </summary>
     private const double Steep = 1.6;
 
-    private static readonly Dictionary<(int Width, int Height), IBrush> fades = [];
+    private static readonly Dictionary<(int Width, int Height), IBrush> FadeBrushes = [];
 
     /// <summary>A gradient from the top of whatever it fills to the bottom.</summary>
     public static IBrush Down(Color top, Color bottom) => new ImmutableLinearGradientBrush(

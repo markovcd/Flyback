@@ -579,10 +579,10 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        const string long_ = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
+        const string longLine = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
             + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
 
-        text.Text = long_;
+        text.Text = longLine;
 
         Press(Tidy(window));
         Settle(window);
@@ -590,7 +590,7 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        text.Text.ShouldBe(long_);
+        text.Text.ShouldBe(longLine);
     }
 
     /// <summary>

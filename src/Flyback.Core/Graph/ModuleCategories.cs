@@ -103,9 +103,9 @@ public static class ModuleCategories
     /// the load order happened to put it.
     /// </summary>
     public static int Order(string category) =>
-        ranks.TryGetValue(category, out var rank) ? rank : All.Count;
+        Ranks.TryGetValue(category, out var rank) ? rank : All.Count;
 
     /// <summary>Built once, because the palette asks this per module per keystroke.</summary>
-    private static readonly Dictionary<string, int> ranks =
+    private static readonly Dictionary<string, int> Ranks =
         All.Select((name, at) => (name, at)).ToDictionary(pair => pair.name, pair => pair.at);
 }

@@ -40,28 +40,32 @@ internal static partial class Attention
 
     #region Windows — the taskbar button
 
-    private const uint FLASHW_TRAY = 0x00000002;
+    /// <summary>FLASHW_TRAY.</summary>
+    private const uint FlashTray = 0x00000002;
 
-    // Keeps the button flashing until this window is brought to the
-    // foreground, rather than a fixed number of blinks nobody may be there to see.
-    private const uint FLASHW_TIMERNOFG = 0x0000000C;
+    /// <summary>
+    /// FLASHW_TIMERNOFG: keeps the button flashing until this window is brought to the
+    /// foreground, rather than a fixed number of blinks nobody may be there to see.
+    /// </summary>
+    private const uint FlashUntilForeground = 0x0000000C;
 
     private static void RequestWindows(Window window)
     {
         if (window.TryGetPlatformHandle() is not { } handle) return;
 
-        var info = new FLASHWINFO
+        var info = new FlashInfo
         {
-            cbSize = (uint)Marshal.SizeOf<FLASHWINFO>(),
+            cbSize = (uint)Marshal.SizeOf<FlashInfo>(),
             hwnd = handle.Handle,
-            dwFlags = FLASHW_TRAY | FLASHW_TIMERNOFG,
+            dwFlags = FlashTray | FlashUntilForeground,
         };
 
         FlashWindowEx(ref info);
     }
 
+    /// <summary>FLASHWINFO.</summary>
     [StructLayout(LayoutKind.Sequential)]
-    private struct FLASHWINFO
+    private struct FlashInfo
     {
         public uint cbSize;
         public IntPtr hwnd;
@@ -72,7 +76,7 @@ internal static partial class Attention
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool FlashWindowEx(ref FLASHWINFO pwfi);
+    private static partial bool FlashWindowEx(ref FlashInfo pwfi);
 
     #endregion
 

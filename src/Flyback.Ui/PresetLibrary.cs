@@ -13,13 +13,13 @@ namespace Flyback.App;
 /// or tried, so a folder of big bundles costs a directory listing to show and a
 /// broken one is a tile that says so rather than a gallery that will not open.
 /// </remarks>
-/// <param name="Name">What the gallery calls it, which is the file's own name.</param>
-/// <param name="Path">The file it is in, which is also how it is removed.</param>
-public sealed class SavedPreset(string Name, string Path)
+/// <param name="name">What the gallery calls it, which is the file's own name.</param>
+/// <param name="path">The file it is in, which is also how it is removed.</param>
+public sealed class SavedPreset(string name, string path)
 {
-    public string Name { get; } = Name;
+    public string Name { get; } = name;
 
-    public string Path { get; } = Path;
+    public string Path { get; } = path;
 
     /// <summary>
     /// The same preset as everything that offers presets takes one. Made once, so

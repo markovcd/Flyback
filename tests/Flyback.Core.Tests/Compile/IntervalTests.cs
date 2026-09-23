@@ -121,10 +121,10 @@ public class IntervalTests
         state.WriteUnit(0, -double.Epsilon);
         state.ReadUnit(0).ShouldBe(0d);
 
-        const double Smallest = 2.2250738585072014e-308;
+        const double smallest = 2.2250738585072014e-308;
 
-        state.WriteUnit(0, Smallest);
-        state.ReadUnit(0).ShouldBe(Smallest);
+        state.WriteUnit(0, smallest);
+        state.ReadUnit(0).ShouldBe(smallest);
     }
 
     [Fact]

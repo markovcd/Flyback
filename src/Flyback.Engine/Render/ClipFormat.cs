@@ -129,7 +129,7 @@ public static class ClipFormats
         Sound: "-c:a libmp3lame -q:a 2");
 
     /// <inheritdoc cref="Mp3"/>
-    public static readonly ClipFormat AacM4a = new(
+    public static readonly ClipFormat Aac = new(
         "m4a", "M4A, AAC 192 kbps", ".m4a", HasPicture: false,
         Sound: "-c:a aac -b:a 192k");
 
@@ -143,7 +143,7 @@ public static class ClipFormats
         [MotionJpegAvi, H264Mp4, H265Mp4, Vp9WebM, ProResMov];
 
     /// <inheritdoc cref="Pictures"/>
-    public static readonly IReadOnlyList<ClipFormat> Sounds = [Wav, Mp3, AacM4a, Flac];
+    public static readonly IReadOnlyList<ClipFormat> Sounds = [Wav, Mp3, Aac, Flac];
 
     public static readonly IReadOnlyList<ClipFormat> All = [.. Pictures, .. Sounds];
 

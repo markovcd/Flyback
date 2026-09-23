@@ -51,8 +51,9 @@ internal static partial class PointerAnchor
         {
         }
 
+        /// <summary>POINT.</summary>
         [StructLayout(LayoutKind.Sequential)]
-        private struct POINT
+        private struct CursorPoint
         {
             public int X;
             public int Y;
@@ -60,7 +61,7 @@ internal static partial class PointerAnchor
 
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static partial bool GetCursorPos(out POINT point);
+        private static partial bool GetCursorPos(out CursorPoint point);
 
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

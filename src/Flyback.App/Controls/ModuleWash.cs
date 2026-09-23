@@ -46,7 +46,7 @@ internal sealed class ModuleWash : Control
     private const double Tick = 40;
 
     /// <summary>What an animated picture on the panel is read against — its own clock, since the panel is not the canvas.</summary>
-    private static readonly Stopwatch clock = Stopwatch.StartNew();
+    private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
     private IBrush? wash, band, grain;
     private ModuleArtwork? picture;
@@ -172,7 +172,7 @@ internal sealed class ModuleWash : Control
             {
                 if (picture is { } art)
                 {
-                    if (art.Paint(context, new RoundedRect(bounds), clock.Elapsed.TotalMilliseconds))
+                    if (art.Paint(context, new RoundedRect(bounds), Clock.Elapsed.TotalMilliseconds))
                         moving = true;
                 }
                 else

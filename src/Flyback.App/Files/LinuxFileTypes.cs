@@ -78,20 +78,20 @@ internal sealed class LinuxFileTypes(string data, string editor, string viewer, 
     /// </summary>
     internal static string Quote(string path)
     {
-        const char Backslash = (char)92;
+        const char backslash = (char)92;
 
         var quoted = new StringBuilder("\"");
 
         foreach (var c in path)
         {
-            if (c is '"' or '`' or '$' or Backslash) quoted.Append(Backslash);
+            if (c is '"' or '`' or '$' or backslash) quoted.Append(backslash);
             quoted.Append(c);
         }
 
         quoted.Append('"');
 
         return quoted.ToString()
-            .Replace(Backslash.ToString(), new string(Backslash, 2), StringComparison.Ordinal)
+            .Replace(backslash.ToString(), new string(backslash, 2), StringComparison.Ordinal)
             .Replace("%", "%%", StringComparison.Ordinal);
     }
 

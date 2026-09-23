@@ -42,7 +42,7 @@ internal static class ModuleGlyphs
     /// </summary>
     private static Geometry? Given(string data)
     {
-        if (given.TryGetValue(data, out var kept)) return kept;
+        if (Parsed.TryGetValue(data, out var kept)) return kept;
 
         Geometry? read;
 
@@ -55,12 +55,12 @@ internal static class ModuleGlyphs
             read = null;
         }
 
-        given[data] = read;
+        Parsed[data] = read;
 
         return read;
     }
 
-    private static readonly Dictionary<string, Geometry?> given = [];
+    private static readonly Dictionary<string, Geometry?> Parsed = [];
 
     /// <summary>What a module of <paramref name="category"/> is drawn as by default.</summary>
     public static Geometry? OfCategory(string category) =>

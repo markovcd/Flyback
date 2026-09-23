@@ -64,20 +64,20 @@ public class QrCodeTests : UiTest
     public void What_it_draws_reads_back_as_the_address()
     {
         // Thirty-seven modules across counting the quiet border, eight pixels each.
-        const int Module = 8;
-        const int Quiet = 4;
-        const int Side = (29 + 2 * Quiet) * Module;
+        const int module = 8;
+        const int quiet = 4;
+        const int side = (29 + 2 * quiet) * module;
 
-        var window = Show(new QrCode { Text = About.BitcoinAddress, Width = Side, Height = Side }, Side);
+        var window = Show(new QrCode { Text = About.BitcoinAddress, Width = side, Height = side }, side);
         var drawn = Frame(window);
-        var scale = drawn.GetLength(0) / (double)Side;
+        var scale = drawn.GetLength(0) / (double)side;
         var modules = new bool[29, 29];
 
         for (var row = 0; row < 29; row++)
         for (var column = 0; column < 29; column++)
         {
-            var x = (int)(((Quiet + column) * Module + Module / 2) * scale);
-            var y = (int)(((Quiet + row) * Module + Module / 2) * scale);
+            var x = (int)(((quiet + column) * module + module / 2) * scale);
+            var y = (int)(((quiet + row) * module + module / 2) * scale);
 
             modules[row, column] = drawn[x, y];
         }
@@ -133,16 +133,16 @@ public class QrCodeTests : UiTest
     /// </summary>
     private static string Svg(bool[,] modules)
     {
-        const int Quiet = 4;
+        const int quiet = 4;
 
         var size = modules.GetLength(0);
-        var box = size + 2 * Quiet;
+        var box = size + 2 * quiet;
         var ink = Hex(QrCode.Ink);
         var paper = Hex(QrCode.Paper);
         var svg = new StringBuilder();
 
         string Block(string fill, double row, double column, double span, double radius) =>
-            $"<rect fill=\"{fill}\" x=\"{Round(column + Quiet)}\" y=\"{Round(row + Quiet)}\""
+            $"<rect fill=\"{fill}\" x=\"{Round(column + quiet)}\" y=\"{Round(row + quiet)}\""
             + $" width=\"{Round(span)}\" height=\"{Round(span)}\" rx=\"{Round(radius)}\"/>";
 
         svg.Append($"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {box} {box}\">");

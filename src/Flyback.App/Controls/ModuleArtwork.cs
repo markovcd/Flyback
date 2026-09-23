@@ -111,7 +111,7 @@ internal sealed class ModuleArtwork
         var own = panel && skin.Panel is not null;
         var key = (skin, own);
 
-        if (read.TryGetValue(key, out var kept)) return kept;
+        if (Pictures.TryGetValue(key, out var kept)) return kept;
 
         var bytes = own ? skin.Panel!.Value : skin.Bytes;
 
@@ -126,12 +126,12 @@ internal sealed class ModuleArtwork
             made = null;
         }
 
-        read[key] = made;
+        Pictures[key] = made;
 
         return made;
     }
 
-    private static readonly Dictionary<(ModuleSkin.Artwork Skin, bool Panel), ModuleArtwork?> read = [];
+    private static readonly Dictionary<(ModuleSkin.Artwork Skin, bool Panel), ModuleArtwork?> Pictures = [];
 
     /// <summary>
     /// Whether the bytes are SVG, which is a question about text where every

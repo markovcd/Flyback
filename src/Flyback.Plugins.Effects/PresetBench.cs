@@ -16,6 +16,8 @@ namespace Flyback.Plugins.Effects;
 /// </remarks>
 internal abstract class PresetBench(ModuleCatalog modules)
 {
+    // One letter because every preset spells a thousand calls through it.
+    // ReSharper disable once InconsistentNaming
     protected readonly PatchBuilder b = new(modules);
 
     /// <summary>How many modules were already in a box when the last one was closed.</summary>

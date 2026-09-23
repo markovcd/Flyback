@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 
-const long UploadLimit = 20 * 1024 * 1024;
-const int PageSize = 24;
-const int PendingLimit = 50;
+const long uploadLimit = 20 * 1024 * 1024;
+const int pageSize = 24;
+const int pendingLimit = 50;
 
 // The output's wwwroot, where the Pages site's linked assets land beside the pages.
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -25,7 +25,7 @@ string Setting(string name, string otherwise) =>
 var database = Setting("Presets:Database", "/data/presets.db");
 var admin = new Admin(builder.Configuration["Presets:Admin:User"], builder.Configuration["Presets:Admin:Password"]);
 
-builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = UploadLimit);
+builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = uploadLimit);
 
 // Behind the NAS's reverse proxy, the client is whoever the proxy says it is —
 // and only the proxy is asked. `X-Forwarded-For` is a header anybody can write,
@@ -186,15 +186,15 @@ api.MapGet("/presets", (HttpContext http, string? q, string? tag, int? page, boo
 {
     if (pending == true)
     {
-        var waiting = store.Oldest().Where(p => media.Pending(p.Id)).Take(PendingLimit).ToList();
+        var waiting = store.Oldest().Where(p => media.Pending(p.Id)).Take(pendingLimit).ToList();
 
-        return Results.Ok(new { Items = Views(waiting), Total = waiting.Count, Page = 1, PageSize = PendingLimit });
+        return Results.Ok(new { Items = Views(waiting), Total = waiting.Count, Page = 1, PageSize = pendingLimit });
     }
 
     var at = Math.Max(1, page ?? 1);
-    var found = store.List(q, tag, at, PageSize, Signed(http));
+    var found = store.List(q, tag, at, pageSize, Signed(http));
 
-    return Results.Ok(new { Items = Views(found.Items), found.Total, Page = at, PageSize });
+    return Results.Ok(new { Items = Views(found.Items), found.Total, Page = at, PageSize = pageSize });
 });
 
 api.MapGet("/presets/{id}", (HttpContext http, string id) =>

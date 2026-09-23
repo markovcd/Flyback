@@ -31,10 +31,10 @@ public class BoxLabelTests : UiTest
     public void A_long_title_is_drawn_on_one_line()
     {
         var one = CanvasText.Text("a", 12.5, Brushes.White, 180, true);
-        var long_ = CanvasText.Text(Long, 12.5, Brushes.White, 180, true);
+        var longTitle = CanvasText.Text(Long, 12.5, Brushes.White, 180, true);
 
-        long_.Height.ShouldBe(one.Height, 0.5);
-        long_.Width.ShouldBeLessThanOrEqualTo(180);
+        longTitle.Height.ShouldBe(one.Height, 0.5);
+        longTitle.Width.ShouldBeLessThanOrEqualTo(180);
     }
 
     /// <summary>The port is what tells a box's sockets apart, so the middle goes and it stays.</summary>

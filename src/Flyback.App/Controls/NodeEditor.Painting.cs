@@ -125,7 +125,7 @@ public sealed partial class NodeEditor
     /// What every animation on the canvas is read against, so two modules showing
     /// the same picture show the same frame of it.
     /// </summary>
-    private static readonly Stopwatch clock = Stopwatch.StartNew();
+    private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
     /// <summary>
     /// Rules the edge of the canvas.
@@ -361,7 +361,7 @@ public sealed partial class NodeEditor
     /// </remarks>
     private void DrawArtwork(DrawingContext context, ModuleArtwork picture, RoundedRect body)
     {
-        if (picture.Paint(context, body, clock.Elapsed.TotalMilliseconds)) moving = true;
+        if (picture.Paint(context, body, Clock.Elapsed.TotalMilliseconds)) moving = true;
     }
 
     /// <summary>
