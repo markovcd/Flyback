@@ -9,10 +9,10 @@ namespace Flyback.Plugins.Voice;
 /// and rescaled to the range it is wanted over.
 /// </summary>
 /// <remarks>
-/// A Noise module does this once its x and y are pinned by a Value — left to their
+/// A Clouds module does this once its x and y are pinned by a Value — left to their
 /// normal they read the pixel, and the screen gets a field where the speakers get a
 /// number. Here the pin is 'seed', on both axes, so the two sinks cannot disagree.
-/// The engine's own Random's drift is the same lookup, between -1 and 1 at a
+/// The engine's own Noise's drift is the same lookup, between -1 and 1 at a
 /// rate counted in steps; this is the one with the range on it.
 /// </remarks>
 internal static class WanderModule

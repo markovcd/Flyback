@@ -4,15 +4,16 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
-    public const string NoiseTypeId = "pattern.noise";
+    public const string CloudsTypeId = "pattern.clouds";
 
     private static IEnumerable<NodeDef> Patterns()
     {
         yield return new NodeDef(
-            NoiseTypeId, "Noise", ModuleCategories.Patterns,
+            CloudsTypeId, "Clouds", ModuleCategories.Patterns,
             [..Position(), Num("z"), Num("scale", 2f, 0f, 32f)], [Num("out", 0f, 0f, 1f)],
             (em, i) => [em.Ternary(OpCode.Noise3, em.Mul(i[0], i[3]), em.Mul(i[1], i[3]), i[2])],
-            "Smooth random field in 0..1. Drive z from Time to make it boil.");
+            "A smooth random field, 0 to 1: clouds, terrain, or a melody that wanders. "
+            + "Drive z from Time to make it boil. For hiss or grain, use Noise.");
 
         yield return new NodeDef(
             "pattern.checker", "Checker", ModuleCategories.Patterns,

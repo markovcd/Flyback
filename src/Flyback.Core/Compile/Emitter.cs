@@ -124,7 +124,7 @@ public sealed class Emitter
     /// <remarks>
     /// The graph walk already leaves out every module the sink cannot reach, and
     /// this is the same rule one level down. A module is emitted whole, since its
-    /// emit function cannot know which of its outputs are wired — so a Random read
+    /// emit function cannot know which of its outputs are wired — so a Noise read
     /// only for its hiss would otherwise run thirteen rows of pink on every
     /// sample. The program is SSA and in order, so one pass backwards is enough:
     /// by the time an op is reached, everything that could read it has been.

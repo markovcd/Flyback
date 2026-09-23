@@ -328,7 +328,7 @@ public class PatchLayoutTests
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        for (var i = 0; i < 200; i++) b.Add("pattern.noise", i * 7d, i * 11d);
+        for (var i = 0; i < 200; i++) b.Add("pattern.clouds", i * 7d, i * 11d);
 
         var before = b.Patch.Nodes.Select(node => (node.X, node.Y)).ToArray();
         var laid = PatchLayout.Arrange(b.Patch, NodeCatalog.BuiltIn);
@@ -347,7 +347,7 @@ public class PatchLayoutTests
     public void A_module_wired_to_nothing_is_parked_ahead_of_the_patch()
     {
         var patch = Preset("Drone");
-        var stray = NodeInstance.Create(NodeCatalog.BuiltIn.Require("pattern.noise"), 9999, 9999);
+        var stray = NodeInstance.Create(NodeCatalog.BuiltIn.Require("pattern.clouds"), 9999, 9999);
         patch.Nodes.Add(stray);
 
         PatchLayout.Arrange(patch, NodeCatalog.BuiltIn);

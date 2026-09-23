@@ -515,12 +515,12 @@ internal sealed class OutrunPreset : PresetBench
 
         // --- the picture: ridge ----------------------------------------------
 
-        // Mountains are one row of a Noise field, read along x with y pinned, so
+        // Mountains are one row of a Clouds field, read along x with y pinned, so
         // every column of the frame has one height. They stand only at the sides —
         // the height is scaled by how far from the middle the column is — which
         // leaves the sun its gap.
         var row = b.Add("value", (0, 3.7f));
-        var rock = b.Add("pattern.noise", (2, 1.3f), (3, 2.2f));
+        var rock = b.Add("pattern.clouds", (2, 1.3f), (3, 2.2f));
         var ridge = Plus(
             Product(Span(rock, 0f, 1f, 0.05f, 0.5f), Rises(Size(coord), 0.3f, 1.3f)), Horizon);
 

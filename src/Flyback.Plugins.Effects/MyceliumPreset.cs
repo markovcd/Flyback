@@ -40,7 +40,7 @@ internal static class MyceliumPreset
 
     private const string DriveType = NodeCatalog.DriveTypeId;
 
-    private const string RandomType = NodeCatalog.RandomTypeId;
+    private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     private const string HissType = "flyback.voice.hiss";
 
@@ -275,7 +275,7 @@ internal static class MyceliumPreset
         // --- chance ----------------------------------------------------------
 
         // White noise, for the snare, the hats and the riser.
-        var hiss = b.Add(RandomType);
+        var hiss = b.Add(NoiseType);
 
         // One slow voltage for the things that should never repeat: how busy the hats
         // are, how open the pad is, how far the picture bends. A Wander, which is the
@@ -283,7 +283,7 @@ internal static class MyceliumPreset
         var weather = b.Add(WanderType, (1, 0.05f), (2, 3f));
 
         // A new number every sixteenth, which a Wander cannot be: the step count
-        // floored is a whole lattice point on all three axes of a Noise, so the field
+        // floored is a whole lattice point on all three axes of a Clouds, so the field
         // is read only where it does not interpolate. Whole numbers on the other two,
         // because value noise at a lattice point is the hash itself — which is what
         // makes this a die rather than a wobble — and pinned by a Value rather than
@@ -291,7 +291,7 @@ internal static class MyceliumPreset
         var lane = b.Add("value", (0, 3f));
         var farLane = b.Add("value", (0, 7f));
         var thrown = b.Add("math.floor");
-        var dice = b.Add("pattern.noise", (3, 1f));
+        var dice = b.Add("pattern.clouds", (3, 1f));
 
         // And one that wanders a bar at a time, which decides when the arp plays and
         // when it rests. Its rate is a wire.

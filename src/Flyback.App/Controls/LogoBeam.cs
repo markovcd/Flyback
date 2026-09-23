@@ -138,7 +138,7 @@ internal static class LogoBeam
         // a flutter a little either side of seven a second.
         var scan = Formula(b, $"0.7 + 0.3 * cos(a * {N(Lines / 2)} * tau)");
         var boil = Formula(b, "a * 14");
-        var snow = b.Add("pattern.noise", (3, 10f));
+        var snow = b.Add("pattern.clouds", (3, 10f));
         var lift = Formula(b, "a * (0.89 + b * 0.22) * (1 + c * 0.28) * (1 + sin(d * 46) * 0.02)");
 
         var emitted = b.Add("color.gain");

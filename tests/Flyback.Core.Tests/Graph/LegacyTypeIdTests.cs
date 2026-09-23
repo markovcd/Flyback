@@ -5,7 +5,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// Filter, Random, Slew, Drive, Delay and Reverb answered to ids of the Voice and
+/// Filter, Noise, Slew, Drive, Delay and Reverb answered to ids of the Voice and
 /// Effects plugins before ADR-0128 moved them into the engine. Every door a type
 /// id comes in through still takes the old one.
 /// </summary>
@@ -14,7 +14,7 @@ public class LegacyTypeIdTests
     public static TheoryData<string, string> Aliases => new()
     {
         { "flyback.voice.filter", NodeCatalog.FilterTypeId },
-        { "flyback.voice.random", NodeCatalog.RandomTypeId },
+        { "flyback.voice.random", NodeCatalog.NoiseTypeId },
         { "flyback.voice.slew", NodeCatalog.SlewTypeId },
         { "flyback.voice.drive", NodeCatalog.DriveTypeId },
         { "flyback.effects.delay", NodeCatalog.DelayTypeId },

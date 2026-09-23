@@ -55,9 +55,9 @@ public class HissTests
     }
 
     /// <summary>
-    /// A Random, a Filter and the two Multiplies that play and level it, against
+    /// A Noise, a Filter and the two Multiplies that play and level it, against
     /// this, for each noise and each band. Equal rather than close, and with the
-    /// Random shared with nothing, which is what a preset moved onto this gives up:
+    /// Noise shared with nothing, which is what a preset moved onto this gives up:
     /// the noise has no memory, so a copy of it is the same samples.
     /// </summary>
     [Theory]
@@ -69,7 +69,7 @@ public class HissTests
     {
         var b = new PatchBuilder(Catalog);
         var level = b.Add("coord");
-        var random = b.Add(NodeCatalog.RandomTypeId, (2, 3f));
+        var random = b.Add(NodeCatalog.NoiseTypeId, (2, 3f));
         var filter = b.Add(NodeCatalog.FilterTypeId, (1, 1900f), (2, 0.3f));
         var played = b.Add("math.mul");
         var leveled = b.Add("math.mul", (1, 2.5f));

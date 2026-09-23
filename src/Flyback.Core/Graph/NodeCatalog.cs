@@ -138,7 +138,7 @@ public static partial class NodeCatalog
             .Concat(Envelopes())
             .Append(Duck())
             .Append(Filter())
-            .Append(Random())
+            .Append(Noise())
             .Append(Slew())
             .Append(Drive())
             .Append(Delay())

@@ -89,7 +89,7 @@ public class WanderTests
     }
 
     /// <summary>
-    /// Two Values, a Multiply, a Noise and a Remap, against this. Equal rather than
+    /// Two Values, a Multiply, a Clouds and a Remap, against this. Equal rather than
     /// close, so a preset moved onto it has the weather it had.
     /// </summary>
     [Fact]
@@ -99,7 +99,7 @@ public class WanderTests
         var clock = b.Add("time");
         var lane = b.Add("value", (0, 2.31f));
         var drift = b.Add("math.mul", (1, 0.06f));
-        var mood = b.Add("pattern.noise", (3, 1f));
+        var mood = b.Add("pattern.clouds", (3, 1f));
         var hang = b.Add("math.remap", (1, 0f), (2, 1f), (3, 0.24f), (4, 0.6f));
         var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 

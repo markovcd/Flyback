@@ -43,7 +43,7 @@ internal sealed class FracturePreset : PresetBench
 
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string RandomType = NodeCatalog.RandomTypeId;
+    private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     private const string SlewType = NodeCatalog.SlewTypeId;
 
@@ -61,7 +61,7 @@ internal sealed class FracturePreset : PresetBench
 
     private const string GradeType = "flyback.picture.grade";
 
-    /// <summary>A Random's third output: a new value 'rate' times across its domain, held.</summary>
+    /// <summary>A Noise's third output: a new value 'rate' times across its domain, held.</summary>
     private const int Held = 2;
 
     /// <summary>F natural minor, written from its root: F, G, A flat, B flat, C, D flat and E flat.</summary>
@@ -153,7 +153,7 @@ internal sealed class FracturePreset : PresetBench
         // One die an eighth. Most of what it throws changes nothing: the top quarter of
         // its range is a roll — the slice played two, three or four times inside itself —
         // and the bottom sixth is a slice played backwards.
-        var die = b.Add(RandomType, (1, 2f), (2, 3f));
+        var die = b.Add(NoiseType, (1, 2f), (2, 3f));
         var rolls = Plus(
             Product(Plus(Knobbed("math.max", Floor(Span(die, 0.45f, 1f, 1f, 4.99f, Held)), 1f), -1f), chopped),
             1f);
@@ -224,7 +224,7 @@ internal sealed class FracturePreset : PresetBench
         // A Drum for the shell, and white noise for the wires: the band round two
         // kilohertz for the crack and what is over it for the air.
         var snareStroke = Enters(Product(Stroke(drumBeats, 4f, 1.6f), pattern, 1), song, 0.42f, 0.48f);
-        var noise = b.Add(RandomType, (2, 1f));
+        var noise = b.Add(NoiseType, (2, 1f));
         var rattle = b.Add(FilterType, (1, 2100f), (2, 0.3f));
         var wires = Sum(Times(rattle, 3.5f, 1), Times(rattle, 1.2f, 2));
         var snare = Sum(Drum(snareStroke, 200f, 170f, 4f, 3f), Product(snareStroke, wires));
@@ -350,7 +350,7 @@ internal sealed class FracturePreset : PresetBench
         // side of a high F, snapped to the scale. How many sixteenths of the bar sound is
         // a Wander, and a Euclid spreads whatever number arrives evenly again. They
         // belong to the first theme, and stop for the second.
-        var notes = b.Add(RandomType, (1, 4f), (2, 9f));
+        var notes = b.Add(NoiseType, (1, 4f), (2, 9f));
         var bellHits = b.Add(EuclidType, (1, 4f), (2, 16f), (EuclidCurve, 4f));
         var bellStroke = Wired("math.mul", bellHits, From(1f, second), EuclidStroke);
         var bellNote = b.Add("audio.tune", (0, 77f));
@@ -517,20 +517,20 @@ internal sealed class FracturePreset : PresetBench
         // The bells are squares on a grid of four to the unit, and so is the lead while
         // it has their place. Each cell has a number of its own, the die that chose the
         // note is added to it, and the top seventh of what results lights: a different
-        // handful of cells for every note. The number is a Noise read at the cell's
+        // handful of cells for every note. The number is Clouds read at the cell's
         // whole corner, where value noise is the hash itself and so the same on the GPU.
         var cellX = Times(coord, 4f);
         var cellY = Times(coord, 4f, 1);
-        var scatter = b.Add("pattern.noise", (2, 5f), (3, 1f));
+        var scatter = b.Add("pattern.clouds", (2, 5f), (3, 1f));
         b.Wire(Floor(cellX), 0, scatter, 0)
          .Wire(Floor(cellY), 0, scatter, 1);
         var chosen = b.Add("math.step", (0, 0.85f));
         var tile = b.Add(BoxType, (2, 0.3f), (3, 0.3f), (4, 0f));
         var tileFill = b.Add(FillType, (1, 0.02f));
 
-        // And the hats are grain: a Random read across the frame instead of along the
+        // And the hats are grain: a Noise read across the frame instead of along the
         // clock, which is a different speck at every pixel and a new set every frame.
-        var speck = b.Add(RandomType, (1, 64f), (2, 6f));
+        var speck = b.Add(NoiseType, (1, 64f), (2, 6f));
         var grain = Product(Times(Size(speck), 0.22f), hatStroke);
 
         b.Wire(Fraction(Sum(Sum(scatter, Times(notes, 3.7f, Held)), Times(leadLine, 0.37f))), 0, chosen, 1)

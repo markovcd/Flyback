@@ -154,8 +154,9 @@ internal static class ModuleGlyphs
         [NodeCatalog.QuantiserTypeId] = Path(
             "M3,19 L21,5 M3,19 L3,15 L7,15 L7,11 L11,11 L11,9 L15,9 L15,7 L19,7 L19,5"),
 
-        // A field with no pattern to it.
-        [NodeCatalog.NoiseTypeId] = Path("M2,12 L4,6 L6,16 L8,4 L10,14 L12,7 L14,18 L16,9 L18,15 L20,5 L22,12"),
+        // A cloud.
+        [NodeCatalog.CloudsTypeId] = Path(
+            "M7,18 L17,18 A4,4 0 0 0 17.6,10.1 A5.5,5.5 0 0 0 7.1,9.6 A4.2,4.2 0 0 0 7,18 Z"),
 
         // The key hitting, and the level it ducked growing back from nothing
         // rather than swinging at one height throughout.
@@ -163,13 +164,8 @@ internal static class ModuleGlyphs
             "M3,20 L3,3 M5.5,12 C6.7,10.5 9.3,10.5 10.5,12 "
             + "C11.7,8 15.3,8 16.5,12 C17.2,5.5 20.8,5.5 22,12"),
 
-        // Values scattered with no order to them.
-        [NodeCatalog.RandomTypeId] = Path(
-            "M3.6,7 A1.4,1.4 0 1 1 6.4,7 A1.4,1.4 0 1 1 3.6,7 "
-            + "M10.6,4.5 A1.4,1.4 0 1 1 13.4,4.5 A1.4,1.4 0 1 1 10.6,4.5 "
-            + "M16.6,10 A1.4,1.4 0 1 1 19.4,10 A1.4,1.4 0 1 1 16.6,10 "
-            + "M6.6,16 A1.4,1.4 0 1 1 9.4,16 A1.4,1.4 0 1 1 6.6,16 "
-            + "M15.6,19 A1.4,1.4 0 1 1 18.4,19 A1.4,1.4 0 1 1 15.6,19"),
+        // A wave with no pattern to it.
+        [NodeCatalog.NoiseTypeId] = Path("M2,12 L4,6 L6,16 L8,4 L10,14 L12,7 L14,18 L16,9 L18,15 L20,5 L22,12"),
 
         // A resonant peak on the cutoff, and a wave with its tops clipped flat.
         [NodeCatalog.FilterTypeId] = Path("M2,14 L9,14 C11,14 11,6 13,6 C15,6 14,10 16,10 C18,10 19,17 22,17"),

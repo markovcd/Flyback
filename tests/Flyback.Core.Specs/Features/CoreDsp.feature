@@ -1,4 +1,4 @@
-Feature: Filter, Random, Slew, Drive, Delay and Reverb are the engine's own
+Feature: Filter, Noise, Slew, Drive, Delay and Reverb are the engine's own
   These six lived in the Voice and Effects plugins. Nothing about them needed a
   plugin, so they are built into the engine now: a patch can use them with no
   plugin installed, and a patch saved under one of their old ids still opens

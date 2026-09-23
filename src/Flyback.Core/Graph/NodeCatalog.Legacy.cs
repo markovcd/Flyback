@@ -5,7 +5,7 @@ namespace Flyback.Core.Graph;
 public partial class NodeCatalog
 {
     /// <summary>
-    /// Type ids Filter, Random, Slew, Drive, Delay and Reverb used while they were
+    /// Type ids Filter, Noise, Slew, Drive, Delay and Reverb used while they were
     /// still Voice's and Effects', kept so a patch saved under one still opens.
     /// </summary>
     /// <remarks>
@@ -19,7 +19,7 @@ public partial class NodeCatalog
         new Dictionary<string, string>
         {
             ["flyback.voice.filter"] = FilterTypeId,
-            ["flyback.voice.random"] = RandomTypeId,
+            ["flyback.voice.random"] = NoiseTypeId,
             ["flyback.voice.slew"] = SlewTypeId,
             ["flyback.voice.drive"] = DriveTypeId,
             ["flyback.effects.delay"] = DelayTypeId,

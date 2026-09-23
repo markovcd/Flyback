@@ -78,8 +78,8 @@ public sealed class CompilerSteps(PatchContext context)
     [Then("the patch reads the clock once")]
     public void ThenReadsTheClockOnce() => Count(context.Picture, OpCode.LoadT).ShouldBe(1);
 
-    [Then("the unwired noise costs nothing")]
-    public void ThenTheNoiseIsFree() => Count(context.Picture, OpCode.Noise3).ShouldBe(0);
+    [Then("the unwired clouds cost nothing")]
+    public void ThenTheCloudsAreFree() => Count(context.Picture, OpCode.Noise3).ShouldBe(0);
 
     [Then("the position is worked out once")]
     public void ThenThePositionIsWorkedOutOnce() => Count(context.Picture, OpCode.LoadX).ShouldBe(1);

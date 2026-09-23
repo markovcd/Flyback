@@ -5,7 +5,7 @@ Feature: One patch drives both the screen and the speakers
   Specified by ADR-0022, amended by ADR-0037.
 
   Scenario: The picture and the sound each pay only for themselves
-    Given a noise picture on the screen and a sine tone at the speakers
+    Given a cloud picture on the screen and a sine tone at the speakers
     Then the patch is accepted without complaint
     And drawing the picture does not compute the tone
     And playing the sound does not compute the picture

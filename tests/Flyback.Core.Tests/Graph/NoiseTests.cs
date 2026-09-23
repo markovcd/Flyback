@@ -5,9 +5,9 @@ using Shouldly;
 namespace Flyback.Core.Tests.Graph;
 
 /// <summary>
-/// The Random module: white and pink noise, and the stepped and drifting values.
+/// The Noise module: white and pink noise, and the stepped and drifting values.
 /// </summary>
-public class RandomTests
+public class NoiseTests
 {
     private const int White = 0;
     private const int Pink = 1;
@@ -27,9 +27,9 @@ public class RandomTests
     [Fact]
     public void It_is_offered_under_oscillators()
     {
-        var def = Modules.Get(NodeCatalog.RandomTypeId).ShouldNotBeNull();
+        var def = Modules.Get(NodeCatalog.NoiseTypeId).ShouldNotBeNull();
 
-        def.Name.ShouldBe("Random");
+        def.Name.ShouldBe("Noise");
         def.Category.ShouldBe(ModuleCategories.Oscillators);
         def.Outputs.Select(p => p.Name).ShouldBe(["white", "pink", "random", "drift"]);
     }
@@ -38,7 +38,7 @@ public class RandomTests
     [Fact]
     public void Its_short_name_is_its_own()
     {
-        Modules.All.Count(d => d.TypeId.Split('.')[^1] == "random").ShouldBe(1);
+        Modules.All.Count(d => d.TypeId.Split('.')[^1] == "noise").ShouldBe(1);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class RandomTests
         return [.. Enumerable.Range(0, count).Select(i => read(1 + i / Inner))];
     }
 
-    /// <summary>One Random, its <paramref name="port"/> into the left speaker, at full gain.</summary>
+    /// <summary>One Noise, its <paramref name="port"/> into the left speaker, at full gain.</summary>
     private static (CompiledPatch Compiled, Func<double, float> Read) Program(
         int port, params (int Port, float Value)[] knobs)
     {
@@ -208,7 +208,7 @@ public class RandomTests
     {
         var patch = new Patch();
 
-        var random = NodeInstance.Create(Modules.Require(NodeCatalog.RandomTypeId), 0, 0);
+        var random = NodeInstance.Create(Modules.Require(NodeCatalog.NoiseTypeId), 0, 0);
         foreach (var (at, value) in knobs) random.InputValues[at] = value;
 
         var sink = NodeInstance.Create(Modules.Require(NodeCatalog.OutputTypeId), 0, 0);

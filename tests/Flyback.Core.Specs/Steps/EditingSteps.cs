@@ -21,9 +21,9 @@ public sealed class EditingSteps(PatchContext context, Session session)
     public void GivenAFileWithAStranger()
     {
         Rainbow();
-        context.Add("stranger", "pattern.noise");
+        context.Add("stranger", "pattern.clouds");
         session.Before = context.Render();
-        session.File = PatchIO.ToJson(context.Patch).Replace("\"pattern.noise\"", $"\"{Stranger}\"");
+        session.File = PatchIO.ToJson(context.Patch).Replace("\"pattern.clouds\"", $"\"{Stranger}\"");
     }
 
     [Given("a rainbow saved in a file layout newer than this build reads")]

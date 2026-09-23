@@ -49,7 +49,7 @@ internal sealed class DubPreset : PresetBench
 
     private const string EuclidType = "flyback.voice.euclid";
 
-    private const string RandomType = NodeCatalog.RandomTypeId;
+    private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     private const string CircleType = "flyback.picture.circle";
 
@@ -292,10 +292,10 @@ internal sealed class DubPreset : PresetBench
         // --- the dust --------------------------------------------------------
 
         // A record that has been played too often: pink hiss that never stops, and a
-        // crackle. The crackle is a Random a hundred and eighty times a second that
+        // crackle. The crackle is a Noise a hundred and eighty times a second that
         // lets a burst of its own white through on the few values near the top.
         var hiss = Hiss(null, 4500f, 0f, "low", 0.35f, "pink", 3f);
-        var chance = b.Add(RandomType, (1, 180f), (2, 5f));
+        var chance = b.Add(NoiseType, (1, 180f), (2, 5f));
         var tick = b.Add("math.step", (0, 0.988f));
         var dust = Sum(hiss, Times(Product(tick, chance), 0.6f));
 

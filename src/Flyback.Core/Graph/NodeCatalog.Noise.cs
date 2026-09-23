@@ -4,7 +4,7 @@ namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog
 {
-    public const string RandomTypeId = "audio.random";
+    public const string NoiseTypeId = "audio.noise";
 
     /// <summary>White's lattice points per second (2²²), well above the oversampled audio rate.</summary>
     private const float Grain = 4_194_304f;
@@ -31,8 +31,8 @@ public partial class NodeCatalog
     /// which returns the hash itself, so it is identical on both sinks and on the GPU.
     /// Pink is Voss–McCartney — one held row per octave, summed.
     /// </remarks>
-    private static NodeDef Random() => new(
-        RandomTypeId, "Random", ModuleCategories.Oscillators,
+    private static NodeDef Noise() => new(
+        NoiseTypeId, "Noise", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: Clock, Domain: true),
             new PortSpec("rate", PortKind.Scalar, 4f, 0f, 64f),
@@ -41,12 +41,13 @@ public partial class NodeCatalog
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
         [new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("pink", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("random", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f)],
-        RandomEmit,
+        NoiseEmit,
         "Noise and chance, each -1 to 1 before 'amp' and 'bias'. 'white' is bright hiss for "
         + "hats and snares; 'pink' is darker, like rain. 'random' jumps to a new value 'rate' "
         + "times a second and holds it; 'drift' glides between the same values. Modules with "
         + "the same 'seed' produce the same noise, so give each its own. On the picture it "
-        + "runs across its domain: on Time the frame flickers, from a coordinate it is grain.");
+        + "runs across its domain: on Time the frame flickers, from a coordinate it is grain. "
+        + "For a smooth field, use Clouds.");
 
     /// <summary>
     /// White and pink over a domain, each -1 to 1, for a module that is noise
@@ -55,9 +56,9 @@ public partial class NodeCatalog
     /// <remarks>
     /// Neither has a memory, so two modules asking with the same domain and seed
     /// are handed the same samples: a module that makes its own noise plays what
-    /// one fed from a shared Random played.
+    /// one fed from a shared Noise played.
     /// </remarks>
-    public static (Slot White, Slot Pink) RandomNoise(Emitter em, Slot domain, Slot seed)
+    public static (Slot White, Slot Pink) WhiteAndPink(Emitter em, Slot domain, Slot seed)
     {
         // Split into whole seconds and the fraction, because domain * Grain would
         // overflow the hash's int after about nine minutes.
@@ -80,12 +81,12 @@ public partial class NodeCatalog
     private static Slot RandomHash(Emitter em, Slot x, Slot y, Slot seed) =>
         em.Add(em.Mul(em.Ternary(OpCode.Noise3, x, y, seed), 2f), -1f);
 
-    private static Slot[] RandomEmit(Emitter em, EmitContext node)
+    private static Slot[] NoiseEmit(Emitter em, EmitContext node)
     {
         var domain = node[0];
         var seed = node[2];
 
-        var (white, pink) = RandomNoise(em, domain, seed);
+        var (white, pink) = WhiteAndPink(em, domain, seed);
 
         var along = em.Mul(domain, node[1]);
         var random = RandomHash(em, em.Unary(OpCode.Floor, along), em.Constant(ChanceRow), seed);

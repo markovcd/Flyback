@@ -56,6 +56,16 @@ public sealed class SpeakerSteps(PatchContext context)
         (Rms(late) / Rms(first)).ShouldBeInRange(0.9, 1.1);
     }
 
+    /// <summary>White noise changes sign on about every other sample; a tone or a drift almost never does.</summary>
+    [Then("the sound is hiss")]
+    public void ThenHiss()
+    {
+        var heard = context.Listen(0, PatchContext.SampleRate);
+        var crossings = heard.Zip(heard.Skip(1)).Count(pair => Math.Sign(pair.First) != Math.Sign(pair.Second));
+
+        crossings.ShouldBeGreaterThan(heard.Length / 3);
+    }
+
     private static double Rms(double[] signal) => Math.Sqrt(signal.Average(v => v * v));
 
     [Then("both speakers play the same sound")]

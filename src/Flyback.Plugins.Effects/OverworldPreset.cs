@@ -51,7 +51,7 @@ internal sealed class OverworldPreset : PresetBench
 
     private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string RandomType = NodeCatalog.RandomTypeId;
+    private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     private const string BoxType = "flyback.picture.box";
 
@@ -69,7 +69,7 @@ internal sealed class OverworldPreset : PresetBench
 
     private const string LimiterType = "flyback.mastering.limiter";
 
-    /// <summary>A Filter's third output: what is over the cutoff. A Random's held value.</summary>
+    /// <summary>A Filter's third output: what is over the cutoff. A Noise's held value.</summary>
     private const int High = 2;
 
     private const int Held = 2;
@@ -371,7 +371,7 @@ internal sealed class OverworldPreset : PresetBench
 
         // The chip's noise is a random value held for a sample of a slower clock:
         // at six thousand four hundred a second it is the crunch rather than a hiss.
-        var crunch = b.Add(RandomType, (1, 64f), (2, 3f));
+        var crunch = b.Add(NoiseType, (1, 64f), (2, 3f));
 
         // Two and four once the verse is in, and in a build, sixteenths that grow
         // louder and thirty-seconds in the last bar.
@@ -392,7 +392,7 @@ internal sealed class OverworldPreset : PresetBench
         // chip's hat. Sixteenths with the off-beat leant on, an open one on the
         // off-beat in the chorus, and a crash at the top of any phrase with a verse
         // or more in it.
-        var fizz = b.Add(RandomType, (1, 64f), (2, 7f));
+        var fizz = b.Add(NoiseType, (1, 64f), (2, 7f));
         var accent = Pattern(beats, 4f, 0.45f, 0.25f, 1f, 0.25f);
         var closed = Enters(Product(Stroke(beats, 4f, 9f), accent), song, 0.38f, 0.42f);
         var open = Product(Stroke(beats, 1f, 3f, 0.5f), chorus);
@@ -675,10 +675,10 @@ internal sealed class OverworldPreset : PresetBench
 
         // --- the picture: clouds ---------------------------------------------
 
-        // A Noise field squashed flat and cut at two heights: the lower cut is the
+        // A Clouds field squashed flat and cut at two heights: the lower cut is the
         // cloud and the higher its bright middle. They drift at a twelfth of the
         // ground's speed, and only in the upper sky.
-        var puff = b.Add("pattern.noise", (3, 1f));
+        var puff = b.Add("pattern.clouds", (3, 1f));
         var cloudLight = Formula(
             "(step(0.63, a) * 0.55 + step(0.71, a) * 0.4) * (smoothstep(0.05, 0.35, b) * (1 - c * 0.65))",
             puff, py, dark);
@@ -693,10 +693,10 @@ internal sealed class OverworldPreset : PresetBench
 
         // --- the picture: mountains ------------------------------------------
 
-        // Far off and slow: one row of a Noise field is the height of every column,
+        // Far off and slow: one row of a Clouds field is the height of every column,
         // colored by the horizon behind it pulled towards slate, the way distance does,
         // with snow where the ridge is high.
-        var rock = b.Add("pattern.noise", (1, 3.7f), (2, 0f), (3, 1.6f));
+        var rock = b.Add("pattern.clouds", (1, 3.7f), (2, 0f), (3, 1.6f));
         var ridge = Span(rock, 0.25f, 0.75f, -0.2f, 0.3f);
         var underRidge = Wired("math.step", py, ridge);
         var farBlue = b.Add("color.mix", (2, 0.55f));

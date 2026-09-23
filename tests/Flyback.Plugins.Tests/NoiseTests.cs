@@ -20,7 +20,7 @@ public class NoiseTests
 {
     private const string Fractal = "flyback.picture.fractal";
     private const string Cells = "flyback.picture.cells";
-    private const string Noise = "pattern.noise";
+    private const string Clouds = "pattern.clouds";
 
     private const int Scale = 3;
     private const int Roughness = 4;
@@ -38,9 +38,9 @@ public class NoiseTests
 
         Catalog.ProviderOf(Fractal).ShouldBe(Catalog.ProviderOf(Cells));
 
-        // The category the engine's own Noise is in, rather than one of their
+        // The category the engine's own Clouds is in, rather than one of their
         // own: these are the same kind of thing and belong beside it.
-        Catalog.Require(Fractal).Category.ShouldBe(Catalog.Require(Noise).Category);
+        Catalog.Require(Fractal).Category.ShouldBe(Catalog.Require(Clouds).Category);
     }
 
     /// <summary>
@@ -65,13 +65,13 @@ public class NoiseTests
     /// One octave is the module it is built out of, exactly — which is what says
     /// the sum, the signing and the normalizing all cancel where there is nothing
     /// to sum. Read where z is nothing, because that is the one place the two
-    /// agree about it: this scales z with the picture and the Noise does not.
+    /// agree about it: this scales z with the picture and Clouds does not.
     /// </summary>
     [Fact]
     public void One_octave_is_exactly_the_noise_it_is_built_from()
     {
         var one = Field(Fractal, 0, 1, (Scale, 3f));
-        var plain = Field(Noise, 0, 0, (Scale, 3f));
+        var plain = Field(Clouds, 0, 0, (Scale, 3f));
 
         foreach (var (x, y) in Grid())
             one(x, y).ShouldBe(plain(x, y), 1e-9);
@@ -247,7 +247,7 @@ public class NoiseTests
     /// <summary>
     /// The price, stated as a number so that it cannot quietly change: nine
     /// squares, two lookups each, because the only agreed randomness in the
-    /// machine is Noise and a point needs two coordinates.
+    /// machine is the noise op and a point needs two coordinates.
     /// </summary>
     [Fact]
     public void A_cell_field_costs_eighteen_noise_lookups()

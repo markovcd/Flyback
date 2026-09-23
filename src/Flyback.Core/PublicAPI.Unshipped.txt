@@ -84,3 +84,9 @@ static Flyback.Core.Graph.AutoRemap.Offered(Flyback.Core.Graph.Patch! patch, Fly
 static Flyback.Core.Graph.AutoRemap.Overflow(Flyback.Core.Graph.Patch! patch, Flyback.Core.Graph.Connection! wire, Flyback.Core.Graph.ModuleCatalog? catalog = null) -> string?
 Flyback.Core.Graph.PortSpec.Lenient.get -> bool
 Flyback.Core.Graph.PortSpec.Lenient.init -> void
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "pattern.noise" -> string!
+*REMOVED*const Flyback.Core.Graph.NodeCatalog.RandomTypeId = "audio.random" -> string!
+*REMOVED*static Flyback.Core.Graph.NodeCatalog.RandomNoise(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
+const Flyback.Core.Graph.NodeCatalog.CloudsTypeId = "pattern.clouds" -> string!
+const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "audio.noise" -> string!
+static Flyback.Core.Graph.NodeCatalog.WhiteAndPink(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)

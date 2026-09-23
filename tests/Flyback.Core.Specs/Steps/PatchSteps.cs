@@ -93,16 +93,16 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire("mystery", 0, "screen", "color");
     }
 
-    [Given("a noise picture on the screen and a sine tone at the speakers")]
+    [Given("a cloud picture on the screen and a sine tone at the speakers")]
     public void GivenAPictureAndATone()
     {
         context.Add("coords", "coord");
-        context.Add("grain", "pattern.noise");
+        context.Add("clouds", "pattern.clouds");
         context.Add("clock", "time");
         context.Add("tone", "osc.sine");
-        context.Wire("coords", "x", "grain", "x");
+        context.Wire("coords", "x", "clouds", "x");
         context.Wire("clock", "t", "tone", "in");
-        Show("grain");
+        Show("clouds");
         context.Wire("tone", "out", "screen", "left");
     }
 
@@ -138,11 +138,11 @@ public sealed class PatchSteps(PatchContext context)
         Show("edge");
     }
 
-    [Given("noise left unwired beside a picture on the screen")]
-    public void GivenUnwiredNoise()
+    [Given("clouds left unwired beside a picture on the screen")]
+    public void GivenUnwiredClouds()
     {
         context.Add("coords", "coord");
-        context.Add("rubbish", "pattern.noise");
+        context.Add("rubbish", "pattern.clouds");
         Show("coords", "x");
     }
 
@@ -336,14 +336,28 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
-    /// <summary>Random read off a fast clock, the way Overworld's hats are: 19200 new values a second.</summary>
+    [Given("the module called {string} is playing")]
+    public void GivenAModuleIsPlaying(string name) => Hear("it", Called(name));
+
+    [Given("the module called {string} is on the screen")]
+    public void GivenAModuleIsOnTheScreen(string name) => Show("it", Called(name));
+
+    /// <summary>The module the catalog shows as <paramref name="name"/>, added as "it"; hands back its first output.</summary>
+    private string Called(string name)
+    {
+        var def = NodeCatalog.All.Single(d => d.Name == name);
+        context.Add("it", def.TypeId);
+        return def.Outputs[0].Name;
+    }
+
+    /// <summary>Noise read off a fast clock, the way Overworld's hats are: 19200 new values a second.</summary>
     [Given("chip noise is playing")]
     public void GivenChipNoise()
     {
         context.Add("clock", NodeCatalog.TimeTypeId);
         context.Add("faster", "math.mul");
         context.SetInput("faster", "b", 300f);
-        context.Add("noise", NodeCatalog.RandomTypeId);
+        context.Add("noise", NodeCatalog.NoiseTypeId);
         context.SetInput("noise", "rate", 64f);
         context.Wire("clock", "t", "faster", "a");
         context.Wire("faster", "out", "noise", "in");

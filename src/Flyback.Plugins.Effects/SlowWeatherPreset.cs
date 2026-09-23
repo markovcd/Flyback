@@ -36,7 +36,7 @@ internal sealed class SlowWeatherPreset : PresetBench
     /// The plugin the voices are borrowed from. The effects live beside this
     /// preset; Wander and Hiss are in Voice, so this is a patch that reaches
     /// across a boundary and has to say so when the other plugin is not there.
-    /// Filter, Random and Slew are the engine's own (ADR-0128), so this preset
+    /// Filter, Noise and Slew are the engine's own (ADR-0128), so this preset
     /// reaches no boundary for them.
     /// </summary>
     private const string Voice = "flyback.voice";
@@ -53,7 +53,7 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private const string SlewType = NodeCatalog.SlewTypeId;
 
-    private const string RandomType = NodeCatalog.RandomTypeId;
+    private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     /// <summary>The outputs read by number below, named so a wire says which.</summary>
     private const int Hz = 0;
@@ -124,11 +124,11 @@ internal sealed class SlowWeatherPreset : PresetBench
         Enters(Wander(rate, seed), from, to);
 
     /// <summary>
-    /// A Random's held value: a new number from -1 to 1 <paramref name="rate"/>
+    /// A Noise's held value: a new number from -1 to 1 <paramref name="rate"/>
     /// times a second, on the same edges as a Stroke of the same rate.
     /// </summary>
     private NodeInstance Dice(float rate, float seed, float amp = 1f, float bias = 0f) =>
-        b.Add(RandomType, (1, rate), (2, seed), (3, amp), (4, bias));
+        b.Add(NoiseType, (1, rate), (2, seed), (3, amp), (4, bias));
 
     /// <summary>A Desk channel's level socket, for a channel whose level is a wire.</summary>
     private static int LevelOf(int channel) => (channel - 1) * 3 + 2;
@@ -531,11 +531,11 @@ internal sealed class SlowWeatherPreset : PresetBench
          .Wire(placed, 1, fold, 1)
          .Wire(Span(tide, 0f, 1f, 2f, 9f), 0, fold, 2);
 
-        // The cloud is Noise read the ordinary way — per pixel, off the folded
+        // The cloud is Clouds read the ordinary way — per pixel, off the folded
         // plane, boiling on its own clock. The same module as the voltages, and
         // the difference between a source and a texture is entirely in what its
         // x and y are patched to.
-        var cloud = b.Add("pattern.noise", (3, 1.6f));
+        var cloud = b.Add("pattern.clouds", (3, 1.6f));
 
         b.Wire(fold, 0, cloud, 0)
          .Wire(fold, 1, cloud, 1)
@@ -625,7 +625,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         // frame, so a glint or a flash drifts away in the tail.
 
         // Glints where a pluck lands, at a new place every pluck.
-        var glintField = b.Add("pattern.noise", (3, 11f));
+        var glintField = b.Add("pattern.clouds", (3, 11f));
         b.Wire(Times(boxOdds, 9f, Held), 0, glintField, 2);
         var glints = Formula(
             "smoothstep(0.7, 0.8, a) * b * step(0.15, c) * d",
@@ -633,7 +633,7 @@ internal sealed class SlowWeatherPreset : PresetBench
 
         // Rain as streaks: noise stretched along a slant and scrolled down it.
         var place = b.Add(NodeCatalog.CoordTypeId);
-        var streakField = b.Add("pattern.noise", (3, 1f));
+        var streakField = b.Add("pattern.clouds", (3, 1f));
         b.Wire(Formula("(a + b * 0.18) * 48", place, new Read(place, 1)), 0, streakField, 0)
          .Wire(Formula("a * 1.5 + b * 2.8", new Read(place, 1), clock), 0, streakField, 1);
         var streaks = Formula("smoothstep(0.64, 0.78, a) * b * 0.45", streakField, new Read(rainHere, FadeGate));

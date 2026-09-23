@@ -14,11 +14,11 @@ namespace Flyback.Plugins.Picture;
 /// door can be nearer than your own, and there is no way to look at fewer in a
 /// program with no branches.
 /// <para>
-/// Each square costs two Noise, which is nearly all of the price. What is wanted
+/// Each square costs two noise lookups, which is nearly all of the price. What is wanted
 /// is a hash, and the machine has no hash op: the usual
 /// <c>fract(sin(x) * 43758.5)</c> turns rounding error into randomness and gives
 /// a different answer at every precision, so the interpreter and the shader would
-/// draw different cells. Noise is the only agreed randomness there is — sampled
+/// draw different cells. The noise op is the only agreed randomness there is — sampled
 /// far apart, so squares next door land in unrelated parts of the field. That
 /// makes this the dearest module in the catalog: eighteen noise lookups a pixel
 /// against a Fractal's eight, which on the interpreter is seconds rather than

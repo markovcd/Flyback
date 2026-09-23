@@ -5,9 +5,9 @@ Feature: Only what reaches the Output costs anything
   Specified by ADR-0011.
 
   Scenario: A module left unwired costs nothing
-    Given noise left unwired beside a picture on the screen
+    Given clouds left unwired beside a picture on the screen
     Then the patch is accepted without complaint
-    And the unwired noise costs nothing
+    And the unwired clouds cost nothing
 
   # Per module, not per port: reaching Coordinates at all computes everything it
   # offers, the radius and angle included.

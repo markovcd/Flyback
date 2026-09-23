@@ -224,7 +224,7 @@ public static partial class Presets
             // --- the noise -------------------------------------------------------
 
             // White, which the hats and the snare each take a band of.
-            var hiss = b.Add(NodeCatalog.RandomTypeId);
+            var hiss = b.Add(NodeCatalog.NoiseTypeId);
 
             Box("Noise");
 
@@ -600,7 +600,7 @@ public static partial class Presets
             // read from inside the fold — symmetric, so it repeats with the wedges
             // rather than quietly undoing them. How far is a slow breath, and a
             // shove from the first string each time it is plucked.
-            var field = b.Add("pattern.noise", (3, 2.1f));
+            var field = b.Add("pattern.clouds", (3, 2.1f));
             var breath = b.Add("osc.sine", (1, 0.071f), (3, 0.25f), (4, 0.45f));
             var bend = b.Add("space.warp");
 

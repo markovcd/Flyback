@@ -49,6 +49,25 @@ public sealed class ScreenSteps(PatchContext context)
     public void ThenRewound(int frames, float level) =>
         ShouldShow(context.RenderAfterRewind(frames, 1).Center, level, level, level, "after rewind");
 
+    /// <summary>Neighbors a small step apart, against a picture that spans a real range: smooth, and not flat.</summary>
+    [Then("the picture changes gradually from one pixel to the next")]
+    public void ThenGradual()
+    {
+        var frame = context.Render();
+        var (lowest, highest, steepest) = (1f, 0f, 0f);
+
+        for (var y = 0; y < frame.Height; y++)
+        for (var x = 0; x < frame.Width; x++)
+        {
+            var here = frame.At(x, y).R;
+            (lowest, highest) = (Math.Min(lowest, here), Math.Max(highest, here));
+            if (x > 0) steepest = Math.Max(steepest, Math.Abs(here - frame.At(x - 1, y).R));
+        }
+
+        (highest - lowest).ShouldBeGreaterThan(0.3f, "the picture is flat");
+        steepest.ShouldBeLessThan((highest - lowest) / 3, "neighboring pixels jump");
+    }
+
     [Then("the picture gets brighter towards the top")]
     public void ThenBrighterUpwards()
     {

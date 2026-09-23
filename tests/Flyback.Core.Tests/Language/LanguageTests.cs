@@ -92,7 +92,7 @@ public class LanguageTests
     public void Kaleidoscope() => Same("Kaleidoscope", """
         rotate(angle: t * 0.15)
           |> kaleidoscope(segments: 6)
-          |> noise(z: t * 0.3, scale: 2.5)
+          |> clouds(z: t * 0.3, scale: 2.5)
           |> hsv(saturation: 0.9, value: 1)
           |> out.color
         """);
@@ -263,7 +263,7 @@ public class LanguageTests
         let pulse = t * 0.2
 
         let folded = rotate(angle: t * 0.05) |> kaleidoscope(segments: 8)
-        let field  = folded |> noise(z: boil, scale: 1.4)
+        let field  = folded |> clouds(z: boil, scale: 1.4)
 
         let fresh = folded
                       |> warp(by: field, amount: 0.5)
@@ -285,7 +285,7 @@ public class LanguageTests
     public void PictureIn() => Same("Picture in", """
         scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
           |> rotate(angle: t * 0.05)
-          |> warp(by: noise(z: t * 0.15, scale: 1.8), amount: 0.12)
+          |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
           |> picture()
           |> gain(gain: 1.15, bias: -0.05)
           |> out.color
@@ -372,7 +372,7 @@ public class LanguageTests
 
     [Fact]
     public void InKey() => Alike("In key", """
-        let field = noise(z: t * 0.3, scale: 2.2)
+        let field = clouds(z: t * 0.3, scale: 2.2)
         let beat  = pulse(freq: tempo(180), width: 0.12)
         let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
 
@@ -424,7 +424,7 @@ public class LanguageTests
         }
 
         group "Noise" {
-          let hiss = random()
+          let hiss = noise()
         }
 
         group "Kick" {
@@ -613,7 +613,7 @@ public class LanguageTests
                                order: "turn")
                        |> kaleidoscope(segments: root |> remap(-5..3, 4..10))
 
-          let field = fold |> noise(z: t * 0.18, scale: 2.1)
+          let field = fold |> clouds(z: t * 0.18, scale: 2.1)
 
           let filament = fold
             |> warp(by: field,

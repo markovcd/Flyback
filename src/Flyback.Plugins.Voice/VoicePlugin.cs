@@ -24,7 +24,7 @@ namespace Flyback.Plugins.Voice;
 /// </summary>
 /// <remarks>
 /// Decay is not pure: it carries state in a one-evaluation cell (ADR-0041), which
-/// only the speakers' program has, so it is declared audio-only. Filter, Random,
+/// only the speakers' program has, so it is declared audio-only. Filter, Noise,
 /// Slew and Drive are the engine's own for the same reason, nothing about them
 /// being particular to a voice (ADR-0128).
 /// </remarks>

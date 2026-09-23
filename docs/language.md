@@ -93,7 +93,7 @@ signal moves at once:
 ```
 rotate(angle: t * 0.15)          # outputs (x, y)
   |> kaleidoscope(segments: 6)   # inputs  (x, y, segments) — the pair fills both
-  |> noise(z: t * 0.3, scale: 2.5)
+  |> clouds(z: t * 0.3, scale: 2.5)
 ```
 
 A position is what the engine itself calls one — the `x` and `y` that
@@ -571,7 +571,7 @@ differences, in the order they will bite.
   compile both variants and crossfade, which doubles the program to buy one
   combinator, and is not worth it.
 - **There is no randomness in the notation.** No `?`, no `degradeBy`. The engine
-  has `pattern.noise`, so a wandering gate is a wire rather than a character.
+  has `pattern.clouds`, so a wandering gate is a wire rather than a character.
 
 And one difference the other way. **One graph drives the picture and the
 sound.** Tidal's visual counterpart is Hydra, and they are two systems bridged
@@ -705,7 +705,7 @@ description "A photograph put through the same geometry a generated field goes t
 
 scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
   |> rotate(angle: t * 0.05)
-  |> warp(by: noise(z: t * 0.15, scale: 1.8), amount: 0.12)
+  |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
   |> picture()
   |> gain(gain: 1.15, bias: -0.05)
   |> out.color
@@ -741,11 +741,11 @@ x |> sine(freq: 1.5)
 ### Kaleidoscope — [:283](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-description "Rotating wedges filled with noise that boils over time."
+description "Rotating wedges filled with clouds that boil over time."
 
 rotate(angle: t * 0.15)
   |> kaleidoscope(segments: 6)
-  |> noise(z: t * 0.3, scale: 2.5)
+  |> clouds(z: t * 0.3, scale: 2.5)
   |> hsv(saturation: 0.9, value: 1)
   |> out.color
 ```
@@ -1113,10 +1113,10 @@ out.volume = 0.25
 ### In key — [:414](../src/Flyback.Core/Graph/Presets.cs)
 
 ```
-description "One noise field snapped to a pentatonic: heard as a melody, seen as the"
+description "One cloud field snapped to a pentatonic: heard as a melody, seen as the"
   "terraces it was cut into."
 
-let field = noise(z: t * 0.3, scale: 2.2)
+let field = clouds(z: t * 0.3, scale: 2.2)
 let beat  = pulse(freq: tempo(180), width: 0.12)
 let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
 
@@ -1147,7 +1147,7 @@ let boil  = t * 0.12
 let pulse = t * 0.2
 
 let folded = rotate(angle: t * 0.05) |> kaleidoscope(segments: 8)
-let field  = folded |> noise(z: boil, scale: 1.4)
+let field  = folded |> clouds(z: boil, scale: 1.4)
 
 let fresh = folded
               |> warp(by: field, amount: 0.5)
@@ -1158,7 +1158,7 @@ let fresh = folded
 fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
 ```
 
-`folded` fans out to the Noise and to the Warp, which is the two wires the
+`folded` fans out to the Clouds and to the Warp, which is the two wires the
 preset draws from one node. `field + pulse |> fract()` groups as
 `(field + pulse) |> fract()`, because the pipe is the loosest operator there is.
 
@@ -1201,7 +1201,7 @@ group "Song" {
 }
 
 group "Noise" {
-  let hiss = random()
+  let hiss = noise()
 }
 
 group "Kick" {
@@ -1390,7 +1390,7 @@ group "Picture: Geometry" {
                        order: "turn")
                |> kaleidoscope(segments: root |> remap(-5..3, 4..10))
 
-  let field = fold |> noise(z: t * 0.18, scale: 2.1)
+  let field = fold |> clouds(z: t * 0.18, scale: 2.1)
 
   let filament = fold
     |> warp(by: field,

@@ -110,7 +110,7 @@ public static partial class Presets
         new("Plasma", Plasma,
             "Two sine fields crossed and read as hue — the hello world of video synths."),
         new("Kaleidoscope", Kaleidoscope,
-            "Rotating wedges filled with noise that boils over time."),
+            "Rotating wedges filled with clouds that boil over time."),
         new("Grid", Grid,
             "Tile, mirror and polar in a row, so what each one does to the plane is separable."),
         new("Three channels", ThreeChannels,
@@ -155,7 +155,7 @@ public static partial class Presets
             "A Probe and a Scope on one signal, which is the only way to see how they differ.",
             PresetKind.Interplay),
         new("In key", InKey,
-            "One noise field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
+            "One cloud field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
             PresetKind.Interplay),
         new("Ring scan", RingScan,
             "A loop swept round a field at audio rate, so the picture is the waveform.",
@@ -368,7 +368,7 @@ public static partial class Presets
         return b.Build();
     }
 
-    /// <summary>Rotating wedges filled with noise that boils over time.</summary>
+    /// <summary>Rotating wedges filled with clouds that boil over time.</summary>
     public static Patch Kaleidoscope(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -382,7 +382,7 @@ public static partial class Presets
 
         var rotate = b.Add("space.rotate");
         var fold = b.Add("space.kaleidoscope", (2, 6f));
-        var noise = b.Add("pattern.noise", (3, 2.5f));
+        var clouds = b.Add("pattern.clouds", (3, 2.5f));
         var color = b.Add("color.hsv", (1, 0.9f), (2, 1f));
         var output = b.Add(NodeCatalog.OutputTypeId);
 
@@ -391,10 +391,10 @@ public static partial class Presets
          .Wire(spin, 0, rotate, 2)
          .Wire(rotate, 0, fold, 0)
          .Wire(rotate, 1, fold, 1)
-         .Wire(fold, 0, noise, 0)
-         .Wire(fold, 1, noise, 1)
-         .Wire(drift, 0, noise, 2)
-         .Wire(noise, 0, color, 0)
+         .Wire(fold, 0, clouds, 0)
+         .Wire(fold, 1, clouds, 1)
+         .Wire(drift, 0, clouds, 2)
+         .Wire(clouds, 0, color, 0)
          .Wire(color, 0, output, 0);
 
         return b.Build();
@@ -497,7 +497,7 @@ public static partial class Presets
     }
 
     /// <summary>
-    /// A noise field played as a melody and drawn as the terraces it is being
+    /// A cloud field played as a melody and drawn as the terraces it is being
     /// snapped to: one Quantiser, in a pentatonic, feeding both sinks.
     /// </summary>
     public static Patch InKey(ModuleCatalog modules)
@@ -519,7 +519,7 @@ public static partial class Presets
         // The one module both sinks read, and the reason they hear and see the
         // same thing. Its x and y need no wire: on the screen they are the
         // pixel's own, and at the speakers there is no pixel and they are zero.
-        var field = b.Add("pattern.noise", (3, 2.2f));
+        var field = b.Add("pattern.clouds", (3, 2.2f));
 
         // Two octaves from A2, which is low enough to sound like a bass line at
         // the bottom and high enough to sing at the top.
@@ -602,7 +602,7 @@ public static partial class Presets
 
     /// <summary>
     /// Everything the video side can do, in one patch: coordinates turned, folded
-    /// into wedges, bent by a noise field read from inside the fold, taken as
+    /// into wedges, bent by a cloud field read from inside the fold, taken as
     /// traveling rings, and laid over a trail of its own previous frames.
     /// </summary>
     public static Patch Nebula(ModuleCatalog modules)
@@ -623,7 +623,7 @@ public static partial class Presets
         // Read from the folded plane, not the flat one, so the field is itself
         // symmetric — warping by anything asymmetric here would quietly undo the
         // fold and leave the picture looking like ordinary noise.
-        var field = b.Add("pattern.noise", (3, 1.4f));
+        var field = b.Add("pattern.clouds", (3, 1.4f));
 
         var bend = b.Add("space.warp", (3, 0.5f));
         var bands = b.Add("pattern.rings", (2, 2.5f));
@@ -988,7 +988,7 @@ public static partial class Presets
         var scale = b.Add("space.scale");
         var turn = b.Add("space.rotate");
 
-        var field = b.Add("pattern.noise", (3, 1.8f));
+        var field = b.Add("pattern.clouds", (3, 1.8f));
         var bend = b.Add("space.warp", (3, 0.12f));
 
         var photo = b.Add(NodeCatalog.PictureTypeId);

@@ -6,7 +6,7 @@ using Flyback.Plugins;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// Noise at several sizes at once, which is what makes it look like something.
+/// Clouds at several sizes at once, which is what makes it look like something.
 /// </summary>
 /// <remarks>
 /// One octave of value noise is a field of blobs all the same size, and nothing
@@ -62,13 +62,13 @@ internal static class FractalModule
             new PortSpec("folded", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Noise at several sizes at once, which is what a cloud, a coastline or a slab of "
+        "Clouds at several sizes at once, which is what a cloud, a coastline or a slab of "
         + "marble is made of. 'smooth' is the plain sum and looks like weather; 'folded' takes "
         + "each octave's distance from the middle instead, which creases the field everywhere "
         + "the noise crossed it and looks like smoke or hammered metal — one minus that is "
         + "ridges, and a mountain. 'roughness' is how much each octave keeps of the one before "
-        + "it: at 0 this is a single Noise, and at 1 the fine detail is as loud as the broad "
-        + "shape and the field is sand. Both outputs run 0 to 1. 'z' boils it as Noise's does "
+        + "it: at 0 this is a single Clouds, and at 1 the fine detail is as loud as the broad "
+        + "shape and the field is sand. Both outputs run 0 to 1. 'z' boils it as Clouds' does "
         + "and is scaled with the picture, so the detail churns faster than the shape. How many "
         + "octaves is on the node rather than on a socket, because it decides how much work the "
         + "patch does rather than what the answer is — one noise lookup each, and noise is the "
@@ -161,7 +161,7 @@ internal static class FractalModule
                 em.Mul(node[1], step),
                 em.Mul(node[2], step));
 
-            // Noise arrives 0 to 1 and is wanted either side of nothing: the
+            // Each octave arrives 0 to 1 and is wanted either side of nothing: the
             // plain sum needs a signed field or every octave would pile onto the
             // same side, and the fold needs a middle to be folded about.
             var signed = em.Add(em.Mul(field, 2f), -1f);

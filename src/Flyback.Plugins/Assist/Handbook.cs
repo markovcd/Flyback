@@ -144,7 +144,7 @@ internal static class Handbook
           oscillating, and a sequencer you place and never wire is already
           playing. This is the common case and needs no work from you.
         - **`x` and `y` on every Space, Pattern and Feedback module are
-          normalled to Coordinates.** So Rotate, Tile, Noise, Rings, Checker
+          normalled to Coordinates.** So Rotate, Tile, Clouds, Rings, Checker
           and Feedback already read the pixel's own position.
         - **A wire overrides the normal**, exactly as a wire overrides a
           knob. Pull the wire and the normal comes back.
@@ -154,7 +154,7 @@ internal static class Handbook
 
         What is *not* normalled, and still has to be wired if it should move:
 
-        - Noise's `z`, Rings' `offset`, an angle on Rotate, a `dx`/`dy` on
+        - Clouds' `z`, Rings' `offset`, an angle on Rotate, a `dx`/`dy` on
           Translate: wire **Time** into these to make a picture move.
         - Anything expecting a sound: a Filter's `in`, a Delay's `in`, the
           Output's `left` and `right`.

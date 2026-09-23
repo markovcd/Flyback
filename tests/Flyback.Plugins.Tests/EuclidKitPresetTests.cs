@@ -7,7 +7,7 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The Euclid kit preset, which exists to put Random, Slew, Decay, Euclid, Layer and Line
+/// The Euclid kit preset, which exists to put Noise, Slew, Decay, Euclid, Layer and Line
 /// in one patch. Building, compiling and layout are covered for every preset in
 /// <see cref="ShippedPresetTests"/>; this checks it holds what it is for.
 /// </summary>
@@ -23,7 +23,7 @@ public class EuclidKitPresetTests
 
         foreach (var typeId in new[]
                  {
-                     NodeCatalog.RandomTypeId, NodeCatalog.SlewTypeId, "flyback.voice.decay",
+                     NodeCatalog.NoiseTypeId, NodeCatalog.SlewTypeId, "flyback.voice.decay",
                      "flyback.voice.euclid", "flyback.picture.layer", "flyback.picture.line",
                  })
             types.ShouldContain(typeId);

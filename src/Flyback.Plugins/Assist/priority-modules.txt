@@ -35,7 +35,7 @@ seq.values
 env.adsr
 audio.duck
 audio.filter
-audio.random
+audio.noise
 audio.slew
 audio.drive
 audio.delay
@@ -59,7 +59,7 @@ space.mirror
 space.kaleidoscope
 space.warp
 
-pattern.noise
+pattern.clouds
 pattern.checker
 pattern.rings
 

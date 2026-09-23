@@ -1,6 +1,6 @@
 ---
 name: authoring-presets
-description: Use when building, porting or measuring a shipped Flyback preset (showcase or small teaching preset) - how it is written and checked, what bounds one (audio cost per op, the Random module's price, the canvas-fit test), and why not to cost-cut a preset that plays.
+description: Use when building, porting or measuring a shipped Flyback preset (showcase or small teaching preset) - how it is written and checked, what bounds one (audio cost per op, the Noise module's price, the canvas-fit test), and why not to cost-cut a preset that plays.
 ---
 
 # Authoring and measuring presets
@@ -9,7 +9,7 @@ The user wants showcase presets that push the engine but still play live; they l
 
 ## Cost
 
-Measured on the user's machine: the audio path runs at 4x oversampling on one thread, and about 1,950 ops came to 0.66x real time. Op counts mislead: a Reverb is ~10% of real time, a 16-step sequencer ~3% (about six ops a step), a Filter ~1%. ADR-0096 sweeps ops nothing reads, so an unwired output costs nothing, `flyback.voice.random`'s white is 1 noise lookup (pink is 13), and patches are 2-19% smaller than before it (Acid 1,360 -> 1,219; Bronze 1,848 -> 1,488; Outrun 2,149 -> 1,960). Bronze (1,850 ops, one Reverb) rendered at 0.62x; Outrun (2,150 ops, two Reverbs) plays live fine.
+Measured on the user's machine: the audio path runs at 4x oversampling on one thread, and about 1,950 ops came to 0.66x real time. Op counts mislead: a Reverb is ~10% of real time, a 16-step sequencer ~3% (about six ops a step), a Filter ~1%. ADR-0096 sweeps ops nothing reads, so an unwired output costs nothing, `audio.noise`'s white is 1 noise lookup (pink is 13), and patches are 2-19% smaller than before it (Acid 1,360 -> 1,219; Bronze 1,848 -> 1,488; Outrun 2,149 -> 1,960). Bronze (1,850 ops, one Reverb) rendered at 0.62x; Outrun (2,150 ops, two Reverbs) plays live fine.
 
 ## Building and checking a big preset
 

@@ -16,6 +16,7 @@
 - A wire between two different ranges has a mark that puts an Auto remap into it.
 - A wire swinging past the range its socket takes is drawn in orange and warned about.
 - The Frequency module is gone: an oscillator's own `freq` knob reaches audible pitches, and a patch that still holds one no longer opens.
+- Random is now Noise and the old Noise is now Clouds, in the canvas and the text, and a patch holding either old one no longer opens.
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.
 - Double-clicking a box looks inside it, over the rest of the patch, without opening it.

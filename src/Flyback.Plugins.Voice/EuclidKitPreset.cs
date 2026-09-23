@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Voice;
 /// A drum kit and a bass line played by four Euclidean rhythms, and a clock face drawn by the same rhythm.
 /// </summary>
 /// <remarks>
-/// Built to use every module added alongside it: Euclid and Decay play the kit, Random
+/// Built to use every module added alongside it: Euclid and Decay play the kit, Noise
 /// makes the hats, the snare, the bass notes and the filter's drift, and Slew glides the
 /// bass. The picture is a Line swept round by the loop, a ring the kick pushes out, and
 /// a difference flash on the snare, stacked with three Layers.
@@ -69,11 +69,11 @@ internal static class EuclidKitPreset
         // --- hats and snare: noise through a filter ----------------------------------
 
         var hatLevel = b.Add(DecayModule.TypeId, (1, -4f), (2, -1.5f), (3, 1f));
-        var hiss = b.Add(NodeCatalog.RandomTypeId, (2, 3f));
+        var hiss = b.Add(NodeCatalog.NoiseTypeId, (2, 3f));
         var hats = b.Add(NodeCatalog.FilterTypeId, (1, 8_000f), (2, 0.1f));
 
         var snareLevel = b.Add(DecayModule.TypeId, (1, -3.5f), (2, -0.95f), (3, 0.6f));
-        var rattle = b.Add(NodeCatalog.RandomTypeId, (2, 7f));
+        var rattle = b.Add(NodeCatalog.NoiseTypeId, (2, 7f));
         var snare = b.Add(NodeCatalog.FilterTypeId, (1, 1_900f), (2, 0.35f));
 
         b.Wire(hatBeat, 0, hatLevel, 0)
@@ -88,7 +88,7 @@ internal static class EuclidKitPreset
         // --- bass: random notes on the step, snapped to the scale, glided ------------
 
         // Same domain and rate as the Euclids, so a new note lands exactly on a step.
-        var notes = b.Add(NodeCatalog.RandomTypeId, (2, 11f), (3, 6f), (4, 45f));
+        var notes = b.Add(NodeCatalog.NoiseTypeId, (2, 11f), (3, 6f), (4, 45f));
         var scale = b.Add(NodeCatalog.QuantiserTypeId);
         ScaleExtra.Set(scale, Scale);
 
@@ -96,7 +96,7 @@ internal static class EuclidKitPreset
         var glide = b.Add(NodeCatalog.SlewTypeId, (1, -1.5f), (2, -1.5f));
         var bassOsc = b.Add("osc.saw", (3, 0.8f));
 
-        var drift = b.Add(NodeCatalog.RandomTypeId, (1, 0.15f), (2, 5f), (3, 700f), (4, 1_100f));
+        var drift = b.Add(NodeCatalog.NoiseTypeId, (1, 0.15f), (2, 5f), (3, 700f), (4, 1_100f));
         var tone = b.Add(NodeCatalog.FilterTypeId, (2, 0.5f));
         var bassLevel = b.Add(DecayModule.TypeId, (1, -3f), (2, -0.8f), (3, 0.4f));
         var bass = b.Add("math.mul");
