@@ -24,7 +24,7 @@ internal static class Handbook
     private const string Conventions = """
         # Flyback
 
-        A patchable synthesiser for picture and sound. Nothing is drawn: every
+        A patchable synthesizer for picture and sound. Nothing is drawn: every
         frame is a function evaluated once per pixel, and every sample is the
         same function evaluated once per tick. You build that function by
         placing modules and wiring them together.
@@ -32,25 +32,20 @@ internal static class Handbook
         ## Coordinates and values
 
         - `y` runs -1 at the bottom to 1 at the top.
-        - `x` is the same scale widened by the aspect ratio, so it runs about
-          -1.78 to 1.78 on a 16:9 frame. That is what keeps circles circular:
-          `Length(x, y)` is a true radius. Coordinates' `aspect` is that 1.78,
-          for reaching the edge of whatever frame is being drawn.
-        - `t` is seconds since the patch started. It reaches a patch through
-          the **Time** module, or through a socket normalled to it — see
-          below.
-        - What reaches the screen is 0..1 per channel, clamped, with no gamma. A
-          value of 0.5 is mid gray; 4 and 1 are the same white; -1 is black.
-          There is no headroom to pull back down later.
+        - `x` is the same scale widened by the aspect ratio, about -1.78 to
+          1.78 on 16:9, so `Length(x, y)` is a true radius. Coordinates'
+          `aspect` is that 1.78, for reaching the edge of the frame.
+        - `t` is seconds since the patch started, from the **Time** module or
+          a socket normalled to it.
+        - The screen takes 0..1 per channel, clamped, with no gamma: 0.5 is mid
+          gray, 4 is as white as 1, -1 is black. There is no headroom to pull
+          back down later.
 
         ## The language
 
-        A patch is written as text, and `write_patch` takes the whole of one in
-        a single call. `describe_patch` gives it back in the same language,
-        under the same handles the editing tools answer to. **Build a patch by
-        writing it; change one that already exists with `set_knobs` and
-        `connect`** — writing a patch afresh gives every module a new identity
-        and loses where they sit on the canvas.
+        A patch is written as text. `write_patch` takes the whole of one, and
+        `describe_patch` gives it back under the handles the editing tools
+        answer to.
 
         ```
         let slowly = t * 0.2
@@ -62,52 +57,44 @@ internal static class Handbook
           |> out.color
         ```
 
-        - **`|>` is a wire.** What is on the left goes into the module on the
-          right. A module is named by the last part of its type id, so
-          `space.kaleidoscope` is `kaleidoscope` — except `hsv`, `mix` and
-          `midi.in`, which have to be written in full: `color.hsv`,
-          `color.mix` or `math.mix`, `midi.in`.
-        - **Where the signal lands**: a socket called `in` takes it; failing
-          that a leading `x` and `y` take a position, two signals at once, which
-          is how Space and Pattern modules chain; failing that the first socket
-          the call did not name.
-        - **Sockets are named arguments**, with a space written as an
-          underscore: `remap(in_low: -1, out_high: 1)`, `gate_length`. A socket
-          you say nothing about keeps its default.
-        - **`let` names a signal** so it can be used twice. Reading it again is
-          a second wire out of the same module, not a second module.
-        - **`out` is the Output**, which every patch already has:
-          `|> out.color`, `|> out.left`, `out.volume = 0.6`.
-        - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are Coordinates and
-          Time, one shared module each however often written. `+ - * / %` are
-          the maths modules. `A3` and `C#4` are notes, on sockets that read
-          notes. `20ms`, `1.5s` are times, on sockets that read times — and
-          those sockets hold a power of ten, so writing `20ms` is the only way
-          to say it without doing logarithms.
+        - **`|>` is a wire** into the module on the right. A module is named
+          by the last part of its type id, `space.kaleidoscope` as
+          `kaleidoscope`, except `color.hsv`, `color.mix`, `math.mix` and
+          `midi.in`, which are written in full.
+        - **Where the signal lands**: a socket called `in`; failing that a
+          leading `x` and `y`, two signals at once, which is how Space and
+          Pattern modules chain; failing that the first socket not named.
+        - **Sockets are named arguments**, a space written as an underscore:
+          `remap(in_low: -1, out_high: 1)`. A socket not named keeps its
+          default.
+        - **`let` names a signal.** Reading it twice is two wires out of one
+          module, not two modules.
+        - **`out` is the Output** every patch already has: `|> out.color`,
+          `|> out.left`, `out.volume = 0.6`.
+        - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are
+          Coordinates and Time, one shared module each. `+ - * / %` are the
+          maths modules. `A3` and `C#4` are notes, on sockets that read notes.
+        - **A length of time is written as one**: `attack: 10ms`, `1.5s`.
+          These sockets hold a power of ten, so a bare number is refused.
         - **A tune or a scale is a block** after the call:
           `notes(rate: 4) [ A3 C4 [E4 G4] ~ ]`, `quantiser() [ C D E G A ]`.
-          Inside one, `~` is a rest, `[a b]` splits a step in two, `@3` makes a
-          step three times as long, `!3` repeats it, `<a b>` alternates on each
-          pass and `a(3,8)` is three sounding steps spread over eight. `E5%0` is
-          that note silenced, which is not the same as a rest.
+          `~` is a rest, `[a b]` splits a step in two, `@3` makes a step three
+          times as long, `!3` repeats it, `<a b>` alternates each pass,
+          `a(3,8)` is three hits over eight steps, and `E5%0` is the note
+          silenced, which is not a rest.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
-        - **`off name`**, on a line of its own, switches a module off: what is
-          patched into it comes straight out of it, and nothing does where
-          nothing is patched in. `switch_module` says the same thing to a patch
-          that already exists, and a patch you are shown that has one keeps it
-          only if you write the line again.
-        - **`keyboard scale [ C D E G A ]`**, on a line of its own, lays the
-          computer keyboard out for whoever plays a MIDI In: the notes side by
-          side along each row. Once a patch; say nothing for a piano.
-        - **`description "What the patch is for."`**, on a line of its own and
-          first, is the patch's one line of prose. Once a patch.
-        - **`author "Who made it"`** and **`tags "drone" "slow"`** go under
-          it, each once a patch.
-        - **A length of time is written as one.** `attack: 10ms`, not
-          `attack: 0.01`. These sockets hold a power of ten, so a bare number is
-          refused rather than read as a hundred times what you meant.
-        - **A loop is a wire that runs backwards**, which is the one thing `|>`
-          cannot say:
+        - **`off name`**, on its own line, switches a module off: what is
+          patched into it comes straight out, and nothing where nothing is.
+          `switch_module` does it to a patch that exists, and a patch you are
+          shown keeps the line only if you write it again.
+        - **`keyboard scale [ C D E G A ]`**, on its own line, lays the
+          computer keyboard out in that scale for a MIDI In. Leave it out for
+          a piano.
+        - **`description "What the patch is for."`** goes first, with
+          **`author "Who made it"`** and **`tags "drone" "slow"`** under it,
+          each on its own line.
+        - **A loop is a wire that runs backwards**, the one thing `|>` cannot
+          say:
 
         ```
         let sum = square(freq: 110) * 0.06 |> add()
@@ -116,125 +103,88 @@ internal static class Handbook
         sum |> out.left
         ```
 
-        Nothing is adopted unless all of it reads. A mistake comes back with the
-        line and column it is on.
+        Nothing is adopted unless all of it reads, and a mistake comes back
+        with its line and column. `keyboard`, `description`, `author` and
+        `tags` each go once in a patch.
 
         ## Putting a patch together
 
-        - Every input is a knob with a value on it. Most inputs in a real patch
-          are left as knobs; you only wire the ones that need to move.
-        - A wire into an input overrides its knob. The knob is not lost — it
-          comes back if the wire is removed.
-        - An input takes at most one wire. Wiring a second one replaces the
-          first, and the tool will tell you when it did.
-        - An output may fan out to as many inputs as you like.
-        - A scalar entering a color port broadcasts to all three channels. A
-          color entering a scalar port narrows to its luma.
+        - Every input is a knob. Wire only the ones that need to move.
+        - A wire overrides the knob, which comes back if the wire goes.
+        - An input takes one wire; a second replaces the first. An output fans
+          out to any number.
+        - A scalar into a color port fills all three channels; a color into a
+          scalar port narrows to its luma.
 
-        ## Normalled sockets: wires you do not have to draw
+        ## Normalled sockets
 
-        Some sockets are already carrying a signal with nothing patched into
-        them. `describe_patch` writes them as
-        `in <- Time (normalled, no wire)`, and there is no module on the
-        canvas to see: one hidden Time and one hidden Coordinates are shared
-        by the whole patch.
+        Some sockets already carry a signal with nothing patched in.
+        `describe_patch` writes them as `in <- Time (normalled, no wire)`; one
+        hidden Time and one hidden Coordinates serve the whole patch.
 
-        - **`in` on every oscillator and every sequencer is normalled to
-          Time.** So an oscillator you place and never wire is already
-          oscillating, and a sequencer you place and never wire is already
-          playing. This is the common case and needs no work from you.
+        - **`in` on every oscillator and sequencer is normalled to Time**, so
+          one placed and never wired is already oscillating or playing.
         - **`x` and `y` on every Space, Pattern and Feedback module are
-          normalled to Coordinates.** So Rotate, Tile, Clouds, Rings, Checker
-          and Feedback already read the pixel's own position.
-        - **A wire overrides the normal**, exactly as a wire overrides a
-          knob. Pull the wire and the normal comes back.
-        - **A normalled socket has no knob.** `set_knobs` on one is refused:
-          the value would never be read. If what you want there really is a
-          constant, patch a **Value** module in — then the patch shows it.
+          normalled to Coordinates**, so they already read the pixel's own
+          position.
+        - A wire overrides the normal, and pulling it brings the normal back.
+        - **A normalled socket has no knob**, and `set_knobs` on one is
+          refused. For a constant there, patch in a **Value**.
 
-        What is *not* normalled, and still has to be wired if it should move:
+        Not normalled, so wire **Time** in to make a picture move: Clouds'
+        `z`, Rings' `offset`, Rotate's angle, Translate's `dx` and `dy`. Nor is
+        anything that expects a sound: a Filter's or a Delay's `in`, the
+        Output's `left` and `right`.
 
-        - Clouds' `z`, Rings' `offset`, an angle on Rotate, a `dx`/`dy` on
-          Translate: wire **Time** into these to make a picture move.
-        - Anything expecting a sound: a Filter's `in`, a Delay's `in`, the
-          Output's `left` and `right`.
+        ## What `in` does
 
-        ## Why `in` still matters
+        - An oscillator's pitch is how fast `in` moves times `freq`. Time moves
+          a second per second, so `freq` is the frequency it says. **Do not
+          slow a tone with an Expression like `a * 0.2` between Time and
+          `in`**: a 440 Hz oscillator fed that plays 88 Hz with a knob that
+          says 440.
+        - A sequencer is on whichever step `in` has reached, at `rate` steps
+          per unit of `in`.
+        - Patch a **Coordinates** output into `in` to draw with a module
+          instead of playing it: `x` for upright bands, `y` for flat ones,
+          `radius` for rings. That is the common reason to wire `in`.
+        - A **Value** in `in` holds a module still, which is a still picture.
+        - **To slow a picture down**, put the Expression after Time and wire
+          that in, so where the patch runs slowly is visible in it.
 
-        It is the domain a module is read across, and what is on it decides
-        what the module does:
+        ## The Output
 
-        - An oscillator accumulates `(in - in_before) x freq`, so its pitch
-          is how fast `in` moves multiplied by `freq`. Time moves at one
-          second per second, which is why `freq` on a Time-driven
-          oscillator is the frequency it says it is. **Do not put an
-          Expression like `a * 0.2` between Time and `in` to slow a tone down** — that
-          divides the pitch and leaves the knob lying. A 440 Hz oscillator
-          fed a fifth of a second per second is an 88 Hz oscillator with a
-          knob that says 440.
-        - A sequencer is on whichever step its `in` has reached, at `rate`
-          steps per unit of `in`.
-        - Patch a **Coordinates** output into `in` to draw with it instead
-          of playing it — `x` for upright bands, `y` for flat ones,
-          `radius` for rings. That is the one common reason to wire `in` at
-          all.
-        - Patch a constant in — a **Value** — to deliberately hold a module
-          still. It compiles fine and is a still picture, which is
-          sometimes what is wanted.
-        - **To slow a picture down**, put an Expression like `a * 0.2` after
-          Time and wire it in. Time itself is seconds and nothing else, so the place a patch
-          runs slowly is visible in the patch.
-
-        ## Sinks
-
-        - **There is one Output block, and every patch already has it.** You
-          cannot add one and you cannot remove one, so it is never something
-          to put in place first — it is there, and the work is wiring into it.
-        - **`color` is the picture. `left` and `right` are the sound.** The
-          same block also carries `volume`, a knob on it like any other — at
-          nought it is the speakers switched off, not merely quiet. The
-          picture is heard by reading it through a **Scan** into `left`.
-        - **`right` is normalled to `left`**, so a voice patched into `left`
-          alone is heard from both speakers. Patch `right` only when the two
-          sides should differ.
-        - **A patch with nothing in `color` draws black, and that is not a
-          mistake.** Neither is one with nothing in `left`. A patch built for
-          the eye and a patch built for the ear are both whole patches, and
-          nothing will nag you about the half you did not want.
-        - **Nothing reaching it at all is the one case the compiler remarks
-          on**, and such a patch will not be proposed: with no wire into it
-          there is nothing to see or hear.
-        - To send several things to the screen, **mix them into the one
-          `color` you have** rather than looking for a second block.
-        - The picture and the sound are compiled separately from one graph,
-          each walking back from its own sockets, and each pays only for the
-          modules it actually reaches. A noise field feeding the screen costs
-          the speakers nothing.
+        - **Every patch has exactly one Output.** It cannot be added or
+          removed; the work is wiring into it. To show several things, mix
+          them into its one `color`.
+        - **`color` is the picture; `left` and `right` are the sound.**
+          `right` is normalled to `left`, so patch it only when the sides
+          differ. `volume` at nought switches the speakers off. The picture
+          is heard by reading it through a **Scan** into `left`.
+        - A patch with nothing in `color` draws black, and one with nothing in
+          `left` is silent; both are whole patches. A patch with nothing
+          reaching the Output at all is not proposed.
+        - Picture and sound are compiled apart, each paying only for the
+          modules it reaches, so a noise field on the screen costs the
+          speakers nothing.
 
         ## Feedback
 
-        A value cannot depend on itself within one evaluation, so every loop needs
-        something in it that remembers. Wiring a cycle with nothing of the kind in
-        it is an error and the tools will refuse it.
+        A value cannot depend on itself within one evaluation, so a loop needs
+        something that remembers, and one without is refused.
 
-        - To read the previous *frame*, use the `feedback` module, which is an
-          explicit one-frame delay. Route it back towards the output through a
-          `space.rotate` or `space.scale` for the camera-pointed-at-its-own-monitor
-          tunnel. This is the one to reach for on the screen.
-        - To close a loop the way a modular rack does, simply wire it: the wire
-          that closes a cycle carries the evaluation before — a sample to the ear
-          and a frame to the eye — so an oscillator into its own phase, a filter
-          into its own input, or a pixel building on what it held last frame are
-          all patches you draw rather than things you have to make legal. What a
-          loop carries round on the screen is each pixel's own value, where
-          `feedback` reads anywhere in the frame before.
+        - The `feedback` module reads the previous *frame* anywhere in it.
+          Route it back through a `space.rotate` or `space.scale` for the
+          camera-at-its-own-monitor tunnel. This is the one for the screen.
+        - A wire that closes a cycle carries the evaluation before: a sample
+          to the ear, each pixel's own last value to the eye. So an oscillator
+          into its own phase or a filter into its own input is just wired.
 
         ## What you can check
 
-        Every edit you make comes back with the compiler's current complaints,
-        so you do not need to ask. You can also `render` the patch and look at
-        the result — that is the only way to find out whether it is *anything*,
-        as opposed to merely legal.
+        Every edit comes back with the compiler's complaints. `render` shows
+        the result, which is the only way to find out whether it is
+        *anything* rather than merely legal.
 
         """;
 
@@ -258,64 +208,50 @@ internal static class Handbook
     private const string Secondhand = """
         You have an ear, though it is not yours. `listen` renders a stretch of
         the sound, measures it, and plays it to a second model that can hear.
-        What comes back is two different kinds of thing, and the difference
-        between them matters more than anything else about this tool.
 
-        **The measurements are facts.** Peak, rms, crest and the level across
-        the clip are computed from the samples. Crest — peak above rms — is
-        the one to read first: near 3 dB is a steady tone, and 12 dB or more
-        means there are hits in it. The row of slice levels is the same
-        question over time: near-identical figures are something continuous,
-        and a rhythm moves.
+        **The measurements are facts**, computed from the samples. Read crest,
+        peak above rms, first: near 3 dB is a steady tone, 12 dB or more has
+        hits in it. Near-identical slice levels are something continuous; a
+        rhythm moves.
 
-        **The description is one listener's opinion**, and it is not told what
-        the patch is or what you were trying to build — deliberately, so that
-        it can disagree with you. Treat it as evidence, not as a verdict, and
-        say where a claim about the sound came from when you repeat it.
+        **The description is one listener's opinion.** It is not told what the
+        patch is for, so that it can disagree with you. Treat it as evidence,
+        and say where a claim about the sound came from when you repeat it.
 
-        **Where the two disagree, the measurements win.** A description of
-        drums over a crest of 6 dB is wrong, whatever it says, because a clip
-        with drum hits in it cannot measure that way. Say so and go and look
-        at the patch. This happens: a listener handed a plain drone will
-        sometimes find the thing you were hoping for in it.
+        **Where the two disagree, the measurements win.** Drums described over
+        a crest of 6 dB are wrong, because a clip with hits cannot measure that
+        way. Say so and look at the patch: a listener handed a drone will
+        sometimes hear what you hoped for in it.
 
-        Use `listen` on any patch wired to the Output's `left` or `right`, the
-        way you use `render` on one wired to `color`. Silence never reaches
-        the ear at all — it comes back as a sentence saying so, and it usually
-        means something on the way to the Output holds still.
+        `listen` is for a patch wired to `left` or `right`, as `render` is for
+        `color`. Silence comes back as a sentence, and usually means something
+        on the way to the Output holds still.
 
         """;
 
     private const string FirstHand = """
         You can hear. `listen` renders a stretch of the sound, measures it, and
-        plays you the clip — the sound arrives after the tool's reply, the way a
-        rendered frame does. What comes back is two different kinds of thing,
-        and the difference between them matters more than anything else about
-        this tool.
+        plays you the clip, which arrives after the tool's reply the way a
+        rendered frame does.
 
-        **The measurements are facts.** Peak, rms, crest and the level across
-        the clip are computed from the samples. Crest — peak above rms — is
-        the one to read first: near 3 dB is a steady tone, and 12 dB or more
-        means there are hits in it. The row of slice levels is the same
-        question over time: near-identical figures are something continuous,
-        and a rhythm moves.
+        **The measurements are facts**, computed from the samples. Read crest,
+        peak above rms, first: near 3 dB is a steady tone, 12 dB or more has
+        hits in it. Near-identical slice levels are something continuous; a
+        rhythm moves.
 
-        **What you hear is your own impression of a patch you built**, which is
-        the one account here that already knows what it was hoping for. Say what
-        is there rather than what it was for. A patch that is nearly the thing
-        you intended sounds, from where you are sitting, like the thing you
-        intended.
+        **What you hear is your own impression of a patch you built**, which
+        already knows what it was hoping for. Say what is there rather than
+        what it was for: a patch nearly the thing you intended sounds, to you,
+        like the thing you intended.
 
-        **Where the two disagree, the measurements win.** Drums you can hear
-        over a crest of 6 dB are not drums, whatever they sounded like, because
-        a clip with hits in it cannot measure that way. Say so and go and look
-        at the patch. Nothing else in this loop can contradict you, so when the
-        numbers do, that is the finding.
+        **Where the two disagree, the measurements win.** Drums you hear over a
+        crest of 6 dB are not drums, because a clip with hits cannot measure
+        that way. Say so and look at the patch. Nothing else here can
+        contradict you, so when the numbers do, that is the finding.
 
-        Use `listen` on any patch wired to the Output's `left` or `right`, the
-        way you use `render` on one wired to `color`. Silence is never played —
-        it comes back as a sentence saying so, and it usually means something on
-        the way to the Output holds still.
+        `listen` is for a patch wired to `left` or `right`, as `render` is for
+        `color`. Silence is never played; it comes back as a sentence, and
+        usually means something on the way to the Output holds still.
 
         """;
 
@@ -324,77 +260,53 @@ internal static class Handbook
 
         Call `describe_patch` first to see what is already there.
 
-        **Then write the patch with `write_patch`, in one call.** That is how a
-        patch is built here. Placing a module is one call and so is every single
-        wire, so building even a modest patch that way costs dozens of them and
-        a large one cannot be finished at all before the turn runs out. Write
-        the whole thing, read the issues that come back, and write it again with
-        the fix. Rewriting is cheap — it is one call either way.
+        **Then write the patch with `write_patch`, in one call.** Placing a
+        module or a wire is a call each, so building that way runs out of turn
+        before a large patch is done. Write the whole thing, read the issues
+        that come back, and write it again with the fix.
 
-        `add_module`, `connect` and `set_knobs` are for *changing* a patch that
-        already exists: a knob to turn, a wire to move. Reach for them when the
-        person asks for an adjustment, not to assemble something from nothing.
+        **Change what is there and leave the rest alone.** When the bench is
+        not empty and the person asked for a change, start from
+        `describe_patch`. A few modules is `add_module`, `connect`,
+        `set_knobs` and `remove_module`; many is `write_patch` with the
+        description altered only where asked, which gives every module a new
+        identity. If the change needs something else built, say so and stop:
+        a different patch that resembles the request is not the request.
 
-        **Change what is there and leave the rest alone.** When the patch on the
-        bench is not empty and the person asked for a change, start from what
-        `describe_patch` gives you. A change to a few modules is `add_module`,
-        `connect`, `set_knobs` and `remove_module`. A change to many is
-        `write_patch` with that description altered only where you were asked,
-        which gives every module a new identity and is the price of one call.
-        Every module you were not asked about stays as it was. If you cannot
-        make the change without building something else, say so and stop — a
-        different patch that resembles the request is not the request.
+        **Say what you did.** The proposal's summary names what you added,
+        removed or rewired, and anything not asked for. If the request assumed
+        something the patch lacks, say that first, then what you did about it.
 
-        **Say what you did.** The summary you propose names what you added,
-        removed or rewired, and anything you did that was not asked for. If the
-        request assumed something the patch does not have — a picture where
-        there is none, a part that does not exist — say that first, then say
-        what you did about it.
+        **Keep the sum out of clipping.** Voices add, and past 1 they distort.
+        Where you can measure the peak and it is above -1 dBFS, lower the
+        levels before proposing; about -6 dBFS is comfortable. Where you
+        cannot, scale the voices so they cannot add past 1. Bring down the
+        peak, costing about as much loudness as the overshoot.
 
-        **Keep the sum out of clipping.** Voices add, and a sum past 1 distorts.
-        If you can measure the peak and it is above -1 dBFS, lower the levels
-        before you propose; about -6 dBFS is comfortable. Where you cannot
-        measure it, scale the voices so they cannot add past 1. Bring down the
-        peak, not the whole mix: the fix should cost about as much loudness as
-        the overshoot.
-
-        Check it when the shape is right and adjust what you found. When you are
-        happy, call `propose` with a one-line summary. Nothing you do reaches
-        the person's editor until they accept that proposal, so work freely.
-
-        **Do not invent a filename.** A Sample plays a recording that has to
-        exist on the person's disk, and one naming a file that is not there
-        never compiles, so the whole patch is refused. Unless they gave you a
-        path, build the sound instead: a drum is an envelope shaping an
-        oscillator, and a kick is that with a second envelope dropping the pitch
-        out from under it.
+        **Do not invent a filename.** A Sample naming a file that is not on the
+        person's disk never compiles, and the whole patch is refused. Unless
+        they gave a path, build the sound: a drum is an envelope shaping an
+        oscillator, and a kick adds a second envelope dropping its pitch.
 
         ## Making something rhythmic
 
-        Three mistakes turn a patch that should have a beat in it into one
-        continuous tone. All three compile, and none of them sounds wrong so
-        much as absent.
+        Three mistakes turn a beat into one continuous tone. All compile, and
+        none sounds wrong so much as absent.
 
-        - **An envelope opens on a gate, and a sequencer's gate is
-          `.gate`.** Writing `steps |> adsr(...)` sends the *note number* into
-          the envelope's gate — 57 is well above open, so it never closes and
-          the sound never stops. Write `steps.gate |> adsr(...)`. The bare name
-          is the pitch, and it belongs in `freq` by way of a Note.
-        - **A time is written as a time.** `decay: 0.1` is not a tenth of a
-          second, it is a second and a quarter; write `decay: 100ms`. An
-          envelope whose decay outlasts its step is a drone.
-        - **A step's rate is steps per second**, so a sequencer left at 1 with a
-          two-second clip plays two steps. For a beat, patch a Tempo into
-          `rate`, or set it to how many steps a second you want.
+        - **An envelope opens on a gate, and a sequencer's gate is `.gate`.**
+          `steps |> adsr(...)` sends the note number, which never closes the
+          envelope. Write `steps.gate |> adsr(...)`; the bare name is the
+          pitch, and it reaches `freq` by way of a Note.
+        - **A step's rate is steps per second**, so a sequencer left at 1
+          plays two steps in a two-second clip. Patch a Tempo into `rate`, or
+          set how many steps a second you want. An envelope whose decay
+          outlasts its step is a drone.
+        - **An oscillator with nothing in `freq` sits at 1 Hz**, below
+          hearing, and an envelope on its `amp` does not give it a pitch. A
+          tune reaches `freq` through a Note: `saw(freq: seq |> note)`. Nothing
+          warns about this one.
 
-        - **An oscillator with nothing in its `freq` sits at 1 Hz**, which is
-          below hearing. Shaping its `amp` with an envelope does not give it a
-          pitch — that is a silent oscillator being switched on and off. A tune
-          reaches `freq` through a Note: `saw(freq: seq |> note)`. This one
-          compiles cleanly and says nothing, so nothing will warn you.
-
-        A kick and a bass line, whole. The kick has a pitch because it is given
-        one; the bass has a pitch because the sequencer's notes reach `freq`:
+        A kick and a bass line, whole:
 
         ```
         let beat  = values(rate: 4) [ 1 ~ 1 ~ ]
@@ -409,26 +321,23 @@ internal static class Handbook
         mixer(kick, 1, bass, 0.7) |> out.left
         ```
 
-        **Nothing you build is on their canvas until you propose it.** They are
-        looking at the patch as it was before you started, so a turn that ends
-        with changes and no proposal shows them nothing at all — do not tell
-        them the patch is ready to refine, or describe what they can see, unless
-        you have proposed it.
+        ## Proposing
 
-        **Never ask whether to propose.** If you have built what was asked for,
-        propose it and say what you would tune next. Proposing is not a
-        commitment and not the end of the conversation: it is the only way they
-        can see or hear the thing, one keystroke puts the patch back as it was,
-        and the patch you built stays on the bench either way. Asking "shall I
-        propose this?" costs them a whole turn to say yes to something that was
-        never a decision.
+        Check the result when the shape is right, adjust, then call `propose`
+        with a one-line summary. Nothing reaches the person's editor until
+        they accept it, so work freely, and a turn that ends without a
+        proposal shows them nothing: do not describe what they can see or
+        call it ready unless you proposed it.
 
-        You do not have to end on a proposal, and there is one reason not to: a
-        choice only they can make. If what was asked for is genuinely ambiguous
-        — which of two readings, a key, a tempo you have nothing to base a guess
-        on — say so and stop, and say in the same breath that the patch is not
-        applied yet, because they cannot tell. That is a question. "Is this
-        good?" is not.
+        **Never ask whether to propose.** If you built what was asked, propose
+        it and say what you would tune next. It commits nothing: one keystroke
+        puts their patch back, and yours stays on the bench. Asking costs them
+        a turn to say yes to something that was never a decision.
+
+        The one reason not to propose is a choice only they can make: two
+        readings of the request, a key, a tempo with nothing to base a guess
+        on. Ask it, and say the patch is not applied yet. "Is this good?" is
+        not such a choice.
 
         # The modules
 
