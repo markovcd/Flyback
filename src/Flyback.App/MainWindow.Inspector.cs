@@ -773,8 +773,8 @@ public sealed partial class MainWindow
             group.Collapsed ? "open-group" : "close-group",
             group.Collapsed ? Glyphs.OpenBox() : Glyphs.ShutBox(),
             group.Collapsed
-                ? "Open the box, showing the modules in it"
-                : "Close the box, drawing its modules as one",
+                ? "Open the box, showing the modules in it  (Ctrl+E)"
+                : "Close the box, drawing its modules as one  (Ctrl+Shift+E)",
             editor.ToggleSelectedGroup);
 
         // Keeping one is not an edit to the patch, so it sits with the one that is
