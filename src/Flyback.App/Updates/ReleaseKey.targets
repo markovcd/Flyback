@@ -4,7 +4,7 @@
     A local build trusts the local release key: the public half of RELEASE_SIGNING_KEY
     is written to obj\ and embedded in place of the committed release-key.pem, so a
     release this machine signs is one its own builds install. On GitHub and in a
-    container the committed key stands, and release.sh and make.sh hand a Docker build
+    container the committed key stands, and release.sh and coverage.sh hand a Docker build
     the local one themselves.
 
     Where the variable is empty, the user environment is read, since Rider and a shell

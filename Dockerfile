@@ -92,8 +92,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore Flyback.slnx --locked-mode
 
 # The public key the app trusts updates from, as base64 DER. Only a build on a
-# developer's machine passes one: release.sh and make.sh hand in the local test
-# key's, and on GitHub the committed release-key.pem stands. Kept in the
+# developer's machine passes one: release.sh and coverage.sh hand in the local
+# test key's, and on GitHub the committed release-key.pem stands. Kept in the
 # environment, so every stage built on this one knows it is a local build.
 ARG RELEASE_PUBLIC_KEY=""
 ENV RELEASE_PUBLIC_KEY=${RELEASE_PUBLIC_KEY}

@@ -19,7 +19,7 @@ if [ "${GITHUB_ACTIONS:-}" = true ]; then
   # never evicts what the gate depends on.
   build+=(--cache-from type=gha)
 else
-  # Built as make.sh builds, so the gate's layers are shared with it.
+  # Built as release.sh builds here, so the gate's layers are shared with it.
   . ./release-key.sh
   build+=(--build-arg RELEASE_PUBLIC_KEY)
 fi

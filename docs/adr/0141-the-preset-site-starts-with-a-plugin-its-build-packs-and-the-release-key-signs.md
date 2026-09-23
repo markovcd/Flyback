@@ -57,8 +57,8 @@ unsigned when the variable is empty.
 **A local build trusts the local key.** The app embeds the public key it takes
 updates from. Built on a developer's machine, it embeds the public half of
 `RELEASE_SIGNING_KEY`, which `ReleaseKey.targets` derives into `obj/` (and makes
-the key where there is none); `make.sh` and `release.sh` hand a Docker build the
-same half as `RELEASE_PUBLIC_KEY`. On GitHub and in any container without that
+the key where there is none); `release.sh` and `coverage.sh` hand a Docker build
+the same half as `RELEASE_PUBLIC_KEY`. On GitHub and in any container without that
 argument, the committed `release-key.pem` is embedded, and `release.sh` checks
 the published signature against it. A local release therefore installs over
 local builds, and nothing built locally installs a local release over a real one.
@@ -66,8 +66,9 @@ local builds, and nothing built locally installs a local release over a real one
 **The release is `release.sh`, and it runs off GitHub too.** It checks the key
 and the changelog, then builds the root Dockerfile's `release` stage: the gate,
 the publishes, Figures packed at the release's version, a zip per platform (a
-folder to run, off GitHub) and a signed `SHA256SUMS`, into `dist/`. The workflow runs it and publishes `dist/`.
-Run elsewhere it signs with the local test key and publishes nothing, and only
+folder to run, off GitHub) and a signed `SHA256SUMS`, into `dist/`. The workflow
+runs it and publishes `dist/`. Run elsewhere it signs with the local test key
+and publishes nothing, and it is the local build of anything on `main`. Only
 GitHub stops at a key that does not pair with the committed public key or at a
 missing changelog heading. A Figures installed from a release and one installed
 from the site are one plugin to the editor's update rule.
