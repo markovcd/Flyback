@@ -44,7 +44,7 @@ internal sealed class PluginHub : IDisposable
 
     private readonly PluginSite? site;
     private readonly Func<Task<IReadOnlyList<HubInstalled>>> readInstalled;
-    private readonly Func<SitePlugin, Task<string?>> install;
+    private readonly Func<SitePlugin, Action, Task<string?>> install;
     private readonly Func<HubInstalled, Task<string?>>? show;
 
     /// <summary>What a patch was short of, listed in a section of its own above everything.</summary>
@@ -91,7 +91,12 @@ internal sealed class PluginHub : IDisposable
     private int page;
     private CancellationTokenSource? asking;
 
-    /// <param name="install">Downloads and installs a site plugin, asking first, and says how that went, or null where nothing was done.</param>
+    /// <param name="install">
+    /// Downloads and installs a site plugin, asking first, and says how that went, or
+    /// null where nothing was done. Calls its second argument once the download itself
+    /// is over, win or lose, so the row stops saying Downloading… once the install
+    /// question is the only thing left waiting on the user.
+    /// </param>
     /// <param name="show">Shows what an installed plugin is, when its row is clicked, and says what became of it, or null where nothing did.</param>
     /// <param name="needed">
     /// What a patch was short of (ADR-0135), which gets a section of its own above
@@ -101,7 +106,7 @@ internal sealed class PluginHub : IDisposable
     public PluginHub(
         PluginSite? site,
         Func<Task<IReadOnlyList<HubInstalled>>> installed,
-        Func<SitePlugin, Task<string?>> install,
+        Func<SitePlugin, Action, Task<string?>> install,
         Func<HubInstalled, Task<string?>>? show = null,
         IReadOnlyList<SitePlugin>? needed = null)
     {
@@ -419,14 +424,20 @@ internal sealed class PluginHub : IDisposable
 
         try
         {
-            Say(await install(plugin));
+            Say(await install(plugin, () => Downloaded(plugin.Id)));
         }
         finally
         {
-            fetching.Remove(plugin.Id);
+            Downloaded(plugin.Id);
         }
 
         await RereadAsync();
+    }
+
+    /// <summary>The row stops saying Downloading… as soon as the bytes are in, not when the install question closes.</summary>
+    private void Downloaded(string id)
+    {
+        if (fetching.Remove(id)) OfferAgain();
     }
 
     private void OfferAgain()

@@ -94,7 +94,7 @@ public sealed partial class MainWindow
     private async Task ShowPluginsAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), plugin => InstallFromSiteAsync(site!, plugin), plugin => ShowInstalledAsync(site, plugin), wanted);
+        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
@@ -109,7 +109,7 @@ public sealed partial class MainWindow
     /// <summary>What the site is asked with in place of <see cref="SiteClient"/>, for a test.</summary>
     internal HttpClient? SiteHttp { get; init; }
 
-    private async Task<string?> InstallFromSiteAsync(PluginSite site, SitePlugin plugin)
+    private async Task<string?> InstallFromSiteAsync(PluginSite site, SitePlugin plugin, Action downloaded)
     {
         PluginPackage package;
 
@@ -122,6 +122,10 @@ public sealed partial class MainWindow
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or InvalidDataException or IOException)
         {
             return $"{plugin.Plugin.Name} was not installed. {ex.Message}";
+        }
+        finally
+        {
+            downloaded();
         }
 
         return await InstallPackageAsync(package);
@@ -167,7 +171,8 @@ public sealed partial class MainWindow
 
         return await this.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
         {
-            PluginAnswer.Download => await InstallFromSiteAsync(site!, newer!),
+            // No site row here to stop saying Downloading…, so nothing to tell.
+            PluginAnswer.Download => await InstallFromSiteAsync(site!, newer!, () => { }),
             PluginAnswer.Remove => Remove(installer!, assembly, plugin.Plugin.Name),
             _ => null,
         };

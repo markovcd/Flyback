@@ -38,13 +38,13 @@ public sealed class PluginHubTests : UiTest
 
     private (PluginHub Hub, Window Window) Open(
         FakePluginSite site,
-        Func<SitePlugin, Task<string?>>? install = null,
+        Func<SitePlugin, Action, Task<string?>>? install = null,
         IReadOnlyList<SitePlugin>? needed = null)
     {
         var hub = new PluginHub(
             site.Site(),
             () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes, Grain]),
-            install ?? (_ => Task.FromResult<string?>(null)),
+            install ?? ((_, _) => Task.FromResult<string?>(null)),
             show: null,
             needed);
 
@@ -257,7 +257,7 @@ public sealed class PluginHubTests : UiTest
         var hub = new PluginHub(
             new PluginSite(new HttpClient(new Unreachable()), FakePluginSite.Root),
             () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes]),
-            _ => Task.FromResult<string?>(null));
+            (_, _) => Task.FromResult<string?>(null));
 
         var window = Show(hub.View, width: 700);
 
@@ -294,6 +294,7 @@ public sealed class PluginHubTests : UiTest
 
         All<ModalOverlay>(window).Count().ShouldBe(2, "the install question sits over the plugins window");
         Directory.Exists(Plugins).ShouldBeFalse("nothing is written before Install is pressed");
+        All<TextBlock>(row).ShouldNotContain(t => t.Text == "Downloading…", "the download is over; only the question is waiting");
 
         Press(All<Button>(All<ModalOverlay>(window).Last()).Single(b => b.Name == "install"));
 
