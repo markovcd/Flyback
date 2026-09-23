@@ -141,8 +141,10 @@
       <li>Press <kbd>Space</kbd> over the canvas and add a <strong>MIDI In</strong>. Its <strong>listens to</strong>
       field lists the Syntakt beside the computer keyboard. If it does not, the box is in Overbridge mode or
       <code>OUTPUT TO</code> is off; fix that on the box and add the module again.</li>
-      <li>Press <strong>[PLAY]</strong> on the Syntakt. Add a <strong>Clock In</strong> from the Timing family;
-      it follows the Syntakt on its own. Select it and watch its <code>bpm</code> read the box's tempo.</li>
+      <li>Add a <strong>Clock In</strong> from the Timing family. Its <strong>follows</strong> field already
+      names the Syntakt, because the box is the one instrument plugged in that sends a clock. Wire its
+      <code>running</code> output into the Output's <code>color</code>, then press <strong>[PLAY]</strong> on the
+      Syntakt: the preview turns white while the box plays and black again at <strong>[STOP]</strong>.</li>
     </ol>
 
     <p>You can delete both modules now. The next step adds them properly.</p>
