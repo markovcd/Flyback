@@ -366,6 +366,20 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return echo;
     }
 
+    /// <summary>The same Echo at a fixed <paramref name="tempo"/>, in beats a second.</summary>
+    protected NodeInstance Echo(
+        NodeInstance from, float tempo, float left, float right, float feedback, float mix,
+        bool sideBySide = false)
+    {
+        var echo = b.Add(EchoModule.TypeId, (1, tempo), (2, left), (3, right), (EchoFeedback, feedback), (5, mix));
+
+        if (sideBySide)
+            echo.SetState(EchoModule.StateKey, new JsonObject { [EchoModule.TapsKey] = EchoModule.SideBySide });
+
+        b.Wire(from, 0, echo, 0);
+        return echo;
+    }
+
     /// <summary>
     /// A Tune: <paramref name="note"/> moved by <paramref name="transpose"/> semitones,
     /// snapped to <paramref name="scale"/>, as a frequency.

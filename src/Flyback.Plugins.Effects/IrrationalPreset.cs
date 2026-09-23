@@ -153,7 +153,7 @@ internal sealed class IrrationalPreset : PresetBench
 
         // Half a second and five sixths of one, which are not a ratio of each other, so
         // the repeats interleave rather than doubling up.
-        var echo = Echo(struck, Fixed(30f), 6f, 10f, 0.55f, 0.6f, sideBySide: true);
+        var echo = Echo(struck, 3f, 6f, 10f, 0.55f, 0.6f, sideBySide: true);
 
         // A hall: the tail is most of what is heard, and it darkens as it goes. One room
         // and not two, because its second output is the same tail smeared the other way,
@@ -238,9 +238,6 @@ internal sealed class IrrationalPreset : PresetBench
         Box("Picture");
 
         return b.Patch;
-
-        // A number as a node, for a socket that wants a wire.
-        NodeInstance Fixed(float value) => b.Add(NodeCatalog.ValueTypeId, (0, value));
 
         // The faint circle a dot runs on: there so its place can be read, and so the
         // screen keeps its shape between passes.
