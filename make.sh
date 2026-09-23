@@ -7,6 +7,4 @@ cd "$(dirname "$0")"
 
 . ./release-key.sh
 
-public="$(printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl pkey -pubout -outform DER | base64 -w0)"
-
-docker build --build-arg RELEASE_PUBLIC_KEY="$public" --output artifacts .
+docker build --build-arg RELEASE_PUBLIC_KEY --output artifacts .

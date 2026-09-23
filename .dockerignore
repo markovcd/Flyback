@@ -6,6 +6,7 @@
 **/obj/
 artifacts/
 dist/
+coverage/
 
 .git/
 .github/

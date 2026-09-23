@@ -507,7 +507,9 @@ why CI builds it rather than installing an SDK.
 The stages stack, and that is what stops a release skipping anything. `publish`
 builds on `gate`, so per-platform artifacts cannot exist without every test
 having passed. `measured` builds on `gate` too and runs the tests again under
-coverage, weekly rather than per change; nothing else reads it. The gate's
+coverage, weekly rather than per change; nothing else reads it. `coverage.sh`
+builds it and writes the table, for the Coverage workflow and locally alike, as
+`release.sh` is the whole release for the Release workflow. The gate's
 restore is locked to the committed lock files, so a version that moved fails
 there rather than building.
 

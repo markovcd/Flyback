@@ -30,3 +30,10 @@ if [ -z "${RELEASE_SIGNING_KEY:-}" ]; then
 fi
 
 export RELEASE_SIGNING_KEY
+
+# Its public half as base64 DER, which a Docker build made here embeds in place of
+# the committed release-key.pem. Never on GitHub, where the committed key stands.
+if [ "${GITHUB_ACTIONS:-}" != true ]; then
+  RELEASE_PUBLIC_KEY="$(printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl pkey -pubout -outform DER | openssl base64 -A)"
+  export RELEASE_PUBLIC_KEY
+fi

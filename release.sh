@@ -81,7 +81,7 @@ echo "Building $tag"
 # Off GitHub the build trusts the local key, so a release made here installs over
 # builds made here. On GitHub nothing is passed and the committed key stands.
 trust=()
-$github || trust=(--build-arg RELEASE_PUBLIC_KEY="$(base64 -w0 < "$temp/derived.der")")
+$github || trust=(--build-arg RELEASE_PUBLIC_KEY)
 
 rm -rf dist
 docker build --build-arg VERSION="$version" "${trust[@]}" --target release \

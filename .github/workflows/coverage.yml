@@ -7,7 +7,8 @@
 # is allowed to fail on should not be charged to every push, so it is charged to
 # Monday instead.
 #
-# The report is an artifact and a table in the run summary. There is no
+# The report is an artifact and a table in the run summary, both written by
+# coverage.sh, which runs the same locally. There is no
 # threshold and nothing here fails on the figure; it is for noticing that
 # something stopped being covered.
 
@@ -36,70 +37,10 @@ jobs:
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
-      # Reads the Build workflow's cache and writes none of its own, so a run
-      # here never evicts what the gate depends on.
+      # Measures into coverage/ and writes the table into the run summary.
+      # coverage.sh is the whole of it, and runs the same on a developer's machine.
       - name: Measure
-        run: |
-          docker buildx build \
-            --target coverage \
-            --cache-from type=gha \
-            --output type=local,dest=coverage \
-            .
-
-      # One report per test project, each naming every assembly that project
-      # loaded, so the engine is in all of them. A line is covered if any
-      # report covered it; adding the reports' totals would count it once per
-      # project and call it missed wherever another project ran it.
-      - name: Summarize
-        run: |
-          set -euo pipefail
-
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
-          import collections, glob, re, xml.etree.ElementTree as ET
-
-          hit = {}
-          taken = {}
-
-          for path in sorted(glob.glob("coverage/*.cobertura.xml")):
-              for package in ET.parse(path).getroot().iter("package"):
-                  for cls in package.iter("class"):
-                      for line in cls.iter("line"):
-                          key = (package.get("name"), cls.get("filename"), line.get("number"))
-                          hit[key] = hit.get(key, False) or int(line.get("hits")) > 0
-
-                          conditions = re.search(r"\((\d+)/(\d+)\)", line.get("condition-coverage") or "")
-                          if conditions:
-                              was = taken.get(key, (0, 0))
-                              taken[key] = (max(was[0], int(conditions[1])), max(was[1], int(conditions[2])))
-
-          lines = collections.defaultdict(lambda: [0, 0])
-          branches = collections.defaultdict(lambda: [0, 0])
-
-          for (assembly, _, _), covered in hit.items():
-              lines[assembly][0] += covered
-              lines[assembly][1] += 1
-
-          for (assembly, _, _), (covered, total) in taken.items():
-              branches[assembly][0] += covered
-              branches[assembly][1] += total
-
-          def rate(pair):
-              return f"{pair[0] / pair[1]:.1%}" if pair[1] else "n/a"
-
-          def row(name, line, branch):
-              print(f"| {name} | {line[0]} / {line[1]} | {rate(line)} | {branch[0]} / {branch[1]} | {rate(branch)} |")
-
-          print("| | Lines | | Branches | |")
-          print("|---|---|---|---|---|")
-          row("**All**",
-              [sum(p[0] for p in lines.values()), sum(p[1] for p in lines.values())],
-              [sum(p[0] for p in branches.values()), sum(p[1] for p in branches.values())])
-
-          for assembly in sorted(lines, key=lambda a: -lines[a][1]):
-              row(assembly, lines[assembly], branches[assembly])
-          PY
-
-          cat "$GITHUB_STEP_SUMMARY"
+        run: bash coverage.sh
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
