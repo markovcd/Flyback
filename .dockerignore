@@ -5,6 +5,7 @@
 **/bin/
 **/obj/
 artifacts/
+dist/
 
 .git/
 .github/

@@ -16,8 +16,8 @@ internal static class Defaults
     /// shelf quietly short of it would not say so.
     /// </remarks>
     /// <param name="builds">The folder a plugin's build is laid out under, one folder each, for a run from the source.</param>
-    /// <param name="keyPath">The key the site signs such a build with, made here the first time it is needed.</param>
-    public static void Seed(PresetStore presets, PluginStore plugins, string folder, string builds, string keyPath, DateTimeOffset at)
+    /// <param name="key">The PEM such a build is signed with, asked for only when there is one; null packs it unsigned.</param>
+    public static void Seed(PresetStore presets, PluginStore plugins, string folder, string builds, Func<string?> key, DateTimeOffset at)
     {
         var packed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -53,20 +53,20 @@ internal static class Defaults
             }
         }
 
-        SeedBuilds(plugins, builds, keyPath, packed, at);
+        SeedBuilds(plugins, builds, key, packed, at);
     }
 
     /// <summary>
     /// A plugin built beside the site stands in for a package nobody shipped: it is
-    /// packed as a build for any system and signed with a key the site makes once
-    /// and keeps beside its database, so a run from the source lists it and the
-    /// editor installs it. A plugin a package already covers is left to the package.
+    /// packed afresh at every start as a build for any system, so a run from the source
+    /// lists what was just built. A plugin a package already covers is left to the package.
     /// </summary>
-    private static void SeedBuilds(PluginStore plugins, string builds, string keyPath, HashSet<string> packed, DateTimeOffset at)
+    private static void SeedBuilds(PluginStore plugins, string builds, Func<string?> key, HashSet<string> packed, DateTimeOffset at)
     {
         if (!Directory.Exists(builds)) return;
 
-        ECDsa? key = null;
+        ECDsa? signing = null;
+        var asked = false;
 
         try
         {
@@ -75,9 +75,15 @@ internal static class Defaults
                 if (Path.GetFileName(folder).StartsWith('.')) continue;
                 if (PluginDescription.OfFolder(folder) is not { } description || packed.Contains(description.Assembly)) continue;
 
-                key ??= LocalKey(keyPath);
+                if (!asked)
+                {
+                    signing = Load(key());
+                    asked = true;
+                }
 
-                var bytes = PackageSigner.Sign(PluginPackage.Pack([(PluginPackage.AnyPlatform, folder)]), key);
+                var bytes = PluginPackage.Pack([(PluginPackage.AnyPlatform, folder)]);
+
+                if (signing is not null) bytes = PackageSigner.Sign(bytes, signing);
 
                 try
                 {
@@ -91,27 +97,21 @@ internal static class Defaults
         }
         finally
         {
-            key?.Dispose();
+            signing?.Dispose();
         }
     }
 
-    /// <summary>The key at <paramref name="path"/>, made and kept there the first time it is asked for.</summary>
-    private static ECDsa LocalKey(string path)
+    private static ECDsa? Load(string? pem)
     {
-        if (!File.Exists(path))
-        {
-            if (Path.GetDirectoryName(path) is { } folder) Directory.CreateDirectory(folder);
-
-            File.WriteAllText(path, PackageSigner.NewKey());
-        }
+        if (pem is null) return null;
 
         try
         {
-            return PackageSigner.Load(File.ReadAllText(path));
+            return PackageSigner.Load(pem);
         }
         catch (InvalidDataException ex)
         {
-            throw new InvalidOperationException($"{path} is not a key the site can sign a plugin with. {ex.Message}", ex);
+            throw new InvalidOperationException($"{ReleaseKey.Variable} is not a key the site can sign a plugin with. {ex.Message}", ex);
         }
     }
 }

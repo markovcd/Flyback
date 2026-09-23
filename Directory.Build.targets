@@ -44,6 +44,8 @@
     declares one is left out of output built for anywhere else, because shipping
     a Windows sound and MIDI backend with its packages inside a macOS application would be
     dead weight that still has to be signed. A plugin without it goes everywhere.
+
+    Publish="false" lays a plugin out beside a build and leaves it out of the publish.
   -->
 
   <Target Name="SelectPlugins" Condition="'@(PluginProject)' != ''">
@@ -114,6 +116,7 @@
     <RemoveDir Directories="$(PluginPublishRoot)" />
 
     <MSBuild Projects="%(ShippedPlugin.Identity)"
+             Condition="'%(ShippedPlugin.Publish)' != 'false'"
              Targets="Build"
              Properties="Configuration=$(Configuration);OutDir=$(PluginPublishRoot)%(ShippedPlugin.FolderName)/"
              RemoveProperties="$(PluginBuildProperties)" />

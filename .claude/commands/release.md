@@ -175,6 +175,11 @@ a changelog without the heading, so nothing is dispatched until the commit is up
 
 Do not create the tag. The workflow does, and a tag already there ends the run.
 
+When `release.sh`, `release.yml` or the Dockerfile's `release` stage changed since
+the last release, run `./release.sh <version>` here first. It is the workflow's
+build, signed with the local test key into `dist/`, and it fails where the
+workflow would fail, minus the key pairing.
+
 ## Firing it
 
 ```bash

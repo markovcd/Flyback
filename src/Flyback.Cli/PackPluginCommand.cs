@@ -340,6 +340,7 @@ internal static class PackPluginCommand
 
         if (tried != Exit.Ok) return tried;
 
+        output.Directory?.Create();
         File.WriteAllBytes(output.FullName, bytes);
 
         Describe(output, package, writer);

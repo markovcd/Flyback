@@ -15,6 +15,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 - `windows-shell.md`: PowerShell and Bash-heredoc pitfalls that corrupt files.
 - `looking-at-a-patch.md`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.
 - `running-the-app.md`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.
+- `release-key.md`: every key is `RELEASE_SIGNING_KEY`, a local test key here, made anew whenever it is missing; `./release.sh` tries a release.
 
 Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill when its description matches the task:
 

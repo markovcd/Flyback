@@ -161,6 +161,18 @@ public sealed class PackPluginCommandTests : IDisposable
     }
 
     [Fact]
+    public void A_package_is_written_into_a_folder_that_is_not_there_yet()
+    {
+        File.WriteAllText(Key.FullName, PackageSigner.NewKey());
+        var output = new FileInfo(Path.Combine(folder, "out", "sample.fbkp"));
+
+        PackPluginCommand.Run(new DirectoryInfo(Build("net10.0")), output, new StringWriter(), new StringWriter(), NoSdk, Key, checkKeys: true)
+            .ShouldBe(Exit.Ok);
+
+        output.Exists.ShouldBeTrue();
+    }
+
+    [Fact]
     public void Two_runtimes_for_one_system_are_refused_by_name()
     {
         Build("net10.0/win-x64");

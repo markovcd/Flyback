@@ -1,6 +1,8 @@
-# Builds a release the same way the README's Docker instructions do, tags it,
-# and publishes the per-platform folders as a GitHub Release — with a signed
+# Builds a release with release.sh, tags it, and publishes it as a GitHub
+# Release: every platform zipped, the Figures plugin package, and a signed
 # SHA256SUMS, which is what lets Flyback install the release as an update.
+# Everything but the publishing is release.sh, which runs the same on a machine
+# with a local test key.
 #
 # Trigger from the Actions tab: Release -> Run workflow. Leave "version" blank
 # to bump the minor version of the latest vX.Y.Z tag (starting at 0.1.0 if
@@ -34,136 +36,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      # First, so a missing or mismatched key fails in seconds rather than after
-      # the build. The public key committed is what every copy of Flyback checks
-      # updates against, so a secret that does not pair with it would publish a
-      # release that nothing installs.
-      - name: Check the signing key
-        env:
-          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
-        run: |
-          set -euo pipefail
-
-          if [ -z "$RELEASE_SIGNING_KEY" ]; then
-            echo "The RELEASE_SIGNING_KEY secret is not set" >&2
-            exit 1
-          fi
-
-          umask 077
-          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
-          openssl pkey -in "$RUNNER_TEMP/release-key.pem" -pubout -outform DER -out "$RUNNER_TEMP/derived.der"
-          rm "$RUNNER_TEMP/release-key.pem"
-
-          # Compared as DER, so line endings and wrapping in the committed PEM
-          # make no difference.
-          if ! openssl pkey -pubin -in src/Flyback.App/Updates/release-key.pem -outform DER -out "$RUNNER_TEMP/committed.der" \
-             || ! cmp -s "$RUNNER_TEMP/derived.der" "$RUNNER_TEMP/committed.der"; then
-            echo "RELEASE_SIGNING_KEY is not the private half of src/Flyback.App/Updates/release-key.pem" >&2
-            exit 1
-          fi
-
-      - name: Determine version
+      # Checks the key and the changelog before building, then builds, tests,
+      # packs and signs into dist/. The input reaches the script as a variable,
+      # never as text spliced into it.
+      - name: Build the release
         id: version
-        run: |
-          set -euo pipefail
-
-          input="${{ inputs.version }}"
-
-          if [ -n "$input" ]; then
-            version="${input#v}"
-            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "Version must be in the form X.Y.Z (got '$input')" >&2
-              exit 1
-            fi
-          else
-            latest=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
-            if [ -z "$latest" ]; then
-              version="0.1.0"
-            else
-              IFS=. read -r major minor _patch <<< "${latest#v}"
-              version="${major}.$((minor + 1)).0"
-            fi
-          fi
-
-          tag="v${version}"
-
-          if git rev-parse "$tag" >/dev/null 2>&1; then
-            echo "Tag $tag already exists" >&2
-            exit 1
-          fi
-
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-
-      # Before anything is built: ReleaseNotes.Of reads a release's notes from the
-      # heading the changelog gives its section (`## X.Y.Z — date`), and a build
-      # whose version has none never opens the "What's new" window (ADR-0088). A
-      # forgotten rename of "## Unreleased" would only be noticed after publishing.
-      - name: Check the changelog has this version's heading
-        run: |
-          set -euo pipefail
-
-          version="${{ steps.version.outputs.version }}"
-
-          if ! grep -qE "^## v?${version//./\\.}([[:space:]]|\$)" CHANGELOG.md; then
-            echo "CHANGELOG.md has no '## $version' heading — rename '## Unreleased' before releasing" >&2
-            exit 1
-          fi
-
-      # Same command as "Docker builds" in the README, plus the version so the
-      # published binaries — assembly version, file version, and the About
-      # window — report the release number rather than the Dockerfile's 0.1.0-dev
-      # default. Restores, builds, runs the whole test suite, and publishes
-      # one self-contained folder per platform for the project's default RID
-      # set.
-      - name: Build release artifacts
-        run: docker build --build-arg VERSION=${{ steps.version.outputs.version }} --output artifacts .
-
-      - name: Package artifacts
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-          cd artifacts
-          for platform in */; do
-            platform="${platform%/}"
-            zip -r "../dist/flyback-${{ steps.version.outputs.version }}-${platform}.zip" "$platform"
-          done
-
-      # The Figures plugin, which the preset site starts with, packed by the
-      # same build and signed with the same key, so a Figures installed from
-      # here and one installed from the site are one plugin to the editor's
-      # update rule (ADR-0132). The key reaches the build as a secret and is
-      # in no layer of the image.
-      - name: Pack the Figures plugin
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
-        run: |
-          set -euo pipefail
-
-          umask 077
-          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
-          docker build --build-arg VERSION=${{ steps.version.outputs.version }} --target figures \
-            --secret id=plugin-key,src="$RUNNER_TEMP/release-key.pem" --output dist .
-          rm "$RUNNER_TEMP/release-key.pem"
-
-      # One signature over the list of package hashes rather than one per
-      # package. The key is written out only for the command that uses it, and
-      # the signature is checked against the committed public key before
-      # anything is published.
-      - name: Sign checksums
-        env:
-          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
-        run: |
-          set -euo pipefail
-          cd dist
-          sha256sum *.zip *.fbkp > SHA256SUMS
-
-          umask 077
-          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
-          openssl dgst -sha256 -sign "$RUNNER_TEMP/release-key.pem" -out SHA256SUMS.sig SHA256SUMS
-          rm "$RUNNER_TEMP/release-key.pem"
-
-          openssl dgst -sha256 -verify ../src/Flyback.App/Updates/release-key.pem -signature SHA256SUMS.sig SHA256SUMS
+          VERSION: ${{ inputs.version }}
+        run: bash release.sh "$VERSION"
 
       - name: Create release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3

@@ -32,27 +32,36 @@ patch nor an installable package stops the site, as a bad setting does.
 
 **The package is made by the site's image build, signed with the release key
 handed in as a Docker build secret.** The site's Dockerfile runs
-`flyback-cli pack-plugin` on the Figures project when the `plugin-key` secret
-is mounted, and writes `Defaults/Figures.fbkp` before publishing the site. The
-key is in no layer. Without the secret the image builds and the site starts
-without Figures, for a developer; `deploy.sh` insists on `PLUGIN_KEY`. A
-rebuilt image carries a fresh signature and so a new file, which replaces the
-stored one; the version decides whether the plugins window offers anything.
+`flyback-cli pack-plugin` on the Figures project with the `release-key` secret,
+which it requires, and writes `Defaults/Figures.fbkp` before publishing the site.
+The key is in no layer. A rebuilt image carries a fresh signature and so a new
+file, which replaces the stored one; the version decides whether the plugins
+window offers anything.
 
-**A plugin built beside the site stands in for a package nobody shipped.** A
-Debug build of the site lays Figures out under `plugins/Figures/`, and at
-start the site packs any plugin build it finds there as a build for any
-system, signs it with a P-256 key it makes once and keeps beside its database
-(`Presets:PluginKey` names another), and seeds it like a package. A plugin a
-shipped package already covers is left to the package, so the image, which is
-a Release publish with the signed `.fbkp` and no `plugins/` folder, never
-touches the key path. A run from Rider therefore lists Figures at once, signed
-by a key that survives restarts, so the editor takes its rebuilds as updates.
+**A plugin built beside the site stands in for a package nobody shipped.** The
+site's build lays Figures out under `plugins/Figures/`, in Debug and Release
+alike and never in its publish, and at every start the site packs any plugin
+build it finds there as a build for any system and seeds it like a package, so
+a run from the source lists what was just built. A plugin a shipped package
+already covers is left to the package, so the image, which has the signed
+`.fbkp` and no `plugins/` folder, never packs anything.
 
-**The Release workflow packs the same package with the same key** in a
-`figures` stage of the root Dockerfile, lists it in `SHA256SUMS` and attaches
-it to the release. A Figures installed from a release and one installed from
-the site are one plugin to the editor's update rule.
+**Every key is `RELEASE_SIGNING_KEY`.** The Release workflow reads its secret
+into that variable, and everything else reads the same variable: the site's
+image build, `deploy.sh`, and a run of the site that packs a build. On a
+developer's machine it holds a local test key, which `release-key.sh` and a
+Release run of the site make and keep in the user environment where there is
+none. A Debug build checks no keys at any stage, so a Debug site packs a build
+unsigned when the variable is empty.
+
+**The release is `release.sh`, and it runs off GitHub too.** It checks the key
+and the changelog, then builds the root Dockerfile's `release` stage: the gate,
+the publishes, Figures packed at the release's version, a zip per platform and
+a signed `SHA256SUMS`, into `dist/`. The workflow runs it and publishes `dist/`.
+Run elsewhere it signs with the local test key and publishes nothing, and only
+GitHub stops at a key that does not pair with the committed public key or at a
+missing changelog heading. A Figures installed from a release and one installed
+from the site are one plugin to the editor's update rule.
 
 **The plugin is not in the box.** It is not in the app's plugin list, so a
 crash in it counts as a stranger's, and the test projects load it as an
@@ -65,5 +74,8 @@ install would: from a plugins folder, and packed as a package.
   installed the old one, the same as any lost plugin key.
 - A default plugin is migrated like a default patch: the change that breaks it
   rebuilds it, which the build does on its own.
+- A package signed with a local test key is a different plugin to an editor that
+  installed one signed with the release key, which is the point: nothing local
+  passes for a release.
 - There is no Gherkin scenario: the specs project reaches the engine, and this
   is the site. `PluginDefaultsTests` states the requirements.

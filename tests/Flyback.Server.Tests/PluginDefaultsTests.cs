@@ -11,14 +11,17 @@ using Xunit;
 namespace Flyback.Server.Tests;
 
 /// <summary>
-/// The plugins the site starts with: signed packages in its defaults folder, seeded
-/// published as it starts and kept to the file (ADR-0139).
+/// The plugins the site starts with: signed packages in its defaults folder, and
+/// plugins built beside it, seeded published as it starts (ADR-0141).
 /// </summary>
 public sealed class PluginDefaultsTests : IDisposable
 {
     private static readonly byte[] Figures = File.ReadAllBytes(typeof(Flyback.Plugins.Figures.FiguresPlugin).Assembly.Location);
 
     private static readonly ECDsa Key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+
+    /// <summary>What RELEASE_SIGNING_KEY holds for these sites, standing in for the release workflow's secret.</summary>
+    private static readonly string ReleaseKey = PackageSigner.NewKey();
 
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-plugin-defaults-").FullName;
 
@@ -34,8 +37,6 @@ public sealed class PluginDefaultsTests : IDisposable
 
     private string Builds => Path.Combine(folder, "plugins");
 
-    private string KeyPath => Path.Combine(folder, "plugin.key");
-
     private WebApplicationFactory<Program> Start() =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
@@ -43,12 +44,12 @@ public sealed class PluginDefaultsTests : IDisposable
             web.UseSetting("Presets:Media", Path.Combine(folder, "media"));
             web.UseSetting("Presets:Defaults", Shipped);
             web.UseSetting("Presets:Builds", Builds);
-            web.UseSetting("Presets:PluginKey", KeyPath);
+            web.UseSetting("RELEASE_SIGNING_KEY", ReleaseKey);
             web.UseSetting("Presets:Admin:User", "admin");
             web.UseSetting("Presets:Admin:Password", "hunter2");
         });
 
-    /// <summary>Figures laid out beside the site the way a Debug build lays it out.</summary>
+    /// <summary>Figures laid out beside the site the way a build lays it out.</summary>
     private void Build()
     {
         Directory.CreateDirectory(Path.Combine(Builds, "Figures"));
@@ -189,9 +190,9 @@ public sealed class PluginDefaultsTests : IDisposable
             .Message.ShouldContain("Figures.fbkp");
     }
 
-    /// <summary>A run from the source: the plugin built beside the site is packed and signed with a key the site makes for itself.</summary>
+    /// <summary>A run from the source: the plugin built beside the site is packed and signed with the release key.</summary>
     [Fact]
-    public async Task A_plugin_built_beside_the_site_is_packed_and_signed_with_the_sites_own_key()
+    public async Task A_plugin_built_beside_the_site_is_packed_and_signed_with_the_release_key()
     {
         Build();
 
@@ -202,14 +203,13 @@ public sealed class PluginDefaultsTests : IDisposable
         figures.GetProperty("published").GetBoolean().ShouldBeTrue();
         figures.GetProperty("builds").EnumerateArray().Select(b => b.GetString()).ShouldBe(["any"]);
 
-        File.Exists(KeyPath).ShouldBeTrue();
-        using var key = PackageSigner.Load(File.ReadAllText(KeyPath));
+        using var key = PackageSigner.Load(ReleaseKey);
         figures.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(key).Fingerprint);
     }
 
-    /// <summary>The key is kept, so a rebuild is the same plugin to an editor that installed the last one.</summary>
+    /// <summary>Packed at every start, so what was just built is what the shelf offers, and to an editor it is the same plugin.</summary>
     [Fact]
-    public async Task A_rebuilt_plugin_beside_the_site_is_signed_with_the_same_key_under_the_same_id()
+    public async Task A_rebuilt_plugin_beside_the_site_replaces_the_last_build_under_the_same_id()
     {
         Build();
 
@@ -221,12 +221,22 @@ public sealed class PluginDefaultsTests : IDisposable
             signer = figures.GetProperty("signer").GetString()!;
         }
 
+        var rebuilt = Path.Combine(Builds, "Figures", "Flyback.Plugins.Figures.xml");
+        File.WriteAllText(rebuilt, "<doc />");
+
         using var again = Start();
         var shelf = await Shelf(again);
 
         shelf.Length.ShouldBe(1);
         shelf[0].GetProperty("id").GetString().ShouldBe(id);
         shelf[0].GetProperty("signer").GetString().ShouldBe(signer);
+
+        using var client = again.CreateClient();
+        var file = await client.GetByteArrayAsync(
+            new Uri($"/api/v1/plugins/{id}/file?count=false", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        using var zip = new ZipArchive(new MemoryStream(file));
+        zip.GetEntry("any/Flyback.Plugins.Figures.xml").ShouldNotBeNull();
     }
 
     [Fact]
@@ -239,7 +249,6 @@ public sealed class PluginDefaultsTests : IDisposable
         var figures = (await Shelf(site)).ShouldHaveSingleItem();
 
         figures.GetProperty("signer").GetString().ShouldBe(PackageSigner.Of(Key).Fingerprint);
-        File.Exists(KeyPath).ShouldBeFalse();
     }
 
     [Fact]

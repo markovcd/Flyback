@@ -129,20 +129,22 @@ FROM scratch AS coverage
 COPY --from=measured /src/TestResults/ /
 
 # The Figures plugin as a signed package, which the preset site starts with and
-# the Release workflow attaches to the release (ADR-0139). The key arrives as a
+# the release carries (ADR-0141), at the release's version. The key arrives as a
 # build secret and leaves no trace in any layer:
 #
-#   docker build --target figures --secret id=plugin-key,src=<the key's PEM> --output dist .
+#   docker build --target figures --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
 #
 # pack-plugin publishes the project, checks the package the way the editor
-# will, loads it once, and writes nothing the editor would refuse.
+# will, loads it once, and writes nothing the editor would refuse. Version
+# reaches that publish as an environment variable, which MSBuild reads as a property.
 FROM gate AS packed
 ARG CONFIGURATION
+ARG VERSION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    --mount=type=secret,id=plugin-key,required=true \
-    dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
-      pack-plugin src/Flyback.Plugins.Figures -o /out/Flyback.Plugins.Figures.fbkp --key /run/secrets/plugin-key
+    --mount=type=secret,id=release-key,required=true \
+    Version=${VERSION} dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
+      pack-plugin src/Flyback.Plugins.Figures -o /out/Flyback.Plugins.Figures.fbkp --key /run/secrets/release-key
 
 FROM scratch AS figures
 COPY --from=packed /out/ /
@@ -192,8 +194,41 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
       dotnet publish src/Flyback.Viewer -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
     done
 
+# A release as the Release workflow publishes it: a zip of each platform's
+# folder, the Figures package, and SHA256SUMS with its signature. release.sh
+# runs it, on GitHub and on a machine with a local test key:
+#
+#   docker build --target release --build-arg VERSION=1.4.0 --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
+#
+# The signature is checked against the key's own public half. That half being
+# release-key.pem is release.sh's check, made before anything is built.
+FROM ${SDK} AS signed
+ARG VERSION
+
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends zip \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY --from=publish /out/ /artifacts/
+COPY --from=packed /out/ /dist/
+
+WORKDIR /artifacts
+
+RUN --mount=type=secret,id=release-key,required=true \
+    set -eu; \
+    for platform in *; do zip -qr /dist/flyback-${VERSION}-${platform}.zip ${platform}; done; \
+    cd /dist; \
+    sha256sum *.zip *.fbkp > SHA256SUMS; \
+    openssl dgst -sha256 -sign /run/secrets/release-key -out SHA256SUMS.sig SHA256SUMS; \
+    openssl pkey -in /run/secrets/release-key -pubout -out /tmp/release-key.pem; \
+    openssl dgst -sha256 -verify /tmp/release-key.pem -signature SHA256SUMS.sig SHA256SUMS
+
+FROM scratch AS release
+COPY --from=signed /dist/ /
+
 # Nothing but the artifacts, so that `--output` writes the publish folders and
-# not a filesystem around them. Publishing from Linux also means the executables
+# not a filesystem around them. Last, so a build with no --target is this one.
+# Publishing from Linux also means the executables
 # carry their mode, which a cross-publish from Windows cannot manage — see the
 # README for keeping it on the way out.
 FROM scratch AS artifacts

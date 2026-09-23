@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using Flyback.Plugins.Hosting;
 using Flyback.Server;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -129,14 +130,16 @@ var app = builder.Build();
 var store = new PresetStore(database);
 var plugins = new PluginStore(database);
 
-// The key is kept beside the database, so a plugin built beside the site keeps its
-// identity across restarts and the editor takes its rebuilds as updates.
+// A plugin built beside the site is signed with the release key, as a release signs it.
+// A Debug run checks no keys and packs it unsigned where there is none; a Release run makes one.
 Defaults.Seed(
     store,
     plugins,
     Setting("Presets:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")),
     Setting("Presets:Builds", Path.Combine(AppContext.BaseDirectory, "plugins")),
-    Setting("Presets:PluginKey", Path.Combine(Path.GetDirectoryName(database)!, "plugin.key")),
+    () => builder.Configuration[ReleaseKey.Variable] is { Length: > 0 } pem
+        ? pem
+        : ReleaseKey.Kept() ?? (PackageSigner.Checked ? ReleaseKey.Make() : null),
     DateTimeOffset.UtcNow);
 var media = new MediaFolder(Setting("Presets:Media", "/media"));
 

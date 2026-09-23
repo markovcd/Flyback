@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 
-# The preset site, as the NAS runs it. Built from the repository root:
+# The preset site, as the NAS runs it. Built from the repository root, with the
+# release key the Figures plugin is signed with:
 #
-#   docker build -f src/Flyback.Server/Dockerfile -t flyback-presets .
+#   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-presets .
 #
 # Add --platform linux/arm64 for an ARM NAS. See deploy/presets/README.md.
 
@@ -24,20 +25,11 @@ COPY src/Flyback.Plugins.Figures src/Flyback.Plugins.Figures
 COPY src/Flyback.Server src/Flyback.Server
 
 # The plugin the site starts with, packed and signed here with the release key
-# handed in as a build secret, so the site never holds a key (ADR-0139):
-#
-#   docker build --secret id=plugin-key,src=<the key's PEM> ...
-#
-# Without the secret the image builds and the site starts without Figures,
-# which is for a developer's build; deploy.sh insists on the key.
+# handed in as a build secret, so the site never holds a key (ADR-0141).
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    --mount=type=secret,id=plugin-key \
-    if [ -f /run/secrets/plugin-key ]; then \
-      dotnet run --project src/Flyback.Cli -c Release -- pack-plugin src/Flyback.Plugins.Figures \
-        -o src/Flyback.Server/Defaults/Figures.fbkp --key /run/secrets/plugin-key; \
-    else \
-      echo "No plugin-key secret, so the site will start without Figures." >&2; \
-    fi
+    --mount=type=secret,id=release-key,required=true \
+    dotnet run --project src/Flyback.Cli -c Release -- pack-plugin src/Flyback.Plugins.Figures \
+      -o src/Flyback.Server/Defaults/Figures.fbkp --key /run/secrets/release-key
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish src/Flyback.Server -c Release -o /app

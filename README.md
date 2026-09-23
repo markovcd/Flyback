@@ -99,6 +99,14 @@ docker build --target gate .
 
 The Release workflow (`.github/workflows/release.yml`) builds every platform, zips each one, and publishes them with a `SHA256SUMS` file and its signature, `SHA256SUMS.sig`. The app only installs an update when that signature checks out against the public key in `src/Flyback.App/Updates/release-key.pem`. The private key is kept in the repository secret `RELEASE_SIGNING_KEY`, and the workflow fails before it builds anything if the secret is missing or doesn't match the committed public key. It also fails before building if `CHANGELOG.md` has no `## X.Y.Z` heading for the version being released, since that heading is what the "What's new" window reads. [ADR-0088](docs/adr/0088-a-release-installs-itself-at-the-next-start.md) explains the design. The same key signs the Figures plugin package, which the workflow attaches to the release and the preset site starts with ([ADR-0141](docs/adr/0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)).
 
+Everything but the publishing is `release.sh`, which runs the same here:
+
+```bash
+./release.sh 1.4.0
+```
+
+It builds, tests, zips, packs and signs into `dist/`, and publishes nothing. Off GitHub, `RELEASE_SIGNING_KEY` holds a local test key rather than the release key: `release-key.sh` takes it from the environment, or makes one and keeps it in the user environment, and only GitHub stops at a key that does not pair with the committed public key or at a missing changelog heading. The preset site's build and a Release run of the site sign with the same variable, and a Debug build checks no keys at all.
+
 To make the key pair, with the `openssl` that comes with Git Bash:
 
 ```bash
