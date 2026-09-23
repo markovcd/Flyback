@@ -385,20 +385,6 @@ public sealed partial class NodeEditor
         // strip takes the group.
         var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
 
-        var ring = new RoundedRect(outline, GroupCornerRadius);
-
-        if (lifted)
-        {
-            context.DrawRectangle(PeekGround, null, ring);
-
-            using (context.PushClip(ring)) DrawGrid(context);
-        }
-
-        context.DrawRectangle(
-            OpenGroupFill,
-            lifted ? PeekPen : isSelected ? OpenGroupPenSelected : OpenGroupPen,
-            ring);
-
         var label = CanvasText.Text(group.Title(), CanvasText.RowSize, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
 
         // A tab only as wide as the name it carries, sitting on the ring: it
@@ -411,6 +397,24 @@ public sealed partial class NodeEditor
             handle.Height);
 
         var tabShape = new RoundedRect(tab, GroupCornerRadius, GroupCornerRadius, 0, 0);
+
+        // Square where the tab sits, so its foot meets the ring instead of
+        // straddling the curve of a corner.
+        var flushRight = tab.Width >= outline.Width;
+        var ring = new RoundedRect(
+            outline, 0, flushRight ? 0 : GroupCornerRadius, GroupCornerRadius, GroupCornerRadius);
+
+        if (lifted)
+        {
+            context.DrawRectangle(PeekGround, null, ring);
+
+            using (context.PushClip(ring)) DrawGrid(context);
+        }
+
+        context.DrawRectangle(
+            OpenGroupFill,
+            lifted ? PeekPen : isSelected ? OpenGroupPenSelected : OpenGroupPen,
+            ring);
 
         if (lifted) context.DrawRectangle(Background, null, tabShape);
 
