@@ -122,6 +122,24 @@ public sealed class PresetThumbnailsTests : IDisposable
         (Directory.Exists(folder) ? Directory.GetFiles(folder, "*.thumb") : []).ShouldBeEmpty();
     }
 
+    /// <summary>
+    /// A tile reads a thumbnail while another Flyback keeps a fresh one under the
+    /// same name, and the fresh one goes in rather than being dropped.
+    /// </summary>
+    [Fact]
+    public void A_thumbnail_being_read_is_still_kept_over()
+    {
+        var store = new ThumbnailStore(folder);
+
+        store.Keep("abc", new Thumbnail(null, "first"));
+
+        using (new FileStream(Path.Combine(folder, "abc.thumb"), FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
+            store.Keep("abc", new Thumbnail(null, "second"));
+
+        new ThumbnailStore(folder).Find("abc").ShouldNotBeNull().Words.ShouldBe("second");
+        Directory.GetFiles(folder).ShouldHaveSingleItem("nothing is left half written");
+    }
+
     [Fact]
     public void A_kept_thumbnail_that_cannot_be_read_is_none()
     {

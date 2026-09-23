@@ -31,7 +31,9 @@ internal sealed class ThumbnailStore(string folder)
 
             Thumbnail found;
 
-            using (var file = File.OpenRead(path))
+            // Shared for deleting, so a thumbnail being read is still one Keep can
+            // swap a fresh one in for.
+            using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
             using (var reader = new BinaryReader(file))
             {
                 if (reader.ReadInt32() != Format) return null;
@@ -96,9 +98,11 @@ internal sealed class ThumbnailStore(string folder)
                 }
             }
 
-            // Written aside and moved in whole, so another Flyback reading it never
-            // sees half a file.
-            File.Move(writing, path, overwrite: true);
+            // Written aside and swapped in whole, so another Flyback reading it never
+            // sees half a file. Replace rather than Move, which Windows refuses over
+            // the open handle this is written aside for.
+            if (File.Exists(path)) File.Replace(writing, path, destinationBackupFileName: null);
+            else File.Move(writing, path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
