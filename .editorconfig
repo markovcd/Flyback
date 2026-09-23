@@ -8,6 +8,10 @@ dotnet_diagnostic.CA1716.severity = none
 # Integer is a kind of port, not a type name.
 dotnet_diagnostic.CA1720.severity = none
 
+# Private fields are camelCase with no underscore.
+resharper_csharp_naming_rule.private_instance_fields = aaBb
+resharper_csharp_naming_rule.private_static_fields = aaBb
+
 [tests/**.cs]
 # Test names are sentences.
 dotnet_diagnostic.CA1707.severity = none
