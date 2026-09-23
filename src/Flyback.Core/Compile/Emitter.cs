@@ -208,9 +208,104 @@ public sealed class Emitter
     /// <summary>Puts back the domain that was in force before the matching push.</summary>
     public void PopDomain() => domains.Pop();
 
+    /// <summary>Which of x, y and t were read since this was last cleared, as <see cref="DomainRead"/> bits.</summary>
+    private int reads;
+
+    /// <summary>What <see cref="Once"/> has lowered, by module and key.</summary>
+    private readonly Dictionary<(Guid Owner, string Key), List<(Slot[] Inputs, DomainRead Read, Slot[] Outputs)>> onces = [];
+
+    /// <summary>
+    /// Lowers part of a module once however many times the module is lowered,
+    /// wherever <paramref name="inputs"/> and the x, y and t it read come out the same.
+    /// </summary>
+    /// <remarks>
+    /// A module read by a sweep is lowered once per place, and most of one seldom
+    /// depends on the place: a struck plate rings the same wherever it is looked at.
+    /// What <paramref name="lower"/> reads of the domain is noticed; every other slot
+    /// it reads and did not make must be in <paramref name="inputs"/>. State it
+    /// claims is claimed once too, so two readings of one plate are one plate.
+    /// </remarks>
+    public Slot[] Once(string key, Slot[] inputs, Func<Slot[]> lower)
+    {
+        if (!onces.TryGetValue((Owner, key), out var earlier)) onces[(Owner, key)] = earlier = [];
+
+        foreach (var (had, read, outputs) in earlier)
+        {
+            if (!had.AsSpan().SequenceEqual(inputs) || !Rereads(read)) continue;
+
+            reads |= read.Mask;
+            return outputs;
+        }
+
+        var (lowered, measured) = Reading(lower);
+
+        earlier.Add(([.. inputs], measured, lowered));
+        return lowered;
+    }
+
+    /// <summary>Runs <paramref name="lower"/> and says which of the domain's registers it read.</summary>
+    internal (T Value, DomainRead Read) Reading<T>(Func<T> lower)
+    {
+        var outer = reads;
+        reads = 0;
+
+        try
+        {
+            var value = lower();
+
+            return (value, new DomainRead(
+                reads,
+                (reads & DomainRead.ReadsX) != 0 ? Current(OpCode.LoadX) : default,
+                (reads & DomainRead.ReadsY) != 0 ? Current(OpCode.LoadY) : default,
+                (reads & DomainRead.ReadsT) != 0 ? Current(OpCode.LoadT) : default));
+        }
+        finally
+        {
+            reads |= outer;
+        }
+    }
+
+    /// <summary>
+    /// Whether lowering again now would read the registers <paramref name="read"/>
+    /// did, so what it made then serves now; and if so, counts them as read here.
+    /// </summary>
+    internal bool Reuses(DomainRead read)
+    {
+        if (!Rereads(read)) return false;
+
+        reads |= read.Mask;
+        return true;
+    }
+
+    private bool Rereads(DomainRead read) =>
+        ((read.Mask & DomainRead.ReadsX) == 0 || Current(OpCode.LoadX) == read.X)
+        && ((read.Mask & DomainRead.ReadsY) == 0 || Current(OpCode.LoadY) == read.Y)
+        && ((read.Mask & DomainRead.ReadsT) == 0 || Current(OpCode.LoadT) == read.T);
+
+    /// <summary>The register <see cref="Load"/> would hand back, without emitting one that is not there yet.</summary>
+    private Slot Current(OpCode code)
+    {
+        if (domains.Count > 0)
+        {
+            var (x, y, t) = domains.Peek();
+
+            return code switch { OpCode.LoadX => x, OpCode.LoadY => y, _ => t };
+        }
+
+        return loads.GetValueOrDefault(code);
+    }
+
     /// <summary>A per-pixel input (x, y or time). Emitted once and reused.</summary>
     public Slot Load(OpCode code)
     {
+        reads |= code switch
+        {
+            OpCode.LoadX => DomainRead.ReadsX,
+            OpCode.LoadY => DomainRead.ReadsY,
+            OpCode.LoadT => DomainRead.ReadsT,
+            _ => 0,
+        };
+
         // A substituted domain neither reads the cache nor writes to it: these
         // registers belong to the sweep that pushed them, and the next sweep
         // will want different ones. Only the renderer's own x, y and t are

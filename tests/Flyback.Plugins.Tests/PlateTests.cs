@@ -186,6 +186,26 @@ public class PlateTests
         program.UnitCount.ShouldBe(0);
     }
 
+    /// <summary>Overtones reads the plate at eight places, and it is one plate struck once, not eight.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Read_at_every_partial_it_rings_once(bool heard)
+    {
+        var b = new PatchBuilder(Catalog);
+        var plate = b.Add(Plate);
+        var overtones = b.Add(Overtones);
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+
+        b.Wire(plate, Motion, overtones, 0)
+         .Wire(overtones, heard ? 0 : 1, output, heard ? NodeCatalog.OutputLeftPort : NodeCatalog.OutputColorPort);
+
+        var program = heard ? b.Patch.CompileForAudio(Catalog).Program : b.Patch.CompileForVideo(Catalog).Program;
+
+        program.PlaneCount.ShouldBe(3);
+        program.Ops.Count(op => op.Code == OpCode.Exp).ShouldBe(9, "an envelope per mode");
+    }
+
     private static int Crossings(float[] samples)
     {
         var count = 0;

@@ -137,31 +137,93 @@ internal static class PlateModule
     {
         var each = Modes(node.Extra<ExtraState>(ModesExtra.StateKey));
 
+        // The ring reads no pixel, so a plate Overtones reads at eight places rings once.
+        var ring = em.Once(
+            "ring",
+            [.. node.Inputs[TriggerPort..(StrikeYPort + 1)]],
+            () => Ring(em, node, each));
+
+        // The plate's own shape at this pixel, one sine per index each way rather
+        // than one per mode, and each once for a row or a column read at several places.
+        var hereX = em.Once("column", [node[8]], () =>
+        {
+            var across = em.Add(em.Binary(OpCode.Div, node[8], em.Mul(em.Load(OpCode.LoadAspect), 2f)), 0.5f);
+
+            return Sines(em, across, each);
+        });
+
+        var hereY = em.Once("row", [node[9]], () =>
+        {
+            // The screen's y is one at the top, and 'strike y' is measured from the top like a row.
+            var down = em.Sub(em.Constant(0.5f), em.Mul(node[9], 0.5f));
+
+            return Sines(em, down, each);
+        });
+
         var one = em.Constant(1f);
-        var half = em.Constant(0.5f);
+        var swing = em.Constant(0f);
+        var shaking = em.Constant(0f);
+
+        for (var m = 1; m <= each; m++)
+        for (var n = 1; n <= each; n++)
+        {
+            var mode = RingModes + ((m - 1) * each + n - 1) * 2;
+
+            var motion = em.Mul(ring[mode], em.Mul(hereX[m], hereY[n]));
+            swing = em.Add(swing, em.Mul(motion, motion));
+
+            var shake = em.Mul(motion, ring[mode + 1]);
+            shaking = em.Add(shaking, em.Mul(shake, shake));
+        }
+
+        // The level rides on every envelope and on the weight alike, so the divisions
+        // take it out and it is put back once. A plate struck on an edge wakes nothing,
+        // and every division here answers nought to nought: silent, still, and covered.
+        var level = ring[RingLevel];
+        var weight = ring[RingWeight];
+        var moving = em.Mul(level, em.Binary(OpCode.Div, em.Unary(OpCode.Sqrt, swing), weight));
+        var thrown = em.Mul(level, em.Binary(OpCode.Div, em.Unary(OpCode.Sqrt, shaking), weight));
+        var sand = em.Sub(one, em.Ternary(OpCode.Smoothstep, em.Constant(Rests), em.Constant(Thrown), thrown));
+
+        return [ring[RingOut], sand, moving];
+    }
+
+    /// <summary>sin(iπ·<paramref name="at"/>) for i from 1 to <paramref name="each"/>, at their own index.</summary>
+    private static Slot[] Sines(Emitter em, Slot at, int each)
+    {
+        var sines = new Slot[each + 1];
+
+        for (var i = 1; i <= each; i++)
+            sines[i] = em.Unary(OpCode.Sin, em.Mul(at, i * Pi));
+
+        return sines;
+    }
+
+    /// <summary>Where <see cref="Ring"/> puts the sound, the level and the weight.</summary>
+    private const int RingOut = 0, RingLevel = 1, RingWeight = 2;
+
+    /// <summary>Where <see cref="Ring"/>'s modes start: each is its envelope, then how hard it shakes for its swing.</summary>
+    private const int RingModes = 3;
+
+    /// <summary>The strike and every mode's ring: the whole sound, and everything the figure needs but the pixel.</summary>
+    private static Slot[] Ring(Emitter em, EmitContext node, int each)
+    {
+        var one = em.Constant(1f);
 
         var (age, level) = Strike.Of(em, node[TriggerPort], node[VelocityPort]);
 
-        // The plate's own shape at the strike point and at this pixel, one sine
-        // per index each way rather than one per mode.
+        // The plate's own shape at the strike point, one sine per index each way.
         var strikeX = node[StrikeXPort];
         var strikeY = node[StrikeYPort];
-        var across = em.Add(em.Binary(OpCode.Div, node[8], em.Mul(em.Load(OpCode.LoadAspect), 2f)), half);
-        // The screen's y is one at the top, and 'strike y' is measured from the top like a row.
-        var down = em.Sub(half, em.Mul(node[9], 0.5f));
 
         var struckX = new Slot[each + 1];
         var struckY = new Slot[each + 1];
-        var hereX = new Slot[each + 1];
-        var hereY = new Slot[each + 1];
 
         for (var i = 1; i <= each; i++)
         {
             // The level rides on one axis of the strike, so it is one multiply for the row rather than one per mode.
             struckX[i] = em.Mul(em.Unary(OpCode.Sin, em.Mul(strikeX, i * Pi)), level);
             struckY[i] = em.Unary(OpCode.Sin, em.Mul(strikeY, i * Pi));
-            hereX[i] = em.Unary(OpCode.Sin, em.Mul(across, i * Pi));
-            hereY[i] = em.Unary(OpCode.Sin, em.Mul(down, i * Pi));
         }
 
         // f(m, n) = freq * (m² + n² / aspect²) / (1 + 1 / aspect²), so mode (1, 1) is freq.
@@ -181,9 +243,8 @@ internal static class PlateModule
         var spin = em.Mul(lowest, Tau);
 
         var sound = em.Constant(0f);
-        var swing = em.Constant(0f);
         var weight = em.Constant(0f);
-        var shaking = em.Constant(0f);
+        var modes = new (Slot Envelope, Slot Shake)[each * each];
 
         for (var m = 1; m <= each; m++)
         for (var n = 1; n <= each; n++)
@@ -207,31 +268,18 @@ internal static class PlateModule
             var pitch = em.Mul(spin, rung);
             sound = em.Add(sound, em.Mul(envelope, em.Unary(OpCode.Cos, em.Mul(pitch, age))));
 
-            var motion = em.Mul(envelope, em.Mul(hereX[m], hereY[n]));
-            swing = em.Add(swing, em.Mul(motion, motion));
-
-            // How hard this mode shakes the plate here: its swing times its frequency
-            // squared against the lowest mode's, so a high mode counts for far more
-            // than its size while it lasts.
+            // How hard this mode shakes the plate for its swing: its frequency squared
+            // against the lowest mode's, so a high mode counts for far more than its
+            // size while it lasts.
             var above = em.Binary(OpCode.Div, rung, both);
-            var shake = em.Mul(motion, em.Mul(above, above));
-            shaking = em.Add(shaking, em.Mul(shake, shake));
+
+            modes[(m - 1) * each + n - 1] = (envelope, em.Mul(above, above));
 
             weight = em.Add(weight, em.Unary(OpCode.Abs, amplitude));
         }
 
-        // The level rides on every envelope and on the weight alike, so the divisions
-        // take it out and it is put back once. A plate struck on an edge wakes nothing,
-        // and every division here answers nought to nought: silent, still, and covered.
-        var moving = em.Mul(level, em.Binary(OpCode.Div, em.Unary(OpCode.Sqrt, swing), weight));
-        var thrown = em.Mul(level, em.Binary(OpCode.Div, em.Unary(OpCode.Sqrt, shaking), weight));
-        var sand = em.Sub(one, em.Ternary(OpCode.Smoothstep, em.Constant(Rests), em.Constant(Thrown), thrown));
+        Slot[] ring = [em.Mul(level, em.Binary(OpCode.Div, sound, weight)), level, weight];
 
-        return
-        [
-            em.Mul(level, em.Binary(OpCode.Div, sound, weight)),
-            sand,
-            moving,
-        ];
+        return [.. ring, .. modes.SelectMany(mode => new[] { mode.Envelope, mode.Shake })];
     }
 }

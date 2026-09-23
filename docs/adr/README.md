@@ -40,7 +40,7 @@ context, decision, consequences.
 | [0032](0032-the-registers-are-double-precision.md) | The registers are double precision |
 | [0035](0035-a-glsl-backend-for-the-video-path.md) | A GLSL backend for the video path *(time carried in two floats by [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md))* |
 | [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md) | The clock reaches the GPU in two floats *(user-directed)* |
-| [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed)* |
+| [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed; what a sweep shares amended by [0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md))* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed; its Output knob superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md))* |
 | [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) | A patch can be played, and what plays it is one opcode *(user-directed)* |
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
@@ -75,6 +75,7 @@ context, decision, consequences.
 | [0126](0126-a-bus-is-a-wire-with-no-cable.md) | A bus is a wire with no cable *(user-directed)* |
 | [0076](0076-the-processor-runs-a-program-as-il-once-it-is-built.md) | The processor runs a program as IL once it is built *(user-directed)* |
 | [0096](0096-an-op-nothing-reads-is-left-out.md) | An op nothing reads is left out *(user-directed)* |
+| [0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md) | A module a sweep reads is lowered once wherever it reads the same |
 | [0077](0077-the-picture-is-heard-only-through-a-scan.md) | The picture is heard only through a Scan *(user-directed; its aspect table's shell-export row retired by [0078](0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md); its Live-engine row amended by [0083](0083-the-live-engines-aspect-follows-the-preview.md))* |
 | [0083](0083-the-live-engines-aspect-follows-the-preview.md) | The live engine's aspect follows the preview *(user-directed)* |
 | [0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md) | A socket with nothing to dial gets no knob *(user-directed)* |

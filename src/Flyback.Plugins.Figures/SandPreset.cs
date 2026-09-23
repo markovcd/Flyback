@@ -11,11 +11,11 @@ namespace Flyback.Plugins.Figures;
 /// Every sound is one module heard on its own and every region of the picture
 /// is one module's output, so what a knob does is seen and heard at once.
 /// <para>
-/// Overtones lowers what feeds 'spectrum' once per partial, so it reads a twin
-/// of the plate ringing its four lowest modes off the same strike rather than
-/// the nine-mode one on the screen: the same figure, coarser, at a fifth of the
-/// cost. Engine modules only besides the three, so the preset needs nothing but
-/// Figures.
+/// Overtones reads the plate's swing once per partial, so it reads a twin of the
+/// plate ringing its four lowest modes off the same strike rather than the
+/// nine-mode one on the screen: the same figure, coarser, at under half the cost
+/// a partial. Engine modules only besides the three, so the preset needs nothing
+/// but Figures.
 /// </para>
 /// </remarks>
 internal static class SandPreset
@@ -32,9 +32,7 @@ internal static class SandPreset
 
         var tempo = b.Add(NodeCatalog.TempoTypeId, (0, Beats));
 
-        // A strike every two beats, from a pulse rather than a sequencer: Overtones
-        // copies everything upstream of the plate once per partial, and a pulse is
-        // a tenth of a sequencer. How hard, and where down the plate, drift on two
+        // A strike every two beats. How hard, and where down the plate, drift on two
         // slow sines, so no two strikes are alike.
         var strikeRate = b.Add("math.mul", (1, 0.5f));
         var strikes = b.Add(NodeCatalog.PulseTypeId, (3, 0.05f), (4, 0.5f), (5, 0.5f));

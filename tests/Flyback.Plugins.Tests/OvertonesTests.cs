@@ -60,6 +60,22 @@ public class OvertonesTests
         program.PhaseCount.ShouldBe(8);
     }
 
+    /// <summary>A partial is a place along the row, so what reads no place is lowered once for all of them.</summary>
+    [Fact]
+    public void What_reads_no_place_is_lowered_once_however_many_partials_read_it()
+    {
+        var b = new PatchBuilder(Catalog);
+        var sine = b.Add(NodeCatalog.SineTypeId, (1, 0.5f));
+        var overtones = b.Add(Overtones);
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+
+        b.Wire(sine, 0, overtones, Spectrum).Wire(overtones, Out, output, NodeCatalog.OutputLeftPort);
+
+        var program = b.Patch.CompileForAudio(Catalog).Program;
+
+        program.PhaseCount.ShouldBe(8 + 1, "a phase for each partial, and the sine's one");
+    }
+
     /// <summary>
     /// Three tenths of Coordinates' x into 'spectrum': the left of the row is dark and the
     /// right reads half, so the last bar stands half way up the screen from the floor.

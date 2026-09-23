@@ -605,6 +605,17 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     Do not reach for one to make a filter work on a picture: a filter over frames is a different effect, and
     every plane costs a value per pixel.</p>
 
+    <h3>Lowering part of a module once</h3>
+
+    <p>A module read through a <code>Swept</code> input is lowered once per place it is read at. Whatever
+    of it does not depend on the place can go behind <code>em.Once(key, inputs, lower)</code>, which lowers
+    it the first time and hands the same slots back wherever <code>inputs</code> and the x, y and t it read
+    are the same. Name every slot <code>lower</code> reads that it did not make; x, y and t are noticed on
+    their own. State claimed inside is claimed once, so a strike kept in planes is one strike however many
+    places the module is read at.</p>
+
+    <pre><code><span class="k">var</span> ring = em.Once(<span class="s">"ring"</span>, [trigger, velocity], () =&gt; Ring(em, trigger, velocity));</code></pre>
+
     <h3>The two questions every stateful module has</h3>
 
     <p>Both are answered by the emitter, once per program rather than once per module, so four filters in one

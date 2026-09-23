@@ -132,3 +132,4 @@ static Flyback.Core.Graph.MidiSignal.Channeled(string! source, int channel) -> s
 static Flyback.Core.Graph.MidiSignal.SourceOf(string! key) -> string!
 Flyback.Core.Graph.MidiSource.Conducts.get -> bool
 Flyback.Core.Graph.MidiSource.Conducts.init -> void
+Flyback.Core.Compile.Emitter.Once(string! key, Flyback.Core.Compile.Slot[]! inputs, System.Func<Flyback.Core.Compile.Slot[]!>! lower) -> Flyback.Core.Compile.Slot[]!

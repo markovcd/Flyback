@@ -52,11 +52,14 @@ figure is not the root-mean-square of the swing, which is bright at the
 antinodes and never settles: that is the module's `motion` output.
 
 **Overtones is a Probe the other way about.** It pushes a place that varies
-along the partials and resolves `spectrum` once per partial, so what feeds it
-is lowered that many times. The count is a setting on the node, and the
-description says what each partial costs. A plate read by it in Sand is a
-four-mode twin of the nine-mode one on the screen, off the same strike, at a
-fifth of the cost.
+along the partials and resolves `spectrum` once per partial, so whatever of
+what feeds it depends on the place is lowered that many times
+([0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md)).
+The count is a setting on the node, and the description says what each
+partial costs. Plate lowers its strike and its ring once however many places
+it is read at, so only where the place sits on the plate is paid per partial.
+A plate read by it in Sand is a four-mode twin of the nine-mode one on the
+screen, off the same strike.
 
 **Each module wears an artwork of what it is**: a nodal figure with sand, a
 harmonograph drawing, a row of partials, as SVGs embedded in the assembly, one
@@ -73,8 +76,8 @@ labels read over them.
   than fifteen. A half-float render target holds the wrapped clock to about
   a sixty-fourth of a second near the wrap.
 - Op counts, on the speakers: Plate at nine modes about 280, Harmonograph
-  about 130, Overtones eight partials times what feeds it. Sand is under two
-  thousand.
+  about 130, Overtones about forty a partial reading a four-mode plate. Sand
+  is about 1,100.
 - There is no Gherkin scenario: the specs project reaches only the engine.
   `PlateTests`, `HarmonographTests` and `OvertonesTests` state the
   requirements in their names.

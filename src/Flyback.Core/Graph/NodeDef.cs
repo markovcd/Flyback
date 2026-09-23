@@ -36,8 +36,8 @@ public readonly record struct EmitContext(Slot[] Inputs)
     /// <remarks>
     /// The delay is for what may have happened in between: a Probe pushes a
     /// domain of its own first, so everything upstream is lowered reading that
-    /// instead of the pixel's x, y and t, and nothing resolved here is shared
-    /// with anything resolved outside the call. Falls back to the port's knob
+    /// instead of the pixel's x, y and t, and only what reads none of the three
+    /// it replaced is shared with anything resolved outside the call. Falls back to the port's knob
     /// when there is no resolver, so a module that calls this is safe to emit
     /// outside a compilation.
     /// </remarks>

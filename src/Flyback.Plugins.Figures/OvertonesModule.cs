@@ -11,10 +11,9 @@ namespace Flyback.Plugins.Figures;
 /// <remarks>
 /// The reading is a Probe's sweep the other way about. A Probe pushes a time
 /// that varies across the picture; this pushes a place that varies along the
-/// partials, so everything upstream of 'spectrum' is lowered once per partial,
-/// reading that place instead of the pixel's own (<see cref="PortSpec.Swept"/>).
-/// That is also the cost: each partial is another copy of whatever feeds it, so
-/// the count is set on the node.
+/// partials, so whatever upstream of 'spectrum' reads the place is lowered once
+/// per partial, reading that place instead of the pixel's own (<see cref="PortSpec.Swept"/>).
+/// That is also the cost, so the count is set on the node.
 /// <para>
 /// The tone is divided by the sum of its partials only where that sum passes
 /// one, so a bright row is held at full scale and a dark one is heard as dark.
@@ -62,8 +61,8 @@ internal static class OvertonesModule
         + "screen along 'row' (0 the top, 1 the bottom), one point per partial, and each reading "
         + "is that overtone's height over 'freq'. Sweep 'row' to scan the picture as a wavetable. "
         + "'tilt' is decibels an octave on top. 'bars' draws the readings, 'wave' one cycle of the "
-        + "result. The partial count is set on the node, and each partial is another copy of what "
-        + "feeds 'spectrum'.")
+        + "result. The partial count is set on the node, and each partial is another copy of whatever "
+        + "feeding 'spectrum' reads the place.")
     {
         Extras = [new PartialsExtra()],
         Skin = Art.Skin("overtones"),

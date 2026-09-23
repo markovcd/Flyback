@@ -166,15 +166,17 @@ public static class PatchCompiler
         }
 
         var emitter = new Emitter();
-        var resolved = new Dictionary<Guid, Slot[]>();
+
+        // Each node as lowered so far, with the x, y and t it read. A sweep reuses
+        // one only where the domain it pushed left those registers alone: a clock
+        // read under a Probe's substituted domain is a different value from one
+        // read outside it, and a knob is the same knob.
+        var resolved = new Dictionary<Guid, List<(Slot[] Outputs, DomainRead Read)>>();
 
         // The hidden modules, one instance each however many sockets are
         // normalled to them — see PortSpec.NormalledTo. Keyed by type id, which
         // is all a normal names.
-        //
-        // Swapped with 'resolved' inside a sweep: a clock read under a Probe's
-        // substituted domain is a different value from one read outside it.
-        var normals = new Dictionary<string, Slot[]>();
+        var normals = new Dictionary<string, List<(Slot[] Outputs, DomainRead Read)>>();
 
         var visiting = new HashSet<Guid>();
 
@@ -266,13 +268,13 @@ public static class PatchCompiler
 
         Slot[] Resolve(NodeInstance node)
         {
-            if (resolved.TryGetValue(node.Id, out var cached)) return cached;
+            if (Earlier(resolved, node.Id) is { } cached) return cached;
 
             var def = catalog.Get(node.TypeId);
             if (def is null)
             {
                 issues.Add(new CompileIssue(node.Id, $"Unknown module '{node.TypeId}'."));
-                return resolved[node.Id] = [emitter.Constant(0f)];
+                return Remember(resolved, node.Id, ([emitter.Constant(0f)], default));
             }
 
             if (!visiting.Add(node.Id))
@@ -287,6 +289,14 @@ public static class PatchCompiler
                 return [.. def.Outputs.Select(_ => emitter.Constant(0f))];
             }
 
+            var lowered = emitter.Reading(() => Lower(node, def));
+
+            visiting.Remove(node.Id);
+            return Remember(resolved, node.Id, lowered);
+        }
+
+        Slot[] Lower(NodeInstance node, NodeDef def)
+        {
             var inputs = new Slot[def.Inputs.Count];
 
             // On the sink, only the sockets this program is rooted at; the rest
@@ -388,7 +398,9 @@ public static class PatchCompiler
                     Node = node.Id,
                     Trace = Watched(node, def),
                     Spans = spans.GetValueOrDefault(node.Id),
-                    Resolver = def.AsksForItsInputs ? Asked(node, def) : port => Sweep(node, def, port),
+                    // A swept input is lowered where the module asks, under whatever it
+                    // pushed, so the memo hands back only what reads none of it.
+                    Resolver = def.AsksForItsInputs ? Asked(node, def) : port => ResolveInput(node, def, port),
                 },
                 node,
                 def);
@@ -406,34 +418,31 @@ public static class PatchCompiler
 
             emitter.Owner = outerOwner;
 
-            visiting.Remove(node.Id);
-            return resolved[node.Id] = outputsOfNode;
+            return outputsOfNode;
         }
 
-        // A swept input, lowered where the module asked for it rather than before
-        // the module was entered — see PortSpec.Swept.
-        //
-        // Under its own cache, because the emitter is likely reading a substituted
-        // domain: the same node resolved in here and outside is two values, and
-        // sharing a register would chart the wrong moment. Nothing else is scoped
-        // — a cycle detected in here is still a cycle.
-        Slot Sweep(NodeInstance node, NodeDef def, int port)
+        // What a node or a normal was lowered to already, where lowering it again
+        // under the domain in force now would read the same registers.
+        Slot[]? Earlier<TKey>(Dictionary<TKey, List<(Slot[] Outputs, DomainRead Read)>> memo, TKey key)
+            where TKey : notnull
         {
-            var outer = resolved;
-            resolved = [];
+            if (memo.TryGetValue(key, out var earlier))
+                foreach (var (outputs, read) in earlier)
+                    if (emitter.Reuses(read)) return outputs;
 
-            var outerNormals = normals;
-            normals = [];
+            return null;
+        }
 
-            try
-            {
-                return ResolveInput(node, def, port);
-            }
-            finally
-            {
-                resolved = outer;
-                normals = outerNormals;
-            }
+        Slot[] Remember<TKey>(
+            Dictionary<TKey, List<(Slot[] Outputs, DomainRead Read)>> memo,
+            TKey key,
+            (Slot[] Outputs, DomainRead Read) lowered)
+            where TKey : notnull
+        {
+            if (!memo.TryGetValue(key, out var earlier)) memo[key] = earlier = [];
+
+            earlier.Add(lowered);
+            return lowered.Outputs;
         }
 
         // The inputs of a module that lowers them itself, each the first time it is
@@ -500,7 +509,7 @@ public static class PatchCompiler
         // could recurse, with no instance to detect the cycle through.
         Slot? Hidden(PortNormal bus)
         {
-            if (!normals.TryGetValue(bus.TypeId, out var outputs))
+            if (Earlier(normals, bus.TypeId) is not { } outputs)
             {
                 if (catalog.Get(bus.TypeId) is not { } def) return null;
 
@@ -514,9 +523,9 @@ public static class PatchCompiler
                 // would — including a clip, for a normal pointing at a module that
                 var scratch = NodeInstance.Create(def, 0d, 0d);
 
-                outputs = normals[bus.TypeId] = def.Emit(
+                outputs = Remember(normals, bus.TypeId, emitter.Reading(() => def.Emit(
                     emitter,
-                    Carried(new EmitContext(knobs), scratch, def));
+                    Carried(new EmitContext(knobs), scratch, def))));
             }
 
             return bus.Port >= 0 && bus.Port < outputs.Length ? outputs[bus.Port] : null;
