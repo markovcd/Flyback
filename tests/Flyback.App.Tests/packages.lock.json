@@ -515,6 +515,13 @@
           "Flyback.Plugins": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.figures": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins.mastering": {
         "type": "Project",
         "dependencies": {

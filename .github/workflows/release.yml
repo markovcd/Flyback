@@ -129,6 +129,23 @@ jobs:
             zip -r "../dist/flyback-${{ steps.version.outputs.version }}-${platform}.zip" "$platform"
           done
 
+      # The Figures plugin, which the preset site starts with, packed by the
+      # same build and signed with the same key, so a Figures installed from
+      # here and one installed from the site are one plugin to the editor's
+      # update rule (ADR-0132). The key reaches the build as a secret and is
+      # in no layer of the image.
+      - name: Pack the Figures plugin
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+
+          umask 077
+          printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
+          docker build --build-arg VERSION=${{ steps.version.outputs.version }} --target figures \
+            --secret id=plugin-key,src="$RUNNER_TEMP/release-key.pem" --output dist .
+          rm "$RUNNER_TEMP/release-key.pem"
+
       # One signature over the list of package hashes rather than one per
       # package. The key is written out only for the command that uses it, and
       # the signature is checked against the committed public key before
@@ -139,7 +156,7 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          sha256sum *.zip > SHA256SUMS
+          sha256sum *.zip *.fbkp > SHA256SUMS
 
           umask 077
           printf '%s\n' "$RELEASE_SIGNING_KEY" > "$RUNNER_TEMP/release-key.pem"
@@ -156,6 +173,7 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: |
             dist/*.zip
+            dist/*.fbkp
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           generate_release_notes: true

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Flyback.Plugins.Figures</RootNamespace>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+
+    <!-- What the install dialog and the plugins window show. -->
+    <Product>Figures</Product>
+    <Authors>Flyback</Authors>
+    <Description>Three modules that are each a picture and a sound from one formula: a struck plate and its sand figure, a harmonograph whose drawing is its chord, and any picture read as the overtones of a tone. With Sand, a preset that shows all three.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="Tags" Value="physics; chladni; harmonograph; additive; picture and sound" />
+    <!-- Retaken by PluginPreviewShotTests. -->
+    <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
+    <!-- The pictures behind the modules (ADR-0118), read out of the assembly by Art. -->
+    <EmbeddedResource Include="Art\*.svg" LogicalName="art.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both are host-owned; shipping either would give its types a second identity. -->
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime"
+                      GlobalPropertiesToRemove="OutDir" />
+  </ItemGroup>
+
+</Project>

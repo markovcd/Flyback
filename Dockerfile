@@ -128,6 +128,25 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS coverage
 COPY --from=measured /src/TestResults/ /
 
+# The Figures plugin as a signed package, which the preset site starts with and
+# the Release workflow attaches to the release (ADR-0139). The key arrives as a
+# build secret and leaves no trace in any layer:
+#
+#   docker build --target figures --secret id=plugin-key,src=<the key's PEM> --output dist .
+#
+# pack-plugin publishes the project, checks the package the way the editor
+# will, loads it once, and writes nothing the editor would refuse.
+FROM gate AS packed
+ARG CONFIGURATION
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    --mount=type=secret,id=plugin-key,required=true \
+    dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
+      pack-plugin src/Flyback.Plugins.Figures -o /out/Flyback.Plugins.Figures.fbkp --key /run/secrets/plugin-key
+
+FROM scratch AS figures
+COPY --from=packed /out/ /
+
 FROM gate AS publish
 ARG RIDS
 ARG CONFIGURATION

@@ -135,6 +135,7 @@ context, decision, consequences.
 | [0101](0101-a-one-knob-maximizer-is-a-module-of-its-own.md) | A one-knob maximizer is a module of its own *(user-directed)* |
 | [0125](0125-a-duck-is-a-sidechain-with-the-depth-on-a-knob.md) | A Duck is a sidechain with the depth on a knob *(user-directed)* |
 | [0128](0128-filter-random-slew-drive-delay-and-reverb-are-the-engines-own.md) | Filter, Random, Slew, Drive, Delay and Reverb are the engine's own *(user-directed)* |
+| [0142](0142-figures-is-three-modules-that-are-each-a-picture-and-a-sound.md) | Figures is three modules that are each a picture and a sound *(user-directed)* |
 
 ### Boundaries
 
@@ -146,6 +147,7 @@ context, decision, consequences.
 | [0131](0131-shared-presets-live-on-a-site-that-only-reads-its-media.md) | Shared presets live on a site that only reads its media *(user-directed)* |
 | [0136](0136-a-letter-goes-to-the-author-through-the-preset-site.md) | A letter goes to the author through the preset site *(user-directed)* |
 | [0138](0138-the-preset-site-starts-with-presets-kept-as-files.md) | The preset site starts with presets kept as files *(user-directed)* |
+| [0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md) | The preset site starts with a plugin its build packs and the release key signs *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |
 | [0028](0028-publish-one-platform-at-a-time.md) | Publish one platform at a time, with only that platform's plugins |

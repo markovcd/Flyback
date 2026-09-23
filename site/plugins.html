@@ -407,6 +407,15 @@
 
     <p>Those are drawn by the canvas itself rather than mocked up, from the same code the app paints a
     patch with — see <code>SkinShotTests</code>, which is what retakes them.</p>
+
+    <figure>
+      <img class="shot" loading="lazy" src="assets/shots/plugin-figures.webp" width="960" height="487"
+           alt="Three Flyback modules on the canvas, Plate, Harmonograph and Overtones, each with a picture behind it: sand on a nodal figure, a harmonograph curve, a row of partials.">
+      <figcaption><strong>Artwork, as shipped.</strong> Figures, the plugin the <a href="PRESETS_URL/plugins.html">preset site</a> starts
+      with, gives each of its three modules a picture of what it is: an SVG for the block and a taller one for the
+      panel, drawn a shade under the node gray so the white labels still read. The same three modules are each a
+      picture and a sound from one formula, which is the plugin's point.</figcaption>
+    </figure>
     <pre><code><span class="c">// A palette: drawn exactly the way every built-in module is.</span>
 Skin = <span class="k">new</span> ModuleSkin.Palette(<span class="k">new</span> Swatch(<span class="s">0x2E</span>, <span class="s">0x8B</span>, <span class="s">0x57</span>))
 {
@@ -884,7 +893,8 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</cod
     <h3>Sharing it</h3>
 
     <p>To offer a package to everyone, <a href="PRESETS_URL/submit-plugin.html">submit it</a> to the
-    <a href="PRESETS_URL/plugins.html">plugin site</a>. The site reads it as the editor does, without running
+    <a href="PRESETS_URL/plugins.html">plugin site</a>, where Figures, Flyback&rsquo;s own, is listed from the
+    start. The site reads a package as the editor does, without running
     it, and refuses what the editor would. Once your plugin is published, its assembly name is your key's:
     a package of it signed with any other is turned away. What it lists comes from the package alone, so set
     the name, version, author, description, tags and preview above before packing. A package goes up unpublished and is listed once it has

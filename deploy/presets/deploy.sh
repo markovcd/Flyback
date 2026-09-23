@@ -5,12 +5,16 @@
 #
 # host defaults to nas and folder to flyback-presets, relative to the remote home.
 # DOCKER overrides the remote docker command, for a NAS that wants "sudo docker".
+# PLUGIN_KEY names the release signing key, the PEM whose public half is
+# src/Flyback.App/Updates/release-key.pem: it signs the Figures plugin the site
+# starts with. The build takes it as a secret and the image keeps no copy.
 set -euo pipefail
 
 host="${1:-nas}"
 dir="${2:-flyback-presets}"
 docker="${DOCKER:-docker}"
 image=flyback-presets
+key="${PLUGIN_KEY:?deploy: set PLUGIN_KEY to the release signing key, which signs the Figures plugin the site starts with}"
 
 cd "$(dirname "$0")/../.."
 
@@ -22,7 +26,7 @@ case "$arch" in
 esac
 
 echo "Building $image for $platform"
-docker build --platform "$platform" -f src/Flyback.Server/Dockerfile -t "$image" .
+docker build --platform "$platform" --secret id=plugin-key,src="$key" -f src/Flyback.Server/Dockerfile -t "$image" .
 
 echo "Loading $image on $host"
 docker save "$image" | gzip | ssh "$host" "gunzip | $docker load"

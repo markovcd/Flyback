@@ -86,6 +86,11 @@ internal sealed class PluginStore
                 signer TEXT
             );
             CREATE INDEX IF NOT EXISTS plugins_submitted ON plugins(submitted_at);
+            CREATE TABLE IF NOT EXISTS plugin_defaults (
+                file_name TEXT PRIMARY KEY,
+                plugin_id TEXT NOT NULL,
+                hash TEXT NOT NULL
+            );
             """);
 
         var reread = false;
@@ -168,32 +173,114 @@ internal sealed class PluginStore
         insert.CommandText = """
             INSERT OR IGNORE INTO plugins
                 (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at,
-                 tags, preview, preview_type, modules, signer)
+                 tags, preview, preview_type, modules, signer, published)
             VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at,
-                 $tags, $preview, $preview_type, $modules, $signer)
+                 $tags, $preview, $preview_type, $modules, $signer, $published)
             """;
         insert.Parameters.AddWithValue("$id", id);
-        insert.Parameters.AddWithValue("$assembly", submission.Assembly);
-        insert.Parameters.AddWithValue("$name", submission.Name);
-        insert.Parameters.AddWithValue("$version", submission.Version);
-        insert.Parameters.AddWithValue("$author", submission.Author);
-        insert.Parameters.AddWithValue("$description", submission.Description);
-        insert.Parameters.AddWithValue("$adds", Joined(submission.Adds));
-        insert.Parameters.AddWithValue("$reaches", Joined(submission.Reaches));
-        insert.Parameters.AddWithValue("$builds", Joined(submission.Builds));
-        insert.Parameters.AddWithValue("$contract", Joined(submission.Contract.Select(c => c.Key + " " + c.Value)));
-        insert.Parameters.AddWithValue("$sha256", submission.Sha256);
-        insert.Parameters.AddWithValue("$file_name", submission.FileName);
-        insert.Parameters.AddWithValue("$file", submission.File);
-        insert.Parameters.AddWithValue("$size", submission.File.LongLength);
         insert.Parameters.AddWithValue("$at", at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
-        insert.Parameters.AddWithValue("$tags", Joined(submission.Tags));
-        insert.Parameters.AddWithValue("$preview", (object?)submission.Preview?.Bytes ?? DBNull.Value);
-        insert.Parameters.AddWithValue("$preview_type", (object?)submission.Preview?.MediaType ?? DBNull.Value);
-        insert.Parameters.AddWithValue("$modules", Modules(submission.Modules));
-        insert.Parameters.AddWithValue("$signer", (object?)submission.Signer?.Key ?? DBNull.Value);
+        insert.Parameters.AddWithValue("$published", 0);
+        Describe(insert, submission);
 
         return insert.ExecuteNonQuery() == 0 ? null : Find(id, unpublished: true);
+    }
+
+    /// <summary>
+    /// Adds a plugin the site starts with, published, once. The same package again
+    /// changes nothing, a changed one replaces the stored package and what it says
+    /// about itself under the same id, and one the admin deleted stays deleted.
+    /// </summary>
+    public void Seed(PluginSubmission submission, DateTimeOffset at)
+    {
+        using var db = Open();
+        using var transaction = db.BeginTransaction();
+
+        string? seeded = null, was = null;
+
+        using (var query = db.CreateCommand())
+        {
+            query.CommandText = "SELECT plugin_id, hash FROM plugin_defaults WHERE file_name = $file_name";
+            query.Parameters.AddWithValue("$file_name", submission.FileName);
+
+            using var reader = query.ExecuteReader();
+
+            if (reader.Read()) (seeded, was) = (reader.GetString(0), reader.GetString(1));
+        }
+
+        if (was == submission.Sha256) return;
+
+        if (seeded is null)
+        {
+            seeded = Guid.CreateVersion7().ToString("N");
+
+            using var insert = db.CreateCommand();
+            insert.CommandText = """
+                INSERT INTO plugins
+                    (id, assembly, name, version, author, description, adds, reaches, builds, contract, sha256, file_name, file, size, submitted_at,
+                     tags, preview, preview_type, modules, signer, published)
+                VALUES ($id, $assembly, $name, $version, $author, $description, $adds, $reaches, $builds, $contract, $sha256, $file_name, $file, $size, $at,
+                     $tags, $preview, $preview_type, $modules, $signer, $published)
+                """;
+            insert.Parameters.AddWithValue("$id", seeded);
+            insert.Parameters.AddWithValue("$at", at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+            insert.Parameters.AddWithValue("$published", 1);
+            Describe(insert, submission);
+            insert.ExecuteNonQuery();
+        }
+        else
+        {
+            // Everything the package says about itself moves with it; the id, when it
+            // arrived, its downloads and whether it is published stay.
+            using var replace = db.CreateCommand();
+            replace.CommandText = """
+                UPDATE plugins SET
+                    assembly = $assembly, name = $name, version = $version, author = $author, description = $description,
+                    adds = $adds, reaches = $reaches, builds = $builds, contract = $contract, sha256 = $sha256,
+                    file_name = $file_name, file = $file, size = $size, tags = $tags, preview = $preview,
+                    preview_type = $preview_type, modules = $modules, signer = $signer
+                WHERE id = $id
+                """;
+            replace.Parameters.AddWithValue("$id", seeded);
+            Describe(replace, submission);
+            replace.ExecuteNonQuery();
+        }
+
+        using (var remember = db.CreateCommand())
+        {
+            remember.CommandText = """
+                INSERT INTO plugin_defaults (file_name, plugin_id, hash) VALUES ($file_name, $id, $hash)
+                ON CONFLICT (file_name) DO UPDATE SET hash = excluded.hash
+                """;
+            remember.Parameters.AddWithValue("$file_name", submission.FileName);
+            remember.Parameters.AddWithValue("$id", seeded);
+            remember.Parameters.AddWithValue("$hash", submission.Sha256);
+            remember.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+    }
+
+    /// <summary>The columns a package fills in about itself, as one statement or another binds them.</summary>
+    private static void Describe(SqliteCommand command, PluginSubmission submission)
+    {
+        command.Parameters.AddWithValue("$assembly", submission.Assembly);
+        command.Parameters.AddWithValue("$name", submission.Name);
+        command.Parameters.AddWithValue("$version", submission.Version);
+        command.Parameters.AddWithValue("$author", submission.Author);
+        command.Parameters.AddWithValue("$description", submission.Description);
+        command.Parameters.AddWithValue("$adds", Joined(submission.Adds));
+        command.Parameters.AddWithValue("$reaches", Joined(submission.Reaches));
+        command.Parameters.AddWithValue("$builds", Joined(submission.Builds));
+        command.Parameters.AddWithValue("$contract", Joined(submission.Contract.Select(c => c.Key + " " + c.Value)));
+        command.Parameters.AddWithValue("$sha256", submission.Sha256);
+        command.Parameters.AddWithValue("$file_name", submission.FileName);
+        command.Parameters.AddWithValue("$file", submission.File);
+        command.Parameters.AddWithValue("$size", submission.File.LongLength);
+        command.Parameters.AddWithValue("$tags", Joined(submission.Tags));
+        command.Parameters.AddWithValue("$preview", (object?)submission.Preview?.Bytes ?? DBNull.Value);
+        command.Parameters.AddWithValue("$preview_type", (object?)submission.Preview?.MediaType ?? DBNull.Value);
+        command.Parameters.AddWithValue("$modules", Modules(submission.Modules));
+        command.Parameters.AddWithValue("$signer", (object?)submission.Signer?.Key ?? DBNull.Value);
     }
 
     public StoredPlugin? Find(string id, bool unpublished = false)

@@ -89,6 +89,7 @@ public sealed class PluginPackageTests : IDisposable
     [InlineData(typeof(Flyback.Plugins.Voice.VoicePlugin))]
     [InlineData(typeof(Flyback.Plugins.Effects.EffectsPlugin))]
     [InlineData(typeof(Flyback.Plugins.Mastering.MasteringPlugin))]
+    [InlineData(typeof(Flyback.Plugins.Figures.FiguresPlugin))]
     public void A_shipped_module_plugin_embeds_a_preview_of_its_modules(Type plugin)
     {
         var assembly = plugin.Assembly;

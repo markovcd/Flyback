@@ -16,10 +16,12 @@ browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
 `deploy.sh` does all of this over ssh: it builds the image for the NAS's processor, loads it there, sets up the folder the first time and restarts the container.
 
 ```bash
-deploy/presets/deploy.sh nas flyback-presets
+PLUGIN_KEY=~/flyback-release.key deploy/presets/deploy.sh nas flyback-presets
 ```
 
 Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if the NAS needs it. `compose.yaml` is copied only when the NAS has none, so the admin's password set there survives a deploy.
+
+`PLUGIN_KEY` is the release signing key, the PEM whose public half is `src/Flyback.App/Updates/release-key.pem`. The build packs the Figures plugin the site starts with and signs it with that key, handed in as a Docker build secret, so the image and the NAS keep no copy of it. A build without the secret starts the site without Figures.
 
 By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
 
@@ -50,7 +52,7 @@ Settings, all optional, as environment variables:
 |---|---|---|
 | `Presets__Database` | `/data/presets.db` | the SQLite file |
 | `Presets__Media` | `/media` | the folder the render machine writes |
-| `Presets__Defaults` | `Defaults` beside the site | the presets the site starts with |
+| `Presets__Defaults` | `Defaults` beside the site | the presets and plugins the site starts with |
 | `Presets__PostsPerHour` | `20` | submissions one address may make in an hour |
 | `Presets__ReportsPerHour` | `10` | reports one address may make in an hour |
 | `Presets__RatingsPerHour` | `60` | ratings one address may give in an hour |
@@ -63,7 +65,7 @@ Settings, all optional, as environment variables:
 
 Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`. Signed in, the shelf shows unpublished presets too, and every preset has Rename, Unpublish (or Publish) and Delete. An unpublished preset is gone from the shelf, its page and its download for everyone else, and is not rendered until it is published again.
 
-Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. Plugins are never rendered, and have nothing in `media/`.
+Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. The one the site starts with, Figures, is published from the start, like the default presets. Plugins are never rendered, and have nothing in `media/`.
 
 Anyone can report a published preset or plugin, from its page or from the editor, with a reason and a line of detail. Reports are listed at `/admin.html` once signed in, each linking to what it is about, where it can be unpublished or deleted; Dismiss clears one, and deleting a preset or plugin clears its reports.
 

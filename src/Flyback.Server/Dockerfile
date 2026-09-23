@@ -19,7 +19,25 @@ COPY site/assets site/assets
 COPY src/Flyback.Core src/Flyback.Core
 COPY src/Flyback.Engine src/Flyback.Engine
 COPY src/Flyback.Plugins src/Flyback.Plugins
+COPY src/Flyback.Cli src/Flyback.Cli
+COPY src/Flyback.Plugins.Figures src/Flyback.Plugins.Figures
 COPY src/Flyback.Server src/Flyback.Server
+
+# The plugin the site starts with, packed and signed here with the release key
+# handed in as a build secret, so the site never holds a key (ADR-0139):
+#
+#   docker build --secret id=plugin-key,src=<the key's PEM> ...
+#
+# Without the secret the image builds and the site starts without Figures,
+# which is for a developer's build; deploy.sh insists on the key.
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    --mount=type=secret,id=plugin-key \
+    if [ -f /run/secrets/plugin-key ]; then \
+      dotnet run --project src/Flyback.Cli -c Release -- pack-plugin src/Flyback.Plugins.Figures \
+        -o src/Flyback.Server/Defaults/Figures.fbkp --key /run/secrets/plugin-key; \
+    else \
+      echo "No plugin-key secret, so the site will start without Figures." >&2; \
+    fi
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish src/Flyback.Server -c Release -o /app
