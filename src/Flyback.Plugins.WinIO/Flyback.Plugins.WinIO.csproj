@@ -61,7 +61,7 @@
       backends out of a target framework that does not name Windows. The MIDI
       half calls winmm, which Windows has always had.
     -->
-    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+    <PackageReference Include="NAudio.Wasapi" />
   </ItemGroup>
 
 </Project>

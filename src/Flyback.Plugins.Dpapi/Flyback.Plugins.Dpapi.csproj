@@ -32,7 +32,7 @@
       why this project stays on plain net10.0 and answers IsSupported honestly
       rather than failing to build for a machine it was never meant to run on.
     -->
-    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.12" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
   </ItemGroup>
 
 </Project>

@@ -53,3 +53,33 @@ testing a commit nobody is waiting on.
 
 **Neither gate can drift from the other**, which is the point. A library the
 tests need is added to the Dockerfile once and both have it.
+
+## Amendments
+
+**2026-09-23 — the cold start is bought back, and coverage is not the gate's to
+pay for.** The build goes through buildx with the run cache on, so the SDK
+image, the apt packages and the restore are no longer fetched on every run — the
+consequence above said that was the price of building the Dockerfile, and it is
+not one that has to be paid. What it costs instead: a commit that changes
+nothing `.dockerignore` lets into the context, such as a workflow or a document,
+hits the cache the whole way through and runs no tests. The check is about the
+context rather than about the run, which for such a commit is the right answer.
+
+Coverage sits outside the gate, in a `measured` stage that runs the tests a
+second time and a Coverage workflow that asks for it weekly. It was tried inside
+and does not belong there. Instrumentation rewrites the assemblies, and this
+codebase reads its own: `PluginPackageTests` and `PluginInstallTests` take a
+built plugin's bytes off disk and assert on what its metadata says it reaches,
+and an instrumented assembly reaches native code because the instrumentation put
+a P/Invoke in it. Three tests fail that way, on Linux only — the Windows
+collector attaches a profiler instead of rewriting, so a local run is green
+about it. Excluding the assemblies the tests read is what coverage.runsettings
+does, but the full list of them includes Flyback.Core and Flyback.App, which is
+most of what the figure is for. Measuring costs roughly twice the test time on
+top, for a number nothing is allowed to fail on.
+
+The restore is locked to the `packages.lock.json` files committed beside each
+project, so the gate resolves what the repository recorded rather than whatever
+the feed offers that morning. Only that restore is locked; the per-platform
+publishes pull a runtime pack no lock file taken without a runtime identifier
+describes.

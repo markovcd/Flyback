@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CsCheck" Version="4.9.1" />
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="Verify.ImageMagick" Version="3.10.0" />
-    <PackageReference Include="Verify.XunitV3" Version="33.1.1" />
-    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="CsCheck" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Verify.ImageMagick" />
+    <PackageReference Include="Verify.XunitV3" />
+    <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
 </Project>

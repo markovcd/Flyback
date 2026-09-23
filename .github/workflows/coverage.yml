@@ -1,0 +1,78 @@
+# How much of the code the tests run, measured weekly and never judged.
+#
+# Not part of the gate, on purpose. Instrumentation rewrites the assemblies, and
+# several tests read a built assembly's bytes and assert on what its metadata
+# says — coverage.runsettings names the three it has to leave alone and says
+# what that costs. It also roughly doubles what the tests take. A number nothing
+# is allowed to fail on should not be charged to every push, so it is charged to
+# Monday instead.
+#
+# The report is an artifact and a table in the run summary. There is no
+# threshold and nothing here fails on the figure; it is for noticing that
+# something stopped being covered.
+
+name: Coverage
+
+on:
+  schedule:
+    # Monday, early.
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      # Reads the Build workflow's cache and writes none of its own, so a run
+      # here never evicts what the gate depends on.
+      - name: Measure
+        run: |
+          docker buildx build \
+            --target coverage \
+            --cache-from type=gha \
+            --output type=local,dest=coverage \
+            .
+
+      - name: Summarize
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, xml.etree.ElementTree as ET
+
+          covered = valid = branches_covered = branches_valid = 0
+
+          for path in sorted(glob.glob("coverage/*.cobertura.xml")):
+              root = ET.parse(path).getroot()
+              covered += int(root.get("lines-covered", 0))
+              valid += int(root.get("lines-valid", 0))
+              branches_covered += int(root.get("branches-covered", 0))
+              branches_valid += int(root.get("branches-valid", 0))
+
+          def rate(a, b):
+              return f"{a / b:.1%}" if b else "n/a"
+
+          print("| | Covered | Total | |")
+          print("|---|---|---|---|")
+          print(f"| Lines | {covered} | {valid} | {rate(covered, valid)} |")
+          print(f"| Branches | {branches_covered} | {branches_valid} | {rate(branches_covered, branches_valid)} |")
+          PY
+
+          cat "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 30

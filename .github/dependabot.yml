@@ -1,0 +1,53 @@
+# What tells us a pinned version has moved.
+#
+# Every action in .github/workflows/ is pinned to a commit rather than a tag,
+# which is the only pin a tag's owner cannot change under us — and which, alone,
+# would mean nobody ever hears that an action has moved on. Dependabot is the
+# other half of it: the pin holds, and a pull request says when it should not.
+#
+# The pull requests land on the Build workflow like any other change, so nothing
+# is taken on the strength of the bump alone. A NuGet one that raises a version
+# without rewriting the packages.lock.json files beside it fails the gate's
+# locked restore, which is the failure saying to restore once with the
+# force-evaluate switch and commit what it rewrites.
+#
+# The Dockerfile's base images are not listed: they are reached through an ARG
+# rather than a literal FROM, which Dependabot does not read.
+
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: []
+
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    labels: []
+
+    # Five at a time, because each one has to be read before it is taken.
+    open-pull-requests-limit: 5
+
+    groups:
+      # Avalonia ships as six packages of one version, and a build with five of
+      # them moved does not work. One pull request, or none.
+      avalonia:
+        patterns:
+          - Avalonia
+          - Avalonia.*
+
+      # The runner, the assertions and the snapshots are read together whenever
+      # one of them moves.
+      testing:
+        patterns:
+          - xunit.v3
+          - Shouldly
+          - Verify.*
+          - Reqnroll.*
+          - Microsoft.Testing.*
+          - CsCheck
+          - BenchmarkDotNet

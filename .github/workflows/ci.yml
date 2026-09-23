@@ -5,6 +5,10 @@
 # release and nothing that only a release needs. It also carries the libraries
 # the headless UI tests want and the ffmpeg the recording tests look for, which
 # a workflow that installed a bare SDK would have to list a second time.
+#
+# Every action is pinned to a commit rather than a tag, because a tag is the
+# action author's to move and this workflow runs on every change. Dependabot
+# (.github/dependabot.yml) is what says when a pin should move.
 
 name: Build
 
@@ -27,7 +31,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      # buildx, for the layer cache below. The runner's plain docker cannot
+      # export one.
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      # The SDK image, the apt packages and the restore are the same on almost
+      # every run, and a runner keeps nothing between jobs, so without a cache
+      # each is fetched cold every time. ADR-0120 took that as the price of
+      # building the Dockerfile; this is the price not being paid.
+      #
+      # It also means a commit that changes nothing in the build context — a
+      # workflow or a document, both of which .dockerignore leaves out — hits
+      # the cache all the way through and runs no tests. That is the right
+      # answer for such a commit, but it is the reason a green check here is
+      # about the context, not about the run.
       - name: Build and test
-        run: docker build --target gate .
+        run: |
+          docker buildx build \
+            --target gate \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            .

@@ -483,9 +483,12 @@ testable without a process. `flyback-cli viewer` parses nothing and starts
 
 `Directory.Build.props` sets the whole solution: `net10.0`, `LangVersion latest`,
 `Nullable enable`, `ImplicitUsings enable`, `InvariantGlobalization true` and
-`TreatWarningsAsErrors true`. There is no `.editorconfig` and no central package
-management; every `PackageReference` carries its version. `global.json` pins no
-SDK and only selects Microsoft.Testing.Platform as the test runner.
+`TreatWarningsAsErrors true`. `Directory.Packages.props` carries every package
+version, so a `PackageReference` names a package and never a version, and
+restore writes a `packages.lock.json` beside each project pinning the transitive
+graph as well. `.editorconfig` holds nothing but the handful of analyzer rules
+this codebase answers differently, each with the reason above it. `global.json`
+pins no SDK and only selects Microsoft.Testing.Platform as the test runner.
 
 ```bash
 dotnet test --solution Flyback.slnx -c Release
@@ -499,9 +502,12 @@ The second is the truth ([0120](adr/0120-every-change-passes-the-gate-a-release-
 The `gate` stage restores, builds and runs every test, and carries the font and
 X11 libraries the headless UI tests rasterize with and the ffmpeg the recording
 tests look for. Without them those tests skip, and a local run can be green about
-code it never ran. CI runs exactly that stage. The `publish` stage is built on top
-of it and publishes App, CLI and Viewer into one folder per runtime, so a release
-cannot skip the gate.
+code it never ran. Its restore is locked to the committed lock files, so a
+version that moved fails here rather than building. CI runs exactly that stage.
+The `publish` stage is built on top of it and publishes App, CLI and Viewer into
+one folder per runtime, so a release cannot skip the gate. The `measured` stage
+runs the tests a second time under coverage, weekly rather than per change, and
+is read by nothing else.
 
 The Release workflow checks the signing key against the committed public key
 before it builds anything, then zips each platform, writes `SHA256SUMS` and signs

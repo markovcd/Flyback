@@ -8,6 +8,10 @@
 #
 # Needs the repository secret RELEASE_SIGNING_KEY: the private half of the key
 # whose public half is src/Flyback.App/Updates/release-key.pem. See ADR-0088.
+#
+# The actions are pinned to commits rather than tags. This workflow is handed the
+# signing key and publishes what every copy of Flyback installs as an update, so
+# what it runs is not something a tag's owner gets to change.
 
 name: Release
 
@@ -26,7 +30,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
@@ -145,7 +149,7 @@ jobs:
           openssl dgst -sha256 -verify ../src/Flyback.App/Updates/release-key.pem -signature SHA256SUMS.sig SHA256SUMS
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}

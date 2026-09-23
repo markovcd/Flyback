@@ -10,6 +10,20 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
 
     <!--
+      A packages.lock.json beside each project, holding the whole resolved
+      graph. Directory.Packages.props pins what this repository asks for; the
+      lock file pins what those packages in turn ask for, which nothing else
+      names and which can otherwise move under a build that changed nothing.
+
+      The gate restores in locked mode, so the lock files are what CI resolves
+      against and a stale one fails there rather than passing quietly. Changing
+      a version in Directory.Packages.props therefore means restoring once
+      locally with the force-evaluate switch and committing the lock files that
+      restore rewrites. The Dockerfile spells the command out.
+    -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+
+    <!--
       Whether a release passed the real version with -p:Version=X.Y.Z (see
       Dockerfile and the release workflow) before the default below fills the
       gap. A command-line property is global and reaches every PropertyGroup

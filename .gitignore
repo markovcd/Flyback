@@ -40,6 +40,9 @@ packages/
 # Benchmark output
 BenchmarkDotNet.Artifacts/
 
+# Coverage reports, written by a test run that asks for them
+TestResults/
+
 # OS
 .DS_Store
 [Tt]humbs.db

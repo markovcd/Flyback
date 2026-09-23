@@ -1,6 +1,21 @@
 <Project>
 
   <!--
+    What the test runner's coverage switch needs present to measure anything.
+    Attached to the one property every test project already sets rather than
+    written into eight project files, so a ninth is covered by declaring itself
+    a test project and nothing else. The benchmarks set no such property and
+    take no such package: they are run to be timed, not to pass.
+
+    Coverage is reported and never enforced, and it is measured weekly rather
+    than in the gate — see the `measured` stage in the Dockerfile and
+    coverage.runsettings for why.
+  -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+  </ItemGroup>
+
+  <!--
     Plugins are loaded from disk at run time, not referenced, so nothing in the
     build graph would otherwise put them where the host looks. A project that
     wants a plugin present declares it:

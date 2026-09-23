@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  What the coverage run measures, and what it must not touch.
+
+  Coverage instruments an assembly by rewriting it, which several tests here can
+  see: PluginPackageTests and PluginInstallTests read a real built plugin's bytes
+  off disk and assert on what its metadata says it reaches, and instrumentation
+  adds a P/Invoke to every assembly it rewrites. An instrumented plugin therefore
+  "reaches native code" and the assertion is about the instrumentation rather
+  than about the plugin.
+
+  The three named below are the assemblies those tests read. They are the plugin
+  under test and two fixtures, so what is given up is the Picture plugin's
+  figure; nothing is given up in the engine or the shell, which is where the
+  number is worth having.
+
+  This is also why coverage is not measured in the gate: it doubles the time the
+  tests take, it is never judged, and the list here has to keep pace with which
+  assemblies the tests read.
+-->
+
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*Flyback\.Plugins\.Picture\.dll$</ModulePath>
+                <ModulePath>.*Flyback\.Plugins\.Sample\.dll$</ModulePath>
+                <ModulePath>.*Flyback\.Plugins\.FakeAssistant\.dll$</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

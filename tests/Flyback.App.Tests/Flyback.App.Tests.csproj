@@ -39,8 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Shouldly" Version="4.3.0" />
-    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
   </ItemGroup>
 
   <!--
@@ -51,10 +51,10 @@
     boxes in the step list rendered empty.
   -->
   <ItemGroup>
-    <PackageReference Include="Avalonia.Headless" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Skia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
   </ItemGroup>
 
   <!--

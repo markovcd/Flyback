@@ -85,10 +85,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
 
     <!--
       The text view's editor — the AvaloniaUI org's port of AvalonEdit, MIT.
@@ -101,7 +101,7 @@
       ADR-0019's rule is the engine's, and Core still answers to it: this is the
       shell, which already carries Avalonia, Skia and a font.
     -->
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
 
     <!--
       SVG, for the picture a plugin may hang behind its own module. Avalonia
@@ -114,7 +114,7 @@
       ADR-0019's rule is the engine's, and Core still answers to it: this is the
       shell, which already carries Avalonia, Skia and a font.
     -->
-    <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
+    <PackageReference Include="Svg.Controls.Skia.Avalonia" />
   </ItemGroup>
 
   <ItemGroup>
