@@ -207,22 +207,22 @@ public class PlateTests
     }
 
     /// <summary>
-    /// Sand as the editor plays it, its knobs live: each plate and the harmonograph
-    /// keep their planes once, however many partials read the plate Overtones hears.
-    /// The kick is a third plate, heard and not seen.
+    /// Vigil as the editor plays it, its knobs live: the bell, the knell and each
+    /// harmonograph keep their planes once, however many partials read the fog.
+    /// The knell is heard and not seen.
     /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Sand_played_strikes_each_plate_once(bool heard)
+    public void Vigil_played_strikes_each_plate_once(bool heard)
     {
-        var sand = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Sand").Build(Catalog);
+        var vigil = ShippedPlugins.Loaded.Presets.Single(p => p.Name == "Vigil").Build(Catalog);
 
         var program = heard
-            ? sand.CompileForAudio(Catalog, played: true).Program
-            : sand.CompileForVideo(Catalog, played: true).Program;
+            ? vigil.CompileForAudio(Catalog, played: true).Program
+            : vigil.CompileForVideo(Catalog, played: true).Program;
 
-        program.PlaneCount.ShouldBe(heard ? 3 + 3 + 3 + 5 : 3 + 3 + 5);
+        program.PlaneCount.ShouldBe(heard ? 3 + 3 + 5 : 3 + 5);
     }
 
     private static int Crossings(float[] samples)

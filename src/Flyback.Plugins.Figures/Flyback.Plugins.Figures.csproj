@@ -7,7 +7,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Figures</Product>
     <Authors>Flyback</Authors>
-    <Description>Three modules that are each a picture and a sound from one formula: a struck plate and its sand figure, a harmonograph whose drawing is its chord, and any picture read as the overtones of a tone. With Sand, a preset that shows all three.</Description>
+    <Description>Three modules that are each a picture and a sound from one formula: a struck plate and its sand figure, a harmonograph whose drawing is its chord, and any picture read as the overtones of a tone. With Vigil, a dark ambient preset on all three.</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -47,10 +47,10 @@ public sealed class FiguresPlugin : IFlybackPlugin
         registry.AddPresets(
         [
             new PatchPreset(
-                SandPreset.Name,
-                SandPreset.Build,
-                "A song in D minor on the three Figures: the plate plays the melody and its sand "
-                + "dances to it, the harmonograph draws each chord, and the sand is the pad.",
+                VigilPreset.Name,
+                VigilPreset.Build,
+                "Dark ambient in D phrygian dominant: a drone of four voices that is the fog heard "
+                + "through Overtones, a harmonograph drawing the chords as they swell, and a far bell, rarely.",
                 PresetKind.Interplay),
         ]);
     }

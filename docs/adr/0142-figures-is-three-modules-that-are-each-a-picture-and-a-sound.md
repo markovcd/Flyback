@@ -27,9 +27,10 @@ acceleration is the figure. Harmonograph is two damped pendulums each way: the
 pen's path is the drawing and the pen at pitch is the chord, from one ratio,
 one twist and one damping. Overtones reads whatever feeds `spectrum` along a
 row of the screen, one place per partial, as the heights of an additive tone,
-and draws the readings back as bars and a wave. Sand, the plugin's preset,
-is a song on all three: the plate plays the melody, the harmonograph the chords,
-Overtones the pad, and a second plate the kick.
+and draws the readings back as bars and a wave. Vigil, the plugin's preset,
+is dark ambient on all three: four Overtones reading the fog on the screen are
+the drone, the harmonograph swells and draws the chords, and plates are a far
+bell and a knell.
 
 **A strike is kept in planes, and the clock in a plane is wrapped at sixteen
 seconds.** A plane write is clamped to ±16 like a cell's, so the clock cannot
@@ -59,8 +60,8 @@ what feeds it depends on the place is lowered that many times
 The count is a setting on the node, and the description says what each
 partial costs. Plate lowers its strike and its ring once however many places
 it is read at, so only where the place sits on the plate is paid per partial.
-A plate read by it in Sand is a four-mode twin of the nine-mode melody plate
-on the screen, off the same strikes.
+The partials share one phase, each turned from the one below by the
+fundamental's angle, so a partial costs no sine of its own.
 
 **Each module wears an artwork of what it is**: a nodal figure with sand, a
 harmonograph drawing, a row of partials, as SVGs embedded in the assembly, one
@@ -77,8 +78,8 @@ labels read over them.
   than fifteen. A half-float render target holds the wrapped clock to about
   a sixty-fourth of a second near the wrap.
 - Op counts, on the speakers: Plate at nine modes about 280, Harmonograph
-  about 130, Overtones about forty a partial reading a four-mode plate. Sand
-  is about 1,800.
+  about 130, Overtones about fifteen a partial besides what it reads. Vigil
+  is about 1,900, a Noise3 of fog in each of its 32 partials.
 - There is no Gherkin scenario: the specs project reaches only the engine.
   `PlateTests`, `HarmonographTests` and `OvertonesTests` state the
   requirements in their names.
