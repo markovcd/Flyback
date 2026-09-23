@@ -57,6 +57,33 @@ public class PresetSiteDefaultsTests
             bundle.Files.ShouldContainKey(file, $"{name} names {file} without carrying it");
     }
 
+    /// <summary>
+    /// A knob follows through to something, keeps its sockets inside their ranges,
+    /// which a compile does not hold them to, and rests them where the knob rests.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Each_knob_is_followed_and_keeps_to_its_sockets(string name)
+    {
+        var modules = ShippedPlugins.Loaded.Modules;
+        var patch = Open(name).Patch;
+
+        foreach (var control in patch.Controls ?? [])
+            ControlMap.Following(patch, control.Id).ShouldNotBeEmpty($"nothing follows '{control.Name}' in {name}");
+
+        foreach (var node in patch.Nodes)
+        foreach (var (port, link) in ControlMap.All(node))
+        {
+            var spec = modules.Require(node.TypeId).Inputs[port];
+            var knob = patch.Control(link.Control).ShouldNotBeNull($"{name} links a knob it does not have");
+
+            foreach (var end in new[] { link.Min, link.Max })
+                end.ShouldBeInRange(spec.Min, spec.Max, $"{name}: {node.TypeId} '{spec.Name}'");
+
+            node.InputValues[port].ShouldBe(link.At(knob.Value), 1e-6f, $"{name}: {node.TypeId} '{spec.Name}'");
+        }
+    }
+
     [Theory]
     [MemberData(nameof(Every))]
     public void Each_compiles_with_nothing_to_say(string name)
