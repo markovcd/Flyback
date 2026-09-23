@@ -182,6 +182,46 @@ public class KnobPanelTests : UiTest
         All<TextBlock>(Panel(window)).ShouldContain(t => t.Text == "Brightness");
     }
 
+    /// <summary>
+    /// A binding named by its instrument is longer than a cell is wide, and two
+    /// of them side by side once ran into each other. Each footer is cut to its
+    /// cell, and the whole name is the tooltip.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_long_binding_name_is_cut_to_its_cell_rather_than_run_into_the_next()
+    {
+        var (patch, value) = Board();
+        var first = patch.AddControl("Vowel");
+        var second = patch.AddControl("Talk");
+        first.Midi = new MidiBinding("midi:box", 2, 79);
+        second.Midi = new MidiBinding("midi:box", 2, 81);
+        ControlMap.Link(value, 0, new ControlLink(first.Id, 0f, 1f));
+
+        var window = Open(patch);
+        var panel = Panel(window);
+
+        panel.Label = binding => $"T2 · Amp {(binding.Controller == 79 ? "Attack" : "Decay")} of a very long page name";
+        panel.Explain = binding => $"Box · Track 2 · Amp {(binding.Controller == 79 ? "Attack" : "Decay")}";
+        panel.Show(patch.Controls!);
+        Settle(window);
+
+        var labels = All<TextBlock>(panel).Where(t => t.Text?.StartsWith("T2 ·", StringComparison.Ordinal) == true).ToList();
+
+        labels.Count.ShouldBe(2);
+
+        foreach (var label in labels)
+        {
+            label.Bounds.Width.ShouldBeLessThanOrEqualTo(76);
+            label.TextTrimming.ShouldBe(Avalonia.Media.TextTrimming.CharacterEllipsis);
+            ToolTip.GetTip(label).ShouldBe($"Box · Track 2 · Amp {(label.Text!.Contains("Attack") ? "Attack" : "Decay")}");
+        }
+
+        var one = OnWindow(window, labels[0], new Point(0, 0)).X;
+        var two = OnWindow(window, labels[1], new Point(0, 0)).X;
+
+        Math.Abs(two - one).ShouldBeGreaterThanOrEqualTo(labels[0].Bounds.Width);
+    }
+
     [AvaloniaFact]
     public void Escape_stops_linking()
     {

@@ -88,8 +88,11 @@ internal sealed class ControlsPanel : Border
     /// <summary>What the tip on a knob says, given its id — which sockets follow it.</summary>
     public Func<Guid, string>? Describe { get; set; }
 
-    /// <summary>What a binding is called under its knob: by the instrument's own names where it has them.</summary>
+    /// <summary>What a binding is called under its knob, short enough to fit: "T3 · Filter Frequency".</summary>
     public Func<MidiBinding, string>? Label { get; set; }
+
+    /// <summary>What a binding is called in full, for the tooltip and the menu: "Syntakt · Track 3 · Filter Frequency".</summary>
+    public Func<MidiBinding, string>? Explain { get; set; }
 
     /// <summary>
     /// The instruments plugged in that Flyback knows by name, for binding a knob
@@ -102,6 +105,8 @@ internal sealed class ControlsPanel : Border
     public event Action<Guid, MidiBinding>? BindRequested;
 
     private string LabelOf(MidiBinding binding) => Label?.Invoke(binding) ?? binding.Label;
+
+    private string ExplainOf(MidiBinding binding) => Explain?.Invoke(binding) ?? binding.Label;
 
     /// <summary>The knob whose sockets are being linked, tinted so it can be found.</summary>
     public Guid? Linking
@@ -294,11 +299,14 @@ internal sealed class ControlsPanel : Border
                 Margin = new Thickness(0, 0, 3, 0),
             };
 
+            // Cut short with an ellipsis rather than run into the next cell: a
+            // binding named by its instrument is longer than a cell is wide.
             midi = new TextBlock
             {
                 FontSize = Text.Micro,
                 Foreground = Text.Muted,
                 VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
             };
 
             var more = new Button
@@ -317,12 +325,10 @@ internal sealed class ControlsPanel : Border
 
             var footer = new DockPanel { LastChildFill = true, Height = 16 };
             DockPanel.SetDock(more, Dock.Right);
+            DockPanel.SetDock(dot, Dock.Left);
             footer.Children.Add(more);
-            footer.Children.Add(new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Children = { dot, midi },
-            });
+            footer.Children.Add(dot);
+            footer.Children.Add(midi);
 
             body = new StackPanel
             {
@@ -470,6 +476,7 @@ internal sealed class ControlsPanel : Border
         {
             midi.Text = learning ? "turn a knob…" : control.Midi is { } bound ? panel.LabelOf(bound) : string.Empty;
             midi.Foreground = learning ? Heard : Text.Muted;
+            ToolTip.SetTip(midi, !learning && control.Midi is { } explained ? panel.ExplainOf(explained) : null);
         }
 
         public void Flash()
@@ -492,7 +499,7 @@ internal sealed class ControlsPanel : Border
 
             flyout.Items.Add(control.Midi is null
                 ? Item("Learn MIDI controller", () => panel.LearnRequested?.Invoke(control.Id))
-                : Item($"Forget {panel.LabelOf(control.Midi)}", () => panel.ForgetRequested?.Invoke(control.Id)));
+                : Item($"Forget {panel.ExplainOf(control.Midi)}", () => panel.ForgetRequested?.Invoke(control.Id)));
 
             if (control.Midi is not null)
                 flyout.Items.Add(Item("Learn another controller", () => panel.LearnRequested?.Invoke(control.Id)));

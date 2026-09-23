@@ -52,25 +52,44 @@ internal sealed record InstrumentProfile(
         ArgumentNullException.ThrowIfNull(binding);
 
         var track = Track(binding.Channel);
-        var knob = track is null
-            ? null
-            : PagesOf(track)
-                .SelectMany(page => page.Controls.Select(control => (Page: page, Control: control)))
-                .Where(pair => pair.Control.Controller == binding.Controller)
-                .Select(pair => $"{pair.Page.Name} {pair.Control.Name}")
-                .FirstOrDefault();
-
         var where = track?.Name ?? (binding.Channel == 0 ? null : $"channel {binding.Channel}");
-        var what = knob ?? $"CC{binding.Controller}";
+        var what = Knob(track, binding.Controller);
 
         return where is null ? $"{Name} · {what}" : $"{Name} · {where} · {what}";
     }
+
+    /// <summary>
+    /// The same, cut to fit under a knob: the track's short name and the knob,
+    /// "T3 · Filter Frequency", with the instrument left off because every knob
+    /// on a panel is usually on the one box.
+    /// </summary>
+    public string Label(MidiBinding binding)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+
+        var track = Track(binding.Channel);
+        var where = track?.Short ?? track?.Name ?? (binding.Channel == 0 ? null : $"ch {binding.Channel}");
+        var what = Knob(track, binding.Controller);
+
+        return where is null ? what : $"{where} · {what}";
+    }
+
+    private string Knob(InstrumentTrack? track, int controller) =>
+        (track is null
+            ? null
+            : PagesOf(track)
+                .SelectMany(page => page.Controls.Select(control => (Page: page, Control: control)))
+                .Where(pair => pair.Control.Controller == controller)
+                .Select(pair => $"{pair.Page.Name} {pair.Control.Name}")
+                .FirstOrDefault())
+        ?? $"CC{controller}";
 }
 
 /// <param name="Name">What the picker calls it.</param>
 /// <param name="Channel">The channel its notes and knobs are on, 1 to 16.</param>
 /// <param name="Kind">Which pages it has, matched against <see cref="InstrumentPage.Kind"/>; null for the ordinary kind.</param>
-internal sealed record InstrumentTrack(string Name, int Channel, string? Kind);
+/// <param name="Short">What fits under a knob, "T3"; null to use the name.</param>
+internal sealed record InstrumentTrack(string Name, int Channel, string? Kind, string? Short = null);
 
 /// <param name="Name">The page as the instrument names it: Filter, Amp, LFO 1.</param>
 /// <param name="Kind">The kind of track this page belongs to, or null for the ordinary tracks.</param>
@@ -142,6 +161,14 @@ internal sealed class InstrumentLibrary
         return device is { } source && For(source) is { } profile ? profile.Describe(binding) : binding.Label;
     }
 
+    /// <summary>What fits under a knob: the short form where the device is known, the plain label otherwise.</summary>
+    public string Label(MidiBinding binding, MidiSource? device)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+
+        return device is { } source && For(source) is { } profile ? profile.Label(binding) : binding.Label;
+    }
+
     /// <summary>Reads one profile file, or null where it is not one.</summary>
     public static InstrumentProfile? Read(string json)
     {
@@ -157,7 +184,11 @@ internal sealed class InstrumentLibrary
                 file.Conducts,
                 [.. (file.Tracks ?? [])
                     .Where(track => !string.IsNullOrWhiteSpace(track.Name) && track.Channel is >= 1 and <= 16)
-                    .Select(track => new InstrumentTrack(track.Name!.Trim(), track.Channel, track.Kind?.Trim()))],
+                    .Select(track => new InstrumentTrack(
+                        track.Name!.Trim(),
+                        track.Channel,
+                        track.Kind?.Trim(),
+                        string.IsNullOrWhiteSpace(track.Short) ? null : track.Short.Trim()))],
                 [.. (file.Pages ?? [])
                     .Where(page => !string.IsNullOrWhiteSpace(page.Name))
                     .Select(page => new InstrumentPage(
@@ -234,6 +265,8 @@ internal sealed class InstrumentLibrary
         public int Channel { get; set; }
 
         public string? Kind { get; set; }
+
+        public string? Short { get; set; }
     }
 
     private sealed class PageFile

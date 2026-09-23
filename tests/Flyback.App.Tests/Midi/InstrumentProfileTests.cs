@@ -53,6 +53,19 @@ public class InstrumentProfileTests
         Syntakt().Describe(new MidiBinding("midi:syntakt", 3, 74)).ShouldBe("Syntakt · Track 3 · Filter Frequency");
     }
 
+    /// <summary>Under a knob there is room for the track's short name and the knob, and no more.</summary>
+    [Fact]
+    public void A_binding_has_a_short_form_for_under_a_knob()
+    {
+        var syntakt = Syntakt();
+
+        syntakt.Label(new MidiBinding("midi:syntakt", 3, 74)).ShouldBe("T3 · Filter Frequency");
+        syntakt.Label(new MidiBinding("midi:syntakt", 13, 70)).ShouldBe("FX · FX filter Frequency");
+        syntakt.Label(new MidiBinding("midi:syntakt", 15, 74)).ShouldBe("ch 15 · CC74");
+        syntakt.Label(new MidiBinding("midi:syntakt", 0, 74)).ShouldBe("CC74");
+        InstrumentLibrary.Shipped().Label(new MidiBinding("midi:other", 2, 21), new MidiSource("midi:other", "Other")).ShouldBe("CC21·2");
+    }
+
     /// <summary>
     /// The same controller number means a different knob on the FX track, so the
     /// track's kind decides which pages are read.

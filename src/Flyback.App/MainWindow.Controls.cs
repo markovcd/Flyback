@@ -109,7 +109,8 @@ public sealed partial class MainWindow
 
         controlsPanel.Reading = (id, value) => StageKnobs.Reading(editor.Patch, id, value);
 
-        controlsPanel.Label = binding => instruments.Describe(binding, Source(binding.Device));
+        controlsPanel.Label = binding => instruments.Label(binding, Source(binding.Device));
+        controlsPanel.Explain = binding => instruments.Describe(binding, Source(binding.Device));
 
         controlsPanel.Instruments = () => midi.Sources
             .Select(source => (source, Profile: instruments.For(source)))
