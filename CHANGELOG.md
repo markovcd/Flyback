@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `flyback-cli modules <module>` describes one module: its sockets with their defaults and ranges, where a pipe lands, and what it does.
 - Added Crush, a bitcrusher.
 - `flyback-cli compare` plays two patches side by side and says whether they are the same instrument, bit for bit, or where they part.
 - Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.

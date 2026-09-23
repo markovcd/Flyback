@@ -150,20 +150,30 @@ internal static class Program
         return command;
     }
 
-    /// <summary>Lists the installed catalog, which is what a plugin adds to.</summary>
+    /// <summary>Lists the installed catalog, which is what a plugin adds to, or describes one module in it.</summary>
     private static Command Modules(Plugins plugins, Option<bool> json)
     {
-        var command = new Command("modules", "Say what modules this build has.")
+        var module = new Argument<string?>("module")
         {
-            json,
+            Description = "One module to describe, by type id or name: its sockets, defaults, ranges and what it does.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var command = new Command("modules", "Say what modules this build has, or everything about one of them.")
+        {
+            module, json,
         };
 
         command.SetAction(result =>
         {
             plugins.Ready();
 
-            return ModulesCommand.Run(
-                NodeCatalog.Current, result.GetValue(json), result.InvocationConfiguration.Output);
+            var output = result.InvocationConfiguration.Output;
+
+            return result.GetValue(module) is { } wanted
+                ? ModulesCommand.Describe(
+                    NodeCatalog.Current, wanted, result.GetValue(json), output, result.InvocationConfiguration.Error)
+                : ModulesCommand.Run(NodeCatalog.Current, result.GetValue(json), output);
         });
 
         return command;

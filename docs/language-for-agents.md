@@ -205,16 +205,16 @@ And a crash is a diagnostic that did not get written. There should be none.
 The cheapest item here, and not a language change at all.
 
 `modules --json` is 11 KB for 77 modules — small enough to hand a model whole —
-and carries type ids, categories and port names. It omits the four things needed
-to write correct text:
+and carries type ids, categories and port names. `modules <module> --json` adds
+the four things needed to write correct text:
 
 - **the pipe socket** (§3), which is the single most load-bearing fact;
 - **each port's display**, so `A3` and `20ms` are known to be legal there;
 - **defaults**, so an agent knows what it may leave out;
 - **what a module carries** — a step block, a file, a plugin's fields.
 
-Add those and the invented-module failure mode mostly goes away, with no syntax
-touched.
+With those one call away, the invented-module failure mode mostly goes away,
+with no syntax touched.
 
 ---
 

@@ -642,6 +642,94 @@ public class CommandTests
         foreach (var typeId in listed) prose.Out.ShouldContain(typeId);
     }
 
+    /// <summary>
+    /// What somebody writing a patch by hand needs and the list does not carry:
+    /// where each socket sits unwired, how far it turns, and in the unit its
+    /// knob is read in.
+    /// </summary>
+    [Fact]
+    public void One_module_is_described_socket_by_socket()
+    {
+        var (code, output, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, "env.adsr", false, o, e));
+
+        code.ShouldBe(Exit.Ok);
+        output.ShouldContain("ADSR  env.adsr");
+        output.ShouldContain("sound only");
+        output.ShouldContain(NodeCatalog.BuiltIn.Require("env.adsr").Description);
+        output.ShouldMatch(@"attack\s+10 ms\s+100 µs to 31\.62 s");
+    }
+
+    /// <summary>The palette's name finds a module as well as its type id, whichever case it is typed in.</summary>
+    [Fact]
+    public void A_module_is_found_by_its_name_as_well_as_its_type_id()
+    {
+        var byName = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, "sine", true, o, e));
+        var byId = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, "osc.sine", true, o, e));
+
+        byName.Code.ShouldBe(Exit.Ok);
+        byName.Out.ShouldBe(byId.Out);
+    }
+
+    /// <summary>A module this build lacks fails the shell and names the ones it might have meant.</summary>
+    [Fact]
+    public void A_module_nothing_defines_fails_and_offers_the_nearest()
+    {
+        var (code, output, error) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, "osc.sin", false, o, e));
+
+        code.ShouldBe(Exit.Failed);
+        output.ShouldBeEmpty();
+        error.ShouldContain("osc.sine");
+    }
+
+    /// <summary>What a module carries besides its sockets is half of a Sequencer, so it is said.</summary>
+    [Fact]
+    public void A_module_says_what_it_carries_besides_its_sockets()
+    {
+        var (_, output, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, "seq.values", true, o, e));
+
+        using var document = JsonDocument.Parse(output);
+
+        document.RootElement.GetProperty("carries").EnumerateArray()
+            .Select(extra => extra.GetProperty("key").GetString())
+            .ShouldContain("notes");
+    }
+
+    /// <summary>
+    /// The socket the description marks as piped is the one the language wires a
+    /// bare <c>|&gt;</c> into, for every module, or an agent writing text from it
+    /// wires the signal into an edge.
+    /// </summary>
+    [Fact]
+    public void The_piped_socket_is_where_the_language_lands_a_pipe()
+    {
+        var wrong = new List<string>();
+
+        foreach (var def in NodeCatalog.BuiltIn.All.Where(def => def.Inputs.Count > 0 && def.TypeId != NodeCatalog.OutputTypeId))
+        {
+            var (_, output, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, def.TypeId, true, o, e));
+
+            using var document = JsonDocument.Parse(output);
+            var piped = document.RootElement.GetProperty("piped")[0].GetString();
+
+            var load = Core.Language.PatchLanguage.Build(
+                $"let source = osc.saw()\nlet stage = source |> {def.TypeId}()",
+                NodeCatalog.BuiltIn);
+
+            var source = load.Patch.Nodes.First(node => node.TypeId == "osc.saw").Id;
+            // A small Maths module is folded into an Expression, so there is no node left to land on.
+            if (load.Patch.Nodes.LastOrDefault(node => node.TypeId == def.TypeId)?.Id is not { } stage) continue;
+
+            var landed = load.Patch.Connections
+                .Where(wire => wire.SourceNode == source && wire.TargetNode == stage)
+                .Select(wire => def.Inputs[wire.TargetPort].Name)
+                .FirstOrDefault();
+
+            if (landed != piped) wrong.Add($"{def.TypeId}: marked {piped}, landed {landed ?? "nowhere"} {load.Report}");
+        }
+
+        wrong.ShouldBeEmpty();
+    }
+
     // --- pack ----------------------------------------------------------------
 
     /// <summary>

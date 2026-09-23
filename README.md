@@ -142,6 +142,7 @@ flyback-cli check nebula.fbk --strict
 flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
 flyback-cli modules
+flyback-cli modules adsr
 flyback-cli pack nebula.fbk -o nebula.fbkb
 flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
 flyback-cli plugin-key -o ripple.key
@@ -164,7 +165,7 @@ flyback-cli viewer nebula.fbk
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
-- `modules`: lists the modules this build has, and which plugin defines each
+- `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
 
 `check` exits with:
