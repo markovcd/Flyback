@@ -1,6 +1,6 @@
 ---
 name: build-artifacts
-description: Use after a feature has landed on main - run what make.sh does (the Docker gate and publish, into artifacts/) so the user gets the build without asking, how to run it on this machine where the repo sits in ownCloud, how long it takes, and what to check before saying it is done.
+description: Use after a feature has landed on main - run make.sh (the Docker gate and publish, into artifacts/) so the user gets the build without asking, how long it takes, and what to check before saying it is done.
 ---
 
 # Building the artifacts after a feature lands
@@ -11,25 +11,19 @@ Dockerfile: win-x64, osx-arm64, linux-x64) into `artifacts/<rid>/`. The user wan
 unprompted whenever a feature lands on `main`, so the build of what landed is on disk under
 `artifacts/` when they come back. `artifacts/` is ignored by git and by the Docker context.
 
-## Run it from a copy, not from the repo
+## Run it from the main checkout
 
-The repo lives in ownCloud, and buildkit refuses the folder's placeholder files (`ERROR:
-invalid file request <path>`, naming a file that is not reliably the culprit). Copy the
-tracked tree out first, which hydrates every file on read, and point `--output` at the main
-checkout's `artifacts/`, which is where the user looks, whether the session is in a worktree
-or not:
+Run it once `main` has been fast-forwarded, from the main checkout rather than a worktree, so
+what is built is the commit that landed and the output is where the user looks:
 
 ```bash
 MAIN="$(git rev-parse --path-format=absolute --git-common-dir)/.."
-TMP="$(mktemp -d)"
-git ls-files -z -co --exclude-standard | tar --null -cf - -T - | (cd "$TMP" && tar -xf -)
-cd "$TMP" && docker build --output "$MAIN/artifacts" . > "$TMP/make.log" 2>&1; echo "exit $?"
+cd "$MAIN" && ./make.sh > /tmp/make.log 2>&1; echo "exit $?"
 ```
 
-Run it from the worktree after `main` has been fast-forwarded, so the copy is the commit
-that landed. Run it in the background: the gate alone is three to four minutes and the
-publishes add a few more, and nothing else in the session waits on it. One build at a time;
-a second `docker build` beside it fights for the same cores and the same cache.
+Run it in the background: the gate alone is three to four minutes and the publishes add a
+few more, and nothing else in the session waits on it. One build at a time; a second
+`docker build` beside it fights for the same cores and the same cache.
 
 ## Read the whole log, then filter
 
