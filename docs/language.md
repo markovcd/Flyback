@@ -396,6 +396,7 @@ arguments like any knob:
 ```
 let land = fractal(octaves: "6")
 let keys = midi.in(device: "Launchkey 49", voice: 2)
+let box  = midi.clock(device: "Syntakt")
 let px   = expression(x, formula: "(floor(a * 45) + 0.5) / 45")
 let card = text(lines: "Hello|World", font: "tiny", line: beats)
 ```

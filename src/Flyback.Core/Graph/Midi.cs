@@ -113,4 +113,25 @@ public static class MidiSignal
 
     public static string AutoKey(string source, Guid node, string signal) =>
         $"{source}/auto/{node:N}/{signal}";
+
+    /// <summary>Beats since the instrument pressed Start, as of its latest tick — see <see cref="MidiClock.Beat"/>.</summary>
+    public const string Beat = "beat";
+
+    /// <summary>Beats a second while it runs, nought while it is stopped.</summary>
+    public const string Rate = "rate";
+
+    /// <summary>The tempo it is sending, in beats a minute.</summary>
+    public const string Bpm = "bpm";
+
+    /// <summary>One between Start and Stop.</summary>
+    public const string Running = "running";
+
+    /// <summary>How many times it has pressed Start, a count for the reason <see cref="Strikes"/> is one.</summary>
+    public const string Starts = "starts";
+
+    /// <summary>
+    /// What one signal of one instrument's clock is called. An instrument has one
+    /// clock however many voices it has, so there is no index.
+    /// </summary>
+    public static string ClockKey(string source, string signal) => $"{source}/clock/{signal}";
 }

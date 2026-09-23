@@ -48,6 +48,120 @@ public class MidiDeviceTests
         MidiSignal.AutoKey(source, node, MidiSignal.Strikes),
     ]);
 
+    /// <summary>A block reading one instrument's clock and nothing else.</summary>
+    private static LiveValues Following(string source) => new(
+    [
+        MidiSignal.ClockKey(source, MidiSignal.Beat),
+        MidiSignal.ClockKey(source, MidiSignal.Rate),
+        MidiSignal.ClockKey(source, MidiSignal.Bpm),
+        MidiSignal.ClockKey(source, MidiSignal.Running),
+        MidiSignal.ClockKey(source, MidiSignal.Starts),
+    ]);
+
+    private static double Clock(LiveValues block, string source, string signal) =>
+        block.At(block.Keys.ToList().IndexOf(MidiSignal.ClockKey(source, signal)));
+
+    // ---- the clock ------------------------------------------------------------
+
+    /// <summary>A Clock In wired in is as much a reason to hold the device as a MIDI In is.</summary>
+    [Fact]
+    public void A_program_following_a_clock_opens_the_device()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+
+        hub.Follow(Following(Device));
+
+        backend.Opened.Select(p => p.Id).ShouldBe([Device]);
+    }
+
+    [Fact]
+    public void A_devices_clock_reaches_the_running_program()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        var now = 0d;
+        using var hub = new MidiHub(backend) { Now = () => now };
+        var block = Following(Device);
+
+        hub.Follow(block);
+        var port = backend.Opened.Single();
+
+        port.Send(new MidiMessage(MidiAction.Start, 0, 0f));
+        for (var tick = 0; tick < 25; tick++)
+        {
+            now = tick / 48d;
+            port.Send(new MidiMessage(MidiAction.Tick, 0, 0f));
+        }
+
+        Clock(block, Device, MidiSignal.Beat).ShouldBe(1d, 1e-6);
+        Clock(block, Device, MidiSignal.Bpm).ShouldBe(120d, 0.001);
+        Clock(block, Device, MidiSignal.Running).ShouldBe(1d);
+        Clock(block, Device, MidiSignal.Starts).ShouldBe(1d);
+    }
+
+    /// <summary>
+    /// A recompile hands the program a fresh block, and the beat the machine is
+    /// on has to be in it before the first evaluation, the way a held note is.
+    /// </summary>
+    [Fact]
+    public void A_recompile_starts_from_where_the_clock_is()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+
+        hub.Follow(Following(Device));
+        backend.Opened.Single().Send(new MidiMessage(MidiAction.Position, 8, 0f));
+
+        var fresh = Following(Device);
+        hub.Follow(fresh);
+
+        Clock(fresh, Device, MidiSignal.Beat).ShouldBe(2d);
+    }
+
+    /// <summary>Closing the device is the one way its Stop will never arrive.</summary>
+    [Fact]
+    public void A_clock_running_when_its_device_closes_is_stopped()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+
+        hub.Follow(Following(Device));
+        backend.Opened.Single().Send(new MidiMessage(MidiAction.Start, 0, 0f));
+
+        hub.Follow(Reading(MidiSources.Keyboard));
+
+        var again = Following(Device);
+        hub.Follow(again);
+
+        Clock(again, Device, MidiSignal.Running).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// Forty-eight ticks a second are not forty-eight reasons to draw, and are
+    /// not somebody playing either. A button on the transport is both.
+    /// </summary>
+    [Fact]
+    public void A_tick_asks_for_nothing_and_a_start_asks_for_a_frame()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+        var frames = 0;
+        var heard = 0;
+
+        hub.Played += () => frames++;
+        hub.Heard += () => heard++;
+        hub.Follow(Following(Device));
+        var port = backend.Opened.Single();
+        var before = frames;
+
+        port.Send(new MidiMessage(MidiAction.Tick, 0, 0f));
+        frames.ShouldBe(before);
+        heard.ShouldBe(0);
+
+        port.Send(new MidiMessage(MidiAction.Start, 0, 0f));
+        frames.ShouldBe(before + 1);
+    }
+
     [Fact]
     public void The_computer_keyboard_comes_first_and_the_devices_after_it()
     {

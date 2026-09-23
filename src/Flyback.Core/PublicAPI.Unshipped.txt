@@ -90,3 +90,40 @@ Flyback.Core.Graph.PortSpec.Lenient.init -> void
 const Flyback.Core.Graph.NodeCatalog.CloudsTypeId = "pattern.clouds" -> string!
 const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "audio.noise" -> string!
 static Flyback.Core.Graph.NodeCatalog.WhiteAndPink(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
+const Flyback.Core.Graph.MidiClock.TicksPerBeat = 24 -> int
+const Flyback.Core.Graph.MidiClockExtra.DeviceField = "device" -> string!
+const Flyback.Core.Graph.MidiClockExtra.StateKey = "midi" -> string!
+const Flyback.Core.Graph.MidiSignal.Beat = "beat" -> string!
+const Flyback.Core.Graph.MidiSignal.Bpm = "bpm" -> string!
+const Flyback.Core.Graph.MidiSignal.Rate = "rate" -> string!
+const Flyback.Core.Graph.MidiSignal.Running = "running" -> string!
+const Flyback.Core.Graph.MidiSignal.Starts = "starts" -> string!
+const Flyback.Core.Graph.NodeCatalog.ClockTypeId = "midi.clock" -> string!
+Flyback.Core.Graph.MidiClock
+Flyback.Core.Graph.MidiClock.Beat.get -> float
+Flyback.Core.Graph.MidiClock.Bpm.get -> float
+Flyback.Core.Graph.MidiClock.Continue() -> void
+Flyback.Core.Graph.MidiClock.MidiClock() -> void
+Flyback.Core.Graph.MidiClock.Position(int sixteenths) -> void
+Flyback.Core.Graph.MidiClock.Rate.get -> float
+Flyback.Core.Graph.MidiClock.Running.get -> bool
+Flyback.Core.Graph.MidiClock.Start() -> void
+Flyback.Core.Graph.MidiClock.Starts.get -> float
+Flyback.Core.Graph.MidiClock.Stop() -> void
+Flyback.Core.Graph.MidiClock.Tick(double now) -> void
+Flyback.Core.Graph.MidiClock.WriteTo(Flyback.Core.Compile.LiveValues! block, string! source) -> void
+Flyback.Core.Graph.MidiClockExtra
+Flyback.Core.Graph.MidiClockExtra.Equals(Flyback.Core.Graph.MidiClockExtra? other) -> bool
+Flyback.Core.Graph.MidiClockExtra.MidiClockExtra() -> void
+override Flyback.Core.Graph.MidiClockExtra.<Clone>$() -> Flyback.Core.Graph.MidiClockExtra!
+override Flyback.Core.Graph.MidiClockExtra.Announce() -> string!
+override Flyback.Core.Graph.MidiClockExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.MidiClockExtra.Fields.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ExtraField!>!
+override Flyback.Core.Graph.MidiClockExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+override Flyback.Core.Graph.MidiClockExtra.GetHashCode() -> int
+override Flyback.Core.Graph.MidiClockExtra.Key.get -> string!
+override Flyback.Core.Graph.MidiClockExtra.ToString() -> string!
+override sealed Flyback.Core.Graph.MidiClockExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
+static Flyback.Core.Graph.MidiClockExtra.operator !=(Flyback.Core.Graph.MidiClockExtra? left, Flyback.Core.Graph.MidiClockExtra? right) -> bool
+static Flyback.Core.Graph.MidiClockExtra.operator ==(Flyback.Core.Graph.MidiClockExtra? left, Flyback.Core.Graph.MidiClockExtra? right) -> bool
+static Flyback.Core.Graph.MidiSignal.ClockKey(string! source, string! signal) -> string!

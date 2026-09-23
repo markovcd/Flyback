@@ -415,6 +415,16 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenASequencersGate(int rate) =>
         Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}s.gate |> out.left");
 
+    [Given(@"^a sequencer of ([\d., ]+) stepping once a beat of a drum machine$")]
+    public void GivenASequencerOnAClock(string values) =>
+        Written(
+            $"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}"
+            + $"values(in: c.beats, rate: 1) [ {string.Join(' ', values.Split(',', StringSplitOptions.TrimEntries))} ] |> out.left");
+
+    [Given("the {word} of a drum machine's clock on the speakers")]
+    public void GivenAClockSignal(string signal) =>
+        Written($"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}c.{signal} |> out.left");
+
     [Given(@"^a pitch of ([\d.]+) kept to (C major|all twelve notes)$")]
     public void GivenAPitchInKey(float pitch, string scale) =>
         Written($"value({Number(pitch)}) |> quantiser() [ {(scale == "C major" ? "C D E F G A B" : "C C# D D# E F F# G G# A A# B")} ] |> out.left");

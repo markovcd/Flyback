@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.
 - Settings → Agent is now Settings → Assistant.
 - Patches carry an author and tags, edited in the panel and written as `author "..."` and `tags "..."` in the text, and found by in the preset gallery.
 - A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.

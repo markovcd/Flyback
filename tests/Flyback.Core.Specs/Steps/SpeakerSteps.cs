@@ -1,4 +1,5 @@
 using System.Globalization;
+using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Specs.Support;
@@ -18,6 +19,36 @@ public sealed class SpeakerSteps(PatchContext context)
 
     [When("it plays one more sample")]
     public void WhenOneMoreSample() => context.Play(1);
+
+    /// <summary>
+    /// Start, then a tick on every twenty-fourth of a beat up to and including the
+    /// last, with the sound played on between them as it would be in the room.
+    /// </summary>
+    [When(@"^the drum machine starts and plays (\d+) beats? at (\d+) bpm$")]
+    public void WhenTheMachinePlays(int beats, int bpm)
+    {
+        context.Clock.Start();
+        context.Push();
+
+        var tick = 60d / bpm / MidiClock.TicksPerBeat;
+        var from = context.Now;
+
+        for (var k = 0; k <= beats * MidiClock.TicksPerBeat; k++)
+        {
+            var at = from + k * tick;
+
+            context.PlayUntil(at);
+            context.Clock.Tick(at);
+            context.Push();
+        }
+    }
+
+    [When("the drum machine stops")]
+    public void WhenTheMachineStops()
+    {
+        context.Clock.Stop();
+        context.Push();
+    }
 
     /// <summary>Exactly zero, not nearly zero: see AudioRendererTests.</summary>
     [Then("the speakers are silent")]

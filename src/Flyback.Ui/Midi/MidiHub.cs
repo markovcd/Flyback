@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Midi;
@@ -47,6 +48,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     private const int VoiceCount = 8;
 
     /// <summary>
+    /// One clock per instrument, keyed the same way and made the first time one
+    /// ticks or a program reads it.
+    /// </summary>
+    private readonly Dictionary<string, MidiClock> clocks = new(StringComparer.Ordinal);
+
+    /// <summary>
     /// The devices currently listening, keyed the same way. Only ever the ones a
     /// running program is actually reading — see <see cref="Listen"/>.
     /// </summary>
@@ -90,10 +97,18 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     public event Action<string, MidiMessage>? Controlled;
 
     /// <summary>
-    /// Anything at all arrived from a device — never from the computer keyboard.
-    /// Raised on the driver's thread, before the message is acted on.
+    /// A note or a knob arrived from a device — never from the computer keyboard,
+    /// and never a clock's tick, which is not somebody playing. Raised on the
+    /// driver's thread, before the message is acted on.
     /// </summary>
     public event Action? Heard;
+
+    /// <summary>
+    /// Seconds on a steady clock, read as each tick arrives so a clock can measure
+    /// its tempo. Only its rate matters, so the machine's stopwatch is the
+    /// default; a test hands in one it can turn.
+    /// </summary>
+    internal Func<double> Now { get; set; } = () => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 
     /// <summary>
     /// What there is to play with: the computer's own keys, and then whatever is
@@ -329,9 +344,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         foreach (var id in opening) Start(id);
     }
 
-    /// <summary>Whether a program reads any of one instrument's signals.</summary>
+    /// <summary>Whether a program reads any of one instrument's signals, its clock's included.</summary>
     /// <remarks>
-    /// All four asked rather than one, because a patch is free to use only the
+    /// Every one asked rather than one, because a patch is free to use only the
     /// pitch, and dead-code elimination will have dropped the three it does not
     /// touch. Asking about the gate alone would leave a keyboard unopened for a
     /// patch that only wanted the note.
@@ -340,7 +355,15 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         block.Reads(MidiSignal.Key(source, MidiSignal.Pitch))
         || block.Reads(MidiSignal.Key(source, MidiSignal.Gate))
         || block.Reads(MidiSignal.Key(source, MidiSignal.Velocity))
-        || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes));
+        || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes))
+        || ReadsClock(block, source);
+
+    private static bool ReadsClock(LiveValues block, string source) =>
+        block.Reads(MidiSignal.ClockKey(source, MidiSignal.Beat))
+        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Rate))
+        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Bpm))
+        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Running))
+        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Starts));
 
     /// <summary>
     /// Opens one device and starts listening to it. A device that will not open
@@ -363,9 +386,10 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     }
 
     /// <summary>
-    /// Closes one device, and lets go of whatever it was holding down. The silence
-    /// is the point: a device closed mid-chord sends no note-offs, so the notes it
-    /// was holding would stay held for the rest of the session.
+    /// Closes one device, lets go of whatever it was holding down and stops its
+    /// clock. The silence is the point: a device closed mid-chord sends no
+    /// note-offs, so the notes it was holding would stay held for the rest of the
+    /// session, and a clock nobody hears ticking would run on at its last tempo.
     /// </summary>
     private void Shut(IMidiPort port)
     {
@@ -381,10 +405,13 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         lock (gate)
         {
-            if (!voices.TryGetValue(port.Id, out var sourceVoices)
-                || !sourceVoices.Any(voice => voice.Playing)) return;
+            var sounding = voices.TryGetValue(port.Id, out var sourceVoices) && sourceVoices.Any(voice => voice.Playing);
+            var ticking = clocks.TryGetValue(port.Id, out var clock) && clock.Running;
 
-            foreach (var voice in sourceVoices) voice.Silence();
+            if (!sounding && !ticking) return;
+
+            if (sounding) foreach (var voice in sourceVoices!) voice.Silence();
+            if (ticking) clock!.Stop();
         }
 
         Publish();
@@ -397,6 +424,12 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </summary>
     private void Receive(string source, MidiMessage message)
     {
+        if (message.Action == MidiAction.Tick)
+        {
+            Tick(source);
+            return;
+        }
+
         Heard?.Invoke();
 
         if (message.Action == MidiAction.Control)
@@ -420,10 +453,51 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
                 case MidiAction.AllOff:
                     foreach (var voice in Voices(source)) voice.Silence();
                     break;
+
+                case MidiAction.Start:
+                    Clock(source).Start();
+                    break;
+
+                case MidiAction.Continue:
+                    Clock(source).Continue();
+                    break;
+
+                case MidiAction.Stop:
+                    Clock(source).Stop();
+                    break;
+
+                case MidiAction.Position:
+                    Clock(source).Position(message.Note);
+                    break;
             }
         }
 
         Publish();
+    }
+
+    /// <summary>
+    /// A clock ticked: the write, and nothing else. Forty-eight a second at a
+    /// dance tempo is no reason to ask for a frame, since a running clock has time
+    /// behind it and the picture is being redrawn anyway.
+    /// </summary>
+    private void Tick(string source)
+    {
+        lock (gate)
+        {
+            var clock = Clock(source);
+
+            clock.Tick(Now());
+
+            foreach (var block in following) clock.WriteTo(block, source);
+        }
+    }
+
+    /// <summary>The clock of one instrument, made if this is the first anyone has heard of it. Call it holding <see cref="gate"/>.</summary>
+    private MidiClock Clock(string source)
+    {
+        if (clocks.TryGetValue(source, out var existing)) return existing;
+
+        return clocks[source] = new MidiClock();
     }
 
     /// <summary>What the picker calls an instrument, for saying which one would not open.</summary>
@@ -525,6 +599,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         lock (gate)
             foreach (var block in following)
+            {
                 foreach (var (source, sourceVoices) in voices)
                     foreach (var indexed in ReadIndexes(source))
                     {
@@ -538,6 +613,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
                         else
                             sourceVoices[indexed.Voice - 1].WriteTo(block, source, indexed.Voice);
                     }
+
+                foreach (var (source, clock) in clocks) clock.WriteTo(block, source);
+            }
 
         Played?.Invoke();
     }

@@ -1,10 +1,10 @@
 namespace Flyback.Plugins.Midi;
 
-/// <summary>What a device just did: a note, or a knob turned.</summary>
+/// <summary>What a device just did: a note, a knob turned, or its clock moving.</summary>
 /// <remarks>
-/// A MIDI cable carries a great deal more — wheels, clock, aftertouch — and none
-/// of it is here, because nothing above this reads any of it. A signal added later
-/// is a case added here rather than a shape changed.
+/// A MIDI cable carries more — wheels, aftertouch, song select — and none of it is
+/// here, because nothing above this reads any of it. A signal added later is a
+/// case added here rather than a shape changed.
 /// </remarks>
 public enum MidiAction
 {
@@ -26,14 +26,36 @@ public enum MidiAction
     /// <see cref="MidiMessage.Velocity"/> where it now sits, 0 to 1.
     /// </summary>
     Control,
+
+    /// <summary>
+    /// One tick of a sequencer's clock, of which there are twenty-four to a beat.
+    /// Sent whether or not the sequencer is running.
+    /// </summary>
+    Tick,
+
+    /// <summary>The sequencer began playing from the top.</summary>
+    Start,
+
+    /// <summary>The sequencer went on from where it had stopped.</summary>
+    Continue,
+
+    /// <summary>The sequencer stopped.</summary>
+    Stop,
+
+    /// <summary>
+    /// The sequencer said where in the song it is: <see cref="MidiMessage.Note"/>
+    /// is the position in sixteenth notes.
+    /// </summary>
+    Position,
 }
 
 /// <summary>
 /// One thing that happened on a device.
 /// </summary>
 /// <param name="Note">
-/// The MIDI note number, 0 to 127, or the controller number for
-/// <see cref="MidiAction.Control"/>. Ignored for <see cref="MidiAction.AllOff"/>.
+/// The MIDI note number, 0 to 127; the controller number for
+/// <see cref="MidiAction.Control"/>; the song position in sixteenths for
+/// <see cref="MidiAction.Position"/>. Ignored by everything else.
 /// </param>
 /// <param name="Velocity">
 /// How hard, or for a controller how far, 0 to 1 — already divided out of whatever
@@ -43,8 +65,9 @@ public enum MidiAction
 public readonly record struct MidiMessage(MidiAction Action, int Note, float Velocity)
 {
     /// <summary>
-    /// The channel it arrived on, 1 to 16, or 0 where nobody said. A voice ignores
-    /// it; a knob bound to a controller may not.
+    /// The channel it arrived on, 1 to 16, or 0 where nobody said — the clock and
+    /// the transport belong to the whole cable. A voice ignores it; a knob bound
+    /// to a controller may not.
     /// </summary>
     public int Channel { get; init; }
 }
@@ -154,6 +177,16 @@ public static class MidiMessages
 
     private const byte ControlChange = 0xB0;
 
+    private const byte SongPosition = 0xF2;
+
+    private const byte TimingClock = 0xF8;
+
+    private const byte SequencerStart = 0xFA;
+
+    private const byte SequencerContinue = 0xFB;
+
+    private const byte SequencerStop = 0xFC;
+
     /// <summary>The panic buttons, which every device that has one sends as one of these.</summary>
     private const byte AllSoundOff = 120;
 
@@ -170,9 +203,9 @@ public static class MidiMessages
     /// always done, and a mapped knob may care which one it was.
     /// </para>
     /// <para>
-    /// Clock, active sensing, aftertouch and the pitch wheel come back null. They
-    /// are not dropped as a shortcut — there is nothing above this that reads them,
-    /// and a module that grew an output for one would be a case added here. The
+    /// Active sensing, aftertouch and the pitch wheel come back null. They are not
+    /// dropped as a shortcut — there is nothing above this that reads them, and a
+    /// module that grew an output for one would be a case added here. The
     /// modulation wheel is a controller like any other, and comes back as one.
     /// </para>
     /// </remarks>
@@ -182,10 +215,21 @@ public static class MidiMessages
         // arrived where a message was expected, and means nothing on its own.
         if (status < 0x80) return null;
 
-        // The system messages — clock, sensing, sysex, and the rest of 0xF0.
-        // They carry no channel, so the mask below would otherwise read one of
-        // them as whatever command happened to share its top nibble.
-        if (status >= Command) return null;
+        // The system messages carry no channel, so the mask below would read one
+        // as whatever command shares its top nibble. The clock and the transport
+        // are the ones anything here listens for.
+        if (status >= Command)
+        {
+            return status switch
+            {
+                TimingClock => new MidiMessage(MidiAction.Tick, 0, 0f),
+                SequencerStart => new MidiMessage(MidiAction.Start, 0, 0f),
+                SequencerContinue => new MidiMessage(MidiAction.Continue, 0, 0f),
+                SequencerStop => new MidiMessage(MidiAction.Stop, 0, 0f),
+                SongPosition => new MidiMessage(MidiAction.Position, (first & 0x7F) | ((second & 0x7F) << 7), 0f),
+                _ => null,
+            };
+        }
 
         var note = first & 0x7F;
         var value = second & 0x7F;

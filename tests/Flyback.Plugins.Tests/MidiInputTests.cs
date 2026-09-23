@@ -263,13 +263,41 @@ public class MidiInputTests
     }
 
     /// <summary>
-    /// Everything a cable carries that this does not read. Clock at 0xF8 is the
-    /// one that matters most: it arrives twenty-four times a beat, and a decoder
-    /// that read its top nibble as a command would call every tick a note.
+    /// The clock and the transport, which carry no channel and no data. A tick
+    /// arrives twenty-four times a beat, and a decoder that read its top nibble as
+    /// a command would call every one a note.
     /// </summary>
     [Theory]
-    [InlineData(0xF8, 0, 0)]     // clock
+    [InlineData(0xF8, MidiAction.Tick)]
+    [InlineData(0xFA, MidiAction.Start)]
+    [InlineData(0xFB, MidiAction.Continue)]
+    [InlineData(0xFC, MidiAction.Stop)]
+    public void The_clock_and_the_transport_are_heard(byte status, MidiAction action)
+    {
+        var message = MidiMessages.Of(status, 0, 0).ShouldNotBeNull();
+
+        message.Action.ShouldBe(action);
+        message.Channel.ShouldBe(0);
+    }
+
+    /// <summary>Fourteen bits, low seven first, counted in sixteenth notes.</summary>
+    [Fact]
+    public void A_song_position_is_read_in_sixteenths()
+    {
+        var message = MidiMessages.Of(0xF2, 0x05, 0x02).ShouldNotBeNull();
+
+        message.Action.ShouldBe(MidiAction.Position);
+        message.Note.ShouldBe(5 + (2 << 7));
+    }
+
+    /// <summary>
+    /// Everything a cable carries that this does not read. Active sensing at 0xFE
+    /// is the one that matters most: a device sends it several times a second
+    /// forever, and it shares the top nibble with the clock.
+    /// </summary>
+    [Theory]
     [InlineData(0xFE, 0, 0)]     // active sensing
+    [InlineData(0xF1, 0x10, 0)]  // a quarter frame of time code
     [InlineData(0xF0, 0x7E, 0)]  // the start of a system-exclusive conversation
     [InlineData(0xE0, 0, 64)]    // pitch bend
     [InlineData(0xD0, 64, 0)]    // channel pressure

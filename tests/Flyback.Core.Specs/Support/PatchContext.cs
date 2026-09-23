@@ -41,6 +41,14 @@ public sealed class PatchContext
     private string? compiledFor;
     private DelayState? memory;
     private CompiledPatch? memoryFor;
+    private LiveValues? live;
+    private CompiledPatch? liveFor;
+
+    /// <summary>What the scenarios call the drum machine whose clock a patch follows.</summary>
+    public const string Machine = "midi:drum-machine";
+
+    /// <summary>The drum machine's clock, as the shell would keep it.</summary>
+    public MidiClock Clock { get; } = new();
 
     public Patch Patch { get; private set; } = new();
 
@@ -181,8 +189,44 @@ public sealed class PatchContext
 
         for (var i = 0; i < samples; i++)
         {
-            program.Evaluate(0d, 0d, (double)heard.Count / SampleRate, registers, default, memory);
+            program.Evaluate(0d, 0d, (double)heard.Count / SampleRate, registers, default, memory, live: Live);
             heard.Add(registers[program.OutputBase]);
+        }
+    }
+
+    /// <summary>Plays on until <paramref name="seconds"/> of sound have been heard.</summary>
+    public void PlayUntil(double seconds)
+    {
+        var wanted = (int)Math.Round(seconds * SampleRate);
+
+        if (wanted > heard.Count) Play(wanted - heard.Count);
+    }
+
+    /// <summary>Seconds of sound heard so far.</summary>
+    public double Now => (double)heard.Count / SampleRate;
+
+    /// <summary>Puts the drum machine's clock where the program will read it.</summary>
+    public void Push() => Clock.WriteTo(Live, Machine);
+
+    /// <summary>
+    /// The block the sound program reads its live inputs from, fresh for each
+    /// program and filled with the drum machine's clock the way the shell fills
+    /// a new block with what is already held.
+    /// </summary>
+    private LiveValues Live
+    {
+        get
+        {
+            var program = Sound.Program;
+
+            if (live is null || !ReferenceEquals(liveFor, program))
+            {
+                live = new LiveValues(program.LiveInputs);
+                liveFor = program;
+                Clock.WriteTo(live, Machine);
+            }
+
+            return live;
         }
     }
 

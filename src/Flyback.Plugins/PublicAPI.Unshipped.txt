@@ -3,3 +3,8 @@ Flyback.Plugins.FlybackModuleAttribute
 Flyback.Plugins.FlybackModuleAttribute.FlybackModuleAttribute(string! id, string! name) -> void
 Flyback.Plugins.FlybackModuleAttribute.Name.get -> string!
 Flyback.Plugins.FlybackModuleAttribute.Id.get -> string!
+Flyback.Plugins.Midi.MidiAction.Tick = 4 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Start = 5 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Continue = 6 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Stop = 7 -> Flyback.Plugins.Midi.MidiAction
+Flyback.Plugins.Midi.MidiAction.Position = 8 -> Flyback.Plugins.Midi.MidiAction

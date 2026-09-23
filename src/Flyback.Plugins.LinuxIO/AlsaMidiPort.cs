@@ -204,8 +204,8 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
     /// </summary>
     /// <remarks>
     /// What the bytes mean is <see cref="MidiMessages.Of"/>, in the contract rather
-    /// than here, because it is the same on every platform. Everything that is not
-    /// a note comes back as a negative count here or as null there.
+    /// than here, because it is the same on every platform. Everything that means
+    /// nothing comes back as a negative count here or as null there.
     /// </remarks>
     private void Decode(IntPtr message)
     {
@@ -213,11 +213,11 @@ internal sealed unsafe class AlsaMidiPort : IMidiPort
 
         var count = LibAsoundSeq.Decode(decoder, bytes, MessageBytes, message);
 
-        // Under two bytes cannot be a note either way, and a negative count is
-        // an event that was never MIDI to begin with.
-        if (count < 2) return;
+        // A clock tick is a single byte. A negative count is an event that was
+        // never MIDI to begin with.
+        if (count < 1) return;
 
-        var read = MidiMessages.Of(bytes[0], bytes[1], count > 2 ? bytes[2] : (byte)0);
+        var read = MidiMessages.Of(bytes[0], count > 1 ? bytes[1] : (byte)0, count > 2 ? bytes[2] : (byte)0);
 
         if (read is not { } note) return;
 
