@@ -1,6 +1,7 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
+using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
@@ -110,7 +111,8 @@ public sealed partial class MainWindow
     private async Task ShowPluginsAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        using var hub = new PluginHub(site, () => Task.Run(InstalledPlugins), (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted);
+        var run = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, sound.Failure);
+        using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
@@ -198,9 +200,21 @@ public sealed partial class MainWindow
             : installer is null ? "This window has no plugins folder."
             : installer.Removal(assembly);
 
+        var ids = plugins.Plugins
+            .Where(p => string.Equals(Path.GetFileNameWithoutExtension(p.AssemblyPath), assembly, StringComparison.OrdinalIgnoreCase))
+            .Select(p => p.Info.Id);
+
+        // Only a loaded plugin has a provider in the catalog.
+        var providers = loaded is null ? [] : (described?.Modules ?? [])
+            .Select(m => plugins.Modules.ProviderOf(m.TypeId))
+            .OfType<ModuleProvider>()
+            .Distinct()
+            .Select(p => $"{p.Name} ({p.Id})");
+
         var view = PluginInstallView.Installed(
             plugin.Plugin, described, fromPackage, folder, plugin.State,
-            newer is null ? null : $"{newer.Plugin.Name} {newer.Plugin.Version}", removal);
+            newer is null ? null : $"{newer.Plugin.Name} {newer.Plugin.Version}", removal,
+            string.Join(", ", ids), string.Join(", ", providers));
 
         return await this.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
         {
@@ -256,7 +270,8 @@ public sealed partial class MainWindow
     /// Every plugin this run loaded, and every one waiting for the next start, read
     /// from its folder. Reads assemblies, so it is kept off the UI thread.
     /// </summary>
-    private IReadOnlyList<HubInstalled> InstalledPlugins()
+    /// <param name="assisting">The folder of the plugin Ask sends a patch to, and what to say of it, or null for none.</param>
+    private IReadOnlyList<HubInstalled> InstalledPlugins((string Assembly, string Said)? assisting)
     {
         var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
         var waiting = installer is null ? [] : installer.Waiting().ToDictionary(p => p.Description.Assembly, StringComparer.OrdinalIgnoreCase);
@@ -278,13 +293,24 @@ public sealed partial class MainWindow
                 plugin = plugin with { Name = loaded.Info.Name, Description = plugin.Description.Length > 0 ? plugin.Description : loaded.Info.Description };
 
             waiting.Remove(plugin.Assembly, out var next);
-            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly)));
+            var said = assisting is { } a && string.Equals(a.Assembly, assembly, StringComparison.OrdinalIgnoreCase) ? a.Said : null;
+
+            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), said));
         }
 
         listed.AddRange(waiting.Values.Select(p =>
             new HubInstalled(ListedPlugin.Of(p.Description), p.Description.Version, Loaded: false, p.Description.Preview?.Bytes)));
 
         return listed;
+    }
+
+    /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and where the patch and its key go, or null where none is chosen.</summary>
+    private (string Assembly, string Said)? Assisting()
+    {
+        if (assistant?.Chosen is not { } chosen || plugins.Provider(chosen) is not { } info) return null;
+        if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
+
+        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
     }
 
     /// <summary>

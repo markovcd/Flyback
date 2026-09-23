@@ -169,3 +169,11 @@ instead — a second model that can, asked on its own and answering in prose.
 What this does not do: there is no way to steer a run once it has started beyond
 stopping it; a proposal is all-or-nothing rather than a diff; and the handbook is
 rebuilt per run rather than shared between them, so two windows pay for it twice.
+
+## Amendment, 2026-09-23: the disclosure is in the plugins window
+
+About's plugin summary is gone. In the plugins window, the plugin whose assistant
+Ask sends to wears the assistant's glyph, and its tooltip carries the standing
+word: which assistant gets the patch and its pictures, and where a key is kept.
+It is still a hover away, and still does not depend on the assistant panel being
+open.

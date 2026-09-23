@@ -466,8 +466,13 @@ public sealed class AssistantPanel : UserControl
         Refresh();
     }
 
-    /// <summary>What the About window should say about this. Never names a key.</summary>
-    public string Summary => assistant is null ? "assistant: none" : $"assistant: {assistant.Name}";
+    /// <summary>The assistant Ask sends to, or null where none is chosen.</summary>
+    public IPatchAssistant? Chosen => assistant;
+
+    /// <summary>Where Ask sends the patch. Never names a key.</summary>
+    public string Summary => assistant is null
+        ? "No assistant is chosen, so nothing is sent anywhere."
+        : $"Ask sends the patch and pictures of it to {assistant.Name}.";
 
     // --- the conversation and the patch it is about ---------------------------
 

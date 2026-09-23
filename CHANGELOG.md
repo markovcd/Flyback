@@ -28,7 +28,7 @@
 - The preset gallery lists the presets shared on the preset site, searched with its filter, and opens one when picked.
 - `flyback-viewer` and `flyback-cli` list the plugins they loaded on the terminal, as the editor does.
 - F11 switches the viewer to full screen and back, and `--full-screen` refuses a patch with no picture.
-- A plugins window, beside the settings button, searches the installed plugins and the shared ones together, and a plugin clicked there installs, updates or removes.
+- A plugins window, beside the settings button, takes over About's plugin list: it searches the installed plugins and the shared ones together, says what failed to load, and a plugin clicked there installs, updates or removes.
 - On macOS, a file opened from Finder or dropped on the Dock icon opens in Flyback.
 - The shipped plugins have a name, author, description and tags, and the module plugins a preview of their modules.
 - A plugin declares its modules, so the install dialog and the shared plugins site list them by name, and one that registers a module it did not declare is refused.

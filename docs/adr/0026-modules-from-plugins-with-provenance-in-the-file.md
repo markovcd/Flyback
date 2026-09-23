@@ -107,3 +107,10 @@ what that policy should be.
 There is still no unloading ([0025](0025-platform-io-behind-loadable-plugins.md)),
 so installing a plugin means restarting. For modules that is more visible than it
 is for a sound device, because the palette is where you would go looking.
+
+## Amendment, 2026-09-23: what is installed is the plugins window's
+
+The plugins window lists what is installed, so About no longer carries a second
+list. What only About said moved with it: what failed to load is a section of
+the plugins window, and each installed plugin's own dialog names its id and the
+provider a saved patch records.

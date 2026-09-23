@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.PluginPackages;
@@ -16,7 +17,8 @@ namespace Flyback.App.Controls;
 /// <param name="Waiting">The version waiting to replace it at the next start, or null where nothing is.</param>
 /// <param name="Picture">Its preview, as the image file it carries.</param>
 /// <param name="Removing">Whether it is removed at the next start.</param>
-internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture, bool Removing = false)
+/// <param name="Assisting">Where Ask sends a patch, where this plugin is what it sends to, or null where it is not.</param>
+internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture, bool Removing = false, string? Assisting = null)
 {
     /// <summary>The version that will be running after the next start.</summary>
     public string Version => Waiting ?? Plugin.Version;
@@ -27,6 +29,11 @@ internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool L
         ? Loaded ? $"{version} loads at the next start" : "Loads at the next start"
         : "Loaded";
 }
+
+/// <summary>What this run of Flyback found besides the plugins it lists.</summary>
+/// <param name="Folder">Where plugins are looked for.</param>
+/// <param name="Problems">Every plugin problem, and sound that would not open.</param>
+internal sealed record PluginRun(string Folder, IReadOnlyList<string> Problems);
 
 /// <summary>
 /// The plugins window: what is installed, and what the plugin site offers for this
@@ -103,12 +110,14 @@ internal sealed class PluginHub : IDisposable
     /// everything else. One search box cannot ask for two plugins at once — every word
     /// of it has to match — and the search is the user's anyway.
     /// </param>
+    /// <param name="run">What this run found besides the plugins, or null to say nothing of it.</param>
     public PluginHub(
         PluginSite? site,
         Func<Task<IReadOnlyList<HubInstalled>>> installed,
         Func<SitePlugin, Action, Task<string?>> install,
         Func<HubInstalled, Task<string?>>? show = null,
-        IReadOnlyList<SitePlugin>? needed = null)
+        IReadOnlyList<SitePlugin>? needed = null,
+        PluginRun? run = null)
     {
         this.site = site;
         readInstalled = installed;
@@ -158,16 +167,17 @@ internal sealed class PluginHub : IDisposable
             {
                 NeededHeading(),
                 neededRows,
+                Section("PROBLEMS", "pluginProblems", run?.Problems, Colors.Sink),
                 Heading("INSTALLED"),
                 installedStatus,
                 installedRows,
+                FolderLine(run?.Folder),
                 SiteHeadingRow("ON THE PLUGIN SITE", site?.Root),
                 siteStatus,
                 siteRows,
                 more,
             },
         };
-
     }
 
     /// <summary>Stops asking the site, which is the end of the window.</summary>
@@ -471,7 +481,7 @@ internal sealed class PluginHub : IDisposable
     /// <summary>An installed plugin's row, which shows what it is when clicked anywhere but a tag.</summary>
     private Grid InstalledRow(HubInstalled plugin)
     {
-        var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin));
+        var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), assisting: plugin.Assisting);
 
         if (show is { } showing)
         {
@@ -496,18 +506,21 @@ internal sealed class PluginHub : IDisposable
     }
 
     /// <summary>A plugin's picture, name, byline, site rating, description, tags and modules, and what can be done about it.</summary>
-    private Grid Row(ListedPlugin plugin, Border picture, Control actions, SiteRating? rating = null)
+    /// <param name="assisting">Where Ask sends a patch, for the plugin it sends to, which is marked with the assistant's glyph.</param>
+    private Grid Row(ListedPlugin plugin, Border picture, Control actions, SiteRating? rating = null, string? assisting = null)
     {
         var text = new StackPanel { Spacing = 3, Margin = new Thickness(12, 0) };
 
-        text.Children.Add(new TextBlock
+        var name = new TextBlock
         {
             Name = "pluginName",
             Text = plugin.Name,
             FontSize = Text.Emphasis,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
-        });
+        };
+
+        text.Children.Add(assisting is null ? name : Assisting(name, assisting));
 
         var byline = plugin.Version.Length > 0 ? $"Version {plugin.Version}" : plugin.Assembly;
 
@@ -569,6 +582,29 @@ internal sealed class PluginHub : IDisposable
         row.Children.Add(actions);
 
         return row;
+    }
+
+    /// <summary>
+    /// The name with the assistant's glyph after it, saying where Ask sends a patch.
+    /// Sized to its content, so the name still trims where the row is too narrow.
+    /// </summary>
+    private static DockPanel Assisting(TextBlock name, string said)
+    {
+        var glyph = new TextBlock
+        {
+            Name = "pluginAssisting",
+            Text = "✦",
+            FontSize = Text.Emphasis,
+            Foreground = new SolidColorBrush(Colors.Feedback),
+            Margin = new Thickness(6, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent,
+        };
+
+        ToolTip.SetTip(glyph, said);
+        DockPanel.SetDock(glyph, Dock.Right);
+
+        return new DockPanel { HorizontalAlignment = HorizontalAlignment.Left, Children = { glyph, name } };
     }
 
     /// <summary>The plugin's preview, or a plug where it has none.</summary>
@@ -644,6 +680,70 @@ internal sealed class PluginHub : IDisposable
         heading.Margin = new Thickness(0, 4, 0, 2);
 
         return heading;
+    }
+
+    /// <summary>A heading over selectable lines, and nothing at all where there are none.</summary>
+    private static Control Section(string heading, string name, IReadOnlyList<string>? lines, Color? color = null)
+    {
+        if (lines is not { Count: > 0 }) return new Panel();
+
+        var section = new StackPanel { Name = name, Spacing = 4, Children = { Heading(heading) } };
+
+        foreach (var line in lines)
+        {
+            var text = new SelectableTextBlock { Text = line, FontSize = Text.Body, TextWrapping = TextWrapping.Wrap };
+
+            if (color is { } shade) text.Foreground = new SolidColorBrush(shade);
+
+            section.Children.Add(text);
+        }
+
+        return section;
+    }
+
+    /// <summary>Where plugins are looked for, with a link that opens the folder where it exists.</summary>
+    private static Control FolderLine(string? folder)
+    {
+        if (folder is null) return new Panel();
+
+        var path = new SelectableTextBlock
+        {
+            Name = "pluginsFolder",
+            Text = $"Looked for in {folder}",
+            FontSize = Text.Body,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var line = new DockPanel { Margin = new Thickness(0, 2, 0, 0) };
+
+        if (Directory.Exists(folder))
+        {
+            var open = new TextBlock
+            {
+                Text = "Open",
+                FontSize = Text.Caption,
+                Foreground = new SolidColorBrush(Colors.Attention),
+                TextDecorations = TextDecorations.Underline,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Margin = new Thickness(8, 0, 0, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            open.PointerPressed += async (_, _) =>
+            {
+                if (TopLevel.GetTopLevel(open)?.Launcher is { } launcher)
+                    await launcher.LaunchDirectoryInfoAsync(new DirectoryInfo(folder));
+            };
+
+            DockPanel.SetDock(open, Dock.Right);
+            line.Children.Add(open);
+        }
+
+        line.Children.Add(path);
+
+        return line;
     }
 
     private static TextBlock Heading(string text) => new()

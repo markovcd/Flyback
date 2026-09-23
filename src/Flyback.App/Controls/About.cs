@@ -1,12 +1,10 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Styling;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -69,11 +67,7 @@ internal static class About
         ?? "unknown";
 
     /// <summary>The contents of the About window.</summary>
-    /// <param name="pluginReport">
-    /// What loaded and what did not, and where it was looked for — built by the
-    /// host, since nothing in this file knows what a plugin is.
-    /// </param>
-    public static Control View(string pluginReport)
+    public static Control View()
     {
         var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("64,*") };
 
@@ -107,9 +101,6 @@ internal static class About
         page.Children.Add(Rule());
         page.Children.Add(Caption("Support"));
         page.Children.Add(Donation());
-        page.Children.Add(Rule());
-        page.Children.Add(Caption("Plugins"));
-        page.Children.Add(Report(pluginReport));
 
         return page;
     }
@@ -227,47 +218,6 @@ internal static class About
         block.Children.Add(words);
 
         return block;
-    }
-
-    /// <summary>
-    /// The plugin report in a box of its own, so it is the report that scrolls and
-    /// not the whole window.
-    /// </summary>
-    /// <remarks>
-    /// Read-only and selectable, so a path or an id can be copied out of it, and
-    /// on the window's own panel color in every state: the theme's box repaints
-    /// itself on hover and focus, which would make it look editable.
-    /// </remarks>
-    private static TextBox Report(string text)
-    {
-        var panel = new SolidColorBrush(Colors.Panel);
-
-        var box = new TextBox
-        {
-            Text = text,
-            IsReadOnly = true,
-            AcceptsReturn = true,
-            TextWrapping = TextWrapping.NoWrap,
-            FontSize = Text.Body,
-            Height = 130,
-            Background = panel,
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(0),
-        };
-
-        ScrollViewer.SetHorizontalScrollBarVisibility(box, ScrollBarVisibility.Auto);
-        ScrollViewer.SetVerticalScrollBarVisibility(box, ScrollBarVisibility.Auto);
-
-        foreach (var state in new[] { ":pointerover", ":focus", ":focus:pointerover", ":disabled" })
-        {
-            var restyled = new Style(x => x.OfType<TextBox>().Class(state).Template().OfType<Border>().Name("PART_BorderElement"));
-
-            restyled.Setters.Add(new Setter(Border.BackgroundProperty, panel));
-            restyled.Setters.Add(new Setter(Border.BorderThicknessProperty, new Thickness(0)));
-            box.Styles.Add(restyled);
-        }
-
-        return box;
     }
 
     /// <summary>A line of text that opens <paramref name="uri"/> in the system browser.</summary>

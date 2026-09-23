@@ -185,6 +185,8 @@ internal static class PluginInstallView
     /// <param name="state">Whether it is loaded or waiting for the next start.</param>
     /// <param name="newer">The newer version the plugin site has, or null for none.</param>
     /// <param name="removal">Why Remove is off, or null where it is on.</param>
+    /// <param name="id">The ids it loaded under, or empty where it is not loaded.</param>
+    /// <param name="provider">Who its modules belong to in a saved patch, or empty where it adds none this run.</param>
     public static Control Installed(
         ListedPlugin listed,
         PluginDescription? described,
@@ -192,10 +194,15 @@ internal static class PluginInstallView
         string? folder,
         string state,
         string? newer = null,
-        string? removal = null)
+        string? removal = null,
+        string id = "",
+        string provider = "")
     {
         var page = new StackPanel { Name = "pluginInstalled", Spacing = 10, Width = 480, Margin = new Thickness(20, 12, 20, 20) };
         var facts = Describe(page, listed, described);
+
+        if (id.Length > 0) Fact(facts, "Id", id, "pluginId");
+        if (provider.Length > 0) Fact(facts, "Provider", provider, "pluginProvider");
 
         Fact(facts, "Installed", fromPackage is null ? "not from a package" : "from a package", "pluginOrigin");
 

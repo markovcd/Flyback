@@ -39,14 +39,17 @@ public sealed class PluginHubTests : UiTest
     private (PluginHub Hub, Window Window) Open(
         FakePluginSite site,
         Func<SitePlugin, Action, Task<string?>>? install = null,
-        IReadOnlyList<SitePlugin>? needed = null)
+        IReadOnlyList<SitePlugin>? needed = null,
+        PluginRun? run = null,
+        IReadOnlyList<HubInstalled>? installed = null)
     {
         var hub = new PluginHub(
             site.Site(),
-            () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes, Grain]),
+            () => Task.FromResult(installed ?? [Echoes, Grain]),
             install ?? ((_, _) => Task.FromResult<string?>(null)),
             show: null,
-            needed);
+            needed,
+            run);
 
         var content = new DockPanel();
 
@@ -133,6 +136,58 @@ public sealed class PluginHubTests : UiTest
 
         All<TextBlock>(hub.View).ShouldNotContain(t => t.Name == "neededHeading");
         All<StackPanel>(hub.View).Single(p => p.Name == "neededPlugins").Children.ShouldBeEmpty();
+    }
+
+    private static IEnumerable<string?> Lines(PluginHub hub, string section) =>
+        All<StackPanel>(hub.View).Single(p => p.Name == section).Children.OfType<SelectableTextBlock>().Select(t => t.Text);
+
+    /// <summary>What could not load and where plugins are looked for are both said here.</summary>
+    [AvaloniaFact]
+    public void It_says_what_failed_and_where_it_looked()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        var run = new PluginRun(Plugins, ["Could not open sound: busy", "Flyback.Plugins.Broken: it threw."]);
+
+        var (hub, _) = Open(site, run: run);
+
+        Lines(hub, "pluginProblems").ShouldBe(run.Problems);
+        All<TextBlock>(hub.View).Single(t => t.Name == "pluginsFolder").Text.ShouldBe($"Looked for in {Plugins}");
+    }
+
+    /// <summary>An empty section is a question nobody asked.</summary>
+    [AvaloniaFact]
+    public void A_run_with_no_problems_has_no_section_for_them()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        var (hub, _) = Open(site, run: new PluginRun(Plugins, []));
+
+        All<StackPanel>(hub.View).ShouldNotContain(p => p.Name == "pluginProblems");
+    }
+
+    /// <summary>The plugin Ask sends a patch to wears the assistant's glyph, which says where it goes.</summary>
+    [AvaloniaFact]
+    public void The_plugin_the_assistant_sends_to_is_marked_and_says_so()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        const string said = "Ask sends the patch and pictures of it to Echoes.";
+        var (hub, _) = Open(site, installed: [Echoes with { Assisting = said }, Grain]);
+
+        var rows = All<StackPanel>(hub.View).Single(p => p.Name == "installedPlugins").Children;
+        var glyph = All<TextBlock>(rows[0]).Single(t => t.Name == "pluginAssisting");
+
+        ToolTip.GetTip(glyph).ShouldBe(said);
+        All<TextBlock>(rows[1]).ShouldNotContain(t => t.Name == "pluginAssisting");
+        Names(hub.View, "installedPlugins").ShouldBe(["Echoes", "Grain"]);
+    }
+
+    [AvaloniaFact]
+    public void An_installed_plugin_names_its_id_and_the_provider_a_patch_records()
+    {
+        var listed = new ListedPlugin("Flyback.Plugins.Echoes", "Echoes", "1.0.0", "Ann", "Delays that repeat.", [], []);
+        var shown = Show(PluginInstallView.Installed(listed, null, null, null, "Loaded", id: "echoes", provider: "Echoes (echoes)"), width: 520);
+
+        All<TextBlock>(shown).Single(t => t.Name == "pluginId").Text.ShouldBe("echoes");
+        All<TextBlock>(shown).Single(t => t.Name == "pluginProvider").Text.ShouldBe("Echoes (echoes)");
     }
 
     [AvaloniaFact]

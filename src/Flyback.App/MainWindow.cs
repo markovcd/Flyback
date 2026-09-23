@@ -1466,7 +1466,7 @@ public sealed partial class MainWindow : Window
     /// into, so there is nothing to carry from one opening to the next.
     /// </summary>
     private async Task ShowAboutAsync() =>
-        await this.ShowDialog("About", About.View(PluginSummary.Text(plugins, sound.Failure, assistant?.Summary)));
+        await this.ShowDialog("About", About.View());
 
     /// <summary>
     /// The bar along the bottom: what the patch costs, and whatever there is to
