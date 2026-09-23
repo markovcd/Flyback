@@ -16,6 +16,9 @@ public sealed record LoadedPlugin(PluginInfo Info, string AssemblyPath);
 /// </summary>
 public sealed record PluginProblem(string Source, string Message)
 {
+    /// <summary>The plugin folder it came from, or null where it came from no folder.</summary>
+    internal string? Folder { get; init; }
+
     public override string ToString() => $"{Source}: {Message}";
 }
 

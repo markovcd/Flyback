@@ -18,7 +18,9 @@ namespace Flyback.App.Controls;
 /// <param name="Picture">Its preview, as the image file it carries.</param>
 /// <param name="Removing">Whether it is removed at the next start.</param>
 /// <param name="Assisting">Where Ask sends a patch, where this plugin is what it sends to, or null where it is not.</param>
-internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture, bool Removing = false, string? Assisting = null)
+/// <param name="Trouble">What went wrong with it this run, or null where nothing did.</param>
+internal sealed record HubInstalled(
+    ListedPlugin Plugin, string? Waiting, bool Loaded, byte[]? Picture, bool Removing = false, string? Assisting = null, string? Trouble = null)
 {
     /// <summary>The version that will be running after the next start.</summary>
     public string Version => Waiting ?? Plugin.Version;
@@ -27,12 +29,12 @@ internal sealed record HubInstalled(ListedPlugin Plugin, string? Waiting, bool L
     public string State => Removing ? "Removed at the next start"
         : Waiting is { } version
         ? Loaded ? $"{version} loads at the next start" : "Loads at the next start"
-        : "Loaded";
+        : Loaded ? "Loaded" : "Not loaded";
 }
 
 /// <summary>What this run of Flyback found besides the plugins it lists.</summary>
 /// <param name="Folder">Where plugins are looked for.</param>
-/// <param name="Problems">Every plugin problem, and sound that would not open.</param>
+/// <param name="Problems">What went wrong that no installed plugin can be blamed for.</param>
 internal sealed record PluginRun(string Folder, IReadOnlyList<string> Problems);
 
 /// <summary>
@@ -481,7 +483,12 @@ internal sealed class PluginHub : IDisposable
     /// <summary>An installed plugin's row, which shows what it is when clicked anywhere but a tag.</summary>
     private Grid InstalledRow(HubInstalled plugin)
     {
-        var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), assisting: plugin.Assisting);
+        List<Control> marks = [];
+
+        if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", "⚠", Colors.Sink, trouble));
+        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", "✦", Colors.Feedback, said));
+
+        var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), marks: marks);
 
         if (show is { } showing)
         {
@@ -506,8 +513,8 @@ internal sealed class PluginHub : IDisposable
     }
 
     /// <summary>A plugin's picture, name, byline, site rating, description, tags and modules, and what can be done about it.</summary>
-    /// <param name="assisting">Where Ask sends a patch, for the plugin it sends to, which is marked with the assistant's glyph.</param>
-    private Grid Row(ListedPlugin plugin, Border picture, Control actions, SiteRating? rating = null, string? assisting = null)
+    /// <param name="marks">Glyphs after the name, each saying something about the plugin when hovered.</param>
+    private Grid Row(ListedPlugin plugin, Border picture, Control actions, SiteRating? rating = null, IReadOnlyList<Control>? marks = null)
     {
         var text = new StackPanel { Spacing = 3, Margin = new Thickness(12, 0) };
 
@@ -520,7 +527,7 @@ internal sealed class PluginHub : IDisposable
             TextTrimming = TextTrimming.CharacterEllipsis,
         };
 
-        text.Children.Add(assisting is null ? name : Assisting(name, assisting));
+        text.Children.Add(marks is { Count: > 0 } ? Marked(name, marks) : name);
 
         var byline = plugin.Version.Length > 0 ? $"Version {plugin.Version}" : plugin.Assembly;
 
@@ -585,26 +592,42 @@ internal sealed class PluginHub : IDisposable
     }
 
     /// <summary>
-    /// The name with the assistant's glyph after it, saying where Ask sends a patch.
-    /// Sized to its content, so the name still trims where the row is too narrow.
+    /// The name with <paramref name="marks"/> after it, in order. Sized to its content,
+    /// so the name still trims where the row is too narrow.
     /// </summary>
-    private static DockPanel Assisting(TextBlock name, string said)
+    private static DockPanel Marked(TextBlock name, IReadOnlyList<Control> marks)
     {
-        var glyph = new TextBlock
+        var line = new DockPanel { HorizontalAlignment = HorizontalAlignment.Left };
+
+        // Docked right, so the last is added first to keep them in order.
+        foreach (var mark in marks.Reverse())
         {
-            Name = "pluginAssisting",
-            Text = "✦",
+            DockPanel.SetDock(mark, Dock.Right);
+            line.Children.Add(mark);
+        }
+
+        line.Children.Add(name);
+
+        return line;
+    }
+
+    /// <summary>A glyph that says <paramref name="tip"/> when hovered.</summary>
+    private static TextBlock Mark(string name, string glyph, Color color, string tip)
+    {
+        var mark = new TextBlock
+        {
+            Name = name,
+            Text = glyph,
             FontSize = Text.Emphasis,
-            Foreground = new SolidColorBrush(Colors.Feedback),
+            Foreground = new SolidColorBrush(color),
             Margin = new Thickness(6, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
         };
 
-        ToolTip.SetTip(glyph, said);
-        DockPanel.SetDock(glyph, Dock.Right);
+        ToolTip.SetTip(mark, tip);
 
-        return new DockPanel { HorizontalAlignment = HorizontalAlignment.Left, Children = { glyph, name } };
+        return mark;
     }
 
     /// <summary>The plugin's preview, or a plug where it has none.</summary>

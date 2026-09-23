@@ -212,6 +212,24 @@ public class PluginHostTests
         catalog.AudioOutputs.ShouldBeEmpty();
     }
 
+    /// <summary>A problem names the folder it came from, so the plugins window can mark that plugin.</summary>
+    [Fact]
+    public void A_problem_knows_which_plugin_folder_it_came_from()
+    {
+        using var folder = new TempFolder();
+
+        var shipped = Path.Combine(PluginHost.DefaultDirectory, "FakeAssistant", "Flyback.Plugins.FakeAssistant.dll");
+        var twice = Directory.CreateDirectory(Path.Combine(folder.Path, "Twice")).FullName;
+
+        File.Copy(shipped, Path.Combine(twice, "Flyback.Plugins.FakeAssistant.dll"));
+        File.Copy(shipped, Path.Combine(twice, "Copy.dll"));
+
+        var (problems, _) = PluginHost.Try(twice);
+
+        problems.ShouldNotBeEmpty();
+        problems.ShouldAllBe(p => p.Folder == twice);
+    }
+
     /// <summary>
     /// A plugin folder with nothing in it at all is a common half-state — an
     /// uninstall that left the directory behind.

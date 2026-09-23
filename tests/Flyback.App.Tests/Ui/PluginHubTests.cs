@@ -190,6 +190,21 @@ public sealed class PluginHubTests : UiTest
         All<TextBlock>(shown).Single(t => t.Name == "pluginProvider").Text.ShouldBe("Echoes (echoes)");
     }
 
+    /// <summary>What went wrong with a plugin is a glyph on its row, and a plugin that loaded nothing still has one.</summary>
+    [AvaloniaFact]
+    public void A_plugin_that_went_wrong_is_marked_and_says_how()
+    {
+        using var site = new FakePluginSite(new Shared("r1", "Ripple"));
+        const string wrong = "Flyback.Plugins.Grain.dll: It needs rebuilding.";
+        var (hub, _) = Open(site, installed: [Echoes, Grain with { Loaded = false, Trouble = wrong }]);
+
+        var rows = All<StackPanel>(hub.View).Single(p => p.Name == "installedPlugins").Children;
+
+        All<TextBlock>(rows[0]).ShouldNotContain(t => t.Name == "pluginTrouble");
+        ToolTip.GetTip(All<TextBlock>(rows[1]).Single(t => t.Name == "pluginTrouble")).ShouldBe(wrong);
+        All<TextBlock>(rows[1]).Single(t => t.Name == "pluginState").Text.ShouldBe("Not loaded");
+    }
+
     [AvaloniaFact]
     public void It_lists_what_is_installed_and_what_the_site_offers()
     {

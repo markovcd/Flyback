@@ -111,8 +111,8 @@ public sealed partial class MainWindow
     private async Task ShowPluginsAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        var run = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, sound.Failure);
-        using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
+        var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, sound);
+        using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting, troubles)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
@@ -189,8 +189,14 @@ public sealed partial class MainWindow
 
             // Waiting for the next start, which moves it here.
             var waiting = installer?.Replacing(assembly);
+            var folder = pluginFolder is null ? null : Path.Combine(pluginFolder, assembly);
 
-            return (pluginFolder is null ? null : Path.Combine(pluginFolder, assembly), waiting, waiting?.Description);
+            if (waiting is not null || folder is null || !Directory.Exists(folder)) return (folder, waiting, waiting?.Description);
+
+            // Installed, and refused this run.
+            var there = PluginInstaller.Installed(folder);
+
+            return (folder, there, there?.Description ?? PluginDescription.OfFolder(folder));
         });
 
         // Not waited for: a site that is down takes seconds to say so.
@@ -275,8 +281,12 @@ public sealed partial class MainWindow
     /// from its folder. Reads assemblies, so it is kept off the UI thread.
     /// </summary>
     /// <param name="assisting">The folder of the plugin Ask sends a patch to, and what to say of it, or null for none.</param>
-    private IReadOnlyList<HubInstalled> InstalledPlugins((string Assembly, string Said)? assisting)
+    /// <param name="troubles">What went wrong this run, by plugin folder. A folder in it that loaded nothing is listed too.</param>
+    private IReadOnlyList<HubInstalled> InstalledPlugins((string Assembly, string Said)? assisting, IReadOnlyDictionary<string, string>? troubles = null)
     {
+        troubles ??= new Dictionary<string, string>();
+
+        var unexplained = troubles.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
         var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
         var waiting = installer is null ? [] : installer.Waiting().ToDictionary(p => p.Description.Assembly, StringComparer.OrdinalIgnoreCase);
         var removing = installer?.Removing() ?? new HashSet<string>();
@@ -298,8 +308,23 @@ public sealed partial class MainWindow
 
             waiting.Remove(plugin.Assembly, out var next);
             var said = assisting is { } a && string.Equals(a.Assembly, assembly, StringComparison.OrdinalIgnoreCase) ? a.Said : null;
+            var home = Path.GetDirectoryName(loaded.AssemblyPath) is { } at ? PluginSummary.Folder(at) : null;
+            var trouble = home is not null && troubles.TryGetValue(home, out var wrong) ? wrong : null;
 
-            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), said));
+            if (home is not null) unexplained.Remove(home);
+
+            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: true, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), said, trouble));
+        }
+
+        // A plugin that loaded nothing has no row of its own otherwise.
+        foreach (var folder in unexplained)
+        {
+            var described = PluginDescription.OfFolder(folder);
+            var name = Path.GetFileName(folder);
+            var plugin = described is null ? new ListedPlugin(name, name, string.Empty, string.Empty, string.Empty, [], []) : ListedPlugin.Of(described);
+
+            waiting.Remove(plugin.Assembly, out var next);
+            listed.Add(new HubInstalled(plugin, next?.Description.Version, Loaded: false, described?.Preview?.Bytes, removing.Contains(plugin.Assembly), Trouble: troubles[folder]));
         }
 
         listed.AddRange(waiting.Values.Select(p =>

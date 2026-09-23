@@ -117,6 +117,21 @@ public static class PluginHost
         var entries = EntryAssemblies(folder);
         if (entries.Count == 0) return;
 
+        var before = problems.Count;
+
+        LoadEntries(entries, plugins, registry, problems, collectible);
+
+        for (var i = before; i < problems.Count; i++) problems[i] = problems[i] with { Folder = folder };
+    }
+
+    private static void LoadEntries(
+        List<string> entries,
+        List<LoadedPlugin> plugins,
+        Registry registry,
+        List<PluginProblem> problems,
+        List<PluginLoadContext>? collectible)
+    {
+
         // One context for the whole folder: its dependencies are shared by
         // everything in it, and isolation is wanted *between* plugins.
         var context = new PluginLoadContext(entries[0], collectible is not null);

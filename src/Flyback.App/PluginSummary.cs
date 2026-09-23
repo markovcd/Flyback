@@ -1,3 +1,4 @@
+using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -42,15 +43,38 @@ internal static class PluginSummary
         return string.Join(Environment.NewLine, lines);
     }
 
-    /// <summary>What the plugins window says besides the plugins it lists.</summary>
-    internal static PluginRun Run(PluginCatalog plugins, string folder, string? soundFailure)
+    /// <summary>
+    /// What went wrong this run: by the plugin folder it happened in, for the plugins
+    /// window to mark that plugin's row with, and the rest for it to list on their own.
+    /// </summary>
+    internal static (PluginRun Run, IReadOnlyDictionary<string, string> Troubles) Run(PluginCatalog plugins, string folder, AudioSetup sound)
     {
-        var problems = plugins.Problems.Select(p => p.ToString()).ToList();
+        var troubles = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var rest = new List<string>();
 
-        if (soundFailure is { } failure) problems.Insert(0, $"Could not open sound: {failure}");
+        void Blame(string? at, string line)
+        {
+            if (at is null) rest.Add(line);
+            else if (troubles.TryGetValue(Folder(at), out var lines)) lines.Add(line);
+            else troubles[Folder(at)] = [line];
+        }
 
-        return new PluginRun(folder, problems);
+        if (sound.Failure is { } failure) Blame(FolderOf(plugins, sound.Output), $"Could not open sound: {failure}");
+
+        foreach (var problem in plugins.Problems) Blame(problem.Folder, problem.ToString());
+
+        return (new PluginRun(folder, rest), troubles.ToDictionary(t => t.Key, t => string.Join(Environment.NewLine, t.Value), StringComparer.OrdinalIgnoreCase));
     }
+
+    /// <summary>A folder as <see cref="Run"/> keys it.</summary>
+    internal static string Folder(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+
+    /// <summary>The folder of the plugin that registered <paramref name="registered"/>, or null where none did.</summary>
+    private static string? FolderOf(PluginCatalog plugins, object? registered) =>
+        registered is not null && plugins.Provider(registered) is { } info
+        && plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is { } loaded
+            ? Path.GetDirectoryName(loaded.AssemblyPath)
+            : null;
 
     /// <summary>
     /// Which third party a patch and its pictures would go to (ADR-0033's disclosure),
