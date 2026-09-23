@@ -122,7 +122,7 @@ public sealed partial class NodeEditor : Control
     private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
 
     /// <summary>The ground inside a box being looked into: slightly transparent, so the canvas under it still shows.</summary>
-    private static readonly IBrush PeekGround = new SolidColorBrush(Colors.Canvas, 0.90);
+    private static readonly IBrush PeekGround = new SolidColorBrush(Colors.Canvas, 0.70);
 
     /// <summary>What the canvas outside a box being looked into is dimmed under.</summary>
     private static readonly IBrush PeekScrim = new SolidColorBrush(Colors.Edge, 0.78);
