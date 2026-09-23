@@ -78,9 +78,19 @@ fi
 
 echo "Building $tag"
 
+# Off GitHub the build trusts the local key, so a release made here installs over
+# builds made here. On GitHub nothing is passed and the committed key stands.
+trust=()
+$github || trust=(--build-arg RELEASE_PUBLIC_KEY="$(base64 -w0 < "$temp/derived.der")")
+
 rm -rf dist
-docker build --build-arg VERSION="$version" --target release \
+docker build --build-arg VERSION="$version" "${trust[@]}" --target release \
   --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
+
+# What every copy of Flyback will check it against, before anything is published.
+if $github; then
+  openssl dgst -sha256 -verify src/Flyback.App/Updates/release-key.pem -signature dist/SHA256SUMS.sig dist/SHA256SUMS
+fi
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   echo "version=$version" >> "$GITHUB_OUTPUT"

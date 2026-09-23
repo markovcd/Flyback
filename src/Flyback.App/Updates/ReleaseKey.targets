@@ -1,0 +1,196 @@
+<Project>
+
+  <!--
+    A local build trusts the local release key: the public half of RELEASE_SIGNING_KEY
+    is written to obj\ and embedded in place of the committed release-key.pem, so a
+    release this machine signs is one its own builds install. On GitHub and in a
+    container the committed key stands, and release.sh and make.sh hand a Docker build
+    the local one themselves.
+
+    Where the variable is empty, the user environment is read, since Rider and a shell
+    started before it was set do not see it; where that is empty too, a key is made
+    and kept there on Windows.
+  -->
+  <PropertyGroup>
+    <LocalReleaseKey Condition="'$(GITHUB_ACTIONS)' != 'true' and '$(DOTNET_RUNNING_IN_CONTAINER)' != 'true'">true</LocalReleaseKey>
+  </PropertyGroup>
+
+  <UsingTask TaskName="LocalReleaseKey" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Into ParameterType="System.String" Required="true" />
+      <Written ParameterType="System.Boolean" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+// Byte work rather than a PEM API: the task compiles against netstandard2.0, which has none.
+// A P-256 PKCS#8 key carries its public point, which is all a public key is.
+public class LocalReleaseKey : Task
+{
+    private const string Variable = "RELEASE_SIGNING_KEY";
+
+    private static readonly byte[] Algorithm =
+    {
+        0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+        0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07,
+    };
+
+    private static readonly byte[] PointTag = { 0xa1, 0x44, 0x03, 0x42, 0x00, 0x04 };
+
+    [Required] public string Into { get; set; }
+
+    [Output] public bool Written { get; set; }
+
+    public override bool Execute()
+    {
+        var windows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        var pem = Environment.GetEnvironmentVariable(Variable);
+
+        if (string.IsNullOrWhiteSpace(pem) && windows)
+            pem = Environment.GetEnvironmentVariable(Variable, EnvironmentVariableTarget.User);
+
+        if (string.IsNullOrWhiteSpace(pem))
+        {
+            if (!windows)
+            {
+                Log.LogWarning("RELEASE_SIGNING_KEY is not set, so this build trusts the committed release key. Run . ./release-key.sh to make a local one.");
+                return true;
+            }
+
+            pem = NewKey();
+            Environment.SetEnvironmentVariable(Variable, pem, EnvironmentVariableTarget.User);
+            Environment.SetEnvironmentVariable(Variable, pem);
+            Log.LogMessage(MessageImportance.High, "Made a local test key and kept it in the user environment as RELEASE_SIGNING_KEY.");
+        }
+
+        var point = Point(pem);
+
+        if (point == null)
+        {
+            Log.LogError("RELEASE_SIGNING_KEY holds no P-256 private key.");
+            return false;
+        }
+
+        var der = new byte[27 + 64];
+        new byte[] { 0x30, 0x59 }.CopyTo(der, 0);
+        Algorithm.CopyTo(der, 2);
+        new byte[] { 0x03, 0x42, 0x00, 0x04 }.CopyTo(der, 23);
+        point.CopyTo(der, 27);
+
+        var body = Convert.ToBase64String(der);
+        var text = new StringBuilder("-----BEGIN PUBLIC KEY-----").Append((char)10);
+
+        for (var at = 0; at < body.Length; at += 64)
+            text.Append(body, at, Math.Min(64, body.Length - at)).Append((char)10);
+
+        text.Append("-----END PUBLIC KEY-----").Append((char)10);
+
+        if (!File.Exists(Into) || File.ReadAllText(Into) != text.ToString())
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(Into)));
+            File.WriteAllText(Into, text.ToString());
+        }
+
+        Written = true;
+        return true;
+    }
+
+    /// <summary>The 64 bytes of X and Y in a P-256 PKCS#8 PEM, or null.</summary>
+    private static byte[] Point(string pem)
+    {
+        byte[] der;
+
+        try
+        {
+            var body = new StringBuilder();
+
+            foreach (var line in pem.Split((char)10))
+                if (!line.StartsWith("-----")) body.Append(line.Trim());
+
+            der = Convert.FromBase64String(body.ToString());
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+
+        if (IndexOf(der, Algorithm) < 0) return null;
+
+        var at = IndexOf(der, PointTag);
+
+        if (at < 0 || at + PointTag.Length + 64 > der.Length) return null;
+
+        var point = new byte[64];
+        Array.Copy(der, at + PointTag.Length, point, 0, 64);
+        return point;
+    }
+
+    private static int IndexOf(byte[] data, byte[] part)
+    {
+        for (var i = 0; i + part.Length <= data.Length; i++)
+        {
+            var j = 0;
+            while (j < part.Length && data[i + j] == part[j]) j++;
+            if (j == part.Length) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>A new P-256 key as a PKCS#8 PEM, laid out as the SDK and openssl write one.</summary>
+    private static string NewKey()
+    {
+        using (var key = ECDsa.Create(ECCurve.NamedCurves.nistP256))
+        {
+            var p = key.ExportParameters(true);
+            var der = new byte[138];
+            var at = 0;
+
+            foreach (var b in new byte[] { 0x30, 0x81, 0x87, 0x02, 0x01, 0x00 }) der[at++] = b;
+            Algorithm.CopyTo(der, at); at += Algorithm.Length;
+            foreach (var b in new byte[] { 0x04, 0x6d, 0x30, 0x6b, 0x02, 0x01, 0x01, 0x04, 0x20 }) der[at++] = b;
+            p.D.CopyTo(der, at); at += 32;
+            PointTag.CopyTo(der, at); at += PointTag.Length;
+            p.Q.X.CopyTo(der, at); at += 32;
+            p.Q.Y.CopyTo(der, at);
+
+            var body = Convert.ToBase64String(der);
+            var text = new StringBuilder("-----BEGIN PRIVATE KEY-----").Append((char)10);
+
+            for (var i = 0; i < body.Length; i += 64)
+                text.Append(body, i, Math.Min(64, body.Length - i)).Append((char)10);
+
+            return text.Append("-----END PRIVATE KEY-----").Append((char)10).ToString();
+        }
+    }
+}
+]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="EmbedLocalReleaseKey" BeforeTargets="PrepareForBuild" Condition="'$(LocalReleaseKey)' == 'true'">
+
+    <!-- Here rather than above: the project imports this before the SDK sets IntermediateOutputPath. -->
+    <PropertyGroup>
+      <LocalReleaseKeyFile>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'release-key.pem'))</LocalReleaseKeyFile>
+    </PropertyGroup>
+
+    <LocalReleaseKey Into="$(LocalReleaseKeyFile)">
+      <Output TaskParameter="Written" PropertyName="LocalReleaseKeyWritten" />
+    </LocalReleaseKey>
+
+    <ItemGroup Condition="'$(LocalReleaseKeyWritten)' == 'true'">
+      <EmbeddedResource Remove="Updates\release-key.pem" />
+      <EmbeddedResource Include="$(LocalReleaseKeyFile)" LogicalName="release-key.pem" />
+    </ItemGroup>
+
+  </Target>
+
+</Project>

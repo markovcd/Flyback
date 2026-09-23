@@ -5,7 +5,7 @@ description: Use after a feature has landed on main - run make.sh (the Docker ga
 
 # Building the artifacts after a feature lands
 
-`make.sh` is one line, `docker build --output artifacts .`: the gate (restore, compile, every
+`make.sh` is `docker build --output artifacts .`, built to trust the local `RELEASE_SIGNING_KEY`: the gate (restore, compile, every
 test) and then the self-contained publishes for the default runtimes (`ARG RIDS` in the
 Dockerfile: win-x64, osx-arm64, linux-x64) into `artifacts/<rid>/`. The user wants this run
 unprompted whenever a feature lands on `main`, so the build of what landed is on disk under

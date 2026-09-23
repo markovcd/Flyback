@@ -54,6 +54,15 @@ Release run of the site make and keep in the user environment where there is
 none. A Debug build checks no keys at any stage, so a Debug site packs a build
 unsigned when the variable is empty.
 
+**A local build trusts the local key.** The app embeds the public key it takes
+updates from. Built on a developer's machine, it embeds the public half of
+`RELEASE_SIGNING_KEY`, which `ReleaseKey.targets` derives into `obj/` (and makes
+the key where there is none); `make.sh` and `release.sh` hand a Docker build the
+same half as `RELEASE_PUBLIC_KEY`. On GitHub and in any container without that
+argument, the committed `release-key.pem` is embedded, and `release.sh` checks
+the published signature against it. A local release therefore installs over
+local builds, and nothing built locally installs a local release over a real one.
+
 **The release is `release.sh`, and it runs off GitHub too.** It checks the key
 and the changelog, then builds the root Dockerfile's `release` stage: the gate,
 the publishes, Figures packed at the release's version, a zip per platform and

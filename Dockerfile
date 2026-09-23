@@ -91,6 +91,16 @@ COPY . .
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore Flyback.slnx --locked-mode
 
+# The public key the app trusts updates from, as base64 DER. Only a build on a
+# developer's machine passes one: release.sh and make.sh hand in the local test
+# key's, and on GitHub the committed release-key.pem stands.
+ARG RELEASE_PUBLIC_KEY=""
+
+RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
+      printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' "${RELEASE_PUBLIC_KEY}" \
+        > src/Flyback.App/Updates/release-key.pem; \
+    fi
+
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
 

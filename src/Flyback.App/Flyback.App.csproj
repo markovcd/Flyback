@@ -131,6 +131,9 @@
     <EmbeddedResource Include="Updates\release-key.pem" LogicalName="release-key.pem" />
   </ItemGroup>
 
+  <!-- A local build embeds the public half of RELEASE_SIGNING_KEY instead. -->
+  <Import Project="Updates\ReleaseKey.targets" />
+
   <ItemGroup>
     <!--
       The changelog, so the window that opens after an update can say what the
