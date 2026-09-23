@@ -357,8 +357,8 @@ public sealed partial class NodeEditor
     /// The box being looked into, and everything of it, over a canvas dimmed under it.
     /// </summary>
     /// <remarks>
-    /// The ring is solid and its ground opaque, so nothing under it shows through.
-    /// Its wires are drawn at full strength wherever they run, since what feeds the
+    /// The ring is solid and its ground nearly opaque, so the canvas under it only
+    /// just shows through. Its wires are drawn at full strength wherever they run, since what feeds the
     /// box and what it feeds are half of why it is being looked into.
     /// </remarks>
     private void DrawPeek(DrawingContext context, CanvasScene scene, IReadOnlySet<Guid> lifted)
@@ -389,7 +389,7 @@ public sealed partial class NodeEditor
 
         if (lifted)
         {
-            context.DrawRectangle(Background, null, ring);
+            context.DrawRectangle(PeekGround, null, ring);
 
             using (context.PushClip(ring)) DrawGrid(context);
         }

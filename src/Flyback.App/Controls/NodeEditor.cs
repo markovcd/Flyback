@@ -121,6 +121,9 @@ public sealed partial class NodeEditor : Control
     /// <summary>The ring round a box being looked into: solid, because it is over everything.</summary>
     private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
 
+    /// <summary>The ground inside a box being looked into: a hair transparent, so the canvas under it still shows.</summary>
+    private static readonly IBrush PeekGround = new SolidColorBrush(Colors.Canvas, 0.95);
+
     /// <summary>What the canvas outside a box being looked into is dimmed under.</summary>
     private static readonly IBrush PeekScrim = new SolidColorBrush(Colors.Edge, 0.78);
 
