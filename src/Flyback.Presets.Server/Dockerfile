@@ -12,7 +12,9 @@ ARG RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0
 FROM ${SDK} AS build
 WORKDIR /src
 
-COPY .editorconfig Directory.Build.props Directory.Build.targets global.json ./
+# Directory.Packages.props among them: it carries every package version, so a
+# restore without it has none.
+COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
 COPY site/assets site/assets
 COPY src/Flyback.Core src/Flyback.Core
 COPY src/Flyback.Engine src/Flyback.Engine

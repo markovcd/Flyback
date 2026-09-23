@@ -11,6 +11,14 @@
 *.fbks    text
 *.sh      text eol=lf
 
+# Docker reads both line by line and does not strip a carriage return, so a
+# CRLF checkout leaves every .dockerignore pattern ending in one and matching
+# nothing: the whole of bin/ and obj/ is then sent as build context and copied
+# into the image. Held to LF so a build on Windows has the context CI has.
+.dockerignore   text eol=lf
+Dockerfile      text eol=lf
+*/Dockerfile    text eol=lf
+
 *.png  binary
 *.ico  binary
 *.icns binary

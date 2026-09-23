@@ -78,8 +78,18 @@ COPY . .
 # Shared by every step that touches NuGet, including the per-platform publishes
 # below — those are what actually download something, since each runtime pack is
 # a fresh set of packages. With the cache a second build fetches nothing.
+#
+# Locked, so the packages.lock.json files committed beside each project are what
+# is resolved and a restore that would need anything else fails here instead of
+# quietly building against it. A version changed in Directory.Packages.props
+# therefore arrives with the lock files that version produces:
+#
+#   dotnet restore Flyback.slnx --force-evaluate
+#
+# Only this restore is locked. The publishes below restore a runtime pack per
+# platform, which no lock file taken without a runtime identifier describes.
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore Flyback.slnx
+    dotnet restore Flyback.slnx --locked-mode
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
@@ -92,6 +102,27 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # failing test to the console, so there is nothing to fish out of a log.
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build
+
+# The same tests again, measured. A second run rather than a flag on the one
+# above, because instrumentation rewrites the assemblies and several tests read
+# a built assembly's bytes and assert on its metadata — coverage.runsettings
+# says which ones and what it costs them. It also roughly doubles what the tests
+# take, which is not a price the gate should pay for a number nothing is allowed
+# to fail on.
+#
+# Its own stage, so nothing above waits for it: the gate is the first stage and
+# the publishes build on the gate, not on this.
+FROM gate AS measured
+ARG CONFIGURATION
+
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build \
+      --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura
+
+# The reports and nothing else, so the Coverage workflow can ask for them with
+# --output and keep them beside the run.
+FROM scratch AS coverage
+COPY --from=measured /src/TestResults/ /
 
 FROM gate AS publish
 ARG RIDS
