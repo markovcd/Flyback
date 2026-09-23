@@ -576,6 +576,26 @@ new code should be indistinguishable from the file it lands in.
 - **Split a big class by region, not by pattern.** A large partial class with a
   file per concern is the house shape (`MainWindow`, `NodeEditor`, `NodeCatalog`).
 
+### Drivable by an agent
+
+Most features here are built, tested and debugged by an agent with no eyes on
+the window, so every feature needs a way in that works without one. A feature
+that only a person watching the screen can check is not finished.
+
+- **A command before a window.** Whatever a patch does can be asked of
+  `flyback-cli` or `flyback-viewer`: `check`, `info`, `print --check`,
+  `render --at` for a still, `compare` for "is this still the same instrument",
+  `flyback-viewer --hidden --for` to hear it. A new question an agent keeps
+  answering with a throwaway test gets a command or a flag instead.
+- **Answers a script can read.** Exit codes mean one thing each (`Exit`), a
+  report has `--json`, and stdout carries only the answer.
+- **The editor headless.** A UI feature is reachable from a `UiTest` and, where
+  it has a look, from `PatchShotTests`. Screen coordinates and `SendKeys` are the
+  last resort (`running-the-app.md`), not the test.
+- **Say where it went wrong.** A failure names the module, the socket, the second
+  or the frame, the way `compare` says where two patches part, so the next step
+  is a fix rather than a bisect.
+
 ### Comments
 
 Doc comments are the norm, and they explain why a thing is the way it is, since
