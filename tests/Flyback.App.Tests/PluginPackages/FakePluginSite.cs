@@ -40,9 +40,19 @@ internal sealed class FakePluginSite(params Shared[] plugins) : HttpMessageHandl
 
     public int PageSize { get; set; } = 24;
 
+    /// <summary>What a search for a word waits for before it is answered, as a slow site keeps one waiting.</summary>
+    public Task Searching { get; set; } = Task.CompletedTask;
+
     public PluginSite Site() => new(new HttpClient(this), Root);
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        if (request.RequestUri!.Query.Contains("q=", StringComparison.Ordinal)) await Searching.WaitAsync(cancellationToken);
+
+        return await Answer(request);
+    }
+
+    private Task<HttpResponseMessage> Answer(HttpRequestMessage request)
     {
         var uri = request.RequestUri!;
 

@@ -183,7 +183,10 @@ internal static class PluginInstallView
     /// <param name="described">What its folder holds, or null where that cannot be read.</param>
     /// <param name="fromPackage">The package that put it there, or null where none did.</param>
     /// <param name="state">Whether it is loaded or waiting for the next start.</param>
-    /// <param name="newer">The newer version the plugin site has, or null for none.</param>
+    /// <param name="newer">
+    /// The newer version the plugin site has, or null for none. The dialog is up before
+    /// it is answered, and offers the update once it is.
+    /// </param>
     /// <param name="removal">Why Remove is off, or null where it is on.</param>
     /// <param name="id">The ids it loaded under, or empty where it is not loaded.</param>
     /// <param name="provider">Who its modules belong to in a saved patch, or empty where it adds none this run.</param>
@@ -193,7 +196,7 @@ internal static class PluginInstallView
         InstalledPlugin? fromPackage,
         string? folder,
         string state,
-        string? newer = null,
+        Task<string?>? newer = null,
         string? removal = null,
         string id = "",
         string provider = "")
@@ -218,14 +221,6 @@ internal static class PluginInstallView
         line.Name = "pluginState";
         page.Children.Add(line);
 
-        if (newer is not null)
-        {
-            var offer = Wrapped($"The plugin site has {newer}.", Text.Body);
-
-            offer.Name = "pluginNewer";
-            page.Children.Add(offer);
-        }
-
         var buttons = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -233,15 +228,6 @@ internal static class PluginInstallView
             HorizontalAlignment = HorizontalAlignment.Right,
             Margin = new Thickness(0, 6, 0, 0),
         };
-
-        if (newer is not null)
-        {
-            var update = new Button { Name = "update", Content = "Update", MinWidth = 96 };
-
-            ToolTip.SetTip(update, $"Download {newer} and see what it is before installing it.");
-            update.Click += (_, _) => Dialog.Close(update, PluginAnswer.Download);
-            buttons.Children.Add(update);
-        }
 
         buttons.Children.Add(RemoveButton(removal));
 
@@ -252,7 +238,26 @@ internal static class PluginInstallView
 
         page.Children.Add(buttons);
 
+        if (newer is not null) _ = OfferAsync(page, buttons, newer);
+
         return page;
+    }
+
+    /// <summary>Says what newer build the plugin site has, and offers Update, once the site has answered.</summary>
+    private static async Task OfferAsync(StackPanel page, StackPanel buttons, Task<string?> newer)
+    {
+        if (await newer is not { } found) return;
+
+        var offer = Wrapped($"The plugin site has {found}.", Text.Body);
+
+        offer.Name = "pluginNewer";
+        page.Children.Insert(page.Children.IndexOf(buttons), offer);
+
+        var update = new Button { Name = "update", Content = "Update", MinWidth = 96 };
+
+        ToolTip.SetTip(update, $"Download {found} and see what it is before installing it.");
+        update.Click += (_, _) => Dialog.Close(update, PluginAnswer.Download);
+        buttons.Children.Insert(0, update);
     }
 
     /// <summary>Remove, off with <paramref name="refusal"/> as its tip where that is given.</summary>

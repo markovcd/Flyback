@@ -193,7 +193,8 @@ public sealed partial class MainWindow
             return (pluginFolder is null ? null : Path.Combine(pluginFolder, assembly), waiting, waiting?.Description);
         });
 
-        var newer = await NewerAsync(site, plugin);
+        // Not waited for: a site that is down takes seconds to say so.
+        var newer = NewerAsync(site, plugin);
         var (folder, fromPackage, described) = await reading;
 
         var removal = plugin.Removing ? "It is removed at the next start already."
@@ -213,13 +214,13 @@ public sealed partial class MainWindow
 
         var view = PluginInstallView.Installed(
             plugin.Plugin, described, fromPackage, folder, plugin.State,
-            newer is null ? null : $"{newer.Plugin.Name} {newer.Plugin.Version}", removal,
+            Named(newer), removal,
             string.Join(", ", ids), string.Join(", ", providers));
 
         return await this.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.
-            PluginAnswer.Download => await InstallFromSiteAsync(site!, newer!, () => { }),
+            PluginAnswer.Download => await InstallFromSiteAsync(site!, (await newer)!, () => { }),
             PluginAnswer.Remove => Remove(installer!, assembly, plugin.Plugin.Name),
             _ => null,
         };
@@ -250,6 +251,9 @@ public sealed partial class MainWindow
             return null;
         }
     }
+
+    private static async Task<string?> Named(Task<SitePlugin?> newer) =>
+        await newer is { } found ? $"{found.Plugin.Name} {found.Plugin.Version}" : null;
 
     /// <summary>Removes the plugin in the folder <paramref name="assembly"/>, and says what became of it.</summary>
     private static string Remove(PluginInstaller installer, string assembly, string name)

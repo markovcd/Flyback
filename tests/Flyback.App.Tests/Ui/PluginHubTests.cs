@@ -454,6 +454,7 @@ public sealed class PluginHubTests : UiTest
 
         var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
 
+        Pump(() => All<TextBlock>(shown).Any(t => t.Name == "pluginNewer"), window);
         All<TextBlock>(shown).Single(t => t.Name == "pluginNewer").Text.ShouldBe("The plugin site has Picture 99.0.0.");
         version.ShouldNotBe("99.0.0");
 
@@ -463,6 +464,33 @@ public sealed class PluginHubTests : UiTest
 
         All<ModalOverlay>(window).Count().ShouldBe(2, "the downloaded package is asked about over the plugins window");
         All<Button>(All<ModalOverlay>(window).Last()).ShouldContain(b => b.Name == "remove", "it is installed");
+    }
+
+    /// <summary>A site that is slow to answer, or down, does not keep the dialog from opening.</summary>
+    [AvaloniaFact]
+    public void An_installed_plugin_opens_before_the_site_says_whether_it_has_newer()
+    {
+        new PluginInstaller(Plugins, [], checkKeys: false).Stage(Picture(), PluginPackage.ThisPlatform);
+
+        var answer = new TaskCompletionSource();
+        using var site = new FakePluginSite(new Shared("p2", "Picture", Assembly: Packages.Folder, Version: "99.0.0", Package: Packages.For("win", "osx", "linux")))
+        {
+            Searching = answer.Task,
+        };
+        var window = OpenPlugins(site);
+
+        Click(window, InstalledRow(window));
+        Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
+
+        var shown = All<StackPanel>(window).Single(p => p.Name == "pluginInstalled");
+
+        All<TextBlock>(shown).ShouldNotContain(t => t.Name == "pluginNewer");
+        All<Button>(shown).ShouldNotContain(b => b.Name == "update");
+
+        answer.SetResult();
+        Pump(() => All<Button>(shown).Any(b => b.Name == "update"), window);
+
+        All<TextBlock>(shown).Single(t => t.Name == "pluginNewer").Text.ShouldBe("The plugin site has Picture 99.0.0.");
     }
 
     [AvaloniaFact]
