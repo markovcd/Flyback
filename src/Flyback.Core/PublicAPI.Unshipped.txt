@@ -127,3 +127,6 @@ override sealed Flyback.Core.Graph.MidiClockExtra.Equals(Flyback.Core.Graph.Node
 static Flyback.Core.Graph.MidiClockExtra.operator !=(Flyback.Core.Graph.MidiClockExtra? left, Flyback.Core.Graph.MidiClockExtra? right) -> bool
 static Flyback.Core.Graph.MidiClockExtra.operator ==(Flyback.Core.Graph.MidiClockExtra? left, Flyback.Core.Graph.MidiClockExtra? right) -> bool
 static Flyback.Core.Graph.MidiSignal.ClockKey(string! source, string! signal) -> string!
+const Flyback.Core.Graph.MidiExtra.ChannelField = "channel" -> string!
+static Flyback.Core.Graph.MidiSignal.Channeled(string! source, int channel) -> string!
+static Flyback.Core.Graph.MidiSignal.SourceOf(string! key) -> string!

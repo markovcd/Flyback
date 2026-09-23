@@ -61,6 +61,58 @@ public class MidiDeviceTests
     private static double Clock(LiveValues block, string source, string signal) =>
         block.At(block.Keys.ToList().IndexOf(MidiSignal.ClockKey(source, signal)));
 
+    // ---- channels -------------------------------------------------------------
+
+    /// <summary>
+    /// A drum machine puts each track on its own channel. A module on channel 3
+    /// hears that track and no other; one on the box hears every track.
+    /// </summary>
+    [Fact]
+    public void A_note_on_a_channel_plays_that_channels_module_and_the_boxs()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+        var third = Reading(MidiSignal.Channeled(Device, 3));
+        var second = Reading(MidiSignal.Channeled(Device, 2));
+        var whole = Reading(Device);
+
+        hub.Follow(third, second, whole);
+        backend.Opened.Single().Send(new MidiMessage(MidiAction.Down, 64, 0.5f) { Channel = 3 });
+
+        Read(third, MidiSignal.Channeled(Device, 3), MidiSignal.Gate).ShouldBe(1);
+        Read(second, MidiSignal.Channeled(Device, 2), MidiSignal.Gate).ShouldBe(0);
+        Read(whole, Device, MidiSignal.Gate).ShouldBe(1);
+    }
+
+    [Fact]
+    public void A_program_on_a_channel_opens_the_device()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+
+        hub.Follow(Reading(MidiSignal.Channeled(Device, 5)));
+
+        backend.Opened.Select(p => p.Id).ShouldBe([Device]);
+    }
+
+    [Fact]
+    public void A_note_held_on_a_channel_is_let_go_when_the_device_closes()
+    {
+        var backend = new FakeInput("Test Keyboard");
+        using var hub = new MidiHub(backend);
+        var channel = MidiSignal.Channeled(Device, 3);
+
+        hub.Follow(Reading(channel));
+        backend.Opened.Single().Send(new MidiMessage(MidiAction.Down, 64, 0.5f) { Channel = 3 });
+
+        hub.Follow(Reading(MidiSources.Keyboard));
+
+        var again = Reading(channel);
+        hub.Follow(again);
+
+        Read(again, channel, MidiSignal.Gate).ShouldBe(0);
+    }
+
     // ---- the clock ------------------------------------------------------------
 
     /// <summary>A Clock In wired in is as much a reason to hold the device as a MIDI In is.</summary>

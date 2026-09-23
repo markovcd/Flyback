@@ -33,7 +33,8 @@ public partial class NodeCatalog
             ],
             EmitMidi,
             "Keyboard or MIDI input. 'pitch' is the current note; 'gate' is high while a key is held; "
-            + "'velocity' follows note strength; 'trigger' fires on each note start. The index selects a polyphonic voice." )
+            + "'velocity' follows note strength; 'trigger' fires on each note start. The index selects a polyphonic voice; "
+            + "'channel' hears one of an instrument's channels, or every one at 0." )
         {
             Extras = [new MidiExtra()],
         };
@@ -183,11 +184,16 @@ public partial class NodeCatalog
         var state = node.Extra<ExtraState>(MidiExtra.StateKey);
         var device = state?.Chosen(MidiExtra.DeviceField);
         var index = (int)(state?.Number(MidiExtra.IndexField) ?? 0f);
+        var channel = (int)(state?.Number(MidiExtra.ChannelField) ?? 0f);
 
         // A patch edited by hand is the one way an empty device arrives, and the
         // keyboard is the honest thing to fall back to: it is what a fresh module
         // listens to, and it is always there.
         if (string.IsNullOrWhiteSpace(device)) device = MidiSources.Keyboard;
+
+        // The computer's keys have no channel, so a module asking for one there
+        // hears the keys anyway rather than nothing.
+        if (device != MidiSources.Keyboard) device = MidiSignal.Channeled(device, channel);
 
         Func<string, string> key = index == 0
             ? (signal => MidiSignal.AutoKey(device, node.Node, signal))
@@ -224,9 +230,10 @@ public sealed record MidiExtra : NodeExtra
     /// <summary>What this is filed under, in a saved patch and on a context.</summary>
     public const string StateKey = "midi";
 
-    /// <summary>The fields selecting the instrument and polyphonic voice.</summary>
+    /// <summary>The fields selecting the instrument, its channel and the polyphonic voice.</summary>
     public const string DeviceField = "device";
     public const string IndexField = "index";
+    public const string ChannelField = "channel";
 
     public override string Key => StateKey;
 
@@ -238,10 +245,12 @@ public sealed record MidiExtra : NodeExtra
             [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
             MidiSources.Keyboard),
         new ExtraField.Number(IndexField, "voice", new PortSpec("voice", PortKind.Scalar, 0f, 0f, 8f, -1, PortDisplay.Integer)),
+        new ExtraField.Number(ChannelField, "channel", new PortSpec("channel", PortKind.Scalar, 0f, 0f, 16f, -1, PortDisplay.Integer)),
     ];
 
     /// <summary>
-    /// The ordinary fold, and a word about a device that is not here. Reported
+    /// The ordinary fold, and a word about a device that is not here, or a channel
+    /// asked of the computer's keys, which have none. Reported
     /// rather than repaired, which is <see cref="SampleExtra"/>'s bargain with a
     /// missing file: a patch written on a machine with a keyboard still means that
     /// keyboard, and quietly moving it to the computer's keys would be a different
@@ -261,6 +270,15 @@ public sealed record MidiExtra : NodeExtra
                 + "until that instrument is plugged in, or until another is picked in the panel.",
                 IssueSeverity.Warning));
         }
+        else if (chosen == MidiSources.Keyboard
+            && Fields[2] is ExtraField.Number channel
+            && channel.Value(node.StateOf(Key)?[ChannelField]) != 0f)
+        {
+            env.Report(new CompileIssue(
+                node.Id,
+                $"'{env.Title}' names a channel, and the computer keyboard has none. It hears the keys as before.",
+                IssueSeverity.Warning));
+        }
 
         return base.Fold(ctx, node, env);
     }
@@ -275,7 +293,8 @@ public sealed record MidiExtra : NodeExtra
         var offered = string.Join(", ", MidiSources.All.Select(source => source.Id));
 
         return $"  midi   device, which instrument it listens to — one of {offered}, "
-            + "as a string; not a knob; voice, 0 for automatic assignment or 1 to 8";
+            + "as a string; not a knob; voice, 0 for automatic assignment or 1 to 8; "
+            + "channel, 0 for every channel or 1 to 16 for one of them";
     }
 }
 

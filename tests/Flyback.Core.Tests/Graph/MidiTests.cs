@@ -104,6 +104,51 @@ public class MidiTests
             ignoreOrder: true);
     }
 
+    /// <summary>
+    /// A module on one channel of a box asks for that channel by name, so the
+    /// shell keeps its voices apart from the box's own.
+    /// </summary>
+    [Fact]
+    public void A_module_on_a_channel_asks_for_that_channel()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = "midi:box",
+            [MidiExtra.IndexField] = 1f,
+            [MidiExtra.ChannelField] = 3f,
+        });
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        builder.Wire(midi, Gate, sink, NodeCatalog.OutputLeftPort);
+
+        var result = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
+
+        result.Program.LiveInputs.ShouldContain(MidiSignal.Key("midi:box@3", MidiSignal.Gate));
+        MidiSignal.SourceOf("midi:box@3/gate").ShouldBe("midi:box");
+        MidiSignal.SourceOf("midi:box/auto/pitch").ShouldBe("midi:box");
+    }
+
+    /// <summary>The computer keyboard has no channels, so a channel asked of it is said and set aside.</summary>
+    [Fact]
+    public void A_channel_asked_of_the_keyboard_is_reported_and_the_keys_still_heard()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var midi = builder.Add(NodeCatalog.MidiTypeId, 0, 0);
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.IndexField] = 1f,
+            [MidiExtra.ChannelField] = 3f,
+        });
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        builder.Wire(midi, Gate, sink, NodeCatalog.OutputLeftPort);
+
+        var result = builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
+
+        result.Program.LiveInputs.ShouldContain(MidiSignal.Key(MidiSources.Keyboard, MidiSignal.Gate));
+        result.Issues.ShouldContain(issue => issue.Message.Contains("channel"));
+    }
+
     /// <summary>Every other patch in the catalog is played by nothing at all.</summary>
     [Fact]
     public void A_patch_without_one_asks_for_nothing()

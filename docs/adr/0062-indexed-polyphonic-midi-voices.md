@@ -71,3 +71,19 @@ The computer keyboard's old last-note-priority behavior is no longer the
 contract. Existing patches that use only voice 1 retain their original live
 signal names and behavior for single-note use, while patches can opt into
 polyphony by adding modules with higher indices.
+
+## Amendment, 2026-09-23: a voice can belong to one channel
+
+A drum machine puts each of its tracks on a MIDI channel of its own, and the
+voices above merge every channel of an instrument into one set, so a kick on
+channel 1 and a hi-hat on channel 2 fought over the same eight voices and no
+module could tell them apart. A MIDI In now has a `channel` field, 0 for the
+whole instrument as before or 1 to 16 for one channel.
+
+A channel is named as an instrument of its own — `midi:syntakt@3` — rather than
+as a segment of the key, so the hub's voice sets, the automatic assignment and
+the indexed keys all go on working unchanged over the longer name. A note on a
+channel plays two voice sets, the instrument's own and the channel's, since a
+module listening to the box and one listening to its channel 3 are both meant to
+hear it. The computer's keys have no channels, so a channel asked of the keyboard
+is reported and the keys are heard as before.

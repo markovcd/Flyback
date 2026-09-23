@@ -209,6 +209,21 @@ public sealed class PatchContext
     public void Push() => Clock.WriteTo(Live, Machine);
 
     /// <summary>
+    /// The drum machine strikes or lets go of a note on one of its channels,
+    /// written the way the shell writes a voice: under the channel's name and
+    /// under the machine's own.
+    /// </summary>
+    public void Strike(int channel, int note, bool down)
+    {
+        foreach (var source in new[] { Machine, MidiSignal.Channeled(Machine, channel) })
+        {
+            Live.Set(MidiSignal.Key(source, MidiSignal.Pitch), note);
+            Live.Set(MidiSignal.Key(source, MidiSignal.Gate), down ? 1f : 0f);
+            Live.Set(MidiSignal.Key(source, MidiSignal.Velocity), down ? 1f : 0f);
+        }
+    }
+
+    /// <summary>
     /// The block the sound program reads its live inputs from, fresh for each
     /// program and filled with the drum machine's clock the way the shell fills
     /// a new block with what is already held.

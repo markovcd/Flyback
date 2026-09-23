@@ -344,26 +344,15 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         foreach (var id in opening) Start(id);
     }
 
-    /// <summary>Whether a program reads any of one instrument's signals, its clock's included.</summary>
-    /// <remarks>
-    /// Every one asked rather than one, because a patch is free to use only the
-    /// pitch, and dead-code elimination will have dropped the three it does not
-    /// touch. Asking about the gate alone would leave a keyboard unopened for a
-    /// patch that only wanted the note.
-    /// </remarks>
+    /// <summary>
+    /// Whether a program reads anything of one instrument's: any voice, on any
+    /// channel, or its clock. A patch is free to use only the pitch, and
+    /// dead-code elimination will have dropped the three it does not touch, so
+    /// asking about the gate alone would leave a keyboard unopened for a patch
+    /// that only wanted the note.
+    /// </summary>
     private static bool Reads(LiveValues block, string source) =>
-        block.Reads(MidiSignal.Key(source, MidiSignal.Pitch))
-        || block.Reads(MidiSignal.Key(source, MidiSignal.Gate))
-        || block.Reads(MidiSignal.Key(source, MidiSignal.Velocity))
-        || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes))
-        || ReadsClock(block, source);
-
-    private static bool ReadsClock(LiveValues block, string source) =>
-        block.Reads(MidiSignal.ClockKey(source, MidiSignal.Beat))
-        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Rate))
-        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Bpm))
-        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Running))
-        || block.Reads(MidiSignal.ClockKey(source, MidiSignal.Starts));
+        block.Keys.Any(key => MidiSignal.SourceOf(key) == source);
 
     /// <summary>
     /// Opens one device and starts listening to it. A device that will not open
@@ -405,12 +394,16 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         lock (gate)
         {
-            var sounding = voices.TryGetValue(port.Id, out var sourceVoices) && sourceVoices.Any(voice => voice.Playing);
+            var sounding = voices
+                .Where(entry => MidiSignal.SourceOf(entry.Key) == port.Id)
+                .SelectMany(entry => entry.Value)
+                .Where(voice => voice.Playing)
+                .ToList();
             var ticking = clocks.TryGetValue(port.Id, out var clock) && clock.Running;
 
-            if (!sounding && !ticking) return;
+            if (sounding.Count == 0 && !ticking) return;
 
-            if (sounding) foreach (var voice in sourceVoices!) voice.Silence();
+            foreach (var voice in sounding) voice.Silence();
             if (ticking) clock!.Stop();
         }
 
@@ -442,16 +435,20 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         {
             switch (message.Action)
             {
+                // A note goes to the whole instrument's voices and to its
+                // channel's, which are two sets: a module listening to channel 3
+                // and one listening to the box are both played by it.
                 case MidiAction.Down:
-                    Down(source, message.Note, message.Velocity);
+                    foreach (var pool in Pools(source, message.Channel)) Down(pool, message.Note, message.Velocity);
                     break;
 
                 case MidiAction.Up:
-                    Up(source, message.Note);
+                    foreach (var pool in Pools(source, message.Channel)) Up(pool, message.Note);
                     break;
 
                 case MidiAction.AllOff:
-                    foreach (var voice in Voices(source)) voice.Silence();
+                    foreach (var pool in Pools(source, message.Channel))
+                        foreach (var voice in Voices(pool)) voice.Silence();
                     break;
 
                 case MidiAction.Start:
@@ -498,6 +495,17 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         if (clocks.TryGetValue(source, out var existing)) return existing;
 
         return clocks[source] = new MidiClock();
+    }
+
+    /// <summary>
+    /// The voice sets a message on one channel plays: the instrument's own, and
+    /// the channel's where the message came on one.
+    /// </summary>
+    private static IEnumerable<string> Pools(string source, int channel)
+    {
+        yield return source;
+
+        if (channel > 0) yield return MidiSignal.Channeled(source, channel);
     }
 
     /// <summary>What the picker calls an instrument, for saying which one would not open.</summary>

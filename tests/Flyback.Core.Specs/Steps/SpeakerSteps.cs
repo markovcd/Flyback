@@ -43,6 +43,12 @@ public sealed class SpeakerSteps(PatchContext context)
         }
     }
 
+    [When("the drum machine plays a note on channel {int}")]
+    public void WhenTheMachinePlaysOn(int channel) => context.Strike(channel, 60, true);
+
+    [When("the drum machine lets the note on channel {int} go")]
+    public void WhenTheMachineLetsGo(int channel) => context.Strike(channel, 60, false);
+
     [When("the drum machine stops")]
     public void WhenTheMachineStops()
     {

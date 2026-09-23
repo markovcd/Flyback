@@ -114,6 +114,32 @@ public static class MidiSignal
     public static string AutoKey(string source, Guid node, string signal) =>
         $"{source}/auto/{node:N}/{signal}";
 
+    /// <summary>
+    /// One channel of an instrument, named as an instrument of its own, so a
+    /// module listening to channel 3 of a box and one listening to the whole box
+    /// keep separate voices. Channel 0 is the whole box.
+    /// </summary>
+    /// <remarks>
+    /// A suffix rather than a segment of the key, because everything that reads a
+    /// key by its segments — the automatic voices most of all — then goes on
+    /// working without knowing channels exist. An id is a slug or the keyboard,
+    /// so the '@' cannot occur in one.
+    /// </remarks>
+    public static string Channeled(string source, int channel) =>
+        channel <= 0 ? source : $"{source}@{channel}";
+
+    /// <summary>The instrument a key belongs to, whichever channel and signal it names.</summary>
+    public static string SourceOf(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        var slash = key.IndexOf('/');
+        var source = slash < 0 ? key : key[..slash];
+        var at = source.IndexOf('@');
+
+        return at < 0 ? source : source[..at];
+    }
+
     /// <summary>Beats since the instrument pressed Start, as of its latest tick — see <see cref="MidiClock.Beat"/>.</summary>
     public const string Beat = "beat";
 
