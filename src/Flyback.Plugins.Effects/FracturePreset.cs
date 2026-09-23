@@ -515,14 +515,15 @@ internal sealed class FracturePreset : PresetBench
         // --- the picture: sparks ---------------------------------------------
 
         // The bells are squares on a grid of four to the unit, and so is the lead while
-        // it has their place. Each cell has a number of
-        // its own — a sine of where it is, scattered — the die that chose the note is
-        // added to it, and the top seventh of what results lights: a different handful of
-        // cells for every note.
+        // it has their place. Each cell has a number of its own, the die that chose the
+        // note is added to it, and the top seventh of what results lights: a different
+        // handful of cells for every note. The number is a Noise read at the cell's
+        // whole corner, where value noise is the hash itself and so the same on the GPU.
         var cellX = Times(coord, 4f);
         var cellY = Times(coord, 4f, 1);
-        var scatter = Fraction(Times(
-            Sine(Sum(Times(Floor(cellX), 12.9898f), Times(Floor(cellY), 78.233f))), 43758.5f));
+        var scatter = b.Add("pattern.noise", (2, 5f), (3, 1f));
+        b.Wire(Floor(cellX), 0, scatter, 0)
+         .Wire(Floor(cellY), 0, scatter, 1);
         var chosen = b.Add("math.step", (0, 0.85f));
         var tile = b.Add(BoxType, (2, 0.3f), (3, 0.3f), (4, 0f));
         var tileFill = b.Add(FillType, (1, 0.02f));

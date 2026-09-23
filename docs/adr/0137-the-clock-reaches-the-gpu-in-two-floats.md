@@ -55,4 +55,5 @@ identical. A lattice index that lands on an integer can still floor differently.
 A hash built as `fract(sin(n) × 43758.5)` still differs between the two, at
 nought seconds as much as a year in, because a GPU's `sin` is not correctly
 rounded and the multiplication magnifies it. That is not a clock problem, and
-this does not touch it.
+this does not touch it: a preset that wants a hash reads Noise at whole lattice
+points, which is the engine's integer hash on both, as Fracture's sparks do.
