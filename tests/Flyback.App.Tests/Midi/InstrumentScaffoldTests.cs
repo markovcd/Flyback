@@ -10,7 +10,7 @@ namespace Flyback.App.Tests.Midi;
 /// <summary>
 /// An instrument picked from the module list arrives whole and ready to play
 /// from: every track a module on its own channel, the clock following the box,
-/// and the lot boxed under the instrument's name.
+/// loose on the canvas so the spare tracks are one Delete away.
 /// </summary>
 public class InstrumentScaffoldTests
 {
@@ -48,30 +48,40 @@ public class InstrumentScaffoldTests
         new ExtraState(new MidiClockExtra().Fields, clock.StateOf(MidiClockExtra.StateKey)).Chosen(MidiClockExtra.DeviceField).ShouldBe(Device);
     }
 
+    /// <summary>A group is drawn as one box with every socket on it, which nobody could wire from.</summary>
     [Fact]
-    public void The_modules_are_boxed_under_the_instruments_name()
+    public void The_modules_arrive_loose_rather_than_boxed()
     {
-        var fragment = InstrumentScaffold.Build(Device, Syntakt());
-
-        var box = fragment.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
-
-        box.Name.ShouldBe("Syntakt");
-        box.Members.Count.ShouldBe(fragment.Nodes.Count);
+        InstrumentScaffold.Build(Device, Syntakt()).Groups.ShouldBeNull();
     }
 
-    /// <summary>A column, each module clear of the one above, so nothing lands on anything.</summary>
+    /// <summary>
+    /// Columns of seven, each module clear of the one above and each column clear
+    /// of the last, so nothing lands on anything and the box fits beside a preview.
+    /// </summary>
     [Fact]
-    public void The_modules_stand_in_a_column_without_overlapping()
+    public void The_modules_stand_in_columns_without_overlapping()
     {
         var fragment = InstrumentScaffold.Build(Device, Syntakt());
-        var ordered = fragment.Nodes.OrderBy(node => node.Y).ToList();
+        var columns = fragment.Nodes.GroupBy(node => node.X).OrderBy(column => column.Key).ToList();
 
-        for (var i = 1; i < ordered.Count; i++)
+        columns.Count.ShouldBe(2);
+        columns[0].Count().ShouldBe(7);
+        columns[1].Count().ShouldBe(7);
+
+        for (var c = 1; c < columns.Count; c++)
+            columns[c].Key.ShouldBeGreaterThan(columns[c - 1].Key + NodeGeometry.Width);
+
+        foreach (var column in columns)
         {
-            var above = NodeGeometry.Bounds(ordered[i - 1], NodeCatalog.Require(ordered[i - 1].TypeId));
+            var ordered = column.OrderBy(node => node.Y).ToList();
 
-            ordered[i].X.ShouldBe(ordered[i - 1].X);
-            ordered[i].Y.ShouldBeGreaterThan(above.Bottom);
+            for (var i = 1; i < ordered.Count; i++)
+            {
+                var above = NodeGeometry.Bounds(ordered[i - 1], NodeCatalog.Require(ordered[i - 1].TypeId));
+
+                ordered[i].Y.ShouldBeGreaterThan(above.Bottom);
+            }
         }
     }
 
@@ -83,7 +93,6 @@ public class InstrumentScaffoldTests
         var fragment = InstrumentScaffold.Build("midi:keys", keyboard);
 
         fragment.Nodes.Select(node => node.TypeId).ShouldBe([NodeCatalog.MidiTypeId]);
-        fragment.Groups.ShouldBeNull();
     }
 
     /// <summary>What lands compiles as it is, so the first sound is one wire away.</summary>
@@ -105,6 +114,6 @@ public class InstrumentScaffoldTests
     [Fact]
     public void The_list_says_what_a_pick_adds()
     {
-        InstrumentScaffold.Describe(Syntakt()).ShouldBe("13 tracks and a clock, boxed as one.");
+        InstrumentScaffold.Describe(Syntakt()).ShouldBe("13 tracks and a clock, one module each.");
     }
 }

@@ -75,8 +75,8 @@ public sealed partial class MainWindow
             editor.Focus();
         }
 
-        // An instrument arrives whole: its clock and a module per track, boxed,
-        // built for the port it is on right now. See InstrumentScaffold.
+        // An instrument arrives whole: its clock and a module per track, built
+        // for the port it is on right now. See InstrumentScaffold.
         void AddInstrument(PanelInstrument instrument)
         {
             paletteFlyout.Hide();
@@ -86,7 +86,7 @@ public sealed partial class MainWindow
             usage.Count(Used.Added);
             Report(wiring is null
                 ? $"Added {instrument.Profile.Name} — {added.Count} modules, one per track. Delete the tracks you will not use."
-                : $"Added {instrument.Profile.Name}. The wire was left loose: a box has more than one socket to choose from.");
+                : $"Added {instrument.Profile.Name}. The wire was left loose: there is more than one module to choose from.");
 
             editor.Focus();
         }

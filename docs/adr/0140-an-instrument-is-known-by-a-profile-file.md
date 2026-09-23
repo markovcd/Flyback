@@ -42,10 +42,12 @@ the engine's picker is built long before anything can read a file.
 **The module list offers the instrument whole.** While a known instrument is
 plugged in it is listed above the groups, and picking it adds a fragment built
 from the profile for the port it is on: a Clock In where it conducts and a MIDI
-In per track on its channel, named after the track, boxed under the
-instrument's name. Built when picked rather than kept as a preset, because the
-one thing a preset could not know is the device id the port has on this
-machine, and every module in the fragment stores it.
+In per track on its channel, named after the track, in columns of seven. Built
+when picked rather than kept as a preset, because the one thing a preset could
+not know is the device id the port has on this machine, and every module in the
+fragment stores it. Loose rather than grouped: a group is drawn as one box with
+every socket that crosses its edge, and a box with fifty sockets is not a thing
+anybody wires from.
 
 **A page belongs to a kind of track.** The Syntakt's FX track reuses controller
 numbers its audio tracks give to other knobs, so a page names the kind of track
