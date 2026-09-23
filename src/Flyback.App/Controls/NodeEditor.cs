@@ -129,9 +129,10 @@ public sealed partial class NodeEditor : Control
 
     /// <summary>
     /// How strongly a wire leaving a box being looked into is drawn at its far end,
-    /// against full strength where it leaves the box.
+    /// against full strength where it leaves the box. It reaches nothing, so no edge
+    /// is left against the socket it runs into.
     /// </summary>
-    private const double PeekWireFar = 0.15, PeekWireNear = 0.7;
+    private const double PeekWireFar = 0, PeekWireNear = 0.7;
 
     /// <summary>How much wider than its title a tab is drawn, and how far in the title sits.</summary>
     private const double TabPadding = 9;
