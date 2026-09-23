@@ -112,12 +112,16 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 #
 # Its own stage, so nothing above waits for it: the gate is the first stage and
 # the publishes build on the gate, not on this.
+#
+# The whole run takes about six minutes, so a test host still going at fifteen
+# has hung: the hang dump prints the tests it was in the middle of and ends it.
 FROM gate AS measured
 ARG CONFIGURATION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build \
-      --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura
+      --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura \
+      --hangdump --hangdump-timeout 15m --hangdump-type Mini
 
 # The reports and nothing else, so the Coverage workflow can ask for them with
 # --output and keep them beside the run.

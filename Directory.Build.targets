@@ -10,9 +10,13 @@
     Coverage is reported and never enforced, and it is measured weekly rather
     than in the gate — see the `measured` stage in the Dockerfile and
     coverage.runsettings for why.
+
+    The hang dump lets a run that stops making progress name the tests it was in
+    the middle of and end, rather than sit silent until the job's own limit.
   -->
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
   </ItemGroup>
 
   <!--
