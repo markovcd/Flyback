@@ -98,8 +98,9 @@ public sealed class FlybackApp : Application
             // does: Finder delivers "open this file" as an activation instead,
             // whether it is what launches the program or a file dropped on its
             // Dock icon while it is already running, and there is no other way
-            // to hear about either.
-            if (desktop is IActivatableLifetime activatable)
+            // to hear about either. The desktop lifetime does not implement it;
+            // the application hands it out as a feature.
+            if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
             {
                 activatable.Activated += (_, e) =>
                 {
