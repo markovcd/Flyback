@@ -35,7 +35,7 @@ internal static class InspectorHelp
         + "Ctrl+C, Ctrl+X and Ctrl+V copy, cut and paste, "
         + "and Ctrl+D duplicates without touching the clipboard.\n"
         + "Ctrl+G draws a selection as one box and Ctrl+Shift+G "
-        + "puts it back; double-click a box to open it.\n"
+        + "puts it back; double-click a box to look inside, Esc to put it back.\n"
         + "Ctrl+E opens every box the selection touches at once, "
         + "Ctrl+Shift+E shuts them again.\n"
         + "Ctrl+Shift+L lays out only what is selected, where "

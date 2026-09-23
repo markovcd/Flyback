@@ -10,12 +10,32 @@ namespace Flyback.App.Controls;
 /// on top answers first — fine for the hundreds a patch has and not for tens of
 /// thousands (ADR-0017).
 /// </remarks>
-internal readonly struct CanvasScene(Patch patch)
+/// <param name="patch">What is on the canvas.</param>
+/// <param name="peek">
+/// A shut box being looked into: drawn open, over everything else, while it stays
+/// shut in the patch. Its ring covers whatever lies under it.
+/// </param>
+internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
 {
     // Everything below is drawing and pointing. Nothing here touches the graph:
     // a collapsed box is several modules that are not being painted and one that
     // is, and every wire still runs between exactly the modules it always ran
     // between. See NodeGroup.
+
+    /// <summary>The box being looked into, if one is.</summary>
+    public NodeGroup? Peek => peek;
+
+    /// <summary>Whether this module is inside the box being looked into.</summary>
+    public bool InPeek(Guid nodeId) => peek is not null && peek.Members.Contains(nodeId);
+
+    /// <summary>Whether the ring of the box being looked into lies over this point.</summary>
+    public bool Covered(Point graph) =>
+        peek is not null && OpenGroup(peek) is var (outline, handle)
+        && (outline.Contains(graph) || handle.Contains(graph));
+
+    /// <summary>The box this module is drawn behind, which the one being looked into is not.</summary>
+    private NodeGroup? ShutGroupOf(Guid nodeId) =>
+        patch.CollapsedGroupOf(nodeId) is { } group && !ReferenceEquals(group, peek) ? group : null;
 
     /// <summary>
     /// Every group that is currently a box, with the sockets it shows and the room
@@ -32,7 +52,7 @@ internal readonly struct CanvasScene(Patch patch)
 
         foreach (var group in patch.Groups)
         {
-            if (!group.Collapsed) continue;
+            if (!group.Collapsed || ReferenceEquals(group, peek)) continue;
 
             var sockets = patch.SocketsOf(group);
             var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
@@ -42,7 +62,7 @@ internal readonly struct CanvasScene(Patch patch)
     }
 
     /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
-    public bool Shut(Guid nodeId) => patch.CollapsedGroupOf(nodeId) is not null;
+    public bool Shut(Guid nodeId) => ShutGroupOf(nodeId) is not null;
 
     /// <summary>
     /// Every rectangle the canvas has something in: a box for each group that is
@@ -81,8 +101,8 @@ internal readonly struct CanvasScene(Patch patch)
 
     /// <summary>Whether both ends of a wire are inside the same box.</summary>
     public bool Hidden(Connection wire) =>
-        patch.CollapsedGroupOf(wire.SourceNode) is { } group
-        && ReferenceEquals(patch.CollapsedGroupOf(wire.TargetNode), group);
+        ShutGroupOf(wire.SourceNode) is { } group
+        && ReferenceEquals(ShutGroupOf(wire.TargetNode), group);
 
     /// <summary>
     /// Where an output is to be reached, which is the box standing in front of it
@@ -96,7 +116,7 @@ internal readonly struct CanvasScene(Patch patch)
     /// </remarks>
     public Point OutputAnchor(NodeInstance node, int port)
     {
-        if (patch.CollapsedGroupOf(node.Id) is { } group)
+        if (ShutGroupOf(node.Id) is { } group)
         {
             var sockets = patch.SocketsOf(group);
             var row = sockets.IndexOfOutput(new GroupSocket(node.Id, port, IsOutput: true));
@@ -112,7 +132,7 @@ internal readonly struct CanvasScene(Patch patch)
     /// <inheritdoc cref="OutputAnchor"/>
     public Point InputAnchor(NodeInstance node, NodeDef def, int port)
     {
-        if (patch.CollapsedGroupOf(node.Id) is { } group)
+        if (ShutGroupOf(node.Id) is { } group)
         {
             var sockets = patch.SocketsOf(group);
             var row = sockets.IndexOfInput(new GroupSocket(node.Id, port, IsOutput: false));
@@ -127,6 +147,8 @@ internal readonly struct CanvasScene(Patch patch)
 
     public NodeGroup? HitBox(Point graph)
     {
+        if (Covered(graph)) return null;
+
         foreach (var (group, _, bounds) in Boxes())
             if (bounds.Contains(graph))
                 return group;
@@ -137,6 +159,9 @@ internal readonly struct CanvasScene(Patch patch)
     public NodeGroup? HitOpenGroupHandle(Point graph)
     {
         if (patch.Groups is null) return null;
+
+        if (peek is not null && OpenGroup(peek) is var (_, lifted) && lifted.Contains(graph)) return peek;
+        if (Covered(graph)) return null;
 
         foreach (var group in patch.Groups)
             if (OpenGroup(group) is var (_, handle) && handle.Contains(graph))
@@ -170,7 +195,7 @@ internal readonly struct CanvasScene(Patch patch)
     /// </remarks>
     public (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group)
     {
-        if (group.Collapsed) return null;
+        if (group.Collapsed && !ReferenceEquals(group, peek)) return null;
 
         var x = double.MaxValue;
         var y = double.MaxValue;
@@ -234,6 +259,8 @@ internal readonly struct CanvasScene(Patch patch)
 
     public NodeInstance? HitNode(Point graph)
     {
+        var covered = Covered(graph);
+
         for (var i = patch.Nodes.Count - 1; i >= 0; i--)
         {
             var node = patch.Nodes[i];
@@ -243,6 +270,7 @@ internal readonly struct CanvasScene(Patch patch)
             // land on it. Without this a click would reach a module it cannot
             // see and drag it out from under the box drawn over it.
             if (Shut(node.Id)) continue;
+            if (covered && !InPeek(node.Id)) continue;
 
             if (def is not null && NodeGeometry.Bounds(node, def).Contains(graph))
                 return node;
@@ -264,7 +292,17 @@ internal readonly struct CanvasScene(Patch patch)
     {
         var tolerance = NodeGeometry.PortRadius + NodeGeometry.HitPadding;
 
-        // Boxes first, because they are painted over the modules they stand for
+        // The box being looked into is over everything, boxes included.
+        if (peek is not null && HitModulePort(graph, tolerance, lifted: true, out nodeId, out portIndex, out isOutput))
+            return true;
+
+        if (Covered(graph))
+        {
+            (nodeId, portIndex, isOutput) = (Guid.Empty, -1, false);
+            return false;
+        }
+
+        // Boxes next, because they are painted over the modules they stand for
         // and a click should reach whatever is on top.
         foreach (var (_, sockets, bounds) in Boxes())
         {
@@ -287,11 +325,21 @@ internal readonly struct CanvasScene(Patch patch)
             }
         }
 
+        return HitModulePort(graph, tolerance, lifted: false, out nodeId, out portIndex, out isOutput);
+    }
+
+    /// <summary>
+    /// Which port on a module is under the pointer, among the modules of the box being
+    /// looked into or among the rest.
+    /// </summary>
+    private bool HitModulePort(
+        Point graph, double tolerance, bool lifted, out Guid nodeId, out int portIndex, out bool isOutput)
+    {
         for (var i = patch.Nodes.Count - 1; i >= 0; i--)
         {
             var node = patch.Nodes[i];
             var def = NodeCatalog.Get(node.TypeId);
-            if (def is null || Shut(node.Id)) continue;
+            if (def is null || Shut(node.Id) || InPeek(node.Id) != lifted) continue;
 
             for (var p = 0; p < def.Outputs.Count; p++)
             {
@@ -332,6 +380,19 @@ internal readonly struct CanvasScene(Patch patch)
     /// </remarks>
     public IEnumerable<Guid> Swept(Rect band)
     {
+        // A band drawn while looking into a box is drawn on its ring, and sweeps
+        // only what is inside.
+        if (peek is not null)
+        {
+            foreach (var node in patch.Nodes)
+                if (InPeek(node.Id)
+                    && NodeCatalog.Get(node.TypeId) is { } def
+                    && NodeGeometry.Bounds(node, def).Intersects(band))
+                    yield return node.Id;
+
+            yield break;
+        }
+
         foreach (var node in patch.Nodes)
             if (!Shut(node.Id)
                 && NodeCatalog.Get(node.TypeId) is { } def

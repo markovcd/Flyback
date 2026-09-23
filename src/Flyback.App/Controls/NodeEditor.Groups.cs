@@ -64,8 +64,10 @@ public sealed partial class NodeEditor
 
         var before = selection.Count;
 
+        var peeked = Peeked;
+
         foreach (var group in patch.Groups)
-            if (group.Collapsed && group.Members.Any(selection.Contains))
+            if (group.Collapsed && group != peeked && group.Members.Any(selection.Contains))
                 selection.UnionWith(group.Members);
 
         return selection.Count != before;
@@ -122,7 +124,70 @@ public sealed partial class NodeEditor
         Reported?.Invoke(
             this,
             $"Grouped {made.Members.Count} modules. "
-            + "Ctrl+Shift+G ungroups them, double-click opens them.");
+            + "Ctrl+Shift+G ungroups them, double-click looks inside.");
+    }
+
+    /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
+    private Guid? peek;
+
+    /// <summary>
+    /// The shut box being looked into: drawn open over everything else, and still
+    /// shut in the patch, in the file and in the history.
+    /// </summary>
+    /// <remarks>
+    /// Forgotten once the box is gone, opened for good, or once anything outside it
+    /// is selected — a module added, a paste, Ctrl+A. What is selected is where the
+    /// work is, and a ring covering it would be in the way.
+    /// </remarks>
+    public NodeGroup? Peeked
+    {
+        get
+        {
+            if (peek is not { } id) return null;
+
+            if (patch.Groups?.FirstOrDefault(g => g.Id == id) is { Collapsed: true } group
+                && selection.All(group.Members.Contains))
+                return group;
+
+            peek = null;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Looks into a shut box without opening it: its modules come up over the rest of
+    /// the canvas, with nothing else in the way, until Escape or a click outside.
+    /// </summary>
+    /// <remarks>
+    /// Not an edit, so it is offered on a locked canvas and never reaches the history.
+    /// </remarks>
+    public void Peek(NodeGroup group)
+    {
+        if (!group.Collapsed) return;
+
+        selection.Clear();
+        foreach (var id in group.Members) selection.Add(id);
+
+        focus = group.Members.Count == 0 ? null : group.Members[^1];
+        peek = group.Id;
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        InvalidateVisual();
+        Reported?.Invoke(this, $"Looking into {group.Title()}. Esc or a click outside puts it back.");
+    }
+
+    /// <summary>Puts the box being looked into back, and says whether there was one.</summary>
+    public bool EndPeek()
+    {
+        if (Peeked is null) return false;
+
+        peek = null;
+
+        // A module picked out inside is behind the box again.
+        if (SelectWholeBoxes()) SelectionChanged?.Invoke(this, EventArgs.Empty);
+
+        InvalidateVisual();
+        return true;
     }
 
     /// <summary>
@@ -279,43 +344,80 @@ public sealed partial class NodeEditor
     /// way of the work. The strip is left bare, because filling it makes a header,
     /// and a header is what a group wears when it is shut.
     /// </remarks>
-    private void DrawOpenGroups(DrawingContext context)
+    private void DrawOpenGroups(DrawingContext context, CanvasScene scene)
     {
         if (patch.Groups is null) return;
 
         foreach (var group in patch.Groups)
+            if (group != scene.Peek && scene.OpenGroup(group) is var (outline, handle))
+                DrawRing(context, group, outline, handle, lifted: false);
+    }
+
+    /// <summary>
+    /// The box being looked into, and everything of it, over a canvas dimmed under it.
+    /// </summary>
+    /// <remarks>
+    /// The ring is solid and its ground opaque, so nothing under it shows through.
+    /// Its wires are drawn at full strength wherever they run, since what feeds the
+    /// box and what it feeds are half of why it is being looked into.
+    /// </remarks>
+    private void DrawPeek(DrawingContext context, CanvasScene scene, IReadOnlySet<Guid> lifted)
+    {
+        if (scene.Peek is not { } group || scene.OpenGroup(group) is not var (outline, handle)) return;
+
+        context.FillRectangle(PeekScrim, new Rect(ToGraph(default), ToGraph(new Point(Bounds.Width, Bounds.Height))));
+
+        DrawRing(context, group, outline, handle, lifted: true);
+
+        DrawConnections(context, lifted, theirs: false, peeked: true);
+
+        foreach (var node in patch.Nodes)
+            if (scene.InPeek(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                DrawNode(context, node, def);
+
+        DrawConnections(context, lifted, theirs: true, peeked: true);
+    }
+
+    private void DrawRing(DrawingContext context, NodeGroup group, Rect outline, Rect handle, bool lifted)
+    {
+        // Selected when its modules are, which is the rule a shut box uses —
+        // and it is the same gesture that selects them, since pressing the
+        // strip takes the group.
+        var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
+
+        var ring = new RoundedRect(outline, GroupCornerRadius);
+
+        if (lifted)
         {
-            if (Scene.OpenGroup(group) is not var (outline, handle)) continue;
+            context.DrawRectangle(Background, null, ring);
 
-            // Selected when its modules are, which is the rule a shut box uses —
-            // and it is the same gesture that selects them, since pressing the
-            // strip takes the group.
-            var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
-
-            context.DrawRectangle(
-                OpenGroupFill,
-                isSelected ? OpenGroupPenSelected : OpenGroupPen,
-                new RoundedRect(outline, GroupCornerRadius));
-
-            var label = CanvasText.Text(group.Title(), CanvasText.RowSize, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
-
-            // A tab only as wide as the name it carries, sitting on the ring: it
-            // joins the name to the region without becoming the header a shut box
-            // wears.
-            var tab = new Rect(
-                handle.X,
-                handle.Y,
-                Math.Min(label.Width + TabPadding * 2, outline.Width),
-                handle.Height);
-
-            context.DrawRectangle(
-                isSelected ? OpenGroupTabSelected : OpenGroupTab,
-                null,
-                new RoundedRect(tab, GroupCornerRadius, GroupCornerRadius, 0, 0));
-
-            context.DrawText(
-                label, new Point(tab.X + TabPadding, tab.Y + (tab.Height - label.Height) / 2));
+            using (context.PushClip(ring)) DrawGrid(context);
         }
+
+        context.DrawRectangle(
+            OpenGroupFill,
+            lifted ? PeekPen : isSelected ? OpenGroupPenSelected : OpenGroupPen,
+            ring);
+
+        var label = CanvasText.Text(group.Title(), CanvasText.RowSize, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
+
+        // A tab only as wide as the name it carries, sitting on the ring: it
+        // joins the name to the region without becoming the header a shut box
+        // wears.
+        var tab = new Rect(
+            handle.X,
+            handle.Y,
+            Math.Min(label.Width + TabPadding * 2, outline.Width),
+            handle.Height);
+
+        var tabShape = new RoundedRect(tab, GroupCornerRadius, GroupCornerRadius, 0, 0);
+
+        if (lifted) context.DrawRectangle(Background, null, tabShape);
+
+        context.DrawRectangle(isSelected ? OpenGroupTabSelected : OpenGroupTab, null, tabShape);
+
+        context.DrawText(
+            label, new Point(tab.X + TabPadding, tab.Y + (tab.Height - label.Height) / 2));
     }
 
     /// <summary>

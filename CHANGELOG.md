@@ -18,6 +18,7 @@
 - The Frequency module is gone: an oscillator's own `freq` knob reaches audible pitches, and a patch that still holds one no longer opens.
 - A turning knob holds the pointer still, so the edge of the screen never stops it.
 - A dragged side panel comes back at the width it was left at.
+- Double-clicking a box looks inside it, over the rest of the patch, without opening it.
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
 - The preset gallery draws only the tiles in sight, and keeps their pictures between runs.

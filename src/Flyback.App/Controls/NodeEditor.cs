@@ -118,6 +118,18 @@ public sealed partial class NodeEditor : Control
 
     private static readonly IBrush OpenGroupTabSelected = new SolidColorBrush(Colors.Attention, 0.22);
 
+    /// <summary>The ring round a box being looked into: solid, because it is over everything.</summary>
+    private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
+
+    /// <summary>What the canvas outside a box being looked into is dimmed under.</summary>
+    private static readonly IBrush PeekScrim = new SolidColorBrush(Colors.Edge, 0.78);
+
+    /// <summary>
+    /// How strongly a wire leaving a box being looked into is drawn at its far end,
+    /// against full strength where it leaves the box.
+    /// </summary>
+    private const double PeekWireFar = 0.15, PeekWireNear = 0.7;
+
     /// <summary>How much wider than its title a tab is drawn, and how far in the title sits.</summary>
     private const double TabPadding = 9;
 
@@ -395,6 +407,7 @@ public sealed partial class NodeEditor : Control
 
             selection.Clear();
             focus = null;
+            peek = null;
             EndGesture();
             FrameAll();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
@@ -404,7 +417,7 @@ public sealed partial class NodeEditor : Control
     }
 
     /// <summary>What the canvas shows of the patch, and what is under a point on it.</summary>
-    internal CanvasScene Scene => new(patch);
+    internal CanvasScene Scene => new(patch, Peeked);
 
     /// <summary>
     /// Whether the patch belongs to somebody else, and this is a view of it.

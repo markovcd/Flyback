@@ -82,6 +82,11 @@ public sealed partial class NodeEditor
         // — so one modifier serves both without either having to know.
         var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
+        // A press outside the box being looked into puts it back, and then goes on
+        // to be whatever press it was. A socket keeps it, so a wire can be drawn in.
+        if (Peeked is not null && !Scene.Covered(graph) && !Scene.HitPort(graph, out _, out _, out _))
+            EndPeek();
+
         if (PickSocket(graph))
         {
             e.Handled = true;
@@ -117,16 +122,15 @@ public sealed partial class NodeEditor
             return;
         }
 
-        // A box, or the strip above an open group. Both answer a double-click by
-        // changing which of the two the group is; a single click on a box selects
-        // what is inside it, which is what makes dragging one work without a drag
-        // of its own — the modules are selected, so the ordinary group drag moves
-        // them and the box follows because it is drawn from where they are.
+        // A box, or the strip above an open group. A double-click on a box looks
+        // into it, and on the strip shuts the group again; a single click on a box
+        // selects what is inside it, which is what makes dragging one work without
+        // a drag of its own — the modules are selected, so the ordinary group drag
+        // moves them and the box follows because it is drawn from where they are.
         if (Scene.HitBox(graph) is { } box)
         {
-            // Opening a box is an edit, so a locked canvas selects it instead —
-            // the same answer Ctrl+E gets.
-            if (e.ClickCount == 2 && !Locked) ToggleBox(box);
+            // Looking is not an edit, so a locked canvas does it too.
+            if (e.ClickCount == 2) Peek(box);
             else PressGroup(box, ctrl);
 
             e.Pointer.Capture(this);
@@ -136,7 +140,10 @@ public sealed partial class NodeEditor
 
         if (Scene.HitOpenGroupHandle(graph) is { } opened)
         {
-            if (e.ClickCount == 2 && !Locked) ToggleBox(opened);
+            if (e.ClickCount == 2 && opened == Peeked) EndPeek();
+            // Shutting an open group is an edit, so a locked canvas selects it
+            // instead — the same answer Ctrl+Shift+E gets.
+            else if (e.ClickCount == 2 && !Locked) ToggleBox(opened);
             else PressGroup(opened, ctrl);
 
             e.Pointer.Capture(this);
@@ -702,7 +709,7 @@ public sealed partial class NodeEditor
         // may still be holding the Ctrl that began it: a wire comes off an output
         // with Ctrl down, and a selection is added to the same way. Unhandled with
         // nothing under way, so the window's own Escape still gets it.
-        if (e.Key == Key.Escape && Abort())
+        if (e.Key == Key.Escape && (Abort() || EndPeek()))
         {
             e.Handled = true;
             return;

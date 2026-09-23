@@ -1800,11 +1800,11 @@ public class SourceViewTests : UiTest
     // --- a locked canvas, and a box on it --------------------------------------
 
     /// <summary>
-    /// Opening a box is an edit, so a double-click on a locked canvas is refused the
-    /// way Ctrl+E is — and selects what is inside, which a locked canvas still does.
+    /// A double-click looks into a box rather than opening it, so a locked canvas does
+    /// it too: nothing in the patch changes.
     /// </summary>
     [AvaloniaFact]
-    public void A_locked_canvas_will_not_open_a_box_on_a_double_click()
+    public void A_locked_canvas_looks_into_a_box_on_a_double_click()
     {
         var window = Open();
 
@@ -1846,6 +1846,7 @@ public class SourceViewTests : UiTest
 
         group.Collapsed.ShouldBeTrue();
         steps.ShouldBe(0, "nothing done to a locked canvas is an edit to the patch");
+        editor.Peeked.ShouldBe(group);
         editor.SelectedGroup.ShouldBe(group, "the press still selects what the box stands for");
     }
 

@@ -298,20 +298,187 @@ public class GroupTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Double_clicking_the_box_opens_it_and_double_clicking_the_strip_shuts_it()
+    public void Double_clicking_the_strip_of_an_open_group_shuts_it()
     {
         var patch = Chain(out _, out var first, out var second, out _);
         var (editor, window) = Editing(patch);
 
         var group = GroupTheMiddle(editor, window, first, second);
 
-        Click(editor, window, BoxHeader(patch, group), count: 2);
-        group.Collapsed.ShouldBeFalse();
+        editor.ToggleBox(group);
+        Settle(window);
 
-        // Open, the group is a dashed ring with a strip above it, and the strip
-        // is where the same gesture lands.
         Click(editor, window, OpenHandle(patch, group), count: 2);
         group.Collapsed.ShouldBeTrue();
+    }
+
+    // --- looking into a box ------------------------------------------------------
+
+    /// <summary>
+    /// A double-click looks into a box without opening it: nothing in the patch, the
+    /// file or the history changes.
+    /// </summary>
+    [AvaloniaFact]
+    public void Double_clicking_a_box_looks_inside_without_opening_it()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        var steps = 0;
+        editor.Recorded += (_, _) => steps++;
+
+        Click(editor, window, BoxHeader(patch, group), count: 2);
+
+        editor.Peeked.ShouldBe(group);
+        group.Collapsed.ShouldBeTrue("looking is not opening");
+        steps.ShouldBe(0, "looking into a box is not an edit");
+
+        // The modules are on the canvas, and answer a click where they stand.
+        Click(editor, window, Body(second));
+        editor.SelectedNodes.ShouldBe([second]);
+        editor.Peeked.ShouldBe(group);
+    }
+
+    /// <summary>
+    /// The point of looking inside: on a crowded canvas the box's modules come up over
+    /// whatever was laid out next to the shut box, and a click reaches them first.
+    /// </summary>
+    [AvaloniaFact]
+    public void While_looking_into_a_box_its_modules_are_over_everything_else()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var left = builder.Add("osc.sine", 0, 0);
+        var right = builder.Add("math.mul", 300, 0);
+        builder.Wire(left, 0, right, 0);
+
+        // Laid out against the shut box, and drawn over where its second module stands.
+        var neighbor = builder.Add("time", 300, 0);
+        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var group = editor.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        Click(editor, window, Body(right));
+        editor.SelectedNodes.ShouldBe([neighbor], "shut, the box's modules are not on the canvas");
+
+        editor.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(right));
+        editor.SelectedNodes.ShouldBe([right], "the module inside is over the one laid out beside the box");
+    }
+
+    [AvaloniaFact]
+    public void Escape_puts_the_box_back_with_the_whole_of_it_selected()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(first));
+        editor.SelectedNodes.ShouldBe([first]);
+
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        editor.Peeked.ShouldBeNull();
+        editor.SelectedGroup.ShouldBe(group, "a module behind a box is selected with the rest of it or not at all");
+    }
+
+    /// <summary>A click outside puts the box back, and is still the click it was.</summary>
+    [AvaloniaFact]
+    public void A_click_outside_puts_the_box_back_and_lands_where_it_was_aimed()
+    {
+        var patch = Chain(out _, out var first, out var second, out var sink);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(sink));
+
+        editor.Peeked.ShouldBeNull();
+        editor.SelectedNodes.ShouldBe([sink]);
+    }
+
+    /// <summary>
+    /// A socket outside keeps the box up, so a wire can be drawn from the rest of the
+    /// patch to a module inside.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_can_be_drawn_from_outside_into_a_box_being_looked_into()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        patch.Disconnect(first.Id, 0);
+        editor.NotifyPatchChanged();
+        editor.Peek(group);
+        Settle(window);
+
+        var from = NodeGeometry.OutputPort(feed, 0);
+        var to = NodeGeometry.InputPort(first, NodeCatalog.Require(first.TypeId), 0);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, to));
+        window.MouseUp(Screen(editor, window, to), MouseButton.Left);
+        Settle(window);
+
+        patch.IncomingTo(first.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(feed.Id);
+        editor.Peeked.ShouldBe(group);
+    }
+
+    /// <summary>Only one box is looked into at a time.</summary>
+    [AvaloniaFact]
+    public void Looking_into_a_second_box_puts_the_first_back()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        Click(editor, window, BoxHeader(patch, top), count: 2);
+        editor.Peeked.ShouldBe(top);
+
+        Click(editor, window, BoxHeader(patch, low), count: 2);
+        editor.Peeked.ShouldBe(low);
+        top.Collapsed.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// A module added while looking into a box is not in it, so it would land under
+    /// the ring. The box goes back, and the new module is on the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void Adding_a_module_puts_the_box_back()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Peek(group);
+        Settle(window);
+
+        var added = editor.AddNode("osc.sine", Body(first)).ShouldNotBeNull();
+        Settle(window);
+
+        editor.Peeked.ShouldBeNull();
+        editor.SelectedNodes.ShouldBe([added]);
     }
 
     /// <summary>

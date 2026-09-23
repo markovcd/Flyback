@@ -51,23 +51,26 @@ public sealed partial class NodeEditor
             // block is pulled across can hide where it is still patched, which
             // is the whole question being asked by the drag.
             var lifted = drag == Drag.Node ? selection : [];
+            var scene = Scene;
 
             // Under the modules and under the wires both, because it is the
             // ground a group stands on rather than anything in the patch.
-            DrawOpenGroups(context);
+            DrawOpenGroups(context, scene);
 
-            DrawConnections(context, lifted, theirs: false);
+            DrawConnections(context, lifted, theirs: false, peeked: false);
 
             DrawRemapMarks(context);
 
             foreach (var node in patch.Nodes)
-                if (!Scene.Shut(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
-            foreach (var (group, sockets, bounds) in Scene.Boxes())
+            foreach (var (group, sockets, bounds) in scene.Boxes())
                 DrawBox(context, group, sockets, bounds);
 
-            DrawConnections(context, lifted, theirs: true);
+            DrawConnections(context, lifted, theirs: true, peeked: false);
+
+            DrawPeek(context, scene, lifted);
 
             DrawBusLinks(context);
 
@@ -206,12 +209,17 @@ public sealed partial class NodeEditor
     /// One loop serves both, so the two passes partition the same set rather than each
     /// deciding what belongs in it.
     /// </param>
-    private void DrawConnections(DrawingContext context, IReadOnlySet<Guid> lifted, bool theirs)
+    /// <param name="peeked">
+    /// Whether this pass draws the wires of the box being looked into, which are
+    /// drawn over everything, or the rest.
+    /// </param>
+    private void DrawConnections(DrawingContext context, IReadOnlySet<Guid> lifted, bool theirs, bool peeked)
     {
         // What a loop is made of, and the one thing about a wire the canvas
         // cannot read off its two ends — see Cycles.Backwards, which the compiler
         // asks the same question of.
         var backwards = Cycles.BackwardsThroughBuses(patch);
+        var scene = Scene;
 
         foreach (var connection in patch.Connections)
         {
@@ -219,11 +227,12 @@ public sealed partial class NodeEditor
                 || lifted.Contains(connection.TargetNode);
 
             if (mine != theirs) continue;
+            if ((scene.InPeek(connection.SourceNode) || scene.InPeek(connection.TargetNode)) != peeked) continue;
 
             // A wire with both ends inside one collapsed box is a wire the box
             // is standing in front of. Not drawn faintly or routed around — it
             // is simply not on the canvas while the box is shut.
-            if (Scene.Hidden(connection)) continue;
+            if (scene.Hidden(connection)) continue;
 
             var source = patch.Find(connection.SourceNode);
             var target = patch.Find(connection.TargetNode);
@@ -235,8 +244,8 @@ public sealed partial class NodeEditor
             if (connection.SourcePort >= sourceDef.Outputs.Count) continue;
             if (connection.TargetPort >= targetDef.Inputs.Count) continue;
 
-            var from = Scene.OutputAnchor(source, connection.SourcePort);
-            var to = Scene.InputAnchor(target, targetDef, connection.TargetPort);
+            var from = scene.OutputAnchor(source, connection.SourcePort);
+            var to = scene.InputAnchor(target, targetDef, connection.TargetPort);
             // A wire swinging past the range its socket takes is drawn in the
             // accent, which is where the status bar's warning about it points.
             var color = AutoRemap.Overflow(patch, connection) is null
@@ -255,9 +264,17 @@ public sealed partial class NodeEditor
 
             // Heavier and at full strength, which is the same signal the pending
             // wire gives: this one is in play.
-            var pen = theirs
-                ? new Pen(new SolidColorBrush(color, strength), LiftedWireThickness, dashes)
-                : new Pen(new SolidColorBrush(color, RestingWireOpacity * strength), WireThickness, dashes);
+            var opacity = theirs ? strength : RestingWireOpacity * strength;
+
+            // A wire leaving a box being looked into fades toward the dimmed canvas
+            // it runs off into, measured end to end rather than along the curve.
+            var leaving = peeked && scene.InPeek(connection.SourceNode) != scene.InPeek(connection.TargetNode);
+
+            IBrush ink = leaving && from != to
+                ? Fading(color, opacity, scene.InPeek(connection.SourceNode) ? (from, to) : (to, from))
+                : new SolidColorBrush(color, opacity);
+
+            var pen = new Pen(ink, theirs ? LiftedWireThickness : WireThickness, dashes);
 
             // How a wire is routed is a question of where its ends are, not of
             // what it carries: one that has to travel leftwards goes round, and a
@@ -276,6 +293,18 @@ public sealed partial class NodeEditor
             WirePath.Draw(context, from, to, pen);
         }
     }
+
+    /// <summary>A wire's ink, strongest at <paramref name="ends"/>'s first point and faint at its second.</summary>
+    private static LinearGradientBrush Fading(Color color, double opacity, (Point Near, Point Far) ends) => new()
+    {
+        StartPoint = new RelativePoint(ends.Near, RelativeUnit.Absolute),
+        EndPoint = new RelativePoint(ends.Far, RelativeUnit.Absolute),
+        GradientStops =
+        [
+            new GradientStop(Colors.Faded(color, opacity * PeekWireNear), 0),
+            new GradientStop(Colors.Faded(color, opacity * PeekWireFar), 1),
+        ],
+    };
 
     /// <summary>
     /// Where the wire being dragged is anchored, and null when none is.

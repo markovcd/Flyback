@@ -68,7 +68,8 @@ public sealed partial class NodeEditor
     /// <summary>The wire whose mark is under <paramref name="graph"/>, where no module covers it.</summary>
     private (Connection Wire, Point At)? RemapMarkAt(Point graph)
     {
-        if (Locked || Scene.HitNode(graph) is not null || Scene.HitBox(graph) is not null) return null;
+        if (Locked || Scene.Covered(graph) || Scene.HitNode(graph) is not null || Scene.HitBox(graph) is not null)
+            return null;
 
         foreach (var mark in RemapMarks())
         {

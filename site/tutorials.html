@@ -418,8 +418,8 @@ out.volume = 0.5</code></pre>
       <li><strong>Select</strong> by dragging the background, <kbd>Ctrl</kbd>+click to add to the selection, or
       <kbd>Ctrl</kbd>+<kbd>A</kbd> for everything. <kbd>Delete</kbd> removes the selection.</li>
       <li><strong>Group</strong> a selection into one box with <kbd>Ctrl</kbd>+<kbd>G</kbd>. The box lists the
-      sockets that cross its edge. Double-click it to open it, and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>
-      ungroups. <kbd>Ctrl</kbd>+<kbd>E</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> open and close
+      sockets that cross its edge. Double-click it to look inside: its modules come up over the rest of the
+      patch until <kbd>Esc</kbd> or a click outside. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> ungroups. <kbd>Ctrl</kbd>+<kbd>E</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> open and close
       every box the selection touches.</li>
       <li><strong>Switch off</strong> a module, a selection or a whole box with <kbd>Ctrl</kbd>+<kbd>B</kbd>
       to hear the patch without it. What is patched into it comes straight out of it, and nothing does
@@ -576,7 +576,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td><kbd>Space</kbd> or right-click</td><td>Open the module list at the pointer</td></tr>
           <tr><td>right-drag up or down on an unpatched input</td><td>Turn that input&rsquo;s value</td></tr>
           <tr><td>type, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Enter</kbd></td><td>Filter the list, move through it, add the highlighted module</td></tr>
-          <tr><td><kbd>Esc</kbd></td><td>Back out of a drag on the canvas; clear the filter, then close the list; leave full-screen preview</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Back out of a drag on the canvas; put back a box being looked into; clear the filter, then close the list; leave full-screen preview</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd> / <kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Open a patch / save this one</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Undo / redo</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></td><td>Copy, cut, paste</td></tr>
@@ -596,6 +596,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Pause the patch, or play it on</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>Start or stop recording</td></tr>
           <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Move the computer keyboard up or down an octave</td></tr>
+          <tr><td>double-click a box</td><td>Look inside it, over the rest of the patch</td></tr>
           <tr><td>double-click the preview</td><td>Full-screen preview</td></tr>
         </tbody>
       </table>
