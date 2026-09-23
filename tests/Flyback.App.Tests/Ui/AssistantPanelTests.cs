@@ -402,9 +402,9 @@ public sealed class AssistantPanelTests : UiTest
     }
 
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
-    private static Window Settings(Window panel)
+    private Window Settings(Window panel)
     {
-        var host = new Window { Content = All<AssistantPanel>(panel).Single().SettingsSection() };
+        var host = Owned(new Window { Content = All<AssistantPanel>(panel).Single().SettingsSection() });
 
         host.Show();
         Settle(host);
