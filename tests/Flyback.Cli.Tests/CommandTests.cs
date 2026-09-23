@@ -383,6 +383,32 @@ public class CommandTests
         File.ReadAllBytes(first.FullName).ShouldBe(File.ReadAllBytes(second.FullName));
     }
 
+    /// <summary>A render runs compiled, and the interpreter is the reference it has to match.</summary>
+    [Theory]
+    [InlineData("Nebula", ".png")]
+    [InlineData("Drone", ".wav")]
+    [InlineData("Drone", ".avi")]
+    public void A_compiled_render_is_the_same_file_as_an_interpreted_one(string preset, string extension)
+    {
+        using var directory = new Scratch();
+        var compiled = directory.File($"compiled{extension}");
+        var interpreted = directory.File($"interpreted{extension}");
+
+        foreach (var (file, off) in new[] { (compiled, false), (interpreted, true) })
+        {
+            var (code, _, error) = Run((_, e) => RenderCommand.Run(
+                Preset(preset),
+                new RenderOptions(file, 96, 54, At: 1.75d, Seconds: 0.5d, Fps: 8d, Interpreted: off),
+                e,
+                cancellation: TestContext.Current.CancellationToken));
+
+            code.ShouldBe(Exit.Ok);
+            error.ShouldNotContain("interpreted");
+        }
+
+        File.ReadAllBytes(compiled.FullName).ShouldBe(File.ReadAllBytes(interpreted.FullName));
+    }
+
     // --- print ---------------------------------------------------------------
 
     /// <summary>

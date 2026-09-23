@@ -19,6 +19,7 @@ namespace Flyback.Cli;
 /// Whether to measure the sound as it is written and say how loud it came out.
 /// Ignored for a still, which has none.
 /// </param>
+/// <param name="Interpreted">Keep the programs on the interpreter rather than compiling them.</param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,
@@ -29,7 +30,8 @@ internal sealed record RenderOptions(
     int Quality = JpegWriter.DefaultQuality,
     string? Format = null,
     string? Ffmpeg = null,
-    bool Loudness = false);
+    bool Loudness = false,
+    bool Interpreted = false);
 
 /// <summary>
 /// Writes a patch to a file: a PNG of one moment, a sound file, or a clip of both.
@@ -38,10 +40,9 @@ internal sealed record RenderOptions(
 /// ADR-0089 for why some of them are ffmpeg's work and two are this program's own.
 /// </summary>
 /// <remarks>
-/// Always the interpreter, never the shader backend: a GPU render needs a context and
+/// On the processor, never the shader backend: a GPU render needs a context and
 /// a window, and the two backends are allowed to differ in their last bits
-/// (ADR-0035), so the one that can be run here is also the one whose output is the
-/// same bytes every time.
+/// (ADR-0035). The programs run as IL, which gives the interpreter's bytes faster.
 /// </remarks>
 internal static class RenderCommand
 {
@@ -130,6 +131,19 @@ internal static class RenderCommand
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: refusing to render a patch with errors in it.");
             return Exit.Problems;
+        }
+
+        if (!options.Interpreted)
+        {
+            // The picture is drawn in stages and the sound whole, as in the app.
+            var failures = new[]
+            {
+                video is null ? null : IlCompiler.CompileOnce(video.Program, IlParts.Staged),
+                audio is null ? null : IlCompiler.CompileOnce(audio.Program, IlParts.Whole),
+            };
+
+            foreach (var failure in failures.OfType<string>().Distinct())
+                error.WriteLine($"{GlobalConstants.ApplicationName}: warning: {failure}");
         }
 
         // Measured as it is written, so a loudness report costs no second pass

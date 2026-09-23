@@ -77,6 +77,8 @@ public sealed partial class PatchWorkbench
                 var capture = requested.Select(t => (int)Math.Round(t / limits.WarmUpStep)).ToArray();
                 var renderer = new SynthRenderer();
 
+                IlCompiler.CompileOnce(patch.Program, IlParts.Staged);
+
                 for (var step = 0; step <= capture[^1]; step++)
                 {
                     cancel.ThrowIfCancellationRequested();
@@ -186,6 +188,8 @@ public sealed partial class PatchWorkbench
                 {
                     Aspect = SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
                 };
+
+                IlCompiler.CompileOnce(patch.Program, IlParts.Whole);
 
                 // Thrown away, but not skipped: this is the warm-up, and what it
                 // leaves behind in the delay lines is the whole point of it.

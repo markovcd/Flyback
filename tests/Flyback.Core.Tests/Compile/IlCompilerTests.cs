@@ -180,6 +180,21 @@ public class IlCompilerTests
         program.Il.ShouldBeNull();
     }
 
+    /// <summary>An offline render builds only the part its renderer calls.</summary>
+    [Theory]
+    [InlineData(IlParts.Staged)]
+    [InlineData(IlParts.Whole)]
+    public void A_program_compiled_once_has_its_il_when_the_call_returns(IlParts parts)
+    {
+        var program = Plasma(0.5f);
+
+        IlCompiler.CompileOnce(program, parts).ShouldBeNull();
+
+        var il = program.Il.ShouldNotBeNull();
+        il.Source.ShouldBeSameAs(program);
+        il.Parts.ShouldBe(parts);
+    }
+
     /// <summary>A preset tried in the gallery does not take the patch's own lanes from it.</summary>
     [Fact]
     public async Task An_audition_does_not_replace_the_patch_in_its_lanes()

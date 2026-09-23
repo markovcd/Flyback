@@ -196,7 +196,7 @@ and both work by pushing a substitute domain onto the emitter before resolving a
 | Backend | Where | Runs |
 |---|---|---|
 | Interpreter | `CompiledPatch.Evaluate` | Everything, always. **It is the specification.** |
-| IL | `IlEmitter`, `IlOps`, `IlProgram`, `IlCompiler` | The CPU picture and the sound, once built ([0076](adr/0076-the-processor-runs-a-program-as-il-once-it-is-built.md)) |
+| IL | `IlEmitter`, `IlOps`, `IlProgram`, `IlCompiler` | The CPU picture and the sound, once built, and every offline render ([0076](adr/0076-the-processor-runs-a-program-as-il-once-it-is-built.md)) |
 | GLSL | `GlslEmitter` | The live preview and live recording ([0035](adr/0035-a-glsl-backend-for-the-video-path.md)) |
 
 **The interpreter** is one `switch` over the flat op array. Register access has no
@@ -210,7 +210,7 @@ attached to the program through a `Volatile` field that renderers read once per
 frame or buffer. Each op is one inlined method in `IlOps` that calls the
 interpreter's own helpers, so a guard exists once. Every build is run against the
 interpreter before it is trusted, bit for bit, and refused if it differs.
-`--interpreted` keeps a run on the interpreter.
+`--interpreted` keeps a run, or a `flyback-cli render`, on the interpreter.
 
 **The GLSL backend** emits text and touches no GL. Where a GLSL builtin disagrees
 with the interpreter (`fract`, `mod`, `mix`, `pow`, `smoothstep`, `atan`) it emits

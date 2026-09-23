@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Picture;
 /// draw different cells. The noise op is the only agreed randomness there is — sampled
 /// far apart, so squares next door land in unrelated parts of the field. That
 /// makes this the dearest module in the catalog: eighteen noise lookups a pixel
-/// against a Fractal's eight, which on the interpreter is seconds rather than
+/// against a Fractal's eight, which on the processor is seconds rather than
 /// milliseconds for a still.
 /// </para>
 /// <para>
@@ -73,7 +73,7 @@ internal static class CellsModule
         + "'edge' is 0 on the line between two cells, so a Threshold on it is a crack. 'cell' "
         + "is one number per cell, a flat mosaic. 'jitter' at 1 scatters the points and at 0 "
         + "pins them to a grid. 'z' drifts them. The dearest module in the catalog: fine on the "
-        + "GPU, slow on the interpreter a command-line render uses.")
+        + "GPU, slow on the processor a command-line render uses.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
         {

@@ -27,6 +27,7 @@
 - Double-clicking a box looks inside it, over the rest of the patch, without opening it.
 - A patch or bundle from somebody else reaches only its own files.
 - The preset gallery's tiles and auditions run as compiled code.
+- `flyback-cli render` and the assistant's looking and listening run the patch as compiled code, and `flyback-cli render --interpreted` keeps it on the interpreter.
 - The preset gallery draws only the tiles in sight, and keeps their pictures between runs.
 - A module read through a Probe or Overtones is copied only as far as it depends on the place being read.
 - Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.

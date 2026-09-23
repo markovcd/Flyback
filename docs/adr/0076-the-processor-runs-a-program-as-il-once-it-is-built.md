@@ -194,3 +194,14 @@ out again. `--interpreted` on the command line starts a run that never builds IL
 for the CPU's programs and says so on the status bar — the same comparison, and
 the same way to rule the compiled code out of a fault, with nothing left behind
 for the next launch.
+
+## Amendment, 2026-09-23: offline renders are compiled too
+
+*Export stays interpreted* kept `flyback-cli render`, and the assistant's `render`
+and `listen`, at the interpreter's speed for no gain: the IL gives the same bits,
+so the file is the reference either way, and a clip or a still of a heavy patch is
+where a 1.5-2x saving is felt most. Each of them now builds its programs with
+`IlCompiler.CompileOnce` before running them, the picture in stages and the sound
+whole, checked against the interpreter as every build is. A program that will not
+build is rendered interpreted and said so. `flyback-cli render --interpreted` keeps
+a render on the interpreter, for the same reason the launch flag does.

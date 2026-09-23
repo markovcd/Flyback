@@ -140,7 +140,7 @@ flyback-cli viewer nebula.fbk
 
 ### Commands
 
-- `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does.
+- `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does. The patch runs compiled; `--interpreted` keeps it on the interpreter, which writes the same bytes more slowly.
 - `check`: compiles the patch and reports issues
 - `info`: shows module and wire counts and compile cost
 - `pack`: packs a patch together with the files it references

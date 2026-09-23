@@ -247,9 +247,14 @@ internal static class Program
                 + "in dBTP, measured as ITU-R BS.1770 does.",
         };
 
+        var interpreted = new Option<bool>("--interpreted")
+        {
+            Description = "Keep the patch on the interpreter rather than compiling it. Same bytes, slower.",
+        };
+
         var command = new Command("render", "Write a patch to a picture, a sound, or a clip of both.")
         {
-            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness,
+            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted,
         };
 
         command.SetAction((result, cancellation) =>
@@ -279,7 +284,8 @@ internal static class Program
                 result.GetValue(quality),
                 result.GetValue(format),
                 result.GetValue(ffmpeg),
-                result.GetValue(loudness));
+                result.GetValue(loudness),
+                result.GetValue(interpreted));
 
             return Task.FromResult(
                 RenderCommand.Run(

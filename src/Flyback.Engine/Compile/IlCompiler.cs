@@ -172,6 +172,20 @@ public sealed class IlCompiler : IDisposable
         }
     }
 
+    /// <summary>
+    /// Builds and attaches IL for <paramref name="program"/> on the calling thread,
+    /// for an offline render that has no compiler of its own to keep code between patches.
+    /// </summary>
+    /// <returns>Why the program stays interpreted, or null once it runs as IL.</returns>
+    public static string? CompileOnce(CompiledPatch program, IlParts parts)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+
+        var failure = Build(program, parts, out var methods);
+        if (methods is not null) program.Attach(IlProgram.Bind(methods, program));
+        return failure;
+    }
+
     /// <summary>Completes once nothing is waiting to be built. For tests, and for anything that needs to know the swap has happened.</summary>
     public Task Settled()
     {
