@@ -28,11 +28,9 @@ internal static class LineModule
         ],
         [Field.Distance("distance"), new PortSpec("along", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "A straight stroke from (x1, y1) to (x2, y2), as a distance, with round ends. 'width' "
-        + "is how far it reaches either side of the line, as a Box's sizes are half-sizes. "
-        + "Patch it into a Fill to see it. 'along' runs from 0 at the first end to 1 at the "
-        + "second, for a stroke that fades, changes color, or breaks into dashes through a "
-        + "Square. Drive the ends from oscillators and it moves.")
+        "A straight stroke from (x1, y1) to (x2, y2), as a distance, with round ends: patch "
+        + "it into a Fill. 'width' is how far it reaches either side. 'along' runs 0 to 1 from "
+        + "the first end to the second, for a fade, a color or dashes.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

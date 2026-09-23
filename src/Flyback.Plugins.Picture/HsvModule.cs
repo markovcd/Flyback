@@ -40,13 +40,10 @@ internal static class HsvModule
             new PortSpec("value", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Pulls a color apart into hue, saturation and value — the HSV module backwards, and "
-        + "the half of it the catalog was missing. It is what anything depending on the "
-        + "color a patch already has needs: rotate a hue by adding to this and building the "
-        + "color again, key on one by thresholding it, or take the saturation out of a "
-        + "picture without touching what color it was. All three come out 0 to 1. A gray has "
-        + "no hue to report and says nought, which is red — threshold the saturation if that "
-        + "matters.");
+        "A color pulled apart into hue, saturation and value, 0 to 1 each: HSV backwards. "
+        + "Rotate a hue by adding to it and rebuilding, key on one by thresholding, or "
+        + "desaturate without changing the color. A gray's hue is 0, which is red: threshold "
+        + "the saturation if that matters.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

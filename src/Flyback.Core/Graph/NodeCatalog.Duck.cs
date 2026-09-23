@@ -34,10 +34,10 @@ public partial class NodeCatalog
         ],
         [new PortSpec("left"), new PortSpec("right"), new PortSpec("gain")],
         EmitDuck,
-        "Turns 'left' and 'right' down while 'key' is loud: patch a kick, its sound or its "
-        + "envelope, into 'key' to make room for it. A key as loud as 'full' takes the level down "
-        + "by 'depth'; 'attack' and 'release' are how quickly it follows. 'gain' is the level "
-        + "applied, to duck anything else with.")
+        "Turns 'left' and 'right' down while 'key' is loud: patch a kick or its envelope into "
+        + "'key' to make room for it. A key as loud as 'full' ducks by 'depth'; 'attack' and "
+        + "'release' are how fast it follows. 'gain' is the level applied, to duck anything "
+        + "else with.")
     {
         Sinks = ModuleSinks.Audio,
     };

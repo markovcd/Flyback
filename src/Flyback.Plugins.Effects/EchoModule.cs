@@ -48,14 +48,11 @@ internal static class EchoModule
         ],
         [new PortSpec("left"), new PortSpec("right")],
         Emit,
-        "A stereo echo that keeps time. Patch a Tempo into 'tempo' and the two delay times are "
-        + "counted in steps: 'left' at 3 and 'right' at 2, with four steps to the beat, is a "
-        + "dotted eighth on one side and the beat after it on the other. 'feedback' is how much "
-        + "comes round again and 'mix' how much of the echo against the dry signal — 1 for a "
-        + "send. Two things are set on the node: how many steps there are in a beat, and whether "
-        + "the taps are in a row, the right one hearing the left so the repeats cross over, or "
-        + "side by side, each hearing the input. A delay holds two seconds at most. Audio only, "
-        + "like the Delay.")
+        "A stereo echo that keeps time. Patch a Tempo into 'tempo' and 'left' and 'right' are "
+        + "counted in steps: 3 and 2 at four steps a beat is a dotted eighth and the beat "
+        + "after. 'feedback' is how much comes round; 'mix' at 1 is a send. Set on the node: "
+        + "steps per beat, and whether the taps are in a row (the repeats cross over) or side "
+        + "by side. Two seconds at most. Audio only.")
     {
         Extras =
         [

@@ -51,10 +51,9 @@ public partial class NodeCatalog
         [new PortSpec("low"), new PortSpec("band"), new PortSpec("high")],
         (em, i) => FilterResponses(em, i[0], i[1], i[2]),
         "A resonant filter, all three responses at once. 'cutoff' is in hertz and is meant to "
-        + "be swept — patch an oscillator or an envelope into it, which is the sound this "
-        + "module exists for. 'resonance' peaks the corner and will ring on a sharp edge. "
-        + "Audio only: a picture is one evaluation with nothing before it, so 'low' passes "
-        + "straight through and the other two are silent.");
+        + "be swept by an oscillator or an envelope. 'resonance' peaks the corner and rings on "
+        + "a sharp edge. Audio only: on the picture 'low' passes straight through and the other "
+        + "two are silent.");
 
     /// <summary>
     /// Low, band and high of <paramref name="dry"/>, for a module with a filter

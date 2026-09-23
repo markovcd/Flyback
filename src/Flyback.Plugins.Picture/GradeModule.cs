@@ -53,13 +53,10 @@ internal static class GradeModule
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Color, contrast and gamma, in the order a grading desk has them, and a wire when all "
-        + "three are 1. 'saturation' mixes towards the picture's own brightness — 0 is a proper "
-        + "grayscale and past 1 keeps going. 'contrast' leans on the middle gray rather than on "
-        + "black, which is what makes it contrast rather than gain: white and black stay where "
-        + "they are. 'gamma' above 1 deepens everything under the middle and leaves the "
-        + "highlights alone, which is the knob for a picture that is nearly right and too pale. "
-        + "Every one of them is a socket, so a patch can grade itself as it moves.");
+        "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire. "
+        + "'saturation' 0 is grayscale and past 1 keeps going. 'contrast' pivots on middle "
+        + "gray, so black and white stay put. 'gamma' above 1 deepens the shadows and leaves "
+        + "the highlights, for a picture that is too pale.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

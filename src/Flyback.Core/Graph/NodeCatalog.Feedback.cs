@@ -72,15 +72,12 @@ public partial class NodeCatalog
 
                 return [em.Binary(OpCode.Max, tail, i[0]), tail];
             },
-            "Leaves a trail behind whatever is patched into 'in'. The last frame is read back "
-            + "through 'zoom', 'angle', 'dx' and 'dy', dimmed by 'persist', and the brighter of "
-            + "that and the new picture comes out of 'color' — patch it into the Output. 'zoom' "
-            + "just over 1 draws the trail inward and just under pushes it out; a small 'angle' "
-            + "makes it spiral; 'dx' and 'dy' smear it sideways. 'persist' is how long it lasts: "
-            + "0.8 is a short ghost, 0.98 takes seconds to fade. Small numbers go a long way, "
-            + "since they are applied again every frame. 'tail' is the dimmed last frame alone, "
-            + "for a Blend or a Layer instead of the brighter-of. Patch a Warp into 'x' and 'y' "
-            + "to bend the trail.")
+            "Leaves a trail behind 'in'. The last frame is read back through 'zoom', 'angle', "
+            + "'dx' and 'dy', dimmed by 'persist', and the brighter of that and the new picture is "
+            + "'color': patch it into the Output. 'zoom' just over 1 draws the trail inward and a "
+            + "small 'angle' spirals it; small numbers go a long way. 'persist' 0.8 is a short "
+            + "ghost, 0.98 fades over seconds. 'tail' is the dimmed last frame alone. A Warp into "
+            + "'x' and 'y' bends the trail.")
         {
             Sinks = ModuleSinks.Video,
         };
@@ -146,19 +143,12 @@ public partial class NodeCatalog
 
                 return [em.Ternary(OpCode.Mix, i[0], soft, mix), soft];
             },
-            "Softens the picture. The last frame is read at nine places around each pixel and "
-            + "averaged, so what comes out of 'color' is blurrier than what went into 'in' — "
-            + "patch it into the Output, since the loop closes through the screen and nothing "
-            + "happens if the result never gets there. 'radius' is how far apart the nine "
-            + "readings sit, in the same units as the coordinates, and one frame of it is a "
-            + "small blur; the width you actually see is set by 'amount', which is how much of "
-            + "each pass survives into the next. 0 is a wire, 0.7 is a soft picture, 0.95 is a "
-            + "fog, and 1 never lets the new picture in at all and dissolves what is there. It "
-            + "takes a few frames to arrive and anything moving smears as well as softens, "
-            + "because the frame being blurred is the one before. 'soft' is the average on its "
-            + "own, for laying back over the original with a Layer. The nine readings move "
-            + "together, so a Warp patched into 'x' and 'y' drags the softness in a direction "
-            + "as it spreads rather than stretching it.")
+            "Softens the picture by averaging the last frame at nine places around each pixel. "
+            + "Patch 'color' into the Output, since the loop closes through the screen. 'radius' is "
+            + "how far apart the readings sit, in coordinate units; 'amount' is how much of each "
+            + "pass survives into the next, and sets the width you see: 0 is a wire, 0.7 soft, 0.95 "
+            + "fog, 1 dissolves. Moving things smear. 'soft' is the average alone, for a Layer. A "
+            + "Warp into 'x' and 'y' drags the blur in a direction.")
         {
             Sinks = ModuleSinks.Video,
         };

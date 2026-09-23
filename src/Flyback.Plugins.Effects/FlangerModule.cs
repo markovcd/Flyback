@@ -40,11 +40,10 @@ internal static class FlangerModule
         ],
         [new PortSpec("out"), Sweep.Motion],
         Emit,
-        "A chorus an order of magnitude shorter, where the copy cancels the original instead "
-        + "of thickening it. Sweeping drags a comb of notches through the sound. 'feedback' "
-        + "sharpens them, and going negative moves them to where the peaks were — the two "
-        + "signs are two different effects. 'lfo' is the sweep, and works on the picture. "
-        + "Audio only otherwise: with nothing to remember it is a wire.")
+        "A very short chorus whose copy cancels the original, sweeping a comb of notches "
+        + "through the sound. 'feedback' sharpens them, and negative moves them to where the "
+        + "peaks were. 'lfo' is the sweep and works on the picture; otherwise it is audio only, "
+        + "a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

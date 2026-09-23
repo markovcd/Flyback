@@ -19,9 +19,8 @@ internal static class CircleModule
         [..Field.Position(), Field.Size("radius", 0.5f)],
         [Field.Distance("distance")],
         Emit,
-        "A circle, as the distance to its rim: negative inside, zero on the edge, positive "
-        + "outside. Patch it into a Fill to see it. It is exact everywhere, which makes it "
-        + "the one to reach for when a Combine is going to smooth it against something else.")
+        "A circle, as the distance to its rim: negative inside, zero on it, positive outside. "
+        + "Patch it into a Fill. Exact everywhere, so it smooths well in a Combine.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

@@ -51,16 +51,12 @@ internal static class PaletteModule
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Turns a signal into a color from a palette, which is what an HSV hue is not: a hue "
-        + "sweep walks the whole wheel and passes through every color there is, and this "
-        + "passes through a handful that go together. 't' is where in the palette to look, 0 to "
-        + "1. 'spread' is the knob to reach for — it is how far apart the three channels are, "
-        + "so a third is the rainbow, small values are tints of one color, and nothing at all "
-        + "is gray. 'cycles' repeats the palette across 't', which bands a gradient. "
-        + "'brightness' and 'contrast' are the middle of the palette and how far either side of "
-        + "it, so contrast at nothing is one flat color. Sweep 'spread' or 'cycles' from an "
-        + "oscillator and the picture changes its mind about what it is colored with rather "
-        + "than merely rotating.");
+        "A signal into a color from a palette: where a hue sweep passes through every color, "
+        + "this passes through a handful that go together. 't' is where in the palette, 0 to 1. "
+        + "'spread' is the knob to reach for, how far apart the channels are: a third is the "
+        + "rainbow, small is tints of one color, 0 is gray. 'cycles' repeats the palette across "
+        + "'t'. 'brightness' and 'contrast' are its middle and how far either side; 'contrast' "
+        + "0 is one flat color.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

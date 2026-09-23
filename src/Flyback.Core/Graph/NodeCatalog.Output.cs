@@ -74,19 +74,13 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Div, em.Live(MeterSignals.Key(node.Node, MeterSignals.Peak)), scale),
                 ];
             },
-            "How loud the sound is, as a number to draw with. Patch the signal you want it to "
-            + "listen to into 'in' — the Output's own 'left' for everything, or one voice for "
-            + "just that — and drive a hue, a size or a brightness from what comes out. 'level' "
-            + "is the loudness of the last 'window' seconds and is the steady one; 'peak' is the "
-            + "furthest that stretch got from silence and is the one that hits. Both are 0 for "
-            + "silence and about 1 for a signal at full scale, divided by 'scale' on the way "
-            + "out, so turn that up to make a quiet signal reach. 'window' is the whole of the "
-            + "smoothing: a few milliseconds follows every drum, half a second leans into the "
-            + "music. Unlike a Scope this costs the picture nothing and keeps the GPU, because "
-            + "what arrives is one number rather than a stretch of the past — it is played into "
-            + "the patch the way a keyboard is. It reads nothing at all where no sound is "
-            + "running: an exported still has no past to be loud in, and a movie is measured as "
-            + "it is written.")
+            "How loud the sound is, as a number to draw with. Patch a signal into 'in' (the "
+            + "Output's 'left' for everything, one voice for just that) and drive a hue, a size or "
+            + "a brightness from it. 'level' is the loudness over the last 'window' seconds; 'peak' "
+            + "is the furthest from silence, and is the one that hits. Both are about 1 at full "
+            + "scale, divided by 'scale'. A few milliseconds of 'window' follows every drum; half a "
+            + "second leans into the music. Costs the picture nothing and keeps the GPU. Reads "
+            + "nothing where no sound runs, as in an exported still.")
         {
             // Tapped but not charted: what it wants from the ring is two numbers
             // rather than a buffer, so no chart is allocated for it and nothing
@@ -132,9 +126,8 @@ public partial class NodeCatalog
             // the speakers the other two. Which of them a given program
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
-            "Video and audio outputs in one node. 'color' drives the screen; 'left' and 'right' drive the speakers. "
-            + "To hear the picture, read it through a Scan and patch that into 'left'. 'volume' at nought "
-            + "is not just quiet — it is the speakers switched off, the device closed rather than fed silence.");
+            "The patch's one Output. 'color' is the screen; 'left' and 'right' are the speakers. "
+            + "'volume' at nought closes the speakers rather than feeding them silence.");
 
         yield return new NodeDef(
             "audio.note", "Note", ModuleCategories.Pitch,
@@ -324,20 +317,12 @@ public partial class NodeCatalog
         [Pitched("in", 57f), Num("hold", 0f, 0f, 1f) with { Lenient = true }],
         [Num("note")],
         EmitQuantiser,
-        "Snaps what arrives to the nearest note the scale has switched on, in whatever "
-        + "octave that lands in — so a sweep becomes a run up the scale and a wandering "
-        + "signal becomes a tune. The twelve switches are pitch classes: turning A on puts "
-        + "every A in the scale, not one of them. Patch its 'note' into a Note module to "
-        + "hear it, or use it anywhere a stepped signal is wanted. All twelve on is the "
-        + "nearest semitone, which is what a Note does on its own; none on is a wire, since "
-        + "there is nothing to snap to. "
-        + "'hold' freezes the note for as long as it is up: patch the same gate that opens "
-        + "the envelope into it and the pitch is settled before the note starts and cannot "
-        + "move until it has finished, which is the difference between a melody and one long "
-        + "note sliding about. Left alone it snaps continuously, which is what it did before "
-        + "the socket existed. Audio only, like every hold — a picture has no previous "
-        + "evaluation to have held anything, so on the screen it snaps continuously whatever "
-        + "is patched here.")
+        "Snaps what arrives to the nearest note the scale has switched on, in any octave, so "
+        + "a sweep becomes a run up the scale. The switches are pitch classes: A on is every A. "
+        + "Patch 'note' into a Note to hear it. All twelve on is the nearest semitone; none on "
+        + "is a wire. 'hold' freezes the note while it is up: patch the envelope's gate into it "
+        + "so the pitch cannot slide mid-note. Audio only, like every hold: the picture snaps "
+        + "continuously.")
     {
         Extras = [new ScaleExtra(Major)],
     };
@@ -377,9 +362,9 @@ public partial class NodeCatalog
             return Sounded(em, snapped, nought, nought);
         },
         "A Quantiser and a Note in one: a note number in, a frequency in the scale out. "
-        + "'transpose' is added first, in semitones — patch a chord's root into it, or set 12 "
-        + "for an octave up. 'hz' goes to an oscillator's freq and 'note' is the same as a "
-        + "number. 'hold' freezes it while it is up, as the Quantiser's does.")
+        + "'transpose' is added first, in semitones: a chord's root, or 12 for an octave up. "
+        + "'hz' goes to an oscillator's 'freq'; 'note' is the same as a number. 'hold' freezes "
+        + "it, as a Quantiser's does.")
     {
         Extras = [new ScaleExtra(Major)],
     };
@@ -537,18 +522,11 @@ public partial class NodeCatalog
                 // past to its left and the future to its right.
                 return [Charted(em, x, y, height, now: zero)];
             },
-            "A chart of whatever is patched into it, in place of the picture. Select it and "
-            + "the screen shows the value of its 'in' over time instead of the patch: the "
-            + "middle column is now, the left is the past and the right is the future, and one "
-            + "grid square is an eighth of 'window' across and a quarter of 'scale' up. "
-            + "'window' is marked in decades so that one knob covers a single cycle of an "
-            + "audible tone as well as half a minute of an LFO — it reads as the time it is. Select "
-            + "anything else and the picture comes back. It is an ordinary module besides — its "
-            + "'out' is the chart as a color, so it can be patched into the Output to keep it "
-            + "on screen. What it cannot show is memory: drawn rather than heard, an oscillator "
-            + "does not accumulate its phase and a delay line passes straight through, so a "
-            + "chart of either is what the screen makes of it rather than what the speakers do. "
-            + "A Scope shows that instead — what was actually played, which is the past only.")
+            "A chart of 'in' in place of the picture while it is selected: the middle column is "
+            + "now, the left the past, the right the future. A grid square is an eighth of 'window' "
+            + "across and a quarter of 'scale' up. 'out' is the chart as a color. It cannot show "
+            + "memory: drawn rather than heard, an oscillator does not accumulate phase and a delay "
+            + "passes straight through. A Scope shows what the speakers actually played.")
         {
             Sinks = ModuleSinks.Video,
         };
@@ -619,21 +597,12 @@ public partial class NodeCatalog
                         glow: em.Add(em.Mul(age, 0.62f), 0.38f)),
                 ];
             },
-            "A chart of what the speakers actually played. Patch the signal you want to "
-            + "watch into its 'in' and select it, and the screen shows the last 'window' "
-            + "seconds of it, across the whole width. Time runs left to right: the right-hand "
-            + "edge is now — the bright vertical line — and the left-hand edge is 'window' "
-            + "ago. One grid square is an eighth of the window across and a quarter of "
-            + "'scale' up, whatever shape the picture is. A Probe puts its line down the "
-            + "middle because it has a future to draw on the other side of it; this one has "
-            + "none, so the newest sample is the last column and there is nothing past it. "
-            + "Unlike a Probe it shows memory: an oscillator's accumulated phase, a delay "
-            + "line's tail, a sample playing, an envelope that was triggered. What it cannot "
-            + "do is show the future, or anything at all while sound is off, or anything the "
-            + "Output's 'left' and 'right' do not reach — it is a record of what was played, "
-            + "so a branch of the patch that only draws was never played and has nothing to "
-            + "show. Use a Probe for those. Its 'out' is the chart as a color, so it can be "
-            + "patched into the Output to keep it on screen alongside the picture.")
+            "A chart of what the speakers actually played: select it and the screen shows the "
+            + "last 'window' seconds of 'in', newest at the right edge. A grid square is an eighth "
+            + "of 'window' across and a quarter of 'scale' up. Unlike a Probe it shows memory (an "
+            + "oscillator's phase, a delay's tail, a sample, an envelope) but only what reaches the "
+            + "Output's 'left' or 'right', and nothing while sound is off. 'out' is the chart as a "
+            + "color.")
         {
             TapsSignal = true,
             ChartsSignal = true,
@@ -723,20 +692,13 @@ public partial class NodeCatalog
                         ground: em.Constant(-1f)),
                 ];
             },
-            "A spectrum of what the speakers actually played. Patch the signal you want to "
-            + "look at into its 'in' and select it, and the screen shows how loud each "
-            + "frequency was over the last 'window' seconds: 20 Hz at the left-hand edge, "
-            + "20 kHz at the right, on a log scale with a grid line at 100 Hz, 1 kHz and "
-            + "10 kHz. Up is louder. The top edge is a full-scale sine divided by 'scale', and "
-            + "the bottom edge is 'range' decibels below that, so a grid square is an eighth "
-            + "of 'range' up — 12 dB at the default. A bar along the top means something is "
-            + "louder than the top of the chart. 'window' is how much of the past is averaged: "
-            + "a short one follows every note and flickers, a long one settles into the "
-            + "character of the whole sound. Resolution is fixed at about 12 Hz, so the "
-            + "lowest octave is coarse. Like a Scope it is a record rather than a computation: "
-            + "it shows nothing while sound is off, and nothing the Output's 'left' and "
-            + "'right' do not reach. Its 'out' is the chart as a color, so it can be patched "
-            + "into the Output to keep it on screen alongside the picture.")
+            "A spectrum of what the speakers actually played: select it and the screen shows how "
+            + "loud each frequency of 'in' was over the last 'window' seconds, 20 Hz to 20 kHz on a "
+            + "log scale, gridded at 100 Hz, 1 kHz and 10 kHz. The top edge is a full-scale sine "
+            + "divided by 'scale' and the bottom is 'range' dB below it; a bar along the top is "
+            + "louder than the chart. A short 'window' follows every note, a long one settles. "
+            + "Resolution is about 12 Hz. Like a Scope, it shows only what reaches the Output's "
+            + "'left' or 'right', and nothing while sound is off. 'out' is the chart as a color.")
         {
             TapsSignal = true,
             ChartsSignal = true,
@@ -854,22 +816,15 @@ public partial class NodeCatalog
                         em.Add(lit, em.Mul(guide, 0.25f))),
                 ];
             },
-            "Hears the picture. A circle is swept round the image 'rate' times a second and "
-            + "whatever is patched into 'in' is read along it, so one turn of the loop is one "
-            + "cycle of a waveform and 'rate' is the pitch. 'radius', 'x' and 'y' choose which "
-            + "loop is read: the image is the wavetable and moving them sweeps through it, "
-            + "which is the knob to reach for rather than the pitch. 'clock' is what carries the "
-            + "sweep round, and it runs off Time until something else is patched into it. "
-            + "A closed loop is the whole point — a raster's retrace would put a sawtooth edge "
-            + "in every cycle whatever the picture held, and a circle contributes nothing of "
-            + "its own. 'out' is the sample; 'view' is the loop drawn where it runs with the "
-            + "value swinging the trace off it, which is the X-Y display to the Probe's chart. "
-            + "A loop that follows the picture's own contours reads a constant and is silent — "
-            + "a circle centered on Rings is the way to hear nothing, and moving it off center "
-            + "is the way to hear everything. At 'radius' 0 the loop is a point, and 'x' and "
-            + "'y' are the path: a sawtooth into 'x' scaled by Coordinates' 'aspect' crosses "
-            + "the whole width, and a slow one into 'y' walks it down the picture a line at a "
-            + "time — the raster, retrace and all, when that edge is what you want.");
+            "Hears the picture. A circle is swept round the image 'rate' times a second and 'in' "
+            + "is read along it, so one turn is one cycle of a waveform and 'rate' is the pitch. "
+            + "'radius', 'x' and 'y' pick the loop: the image is the wavetable, and moving them "
+            + "sweeps through it. 'clock' carries the sweep and runs off Time until something is "
+            + "patched in. 'out' is the sample; 'view' is the loop drawn over the picture. A loop "
+            + "along the picture's own contours reads a constant and is silent: a circle centered "
+            + "on Rings hears nothing, and moving it off center hears everything. At 'radius' 0, "
+            + "'x' and 'y' are the path: a sawtooth into 'x' times Coordinates' 'aspect', with a "
+            + "slow one into 'y', is a raster scan, retrace edge and all.");
     }
     
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>

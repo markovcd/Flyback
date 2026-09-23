@@ -57,13 +57,12 @@ internal static class FmModule
         ],
         [new PortSpec("out")],
         Emit,
-        "A four-operator FM synth: an electric piano, brass, a slap bass, a bell. Patch an "
-        + "envelope into 'level' and a frequency into 'freq'. Operator one sounds at the "
-        + "pitch; 'ratio2'..'ratio4' put the other three above it and 'index2'..'index4' say "
-        + "how hard each bends what it feeds, fading with the level so a note starts bright. "
-        + "'tone' scales every index at once. The algorithm is set on the node: stack "
-        + "(4→3→2→1), branch (4→3, 3 and 2 → 1), fan (2, 3 and 4 → 1), pair (2→1 beside 4→3) "
-        + "or organ (all four heard).")
+        "A four-operator FM synth: electric piano, brass, slap bass, bell. Patch an envelope "
+        + "into 'level' and a frequency into 'freq'. Operator one sounds at the pitch; "
+        + "'ratio2'..'ratio4' place the others above it and 'index2'..'index4' set how hard "
+        + "each bends what it feeds, fading with the level. 'tone' scales every index. The "
+        + "algorithm is set on the node: stack (4→3→2→1), branch (4→3, 3 and 2 → 1), fan (2, 3 "
+        + "and 4 → 1), pair (2→1 beside 4→3) or organ (all four heard).")
     {
         Extras =
         [

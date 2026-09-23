@@ -32,12 +32,10 @@ internal static class PosteriseModule
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Holds each channel to a fixed number of levels, which turns a gradient into flat "
-        + "bands. The levels reach both ends, so black stays black and white stays white and "
-        + "2 is every channel off or on — the eight colors a very old machine had. 'levels' is "
-        + "rounded down and never goes below two. Each channel is stepped on its own, so the "
-        + "three sets of bands cross and there are many more than 'levels' colors in the "
-        + "result. Sweep it from an oscillator to make a picture resolve.");
+        "Holds each channel to 'levels' steps, turning a gradient into flat bands. The steps "
+        + "include black and white, so 2 is the eight colors of a very old machine. Rounded "
+        + "down, never below two. The channels step apart, so the result has more than 'levels' "
+        + "colors. Sweep it from an oscillator to make a picture resolve.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

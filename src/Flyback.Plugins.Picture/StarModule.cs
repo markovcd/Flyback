@@ -36,12 +36,10 @@ internal static class StarModule
         ],
         [Field.Distance("distance")],
         Emit,
-        "A star, as a distance, with a point at the top like a Polygon's corner. 'radius' is "
-        + "to the tips. 'sharpness' runs from a polygon with its corners on those tips, at 0, "
-        + "to a needle at 1 — the five-pointed star it starts on is the one on a flag, and "
-        + "sweeping the knob grows the points rather than spinning the shape. 'points' is "
-        + "rounded down like a Polygon's 'sides', and two of them is a lens rather than a "
-        + "star. Exact, so an outline round one is the width it says even at the tips.")
+        "A star, as a distance, with a point at the top. 'radius' is to the tips. 'sharpness' "
+        + "runs from a polygon at 0 to needles at 1, growing the points. 'points' is rounded "
+        + "down like a Polygon's 'sides', and 2 is a lens. Exact, so an outline is its stated "
+        + "width even at the tips.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

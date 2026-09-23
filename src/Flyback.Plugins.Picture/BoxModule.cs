@@ -33,10 +33,8 @@ internal static class BoxModule
         ],
         [Field.Distance("distance")],
         Emit,
-        "A rectangle, as a distance. 'width' and 'height' are half-sizes, so they read as how "
-        + "far it reaches from the middle — the same way a radius does, and the reason a box "
-        + "and a circle of the same number are the same size. 'corner' rounds the corners off, "
-        + "up to the point where the shape is a capsule and then a disc.")
+        "A rectangle, as a distance. 'width' and 'height' are half-sizes, reaching from the "
+        + "middle as a radius does. 'corner' rounds it, up to a capsule and then a disc.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

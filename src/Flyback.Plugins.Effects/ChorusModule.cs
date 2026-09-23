@@ -41,11 +41,9 @@ internal static class ChorusModule
         ],
         [new PortSpec("out"), new PortSpec("wide"), Sweep.Motion],
         Emit,
-        "One voice heard as several: a short delay swept slowly under the dry signal, so the "
-        + "copy is never quite in tune with the original. 'out' and 'wide' are swept in "
-        + "opposite directions — patch both for stereo, or use 'out' alone. 'lfo' is the "
-        + "sweep itself, and is the one output that works on the picture. Audio only "
-        + "otherwise: with nothing to remember it is a wire.")
+        "One voice heard as several: a short delay swept slowly under the dry signal. 'out' "
+        + "and 'wide' sweep in opposite directions: both for stereo, or 'out' alone. 'lfo' is "
+        + "the sweep and works on the picture; otherwise it is audio only, a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

@@ -62,17 +62,12 @@ internal static class FractalModule
             new PortSpec("folded", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Clouds at several sizes at once, which is what a cloud, a coastline or a slab of "
-        + "marble is made of. 'smooth' is the plain sum and looks like weather; 'folded' takes "
-        + "each octave's distance from the middle instead, which creases the field everywhere "
-        + "the noise crossed it and looks like smoke or hammered metal — one minus that is "
-        + "ridges, and a mountain. 'roughness' is how much each octave keeps of the one before "
-        + "it: at 0 this is a single Clouds, and at 1 the fine detail is as loud as the broad "
-        + "shape and the field is sand. Both outputs run 0 to 1. 'z' boils it as Clouds' does "
-        + "and is scaled with the picture, so the detail churns faster than the shape. How many "
-        + "octaves is on the node rather than on a socket, because it decides how much work the "
-        + "patch does rather than what the answer is — one noise lookup each, and noise is the "
-        + "dearest thing here.")
+        "Clouds at several sizes at once: cloud, coastline, marble. 'smooth' is the plain sum "
+        + "and looks like weather; 'folded' creases the field wherever the noise crossed its "
+        + "middle, like smoke or hammered metal, and one minus it is ridges. 'roughness' is how "
+        + "much each octave keeps of the last: 0 is a single Clouds, 1 is sand. Both run 0 to "
+        + "1. 'z' boils it. The octave count is set on the node, and each octave costs a noise "
+        + "lookup.")
     {
         Extras = [new OctaveExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))

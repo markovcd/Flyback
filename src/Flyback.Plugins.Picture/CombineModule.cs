@@ -51,12 +51,10 @@ internal static class CombineModule
             Field.Distance("difference"),
         ],
         Emit,
-        "Two shapes into one, three ways at once: 'union' is both of them, 'intersection' is "
-        + "only where they overlap, and 'difference' is a with b cut out of it. 'smoothness' "
-        + "melts the seam where they meet — at 0 the corners are sharp and this is exactly a "
-        + "Minimum and a Maximum, and turned up the two forms flow into each other. Chain "
-        + "them for more than two shapes; the outputs are distances like the inputs, so "
-        + "anything here can be combined again, filled or outlined.")
+        "Two shapes into one, three ways: 'union' is both, 'intersection' only the overlap, "
+        + "'difference' a with b cut out. 'smoothness' melts the seam; at 0 it is exactly a "
+        + "Minimum and a Maximum. The outputs are distances, so they chain, fill or outline "
+        + "like any shape.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

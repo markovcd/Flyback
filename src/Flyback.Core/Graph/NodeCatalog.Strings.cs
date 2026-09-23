@@ -28,12 +28,10 @@ public partial class NodeCatalog
             ],
             [Num("out", 0f, -1f, 1f)],
             EmitString,
-            "A plucked string. Each rise of 'trigger' plucks it with a burst of noise one "
-            + "period long, and it rings at 'freq' in hertz for about 'decay' before it is gone. "
-            + "'brightness' at 0 is a soft, dark pluck that loses its top quickly; at 1 it stays "
-            + "bright and metallic. 'in' excites it continuously, so noise into it bows the string "
-            + "and a drum into it sets it ringing in sympathy. Audio only: on the picture 'in' "
-            + "passes through.")
+            "A plucked string. Each rise of 'trigger' plucks it with a period of noise, and it "
+            + "rings at 'freq' for about 'decay'. 'brightness' 0 is soft and dark, 1 bright and "
+            + "metallic. 'in' excites it continuously: noise bows it, a drum sets it ringing in "
+            + "sympathy. Audio only: on the picture 'in' passes through.")
         {
             Sinks = ModuleSinks.Audio,
         };

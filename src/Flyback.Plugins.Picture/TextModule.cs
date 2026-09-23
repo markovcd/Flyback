@@ -56,13 +56,10 @@ internal static class TextModule
         ],
         [Field.Distance("distance")],
         Emit,
-        "Lines of text in a pixel font, as the distance to the letters, so patch it into a "
-        + "Fill to see it. The lines are typed on the node, one to a line break, and the font "
-        + "is picked there too: Pixel, or Tiny, which is blockier and has one case. 'line' "
-        + "chooses which shows and wraps round past the last, so a counted clock or a "
-        + "sequencer's step pages through them. 'reveal' is how much of the line shows, "
-        + "letter by letter from the left: sweep it 0 to 1 to type it out. 'size' is the "
-        + "height of a capital.")
+        "Lines of text in a pixel font, as the distance to the letters: patch it into a Fill. "
+        + "The lines and the font (Pixel, or the blockier one-case Tiny) are set on the node. "
+        + "'line' picks which shows and wraps past the last, so a counter pages through them. "
+        + "'reveal' 0 to 1 types the line out from the left. 'size' is a capital's height.")
     {
         Extras = [new LinesExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))

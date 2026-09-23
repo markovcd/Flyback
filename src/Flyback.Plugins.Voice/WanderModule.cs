@@ -31,11 +31,10 @@ internal static class WanderModule
         [new PortSpec("out")],
         Emit,
         "A smooth random value that never repeats, between 'low' and 'high'. 'rate' is how "
-        + "many new values it passes through a second: 0.05 drifts like weather, 4 wobbles. "
-        + "Patch it into anything that should keep changing once the sequence has been heard "
-        + "— a cutoff, a level, a hue. Whole 'seed's share nothing; two Wanders with the same "
-        + "'seed' and 'rate' move together, and on the picture it is the same value at every "
-        + "pixel, so the screen follows what the speakers follow.")
+        + "many new values a second: 0.05 drifts like weather, 4 wobbles. For anything that "
+        + "should keep changing: a cutoff, a level, a hue. The same 'seed' and 'rate' move "
+        + "together. On the picture it is one value at every pixel, the one the speakers "
+        + "follow.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

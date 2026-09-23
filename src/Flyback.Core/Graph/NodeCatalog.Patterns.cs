@@ -24,7 +24,7 @@ public partial class NodeCatalog
                 var fy = em.Unary(OpCode.Floor, em.Mul(i[1], i[2]));
                 return [em.Mul(em.Unary(OpCode.Fract, em.Mul(em.Add(fx, fy), 0.5f)), 2f)];
             },
-            "A chequerboard, 0 or 1.");
+            "A checkerboard, 0 or 1.");
 
         yield return new NodeDef(
             "pattern.rings", "Rings", ModuleCategories.Patterns,

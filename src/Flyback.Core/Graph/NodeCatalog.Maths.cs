@@ -181,11 +181,9 @@ public partial class NodeCatalog
                     sum = em.Add(sum, em.Mul(i[ch * 2], i[ch * 2 + 1]));
                 return [sum];
             },
-            "Four signals summed, each through its own level. It sums the way a desk does "
-            + "rather than averaging, so four things at full is four times as loud — pull the "
-            + "levels down, or the Output's gain. An unused input rests on a knob at zero, so it "
-            + "adds nothing until something is patched in. Colors mix as readily as tones: patch "
-            + "a picture into any input and the levels are a four-way blend of pictures.");
+            "Four signals summed, each through its own level. It sums rather than averages, so "
+            + "four at full is four times as loud. An unused input adds nothing. Colors mix too: "
+            + "the levels are a four-way blend of pictures.");
     }
 
     /// <summary>
@@ -242,14 +240,11 @@ public partial class NodeCatalog
                 Slot Railed(Slot sum) =>
                     em.Ternary(OpCode.Clamp, em.Mul(sum, i[trim]), em.Constant(-1f), em.Constant(1f));
             },
-            "A stereo mixer for the end of a patch. Four channels, each a 'left', a 'right' and one "
-            + "'level' for both; leave 'right' unpatched and it carries the left, so a mono voice "
-            + "is one wire and a stereo effect is two. 'left' and 'right' out are the sum times "
-            + "'trim', held to -1..1 so nothing reaches the speakers hotter than full scale — "
-            + "patch them into the Output. For more than four channels chain Desks: 'bus left' "
-            + "and 'bus right' out are the sum before the trim and the rails, and patched into "
-            + "the next Desk's 'bus' inputs they are added at full level, so the last Desk in the "
-            + "chain is the master.");
+            "A stereo mixer for the end of a patch: four channels, each a 'left', a 'right' and "
+            + "one 'level'; an unpatched 'right' carries the left. 'left' and 'right' out are the "
+            + "sum times 'trim', held to -1..1: patch them into the Output. For more channels chain "
+            + "Desks: 'bus left' and 'bus right' out, before the trim and the rails, go into the "
+            + "next Desk's 'bus' inputs at full level, and the last Desk is the master.");
     }
 
     /// <summary>
@@ -268,13 +263,11 @@ public partial class NodeCatalog
         [Any("a"), Any("b", 1f), Any("c"), Any("d")], [Any("out")],
         (em, i) =>
             [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Resolve) : em.Constant(0f)],
-        "A formula over its four sockets, typed rather than wired: 'a * b + c', "
-        + "'(floor(a * 45) + 0.5) / 45', 'smoothstep(0.2, 0.8, a) * b'. It is exactly the Maths "
-        + "modules it names, so it sounds and looks the same as the patch it replaces. "
-        + "It knows + - * / %, a minus in front, brackets, numbers, pi and tau, and "
-        + Formula.Listed(functions) + " — an argument left off is that module's knob "
-        + "at rest. A number that should be turned belongs on a socket instead, where it "
-        + "is a knob. A formula that does not read gives 0 and says why.")
+        "A formula over its four sockets: 'a * b + c', 'smoothstep(0.2, 0.8, a) * b'. "
+        + "Exactly the Maths modules it names. It knows + - * / %, a minus in front, "
+        + "brackets, numbers, pi and tau, and " + Formula.Listed(functions)
+        + "; an argument left off is that module's knob at rest. A number to be turned "
+        + "belongs on a socket. A formula that does not read gives 0 and says why.")
     {
         Extras = [new FormulaExtra(functions)],
         AsksForItsInputs = true,

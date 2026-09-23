@@ -28,13 +28,11 @@ internal static class FadeModule
         ],
         [new PortSpec("out", PortKind.Any), new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "Brings a part in. 'in' is silent while 'level' is under 'from', at full once it is "
-        + "over 'to', and fades smoothly between. Drive 'level' from one Sequencer that says "
-        + "how far the track has got and give every part its own 'from' and 'to': that is a "
-        + "whole arrangement on one lane. Set 'from' above 'to' and the part leaves as the "
-        + "level rises instead. 'gate' is the fade alone, 0 to 1, for whatever should arrive "
-        + "with the part — a color, a filter. Untyped, so it fades a picture as readily as a "
-        + "voice.");
+        "Brings a part in: 'in' is silent while 'level' is under 'from', full over 'to', and "
+        + "fades between. Drive every part's 'level' from one Sequencer that says how far the "
+        + "track has got, each with its own 'from' and 'to', for a whole arrangement on one "
+        + "lane; 'from' above 'to' fades out instead. 'gate' is the fade alone, 0 to 1. "
+        + "Untyped: it fades a picture as readily as a voice.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

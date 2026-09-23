@@ -68,17 +68,12 @@ internal static class CellsModule
             new PortSpec("cell", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Scattered points and the distance to the nearest — cells, cracks, scales and stone, "
-        + "which is the one thing smooth noise cannot make because it has no edges in it. "
-        + "'distance' shades each cell outward from its point. 'edge' is nothing exactly on the "
-        + "line between two cells and rises inside them, so a Threshold on it is a crack and a "
-        + "Smoothstep is a soft one. 'cell' is one number for the whole cell and a different "
-        + "one next door, which is a flat mosaic and the only value here that jumps at a "
-        + "border. 'jitter' at 1 scatters the points and at 0 pins them to the middle of a "
-        + "square grid, so a patch can slide between organic and mechanical. 'z' drifts the "
-        + "points. It is the most expensive module in the catalog — eighteen noise lookups a "
-        + "pixel, which is what measuring nine squares costs — so it is a joy on the GPU and "
-        + "slow on the interpreter, which is what a command-line render uses.")
+        "Scattered points and the distance to the nearest: cells, cracks, scales, stone, the "
+        + "edges smooth noise cannot make. 'distance' shades each cell outward from its point. "
+        + "'edge' is 0 on the line between two cells, so a Threshold on it is a crack. 'cell' "
+        + "is one number per cell, a flat mosaic. 'jitter' at 1 scatters the points and at 0 "
+        + "pins them to a grid. 'z' drifts them. The dearest module in the catalog: fine on the "
+        + "GPU, slow on the interpreter a command-line render uses.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
         {

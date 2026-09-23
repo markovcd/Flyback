@@ -32,11 +32,9 @@ public partial class NodeCatalog
         ],
         [new PortSpec("out", PortKind.Any)],
         DriveEmit,
-        "Soft saturation. Rounds the peaks off a signal instead of folding them back, which "
-        + "is the difference between a tone that thickens and one that changes shape. "
-        + "Normalized as it goes, so more drive is dirtier and never louder — and because "
-        + "the quiet parts come up while the loud ones stop moving, it doubles as a "
-        + "compressor. Untyped, and on the screen it reads as contrast that never clips.");
+        "Soft saturation: rounds the peaks off rather than folding them back. Normalized, so "
+        + "more drive is dirtier and never louder, and it doubles as a compressor. Untyped; on "
+        + "the screen it is contrast that never clips.");
 
     private static Slot[] DriveEmit(Emitter em, EmitContext inputs)
     {

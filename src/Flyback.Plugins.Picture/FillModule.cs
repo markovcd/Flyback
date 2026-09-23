@@ -39,12 +39,10 @@ internal static class FillModule
             new PortSpec("outline", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "Turns a distance into ink: 1 inside the shape, 0 outside, and a soft edge of "
-        + "'softness' between them. 'outline' is the same shape's edge instead, 'width' "
-        + "across and centered on it, so a form and its own outline are two wires from one "
-        + "module. Both are 0..1, which is what a color's 'value' wants and what a Mixer "
-        + "blends. Sizes are in the picture's own units rather than in pixels, so a patch "
-        + "looks the same at any size it is rendered at.")
+        "Turns a distance into ink: 1 inside, 0 outside, with an edge 'softness' wide. "
+        + "'outline' is the shape's edge instead, 'width' across. Both 0..1, for a color's "
+        + "'value' or a Mixer. Sizes are in picture units, so it looks the same at any "
+        + "resolution.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

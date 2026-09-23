@@ -40,12 +40,10 @@ internal static class DrumModule
         ],
         [new PortSpec("out")],
         Emit,
-        "A kick drum, or a tom. Patch an envelope into 'level' — a Stroke, a Decay, an ADSR — "
-        + "and that one envelope is both how loud the drum is and how far its pitch drops. "
-        + "'pitch' is where it comes to rest, in hertz: 45 is a kick, 100 to 250 a tom. 'sweep' "
-        + "is how many hertz above that the hit starts, and 'bend' how quickly it falls — high "
-        + "is a click at the front, low a long dive. 'drive' thickens it without making it "
-        + "louder, and 0 is clean.")
+        "A kick or a tom. Patch an envelope into 'level' (a Stroke, a Decay, an ADSR) and it "
+        + "sets both the loudness and the pitch drop. 'pitch' is where it rests, in hertz: 45 a "
+        + "kick, 100 to 250 a tom. 'sweep' is how far above that it starts, 'bend' how fast it "
+        + "falls: high clicks, low dives. 'drive' thickens it without making it louder.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

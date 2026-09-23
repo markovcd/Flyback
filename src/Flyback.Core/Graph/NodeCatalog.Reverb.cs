@@ -112,13 +112,11 @@ public partial class NodeCatalog
         ],
         [new PortSpec("out"), new PortSpec("wide")],
         ReverbEmit,
-        "A room. 'size' stretches every delay together and sets how long the first reflection "
-        + "takes to arrive, so it moves from a tiled bathroom to a hall; 'decay' is how long "
-        + "the tail takes to die, and it darkens as it goes the way a real one does. The "
-        + "tail comes out at about the level that went in, so 'mix' is a straight crossfade "
-        + "between the two. 'out' and 'wide' "
-        + "are the same tail smeared two different ways: patch both for stereo, or use 'out' "
-        + "alone. Audio only — on the picture it has nothing to remember, and is a wire.");
+        "A room. 'size' stretches every delay and the first reflection, from a bathroom to a "
+        + "hall; 'decay' is how long the tail lasts, darkening as it goes. The tail comes out "
+        + "at about the level that went in, so 'mix' is a straight crossfade. 'out' and 'wide' "
+        + "are the tail smeared two ways: both for stereo, or 'out' alone. Audio only: a wire "
+        + "on the picture.");
 
     private static Slot[] ReverbEmit(Emitter em, EmitContext inputs)
     {

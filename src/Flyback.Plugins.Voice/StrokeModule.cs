@@ -29,13 +29,11 @@ internal static class StrokeModule
         ],
         [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "A drum hit without a trigger. 'in' times 'rate' is a count of strokes — patch a "
-        + "count of beats in, and a 'rate' of 4 is a hit on every sixteenth. 'out' jumps to 1 "
-        + "at the start of each stroke and falls to 0 by the end of it; 'curve' bends the "
-        + "fall, 1 a straight line, 3 a pluck, 8 a click. 'offset' slides the hits by a share "
-        + "of a stroke: a 'rate' of 0.5 with an 'offset' of 0.5 is beats two and four. 'phase' "
-        + "is how far through the stroke it is, 0 to 1. The same on the picture as in the "
-        + "speakers, so whatever it strikes can flash with it.")
+        "A drum hit without a trigger. 'in' times 'rate' counts strokes: a count of beats in "
+        + "and a 'rate' of 4 is every sixteenth. 'out' jumps to 1 at each stroke and falls to 0 "
+        + "by its end; 'curve' 1 is straight, 3 a pluck, 8 a click. 'offset' slides the hits by "
+        + "a share of a stroke: 'rate' 0.5 and 'offset' 0.5 is beats two and four. 'phase' is 0 "
+        + "to 1 through the stroke. The same on the picture as in the speakers.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {

@@ -48,12 +48,11 @@ internal static class HissModule
         ],
         [new PortSpec("out")],
         Emit,
-        "A hi-hat, or a snare's wires, a clap, a riser: noise through a filter. Patch an "
-        + "envelope into 'level' — a Stroke, a Decay, a Euclid's 'stroke' — and that is how loud "
-        + "it is. 'cutoff' and 'resonance' are the Filter's: 8000 on the high band is a hat, "
-        + "1900 on the middle one a snare, and a 'cutoff' swept upwards is a riser. 'gain' makes "
-        + "up what a narrow band takes away. The noise and the band are set on the node: white "
-        + "or pink, and low, band or high. Audio only, like the Filter in it.")
+        "A hi-hat, a snare's wires, a clap, a riser: noise through a filter. Patch an "
+        + "envelope into 'level': a Stroke, a Decay, a Euclid's 'stroke'. A 'cutoff' of 8000 on "
+        + "the high band is a hat, 1900 on the band a snare, and swept upwards a riser. 'gain' "
+        + "makes up what a narrow band takes away. White or pink, and low, band or high, are "
+        + "set on the node. Audio only.")
     {
         Extras =
         [

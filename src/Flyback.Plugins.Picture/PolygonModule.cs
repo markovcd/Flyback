@@ -46,12 +46,10 @@ internal static class PolygonModule
         ],
         [Field.Distance("distance")],
         Emit,
-        "A regular polygon, as a distance. 'radius' is to the corners rather than to the "
-        + "flats, so a polygon and a Circle of the same radius touch, and there is always a "
-        + "corner at the top — a triangle points up. 'sides' is rounded down and never goes "
-        + "below three: an in-between count is a shape that does not close, so the knob steps "
-        + "between whole polygons rather than sliding through broken ones. It costs the same "
-        + "however many sides it is asked for.")
+        "A regular polygon, as a distance, with a corner at the top. 'radius' is to the "
+        + "corners, so it touches a Circle of the same radius. 'sides' is rounded down and "
+        + "never below three, so the knob steps between whole polygons. Costs the same at any "
+        + "count.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

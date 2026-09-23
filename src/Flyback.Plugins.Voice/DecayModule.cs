@@ -33,12 +33,10 @@ internal static class DecayModule
         ],
         [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "A percussive envelope. Each rise of 'trigger' — a Sequencer's gate, a MIDI trigger, "
-        + "a Euclid — sends it up over 'attack' and back to silence over 'decay', without "
-        + "waiting for the trigger to fall. A new hit mid-fall rises from where it is, so fast "
-        + "hits do not click. 'curve' at 0 falls in a straight line; turned up it drops fast "
-        + "and leaves a long tail, the way a drum does. Audio only: on the picture it passes "
-        + "the trigger through.")
+        "A percussive envelope. Each rise of 'trigger' sends it up over 'attack' and back to "
+        + "silence over 'decay', without waiting for the trigger to fall; a hit mid-fall rises "
+        + "from where it is. 'curve' 0 falls straight; turned up it drops fast with a long "
+        + "tail, like a drum. Audio only: the picture gets the trigger.")
     {
         Sinks = ModuleSinks.Audio,
     };

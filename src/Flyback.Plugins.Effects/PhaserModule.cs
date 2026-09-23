@@ -65,11 +65,9 @@ internal static class PhaserModule
         ],
         [new PortSpec("out"), Sweep.Motion],
         Emit,
-        "Two notches swept through the sound, from four allpass stages added back to the dry "
-        + "signal. Where a flanger's notches are a comb — every multiple of one frequency — "
-        + "these are not related to each other, which is why it sweeps rather than whooshes. "
-        + "'feedback' sharpens them. 'lfo' is the sweep, and works on the picture. Audio only "
-        + "otherwise: with nothing to remember it is exactly a wire.")
+        "Two unrelated notches swept through the sound, from four allpass stages over the dry "
+        + "signal, so it sweeps where a flanger whooshes. 'feedback' sharpens them. 'lfo' is "
+        + "the sweep and works on the picture; otherwise it is audio only, a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

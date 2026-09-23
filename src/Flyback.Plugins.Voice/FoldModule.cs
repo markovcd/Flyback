@@ -29,12 +29,10 @@ internal static class FoldModule
         ],
         [new PortSpec("out", PortKind.Any)],
         Emit,
-        "Folds a signal back on itself where it runs past full scale, which adds harmonics "
-        + "rather than removing them. At a drive of 1 it is exactly a wire; turn it up and a "
-        + "sine grows a spectrum. 'bias' shifts the signal before the fold, so the folds stop "
-        + "being symmetric and even harmonics appear. Untyped like the maths modules, so it "
-        + "folds a color as readily as a tone — and on the screen the same knob turns a "
-        + "gradient into bands.")
+        "Folds a signal back where it runs past full scale, adding harmonics. 'drive' 1 is a "
+        + "wire; turned up, a sine grows a spectrum. 'bias' shifts it first, so the folds go "
+        + "asymmetric and even harmonics appear. Untyped: it folds a color too, and on the "
+        + "screen turns a gradient into bands.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

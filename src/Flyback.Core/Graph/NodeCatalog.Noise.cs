@@ -44,10 +44,9 @@ public partial class NodeCatalog
         NoiseEmit,
         "Noise and chance, each -1 to 1 before 'amp' and 'bias'. 'white' is bright hiss for "
         + "hats and snares; 'pink' is darker, like rain. 'random' jumps to a new value 'rate' "
-        + "times a second and holds it; 'drift' glides between the same values. Modules with "
-        + "the same 'seed' produce the same noise, so give each its own. On the picture it "
-        + "runs across its domain: on Time the frame flickers, from a coordinate it is grain. "
-        + "For a smooth field, use Clouds.");
+        + "times a second and holds it; 'drift' glides between the same values. Give each Noise "
+        + "its own 'seed'. On the picture it runs across its domain: on Time the frame "
+        + "flickers, on a coordinate it is grain. For a smooth field, use Clouds.");
 
     /// <summary>
     /// White and pink over a domain, each -1 to 1, for a module that is noise

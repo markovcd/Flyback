@@ -29,10 +29,9 @@ public partial class NodeCatalog
         ],
         [new PortSpec("out")],
         SlewEmit,
-        "Follows 'in', but takes its time. Between a Note Sequencer and a Note it is glide; "
-        + "after a gate or a Sequencer it smooths the steps. 'rise' is how long it takes to "
-        + "catch an input that went up, 'fall' one that went down, and the time is the same "
-        + "whatever the distance. Audio only: on the picture it is a wire.")
+        "Follows 'in', taking its time: between a Note Sequencer and a Note it is glide, and "
+        + "after a gate it smooths the steps. 'rise' and 'fall' are how long it takes to catch "
+        + "a move up or down, whatever the distance. Audio only: a wire on the picture.")
     {
         Sinks = ModuleSinks.Audio,
     };

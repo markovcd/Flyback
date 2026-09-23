@@ -34,13 +34,12 @@ internal static class EuclidModule
         ],
         [new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("hit", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("index", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("stroke", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "A rhythm from two numbers: 'hits' spread as evenly as possible over 'steps', moving at "
-        + "'rate' steps a second — 3 in 8 is the tresillo, 5 in 8 the cinquillo. 'rotate' "
-        + "slides the pattern along the loop by whole steps. 'gate' opens for 'gate length' of each hit step, to trigger a "
-        + "Decay or an ADSR; 'hit' is 1 for the whole step. 'index' is how far through the loop "
-        + "it is, 0 to 1. 'stroke' is an envelope with no trigger: 1 at the start of each hit "
-        + "step, fallen to 0 by the end of it, bent by 'curve' the way a Stroke's is — patch it "
-        + "into a Drum's 'level'. On the picture it runs across its domain like a Sequencer.")
+        "A Euclidean rhythm: 'hits' spread as evenly as possible over 'steps', at 'rate' "
+        + "steps a second; 3 in 8 is the tresillo. 'rotate' slides the pattern by whole steps. "
+        + "'gate' opens for 'gate length' of each hit, for a Decay or an ADSR; 'hit' is 1 for "
+        + "the whole step; 'index' is 0 to 1 through the loop. 'stroke' falls from 1 to 0 "
+        + "across each hit step, bent by 'curve', for a Drum's 'level'. On the picture it runs "
+        + "across its domain like a Sequencer.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {

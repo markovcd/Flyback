@@ -32,11 +32,10 @@ internal static class BellModule
         ],
         [new PortSpec("out")],
         Emit,
-        "A bell, a gong, a chime. Patch an envelope into 'level' — a Stroke, a Decay — and a "
-        + "frequency into 'freq'. 'ratio' is where the overtone sits above the pitch: a whole "
-        + "number is a clean organ tone, 2.76 is a bronze bar, 1.41 a small bright chime, 3.5 "
-        + "glass. 'index' is how much of it there is when the note is struck; it fades with the "
-        + "level, so every note starts bright and rings pure.")
+        "A bell, a gong, a chime. Patch an envelope into 'level' (a Stroke, a Decay) and a "
+        + "frequency into 'freq'. 'ratio' places the overtone: a whole number is an organ tone, "
+        + "2.76 a bronze bar, 1.41 a bright chime, 3.5 glass. 'index' is how much of it there "
+        + "is at the strike, fading with the level.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {
