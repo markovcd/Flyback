@@ -120,15 +120,10 @@ internal sealed class DubPreset : PresetBench
         // fifty hertz at the bottom and a little over five octaves above it at the
         // top. Thirty milliseconds of Slew takes the steps out of a controller's
         // hundred and twenty-eight values; on the screen a Slew is a wire.
-        var cutoffHz = Times(Through("math.exp", Smoothed(Dial(cutoff, 0f, 3.67f))), 150f);
+        var cutoffHz = Times(Through("math.exp", Times(Smoothed(cutoff), 3.67f)), 150f);
 
         // How many times over the envelope opens the filter.
-        var pluckDepth = Times(Smoothed(Dial(pluck, 0f, 1f)), 6f);
-
-        // The two faders as numbers, for what follows a fader without being on the
-        // desk: the sidechain, and what the picture shows of the kick and the sub.
-        var drumsUp = Dial(drums, 0f, 1f);
-        var bassUp = Dial(bass, 0f, 1f);
+        var pluckDepth = Times(Smoothed(pluck), 6f);
 
         Box("Knobs");
 
@@ -142,7 +137,7 @@ internal sealed class DubPreset : PresetBench
         // The sidechain: the chords and the sub lean away from the kick, by as much
         // as the kick is up.
         var duck = Ducking(kickStroke, 0f);
-        b.Wire(Times(drumsUp, 0.55f), 0, duck, 3);
+        Follows(duck, 3, drums, 0f, 0.55f);
 
         Box("Kick");
 
@@ -386,7 +381,7 @@ internal sealed class DubPreset : PresetBench
 
         // The sub is a glow along the bottom of the frame, as high as the Bass knob.
         var low = From(1f, Rises(coord, -1f, -0.3f, 1));
-        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), bassUp), 0.5f), 0.9f, 0.35f, 0.1f);
+        var glow = Ink(mist, Times(Product(low, bassLine, 1), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
 
         b.Wire(Times(clock, 0.05f), 0, fog, 2)
          .Wire(cold, 0, mist, 0)
@@ -398,7 +393,7 @@ internal sealed class DubPreset : PresetBench
 
         // The resonance is how far the fog pushes the rings out of round: the same
         // field added to every ring's distance, so they bend together.
-        var wobble = Product(Plus(fog, -0.5f), Dial(resonance, 0f, 0.35f));
+        var wobble = Times(Plus(fog, -0.5f), resonance, 0f, 0.35f);
 
         NodeInstance? rings = null;
 
@@ -438,7 +433,7 @@ internal sealed class DubPreset : PresetBench
 
         // The kick is a disc in the middle that every ring is drawn round, swelling
         // on the beat and gone when the drums are down.
-        var kickSeen = Product(kickStroke, drumsUp);
+        var kickSeen = Times(kickStroke, drums, 0f, 1f);
         var disc = b.Add(CircleType);
         var pulse = b.Add(FillType, (1, 0.06f));
         var scene = Ink(Sum(glow, rings!), Product(pulse, kickSeen), 0.75f, 0.95f, 1f);
@@ -474,10 +469,10 @@ internal sealed class DubPreset : PresetBench
     }
 
     /// <summary>A Slew of thirty milliseconds each way, for a knob that is heard.</summary>
-    private NodeInstance Smoothed(NodeInstance dial)
+    private NodeInstance Smoothed(PatchControl knob)
     {
         var slew = b.Add(SlewType, (1, -1.5f), (2, -1.5f));
-        b.Wire(dial, 0, slew, 0);
+        Follows(slew, 0, knob, 0f, 1f);
         return slew;
     }
 

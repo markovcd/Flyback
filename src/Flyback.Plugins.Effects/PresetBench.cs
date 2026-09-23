@@ -169,15 +169,12 @@ internal abstract class PresetBench(ModuleCatalog modules)
         ControlMap.Link(node, port, link);
     }
 
-    /// <summary>
-    /// A panel knob as a signal, for what a knob has to reach through arithmetic: a
-    /// Value whose one socket follows it.
-    /// </summary>
-    protected NodeInstance Dial(PatchControl knob, float low, float high)
+    /// <summary>A signal times a panel knob turned from <paramref name="low"/> to <paramref name="high"/>.</summary>
+    protected NodeInstance Times(NodeInstance a, PatchControl knob, float low, float high, int from = 0)
     {
-        var dial = b.Add("value");
-        Follows(dial, 0, knob, low, high);
-        return dial;
+        var node = Knobbed("math.mul", a, 0f, from);
+        Follows(node, 1, knob, low, high);
+        return node;
     }
 
     /// <summary>The Stroke's second output: how far through the stroke it is.</summary>
@@ -294,6 +291,14 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return tone;
     }
 
+    /// <summary>A sine at a fixed frequency and a level that is a wire.</summary>
+    protected NodeInstance Tone(float hz, NodeInstance level)
+    {
+        var tone = b.Add("osc.sine", (1, hz));
+        b.Wire(level, 0, tone, 3);
+        return tone;
+    }
+
     /// <summary>The Bell's index, for one whose brightness is a wire.</summary>
     protected const int BellIndex = 4;
 
@@ -306,6 +311,14 @@ internal abstract class PresetBench(ModuleCatalog modules)
     {
         var bell = b.Add("flyback.voice.bell", (3, ratio), (BellIndex, index));
         b.Wire(hz, from, bell, 1).Wire(stroke, 0, bell, 2);
+        return bell;
+    }
+
+    /// <summary>A <see cref="Bell(NodeInstance, NodeInstance, float, float, int)"/> at a fixed pitch.</summary>
+    protected NodeInstance Bell(float hz, NodeInstance stroke, float ratio, float index)
+    {
+        var bell = b.Add("flyback.voice.bell", (1, hz), (3, ratio), (BellIndex, index));
+        b.Wire(stroke, 0, bell, 2);
         return bell;
     }
 
