@@ -5,6 +5,7 @@ using Flyback.Plugins.Voice;
 // Every module Register adds, so it can be listed before the plugin runs.
 [assembly: FlybackModule(SupersawModule.TypeId, "Supersaw")]
 [assembly: FlybackModule(FoldModule.TypeId, "Fold")]
+[assembly: FlybackModule(CrushModule.TypeId, "Crush")]
 [assembly: FlybackModule(DecayModule.TypeId, "Decay")]
 [assembly: FlybackModule(EuclidModule.TypeId, "Euclid")]
 [assembly: FlybackModule(StrokeModule.TypeId, "Stroke")]
@@ -19,7 +20,7 @@ namespace Flyback.Plugins.Voice;
 
 /// <summary>
 /// What makes a tone and what is done to it before it leaves the instrument: the
-/// stacked oscillator, the drum and the noises, the fold that shapes a waveform,
+/// stacked oscillator, the drum and the noises, the fold and the crush that shape a waveform,
 /// and the envelopes, the rhythm and the fade that play it.
 /// </summary>
 /// <remarks>
@@ -36,7 +37,7 @@ public sealed class VoicePlugin : IFlybackPlugin
         "flyback.voice",
         "Voice",
         "A seven-oscillator supersaw, a four-operator FM synth, a drum, a bell, a hiss and a "
-        + "wandering value, a fold to shape them, struck and counted envelopes with a "
+        + "wandering value, a fold and a crush to shape them, struck and counted envelopes with a "
         + "Euclidean rhythm to play them, and a fade to arrange them.");
 
     public void Register(IPluginRegistry registry)
@@ -46,6 +47,7 @@ public sealed class VoicePlugin : IFlybackPlugin
             [
                 SupersawModule.Definition,
                 FoldModule.Definition,
+                CrushModule.Definition,
                 DecayModule.Definition,
                 EuclidModule.Definition,
                 StrokeModule.Definition,

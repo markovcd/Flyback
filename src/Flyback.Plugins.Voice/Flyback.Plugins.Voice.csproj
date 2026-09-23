@@ -7,7 +7,7 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Voice</Product>
     <Authors>Flyback</Authors>
-    <Description>A seven-oscillator supersaw, a four-operator FM synth, a drum, a bell, a hiss and a wandering value, a fold to shape them, struck and counted envelopes with a Euclidean rhythm to play them, and a fade to arrange them.</Description>
+    <Description>A seven-oscillator supersaw, a four-operator FM synth, a drum, a bell, a hiss and a wandering value, a fold and a crush to shape them, struck and counted envelopes with a Euclidean rhythm to play them, and a fade to arrange them.</Description>
   </PropertyGroup>
 
   <ItemGroup>
