@@ -19,7 +19,7 @@ file and its author, description and tags from the patch, and is added to the sh
 once. The site records which file each came from and a hash of it: the same file
 again changes nothing, a changed file replaces the stored one and what it says about
 itself under the same id, so ratings and downloads survive, and a default the admin
-deleted stays deleted. `Presets:Defaults` points the site at another folder.
+deleted stays deleted. `Site:Defaults` points the site at another folder.
 
 **A file that is not a patch stops the site starting.** It is a broken build, as a
 bad setting is, and a shelf quietly short of it would not say so.

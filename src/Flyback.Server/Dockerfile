@@ -39,8 +39,8 @@ WORKDIR /app
 COPY --from=build /app .
 
 ENV ASPNETCORE_HTTP_PORTS=8080 \
-    Presets__Database=/data/presets.db \
-    Presets__Media=/media
+    Site__Database=/data/presets.db \
+    Site__Media=/media
 
 VOLUME ["/data"]
 EXPOSE 8080

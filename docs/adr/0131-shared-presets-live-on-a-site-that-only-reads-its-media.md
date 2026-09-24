@@ -44,7 +44,7 @@ submission, which is rate-limited per address. The API is versioned (`/api/v1`)
 so the app can submit through the same endpoint later.
 
 **One admin, named in the container's configuration, moderates after the
-fact.** `Presets__Admin__User` and `Presets__Admin__Password` in the compose
+fact.** `Site__Admin__User` and `Site__Admin__Password` in the compose
 file are the whole account; there is no user table, and admin mode is off while
 either is blank. Signing in sets a cookie whose keys sit beside the database.
 The admin renames, unpublishes and deletes presets on the same pages everyone

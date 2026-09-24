@@ -24,13 +24,13 @@ public sealed class ServerTests : IDisposable
     {
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
-            web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
-            web.UseSetting("Presets:Defaults", Path.Combine(folder, "no-defaults"));
-            web.UseSetting("Presets:Media", Media);
-            web.UseSetting("Presets:PostsPerHour", postsPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            web.UseSetting("Presets:LettersPerHour", lettersPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
-            web.UseSetting("Presets:Admin:User", "admin");
-            web.UseSetting("Presets:Admin:Password", adminPassword);
+            web.UseSetting("Site:Database", Path.Combine(folder, "presets.db"));
+            web.UseSetting("Site:Defaults", Path.Combine(folder, "no-defaults"));
+            web.UseSetting("Site:Media", Media);
+            web.UseSetting("Site:PostsPerHour", postsPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            web.UseSetting("Site:LettersPerHour", lettersPerHour.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            web.UseSetting("Site:Admin:User", "admin");
+            web.UseSetting("Site:Admin:Password", adminPassword);
 
             if (connectedFrom is not null)
                 web.ConfigureServices(services =>

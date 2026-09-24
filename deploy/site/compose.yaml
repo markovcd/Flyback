@@ -7,8 +7,8 @@ services:
       - "8080:8080"
     environment:
       # The admin at /admin.html, who can rename, unpublish and delete presets. Blank turns admin mode off.
-      Presets__Admin__User: ""
-      Presets__Admin__Password: ""
+      Site__Admin__User: ""
+      Site__Admin__Password: ""
     volumes:
       # The database, which only this container writes.
       - ./data:/data
