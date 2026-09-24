@@ -228,6 +228,7 @@ so packing one means building it first.
 ## Amendment, 2026-09-24: a pipe lands where the text says
 
 The pipe rule's third clause, the first socket the call did not name, is gone.
-A pipe lands on `socket: _`, else `in`, else a leading `x` and `y`, and a
+A pipe lands on `socket: _`, else `in` or a module's only socket, else a
+leading `x` and `y`, and a
 pipeline inside an argument is an error
 ([0144](0144-a-pipe-lands-where-the-text-says.md)).

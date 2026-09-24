@@ -21,12 +21,13 @@ write.
 ## Decision
 
 **`socket: _` says where a pipe lands.** A pipe lands on the socket an argument
-gives as `_`, else on `in`, else on the module's own first two sockets when they
-are `x` and `y`, the call names neither, and what is piped is a position. Which
-sockets a bare pipe lands on is a fact about the module, never about the
-arguments beside it. Anything else is refused, and the complaint names the
-socket to write: `'adsr(gate: _)'`. `_` goes in a named argument, once. In a `def`'s call
-it stands for the parameter it is written in place of.
+gives as `_`, else on `in` or a module's only socket, else on the module's own
+first two sockets when they are `x` and `y`, the call names neither, and what is
+piped is a position. Which sockets a bare pipe lands on is a fact about the
+module, never about the arguments beside it. Anything else is refused, and the
+complaint names the socket to write: `'adsr(gate: _)'`. `_` goes in a named
+argument, once. In a `def`'s call it stands for the parameter it is written in
+place of.
 
 This was proposed as a pipe socket declared on every module. `_` gives the same
 guarantee with no field on `NodeDef` and no pass over the catalog: the landing is
@@ -35,15 +36,15 @@ on the line, so a reader, a model or a diff sees it without knowing the module.
 **A pipeline is never an argument.** One inside an argument, bracketed or not,
 is an error that says to bind it with `let`. Arithmetic in an argument stays.
 
-**`print` writes the same dialect.** It writes `_` where the landing is not `in`
-or a pair, and binds to a `let` anything that would otherwise be a pipeline
+**`print` writes the same dialect.** It writes `_` where the landing is not `in`,
+an only socket or a pair, and binds to a `let` anything that would otherwise be a pipeline
 inside an argument.
 
 ## Consequences
 
-- Twenty-seven built-in modules have neither `in` nor a leading pair — Note,
-  ADSR, Chance, Duck, Gain, HSV, the two-input Maths — and a pipe into any of
-  them writes `_`. That is longer, and it is the point.
+- Twenty-four built-in modules have neither `in`, a single socket nor a
+  leading pair — Note, ADSR, Chance, Duck, Gain, HSV, the two-input Maths — and
+  a pipe into any of them writes `_`. That is longer, and it is the point.
 - Every `.fbks` in the docs, the site, the handbook and the tests was rewritten,
   and each compiles to the same program as before.
 - `flyback-cli modules <module>` marks the sockets a bare pipe lands on, and for

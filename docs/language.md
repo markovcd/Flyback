@@ -71,7 +71,8 @@ This is the whole language in one paragraph
 ([0144](adr/0144-a-pipe-lands-where-the-text-says.md)).
 
 > 1. **`socket: _` takes the source's first output**, wherever it is written;
-> 2. otherwise **an `in` takes it**, wherever in the list it sits;
+> 2. otherwise **an `in` takes it**, wherever in the list it sits, and so does a
+>    module's only socket;
 > 3. otherwise **a position — the module's own first two sockets, `x` and `y`,
 >    with neither named in the call — takes the first two**;
 > 4. otherwise the pipe is refused, and the complaint says to write `_`.

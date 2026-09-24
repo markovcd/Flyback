@@ -803,6 +803,9 @@ public static class PatchPrinter
             // off one module's leading pair.
             var signal = Port(def.Inputs, "in");
 
+            // A module's only socket is where a bare pipe lands, as 'in' is.
+            if (signal < 0 && def.Inputs.Count == 1) signal = 0;
+
             if (signal >= 0 && Forward(node.Id, signal) is { } straight)
             {
                 var part = From(straight);

@@ -150,7 +150,7 @@ the rest of Flyback.
 |---|---|---|---|
 | **short name** | A module's name in text: the last segment of its type id. | — | alias |
 | **binding** | `let NAME = …`: a name given to a module. | `let` | variable |
-| **pipe** | `a \|> b`: `a` into `b`'s `in`, its leading `x` and `y`, or the socket written `_`. | `\|>` | chain |
+| **pipe** | `a \|> b`: `a` into `b`'s `in`, its only socket, its leading `x` and `y`, or the socket written `_`. | `\|>` | chain |
 | **placeholder** | `_` as an argument, `adsr(gate: _)`: the socket a pipe lands on. | `_` | hole, wildcard |
 | **def** | A subgraph with holes in it, written once and used many times. Exists only in text; building it leaves modules. | `def` | function, group (a group is on the canvas) |
 | **build** | Text into a patch. Exact. | `Binder.Build` | compile (that is a patch into programs), parse |

@@ -322,7 +322,7 @@ rings(freq: 3, offset: t)
 out.volume = 0.6</code></pre>
 
     <p>Read <code>|&gt;</code> as a wire. Its left side is plugged into the module on its right: into
-    <code>in</code> if the module has one, otherwise into the socket written as <code>_</code>, like
+    <code>in</code> if the module has one or into its only socket, otherwise into the socket written as <code>_</code>, like
     <code>value: _</code> above. Named arguments set knobs or take other wires, and a wire from a chain of its
     own is a <code>let</code> above, never a pipeline inside the brackets. <code>x</code>, <code>y</code> and <code>t</code> are
     Coordinates and Time, and arithmetic such as <code>a * b</code> is an Expression, one block that computes

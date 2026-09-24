@@ -63,7 +63,8 @@ internal static class Handbook
           by the last part of its type id, `space.kaleidoscope` as
           `kaleidoscope`, except `color.hsv`, `color.mix`, `math.mix` and
           `midi.in`, which are written in full.
-        - **Where the signal lands**: a socket called `in`; failing that a
+        - **Where the signal lands**: a socket called `in`, or a module's only
+          socket; failing that a
           leading `x` and `y`, two signals at once, which is how Space and
           Pattern modules chain. Anywhere else, say which socket with `_`:
           `beat.gate |> adsr(gate: _, decay: 240ms)`. A module with neither

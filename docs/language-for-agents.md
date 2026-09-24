@@ -74,8 +74,8 @@ arguments beside it: `hsv(saturation: 0.85, value: 1)` after a pipe took it on
 agent wrote, took it nowhere.
 
 The clause is gone. A pipe lands on `socket: _` where the call writes one, else
-on `in`, else on a leading `x` and `y` pair, and anything else is an error that
-says to write `_`:
+on `in` or a module's only socket, else on a leading `x` and `y` pair, and
+anything else is an error that says to write `_`:
 
 ```
 rings(freq: 3) |> color.hsv(hue: _, saturation: 0.85, value: 1)

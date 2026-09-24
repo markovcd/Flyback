@@ -165,14 +165,15 @@ internal static class ModulesCommand
 
     /// <summary>
     /// The inputs a bare <c>|&gt;</c> lands on: <c>in</c> where there is one, else
-    /// <c>x</c> and <c>y</c> together when they lead. None means the call says
-    /// where with <c>socket: _</c>.
+    /// the only one, else <c>x</c> and <c>y</c> together when they lead. None means
+    /// the call says where with <c>socket: _</c>.
     /// </summary>
     private static int[] Piped(NodeDef def)
     {
         var signal = def.Inputs.ToList().FindIndex(port => string.Equals(port.Name, "in", StringComparison.OrdinalIgnoreCase));
 
         if (signal >= 0) return [signal];
+        if (def.Inputs.Count == 1) return [0];
 
         return def.Inputs.Count >= 2 && string.Equals(def.Inputs[0].Name, "x", StringComparison.OrdinalIgnoreCase)
             && string.Equals(def.Inputs[1].Name, "y", StringComparison.OrdinalIgnoreCase) ? [0, 1] : [];

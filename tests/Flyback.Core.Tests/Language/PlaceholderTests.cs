@@ -5,8 +5,9 @@ using Shouldly;
 namespace Flyback.Core.Tests.Language;
 
 /// <summary>
-/// Where a pipe lands: <c>socket: _</c>, else <c>in</c>, else a leading
-/// <c>x</c> and <c>y</c>, else nowhere. And a pipeline is never an argument.
+/// Where a pipe lands: <c>socket: _</c>, else <c>in</c> or a module's only
+/// socket, else a leading <c>x</c> and <c>y</c>, else nowhere. And a pipeline
+/// is never an argument.
 /// </summary>
 public class PlaceholderTests
 {
@@ -80,6 +81,24 @@ public class PlaceholderTests
 
         patch.IncomingTo(checker.Id, 0).ShouldNotBeNull().SourcePort.ShouldBe(0);
         patch.IncomingTo(checker.Id, 1).ShouldNotBeNull().SourcePort.ShouldBe(1);
+    }
+
+    [Fact]
+    public void A_module_with_one_socket_needs_no_placeholder()
+    {
+        var patch = Built("rings(freq: 3) |> color.hsv(hue: _) |> split |> out.left");
+
+        var split = Only(patch, "color.split");
+
+        patch.IncomingTo(split.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(Only(patch, "color.hsv").Id);
+    }
+
+    [Fact]
+    public void A_module_with_one_socket_is_printed_without_one()
+    {
+        var built = Built("rings(freq: 3) |> color.hsv(hue: _) |> color.split() |> out.left");
+
+        PatchPrinter.Print(built, NodeCatalog.BuiltIn).ShouldContain("|> split()");
     }
 
     [Fact]

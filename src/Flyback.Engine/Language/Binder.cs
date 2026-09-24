@@ -1155,7 +1155,8 @@ public sealed class Binder
 
     /// <summary>
     /// Where a pipe lands when no argument says <c>_</c>: a socket called
-    /// <c>in</c>, else a leading <c>x</c> and <c>y</c>, else nowhere.
+    /// <c>in</c>, else a module's only socket, else a leading <c>x</c> and
+    /// <c>y</c>, else nowhere.
     /// </summary>
     /// <remarks>
     /// Nowhere is an error rather than a guess at the first socket left. That
@@ -1171,10 +1172,13 @@ public sealed class Binder
         // name means anywhere else a single value is wanted. A MIDI In has four
         // outputs and 'keys |> clamp(36, 84)' means its pitch, which falls out
         // of this rather than being a case anyone had to add.
-        if (signal >= 0 && !taken.Contains(signal))
+        // A module with one socket has nowhere else for it to go.
+        var sole = signal >= 0 ? signal : def.Inputs.Count == 1 ? 0 : -1;
+
+        if (sole >= 0 && !taken.Contains(sole))
         {
-            taken.Add(signal);
-            into.Add((signal, Part(piped, 0)));
+            taken.Add(sole);
+            into.Add((sole, Part(piped, 0)));
 
             return true;
         }
