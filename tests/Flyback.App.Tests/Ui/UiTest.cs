@@ -256,6 +256,9 @@ public class UiTest : IDisposable
 
     protected static IEnumerable<T> All<T>(Visual root) where T : Visual => Tree(root).OfType<T>();
 
+    /// <summary>Every knob's slider in the window, which the toolbar's seek bar is not.</summary>
+    protected static IEnumerable<Slider> Knobs(Visual root) => All<Slider>(root).Where(slider => slider.Name != "seek");
+
     /// <summary>Picks the preset called <paramref name="name"/> out of a preset list.</summary>
     /// <remarks>
     /// By name rather than by row, because a row number names one preset until a

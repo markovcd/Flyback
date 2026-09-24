@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -203,6 +204,43 @@ public sealed class Editor(PatchContext context) : IDisposable
     /// <summary>What the canvas's tooltip says, or null while it says nothing.</summary>
     public string? Tip => Read(canvas => ToolTip.GetTip(canvas) as string);
 
+    /// <summary>Clicks the seek bar where <paramref name="seconds"/> falls along it.</summary>
+    public void Seek(double seconds) =>
+        DoWindow((open, _) =>
+        {
+            var bar = SeekBar(open);
+            var track = bar.GetVisualDescendants().OfType<Track>().Single();
+            var thumb = track.Thumb!.Bounds.Width;
+
+            // The thumb's middle runs from half its width in to half its width short of the end.
+            var along = thumb / 2 + (track.Bounds.Width - thumb) * seconds / bar.Maximum;
+            var at = track.TranslatePoint(new Point(along, track.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>Types a length into the box beside the seek bar, and presses Enter.</summary>
+    public void SetSeekLength(string typed) =>
+        DoWindow((open, _) =>
+        {
+            var box = open.GetVisualDescendants().OfType<TextBox>().Single(b => b.Name == "seekLength");
+
+            box.Focus();
+            box.Text = typed;
+            open.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+            open.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        });
+
+    /// <summary>How many seconds the seek bar spans.</summary>
+    public double SeekLength => ReadWindow(open => SeekBar(open).Maximum);
+
+    /// <summary>Where the patch's clock is, in seconds: what the status bar says after "t =".</summary>
+    public double Clock => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Time);
+
+    /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
+    public bool Paused => ReadWindow(open => ToolTip.GetTip(open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "pause")) as string == Toolbar.PlayTip);
+
     /// <summary>Makes the selection exactly these modules, which is what clicking them with Ctrl held does.</summary>
     public void Select(params Guid[] ids) =>
         Do(canvas =>
@@ -310,6 +348,9 @@ public sealed class Editor(PatchContext context) : IDisposable
 
     private static Button? RowButton(Control row, string name) =>
         row.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name);
+
+    private static Slider SeekBar(MainWindow window) =>
+        window.GetVisualDescendants().OfType<Slider>().Single(slider => slider.Name == "seek");
 
     private static ComboBox Presets(MainWindow window) =>
         window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");

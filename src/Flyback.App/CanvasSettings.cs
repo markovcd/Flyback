@@ -54,6 +54,15 @@ public sealed class CanvasSettings
 
     public const double MaxEditorFontSize = 40;
 
+    /// <summary>How many seconds the seek bar spans, set in the box beside it.</summary>
+    public double SeekLength { get; set; } = DefaultSeekLength;
+
+    public const double DefaultSeekLength = 60;
+
+    public const double MinSeekLength = 1;
+
+    public const double MaxSeekLength = 24 * 60 * 60;
+
     public static string File => Path.Combine(GlobalConstants.DataFolder, "canvas.json");
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
@@ -68,6 +77,10 @@ public sealed class CanvasSettings
             loaded.EditorFontSize = double.IsFinite(loaded.EditorFontSize)
                 ? Math.Clamp(loaded.EditorFontSize, MinEditorFontSize, MaxEditorFontSize)
                 : DefaultEditorFontSize;
+
+            loaded.SeekLength = double.IsFinite(loaded.SeekLength)
+                ? Math.Clamp(loaded.SeekLength, MinSeekLength, MaxSeekLength)
+                : DefaultSeekLength;
 
             return loaded;
         }

@@ -72,6 +72,9 @@ internal sealed class Toolbar
     /// </summary>
     public Button Rewind { get; } = new();
 
+    /// <summary>The patch's clock, to drag anywhere along a length the user sets.</summary>
+    public SeekBar Seek { get; }
+
     /// <summary>
     /// Starts and stops a take (ADR-0080). Its glyph swaps between the dot and the
     /// square rather than its label, since a toolbar button here carries no text.
@@ -95,8 +98,10 @@ internal sealed class Toolbar
 
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins)
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek)
     {
+        Seek = seek;
+
         var assistants = plugins.Assistants.Count > 0;
 
         // A locked canvas says why in its tip, and that is wasted unless a
@@ -153,11 +158,12 @@ internal sealed class Toolbar
         patchwork.Children.Add(Swap);
 
         // On its own, between what is done to the patch and what is done to
-        // the program: pausing, rewinding and recording are neither — all are
+        // the program: pausing, rewinding, seeking and recording are neither — all are
         // facts about the performance, not an edit Ctrl+Z takes back.
         var transport = ToolbarButtons.Group();
         transport.Children.Add(Pause);
         transport.Children.Add(Rewind);
+        transport.Children.Add(Seek.View);
         transport.Children.Add(Record);
 
         // The other end of the bar, because none of these is about the patch:

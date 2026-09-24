@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A seek bar on the toolbar moves the patch's clock anywhere along a length typed beside it.
 - Settings → Canvas → Compact modules puts each input beside an output on one row, with an input's value in its tooltip.
 - A patched socket in the panel names the socket at the other end of its wire, `◀ patched from Time.t`, and an output names every socket it feeds; a group's socket in the panel is its module's row, help and slider included.
 - Every socket and every setting on a node says what it is for: hovering its row in the panel shows it, the panel lists a module's outputs with theirs, and the assistant and `flyback-cli modules <module>` read the same words.

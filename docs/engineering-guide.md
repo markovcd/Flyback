@@ -866,8 +866,8 @@ sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoe
 and pastes, `PresetSteps` checks every shipped preset, `ExportSteps` exports
 with `flyback-cli render` and plays through the editor's sound engine,
 `KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub,
-`CanvasEditingSteps` and `UnsavedWorkSteps` press keys and answer questions in the
-editor's own window, headless, and `CliSteps` runs `flyback-cli` on files. They
+`CanvasEditingSteps`, `UnsavedWorkSteps` and `TransportSteps` press keys, answer
+questions and move the seek bar in the editor's own window, headless, and `CliSteps` runs `flyback-cli` on files. They
 share a fresh `PatchContext`, `Session` and `Editor` per scenario. A step drives
 the program the way somebody would; a scenario that composes services by hand
 is testing the wiring, and belongs in `Flyback.App.Tests`.

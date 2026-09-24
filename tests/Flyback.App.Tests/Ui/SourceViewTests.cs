@@ -1449,7 +1449,7 @@ public class SourceViewTests : UiTest
     /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
     private static void Turn(MainWindow window, double to)
     {
-        var slider = All<Slider>(window).First();
+        var slider = Knobs(window).First();
 
         // The first knob's slider, which on a socket with a knee is travel rather than value.
         var node = Editor(window).Selection.Focused.ShouldNotBeNull();
@@ -1612,7 +1612,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
         Click(window, "math.mix");
 
-        var slider = All<Slider>(window).First();
+        var slider = Knobs(window).First();
 
         slider.Value = 2d;
         Settle(window);
@@ -1717,7 +1717,7 @@ public class SourceViewTests : UiTest
         // The block waits for the hand to come off it, the same as a knob does.
         Text(window).Text.ShouldContain("[ A3 C4 ]");
 
-        Release(All<Slider>(window).First());
+        Release(Knobs(window).First());
         Settle(window);
 
         Text(window).Text.Trim().ShouldBe("let riff = notes() [ C4 C4 ]\nriff |> out.left");
@@ -1737,7 +1737,7 @@ public class SourceViewTests : UiTest
 
         // The second row, which is the second socket — the one the text says
         // nothing about.
-        var slider = All<Slider>(window).ElementAt(1);
+        var slider = Knobs(window).ElementAt(1);
 
         slider.Value = 0.25d;
         Settle(window);
@@ -1919,7 +1919,7 @@ public class SourceViewTests : UiTest
         editor.Selection.Select(turned.Id);
         Settle(window);
 
-        var slider = All<Slider>(window).First();
+        var slider = Knobs(window).First();
 
         Turn(window, slider.Minimum + ((slider.Maximum - slider.Minimum) * 0.37));
 

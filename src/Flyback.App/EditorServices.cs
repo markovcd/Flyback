@@ -105,6 +105,7 @@ internal static class EditorServices
         services.AddSingleton<PluginInstalls>();
         services.AddSingleton<PresetAudition>();
         services.AddSingleton<PresetSlot>();
+        services.AddSingleton<SeekBar>();
         services.AddSingleton<Toolbar>();
         services.AddSingleton<StatusBar>();
         services.AddSingleton<TakeRecording>();

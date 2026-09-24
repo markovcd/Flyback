@@ -316,6 +316,22 @@ internal sealed class Playback
     }
 
     /// <summary>
+    /// Takes the picture and the sound to <paramref name="seconds"/>, playing on from
+    /// there, or held there while paused. What the patch remembers starts empty, as
+    /// after <see cref="Rewind"/>.
+    /// </summary>
+    public void SeekTo(double seconds)
+    {
+        seconds = double.IsFinite(seconds) ? Math.Max(0, seconds) : 0;
+
+        audio.SeekTo(seconds);
+        preview.Rewind();
+        preview.Time = seconds;
+
+        if (Paused) frozenAt = seconds;
+    }
+
+    /// <summary>
     /// Brings the audio device into line with what Volume now says, turning it on
     /// exactly where the toggle this replaced would have been clicked on, and off
     /// where it would have been clicked off — ADR-0079. Called after every

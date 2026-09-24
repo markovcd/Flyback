@@ -2019,6 +2019,7 @@ internal sealed class MainWindow : Window
         }
 
         toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
+        toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
 
         ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
 

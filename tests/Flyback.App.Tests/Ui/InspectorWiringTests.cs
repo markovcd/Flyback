@@ -74,7 +74,7 @@ public class InspectorWiringTests : UiTest
     }
 
     /// <summary>Every knob on the panel. The inspector owns the only sliders the shell builds.</summary>
-    private static int Knobs(MainWindow window) => All<Slider>(window).Count();
+    private static int KnobCount(MainWindow window) => Knobs(window).Count();
 
     /// <summary>How many rows say the socket is wired rather than offering a knob.</summary>
     private static int Wired(MainWindow window) =>
@@ -110,7 +110,7 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
-        Knobs(window).ShouldBe(SineKnobs);
+        KnobCount(window).ShouldBe(SineKnobs);
         Wired(window).ShouldBe(0);
 
         // Onto 'freq', which is a knob. Wiring 'in' would take nothing away —
@@ -120,7 +120,7 @@ public class InspectorWiringTests : UiTest
         // Nothing has been selected in between: this is the same panel, asked
         // again because the patch changed under it.
         Editor(window).History.Patch.IncomingTo(sine.Id, 1).ShouldNotBeNull();
-        Knobs(window).ShouldBe(SineKnobs - 1);
+        KnobCount(window).ShouldBe(SineKnobs - 1);
         Wired(window).ShouldBe(1);
     }
 
@@ -132,7 +132,7 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
-        Knobs(window).ShouldBe(SineKnobs - 1);
+        KnobCount(window).ShouldBe(SineKnobs - 1);
         Wired(window).ShouldBe(1);
 
         // Grabbing a wired input picks the wire up by its far end; dropped on a
@@ -141,7 +141,7 @@ public class InspectorWiringTests : UiTest
         DragFrom(window, Input(sine, 1), Body(sine));
 
         Editor(window).History.Patch.IncomingTo(sine.Id, 1).ShouldBeNull();
-        Knobs(window).ShouldBe(SineKnobs);
+        KnobCount(window).ShouldBe(SineKnobs);
         Wired(window).ShouldBe(0);
     }
 
@@ -239,7 +239,7 @@ public class InspectorWiringTests : UiTest
 
         Select(window, Editor(window).History.Patch.Output);
 
-        Knobs(window).ShouldBe(1, "volume is the only socket worth dialing");
+        KnobCount(window).ShouldBe(1, "volume is the only socket worth dialing");
         NotPatched(window).ShouldBe(2, "color and left have nothing to fall back to");
         NormalledFrom(window, "left").ShouldBe(1, "right falls back to left");
     }
@@ -290,13 +290,13 @@ public class InspectorWiringTests : UiTest
 
         // The first knob on a Sine is 'freq': 'in' is above it and is normalled,
         // so it has a row and no slider in it.
-        var knob = All<Slider>(window).First();
+        var knob = Knobs(window).First();
         var was = sine.InputValues[1];
 
         knob.Value += 0.25;
         Settle(window);
 
-        All<Slider>(window).ShouldContain(knob);
+        Knobs(window).ShouldContain(knob);
         sine.InputValues[1].ShouldBeGreaterThan(was);
     }
 
@@ -332,7 +332,7 @@ public class InspectorWiringTests : UiTest
 
         Select(window, sine);
 
-        var knob = All<Slider>(window).First();
+        var knob = Knobs(window).First();
         var was = sine.InputValues[1];
         var at = knob.Value;
 
@@ -378,7 +378,7 @@ public class InspectorWiringTests : UiTest
 
         // ReSharper disable once CompareOfFloatsByEqualityOperator
         opened.InputValues.ShouldAllBe(v => v == 1e30f, "showing a number must not change it");
-        Knobs(window).ShouldBeGreaterThan(0);
+        KnobCount(window).ShouldBeGreaterThan(0);
     }
 
     /// <summary>A number box emptied and left says the number in force.</summary>
