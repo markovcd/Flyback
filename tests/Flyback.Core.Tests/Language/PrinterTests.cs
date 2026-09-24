@@ -136,6 +136,26 @@ public class PrinterTests
     }
 
     /// <summary>
+    /// A sum's type says nothing of what it is for, so an unnamed one is named
+    /// after the socket it drives, and after the module too where there is one.
+    /// </summary>
+    [Theory]
+    [InlineData("sine(freq: pitch) + saw(freq: pitch)", "let freq = x * 200 + 300")]
+    [InlineData("sine(freq: pitch) + sine(freq: pitch)", "let sine_freq = x * 200 + 300")]
+    [InlineData("sine(freq: pitch, amp: pitch)", "let expression = x * 200 + 300")]
+    public void Unnamed_arithmetic_is_named_after_what_it_drives(string played, string line)
+    {
+        var patch = PatchLanguage.Build($"let pitch = x * 200 + 300\n{played} |> out.left", NodeCatalog.BuiltIn).Patch;
+
+        foreach (var node in patch.Nodes) node.Rename(NodeCatalog.BuiltIn.Require(node.TypeId), null);
+
+        var printed = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+
+        printed.ShouldContain(line);
+        PatchLanguage.Build(printed, NodeCatalog.BuiltIn).Issues.ShouldBeEmpty();
+    }
+
+    /// <summary>
     /// A module called something that reads as a pitch cannot be written as a
     /// name, however good it looks on the canvas.
     /// </summary>

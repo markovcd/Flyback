@@ -572,11 +572,12 @@ public static class PatchPrinter
             if (must) bound.Add(node.Id);
         }
 
-        foreach (var node in patch.Nodes.Where(n => bound.Contains(n.Id)))
+        // Plain arithmetic last, since it is named after what it feeds.
+        foreach (var node in patch.Nodes.Where(n => bound.Contains(n.Id)).OrderBy(n => Plain(n) ? 1 : 0))
         {
             var wanted = called is not null && called.TryGetValue(node.Id, out var given) && Usable(given)
                 ? given
-                : Wanted(node, modules);
+                : Role(patch, node, modules, names) ?? Wanted(node, modules);
 
             names[node.Id] = Unique(wanted, taken);
         }
@@ -632,13 +633,61 @@ public static class PatchPrinter
         return "node";
     }
 
+    /// <summary>
+    /// Whether a module is arithmetic whose type says nothing of what it is for:
+    /// an Expression, a Remap, a Clamp. A Mixer and a Desk are named for their job.
+    /// </summary>
+    private static bool Plain(NodeInstance node) =>
+        node.TypeId.StartsWith("math.", StringComparison.Ordinal)
+        && node.TypeId is not (NodeCatalog.MixerTypeId or NodeCatalog.DeskTypeId);
+
+    /// <summary>
+    /// What a plain module is for, said by the socket it lands in: the Remap
+    /// feeding a circle's radius is <c>circle_radius</c>. Null where it lands in
+    /// more than one kind of socket, or in another plain module, where it is
+    /// only a part of what the socket is given.
+    /// </summary>
+    private static string? Role(
+        Patch patch,
+        NodeInstance node,
+        ModuleCatalog modules,
+        IReadOnlyDictionary<Guid, string> names)
+    {
+        if (!Plain(node) || Usable(node.Name)) return null;
+
+        var places = new HashSet<(string Target, string Socket)>();
+
+        foreach (var wire in patch.Connections.Where(c => c.SourceNode == node.Id))
+        {
+            if (patch.Find(wire.TargetNode) is not { } target || Plain(target)) return null;
+            if (modules.Get(target.TypeId) is not { } def || wire.TargetPort >= def.Inputs.Count) return null;
+
+            var where = NodeCatalog.IsSink(target.TypeId)
+                ? "out"
+                : names.TryGetValue(target.Id, out var named) ? named : Wanted(target, modules);
+
+            places.Add((where, def.Inputs[wire.TargetPort].Name.Replace(' ', '_').ToLowerInvariant()));
+        }
+
+        if (places.Select(p => p.Socket).Distinct().Count() != 1) return null;
+
+        var socket = places.First().Socket;
+        var targets = places.Select(p => p.Target).Distinct().ToList();
+        var word = targets.Count == 1 && targets[0] != socket ? $"{targets[0]}_{socket}" : socket;
+
+        return Usable(word) ? word : null;
+    }
+
     private static string Unique(string wanted, HashSet<string> taken)
     {
         if (taken.Add(wanted)) return wanted;
 
+        // left_1's second is left_1_2, never left_12.
+        var apart = char.IsAsciiDigit(wanted[^1]) ? wanted + "_" : wanted;
+
         for (var n = 2; ; n++)
         {
-            var tried = wanted + n.ToString(CultureInfo.InvariantCulture);
+            var tried = apart + n.ToString(CultureInfo.InvariantCulture);
 
             if (taken.Add(tried)) return tried;
         }
@@ -1238,7 +1287,7 @@ public static class PatchPrinter
         {
             if (!plan.Bound.Add(node.Id)) return;
 
-            plan.Names[node.Id] = Unique(Wanted(node, modules), plan.Taken);
+            plan.Names[node.Id] = Unique(Role(patch, node, modules, plan.Names) ?? Wanted(node, modules), plan.Taken);
             chains.Clear();
         }
 

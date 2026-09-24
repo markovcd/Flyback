@@ -743,7 +743,11 @@ it is first read.
 A `let` name becomes the node's rename label, so a patch built from text opens
 in the editor already labeled, and printing recovers the names somebody chose.
 Nodes inlined into a chain stay anonymous, which is right — they had no name to
-lose.
+lose. A `let` nobody named takes the module's short name, except for plain
+arithmetic — an Expression, a Remap, a Clamp — whose type says nothing of its
+job: that is named after the socket it drives, `filter_cutoff`, or `freq` where
+it drives the same socket on different modules. One that drives several kinds
+of socket, or feeds another sum, keeps its short name.
 
 The printer emits a `let` for any module that more than one wire leaves, that
 nothing leaves, whose output is read from a socket other than the first — a

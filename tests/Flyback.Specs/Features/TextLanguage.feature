@@ -28,6 +28,16 @@ Feature: A patch can be written as text
     Then the text has the line "bent * x |> out.color"
     And the picture is as it was
 
+  Scenario: Arithmetic nobody named is written out named after what it drives
+    Given the text:
+      """
+      let pitch = x * 200 + 300
+      sine(freq: pitch) + saw(freq: pitch) |> out.left
+      """
+    And its modules were never named
+    When the patch is written out as text and read back
+    Then the text has the line "let freq = x * 200 + 300"
+
   # One mistake does not lose the rest of the patch.
   Scenario: A mistake is pointed out on its own line, and the rest still plays
     Given the text:
