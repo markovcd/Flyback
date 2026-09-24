@@ -836,8 +836,9 @@ Every new feature ships with at least one scenario (see `.claude/rules/tests.md`
 The wiring behind each phrase lives in the steps: `PatchSteps` builds and edits
 patches, `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture, the
 sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoes
-and pastes, `PresetSteps` checks every shipped preset, and `ExportSteps` exports
-with `flyback-cli render` and plays through the editor's sound engine. They share a fresh
+and pastes, `PresetSteps` checks every shipped preset, `ExportSteps` exports
+with `flyback-cli render` and plays through the editor's sound engine, and
+`KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub. They share a fresh
 `PatchContext` and `Session` per scenario.
 The project references every program and library and lays out every shipped
 plugin under `plugins\`, so a feature of the editor, the viewer, the CLI, the

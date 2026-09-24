@@ -47,8 +47,14 @@ public sealed class PatchContext
     /// <summary>What the scenarios call the drum machine whose clock a patch follows.</summary>
     public const string Machine = "midi:drum-machine";
 
+    /// <summary>What the scenarios call the keyboard a patch's voices listen to: the slug of "Stage Piano".</summary>
+    public const string Keyboard = "midi:stage-piano";
+
     /// <summary>The drum machine's clock, as the shell would keep it.</summary>
     public MidiClock Clock { get; } = new();
+
+    /// <summary>How many voices the scenario's patch has, named "voice 1" onward and read as "sounding 1" onward.</summary>
+    public int Voices { get; set; }
 
     public Patch Patch { get; private set; } = new();
 

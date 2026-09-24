@@ -473,6 +473,45 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenAMidiInOnAChannel(int channel) =>
         Written($"midi.in(device: \"{PatchContext.Machine}\", voice: 1, channel: {channel}).gate |> out.left");
 
+    /// <summary>
+    /// A MIDI In per voice, each read as its pitch while its gate is open, so a
+    /// voice that plays nothing reads nought. All of them reach the speakers,
+    /// which is what makes the patch a many-voiced instrument to whoever plays it.
+    /// </summary>
+    [Given(@"^(one|two|three|four) (voices?|voices on automatic) listening to a keyboard$")]
+    public void GivenVoices(string count, string kind)
+    {
+        var voices = Array.IndexOf(["one", "two", "three", "four"], count) + 1;
+        var automatic = kind.EndsWith("automatic", StringComparison.Ordinal);
+
+        context.Add("screen", "output");
+        context.SetInput("screen", "volume", 1f);
+        context.Voices = voices;
+
+        for (var voice = 1; voice <= voices; voice++)
+        {
+            context.Add($"voice {voice}", NodeCatalog.MidiTypeId).SetState(
+                MidiExtra.StateKey,
+                new JsonObject
+                {
+                    [MidiExtra.DeviceField] = PatchContext.Keyboard,
+                    [MidiExtra.IndexField] = automatic ? 0 : voice,
+                });
+
+            context.Add($"sounding {voice}", "math.mul");
+            context.Wire($"voice {voice}", "pitch", $"sounding {voice}", "a");
+            context.Wire($"voice {voice}", "gate", $"sounding {voice}", "b");
+
+            if (voice == 1) continue;
+
+            context.Add($"mix {voice}", "math.add");
+            context.Wire(voice == 2 ? "sounding 1" : $"mix {voice - 1}", "out", $"mix {voice}", "a");
+            context.Wire($"sounding {voice}", "out", $"mix {voice}", "b");
+        }
+
+        context.Wire(voices == 1 ? "sounding 1" : $"mix {voices}", "out", "screen", "left");
+    }
+
     [Given("the {word} of a drum machine's clock on the speakers")]
     public void GivenAClockSignal(string signal) =>
         Written($"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}c.{signal} |> out.left");
