@@ -30,7 +30,7 @@ public partial class NodeCatalog
                     Lenient = true,
                     Help = "Holds the note: attack and decay while it is up, release once it falls.",
                 },
-                Seconds("attack", -2f) with { Help = SocketHelp.Attack },
+                Seconds("attack", -2f) with { Standard = true },
                 Seconds("decay", -1f) with { Help = "How long the fall from the peak to 'sustain' takes." },
                 Num("sustain", 0.7f, 0f, 1f) with { Help = "The level held while the gate stays up." },
                 Seconds("release", -0.6f) with { Help = "How long the fall to silence takes once the gate drops." },

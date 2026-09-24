@@ -55,7 +55,7 @@ internal static class CompressorModule
         TypeId, "Compressor", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Standard = true },
             new PortSpec("key", NormalledFrom: Left, PatchOnly: true)
             {
                 Help = "Patch it to duck: the gain then follows this instead of the two sides.",

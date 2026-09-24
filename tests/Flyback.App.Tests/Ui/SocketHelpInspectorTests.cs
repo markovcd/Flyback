@@ -91,8 +91,8 @@ public class SocketHelpInspectorTests : UiTest
 
         var freq = NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs.Single(port => port.Name == "freq");
 
-        freq.Help.ShouldBe(SocketHelp.Freq);
-        ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Freq);
+        freq.Standard.ShouldBeTrue();
+        ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Inputs["freq"]);
     }
 
     /// <summary>A setting carried on the node has its help as the tip on its row, as a socket does.</summary>

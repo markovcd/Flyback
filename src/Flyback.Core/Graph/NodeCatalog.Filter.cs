@@ -50,7 +50,7 @@ public partial class NodeCatalog
                 Knee = 20f,
                 Help = "The corner, in hertz. Meant to be swept by an oscillator or an envelope.",
             },
-            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = SocketHelp.Resonance },
+            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Standard = true },
         ],
         [
             new PortSpec("low") { Help = "What is under the cutoff. On the picture, 'in' unchanged." },

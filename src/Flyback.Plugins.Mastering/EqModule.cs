@@ -40,7 +40,7 @@ internal static class EqModule
         TypeId, "EQ", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Standard = true },
             new PortSpec("low cut", PortKind.Scalar, 0f, 0f, 300f)
             {
                 Knee = 20f,

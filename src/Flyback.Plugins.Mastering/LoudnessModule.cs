@@ -60,7 +60,7 @@ internal static class LoudnessModule
         TypeId, "Loudness", ModuleCategories.Measurement,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: 0, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: 0, PatchOnly: true) { Standard = true },
         ],
         [
             new PortSpec("momentary") { Help = "LUFS over the last 0.4 s, floored at -70." },

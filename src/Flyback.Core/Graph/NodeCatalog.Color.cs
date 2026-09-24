@@ -52,7 +52,7 @@ public partial class NodeCatalog
             [
                 Col("a") with { Help = "The color at 't' 0." },
                 Col("b") with { Help = "The color at 't' 1." },
-                Num("t", 0.5f, 0f, 1f) with { Help = SocketHelp.Blend },
+                Num("t", 0.5f, 0f, 1f) with { Standard = true },
             ],
             [Col("color") with { Help = Blended }],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],

@@ -60,7 +60,7 @@ internal static class LimiterModule
         TypeId, "Limiter", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Standard = true },
             new PortSpec("ceiling", PortKind.Scalar, -1f, -24f, 0f) { Help = "In dB. Nothing leaves louder." },
             new PortSpec("release", PortKind.Scalar, -1f, -3f, 0.5f, Display: PortDisplay.Duration)
             {

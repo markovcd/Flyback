@@ -129,6 +129,12 @@ public sealed class ModuleCatalog
                 continue;
             }
 
+            if (SocketHelp.Missing(module).ToList() is [_, ..] missing)
+            {
+                rejected.AddRange(missing.Select(said => $"{said} It was ignored."));
+                continue;
+            }
+
             accepted.Add(module);
         }
 

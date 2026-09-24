@@ -121,7 +121,7 @@ public partial class NodeCatalog
                 {
                     Help = "How often a note plays on 'gate'. At 0 nothing gets through, at 1 everything does.",
                 },
-                new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer) { Help = SocketHelp.Seed },
+                new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer) { Standard = true },
             ],
             [
                 Num("gate", 0f, 0f, 1f) with { Help = "The notes the coin lets through." },
@@ -172,7 +172,7 @@ public partial class NodeCatalog
         [
             Domain("in", "What it steps across: Time without a wire. Reversing or speeding it up does the same to the pattern."),
             Num("rate", 4f, 0f, 32f) with { Help = "Steps for each unit of 'in': steps a second while it runs on Time." },
-            Num("gate length", 0.5f, 0f, 1f) with { Help = SocketHelp.GateLength },
+            Num("gate length", 0.5f, 0f, 1f) with { Standard = true },
             Num("shape", 0.02f, 0f, WidestGateEdge) with
             {
                 Help = "How long the gate's edges ramp, as a fraction of a step. At the top a note is one smooth hump.",

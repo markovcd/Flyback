@@ -22,7 +22,7 @@ internal static class WanderModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Wander", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("rate", PortKind.Scalar, 0.1f, 0f, 8f)
             {
                 Help = "New values a second: 0.05 drifts like weather, 4 wobbles.",

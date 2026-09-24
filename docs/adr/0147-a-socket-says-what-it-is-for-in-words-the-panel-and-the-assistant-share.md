@@ -43,12 +43,16 @@ shows it as the tip on the row, and the lookups print it beside the key. A
 shipped module with a silent socket or a silent setting fails its scenario.
 
 **A socket that means the same everywhere is described once, and opts in.**
-`SocketHelp` holds the standard texts as constants — a position's `x` and `y`,
-an oscillator's `freq`, `phase`, `amp` and `bias`, an effect's `mix`, a domain
-input whatever it is called — and a socket takes one by setting its help to it,
-usually in the helper that builds the socket. Nothing is filled in by name, so a
-socket whose name means something else on its module never shows words that are
-wrong for it.
+`SocketHelp` holds the standard texts by name, inputs and outputs apart — a
+position's `x` and `y`, an oscillator's `freq`, `phase`, `amp` and `bias`, an
+effect's `mix` — and one for every domain input whatever it is called. A socket
+takes its name's standard by setting `PortSpec.Standard`, usually in the helper
+that builds it, and `NodeDef` fills the help in, since only the module knows an
+input from an output. Nothing is filled in unasked, so a socket whose name means
+something else on its module never shows words that are wrong for it. A socket
+that asks for a name with no standard is refused: a plugin's module with one is
+turned away with the socket named, as a module with the wrong prefix is, and the
+built-in catalog does not start.
 
 **Help is an init property**, the way `Knee` and `Lenient` are, so a plugin built
 against the earlier contract loads unchanged, with no help on its sockets.

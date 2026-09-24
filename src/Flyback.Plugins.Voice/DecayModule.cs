@@ -31,7 +31,7 @@ internal static class DecayModule
                 Lenient = true,
                 Help = "Each rise starts it, without waiting for the fall. A hit mid-fall rises from where it is.",
             },
-            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration) { Help = SocketHelp.Attack },
+            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration) { Standard = true },
             new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration)
             {
                 Help = "How long the fall to silence takes.",

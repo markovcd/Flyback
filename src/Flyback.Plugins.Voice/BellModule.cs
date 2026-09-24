@@ -27,8 +27,8 @@ internal static class BellModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Bell", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
-            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f, Help = SocketHelp.Freq },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
+            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f, Standard = true },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f) { Help = LevelHelp },
             new PortSpec("ratio", PortKind.Scalar, 2.76f, 0.25f, 16f)
             {

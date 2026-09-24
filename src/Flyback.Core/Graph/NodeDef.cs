@@ -198,6 +198,14 @@ public sealed record NodeDef(
     EmitFn Emit,
     string Description = "")
 {
+    /// <summary>The inputs, with the standard help filled in on each that asks for it.</summary>
+    public IReadOnlyList<PortSpec> Inputs { get; init => field = SocketHelp.Filled(value, input: true); } =
+        SocketHelp.Filled(Inputs, input: true);
+
+    /// <summary>The outputs, with the standard help filled in on each that asks for it.</summary>
+    public IReadOnlyList<PortSpec> Outputs { get; init => field = SocketHelp.Filled(value, input: false); } =
+        SocketHelp.Filled(Outputs, input: false);
+
     /// <summary>
     /// Everything an instance of this module carries that is not a knob: a
     /// sequencer's notes, a quantiser's scale, a player's file. Empty for the

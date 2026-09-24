@@ -80,7 +80,7 @@ public partial class NodeCatalog
             [
                 Any("a") with { Help = "What comes out at 't' 0." },
                 Any("b", 1f) with { Help = "What comes out at 't' 1." },
-                Any("t", 0.5f, 0f, 1f) with { Help = SocketHelp.Blend },
+                Any("t", 0.5f, 0f, 1f) with { Standard = true },
             ],
             [Any("out") with { Help = Blended }],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],

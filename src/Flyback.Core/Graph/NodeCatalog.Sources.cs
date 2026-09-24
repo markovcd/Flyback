@@ -44,7 +44,7 @@ public partial class NodeCatalog
             [
                 Num("x") with { Help = "Normalized, and widened by the aspect ratio." },
                 Num("y", 0f, -1f, 1f) with { Help = "Normalized." },
-                Num("radius") with { Help = SocketHelp.Radius },
+                Num("radius") with { Standard = true },
                 Num("angle", 0f, -MathF.PI, MathF.PI) with { Help = "Around the center, in radians." },
                 Num("aspect") with
                 {

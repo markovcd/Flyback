@@ -25,7 +25,7 @@ public partial class NodeCatalog
         DuckTypeId, "Duck", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = "The sound to turn down, or its left side." },
-            new PortSpec("right", NormalledFrom: 0, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: 0, PatchOnly: true) { Standard = true },
             new PortSpec("key", PatchOnly: true) { Help = "What to make room for: a kick or its envelope." },
             Num("depth", 0.5f, 0f, 1f) with { Help = "How far down a key at 'full' turns it: 1 is silence." },
             Num("full", 1f, 0.01f, 2f) with { Help = "How loud the key has to be to duck by the whole of 'depth'." },

@@ -66,9 +66,9 @@ public partial class NodeCatalog
 
     private const string Wave = "The wave, after 'amp' and 'bias'.";
 
-    private static PortSpec Phase => Num("phase", 0f, 0f, 1f) with { Lenient = true, Help = SocketHelp.Phase };
+    private static PortSpec Phase => Num("phase", 0f, 0f, 1f) with { Lenient = true, Standard = true };
 
-    private static PortSpec Amp => Num("amp", 1f, 0f, 2f) with { Help = SocketHelp.Amp };
+    private static PortSpec Amp => Num("amp", 1f, 0f, 2f) with { Standard = true };
 
-    private static PortSpec Bias => Num("bias", 0f, -2f, 2f) with { Help = SocketHelp.Bias };
+    private static PortSpec Bias => Num("bias", 0f, -2f, 2f) with { Standard = true };
 }

@@ -67,8 +67,8 @@ internal static class OrbitModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Orbit", FractalsPlugin.Category,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
-            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Standard = true },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Standard = true },
             new PortSpec("re", PortKind.Scalar, -0.12f, -2f, 1f) { Help = MandelbrotModule.ReHelp },
             new PortSpec("im", PortKind.Scalar, 0.75f, -1.5f, 1.5f) { Help = MandelbrotModule.ImHelp },
             new PortSpec("rate", PortKind.Scalar, 330f, 20f, 8000f)
@@ -76,7 +76,7 @@ internal static class OrbitModule
                 Knee = 20f,
                 Help = "Steps a second.",
             },
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("start re", PortKind.Scalar, 0f, -2f, 2f) { Help = "The real part of where z starts, in Julia mode." },
             new PortSpec("start im", PortKind.Scalar, 0f, -2f, 2f) { Help = "The imaginary part of where z starts, in Julia mode." },
         ],

@@ -33,8 +33,8 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
         new NodeDef(
             "flyback.sample.ripple", "Ripple", "Sample",
             [
-                new PortSpec("x") { Help = SocketHelp.Position },
-                new PortSpec("y") { Help = SocketHelp.Position },
+                new PortSpec("x") { Standard = true },
+                new PortSpec("y") { Standard = true },
                 new PortSpec("freq", PortKind.Scalar, 4f, 0f, 32f) { Help = "Rings to each unit out from the middle." },
                 new PortSpec("offset") { Help = "Shifts the rings, one whole ring at 1." },
             ],

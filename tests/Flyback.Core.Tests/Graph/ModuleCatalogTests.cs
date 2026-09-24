@@ -55,6 +55,39 @@ public class ModuleCatalogTests
         original.Get("test.extras.double").ShouldBeNull();
     }
 
+    /// <summary>A socket that asks for the standard help takes the one for its name and side, a domain input the domain's.</summary>
+    [Fact]
+    public void A_standard_socket_takes_the_help_for_its_name_and_side()
+    {
+        var module = new NodeDef(
+            "test.extras.moved", "Moved", "Test",
+            [new PortSpec("x") { Standard = true }, new PortSpec("along", Domain: true) { Standard = true }],
+            [new PortSpec("x") { Standard = true }],
+            (_, i) => [i[0]]);
+
+        module.Inputs[0].Help.ShouldBe(SocketHelp.Inputs["x"]);
+        module.Inputs[1].Help.ShouldBe(NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs[0].Help);
+        module.Outputs[0].Help.ShouldBe(SocketHelp.Outputs["x"]);
+        module.Outputs[0].Help.ShouldNotBe(module.Inputs[0].Help);
+    }
+
+    /// <summary>A socket asking for a standard its name does not have is a mistake in the plugin, and costs that module.</summary>
+    [Fact]
+    public void A_module_asking_for_a_standard_that_does_not_exist_is_refused()
+    {
+        var module = new NodeDef(
+            "test.extras.odd", "Odd", "Test",
+            [new PortSpec("wobble") { Standard = true }],
+            [new PortSpec("out") { Help = "What it makes." }],
+            (_, i) => [i[0]]);
+
+        var added = NodeCatalog.BuiltIn.With(Extras, [module, Module("test.extras.double")]);
+
+        added.Catalog.Get("test.extras.odd").ShouldBeNull();
+        added.Catalog.Get("test.extras.double").ShouldNotBeNull();
+        added.Rejected.ShouldHaveSingleItem().ShouldContain("'wobble'");
+    }
+
     [Fact]
     public void A_module_not_named_after_its_provider_is_refused()
     {

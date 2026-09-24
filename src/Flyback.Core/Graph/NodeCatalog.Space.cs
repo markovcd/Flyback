@@ -46,7 +46,7 @@ public partial class NodeCatalog
             "space.polar", "To polar", ModuleCategories.Geometry,
             [..Position()],
             [
-                Num("radius") with { Help = SocketHelp.Radius },
+                Num("radius") with { Standard = true },
                 Num("angle") with { Help = "In radians, round the center: -pi to pi." },
             ],
             (em, i) => [em.Binary(OpCode.Hypot, i[0], i[1]), em.Binary(OpCode.Atan2, i[1], i[0])],
@@ -113,7 +113,7 @@ public partial class NodeCatalog
 
 
     /// <summary>A Geometry module's moved x and y.</summary>
-    private static PortSpec[] Moved() => [Num("x") with { Help = SocketHelp.Moved }, Num("y") with { Help = SocketHelp.Moved }];
+    private static PortSpec[] Moved() => [Num("x") with { Standard = true }, Num("y") with { Standard = true }];
 
     private const string TileCellHelp = "Where in its cell the pixel is, -1 to 1 across it.";
 
@@ -146,7 +146,7 @@ public partial class NodeCatalog
         [
             ..Position(),
             Num("zoom", 1f, 0f, 16f) with { Help = "Multiplies the coordinate, as on Scale." },
-            Num("angle", 0f, -Tau, Tau) with { Help = SocketHelp.Angle },
+            Num("angle", 0f, -Tau, Tau) with { Standard = true },
             Num("dx", 0f, -2f, 2f) with { Help = TransformSlideHelp },
             Num("dy", 0f, -2f, 2f) with { Help = TransformSlideHelp },
         ],

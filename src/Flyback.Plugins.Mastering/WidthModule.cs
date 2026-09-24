@@ -28,7 +28,7 @@ internal static class WidthModule
         TypeId, "Width", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Standard = true },
             new PortSpec("width", PortKind.Scalar, 1f, 0f, 2f) { Help = "Scales the side: 0 is mono, 2 twice as wide." },
             new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f)
             {

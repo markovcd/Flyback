@@ -219,6 +219,17 @@ public readonly record struct PortSpec(
     /// </summary>
     public bool Lenient { get; init; }
 
+    /// <summary>
+    /// Whether this socket means what its name means everywhere, and so takes its
+    /// <see cref="Help"/> from <see cref="SocketHelp"/> rather than saying it here.
+    /// </summary>
+    /// <remarks>
+    /// Filled in by <see cref="NodeDef"/>, which knows an input from an output. A
+    /// name with no standard is an error in the declaration: a plugin's module that
+    /// asks for one is refused, and the built-in catalog does not start.
+    /// </remarks>
+    public bool Standard { get; init; }
+
     /// <summary>How far along a control spanning <paramref name="min"/> to <paramref name="max"/> <paramref name="value"/> sits, 0 to 1.</summary>
     public double Travel(float value, float min, float max) => Taper.Travel(value, min, max, Knee);
 

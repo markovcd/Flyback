@@ -96,7 +96,7 @@ public static partial class NodeCatalog
     /// An oscillator's rate, from standing still to the top of hearing: the lower
     /// half of the knob's travel is LFO territory up to 20 Hz, the upper half is pitch.
     /// </summary>
-    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f, Help = SocketHelp.Freq };
+    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f, Standard = true };
 
     /// <summary>
     /// The axis a module is read across rather than a value it uses. Named at the
@@ -108,8 +108,8 @@ public static partial class NodeCatalog
     /// catalog is built through here, so this one line is the whole of "an
     /// oscillator runs unless you say otherwise".
     /// </remarks>
-    private static PortSpec Domain(string name, string help = SocketHelp.Domain) =>
-        new(name, NormalledTo: Clock, Domain: true) { Help = help };
+    private static PortSpec Domain(string name, string help = "") =>
+        new(name, NormalledTo: Clock, Domain: true) { Help = help, Standard = help.Length == 0 };
 
     /// <summary>
     /// Where on the screen a module is being asked about, normalled to Coordinates
@@ -120,8 +120,8 @@ public static partial class NodeCatalog
     /// </summary>
     private static PortSpec[] Position() =>
     [
-        new("x", NormalledTo: Across) { Help = SocketHelp.Position },
-        new("y", NormalledTo: Down) { Help = SocketHelp.Position },
+        new("x", NormalledTo: Across) { Standard = true },
+        new("y", NormalledTo: Down) { Standard = true },
     ];
 
 
@@ -151,6 +151,9 @@ public static partial class NodeCatalog
             .Concat(Color())
             .Concat(Feedback())
             .ToImmutableList();
+
+        if (modules.SelectMany(SocketHelp.Missing).ToList() is [_, ..] missing)
+            throw new InvalidOperationException(string.Join(Environment.NewLine, missing));
 
         BuiltIn = ModuleCatalog.Of(BuiltInProvider, modules);
         Current = BuiltIn;

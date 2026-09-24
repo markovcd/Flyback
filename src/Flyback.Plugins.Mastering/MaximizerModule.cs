@@ -69,7 +69,7 @@ internal static class MaximizerModule
         TypeId, "Maximizer", ModuleCategories.Shaping,
         [
             new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Standard = true },
             new PortSpec("amount", PortKind.Scalar, 0.5f, 0f, 1f)
             {
                 Help = "How hard it works: the thresholds, the makeup and the style's tilt follow it.",

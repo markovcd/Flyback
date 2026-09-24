@@ -22,7 +22,7 @@ internal static class StrokeModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Stroke", ModuleCategories.Timing,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("rate", PortKind.Scalar, 1f, 0f, 32f) { Help = "Strokes for each unit of 'in'." },
             new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f)
             {

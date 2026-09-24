@@ -39,7 +39,7 @@ internal static class HissModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Hiss", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f)
             {
                 Help = "An envelope: a Stroke, a Decay, a Euclid's 'stroke'.",
@@ -50,9 +50,9 @@ internal static class HissModule
                 Help = "The filter's corner, in hertz. 8000 on the high band is a hat, 1900 on the "
                     + "band a snare, and swept upwards a riser.",
             },
-            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = SocketHelp.Resonance },
+            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Standard = true },
             new PortSpec("gain", PortKind.Scalar, 1f, 0f) { Help = "Makes up what a narrow band takes away." },
-            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer) { Help = SocketHelp.Seed },
+            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer) { Standard = true },
         ],
         [new PortSpec("out") { Help = "The filtered noise, times 'level'." }],
         Emit,

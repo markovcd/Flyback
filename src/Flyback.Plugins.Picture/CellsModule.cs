@@ -56,8 +56,8 @@ internal static class CellsModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Cells", ModuleCategories.Patterns,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
-            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Standard = true },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Standard = true },
             new PortSpec("z") { Help = "Drifts the points." },
             new PortSpec("scale", PortKind.Scalar, 4f, 0f, 32f) { Help = "Cells to a unit of the picture: bigger is smaller cells." },
             new PortSpec("jitter", PortKind.Scalar, 1f, 0f, 1f)

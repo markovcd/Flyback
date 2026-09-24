@@ -31,7 +31,7 @@ internal static class DrumModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Drum", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f)
             {
                 Help = "An envelope: a Stroke, a Decay, an ADSR. It sets both the loudness and the pitch drop.",

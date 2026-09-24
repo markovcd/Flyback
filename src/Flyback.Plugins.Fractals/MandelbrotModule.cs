@@ -38,8 +38,8 @@ internal static class MandelbrotModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Mandelbrot", FractalsPlugin.Category,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
-            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Standard = true },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Standard = true },
             new PortSpec("re", PortKind.Scalar, Middle, -2f, 1f) { Help = "The real part of the c in the middle of the picture." },
             new PortSpec("im", PortKind.Scalar, 0f, -1.5f, 1.5f) { Help = "The imaginary part of the c in the middle of the picture." },
             new PortSpec("zoom", PortKind.Scalar, 0f, 0f, 12f)
