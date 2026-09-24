@@ -1190,7 +1190,10 @@ public static class PatchPrinter
 
             var value = node.InputValues[port];
 
-            return Math.Abs(value - spec.Default) < 1e-7f ? null : Value(value, spec.Display);
+            // Exactly, because a fresh module holds exactly its default and a value a
+            // hair from it is still a different knob.
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            return value == spec.Default ? null : Value(value, spec.Display);
         }
 
         /// <summary>The path a player or a picture names, or null where it names none.</summary>

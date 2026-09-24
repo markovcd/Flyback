@@ -246,6 +246,26 @@ public class PrinterTests
             .ShouldBe(Fingerprint(built.CompileForVideo(NodeCatalog.BuiltIn).Program));
     }
 
+    /// <summary>
+    /// A knob a hair from its default is still a different knob, and writing it
+    /// nowhere would read it back as the default.
+    /// </summary>
+    [Fact]
+    public void A_knob_a_hair_from_its_default_is_written()
+    {
+        var patch = new Patch();
+        patch.EnsureOutput(NodeCatalog.BuiltIn);
+
+        var sine = NodeInstance.Create(NodeCatalog.BuiltIn.Require("osc.sine"), 0, 0);
+        sine.InputValues[3] = 1f - 0.00000006f;
+        patch.Nodes.Add(sine);
+        patch.Connect(sine.Id, 0, patch.Output.Id, NodeCatalog.OutputLeftPort);
+
+        var again = Reread(patch, out _);
+
+        again.Nodes.Single(n => n.TypeId == "osc.sine").InputValues[3].ShouldBe(sine.InputValues[3]);
+    }
+
     [Fact]
     public void An_empty_patch_prints_to_nothing_much() =>
         PatchLanguage.Build(PatchPrinter.Print(Preset("Empty"), NodeCatalog.BuiltIn), NodeCatalog.BuiltIn)
