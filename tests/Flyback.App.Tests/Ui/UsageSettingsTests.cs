@@ -41,7 +41,7 @@ public sealed class UsageSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, Usage? usage = null)
     {
-        var window = Owned(new MainWindow(usageSettingsPath: settingsPath, usage: usage));
+        var window = Owned(new MainWindow(new EditorSetup { UsageSettingsPath = settingsPath, Usage = usage }));
 
         window.Show();
         Settle(window);

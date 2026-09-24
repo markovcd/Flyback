@@ -68,26 +68,14 @@ public sealed class FlybackApp : Application
                 usage.Drain(Usage.LongestWait);
             };
 
-            var window = new MainWindow(
-                openPath: Startup.OpenPath,
-                openShared: Startup.OpenShared,
-                outputSettingsPath: OutputSettings.File,
-                updateSettingsPath: UpdateSettings.File,
-                interpreted: Startup.Interpreted,
-                updateNote: string.Join("  ", new[] { Startup.UpdateNote, Startup.PluginNote }.OfType<string>()) is { Length: > 0 } note ? note : null,
-                whatsNew: Startup.WhatsNew,
-                usageSettingsPath: UsageSettings.File,
-                usage: usage,
-                recoveryFolder: Recovery.Folder,
-                presetFolder: PresetLibrary.DefaultFolder,
-                thumbnailFolder: ThumbnailStore.DefaultFolder,
-                canvasSettingsPath: CanvasSettings.File,
-                layoutPath: WindowLayout.File,
-                fileTypeSettingsPath: FileTypeSettings.File,
-                fileTypes: FileTypes.ForThisCopy(),
-                pluginFolder: PluginHost.DefaultDirectory,
-                relaunch: Restart.Launch,
-                presetSite: PresetSite.Local);
+            var window = new MainWindow(EditorSetup.ThisMachine(usage) with
+            {
+                OpenPath = Startup.OpenPath,
+                OpenShared = Startup.OpenShared,
+                Interpreted = Startup.Interpreted,
+                UpdateNote = string.Join("  ", new[] { Startup.UpdateNote, Startup.PluginNote }.OfType<string>()) is { Length: > 0 } note ? note : null,
+                WhatsNew = Startup.WhatsNew,
+            });
             desktop.MainWindow = window;
 
             // Once there is a window, so a slow network is never a slow start.

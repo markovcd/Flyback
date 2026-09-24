@@ -147,7 +147,7 @@ public sealed class SitePresetTests : UiTest
     {
         using var site = new FakePresetSite(new Posted("n1", "Nebula", "Ann", File: PatchFile()));
 
-        var window = Owned(new MainWindow(presetSite: FakePresetSite.Root) { SiteHttp = new HttpClient(site) });
+        var window = Owned(new MainWindow(new EditorSetup { PresetSite = FakePresetSite.Root }) { SiteHttp = new HttpClient(site) });
 
         window.Show();
         Settle(window);

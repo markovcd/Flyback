@@ -33,7 +33,7 @@ public sealed class WindowLayoutTests : UiTest
 
     private MainWindow Open()
     {
-        var window = Owned(new MainWindow(layoutPath: layoutPath));
+        var window = Owned(new MainWindow(new EditorSetup { LayoutPath = layoutPath }));
 
         window.Show();
         Settle(window);

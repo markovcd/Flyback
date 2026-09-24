@@ -41,7 +41,7 @@ public sealed class FileTypeSettingsTests : UiTest
 
     private MainWindow Open()
     {
-        var window = Owned(new MainWindow(fileTypeSettingsPath: settingsPath, fileTypes: system));
+        var window = Owned(new MainWindow(new EditorSetup { FileTypeSettingsPath = settingsPath, FileTypes = system }));
 
         window.Show();
         Settle(window);

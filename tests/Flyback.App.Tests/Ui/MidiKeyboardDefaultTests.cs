@@ -37,7 +37,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
     {
         new OutputSettings { Keyboard = layout }.Save(settingsPath);
 
-        var window = Owned(new MainWindow(outputSettingsPath: settingsPath));
+        var window = Owned(new MainWindow(new EditorSetup { OutputSettingsPath = settingsPath }));
 
         window.Show();
         window.UpdateLayout();

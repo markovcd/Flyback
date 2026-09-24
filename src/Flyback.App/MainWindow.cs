@@ -173,119 +173,22 @@ public sealed class MainWindow : Window
     /// </summary>
     private readonly MidiHub midi;
 
-    /// <param name="groupFolder">
-    /// Where the kept groups live. Null is the usual place; a path is for the
-    /// tests, which must not write into the folder a person's own groups are in.
-    /// </param>
-    /// <param name="presetFolder">
-    /// Where the presets somebody saved live. Null keeps none and offers no way to
-    /// save one — unlike <paramref name="groupFolder"/>, for the reason
-    /// <paramref name="outputSettingsPath"/> gives. The program itself passes
-    /// <see cref="PresetLibrary.DefaultFolder"/>.
-    /// </param>
-    /// <param name="thumbnailFolder">
-    /// Where the gallery's thumbnails are kept between runs. Null draws them afresh
-    /// each run. The program itself passes <see cref="ThumbnailStore.DefaultFolder"/>.
-    /// </param>
-    /// <param name="openPath">
-    /// A file to open once there is a window for it, or null for the usual
-    /// start on the default preset — see <see cref="Startup.OpenPath"/>.
-    /// </param>
-    /// <param name="outputSettingsPath">
-    /// Where the Graphics, Recording and Sound settings are read from and saved to.
-    /// Null reads nothing and keeps nothing — unlike <paramref name="groupFolder"/>
-    /// — so that the many tests that build a window with no arguments start on the defaults
-    /// rather than on whatever the machine running them last saved. The program
-    /// itself passes <see cref="OutputSettings.File"/>.
-    /// </param>
-    /// <param name="interpreted">
-    /// Keep the CPU's programs on the interpreter for the whole run — see
-    /// <see cref="Startup.Interpreted"/>.
-    /// </param>
-    /// <param name="updateSettingsPath">
-    /// Where the Updates section is read from and saved to, null keeping it nowhere
-    /// for the reason <paramref name="outputSettingsPath"/> does.
-    /// </param>
-    /// <param name="updateNote">
-    /// What the last update did, said once on the status bar — see
-    /// <see cref="Startup.UpdateNote"/>.
-    /// </param>
-    /// <param name="whatsNew">
-    /// What the release just installed changed, shown once in a dialog when the
-    /// window opens in place of <paramref name="updateNote"/> — see
-    /// <see cref="Startup.WhatsNew"/>.
-    /// </param>
-    /// <param name="usageSettingsPath">
-    /// Where the Usage section is read from and saved to, null keeping it nowhere
-    /// for the reason <paramref name="outputSettingsPath"/> does.
-    /// </param>
-    /// <param name="canvasSettingsPath">
-    /// Where the Canvas section is read from and saved to, null keeping it nowhere
-    /// for the reason <paramref name="outputSettingsPath"/> does.
-    /// </param>
-    /// <param name="fileTypeSettingsPath">
-    /// Where the Files section is read from and saved to, null keeping it nowhere
-    /// for the reason <paramref name="outputSettingsPath"/> does.
-    /// </param>
-    /// <param name="fileTypes">
-    /// What the Files section tells the operating system. Null tells it nothing,
-    /// which is what every test gets.
-    /// </param>
-    /// <param name="usage">
-    /// What this run says about itself (ADR-0094). Null says nothing, which is what
-    /// every test gets: none of them has any business reaching a network.
-    /// </param>
-    /// <param name="recoveryFolder">
-    /// Where unsaved work is kept against a crash, and where what a crash left is
-    /// looked for (ADR-0103). Null keeps nothing and offers nothing, for the reason
-    /// <paramref name="outputSettingsPath"/> reads nothing.
-    /// </param>
-    /// <param name="pluginFolder">
-    /// Where a plugin package opened in the window is installed. Null installs
-    /// nothing, for the reason <paramref name="outputSettingsPath"/> reads nothing.
-    /// </param>
-    /// <param name="relaunch">
-    /// Starts Flyback again once this window has closed, which is what loads a plugin
-    /// just installed. Null offers no restart, which is what every test gets unless it
-    /// is watching for one.
-    /// </param>
-    /// <param name="presetSite">
-    /// The site the gallery lists shared presets from and the plugins window shared
-    /// plugins. Null lists none, so no test reaches the network unless it asks to.
-    /// </param>
-    public MainWindow(
-        string? groupFolder = null,
-        string? openPath = null,
-        string? openShared = null,
-        string? outputSettingsPath = null,
-        bool interpreted = false,
-        string? updateSettingsPath = null,
-        string? updateNote = null,
-        string? usageSettingsPath = null,
-        Usage? usage = null,
-        ReleaseNotes? whatsNew = null,
-        string? recoveryFolder = null,
-        string? presetFolder = null,
-        string? thumbnailFolder = null,
-        string? canvasSettingsPath = null,
-        string? layoutPath = null,
-        string? fileTypeSettingsPath = null,
-        FileTypes? fileTypes = null,
-        string? pluginFolder = null,
-        Action<Reopen?>? relaunch = null,
-        Uri? presetSite = null)
+    /// <param name="setup">Where this machine keeps things and what this launch asked for; none keeps nothing.</param>
+    public MainWindow(EditorSetup? setup = null)
     {
-        this.pluginFolder = pluginFolder;
-        this.relaunch = relaunch;
-        this.presetSite = presetSite;
-        this.openShared = openShared;
+        setup ??= new EditorSetup();
+
+        this.pluginFolder = setup.PluginFolder;
+        this.relaunch = setup.Relaunch;
+        this.presetSite = setup.PresetSite;
+        this.openShared = setup.OpenShared;
 
         // Before the layout, because the toolbar lists what is saved.
-        if (presetFolder is not null) savedPresets = new PresetLibrary(presetFolder);
+        if (setup.PresetFolder is not null) savedPresets = new PresetLibrary(setup.PresetFolder);
 
-        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler, thumbnailFolder) { Saved = savedPresets };
-        this.outputSettingsPath = outputSettingsPath;
-        this.usage = usage ?? Usage.Off;
+        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler, setup.ThumbnailFolder) { Saved = savedPresets };
+        this.outputSettingsPath = setup.OutputSettingsPath;
+        this.usage = setup.Usage ?? Usage.Off;
 
         document = new Document(editor, source, report, this.usage);
 
@@ -294,17 +197,17 @@ public sealed class MainWindow : Window
         outputSections = new OutputSections(shell, OrderedPresets, PickStartupPatchAsync);
 
         // Before anything is compiled, so no build is started only to be taken off.
-        compiler.Enabled = !interpreted;
+        compiler.Enabled = !setup.Interpreted;
 
-        if (outputSettingsPath is not null) outputSettings = OutputSettings.Load(outputSettingsPath);
+        if (setup.OutputSettingsPath is not null) outputSettings = OutputSettings.Load(setup.OutputSettingsPath);
 
-        this.layoutPath = layoutPath;
-        if (layoutPath is not null) layout = WindowLayout.Load(layoutPath);
+        this.layoutPath = setup.LayoutPath;
+        if (setup.LayoutPath is not null) layout = WindowLayout.Load(setup.LayoutPath);
 
-        updatesSection = new UpdatesSection(updateSettingsPath, (message, detail) => Report(message, detail));
-        usageSection = new UsageSection(usageSettingsPath, this.usage, (message, detail) => Report(message, detail));
-        canvasSection = new CanvasSection(canvasSettingsPath, editor, (message, detail) => Report(message, detail));
-        filesSection = new FilesSection(fileTypeSettingsPath, fileTypes, (message, detail) => Report(message, detail));
+        updatesSection = new UpdatesSection(setup.UpdateSettingsPath, (message, detail) => Report(message, detail));
+        usageSection = new UsageSection(setup.UsageSettingsPath, this.usage, (message, detail) => Report(message, detail));
+        canvasSection = new CanvasSection(setup.CanvasSettingsPath, editor, (message, detail) => Report(message, detail));
+        filesSection = new FilesSection(setup.FileTypeSettingsPath, setup.FileTypes, (message, detail) => Report(message, detail));
 
         var sound = Sound.Open(plugins, outputSettings);
 
@@ -321,7 +224,7 @@ public sealed class MainWindow : Window
 
         knobs = new PanelKnobs(shell, preview, audio, midi);
 
-        palette = new Palette(shell, knobs.View.Instruments, () => outputSettings.Keyboard, groupFolder);
+        palette = new Palette(shell, knobs.View.Instruments, () => outputSettings.Keyboard, setup.GroupFolder);
 
         files = new PatchFiles(shell, Show, OfferMissingPluginsAsync);
 
@@ -345,12 +248,12 @@ public sealed class MainWindow : Window
 
         pluginInstalls = new PluginInstalls(
             shell,
-            pluginFolder,
-            presetSite,
+            setup.PluginFolder,
+            setup.PresetSite,
             () => SiteHttp ?? SiteClient.Value,
             () => playback.Sound,
             Assisting,
-            relaunch is null ? null : RestartAsync);
+            setup.Relaunch is null ? null : RestartAsync);
 
         audition = new PresetAudition(
             audio,
@@ -498,15 +401,15 @@ public sealed class MainWindow : Window
 
         // Said once, because nothing else on screen shows it, and a run that is
         // slower for a reason should say which.
-        if (interpreted)
+        if (setup.Interpreted)
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 
         // Last, so it is what the bar is showing when the window first appears.
-        if (whatsNew is null && updateNote is not null) Report(updateNote);
+        if (setup.WhatsNew is null && setup.UpdateNote is not null) Report(setup.UpdateNote);
 
         ApplyPanelLayout();
 
-        if (recoveryFolder is not null) keeper = new WorkKeeper(recoveryFolder, Work);
+        if (setup.RecoveryFolder is not null) keeper = new WorkKeeper(setup.RecoveryFolder, Work);
 
         // Opened rather than called straight away: there is nothing to put a
         // dialog over before, and the platform window behind this one — and the
@@ -517,15 +420,15 @@ public sealed class MainWindow : Window
         // unsaved work like any other and so about work just restored.
         Opened += async (_, _) =>
         {
-            if (whatsNew is not null) await this.ShowDialog(WhatsNew.Title(whatsNew), WhatsNew.View(whatsNew));
+            if (setup.WhatsNew is not null) await this.ShowDialog(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
 
             keeper?.Restore(Recover);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
-            if (openPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
+            if (setup.OpenPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
                 await OpenPathAsync(path);
 
-            if (openShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
+            if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
         };
     }
 

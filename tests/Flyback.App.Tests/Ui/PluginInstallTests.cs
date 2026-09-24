@@ -29,7 +29,7 @@ public sealed class PluginInstallTests : UiTest
 
     private MainWindow Open(Action<Reopen?>? relaunch = null)
     {
-        var window = Owned(new MainWindow(pluginFolder: Plugins, relaunch: relaunch));
+        var window = Owned(new MainWindow(new EditorSetup { PluginFolder = Plugins, Relaunch = relaunch }));
 
         window.Show();
         Settle(window);

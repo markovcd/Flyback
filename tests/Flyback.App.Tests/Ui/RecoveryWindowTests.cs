@@ -31,7 +31,7 @@ public class RecoveryWindowTests : UiTest
 
     private MainWindow Open(string? recoveryFolder = null)
     {
-        var window = Owned(new MainWindow(recoveryFolder: recoveryFolder));
+        var window = Owned(new MainWindow(new EditorSetup { RecoveryFolder = recoveryFolder }));
 
         window.Show();
         window.UpdateLayout();
