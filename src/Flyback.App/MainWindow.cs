@@ -59,22 +59,20 @@ public sealed partial class MainWindow : Window
     private Control? statusBar;
 
     /// <summary>
-    /// The toolbar's preset list, kept so a file opened from elsewhere — see
-    /// <see cref="ClearPresetSelection"/> — can take the selection off it. Null
-    /// only before <see cref="BuildLayout"/> has run.
+    /// The presets somebody saved, or null for a window that keeps none — every
+    /// test that did not ask for a folder, which must not see the ones on the
+    /// machine running it.
     /// </summary>
-    private Picker? presetsPicker;
+    private readonly PresetLibrary? savedPresets;
+
+    /// <summary>Trying a preset from the gallery by resting the pointer on its tile.</summary>
+    private readonly PresetAudition audition;
+
+    /// <summary>The preset slot on the toolbar, and the gallery it opens.</summary>
+    private readonly PresetSlot presets;
 
     /// <summary>The frames the preset gallery's tiles are drawn with, and the ones it has already drawn.</summary>
     private readonly PresetThumbnails thumbnails;
-
-    /// <summary>
-    /// Which row of <see cref="presetsPicker"/> is on the canvas, or -1 for a
-    /// document that did not come from that list. What a refused change puts the
-    /// box back to, and what a later pick is compared against so re-choosing the
-    /// same preset is a no-op rather than a rebuild.
-    /// </summary>
-    private int presetShowing;
 
     /// <summary>
     /// The preview's own row and the splitter below it, put away when the patch
@@ -297,8 +295,6 @@ public sealed partial class MainWindow : Window
 
         document = new Document(editor, source, report, this.usage);
 
-        toolbar = new Toolbar(BuildPresetSlot(), plugins.Assistants.Count > 0);
-
         outputSections = new OutputSections(this, plugins, OrderedPresets, PickStartupPatchAsync);
 
         // Before anything is compiled, so no build is started only to be taken off.
@@ -383,6 +379,35 @@ public sealed partial class MainWindow : Window
             Assisting,
             relaunch is null ? null : RestartAsync);
 
+        audition = new PresetAudition(
+            audio,
+            compiler,
+            plugins.Modules,
+            savedPresets,
+            // A take records what the speakers play, and a preset tried on the
+            // way past is not part of it.
+            () => playback.CanSound && Recording is { Running: false },
+            playback.SyncAudioToVolume);
+
+        presets = new PresetSlot(
+            this,
+            editor,
+            document,
+            files,
+            plugins,
+            report,
+            this.usage,
+            thumbnails,
+            audition,
+            savedPresets,
+            PresetSite,
+            () => assistant,
+            MayReplaceThePatchAsync,
+            Show,
+            OfferMissingPluginsAsync);
+
+        toolbar = new Toolbar(presets.View, plugins.Assistants.Count > 0);
+
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.
         Recording = new TakeRecording(
@@ -398,15 +423,6 @@ public sealed partial class MainWindow : Window
             RewindToZero,
             playback.SyncAudioToVolume);
 
-        audition = new PresetAudition(
-            audio,
-            compiler,
-            plugins.Modules,
-            savedPresets,
-            // A take records what the speakers play, and a preset tried on the
-            // way past is not part of it.
-            () => playback.CanSound && !Recording.Running,
-            playback.SyncAudioToVolume);
 
         WirePlayback();
 
@@ -501,34 +517,7 @@ public sealed partial class MainWindow : Window
         // patch" is set to, or the first of the list for a name it no longer
         // offers — said here so the title and the toolbar's own selection agree
         // with the canvas from the first frame (ADR-0093).
-        var offered = OrderedPresets();
-        var openIndex = PresetLibrary.Opening(offered, outputSettings.DefaultPreset);
-
-        Patch opened;
-
-        try
-        {
-            opened = Arrive(offered[openIndex]);
-        }
-        catch (Exception ex)
-        {
-            // Only a saved preset can fail here — one whose file has gone bad, or
-            // that needs a plugin taken away since. The window still opens, on
-            // the preset it would have opened on had none been chosen.
-            Report($"Could not open the '{offered[openIndex].Name}' preset: {ex.Message}");
-
-            openIndex = PresetLibrary.Opening(offered, "");
-            opened = Arrive(offered[openIndex]);
-        }
-
-        // Set before the patch, whose first play says which preset it is, and
-        // before the picker's own index, so its handler — which rebuilds the
-        // patch on a change — sees the row it is already showing and does
-        // nothing: the patch below is already built.
-        presetShowing = openIndex;
-
-        editor.Patch = opened;
-        if (presetsPicker is not null) presetsPicker.SelectedIndex = openIndex;
+        presets.StartOn(outputSettings.DefaultPreset);
 
         // No manual switch any more — Volume is the one now, and the Recompile
         // that patch assignment just ran already brought sound up to match its
@@ -571,7 +560,7 @@ public sealed partial class MainWindow : Window
             if (openPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
                 await OpenPathAsync(path);
 
-            if (openShared is { Length: > 0 } id) await OpenSharedAgainAsync(id);
+            if (openShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
         };
     }
 
@@ -860,12 +849,7 @@ public sealed partial class MainWindow : Window
     /// index to -1 is enough: the picker's own handler returns on a negative index
     /// before it asks what "wanted" means.
     /// </remarks>
-    internal void ClearPresetSelection()
-    {
-        presetShowing = -1;
-
-        if (presetsPicker is not null) presetsPicker.SelectedIndex = -1;
-    }
+    internal void ClearPresetSelection() => presets.Clear();
 
     /// <summary>
     /// Set while the settings window is up, so the app is not closed under it.

@@ -6,7 +6,7 @@ using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
-/// <summary>What the window keeps for <see cref="PluginInstalls"/>: where plugins go, where the site is, and how to start again.</summary>
+/// <summary>What the window keeps for <see cref="PluginInstalls"/> and <see cref="PresetSlot"/>: where plugins go, where the site is, and how to start again.</summary>
 public sealed partial class MainWindow
 {
     /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
@@ -42,6 +42,12 @@ public sealed partial class MainWindow
 
         return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
     }
+
+    /// <summary>What the gallery asks for shared presets, or null where this window has no site.</summary>
+    private PresetSite? PresetSite() => presetSite is null ? null : new PresetSite(SiteHttp ?? SiteClient.Value, presetSite);
+
+    /// <summary>The shared preset this launch was told to open again, or null.</summary>
+    private readonly string? openShared;
 
     /// <summary>
     /// Closes the window, asking about unsaved work as any close does, and starts

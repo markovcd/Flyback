@@ -38,7 +38,7 @@ public sealed partial class MainWindow
         playback.Started += (_, _) => usage.Played(
             editor.Patch.Nodes.Select(node => node.TypeId),
             editor.Patch.Connections.Count,
-            OrderedPresets().ElementAtOrDefault(presetShowing)?.Name);
+            presets.Showing?.Name);
     }
 
     /// <summary>

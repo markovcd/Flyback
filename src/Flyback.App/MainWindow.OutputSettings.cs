@@ -123,7 +123,7 @@ public sealed partial class MainWindow
             showing,
             thumbnails,
             audition.PointedAt,
-            Yours()?.ToPickFrom());
+            presets.Yours()?.ToPickFrom());
 
         var chosen = await this.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
 
