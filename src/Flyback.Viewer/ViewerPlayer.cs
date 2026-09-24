@@ -72,7 +72,10 @@ internal sealed class ViewerPlayer : IDisposable
         this.patch = patch;
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
-        audio.Update(patch, samples, held: true);
+
+        // Sound and picture start together, once both are built.
+        var start = new Cue();
+        audio.Update(patch, samples, start);
 
         // The panel's knobs are worth nothing until somebody writes them into the
         // block the programs read, which the editor does as it lays the panel out.
@@ -87,15 +90,18 @@ internal sealed class ViewerPlayer : IDisposable
             surface.FrameRate = options.FrameRate;
 
             var program = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
+            program.WaitFor(start);
 
             surface.Program = program;
             surface.Live = new LiveValues(program.LiveInputs);
             patch.Seed(surface.Live);
 
             // The renderer is the processor's for good if the graphics card refuses.
-            Submit(held: true);
-            surface.BackendChanged += _ => Submit(held: false);
+            Submit();
+            surface.BackendChanged += _ => Submit();
         }
+
+        start.Give();
 
         midi = new MidiHub(instruments);
         controls = new ControlHub(midi) { Takeover = takeover };
@@ -321,9 +327,9 @@ internal sealed class ViewerPlayer : IDisposable
         }
     }
 
-    private void Submit(bool held)
+    private void Submit()
     {
-        if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture, held);
+        if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
     }
 
     private static Func<TimeSpan> Watch()

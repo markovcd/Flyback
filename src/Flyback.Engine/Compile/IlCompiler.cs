@@ -109,7 +109,7 @@ public sealed class IlCompiler : IDisposable
                 {
                     if (latest[lane] is not { } program) continue;
 
-                    if (value) Enqueue(program, lane, held: false);
+                    if (value) Enqueue(program, lane);
                     else
                     {
                         pending[lane] = false;
@@ -128,11 +128,11 @@ public sealed class IlCompiler : IDisposable
     /// once when code of its shape is already built, on the compiler's thread
     /// otherwise, and never once this compiler has been disposed.
     /// </summary>
-    /// <param name="held">
-    /// Keep the program <see cref="CompiledPatch.Waiting"/> until its IL is attached
-    /// or will not be: a patch just opened starts compiled rather than interpreted.
-    /// </param>
-    public void Submit(CompiledPatch program, IlLane lane, bool held = false)
+    /// <remarks>
+    /// A program with a <see cref="CompiledPatch.Cue"/> holds a part of it until
+    /// its IL is attached or will not be, so a patch just opened starts compiled.
+    /// </remarks>
+    public void Submit(CompiledPatch program, IlLane lane)
     {
         ArgumentNullException.ThrowIfNull(program);
 
@@ -142,7 +142,7 @@ public sealed class IlCompiler : IDisposable
             // queued behind it, and that program plays interpreted, as it would have
             // until its IL arrived anyway.
             if (disposed) return;
-            Enqueue(program, (int)lane, held);
+            Enqueue(program, (int)lane);
         }
     }
 
@@ -221,17 +221,20 @@ public sealed class IlCompiler : IDisposable
         _ => IlParts.Staged,
     };
 
-    private void Enqueue(CompiledPatch program, int lane, bool held)
+    private void Enqueue(CompiledPatch program, int lane)
+    {
+        var replaced = latest[lane];
+
+        Place(program, lane);
+
+        // After the new program has taken its part, so a cue both share never
+        // reads as gone in between. A program replaced is no longer playing.
+        if (replaced is not null && !ReferenceEquals(replaced, program)) replaced.Release();
+    }
+
+    private void Place(CompiledPatch program, int lane)
     {
         var key = new IlKey(new IlShape(program), PartsFor(lane));
-
-        // A program replaced is no longer playing, so nothing is waiting on it. One
-        // replaced before it ever played hands its wait on: nothing is live to keep.
-        if (latest[lane] is { } replaced && !ReferenceEquals(replaced, program))
-        {
-            held |= replaced.Waiting;
-            replaced.Release();
-        }
 
         latest[lane] = program;
         latestKey[lane] = key;
@@ -245,7 +248,7 @@ public sealed class IlCompiler : IDisposable
             return;
         }
 
-        if (held) program.Hold();
+        program.Hold();
 
         pending[lane] = true;
         if (settled.Task.IsCompleted) settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

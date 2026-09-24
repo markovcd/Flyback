@@ -517,7 +517,7 @@ public sealed partial class MainWindow : Window
 
         editor.PatchChanged += (_, _) =>
         {
-            playback.Recompile(held: editor.Opening);
+            playback.Recompile(opened: editor.Opening);
 
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked

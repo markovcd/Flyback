@@ -64,6 +64,12 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private volatile bool running;
     private volatile bool finished;
 
+    /// <summary>Whether the render thread is waiting on the driver for a shader, and so wants frames whatever the clock says.</summary>
+    private volatile bool linking;
+
+    /// <summary>The cue this surface holds a part of until the program's shader is built, under <see cref="gate"/>.</summary>
+    private Cue? part;
+
     public GpuPreviewSurface()
     {
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
@@ -158,7 +164,26 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             {
                 program = value;
                 dirty = true;
+
+                // An opened patch's picture is ready once its shader is: a part of
+                // the cue, taken here and given back when the render thread has it.
+                var start = value.Cue is { Waiting: true } cue ? cue : null;
+                if (ReferenceEquals(start, part)) return;
+
+                start?.Take();
+                part?.Give();
+                part = start;
             }
+        }
+    }
+
+    /// <summary>Gives back the part of the cue this surface holds, if it holds one.</summary>
+    private void GivePart()
+    {
+        lock (gate)
+        {
+            part?.Give();
+            part = null;
         }
     }
 
@@ -196,6 +221,10 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         timer.Stop();
+
+        // Never drawn now, so nothing is waiting on this one's shader.
+        GivePart();
+
         base.OnDetachedFromVisualTree(e);
     }
 
@@ -239,11 +268,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
                 // numeric comparison — see PreviewSurface, where the same line is
                 // and for the same reason.
                 // ReSharper disable once CompareOfFloatsByEqualityOperator
-                if (driven == time && !dirty) return;
+                if (driven == time && !dirty && !linking) return;
 
                 time = driven;
             }
-            else
+            else if (!program.Waiting)
             {
                 // Clamped so a stall — dragging the window, a slow recompile —
                 // does not jump the patch forward.
@@ -337,6 +366,20 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             return;
         }
 
+        linking = active.Linking;
+
+        if (!linking)
+        {
+            lock (gate)
+            {
+                if (ReferenceEquals(snapshot, program))
+                {
+                    part?.Give();
+                    part = null;
+                }
+            }
+        }
+
         if (active.Render(gl, fb, control, size, at, played) is { } renderError)
         {
             Fail(renderError);
@@ -358,6 +401,9 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
         finished = true;
         timer.Stop();
+
+        // The processor draws it from here, and waits on nothing of this surface's.
+        GivePart();
 
         Dispatcher.UIThread.Post(() => Failed?.Invoke(
             running ? message : $"{message} Falling back to the processor."));

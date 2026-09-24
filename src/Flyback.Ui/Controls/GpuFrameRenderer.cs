@@ -46,8 +46,39 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate void GlBindFragDataLocation(int program, int color, string name);
 
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void GlGetIntegerv(int name, out int value);
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate IntPtr GlGetStringi(int name, int index);
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate void GlMaxShaderCompilerThreads(uint count);
+
     private GlDrawBuffers? drawBuffers;
     private GlBindFragDataLocation? bindFragDataLocation;
+
+    // KHR_parallel_shader_compile, and what it takes to ask for it.
+    private const int GlCompletionStatus = 0x91B1;
+    private const int GlNumExtensions = 0x821D;
+    private const int GlExtensions = 0x1F03;
+    private const int GlCompileStatus = 0x8B81;
+    private const int GlLinkStatus = 0x8B82;
+
+    /// <summary>
+    /// Whether the driver builds a shader on threads of its own. A large patch's
+    /// shader takes seconds to link, and a link waited for here stops the render
+    /// thread, which draws the whole window.
+    /// </summary>
+    private bool parallel;
+
+    /// <summary>A patch's shader the driver is still building, while the last frame is shown.</summary>
+    private Building? building;
+
+    private sealed record Building(int Program, int Vertex, int Fragment, ShaderSource Shaders);
+
+    /// <summary>Whether a shader is still being built, so a frame drawn now repeats the last one.</summary>
+    public bool Linking => building is not null;
 
     /// <summary>The four corners of the unit square, in strip order.</summary>
     private static readonly IntPtr Quad = new(4);
@@ -174,6 +205,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         drawBuffers = Bind<GlDrawBuffers>(gl, "glDrawBuffers");
         bindFragDataLocation = Bind<GlBindFragDataLocation>(gl, "glBindFragDataLocation");
 
+        parallel = Supports(gl, "GL_KHR_parallel_shader_compile") || Supports(gl, "GL_ARB_parallel_shader_compile");
+
+        // As many threads as it likes; left alone, a driver may choose none.
+        if (parallel)
+            (Bind<GlMaxShaderCompilerThreads>(gl, "glMaxShaderCompilerThreadsKHR")
+                ?? Bind<GlMaxShaderCompilerThreads>(gl, "glMaxShaderCompilerThreadsARB"))?.Invoke(uint.MaxValue);
+
         // Not fatal when it fails: a machine that cannot read frames back can
         // still show them, and only a recording is refused.
         readback.Initialise(gl);
@@ -186,6 +224,21 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         var address = gl.GetProcAddress(name);
 
         return address == IntPtr.Zero ? null : Marshal.GetDelegateForFunctionPointer<T>(address);
+    }
+
+    private static bool Supports(GlInterface gl, string extension)
+    {
+        if (Bind<GlGetIntegerv>(gl, "glGetIntegerv") is not { } getIntegerv
+            || Bind<GlGetStringi>(gl, "glGetStringi") is not { } getStringi)
+            return false;
+
+        getIntegerv(GlNumExtensions, out var count);
+
+        for (var i = 0; i < count; i++)
+            if (Marshal.PtrToStringAnsi(getStringi(GlExtensions, i)) == extension)
+                return true;
+
+        return false;
     }
 
     /// <summary>
@@ -228,15 +281,23 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         // program reading a different texture.
         Upload(gl, patch.Pictures);
 
-        if (shaders.PatchFragment == liveSource) return null;
-        if (shaders.PatchFragment == refusedSource) return null;
+        if (shaders.PatchFragment == liveSource || shaders.PatchFragment == refusedSource)
+        {
+            Abandon(gl);
+            return null;
+        }
 
-        var program = Link(
-            gl,
-            shaders.PatchVertex,
-            shaders.PatchFragment,
-            out var error,
-            linking => BindOutputs(linking, shaders.PlaneTargets));
+        if (building?.Shaders.PatchFragment != shaders.PatchFragment)
+        {
+            Abandon(gl);
+            building = Start(gl, shaders);
+        }
+
+        // Asked without waiting; the frame repeats the last one until it is done.
+        if (parallel && ProgramParameter(gl, building.Program, GlCompletionStatus) == 0) return null;
+
+        var program = Finish(gl, building, out var error);
+        building = null;
 
         if (program is not { } compiled)
         {
@@ -388,7 +449,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         double time,
         LiveValues? live = null)
     {
-        if (patchProgram == 0) return null;
+        if (patchProgram == 0 && building is null) return null;
         if (resolution.Width <= 0 || resolution.Height <= 0) return null;
 
         if (Resize(gl, resolution) is { } failure) return failure;
@@ -419,10 +480,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             clearPending = false;
         }
 
-        DrawPatch(gl, resolution, time, live);
+        // The last frame again, or black before the first, while the shader is built.
+        if (building is null)
+        {
+            DrawPatch(gl, resolution, time, live);
 
-        // The frame just drawn becomes the one the next frame reads back.
-        read = 1 - read;
+            // The frame just drawn becomes the one the next frame reads back.
+            read = 1 - read;
+        }
 
         // Before the blit, while the frame is still the whole picture rather than
         // a letterboxed corner of a control. A recording wants what the patch
@@ -765,6 +830,92 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         return null;
     }
 
+    /// <summary>Hands the driver a patch's shader to compile and link, without asking how it went.</summary>
+    private Building Start(GlInterface gl, ShaderSource shaders)
+    {
+        var vertex = gl.CreateShader(GL_VERTEX_SHADER);
+        gl.ShaderSourceString(vertex, shaders.PatchVertex);
+        gl.CompileShader(vertex);
+
+        var fragment = gl.CreateShader(GL_FRAGMENT_SHADER);
+        gl.ShaderSourceString(fragment, shaders.PatchFragment);
+        gl.CompileShader(fragment);
+
+        var program = gl.CreateProgram();
+        gl.AttachShader(program, vertex);
+        gl.AttachShader(program, fragment);
+
+        BindOutputs(program, shaders.PlaneTargets);
+        gl.LinkProgram(program);
+
+        return new Building(program, vertex, fragment, shaders);
+    }
+
+    /// <summary>The linked program, or null with what the driver said. Waits for the driver unless it has finished.</summary>
+    private static int? Finish(GlInterface gl, Building built, out string? error)
+    {
+        error = null;
+
+        if (ShaderParameter(gl, built.Vertex, GlCompileStatus) == 0) error = ShaderLog(gl, built.Vertex);
+        else if (ShaderParameter(gl, built.Fragment, GlCompileStatus) == 0) error = ShaderLog(gl, built.Fragment);
+        else if (ProgramParameter(gl, built.Program, GlLinkStatus) == 0) error = ProgramLog(gl, built.Program);
+
+        gl.DeleteShader(built.Vertex);
+        gl.DeleteShader(built.Fragment);
+
+        if (error is null) return built.Program;
+
+        gl.DeleteProgram(built.Program);
+        return null;
+    }
+
+    /// <summary>Drops a shader still being built, whose patch has moved on.</summary>
+    private void Abandon(GlInterface gl)
+    {
+        if (building is not { } dropped) return;
+
+        gl.DeleteShader(dropped.Vertex);
+        gl.DeleteShader(dropped.Fragment);
+        gl.DeleteProgram(dropped.Program);
+        building = null;
+    }
+
+    private static unsafe int ProgramParameter(GlInterface gl, int program, int name)
+    {
+        int value;
+        gl.GetProgramiv(program, name, &value);
+        return value;
+    }
+
+    private static unsafe int ShaderParameter(GlInterface gl, int shader, int name)
+    {
+        int value;
+        gl.GetShaderiv(shader, name, &value);
+        return value;
+    }
+
+    private static unsafe string ShaderLog(GlInterface gl, int shader)
+    {
+        var log = new byte[8192];
+
+        fixed (byte* at = log)
+        {
+            gl.GetShaderInfoLog(shader, log.Length, out var length, at);
+            return System.Text.Encoding.UTF8.GetString(log, 0, length);
+        }
+    }
+
+    private static unsafe string ProgramLog(GlInterface gl, int program)
+    {
+        var log = new byte[8192];
+
+        fixed (byte* at = log)
+        {
+            gl.GetProgramInfoLog(program, log.Length, out var length, at);
+            return System.Text.Encoding.UTF8.GetString(log, 0, length);
+        }
+    }
+
     private void Release(GlInterface gl)
     {
         ReleasePlanes(gl);
@@ -814,6 +965,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             // reading a name that had been handed back the moment somebody
             // dragged the window.
             foreach (var texture in pictures) gl.DeleteTexture(texture);
+
+            Abandon(gl);
 
             if (patchProgram != 0) gl.DeleteProgram(patchProgram);
             if (blitProgram != 0) gl.DeleteProgram(blitProgram);

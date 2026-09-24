@@ -187,3 +187,12 @@ built the deferred fix, and more of it than was named here: the clock, the arith
 on it and the arithmetic feeding it are carried as pairs, and fract, mod, the
 trigonometry and noise reduce them exactly. The table above describes the shader
 before that, and the stairstep after an hour is gone.
+
+**2026-09-24 — the shader is built off the render thread.** A link waited for in
+`SetPatch` stopped Avalonia's render thread, which draws the whole window: Whole
+band's 52,000-character shader took 1.7-2.1 s through ANGLE on an RTX 4070 SUPER, and
+the driver keeps no cache between runs. Where the context offers
+`KHR_parallel_shader_compile` (ANGLE does), the shader is handed to the driver's own
+threads and asked after once a frame without waiting; the preview repeats its last
+frame meanwhile, and no frame of that link blocked longer than 18 ms. Without the
+extension it links as before.

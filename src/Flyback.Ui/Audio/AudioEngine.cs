@@ -188,17 +188,18 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// to allocate — and both go in with the program they belong to, in one write.
     /// </summary>
 
-    /// <param name="held">
-    /// Silent, with the clock stopped, until the program runs compiled: a patch just
-    /// opened is not heard on the interpreter first.
+    /// <param name="start">
+    /// For a patch just opened: silent, with the clock stopped, until the cue goes,
+    /// which is once the sound runs compiled and the picture is ready too.
     /// </param>
-    public void Update(Patch patch, ISampleLibrary? samples = null, bool held = false)
+    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null)
     {
         var program = patch.CompileForAudio(samples: samples, played: true).Program;
+        if (start is not null) program.WaitFor(start);
 
-        // Interpreted from the first buffer unless held; the compiler attaches IL to
+        // Interpreted from the first buffer unless waiting; the compiler attaches IL to
         // this same program when it has some, and the callback picks it up on the next buffer.
-        Compiler?.Submit(program, IlLane.Sound, held);
+        Compiler?.Submit(program, IlLane.Sound);
 
         renderer.Prepare(program);
 

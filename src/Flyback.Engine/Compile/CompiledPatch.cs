@@ -148,18 +148,32 @@ public sealed class CompiledPatch(
         Volatile.Write(ref il, program);
     }
 
-    private volatile bool held;
+    private Cue? cue;
+    private int holding;
+
+    /// <summary>What this program starts on, or null for one that plays at once.</summary>
+    public Cue? Cue => Volatile.Read(ref cue);
 
     /// <summary>
-    /// Whether a renderer should leave this program unplayed: it was opened
-    /// rather than edited, and its IL is still being built. See
-    /// <see cref="IlCompiler.Submit"/>.
+    /// Whether a renderer should leave this program unplayed, silent and with its
+    /// clock standing: it belongs to a patch just opened whose cue has not gone.
     /// </summary>
-    public bool Waiting => held && Il is null;
+    public bool Waiting => Cue?.Waiting == true;
 
-    internal void Hold() => held = true;
+    /// <summary>Makes this program start on <paramref name="start"/>, with whatever else is waiting on it.</summary>
+    public void WaitFor(Cue start) => Volatile.Write(ref cue, start);
 
-    internal void Release() => held = false;
+    /// <summary>Takes a part of the cue for this program's own IL, once.</summary>
+    internal void Hold()
+    {
+        if (Cue is { } start && Interlocked.Exchange(ref holding, 1) == 0) start.Take();
+    }
+
+    /// <summary>Gives that part back, once.</summary>
+    internal void Release()
+    {
+        if (Cue is { } start && Interlocked.Exchange(ref holding, 0) == 1) start.Give();
+    }
 
     public int RegisterCount { get; } = Vouch(ops, registerCount);
 

@@ -161,6 +161,9 @@ internal sealed class Playback
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
 
+    /// <summary>The cue the patch last opened starts on. Edits made before it goes wait with it.</summary>
+    private Cue? opening;
+
     /// <summary>
     /// Selecting a Probe is what puts its chart on the screen and selecting
     /// anything else is what takes it off again. No other selection changes the
@@ -176,11 +179,21 @@ internal sealed class Playback
     /// sound is off, so switching it on is instant and the status line can show
     /// what the ear would cost.
     /// </summary>
-    /// <param name="held">A patch just opened, which plays once it is compiled rather than interpreted until then.</param>
-    public void Recompile(bool held = false)
+    /// <param name="opened">
+    /// A patch just opened, whose sound and picture start together once both are
+    /// built: the sound's IL, and the picture's shader or IL.
+    /// </param>
+    public void Recompile(bool opened = false)
     {
         var probe = Probed;
         showingProbe = probe?.Id;
+
+        // Held by this call until both programs have taken their parts.
+        if (opened) opening = new Cue();
+        else if (opening is { Waiting: true }) opening.Take();
+        else opening = null;
+
+        var start = opening;
 
         var samples = sounds();
         var images = pictures();
@@ -189,10 +202,14 @@ internal sealed class Playback
             ? editor.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
             : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
 
-        preview.Program = result.Program;
-        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture, held);
+        // Not a picture that is never drawn: a hidden preview would hold the cue until it gave up.
+        if (start is not null && HasPicture) result.Program.WaitFor(start);
 
-        audio.Update(editor.Patch, samples, held);
+        preview.Program = result.Program;
+        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
+
+        audio.Update(editor.Patch, samples, start);
+        start?.Give();
 
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the
