@@ -63,15 +63,24 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the text has the line "let freq = x * 200 + 300"
 
-  # One mistake does not lose the rest of the patch.
-  Scenario: A mistake is pointed out on its own line, and the rest still plays
+  Scenario: A mistake is pointed out on its own line
     Given the text:
       """
       rings() |> out.color
       kaleidoscop() |> out.color
       """
     Then the complaint quotes line 2
-    And the screen is not black
+
+  # The text is refused whole, so what the mistake would have made is not complained about again.
+  Scenario: A line that fails is the one complaint, however often what it names is read
+    Given the text:
+      """
+      let tone = sinee(freq: 220)
+      tone |> out.left
+      tone * 0.5 |> out.right
+      """
+    Then the complaint quotes line 1
+    And that is the only complaint
 
   # A second binding would leave every reader of the name guessing which it means.
   Scenario: A name is bound once

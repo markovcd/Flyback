@@ -95,6 +95,12 @@ public static class IssueCode
     // --- the panel -------------------------------------------------------------
 
     public const string PanelInDef = "panel-in-def";
+    public const string PanelInGroup = "panel-in-group";
+
+    // --- groups ----------------------------------------------------------------
+
+    public const string RequiresInGroup = "requires-in-group";
+    public const string GroupInGroup = "group-in-group";
     public const string PanelNotASignal = "panel-not-a-signal";
     public const string UnknownSetting = "unknown-setting";
 

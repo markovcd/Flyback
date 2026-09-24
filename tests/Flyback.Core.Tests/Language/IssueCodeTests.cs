@@ -34,6 +34,9 @@ public class IssueCodeTests
     [InlineData("\"never closed", IssueCode.UnclosedText)]
     [InlineData("let = 3", IssueCode.Syntax)]
     [InlineData("notes() [ H3 ] |> out.left", IssueCode.UnknownNote)]
+    [InlineData("group \"K\" {\n  panel level = 0.5\n}", IssueCode.PanelInGroup)]
+    [InlineData("group \"K\" {\n  requires flyback.picture\n}", IssueCode.RequiresInGroup)]
+    [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}", IssueCode.GroupInGroup)]
     public void A_mistake_is_known_by_its_code(string source, string code)
     {
         var load = Build(source);
@@ -54,5 +57,23 @@ public class IssueCodeTests
 
         foreach (var source in sources)
             Build(source).Issues.ShouldAllBe(issue => Codes.Contains(issue.Code));
+    }
+
+    /// <summary>
+    /// A statement refused is the one complaint: the text is refused whole, and
+    /// every line reading what it would have bound says nothing more.
+    /// </summary>
+    [Theory]
+    [InlineData("let base = sinee(freq: 3)\nbase |> out.left\nbase.freq = 2\noff base\nbase * 2 |> out.right")]
+    [InlineData("panel rate = 2\nsine(freq: rate(0..4), amp: rate) |> out.left")]
+    [InlineData("let (a, b) = sine()\na |> out.left\nb |> out.right")]
+    [InlineData("group \"K\" {\n  panel level = 0.5\n}\nsine(amp: level) |> out.left")]
+    [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}\ns |> out.left")]
+    public void A_refused_statement_is_the_one_complaint(string source)
+    {
+        var load = Build(source);
+
+        load.Ok.ShouldBeFalse();
+        load.Issues.ShouldHaveSingleItem(load.Report).Line.ShouldBeLessThanOrEqualTo(2);
     }
 }

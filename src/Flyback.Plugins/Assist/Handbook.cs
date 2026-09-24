@@ -109,7 +109,8 @@ internal static class Handbook
           computer keyboard out in that scale for a MIDI In. Leave it out for
           a piano.
         - **`group "Bass" { … }`** draws the modules its statements place as one
-          box, shut. Blocks with the same name are one group.
+          box, shut. Blocks with the same name are one group. A group holds
+          modules only: no group, `panel` or `requires` inside one.
         - **`requires flyback.picture`**, on its own line, names the plugins
           whose modules the patch uses, so a build without one says so once.
         - **`description "What the patch is for."`** goes first, with

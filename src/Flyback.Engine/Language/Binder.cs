@@ -200,6 +200,13 @@ public sealed class Binder
     /// <summary>What a def with several results hands back.</summary>
     private sealed record Several(IReadOnlyList<Value> Items) : Value;
 
+    /// <summary>
+    /// A name whose statement was refused. Bound all the same, so every line that
+    /// reads it fails without a word: the text is refused whole already, and a
+    /// complaint per reader would bury the one mistake there is.
+    /// </summary>
+    private sealed record Failed : Value;
+
     /// <summary>A file a module names rather than carries (ADR-0052).</summary>
     private sealed record Named(string Path) : Value;
 
@@ -333,11 +340,16 @@ public sealed class Binder
 
                     if (value is Placed placed) named.TryAdd(placed.Id, let.Name);
                 }
+                else
+                {
+                    scope.Set(let.Name, new Failed(), let.Line);
+                }
 
                 break;
 
             case LetTupleStatement tuple:
                 Destructure(tuple, scope);
+                Unmade(tuple.Names, scope, tuple.Line);
                 break;
 
             case PipelineStatement pipeline:
@@ -378,8 +390,16 @@ public sealed class Binder
 
             case PanelStatement panel:
                 Declare(panel, scope);
+                Unmade([panel.Name], scope, panel.Line);
                 break;
         }
+    }
+
+    /// <summary>Binds each name a refused statement leaves unbound to <see cref="Failed"/>.</summary>
+    private static void Unmade(IEnumerable<string> names, Scope scope, int line)
+    {
+        foreach (var name in names)
+            if (scope.Entry(name) is null) scope.Set(name, new Failed(), line);
     }
 
     // --- naming what gets placed ---------------------------------------------
@@ -565,6 +585,8 @@ public sealed class Binder
             return;
         }
 
+        if (value is Failed) return;
+
         if (value is not Placed placed || patch.Find(placed.Id) is not { } node)
         {
             Complain(IssueCode.NotAModule, target.Line, target.Column,
@@ -735,7 +757,34 @@ public sealed class Binder
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
         var inner = new Scope(scope);
 
-        foreach (var child in statement.Body) Run(child, inner);
+        foreach (var child in statement.Body)
+        {
+            switch (child)
+            {
+                // A box is drawn round modules, and each of these is about the
+                // whole patch or the panel, which no box holds.
+                case GroupStatement nested:
+                    Complain(IssueCode.GroupInGroup, nested.Line, nested.Column,
+                        "a group cannot hold another group. Close this one first.");
+                    Unmade(Declared(nested.Body), scope, nested.Line);
+                    break;
+
+                case PanelStatement panel:
+                    Complain(IssueCode.PanelInGroup, panel.Line, panel.Column,
+                        "a panel knob belongs to the whole patch, so it is declared outside a group.");
+                    Unmade([panel.Name], scope, panel.Line);
+                    break;
+
+                case RequiresStatement requires:
+                    Complain(IssueCode.RequiresInGroup, requires.Line, requires.Column,
+                        "what a patch requires is said once, outside every group, before anything else.");
+                    break;
+
+                default:
+                    Run(child, inner);
+                    break;
+            }
+        }
 
         // Everything placed while the block was open, which is what "declared
         // inside it" means once a def has been expanded in there too.
@@ -757,15 +806,19 @@ public sealed class Binder
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into
         // the next, as the largest preset does throughout.
-        foreach (var child in statement.Body)
-            if (child is LetStatement let && inner.Entry(let.Name) is { } value)
-                scope.Set(let.Name, value.Value, value.Line);
-            else if (child is LetTupleStatement tuple)
-                foreach (var name in tuple.Names)
-                    if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
-            else if (child is PanelStatement panel && inner.Entry(panel.Name) is { } knob)
-                scope.Set(panel.Name, knob.Value, knob.Line);
+        foreach (var name in Declared(statement.Body.Where(child => child is not GroupStatement)))
+            if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
     }
+
+    /// <summary>The names the statements bind with <c>let</c>, in groups within them too.</summary>
+    private static IEnumerable<string> Declared(IEnumerable<Statement> statements) =>
+        statements.SelectMany(statement => statement switch
+        {
+            LetStatement let => [let.Name],
+            LetTupleStatement tuple => tuple.Names,
+            GroupStatement group => Declared(group.Body),
+            _ => [],
+        });
 
     // --- expressions ---------------------------------------------------------
 
@@ -1095,6 +1148,8 @@ public sealed class Binder
             return null;
         }
 
+        if (value is Failed) return null;
+
         // Reading a name is naming the module, so the word is somewhere to click
         // even though nothing is placed here.
         Mention(expr, value);
@@ -1261,6 +1316,7 @@ public sealed class Binder
 
     private Value? Call(CallExpr expr, Scope scope, Value? piped)
     {
+        if (scope.Find(expr.Target) is Failed) return null;
         if (scope.Find(expr.Target) is Dial dial) return Ranged(dial, expr, scope, piped);
         if (defs.TryGetValue(expr.Target, out var macro)) return Expand(macro, expr, scope, piped);
 
@@ -2071,6 +2127,10 @@ public sealed class Binder
         {
             node = found;
             def = placed.Def;
+        }
+        else if (scope.Find(target.Name) is Failed)
+        {
+            return null;
         }
         else if (scope.Find(target.Name) is not null)
         {

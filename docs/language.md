@@ -65,6 +65,9 @@ a line ending in `|>` or `,`, or a line beginning with `|>` or a string,
 continues the one before it. Whatever a statement leaves unread on its line is a complaint, never
 something skipped.
 
+A text with any mistake in it is refused whole, and a statement refused is one
+complaint however often what it would have bound is read after it.
+
 Every complaint has a line, a column and a stable code, one of `IssueCode` —
 `pipe-lands-nowhere`, `bound-twice`, `unknown-module` and the rest.
 `flyback-cli check --json` writes all three. A misspelling is said and not
@@ -569,9 +572,9 @@ already has, and never a module's name, since `cutoff(200..4000)` is written
 like a call. It is not a signal, so it is never piped, and a socket that follows
 one takes no number as well. A sum may read one, `sine(freq: 3) * level` or
 `t * rate(0..2)`: each mention is a socket of the sum's Expression following the
-knob, over the range written or the socket's own. A `def` declares none, since
-every call would put another on the panel; a knob is declared outside and
-passed in.
+knob, over the range written or the socket's own. Neither a `def` nor a group
+declares one, since a knob belongs to the whole patch; it is declared outside
+and passed in or read.
 
 ---
 
@@ -627,7 +630,8 @@ group "Bass" {
 
 Members are the nodes declared inside the block. A group built from text is
 shut, and the sockets on its edge are the ones its wires cross. A group with no
-name is `group { … }`.
+name is `group { … }`. A group holds modules and nothing else: another group, a
+`panel` knob or a `requires` line inside one is refused.
 
 **A group may be opened more than once.** Blocks with the same name are one
 group, which is how a printing says a group whose modules cannot all be written
