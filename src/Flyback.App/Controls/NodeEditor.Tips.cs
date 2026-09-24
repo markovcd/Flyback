@@ -6,7 +6,7 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// What hovering says where the canvas has no room to: a tag's note, and the whole
+/// What hovering says where the canvas has no room to: a socket's help, a tag's note, and the whole
 /// of a title or a box socket's label that is drawn cut short.
 /// </summary>
 public sealed partial class NodeEditor
@@ -48,6 +48,15 @@ public sealed partial class NodeEditor
         if (HitTag(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
 
         if (RemapMarkAt(graph) is var (wire, _)) return (wire, "Fit the ranges: put an Auto remap in this wire");
+
+        if (Scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput)
+            && patch.Find(portNode) is { } owner
+            && NodeCatalog.Get(owner.TypeId) is { } ownerDef
+            && (isOutput ? ownerDef.Outputs : ownerDef.Inputs) is var ports
+            && portIndex >= 0 && portIndex < ports.Count)
+        {
+            return ((portNode, portIndex, isOutput), SocketHelp.For(ports[portIndex], input: !isOutput));
+        }
 
         // A box's socket row, by the half of the box its label is drawn in.
         foreach (var (_, sockets, bounds) in Scene.Boxes())
