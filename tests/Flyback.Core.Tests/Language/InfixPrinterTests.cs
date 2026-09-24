@@ -175,4 +175,20 @@ public class InfixPrinterTests
 
         typed.Map.At("x * 2 - 1".IndexOf('-')).ShouldBe(placed.Id);
     }
+
+    /// <summary>
+    /// An Expression that only passes one socket on has no operator to be
+    /// written at, so it is written as the call rather than vanishing into its
+    /// source.
+    /// </summary>
+    [Fact]
+    public void A_formula_that_passes_one_socket_on_is_still_a_module()
+    {
+        var built = PatchLanguage.Build("x |> expression(a: _, formula: \"a\") |> out.left", NodeCatalog.BuiltIn).Patch;
+
+        var printed = PatchPrinter.Print(built, NodeCatalog.BuiltIn);
+        var again = PatchLanguage.Build(printed, NodeCatalog.BuiltIn).Patch;
+
+        again.Nodes.Count(n => n.TypeId == NodeCatalog.ExpressionTypeId).ShouldBe(1, printed);
+    }
 }

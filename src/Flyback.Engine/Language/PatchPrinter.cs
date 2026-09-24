@@ -1142,6 +1142,11 @@ public static class PatchPrinter
             var formula = FormulaExtra.Of(node);
             var reads = new List<(int Socket, bool After)>();
 
+            // A formula that is one socket and nothing else has no operator to
+            // stand at, so written as a sum it would be its source alone and the
+            // module would be gone. The call keeps it.
+            if (formula.Trim() is "a" or "b" or "c" or "d") return null;
+
             if (Formula.Infix(formula, extra.Functions, _ => "0", _ => "a", reads) is null) return null;
 
             var read = reads.Select(r => r.Socket).ToHashSet();
