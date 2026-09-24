@@ -89,7 +89,14 @@ which from the line.
 
 ## 4. One canonical form
 
-Three normalizations. Each is accepted loosely and written back strictly, so a
+**Declined, but for flat statements.** A pipeline inside an argument is an
+error, as below. The other two are not taken: the printer follows a patch's own
+chain, writes its arithmetic as sums and names a binding after what it drives,
+and one binding per module in full type ids would undo all three for a dialect
+nobody reads more easily. Named arguments are already what it writes; short
+names are what everybody writes.
+
+Three normalizations were proposed. Each is accepted loosely and written back strictly, so a
 person keeps the sugar and an agent always reads the same dialect.
 
 **Arguments are named.** `math.remap(in_low: -2, in_high: 2, out_low: 0,
@@ -121,6 +128,9 @@ form in §1 of the reference it is the same program — nine modules, nine wires
 twenty-nine picture ops, thirty-six registers — and every line of it builds.
 
 ## 5. `print` emits the canonical form
+
+**Declined**, with §4. What `print` writes still reads back as the same program,
+and every line of it is legal input.
 
 Not byte-identity — 0065 chose the lossy asymmetry deliberately, because
 guaranteeing both directions would force canvas coordinates into the syntax.
@@ -154,17 +164,19 @@ code (§9).
 ## 7. A patch says what it needs
 
 ```
-flyback 1
 requires flyback.picture
 ```
 
-**Done, without the version line**: `requires flyback.picture` is read before
+**Done, and the version line declined**: `requires flyback.picture` is read before
 anything else and always printed. `Patch.Requires` is recomputed on write;
 writing it down makes a `.fbks` self-describing. An agent reading a file learns which namespace it may
 draw on, and `check` can say "this build has no `flyback.picture`" once instead
 of "nothing here is called `circle`" five times.
 
-Optional to write, always printed.
+Optional to write, always printed. A `flyback 1` line was declined: the
+language keeps no old spelling readable, so a number that never changes would
+only be one more line on every printing, and `requires` already says what a
+file needs.
 
 ## 8. The panel is spelled
 
