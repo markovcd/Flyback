@@ -1225,11 +1225,21 @@ public static class PatchPrinter
 
             if (!Pipeline(part.Text) || patch.Find(wire.SourceNode) is not { } node) return part;
 
-            plan.Bound.Add(node.Id);
-            plan.Names[node.Id] = Unique(Wanted(node, modules), plan.Taken);
-            chains.Clear();
+            Name(node);
 
             return From(wire);
+        }
+
+        /// <summary>
+        /// Gives a module a binding of its own while the text is being written,
+        /// for a place that cannot take it written out in full.
+        /// </summary>
+        private void Name(NodeInstance node)
+        {
+            if (!plan.Bound.Add(node.Id)) return;
+
+            plan.Names[node.Id] = Unique(Wanted(node, modules), plan.Taken);
+            chains.Clear();
         }
 
         /// <summary>Whether written text has a pipe outside every bracket and quote.</summary>
@@ -1328,24 +1338,36 @@ public static class PatchPrinter
                 if (incoming is null) continue;
                 if (Forward(node.Id, port) is null) return null;
 
-                if (patch.Find(incoming.SourceNode) is { TypeId: NodeCatalog.ExpressionTypeId }
-                    && !plan.Bound.Contains(incoming.SourceNode))
-                {
-                    return null;
-                }
+                // Another sum written in full would read back fused with this one,
+                // so it is said by name.
+                if (patch.Find(incoming.SourceNode) is { TypeId: NodeCatalog.ExpressionTypeId } inner)
+                    Name(inner);
             }
 
             var parts = new Dictionary<int, Part>();
 
             foreach (var port in read)
             {
-                var part = From(Forward(node.Id, port)!);
+                var wire = Forward(node.Id, port)!;
+                var part = From(wire);
 
-                if (part.Calls.Count > 0 && reads.Count(r => r.Socket == port) > 1) return null;
+                // A module written in full where the sum reads it twice would read
+                // back as two modules, and a pipeline would need brackets the layout
+                // cannot fold: either is said by name, so the sum stays a sum.
+                if ((part.Calls.Count > 0 && reads.Count(r => r.Socket == port) > 1) || !Atom(part.Text))
+                {
+                    if (patch.Find(wire.SourceNode) is not { } source
+                        || wire.SourceNode == plan.Coord
+                        || wire.SourceNode == plan.Clock)
+                    {
+                        return null;
+                    }
 
-                // A pipeline bracketed into a sum is the one line the layout cannot
-                // fold, and it reads better piped into the call.
-                if (!Atom(part.Text)) return null;
+                    Name(source);
+                    part = From(wire);
+
+                    if (!Atom(part.Text)) return null;
+                }
 
                 parts[port] = part;
             }

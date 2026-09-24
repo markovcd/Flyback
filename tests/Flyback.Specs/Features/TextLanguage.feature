@@ -18,6 +18,16 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the picture is as it was
 
+  Scenario: Arithmetic on a chain is written out as arithmetic
+    Given the text:
+      """
+      let bent = sine(freq: 3) |> clamp()
+      bent * x |> out.color
+      """
+    When the patch is written out as text and read back
+    Then the text has the line "bent * x |> out.color"
+    And the picture is as it was
+
   # One mistake does not lose the rest of the patch.
   Scenario: A mistake is pointed out on its own line, and the rest still plays
     Given the text:

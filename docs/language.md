@@ -304,11 +304,12 @@ the same program the Maths modules it replaces would have been, op for op.
 
 A printing writes an Expression back as its sum
 ([0107](adr/0107-an-expression-is-printed-as-the-sum-it-is.md)) wherever that
-reads back as the same module. Otherwise it writes the call,
+reads back as the same module. What is wired into it and cannot stand in a sum
+written out — a pipeline, another sum, a module the sum reads twice — is given
+a `let` and named there, so the sum stays a sum. Otherwise it writes the call,
 `x |> expression(a: _, formula: "floor(a * 8) / 8")`. That happens when the
-formula uses a function, `pi` or `tau`, when a socket it reads rests on its
-knob, or when what is wired into a socket is a pipeline, which would need
-brackets inside the sum.
+formula uses a function, `pi` or `tau`, or when a socket it reads rests on its
+knob.
 
 ### Duration literals
 

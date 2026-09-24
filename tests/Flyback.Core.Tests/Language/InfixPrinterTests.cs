@@ -109,7 +109,7 @@ public class InfixPrinterTests
 
     /// <summary>
     /// A source written out in full would read back as two modules if it stood
-    /// twice, so a sum reading one twice is the call.
+    /// twice, so a sum reading one twice names it.
     /// </summary>
     [Fact]
     public void A_source_written_in_full_is_not_written_twice()
@@ -122,13 +122,13 @@ public class InfixPrinterTests
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
-        printed.ShouldContain("expression(a: _, formula: \"a * a\")");
+        printed.ShouldBe("let sine = sine(freq: 3)\n\nsine * sine |> out.color\n");
         SameInstrument(b.Patch, Build(printed), printed);
     }
 
     /// <summary>
     /// One sum written into another would read back as one Expression, so the
-    /// inner is piped into the outer's call instead.
+    /// inner is named and the outer written over the name.
     /// </summary>
     [Fact]
     public void An_expression_into_an_expression_stays_two()
@@ -137,7 +137,19 @@ public class InfixPrinterTests
         var printed = PatchPrinter.Print(original, NodeCatalog.BuiltIn);
 
         Expressions(Build(printed)).ShouldBe(2);
-        printed.ShouldContain("x + y + t + radius |> expression(");
+        printed.ShouldBe("let expression = x + y + t + radius\n\nexpression * angle |> out.color\n");
+    }
+
+    /// <summary>A pipeline cannot stand in a sum, so it is named and the sum is kept.</summary>
+    [Fact]
+    public void A_pipeline_into_a_sum_is_named()
+    {
+        var original = Build("let bent = sine(freq: 3) |> clamp()\nbent * x |> out.color");
+        var printed = PatchPrinter.Print(original, NodeCatalog.BuiltIn);
+
+        printed.ShouldNotContain("expression(");
+        printed.ShouldContain(" * x |> out.color");
+        SameInstrument(original, Build(printed), printed);
     }
 
     /// <summary>A socket resting on its knob would read back as a number in the formula, so it is the call.</summary>

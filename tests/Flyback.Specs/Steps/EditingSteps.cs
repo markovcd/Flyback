@@ -103,6 +103,10 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [Then("the patch is tagged {string}")]
     public void ThenTagged(string tags) => context.Patch.Tags.ShouldBe(tags.Split(", "));
 
+    [Then("the text has the line {string}")]
+    public void ThenTheTextHasTheLine(string line) =>
+        Text.Source.Split('\n').Select(l => l.TrimEnd('\r')).ShouldContain(line, Text.Source);
+
     [Then("it reads without complaint")]
     public void ThenReadsCleanly() => Text.Ok.ShouldBeTrue(Text.Report);
 
