@@ -75,13 +75,21 @@ public sealed class SourceMap
     /// </summary>
     private readonly HashSet<Guid> shared = [];
 
+    /// <summary>
+    /// Each group's block: its header up to the brace that opens it, and the
+    /// brace that closes it.
+    /// </summary>
+    private readonly List<(int From, int Opened, int Closed, int To, Guid Group)> blocks = [];
+
+    /// <param name="boxes">Where each <c>group</c> block begins, and the group it is.</param>
     internal SourceMap(
         string source,
         IReadOnlyList<(Site Where, Guid Node)> mentions,
         IReadOnlyDictionary<Guid, Site> calls,
         IReadOnlyDictionary<(Guid Node, string Name), Site?> written,
         IReadOnlyDictionary<Guid, string> named,
-        IReadOnlySet<Guid> bound)
+        IReadOnlySet<Guid> bound,
+        IReadOnlyList<(Site Where, Guid Group)>? boxes = null)
     {
         this.source = source;
         this.calls = new Dictionary<Guid, Site>(calls);
@@ -120,6 +128,57 @@ public sealed class SourceMap
         }
 
         Bindings(bound);
+        Blocks(boxes ?? []);
+    }
+
+    /// <summary>
+    /// The group the text at <paramref name="offset"/> is about: on a block's
+    /// header or its closing brace, and anywhere inside it that is about no
+    /// module. Null elsewhere, and on a module inside a block, which is about
+    /// that module.
+    /// </summary>
+    public Guid? GroupAt(int offset)
+    {
+        foreach (var (from, opened, closed, to, group) in blocks.OrderBy(block => block.To - block.From))
+        {
+            if (offset < from || offset > to) continue;
+
+            if (offset <= opened || offset >= closed) return group;
+
+            return At(offset) is null ? group : null;
+        }
+
+        return null;
+    }
+
+    private void Blocks(IReadOnlyList<(Site Where, Guid Group)> boxes)
+    {
+        foreach (var (where, group) in boxes)
+        {
+            var from = Offset(where);
+
+            if (!beginning.TryGetValue(from, out var i)) continue;
+
+            var open = i;
+
+            while (open < tokens.Count && tokens[open].Kind != TokenKind.OpenBrace) open++;
+
+            if (open >= tokens.Count) continue;
+
+            var depth = 0;
+            var close = open;
+
+            for (; close < tokens.Count; close++)
+            {
+                if (tokens[close].Kind == TokenKind.OpenBrace) depth++;
+                else if (tokens[close].Kind == TokenKind.CloseBrace && --depth == 0) break;
+            }
+
+            var opened = Offset(tokens[open]) + 1;
+            var closed = close < tokens.Count ? Offset(tokens[close]) : source.Length;
+
+            blocks.Add((from, opened, closed, Math.Min(closed + 1, source.Length), group));
+        }
     }
 
     /// <summary>

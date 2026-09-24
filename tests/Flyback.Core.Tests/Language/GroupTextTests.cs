@@ -114,6 +114,34 @@ public class GroupTextTests
         printing.Map.ShouldNotBeSameAs(SourceMap.Empty);
     }
 
+    [Fact]
+    public void The_text_maps_a_blocks_header_brace_and_gaps_to_its_group()
+    {
+        const string source = "group \"Voice\" {\n  let a = sine(freq: 2)\n\n  let b = a |> drive()\n}\nb |> out.left";
+
+        var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
+        var voice = load.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Id;
+
+        load.Map.GroupAt(source.IndexOf("Voice", StringComparison.Ordinal)).ShouldBe(voice);
+        load.Map.GroupAt(source.IndexOf("\n\n", StringComparison.Ordinal) + 1).ShouldBe(voice);
+        load.Map.GroupAt(source.IndexOf('}')).ShouldBe(voice);
+
+        // A module inside is about the module, and what is outside about no group.
+        load.Map.GroupAt(source.IndexOf("sine", StringComparison.Ordinal) + 1).ShouldBeNull();
+        load.Map.GroupAt(source.LastIndexOf("out", StringComparison.Ordinal)).ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_printing_maps_each_block_to_the_patchs_own_group()
+    {
+        var patch = Preset("Whole band");
+        var printing = PatchPrinter.Written(patch, NodeCatalog.BuiltIn);
+
+        var clock = patch.Groups!.Single(group => group.Name == "Clock").Id;
+
+        printing.Map.GroupAt(printing.Source.IndexOf("group \"Clock\"", StringComparison.Ordinal)).ShouldBe(clock);
+    }
+
     private static List<string> Boxes(Patch patch) =>
     [
         .. (patch.Groups ?? []).Select(group =>

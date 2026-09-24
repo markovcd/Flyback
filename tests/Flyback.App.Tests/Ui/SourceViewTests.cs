@@ -1337,6 +1337,74 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>
+    /// On a group's header, or anywhere in its block that is about no module, the
+    /// caret points the panel at the group, as a click on the box does; on a
+    /// module inside it, at the module.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_caret_on_a_group_points_the_panel_at_the_group()
+    {
+        var window = Open();
+
+        Evaluate(window,
+            """
+            group "Voice" {
+              let a = sine(freq: 2)
+
+              let b = a |> drive()
+            }
+            b |> out.left
+            """);
+
+        Click(window, "group \"Voice\"");
+
+        Editor(window).SelectedGroup.ShouldNotBeNull().Name.ShouldBe("Voice");
+        Panel(window).ShouldContain("drawn as one");
+
+        Click(window, "sine");
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+
+        // The blank line between the two bindings, inside the block.
+        var text = Text(window);
+        text.CaretOffset = text.Text.IndexOf("let b", StringComparison.Ordinal) - 3;
+        Settle(window);
+
+        Editor(window).SelectedGroup.ShouldNotBeNull().Name.ShouldBe("Voice");
+    }
+
+    /// <summary>
+    /// A group named in the text since it was applied is not on the canvas yet,
+    /// and the panel says so in a group's words rather than falling silent.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_group_the_canvas_has_not_got_yet_says_so()
+    {
+        var window = Open();
+
+        Evaluate(window,
+            """
+            group "Voice" {
+              let a = sine(freq: 2)
+              let b = a |> drive()
+            }
+            b |> filter(cutoff: 400) |> out.left
+            """);
+
+        var text = Text(window);
+        text.Document.Replace(text.Text.IndexOf("Voice", StringComparison.Ordinal), 5, "Chorus");
+        Settle(window);
+
+        Click(window, "group \"Chorus\"");
+
+        Editor(window).SelectedNode.ShouldBeNull();
+        Panel(window).ShouldContain("this group is not there to show yet");
+
+        // Renaming a group moves the modules in it too, but not one outside it.
+        Click(window, "filter");
+        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("audio.filter");
+    }
+
+    /// <summary>
     /// The caret is the text view's pointer, and the panel follows it exactly as
     /// it follows a click on the canvas.
     /// </summary>

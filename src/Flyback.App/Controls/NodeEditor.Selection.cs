@@ -40,6 +40,24 @@ public sealed partial class NodeEditor
     }
 
     /// <summary>
+    /// Makes the selection exactly one group's modules, which is what the panel
+    /// takes for the group itself — what a caret in a group's block in the text
+    /// view does.
+    /// </summary>
+    public void SelectGroup(NodeGroup group)
+    {
+        if (selection.Count == group.Members.Count && group.Members.All(selection.Contains)) return;
+
+        selection.Clear();
+        foreach (var id in group.Members) selection.Add(id);
+
+        focus = group.Members.Count == 0 ? null : group.Members[^1];
+
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
+        InvalidateVisual();
+    }
+
+    /// <summary>
     /// Makes the selection exactly this one module, or nothing at all — what an
     /// ordinary click does, and what every caller outside the pointer handling wants.
     /// </summary>

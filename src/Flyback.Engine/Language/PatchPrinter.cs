@@ -347,6 +347,21 @@ public static class PatchPrinter
                     values[(sink.Id, name)] = Wrote(turn.Value);
         }
 
+        // Each block by a module it places, which is how a printing knows which
+        // group it is: a group with no name, or one opened twice, has nothing
+        // else to be told by.
+        var blocks = new List<(Site Where, Guid Group)>();
+
+        foreach (var block in read.OfType<GroupStatement>())
+        {
+            var inside = new List<Expr>();
+
+            foreach (var statement in block.Body) Gather(statement, inside, [], [], []);
+
+            if (inside.FirstOrDefault(placed.ContainsKey) is { } call && patch.GroupOf(placed[call])?.Id is { } group)
+                blocks.Add((new Site(block.Line, block.Column), group));
+        }
+
         var named = plan.Names.ToDictionary(pair => pair.Key, pair => pair.Value);
 
         if (sink is not null) named[sink.Id] = "out";
@@ -357,7 +372,8 @@ public static class PatchPrinter
             calls,
             values,
             named,
-            principals.Where(placed.ContainsKey).Select(call => placed[call]).ToHashSet());
+            principals.Where(placed.ContainsKey).Select(call => placed[call]).ToHashSet(),
+            blocks);
     }
 
     /// <summary>Every call and sum, name and knob one statement writes.</summary>

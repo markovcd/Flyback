@@ -71,4 +71,11 @@ internal static class InspectorHelp
         + "typed in ahead of this one gives it a new name.\n\n"
         + "Apply the text to catch the patch up, or take the edit back. Modules the "
         + "edit did not move are still here to select.";
+
+    /// <summary>The same, for a caret on a group block the patch has not got yet.</summary>
+    internal const string AdriftingGroup =
+        "The text has moved on from the patch that is playing, so this group is not "
+        + "there to show yet — a group is known by its name, and one named or added "
+        + "since the text was applied is not on the canvas.\n\n"
+        + "Apply the text to catch the patch up, or take the edit back.";
 }

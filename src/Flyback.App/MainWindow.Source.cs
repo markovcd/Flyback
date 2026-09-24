@@ -19,7 +19,7 @@ namespace Flyback.App;
 /// <c>.fbk</c> and the graph is, so the text view shows a printing.
 /// <para>
 /// The two are not symmetrical: building text into a patch is exact, printing a
-/// patch back out drops the groups and lays the canvas out afresh (ADR-0065). So
+/// patch back out lays the canvas out afresh and shuts every box (ADR-0065). So
 /// a printing is offered and labeled, never adopted behind somebody's back.
 /// </para>
 /// </remarks>
@@ -294,6 +294,9 @@ public sealed partial class MainWindow
     /// </summary>
     private bool adrift;
 
+    /// <summary>Whether what the caret stands on and the patch has moved on from is a group rather than a module.</summary>
+    private bool adriftBox;
+
     /// <summary>
     /// Points the inspector at the module the caret is standing in.
     /// </summary>
@@ -307,14 +310,35 @@ public sealed partial class MainWindow
     {
         if (!showingCode || writingBack) return;
 
+        // A group's header, its closing brace, or anywhere in its block that is
+        // about no module: the group, which the panel shows as the canvas does
+        // for a box. A group the canvas has not got yet is one the text has
+        // moved on to, and says so the way a module does.
+        if (Map.GroupAt(at) is { } boxed)
+        {
+            var group = editor.Patch.Groups?.FirstOrDefault(g => g.Id == boxed);
+            var shifted = (group is null) != adrift || (group is null && !adriftBox);
+
+            adrift = group is null;
+            adriftBox = group is null;
+
+            if (group is null) editor.Select(null);
+            else editor.SelectGroup(group);
+
+            if (shifted && group is null) BuildInspector();
+
+            return;
+        }
+
         var named = Map.At(at);
         var lost = named is { } id && Adrift(id);
 
         // Before the selection, because changing it is what rebuilds the panel
         // and the panel reads this on the way past.
-        var moved = lost != adrift;
+        var moved = lost != adrift || (lost && adriftBox);
 
         adrift = lost;
+        adriftBox = false;
 
         editor.Select(lost ? null : named);
 

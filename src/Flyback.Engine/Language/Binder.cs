@@ -51,6 +51,12 @@ public sealed class Binder
     /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
     private readonly List<(string? Name, List<Guid> Members)> boxes = [];
 
+    /// <summary>Where each group block begins, and which of <see cref="boxes"/> it is.</summary>
+    private readonly List<(Site Where, int Box)> opened = [];
+
+    /// <summary>Where each group block begins, and the group it built.</summary>
+    private readonly List<(Site Where, Guid Group)> blocks = [];
+
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
 
@@ -97,7 +103,7 @@ public sealed class Binder
     /// name a module and a knob that has to be written back. Only the binder can
     /// say this: a patch carries nothing about the file it came from.
     /// </summary>
-    public SourceMap Map(string source) => new(source, mentions, calls, written, named, bound);
+    public SourceMap Map(string source) => new(source, mentions, calls, written, named, bound, blocks);
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -133,6 +139,9 @@ public sealed class Binder
 
             group.Rename(name);
             patch.Groups![patch.Groups.IndexOf(made)] = group;
+
+            foreach (var (where, box) in opened)
+                if (box == i) blocks.Add((where, group.Id));
         }
 
         // A call to a Maths module the Expression stands for, and the sums and
@@ -730,8 +739,14 @@ public sealed class Binder
         // whose modules do not come out next to each other.
         var index = statement.Name is null ? -1 : boxes.FindIndex(box => box.Name == statement.Name);
 
-        if (index >= 0) boxes[index].Members.AddRange(made);
-        else boxes.Add((statement.Name, made));
+        if (index < 0)
+        {
+            index = boxes.Count;
+            boxes.Add((statement.Name, []));
+        }
+
+        boxes[index].Members.AddRange(made);
+        opened.Add((new Site(statement.Line, statement.Column), index));
 
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into

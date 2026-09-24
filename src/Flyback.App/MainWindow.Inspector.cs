@@ -466,7 +466,9 @@ public sealed partial class MainWindow
 
             inspector.Children.Add(new TextBlock
             {
-                Text = adrift ? InspectorHelp.Adrifting : editor.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
+                Text = adrift
+                    ? adriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
+                    : editor.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = Text.Muted,
                 FontSize = Text.Body,
