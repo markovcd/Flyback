@@ -13,7 +13,7 @@ public sealed partial class MainWindow
     private void WireDocument()
     {
         document.EditStateChanged += (_, _) => RefreshEditState();
-        document.PanelStale += (_, _) => BuildInspector();
+        document.PanelStale += (_, _) => inspector.Build();
         document.OwnershipChanged += (_, _) => ShowOwnership();
         document.ViewChanged += (_, _) =>
         {
@@ -36,7 +36,7 @@ public sealed partial class MainWindow
         // captures the pointer: letting go halfway across the window is still
         // letting go of the slider, and the value written should be the one the
         // control finished on.
-        inspector.AddHandler(
+        inspector.Panel.AddHandler(
             PointerReleasedEvent,
             (_, _) => document.HandCameOff(),
             RoutingStrategies.Bubble,
@@ -44,13 +44,13 @@ public sealed partial class MainWindow
 
         // A number typed rather than dragged has no gesture to wait for, and the
         // focus going is the surest end of one.
-        inspector.AddHandler(LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
+        inspector.Panel.AddHandler(LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
 
         // And a key let go of, because a number box takes what is typed as it is
         // typed. On the way up rather than down, because the character is taken
         // between the two; any key, since an arrow steps the value and a backspace
         // clears it without giving up the focus.
-        inspector.AddHandler(
+        inspector.Panel.AddHandler(
             KeyUpEvent,
             (_, _) => document.HandCameOff(),
             RoutingStrategies.Bubble,
@@ -59,7 +59,7 @@ public sealed partial class MainWindow
         // And a notch of the wheel, the one way a number box moves that touches
         // neither the pointer's button nor the focus. Each notch is finished the
         // moment it lands.
-        inspector.AddHandler(
+        inspector.Panel.AddHandler(
             PointerWheelChangedEvent,
             (_, _) => document.HandCameOff(),
             RoutingStrategies.Bubble,
@@ -89,11 +89,11 @@ public sealed partial class MainWindow
 
         // What the empty panel says is a list of gestures, and half of them
         // have just been switched off or back on.
-        BuildInspector();
+        inspector.Build();
         RefreshEditState();
 
         ToolTip.SetTip(
-            inspector,
+            inspector.Panel,
             document.Owned
                 ? "The text is the document. A knob turned here is written back into it "
                   + "where it already says it."

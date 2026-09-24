@@ -220,7 +220,7 @@ public sealed partial class MainWindow
         editor.InputLetGo += (_, pick) =>
         {
             document.HandCameOff();
-            if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) BuildInspector();
+            if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) inspector.Build();
         };
     }
 
@@ -505,107 +505,5 @@ public sealed partial class MainWindow
         }
 
         editor.InvalidateVisual();
-    }
-
-    /// <summary>
-    /// A socket that follows a knob, in the inspector: which knob, the range it
-    /// follows it over, and a button to let it go.
-    /// </summary>
-    private Control LinkedRow(NodeInstance node, PortSpec spec, string caption, int index, ControlLink link, PatchControl knob)
-    {
-        var row = InspectorRows.Row("*,58,14,58,26");
-
-        var label = InspectorRows.Caption(caption);
-        Grid.SetColumn(label, 0);
-        row.Children.Add(label);
-
-        var name = new TextBlock
-        {
-            Text = $"◉ {knob.Name}",
-            FontSize = Text.Body,
-            Foreground = new SolidColorBrush(Colors.Attention),
-            VerticalAlignment = VerticalAlignment.Center,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-        };
-
-        ToolTip.SetTip(name, $"Follows the knob '{knob.Name}' on the knob panel, over this range.");
-
-        var min = Bound(link.Min, next => link with { Min = next });
-        var max = Bound(link.Max, next => link with { Max = next });
-
-        var dash = new TextBlock
-        {
-            Text = "–",
-            Foreground = Text.Muted,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        var unlink = new Button
-        {
-            Name = "unlink",
-            Content = "✕",
-            Padding = new Avalonia.Thickness(0),
-            Width = 22,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        ToolTip.SetTip(unlink, "Let this socket go, leaving it where the knob had put it.");
-
-        unlink.Click += (_, _) =>
-        {
-            if (index < node.InputValues.Length) node.InputValues[index] = link.At(knob.Value);
-
-            ControlMap.Unlink(node, index);
-            editor.NotifyPatchChanged();
-        };
-
-        Grid.SetColumn(name, 1);
-        Grid.SetColumn(min, 2);
-        Grid.SetColumn(dash, 3);
-        Grid.SetColumn(max, 4);
-        Grid.SetColumn(unlink, 5);
-
-        row.Children.Add(name);
-        row.Children.Add(min);
-        row.Children.Add(dash);
-        row.Children.Add(max);
-        row.Children.Add(unlink);
-
-        return row;
-
-        NumericUpDown Bound(float value, Func<float, ControlLink> with)
-        {
-            var box = new NumericUpDown
-            {
-                Value = Boxed.Of(value),
-                Increment = spec.Stepped ? 1m : 0.05m,
-                FormatString = spec.Stepped ? "0.##" : "0.###",
-                FontSize = Text.Body,
-                ShowButtonSpinner = false,
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            box.ValueChanged += (_, e) =>
-            {
-                if (e.NewValue is not { } next) return;
-
-                link = with((float)next);
-                ControlMap.Link(node, index, link);
-
-                // The range is part of what the panel takes its shape from, so
-                // that one changed from elsewhere rebuilds this row. Changed from
-                // here the row already says it, and rebuilding would take the box
-                // out from under the number being typed into it — after its
-                // first digit, a box taking its value a keystroke at a time.
-                inspectorShape = InspectorShape.Of(editor);
-
-                editor.NotifyPatchChanged($"{node.Id} range {index}");
-            };
-
-            return Boxed.NeverBlank(box);
-        }
     }
 }

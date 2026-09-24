@@ -100,7 +100,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **block** | A module as it is drawn: its face, header and mark. Only for the drawing. | `ModulePlate`, `ModuleWash` | block for the module in any other sense |
 | **standout** | A module drawn as itself rather than as its category. | — | — |
 | **skin** | A plugin's own drawing of its module. | `ModuleSkin` | theme |
-| **inspector** | The panel that shows and edits what is selected. | `MainWindow.Inspector` | properties, sidebar |
+| **inspector** | The panel that shows and edits what is selected. | `Inspector` | properties, sidebar |
 | **palette** | The module list that opens on right-click or Space. | `ModulePalette` | module list, menu, browser |
 | **knob panel** | The row of panel knobs, turned by hand or from a MIDI controller. | `ControlsPanel` | controls panel, mixer |
 | **panel knob** | A knob on the knob panel. It moves every socket linked to it, and a MIDI controller can be learned for it. | `PatchControl`, `Patch.Controls` | control, macro, fader |

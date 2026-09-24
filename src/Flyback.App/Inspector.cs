@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -18,95 +19,88 @@ using Colors = Flyback.App.Controls.Colors;
 namespace Flyback.App;
 
 /// <summary>
-/// The panel on the right: the selected module's knobs.
+/// The panel on the right: the selected module's knobs, or the group's, or what
+/// the patch says about itself when nothing is selected (ADR-0148).
 /// </summary>
 /// <remarks>
 /// Rebuilt from nothing every time the selection changes, because what it shows
 /// is entirely the selected module's port list.
 /// </remarks>
-public sealed partial class MainWindow
+internal sealed class Inspector
 {
     /// <summary>
-    /// The preview, the splitter under it and the inspector, down one column of
-    /// <paramref name="grid"/>, whose three rows are theirs.
+    /// How far the panel's rows keep off its edges. Named because the plate at the
+    /// head of it takes the inset back off again to reach them.
     /// </summary>
-    private void BuildRightPanel(Grid grid, int column)
+    internal const double PanelInset = 12;
+
+    private readonly TopLevel owner;
+    private readonly NodeEditor editor;
+    private readonly Document document;
+    private readonly MidiHub midi;
+    private readonly InstrumentLibrary instruments;
+    private readonly SampleLibrary soundFolder;
+    private readonly ImageLibrary pictureFolder;
+    private readonly Func<GroupLibrary?> groups;
+    private readonly Action<NodeGroup> saveGroup;
+
+    /// <summary>
+    /// Named so a test can find it. It is the one panel here that is switched
+    /// off whole while the text owns the patch, and there is nothing else about it
+    /// to tell it apart by.
+    /// </summary>
+    private readonly StackPanel panel = new()
     {
-        previewBox = new Border
-        {
-            Background = Brushes.Black,
-            Child = preview,
-        };
+        Name = "inspector",
+        Margin = new Thickness(PanelInset),
+        Spacing = 8,
+    };
 
-        // Double-click the picture and it takes the window; double-click it or
-        // press Escape to put everything back. The gesture every video player
-        // already has, on the one control here that is a video.
-        previewBox.DoubleTapped += (_, e) =>
-        {
-            ToggleFullScreenPreview();
-            e.Handled = true;
-        };
+    /// <summary>
+    /// The selected block's background, behind everything on the panel and fading
+    /// out down it, with the block's mark set large in it.
+    /// </summary>
+    private readonly ModuleWash wash = new();
 
-        Grid.SetColumn(previewBox, column);
-        Grid.SetRow(previewBox, 0);
+    /// <summary>
+    /// Where the plate stands: above the scroller rather than in it, so the name and
+    /// the buttons are there at every scroll position.
+    /// </summary>
+    private readonly ContentControl plateHost = new() { Name = "plate-host" };
 
-        previewRow = grid.RowDefinitions[0];
-
-        var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
-        Grid.SetColumn(splitter, column);
-        Grid.SetRow(splitter, 1);
-
-        // The plate is docked rather than scrolled: what a block is and the buttons
-        // that act on it are wanted wherever the reading has been scrolled to.
-        var reading = new DockPanel();
-
-        DockPanel.SetDock(plateHost, Dock.Top);
-
-        reading.Children.Add(plateHost);
-        reading.Children.Add(new ScrollViewer
-        {
-            Content = inspector,
-
-            // Explicitly transparent: a theme that gave the scroll viewer a
-            // background would paint straight over the wash and the mark.
-            Background = Brushes.Transparent,
-        });
-
-        // The block's face sits behind the inspector rather than beside it, and
-        // never takes a click.
-        var inspectorBorder = inspectorBox = new Border
-        {
-            Background = new SolidColorBrush(Colors.Panel),
-            Child = new Panel { Children = { wash, reading } },
-        };
-
-        // The mark starts under the plate, whatever height the name and the buttons
-        // have left it at.
-        // The band and the mark are drawn on the wash, so it is told how deep the
-        // name's row is and how far down the plate reaches.
-        plateHost.PropertyChanged += (_, e) =>
-        {
-            if (e.Property != BoundsProperty) return;
-
-            wash.Below = plateHost.Bounds.Height;
-            wash.BandHeight = (plateHost.Content as ModulePlate)?.Band ?? 0;
-        };
-        Grid.SetColumn(inspectorBorder, column);
-        Grid.SetRow(inspectorBorder, 2);
-
-        // Over the preview's own cell while it has the window, and nowhere otherwise.
-        var overlay = transportOverlay = new TransportOverlay() { IsVisible = false };
-
-        overlay.PauseClicked += TogglePause;
-        overlay.MuteClicked += playback.ToggleMute;
-        overlay.RewindClicked += RewindToZero;
-
-        grid.Children.Add(previewBox);
-        grid.Children.Add(stageKnobs);
-        grid.Children.Add(overlay);
-        grid.Children.Add(splitter);
-        grid.Children.Add(inspectorBorder);
+    /// <param name="owner">What a file picker is opened over.</param>
+    /// <param name="groups">The kept groups, or null where none are kept.</param>
+    /// <param name="saveGroup">Keeps a group under its name.</param>
+    public Inspector(
+        TopLevel owner,
+        NodeEditor editor,
+        Document document,
+        MidiHub midi,
+        InstrumentLibrary instruments,
+        SampleLibrary soundFolder,
+        ImageLibrary pictureFolder,
+        Func<GroupLibrary?> groups,
+        Action<NodeGroup> saveGroup)
+    {
+        this.owner = owner;
+        this.editor = editor;
+        this.document = document;
+        this.midi = midi;
+        this.instruments = instruments;
+        this.soundFolder = soundFolder;
+        this.pictureFolder = pictureFolder;
+        this.groups = groups;
+        this.saveGroup = saveGroup;
     }
+
+    /// <summary>The rows, which scroll.</summary>
+    public StackPanel Panel => panel;
+
+    /// <summary>The block's face, behind the whole column.</summary>
+    public ModuleWash Wash => wash;
+
+    /// <summary>The plate, docked above the rows.</summary>
+    public ContentControl PlateHost => plateHost;
 
     /// <summary>
     /// What the panel's rows are, as against what is in them: which module is being
@@ -125,9 +119,9 @@ public sealed partial class MainWindow
     /// showing. Hung off every patch change, because patching is not a selection
     /// change and the panel has no other way to hear about it.
     /// </summary>
-    private void SyncInspector()
+    public void Sync()
     {
-        if (InspectorShape.Of(editor) != inspectorShape) BuildInspector();
+        if (InspectorShape.Of(editor) != inspectorShape) Build();
     }
 
     /// <summary>
@@ -135,10 +129,10 @@ public sealed partial class MainWindow
     /// the selected module's rows are. The canvas handles patching; exact
     /// numbers are easier to set with real controls than by dragging on a knob.
     /// </summary>
-    private void BuildInspector()
+    public void Build()
     {
         inspectorShape = InspectorShape.Of(editor);
-        inspector.Children.Clear();
+        panel.Children.Clear();
         plateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
@@ -150,11 +144,11 @@ public sealed partial class MainWindow
             wash.Clear();
             plateHost.Content = null;
 
-            inspector.Children.Add(BuildPatchDescription());
-            inspector.Children.Add(BuildPatchAuthor());
-            inspector.Children.Add(BuildPatchTags());
+            panel.Children.Add(BuildPatchDescription());
+            panel.Children.Add(BuildPatchAuthor());
+            panel.Children.Add(BuildPatchTags());
 
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Text = document.IsAdrift
                     ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
@@ -203,7 +197,7 @@ public sealed partial class MainWindow
         var above = plate.Under.Children.Count;
 
         if (!string.IsNullOrEmpty(def.Description))
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Text = def.Description,
                 TextWrapping = TextWrapping.Wrap,
@@ -212,7 +206,7 @@ public sealed partial class MainWindow
                 Margin = new Thickness(0, 4, 0, 6),
             });
 
-        if (BuildNormalledNote(node, def) is { } normalled) inspector.Children.Add(normalled);
+        if (BuildNormalledNote(node, def) is { } normalled) panel.Children.Add(normalled);
 
         // Checked once for the whole panel rather than row by row, so that a
         // bar is the same width down the entire module: a module where nothing
@@ -221,7 +215,7 @@ public sealed partial class MainWindow
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(Edged(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
+            panel.Children.Add(Edged(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -229,12 +223,12 @@ public sealed partial class MainWindow
         // engine does not reference.
         foreach (var extra in def.Extras)
             if (EditorFor(extra, node, def, reading) is { } control)
-                inspector.Children.Add(extra.Fields.Count == 0 ? Helped(control, extra.Help) : control);
+                panel.Children.Add(extra.Fields.Count == 0 ? Helped(control, extra.Help) : control);
 
-        if (BuildKeyboardSection(node, def) is { } keyboard) inspector.Children.Add(keyboard);
+        if (BuildKeyboardSection(node, def) is { } keyboard) panel.Children.Add(keyboard);
 
         if (def.Inputs.Count == 0 && def.Extras.Count == 0)
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Text = "This module has nothing to set — it only produces.",
                 Foreground = Text.Muted,
@@ -344,7 +338,7 @@ public sealed partial class MainWindow
         {
             if (!editor.Undescribed.Contains(def.TypeId)) return;
 
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Name = "undescribedNote",
                 Text = AssistantPanel.UndescribedNote,
@@ -372,7 +366,7 @@ public sealed partial class MainWindow
     {
         if (def.Outputs.Count == 0) return;
 
-        inspector.Children.Add(new TextBlock
+        panel.Children.Add(new TextBlock
         {
             Text = "Outputs",
             FontSize = Text.Small,
@@ -382,7 +376,7 @@ public sealed partial class MainWindow
         });
 
         for (var i = 0; i < def.Outputs.Count; i++)
-            inspector.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+            panel.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
     }
 
     /// <summary>
@@ -526,7 +520,7 @@ public sealed partial class MainWindow
         // Under the name, above the description, where a module's own row sits.
         var above = plate.Under.Children.Count;
 
-        inspector.Children.Add(new TextBlock
+        panel.Children.Add(new TextBlock
         {
             Text = "Several modules drawn as one. Nothing about the patch changes — the modules "
                  + "are where they were and so are the wires between them.",
@@ -548,7 +542,7 @@ public sealed partial class MainWindow
         Edge("Out", sockets.Outputs);
 
         if (sockets.Rows == 0)
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Text = "Nothing has been wired across its edge, so the box has no sockets yet.",
                 TextWrapping = TextWrapping.Wrap,
@@ -558,7 +552,7 @@ public sealed partial class MainWindow
 
         // A box on a locked canvas is drawn from the text's group statements, so
         // everything that would change one is left off for the same reason
-        // deleting a module is — see BuildInspector.
+        // deleting a module is — see Build.
         if (editor.Locked) return;
 
         var actions = ActionRow();
@@ -599,7 +593,7 @@ public sealed partial class MainWindow
         // else's group going, and the name is the only warning there is.
         var keep = Act("keep-group", Glyphs.Keep(), !named
             ? "The module list calls a kept group by its name — double-click the title above to give it one."
-            : groups?.Named(group.Name) is not null
+            : groups()?.Named(group.Name) is not null
                 ? $"Replaces the “{group.Name}” already in the module list. It will ask first."
                 : $"Keeps “{group.Name}” under Groups in the module list, ready to add again.",
             () => KeepGroup(group, actions));
@@ -628,7 +622,7 @@ public sealed partial class MainWindow
         {
             if (sockets.Count == 0) return;
 
-            inspector.Children.Add(new TextBlock
+            panel.Children.Add(new TextBlock
             {
                 Text = heading,
                 FontSize = Text.Small,
@@ -639,7 +633,7 @@ public sealed partial class MainWindow
 
             foreach (var socket in sockets)
                 if (editor.Scene.Named(socket) is var (_, spec) && editor.Patch.Find(socket.Node) is { } node)
-                    inspector.Children.Add(Socket(socket, node, spec));
+                    panel.Children.Add(Socket(socket, node, spec));
         }
 
         // The row the module's own panel has for the port, and — on one with nothing plugged into it — the way to
@@ -716,16 +710,16 @@ public sealed partial class MainWindow
     /// </remarks>
     private void KeepGroup(NodeGroup group, StackPanel actions)
     {
-        if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
+        if (groups() is not { } kept || string.IsNullOrWhiteSpace(group.Name)) return;
 
         var host = actions.Parent as Panel;
         var at = host?.Children.IndexOf(actions) ?? -1;
 
         // Nothing kept under that name, or no row left to ask in — either way
         // there is nothing to ask about.
-        if (groups.Named(group.Name) is null || host is null || at < 0)
+        if (kept.Named(group.Name) is null || host is null || at < 0)
         {
-            SaveGroup(group);
+            saveGroup(group);
             return;
         }
 
@@ -736,12 +730,12 @@ public sealed partial class MainWindow
             "Leave the kept one alone.",
             replace =>
             {
-                if (replace) SaveGroup(group);
+                if (replace) saveGroup(group);
 
                 // Put back exactly what a fresh panel would have, which is the
                 // button saying whatever it should say now — a replaced group is
                 // one this list already knows, so its tip changes.
-                BuildInspector();
+                Build();
             });
     }
 
@@ -1140,7 +1134,7 @@ public sealed partial class MainWindow
 
                 // After the picker has finished with its own event, since what
                 // is rebuilt includes the picker.
-                Dispatcher.UIThread.Post(BuildInspector);
+                Dispatcher.UIThread.Post(Build);
             }));
 
         if (editor.Patch.KeyboardScale is not null)
@@ -1162,7 +1156,7 @@ public sealed partial class MainWindow
     private const string ByScale = "scale";
 
     /// <summary>What a fresh scale layout starts on: C major, what a fresh Quantiser starts on.</summary>
-    private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
+    internal static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
 
     /// <summary>The scale last switched away from, for switching back to.</summary>
     private List<int>? keptKeyboardScale;
@@ -1233,7 +1227,7 @@ public sealed partial class MainWindow
                 // The keyboard's section belongs to a MIDI In on the keyboard,
                 // and the channel row's shape to its instrument, so both come and
                 // go with the device.
-                if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(BuildInspector);
+                if (extra is MidiExtra && field.Key == MidiExtra.DeviceField) Dispatcher.UIThread.Post(Build);
             },
 
             // What the same field would say if asked again. An extra is free to
@@ -1365,7 +1359,7 @@ public sealed partial class MainWindow
 
         choose.Click += async (_, _) =>
         {
-            var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = title,
                 AllowMultiple = false,
@@ -1541,5 +1535,107 @@ public sealed partial class MainWindow
             { } span => (travel => span.Format(travel), null),
             null => (_ => "", $"Plain numbers: {(input ? spans.InWhy : spans.OutWhy)}."),
         };
+    }
+
+    /// <summary>
+    /// A socket that follows a knob, in the inspector: which knob, the range it
+    /// follows it over, and a button to let it go.
+    /// </summary>
+    private Control LinkedRow(NodeInstance node, PortSpec spec, string caption, int index, ControlLink link, PatchControl knob)
+    {
+        var row = InspectorRows.Row("*,58,14,58,26");
+
+        var label = InspectorRows.Caption(caption);
+        Grid.SetColumn(label, 0);
+        row.Children.Add(label);
+
+        var name = new TextBlock
+        {
+            Text = $"◉ {knob.Name}",
+            FontSize = Text.Body,
+            Foreground = new SolidColorBrush(Colors.Attention),
+            VerticalAlignment = VerticalAlignment.Center,
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        };
+
+        ToolTip.SetTip(name, $"Follows the knob '{knob.Name}' on the knob panel, over this range.");
+
+        var min = Bound(link.Min, next => link with { Min = next });
+        var max = Bound(link.Max, next => link with { Max = next });
+
+        var dash = new TextBlock
+        {
+            Text = "–",
+            Foreground = Text.Muted,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var unlink = new Button
+        {
+            Name = "unlink",
+            Content = "✕",
+            Padding = new Avalonia.Thickness(0),
+            Width = 22,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        ToolTip.SetTip(unlink, "Let this socket go, leaving it where the knob had put it.");
+
+        unlink.Click += (_, _) =>
+        {
+            if (index < node.InputValues.Length) node.InputValues[index] = link.At(knob.Value);
+
+            ControlMap.Unlink(node, index);
+            editor.NotifyPatchChanged();
+        };
+
+        Grid.SetColumn(name, 1);
+        Grid.SetColumn(min, 2);
+        Grid.SetColumn(dash, 3);
+        Grid.SetColumn(max, 4);
+        Grid.SetColumn(unlink, 5);
+
+        row.Children.Add(name);
+        row.Children.Add(min);
+        row.Children.Add(dash);
+        row.Children.Add(max);
+        row.Children.Add(unlink);
+
+        return row;
+
+        NumericUpDown Bound(float value, Func<float, ControlLink> with)
+        {
+            var box = new NumericUpDown
+            {
+                Value = Boxed.Of(value),
+                Increment = spec.Stepped ? 1m : 0.05m,
+                FormatString = spec.Stepped ? "0.##" : "0.###",
+                FontSize = Text.Body,
+                ShowButtonSpinner = false,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            box.ValueChanged += (_, e) =>
+            {
+                if (e.NewValue is not { } next) return;
+
+                link = with((float)next);
+                ControlMap.Link(node, index, link);
+
+                // The range is part of what the panel takes its shape from, so
+                // that one changed from elsewhere rebuilds this row. Changed from
+                // here the row already says it, and rebuilding would take the box
+                // out from under the number being typed into it — after its
+                // first digit, a box taking its value a keystroke at a time.
+                inspectorShape = InspectorShape.Of(editor);
+
+                editor.NotifyPatchChanged($"{node.Id} range {index}");
+            };
+
+            return Boxed.NeverBlank(box);
+        }
     }
 }

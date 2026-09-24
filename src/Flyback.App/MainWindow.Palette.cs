@@ -28,7 +28,7 @@ public sealed partial class MainWindow
             || editor.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
             return;
 
-        editor.Patch.KeyboardScale = [.. Major];
+        editor.Patch.KeyboardScale = [.. Inspector.Major];
         document.Relaid();
     }
 

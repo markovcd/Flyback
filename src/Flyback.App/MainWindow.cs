@@ -190,35 +190,9 @@ public sealed partial class MainWindow : Window
         ShowMode = FlyoutShowMode.Standard,
     };
 
-    /// <summary>
-    /// Named so a test can find it. It is the one panel here that is switched
-    /// off whole — see <see cref="ShowOwnership"/> — and there is nothing
-    /// else about it to tell it apart by.
-    /// </summary>
-    private readonly StackPanel inspector = new()
-    {
-        Name = "inspector",
-        Margin = new Thickness(PanelInset),
-        Spacing = 8,
-    };
+    /// <summary>The panel on the right, under the preview.</summary>
+    private readonly Inspector inspector;
 
-    /// <summary>
-    /// How far the panel's rows keep off its edges. Named because the plate at the
-    /// head of it takes the inset back off again to reach them — see BuildInspector.
-    /// </summary>
-    internal const double PanelInset = 12;
-
-    /// <summary>
-    /// The selected block's background, behind everything on the panel and fading
-    /// out down it, with the block's mark set large in it.
-    /// </summary>
-    private readonly ModuleWash wash = new();
-
-    /// <summary>
-    /// Where the plate stands: above the scroller rather than in it, so the name and
-    /// the buttons are there at every scroll position.
-    /// </summary>
-    private readonly ContentControl plateHost = new() { Name = "plate-host" };
     private readonly TextBlock status = new()
     {
         VerticalAlignment = VerticalAlignment.Center,
@@ -445,6 +419,8 @@ public sealed partial class MainWindow : Window
         // program is actually reading one — see MidiHub.Listen.
         midi = new MidiHub(plugins.PreferredMidiInput);
 
+        inspector = new Inspector(this, editor, document, midi, instruments, soundFolder, pictureFolder, () => groups, SaveGroup);
+
         playback = new Playback(
             editor,
             preview,
@@ -536,12 +512,12 @@ public sealed partial class MainWindow : Window
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
             // here as well, and answers only when a wire actually moved.
-            SyncInspector();
+            inspector.Sync();
         };
 
         editor.SelectionChanged += (_, _) =>
         {
-            BuildInspector();
+            inspector.Build();
             playback.ProbeSelectionChanged();
         };
         editor.HistoryChanged += (_, _) => RefreshEditState();
@@ -689,7 +665,7 @@ public sealed partial class MainWindow : Window
         assistant.UndescribedChanged += (_, _) =>
         {
             editor.Undescribed = assistant.Undescribed;
-            BuildInspector();
+            inspector.Build();
         };
 
         toolbar = BuildToolbar();
