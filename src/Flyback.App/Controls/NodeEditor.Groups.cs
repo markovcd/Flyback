@@ -309,6 +309,15 @@ public sealed partial class NodeEditor
         NotifyPatchChanged();
     }
 
+    /// <summary>Puts an unwired socket of a module inside a box on its edge.</summary>
+    public void ExposeSocket(NodeGroup group, GroupSocket socket)
+    {
+        if (!patch.Exposable(group, socket)) return;
+        if (!group.Expose(socket)) return;
+
+        NotifyPatchChanged();
+    }
+
     /// <summary>
     /// A press on a box, or on the strip above an open group: what is inside is
     /// what gets selected.

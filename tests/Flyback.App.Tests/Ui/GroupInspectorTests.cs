@@ -114,6 +114,28 @@ public class GroupInspectorTests : UiTest
         ?? throw new InvalidOperationException("the control is not in this window");
 
     [AvaloniaFact]
+    public void Putting_a_socket_on_the_edge_takes_its_button_away_at_once()
+    {
+        var window = Open(out var group);
+        var editor = Editor(window);
+        var mul = group.Members[1];
+
+        editor.ToggleBox(group);
+        editor.Select(mul);
+        Settle(window);
+
+        // Multiply's 'b' is its only unwired input; its 'out' crosses the edge.
+        var before = All<Button>(window).Count(b => b.Name == "exposeSocket");
+        before.ShouldBe(1);
+
+        Button(window, "exposeSocket").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Settle(window);
+
+        group.Exposed.ShouldContain(new GroupSocket(mul, 1, IsOutput: false));
+        All<Button>(window).Count(b => b.Name == "exposeSocket").ShouldBe(0);
+    }
+
+    [AvaloniaFact]
     public void The_panel_is_about_the_group_rather_than_a_module_inside_it()
     {
         var window = Open(out _);

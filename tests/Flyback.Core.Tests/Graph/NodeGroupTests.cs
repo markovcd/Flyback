@@ -222,6 +222,43 @@ public class NodeGroupTests
         patch.SocketsOf(group).Inputs.ShouldBeEmpty();
     }
 
+    [Fact]
+    public void An_unwired_socket_inside_can_be_put_on_the_edge()
+    {
+        var patch = new Patch();
+
+        var a = Add(patch, "math.mul", 0, 0);
+        var b = Add(patch, "math.add", 200, 0);
+
+        var group = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+        var socket = new GroupSocket(b.Id, 1, IsOutput: false);
+
+        patch.Exposable(group, socket).ShouldBeTrue();
+        group.Expose(socket);
+
+        patch.SocketsOf(group).Inputs.ShouldBe([socket]);
+        patch.Exposable(group, socket).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Only_an_unwired_socket_of_a_member_is_offered_for_the_edge()
+    {
+        var patch = new Patch();
+
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 200, 0);
+        var outside = Add(patch, "math.add", 400, 0);
+
+        var group = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+
+        patch.Connect(a.Id, 0, b.Id, 0);
+
+        patch.Exposable(group, new GroupSocket(a.Id, 0, IsOutput: true)).ShouldBeFalse();
+        patch.Exposable(group, new GroupSocket(b.Id, 0, IsOutput: false)).ShouldBeFalse();
+        patch.Exposable(group, new GroupSocket(outside.Id, 0, IsOutput: false)).ShouldBeFalse();
+        patch.Exposable(group, new GroupSocket(b.Id, 99, IsOutput: false)).ShouldBeFalse();
+    }
+
     /// <summary>
     /// Hiding one that is still wired is not refused so much as futile: a
     /// crossing wire is a socket whatever the stored list says, so it comes

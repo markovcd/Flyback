@@ -643,6 +643,21 @@ public sealed class Patch
         return false;
     }
 
+    /// <summary>
+    /// Whether <paramref name="socket"/> can be put on <paramref name="group"/>'s
+    /// edge: a port of a module inside, with no wire on it, not there already.
+    /// </summary>
+    public bool Exposable(NodeGroup group, GroupSocket socket)
+    {
+        if (!group.Members.Contains(socket.Node) || group.Exposed.Contains(socket)) return false;
+        if (Find(socket.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return false;
+        if (socket.Port < 0 || socket.Port >= (socket.IsOutput ? def.Outputs : def.Inputs).Count) return false;
+
+        return socket.IsOutput
+            ? !Connections.Any(c => c.SourceNode == socket.Node && c.SourcePort == socket.Port)
+            : IncomingTo(socket.Node, socket.Port) is null;
+    }
+
     /// <summary>Down the canvas, then across it, then by port.</summary>
     private int Down(GroupSocket a, GroupSocket b)
     {

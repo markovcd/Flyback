@@ -58,6 +58,31 @@ public sealed class EditorSteps(PatchContext context)
             : WireEnds.Into(context.Patch, socket.Node, socket.Port)).ShouldBe(text);
     }
 
+    [When("the Multiply's {string} is put on the box's edge")]
+    public void WhenTheMultiplysSocketIsExposed(string port)
+    {
+        var socket = new GroupSocket(context.Node("Multiply").Id, Port("math.mul", port, output: false), IsOutput: false);
+
+        context.Patch.Exposable(box.ShouldNotBeNull(), socket).ShouldBeTrue();
+        box.Expose(socket);
+    }
+
+    [Then("the Multiply's {string} cannot be put on the box's edge")]
+    public void ThenTheMultiplysSocketIsNotExposable(string port) =>
+        context.Patch.Exposable(
+            box.ShouldNotBeNull(),
+            new GroupSocket(context.Node("Multiply").Id, Port("math.mul", port, output: false), IsOutput: false))
+            .ShouldBeFalse();
+
+    [Then("the box has a {string} socket")]
+    public void ThenTheBoxHasASocket(string label)
+    {
+        var sockets = context.Patch.SocketsOf(box.ShouldNotBeNull());
+        var scene = new CanvasScene(context.Patch);
+
+        sockets.Inputs.Concat(sockets.Outputs).ShouldContain(s => scene.Named(s)!.Value.Label == label);
+    }
+
     private static int Port(string typeId, string name, bool output)
     {
         var def = NodeCatalog.Require(typeId);

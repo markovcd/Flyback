@@ -81,7 +81,12 @@ internal static class InspectorShape
         // move when its output is patched or the module feeding it is turned.
         var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.Patch, node).ToString() : "";
 
-        return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}";
+        // A row not on its box's edge carries the button that puts it there.
+        var edge = editor.Patch.GroupOf(node.Id) is { } home
+            ? string.Concat(home.Exposed.Where(s => s.Node == node.Id).Select(s => $"{(s.IsOutput ? 'o' : 'i')}{s.Port}"))
+            : "";
+
+        return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}e{edge}";
     }
 
     /// <summary>Whether an input's row is a wire, a panel knob or a slider, and what the row names.</summary>

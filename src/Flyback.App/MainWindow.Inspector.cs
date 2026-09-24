@@ -531,7 +531,7 @@ public sealed partial class MainWindow
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help));
+            inspector.Children.Add(Edged(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help), node, i, output: false));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -692,7 +692,43 @@ public sealed partial class MainWindow
         });
 
         for (var i = 0; i < def.Outputs.Count; i++)
-            inspector.Children.Add(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help));
+            inspector.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+    }
+
+    /// <summary>
+    /// A grouped module's unwired socket row, with the button that puts it on the
+    /// box's edge: the counterpart of the ✕ on the group's panel.
+    /// </summary>
+    private Control Edged(Control row, NodeInstance node, int port, bool output)
+    {
+        var socket = new GroupSocket(node.Id, port, output);
+
+        if (editor.Locked
+            || editor.Patch.GroupOf(node.Id) is not { } group
+            || !editor.Patch.Exposable(group, socket))
+            return row;
+
+        var expose = new Button
+        {
+            Name = "exposeSocket",
+            Content = output ? "⇥" : "⇤",
+            FontSize = Text.Caption,
+            Padding = new Thickness(5, 0, 5, 0),
+            Background = Brushes.Transparent,
+            Opacity = 0.55,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(expose, $"Put this socket on the edge of “{group.Title()}”.");
+        expose.Click += (_, _) => editor.ExposeSocket(group, socket);
+
+        var edged = new DockPanel();
+
+        DockPanel.SetDock(expose, Dock.Right);
+        edged.Children.Add(expose);
+        edged.Children.Add(row);
+
+        return edged;
     }
 
     /// <summary>An output's name, and what it feeds beside it.</summary>
