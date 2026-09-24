@@ -46,7 +46,7 @@ public class PatchShotTests : UiTest
             """
             rings(freq: 4, offset: t)
               |> autoremap()
-              |> color.hsv(hue: t * 0.1, saturation: 0.85)
+              |> color.hsv(value: _, hue: t * 0.1, saturation: 0.85)
               |> out.color
             out.volume = 0.5
             """));
@@ -72,11 +72,12 @@ public class PatchShotTests : UiTest
 
         Shoot(folder, "syntakt-bass", Built(
             """
-            let box  = midi.clock(device: "midi:elektron-syntakt")
-            let bass = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+            let box   = midi.clock(device: "midi:elektron-syntakt")
+            let bass  = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+            let pitch = bass |> note(note: _)
+            let pluck = bass.gate |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0, release: 60ms)
 
-            saw(freq: bass |> note())
-              * (bass.gate |> adsr(attack: 2ms, decay: 180ms, sustain: 0, release: 60ms))
+            saw(freq: pitch) * pluck
               |> filter(cutoff: 900, resonance: 0.4)
               |> out.left
 

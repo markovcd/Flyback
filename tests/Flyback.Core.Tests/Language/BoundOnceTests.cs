@@ -27,7 +27,7 @@ public class BoundOnceTests
             """
             let a = x |> sine(freq: 2)
             let a = y |> sine(freq: 3)
-            a |> color.hsv() |> out.color
+            a |> color.hsv(hue: _) |> out.color
             """);
 
         issue.Line.ShouldBe(2);
@@ -119,8 +119,8 @@ public class BoundOnceTests
     {
         var issue = Refused(
             """
-            x |> color.hsv() |> out.color
-            y |> color.hsv() |> out.color
+            x |> color.hsv(hue: _) |> out.color
+            y |> color.hsv(hue: _) |> out.color
             """);
 
         issue.Line.ShouldBe(2);
@@ -133,9 +133,9 @@ public class BoundOnceTests
         var issue = Refused(
             """
             let a = x |> sine()
-            a.freq <- y |> add(b: 1)
-            a.freq <- y |> add(b: 2)
-            a |> color.hsv() |> out.color
+            a.freq <- y |> add(a: _, b: 1)
+            a.freq <- y |> add(a: _, b: 2)
+            a |> color.hsv(hue: _) |> out.color
             """);
 
         issue.Line.ShouldBe(3);
@@ -149,7 +149,7 @@ public class BoundOnceTests
             """
             let a = sine(freq: y)
             a.freq <- x
-            a |> color.hsv() |> out.color
+            a |> color.hsv(hue: _) |> out.color
             """).Message.ShouldContain("'a.freq' is already wired on line 1");
     }
 }

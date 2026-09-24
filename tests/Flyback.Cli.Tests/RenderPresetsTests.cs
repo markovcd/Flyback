@@ -73,7 +73,7 @@ internal sealed class FakeTools : IPresetTools
 
 public sealed class RenderPresetsTests : IDisposable
 {
-    private const string Picture = "rings(freq: 3, offset: t) |> color.hsv(hue: 0.3) |> out.color\n";
+    private const string Picture = "rings(freq: 3, offset: t) |> color.hsv(saturation: _, hue: 0.3) |> out.color\n";
     private const string Sound = "sine(freq: 110) |> out.left\n";
 
     private readonly string work = Directory.CreateTempSubdirectory("flyback-presets-").FullName;

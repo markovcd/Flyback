@@ -92,7 +92,7 @@ public class LayerTests
     [Fact]
     public void The_mode_is_written_and_read_back_by_the_language()
     {
-        var built = PatchLanguage.Build("""rgb(0.2, 0.5, 0.8) |> layer(rgb(0.6, 0.4, 0.1), mode: "screen") |> out.color""", Catalog);
+        var built = PatchLanguage.Build("""rgb(0.2, 0.5, 0.8) |> layer(base: _, top: rgb(0.6, 0.4, 0.1), mode: "screen") |> out.color""", Catalog);
         built.Issues.ShouldBeEmpty();
 
         var layer = built.Patch.Nodes.Single(n => n.TypeId == LayerType);

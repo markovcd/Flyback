@@ -199,11 +199,11 @@
     the text, then press [PLAY] on the box:</p>
 
     <pre><code class="fbks"># Track 9 on the Syntakt is a MIDI track, and this is the voice it plays.
-let keys = midi.in(device: "midi:elektron-syntakt", channel: 9)
+let keys  = midi.in(device: "midi:elektron-syntakt", channel: 9)
+let pitch = keys.pitch |> note(note: _)
+let pluck = keys.gate |> adsr(gate: _, attack: 5ms, decay: 200ms, sustain: 0.5, release: 300ms)
 
-saw(freq: keys.pitch |> note())
-  * (keys.gate |> adsr(attack: 5ms, decay: 200ms, sustain: 0.5, release: 300ms))
-  * (0.3 + keys.velocity * 0.7)
+saw(freq: pitch) * pluck * (0.3 + keys.velocity * 0.7)
   |> filter(cutoff: 400 + keys.velocity * 3000, resonance: 0.3)
   |> out.left
 
@@ -234,11 +234,12 @@ out.volume = 0.5</code></pre>
     takes <code>beats</code> in place of time and is then on the Syntakt's bar:</p>
 
     <pre><code class="fbks"># The Syntakt keeps time; the sequencer steps four times a beat.
-let box  = midi.clock(device: "midi:elektron-syntakt")
-let bass = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+let box   = midi.clock(device: "midi:elektron-syntakt")
+let bass  = notes(in: box.beats, rate: 4) [ C2 ~ C2 G1  C2 ~ D#2 C2 ]
+let pitch = bass |> note(note: _)
+let pluck = bass.gate |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0, release: 60ms)
 
-saw(freq: bass |> note())
-  * (bass.gate |> adsr(attack: 2ms, decay: 180ms, sustain: 0, release: 60ms))
+saw(freq: pitch) * pluck
   |> filter(cutoff: 900, resonance: 0.4)
   |> out.left
 
@@ -282,7 +283,7 @@ let hat  = midi.in(device: "midi:elektron-syntakt", channel: 12)
 
 (rings(freq: 3 + kick.gate * 2, offset: box.beats * 0.25) |> remap(-1..1, 0..1))
   * (0.25 + hat.gate * 0.75)
-  |> color.hsv(hue: fract(box.beats / 16), saturation: 0.8)
+  |> color.hsv(value: _, hue: fract(box.beats / 16), saturation: 0.8)
   |> out.color
 
 out.volume = 0</code></pre>

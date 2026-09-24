@@ -57,3 +57,30 @@ Feature: A patch can be written as text
       """
     Then the complaint quotes line 2
     And the complaint says "already wired on line 1"
+
+  # Where a pipe lands is written on the line, never guessed from the arguments beside it.
+  Scenario: A pipe into a module with no 'in' is told where to land
+    Given the text:
+      """
+      pulse(freq: 2) |> adsr(decay: 240ms) |> out.left
+      """
+    Then the complaint quotes line 1
+    And the complaint says "adsr(gate: _)"
+
+  Scenario: The placeholder puts the signal where it says
+    Given the text:
+      """
+      let held = value(1)
+      sine(freq: 220) * (held |> adsr(gate: _, attack: 1ms)) |> out.left
+      """
+    Then it reads without complaint
+    And the speakers are not silent
+
+  Scenario: A pipeline inside a call's brackets is pointed out
+    Given the text:
+      """
+      let steps = notes(rate: 4) [ A3 C4 ]
+      saw(freq: steps |> note(note: _)) |> out.left
+      """
+    Then the complaint quotes line 2
+    And the complaint says "Bind it with 'let'"

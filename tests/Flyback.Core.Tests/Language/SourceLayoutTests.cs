@@ -75,34 +75,33 @@ public class SourceLayoutTests
     public void A_long_pipeline_breaks_before_each_stage()
     {
         var wrapped = SourceLayout.Wrap(
-            "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(saturation: 0.85) |> out.color",
-            width: 40);
+            "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(hue: _, saturation: 0.85) |> out.color",
+            width: 44);
 
         Lines(wrapped).ShouldBe([
             "x |> sine(freq: 1.5)",
-            "  |> add(b: 0.25)",
+            "  |> add(a: _, b: 0.25)",
             "  |> remap(in_low: -2, in_high: 2)",
-            "  |> color.hsv(saturation: 0.85)",
+            "  |> color.hsv(hue: _, saturation: 0.85)",
             "  |> out.color",
         ]);
     }
 
     /// <summary>
-    /// A pipe inside a call belongs to that call. Breaking there would take an
-    /// argument out of the brackets it is an argument of.
+    /// A pipe inside brackets belongs to them. Breaking there would take half a
+    /// bracketed pipeline out of the brackets it is inside.
     /// </summary>
     [Fact]
-    public void A_pipe_inside_a_call_is_not_a_place_to_break()
+    public void A_pipe_inside_brackets_is_not_a_place_to_break()
     {
         var wrapped = SourceLayout.Wrap(
-            "x |> add(b: y |> sine(freq: 1.1)) |> out.color",
+            "(y |> sine(freq: 1.1)) * x |> fract() |> out.color",
             width: 30);
 
-        // Broken somewhere, since none of it fits — but the argument's own
-        // pipeline is intact on one line, which is the claim. Broken there, the
-        // second half would be outside the brackets it is inside.
-        Lines(wrapped).ShouldContain(line => line.Contains("y |> sine(freq: 1.1)"));
+        // Broken somewhere, since none of it fits — but the bracketed pipeline
+        // is intact on one line, which is the claim.
+        Lines(wrapped).ShouldContain(line => line.Contains("(y |> sine(freq: 1.1))"));
         Lines(wrapped)[^1].ShouldBe("  |> out.color");
     }
 
@@ -114,11 +113,11 @@ public class SourceLayoutTests
     public void A_stage_that_fits_is_one_line_however_many_pipes_are_inside_it()
     {
         var wrapped = SourceLayout.Wrap(
-            "x |> add(b: y |> sine(freq: 1.1)) |> out.color",
+            "(y |> sine(freq: 1.1)) * x |> fract() |> out.color",
             width: 40);
 
         Lines(wrapped).ShouldBe([
-            "x |> add(b: y |> sine(freq: 1.1))",
+            "(y |> sine(freq: 1.1)) * x |> fract()",
             "  |> out.color",
         ]);
     }
@@ -168,7 +167,7 @@ public class SourceLayoutTests
     public void A_sharpened_note_does_not_end_the_line()
     {
         var wrapped = SourceLayout.Wrap(
-            "sine(freq: note(note: C#4)) |> gain(gain: 0.5) |> out.left",
+            "sine(freq: note(note: C#4)) |> gain(color: _, gain: 0.5) |> out.left",
             width: 40);
 
         Lines(wrapped).Length.ShouldBeGreaterThan(1);

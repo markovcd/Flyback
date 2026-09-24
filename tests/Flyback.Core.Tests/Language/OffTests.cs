@@ -24,7 +24,7 @@ public class OffTests
             """
             let wobble = sine(freq: 3)
 
-            x |> rotate(angle: wobble) |> out.color
+            x |> rotate(x: _, angle: wobble) |> out.color
             off wobble
             """);
 

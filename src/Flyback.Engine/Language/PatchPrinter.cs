@@ -32,7 +32,8 @@ public sealed record Printing(string Source, SourceMap Map, IReadOnlyList<Guid> 
 public static class PatchPrinter
 {
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
-    private sealed record Plan(Dictionary<Guid, string> Names, HashSet<Guid> Bound, Guid Coord, Guid Clock);
+    /// <param name="Taken">Every name given out, for one given while writing.</param>
+    private sealed record Plan(Dictionary<Guid, string> Names, HashSet<Guid> Bound, HashSet<string> Taken, Guid Coord, Guid Clock);
 
     /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
     /// <remarks>
@@ -521,7 +522,7 @@ public static class PatchPrinter
             names[node.Id] = Unique(wanted, taken);
         }
 
-        return new Plan(names, bound, coord, clock);
+        return new Plan(names, bound, taken, coord, clock);
     }
 
     /// <summary>
@@ -577,7 +578,7 @@ public static class PatchPrinter
         if (name.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_')) return false;
         if (Lexer.Note(name) is not null) return false;
 
-        return name is not ("let" or "def" or "group" or "off" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
+        return name is not ("_" or "let" or "def" or "group" or "off" or "out" or "in" or "x" or "y" or "t" or "radius" or "angle" or "aspect");
     }
 
     /// <summary>
@@ -795,6 +796,7 @@ public static class PatchPrinter
             var before = new List<Guid>();
             var after = new List<Guid>();
             string? piped = null;
+            int? landing = null;
 
             // The pipe is chosen so that the rule which reads it puts the signal
             // back where it came from: an 'in' first, then a position taken whole
@@ -825,15 +827,15 @@ public static class PatchPrinter
             }
             else if (signal < 0 && Forward(node.Id, 0) is { } leading)
             {
-                // Otherwise the first socket, which is where the rule that reads
-                // this puts a signal when there is no 'in' and no position. It is
-                // what turns a patch into the chain it was built as, rather than
-                // one expression nested inside another twenty deep.
+                // Otherwise the first socket, said with '_'. It is what turns a
+                // patch into the chain it was built as, rather than a name bound
+                // for every module that has no 'in'.
                 var part = From(leading);
 
                 piped = part.Text;
                 before.AddRange(part.Calls);
                 used.Add(0);
+                landing = 0;
             }
 
             var arguments = new List<string>();
@@ -845,9 +847,10 @@ public static class PatchPrinter
 
             for (var port = 0; port < def.Inputs.Count; port++)
             {
-                if (used.Contains(port)) continue;
-
                 var name = def.Inputs[port].Name.Replace(' ', '_');
+
+                if (port == landing) arguments.Add($"{name}: _");
+                if (used.Contains(port)) continue;
 
                 // Forward rather than incoming: a socket fed by a wire that runs
                 // backwards is written as nothing here and said at the end as the
@@ -855,7 +858,7 @@ public static class PatchPrinter
                 // itself.
                 if (Forward(node.Id, port) is { } wire)
                 {
-                    var part = From(wire);
+                    var part = Argument(wire);
 
                     arguments.Add($"{name}: {part.Text}");
                     after.AddRange(part.Calls);
@@ -895,6 +898,43 @@ public static class PatchPrinter
             return patch.Find(id) is { } node && modules.Get(node.TypeId) is { } def
                 ? Call(node, def)
                 : Part.Of("0");
+        }
+
+        /// <summary>
+        /// What a wire's far end is written as inside an argument, which takes no
+        /// pipeline: one that would be is given a name of its own and said above.
+        /// </summary>
+        private Part Argument(Connection wire)
+        {
+            var part = From(wire);
+
+            if (!Pipeline(part.Text) || patch.Find(wire.SourceNode) is not { } node) return part;
+
+            plan.Bound.Add(node.Id);
+            plan.Names[node.Id] = Unique(Wanted(node, modules), plan.Taken);
+
+            return From(wire);
+        }
+
+        /// <summary>Whether written text has a pipe outside every bracket and quote.</summary>
+        private static bool Pipeline(string text)
+        {
+            var depth = 0;
+            var quoted = false;
+
+            for (var i = 0; i < text.Length - 1; i++)
+            {
+                var c = text[i];
+
+                if (c == '"') quoted = !quoted;
+                if (quoted) continue;
+
+                if (c is '(' or '[') depth++;
+                else if (c is ')' or ']') depth--;
+                else if (depth == 0 && c == '|' && text[i + 1] == '>') return true;
+            }
+
+            return false;
         }
 
         /// <summary>What a wire's far end is written as.</summary>

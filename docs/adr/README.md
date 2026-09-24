@@ -15,11 +15,12 @@ context, decision, consequences.
 | [0002](0002-split-engine-from-shell.md) | Split the engine from the UI shell |
 | [0003](0003-cpu-rendering-with-a-gpu-path-left-open.md) | Render on the CPU, leave a GPU backend possible *(user-directed)* |
 | [0004](0004-visual-patch-editor-as-the-authoring-model.md) | Author patches in a visual node editor *(user-directed)* |
-| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed)* |
+| [0065](0065-a-text-language-that-parses-to-a-patch.md) | A text language, which parses to a patch *(user-directed; the pipe rule amended by [0144](0144-a-pipe-lands-where-the-text-says.md))* |
 | [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md) | A module keeps its name, and its memory, across a rebuild *(user-directed)* |
 | [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) | The file that was opened decides who owns the patch *(user-directed)* |
 | [0119](0119-the-website-shows-a-module-by-photographing-one.md) | The website shows a module by photographing one *(user-directed)* |
 | [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md) | A third program plays a patch and writes nothing *(user-directed)* |
+| [0144](0144-a-pipe-lands-where-the-text-says.md) | A pipe lands where the text says *(user-directed)* |
 
 ### The engine
 

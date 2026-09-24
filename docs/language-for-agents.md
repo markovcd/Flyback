@@ -65,40 +65,26 @@ the reason to keep them and not a reason to think them optimal.
 
 ---
 
-## 3. The pipe lands where the catalog says, and nowhere else
+## 3. The pipe lands where the text says, and nowhere else
 
-Today's rule has three clauses, and the third is the problem:
+**Done, without the catalog.** The rule had a third clause, "the first socket
+the call did not name takes the signal", so what a stage did hung on the
+arguments beside it: `hsv(saturation: 0.85, value: 1)` after a pipe took it on
+`hue`, and `hsv(hue: h, saturation: s, value: v)`, which is what an unsteered
+agent wrote, took it nowhere.
 
-> 3. otherwise **the first free socket takes the first output**.
-
-"Free" means *not named in this call*, so what a stage does depends on which
-arguments were written. Two readings of the same module:
+The clause is gone. A pipe lands on `socket: _` where the call writes one, else
+on `in`, else on a leading `x` and `y` pair, and anything else is an error that
+says to write `_`:
 
 ```
-rings(freq: 3) |> color.hsv(saturation: 0.85, value: 1)     # lands on hue
-rings(freq: 3) |> color.hsv(hue: h, saturation: s, value: v) # lands nowhere
+rings(freq: 3) |> color.hsv(hue: _, saturation: 0.85, value: 1)
+beat.gate |> env.adsr(gate: _, decay: 240ms)
 ```
 
-The second is what an unsteered agent wrote — signal in, parameters named, which
-is how every shader and effect chain it has ever seen behaves. It is currently an
-error, which is the right answer arrived at by accident: the rule has no clause
-for it.
-
-**Proposal.** A module declares **one pipe socket** — a single socket, or a
-position pair — and a pipe always lands there.
-
-- Naming that socket in the same call is an error that says so.
-- A module that declares none cannot be piped into; write it as a call.
-- Clauses 1 and 2 survive as *declarations in the catalog* rather than
-  inferences at parse time. Clause 3 is deleted.
-
-`osc.sine` declares `in`, `math.smoothstep` declares `in` (its third port),
-Space modules declare their position pair, `color.hsv` declares `hue`. Every
-preset that reads correctly today goes on reading correctly, because the
-declaration is what the old rule was trying to guess.
-
-The gain is that `a |> f(…)` means one thing, always, and an agent can know
-which without simulating the rest of the line.
+This was proposed as a pipe socket each module declares. `_` gets the same
+guarantee with no catalog pass: `a |> f(…)` means one thing, and an agent reads
+which from the line.
 
 ## 4. One canonical form
 
@@ -109,10 +95,10 @@ person keeps the sugar and an agent always reads the same dialect.
 out_high: 1)`. Positional arguments and the `..` range are accepted and
 normalized away. Nobody counts sockets.
 
-**Statements are flat.** A pipeline may not appear inside an argument. Instead
-of `osc.sine(freq: steps |> audio.note())`, a `let` above and a name below. This
-is what every specimen wrote unprompted, and it is what makes an edit a one-line
-edit rather than a change of shape.
+**Statements are flat.** Done: a pipeline inside an argument is an error. Instead
+of `osc.sine(freq: steps |> audio.note(note: _))`, a `let` above and a name
+below. This is what every specimen wrote unprompted, and it is what makes an
+edit a one-line edit rather than a change of shape.
 
 **Modules are full type ids.** `color.hsv`, `osc.sine`, `math.remap`. The
 ambiguity table disappears, `midi.in` stops shortening to `in`, and a name in
@@ -123,16 +109,15 @@ The cost is verbosity, which is the trade being asked for. Plasma, whole:
 ```
 let slowly  = t * 0.2
 let wave_y  = y |> osc.sine(freq: 1.1, phase: slowly)
-let crossed = x |> osc.sine(freq: 1.5) |> math.add(b: wave_y)
+let crossed = x |> osc.sine(freq: 1.5) |> math.add(a: _, b: wave_y)
 let level   = crossed |> math.remap(in_low: -2, in_high: 2, out_low: 0, out_high: 1)
 
-level |> color.hsv(saturation: 0.85, value: 1) |> out.color
+level |> color.hsv(hue: _, saturation: 0.85, value: 1) |> out.color
 ```
 
 One binding per nesting that had to be lifted, and longer lines. Against the
 form in §1 of the reference it is the same program — nine modules, nine wires,
-twenty-nine picture ops, thirty-six registers — and every line of it builds
-today, since only §3 needs a change to the catalog.
+twenty-nine picture ops, thirty-six registers — and every line of it builds.
 
 ## 5. `print` emits the canonical form
 

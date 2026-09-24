@@ -438,8 +438,8 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         // Arithmetic on what a pipe just produced, which is a thing people write
         // and this cannot read. The pipe is the loosest operator there is —
-        // `t * 0.2 |> sine()` needs it to be — so `s |> note * 2` would have to
-        // mean piping into `note * 2`, which is nothing. Said as the fix rather
+        // `t * 0.2 |> sine()` needs it to be — so `s |> fract * 2` would have to
+        // mean piping into `fract * 2`, which is nothing. Said as the fix rather
         // than as the rule, because the rule is not what anybody wanted to know.
         if (piped && Current.Kind is TokenKind.Star or TokenKind.Slash or TokenKind.Percent
             or TokenKind.Plus or TokenKind.Minus)

@@ -36,11 +36,12 @@ public class IdentityTests
 
     private const string Plasma = """
         let slowly = t * 0.2
+        let wave   = y |> sine(freq: 1.1, phase: slowly)
 
         x |> sine(freq: 1.5)
-          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> add(a: _, b: wave)
           |> remap(-2..2, 0..1)
-          |> hsv(saturation: 0.85, value: 1)
+          |> hsv(hue: _, saturation: 0.85, value: 1)
           |> out.color
         """;
 
@@ -121,8 +122,8 @@ public class IdentityTests
     [Fact]
     public void A_stage_added_mid_pipeline_renames_the_rest_of_its_own_statement()
     {
-        var before = Build("t |> sine(freq: 55) |> gain(0.5) |> out.left");
-        var after = Build("t |> sine(freq: 55) |> add(0.1) |> gain(0.5) |> out.left");
+        var before = Build("t |> sine(freq: 55) |> gain(color: _, gain: 0.5) |> out.left");
+        var after = Build("t |> sine(freq: 55) |> add(a: _, b: 0.1) |> gain(color: _, gain: 0.5) |> out.left");
 
         Only(after, "color.gain").ShouldNotBe(Only(before, "color.gain"));
 
@@ -153,8 +154,8 @@ public class IdentityTests
     [Fact]
     public void The_clock_is_one_module_wherever_it_is_first_mentioned()
     {
-        var first = Build("let a = t * 2\nlet b = t * 3\na |> add(b) |> out.left");
-        var second = Build("let b = t * 3\nlet a = t * 2\na |> add(b) |> out.left");
+        var first = Build("let a = t * 2\nlet b = t * 3\na |> add(a: _, b: b) |> out.left");
+        var second = Build("let b = t * 3\nlet a = t * 2\na |> add(a: _, b: b) |> out.left");
 
         first.Nodes.Count(n => n.TypeId == NodeCatalog.TimeTypeId).ShouldBe(1);
 
@@ -176,7 +177,7 @@ public class IdentityTests
             let low = voice(55)
             let high = voice(880)
 
-            low |> add(high) |> out.left
+            low |> add(a: _, high) |> out.left
             """);
 
         patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
@@ -189,7 +190,7 @@ public class IdentityTests
         var patch = Build("""
             def voice(pitch) = t |> sine(freq: pitch)
 
-            voice(55) |> add(voice(880)) |> out.left
+            voice(55) |> add(a: _, voice(880)) |> out.left
             """);
 
         patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);

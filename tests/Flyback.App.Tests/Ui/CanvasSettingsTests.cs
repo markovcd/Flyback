@@ -200,6 +200,8 @@ public sealed class CanvasSettingsTests : UiTest
         text.TextArea.Focus();
         Settle(window);
 
+        var shown = text.Text;
+
         window.KeyPress(Key.OemPlus, RawInputModifiers.Control, PhysicalKey.Equal, "=");
         window.KeyPress(Key.OemPlus, RawInputModifiers.Control, PhysicalKey.Equal, "=");
         window.KeyPress(Key.OemMinus, RawInputModifiers.Control, PhysicalKey.Minus, "-");
@@ -212,7 +214,7 @@ public sealed class CanvasSettingsTests : UiTest
         Settle(window);
 
         text.FontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize);
-        text.Text.ShouldNotContain("=");
+        text.Text.ShouldBe(shown);
         CanvasSettings.Load(settingsPath).EditorFontSize.ShouldBe(CanvasSettings.DefaultEditorFontSize);
     }
 

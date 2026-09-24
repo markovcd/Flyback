@@ -1290,11 +1290,12 @@ public class PatchWorkbenchTests
         {
             source = """
                 let slowly = t * 0.2
+                let wave   = y |> sine(freq: 1.1, phase: slowly)
 
                 x |> sine(freq: 1.5)
-                  |> add(y |> sine(freq: 1.1, phase: slowly))
+                  |> add(a: _, b: wave)
                   |> remap(-2..2, 0..1)
-                  |> hsv(saturation: 0.85, value: 1)
+                  |> hsv(hue: _, saturation: 0.85, value: 1)
                   |> out.color
                 """,
         }));

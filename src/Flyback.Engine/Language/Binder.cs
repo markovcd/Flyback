@@ -854,6 +854,9 @@ public sealed class Binder
                 "the Output has nothing to read. Pipe something into 'out.color' or 'out.left'.");
         }
 
+        if (Placeholder(expr))
+            return Refuse(expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
+
         if (scope.Find(expr.Name) is not { } value)
             return Refuse(expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
 
@@ -911,6 +914,7 @@ public sealed class Binder
         "t" => "the clock",
         "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
         "out" => "the Output",
+        "_" => "what a pipe brings in",
         _ => null,
     };
 
@@ -1019,12 +1023,22 @@ public sealed class Binder
         var wiring = new List<(int Port, Value Value)>();
         var paths = new List<(string Path, int Line, int Column)>();
         var fields = new List<(NodeExtra Owner, ExtraField Field, JsonNode Value, Site Where)>();
+        int? landing = null;
 
         // Named arguments first, because what they claim decides where
         // everything else can go.
         foreach (var argument in expr.Arguments)
         {
-            if (argument.Name is null) continue;
+            if (argument.Name is null)
+            {
+                if (Placeholder(argument.Value))
+                {
+                    Complain(argument.Line, argument.Column,
+                        "'_' goes in a named argument, 'socket: _', so it says which socket.");
+                }
+
+                continue;
+            }
 
             var port = Find(def.Inputs, argument.Name);
 
@@ -1053,19 +1067,34 @@ public sealed class Binder
                 continue;
             }
 
-            if (Bind(argument.Value, scope) is { } value) wiring.Add((port, value));
+            if (Placeholder(argument.Value))
+            {
+                if (piped is null)
+                    Complain(argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
+                else if (landing is not null)
+                    Complain(argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
+                else
+                    landing = port;
+
+                continue;
+            }
+
+            if (!Piped(argument) && Bind(argument.Value, scope) is { } value) wiring.Add((port, value));
         }
 
         var piping = new List<(int Port, Value Value)>();
 
-        if (piped is not null && !Land(def, piped, taken, expr, piping)) return null;
+        if (landing is { } at)
+            piping.Add((at, Part(piped!, 0)));
+        else if (piped is not null && !Land(def, piped, taken, expr, piping))
+            return null;
 
         // Whatever the pipe and the named arguments left, in order.
         var free = new Queue<int>(Enumerable.Range(0, def.Inputs.Count).Where(i => !taken.Contains(i)));
 
         foreach (var argument in expr.Arguments)
         {
-            if (argument.Name is not null) continue;
+            if (argument.Name is not null || Placeholder(argument.Value)) continue;
 
             if (argument.Value is TextExpr text)
             {
@@ -1076,6 +1105,7 @@ public sealed class Binder
             // A range is two arguments written as one, which is what makes
             // remap(-2..2, 0..1) four sockets and two commas.
             var parts = argument.Value is RangeExpr range ? new[] { range.Low, range.High } : [argument.Value];
+            var refused = Piped(argument);
 
             foreach (var part in parts)
             {
@@ -1089,7 +1119,7 @@ public sealed class Binder
                 var port = free.Dequeue();
                 taken.Add(port);
 
-                if (Bind(part, scope) is { } value) wiring.Add((port, value));
+                if (!refused && Bind(part, scope) is { } value) wiring.Add((port, value));
             }
         }
 
@@ -1124,13 +1154,13 @@ public sealed class Binder
     }
 
     /// <summary>
-    /// Where a pipe lands, which is the whole of the language's shape.
+    /// Where a pipe lands when no argument says <c>_</c>: a socket called
+    /// <c>in</c>, else a leading <c>x</c> and <c>y</c>, else nowhere.
     /// </summary>
     /// <remarks>
-    /// A socket named exactly <c>in</c> wins when the call did not name one, and
-    /// that is not a convenience: <c>math.smoothstep</c> is
-    /// <c>[edge0, edge1, in]</c>, so "the first socket left" would wire the
-    /// signal into an edge, read perfectly, and mean something else.
+    /// Nowhere is an error rather than a guess at the first socket left. That
+    /// guess wired a signal into <c>math.smoothstep</c>'s <c>edge0</c> and read
+    /// perfectly, and which socket was "left" hung on the arguments beside it.
     /// </remarks>
     private bool Land(NodeDef def, Value piped, HashSet<int> taken, CallExpr expr, List<(int, Value)> into)
     {
@@ -1157,30 +1187,81 @@ public sealed class Binder
             return false;
         }
 
-        // A position takes two, and it is the only thing that does: 'x' and 'y'
-        // next to each other are what the engine calls a position — the pair
-        // ADR-0050 normals to Coordinates together — so a Space chains off
-        // another without either end saying so.
+        // A position takes two, and it is the only thing that does: a module
+        // whose own first sockets are 'x' and 'y' takes what the engine calls a
+        // position — the pair ADR-0050 normals to Coordinates together — so a
+        // Space chains off another without either end saying so. The module's
+        // first two, not the first two the call left, so what the arguments
+        // name never moves the landing.
         //
         // Forwarding every output a source has was the alternative, and
-        // 'steps |> note()' rules it out: the sequencer's gate would land in
+        // 'steps |> note(note: _)' rules it out: the sequencer's gate would land in
         // Note's octave and its index in the cents, which reads perfectly and is
         // not a tune.
-        var position = free.Count >= 2
-            && Same(def.Inputs[free[0]].Name, "x")
-            && Same(def.Inputs[free[1]].Name, "y")
+        var position = def.Inputs.Count >= 2
+            && Same(def.Inputs[0].Name, "x")
+            && Same(def.Inputs[1].Name, "y")
+            && !taken.Contains(0)
+            && !taken.Contains(1)
             && Width(piped) >= 2;
 
-        var count = position ? 2 : 1;
-
-        for (var i = 0; i < count; i++)
+        if (!position)
         {
-            taken.Add(free[i]);
-            into.Add((free[i], Part(piped, i)));
+            var example = def.Inputs[free[0]].Name.Replace(' ', '_');
+            var why = signal >= 0 ? "its 'in' is already given" : "it has no socket called 'in'";
+
+            Complain(expr.Line, expr.Column,
+                $"'{def.Name}': {why}, so say where the pipe lands: "
+                + $"'{expr.Target}({example}: _)'. It has {List(def.Inputs)}.");
+            return false;
         }
+
+        taken.Add(0);
+        taken.Add(1);
+        into.Add((0, Part(piped, 0)));
+        into.Add((1, Part(piped, 1)));
 
         return true;
     }
+
+    /// <summary>Whether an argument is <c>_</c>, which stands for what is piped in.</summary>
+    private static bool Placeholder(Expr value) => value is NameExpr { Name: "_", Port: null };
+
+    /// <summary>
+    /// Whether an argument holds a pipeline, said where it does. A pipeline is a
+    /// statement's spine, so one inside an argument is written as a <c>let</c>
+    /// above and a name here, and every edit stays a one-line edit.
+    /// </summary>
+    private bool Piped(Argument argument)
+    {
+        if (!Pipes(argument.Value)) return false;
+
+        var start = Leftmost(argument.Value);
+
+        Complain(start.Line, start.Column,
+            "a pipeline cannot go inside an argument. Bind it with 'let' above and name it here.");
+        return true;
+    }
+
+    /// <summary>Where an expression begins in the text, which an operator's own position is not.</summary>
+    private static Expr Leftmost(Expr expr) => expr switch
+    {
+        PipeExpr pipe => Leftmost(pipe.Source),
+        BinaryExpr binary => Leftmost(binary.Left),
+        SelectExpr select => Leftmost(select.Source),
+        RangeExpr range => Leftmost(range.Low),
+        _ => expr,
+    };
+
+    private static bool Pipes(Expr expr) => expr switch
+    {
+        PipeExpr => true,
+        BinaryExpr binary => Pipes(binary.Left) || Pipes(binary.Right),
+        NegateExpr negate => Pipes(negate.Value),
+        SelectExpr select => Pipes(select.Source),
+        RangeExpr range => Pipes(range.Low) || Pipes(range.High),
+        _ => false,
+    };
 
     // --- placing and wiring --------------------------------------------------
 
@@ -1518,11 +1599,21 @@ public sealed class Binder
         {
             var arguments = new List<Value>();
 
-            if (piped is not null) arguments.Add(piped);
+            // What is piped in is the first parameter, or the one '_' stands in.
+            var placed = call.Arguments.Count(a => Placeholder(a.Value));
+
+            if (placed > 1)
+                return Refuse(call.Line, call.Column, "'_' is written twice, and a pipe brings one signal.");
+
+            if (placed == 1 && piped is null)
+                return Refuse(call.Line, call.Column, "'_' stands for what is piped in, and nothing is.");
+
+            if (piped is not null && placed == 0) arguments.Add(piped);
 
             foreach (var argument in call.Arguments)
             {
-                if (Bind(argument.Value, scope) is { } value) arguments.Add(value);
+                if (Placeholder(argument.Value)) arguments.Add(piped!);
+                else if (!Piped(argument) && Bind(argument.Value, scope) is { } value) arguments.Add(value);
             }
 
             if (arguments.Count != macro.Parameters.Count)

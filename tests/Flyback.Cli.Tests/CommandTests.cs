@@ -132,7 +132,7 @@ public class CommandTests
         using var directory = new Scratch();
         var file = directory.File("twice.fbks");
 
-        File.WriteAllText(file.FullName, "x |> color.hsv() |> out.color\ny |> color.hsv() |> out.color\n");
+        File.WriteAllText(file.FullName, "x |> color.hsv(hue: _) |> out.color\ny |> color.hsv(hue: _) |> out.color\n");
 
         var output = new StringWriter();
         var code = Program.Run(
@@ -530,10 +530,11 @@ public class CommandTests
     /// <summary>A picture and a sound, so either half can be turned on its own.</summary>
     private const string Hello = """
         let slowly = t * 0.2
+        let signal = y |> sine(freq: 1.1, phase: slowly)
         x |> sine(freq: 0.9, phase: slowly)
-          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> add(a: _, signal)
           |> remap(-2..2, 0..1)
-          |> hsv(saturation: 0.85, value: 1)
+          |> hsv(hue: _, saturation: 0.85, value: 1)
           |> out.color
         t |> sine(freq: 220) |> out.left
         """;
@@ -725,9 +726,9 @@ public class CommandTests
     }
 
     /// <summary>
-    /// The socket the description marks as piped is the one the language wires a
-    /// bare <c>|&gt;</c> into, for every module, or an agent writing text from it
-    /// wires the signal into an edge.
+    /// The sockets the description marks as piped are the ones the language wires
+    /// a bare <c>|&gt;</c> into, for every module, and a module with none marked
+    /// refuses a bare pipe rather than guessing.
     /// </summary>
     [Fact]
     public void The_piped_socket_is_where_the_language_lands_a_pipe()
@@ -739,22 +740,32 @@ public class CommandTests
             var (_, output, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, def.TypeId, true, o, e));
 
             using var document = JsonDocument.Parse(output);
-            var piped = document.RootElement.GetProperty("piped")[0].GetString();
+            var marked = document.RootElement.GetProperty("piped").EnumerateArray().Select(p => p.GetString()).ToArray();
 
+            // A position, so a module that takes one has something to take.
             var load = Core.Language.PatchLanguage.Build(
-                $"let source = osc.saw()\nlet stage = source |> {def.TypeId}()",
+                $"let source = space.rotate()\nlet stage = source |> {def.TypeId}()",
                 NodeCatalog.BuiltIn);
 
-            var source = load.Patch.Nodes.First(node => node.TypeId == "osc.saw").Id;
+            if (marked.Length == 0)
+            {
+                if (!load.Report.Contains("say where the pipe lands")) wrong.Add($"{def.TypeId}: marked nothing, and was not refused");
+                continue;
+            }
+
+            var source = load.Patch.Nodes.First(node => node.TypeId == "space.rotate").Id;
+
             // A small Maths module is folded into an Expression, so there is no node left to land on.
             if (load.Patch.Nodes.LastOrDefault(node => node.TypeId == def.TypeId)?.Id is not { } stage) continue;
 
             var landed = load.Patch.Connections
                 .Where(wire => wire.SourceNode == source && wire.TargetNode == stage)
+                .OrderBy(wire => wire.TargetPort)
                 .Select(wire => def.Inputs[wire.TargetPort].Name)
-                .FirstOrDefault();
+                .ToArray();
 
-            if (landed != piped) wrong.Add($"{def.TypeId}: marked {piped}, landed {landed ?? "nowhere"} {load.Report}");
+            if (!landed.SequenceEqual(marked))
+                wrong.Add($"{def.TypeId}: marked {string.Join(",", marked)}, landed {string.Join(",", landed)} {load.Report}");
         }
 
         wrong.ShouldBeEmpty();

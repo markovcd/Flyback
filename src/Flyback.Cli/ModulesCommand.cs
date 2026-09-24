@@ -121,6 +121,9 @@ internal static class ModulesCommand
         for (var i = 0; i < def.Inputs.Count; i++)
             output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {At(def.Inputs[i]).PadRight(at)}  {Turns(def.Inputs[i])}".TrimEnd());
 
+        if (def.Inputs.Count > 0 && piped.Length == 0)
+            output.WriteLine($"  a pipe says where it lands: {def.TypeId}({def.Inputs[0].Name.Replace(' ', '_')}: _)");
+
         output.WriteLine();
         output.WriteLine("outputs");
 
@@ -161,19 +164,18 @@ internal static class ModulesCommand
     }
 
     /// <summary>
-    /// The inputs a bare <c>|&gt;</c> lands on: <c>in</c> where there is one, else the
-    /// first, and <c>x</c> and <c>y</c> together when they lead.
+    /// The inputs a bare <c>|&gt;</c> lands on: <c>in</c> where there is one, else
+    /// <c>x</c> and <c>y</c> together when they lead. None means the call says
+    /// where with <c>socket: _</c>.
     /// </summary>
     private static int[] Piped(NodeDef def)
     {
-        if (def.Inputs.Count == 0) return [];
-
         var signal = def.Inputs.ToList().FindIndex(port => string.Equals(port.Name, "in", StringComparison.OrdinalIgnoreCase));
 
         if (signal >= 0) return [signal];
 
         return def.Inputs.Count >= 2 && string.Equals(def.Inputs[0].Name, "x", StringComparison.OrdinalIgnoreCase)
-            && string.Equals(def.Inputs[1].Name, "y", StringComparison.OrdinalIgnoreCase) ? [0, 1] : [0];
+            && string.Equals(def.Inputs[1].Name, "y", StringComparison.OrdinalIgnoreCase) ? [0, 1] : [];
     }
 
     private static Module Listed(ModuleCatalog catalog, NodeDef def) => new(

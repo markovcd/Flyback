@@ -223,7 +223,7 @@ let slowly = t * 0.2
 
 (x |> sine(freq: 1.5)) + (y |> sine(freq: 1.1, phase: slowly))
   |> remap(-2..2, 0..1)
-  |> color.hsv(saturation: 0.85, value: 1)
+  |> color.hsv(hue: _, saturation: 0.85, value: 1)
   |> out.color</code></pre>
       </div>
       <div class="window">

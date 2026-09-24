@@ -50,10 +50,12 @@ internal static class Handbook
         ```
         let slowly = t * 0.2
 
+        let wave = y |> sine(freq: 1.1, phase: slowly)
+
         x |> sine(freq: 1.5)
-          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> add(a: _, b: wave)
           |> remap(-2..2, 0..1)
-          |> color.hsv(saturation: 0.85, value: 1)
+          |> color.hsv(hue: _, saturation: 0.85, value: 1)
           |> out.color
         ```
 
@@ -63,7 +65,11 @@ internal static class Handbook
           `midi.in`, which are written in full.
         - **Where the signal lands**: a socket called `in`; failing that a
           leading `x` and `y`, two signals at once, which is how Space and
-          Pattern modules chain; failing that the first socket not named.
+          Pattern modules chain. Anywhere else, say which socket with `_`:
+          `beat.gate |> adsr(gate: _, decay: 240ms)`. A module with neither
+          and no `_` is refused.
+        - **A pipeline is a statement, never an argument.** Bind it with `let`
+          and name it in the call.
         - **Sockets are named arguments**, a space written as an underscore:
           `remap(in_low: -1, out_high: 1)`. A socket not named keeps its
           default.
@@ -99,7 +105,7 @@ internal static class Handbook
           say:
 
         ```
-        let sum = square(freq: 110) * 0.06 |> add()
+        let sum = square(freq: 110) * 0.06 |> add(a: _)
 
         sum.b <- sum * 0.94
         sum |> out.left
@@ -296,29 +302,31 @@ internal static class Handbook
         none sounds wrong so much as absent.
 
         - **An envelope opens on a gate, and a sequencer's gate is `.gate`.**
-          `steps |> adsr(...)` sends the note number, which never closes the
-          envelope. Write `steps.gate |> adsr(...)`; the bare name is the
-          pitch, and it reaches `freq` by way of a Note.
+          `steps |> adsr(gate: _)` sends the note number, which never closes
+          the envelope. Write `steps.gate |> adsr(gate: _)`; the bare name is
+          the pitch, and it reaches `freq` by way of a Note.
         - **A step's rate is steps per second**, so a sequencer left at 1
           plays two steps in a two-second clip. Patch a Tempo into `rate`, or
           set how many steps a second you want. An envelope whose decay
           outlasts its step is a drone.
         - **An oscillator with nothing in `freq` sits at 1 Hz**, below
           hearing, and an envelope on its `amp` does not give it a pitch. A
-          tune reaches `freq` through a Note: `saw(freq: seq |> note)`. Nothing
-          warns about this one.
+          tune reaches `freq` through a Note: `let pitch = seq |> note(note: _)`,
+          then `saw(freq: pitch)`. Nothing warns about this one.
 
         A kick and a bass line, whole:
 
         ```
         let beat  = values(rate: 4) [ 1 ~ 1 ~ ]
-        let level = beat.gate |> adsr(attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
-        let drop  = beat.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
-        let kick  = sine(freq: drop |> remap(0..1, 47..205)) * level
+        let level = beat.gate |> adsr(gate: _, attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
+        let drop  = beat.gate |> adsr(gate: _, attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
+        let sweep = drop |> remap(0..1, 47..205)
+        let kick  = sine(freq: sweep) * level
 
         let line  = notes(rate: 4) [ A1 A1 E2 A1 ]
-        let bass  = saw(freq: line |> note, amp: 0.8)
-                      * (line.gate |> adsr(attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms))
+        let pitch = line |> note(note: _)
+        let pluck = line.gate |> adsr(gate: _, attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms)
+        let bass  = saw(freq: pitch, amp: 0.8) * pluck
 
         mixer(kick, 1, bass, 0.7) |> out.left
         ```

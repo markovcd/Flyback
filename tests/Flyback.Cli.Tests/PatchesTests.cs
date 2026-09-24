@@ -72,7 +72,7 @@ public class PatchesTests
 
         File.WriteAllText(file.FullName, """
             x |> sine(freq: 1.5)
-              |> hsv(saturation: 0.85)
+              |> hsv(hue: _, saturation: 0.85)
               |> out.color
             """);
 

@@ -536,8 +536,8 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        text.Text = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+        text.Text = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
 
         Press(Tidy(window));
         Settle(window);
@@ -557,8 +557,8 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        text.Text = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+        text.Text = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
 
         window.RaiseEvent(new Avalonia.Input.KeyEventArgs
         {
@@ -579,8 +579,8 @@ public class SourceViewTests : UiTest
         var window = Open();
         var text = ShowCode(window);
 
-        const string longLine = "x |> sine(freq: 1.5) |> add(b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(saturation: 0.85) |> gain(gain: 0.5) |> out.color";
+        const string longLine = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
 
         text.Text = longLine;
 
@@ -1070,6 +1070,7 @@ public class SourceViewTests : UiTest
         Editor(window).SelectedNode.ShouldNotBeNull("the caret points the panel to begin with");
 
         // Typed in ahead of it, which is what gives the Mix a new name.
+        text.Document.Insert("math.mix(".Length, "b: _, ");
         text.Document.Insert(0, "t |> sine(freq: 2) |> ");
         Settle(window);
 
@@ -1109,6 +1110,7 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
+        text.Document.Insert("math.mix(".Length, "b: _, ");
         text.Document.Insert(0, "t |> sine(freq: 2) |> ");
         Settle(window);
 
@@ -1811,7 +1813,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, """
             group "Voice" {
               let a = t |> sine(freq: 220)
-              let b = a |> mul(b: 0.5)
+              let b = a |> mul(a: _, b: 0.5)
             }
             b |> out.left
             """);

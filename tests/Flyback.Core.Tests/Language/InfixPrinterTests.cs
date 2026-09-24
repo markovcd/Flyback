@@ -103,7 +103,7 @@ public class InfixPrinterTests
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
-        printed.ShouldContain("expression(formula: \"floor(a * 8) / 8\")");
+        printed.ShouldContain("expression(a: _, formula: \"floor(a * 8) / 8\")");
         SameInstrument(b.Patch, Build(printed), printed);
     }
 
@@ -122,7 +122,7 @@ public class InfixPrinterTests
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
-        printed.ShouldContain("expression(formula: \"a * a\")");
+        printed.ShouldContain("expression(a: _, formula: \"a * a\")");
         SameInstrument(b.Patch, Build(printed), printed);
     }
 
@@ -153,7 +153,7 @@ public class InfixPrinterTests
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
 
-        printed.ShouldContain("expression(b: 0.25, formula: \"a * b\")");
+        printed.ShouldContain("expression(a: _, b: 0.25, formula: \"a * b\")");
         SameInstrument(b.Patch, Build(printed), printed);
     }
 

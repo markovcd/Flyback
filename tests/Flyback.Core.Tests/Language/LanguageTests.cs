@@ -80,11 +80,12 @@ public class LanguageTests
     [Fact]
     public void Plasma() => Same("Plasma", """
         let slowly = t * 0.2
+        let wave   = y |> sine(freq: 1.1, phase: slowly)
 
         x |> sine(freq: 1.5)
-          |> add(y |> sine(freq: 1.1, phase: slowly))
+          |> add(a: _, b: wave)
           |> remap(-2..2, 0..1)
-          |> hsv(saturation: 0.85, value: 1)
+          |> hsv(hue: _, saturation: 0.85, value: 1)
           |> out.color
         """);
 
@@ -93,7 +94,7 @@ public class LanguageTests
         rotate(angle: t * 0.15)
           |> kaleidoscope(segments: 6)
           |> clouds(z: t * 0.3, scale: 2.5)
-          |> hsv(saturation: 0.9, value: 1)
+          |> hsv(hue: _, saturation: 0.9, value: 1)
           |> out.color
         """);
 
@@ -105,7 +106,7 @@ public class LanguageTests
 
         rings(freq: 3, offset: t)
           |> autoremap()
-          |> hsv(hue: slow, saturation: 0.85)
+          |> hsv(value: _, hue: slow, saturation: 0.85)
           |> out.color
 
         out.volume = 0.6
@@ -118,9 +119,10 @@ public class LanguageTests
                       |> mirror()
                       |> polar()
 
+        let hue = plane.angle |> remap(-3.15..3.15, 0..1)
         plane |> checker(size: 3)
               |> remap(0..1, 0.14..1)
-              |> hsv(hue: plane.angle |> remap(-3.15..3.15, 0..1), saturation: 0.7)
+              |> hsv(value: _, hue: hue, saturation: 0.7)
               |> out.color
         """);
 
@@ -131,19 +133,19 @@ public class LanguageTests
         let past = rotate(angle: t * 0.08)
                      |> scale(scale: 1.05)
                      |> feedback()
-                     |> gain(gain: 0.95, bias: 0)
+                     |> gain(color: _, gain: 0.95, bias: 0)
 
         let fresh = rings(freq: 1.5, offset: pulse)
                       |> smoothstep(0.8, 1)
-                      |> hsv(hue: pulse, saturation: 1)
+                      |> hsv(value: _, hue: pulse, saturation: 1)
 
-        past |> max(fresh) |> out.color
+        past |> max(a: _, b: fresh) |> out.color
         """);
 
     [Fact]
     public void Loop() => Same("Loop", """
         let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
-        let sum  = square(freq: 110) * (1 - keep) |> add()
+        let sum  = square(freq: 110) * (1 - keep) |> add(a: _)
 
         sum.b <- sum * keep
         sum |> out.left
@@ -156,7 +158,7 @@ public class LanguageTests
         let root  = note(A2)
         let twin  = note(root.note, cents: 9)
         let shape = pulse(freq: 1.5, width: 0.3)
-                      |> adsr(attack: 10ms, decay: 126ms, sustain: 0.4, release: 158ms)
+                      |> adsr(gate: _, attack: 10ms, decay: 126ms, sustain: 0.4, release: 158ms)
 
         saw(freq: root, amp: 0.7) * shape |> out.left
         saw(freq: twin, amp: 0.7) * shape |> out.right
@@ -184,12 +186,15 @@ public class LanguageTests
     public void Sequence() => Same("Sequence", """
         let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 
-        sine(freq: steps |> note()) * steps.gate |> out.left
+        let pitch = steps |> note(note: _)
+        sine(freq: pitch) * steps.gate |> out.left
 
-        rings(freq: steps.index |> remap(0..1, 1.5..9))
+        let bands = steps.index |> remap(0..1, 1.5..9)
+        let bright = steps.gate |> remap(0..1, 0.4..1)
+        rings(freq: bands)
           |> remap(-1..1, 0.05..1)
-          |> mul(steps.gate |> remap(0..1, 0.4..1))
-          |> hsv(hue: steps.index, saturation: 0.8)
+          |> mul(a: _, b: bright)
+          |> hsv(value: _, hue: steps.index, saturation: 0.8)
           |> out.color
 
         out.volume = 0.5
@@ -199,7 +204,7 @@ public class LanguageTests
     public void Heard() => Alike("Heard", """
         let voiced = sine(freq: 70)
                        * (pulse(freq: 2, width: 0.08)
-                            |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+                            |> adsr(gate: _, attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
         let heard = meter(voiced, window: 32ms)
 
@@ -207,8 +212,8 @@ public class LanguageTests
 
         rings(freq: 5)
           |> remap(-1..1, 0.1..1)
-          |> mul(heard.peak + 0.18)
-          |> hsv(hue: heard, saturation: 0.75)
+          |> mul(a: _, b: heard.peak + 0.18)
+          |> hsv(value: _, hue: heard, saturation: 0.75)
           |> out.color
 
         out.volume = 0.6
@@ -218,10 +223,10 @@ public class LanguageTests
     public void Duck() => Alike("Duck", """
         let kick = sine(freq: 55)
                      * (pulse(freq: 2, width: 0.08)
-                          |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+                          |> adsr(gate: _, attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
         let pad = saw(freq: 110, amp: 0.25) + saw(freq: 165, amp: 0.2)
-                    |> duck(key: kick, depth: 0.8, release: 200ms)
+                    |> duck(left: _, key: kick, depth: 0.8, release: 200ms)
 
         pad + kick |> out.left
         scope(pad.gain, window: 2s, scale: 1.25) |> out.color
@@ -231,11 +236,13 @@ public class LanguageTests
 
     [Fact]
     public void AheadAndBehind() => Alike("Ahead and behind", """
-        let tone = saw(freq: sine(freq: 0.4) |> remap(-1..1, 90..320))
+        let sweep = sine(freq: 0.4) |> remap(-1..1, 90..320)
+        let tone = saw(freq: sweep)
 
         tone |> out.left
 
-        color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
+        let split = y |> step()
+        color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), split)
           |> out.color
 
         out.volume = 0.3
@@ -250,8 +257,8 @@ public class LanguageTests
         loop |> out.left
 
         bands |> remap(-1..1, 0.05..0.55)
-              |> hsv(hue: where, saturation: 0.7)
-              |> add(loop.view)
+              |> hsv(value: _, hue: where, saturation: 0.7)
+              |> add(a: _, b: loop.view)
               |> out.color
 
         out.volume = 0.25
@@ -265,11 +272,12 @@ public class LanguageTests
         let folded = rotate(angle: t * 0.05) |> kaleidoscope(segments: 8)
         let field  = folded |> clouds(z: boil, scale: 1.4)
 
+        let shimmer = field + pulse |> fract()
         let fresh = folded
                       |> warp(by: field, amount: 0.5)
                       |> rings(freq: 2.5, offset: pulse)
                       |> smoothstep(0.15, 0.85)
-                      |> hsv(hue: field + pulse |> fract(), saturation: 0.85)
+                      |> hsv(value: _, hue: shimmer, saturation: 0.85)
 
         fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
         """);
@@ -283,11 +291,12 @@ public class LanguageTests
 
     [Fact]
     public void PictureIn() => Same("Picture in", """
-        scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
+        let zoom = sine(freq: 0.05) |> remap(-1..1, 0.85..1.4)
+        scale(scale: zoom)
           |> rotate(angle: t * 0.05)
           |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
           |> picture()
-          |> gain(gain: 1.15, bias: -0.05)
+          |> gain(color: _, gain: 1.15, bias: -0.05)
           |> out.color
         """);
 
@@ -319,11 +328,11 @@ public class LanguageTests
     [Fact]
     public void HeadsOrTails() => Alike("Heads or tails", """
         let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
-        let coin = riff.gate |> chance(chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
+        let coin = riff.gate |> chance(gate: _, chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
 
-        triangle(freq: note(riff)) * (coin |> adsr(attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
+        triangle(freq: note(riff)) * (coin |> adsr(gate: _, attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
           |> out.left
-        sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
+        sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(gate: _, attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
           |> out.right
 
         out.volume = 0.5
@@ -333,10 +342,11 @@ public class LanguageTests
     public void Staircase() => Alike("Staircase", """
         let clock = pulse(freq: 6)
         let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
-        let stair = hold(in: slope |> remap(-1.5..1.5, 45..81), trigger: clock)
+        let height = slope |> remap(-1.5..1.5, 45..81)
+        let stair = hold(in: height, trigger: clock)
         let pitch = tune(in: stair) [ A C D E G ]
 
-        triangle(freq: pitch) * (clock |> adsr(attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
+        triangle(freq: pitch) * (clock |> adsr(gate: _, attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
           |> out.left
 
         out.volume = 0.5
@@ -345,7 +355,7 @@ public class LanguageTests
     [Fact]
     public void Sidebands() => Alike("Sidebands", """
         let strike = pulse(freq: 0.5, width: 0.1)
-                       |> adsr(attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
+                       |> adsr(gate: _, attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
 
         let depth = sine(freq: 0.07) |> remap(-1..1, 0.2..1.6)
 
@@ -365,7 +375,7 @@ public class LanguageTests
           let level = sine(freq: rate, phase: phase, amp: 0.5, bias: 0.5)
           let tone  = sine(freq: note(pitch))
           let tint  = radius |> sine(freq: bands, amp: 0.5, bias: 0.5)
-                             |> hsv(hue: hue, saturation: 1)
+                             |> hsv(value: _, hue: hue)
           (tone, level, tint)
         }
 
@@ -377,7 +387,7 @@ public class LanguageTests
         mixer(toneA, levelA, toneB, levelB, toneC, levelC, toneD, levelD) |> out.left
 
         mixer(tintA, levelA, tintB, levelB, tintC, levelC, tintD, levelD)
-          |> gain(gain: 0.6)
+          |> gain(color: _, gain: 0.6)
           |> out.color
 
         out.volume = 0.25
@@ -389,13 +399,14 @@ public class LanguageTests
         let beat  = pulse(freq: tempo(180), width: 0.12)
         let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
 
-        sine(freq: key |> note())
-          * (beat |> adsr(attack: 4ms, decay: 141ms, sustain: 0, release: 32ms))
+        let pitch = key |> note(note: _)
+        sine(freq: pitch)
+          * (beat |> adsr(gate: _, attack: 4ms, decay: 141ms, sustain: 0, release: 32ms))
           |> out.left
 
-        hsv(hue: key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6),
-            saturation: 0.6,
-            value: field |> remap(0..1, 0.22..0.95))
+        let hue   = key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6)
+        let shade = field |> remap(0..1, 0.22..0.95)
+        hsv(hue: hue, saturation: 0.6, value: shade)
           |> out.color
 
         out.volume = 0.55
@@ -430,9 +441,11 @@ public class LanguageTests
           let filling = (phrase |> step(edge: 0.875)) * turn
           let ramp    = phrase |> remap(0.875..1, 0.35..1)
 
+          let chorusRoot = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ]
+          let verseRoot  = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ]
           let root = math.mix(
-            beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ],
-            beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ],
+            verseRoot,
+            chorusRoot,
             theme)
         }
 
@@ -452,10 +465,11 @@ public class LanguageTests
           let kickGate = math.mix(verseKick.gate, chorusKick.gate, theme) * (song |> step(edge: 0.25))
           let kickHard = math.mix(verseKick, chorusKick, theme) |> hold(trigger: kickGate)
 
-          let kickLevel = kickGate |> adsr(attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
-          let sweep     = kickGate |> adsr(attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
+          let kickLevel = kickGate |> adsr(gate: _, attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
+          let sweep     = kickGate |> adsr(gate: _, attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
 
-          let kick = sine(freq: sweep |> remap(0..1, 46..200)) * kickLevel * kickHard * 1.7
+          let kickFreq = sweep |> remap(0..1, 46..200)
+          let kick = sine(freq: kickFreq) * kickLevel * kickHard * 1.7
                        |> clamp(-1, 1)
 
           let duck = duck(key: kickLevel, depth: 0.55, attack: 100us, release: 100us)
@@ -466,8 +480,8 @@ public class LanguageTests
             0.8 0.3 0.55 0.3  0.75 0.3 0.6 0.35  0.8 0.3 0.55 0.3  0.75 0.35 0.65 0.5
           ]
 
-          let shut = (1 - fract(beat.beats * 4) |> pow(10)) * hatSeq * (song |> step(edge: 0.25))
-          let open = (1 - fract(beat.beats + 0.5) |> pow(3)) * theme
+          let shut = (1 - fract(beat.beats * 4) |> pow(a: _, 10)) * hatSeq * (song |> step(edge: 0.25))
+          let open = (1 - fract(beat.beats + 0.5) |> pow(a: _, 3)) * theme
 
           let hatLevel = shut + open * 0.6
 
@@ -479,10 +493,11 @@ public class LanguageTests
             ~ ~ ~ ~  1 ~ ~ ~  ~ ~ ~ ~  0.95 ~ ~ 0.45
           ]
 
-          let snareGate = math.mix(snareSeq.gate * (song |> step(edge: 0.5)), hatSeq.gate, filling)
+          let snareHit = snareSeq.gate * (song |> step(edge: 0.5))
+          let snareGate = math.mix(snareHit, hatSeq.gate, filling)
           let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
 
-          let snareLevel = snareGate |> adsr(attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
+          let snareLevel = snareGate |> adsr(gate: _, attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
 
           let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
 
@@ -500,14 +515,15 @@ public class LanguageTests
           ]
 
           let bassGate = math.mix(verseBass.gate, chorusBass.gate, theme) * (song |> step(edge: 0.4))
-          let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note()
+          let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note(note: _)
 
           let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
 
-          let pluck = (bassGate |> adsr(attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
+          let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
+          let cutoffTop = song |> remap(0..1, 900..2600)
           let cutoff = pluck |> remap(in_low: 0, out_low: 70,
-                                      out_high: song |> remap(0..1, 900..2600))
+                                      out_high: cutoffTop)
 
           let low = saw(freq: bassHz, amp: 0.8) |> filter(cutoff: cutoff, resonance: 0.8)
 
@@ -519,18 +535,21 @@ public class LanguageTests
             57 64%0.7 69%0.8 64%0.7  72.6%0.9 64%0.7 69%0.8 64%0.7
           ]
 
-          let secondArp = beat.beats |> add(b: -0.25) |> values(rate: 2) [
+          let secondArp = beat.beats |> add(a: _, b: -0.25) |> values(rate: 2) [
             69 72.6 76 72.6  69 76 72.6 69
           ]
 
           let stringTone = song |> remap(0..1, 900..2200)
 
+          let firstTuned = firstArp |> tune(transpose: root) [ C D E F G G# A B ]
           let firstPlucked = string(trigger: firstArp.gate,
-                                    freq: firstArp |> tune(transpose: root) [ C D E F G G# A B ],
+                                    freq: firstTuned,
                                     decay: 708ms)
 
-          let secondPlucked = string(trigger: secondArp.gate * (song |> step(edge: 0.2)),
-                                     freq: secondArp |> tune(transpose: root) [ C D E F G G# A B ],
+          let secondTuned = secondArp |> tune(transpose: root) [ C D E F G G# A B ]
+          let secondStrike = secondArp.gate * (song |> step(edge: 0.2))
+          let secondPlucked = string(trigger: secondStrike,
+                                     freq: secondTuned,
                                      decay: 708ms)
 
           let firstString  = (firstPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
@@ -543,11 +562,13 @@ public class LanguageTests
         }
 
         group "Pad" {
-          let padRoot   = pulse(freq: root + 57 |> note(),
+          let padRootFreq = root + 57 |> note(note: _)
+          let padRoot   = pulse(freq: padRootFreq,
                                 width: sine(freq: 0.17, amp: 0.22, bias: 0.5), amp: 0.5)
           let padMiddle = pulse(freq: tune(in: 60.6, transpose: root) [ C D E F G G# A B ],
                                 width: sine(freq: 0.23, amp: 0.22, bias: 0.5), amp: 0.5)
-          let padFifth  = pulse(freq: root + 64 |> note(),
+          let padFifthFreq = root + 64 |> note(note: _)
+          let padFifth  = pulse(freq: padFifthFreq,
                                 width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
 
           let padTone = song |> remap(0..1, 700..2400)
@@ -579,13 +600,15 @@ public class LanguageTests
           let leadStep = math.mix(hook, melody, theme)
           let leadGate = math.mix(hook.gate, melody.gate, theme) * theme.gate
 
-          let tuned = leadStep |> note()
+          let tuned = leadStep |> note(note: _)
           let wide  = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
-          let fifth = triangle(freq: leadStep + 7 |> note(), amp: 0.5)
+          let fifthFreq = leadStep + 7 |> note(note: _)
+          let fifth = triangle(freq: fifthFreq, amp: 0.5)
                         * sine(freq: 0.043, amp: 0.5, bias: 0.5)
 
-          let leadEnv = leadGate |> adsr(attack: 3.16ms, decay: 112ms,
-                                         sustain: theme |> remap(0..1, 0.3..0.7), release: 141ms)
+          let leadEnvSustain = theme |> remap(0..1, 0.3..0.7)
+          let leadEnv = leadGate |> adsr(gate: _, attack: 3.16ms, decay: 112ms,
+                                         sustain: leadEnvSustain, release: 141ms)
 
           let leadTone  = leadEnv |> remap(0..1, 500..5200)
           let leadToneL = saw(freq: tuned, amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
@@ -621,40 +644,48 @@ public class LanguageTests
         }
 
         group "Picture: Geometry" {
+          let foldSegments = root |> remap(-5..3, 4..10)
+          let foldZoom = kickGate |> remap(0..1, 0.96..1.3)
           let fold = transform(angle: t * 0.055 + root * 0.08,
-                               zoom:  kickGate |> remap(0..1, 0.96..1.3),
+                               zoom:  foldZoom,
                                order: "turn")
-                       |> kaleidoscope(segments: root |> remap(-5..3, 4..10))
+                       |> kaleidoscope(segments: foldSegments)
 
           let field = fold |> clouds(z: t * 0.18, scale: 2.1)
 
+          let filamentBands = leadGate |> remap(0..1, 2.2..4.4)
           let filament = fold
             |> warp(by: field,
                     amount: sine(freq: 0.071, amp: 0.25, bias: 0.45) + firstArp.gate * 0.15)
-            |> rings(freq: (leadGate |> remap(0..1, 2.2..4.4)) + song * 1.6, offset: t * 0.4)
+            |> rings(freq: filamentBands + song * 1.6, offset: t * 0.4)
             |> smoothstep(0.2, 0.95)
         }
 
         group "Picture: Color" {
+          let freshValue = filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35) |> clamp(0, 1)
+          let bassLift = bassGate |> remap(0..1, 0.55..0.95)
+          let freshHue = leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract()
+          let freshSaturation = bassLift * (snareGate |> remap(0..1, 1..0.3))
           let fresh = hsv(
-            hue:        leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract(),
-            saturation: (bassGate |> remap(0..1, 0.55..0.95)) * (snareGate |> remap(0..1, 1..0.3)),
-            value:      filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35)
-                          |> clamp(0, 1))
+            hue:        freshHue,
+            saturation: freshSaturation,
+            value:      freshValue)
         }
 
         group "Picture: Feedback" {
-          let warm = transform(zoom: 1.035, angle: kickGate |> remap(0..1, 0.012..0.05))
+          let warmAngle = kickGate |> remap(0..1, 0.012..0.05)
+          let warm = transform(zoom: 1.035, angle: warmAngle)
                        |> feedback()
-                       |> color.split()
+                       |> color.split(color: _)
 
           let cool = transform(zoom: 0.972, angle: -0.016)
                        |> feedback()
-                       |> color.split()
+                       |> color.split(color: _)
 
+          let gain2 = song |> remap(0..1, 0.78..0.9)
           rgb(warm, cool.g, cool.b)
-            |> gain(gain: song |> remap(0..1, 0.78..0.9), bias: 0)
-            |> max(fresh)
+            |> gain(color: _, gain: gain2, bias: 0)
+            |> max(a: _, b: fresh)
             |> out.color
         }
 
@@ -750,7 +781,7 @@ public class LanguageTests
     public void A_selector_on_a_stage_picks_the_stages_output()
     {
         var patch = Build("""
-            tempo(bpm: 104).beats |> notes(rate: 2) [ A2 E3 ].gate |> adsr() |> out.left
+            tempo(bpm: 104).beats |> notes(rate: 2) [ A2 E3 ].gate |> adsr(gate: _) |> out.left
             """);
 
         var tempo = patch.Nodes.Single(n => n.TypeId == NodeCatalog.TempoTypeId);
@@ -787,14 +818,14 @@ public class LanguageTests
 
     /// <summary>
     /// A position takes two signals and nothing else does. The Sequence preset
-    /// is why: its 'steps |> note()' would otherwise have put the sequencer's
+    /// is why: its 'steps |> note(note: _)' would otherwise have put the sequencer's
     /// gate into Note's octave and its index into the cents — a patch that
     /// compiles, plays, and is not a tune.
     /// </summary>
     [Fact]
     public void Only_a_position_takes_more_than_one_signal()
     {
-        var patch = Build("notes() |> note() |> out.left");
+        var patch = Build("notes() |> note(note: _) |> out.left");
 
         var steps = patch.Nodes.Single(n => n.TypeId == "seq.notes");
         var note = patch.Nodes.Single(n => n.TypeId == "audio.note");
@@ -829,9 +860,9 @@ public class LanguageTests
     [Fact]
     public void A_module_after_a_pipe_needs_no_brackets()
     {
-        var patch = Build("notes(rate: 2) [ A2 E3 ] |> note |> out.left");
+        var patch = Build("t |> sine |> out.left");
 
-        patch.Nodes.ShouldContain(n => n.TypeId == "audio.note");
+        patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
         patch.Reaches().Sound.ShouldBeTrue();
     }
 
@@ -849,7 +880,7 @@ public class LanguageTests
     [Fact]
     public void Arithmetic_after_a_pipeline_is_told_where_the_brackets_go()
     {
-        var report = Try("let s = notes() [ C2 ]\nsaw(freq: s |> note * 2) |> out.left").Report;
+        var report = Try("let s = notes() [ C2 ]\nlet pitch = s |> note(note: _) * 2").Report;
 
         report.ShouldContain("cannot follow a pipeline");
         report.ShouldContain("(a |> b) * 2");
@@ -857,7 +888,7 @@ public class LanguageTests
 
     [Fact]
     public void The_bracketed_form_is_what_was_meant() =>
-        Build("let s = notes() [ C2 ]\nsaw(freq: (s |> note) * 2) |> out.left").Nodes
+        Build("let s = notes() [ C2 ]\nlet pitch = (s |> note(note: _)) * 2\nsaw(freq: pitch) |> out.left").Nodes
             .Single(n => n.TypeId == NodeCatalog.ExpressionTypeId).StateOf("expression")!["formula"]!.GetValue<string>().ShouldBe("a * 2");
 
     /// <summary>A comma before the bracket is a habit, not a mistake worth a refusal.</summary>
@@ -972,13 +1003,15 @@ public class LanguageTests
     {
         var patch = Build("""
             let beat  = values(rate: 4) [ 1 ~ 1 ~ ]
-            let level = beat.gate |> adsr(attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
-            let drop  = beat.gate |> adsr(attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
-            let kick  = sine(freq: drop |> remap(0..1, 47..205)) * level
+            let level = beat.gate |> adsr(gate: _, attack: 1ms, decay: 240ms, sustain: 0, release: 80ms)
+            let drop  = beat.gate |> adsr(gate: _, attack: 0.5ms, decay: 40ms, sustain: 0, release: 16ms)
+            let kickFreq = drop |> remap(0..1, 47..205)
+            let kick  = sine(freq: kickFreq) * level
 
             let line  = notes(rate: 4) [ A1 A1 E2 A1 ]
-            let bass  = saw(freq: line |> note, amp: 0.8)
-                          * (line.gate |> adsr(attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms))
+            let bassFreq = line |> note(note: _)
+            let bass  = saw(freq: bassFreq, amp: 0.8)
+                          * (line.gate |> adsr(gate: _, attack: 2ms, decay: 120ms, sustain: 0.3, release: 60ms))
 
             mixer(kick, 1, bass, 0.7) |> out.left
             """);
@@ -1317,7 +1350,7 @@ public class LanguageTests
 
     [Fact]
     public void The_patch_is_laid_out_rather_than_left_at_the_origin() =>
-        Build("rings() |> hsv() |> out.color").Nodes
+        Build("rings() |> hsv(hue: _) |> out.color").Nodes
             .Select(n => n.X).Distinct().Count().ShouldBeGreaterThan(1);
 
     // --- complaints ------------------------------------------------------------------

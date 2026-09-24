@@ -24,16 +24,17 @@ Source files are `.fbks`, beside the `.fbk` document they build into and the
 # Two sine fields crossed and read as hue.
 
 let slowly = t * 0.2
+let wave   = y |> sine(freq: 1.1, phase: slowly)
 
 x |> sine(freq: 1.5)
-  |> add(y |> sine(freq: 1.1, phase: slowly))
+  |> add(a: _, b: wave)
   |> remap(-2..2, 0..1)
-  |> hsv(saturation: 0.85, value: 1)
+  |> hsv(hue: _, saturation: 0.85, value: 1)
   |> out.color
 ```
 
 That is the Plasma preset: eight modules and nine wires, and every line of it is
-a decision.
+a decision. `_` is where the pipe lands when the module has no `in` for it.
 
 ---
 
@@ -66,15 +67,43 @@ something skipped.
 
 ## 3. The pipe rule
 
-This is the whole language in one paragraph.
+This is the whole language in one paragraph
+([0144](adr/0144-a-pipe-lands-where-the-text-says.md)).
 
-> Of the sockets the call did not name:
->
-> 1. **an `in` takes the source's first output**, wherever in the list it sits;
-> 2. otherwise **a position — a leading `x` and `y` — takes the first two**;
-> 3. otherwise **the first free socket takes the first output**.
+> 1. **`socket: _` takes the source's first output**, wherever it is written;
+> 2. otherwise **an `in` takes it**, wherever in the list it sits;
+> 3. otherwise **a position — the module's own first two sockets, `x` and `y`,
+>    with neither named in the call — takes the first two**;
+> 4. otherwise the pipe is refused, and the complaint says to write `_`.
 
-**Rule 1 is load-bearing.** Three modules in the catalog do not put their
+Nothing is inferred from a socket the text did not name. The same call means the
+same wiring whatever arguments sit beside it.
+
+**`_` is the general case.** Most modules have no `in`, and a pipe into one says
+where it goes:
+
+```
+beat.gate |> adsr(gate: _, decay: 240ms)
+steps |> note(note: _)
+rings(freq: 3) |> hsv(hue: _, saturation: 0.85)
+```
+
+`_` goes in a named argument, once per call. With nothing piped in, or written
+anywhere but a call's argument, it is an error. In a `def`'s call it stands for
+the parameter it is written in place of, and without it what is piped in is the
+first parameter.
+
+**A pipeline is a statement, never an argument.** A pipeline inside an argument
+is an error, and what it meant is a `let` above and a name in the call:
+
+```
+let pitch = steps |> note(note: _)
+saw(freq: pitch)
+```
+
+That keeps every statement one chain, and every edit a one-line edit.
+
+**Rule 2 is load-bearing.** Three modules in the catalog do not put their
 signal input first:
 
 | Module | Ports |
@@ -83,11 +112,12 @@ signal input first:
 | `math.step` | `edge`, **`in`** |
 | `math.remap` | **`in`**, `in low`, `in high`, `out low`, `out high` |
 
-Without it, `bands |> smoothstep(0.15, 0.85)` would wire `bands` into `edge0`,
-read perfectly, and mean something else — the worst kind of mistake, and one
-that three shipped presets would have walked into.
+It is why `bands |> smoothstep(0.15, 0.85)` puts `bands` on `in` and the two
+numbers on the edges. Guessing "the first socket left" instead would wire
+`bands` into `edge0`, read perfectly, and mean something else — the worst kind
+of mistake, and the reason there is no such guess.
 
-**Rule 2 is what makes geometry chain**, and it is the only place more than one
+**Rule 3 is what makes geometry chain**, and it is the only place more than one
 signal moves at once:
 
 ```
@@ -103,12 +133,13 @@ kept here. Names need not agree across the join: To polar hands back
 `(radius, angle)` and Checker takes `(x, y)`, and the Grid preset joins them,
 because what matches is that both are a position.
 
-**Rule 3 is the default, and it is one signal.** The alternative — forwarding
-every output a source happens to have — was tried and is wrong: `steps |>
-note()` would put a sequencer's `gate` into Note's `octave` and its `index` into
-the `cents`. That compiles, plays, and is not a tune. So a Note Sequencer's
-three outputs and a MIDI In's four go one at a time, and the others are taken by
-name.
+A single signal piped into a module with a position and no `in` is refused, since
+there is no pair to hand on: `wave |> checker(x: _)` says which half it is.
+
+**Everything but a position is one signal.** Forwarding every output a source
+has would put a sequencer's `gate` into Note's `octave` and its `index` into the
+`cents`, which compiles, plays, and is not a tune. So a Note Sequencer's three
+outputs and a MIDI In's four go one at a time, and the others are taken by name.
 
 No coercion happens here: widening a scalar to a color is the compiler's job
 ([0007](adr/0007-register-slots-with-scalar-broadcast.md)), not the parser's.
@@ -136,7 +167,7 @@ by:
 let beats = tempo(bpm: 104).beats          # the count of beats, not the rate
 
 beats |> notes(rate: 2) [ A2 E3 ].gate     # the sequencer's gate, with the beats arriving
-  |> adsr()
+  |> adsr(gate: _)
 ```
 
 Here the `let` binds the one output that was chosen, which is all the name can
@@ -152,8 +183,10 @@ An oscillator has an `in`, so a pipe lands there — which is right for
 has to say so:
 
 ```
-sine(freq: steps |> note())     # a tune
-x |> sine(freq: 1.5)            # a field
+let pitch = steps |> note(note: _)
+
+sine(freq: pitch)          # a tune
+x |> sine(freq: 1.5)       # a field
 ```
 
 This is the same distinction the assistant handbook spends five paragraphs on,
@@ -253,7 +286,7 @@ the same program the Maths modules it replaces would have been, op for op.
 A printing writes an Expression back as its sum
 ([0107](adr/0107-an-expression-is-printed-as-the-sum-it-is.md)) wherever that
 reads back as the same module. Otherwise it writes the call,
-`x |> expression(formula: "floor(a * 8) / 8")`. That happens when the
+`x |> expression(a: _, formula: "floor(a * 8) / 8")`. That happens when the
 formula uses a function, `pi` or `tau`, when a socket it reads rests on its
 knob, or when what is wired into a socket is a pipeline, which would need
 brackets inside the sum.
@@ -318,7 +351,7 @@ A module can be switched off, and one that is off is a wire
 ([0117](adr/0117-a-module-switched-off-is-a-wire.md)):
 
 ```
-let wash = grain |> vignette(amount: 0.6)
+let wash = grain |> vignette(color: _, amount: 0.6)
 
 off wash
 ```
@@ -331,9 +364,8 @@ its own knob, exactly as it would with the wire pulled out. So an effect in a
 chain passes its signal on and a voice with nothing feeding it falls silent,
 which is one rule and not two.
 
-Which socket is handed on is the pipe rule of section 3 read backwards: the one
-called `in`, failing that the one the output is named after, failing that the
-first. Only a wire is handed on, never a normal — `off` on an oscillator is
+The socket handed on is the one called `in`, failing that the one the output
+is named after, failing that the first. Only a wire is handed on, never a normal — `off` on an oscillator is
 silence and not the clock.
 
 `out` cannot be switched off. Write `out.volume = 0`.
@@ -529,7 +561,7 @@ be unreadable at that size.
 
 ```
 group "Bass" {
-  let tuned = riff |> note()
+  let tuned = riff |> note(note: _)
   let body  = saw(freq: tuned, amp: 0.8)
 }
 ```
@@ -547,7 +579,7 @@ A pipeline cannot express a loop, so the back-wire does:
 ```
 # An integrator: each evaluation adds a little of the source to what it held.
 
-let sum = square(freq: 110) * 0.06 |> add()
+let sum = square(freq: 110) * 0.06 |> add(a: _)
 
 sum.b <- sum * 0.94
 sum |> out.left
@@ -638,8 +670,9 @@ lose.
 The printer emits a `let` for any module that more than one wire leaves, that
 nothing leaves, whose output is read from a socket other than the first — a
 Sequencer's `gate` reads better off a name than off the end of the call that
-wrote its tune — or that somebody named. It inlines everything else, choosing the pipe so that the rule which reads it back
-puts the signal where it came from.
+wrote its tune — or that somebody named. It inlines everything else into
+chains, writing `_` where the pipe lands on a socket that is not `in`, and it
+gives a `let` to anything that would otherwise be a pipeline inside an argument.
 
 Numbers are written to whatever precision reads back as the same knob, and no
 further: a twelfth prints as `0.083333336` rather than `0.083333`, because the
@@ -680,7 +713,7 @@ primary    = literal | selector | ( call | "(" pipeline ")" ) outputs ;
 outputs    = { "." ident } ;
 
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
-arg        = [ ident ":" ] pipeline ;
+arg        = [ ident ":" ] ( expr | "_" ) ;
 block      = "[" { step } "]" ;
 
 selector   = ident [ "." ident ] ;
@@ -695,7 +728,9 @@ duration   = number ( "us" | "ms" | "s" ) ;
 written in full; a `selector` with a dot is a binding and one of its ports.
 `outputs` is the same choice made on a module with no name. The grammar lets
 one follow another and the binder refuses the second, since one output has no
-outputs of its own.
+outputs of its own. The binder also refuses an argument holding a pipeline,
+bracketed or not, and a `_` anywhere but an argument of a stage — a named one,
+where the stage is a module.
 
 ---
 
@@ -716,11 +751,12 @@ The Output, alone. An empty file.
 description "A photograph put through the same geometry a generated field goes through,"
   "once you choose one."
 
-scale(scale: sine(freq: 0.05) |> remap(-1..1, 0.85..1.4))
+let zoom = sine(freq: 0.05) |> remap(-1..1, 0.85..1.4)
+scale(scale: zoom)
   |> rotate(angle: t * 0.05)
   |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
   |> picture()
-  |> gain(gain: 1.15, bias: -0.05)
+  |> gain(color: _, gain: 1.15, bias: -0.05)
   |> out.color
 ```
 
@@ -743,11 +779,12 @@ out.volume = 0.7
 description "Two sine fields crossed and read as hue — the hello world of video synths."
 
 let slowly = t * 0.2
+let wave   = y |> sine(freq: 1.1, phase: slowly)
 
 x |> sine(freq: 1.5)
-  |> add(y |> sine(freq: 1.1, phase: slowly))
+  |> add(a: _, b: wave)
   |> remap(-2..2, 0..1)
-  |> hsv(saturation: 0.85, value: 1)
+  |> hsv(hue: _, saturation: 0.85, value: 1)
   |> out.color
 ```
 
@@ -759,7 +796,7 @@ description "Rotating wedges filled with clouds that boil over time."
 rotate(angle: t * 0.15)
   |> kaleidoscope(segments: 6)
   |> clouds(z: t * 0.3, scale: 2.5)
-  |> hsv(saturation: 0.9, value: 1)
+  |> hsv(hue: _, saturation: 0.9, value: 1)
   |> out.color
 ```
 
@@ -777,9 +814,10 @@ let plane = translate(dx: sine(freq: 0.06))
               |> mirror()
               |> polar()
 
+let hue = plane.angle |> remap(-3.15..3.15, 0..1)
 plane |> checker(size: 3)
       |> remap(0..1, 0.14..1)
-      |> hsv(hue: plane.angle |> remap(-3.15..3.15, 0..1), saturation: 0.7)
+      |> hsv(value: _, hue: hue, saturation: 0.7)
       |> out.color
 ```
 
@@ -797,13 +835,13 @@ let pulse = t * 0.25
 let past = rotate(angle: t * 0.08)
              |> scale(scale: 1.05)
              |> feedback()
-             |> gain(gain: 0.95, bias: 0)
+             |> gain(color: _, gain: 0.95, bias: 0)
 
 let fresh = rings(freq: 1.5, offset: pulse)
               |> smoothstep(0.8, 1)
-              |> hsv(hue: pulse, saturation: 1)
+              |> hsv(value: _, hue: pulse, saturation: 1)
 
-past |> max(fresh) |> out.color
+past |> max(a: _, b: fresh) |> out.color
 ```
 
 The Smoothstep is where the `in` rule earns itself: the rings go to `in`, which
@@ -857,7 +895,7 @@ description "A wire running backwards: a lowpass built from an add and a multipl
   "its one number swept."
 
 let keep = sine(freq: 0.1) |> remap(-1..1, 0.92..0.996)
-let sum  = square(freq: 110) * (1 - keep) |> add()
+let sum  = square(freq: 110) * (1 - keep) |> add(a: _)
 
 sum.b <- sum * keep
 sum |> out.left
@@ -876,7 +914,7 @@ description "Stereo from one voice: left and right fed differently rather than p
 let root  = note(A2)
 let twin  = note(root.note, cents: 9)
 let shape = pulse(freq: 1.5, width: 0.3)
-              |> adsr(attack: 10ms, decay: 126ms, sustain: 0.4, release: 158ms)
+              |> adsr(gate: _, attack: 10ms, decay: 126ms, sustain: 0.4, release: 158ms)
 
 saw(freq: root, amp: 0.7) * shape |> out.left
 saw(freq: twin, amp: 0.7) * shape |> out.right
@@ -895,10 +933,11 @@ description "A slope caught six times a second by a Sample & Hold, which makes s
 
 let clock = pulse(freq: 6)
 let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
-let stair = hold(in: slope |> remap(-1.5..1.5, 45..81), trigger: clock)
+let height = slope |> remap(-1.5..1.5, 45..81)
+let stair = hold(in: height, trigger: clock)
 let pitch = tune(in: stair) [ A C D E G ]
 
-triangle(freq: pitch) * (clock |> adsr(attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
+triangle(freq: pitch) * (clock |> adsr(gate: _, attack: 3ms, decay: 120ms, sustain: 0.2, release: 60ms))
   |> out.left
 
 out.volume = 0.5
@@ -914,11 +953,11 @@ description "One riff and a coin for every note: heads plays it on the left, tai
   "octave down on the right, and the odds drift."
 
 let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
-let coin = riff.gate |> chance(chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
+let coin = riff.gate |> chance(gate: _, chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
 
-triangle(freq: note(riff)) * (coin |> adsr(attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
+triangle(freq: note(riff)) * (coin |> adsr(gate: _, attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
   |> out.left
-sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
+sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(gate: _, attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
   |> out.right
 
 out.volume = 0.5
@@ -939,7 +978,7 @@ sine(freq: 110) * slow |> out.left
 
 rings(freq: 3, offset: t)
   |> autoremap()
-  |> hsv(hue: slow, saturation: 0.85)
+  |> hsv(value: _, hue: slow, saturation: 0.85)
   |> out.color
 
 out.volume = 0.6
@@ -956,12 +995,15 @@ description "One sequencer heard and seen at once: the steps are the tune and th
 
 let steps = notes(rate: 3, gate_length: 0.66) [ A3 C4 D4 E4 G4 E4 D4 C4 ]
 
-sine(freq: steps |> note()) * steps.gate |> out.left
+let pitch = steps |> note(note: _)
+sine(freq: pitch) * steps.gate |> out.left
 
-rings(freq: steps.index |> remap(0..1, 1.5..9))
+let bands = steps.index |> remap(0..1, 1.5..9)
+let bright = steps.gate |> remap(0..1, 0.4..1)
+rings(freq: bands)
   |> remap(-1..1, 0.05..1)
-  |> mul(steps.gate |> remap(0..1, 0.4..1))
-  |> hsv(hue: steps.index, saturation: 0.8)
+  |> mul(a: _, b: bright)
+  |> hsv(value: _, hue: steps.index, saturation: 0.8)
   |> out.color
 
 out.volume = 0.5
@@ -982,7 +1024,7 @@ def voice(pitch, bands, hue, rate, phase) = {
   let level = sine(freq: rate, phase: phase, amp: 0.5, bias: 0.5)
   let tone  = sine(freq: note(pitch))
   let tint  = radius |> sine(freq: bands, amp: 0.5, bias: 0.5)
-                     |> hsv(hue: hue, saturation: 1)
+                     |> hsv(value: _, hue: hue)
   (tone, level, tint)
 }
 
@@ -994,16 +1036,14 @@ let (toneD, levelD, tintD) = voice(C#4, 4, 0.83, 0.17, 0.85)
 mixer(toneA, levelA, toneB, levelB, toneC, levelC, toneD, levelD) |> out.left
 
 mixer(tintA, levelA, tintB, levelB, tintC, levelC, tintD, levelD)
-  |> gain(gain: 0.6)
+  |> gain(color: _, gain: 0.6)
   |> out.color
 
 out.volume = 0.25
 ```
 
-`saturation: 1` is written out although it is also the default, because it has
-to be: the pipe takes the first port the call did not name, and leaving
-saturation off would put the band there instead of in `value`. Name the ports
-you mean.
+The band goes to `value` because `_` puts it there. HSV has no `in`, so a pipe
+into it always says which of its three sockets it means.
 
 ### Heard — [:192](../src/Flyback.Core/Graph/Presets.cs)
 
@@ -1013,7 +1053,7 @@ description "A drum the picture listens to rather than being told about, through
 
 let voiced = sine(freq: 70)
                * (pulse(freq: 2, width: 0.08)
-                    |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+                    |> adsr(gate: _, attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
 let heard = meter(voiced, window: 32ms)
 
@@ -1021,8 +1061,8 @@ voiced |> out.left
 
 rings(freq: 5)
   |> remap(-1..1, 0.1..1)
-  |> mul(heard.peak + 0.18)
-  |> hsv(hue: heard, saturation: 0.75)
+  |> mul(a: _, b: heard.peak + 0.18)
+  |> hsv(value: _, hue: heard, saturation: 0.75)
   |> out.color
 
 out.volume = 0.6
@@ -1040,10 +1080,10 @@ description "A pad that gets out of the way each time the kick hits, on a Scope 
 
 let kick = sine(freq: 55)
              * (pulse(freq: 2, width: 0.08)
-                  |> adsr(attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
+                  |> adsr(gate: _, attack: 2.5ms, decay: 126ms, sustain: 0, release: 100ms))
 
 let pad = saw(freq: 110, amp: 0.25) + saw(freq: 165, amp: 0.2)
-            |> duck(key: kick, depth: 0.8, release: 200ms)
+            |> duck(left: _, key: kick, depth: 0.8, release: 200ms)
 
 pad + kick |> out.left
 scope(pad.gain, window: 2s, scale: 1.25) |> out.color
@@ -1086,7 +1126,7 @@ description "One sine bending another's phase at audio rate, on an Analyzer show
   "partials that grows."
 
 let strike = pulse(freq: 0.5, width: 0.1)
-               |> adsr(attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
+               |> adsr(gate: _, attack: 2ms, decay: 1500ms, sustain: 0, release: 300ms)
 
 let depth = sine(freq: 0.07) |> remap(-1..1, 0.2..1.6)
 
@@ -1109,11 +1149,13 @@ other: the language has no idea that one side of it is a pitch.
 description "A Probe and a Scope on one signal, which is the only way to see how they"
   "differ."
 
-let tone = saw(freq: sine(freq: 0.4) |> remap(-1..1, 90..320))
+let sweep = sine(freq: 0.4) |> remap(-1..1, 90..320)
+let tone = saw(freq: sweep)
 
 tone |> out.left
 
-color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), y |> step())
+let split = y |> step()
+color.mix(scope(tone, window: 25ms), probe(tone, window: 25ms), split)
   |> out.color
 
 out.volume = 0.3
@@ -1136,8 +1178,8 @@ let loop  = scan(bands, rate: 110, radius: 0.35, x: where, scale: 1)
 loop |> out.left
 
 bands |> remap(-1..1, 0.05..0.55)
-      |> hsv(hue: where, saturation: 0.7)
-      |> add(loop.view)
+      |> hsv(value: _, hue: where, saturation: 0.7)
+      |> add(a: _, b: loop.view)
       |> out.color
 
 out.volume = 0.25
@@ -1153,13 +1195,14 @@ let field = clouds(z: t * 0.3, scale: 2.2)
 let beat  = pulse(freq: tempo(180), width: 0.12)
 let key   = field |> remap(0..1, 45..69) |> quantiser(hold: beat) [ C D E G A ]
 
-sine(freq: key |> note())
-  * (beat |> adsr(attack: 4ms, decay: 141ms, sustain: 0, release: 32ms))
+let pitch = key |> note(note: _)
+sine(freq: pitch)
+  * (beat |> adsr(gate: _, attack: 4ms, decay: 141ms, sustain: 0, release: 32ms))
   |> out.left
 
-hsv(hue: key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6),
-    saturation: 0.6,
-    value: field |> remap(0..1, 0.22..0.95))
+let hue   = key * (1 / 12) |> fract() |> remap(0..1, 0.02..0.6)
+let shade = field |> remap(0..1, 0.22..0.95)
+hsv(hue: hue, saturation: 0.6, value: shade)
   |> out.color
 
 out.volume = 0.55
@@ -1182,11 +1225,12 @@ let pulse = t * 0.2
 let folded = rotate(angle: t * 0.05) |> kaleidoscope(segments: 8)
 let field  = folded |> clouds(z: boil, scale: 1.4)
 
+let shimmer = field + pulse |> fract()
 let fresh = folded
               |> warp(by: field, amount: 0.5)
               |> rings(freq: 2.5, offset: pulse)
               |> smoothstep(0.15, 0.85)
-              |> hsv(hue: field + pulse |> fract(), saturation: 0.85)
+              |> hsv(value: _, hue: shimmer, saturation: 0.85)
 
 fresh |> trails(zoom: 0.99, angle: 0.015, persist: 0.92) |> out.color
 ```
@@ -1227,9 +1271,11 @@ group "Song" {
   let filling = (phrase |> step(edge: 0.875)) * turn
   let ramp    = phrase |> remap(0.875..1, 0.35..1)
 
+  let chorusRoot = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ]
+  let verseRoot  = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ]
   let root = math.mix(
-    beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ],
-    beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ],
+    verseRoot,
+    chorusRoot,
     theme)
 }
 
@@ -1249,10 +1295,11 @@ group "Kick" {
   let kickGate = math.mix(verseKick.gate, chorusKick.gate, theme) * (song |> step(edge: 0.25))
   let kickHard = math.mix(verseKick, chorusKick, theme) |> hold(trigger: kickGate)
 
-  let kickLevel = kickGate |> adsr(attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
-  let sweep     = kickGate |> adsr(attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
+  let kickLevel = kickGate |> adsr(gate: _, attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
+  let sweep     = kickGate |> adsr(gate: _, attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
 
-  let kick = sine(freq: sweep |> remap(0..1, 46..200)) * kickLevel * kickHard * 1.7
+  let kickFreq = sweep |> remap(0..1, 46..200)
+  let kick = sine(freq: kickFreq) * kickLevel * kickHard * 1.7
                |> clamp(-1, 1)
 
   let duck = duck(key: kickLevel, depth: 0.55, attack: 100us, release: 100us)
@@ -1263,8 +1310,8 @@ group "Hats" {
     0.8 0.3 0.55 0.3  0.75 0.3 0.6 0.35  0.8 0.3 0.55 0.3  0.75 0.35 0.65 0.5
   ]
 
-  let shut = (1 - fract(beat.beats * 4) |> pow(10)) * hatSeq * (song |> step(edge: 0.25))
-  let open = (1 - fract(beat.beats + 0.5) |> pow(3)) * theme
+  let shut = (1 - fract(beat.beats * 4) |> pow(a: _, 10)) * hatSeq * (song |> step(edge: 0.25))
+  let open = (1 - fract(beat.beats + 0.5) |> pow(a: _, 3)) * theme
 
   let hatLevel = shut + open * 0.6
 
@@ -1276,10 +1323,11 @@ group "Snare" {
     ~ ~ ~ ~  1 ~ ~ ~  ~ ~ ~ ~  0.95 ~ ~ 0.45
   ]
 
-  let snareGate = math.mix(snareSeq.gate * (song |> step(edge: 0.5)), hatSeq.gate, filling)
+  let snareHit = snareSeq.gate * (song |> step(edge: 0.5))
+  let snareGate = math.mix(snareHit, hatSeq.gate, filling)
   let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
 
-  let snareLevel = snareGate |> adsr(attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
+  let snareLevel = snareGate |> adsr(gate: _, attack: 0.5ms, decay: 158ms, sustain: 0, release: 63ms)
 
   let wires = (hiss |> filter(cutoff: 1100, resonance: 0)).high |> filter(cutoff: 6500, resonance: 0)
 
@@ -1297,14 +1345,15 @@ group "Bass" {
   ]
 
   let bassGate = math.mix(verseBass.gate, chorusBass.gate, theme) * (song |> step(edge: 0.4))
-  let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note()
+  let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note(note: _)
 
   let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
 
-  let pluck = (bassGate |> adsr(attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
+  let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
+  let cutoffTop = song |> remap(0..1, 900..2600)
   let cutoff = pluck |> remap(in_low: 0, out_low: 70,
-                              out_high: song |> remap(0..1, 900..2600))
+                              out_high: cutoffTop)
 
   let low = saw(freq: bassHz, amp: 0.8) |> filter(cutoff: cutoff, resonance: 0.8)
 
@@ -1316,18 +1365,21 @@ group "Strings" {
     57 64%0.7 69%0.8 64%0.7  72.6%0.9 64%0.7 69%0.8 64%0.7
   ]
 
-  let secondArp = beat.beats |> add(b: -0.25) |> values(rate: 2) [
+  let secondArp = beat.beats |> add(a: _, b: -0.25) |> values(rate: 2) [
     69 72.6 76 72.6  69 76 72.6 69
   ]
 
   let stringTone = song |> remap(0..1, 900..2200)
 
+  let firstTuned = firstArp |> tune(transpose: root) [ C D E F G G# A B ]
   let firstPlucked = string(trigger: firstArp.gate,
-                            freq: firstArp |> tune(transpose: root) [ C D E F G G# A B ],
+                            freq: firstTuned,
                             decay: 708ms)
 
-  let secondPlucked = string(trigger: secondArp.gate * (song |> step(edge: 0.2)),
-                             freq: secondArp |> tune(transpose: root) [ C D E F G G# A B ],
+  let secondTuned = secondArp |> tune(transpose: root) [ C D E F G G# A B ]
+  let secondStrike = secondArp.gate * (song |> step(edge: 0.2))
+  let secondPlucked = string(trigger: secondStrike,
+                             freq: secondTuned,
                              decay: 708ms)
 
   let firstString  = (firstPlucked |> filter(cutoff: stringTone, resonance: 0)) * 2.2
@@ -1340,11 +1392,13 @@ group "Strings" {
 }
 
 group "Pad" {
-  let padRoot   = pulse(freq: root + 57 |> note(),
+  let padRootFreq = root + 57 |> note(note: _)
+  let padRoot   = pulse(freq: padRootFreq,
                         width: sine(freq: 0.17, amp: 0.22, bias: 0.5), amp: 0.5)
   let padMiddle = pulse(freq: tune(in: 60.6, transpose: root) [ C D E F G G# A B ],
                         width: sine(freq: 0.23, amp: 0.22, bias: 0.5), amp: 0.5)
-  let padFifth  = pulse(freq: root + 64 |> note(),
+  let padFifthFreq = root + 64 |> note(note: _)
+  let padFifth  = pulse(freq: padFifthFreq,
                         width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
 
   let padTone = song |> remap(0..1, 700..2400)
@@ -1376,13 +1430,15 @@ group "Lead" {
   let leadStep = math.mix(hook, melody, theme)
   let leadGate = math.mix(hook.gate, melody.gate, theme) * theme.gate
 
-  let tuned = leadStep |> note()
+  let tuned = leadStep |> note(note: _)
   let wide  = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
-  let fifth = triangle(freq: leadStep + 7 |> note(), amp: 0.5)
+  let fifthFreq = leadStep + 7 |> note(note: _)
+  let fifth = triangle(freq: fifthFreq, amp: 0.5)
                 * sine(freq: 0.043, amp: 0.5, bias: 0.5)
 
-  let leadEnv = leadGate |> adsr(attack: 3.16ms, decay: 112ms,
-                                 sustain: theme |> remap(0..1, 0.3..0.7), release: 141ms)
+  let leadEnvSustain = theme |> remap(0..1, 0.3..0.7)
+  let leadEnv = leadGate |> adsr(gate: _, attack: 3.16ms, decay: 112ms,
+                                 sustain: leadEnvSustain, release: 141ms)
 
   let leadTone  = leadEnv |> remap(0..1, 500..5200)
   let leadToneL = saw(freq: tuned, amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
@@ -1418,40 +1474,48 @@ group "Desk" {
 }
 
 group "Picture: Geometry" {
+  let foldSegments = root |> remap(-5..3, 4..10)
+  let foldZoom = kickGate |> remap(0..1, 0.96..1.3)
   let fold = transform(angle: t * 0.055 + root * 0.08,
-                       zoom:  kickGate |> remap(0..1, 0.96..1.3),
+                       zoom:  foldZoom,
                        order: "turn")
-               |> kaleidoscope(segments: root |> remap(-5..3, 4..10))
+               |> kaleidoscope(segments: foldSegments)
 
   let field = fold |> clouds(z: t * 0.18, scale: 2.1)
 
+  let filamentBands = leadGate |> remap(0..1, 2.2..4.4)
   let filament = fold
     |> warp(by: field,
             amount: sine(freq: 0.071, amp: 0.25, bias: 0.45) + firstArp.gate * 0.15)
-    |> rings(freq: (leadGate |> remap(0..1, 2.2..4.4)) + song * 1.6, offset: t * 0.4)
+    |> rings(freq: filamentBands + song * 1.6, offset: t * 0.4)
     |> smoothstep(0.2, 0.95)
 }
 
 group "Picture: Color" {
+  let freshValue = filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35) |> clamp(0, 1)
+  let bassLift = bassGate |> remap(0..1, 0.55..0.95)
+  let freshHue = leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract()
+  let freshSaturation = bassLift * (snareGate |> remap(0..1, 1..0.3))
   let fresh = hsv(
-    hue:        leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract(),
-    saturation: (bassGate |> remap(0..1, 0.55..0.95)) * (snareGate |> remap(0..1, 1..0.3)),
-    value:      filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35)
-                  |> clamp(0, 1))
+    hue:        freshHue,
+    saturation: freshSaturation,
+    value:      freshValue)
 }
 
 group "Picture: Feedback" {
-  let warm = transform(zoom: 1.035, angle: kickGate |> remap(0..1, 0.012..0.05))
+  let warmAngle = kickGate |> remap(0..1, 0.012..0.05)
+  let warm = transform(zoom: 1.035, angle: warmAngle)
                |> feedback()
-               |> color.split()
+               |> color.split(color: _)
 
   let cool = transform(zoom: 0.972, angle: -0.016)
                |> feedback()
-               |> color.split()
+               |> color.split(color: _)
 
+  let gain2 = song |> remap(0..1, 0.78..0.9)
   rgb(warm, cool.g, cool.b)
-    |> gain(gain: song |> remap(0..1, 0.78..0.9), bias: 0)
-    |> max(fresh)
+    |> gain(color: _, gain: gain2, bias: 0)
+    |> max(a: _, b: fresh)
     |> out.color
 }
 
@@ -1512,3 +1576,10 @@ The first of those is worth dwelling on. It was wrong in the specification, it
 survived being written out by hand across twenty patches, and it was caught only
 by compiling both and comparing them. Reading does not find that kind of
 mistake, because the mistake reads correctly.
+
+**Then agents wrote it.** Unsteered, they wrote `hsv(hue: h, saturation: s,
+value: v)` after a pipe and expected the signal to go somewhere, and they bound
+every pipeline to a name rather than nest one in an argument
+([language-for-agents.md](language-for-agents.md)). "The first socket the call
+did not name" was a guess that hung on the arguments beside it, so it became
+`_`, and a pipeline inside an argument became an error.

@@ -224,3 +224,10 @@ additive. This record settles the language, not every door onto it.
 the bundle ([0060](0060-a-bundle-is-a-patch-and-what-it-names.md)). A `.fbks` is
 a source: it names the modules it uses but carries none of the files they name,
 so packing one means building it first.
+
+## Amendment, 2026-09-24: a pipe lands where the text says
+
+The pipe rule's third clause, the first socket the call did not name, is gone.
+A pipe lands on `socket: _`, else `in`, else a leading `x` and `y`, and a
+pipeline inside an argument is an error
+([0144](0144-a-pipe-lands-where-the-text-says.md)).
