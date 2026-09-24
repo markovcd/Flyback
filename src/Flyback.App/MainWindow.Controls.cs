@@ -54,22 +54,6 @@ public sealed partial class MainWindow
         TextWrapping = TextWrapping.Wrap,
     };
 
-    private readonly ComboBox takeover = new Picker
-    {
-        Name = "takeover",
-        ItemsSource = new[] { "Jump to the controller", "Pick up the knob" },
-        SelectedIndex = 0,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    private readonly ComboBox keyboardLayout = new Picker
-    {
-        Name = "keyboardLayout",
-        ItemsSource = new[] { "Piano", "Scale" },
-        SelectedIndex = 0,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
     private readonly ToggleButton controlsButton =
         ToolbarButtons.Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
 
@@ -270,22 +254,22 @@ public sealed partial class MainWindow
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>
     private void BuildMidiSection()
     {
-        ToolTip.SetTip(takeover,
+        ToolTip.SetTip(outputSections.Takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
             + "or leave the knob alone until the controller passes it. Flyback's own, whichever plugin "
             + "hears the controller.");
 
-        ToolTip.SetTip(keyboardLayout,
+        ToolTip.SetTip(outputSections.KeyboardLayout,
             "How the computer keyboard is laid out on a patch when its first MIDI In is added: as a piano, "
             + "or as a scale, one note to a key. Patches that already have a MIDI In keep their own.");
 
         midiNote.Text = plugins.PreferredMidiInput is { } input
-            ? Attributed($"Heard through {input.Name}", plugins.Provider(input))
+            ? OutputSections.Attributed($"Heard through {input.Name}", plugins.Provider(input))
             : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.";
 
         midiSection.Children.Add(midiNote);
-        midiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
-        midiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
+        midiSection.Children.Add(InspectorRows.Field("Knobs", outputSections.Takeover));
+        midiSection.Children.Add(InspectorRows.Field("New keyboard", outputSections.KeyboardLayout));
 
         var known = string.Join(", ", instruments.Profiles.Select(profile => profile.Name));
         var instrumentsNote = new TextBlock

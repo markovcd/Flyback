@@ -418,10 +418,10 @@ public class OutputSettingsTests : UiTest
     [AvaloniaFact]
     public void A_backend_is_named_with_the_plugin_that_offered_it()
     {
-        MainWindow.Attributed("Played by WASAPI (shared mode)", new PluginInfo("win.io", "Windows sound and MIDI"))
+        OutputSections.Attributed("Played by WASAPI (shared mode)", new PluginInfo("win.io", "Windows sound and MIDI"))
             .ShouldBe("Played by WASAPI (shared mode), from the Windows sound and MIDI plugin (win.io).");
 
-        MainWindow.Attributed("Played by WASAPI (shared mode)", null)
+        OutputSections.Attributed("Played by WASAPI (shared mode)", null)
             .ShouldBe("Played by WASAPI (shared mode).");
     }
 

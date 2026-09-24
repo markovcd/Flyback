@@ -57,60 +57,6 @@ public sealed partial class MainWindow
 
     private static GridLength Everything => new(1, GridUnitType.Star);
 
-    /// <summary>Which monitor full screen fills — the Graphics section.</summary>
-    private readonly ComboBox fullScreenOn = new Picker
-    {
-        Name = "fullScreenOn",
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>The monitors <see cref="fullScreenOn"/> lists after its first two rows, in order.</summary>
-    private List<MonitorSpot> fullScreenMonitors = [];
-
-    /// <summary>
-    /// Lists the monitors plugged in now, and the chosen one if it is not, and
-    /// selects what <paramref name="settings"/> says.
-    /// </summary>
-    private void ShowFullScreenSetting(OutputSettings settings)
-    {
-        var screens = Screens.All;
-
-        fullScreenMonitors = [.. screens.Select(s => MonitorPlacement.Describe(s)!)];
-
-        List<string> rows =
-        [
-            "Same monitor",
-            "Another monitor",
-            .. screens.Select(s => $"{s.DisplayName ?? "Monitor"} · {s.Bounds.Width}×{s.Bounds.Height}{(s.IsPrimary ? " · main" : "")}"),
-        ];
-
-        var chosen = settings.FullScreenMonitor is { } wanted ? MonitorPlacement.Find(wanted, fullScreenMonitors) : null;
-
-        // Kept on the list while unplugged, so saving anything else does not forget it.
-        if (settings.FullScreenMonitor is { } away && chosen is null)
-        {
-            fullScreenMonitors.Add(away);
-            rows.Add($"{away.Name ?? "Monitor"} · {away.Width}×{away.Height} · not plugged in");
-            chosen = fullScreenMonitors.Count - 1;
-        }
-
-        fullScreenOn.ItemsSource = rows;
-        fullScreenOn.SelectedIndex = settings.FullScreen switch
-        {
-            FullScreenOn.OtherMonitor => 1,
-            FullScreenOn.ChosenMonitor when chosen is { } row => 2 + row,
-            _ => 0,
-        };
-    }
-
-    /// <summary>What <see cref="fullScreenOn"/> holds, as the settings keep it.</summary>
-    private (FullScreenOn On, MonitorSpot? Monitor) ReadFullScreenSetting() => fullScreenOn.SelectedIndex switch
-    {
-        1 => (FullScreenOn.OtherMonitor, outputSettings.FullScreenMonitor),
-        >= 2 and var row when row - 2 < fullScreenMonitors.Count => (FullScreenOn.ChosenMonitor, fullScreenMonitors[row - 2]),
-        _ => (FullScreenOn.SameMonitor, outputSettings.FullScreenMonitor),
-    };
-
     /// <summary>The window holding the preview on another monitor, while it is there.</summary>
     private Window? pictureWindow;
 

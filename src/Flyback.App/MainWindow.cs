@@ -48,28 +48,8 @@ public sealed partial class MainWindow : Window
     private const string RewindTip =
         "Take the patch back to zero seconds, in the picture and in the sound.";
 
-    private readonly ComboBox resolution = new Picker
-    {
-        ItemsSource = Resolutions.All.Select(r => r.Label).ToList(),
-        SelectedIndex = Resolutions.Default,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// The Graphics section of the settings window: size, preview rate and renderer.
-    /// Assembled once and lent to the window each time it opens, because these
-    /// controls are the live state of the instrument (ADR-0082).
-    /// </summary>
-    private readonly StackPanel graphicsSection = new() { Spacing = 8, Width = 280 };
-
-    /// <summary>The Recording section: how a take's frames are timed and compressed.</summary>
-    private readonly StackPanel recordingSection = new() { Spacing = 8, Width = 280 };
-
-    /// <summary>
-    /// The Sound section: whatever the sound backend declares, then how far behind
-    /// the patch the speakers may run.
-    /// </summary>
-    private readonly StackPanel soundSection = new() { Spacing = 8, Width = 280 };
+    /// <summary>The Graphics, Recording and Sound sections, and what they were last saved as.</summary>
+    private readonly OutputSections outputSections;
 
     private readonly CanvasSection canvasSection;
 
@@ -78,110 +58,6 @@ public sealed partial class MainWindow : Window
     private readonly UsageSection usageSection;
 
     private readonly FilesSection filesSection;
-
-    private readonly ComboBox frameRate = new Picker
-    {
-        Name = "frameRate",
-        ItemsSource = FrameRates.Select(r => $"{r:0.##} fps").ToList(),
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    private readonly ComboBox previewFrameRate = new Picker
-    {
-        Name = "previewFrameRate",
-        ItemsSource = PreviewFrameRates.Select(r => r <= 0 ? "Unlimited" : $"{r:0.##} fps").ToList(),
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// Which preset the window opens on at the next launch — the Graphics section
-    /// (ADR-0093). It reads <see cref="startupPatch"/>, and a click picks another
-    /// from the gallery.
-    /// </summary>
-    private readonly Button defaultPreset = new()
-    {
-        Name = "defaultPreset",
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-        HorizontalContentAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>The name on <see cref="defaultPreset"/>.</summary>
-    private readonly TextBlock defaultPresetName = new()
-    {
-        Name = "defaultPresetName",
-        TextTrimming = TextTrimming.CharacterEllipsis,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    /// <summary>The name <see cref="defaultPreset"/> shows, and what Save writes.</summary>
-    private string startupPatch = "";
-
-    private readonly NumericUpDown jpegQuality = new()
-    {
-        Name = "jpegQuality",
-        Minimum = OutputSettings.LowestQuality,
-        Maximum = OutputSettings.HighestQuality,
-        Increment = 5,
-        FormatString = "0",
-        FontSize = Text.Body,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// How long a take is counted in for — the length ADR-0090 fixed at three
-    /// seconds and ADR-0091 made a choice.
-    /// </summary>
-    private readonly ComboBox countIn = new Picker
-    {
-        Name = "countIn",
-        ItemsSource = CountIns.Select(s => s <= 0 ? "None" : $"{s} s").ToList(),
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// Whether a take starts at nought seconds. Its own row rather than another
-    /// entry on <see cref="countIn"/>, because standing ready and starting from
-    /// the beginning are two different things: a take may want either alone.
-    /// </summary>
-    private readonly CheckBox rewindBeforeTake = new()
-    {
-        Name = "rewindBeforeTake",
-        Content = "Rewind to zero first",
-        FontSize = Text.Body,
-        VerticalAlignment = VerticalAlignment.Center,
-    };
-
-    private readonly ComboBox latency = new Picker
-    {
-        Name = "latency",
-        ItemsSource = Latencies.Select(ms => $"{ms} ms").ToList(),
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>
-    /// The sound backend's own settings — which device plays, for one — drawn from
-    /// what it declares (ADR-0085). Empty where no backend is installed or it has
-    /// nothing to ask.
-    /// </summary>
-    private readonly SettingsForm soundForm = new() { Name = "soundForm", Beside = true };
-
-    /// <summary>Which backend plays, and which plugin it came from, above the rows it asks for.</summary>
-    private readonly TextBlock soundNote = new()
-    {
-        Name = "soundNote",
-        FontSize = Text.Small,
-        Foreground = Text.Muted,
-        TextWrapping = TextWrapping.Wrap,
-    };
-
-    /// <summary>
-    /// What the Graphics, Recording and Sound sections were last saved as, and so
-    /// what closing the settings window without Save puts them back to.
-    /// </summary>
-    private OutputSettings outputSettings = new();
-
-    /// <summary>Where <see cref="outputSettings"/> is kept, or null to keep it nowhere.</summary>
-    private readonly string? outputSettingsPath;
 
     private readonly NodeEditor editor = new();
 
@@ -363,13 +239,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly ComboBox gpuButton = new Picker
-    {
-        Name = "render",
-        ItemsSource = new[] { "GPU", "CPU" },
-        SelectedIndex = 0,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
     private readonly ToggleButton assistantButton =
         ToolbarButtons.Toggle("assistant", "✦", "Describe a patch and have one built.");
 
@@ -548,6 +417,8 @@ public sealed partial class MainWindow : Window
 
         document = new Document(editor, source, report, this.usage);
 
+        outputSections = new OutputSections(this, plugins, OrderedPresets, PickStartupPatchAsync);
+
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
 
@@ -593,7 +464,7 @@ public sealed partial class MainWindow : Window
         // record button should say and whether the device may be stopped.
         Recording = new TakeRecording(
             recordButton,
-            resolution,
+            outputSections.Resolution,
             preview,
             audio,
             this.usage,
@@ -1326,7 +1197,7 @@ public sealed partial class MainWindow : Window
         // time this is opened. The window around them is built fresh, so each
         // section the window owns has to be taken back from the last one first.
         foreach (var section in new[]
-                 { graphicsSection, canvasSection.View, recordingSection, soundSection, midiSection, filesSection.View, updatesSection.View, usageSection.View })
+                 { outputSections.Graphics, canvasSection.View, outputSections.Recording, outputSections.Sound, midiSection, filesSection.View, updatesSection.View, usageSection.View })
             if (section.Parent is ContentControl lender) lender.Content = null;
 
         var save = new Button { Content = "Save", Width = 84 };
@@ -1335,7 +1206,7 @@ public sealed partial class MainWindow : Window
         // may have been installed, moved or taken away since, and the Recording
         // tab's note is only worth anything if it is about now. Not awaited —
         // the window opens while the search runs and the note fills itself in.
-        _ = ShowFfmpegAsync();
+        _ = outputSections.ShowFfmpegAsync();
 
         // Tabs rather than one long column, so moving between sections is a
         // click rather than a scroll, listed down the left so a section added
@@ -1353,10 +1224,10 @@ public sealed partial class MainWindow : Window
             Padding = new Thickness(4, 6, 0, 0),
         };
 
-        tabs.Items.Add(SectionTab("Graphics", graphicsSection));
+        tabs.Items.Add(SectionTab("Graphics", outputSections.Graphics));
         tabs.Items.Add(SectionTab("Canvas", canvasSection.View));
-        tabs.Items.Add(SectionTab("Recording", recordingSection));
-        tabs.Items.Add(SectionTab("Sound", soundSection));
+        tabs.Items.Add(SectionTab("Recording", outputSections.Recording));
+        tabs.Items.Add(SectionTab("Sound", outputSections.Sound));
         tabs.Items.Add(SectionTab("MIDI", midiSection));
         tabs.Items.Add(SectionTab("Assistant", panel.SettingsSection()));
         tabs.Items.Add(SectionTab("Files", filesSection.View));
@@ -1423,7 +1294,7 @@ public sealed partial class MainWindow : Window
         if (saved) return;
 
         panel.DiscardSettings();
-        ShowOutputSettings(outputSettings);
+        outputSections.Show(outputSettings);
         updatesSection.Show();
         usageSection.Show();
         canvasSection.Show();
