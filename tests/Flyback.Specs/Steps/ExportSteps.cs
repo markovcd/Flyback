@@ -121,23 +121,4 @@ public sealed class ExportSteps(PatchContext context) : IDisposable
     private static string Invariant(float value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     public void Dispose() => folder.Delete(recursive: true);
-
-    /// <summary>A sound card that plays nothing and hands back what it was given.</summary>
-    private sealed class Loopback : IAudioDevice
-    {
-        private AudioCallback? fill;
-
-        public int SampleRate => GlobalConstants.SampleRate;
-
-        public bool IsRunning => fill is not null;
-
-        public void Start(AudioCallback callback) => fill = callback;
-
-        public void Stop() => fill = null;
-
-        public void Dispose() => Stop();
-
-        public void Pull(Span<float> buffer) =>
-            (fill ?? throw new InvalidOperationException("The engine never started the device."))(buffer);
-    }
 }
