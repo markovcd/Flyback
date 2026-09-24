@@ -54,7 +54,7 @@ context, decision, consequences.
 | [0054](0054-what-a-module-carries-is-a-part-not-a-subtype.md) | What a module carries is a part, not a subtype *(user-directed)* |
 | [0055](0055-a-plugins-extra-declares-its-editor.md) | A plugin's extra declares its editor *(user-directed; a fourth shape, text, added by [0104](0104-a-formula-is-one-block-and-exactly-the-modules-it-names.md) and given several lines by [0105](0105-text-is-a-shape-baked-into-a-picture.md))* |
 | [0061](0061-what-a-module-carries-is-kept-in-one-store.md) | What a module carries is kept in one store *(user-directed)* |
-| [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed; a voice can belong to one channel by amendment)* |
+| [0062](0062-indexed-polyphonic-midi-voices.md) | MIDI input is polyphonic through indexed voices *(user-directed; a voice can belong to one channel, and a busy voice keeps what it held, by amendment)* |
 | [0099](0099-the-computer-keyboard-can-be-laid-out-by-scale.md) | The computer keyboard can be laid out by scale, and the patch says how *(user-directed)* |
 | [0086](0086-panel-knobs-are-read-as-live-values.md) | Panel knobs are read as live values, and a MIDI controller turns a knob rather than a socket *(user-directed; a learn walks the panel and keeps a drum machine's channel by amendment)* |
 | [0139](0139-a-patch-keeps-to-an-instruments-clock.md) | A patch keeps to an instrument's clock *(user-directed)* |

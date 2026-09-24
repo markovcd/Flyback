@@ -530,8 +530,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
         var indexes = ReadIndexes(source).Select(index => index.Voice).ToList();
         var voice = indexes
             .Select(index => voices[index - 1])
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            .FirstOrDefault(candidate => candidate.Playing && candidate.Pitch == Math.Clamp(note, 0, 127));
+            .FirstOrDefault(candidate => candidate.Holds(note));
 
         if (voice is null)
         {
@@ -542,10 +541,9 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
         if (voice is null)
         {
-            // No configured voice is free: cycle back to the first module rather
-            // than assigning the note to an index the patch cannot hear.
+            // No configured voice is free: the first module plays it, over what it
+            // held, and goes back to that when this one is let go.
             voice = voices[indexes[0] - 1];
-            voice.Silence();
         }
 
         voice.Down(note, velocity);
@@ -584,10 +582,10 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
 
     private void Up(string source, int note)
     {
+        // Wherever it is held, sounding or under a note that took its voice.
         foreach (var voice in Voices(source))
         {
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (voice.Playing && voice.Pitch == Math.Clamp(note, 0, 127))
+            if (voice.Holds(note))
             {
                 voice.Up(note);
                 return;

@@ -107,6 +107,14 @@ internal sealed class MidiVoice
     /// <summary>Whether anything is held, which is what a stuck note looks like from outside.</summary>
     public bool Playing => held.Count > 0;
 
+    /// <summary>Whether <paramref name="note"/> is held here, sounding or under the one that is.</summary>
+    public bool Holds(int note)
+    {
+        note = Math.Clamp(note, 0, 127);
+
+        return held.Any(entry => entry.Note == note);
+    }
+
     /// <summary>Puts this indexed voice into a program's live-input block.</summary>
     public void WriteTo(LiveValues block, string source, int index)
         => WriteTo(block, signal => MidiSignal.Key(source, index, signal));

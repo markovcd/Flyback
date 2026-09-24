@@ -87,3 +87,12 @@ channel plays two voice sets, the instrument's own and the channel's, since a
 module listening to the box and one listening to its channel 3 are both meant to
 hear it. The computer's keys have no channels, so a channel asked of the keyboard
 is reported and the keys are heard as before.
+
+## Amendment, 2026-09-24: a busy voice keeps what it held
+
+A note arriving with every configured voice busy still goes to voice 1, but no
+longer silences it first. It sounds over what voice 1 held, and when it is let
+go the voice falls back to the newest of those still down. That makes a patch
+with one MIDI In play legato, the way a mono synth does, and gives a note back
+its voice when the note that took it ends. A note let go while buried under
+another is taken out wherever it is held, so it never comes back.
