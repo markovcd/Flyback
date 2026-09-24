@@ -190,6 +190,9 @@ public sealed partial class MainWindow : Window
         ShowMode = FlyoutShowMode.Standard,
     };
 
+    /// <summary>Installing and removing plugins, and the plugins window.</summary>
+    private readonly PluginInstalls pluginInstalls;
+
     /// <summary>The panel knobs, their learning and the knobs over the picture.</summary>
     private readonly PanelKnobs knobs;
 
@@ -440,6 +443,17 @@ public sealed partial class MainWindow : Window
             // The take is made next, and needs the playback to make it.
             () => Recording is { Running: true },
             () => assistant?.Summary);
+
+        pluginInstalls = new PluginInstalls(
+            this,
+            plugins,
+            report,
+            pluginFolder,
+            presetSite,
+            () => SiteHttp ?? SiteClient.Value,
+            () => playback.Sound,
+            Assisting,
+            relaunch is null ? null : RestartAsync);
 
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.
@@ -1092,7 +1106,7 @@ public sealed partial class MainWindow : Window
         settings.Click += async (_, _) => await ShowSettingsAsync();
 
         var pluginsButton = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.");
-        pluginsButton.Click += async (_, _) => await ShowPluginsAsync();
+        pluginsButton.Click += async (_, _) => await pluginInstalls.ShowAsync();
 
         var about = ToolbarButtons.Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
         about.Click += async (_, _) => await ShowAboutAsync();

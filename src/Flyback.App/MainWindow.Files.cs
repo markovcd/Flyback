@@ -159,7 +159,7 @@ public sealed partial class MainWindow
     {
         if (PluginPackage.Named(file.Name))
         {
-            await InstallPluginAsync(file);
+            await pluginInstalls.InstallAsync(file);
             return;
         }
 

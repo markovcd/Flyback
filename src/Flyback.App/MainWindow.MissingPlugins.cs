@@ -36,16 +36,16 @@ public sealed partial class MainWindow
         // Live only while that window is up: coming back from it is nothing having been
         // installed, or something having been that a restart was not asked for.
         refused = open;
-        awaited = found;
+        pluginInstalls.Awaited = found;
 
         try
         {
-            await ShowPluginsAsync(found);
+            await pluginInstalls.ShowAsync(found);
         }
         finally
         {
             refused = null;
-            awaited = [];
+            pluginInstalls.Awaited = [];
         }
     }
 }
