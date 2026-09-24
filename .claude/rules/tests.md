@@ -85,6 +85,11 @@ whether the behavior is the right one.
 gets. Add the phrase to `PatchSteps` if it builds or edits a patch, to `EditingSteps`
 if it saves, opens, undoes or pastes one, or to `ScreenSteps`, `SpeakerSteps` or
 `CompilerSteps` if it checks one, and keep the numbers there
-unless the number is the requirement ("peaks at a quarter of a second"). A
-feature the specs project cannot reach (the editor, a plugin) takes its scenario
-where it can be reached, or says in the commit why it has none.
+unless the number is the requirement ("peaks at a quarter of a second").
+
+The specs project references every program and library in `src/` and lays out
+every shipped plugin under `plugins\`, so no feature is out of its reach: the
+editor, the viewer, the CLI, the preset site and a plugin's modules all take
+their scenario there. If a feature needs a project or a package the specs do not
+have yet, add the reference; a new area gets its own steps class (`EditorSteps`,
+`CliSteps`) rather than a phrase bolted onto a class about something else.

@@ -648,7 +648,7 @@ changed: saved patches name it.
 | Project | Tests | Notes |
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
-| `Flyback.Core.Specs` | Compiler and playback behavior as Gherkin scenarios | Reqnroll; no C# test methods |
+| `Flyback.Core.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
 | `Flyback.App.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
@@ -838,6 +838,9 @@ patches, `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture, th
 sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoes
 and pastes, and `PresetSteps` checks every shipped preset. They share a fresh
 `PatchContext` and `Session` per scenario.
+The project references every program and library and lays out every shipped
+plugin under `plugins\`, so a feature of the editor, the viewer, the CLI, the
+preset site or a plugin takes its scenario here like any other.
 Building never compiles; each check compiles for its own sink. The sound steps
 evaluate the audio program at 1 kHz without the renderer's filters, so a sample is
 exactly what the patch computed. C# tests cover the edges.

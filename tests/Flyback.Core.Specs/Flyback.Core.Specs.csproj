@@ -13,9 +13,40 @@
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
+  <!--
+    Every program and library, so a scenario can drive a feature from wherever
+    it lives: the editor, the viewer, the command line or the preset site.
+  -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Core\Flyback.Core.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.App\Flyback.App.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Viewer\Flyback.Viewer.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Server\Flyback.Server.csproj" />
+  </ItemGroup>
+
+  <!--
+    Every shipped plugin, laid out under plugins\ the way an install has them,
+    so PluginHost.Load() finds them. Platform ones included on every system, as
+    Flyback.Plugins.Tests does: a scenario that needs one skips where it cannot work.
+  -->
+  <ItemGroup>
+    <PluginProject Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
   </ItemGroup>
 
   <ItemGroup>
