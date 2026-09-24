@@ -473,6 +473,27 @@ public class CommandTests
         output.ShouldContain("out.color");
     }
 
+    /// <summary>A shipped preset is printed by its name, with no file to have saved first.</summary>
+    [Theory]
+    [InlineData(new[] { "print", "--preset", "plasma" }, Exit.Ok, "out.color")]
+    [InlineData(new[] { "print", "--presets" }, Exit.Ok, "Whole band")]
+    [InlineData(new[] { "print", "--preset", "Nonesuch" }, Exit.Failed, "no preset is called 'Nonesuch'")]
+    [InlineData(new[] { "print" }, Exit.Failed, "say what to print")]
+    [InlineData(new[] { "print", "plasma.fbk", "--preset", "Plasma" }, Exit.Failed, "say what to print")]
+    public void A_preset_is_printed_by_its_name(string[] args, int exit, string said)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var code = Program.Run(
+            args,
+            new Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = output, Error = error });
+
+        code.ShouldBe(exit, error.ToString());
+        (output.ToString() + error).ShouldContain(said);
+    }
+
     /// <summary>Standard output where no file was named, so a printing can be piped.</summary>
     [Fact]
     public void With_no_file_named_the_patch_goes_to_standard_output()

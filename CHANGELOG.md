@@ -14,6 +14,7 @@
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.
 - `flyback-cli render` takes the size, frame rate, quality, format and ffmpeg it is not given from the editor's settings.
+- `flyback-cli print --preset <name>` writes a shipped preset out as text.
 - `flyback-cli modules <module>` describes one module: its sockets with their defaults and ranges, where a pipe lands, and what it does.
 - Added Crush, a bitcrusher.
 - Added Arc, part of a ring opening from the top, filled like a dial by its `sweep`, and Four forms has one filling in its middle.

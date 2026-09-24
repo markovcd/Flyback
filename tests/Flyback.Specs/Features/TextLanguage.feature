@@ -28,6 +28,11 @@ Feature: A patch can be written as text
     Then the text has the line "bent * x |> out.color"
     And the picture is as it was
 
+  Scenario: A shipped preset can be read as text by its name
+    When the preset "Plasma" is printed from the command line
+    Then it reads without complaint
+    And the screen is not black
+
   Scenario: Arithmetic calling a function is written out as arithmetic
     Given the text:
       """

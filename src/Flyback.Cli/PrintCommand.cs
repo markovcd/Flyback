@@ -23,21 +23,25 @@ namespace Flyback.Cli;
 /// </remarks>
 internal static class PrintCommand
 {
+    /// <param name="file">The file the patch was read from, or null for a preset.</param>
+    /// <param name="name">What to call the patch, where it is not a file's.</param>
     public static int Run(
         Patch patch,
-        FileInfo file,
+        FileInfo? file,
         FileInfo? output,
         bool check,
         TextWriter writer,
         TextWriter error,
         ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null)
+        IImageLibrary? pictures = null,
+        string? name = null)
     {
+        var called = name ?? file?.Name ?? "the patch";
         var source = PatchPrinter.Print(patch);
-        var absent = Absent(patch, file.Name, error);
+        var absent = Absent(patch, called, error);
 
         var code = check
-            ? Checked(patch, file.Name, source, writer, error, samples, pictures)
+            ? Checked(patch, called, source, writer, error, samples, pictures)
             : Written(source, file, output, writer, error);
 
         // A printing short of a module is still a printing and is still written,
@@ -78,7 +82,7 @@ internal static class PrintCommand
     /// <summary>Puts the printing where it was asked for.</summary>
     private static int Written(
         string source,
-        FileInfo file,
+        FileInfo? file,
         FileInfo? output,
         TextWriter writer,
         TextWriter error)
@@ -92,7 +96,7 @@ internal static class PrintCommand
             return Exit.Ok;
         }
 
-        if (string.Equals(file.FullName, output.FullName, StringComparison.OrdinalIgnoreCase))
+        if (file is not null && string.Equals(file.FullName, output.FullName, StringComparison.OrdinalIgnoreCase))
         {
             error.WriteLine(
                 $"{GlobalConstants.ApplicationName}: {output.Name}: this is the file being read — "

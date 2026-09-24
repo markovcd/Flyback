@@ -103,6 +103,21 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [Then("the patch is tagged {string}")]
     public void ThenTagged(string tags) => context.Patch.Tags.ShouldBe(tags.Split(", "));
 
+    [When("the preset {string} is printed from the command line")]
+    public void WhenAPresetIsPrinted(string name)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var code = Cli.Program.Run(
+            ["print", "--preset", name],
+            new Cli.Plugins(() => Plugins.Hosting.PluginCatalog.Empty, "nowhere", null),
+            new System.CommandLine.InvocationConfiguration { Output = output, Error = error });
+
+        code.ShouldBe(Cli.Exit.Ok, error.ToString());
+        Read(output.ToString());
+    }
+
     [Given("its modules were never named")]
     public void GivenNeverNamed()
     {

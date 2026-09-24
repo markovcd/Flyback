@@ -71,7 +71,7 @@ internal static class Program
             Render(plugins, patch, exports),
             Check(plugins, patch, json),
             Info(plugins, patch, json),
-            Print(plugins, patch),
+            Print(plugins),
             Pack(plugins, patch, json),
             PackPlugin(),
             PluginKey(),
@@ -382,8 +382,26 @@ internal static class Program
     /// than a report about one, so there is nothing for a <c>--json</c> to be an
     /// alternative to.
     /// </summary>
-    private static Command Print(Plugins plugins, Argument<FileInfo> patch)
+    private static Command Print(Plugins plugins)
     {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
         var output = new Option<FileInfo>("--out", "-o")
         {
             Description = $"Where to write it, .{PatchLanguage.FileExtension} by convention. "
@@ -397,13 +415,14 @@ internal static class Program
 
         var command = new Command("print", "Write a patch out as text, in the language.")
         {
-            patch, output, check,
+            patch, preset, presets, output, check,
         };
 
         command.SetAction(result =>
         {
             var checking = result.GetValue(check);
             var into = result.GetValue(output);
+            var error = result.InvocationConfiguration.Error;
 
             // Said rather than ignored, because the two asked for together are
             // somebody expecting a file at the end of it.
@@ -417,7 +436,41 @@ internal static class Program
 
             plugins.Ready();
 
-            var file = result.GetRequiredValue(patch);
+            if (result.GetValue(presets))
+            {
+                foreach (var shipped in plugins.Catalog.Presets) result.InvocationConfiguration.Output.WriteLine(shipped.Name);
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to print: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (file is null)
+            {
+                if (plugins.Catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
+                {
+                    error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{named}'. --presets lists them.");
+
+                    return Exit.Failed;
+                }
+
+                return PrintCommand.Run(
+                    wanted.Build(plugins.Catalog.Modules),
+                    null,
+                    into,
+                    checking,
+                    result.InvocationConfiguration.Output,
+                    error,
+                    name: wanted.Name);
+            }
 
             // Opened rather than read, so that --check compiles a bundle against
             // the files it carries: a program that loaded a table is a different

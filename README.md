@@ -148,6 +148,7 @@ flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key rippl
 flyback-cli plugin-key -o ripple.key
 flyback-cli print nebula.fbk -o nebula.fbks
 flyback-cli print nebula.fbk --check
+flyback-cli print --preset "Whole band"
 flyback-cli render nebula.fbks -o nebula.png
 flyback-cli probe --keys
 flyback-cli probe --provider all
@@ -163,7 +164,7 @@ flyback-cli viewer nebula.fbk
 - `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
-- `print`: writes the patch out as text in the language, and can check that the text builds back to the same program
+- `print`: writes the patch out as text in the language, and can check that the text builds back to the same program; `--preset` prints a shipped preset by name, and `--presets` lists them
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
 - `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
