@@ -60,9 +60,6 @@ public sealed partial class MainWindow
     /// <summary>The window holding the preview on another monitor, while it is there.</summary>
     private Window? pictureWindow;
 
-    /// <summary>The knobs over the picture in <see cref="pictureWindow"/>.</summary>
-    private StageKnobs? pictureKnobs;
-
     /// <summary>The dots and transport over the picture in <see cref="pictureWindow"/>.</summary>
     private TransportOverlay? pictureTransport;
 
@@ -112,16 +109,16 @@ public sealed partial class MainWindow
 
         preview.Renew();
 
-        var knobs = pictureKnobs = new StageKnobs();
+        var away = knobs.Away = new StageKnobs();
 
-        knobs.Show(editor.Patch);
-        knobs.Turning += TurnKnob;
-        knobs.TurnEnded += document.LetGoOfKnob;
+        away.Show(editor.Patch);
+        away.Turning += knobs.Turn;
+        away.TurnEnded += document.LetGoOfKnob;
 
         var picture = new Panel();
 
         picture.Children.Add(preview);
-        picture.Children.Add(knobs);
+        picture.Children.Add(away);
 
         // Not activated, so the keyboard stays with the editor.
         var window = pictureWindow = new Window
@@ -172,7 +169,7 @@ public sealed partial class MainWindow
 
         window.Show(this);
         SyncTransport();
-        SyncStageKnobs();
+        knobs.SyncStages();
     }
 
     private void BringPictureBack(Window window)
@@ -180,7 +177,7 @@ public sealed partial class MainWindow
         if (pictureWindow != window || previewBox is null) return;
 
         pictureWindow = null;
-        pictureKnobs = null;
+        knobs.Away = null;
         pictureTransport = null;
 
         if (window.Content is Panel picture) picture.Children.Clear();
@@ -200,6 +197,7 @@ public sealed partial class MainWindow
         if (columns is null || previewBox is null || toolbar is null || statusBar is null) return;
 
         previewIsFullScreen = full;
+        knobs.OverPicture = full;
 
         if (full) usage.Count(Used.FullScreen);
 
@@ -228,8 +226,8 @@ public sealed partial class MainWindow
             overlay.IsVisible = full;
         }
 
-        Over(stageKnobs);
-        SyncStageKnobs();
+        Over(knobs.Stage);
+        knobs.SyncStages();
 
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has

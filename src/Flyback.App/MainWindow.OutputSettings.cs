@@ -60,7 +60,7 @@ public sealed partial class MainWindow
 
         recordButton.Click += async (_, _) => await ToggleRecordAsync();
 
-        BuildMidiSection();
+        knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.KeyboardLayout);
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
@@ -85,7 +85,7 @@ public sealed partial class MainWindow
         // all one shape.
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
 
-        controls.Takeover = settings.Takeover;
+        knobs.Hub.Takeover = settings.Takeover;
     }
 
     /// <summary>

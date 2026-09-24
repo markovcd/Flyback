@@ -48,7 +48,7 @@ public sealed partial class MainWindow
         pictureFolder.Beside = beside;
 
         // Where the last document's knobs were left says nothing about this one's.
-        controls.Forget();
+        knobs.Hub.Forget();
     }
 
     /// <summary>

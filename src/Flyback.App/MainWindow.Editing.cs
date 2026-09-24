@@ -350,7 +350,7 @@ public sealed partial class MainWindow
             return;
         }
 
-        if (e.Key == Key.Escape && StopControlModes())
+        if (e.Key == Key.Escape && knobs.StopModes())
         {
             Report("Done.");
             e.Handled = true;
@@ -422,7 +422,7 @@ public sealed partial class MainWindow
 
             // The panel has no room while the picture has the window.
             case Key.K:
-                if (!previewIsFullScreen) ShowControls(!controlsPanel.IsVisible);
+                if (!previewIsFullScreen) ShowControls(!knobs.View.IsVisible);
 
                 e.Handled = true;
                 break;

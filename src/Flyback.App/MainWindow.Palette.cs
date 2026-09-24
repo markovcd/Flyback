@@ -35,7 +35,7 @@ public sealed partial class MainWindow
     private void BuildPalette()
     {
         groups = new GroupLibrary(plugins.Modules, groupFolder);
-        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup, controlsPanel.Instruments, AddInstrument);
+        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup, knobs.View.Instruments, AddInstrument);
 
         paletteFlyout.Content = palette;
         paletteFlyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);

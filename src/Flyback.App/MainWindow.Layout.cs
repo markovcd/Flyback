@@ -65,7 +65,7 @@ public sealed partial class MainWindow
         assistantButton.IsChecked = saved.AssistantOpen && assistantButton.IsEnabled;
 
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
-        if (ControlsRow is { } controlsRow && controlsPanel.IsVisible) controlsRow.Height = controlsShare;
+        if (ControlsRow is { } controlsRow && knobs.View.IsVisible) controlsRow.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
 
         // Only while there is a picture to swap in, which is the button's own rule.
@@ -137,8 +137,8 @@ public sealed partial class MainWindow
             AssistantWidth = assistant is { IsVisible: true } ? assistantColumn!.Width.Value : assistantShare.Value,
             AssistantOpen = assistant?.IsVisible == true,
 
-            ControlsHeight = controlsPanel.IsVisible ? Under(controlsPanel, length => length.Value) : controlsShare.Value,
-            ControlsOpen = controlsPanel.IsVisible,
+            ControlsHeight = knobs.View.IsVisible ? Under(knobs.View, length => length.Value) : controlsShare.Value,
+            ControlsOpen = knobs.View.IsVisible,
 
             Code = document.ShowingCode,
             Swapped = swapButton.IsChecked == true,

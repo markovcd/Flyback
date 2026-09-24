@@ -101,7 +101,7 @@ public sealed partial class MainWindow
         overlay.RewindClicked += RewindToZero;
 
         grid.Children.Add(previewBox);
-        grid.Children.Add(stageKnobs);
+        grid.Children.Add(knobs.Stage);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);
         grid.Children.Add(inspectorBorder);

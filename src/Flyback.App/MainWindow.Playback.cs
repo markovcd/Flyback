@@ -22,7 +22,7 @@ public sealed partial class MainWindow
         playback.Compiled += (_, _) =>
         {
             ShowPreview(playback.HasPicture);
-            RefreshControls();
+            knobs.Refresh();
             Recording.Mark();
         };
 

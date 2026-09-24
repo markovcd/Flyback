@@ -190,6 +190,9 @@ public sealed partial class MainWindow : Window
         ShowMode = FlyoutShowMode.Standard,
     };
 
+    /// <summary>The panel knobs, their learning and the knobs over the picture.</summary>
+    private readonly PanelKnobs knobs;
+
     /// <summary>The panel on the right, under the preview.</summary>
     private readonly Inspector inspector;
 
@@ -419,7 +422,9 @@ public sealed partial class MainWindow : Window
         // program is actually reading one — see MidiHub.Listen.
         midi = new MidiHub(plugins.PreferredMidiInput);
 
-        inspector = new Inspector(this, editor, document, midi, instruments, soundFolder, pictureFolder, () => groups, SaveGroup);
+        knobs = new PanelKnobs(editor, document, preview, audio, midi, report);
+
+        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, soundFolder, pictureFolder, () => groups, SaveGroup);
 
         playback = new Playback(
             editor,
@@ -468,7 +473,7 @@ public sealed partial class MainWindow : Window
         // happens. Installed here rather than in Startup because the list is the
         // window's — the computer's keyboard is only an instrument while there
         // is a window for it to be typed into.
-        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = instruments.For(source)?.Conducts == true })]);
+        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
 
         // A key going down while the clock is stopped changes the picture and
         // moves nothing else, so the preview has to be told there is a new frame
@@ -728,12 +733,12 @@ public sealed partial class MainWindow : Window
         Grid.SetRow(editor, 0);
         Grid.SetRow(source, 0);
         Grid.SetRow(controlsSplitter, 1);
-        Grid.SetRow(controlsPanel, 2);
+        Grid.SetRow(knobs.View, 2);
 
         patch.Children.Add(editor);
         patch.Children.Add(source);
         patch.Children.Add(controlsSplitter);
-        patch.Children.Add(controlsPanel);
+        patch.Children.Add(knobs.View);
 
         BuildPalette();
 
@@ -849,9 +854,9 @@ public sealed partial class MainWindow : Window
         Grid.SetColumn(patchPane, patchColumn);
 
         Hang(swapped ? controlsSplitter : previewSplitter, columns, pictureColumn, 1);
-        Hang(swapped ? controlsPanel : inspectorBox, columns, pictureColumn, 2);
+        Hang(swapped ? knobs.View : inspectorBox, columns, pictureColumn, 2);
         Hang(swapped ? previewSplitter : controlsSplitter, patchPane, 0, 1);
-        Hang(swapped ? inspectorBox : controlsPanel, patchPane, 0, 2);
+        Hang(swapped ? inspectorBox : knobs.View, patchPane, 0, 2);
 
         var outer = columns.RowDefinitions[2];
         var inner = patchPane.RowDefinitions[2];
@@ -1186,7 +1191,7 @@ public sealed partial class MainWindow : Window
                 ("Canvas", canvasSection.View),
                 ("Recording", outputSections.Recording),
                 ("Sound", outputSections.Sound),
-                ("MIDI", midiSection),
+                ("MIDI", knobs.MidiSection),
                 ("Assistant", panel.SettingsSection()),
                 ("Files", filesSection.View),
                 ("Updates", updatesSection.View),
