@@ -70,34 +70,28 @@ internal sealed class PresetSlot
     /// <param name="show">Puts a patch that has just arrived on the canvas, from its beginning.</param>
     /// <param name="offerMissing">Offers the plugins a shared preset that could not be opened is short of.</param>
     public PresetSlot(
-        Window owner,
-        NodeEditor editor,
-        Document document,
+        Shell shell,
         PatchFiles files,
-        PluginCatalog plugins,
-        ReportLine report,
-        Usage usage,
         PresetThumbnails thumbnails,
         PresetAudition audition,
         PresetLibrary? saved,
         Func<PresetSite?> site,
-        Func<AssistantPanel?> assistant,
         Func<Task<bool>> mayReplace,
         Action<Patch> show,
         Func<PatchLoad, Reopen?, Task> offerMissing)
     {
-        this.owner = owner;
-        this.editor = editor;
-        this.document = document;
+        owner = shell.Owner;
+        editor = shell.Editor;
+        document = shell.Document;
         this.files = files;
-        this.plugins = plugins;
-        this.report = report;
-        this.usage = usage;
+        plugins = shell.Plugins;
+        report = shell.Report;
+        usage = shell.Usage;
         this.thumbnails = thumbnails;
         this.audition = audition;
         this.saved = saved;
         this.site = site;
-        this.assistant = assistant;
+        assistant = () => shell.Assistant;
         this.mayReplace = mayReplace;
         this.show = show;
         this.offerMissing = offerMissing;

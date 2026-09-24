@@ -32,9 +32,7 @@ internal sealed class PluginInstalls
     /// stays; null where a restart is not offered.
     /// </param>
     public PluginInstalls(
-        Window owner,
-        PluginCatalog plugins,
-        ReportLine report,
+        Shell shell,
         string? pluginFolder,
         Uri? presetSite,
         Func<HttpClient> http,
@@ -42,9 +40,9 @@ internal sealed class PluginInstalls
         Func<(string Assembly, string Said)?> assisting,
         Func<Task<bool>>? restart)
     {
-        this.owner = owner;
-        this.plugins = plugins;
-        this.report = report;
+        owner = shell.Owner;
+        plugins = shell.Plugins;
+        report = shell.Report;
         this.pluginFolder = pluginFolder;
         this.presetSite = presetSite;
         this.http = http;

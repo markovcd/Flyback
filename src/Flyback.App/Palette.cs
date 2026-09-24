@@ -58,21 +58,17 @@ internal sealed class Palette
     /// <param name="keyboard">How the MIDI section lays out a first keyboard.</param>
     /// <param name="groupFolder">Where kept groups are read from and written to, or null for the usual place.</param>
     public Palette(
-        NodeEditor editor,
-        Document document,
-        PluginCatalog plugins,
-        Usage usage,
-        ReportLine report,
+        Shell shell,
         Func<IReadOnlyList<PanelInstrument>>? instruments,
         Func<KeyboardLayout> keyboard,
         string? groupFolder)
     {
-        this.editor = editor;
-        this.document = document;
+        editor = shell.Editor;
+        document = shell.Document;
         this.keyboard = keyboard;
-        this.plugins = plugins;
-        this.usage = usage;
-        this.report = report;
+        plugins = shell.Plugins;
+        usage = shell.Usage;
+        report = shell.Report;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);
         list = new ModulePalette(plugins.Modules, Add, Groups, AddGroup, instruments, AddInstrument);

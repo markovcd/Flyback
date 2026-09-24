@@ -57,23 +57,17 @@ internal sealed class PatchFiles
     /// <param name="show">Puts a patch that has just been read on the canvas, from its beginning.</param>
     /// <param name="offerMissing">Offers the plugins a patch that could not be opened is short of.</param>
     public PatchFiles(
-        TopLevel owner,
-        NodeEditor editor,
-        Document document,
-        PluginCatalog plugins,
-        ReportLine report,
-        Usage usage,
-        Func<AssistantPanel?> assistant,
+        Shell shell,
         Action<Patch> show,
         Func<PatchLoad, Reopen?, Task> offerMissing)
     {
-        this.owner = owner;
-        this.editor = editor;
-        this.document = document;
-        this.plugins = plugins;
-        this.report = report;
-        this.usage = usage;
-        this.assistant = assistant;
+        owner = shell.Owner;
+        editor = shell.Editor;
+        document = shell.Document;
+        plugins = shell.Plugins;
+        report = shell.Report;
+        usage = shell.Usage;
+        assistant = () => shell.Assistant;
         this.show = show;
         this.offerMissing = offerMissing;
     }

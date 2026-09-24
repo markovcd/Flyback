@@ -68,13 +68,10 @@ internal sealed class Inspector
     /// </summary>
     private readonly ContentControl plateHost = new() { Name = "plate-host" };
 
-    /// <param name="owner">What a file picker is opened over.</param>
     /// <param name="groups">The kept groups, or null where none are kept.</param>
     /// <param name="saveGroup">Keeps a group under its name.</param>
     public Inspector(
-        TopLevel owner,
-        NodeEditor editor,
-        Document document,
+        Shell shell,
         MidiHub midi,
         InstrumentLibrary instruments,
         SampleLibrary soundFolder,
@@ -82,9 +79,9 @@ internal sealed class Inspector
         Func<GroupLibrary?> groups,
         Action<NodeGroup> saveGroup)
     {
-        this.owner = owner;
-        this.editor = editor;
-        this.document = document;
+        owner = shell.Owner;
+        editor = shell.Editor;
+        document = shell.Document;
         this.midi = midi;
         this.instruments = instruments;
         this.soundFolder = soundFolder;

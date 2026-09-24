@@ -280,7 +280,9 @@ public sealed partial class MainWindow : Window
 
         document = new Document(editor, source, report, this.usage);
 
-        outputSections = new OutputSections(this, plugins, OrderedPresets, PickStartupPatchAsync);
+        var shell = new Shell(this, editor, document, plugins, report, this.usage, () => assistant);
+
+        outputSections = new OutputSections(shell, OrderedPresets, PickStartupPatchAsync);
 
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
@@ -308,55 +310,32 @@ public sealed partial class MainWindow : Window
         // program is actually reading one — see MidiHub.Listen.
         midi = new MidiHub(plugins.PreferredMidiInput);
 
-        knobs = new PanelKnobs(editor, document, preview, audio, midi, report);
+        knobs = new PanelKnobs(shell, preview, audio, midi);
 
-        palette = new Palette(
-            editor,
-            document,
-            plugins,
-            this.usage,
-            report,
-            knobs.View.Instruments,
-            () => outputSettings.Keyboard,
-            groupFolder);
+        palette = new Palette(shell, knobs.View.Instruments, () => outputSettings.Keyboard, groupFolder);
 
-
-        files = new PatchFiles(
-            this,
-            editor,
-            document,
-            plugins,
-            report,
-            this.usage,
-            () => assistant,
-            Show,
-            OfferMissingPluginsAsync);
+        files = new PatchFiles(shell, Show, OfferMissingPluginsAsync);
 
         // Where the last document's knobs were left says nothing about this one's.
         files.Arrived += (_, _) => knobs.Hub.Forget();
         files.Saved += (_, _) => ClearPresetSelection();
 
-        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, files.SoundFolder, files.PictureFolder, () => palette.Groups, palette.SaveGroup);
+        inspector = new Inspector(shell, midi, knobs.Instruments, files.SoundFolder, files.PictureFolder, () => palette.Groups, palette.SaveGroup);
 
         playback = new Playback(
-            editor,
+            shell,
             preview,
             audio,
             compiler,
             midi,
-            report,
-            plugins,
             sound,
             () => files.Sounds,
             () => files.Pictures,
             // The take is made next, and needs the playback to make it.
-            () => Recording is { Running: true },
-            () => assistant?.Summary);
+            () => Recording is { Running: true });
 
         pluginInstalls = new PluginInstalls(
-            this,
-            plugins,
-            report,
+            shell,
             pluginFolder,
             presetSite,
             () => SiteHttp ?? SiteClient.Value,
@@ -375,25 +354,19 @@ public sealed partial class MainWindow : Window
             playback.SyncAudioToVolume);
 
         presets = new PresetSlot(
-            this,
-            editor,
-            document,
+            shell,
             files,
-            plugins,
-            report,
-            this.usage,
             thumbnails,
             audition,
             savedPresets,
             PresetSite,
-            () => assistant,
             MayReplaceThePatchAsync,
             Show,
             OfferMissingPluginsAsync);
 
         toolbar = new Toolbar(presets.View, plugins.Assistants.Count > 0);
 
-        statusBar = new StatusBar(report, editor, preview, this.usage, () => IsActive, WriteToTheAuthorAsync);
+        statusBar = new StatusBar(shell, preview, WriteToTheAuthorAsync);
 
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.

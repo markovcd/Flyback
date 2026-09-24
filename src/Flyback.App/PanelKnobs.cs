@@ -63,20 +63,14 @@ internal sealed class PanelKnobs
     /// <summary>The knob panel should be shown: a knob was added, is being linked or learned.</summary>
     public event EventHandler? Wanted;
 
-    public PanelKnobs(
-        NodeEditor editor,
-        Document document,
-        PreviewHost preview,
-        AudioEngine audio,
-        MidiHub midi,
-        ReportLine report)
+    public PanelKnobs(Shell shell, PreviewHost preview, AudioEngine audio, MidiHub midi)
     {
-        this.editor = editor;
-        this.document = document;
+        editor = shell.Editor;
+        document = shell.Document;
         this.preview = preview;
         this.audio = audio;
         this.midi = midi;
-        this.report = report;
+        report = shell.Report;
 
         Hub = new ControlHub(midi);
 

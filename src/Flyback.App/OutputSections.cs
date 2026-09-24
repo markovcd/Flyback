@@ -237,17 +237,15 @@ internal sealed class OutputSections
         TextWrapping = TextWrapping.Wrap,
     };
 
-    /// <param name="owner">What the monitors are listed from and the ffmpeg picker is opened over.</param>
     /// <param name="presets">The presets the startup patch is named from.</param>
     /// <param name="pickStartupPatch">Picks a startup patch from the one showing, or null for none picked.</param>
     public OutputSections(
-        TopLevel owner,
-        PluginCatalog plugins,
+        Shell shell,
         Func<IReadOnlyList<PatchPreset>> presets,
         Func<string, Task<string?>> pickStartupPatch)
     {
-        this.owner = owner;
-        this.plugins = plugins;
+        owner = shell.Owner;
+        plugins = shell.Plugins;
         this.presets = presets;
         this.pickStartupPatch = pickStartupPatch;
 

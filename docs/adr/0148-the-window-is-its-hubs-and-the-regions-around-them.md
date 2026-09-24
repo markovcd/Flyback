@@ -50,6 +50,10 @@ regions, lays them out, and asks the closing question.
 A hub says what changed through events, and whoever cares subscribes. It never
 names a region.
 
+What nearly every region reads (the window, the canvas, the document, the
+plugins, the report line, the usage counts and the assistant) is one `Shell`,
+built once and handed to each; a region takes anything else on its own.
+
 The wiring is written out in the window's constructor, with no container. Two
 pairs need each other (the take and the playback, the files and the playback),
 and a lazy `Func` or an event settles each where it is built; a container would

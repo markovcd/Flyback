@@ -46,32 +46,28 @@ internal sealed class Playback
     public event EventHandler? TransportChanged;
 
     /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
-    /// <param name="assistantSummary">What the assistant plugins came to, for a sound failure's detail.</param>
     public Playback(
-        NodeEditor editor,
+        Shell shell,
         PreviewHost preview,
         AudioEngine audio,
         IlCompiler compiler,
         MidiHub midi,
-        ReportLine report,
-        PluginCatalog plugins,
         AudioSetup sound,
         Func<ISampleLibrary> sounds,
         Func<IImageLibrary> pictures,
-        Func<bool> recording,
-        Func<string?> assistantSummary)
+        Func<bool> recording)
     {
-        this.editor = editor;
+        editor = shell.Editor;
         this.preview = preview;
         this.audio = audio;
         this.compiler = compiler;
         this.midi = midi;
-        this.report = report;
-        this.plugins = plugins;
+        report = shell.Report;
+        plugins = shell.Plugins;
         this.sounds = sounds;
         this.pictures = pictures;
         this.recording = recording;
-        this.assistantSummary = assistantSummary;
+        assistantSummary = () => shell.Assistant?.Summary;
 
         Sound = sound;
     }

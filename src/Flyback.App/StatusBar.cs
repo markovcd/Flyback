@@ -47,21 +47,15 @@ internal sealed class StatusBar
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
-    /// <param name="report">The one line anything is said on, which the bar gives most of its width.</param>
-    /// <param name="active">Whether the window is somebody's, which is when its frame rate means anything.</param>
     /// <param name="writeToAuthor">What the letter at the end of the bar opens.</param>
-    public StatusBar(
-        ReportLine report,
-        NodeEditor editor,
-        PreviewHost preview,
-        Usage usage,
-        Func<bool> active,
-        Func<Task> writeToAuthor)
+    public StatusBar(Shell shell, PreviewHost preview, Func<Task> writeToAuthor)
     {
-        this.editor = editor;
+        var report = shell.Report;
+
+        editor = shell.Editor;
         this.preview = preview;
-        this.usage = usage;
-        this.active = active;
+        usage = shell.Usage;
+        active = () => shell.Owner.IsActive;
 
         var bar = new Grid
         {
