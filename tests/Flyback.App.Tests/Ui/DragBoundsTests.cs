@@ -87,7 +87,7 @@ public class DragBoundsTests : UiTest
         DragBy(editor, window, Body(near), new Vector(4000, 4000));
 
         var def = NodeCatalog.BuiltIn.Require(near.TypeId);
-        var body = NodeGeometry.Bounds(near, def);
+        var body = Geometry.Bounds(near, def);
 
         body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Across + 0.001);
         body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Down + 0.001);
@@ -111,7 +111,7 @@ public class DragBoundsTests : UiTest
         Editing(builder.Patch);
 
         var def = NodeCatalog.BuiltIn.Require(hanging.TypeId);
-        var body = NodeGeometry.Bounds(hanging, def);
+        var body = Geometry.Bounds(hanging, def);
 
         body.Right.ShouldBeLessThanOrEqualTo(NodeInstance.Across + 0.001);
         body.Bottom.ShouldBeLessThanOrEqualTo(NodeInstance.Down + 0.001);

@@ -8,7 +8,7 @@ namespace Flyback.App.Controls;
 /// A mark in the middle of a wire whose two ends have different ranges, which puts
 /// an Auto remap into the wire when clicked (ADR-0130).
 /// </summary>
-internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selection, Repaint repaint)
+internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selection, Repaint repaint, NodeGeometry geometry)
 {
     /// <summary>How far from a mark's center a click or a hover still lands on it, in graph units.</summary>
     private const double MarkReach = 9;
@@ -76,7 +76,7 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
     public NodeInstance Splice(Connection wire, Point at)
     {
         var def = NodeCatalog.Require(NodeCatalog.AutoRemapTypeId);
-        var node = NodeInstance.Create(def, at.X - NodeGeometry.Width / 2, at.Y - NodeGeometry.Height(def) / 2);
+        var node = NodeInstance.Create(def, at.X - NodeGeometry.Width / 2, at.Y - geometry.Height(def) / 2);
 
         Patch.Nodes.Add(node);
 
@@ -112,7 +112,7 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
             {
                 yield return (wire, new Point(
                     (from.X + to.X) / 2,
-                    WirePath.ReturnRun(NodeGeometry.Bounds(source, sourceDef), NodeGeometry.Bounds(target, targetDef))));
+                    WirePath.ReturnRun(geometry.Bounds(source, sourceDef), geometry.Bounds(target, targetDef))));
                 continue;
             }
 

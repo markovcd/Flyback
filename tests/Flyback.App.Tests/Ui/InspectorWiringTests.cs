@@ -93,7 +93,7 @@ public class InspectorWiringTests : UiTest
         All<TextBlock>(window).Count(t => t.Text == "◀ not patched");
 
     private static Point Input(NodeInstance node, int index) =>
-        NodeGeometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
+        Geometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
 
     /// <summary>
     /// How many knobs a Sine offers with nothing wired into it. Five inputs, and

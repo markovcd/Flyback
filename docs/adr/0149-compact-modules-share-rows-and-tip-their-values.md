@@ -33,6 +33,7 @@ A value is a hover away rather than a glance away, which the switch leaves as
 the person's trade. A panel knob's link shows as a dot after the input's name,
 and an Auto remap range with no range at the far end is flagged on the name.
 
-`NodeGeometry.Compact` is one static switch for the whole program, like
-`ModuleSkins.Honored`. A test that turns it on runs on the UI thread and turns it
-off again.
+The switch is the window's: `NodeGeometry` is registered in each window's
+container ([0150](0150-the-editor-is-composed-in-a-container.md)), and everything
+that paints, hit-tests or lays out a module is handed that one. Two windows draw
+each their own way, and a test turns compact on without reaching another.

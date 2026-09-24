@@ -35,7 +35,7 @@ public class MidDragTests : UiTest
     }
 
     private static Point Input(NodeInstance node, int index) =>
-        NodeGeometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
+        Geometry.InputPort(node, NodeCatalog.BuiltIn.Require(node.TypeId), index);
 
     private static Point Output(NodeInstance node, int index = 0) =>
         NodeGeometry.OutputPort(node, index);

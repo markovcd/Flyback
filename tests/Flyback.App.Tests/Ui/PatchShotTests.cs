@@ -147,7 +147,7 @@ public class PatchShotTests : UiTest
         {
             if (catalog.Get(node.TypeId) is not { } def) continue;
 
-            var bounds = NodeGeometry.Bounds(node, def);
+            var bounds = Geometry.Bounds(node, def);
 
             box = box is { } so ? so.Union(bounds) : bounds;
         }

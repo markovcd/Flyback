@@ -148,7 +148,7 @@ public class WireDropTests : UiTest
             window.TranslatePoint(dropped, editor) ?? dropped);
 
         (added.X + NodeGeometry.Width / 2).ShouldBe(at.X, 1);
-        (added.Y + NodeGeometry.Height(def) / 2).ShouldBe(at.Y, 1);
+        (added.Y + Geometry.Height(def) / 2).ShouldBe(at.Y, 1);
     }
 
     [AvaloniaFact]
@@ -252,7 +252,7 @@ public class WireDropTests : UiTest
         // Dragged backwards, out of the Output's color socket.
         DragFrom(
             window,
-            NodeGeometry.InputPort(sink, def, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, def, NodeCatalog.OutputColorPort),
             Bare(window));
 
         Pick(window, "Scan");

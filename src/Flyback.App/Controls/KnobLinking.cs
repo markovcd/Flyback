@@ -10,7 +10,7 @@ public readonly record struct SocketPick(Guid Node, int Port);
 /// The mode in which clicking a socket on the canvas links it to the panel knob being
 /// linked, rather than starting a wire or a drag.
 /// </summary>
-internal sealed class KnobLinking(CanvasSelection selection, Repaint repaint)
+internal sealed class KnobLinking(CanvasSelection selection, Repaint repaint, NodeGeometry geometry)
 {
     /// <summary>
     /// The knob sockets are being linked to, or null. While set, every socket that can
@@ -53,12 +53,12 @@ internal sealed class KnobLinking(CanvasSelection selection, Repaint repaint)
         {
             for (var i = 0; i < def.Inputs.Count; i++)
             {
-                var center = NodeGeometry.InputPort(node, def, i);
+                var center = geometry.InputPort(node, def, i);
 
                 if (Math.Abs(graph.Y - center.Y) > NodeGeometry.RowHeight / 2) continue;
 
                 // A shared row's right half is its output's.
-                if (NodeGeometry.Compact && graph.X >= NodeGeometry.Bounds(node, def).Center.X) break;
+                if (geometry.Compact && graph.X >= geometry.Bounds(node, def).Center.X) break;
 
                 (nodeId, port) = (node.Id, i);
                 return true;

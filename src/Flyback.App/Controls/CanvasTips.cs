@@ -16,7 +16,8 @@ internal sealed class CanvasTips(
     CanvasHistory history,
     CanvasSelection selection,
     RemapMarks marks,
-    UndescribedTags tags)
+    UndescribedTags tags,
+    NodeGeometry geometry)
 {
     /// <summary>What the tooltip is up for, null while it is down.</summary>
     private object? tipped;
@@ -81,7 +82,7 @@ internal sealed class CanvasTips(
                 }
 
             for (var p = 0; p < sockets.Inputs.Count; p++)
-                if (OnRow(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
+                if (OnRow(geometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
                     && BoxRowTip(scene, sockets.Inputs[p], bounds) is { } said)
                 {
                     return ((sockets.Inputs[p], said), said);
@@ -92,7 +93,7 @@ internal sealed class CanvasTips(
 
         if (scene.HitNode(graph) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
         {
-            var bounds = NodeGeometry.Bounds(node, def);
+            var bounds = geometry.Bounds(node, def);
             var title = node.Title(def);
 
             if (new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight).Contains(graph)
@@ -103,14 +104,14 @@ internal sealed class CanvasTips(
 
             // A formula too long for the body is cut on its last line. Only its area
             // matters here, not the ink it would be drawn in.
-            if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, static _ => CanvasText.ValueBrush) is { Cut: true, Area: var area }
+            if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, geometry.Compact, static _ => CanvasText.ValueBrush) is { Cut: true, Area: var area }
                 && area.Contains(graph)
                 && NodeCatalog.FormulaOf(node) is { } formula)
             {
                 return ((node.Id, "formula"), formula);
             }
 
-            if (SocketTips.RowAt(graph, bounds, def, out var row, out var output) && SocketTip(node, def, row, output) is { } said)
+            if (geometry.Compact && SocketTips.RowAt(graph, bounds, def, out var row, out var output) && SocketTip(node, def, row, output) is { } said)
                 return ((node.Id, row, output, said), said);
         }
 
@@ -119,7 +120,7 @@ internal sealed class CanvasTips(
 
     /// <summary>A socket's tooltip: its help, with what it rests at first on a compact module.</summary>
     private string? SocketTip(NodeInstance node, NodeDef def, int port, bool isOutput) =>
-        NodeGeometry.Compact
+        geometry.Compact
             ? SocketTips.Say(Patch, node, def, port, isOutput)
             : (isOutput ? def.Outputs : def.Inputs)[port].Help;
 
@@ -131,8 +132,8 @@ internal sealed class CanvasTips(
     {
         if (scene.Named(socket) is not var (label, spec)) return null;
 
-        var cut = CanvasText.Overflows(label, CanvasText.RowSize, CanvasPainter.BoxLabelRoom(bounds, resting: false)) ? label : null;
-        var resting = NodeGeometry.Compact && !socket.IsOutput && Patch.Find(socket.Node) is { } node
+        var cut = CanvasText.Overflows(label, CanvasText.RowSize, CanvasPainter.BoxLabelRoom(bounds, resting: false, geometry.Compact)) ? label : null;
+        var resting = geometry.Compact && !socket.IsOutput && Patch.Find(socket.Node) is { } node
             ? SocketTips.Resting(Patch, node, spec, socket.Port)
             : null;
 

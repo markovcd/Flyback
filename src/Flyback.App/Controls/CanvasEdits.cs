@@ -17,7 +17,8 @@ internal sealed class CanvasEdits(
     CanvasSelection selection,
     Viewport view,
     Repaint repaint,
-    CanvasReport report)
+    CanvasReport report,
+    NodeGeometry geometry)
 {
     /// <summary>How far a duplicate or a paste steps clear of what is already there.</summary>
     private const double Step = 28;
@@ -79,7 +80,7 @@ internal sealed class CanvasEdits(
     /// A new module centered on <paramref name="center"/>, and for a Maths module an
     /// Expression stands for, the Expression it is instead (ADR-0109).
     /// </summary>
-    private static NodeInstance Created(ref NodeDef def, Point center)
+    private NodeInstance Created(ref NodeDef def, Point center)
     {
         var x = center.X - NodeGeometry.Width / 2;
 
@@ -87,11 +88,11 @@ internal sealed class CanvasEdits(
         {
             def = NodeCatalog.Require(NodeCatalog.ExpressionTypeId);
             standing.X = x;
-            standing.Y = center.Y - NodeGeometry.Height(def) / 2;
+            standing.Y = center.Y - geometry.Height(def) / 2;
             return standing;
         }
 
-        return NodeInstance.Create(def, x, center.Y - NodeGeometry.Height(def) / 2);
+        return NodeInstance.Create(def, x, center.Y - geometry.Height(def) / 2);
     }
 
     /// <summary>How many of the selected modules can be switched off: all but the Output.</summary>
@@ -302,7 +303,7 @@ internal sealed class CanvasEdits(
             return;
         }
 
-        AddFragment(fragment, CanvasScene.Drawn(fragment, fragment.Nodes).Center + new Vector(Step, Step));
+        AddFragment(fragment, selection.Scene.Drawn(fragment, fragment.Nodes).Center + new Vector(Step, Step));
     }
 
     /// <summary>
@@ -319,7 +320,7 @@ internal sealed class CanvasEdits(
         var arriving = fragment.Nodes.Where(n => !NodeCatalog.IsSink(n.TypeId)).ToArray();
         if (arriving.Length == 0) return [];
 
-        var box = CanvasScene.Drawn(fragment, arriving);
+        var box = selection.Scene.Drawn(fragment, arriving);
 
         var (dx, dy) = at is { } point
             ? (point.X - box.Center.X, point.Y - box.Center.Y)
@@ -386,7 +387,7 @@ internal sealed class CanvasEdits(
         var laid = PatchLayout.Arrange(
             Patch,
             NodeCatalog.Current,
-            NodeGeometry.Metrics,
+            geometry.Metrics,
             onlySelected ? selection.Ids : null);
 
         if (!laid.Fitted)

@@ -14,6 +14,7 @@ internal sealed class CanvasSelection
 {
     private readonly CanvasHistory history;
     private readonly Repaint repaint;
+    private readonly NodeGeometry geometry;
     private readonly CanvasReport report;
 
     private readonly HashSet<Guid> ids = [];
@@ -21,9 +22,10 @@ internal sealed class CanvasSelection
     /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
     private Guid? peek;
 
-    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report)
+    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry)
     {
         this.history = history;
+        this.geometry = geometry;
         this.repaint = repaint;
         this.report = report;
 
@@ -60,7 +62,7 @@ internal sealed class CanvasSelection
     public IReadOnlyList<NodeInstance> Nodes => [.. Patch.Nodes.Where(node => ids.Contains(node.Id))];
 
     /// <summary>What the canvas shows of the patch, and what is under a point on it.</summary>
-    public CanvasScene Scene => new(Patch, Peeked);
+    public CanvasScene Scene => new(Patch, geometry, Peeked);
 
     public bool Contains(Guid id) => ids.Contains(id);
 

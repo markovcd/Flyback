@@ -1989,7 +1989,7 @@ public class SourceViewTests : UiTest
 
         group.Collapsed.ShouldBeTrue("a group built from text arrives shut");
 
-        var box = NodeGeometry.GroupBounds(editor.History.Patch, group, editor.History.Patch.SocketsOf(group));
+        var box = Geometry.GroupBounds(editor.History.Patch, group, editor.History.Patch.SocketsOf(group));
 
         var at = editor.TranslatePoint(
                 editor.GraphToScreen.Transform(new Point(box.X + (box.Width / 2), box.Y + 8)), window)

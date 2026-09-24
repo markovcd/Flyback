@@ -8,7 +8,11 @@ namespace Flyback.App.Controls;
 /// composing real controls, so these are the single source of truth for both
 /// painting and hit-testing.
 /// </summary>
-internal static class NodeGeometry
+/// <remarks>
+/// One per window, since whether modules are drawn compact is the window's setting.
+/// The measures that do not depend on it are constants.
+/// </remarks>
+internal sealed class NodeGeometry
 {
     public const double Width = 196;
     public const double HeaderHeight = 26;
@@ -23,14 +27,14 @@ internal static class NodeGeometry
     /// share a row and knob values move to the socket's tooltip. Otherwise outputs
     /// are listed first, then inputs, the Blender convention. Set from Settings, Canvas.
     /// </summary>
-    public static bool Compact { get; set; }
+    public bool Compact { get; set; }
 
-    private static int Rows(int inputs, int outputs) => Compact ? Math.Max(inputs, outputs) : inputs + outputs;
+    private int Rows(int inputs, int outputs) => Compact ? Math.Max(inputs, outputs) : inputs + outputs;
 
-    public static double Height(NodeDef def) =>
+    public double Height(NodeDef def) =>
         HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
 
-    public static Rect Bounds(NodeInstance node, NodeDef def) =>
+    public Rect Bounds(NodeInstance node, NodeDef def) =>
         new(node.X, node.Y, Width, Height(def));
 
     /// <summary>The middle of row <paramref name="index"/>, measured from the top of the module.</summary>
@@ -39,7 +43,7 @@ internal static class NodeGeometry
     public static Point OutputPort(NodeInstance node, int index) =>
         new(node.X + Width, node.Y + Row(index));
 
-    public static Point InputPort(NodeInstance node, NodeDef def, int index) =>
+    public Point InputPort(NodeInstance node, NodeDef def, int index) =>
         new(node.X, node.Y + Row(Compact ? index : def.Outputs.Count + index));
 
     // --- a collapsed group ---------------------------------------------------
@@ -53,7 +57,7 @@ internal static class NodeGeometry
     /// A box always has a header and a floor to stand on, whatever crosses its
     /// boundary — a group nothing is wired into or out of is still a box.
     /// </summary>
-    public static double GroupHeight(GroupSockets sockets) =>
+    public double GroupHeight(GroupSockets sockets) =>
         HeaderHeight + Math.Max(Rows(sockets.Inputs.Count, sockets.Outputs.Count), 1) * RowHeight + FooterPadding;
 
     /// <summary>
@@ -66,7 +70,7 @@ internal static class NodeGeometry
     /// corner everywhere else here, and a box that grew downward as sockets appeared
     /// would move when it was not dragged.
     /// </remarks>
-    public static Rect GroupBounds(Patch patch, NodeGroup group, GroupSockets sockets)
+    public Rect GroupBounds(Patch patch, NodeGroup group, GroupSockets sockets)
     {
         var x = double.MaxValue;
         var y = double.MaxValue;
@@ -89,7 +93,7 @@ internal static class NodeGeometry
 
     public static Point GroupOutputPort(Rect bounds, int index) => new(bounds.Right, bounds.Y + Row(index));
 
-    public static Point GroupInputPort(Rect bounds, GroupSockets sockets, int index) =>
+    public Point GroupInputPort(Rect bounds, GroupSockets sockets, int index) =>
         new(bounds.X, bounds.Y + Row(Compact ? index : sockets.Outputs.Count + index));
 
     // --- an open group -------------------------------------------------------
@@ -114,7 +118,7 @@ internal static class NodeGeometry
     /// has no canvas to ask, so the sizes travel to it. Wide enough between columns
     /// for the wires to be followed, and about a row's worth between nodes.
     /// </remarks>
-    public static PatchLayout.Metrics Metrics => new(
+    public PatchLayout.Metrics Metrics => new(
         Width,
         HeaderHeight,
         RowHeight,

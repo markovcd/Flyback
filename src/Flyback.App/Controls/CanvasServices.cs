@@ -16,6 +16,7 @@ internal static class CanvasServices
         // The pointer held where a socket's turn began; a test hands over one that holds nothing.
         services.TryAddSingleton<Func<Visual, IPointerAnchor?>>(PointerAnchor.Take);
 
+        services.AddSingleton<NodeGeometry>();
         services.AddSingleton<Repaint>();
         services.AddSingleton<CanvasReport>();
         services.AddSingleton<CanvasHistory>();

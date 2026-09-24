@@ -71,7 +71,7 @@ public class WirePanTests : UiTest
         Settle(window);
 
         // Dropped where the target now sits on screen, after the pan.
-        var to = NodeGeometry.InputPort(fed, NodeCatalog.BuiltIn.Require(fed.TypeId), 0);
+        var to = Geometry.InputPort(fed, NodeCatalog.BuiltIn.Require(fed.TypeId), 0);
         window.MouseMove(OnScreen(editor, to), LeftHeld);
         window.MouseUp(OnScreen(editor, to), MouseButton.Left);
         Settle(window);

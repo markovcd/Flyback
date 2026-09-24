@@ -33,7 +33,7 @@ public class CanvasSocketTipTests : UiTest
         editor.History.Open(b.Patch);
         Settle(window);
 
-        var port = NodeGeometry.InputPort(module, Filter, 1);
+        var port = Geometry.InputPort(module, Filter, 1);
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(port), window)!.Value;
 
         window.MouseMove(at);

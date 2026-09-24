@@ -41,7 +41,6 @@ public sealed class CanvasSettingsTests : UiTest
         // A setting of the running program, not of the window — see ModuleSkins.
         ModuleSkins.Honored = true;
         ModuleSkins.Animated = true;
-        NodeGeometry.Compact = false;
     }
 
     private MainWindow Open(string? settingsPath = null)
@@ -114,8 +113,8 @@ public sealed class CanvasSettingsTests : UiTest
         Compact(dialog).IsChecked = true;
         Close(window, dialog, "Save");
 
-        NodeGeometry.Compact.ShouldBeTrue();
-        NodeGeometry.InputPort(node, filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
+        Editor(window).Geometry.Compact.ShouldBeTrue();
+        Editor(window).Geometry.InputPort(node, filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
         CanvasSettings.Load(settingsPath).CompactModules.ShouldBeTrue();
 
         Compact(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(true);

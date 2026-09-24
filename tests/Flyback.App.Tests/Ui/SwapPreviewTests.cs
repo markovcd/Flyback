@@ -199,7 +199,7 @@ public class SwapPreviewTests : UiTest
         var swappedWidth = editor.Bounds.Width;
 
         var output = editor.History.Patch.Output;
-        var socket = NodeGeometry.InputPort(
+        var socket = Geometry.InputPort(
             output, NodeCatalog.BuiltIn.Require(output.TypeId), NodeCatalog.OutputColorPort);
 
         // Down on the socket and away over the Output's own body, where letting

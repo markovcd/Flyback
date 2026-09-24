@@ -76,7 +76,7 @@ public class ModuleStateShotTests : UiTest
 
         // Where the tag sits: the right of the header, clear of the title on a
         // module named this short.
-        var bounds = NodeGeometry.Bounds(node, def);
+        var bounds = Geometry.Bounds(node, def);
         var tagArea = new Rect(bounds.Right - 30, bounds.Y, 26, NodeGeometry.HeaderHeight);
 
         var before = Brightest(window, editor, tagArea);
@@ -113,7 +113,7 @@ public class ModuleStateShotTests : UiTest
     /// <summary>The middle of the header band, away from the title and the tag.</summary>
     private static Point HeaderPoint(NodeInstance node, NodeDef def)
     {
-        var bounds = NodeGeometry.Bounds(node, def);
+        var bounds = Geometry.Bounds(node, def);
 
         return new Point(bounds.X + bounds.Width * 0.3, bounds.Y + NodeGeometry.HeaderHeight * 0.5);
     }
@@ -121,7 +121,7 @@ public class ModuleStateShotTests : UiTest
     /// <summary>Near the body's floor, where the wash is almost entirely the ground rather than the accent.</summary>
     private static Point FloorPoint(NodeInstance node, NodeDef def)
     {
-        var bounds = NodeGeometry.Bounds(node, def);
+        var bounds = Geometry.Bounds(node, def);
 
         return new Point(bounds.X + 10, bounds.Bottom - 6);
     }

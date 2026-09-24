@@ -233,7 +233,7 @@ public class GroupTests : UiTest
         editor.History.Record();
         Settle(window);
 
-        var bounds = NodeGeometry.GroupBounds(editor.History.Patch, box, editor.History.Patch.SocketsOf(box));
+        var bounds = Geometry.GroupBounds(editor.History.Patch, box, editor.History.Patch.SocketsOf(box));
         bounds.Contains(Body(under)).ShouldBeTrue("the box is drawn over the module this test is about");
 
         Click(editor, window, Body(under));
@@ -392,7 +392,7 @@ public class GroupTests : UiTest
         Settle(window);
 
         var from = NodeGeometry.OutputPort(feed, 0);
-        var to = NodeGeometry.InputPort(first, NodeCatalog.Require(first.TypeId), 0);
+        var to = Geometry.InputPort(first, NodeCatalog.Require(first.TypeId), 0);
 
         window.MouseDown(Screen(editor, window, from), MouseButton.Left);
         window.MouseMove(Screen(editor, window, to));
@@ -458,9 +458,9 @@ public class GroupTests : UiTest
 
         sockets.Outputs.ShouldBe([new GroupSocket(second.Id, 0, IsOutput: true)]);
 
-        var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
         var from = NodeGeometry.GroupOutputPort(bounds, 0);
-        var to = NodeGeometry.InputPort(sink, NodeCatalog.Require(sink.TypeId), NodeCatalog.OutputRightPort);
+        var to = Geometry.InputPort(sink, NodeCatalog.Require(sink.TypeId), NodeCatalog.OutputRightPort);
 
         window.MouseDown(Screen(editor, window, from), MouseButton.Left);
         window.MouseMove(Screen(editor, window, to));
@@ -661,7 +661,7 @@ public class GroupTests : UiTest
 
         var group = GroupTheMiddle(editor, window, first, second);
         var sockets = patch.SocketsOf(group);
-        var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
 
         var socket = NodeGeometry.GroupOutputPort(bounds, 0);
 
@@ -718,10 +718,10 @@ public class GroupTests : UiTest
         Settle(window);
 
         var sockets = patch.SocketsOf(group);
-        var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
 
         var from = NodeGeometry.OutputPort(feed, 0);
-        var to = NodeGeometry.GroupInputPort(bounds, sockets, 0);
+        var to = Geometry.GroupInputPort(bounds, sockets, 0);
 
         window.MouseDown(Screen(editor, window, from), MouseButton.Left);
         window.MouseMove(Screen(editor, window, to));
@@ -792,7 +792,7 @@ public class GroupTests : UiTest
 
     private static Point BoxHeader(Patch patch, NodeGroup group)
     {
-        var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
 
         return new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
     }

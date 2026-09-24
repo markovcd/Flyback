@@ -40,10 +40,13 @@ internal static class InstrumentScaffold
     }
 
     /// <summary>The fragment for <paramref name="profile"/> as it is plugged in under <paramref name="device"/>.</summary>
-    public static Patch Build(string device, InstrumentProfile profile, ModuleCatalog? modules = null)
+    /// <param name="geometry">How tall the canvas draws each module, full size where none is given.</param>
+    public static Patch Build(string device, InstrumentProfile profile, ModuleCatalog? modules = null, NodeGeometry? geometry = null)
     {
         ArgumentNullException.ThrowIfNull(device);
         ArgumentNullException.ThrowIfNull(profile);
+
+        geometry ??= new NodeGeometry();
 
         var builder = new PatchBuilder(modules);
         var placed = 0;
@@ -56,7 +59,7 @@ internal static class InstrumentScaffold
 
             var at = ((placed / Rows) * (NodeGeometry.Width + Gap), y);
 
-            y += NodeGeometry.Height(NodeCatalog.Require(typeId)) + Gap;
+            y += geometry.Height(NodeCatalog.Require(typeId)) + Gap;
             placed++;
 
             return at;

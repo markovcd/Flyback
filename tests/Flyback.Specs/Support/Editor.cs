@@ -170,6 +170,39 @@ public sealed class Editor(PatchContext context) : IDisposable
             open.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         });
 
+    /// <summary>Opens the settings from the toolbar, on the tab so named.</summary>
+    public void OpenSettings(string tab) =>
+        DoWindow((open, _) =>
+        {
+            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "settings")
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            // The dialog is put up on a later turn than the click.
+            for (var turn = 0; turn < 20 && !open.GetVisualDescendants().OfType<ModalOverlay>().Any(); turn++)
+                Dispatcher.UIThread.RunJobs();
+
+            Settle();
+
+            var tabs = open.GetVisualDescendants().OfType<TabControl>().Single(t => t.Name == "settingsTabs");
+
+            tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == tab);
+        });
+
+    /// <summary>Ticks or clears the box so labeled on the question up over the window.</summary>
+    public void Tick(string label, bool on) =>
+        DoWindow((open, _) =>
+            open.GetVisualDescendants().OfType<ModalOverlay>().Single()
+                .GetVisualDescendants().OfType<CheckBox>().Single(box => box.Content as string == label)
+                .IsChecked = on);
+
+    /// <summary>Rests the pointer over a point on the canvas, in the patch's own coordinates.</summary>
+    internal void Hover(Func<NodeEditor, Point> graph) =>
+        DoWindow((open, canvas) =>
+            open.MouseMove(canvas.TranslatePoint(canvas.GraphToScreen.Transform(graph(canvas)), open)!.Value));
+
+    /// <summary>What the canvas's tooltip says, or null while it says nothing.</summary>
+    public string? Tip => Read(canvas => ToolTip.GetTip(canvas) as string);
+
     /// <summary>Makes the selection exactly these modules, which is what clicking them with Ctrl held does.</summary>
     public void Select(params Guid[] ids) =>
         Do(canvas =>

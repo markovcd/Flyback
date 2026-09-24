@@ -443,8 +443,10 @@ view models, and that has been decided twice.
 split the way the window is: hubs (`CanvasHistory`, `CanvasSelection`,
 `Viewport`) and regions that take them (`CanvasEdits`, `CanvasClipboard`,
 `CanvasGestures`, `CanvasPainter`, `SocketDial` and the rest), with the control
-one file that hands its pointer, keys and `Render` to them. `NodeGeometry` is the single source of measurement that both
-painting and hit-testing call, which is what keeps a socket where it is drawn. A
+one file that hands its pointer, keys and `Render` to them. `NodeGeometry`, one
+per window since compact modules are the window's setting, is the single source
+of measurement that both painting and hit-testing call, which is what keeps a
+socket where it is drawn. A
 module is drawn as its category, or as itself if it is a standout or a plugin
 paints it ([0116](adr/0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md),
 [0118](adr/0118-a-plugin-paints-its-own-module-background.md)).

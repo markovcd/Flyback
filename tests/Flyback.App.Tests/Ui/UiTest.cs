@@ -46,6 +46,9 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class UiTest : IDisposable
 {
+    /// <summary>Where a module's parts sit on a canvas drawn in full, as every test's window starts.</summary>
+    internal static NodeGeometry Geometry { get; } = new();
+
     /// <summary>
     /// The windows this test opened, closed when it ends. Headless runs the whole
     /// assembly on one UI thread, so a window left open keeps its preview, its

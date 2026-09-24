@@ -41,7 +41,7 @@ internal sealed class CanvasSection
     /// <summary>Where <see cref="saved"/> is kept, or null to keep it nowhere.</summary>
     private readonly string? path;
 
-    private readonly Control canvas;
+    private readonly NodeEditor canvas;
 
     private readonly Action<string, string?> report;
 
@@ -108,7 +108,7 @@ internal sealed class CanvasSection
 
     /// <summary>
     /// Puts what was last saved on the controls and on the canvas both, since what
-    /// the canvas draws is read from <see cref="ModuleSkins"/> and <see cref="NodeGeometry"/> rather than from here.
+    /// the canvas draws is read from <see cref="ModuleSkins"/> and its <see cref="NodeGeometry"/> rather than from here.
     /// </summary>
     internal void Show()
     {
@@ -116,7 +116,7 @@ internal sealed class CanvasSection
         pluginSkins.IsChecked = saved.PluginSkins;
         animateSkins.IsChecked = saved.AnimateSkins;
 
-        NodeGeometry.Compact = saved.CompactModules;
+        canvas.Geometry.Compact = saved.CompactModules;
         ModuleSkins.Honored = saved.PluginSkins;
         ModuleSkins.Animated = saved.AnimateSkins;
 

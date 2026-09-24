@@ -35,7 +35,7 @@ public class HoldMuteTests : UiTest
     private static Point Header(NodeEditor editor, NodeGroup group)
     {
         var patch = editor.History.Patch;
-        var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
 
         return new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
     }

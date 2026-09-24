@@ -24,7 +24,7 @@ internal enum Replacement
 /// arrives passes one gate here, so a step can never be undone into a module standing
 /// half off the canvas and every patch shown has an Output.
 /// </remarks>
-internal sealed class CanvasHistory
+internal sealed class CanvasHistory(NodeGeometry geometry)
 {
     private readonly PatchHistory history = new();
 
@@ -102,7 +102,7 @@ internal sealed class CanvasHistory
     public void Record(string? coalesce = null)
     {
         // Before the step, so what can be undone into has every module on the canvas.
-        new CanvasScene(Patch).HoldInside();
+        new CanvasScene(Patch, geometry).HoldInside();
 
         var stepped = history.Record(Patch, coalesce, Mark);
 
@@ -230,7 +230,7 @@ internal sealed class CanvasHistory
     {
         Patch = next;
         Patch.EnsureOutput();
-        new CanvasScene(Patch).HoldInside();
+        new CanvasScene(Patch, geometry).HoldInside();
     }
 
     private void Announce()

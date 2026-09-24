@@ -7,19 +7,14 @@ using Flyback.Specs.Support;
 namespace Flyback.Specs.Steps;
 
 /// <summary>How the canvas draws a module: its rows, its size and what hovering it says.</summary>
-/// <remarks>
-/// Measured with the layout's metrics rather than by turning <see cref="NodeGeometry.Compact"/>
-/// on, which is one switch for the whole program and would reach scenarios running beside
-/// this one. The app's tests hold the two to the same numbers.
-/// </remarks>
 [Binding]
-public sealed class CanvasSteps(PatchContext context)
+public sealed class CanvasSteps(PatchContext context, Editor editor)
 {
     private static NodeDef Filter => NodeCatalog.Require(NodeCatalog.FilterTypeId);
 
-    private static readonly PatchLayout.Metrics Full = PatchLayout.Metrics.Default;
+    private static int Cutoff => Filter.Inputs.ToList().FindIndex(p => p.Name == "cutoff");
 
-    private PatchLayout.Metrics drawn = Full;
+    private double fullHeight;
 
     [Given("a Filter")]
     public void GivenAFilter() => context.Add("Filter", NodeCatalog.FilterTypeId);
@@ -32,19 +27,41 @@ public sealed class CanvasSteps(PatchContext context)
     }
 
     [When("modules are drawn compact")]
-    public void WhenModulesAreDrawnCompact() => drawn = Full with { SharedRows = true };
+    public void WhenModulesAreDrawnCompact()
+    {
+        fullHeight = Drawn();
+
+        editor.OpenSettings("Canvas");
+        editor.Tick("Compact modules", on: true);
+        editor.Answer("Save");
+    }
 
     [Then("the Filter is shorter than when drawn in full")]
-    public void ThenTheFilterIsShorter() => drawn.Height(Filter).ShouldBeLessThan(Full.Height(Filter));
+    public void ThenTheFilterIsShorter() => Drawn().ShouldBeLessThan(fullHeight);
 
     [Then("the Filter's first input is level with its first output")]
-    public void ThenTheFirstInputIsLevelWithTheFirstOutput() =>
-        drawn.InputPort(Filter, 0).ShouldBe(drawn.OutputPort(0));
+    public void ThenTheFirstInputIsLevelWithTheFirstOutput()
+    {
+        var filter = context.Node("Filter");
+
+        editor.Read(canvas => canvas.Geometry.InputPort(filter, Filter, 0).Y).ShouldBe(NodeGeometry.OutputPort(filter, 0).Y);
+    }
 
     [Then("hovering the Filter's cutoff shows {word} before what the socket is for")]
-    public void ThenHoveringTheCutoffShows(string value) =>
-        SocketTips.Say(context.Patch, context.Node("Filter"), Filter, Cutoff, isOutput: false)
-            .ShouldBe($"{value}\n{Filter.Inputs[Cutoff].Help}");
+    public void ThenHoveringTheCutoffShows(string value)
+    {
+        var filter = context.Node("Filter");
 
-    private static int Cutoff => Filter.Inputs.ToList().FindIndex(p => p.Name == "cutoff");
+        // On the row's name, clear of the socket's dot.
+        editor.Hover(canvas => canvas.Geometry.InputPort(filter, Filter, Cutoff) + new Avalonia.Vector(30, 0));
+        editor.Tip.ShouldBe($"{value}\n{Filter.Inputs[Cutoff].Help}");
+    }
+
+    /// <summary>How tall the canvas draws the Filter now.</summary>
+    private double Drawn()
+    {
+        var filter = context.Node("Filter");
+
+        return editor.Read(canvas => canvas.Geometry.Bounds(filter, Filter).Height);
+    }
 }

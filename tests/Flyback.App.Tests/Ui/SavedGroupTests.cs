@@ -73,7 +73,7 @@ public class SavedGroupTests : UiTest
     private static void SelectBox(MainWindow window, Patch patch, NodeGroup group)
     {
         var editor = Editor(window);
-        var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
         var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)
@@ -236,7 +236,7 @@ public class SavedGroupTests : UiTest
         Settle(window);
 
         var added = editor.History.Patch.Groups.ShouldNotBeNull().Where(g => g.Id != already.Id).ShouldHaveSingleItem();
-        var bounds = NodeGeometry.GroupBounds(editor.History.Patch, added, editor.History.Patch.SocketsOf(added));
+        var bounds = Geometry.GroupBounds(editor.History.Patch, added, editor.History.Patch.SocketsOf(added));
 
         bounds.Inflate(40).Contains(at).ShouldBeTrue(
             $"asked for at {at}, and the box is drawn at {bounds}");

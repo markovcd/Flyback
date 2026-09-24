@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -11,13 +10,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// Compact modules: an input and an output share each row, and an unwired input's
-/// value is in its tooltip rather than on the row.
+/// value is in its tooltip rather than on the row. The switch is each window's own.
 /// </summary>
-/// <remarks>
-/// <see cref="NodeGeometry.Compact"/> is one switch for the whole app, so every test
-/// here runs on the UI thread, which serializes it against the other canvas tests,
-/// and puts it back before it returns.
-/// </remarks>
 public class CompactModuleTests : UiTest
 {
     private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
@@ -26,62 +20,54 @@ public class CompactModuleTests : UiTest
     public void A_compact_module_is_as_tall_as_its_longer_side()
     {
         var node = NodeInstance.Create(Filter, 0, 0);
-        var tall = NodeGeometry.Height(Filter);
+        var compact = new NodeGeometry { Compact = true };
 
-        try
-        {
-            NodeGeometry.Compact = true;
+        compact.Height(Filter).ShouldBeLessThan(Geometry.Height(Filter));
+        compact.Height(Filter).ShouldBe(compact.Metrics.Height(Filter));
+        compact.InputPort(node, Filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
 
-            NodeGeometry.Height(Filter).ShouldBeLessThan(tall);
-            NodeGeometry.Height(Filter).ShouldBe(NodeGeometry.Metrics.Height(Filter));
-            NodeGeometry.InputPort(node, Filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
-
-            for (var port = 0; port < Filter.Inputs.Count; port++)
-                NodeGeometry.Metrics.InputPort(Filter, port).ShouldBe(NodeGeometry.InputPort(node, Filter, port).Y);
-        }
-        finally
-        {
-            NodeGeometry.Compact = false;
-        }
+        for (var port = 0; port < Filter.Inputs.Count; port++)
+            compact.Metrics.InputPort(Filter, port).ShouldBe(compact.InputPort(node, Filter, port).Y);
     }
 
     [AvaloniaFact]
     public void Hovering_a_compact_input_row_shows_its_value_then_its_help()
     {
-        try
-        {
-            var window = NewMainWindow();
+        var window = NewMainWindow();
 
-            window.Show();
-            window.UpdateLayout();
-            Dispatcher.UIThread.RunJobs();
+        window.Show();
+        Settle(window);
 
-            // After the window, which puts the switch where its settings say.
-            NodeGeometry.Compact = true;
+        var editor = Editor(window);
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-            var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        b.Add(NodeCatalog.OutputTypeId, 900, 40);
+        var module = b.Add(NodeCatalog.FilterTypeId, 300, 100);
 
-            b.Add(NodeCatalog.OutputTypeId, 900, 40);
-            var module = b.Add(NodeCatalog.FilterTypeId, 300, 100);
+        editor.Geometry.Compact = true;
+        editor.History.Open(b.Patch);
+        Settle(window);
 
-            var editor = All<NodeEditor>(window).Single();
+        // On the row's name rather than its socket.
+        var row = editor.Geometry.InputPort(module, Filter, 1) + new Point(30, 0);
+        var at = editor.TranslatePoint(editor.GraphToScreen.Transform(row), window)!.Value;
 
-            editor.History.Open(b.Patch);
-            Settle(window);
+        window.MouseMove(at);
+        Settle(window);
 
-            // On the row's name rather than its socket, which is where a value used to be read.
-            var row = NodeGeometry.InputPort(module, Filter, 1) + new Point(30, 0);
-            var at = editor.TranslatePoint(editor.GraphToScreen.Transform(row), window)!.Value;
+        ToolTip.GetTip(editor).ShouldBe(
+            $"{Filter.Inputs[1].Format(module.InputValues[1])}\n{Filter.Inputs[1].Help}");
+    }
 
-            window.MouseMove(at);
-            Settle(window);
+    [AvaloniaFact]
+    public void One_window_drawn_compact_leaves_another_drawn_in_full()
+    {
+        var compact = Editor(Open());
+        var full = Editor(Open());
 
-            ToolTip.GetTip(editor).ShouldBe(
-                $"{Filter.Inputs[1].Format(module.InputValues[1])}\n{Filter.Inputs[1].Help}");
-        }
-        finally
-        {
-            NodeGeometry.Compact = false;
-        }
+        compact.Geometry.Compact = true;
+
+        full.Geometry.Compact.ShouldBeFalse();
+        full.Geometry.Height(Filter).ShouldBeGreaterThan(compact.Geometry.Height(Filter));
     }
 }

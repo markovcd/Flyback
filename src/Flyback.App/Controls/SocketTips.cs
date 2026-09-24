@@ -63,7 +63,7 @@ internal static class SocketTips
         port = (int)Math.Floor((graph.Y - bounds.Y - NodeGeometry.HeaderHeight) / NodeGeometry.RowHeight);
         isOutput = graph.X >= bounds.Center.X;
 
-        return NodeGeometry.Compact && port >= 0 && port < (isOutput ? def.Outputs.Count : def.Inputs.Count);
+        return port >= 0 && port < (isOutput ? def.Outputs.Count : def.Inputs.Count);
     }
 
     /// <summary>The lines given, skipping the empty ones; null when none is left.</summary>

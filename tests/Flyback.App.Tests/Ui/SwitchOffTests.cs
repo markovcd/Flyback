@@ -230,7 +230,7 @@ public class SwitchOffTests : UiTest
     private static void ClickBox(NodeEditor editor, Window window, NodeGroup group)
     {
         var patch = editor.History.Patch;
-        var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
         var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)

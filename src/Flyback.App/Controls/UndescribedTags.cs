@@ -13,7 +13,7 @@ namespace Flyback.App.Controls;
 /// that is the one part of a module always on screen. A footnote about the assistant,
 /// not about the patch, so it is neither a color nor a badge on the body.
 /// </remarks>
-internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint)
+internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint, NodeGeometry geometry)
 {
     private const double TagWidth = 16, TagHeight = 10, TagInset = 7;
 
@@ -48,7 +48,7 @@ internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint
         selection.Scene.HitNode(graph) is { } node
         && NodeCatalog.Get(node.TypeId) is { } def
         && Tagged(def)
-        && TagBounds(NodeGeometry.Bounds(node, def)).Inflate(2).Contains(graph)
+        && TagBounds(geometry.Bounds(node, def)).Inflate(2).Contains(graph)
             ? node
             : null;
 

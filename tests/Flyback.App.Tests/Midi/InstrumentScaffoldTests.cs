@@ -78,7 +78,7 @@ public class InstrumentScaffoldTests
 
             for (var i = 1; i < ordered.Count; i++)
             {
-                var above = NodeGeometry.Bounds(ordered[i - 1], NodeCatalog.Require(ordered[i - 1].TypeId));
+                var above = Ui.UiTest.Geometry.Bounds(ordered[i - 1], NodeCatalog.Require(ordered[i - 1].TypeId));
 
                 ordered[i].Y.ShouldBeGreaterThan(above.Bottom);
             }

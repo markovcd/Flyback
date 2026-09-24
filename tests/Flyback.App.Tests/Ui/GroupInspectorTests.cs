@@ -60,7 +60,7 @@ public class GroupInspectorTests : UiTest
     private static void SelectBox(MainWindow window, Patch patch, NodeGroup group, bool adding = false)
     {
         var editor = Editor(window);
-        var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
         var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
         var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)

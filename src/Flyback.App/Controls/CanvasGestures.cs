@@ -57,6 +57,7 @@ internal sealed class CanvasGestures
     private readonly RemapMarks marks;
     private readonly CanvasTips tips;
     private readonly Repaint repaint;
+    private readonly NodeGeometry geometry;
 
     private Drag drag;
 
@@ -125,9 +126,11 @@ internal sealed class CanvasGestures
         KnobLinking linking,
         RemapMarks marks,
         CanvasTips tips,
-        Repaint repaint)
+        Repaint repaint,
+        NodeGeometry geometry)
     {
         this.history = history;
+        this.geometry = geometry;
         this.selection = selection;
         this.view = view;
         this.edits = edits;
@@ -611,7 +614,7 @@ internal sealed class CanvasGestures
 
         // The pointer is a module of no size.
         var holding = history.Patch.Find(wireNode) is { } node && NodeCatalog.Get(node.TypeId) is { } def
-            ? NodeGeometry.Bounds(node, def)
+            ? geometry.Bounds(node, def)
             : new Rect(anchor, anchor);
 
         WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(wireEnd, wireEnd)), pen);

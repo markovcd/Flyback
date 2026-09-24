@@ -33,6 +33,7 @@ internal static class FormulaLayout
     /// The formula as it is drawn in the body, where that is, and whether it is
     /// cut short. Null for any module but an Expression.
     /// </summary>
+    /// <param name="compact">Whether modules are drawn compact, which moves knob values off the body.</param>
     /// <param name="ink">
     /// The value column's own ink for the module — see
     /// <see cref="NodeSkin.Ink"/> — asked at the block's own center so a module
@@ -40,11 +41,11 @@ internal static class FormulaLayout
     /// as it reads a knob.
     /// </param>
     internal static (FormattedText Text, Point At, Rect Area, bool Cut)? FormulaBlock(
-        Patch patch, NodeInstance node, NodeDef def, Rect bounds, Func<double, IBrush> ink)
+        Patch patch, NodeInstance node, NodeDef def, Rect bounds, bool compact, Func<double, IBrush> ink)
     {
         if (NodeCatalog.FormulaOf(node) is not { } formula || string.IsNullOrWhiteSpace(formula)) return null;
 
-        var reserve = Reserve(patch, node, def, bounds, formula);
+        var reserve = Reserve(patch, node, def, bounds, formula, compact);
 
         var area = new Rect(
             bounds.X + FormulaInset,
@@ -69,14 +70,14 @@ internal static class FormulaLayout
     /// How much of the right of the body the formula keeps clear of: the output's
     /// name, and the value of each knob the formula reads unless modules are compact.
     /// </summary>
-    private static double Reserve(Patch patch, NodeInstance node, NodeDef def, Rect bounds, string formula)
+    private static double Reserve(Patch patch, NodeInstance node, NodeDef def, Rect bounds, string formula, bool compact)
     {
         var reserve = 0d;
 
         foreach (var port in def.Outputs)
             reserve = Math.Max(reserve, CanvasText.Text(port.Name, CanvasText.RowSize, CanvasText.LabelBrush, bounds.Width - 24, true).Width + 22);
 
-        if (NodeGeometry.Compact) return reserve;
+        if (compact) return reserve;
 
         for (var i = 0; i < def.Inputs.Count && i < node.InputValues.Length; i++)
         {

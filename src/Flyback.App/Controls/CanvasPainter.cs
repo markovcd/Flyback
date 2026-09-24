@@ -24,7 +24,8 @@ internal sealed class CanvasPainter(
     RemapMarks marks,
     KnobLinking linking,
     UndescribedTags tags,
-    Repaint repaint)
+    Repaint repaint,
+    NodeGeometry geometry)
 {
     /// <summary>How large a module's title is drawn.</summary>
     internal const double HeaderSize = 12.5;
@@ -398,8 +399,8 @@ internal sealed class CanvasPainter(
             if (from.X > to.X)
             {
                 var run = WirePath.ReturnRun(
-                    NodeGeometry.Bounds(source, sourceDef),
-                    NodeGeometry.Bounds(target, targetDef));
+                    geometry.Bounds(source, sourceDef),
+                    geometry.Bounds(target, targetDef));
 
                 WirePath.DrawReturn(context, from, to, run, pen);
                 continue;
@@ -478,7 +479,7 @@ internal sealed class CanvasPainter(
 
     private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
     {
-        var bounds = NodeGeometry.Bounds(node, def);
+        var bounds = geometry.Bounds(node, def);
         var isSelected = selection.Contains(node.Id);
         var (accent, floor) = Colors.Palette(def);
         var backdrop = ModuleBackdrop.Of(def, isSelected);
@@ -559,7 +560,7 @@ internal sealed class CanvasPainter(
         {
             var port = def.Outputs[i];
             var center = NodeGeometry.OutputPort(node, i);
-            var room = NodeGeometry.Compact ? HalfRow(bounds) : bounds.Width - 24;
+            var room = geometry.Compact ? HalfRow(bounds) : bounds.Width - 24;
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
 
             context.DrawText(label, new Point(bounds.Right - 14 - label.Width, center.Y - label.Height / 2));
@@ -569,10 +570,10 @@ internal sealed class CanvasPainter(
         for (var i = 0; i < def.Inputs.Count; i++)
         {
             var port = def.Inputs[i];
-            var center = NodeGeometry.InputPort(node, def, i);
+            var center = geometry.InputPort(node, def, i);
             var connected = Patch.IncomingTo(node.Id, i) is not null;
 
-            if (NodeGeometry.Compact)
+            if (geometry.Compact)
             {
                 DrawCompactInput(context, node, port, i, bounds, center, connected, follow, spans, Ink);
                 continue;
@@ -588,7 +589,7 @@ internal sealed class CanvasPainter(
             NodeSkin.DrawPort(context, center, port.Kind);
         }
 
-        if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
+        if (FormulaLayout.FormulaBlock(Patch, node, def, bounds, geometry.Compact, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
             context.DrawText(text, at);
     }
 
@@ -795,7 +796,7 @@ internal sealed class CanvasPainter(
 
         for (var i = 0; i < sockets.Inputs.Count; i++)
             DrawBoxSocket(
-                context, sockets.Inputs[i], NodeGeometry.GroupInputPort(bounds, sockets, i), bounds);
+                context, sockets.Inputs[i], geometry.GroupInputPort(bounds, sockets, i), bounds);
     }
 
     /// <summary>
@@ -808,13 +809,13 @@ internal sealed class CanvasPainter(
         if (selection.Scene.Named(socket) is not var (label, spec)) return;
 
         // An unwired input shows what it rests at, as the module's own row does.
-        var resting = !NodeGeometry.Compact
+        var resting = !geometry.Compact
             && !socket.IsOutput
             && Patch.IncomingTo(socket.Node, socket.Port) is null
             && Patch.Find(socket.Node) is { } node
             && DrawRestingOf(context, node, spec, socket.Port, bounds, center);
 
-        var width = BoxLabelRoom(bounds, resting);
+        var width = BoxLabelRoom(bounds, resting, geometry.Compact);
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
         context.DrawText(
@@ -843,8 +844,8 @@ internal sealed class CanvasPainter(
     private const double SocketLabelRoom = 26;
 
     /// <summary>How wide a box socket's label may be drawn: beside its value, on half a shared row, or across the box.</summary>
-    internal static double BoxLabelRoom(Rect bounds, bool resting) =>
-        resting ? bounds.Width * 0.55 : NodeGeometry.Compact ? HalfRow(bounds) : bounds.Width - SocketLabelRoom;
+    internal static double BoxLabelRoom(Rect bounds, bool resting, bool compact) =>
+        resting ? bounds.Width * 0.55 : compact ? HalfRow(bounds) : bounds.Width - SocketLabelRoom;
 
     private static readonly IPen BusPen = new Pen(
         new SolidColorBrush(Colors.Attention, 0.7),
@@ -872,7 +873,7 @@ internal sealed class CanvasPainter(
             if (selection.Scene.Shut(end.Id) || NodeCatalog.Get(end.TypeId) is not { } def) continue;
 
             var partner = end.TypeId == NodeCatalog.SendTypeId ? NodeCatalog.ReceiveTypeId : NodeCatalog.SendTypeId;
-            var from = NodeGeometry.Bounds(end, def);
+            var from = geometry.Bounds(end, def);
 
             foreach (var other in Patch.Nodes)
             {
@@ -880,7 +881,7 @@ internal sealed class CanvasPainter(
                 if (!string.Equals(NodeCatalog.BusOf(other), bus, StringComparison.OrdinalIgnoreCase)) continue;
                 if (NodeCatalog.Get(other.TypeId) is not { } otherDef) continue;
 
-                var to = NodeGeometry.Bounds(other, otherDef);
+                var to = geometry.Bounds(other, otherDef);
 
                 context.DrawLine(BusPen, Edge(from, to.Center), Edge(to, from.Center));
             }
@@ -955,7 +956,7 @@ internal sealed class CanvasPainter(
     {
         if (linking.Control is not { } knob || connected || !KnobLinking.Linkable(port)) return;
 
-        var width = NodeGeometry.Compact ? bounds.Width / 2 : bounds.Width;
+        var width = geometry.Compact ? bounds.Width / 2 : bounds.Width;
         var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, width, NodeGeometry.RowHeight);
 
         context.FillRectangle(ControlMap.Of(node, index)?.Control == knob ? LinkedWash : LinkableWash, row);

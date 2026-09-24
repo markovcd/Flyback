@@ -94,7 +94,7 @@ public class AutoRemapInspectorTests : UiTest
         var editor = Editor(window);
 
         var from = NodeGeometry.OutputPort(sine, 0);
-        var to = NodeGeometry.InputPort(filter, NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId), 1);
+        var to = Geometry.InputPort(filter, NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId), 1);
         var at = OnWindow(window, new Point((from.X + to.X) / 2, (from.Y + to.Y) / 2));
 
         window.MouseDown(at, MouseButton.Left);
@@ -128,7 +128,7 @@ public class AutoRemapInspectorTests : UiTest
         Outlined(window).ShouldBe([false, false, false, false]);
 
         var from = OnWindow(window, NodeGeometry.OutputPort(remap, 0));
-        var to = OnWindow(window, NodeGeometry.InputPort(add, NodeCatalog.BuiltIn.Require("math.add"), 0));
+        var to = OnWindow(window, Geometry.InputPort(add, NodeCatalog.BuiltIn.Require("math.add"), 0));
 
         window.MouseDown(from, MouseButton.Left);
         window.MouseMove(to);

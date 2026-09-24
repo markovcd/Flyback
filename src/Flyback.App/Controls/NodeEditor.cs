@@ -34,9 +34,11 @@ internal sealed class NodeEditor : Control
         UndescribedTags tags,
         CanvasPainter painter,
         Repaint repaint,
-        CanvasReport report)
+        CanvasReport report,
+        NodeGeometry geometry)
     {
         History = history;
+        Geometry = geometry;
         Selection = selection;
         View = view;
         Edits = edits;
@@ -76,6 +78,9 @@ internal sealed class NodeEditor : Control
     internal KnobLinking Linking { get; }
 
     internal UndescribedTags Tags { get; }
+
+    /// <summary>Where each part of a module sits, drawn compact or in full.</summary>
+    internal NodeGeometry Geometry { get; }
 
     /// <summary>What the canvas has to say, which the window puts on its report line.</summary>
     internal CanvasReport Report => report;

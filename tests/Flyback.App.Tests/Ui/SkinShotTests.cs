@@ -65,7 +65,7 @@ public class SkinShotTests : UiTest
             editor.View.FrameAll();
             Settle(window);
 
-            var bounds = NodeGeometry.Bounds(node, def);
+            var bounds = Geometry.Bounds(node, def);
 
             // Low in the body and left of the mark, clear of the header and of
             // any label — an empty svg leaves the whole block transparent, so
@@ -201,7 +201,7 @@ public class SkinShotTests : UiTest
             // read before the capture rather than after it: a window still
             // settling its size fits the view again, and a transform read on the
             // far side of that describes a frame that no longer exists.
-            var bounds = new Rect(Across, Down, NodeGeometry.Width, NodeGeometry.Height(def))
+            var bounds = new Rect(Across, Down, NodeGeometry.Width, Geometry.Height(def))
                 .TransformToAABB(editor.GraphToScreen)
                 .Inflate(10);
 

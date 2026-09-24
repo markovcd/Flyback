@@ -11,11 +11,12 @@ namespace Flyback.App.Controls;
 /// thousands (ADR-0017).
 /// </remarks>
 /// <param name="patch">What is on the canvas.</param>
+/// <param name="geometry">Where each part of a module sits in this window.</param>
 /// <param name="peek">
 /// A shut box being looked into: drawn open, over everything else, while it stays
 /// shut in the patch. Its ring covers whatever lies under it.
 /// </param>
-internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
+internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGroup? peek = null)
 {
     // Everything below is drawing and pointing. Nothing here touches the graph:
     // a collapsed box is several modules that are not being painted and one that
@@ -55,7 +56,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
             if (!group.Collapsed || ReferenceEquals(group, peek)) continue;
 
             var sockets = patch.SocketsOf(group);
-            var bounds = NodeGeometry.GroupBounds(patch, group, sockets);
+            var bounds = geometry.GroupBounds(patch, group, sockets);
 
             if (bounds.Width > 0) yield return (group, sockets, bounds);
         }
@@ -93,11 +94,11 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
     /// A module whose plugin is missing has no height to ask for. Counted at nothing
     /// rather than skipped, so its corner is still somewhere the canvas is occupied.
     /// </remarks>
-    public static Rect Footprint(NodeInstance node) => new(
+    public Rect Footprint(NodeInstance node) => new(
         node.X,
         node.Y,
         NodeGeometry.Width,
-        NodeCatalog.Get(node.TypeId) is { } def ? NodeGeometry.Height(def) : 0);
+        NodeCatalog.Get(node.TypeId) is { } def ? geometry.Height(def) : 0);
 
     /// <summary>Whether both ends of a wire are inside the same box.</summary>
     public bool Hidden(Connection wire) =>
@@ -123,7 +124,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
 
             if (row >= 0)
                 return NodeGeometry.GroupOutputPort(
-                    NodeGeometry.GroupBounds(patch, group, sockets), row);
+                    geometry.GroupBounds(patch, group, sockets), row);
         }
 
         return NodeGeometry.OutputPort(node, port);
@@ -138,11 +139,11 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
             var row = sockets.IndexOfInput(new GroupSocket(node.Id, port, IsOutput: false));
 
             if (row >= 0)
-                return NodeGeometry.GroupInputPort(
-                    NodeGeometry.GroupBounds(patch, group, sockets), sockets, row);
+                return geometry.GroupInputPort(
+                    geometry.GroupBounds(patch, group, sockets), sockets, row);
         }
 
-        return NodeGeometry.InputPort(node, def, port);
+        return geometry.InputPort(node, def, port);
     }
 
     public NodeGroup? HitBox(Point graph)
@@ -205,7 +206,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
         foreach (var id in group.Members)
             if (patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
             {
-                var bounds = NodeGeometry.Bounds(node, def);
+                var bounds = geometry.Bounds(node, def);
 
                 x = Math.Min(x, bounds.X);
                 y = Math.Min(y, bounds.Y);
@@ -272,7 +273,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
             if (Shut(node.Id)) continue;
             if (covered && !InPeek(node.Id)) continue;
 
-            if (def is not null && NodeGeometry.Bounds(node, def).Contains(graph))
+            if (def is not null && geometry.Bounds(node, def).Contains(graph))
                 return node;
         }
 
@@ -317,7 +318,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
 
             for (var p = 0; p < sockets.Inputs.Count; p++)
             {
-                if (!Near(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, tolerance)) continue;
+                if (!Near(geometry.GroupInputPort(bounds, sockets, p), graph, tolerance)) continue;
 
                 var socket = sockets.Inputs[p];
                 (nodeId, portIndex, isOutput) = (socket.Node, socket.Port, false);
@@ -351,7 +352,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
 
             for (var p = 0; p < def.Inputs.Count; p++)
             {
-                if (!Near(NodeGeometry.InputPort(node, def, p), graph, tolerance)) continue;
+                if (!Near(geometry.InputPort(node, def, p), graph, tolerance)) continue;
 
                 (nodeId, portIndex, isOutput) = (node.Id, p, false);
                 return true;
@@ -387,7 +388,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
             foreach (var node in patch.Nodes)
                 if (InPeek(node.Id)
                     && NodeCatalog.Get(node.TypeId) is { } def
-                    && NodeGeometry.Bounds(node, def).Intersects(band))
+                    && geometry.Bounds(node, def).Intersects(band))
                     yield return node.Id;
 
             yield break;
@@ -396,7 +397,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
         foreach (var node in patch.Nodes)
             if (!Shut(node.Id)
                 && NodeCatalog.Get(node.TypeId) is { } def
-                && NodeGeometry.Bounds(node, def).Intersects(band))
+                && geometry.Bounds(node, def).Intersects(band))
                 yield return node.Id;
 
         // A box is swept as the modules it stands for, all of them together and
@@ -430,7 +431,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
     /// apart they were left. Placed by the spread instead, a group saved from a
     /// chain laid out by hand lands half its hidden width away from the click.
     /// </remarks>
-    public static Rect Drawn(Patch fragment, IReadOnlyList<NodeInstance> arriving)
+    public Rect Drawn(Patch fragment, IReadOnlyList<NodeInstance> arriving)
     {
         var shut = fragment.Groups?.Where(group => group.Collapsed).ToArray() ?? [];
         var hidden = shut.SelectMany(group => group.Members).ToHashSet();
@@ -439,7 +440,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
 
         foreach (var group in shut)
         {
-            var box = NodeGeometry.GroupBounds(fragment, group, fragment.SocketsOf(group));
+            var box = geometry.GroupBounds(fragment, group, fragment.SocketsOf(group));
 
             seen = seen == default ? box : seen.Union(box);
         }
@@ -448,7 +449,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
     }
 
     /// <summary>The one rectangle that holds all of these modules.</summary>
-    private static Rect BoxAround(IReadOnlyList<NodeInstance> nodes)
+    private Rect BoxAround(IReadOnlyList<NodeInstance> nodes)
     {
         double left = double.MaxValue, top = double.MaxValue;
         double right = double.MinValue, bottom = double.MinValue;
@@ -500,11 +501,11 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
     /// and the body hangs below and right of it, so holding the coordinate inside
     /// leaves the body outside.
     /// </summary>
-    private static Rect Room(NodeDef def) => new(
+    private Rect Room(NodeDef def) => new(
         Viewport.CanvasBounds.X,
         Viewport.CanvasBounds.Y,
         Math.Max(0, Viewport.CanvasBounds.Width - NodeGeometry.Width),
-        Math.Max(0, Viewport.CanvasBounds.Height - NodeGeometry.Height(def)));
+        Math.Max(0, Viewport.CanvasBounds.Height - geometry.Height(def)));
 
     /// <summary>
     /// Puts every module wholly inside the canvas.

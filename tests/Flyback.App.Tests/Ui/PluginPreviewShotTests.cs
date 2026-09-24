@@ -79,7 +79,7 @@ public class PluginPreviewShotTests : UiTest
         {
             var def = plugin.Modules.Single(d => d.TypeId == plugin.Provider!.Id + "." + module);
             var node = builder.Add(def.TypeId, x, 0);
-            var bounds = NodeGeometry.Bounds(node, def);
+            var bounds = Geometry.Bounds(node, def);
 
             box = box is { } so ? so.Union(bounds) : bounds;
             x += NodeGeometry.Width + Gap;

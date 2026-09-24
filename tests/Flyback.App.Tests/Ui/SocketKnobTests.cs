@@ -43,7 +43,7 @@ public class SocketKnobTests : UiTest
     }
 
     private static Point Socket(NodeInstance node, int port) =>
-        NodeGeometry.InputPort(node, NodeCatalog.Get(node.TypeId)!, port);
+        Geometry.InputPort(node, NodeCatalog.Get(node.TypeId)!, port);
 
     private static Point On(NodeEditor editor, Window window, Point graph) =>
         editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)

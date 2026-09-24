@@ -114,7 +114,7 @@ internal sealed class Palette
         {
             Flyout.Hide();
 
-            var added = editor.Edits.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules), addingAt);
+            var added = editor.Edits.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules, editor.Geometry), addingAt);
 
             usage.Count(Used.Added);
             report.Say(wiring is null

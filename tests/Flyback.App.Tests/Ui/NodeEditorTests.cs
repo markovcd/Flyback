@@ -67,7 +67,7 @@ public class NodeEditorTests : UiTest
             var (editor, window) = Editing(patch);
 
             Drag(editor, window,
-                NodeGeometry.InputPort(sink, Sink, port),
+                Geometry.InputPort(sink, Sink, port),
                 NodeGeometry.OutputPort(source, 0));
 
             var landed = patch.IncomingTo(sink.Id, port);
@@ -95,7 +95,7 @@ public class NodeEditorTests : UiTest
         // read off the position rather than assumed to be the first.
         Drag(editor, window,
             NodeGeometry.OutputPort(coords, 2),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
         var wire = builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort);
 
@@ -114,8 +114,8 @@ public class NodeEditorTests : UiTest
         var patch = Pair(out _, out var sink);
         var (editor, window) = Editing(patch);
 
-        var first = NodeGeometry.InputPort(sink, Sink, 0);
-        var second = NodeGeometry.InputPort(sink, Sink, 1);
+        var first = Geometry.InputPort(sink, Sink, 0);
+        var second = Geometry.InputPort(sink, Sink, 1);
         var between = new Point(first.X + NodeGeometry.Width / 2, (first.Y + second.Y) / 2);
 
         var was = sink.X;
@@ -154,8 +154,8 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
             .ShouldBeNull("the wire should have left the socket it was picked up from");
@@ -182,7 +182,7 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
             new Point(sink.X + 100, sink.Y + 420));
 
         patch.Connections.ShouldBeEmpty();
@@ -203,7 +203,7 @@ public class NodeEditorTests : UiTest
 
         Drag(editor, window,
             NodeGeometry.OutputPort(second, 0),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort));
 
         builder.Patch.Connections.Count.ShouldBe(1);
         builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)!.SourceNode.ShouldBe(second.Id);
@@ -338,7 +338,7 @@ public class NodeEditorTests : UiTest
     private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
     {
         var def = NodeCatalog.BuiltIn.Require(node.TypeId);
-        var bounds = NodeGeometry.Bounds(node, def).Deflate(6);
+        var bounds = Geometry.Bounds(node, def).Deflate(6);
 
         var topLeft = Screen(editor, window, bounds.TopLeft);
         var bottomRight = Screen(editor, window, bounds.BottomRight);
@@ -489,7 +489,7 @@ public class NodeEditorTests : UiTest
 
         Drag(editor, window,
             NodeGeometry.OutputPort(source, 0),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
 
@@ -511,8 +511,8 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         Drag(editor, window,
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull("the wire moved");
 
@@ -700,7 +700,7 @@ public class NodeEditorTests : UiTest
         // gain.out -> sine.phase, which closes sine -> gain -> sine.
         Drag(editor, window,
             NodeGeometry.OutputPort(gain, 0),
-            NodeGeometry.InputPort(osc, sine, 2));
+            Geometry.InputPort(osc, sine, 2));
 
         var closing = patch.IncomingTo(osc.Id, 2);
 
@@ -732,7 +732,7 @@ public class NodeEditorTests : UiTest
 
         Drag(editor, window,
             NodeGeometry.OutputPort(gain, 0),
-            NodeGeometry.InputPort(osc, sine, 2));
+            Geometry.InputPort(osc, sine, 2));
 
         editor.History.Undo().ShouldBeTrue();
 
@@ -755,7 +755,7 @@ public class NodeEditorTests : UiTest
 
         Drag(editor, window,
             NodeGeometry.OutputPort(osc, 0),
-            NodeGeometry.InputPort(osc, sine, 2));
+            Geometry.InputPort(osc, sine, 2));
 
         var closing = patch.IncomingTo(osc.Id, 2);
 
@@ -778,7 +778,7 @@ public class NodeEditorTests : UiTest
 
         Drag(editor, window,
             NodeGeometry.OutputPort(gain, 0),
-            NodeGeometry.InputPort(sink, Sink, NodeCatalog.OutputRightPort));
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputRightPort));
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
             .ShouldNotBeNull()
@@ -799,7 +799,7 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         var sine = NodeCatalog.BuiltIn.Require("osc.sine");
-        var phase = NodeGeometry.InputPort(osc, sine, 2);
+        var phase = Geometry.InputPort(osc, sine, 2);
 
         Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
 
@@ -824,7 +824,7 @@ public class NodeEditorTests : UiTest
     [AvaloniaFact]
     public void The_layout_is_told_the_size_a_node_is_actually_drawn()
     {
-        var metrics = NodeGeometry.Metrics;
+        var metrics = Geometry.Metrics;
 
         metrics.Width.ShouldBe(NodeGeometry.Width);
         metrics.HeaderHeight.ShouldBe(NodeGeometry.HeaderHeight);
@@ -836,10 +836,10 @@ public class NodeEditorTests : UiTest
         // And the derived measurements agree, which is what actually gets used.
         var node = NodeInstance.Create(Sink, 0, 0);
 
-        metrics.Height(Sink).ShouldBe(NodeGeometry.Height(Sink));
+        metrics.Height(Sink).ShouldBe(Geometry.Height(Sink));
 
         for (var port = 0; port < Sink.Inputs.Count; port++)
-            metrics.InputPort(Sink, port).ShouldBe(NodeGeometry.InputPort(node, Sink, port).Y);
+            metrics.InputPort(Sink, port).ShouldBe(Geometry.InputPort(node, Sink, port).Y);
 
         // Including a shut group's, which the layout reserves the room for and
         // the editor draws — a box laid out to a size it is not drawn at is the
@@ -848,9 +848,9 @@ public class NodeEditorTests : UiTest
             [new GroupSocket(node.Id, 0, IsOutput: false), new GroupSocket(node.Id, 1, IsOutput: false)],
             [new GroupSocket(node.Id, 0, IsOutput: true)]);
 
-        var bounds = new Rect(0, 0, NodeGeometry.Width, NodeGeometry.GroupHeight(sockets));
+        var bounds = new Rect(0, 0, NodeGeometry.Width, Geometry.GroupHeight(sockets));
 
-        metrics.GroupHeight(sockets).ShouldBe(NodeGeometry.GroupHeight(sockets));
+        metrics.GroupHeight(sockets).ShouldBe(Geometry.GroupHeight(sockets));
 
         for (var row = 0; row < sockets.Outputs.Count; row++)
             metrics.GroupPort(sockets, row, isOutput: true)
@@ -858,7 +858,7 @@ public class NodeEditorTests : UiTest
 
         for (var row = 0; row < sockets.Inputs.Count; row++)
             metrics.GroupPort(sockets, row, isOutput: false)
-                .ShouldBe(NodeGeometry.GroupInputPort(bounds, sockets, row).Y);
+                .ShouldBe(Geometry.GroupInputPort(bounds, sockets, row).Y);
     }
 
     /// <summary>

@@ -198,7 +198,7 @@ public class ModulePaletteTests : UiTest
         var def = NodeCatalog.BuiltIn.Require("osc.sine");
 
         (added.X + NodeGeometry.Width / 2).ShouldBe(spot.X, 1);
-        (added.Y + NodeGeometry.Height(def) / 2).ShouldBe(spot.Y, 1);
+        (added.Y + Geometry.Height(def) / 2).ShouldBe(spot.Y, 1);
     }
 
     /// <summary>
@@ -340,7 +340,7 @@ public class ModulePaletteTests : UiTest
         // Centered on the click, which is what "lands here" means for a block
         // that has a width and a height.
         (added.X + NodeGeometry.Width / 2).ShouldBe(spot.X, 1);
-        (added.Y + NodeGeometry.Height(def) / 2).ShouldBe(spot.Y, 1);
+        (added.Y + Geometry.Height(def) / 2).ShouldBe(spot.Y, 1);
     }
 
     [AvaloniaFact]
