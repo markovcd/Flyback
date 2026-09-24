@@ -5,6 +5,16 @@ description: Use when a UI or preset change makes a screenshot in site/assets/sh
 
 # Recapturing site screenshots
 
+## A stale full-window shot is listed, not retaken on the spot
+
+A change that makes a full-window shot stale does not stop to drive the real window. It adds the shot to [stale.md](stale.md) beside this skill, in the change's own commit: the file, where the site uses it, what no longer matches, and the date. The site's prose is still fixed in that commit; only the picture waits.
+
+Each time a shot is added, look at the whole list. Once it holds **four or more shots**, or any shot the front page leads with (the hero, nebula.webp), propose to the user spinning a second session to retake the lot, with the background-task chip carrying the list as its prompt. That session works through this skill's recipe, takes each retaken shot off the list, and lands them on `main` in one commit.
+
+**Why:** the user does not want a UI change stalled on a minutes-long window-driving capture, and one session retaking several shots costs about what one shot does.
+
+The canvas-only shots below are a test run, not a window, so those are still retaken in the change's own commit.
+
 ## The canvas-only shots come from a test, not a window
 
 `patch-*.webp` (the patch figures) and `skin-*.webp` (the plugin guide's backgrounds) are headless captures of a real `NodeEditor`, cropped to the modules. Nothing here is driven by hand:
@@ -19,7 +29,7 @@ The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/previ
 
 ## The full-window shots
 
-The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. A preset dumped with `PatchIO.ToJson` from a scratch test is the `.fbk`; set every `Group.Collapsed` in the dump for the shots that show shut boxes (whole-band, euclid-kit). tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. The website has to stay accurate, so a stale screenshot is retaken in the same commit as the UI change.
+The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. A preset dumped with `PatchIO.ToJson` from a scratch test is the `.fbk`; set every `Group.Collapsed` in the dump for the shots that show shut boxes (whole-band, euclid-kit). tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. A stale one goes on the list above rather than being retaken in the UI change's commit.
 
 A preset with sound plays through the user's speakers while it is captured, for the few seconds the recipe takes. Capture it anyway; muting the system is a system setting and off limits.
 
