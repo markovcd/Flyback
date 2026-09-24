@@ -215,6 +215,36 @@ public sealed class Editor(PatchContext context) : IDisposable
             open.MouseUp(at, MouseButton.Left);
         });
 
+    /// <summary>Switches the seek bar's loop on, as a click on it does.</summary>
+    public void LoopSeekBar() =>
+        DoWindow((open, _) =>
+        {
+            var loop = open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == "seekLoop");
+            var at = loop.TranslatePoint(new Point(loop.Bounds.Width / 2, loop.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>
+    /// Waits for the patch's clock to come to <paramref name="arrived"/>, for at most
+    /// <paramref name="cap"/>, and says whether it did.
+    /// </summary>
+    /// <remarks>The clock moves on the UI thread's own timers, which run between the looks.</remarks>
+    public bool WaitForClock(Func<double, bool> arrived, TimeSpan cap)
+    {
+        var until = DateTime.UtcNow + cap;
+
+        while (!arrived(Clock))
+        {
+            if (DateTime.UtcNow > until) return false;
+
+            Thread.Sleep(20);
+        }
+
+        return true;
+    }
+
     /// <summary>Types a length into the box beside the seek bar, and presses Enter.</summary>
     public void SetSeekLength(string typed) =>
         DoWindow((open, _) =>

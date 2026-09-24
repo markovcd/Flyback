@@ -143,6 +143,16 @@ internal sealed class CanvasSection
         Write();
     }
 
+    /// <summary>Whether the seek bar loops, kept beside the switches but set on the bar.</summary>
+    internal bool SeekLoop => saved.SeekLoop;
+
+    /// <summary>Saves whether the seek bar loops, leaving the switches as last saved.</summary>
+    internal void SaveSeekLoop(bool loop)
+    {
+        saved.SeekLoop = loop;
+        Write();
+    }
+
     internal void Save()
     {
         saved = new CanvasSettings
@@ -152,6 +162,7 @@ internal sealed class CanvasSection
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,
             SeekLength = saved.SeekLength,
+            SeekLoop = saved.SeekLoop,
         };
 
         Show();

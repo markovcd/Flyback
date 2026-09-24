@@ -18,6 +18,17 @@ public sealed class TransportSteps(Editor editor)
     [When("the seek bar is clicked at {int} seconds")]
     public void WhenSought(int seconds) => editor.Seek(seconds);
 
+    [Given("the seek bar loops")]
+    public void GivenLooping() => editor.LoopSeekBar();
+
+    /// <summary>Seeks to the very end, then gives the bar the tick it comes round on, capped since the tick is a tenth of a second.</summary>
+    [When("the patch plays on past the end of the seek bar")]
+    public void WhenPastTheEnd()
+    {
+        editor.Seek(editor.SeekLength);
+        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2));
+    }
+
     [When("the seek bar's length is set to {string}")]
     public void WhenTheLengthIsSet(string typed) => editor.SetSeekLength(typed);
 

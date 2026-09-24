@@ -11,12 +11,14 @@ namespace Flyback.App;
 
 /// <summary>
 /// The patch's clock as a strip on the toolbar: where it is, and a thumb to drag it
-/// anywhere from zero to a length typed in the box beside it.
+/// anywhere from zero to a length typed in the box beside it, with a switch that
+/// brings the patch round to zero each time it reaches the end.
 /// </summary>
 /// <remarks>
-/// A patch that runs longer than the strip holds the thumb at the far end. The
-/// length is the editor's rather than the patch's, so it is kept with the canvas
-/// settings and not in the file.
+/// Unlooped, a patch that runs longer than the strip holds the thumb at the far end.
+/// The length and the switch are the editor's rather than the patch's, so they are
+/// kept with the canvas settings and not in the file. Looping comes round on the
+/// thumb's own tick, so it lands within a tenth of a second of the end.
 /// </remarks>
 internal sealed class SeekBar
 {
@@ -64,6 +66,10 @@ internal sealed class SeekBar
 
         ToolTip.SetTip(Length, "How long the bar is: seconds, or minutes:seconds.");
 
+        Loop = ToolbarButtons.Toggle("seekLoop", "⟲", "Play the bar's length round and round, from zero again at its end.");
+        Loop.IsChecked = settings.SeekLoop;
+        Loop.IsCheckedChanged += (_, _) => settings.SaveSeekLoop(Loop.IsChecked == true);
+
         Track.PropertyChanged += (_, e) =>
         {
             if (e.Property == RangeBase.ValueProperty && !following) playback.SeekTo(Track.Value);
@@ -83,7 +89,7 @@ internal sealed class SeekBar
             Orientation = Orientation.Horizontal,
             Spacing = 6,
             VerticalAlignment = VerticalAlignment.Center,
-            Children = { Track, Length },
+            Children = { Track, Length, Loop },
         };
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = Follow };
@@ -100,6 +106,9 @@ internal sealed class SeekBar
     /// <summary>The box the strip's length is typed in.</summary>
     public TextBox Length { get; }
 
+    /// <summary>The switch that brings the patch round to zero at the end of the strip.</summary>
+    public ToggleButton Loop { get; }
+
     /// <summary>Whether the bar can be used: not during a take, which is paced by its own samples.</summary>
     public bool IsEnabled
     {
@@ -107,10 +116,16 @@ internal sealed class SeekBar
         set => View.IsEnabled = value;
     }
 
-    /// <summary>Moves the thumb to where the clock is, unless it is in somebody's hand.</summary>
+    /// <summary>
+    /// Brings a looped patch that has reached the end round to zero, then moves the
+    /// thumb to where the clock is, unless it is in somebody's hand.
+    /// </summary>
     public void Update()
     {
         if (held) return;
+
+        if (Loop.IsChecked == true && View.IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
+            playback.Rewind();
 
         following = true;
         Track.Value = Math.Min(preview.Time, Track.Maximum);

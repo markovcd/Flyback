@@ -21,3 +21,10 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     Given the patch is open in the editor
     When the seek bar's length is set to "2:30"
     Then the seek bar reaches 150 seconds
+
+  Scenario: A looped patch comes round to the start at the end of the seek bar
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    And the seek bar loops
+    When the patch plays on past the end of the seek bar
+    Then the patch's clock is at about 0 seconds

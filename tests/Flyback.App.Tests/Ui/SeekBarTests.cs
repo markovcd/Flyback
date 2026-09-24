@@ -11,7 +11,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// The seek bar on the toolbar: dragging it moves the patch's clock, paused or not,
-/// and its length is what was typed beside it, kept for the next window.
+/// its length is what was typed beside it, and looped it comes round to zero at its
+/// end; the length and the loop are kept for the next window.
 /// </summary>
 public sealed class SeekBarTests : UiTest
 {
@@ -74,13 +75,72 @@ public sealed class SeekBarTests : UiTest
     [AvaloniaFact]
     public void A_clock_past_the_end_holds_the_thumb_there()
     {
-        SeekBar? bar = null;
-        var window = Open(replace: services => services.AddSingleton(sp => bar = ActivatorUtilities.CreateInstance<SeekBar>(sp)));
+        var (window, bar) = WithBar();
 
         Preview(window).Time = 500;
-        bar.ShouldNotBeNull().Update();
+        bar.Update();
 
         Track(window).Value.ShouldBe(Track(window).Maximum);
+    }
+
+    /// <summary>A window and the seek bar in it, caught as the container builds it.</summary>
+    private (MainWindow Window, SeekBar Bar) WithBar(EditorSetup? setup = null)
+    {
+        SeekBar? bar = null;
+        var window = Open(setup: setup, replace: services => services.AddSingleton(sp => bar = ActivatorUtilities.CreateInstance<SeekBar>(sp)));
+
+        return (window, bar.ShouldNotBeNull());
+    }
+
+    [AvaloniaFact]
+    public void A_looped_patch_at_the_end_of_the_bar_comes_round_to_zero()
+    {
+        var (window, bar) = WithBar();
+
+        bar.Loop.IsChecked = true;
+        Preview(window).Time = 61;
+        bar.Update();
+
+        Preview(window).Time.ShouldBeLessThan(1);
+        Track(window).Value.ShouldBeLessThan(1);
+    }
+
+    [AvaloniaFact]
+    public void An_unlooped_patch_runs_on_past_the_end_of_the_bar()
+    {
+        var (window, bar) = WithBar();
+
+        Preview(window).Time = 61;
+        bar.Update();
+
+        Preview(window).Time.ShouldBe(61);
+    }
+
+    [AvaloniaFact]
+    public void A_paused_patch_held_past_the_end_stays_where_it_is_held()
+    {
+        var (window, bar) = WithBar();
+
+        bar.Loop.IsChecked = true;
+        window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
+        Settle(window);
+
+        Track(window).Value = 60;
+        bar.Update();
+
+        Preview(window).Time.ShouldBe(60);
+    }
+
+    [AvaloniaFact]
+    public void Looping_is_kept_for_the_next_window()
+    {
+        var setup = new EditorSetup { CanvasSettingsPath = settingsPath };
+        var (_, bar) = WithBar(setup);
+
+        bar.Loop.IsChecked.ShouldBe(false);
+        bar.Loop.IsChecked = true;
+
+        WithBar(setup).Bar.Loop.IsChecked.ShouldBe(true);
     }
 
     [AvaloniaFact]
