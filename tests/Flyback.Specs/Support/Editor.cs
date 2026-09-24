@@ -124,8 +124,59 @@ public sealed class Editor(PatchContext context) : IDisposable
             entry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         });
 
+    /// <summary>
+    /// What the module panel says beside the row captioned <paramref name="caption"/>,
+    /// or null where it has no such row.
+    /// </summary>
+    public string? PanelRow(string caption) =>
+        ReadWindow(open => Row(open, caption) is var (label, row)
+            ? string.Join(" ", row.GetVisualDescendants().OfType<TextBlock>().Where(t => t != label).Select(t => t.Text))
+            : null);
+
+    /// <summary>Whether the row captioned <paramref name="caption"/> has a button so named.</summary>
+    public bool RowOffers(string caption, string button) =>
+        ReadWindow(open => Row(open, caption) is var (_, row) && RowButton(row, button) is not null);
+
+    /// <summary>Presses the button so named on the row captioned <paramref name="caption"/>.</summary>
+    public void PressInRow(string caption, string button) =>
+        DoWindow((open, _) =>
+        {
+            var (_, row) = Row(open, caption) ?? throw new InvalidOperationException($"the panel has no row '{caption}'");
+
+            (RowButton(row, button) ?? throw new InvalidOperationException($"the row '{caption}' has no {button}"))
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        });
+
+    /// <summary>Renames the one module selected: a double-click on its name on the panel, then typing and Enter.</summary>
+    /// <remarks>One turn of the thread from click to Enter, so no other scenario's window takes the focus in between.</remarks>
+    public void Rename(string name) =>
+        DoWindow((open, _) =>
+        {
+            var title = open.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "moduleName");
+            var at = title.TranslatePoint(new Point(title.Bounds.Width / 2, title.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+            Settle();
+
+            var box = open.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(b => b.Classes.Contains(ModulePlate.NameBoxClass))
+                ?? throw new InvalidOperationException("the name did not become a box to type into");
+
+            box.Focus();
+            box.Text = name;
+            open.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+            open.KeyReleaseQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        });
+
     /// <summary>Makes the selection exactly these modules, which is what clicking them with Ctrl held does.</summary>
-    public void Select(params Guid[] ids) => Do(canvas => canvas.Selection.Take(ids));
+    public void Select(params Guid[] ids) =>
+        Do(canvas =>
+        {
+            canvas.Selection.Take(ids);
+            canvas.Selection.Announce();
+        });
 
     /// <summary>Presses a key, with Ctrl or anything else held, while the canvas has the focus.</summary>
     public void Press(PhysicalKey key, RawInputModifiers modifiers = RawInputModifiers.None) =>
@@ -206,6 +257,26 @@ public sealed class Editor(PatchContext context) : IDisposable
     }
 
     private NodeEditor Canvas() => CanvasIn(Window());
+
+    /// <summary>
+    /// The caption on the module panel reading <paramref name="caption"/>, and the whole
+    /// row it heads: everything up to the panel itself.
+    /// </summary>
+    private static (TextBlock Caption, Control Row)? Row(MainWindow window, string caption)
+    {
+        var panel = window.GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "inspector");
+
+        if (panel.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Text == caption) is not { } label)
+            return null;
+
+        Control row = label;
+        while (row.GetVisualParent() is Control parent && parent != panel) row = parent;
+
+        return (label, row);
+    }
+
+    private static Button? RowButton(Control row, string name) =>
+        row.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name);
 
     private static ComboBox Presets(MainWindow window) =>
         window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");

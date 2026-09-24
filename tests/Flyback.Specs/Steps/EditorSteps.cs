@@ -1,16 +1,16 @@
+using Avalonia.Input;
 using Reqnroll;
 using Shouldly;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>What the editor's panel says about the wires on a module or a box.</summary>
+/// <summary>What the editor's panel says about the wires on a module or a box, read off the panel itself.</summary>
 [Binding]
 public sealed class EditorSteps(PatchContext context, Editor editor)
 {
-    private NodeGroup? box;
+    private IReadOnlyList<Guid> box = [];
 
     [Given("a sine driven by Time")]
     public void GivenASineDrivenByTime()
@@ -24,17 +24,17 @@ public sealed class EditorSteps(PatchContext context, Editor editor)
     public void GivenTimeAlsoDrives(string port) => context.Wire("Time", "t", "Sine", port);
 
     [When("Time is renamed {string}")]
-    public void WhenTimeIsRenamed(string name) => context.Node("Time").Name = name;
+    public void WhenTimeIsRenamed(string name)
+    {
+        editor.Select(context.Node("Time").Id);
+        editor.Rename(name);
+    }
 
     [Then("the sine's {string} reads {string}")]
-    public void ThenTheInputReads(string port, string text) =>
-        WireEnds.Into(context.Patch, context.Node("Sine").Id, Port(NodeCatalog.SineTypeId, port, output: false))
-            .ShouldBe(text);
+    public void ThenTheInputReads(string port, string text) => Reads(context.Node("Sine").Id, port, text);
 
     [Then("Time's {string} reads {string}")]
-    public void ThenTheOutputReads(string port, string text) =>
-        WireEnds.OutOf(context.Patch, context.Node("Time").Id, Port(NodeCatalog.TimeTypeId, port, output: true))
-            .ShouldBe(text);
+    public void ThenTheOutputReads(string port, string text) => Reads(context.Node("Time").Id, port, text);
 
     [Given("the sine is drawn in one box with a Multiply it feeds")]
     public void GivenTheSineIsBoxed()
@@ -42,52 +42,45 @@ public sealed class EditorSteps(PatchContext context, Editor editor)
         context.Add("Multiply", "math.mul");
         context.Wire("Sine", "out", "Multiply", "a");
 
-        box = context.Patch.Group([context.Node("Sine").Id, context.Node("Multiply").Id]);
+        box = [context.Node("Sine").Id, context.Node("Multiply").Id];
+
+        editor.Select([.. box]);
+        editor.PressCtrl(PhysicalKey.G);
     }
 
     [Then("the box's {string} reads {string}")]
     public void ThenTheBoxSocketReads(string label, string text)
     {
-        var sockets = context.Patch.SocketsOf(box.ShouldNotBeNull());
-        var scene = new CanvasScene(context.Patch);
-
-        var socket = sockets.Inputs.Concat(sockets.Outputs).Single(s => scene.Named(s)?.Label == label);
-
-        (socket.IsOutput
-            ? WireEnds.OutOf(context.Patch, socket.Node, socket.Port)
-            : WireEnds.Into(context.Patch, socket.Node, socket.Port)).ShouldBe(text);
+        editor.Select([.. box]);
+        editor.PanelRow(label).ShouldBe(text);
     }
 
     [When("the Multiply's {string} is put on the box's edge")]
     public void WhenTheMultiplysSocketIsExposed(string port)
     {
-        var socket = new GroupSocket(context.Node("Multiply").Id, Port("math.mul", port, output: false), IsOutput: false);
-        var group = box.ShouldNotBeNull();
-
-        // What the box's panel does when the socket's row is ticked.
-        editor.Do(canvas => canvas.Edits.ExposeSocket(group, socket));
+        editor.Select(context.Node("Multiply").Id);
+        editor.PressInRow(port, "exposeSocket");
     }
 
     [Then("the Multiply's {string} cannot be put on the box's edge")]
-    public void ThenTheMultiplysSocketIsNotExposable(string port) =>
-        context.Patch.Exposable(
-            box.ShouldNotBeNull(),
-            new GroupSocket(context.Node("Multiply").Id, Port("math.mul", port, output: false), IsOutput: false))
-            .ShouldBeFalse();
+    public void ThenTheMultiplysSocketIsNotExposable(string port)
+    {
+        editor.Select(context.Node("Multiply").Id);
+
+        editor.PanelRow(port).ShouldNotBeNull($"the panel has no row for '{port}'");
+        editor.RowOffers(port, "exposeSocket").ShouldBeFalse();
+    }
 
     [Then("the box has a {string} socket")]
     public void ThenTheBoxHasASocket(string label)
     {
-        var sockets = context.Patch.SocketsOf(box.ShouldNotBeNull());
-        var scene = new CanvasScene(context.Patch);
-
-        sockets.Inputs.Concat(sockets.Outputs).ShouldContain(s => scene.Named(s)!.Value.Label == label);
+        editor.Select([.. box]);
+        editor.PanelRow(label).ShouldNotBeNull($"the box's panel has no row for '{label}'");
     }
 
-    private static int Port(string typeId, string name, bool output)
+    private void Reads(Guid module, string socket, string text)
     {
-        var def = NodeCatalog.Require(typeId);
-
-        return (output ? def.Outputs : def.Inputs).ToList().FindIndex(p => p.Name == name);
+        editor.Select(module);
+        editor.PanelRow(socket).ShouldBe(text);
     }
 }

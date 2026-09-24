@@ -902,6 +902,8 @@ internal sealed class Inspector
     {
         var title = new TextBlock
         {
+            Name = "moduleName",
+
             // The same heading the canvas draws — a Send or a Receive names its
             // bus alongside its own name (CanvasPainter.Heading) — so the
             // panel and the block read the same. The rename box beneath this
