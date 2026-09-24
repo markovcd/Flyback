@@ -537,7 +537,7 @@ public class SourceViewTests : UiTest
         var text = ShowCode(window);
 
         text.Text = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(gain: 0.5) |> out.color";
 
         Press(Tidy(window));
         Settle(window);
@@ -558,7 +558,7 @@ public class SourceViewTests : UiTest
         var text = ShowCode(window);
 
         text.Text = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(gain: 0.5) |> out.color";
 
         window.RaiseEvent(new Avalonia.Input.KeyEventArgs
         {
@@ -580,7 +580,7 @@ public class SourceViewTests : UiTest
         var text = ShowCode(window);
 
         const string longLine = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
-            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(color: _, gain: 0.5) |> out.color";
+            + "|> color.hsv(hue: _, saturation: 0.85) |> gain(gain: 0.5) |> out.color";
 
         text.Text = longLine;
 

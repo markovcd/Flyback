@@ -6,8 +6,8 @@ namespace Flyback.Core.Tests.Language;
 
 /// <summary>
 /// Where a pipe lands: <c>socket: _</c>, else <c>in</c> or a module's only
-/// socket, else a leading <c>x</c> and <c>y</c>, else nowhere. And a pipeline
-/// is never an argument.
+/// socket, else a leading <c>x</c> and <c>y</c>, else a module's one color
+/// socket for a color, else nowhere. And a pipeline is never an argument.
 /// </summary>
 public class PlaceholderTests
 {
@@ -99,6 +99,36 @@ public class PlaceholderTests
         var built = Built("rings(freq: 3) |> color.hsv(hue: _) |> color.split() |> out.left");
 
         PatchPrinter.Print(built, NodeCatalog.BuiltIn).ShouldContain("|> split()");
+    }
+
+    [Fact]
+    public void A_color_lands_on_the_one_color_socket_a_module_has()
+    {
+        var patch = Built("rings() |> color.hsv(hue: _) |> gain(gain: 0.5) |> out.color");
+
+        var gain = Only(patch, "color.gain");
+
+        patch.IncomingTo(gain.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(Only(patch, "color.hsv").Id);
+    }
+
+    [Fact]
+    public void A_signal_that_is_not_a_color_still_says_where()
+    {
+        Refused("rings() |> gain(gain: 0.5) |> out.color").Message.ShouldContain("'gain(color: _)'");
+    }
+
+    [Fact]
+    public void A_color_into_a_module_with_two_color_sockets_still_says_which()
+    {
+        Refused("rings() |> color.hsv(hue: _) |> color.mix(t: 0.5) |> out.color").Message.ShouldContain("'color.mix(a: _)'");
+    }
+
+    [Fact]
+    public void A_color_into_its_one_socket_is_printed_without_a_placeholder()
+    {
+        var built = Built("rings() |> color.hsv(hue: _) |> gain(gain: 0.5) |> out.color");
+
+        PatchPrinter.Print(built, NodeCatalog.BuiltIn).ShouldContain("|> gain(gain: 0.5)");
     }
 
     [Fact]

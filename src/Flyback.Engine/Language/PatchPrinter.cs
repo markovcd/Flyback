@@ -828,6 +828,16 @@ public static class PatchPrinter
                 used.Add(0);
                 used.Add(1);
             }
+            else if (signal < 0 && Tint(node, def) is var (tint, colored))
+            {
+                // A color into the one color socket a module has lands there
+                // with no '_', so it is written that way.
+                var part = From(colored);
+
+                piped = part.Text;
+                before.AddRange(part.Calls);
+                used.Add(tint);
+            }
             else if (signal < 0 && MainLine(node, def) is var (port, wire))
             {
                 // Otherwise the socket the longest chain arrives on, said with
@@ -916,6 +926,24 @@ public static class PatchPrinter
             }
 
             return best ?? (Forward(node.Id, 0) is { } leading ? (0, leading) : null);
+        }
+
+        /// <summary>The one color socket a module has, where a color arrives on it from a module declaring one.</summary>
+        private (int Port, Connection Wire)? Tint(NodeInstance node, NodeDef def)
+        {
+            var colors = Enumerable.Range(0, def.Inputs.Count).Where(i => def.Inputs[i].Kind == PortKind.Color).ToList();
+
+            if (colors is not [var tint] || Forward(node.Id, tint) is not { } wire) return null;
+
+            // A module that leads with a position would read a bare pipe from a
+            // two-output source as the pair, so it keeps its '_'.
+            if (def.Inputs.Count >= 2 && Named(def.Inputs[0], "x") && Named(def.Inputs[1], "y")) return null;
+            if (wire.SourceNode == plan.Coord || wire.SourceNode == plan.Clock) return null;
+            if (patch.Find(wire.SourceNode) is not { } source || modules.Get(source.TypeId) is not { } from) return null;
+
+            return wire.SourcePort < from.Outputs.Count && from.Outputs[wire.SourcePort].Kind == PortKind.Color
+                ? (tint, wire)
+                : null;
         }
 
         private readonly Dictionary<Guid, int> chains = [];

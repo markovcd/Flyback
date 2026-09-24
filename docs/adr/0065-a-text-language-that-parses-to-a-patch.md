@@ -229,6 +229,6 @@ so packing one means building it first.
 
 The pipe rule's third clause, the first socket the call did not name, is gone.
 A pipe lands on `socket: _`, else `in` or a module's only socket, else a
-leading `x` and `y`, and a
+leading `x` and `y`, else a module's one color socket for a color, and a
 pipeline inside an argument is an error
 ([0144](0144-a-pipe-lands-where-the-text-says.md)).

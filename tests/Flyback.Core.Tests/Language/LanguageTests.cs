@@ -133,7 +133,7 @@ public class LanguageTests
         let past = rotate(angle: t * 0.08)
                      |> scale(scale: 1.05)
                      |> feedback()
-                     |> gain(color: _, gain: 0.95, bias: 0)
+                     |> gain(gain: 0.95, bias: 0)
 
         let fresh = rings(freq: 1.5, offset: pulse)
                       |> smoothstep(0.8, 1)
@@ -296,7 +296,7 @@ public class LanguageTests
           |> rotate(angle: t * 0.05)
           |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
           |> picture()
-          |> gain(color: _, gain: 1.15, bias: -0.05)
+          |> gain(gain: 1.15, bias: -0.05)
           |> out.color
         """);
 
@@ -676,15 +676,15 @@ public class LanguageTests
           let warmAngle = kickGate |> remap(0..1, 0.012..0.05)
           let warm = transform(zoom: 1.035, angle: warmAngle)
                        |> feedback()
-                       |> color.split(color: _)
+                       |> color.split()
 
           let cool = transform(zoom: 0.972, angle: -0.016)
                        |> feedback()
-                       |> color.split(color: _)
+                       |> color.split()
 
-          let gain2 = song |> remap(0..1, 0.78..0.9)
+          let fade = song |> remap(0..1, 0.78..0.9)
           rgb(warm, cool.g, cool.b)
-            |> gain(color: _, gain: gain2, bias: 0)
+            |> gain(gain: fade, bias: 0)
             |> max(a: _, b: fresh)
             |> out.color
         }

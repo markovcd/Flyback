@@ -1156,7 +1156,8 @@ public sealed class Binder
     /// <summary>
     /// Where a pipe lands when no argument says <c>_</c>: a socket called
     /// <c>in</c>, else a module's only socket, else a leading <c>x</c> and
-    /// <c>y</c>, else nowhere.
+    /// <c>y</c>, else the one color socket where a color is arriving, else
+    /// nowhere.
     /// </summary>
     /// <remarks>
     /// Nowhere is an error rather than a guess at the first socket left. That
@@ -1209,6 +1210,18 @@ public sealed class Binder
             && !taken.Contains(1)
             && Width(piped) >= 2;
 
+        // A color into a module that takes exactly one color can only mean that
+        // one, whatever else the module has.
+        var colors = Enumerable.Range(0, def.Inputs.Count).Where(i => def.Inputs[i].Kind == PortKind.Color).ToList();
+
+        if (!position && colors is [var tint] && !taken.Contains(tint) && KindOf(piped) == PortKind.Color)
+        {
+            taken.Add(tint);
+            into.Add((tint, Part(piped, 0)));
+
+            return true;
+        }
+
         if (!position)
         {
             var example = def.Inputs[free[0]].Name.Replace(' ', '_');
@@ -1227,6 +1240,21 @@ public sealed class Binder
 
         return true;
     }
+
+    /// <summary>
+    /// What the first signal of a value is declared as, or null where nothing
+    /// declares it — a number, or a Maths module passing on whatever it reads.
+    /// </summary>
+    private PortKind? KindOf(Value value) => value switch
+    {
+        Placed placed => placed.Def.Outputs.Count > 0 ? placed.Def.Outputs[0].Kind : null,
+        Socket socket => patch.Find(socket.Id) is { } node && modules.Get(node.TypeId) is { } def
+            && socket.Port < def.Outputs.Count
+                ? def.Outputs[socket.Port].Kind
+                : null,
+        Several several when several.Items.Count > 0 => KindOf(several.Items[0]),
+        _ => null,
+    };
 
     /// <summary>Whether an argument is <c>_</c>, which stands for what is piped in.</summary>
     private static bool Placeholder(Expr value) => value is NameExpr { Name: "_", Port: null };

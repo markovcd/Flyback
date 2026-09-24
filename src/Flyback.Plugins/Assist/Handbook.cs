@@ -64,9 +64,10 @@ internal static class Handbook
           `kaleidoscope`, except `color.hsv`, `color.mix`, `math.mix` and
           `midi.in`, which are written in full.
         - **Where the signal lands**: a socket called `in`, or a module's only
-          socket; failing that a
-          leading `x` and `y`, two signals at once, which is how Space and
-          Pattern modules chain. Anywhere else, say which socket with `_`:
+          socket; failing that a leading `x` and `y`, two signals at once,
+          which is how Space and Pattern modules chain; failing that, for a
+          color, the module's one color socket, so `hsv(...) |> gain(gain: 2)`
+          needs nothing more. Anywhere else, say which socket with `_`:
           `beat.gate |> adsr(gate: _, decay: 240ms)`. A module with neither
           and no `_` is refused.
         - **A pipeline is a statement, never an argument.** Bind it with `let`

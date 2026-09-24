@@ -92,6 +92,7 @@ internal static class ModulesCommand
                     reaches = Reaches(def.Sinks),
                     description = def.Description,
                     piped = piped.Select(port => def.Inputs[port].Name),
+                    pipedColor = piped.Length == 0 && Tinted(def) is { } colored ? def.Inputs[colored].Name : null,
                     inputs,
                     outputs = def.Outputs.Select((port, index) => new { index, name = port.Name }),
                     carries = carried,
@@ -121,8 +122,17 @@ internal static class ModulesCommand
         for (var i = 0; i < def.Inputs.Count; i++)
             output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {At(def.Inputs[i]).PadRight(at)}  {Turns(def.Inputs[i])}".TrimEnd());
 
+        var tinted = piped.Length == 0 ? Tinted(def) : null;
+
+        if (tinted is { } tint)
+            output.WriteLine($"  a color piped in lands on {def.Inputs[tint].Name}");
+
         if (def.Inputs.Count > 0 && piped.Length == 0)
-            output.WriteLine($"  a pipe says where it lands: {def.TypeId}({def.Inputs[0].Name.Replace(' ', '_')}: _)");
+        {
+            output.WriteLine(
+                $"  {(tinted is null ? "a pipe" : "anything else")} says where it lands: "
+                + $"{def.TypeId}({def.Inputs[0].Name.Replace(' ', '_')}: _)");
+        }
 
         output.WriteLine();
         output.WriteLine("outputs");
@@ -177,6 +187,14 @@ internal static class ModulesCommand
 
         return def.Inputs.Count >= 2 && string.Equals(def.Inputs[0].Name, "x", StringComparison.OrdinalIgnoreCase)
             && string.Equals(def.Inputs[1].Name, "y", StringComparison.OrdinalIgnoreCase) ? [0, 1] : [];
+    }
+
+    /// <summary>The one color socket a module has, where a color piped in lands; null for none or several.</summary>
+    private static int? Tinted(NodeDef def)
+    {
+        var colors = Enumerable.Range(0, def.Inputs.Count).Where(i => def.Inputs[i].Kind == PortKind.Color).ToList();
+
+        return colors is [var tint] ? tint : null;
     }
 
     private static Module Listed(ModuleCatalog catalog, NodeDef def) => new(

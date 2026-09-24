@@ -75,7 +75,9 @@ This is the whole language in one paragraph
 >    module's only socket;
 > 3. otherwise **a position — the module's own first two sockets, `x` and `y`,
 >    with neither named in the call — takes the first two**;
-> 4. otherwise the pipe is refused, and the complaint says to write `_`.
+> 4. otherwise **a color takes the module's one color socket**, where the source
+>    declares a color and the module has exactly one;
+> 5. otherwise the pipe is refused, and the complaint says to write `_`.
 
 Nothing is inferred from a socket the text did not name. The same call means the
 same wiring whatever arguments sit beside it.
@@ -759,7 +761,7 @@ scale(scale: zoom)
   |> rotate(angle: t * 0.05)
   |> warp(by: clouds(z: t * 0.15, scale: 1.8), amount: 0.12)
   |> picture()
-  |> gain(color: _, gain: 1.15, bias: -0.05)
+  |> gain(gain: 1.15, bias: -0.05)
   |> out.color
 ```
 
@@ -838,7 +840,7 @@ let pulse = t * 0.25
 let past = rotate(angle: t * 0.08)
              |> scale(scale: 1.05)
              |> feedback()
-             |> gain(color: _, gain: 0.95, bias: 0)
+             |> gain(gain: 0.95, bias: 0)
 
 let fresh = rings(freq: 1.5, offset: pulse)
               |> smoothstep(0.8, 1)
@@ -1509,15 +1511,15 @@ group "Picture: Feedback" {
   let warmAngle = kickGate |> remap(0..1, 0.012..0.05)
   let warm = transform(zoom: 1.035, angle: warmAngle)
                |> feedback()
-               |> color.split(color: _)
+               |> color.split()
 
   let cool = transform(zoom: 0.972, angle: -0.016)
                |> feedback()
-               |> color.split(color: _)
+               |> color.split()
 
-  let gain2 = song |> remap(0..1, 0.78..0.9)
+  let fade = song |> remap(0..1, 0.78..0.9)
   rgb(warm, cool.g, cool.b)
-    |> gain(color: _, gain: gain2, bias: 0)
+    |> gain(gain: fade, bias: 0)
     |> max(a: _, b: fresh)
     |> out.color
 }
