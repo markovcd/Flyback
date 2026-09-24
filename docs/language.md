@@ -377,7 +377,7 @@ A module can be switched off, and one that is off is a wire
 ([0117](adr/0117-a-module-switched-off-is-a-wire.md)):
 
 ```
-let wash = grain |> vignette(color: _, amount: 0.6)
+let wash = grain |> vignette(color: _, dark: 0.6)
 
 off wash
 ```
@@ -631,7 +631,11 @@ group "Bass" {
 Members are the nodes declared inside the block. A group built from text is
 shut, and the sockets on its edge are the ones its wires cross. A group with no
 name is `group { … }`. A group holds modules and nothing else: another group, a
-`panel` knob or a `requires` line inside one is refused.
+`panel` knob or a `requires` line inside one is refused, and so is a group of
+fewer than two modules, which the canvas never draws. The clock and the
+coordinates `t` and `x` reach for belong to the whole patch and are in no group,
+however early a block reads them; a group that holds its own is written
+`let time = time()` inside it.
 
 **A group may be opened more than once.** Blocks with the same name are one
 group, which is how a printing says a group whose modules cannot all be written
@@ -1345,9 +1349,7 @@ since the C# builds it that way already.
 description "A whole song from the engine's own modules: seven parts in a room, twelve"
   "phrases, one picture."
 
-group "Clock" {
-  let beat = tempo(112)
-}
+let beat = tempo(112)
 
 group "Song" {
   let song = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
@@ -1375,9 +1377,7 @@ group "Song" {
     theme)
 }
 
-group "Noise" {
-  let hiss = noise()
-}
+let hiss = noise()
 
 group "Kick" {
   let verseKick = beat.beats |> values(shape: 0.01) [

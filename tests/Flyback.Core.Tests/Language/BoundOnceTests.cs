@@ -90,11 +90,13 @@ public class BoundOnceTests
             """
             group "One" {
               let a = y |> sine()
+              let b = a |> sine()
             }
             group "Two" {
               let a = x |> sine()
+              let c = a |> sine()
             }
-            """).Line.ShouldBe(5);
+            """).Line.ShouldBe(6);
     }
 
     [Fact]

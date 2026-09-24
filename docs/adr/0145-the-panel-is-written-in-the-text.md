@@ -52,6 +52,8 @@ it, with the range and knee only where they are not the socket's own.
   them to it.
 - A knob's id comes from its name, so rebuilding the same text keeps the same
   knob, as a module's does ([0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md)).
+  A knob with a `label:` keeps the word it was written as (`PatchControl.Word`),
+  so a printing calls it that and rebuilds the same knob.
 - The `panel` lines follow the panel in the text view. Where a knob is left by
   hand is written into its line when the hand comes off it; a controller's turns
   are not, since they would rewrite the line on every message. A knob moved,

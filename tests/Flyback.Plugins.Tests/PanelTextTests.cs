@@ -81,18 +81,13 @@ public class PanelTextTests
             .Order(StringComparer.Ordinal),
     ];
 
-    /// <summary>
-    /// Each box by its name and the kinds of module in it, sorted. The engine's
-    /// shared Coordinates and Time are left out: the text has one of each for the
-    /// whole patch, placed wherever it is first read.
-    /// </summary>
+    /// <summary>Each box by its name and the kinds of module in it, sorted.</summary>
     private static List<string> Boxes(Patch patch) =>
     [
         .. (patch.Groups ?? []).Select(group =>
                 $"{group.Name}: " + string.Join(", ", group.Members
                     .Select(id => patch.Find(id)?.TypeId)
                     .OfType<string>()
-                    .Where(type => type is not (NodeCatalog.CoordTypeId or NodeCatalog.TimeTypeId))
                     .Order(StringComparer.Ordinal)))
             .Order(StringComparer.Ordinal),
     ];

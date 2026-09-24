@@ -419,9 +419,7 @@ public class LanguageTests
     /// </summary>
     [Fact]
     public void WholeBand() => Alike("Whole band", """
-        group "Clock" {
-          let beat = tempo(112)
-        }
+        let beat = tempo(112)
 
         group "Song" {
           let song = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
@@ -449,9 +447,7 @@ public class LanguageTests
             theme)
         }
 
-        group "Noise" {
-          let hiss = noise()
-        }
+        let hiss = noise()
 
         group "Kick" {
           let verseKick = beat.beats |> values(shape: 0.01) [

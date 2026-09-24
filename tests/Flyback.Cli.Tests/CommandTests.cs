@@ -494,6 +494,23 @@ public class CommandTests
         (output.ToString() + error).ShouldContain(said);
     }
 
+    /// <summary>A preset that will not build, short of a plugin, is said and not thrown.</summary>
+    [Fact]
+    public void A_preset_that_will_not_build_is_said_rather_than_thrown()
+    {
+        var broken = new PatchPreset("Broken", _ => throw new InvalidOperationException("no module 'osc.nonesuch'"));
+        var catalog = new PluginCatalog([], [], NodeCatalog.BuiltIn, [broken], []);
+        var error = new StringWriter();
+
+        var code = Program.Run(
+            ["print", "--preset", "Broken"],
+            new Plugins(() => catalog, "nowhere", null),
+            new InvocationConfiguration { Output = TextWriter.Null, Error = error });
+
+        code.ShouldBe(Exit.Failed);
+        error.ToString().ShouldContain("the 'Broken' preset would not build: no module 'osc.nonesuch'");
+    }
+
     /// <summary>Standard output where no file was named, so a printing can be piped.</summary>
     [Fact]
     public void With_no_file_named_the_patch_goes_to_standard_output()

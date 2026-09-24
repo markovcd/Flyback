@@ -57,13 +57,20 @@ public sealed class PatchControl
     /// <summary>The hardware controller it follows, or null for a knob only turned on screen.</summary>
     public MidiBinding? Midi { get; set; }
 
+    /// <summary>
+    /// What the text calls it, where that is not its name: <c>cutoff</c> for a
+    /// knob labeled "Filter cutoff". Null for one the text calls by its name, and
+    /// for one made on the canvas.
+    /// </summary>
+    public string? Word { get; set; }
+
     /// <summary>What a program reading this knob calls it in <c>CompiledPatch.LiveInputs</c>.</summary>
     public static string KeyOf(Guid control) => $"control/{control:N}";
 
     /// <inheritdoc cref="KeyOf(Guid)"/>
     public string Key => KeyOf(Id);
 
-    public PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi };
+    public PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word };
 
     private static string Named(string? name)
     {

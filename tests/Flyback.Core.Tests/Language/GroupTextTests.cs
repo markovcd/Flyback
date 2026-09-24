@@ -22,6 +22,37 @@ public class GroupTextTests
     private static Patch Preset(string name) =>
         Presets.All.Single(p => p.Name == name).Build(NodeCatalog.BuiltIn);
 
+    /// <summary>
+    /// The clock and the coordinates a bare word reaches for are the whole
+    /// patch's, so a block that reads them first does not take them in.
+    /// </summary>
+    [Fact]
+    public void The_shared_clock_and_coordinates_are_in_no_group()
+    {
+        var patch = Built(
+            """
+            group "Voice" {
+              let tone = sine(freq: t * 220 + x)
+              let shaped = tone |> drive(drive: 2)
+            }
+            shaped |> out.left
+            """);
+
+        var group = patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+
+        group.Members.Select(id => patch.Find(id)!.TypeId)
+            .ShouldNotContain(type => type == NodeCatalog.TimeTypeId || type == NodeCatalog.CoordTypeId);
+    }
+
+    /// <summary>A box round one module is not drawn on the canvas, so the text refuses one rather than dropping it.</summary>
+    [Fact]
+    public void A_group_of_one_module_is_refused()
+    {
+        var load = PatchLanguage.Build("group \"Lone\" {\n  let s = sine()\n}\ns |> out.left", NodeCatalog.BuiltIn);
+
+        load.Issues.ShouldHaveSingleItem(load.Report).Code.ShouldBe(IssueCode.GroupTooSmall);
+    }
+
     [Fact]
     public void Blocks_with_one_name_are_one_group()
     {

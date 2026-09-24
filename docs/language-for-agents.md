@@ -189,7 +189,7 @@ the same instrument.
 ```
 panel depth = 0.5, cc: 21, device: "midi:launchkey-49"
 
-let wash = color.vignette(amount: depth)
+let wash = color.vignette(dark: depth)
 ```
 
 A knob is a named value in the same namespace as a `let`, and a socket follows

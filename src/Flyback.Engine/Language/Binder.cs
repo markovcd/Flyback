@@ -51,6 +51,9 @@ public sealed class Binder
     /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
     private readonly List<(string? Name, List<Guid> Members)> boxes = [];
 
+    /// <summary>The boxes a block of which had a mistake in it, and so no say about its size.</summary>
+    private readonly HashSet<int> troubled = [];
+
     /// <summary>Where each group block begins, and which of <see cref="boxes"/> it is.</summary>
     private readonly List<(Site Where, int Box)> opened = [];
 
@@ -133,7 +136,16 @@ public sealed class Binder
         {
             var (name, members) = boxes[i];
 
-            if (patch.Group(members) is not { } made) continue;
+            if (patch.Group(members) is not { } made)
+            {
+                if (troubled.Contains(i)) continue;
+
+                var (line, column) = opened.First(open => open.Box == i).Where;
+
+                Complain(IssueCode.GroupTooSmall, line, column,
+                    $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}.");
+                continue;
+            }
 
             var group = made.Clone(Identity(name is null ? $"group #{i}" : "group " + name));
 
@@ -698,6 +710,7 @@ public sealed class Binder
         {
             Id = PanelId(statement.Name),
             Name = label ?? statement.Name,
+            Word = label is null || label == statement.Name ? null : statement.Name,
             Value = (float)resting.Amount,
             Midi = controller is { } cc ? new MidiBinding(device!, channel, cc) : null,
         };
@@ -755,6 +768,7 @@ public sealed class Binder
     private void Box(GroupStatement statement, Scope scope)
     {
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
+        var said = issues.Count;
         var inner = new Scope(scope);
 
         foreach (var child in statement.Body)
@@ -787,8 +801,13 @@ public sealed class Binder
         }
 
         // Everything placed while the block was open, which is what "declared
-        // inside it" means once a def has been expanded in there too.
-        var made = patch.Nodes.Where(n => !before.Contains(n.Id)).Select(n => n.Id).ToList();
+        // inside it" means once a def has been expanded in there too. The clock
+        // and the coordinates a bare word reaches for are the whole patch's, so
+        // they are in no box however early a block reads them.
+        var made = patch.Nodes
+            .Where(n => !before.Contains(n.Id) && n.Id != clock && n.Id != coordinates)
+            .Select(n => n.Id)
+            .ToList();
 
         // A name opened again is the same group, which is how a printing says one
         // whose modules do not come out next to each other.
@@ -801,6 +820,8 @@ public sealed class Binder
         }
 
         boxes[index].Members.AddRange(made);
+
+        if (issues.Count > said) troubled.Add(index);
         opened.Add((new Site(statement.Line, statement.Column), index));
 
         // A group is a box on the canvas and nothing more, so the names it made

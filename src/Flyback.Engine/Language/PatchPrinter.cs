@@ -538,7 +538,7 @@ public static class PatchPrinter
 
         foreach (var control in patch.Controls ?? [])
         {
-            var word = Usable(control.Name) ? control.Name : Spelled(control.Name);
+            var word = Usable(control.Word) ? control.Word! : Usable(control.Name) ? control.Name : Spelled(control.Name);
 
             // Called like a module when it has a range, so never named like one.
             panel[control.Id] = Unique(moduleNames.Knows(word) ? word + "_knob" : word, taken);
@@ -722,13 +722,29 @@ public static class PatchPrinter
         return new ModuleNames(against ?? NodeCatalog.Current).Knows(word) ? word + "_knob" : word;
     }
 
-    /// <summary>A label made into a word the text can say: <c>Filter cutoff</c> as <c>filter_cutoff</c>.</summary>
+    /// <summary>
+    /// A label made into a word the text can say: <c>Filter cutoff</c> as
+    /// <c>filter_cutoff</c>, <c>Émile's speed</c> as <c>emile_s_speed</c>.
+    /// </summary>
     private static string Spelled(string label)
     {
-        var word = new string([.. label.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '_')]).Trim('_');
+        var bare = new string([.. label.ToLowerInvariant().Replace("ß", "ss").Replace("æ", "ae").Replace("œ", "oe")
+            .Select(c => Marked.IndexOf(c) is >= 0 and var at ? Unmarked[at] : c)]);
+
+        var word = string.Join('_', System.Text.RegularExpressions.Regex.Split(bare, "[^a-z0-9]+")
+            .Where(part => part.Length > 0));
 
         return Usable(word) ? word : "knob";
     }
+
+    /// <summary>
+    /// Latin letters with a mark on them, and the plain letter each is written as,
+    /// by position. A table because the build is culture-invariant, where a string
+    /// is not decomposed.
+    /// </summary>
+    private const string Marked = "àáâãäåāăąçćčďèéêëēėęěìíîïīįłñńňòóôõöøōőùúûüūůűýÿśšźżžğşţťř";
+
+    private const string Unmarked = "aaaaaaaaacccdeeeeeeeeiiiiiilnnnoooooooouuuuuuuyysszzzgsttr";
 
     /// <summary>
     /// Whether a name may be written as one. A note is the sharp edge here: a

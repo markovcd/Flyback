@@ -462,8 +462,21 @@ internal static class Program
                     return Exit.Failed;
                 }
 
+                Patch built;
+
+                try
+                {
+                    built = wanted.Build(plugins.Catalog.Modules);
+                }
+                catch (Exception ex)
+                {
+                    error.WriteLine($"{GlobalConstants.ApplicationName}: the '{wanted.Name}' preset would not build: {ex.Message}");
+
+                    return Exit.Failed;
+                }
+
                 return PrintCommand.Run(
-                    wanted.Build(plugins.Catalog.Modules),
+                    built,
                     null,
                     into,
                     checking,

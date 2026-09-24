@@ -30,6 +30,35 @@ public class PanelTests
 
     private static NodeInstance Only(Patch patch, string typeId) => patch.Nodes.Single(n => n.TypeId == typeId);
 
+    /// <summary>
+    /// A knob labeled something other than its word keeps the word through a
+    /// printing, and so its id: the text calls it what it was written as.
+    /// </summary>
+    [Theory]
+    [InlineData("panel cutoff = 0.4, label: \"Filter cutoff\"")]
+    [InlineData("panel reso = 0.5, label: \"Reso\"")]
+    public void A_labeled_knob_keeps_its_word_through_a_printing(string line)
+    {
+        var patch = Built(line + "\nsine(amp: " + line.Split(' ')[1] + ") |> out.left");
+        var printed = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+
+        printed.ShouldStartWith(line + "\n");
+        Built(printed).Controls.ShouldNotBeNull().Single().Id.ShouldBe(patch.Controls.ShouldNotBeNull().Single().Id);
+    }
+
+    /// <summary>A knob made on the canvas is called by its name, spelled as a word the text can say.</summary>
+    [Theory]
+    [InlineData("Émile ☃ speed", "emile_speed")]
+    [InlineData("Filter cutoff", "filter_cutoff")]
+    public void A_knob_made_on_the_canvas_is_called_by_its_name_spelled(string name, string word)
+    {
+        var patch = new Patch();
+        patch.EnsureOutput(NodeCatalog.BuiltIn);
+        patch.AddControl(name);
+
+        PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldStartWith($"panel {word} = 0.5, label: \"{name}\"");
+    }
+
     private static string Changed(string source, Change? change) =>
         change is { } edit ? source[..edit.Offset] + edit.Text + source[(edit.Offset + edit.Length)..] : source;
 
