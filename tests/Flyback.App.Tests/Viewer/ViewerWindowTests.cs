@@ -73,6 +73,7 @@ public class ViewerWindowTests : UiTest
         var player = new ViewerPlayer(opened ?? Plasma(), device, options, null) { Now = () => TimeSpan.FromSeconds(seconds()) };
 
         player.Begin();
+        player.Compiled().Wait();
 
         return player;
     }
@@ -106,6 +107,9 @@ public class ViewerWindowTests : UiTest
 
         window.Show();
         Settle(window);
+
+        // An opened patch is silent until it is compiled, and these tests are about what it does after.
+        window.Player.Compiled().Wait();
 
         return window;
     }

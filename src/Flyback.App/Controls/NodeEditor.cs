@@ -386,6 +386,9 @@ public sealed partial class NodeEditor : Control
     /// </summary>
     public event EventHandler<WireDrop>? WireDropped;
 
+    /// <summary>Whether the <see cref="PatchChanged"/> being raised is a patch opened rather than edited.</summary>
+    public bool Opening { get; private set; }
+
     public Patch Patch
     {
         get => patch;
@@ -415,7 +418,17 @@ public sealed partial class NodeEditor : Control
             EndGesture();
             FrameAll();
             SelectionChanged?.Invoke(this, EventArgs.Empty);
-            PatchChanged?.Invoke(this, EventArgs.Empty);
+
+            Opening = true;
+            try
+            {
+                PatchChanged?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                Opening = false;
+            }
+
             HistoryChanged?.Invoke(this, EventArgs.Empty);
         }
     }

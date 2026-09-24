@@ -176,7 +176,8 @@ internal sealed class Playback
     /// sound is off, so switching it on is instant and the status line can show
     /// what the ear would cost.
     /// </summary>
-    public void Recompile()
+    /// <param name="held">A patch just opened, which plays once it is compiled rather than interpreted until then.</param>
+    public void Recompile(bool held = false)
     {
         var probe = Probed;
         showingProbe = probe?.Id;
@@ -189,9 +190,9 @@ internal sealed class Playback
             : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
 
         preview.Program = result.Program;
-        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
+        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture, held);
 
-        audio.Update(editor.Patch, samples);
+        audio.Update(editor.Patch, samples, held);
 
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the

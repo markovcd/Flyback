@@ -213,6 +213,104 @@ public class IlCompilerTests
         tried.Il.ShouldNotBeNull();
     }
 
+    /// <summary>An opened patch is never left for the interpreter: it waits until its IL is there.</summary>
+    [Fact]
+    public async Task A_held_program_waits_until_its_il_arrives()
+    {
+        using var compiler = new IlCompiler();
+        var program = Plasma(0.5f);
+
+        compiler.Submit(program, IlLane.Picture, held: true);
+
+        // Read in this order: a hold is let go only after the IL is attached.
+        (program.Waiting || program.Il is not null).ShouldBeTrue();
+
+        await compiler.Settled();
+
+        program.Waiting.ShouldBeFalse();
+        program.Il.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void An_edited_program_never_waits()
+    {
+        using var compiler = new IlCompiler();
+        var program = Plasma(0.5f);
+
+        compiler.Submit(program, IlLane.Picture);
+
+        program.Waiting.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_held_program_whose_shape_is_built_does_not_wait()
+    {
+        using var compiler = new IlCompiler();
+
+        compiler.Submit(Plasma(0.5f), IlLane.Picture);
+        await compiler.Settled();
+
+        var opened = Plasma(0.9f);
+        compiler.Submit(opened, IlLane.Picture, held: true);
+
+        opened.Waiting.ShouldBeFalse();
+        opened.Il.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public void A_held_program_is_let_go_when_an_edit_replaces_it()
+    {
+        using var compiler = new IlCompiler();
+        var opened = Presets.WholeBand(NodeCatalog.Current).CompileForVideo().Program;
+
+        compiler.Submit(opened, IlLane.Picture, held: true);
+        compiler.Submit(Plasma(0.5f), IlLane.Picture);
+
+        opened.Waiting.ShouldBeFalse();
+    }
+
+    /// <summary>A preset picked from the text view is read into text the moment it opens, which is an edit.</summary>
+    [Fact]
+    public async Task An_edit_to_a_patch_that_has_not_started_waits_with_it()
+    {
+        using var compiler = new IlCompiler();
+        var opened = Presets.WholeBand(NodeCatalog.Current).CompileForVideo().Program;
+        var edited = Presets.WholeBand(NodeCatalog.Current).CompileForVideo().Program;
+
+        compiler.Submit(opened, IlLane.Picture, held: true);
+        var stillWaiting = opened.Waiting;
+        compiler.Submit(edited, IlLane.Picture);
+
+        opened.Waiting.ShouldBeFalse();
+        if (stillWaiting) (edited.Waiting || edited.Il is not null).ShouldBeTrue();
+
+        await compiler.Settled();
+        edited.Waiting.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void A_held_program_is_let_go_when_compiling_is_turned_off()
+    {
+        using var compiler = new IlCompiler();
+        var opened = Presets.WholeBand(NodeCatalog.Current).CompileForVideo().Program;
+
+        compiler.Submit(opened, IlLane.Picture, held: true);
+        compiler.Enabled = false;
+
+        opened.Waiting.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Nothing_is_held_while_it_is_off()
+    {
+        using var compiler = new IlCompiler { Enabled = false };
+        var opened = Plasma(0.5f);
+
+        compiler.Submit(opened, IlLane.Picture, held: true);
+
+        opened.Waiting.ShouldBeFalse();
+    }
+
     /// <summary>Plasma with one of its knobs at <paramref name="speed"/>, which changes a constant and nothing else.</summary>
     private static CompiledPatch Plasma(float speed)
     {

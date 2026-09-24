@@ -72,7 +72,7 @@ internal sealed class ViewerPlayer : IDisposable
         this.patch = patch;
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
-        audio.Update(patch, samples);
+        audio.Update(patch, samples, held: true);
 
         // The panel's knobs are worth nothing until somebody writes them into the
         // block the programs read, which the editor does as it lays the panel out.
@@ -93,8 +93,8 @@ internal sealed class ViewerPlayer : IDisposable
             patch.Seed(surface.Live);
 
             // The renderer is the processor's for good if the graphics card refuses.
-            Submit();
-            surface.BackendChanged += _ => Submit();
+            Submit(held: true);
+            surface.BackendChanged += _ => Submit(held: false);
         }
 
         midi = new MidiHub(instruments);
@@ -131,6 +131,9 @@ internal sealed class ViewerPlayer : IDisposable
 
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>
     internal AudioEngine Audio => audio;
+
+    /// <summary>Completes once the patch opened here runs compiled, which is when it starts to play.</summary>
+    internal Task Compiled() => compiler.Settled();
 
     /// <summary>Whether a sound device is running, or will be once play resumes.</summary>
     public bool Sounding => audible;
@@ -318,9 +321,9 @@ internal sealed class ViewerPlayer : IDisposable
         }
     }
 
-    private void Submit()
+    private void Submit(bool held)
     {
-        if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
+        if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture, held);
     }
 
     private static Func<TimeSpan> Watch()

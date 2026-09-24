@@ -148,6 +148,19 @@ public sealed class CompiledPatch(
         Volatile.Write(ref il, program);
     }
 
+    private volatile bool held;
+
+    /// <summary>
+    /// Whether a renderer should leave this program unplayed: it was opened
+    /// rather than edited, and its IL is still being built. See
+    /// <see cref="IlCompiler.Submit"/>.
+    /// </summary>
+    public bool Waiting => held && Il is null;
+
+    internal void Hold() => held = true;
+
+    internal void Release() => held = false;
+
     public int RegisterCount { get; } = Vouch(ops, registerCount);
 
     /// <summary>

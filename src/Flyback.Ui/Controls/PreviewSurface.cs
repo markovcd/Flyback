@@ -165,6 +165,9 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         var delta = now - lastTick;
         lastTick = now;
 
+        // Opened and still compiling: the last frame stays and the clock stands.
+        if (activeProgram.Waiting) return;
+
         if (Clock is { } clock)
         {
             var driven = clock();

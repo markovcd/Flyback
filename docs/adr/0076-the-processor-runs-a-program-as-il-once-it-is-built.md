@@ -228,3 +228,21 @@ clear of the edge. Optimized code costs the JIT more, so the chunks, which share
 nothing but read-only constants, go through it side by side on half the cores, at
 the compiler thread's priority. Building Tranquility's sound takes 11-14 ms where one
 thread took 40, which is the interpreted gap after an edit that changes the shape.
+
+## Amendment, 2026-09-24: an opened patch waits for its IL
+
+*A program plays interpreted the moment it exists* is right for an edit, which
+must not wait for the JIT, and wrong for a patch just opened: a preset or a file
+started on the interpreter, at half the speed, and a heavy one could stutter
+through its first buffers before the IL took over. Nothing is being performed at
+that moment, so there is nothing to keep live.
+
+A program submitted `held` is `CompiledPatch.Waiting` until its IL is attached,
+or until the compiler will not build it: refused, switched off or disposed. An
+edit that replaces it before it has played waits in its place, since nothing is
+live yet; a preset picked from the text view is read into text that way. While it waits the sound is silence and the
+clock stands, and the processor's preview keeps its last frame, so the patch
+starts from nought once it runs compiled. Everything the editor opens passes
+through `NodeEditor.Patch`, whose `PatchChanged` says `Opening`, and the viewer
+holds the patch it opens. An edit is never held, so live coding and a knob drag
+are what they were. The wait is the build: 1-14 ms for the shipped presets.

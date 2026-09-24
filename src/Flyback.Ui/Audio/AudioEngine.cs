@@ -188,13 +188,17 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
     /// to allocate — and both go in with the program they belong to, in one write.
     /// </summary>
 
-    public void Update(Patch patch, ISampleLibrary? samples = null)
+    /// <param name="held">
+    /// Silent, with the clock stopped, until the program runs compiled: a patch just
+    /// opened is not heard on the interpreter first.
+    /// </param>
+    public void Update(Patch patch, ISampleLibrary? samples = null, bool held = false)
     {
         var program = patch.CompileForAudio(samples: samples, played: true).Program;
 
-        // Interpreted from the first buffer; the compiler attaches IL to this same
-        // program when it has some, and the callback picks it up on the next buffer.
-        Compiler?.Submit(program, IlLane.Sound);
+        // Interpreted from the first buffer unless held; the compiler attaches IL to
+        // this same program when it has some, and the callback picks it up on the next buffer.
+        Compiler?.Submit(program, IlLane.Sound, held);
 
         renderer.Prepare(program);
 
@@ -349,7 +353,8 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
             if (seek != NoSeek) renderer.SeekTo(BitConverter.Int64BitsToDouble(seek));
         }
 
-        renderer.Render(state.Program, buffer, state.Memory, state.Live);
+        if (state.Program.Waiting) buffer.Clear();
+        else renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
         Mix(buffer);
 
