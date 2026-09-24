@@ -81,6 +81,9 @@ public static class IssueCode
 
     // --- what a module carries -------------------------------------------------
 
+    /// <summary>A plugin a <c>requires</c> line names that this build does not have. Said once, for every module it would have given.</summary>
+    public const string MissingPlugin = "missing-plugin";
+
     public const string NoFile = "no-file";
     public const string NoBlock = "no-block";
 

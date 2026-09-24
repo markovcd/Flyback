@@ -126,6 +126,9 @@ public sealed class EditingSteps(PatchContext context, Session session)
     public void ThenThePanelHasAKnob(string name, float value) =>
         context.Patch.Controls.ShouldNotBeNull().ShouldContain(knob => knob.Name == name && Math.Abs(knob.Value - value) < 1e-6f);
 
+    [Then("that is the only complaint")]
+    public void ThenThatIsTheOnlyComplaint() => Text.Issues.ShouldHaveSingleItem(Text.Report);
+
     [Then("the complaint says {string}")]
     public void ThenTheComplaintSays(string words) => Text.Report.ShouldContain(words);
 

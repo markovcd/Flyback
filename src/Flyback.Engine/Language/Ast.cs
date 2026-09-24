@@ -164,6 +164,9 @@ public sealed record BackWireStatement(NameExpr Target, Expr Value, int Line, in
 /// </summary>
 public sealed record OffStatement(NameExpr Target, int Line, int Column) : Statement(Line, Column);
 
+/// <summary><c>requires flyback.picture, flyback.effects</c>: the plugins the patch cannot be built without.</summary>
+public sealed record RequiresStatement(IReadOnlyList<string> Plugins, int Line, int Column) : Statement(Line, Column);
+
 /// <summary>
 /// <c>panel name = 0.5, label: "…", cc: 21, channel: 2, device: "…"</c>: a knob
 /// on the patch's panel, which sockets follow by naming it where a number goes.

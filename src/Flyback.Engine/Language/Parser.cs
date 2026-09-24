@@ -121,6 +121,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // binding somebody happened to call 'off'.
         if (AtWord("off") && Ahead().Kind == TokenKind.Identifier) return Off(line, column);
 
+        // And again: 'requires' names plugins only where one follows it.
+        if (AtWord("requires") && Ahead().Kind is TokenKind.Identifier or TokenKind.Text) return Requires(line, column);
+
         // And again: 'panel' is a knob only when a name and an '=' follow it.
         if (AtWord("panel") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.Assign)
             return Panel(line, column);
@@ -408,6 +411,44 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         at++;
 
         return new OffStatement(target, line, column);
+    }
+
+    /// <summary><c>requires</c> and the plugins after it, each a dotted name or, where it cannot be one, a string.</summary>
+    private Statement? Requires(int line, int column)
+    {
+        at++;
+
+        var plugins = new List<string>();
+
+        do
+        {
+            if (Current.Kind == TokenKind.Text)
+            {
+                plugins.Add(Current.Text);
+                at++;
+                continue;
+            }
+
+            if (Current.Kind != TokenKind.Identifier)
+            {
+                Complain(IssueCode.Syntax, "expected the name of a plugin, such as 'flyback.picture'.");
+                return null;
+            }
+
+            var name = Current.Text;
+            at++;
+
+            while (Current.Kind == TokenKind.Dot && Ahead().Kind == TokenKind.Identifier)
+            {
+                name += "." + Ahead().Text;
+                at += 2;
+            }
+
+            plugins.Add(name);
+        }
+        while (Take(TokenKind.Comma));
+
+        return new RequiresStatement(plugins, line, column);
     }
 
     /// <summary><c>panel name = value</c>, then its settings as named arguments.</summary>

@@ -105,6 +105,8 @@ internal static class Handbook
         - **`keyboard scale [ C D E G A ]`**, on its own line, lays the
           computer keyboard out in that scale for a MIDI In. Leave it out for
           a piano.
+        - **`requires flyback.picture`**, on its own line, names the plugins
+          whose modules the patch uses, so a build without one says so once.
         - **`description "What the patch is for."`** goes first, with
           **`author "Who made it"`** and **`tags "drone" "slow"`** under it,
           each on its own line.

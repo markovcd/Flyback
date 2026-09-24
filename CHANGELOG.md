@@ -4,6 +4,7 @@
 
 - The preset site starts with Fractals, a plugin of three modules about one point c: Mandelbrot, which maps every c in the classic colors, Julia, its picture, and Orbit, its sound, with Dive and Julia walk as presets.
 - A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
+- A text patch names the plugins it needs, `requires flyback.picture`, and a build without one says so once.
 - A patch's knob panel is written in the text, `panel cutoff = 0.4, cc: 21, device: "…"`, with the sockets that follow each knob, so a played patch keeps its knobs through the text view and `flyback-cli print`.
 - A patch written out as text follows its own chain, with what the chain reads in the brackets.
 - In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.

@@ -40,7 +40,7 @@ a decision. `_` is where the pipe lands when the module has no `in` for it.
 
 ## 2. Statements
 
-Thirteen forms, and no others.
+Fourteen forms, and no others.
 
 ```
 # a comment, to end of line
@@ -53,6 +53,7 @@ NAME.port = 0.6                  # set a knob
 NAME.port <- pipeline            # back-wire, which is how a cycle is closed
 off NAME                         # switch a module off, so it is a wire
 panel NAME = 0.5, cc: 21, …      # a knob on the patch's panel
+requires flyback.picture, …      # the plugins the patch cannot be built without
 group "Name" { statements }      # draw these together on the canvas
 description "What it is for"     # say what the patch is for, once
 author "Who made it"             # say who made the patch, once
@@ -231,6 +232,12 @@ ninety modules in the box there are exactly two collisions:
 
 One more is legal but ugly: `midi.in` shortens to `in`, which reads badly beside
 the port of that name. Write `midi.in` in full.
+
+**A patch says which plugins it needs**, on a line of its own:
+`requires flyback.picture, flyback.effects`. It is read before anything else,
+so a build without one of them says so once, by name, instead of once for every
+module the plugin would have given. It is optional to write, and a printing
+always writes it for a patch that uses a plugin's modules.
 
 **Port names** map the same way, with spaces becoming underscores and matching
 case-insensitively: `in low` becomes `in_low` and `gate length` becomes
@@ -684,6 +691,7 @@ each paying only for what it reaches
 | plugin requirements, recomputed on write | — |
 | which modules are switched off | — |
 | the panel's knobs, what each follows, and every socket following one | — |
+| which plugins the patch needs, as its `requires` line | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A
 printing is for reading, and every module restating its whole shape would bury
@@ -744,6 +752,7 @@ statement  = comment
            | selector "<-" pipeline
            | "off" ident
            | "panel" ident "=" number { "," ident ":" ( number | string ) }
+           | "requires" plugin { "," plugin }
            | "group" string "{" { statement } "}"
            | "description" string { string }
            | "author" string
@@ -770,6 +779,7 @@ selector   = ident [ "." ident ] ;
 name       = ident { "." ident } ;
 
 literal    = number | note | duration | string ;
+plugin     = name | string ;
 note       = ("A".."G") [ "#" | "b" ] [ "-" ] digit ;
 duration   = number ( "us" | "ms" | "s" ) ;
 ```

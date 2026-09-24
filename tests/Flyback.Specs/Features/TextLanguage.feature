@@ -114,3 +114,14 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the panel has a knob "Level" resting at 0.8
     And the speakers are not silent
+
+  Scenario: A patch needing a plugin this build lacks says so once, by name
+    Given the text:
+      """
+      requires nobody.here
+      blob() |> out.color
+      blob() |> out.left
+      """
+    Then the complaint quotes line 1
+    And the complaint says "no plugin 'nobody.here'"
+    And that is the only complaint

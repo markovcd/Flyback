@@ -238,3 +238,9 @@ pipeline inside an argument is an error
 A patch's knob panel is a statement, `panel cutoff = 0.4`, and a socket follows a
 knob by naming it where a number goes
 ([0145](0145-the-panel-is-written-in-the-text.md)).
+
+## Amendment, 2026-09-24: a patch says which plugins it needs
+
+`requires flyback.picture, flyback.effects` names them, is read before anything
+else so a missing one is said once rather than once a module, and is always
+printed for a patch that uses a plugin's modules.

@@ -158,8 +158,9 @@ flyback 1
 requires flyback.picture
 ```
 
-`Patch.Requires` already exists and is recomputed on write; writing it down makes
-a `.fbks` self-describing. An agent reading a file learns which namespace it may
+**Done, without the version line**: `requires flyback.picture` is read before
+anything else and always printed. `Patch.Requires` is recomputed on write;
+writing it down makes a `.fbks` self-describing. An agent reading a file learns which namespace it may
 draw on, and `check` can say "this build has no `flyback.picture`" once instead
 of "nothing here is called `circle`" five times.
 

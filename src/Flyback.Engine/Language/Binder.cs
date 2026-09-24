@@ -48,6 +48,9 @@ public sealed class Binder
     /// <summary>The line that wired each socket the text wires.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> wired = [];
 
+    /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
+    private readonly List<string> missing = [];
+
     /// <summary>The line that set each knob the text sets.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> turned = [];
 
@@ -106,6 +109,10 @@ public sealed class Binder
         named[patch.Output.Id] = "out";
 
         var scope = new Scope(null);
+
+        // Before anything names a module, so a plugin that is missing is said
+        // once rather than once for every module it would have given.
+        foreach (var requires in statements.OfType<RequiresStatement>()) Require(requires);
 
         foreach (var statement in statements) Run(statement, scope);
 
@@ -245,6 +252,7 @@ public sealed class Binder
         DefStatement def => "def " + def.Name,
         OffStatement off => "off " + off.Target.Name,
         PanelStatement panel => "panel " + panel.Name,
+        RequiresStatement => "requires",
         KeyboardStatement => "keyboard",
         DescriptionStatement => "description",
         AuthorStatement => "author",
@@ -535,6 +543,20 @@ public sealed class Binder
 
         mentions.Add((new Site(target.Line, target.Column), node.Id));
         node.Off = true;
+    }
+
+    /// <summary>The plugins a patch says it needs, checked against the ones this build has.</summary>
+    private void Require(RequiresStatement statement)
+    {
+        foreach (var plugin in statement.Plugins)
+        {
+            if (modules.HasProvider(plugin) || missing.Contains(plugin, StringComparer.Ordinal)) continue;
+
+            missing.Add(plugin);
+
+            Complain(IssueCode.MissingPlugin, statement.Line, statement.Column,
+                $"this build has no plugin '{plugin}', which this patch needs. Install it, or open the patch where it is.");
+        }
     }
 
     /// <summary>
@@ -1940,6 +1962,10 @@ public sealed class Binder
     private NodeDef? Module(string name, int line, int column)
     {
         if (moduleNames.Find(name, out var refusal, out var code, out var nearest) is { } def) return def;
+
+        // Already said, once, by the requires line: the module is likely the
+        // missing plugin's, and naming it again says nothing new.
+        if (code == IssueCode.UnknownModule && missing.Count > 0) return null;
 
         Complain(code, line, column, refusal, nearest is null ? null : new LanguageFix(line, column, name.Length, nearest));
         return null;

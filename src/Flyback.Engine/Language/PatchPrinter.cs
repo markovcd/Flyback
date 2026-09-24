@@ -696,6 +696,13 @@ public static class PatchPrinter
                 text.AppendLine();
             }
 
+            // Before anything that would name one of their modules.
+            if (Required() is { } requires)
+            {
+                text.AppendLine(requires);
+                text.AppendLine();
+            }
+
             if (patch.Controls is { Count: > 0 } controls)
             {
                 foreach (var control in controls) text.AppendLine(Panel(control));
@@ -1235,6 +1242,24 @@ public static class PatchPrinter
             // hair from it is still a different knob.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             return value == spec.Default ? null : Value(value, spec.Display);
+        }
+
+        /// <summary>
+        /// The plugins the patch's modules come from, as the line that says so, or
+        /// null where every module is the engine's own.
+        /// </summary>
+        private string? Required()
+        {
+            var plugins = patch.Nodes
+                .Select(node => modules.ProviderOf(node.TypeId)?.Id)
+                .OfType<string>()
+                .Where(id => id != NodeCatalog.BuiltInProvider.Id)
+                .Distinct(StringComparer.Ordinal)
+                .Order(StringComparer.Ordinal)
+                .Select(id => id.Split('.').All(Usable) ? id : $"\"{id}\"")
+                .ToList();
+
+            return plugins.Count == 0 ? null : "requires " + string.Join(", ", plugins);
         }
 
         /// <summary>A panel knob's statement: where it rests, and what it is labeled and follows where that is said.</summary>
