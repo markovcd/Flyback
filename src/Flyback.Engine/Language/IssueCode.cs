@@ -12,6 +12,9 @@ public static class IssueCode
     public const string UnclosedBlock = "unclosed-block";
     public const string StrayCharacter = "stray-character";
 
+    /// <summary>A comment written with <c>//</c>, which the language writes with <c>#</c>.</summary>
+    public const string SlashComment = "slash-comment";
+
     // --- reading the statements ------------------------------------------------
 
     /// <summary>Something the grammar needed and did not find, which the message names.</summary>

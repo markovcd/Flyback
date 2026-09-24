@@ -83,6 +83,17 @@ Feature: A patch can be written as text
     And that is the only complaint
 
   # A second binding would leave every reader of the name guessing which it means.
+  Scenario: A comment written the way other languages write one is pointed at the right way
+    Given the text:
+      """
+      // --- CLOCK & TIMING ---
+      let tempo = tempo(bpm: 100)
+      """
+    Then the complaint quotes line 1
+    And that is the only complaint
+    And the complaint says "a comment starts with '#'"
+    And the complaint says "group"
+
   Scenario: A name is bound once
     Given the text:
       """

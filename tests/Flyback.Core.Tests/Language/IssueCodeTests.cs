@@ -32,6 +32,7 @@ public class IssueCodeTests
     [InlineData("sine(nope: 1) |> out.left", IssueCode.UnknownSocket)]
     [InlineData("x |> out.color\ny |> out.color", IssueCode.WiredTwice)]
     [InlineData("\"never closed", IssueCode.UnclosedText)]
+    [InlineData("// the clock\nsine() |> out.left", IssueCode.SlashComment)]
     [InlineData("let = 3", IssueCode.Syntax)]
     [InlineData("notes() [ H3 ] |> out.left", IssueCode.UnknownNote)]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}", IssueCode.PanelInGroup)]
@@ -69,6 +70,8 @@ public class IssueCodeTests
     [InlineData("let (a, b) = sine()\na |> out.left\nb |> out.right")]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}\nsine(amp: level) |> out.left")]
     [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}\ns |> out.left")]
+    [InlineData("// --- CLOCK & TIMING / 2 ---\nsine() |> out.left")]
+    [InlineData("sine() |> out.left // the tone & its level")]
     public void A_refused_statement_is_the_one_complaint(string source)
     {
         var load = Build(source);

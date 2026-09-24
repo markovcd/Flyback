@@ -12,6 +12,7 @@
 - A patch written out as text follows its own chain, with what the chain reads in the brackets, keeps its arithmetic as arithmetic, functions and panel knobs included, and names a sum after what it drives.
 - In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
 - `flyback-cli check --json` and the assistant's `write_patch` give each complaint about a text patch a stable code.
+- A `//` comment in a text patch is one complaint that points at `#` and at groups, and the assistant is told to write both.
 - The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice, a knob set twice, a group, `panel` or `requires` inside a group and a group of one module, and `flyback-cli check --json` reports it by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.

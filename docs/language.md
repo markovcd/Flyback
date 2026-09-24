@@ -60,6 +60,9 @@ author "Who made it"             # say who made the patch, once
 tags "drone" "slow"              # words to find the patch by, once
 ```
 
+A comment starts with `#`; `//` is refused as `slash-comment`, and a part of a
+patch that wants a heading wants a `group`.
+
 Statements are newline-separated. A pipeline may be broken across lines freely;
 a line ending in `|>` or `,`, or a line beginning with `|>` or a string,
 continues the one before it. Whatever a statement leaves unread on its line is a complaint, never
