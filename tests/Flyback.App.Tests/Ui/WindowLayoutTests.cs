@@ -32,7 +32,7 @@ public sealed class WindowLayoutTests : UiTest
 
     private MainWindow Open()
     {
-        var window = Owned(new MainWindow(new EditorSetup { LayoutPath = layoutPath }));
+        var window = NewMainWindow(new EditorSetup { LayoutPath = layoutPath });
 
         window.Show();
         Settle(window);
@@ -200,7 +200,7 @@ public sealed class WindowLayoutTests : UiTest
     [AvaloniaFact]
     public void A_window_with_no_layout_path_writes_nothing()
     {
-        var window = Owned(new MainWindow());
+        var window = NewMainWindow();
 
         window.Show();
         window.CloseWithoutAsking();

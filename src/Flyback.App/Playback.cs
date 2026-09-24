@@ -45,6 +45,9 @@ internal sealed class Playback
     /// <summary>Paused, muted or audible may have changed.</summary>
     public event EventHandler? TransportChanged;
 
+    /// <summary>A patch that has just arrived is about to go on the canvas, so whatever it replaced is no longer showing.</summary>
+    public event EventHandler? Showing;
+
     /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
     public Playback(
         Shell shell,
@@ -53,9 +56,8 @@ internal sealed class Playback
         IlCompiler compiler,
         MidiHub midi,
         AudioSetup sound,
-        Func<ISampleLibrary> sounds,
-        Func<IImageLibrary> pictures,
-        Func<bool> recording)
+        Lazy<PatchFiles> files,
+        Lazy<TakeRecording> recording)
     {
         editor = shell.Editor;
         this.preview = preview;
@@ -64,9 +66,9 @@ internal sealed class Playback
         this.midi = midi;
         report = shell.Report;
         plugins = shell.Plugins;
-        this.sounds = sounds;
-        this.pictures = pictures;
-        this.recording = recording;
+        sounds = () => files.Value.Sounds;
+        pictures = () => files.Value.Pictures;
+        this.recording = () => recording.Value.Running;
         assistantSummary = () => shell.Assistant?.Summary;
 
         Sound = sound;
@@ -289,6 +291,15 @@ internal sealed class Playback
         audio.Gain = Muted ? 0f : 1f;
 
         TransportChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Puts a patch that has just been read on the canvas, from its beginning.</summary>
+    public void Show(Patch patch)
+    {
+        Showing?.Invoke(this, EventArgs.Empty);
+
+        editor.History.Open(patch);
+        Rewind();
     }
 
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>

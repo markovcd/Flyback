@@ -28,11 +28,11 @@ internal sealed class FilesSection
 
     private readonly Action<string, string?> report;
 
-    internal FilesSection(string? path, FileTypes? system, Action<string, string?> report)
+    public FilesSection(EditorSetup setup, ReportLine report)
     {
-        this.path = path;
-        this.system = system;
-        this.report = report;
+        path = setup.FileTypeSettingsPath;
+        system = setup.FileTypes;
+        this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = FileTypeSettings.Load(path);
 

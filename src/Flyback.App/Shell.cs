@@ -11,20 +11,24 @@ namespace Flyback.App;
 /// (ADR-0148).
 /// </summary>
 /// <remarks>
-/// Built once, by the window, and handed to each region in place of the same six
-/// or seven arguments. A region still takes whatever else it needs on its own.
+/// Built once, by the container, and handed to each region in place of the same six
+/// or seven arguments. The window is the one thing here the container cannot hand
+/// over, since the window is built from the regions: it attaches itself as the first
+/// thing its constructor does, and a region reads <see cref="Owner"/> only once it is
+/// asked to do something (ADR-0150).
 /// </remarks>
 internal sealed class Shell(
-    Window owner,
     NodeEditor editor,
     Document document,
     PluginCatalog plugins,
     ReportLine report,
     Usage usage,
-    Func<AssistantPanel?> assistant)
+    Lazy<AssistantPanel> assistant)
 {
+    private Window? owner;
+
     /// <summary>The window, for a dialog, a file picker or the monitors it is on.</summary>
-    public Window Owner { get; } = owner;
+    public Window Owner => owner ?? throw new InvalidOperationException("The window has not attached itself to its shell yet.");
 
     public NodeEditor Editor { get; } = editor;
 
@@ -37,6 +41,9 @@ internal sealed class Shell(
 
     public Usage Usage { get; } = usage;
 
-    /// <summary>The assistant's column, or null before the layout is built or where there is none.</summary>
-    public AssistantPanel? Assistant => assistant();
+    /// <summary>The assistant's column, or null where there is none.</summary>
+    public AssistantPanel? Assistant => assistant.Value;
+
+    /// <summary>Says which window the regions are in. Once, by that window, before it builds anything.</summary>
+    public void Attach(Window window) => owner = window;
 }

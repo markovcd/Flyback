@@ -103,8 +103,16 @@ public class UiTest : IDisposable
         return canvas;
     }
 
-    /// <summary>A shell whose window this test owns, and which is closed with it.</summary>
-    protected MainWindow NewMainWindow() => Owned(new MainWindow());
+    /// <summary>
+    /// A window this test owns, and which is closed with it, built by the editor's
+    /// container. <paramref name="replace"/> swaps any of its services for a test's own.
+    /// </summary>
+    internal MainWindow NewMainWindow(EditorSetup? setup = null, Action<IServiceCollection>? replace = null) =>
+        Owned(EditorServices.Window(setup, replace));
+
+    /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>
+    internal static Action<IServiceCollection> Site(HttpMessageHandler site) =>
+        services => services.AddKeyedSingleton(SiteAccess.Client, new HttpClient(site));
 
     /// <summary>Hands a window this test made over to be closed when it ends.</summary>
     protected T Owned<T>(T window) where T : Window

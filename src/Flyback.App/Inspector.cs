@@ -29,7 +29,7 @@ internal sealed class Inspector
     /// </summary>
     internal const double PanelInset = 12;
 
-    private readonly TopLevel owner;
+    private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly MidiHub midi;
@@ -63,26 +63,20 @@ internal sealed class Inspector
     /// </summary>
     private readonly ContentControl plateHost = new() { Name = "plate-host" };
 
-    /// <param name="groups">The kept groups, or null where none are kept.</param>
-    /// <param name="saveGroup">Keeps a group under its name.</param>
-    public Inspector(
-        Shell shell,
-        MidiHub midi,
-        InstrumentLibrary instruments,
-        SampleLibrary soundFolder,
-        ImageLibrary pictureFolder,
-        Func<GroupLibrary?> groups,
-        Action<NodeGroup> saveGroup)
+    /// <param name="knobs">The instruments a MIDI In can be played from.</param>
+    /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
+    /// <param name="palette">The kept groups, and keeping one under its name.</param>
+    public Inspector(Shell shell, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette)
     {
-        owner = shell.Owner;
+        this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
         this.midi = midi;
-        this.instruments = instruments;
-        this.soundFolder = soundFolder;
-        this.pictureFolder = pictureFolder;
-        this.groups = groups;
-        this.saveGroup = saveGroup;
+        instruments = knobs.Instruments;
+        soundFolder = files.SoundFolder;
+        pictureFolder = files.PictureFolder;
+        groups = () => palette.Groups;
+        saveGroup = palette.SaveGroup;
     }
 
     /// <summary>The rows, which scroll.</summary>
@@ -1351,7 +1345,7 @@ internal sealed class Inspector
 
         choose.Click += async (_, _) =>
         {
-            var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var files = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = title,
                 AllowMultiple = false,

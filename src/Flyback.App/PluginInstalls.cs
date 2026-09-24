@@ -14,41 +14,42 @@ namespace Flyback.App;
 /// </summary>
 internal sealed class PluginInstalls
 {
-    private readonly Window owner;
+    private readonly Shell shell;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly string? pluginFolder;
-    private readonly Uri? presetSite;
-    private readonly Func<HttpClient> http;
-    private readonly Func<AudioSetup> sound;
-    private readonly Func<(string Assembly, string Said)?> assisting;
-    private readonly Func<Task<bool>>? restart;
+    private readonly SiteAccess site;
+    private readonly Playback playback;
+    private readonly Lazy<UnsavedWork>? unsaved;
 
-    /// <param name="pluginFolder">Where a package's plugin is installed, or null where nothing is.</param>
-    /// <param name="presetSite">Where the plugins window lists shared plugins from, or null for nowhere.</param>
-    /// <param name="assisting">The folder of the plugin whose assistant Ask sends a patch to, and what to say of it.</param>
-    /// <param name="restart">
-    /// Closes the window and starts Flyback again, answering false where the window
-    /// stays; null where a restart is not offered.
-    /// </param>
+    /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
+    private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// The patch the plugins window was opened for, which a restart from inside it opens
+    /// again, by then with the plugin it was refused for. Null at every other moment,
+    /// so installing something unrelated reopens nothing.
+    /// </summary>
+    private Reopen? refused;
+
+    /// <param name="setup">Where a package's plugin is installed, and whether a restart is offered.</param>
+    /// <param name="site">Where the plugins window lists shared plugins from.</param>
+    /// <param name="playback">The sound device the plugins window says what opened.</param>
+    /// <param name="unsaved">What a restart asks about first, and closes the window through.</param>
     public PluginInstalls(
         Shell shell,
-        string? pluginFolder,
-        Uri? presetSite,
-        Func<HttpClient> http,
-        Func<AudioSetup> sound,
-        Func<(string Assembly, string Said)?> assisting,
-        Func<Task<bool>>? restart)
+        EditorSetup setup,
+        SiteAccess site,
+        Playback playback,
+        Lazy<UnsavedWork> unsaved)
     {
-        owner = shell.Owner;
+        this.shell = shell;
         plugins = shell.Plugins;
         report = shell.Report;
-        this.pluginFolder = pluginFolder;
-        this.presetSite = presetSite;
-        this.http = http;
-        this.sound = sound;
-        this.assisting = assisting;
-        this.restart = restart;
+        pluginFolder = setup.PluginFolder;
+        this.site = site;
+        this.playback = playback;
+        this.unsaved = setup.Relaunch is null ? null : unsaved;
     }
 
     /// <summary>
@@ -56,6 +57,51 @@ internal sealed class PluginInstalls
     /// can say how many are still to come. Empty at every other moment.
     /// </summary>
     public IReadOnlyList<SitePlugin> Awaited { get; set; } = [];
+
+    /// <summary>
+    /// Offers what <paramref name="loaded"/> was refused for, where the plugin site has
+    /// a build of it for this system (ADR-0135). Silent where it has none or there is no
+    /// site: the refusal has been said already, and an offer of nothing is worse than none.
+    /// </summary>
+    /// <param name="open">
+    /// What this patch was, so it can be opened again once a restart brings the plugin.
+    /// </param>
+    public async Task OfferMissingAsync(PatchLoad loaded, Reopen? open = null)
+    {
+        if (loaded.MissingProviders.Count == 0 || site.Plugins() is not { } shared) return;
+
+        using var cancel = new CancellationTokenSource(Looking);
+
+        var found = await MissingPlugins.FoundAsync(shared, loaded, cancel.Token);
+
+        if (found.Count == 0) return;
+
+        if (!await shell.Owner.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
+
+        // Live only while that window is up: coming back from it is nothing having been
+        // installed, or something having been that a restart was not asked for.
+        refused = open;
+        Awaited = found;
+
+        try
+        {
+            await ShowAsync(found);
+        }
+        finally
+        {
+            refused = null;
+            Awaited = [];
+        }
+    }
+
+    /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and what to say of it, or null where none is chosen.</summary>
+    private (string Assembly, string Said)? Assisting()
+    {
+        if (shell.Assistant is not { Chosen: { } chosen } assistant || plugins.Provider(chosen) is not { } info) return null;
+        if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
+
+        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
+    }
 
     /// <summary>
     /// Shows what the package says it is and installs it if asked. Leaves the patch
@@ -101,10 +147,10 @@ internal sealed class PluginInstalls
             // Not offered while the patch is short of others: one start loads everything
             // installed by then, and a restart before the last of them lands back on the
             // same refusal with the window it was being installed from thrown away.
-            offerRestart: restart is not null && awaiting == 0,
+            offerRestart: unsaved is not null && awaiting == 0,
             removable,
             awaiting);
-        var answer = await owner.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
+        var answer = await shell.Owner.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
 
         if (answer == PluginAnswer.Cancel) return null;
 
@@ -121,7 +167,7 @@ internal sealed class PluginInstalls
             return $"{name} was not installed: {ex.Message}";
         }
 
-        if (answer == PluginAnswer.InstallAndRestart && restart is not null && await restart()) return null;
+        if (answer == PluginAnswer.InstallAndRestart && unsaved is not null && await unsaved.Value.RelaunchAsync(refused)) return null;
 
         return $"{name} is {(change == PluginChange.Update ? "updated" : "installed")}, and loads the next time Flyback starts.";
     }
@@ -133,15 +179,15 @@ internal sealed class PluginInstalls
     /// <param name="wanted">What a patch was short of, listed first, or null for an ordinary opening.</param>
     public async Task ShowAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
-        var site = presetSite is null ? null : new PluginSite(http(), presetSite);
-        var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, sound());
-        using var hub = new PluginHub(site, () => { var assisting = this.assisting(); return Task.Run(() => InstalledPlugins(assisting, troubles)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
+        var site = this.site.Plugins();
+        var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
+        using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting, troubles)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
         _ = hub.AskSiteAsync();
 
-        await owner.ShowDialog<object?>("Plugins", hub.View, hub.Header, fill: true);
+        await shell.Owner.ShowDialog<object?>("Plugins", hub.View, hub.Header, fill: true);
     }
 
     /// <summary>
@@ -240,7 +286,7 @@ internal sealed class PluginInstalls
             Named(newer), removal,
             string.Join(", ", ids), string.Join(", ", providers));
 
-        return await owner.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
+        return await shell.Owner.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.
             PluginAnswer.Download => await InstallFromSiteAsync(site!, (await newer)!, () => { }),

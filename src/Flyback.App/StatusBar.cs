@@ -47,8 +47,8 @@ internal sealed class StatusBar
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
-    /// <param name="writeToAuthor">What the letter at the end of the bar opens.</param>
-    public StatusBar(Shell shell, PreviewHost preview, Func<Task> writeToAuthor)
+    /// <param name="site">Where the letter at the end of the bar is sent.</param>
+    public StatusBar(Shell shell, PreviewHost preview, SiteAccess site, Playback playback)
     {
         var report = shell.Report;
 
@@ -65,7 +65,7 @@ internal sealed class StatusBar
 
         var letter = Glyph("letter", Glyphs.Letter(), "Write to Flyback's author. Anything you like, good or bad.");
 
-        letter.Click += async (_, _) => await writeToAuthor();
+        letter.Click += async (_, _) => await WriteToTheAuthorAsync(shell, site, playback);
 
         // The same bar the count divides itself with, at the same size and color:
         // a drawn rule here would be a second kind of separator on one line.
@@ -153,5 +153,25 @@ internal sealed class StatusBar
         ToolTip.SetTip(button, tip);
 
         return button;
+    }
+
+    /// <summary>Writing to the author, which the bar's last glyph opens (ADR-0136).</summary>
+    private static async Task WriteToTheAuthorAsync(Shell shell, SiteAccess site, Playback playback)
+    {
+        if (site.Root is not { } root)
+        {
+            shell.Report.Say("There is nowhere to send a letter: this copy has no site.");
+            return;
+        }
+
+        // Built once and both shown and sent, so what was read is what goes.
+        var about = SiteLetters.About(shell.Plugins, playback.Sound);
+
+        var said = await LetterView.AskAsync(
+            shell.Owner,
+            about,
+            (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel));
+
+        if (said is not null) shell.Report.Say(said);
     }
 }

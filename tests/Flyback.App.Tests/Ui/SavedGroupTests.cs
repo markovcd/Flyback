@@ -47,7 +47,7 @@ public class SavedGroupTests : UiTest
 
         b.Wire(time, 0, osc, 1).Wire(osc, 0, screen, NodeCatalog.OutputLeftPort);
 
-        var window = Owned(new MainWindow(new EditorSetup { GroupFolder = folder }));
+        var window = NewMainWindow(new EditorSetup { GroupFolder = folder });
 
         window.Show();
         window.UpdateLayout();

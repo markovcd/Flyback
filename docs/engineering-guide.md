@@ -430,9 +430,11 @@ is a class that takes a `Shell` (the window, the canvas, the document, the
 plugins, the report line, the usage counts and the assistant) and whatever else
 it reads, owns its own fields and raises events: `Inspector`,
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
-`Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. `MainWindow` builds them
-by hand in its constructor, lays them out, and keeps its layout, its keys, full
-screen and the closing question in one file, a `#region` per part. There are no
+`Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
+container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
+`EditorServices` registers them, a constructor says what each depends on, and a
+cycle is a `Lazy<T>`. `MainWindow` is handed them, lays them out, and keeps its
+layout, its keys, full screen and its close in one file, a `#region` per part. There are no
 view models, and that has been decided twice.
 
 **The node editor is one control**
@@ -575,7 +577,9 @@ new code should be indistinguishable from the file it lands in.
 - **Time is an argument.** No `TimeProvider`, no injected clock. Code that needs
   the time is passed seconds.
 - **No dependency where a page of code will do.** The engine has none. The
-  assistants talk JSON over `HttpClient` by hand rather than take an SDK. A
+  assistants talk JSON over `HttpClient` by hand rather than take an SDK. The
+  editor is composed in Microsoft's own container (ADR-0150), because its wiring
+  had stopped being a page. A
   first-party build-time analyzer with `PrivateAssets="all"` is fine; ADR-0019 is
   about what ships.
 - **One place knows a thing.** `NodeGeometry` for where a socket is, `OpShape` for
@@ -771,9 +775,13 @@ public class BoxLabelTests : UiTest
 }
 ```
 
-`UiTest` gives you `Show(control)`, `NewMainWindow()`, `Owned(window)`,
-`Settle(window)`, `All<T>(visual)` and `Pick(combo, name)`. Open windows through
-it. Headless gives the whole assembly one UI thread, so a window left open keeps
+`UiTest` gives you `Show(control)`, `NewMainWindow(setup, replace)`,
+`NewCanvas(width, height, replace)`, `Owned(window)`, `Settle(window)`,
+`All<T>(visual)` and `Pick(combo, name)`. Open windows through it. The window and
+the canvas come out of the editor's container, and `replace` registers a test's
+own service in place of one of them: `Site(handler)` for the preset site, or a
+pointer anchor that holds nothing. A test about one service can take it from
+`new ServiceCollection().AddCanvas()` without a window. Headless gives the whole assembly one UI thread, so a window left open keeps
 its preview, timers and engine on that thread for every test after it; `UiTest`
 closes what it opened, newest first, and closes a `MainWindow` without asking
 about unsaved work.

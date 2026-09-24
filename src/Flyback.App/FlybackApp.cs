@@ -66,7 +66,7 @@ public sealed class FlybackApp : Application
                 usage.Drain(Usage.LongestWait);
             };
 
-            var window = new MainWindow(EditorSetup.ThisMachine(usage) with
+            var window = EditorServices.Window(EditorSetup.ThisMachine(usage) with
             {
                 OpenPath = Startup.OpenPath,
                 OpenShared = Startup.OpenShared,

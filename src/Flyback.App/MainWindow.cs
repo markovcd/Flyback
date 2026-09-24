@@ -19,17 +19,17 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
 
 /// <summary>
-/// The editor's window: it builds the hubs and the regions around them, lays them
-/// out, and keeps its own keys, full screen and the closing question (ADR-0148).
+/// The editor's window: it is handed the hubs and the regions around them by its
+/// container (ADR-0150), lays them out, and keeps its own keys and full screen, and
+/// the close that asks the unsaved question (ADR-0148).
 /// </summary>
 [SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
-public sealed class MainWindow : Window
+internal sealed class MainWindow : Window
 {
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
     private void RewindToZero() => playback.Rewind();
@@ -47,7 +47,7 @@ public sealed class MainWindow : Window
 
     private readonly NodeEditor editor;
 
-    private readonly SourceView source = new();
+    private readonly SourceView source;
 
     /// <summary>Which of the canvas and the text owns the patch.</summary>
     private readonly Document document;
@@ -55,7 +55,7 @@ public sealed class MainWindow : Window
     /// <summary>Which file the patch is, and opening and saving it.</summary>
     private readonly PatchFiles files;
 
-    private readonly PreviewHost preview = new();
+    private readonly PreviewHost preview;
 
     /// <summary>
     /// The pieces of the shell the fullscreen preview puts away and has to bring
@@ -65,21 +65,8 @@ public sealed class MainWindow : Window
     private Grid? columns;
     private Border? previewBox;
 
-    /// <summary>
-    /// The presets somebody saved, or null for a window that keeps none — every
-    /// test that did not ask for a folder, which must not see the ones on the
-    /// machine running it.
-    /// </summary>
-    private readonly PresetLibrary? savedPresets;
-
-    /// <summary>Trying a preset from the gallery by resting the pointer on its tile.</summary>
-    private readonly PresetAudition audition;
-
     /// <summary>The preset slot on the toolbar, and the gallery it opens.</summary>
     private readonly PresetSlot presets;
-
-    /// <summary>The frames the preset gallery's tiles are drawn with, and the ones it has already drawn.</summary>
-    private readonly PresetThumbnails thumbnails;
 
     /// <summary>
     /// The preview's own row and the splitter below it, put away when the patch
@@ -133,9 +120,9 @@ public sealed class MainWindow : Window
     /// The one line anything is said on, and the log of what has been said. See
     /// <see cref="Report"/>, which is the only thing that writes to it.
     /// </summary>
-    private readonly ReportLine report = new();
+    private readonly ReportLine report;
 
-    private AssistantPanel? assistant;
+    private readonly AssistantPanel assistant;
     private ColumnDefinition? assistantColumn;
     private GridSplitter? assistantSplitter;
 
@@ -150,7 +137,7 @@ public sealed class MainWindow : Window
     /// Read before this window existed, and already installed. Nothing here
     /// knows which backends or modules there are, or what they are called.
     /// </summary>
-    private readonly PluginCatalog plugins = Startup.Plugins;
+    private readonly PluginCatalog plugins;
 
     private readonly AudioEngine audio;
 
@@ -162,7 +149,7 @@ public sealed class MainWindow : Window
     /// the sound always, and the picture while the processor is drawing it. See
     /// ADR-0076.
     /// </summary>
-    private readonly IlCompiler compiler = new();
+    private readonly IlCompiler compiler;
 
     /// <summary>
     /// Everything that plays the patch from outside it. The mirror of
@@ -172,130 +159,91 @@ public sealed class MainWindow : Window
     /// </summary>
     private readonly MidiHub midi;
 
-    /// <param name="setup">Where this machine keeps things and what this launch asked for; none keeps nothing.</param>
-    public MainWindow(EditorSetup? setup = null)
+    /// <summary>What unsaved work there is, and the question closing it asks.</summary>
+    private readonly UnsavedWork unsaved;
+
+    /// <param name="setup">Where this machine keeps things and what this launch asked for.</param>
+    public MainWindow(
+        EditorSetup setup,
+        Shell shell,
+        NodeEditor editor,
+        SourceView source,
+        Document document,
+        PatchFiles files,
+        UnsavedWork unsaved,
+        PreviewHost preview,
+        ReportLine report,
+        PluginCatalog plugins,
+        Usage usage,
+        IlCompiler compiler,
+        AudioEngine audio,
+        MidiHub midi,
+        Playback playback,
+        OutputSections outputSections,
+        CanvasSection canvasSection,
+        UpdatesSection updatesSection,
+        UsageSection usageSection,
+        FilesSection filesSection,
+        PanelKnobs knobs,
+        Palette palette,
+        Inspector inspector,
+        PluginInstalls pluginInstalls,
+        PresetSlot presets,
+        Toolbar toolbar,
+        StatusBar statusBar,
+        TakeRecording recording,
+        AssistantPanel assistant,
+        WorkKeeper? keeper)
     {
-        setup ??= new EditorSetup();
+        // First, so every region can reach the window it is in.
+        shell.Attach(this);
 
-        editor = new ServiceCollection().AddSingleton(report).AddCanvas().BuildServiceProvider().GetRequiredService<NodeEditor>();
+        this.editor = editor;
+        this.source = source;
+        this.document = document;
+        this.files = files;
+        this.unsaved = unsaved;
+        this.preview = preview;
+        this.report = report;
+        this.plugins = plugins;
+        this.usage = usage;
+        this.compiler = compiler;
+        this.audio = audio;
+        this.midi = midi;
+        this.playback = playback;
+        this.outputSections = outputSections;
+        this.canvasSection = canvasSection;
+        this.updatesSection = updatesSection;
+        this.usageSection = usageSection;
+        this.filesSection = filesSection;
+        this.knobs = knobs;
+        this.palette = palette;
+        this.inspector = inspector;
+        this.pluginInstalls = pluginInstalls;
+        this.presets = presets;
+        this.toolbar = toolbar;
+        this.statusBar = statusBar;
+        this.assistant = assistant;
+        this.keeper = keeper;
 
-        this.pluginFolder = setup.PluginFolder;
-        this.relaunch = setup.Relaunch;
-        this.presetSite = setup.PresetSite;
-        this.openShared = setup.OpenShared;
+        Recording = recording;
 
-        // Before the layout, because the toolbar lists what is saved.
-        if (setup.PresetFolder is not null) savedPresets = new PresetLibrary(setup.PresetFolder);
+        outputSettingsPath = setup.OutputSettingsPath;
 
-        thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler, setup.ThumbnailFolder) { Saved = savedPresets };
-        this.outputSettingsPath = setup.OutputSettingsPath;
-        this.usage = setup.Usage ?? Usage.Off;
-
-        document = new Document(editor, source, report, this.usage);
-
-        var shell = new Shell(this, editor, document, plugins, report, this.usage, () => assistant);
-
-        outputSections = new OutputSections(shell, OrderedPresets, PickStartupPatchAsync);
-
-        // Before anything is compiled, so no build is started only to be taken off.
-        compiler.Enabled = !setup.Interpreted;
-
-        if (setup.OutputSettingsPath is not null) outputSettings = OutputSettings.Load(setup.OutputSettingsPath);
-
-        this.layoutPath = setup.LayoutPath;
+        layoutPath = setup.LayoutPath;
         if (setup.LayoutPath is not null) layout = WindowLayout.Load(setup.LayoutPath);
-
-        updatesSection = new UpdatesSection(setup.UpdateSettingsPath, (message, detail) => Report(message, detail));
-        usageSection = new UsageSection(setup.UsageSettingsPath, this.usage, (message, detail) => Report(message, detail));
-        canvasSection = new CanvasSection(setup.CanvasSettingsPath, editor, (message, detail) => Report(message, detail));
-        filesSection = new FilesSection(setup.FileTypeSettingsPath, setup.FileTypes, (message, detail) => Report(message, detail));
-
-        var sound = Sound.Open(plugins, outputSettings);
 
         // Here rather than at the launch, because what a run started as includes
         // which backend actually opened, and that is only known once one has been
         // asked for.
-        this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id, ScreenHeights());
-        audio = new AudioEngine(sound.Device) { Compiler = compiler };
-
-        // Nothing is opened by this. The backend is asked what is plugged in
-        // when a picker is drawn, and asked for a device only once a compiled
-        // program is actually reading one — see MidiHub.Listen.
-        midi = new MidiHub(plugins.PreferredMidiInput);
-
-        knobs = new PanelKnobs(shell, preview, audio, midi);
-
-        palette = new Palette(shell, knobs.View.Instruments, () => outputSettings.Keyboard, setup.GroupFolder);
-
-        files = new PatchFiles(shell, Show, OfferMissingPluginsAsync);
+        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights());
 
         // Where the last document's knobs were left says nothing about this one's.
         files.Arrived += (_, _) => knobs.Hub.Forget();
         files.Saved += (_, _) => ClearPresetSelection();
 
-        inspector = new Inspector(shell, midi, knobs.Instruments, files.SoundFolder, files.PictureFolder, () => palette.Groups, palette.SaveGroup);
-
-        playback = new Playback(
-            shell,
-            preview,
-            audio,
-            compiler,
-            midi,
-            sound,
-            () => files.Sounds,
-            () => files.Pictures,
-            // The take is made next, and needs the playback to make it.
-            () => Recording is { Running: true });
-
-        pluginInstalls = new PluginInstalls(
-            shell,
-            setup.PluginFolder,
-            setup.PresetSite,
-            () => SiteHttp ?? SiteClient.Value,
-            () => playback.Sound,
-            Assisting,
-            setup.Relaunch is null ? null : RestartAsync);
-
-        audition = new PresetAudition(
-            audio,
-            compiler,
-            plugins.Modules,
-            savedPresets,
-            // A take records what the speakers play, and a preset tried on the
-            // way past is not part of it.
-            () => playback.CanSound && Recording is { Running: false },
-            playback.SyncAudioToVolume);
-
-        presets = new PresetSlot(
-            shell,
-            files,
-            thumbnails,
-            audition,
-            savedPresets,
-            PresetSite,
-            MayReplaceThePatchAsync,
-            Show,
-            OfferMissingPluginsAsync);
-
-        toolbar = new Toolbar(presets.View, plugins.Assistants.Count > 0);
-
-        statusBar = new StatusBar(shell, preview, WriteToTheAuthorAsync);
-
-        // Before anything recompiles, because a recompile asks the take what the
-        // record button should say and whether the device may be stopped.
-        Recording = new TakeRecording(
-            toolbar.Record,
-            outputSections.Resolution,
-            preview,
-            audio,
-            this.usage,
-            () => editor.History.Patch,
-            () => outputSettings,
-            (message, progress) => Report(message, progress: progress),
-            SyncTransport,
-            RewindToZero,
-            playback.SyncAudioToVolume);
-
+        // A take running takes Pause away, and finishing gives it back.
+        recording.Marked += (_, _) => SyncTransport();
 
         WirePlayback();
 
@@ -317,7 +265,7 @@ public sealed class MainWindow : Window
 
         // That an instrument was played at all, counted for the end of the run
         // and nothing about what was played on it (ADR-0103).
-        midi.Heard += () => this.usage.Count(Used.Instrument);
+        midi.Heard += () => usage.Count(Used.Instrument);
 
         WireControls();
 
@@ -389,7 +337,7 @@ public sealed class MainWindow : Window
         // patch" is set to, or the first of the list for a name it no longer
         // offers — said here so the title and the toolbar's own selection agree
         // with the canvas from the first frame (ADR-0093).
-        presets.StartOn(outputSettings.DefaultPreset);
+        presets.StartOn(outputSections.Saved.DefaultPreset);
 
         // No manual switch any more — Volume is the one now, and the Recompile
         // that patch assignment just ran already brought sound up to match its
@@ -409,8 +357,6 @@ public sealed class MainWindow : Window
 
         ApplyPanelLayout();
 
-        if (setup.RecoveryFolder is not null) keeper = new WorkKeeper(setup.RecoveryFolder, Work);
-
         // Opened rather than called straight away: there is nothing to put a
         // dialog over before, and the platform window behind this one — and the
         // storage provider that comes with it — is not guaranteed to exist until
@@ -425,7 +371,7 @@ public sealed class MainWindow : Window
             keeper?.Restore(Recover);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
-            if (setup.OpenPath is { } path && (PluginPackage.Named(path) || await MayReplaceThePatchAsync()))
+            if (setup.OpenPath is { } path && (PluginPackage.Named(path) || await unsaved.MayReplaceThePatchAsync()))
                 await OpenPathAsync(path);
 
             if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
@@ -436,29 +382,6 @@ public sealed class MainWindow : Window
     {
         var root = new DockPanel();
 
-        // Before the bars, because both of them ask it what it is called.
-        assistant = new AssistantPanel(
-            plugins,
-            () => editor.History.Patch,
-            // An edit rather than a new document, so it undoes like every other
-            // edit and there is nothing to ask about first: what it replaced is
-            // one press of Ctrl+Z away rather than gone.
-            patch =>
-            {
-                document.TakeFromAssistant(patch);
-                preview.Rewind();
-            },
-            // Wrapped rather than handed over as it stands, because the third
-            // thing Report takes is about how a line ages in the log and the
-            // panel has no business knowing there is one.
-            (message, detail) => Report(message, detail),
-            samples: files.Sounds,
-            pictures: files.Pictures,
-            asked: usage.Assistant,
-            presets: () => OrderedPresets())
-        {
-            IsVisible = false,
-        };
 
         // A conversation is saved with the patch, so one with a turn nobody has
         // saved is something the title and the close have to know about.
@@ -682,14 +605,11 @@ public sealed class MainWindow : Window
         }
     }
 
-    /// <summary>Every preset the toolbar and the "Startup patch" list offer, in <see cref="PresetLibrary.Ordered"/>'s order.</summary>
-    private List<PatchPreset> OrderedPresets() => PresetLibrary.Ordered(plugins.Presets, savedPresets);
-
     /// <summary>What each button on the toolbar does. Called once, as the window is built.</summary>
     private void WireToolbar()
     {
         toolbar.Open.Click += async (_, _) => await OpenAnotherPatchAsync();
-        toolbar.Save.Click += async (_, _) => await SavePatchAsync();
+        toolbar.Save.Click += async (_, _) => await unsaved.SavePatchAsync();
 
         // All three go to whichever view is showing — see Document.
         toolbar.Undo.Click += (_, _) => document.Undo();
@@ -788,7 +708,7 @@ public sealed class MainWindow : Window
         // Whatever was typed or picked since it opened belongs to that window, and
         // only Save is allowed to keep it.
         panel.DiscardSettings();
-        outputSections.Show(outputSettings);
+        outputSections.Show(outputSections.Saved);
         updatesSection.Show();
         usageSection.Show();
         canvasSection.Show();
@@ -806,225 +726,19 @@ public sealed class MainWindow : Window
     #region Keys, undo and the unsaved question
 
     // The editing session as opposed to the patch: undo and redo from wherever the
-    // focus is, what the title bar says about unsaved work, and the question every
-    // route out of a patch has to ask first.
-    // The canvas owns the history and answers whether there is anything to lose;
-    // what is here is the asking. One method fronts every way a patch can be closed,
-    // so none of those callers has to know whether anything was edited.
+    // focus is, what the title bar says about unsaved work, and the window's own close.
+    // The question every route out of a patch asks is UnsavedWork's; what is here is
+    // the close that asks it.
 
     /// <summary>The window title, before anything is said about the patch in it.</summary>
     private const string BaseTitle = GlobalConstants.ApplicationName;
 
-    /// <summary>
-    /// Set once the question about unsaved work has been asked and answered, so
-    /// the second Close does not ask it again. A close has to be canceled to
-    /// put a dialog up at all — nothing may block inside OnClosing — so the way
-    /// back out is to close again once there is an answer.
-    /// </summary>
-    private bool leaving;
-
-    /// <summary>
-    /// Set while the question is on the screen and being answered. The dialog is
-    /// a panel over this window rather than a window of its own, so the frame's
-    /// cross stays live underneath it; a second close arriving while the first
-    /// is still being dealt with is ignored rather than allowed to stack a
-    /// second copy of the same question.
-    /// </summary>
-    private bool questionIsUp;
-
     /// <summary>Set while a close is waiting for a take to be finished, so a second close does not wait twice.</summary>
     private bool waitingOnTake;
 
-    /// <summary>What to do about a patch that has been edited and not written out.</summary>
-    private enum Unsaved
-    {
-        /// <summary>Refused, and whatever asked should not go ahead.</summary>
-        Cancel,
-
-        Save,
-
-        Discard,
-    }
-
-    /// <summary>
-    /// Whether the thing about to replace or close the patch may go ahead. Asks
-    /// only when there is something to lose, so every caller can front its own
-    /// action with this and none of them has to know whether anything was
-    /// edited.
-    /// </summary>
-    private async Task<bool> MayReplaceThePatchAsync()
-    {
-        if (!SomethingToLose) return true;
-
-        return await AnsweredAsync(
-            "Unsaved changes",
-            editor.History.IsModified || document.IsUnapplied
-                ? "This patch has changes that have not been saved. Closing it now would lose them."
-                : "The conversation about this patch has not been saved. Closing it now would lose it.");
-    }
-
-    /// <summary>
-    /// Whether this document has anything in it that closing would lose.
-    /// </summary>
-    /// <remarks>
-    /// Three parts, because there are three places work can be: typing that has not
-    /// been applied is the one the editor's history cannot know about, and a
-    /// conversation is saved with the patch it is about (ADR-0072) without being
-    /// any part of the patch. Asked by the question, by the close that puts it up
-    /// and by the dot in the title, so the three cannot come to disagree.
-    /// </remarks>
-    private bool SomethingToLose =>
-        editor.History.IsModified || document.IsUnapplied || assistant?.ConversationUnsaved == true;
-
     /// <summary>Whether the window could close without asking anything.</summary>
-    internal bool HoldsNoWork => !SomethingToLose;
+    internal bool HoldsNoWork => !unsaved.SomethingToLose;
 
-    /// <summary>
-    /// Whether text about to stop being the document may go. Asks only about typing
-    /// that is nowhere else: text already written out as <c>.fbks</c> is on disk.
-    /// </summary>
-    /// <remarks>
-    /// The patch is deliberately not asked about, because it is not going anywhere:
-    /// handing it back to the canvas changes who owns it and not what it is, so the
-    /// question a file asks is still there to be asked.
-    /// </remarks>
-    private async Task<bool> MayLoseTheTextAsync()
-    {
-        if (!document.IsUnapplied) return true;
-
-        return await AnsweredAsync(
-            "Unsaved text",
-            "This text has not been saved. Handing the patch back to the canvas empties it, "
-            + "and its comments, its names and its defs go with it — the patch itself is "
-            + "untouched.");
-    }
-
-    /// <summary>
-    /// Whether a save that makes <paramref name="name"/> the document may empty text
-    /// that is written nowhere else.
-    /// </summary>
-    /// <remarks>
-    /// Two answers rather than three: Save… is how this was reached. It may be
-    /// reached from inside the unsaved question, whose own dialog is down by then,
-    /// so it puts its own up rather than going through <see cref="AnsweredAsync"/>
-    /// — and holds <see cref="questionIsUp"/> for as long as it is.
-    /// </remarks>
-    private async Task<bool> MayLoseTheTextToAsync(string name)
-    {
-        if (!document.IsUnapplied) return true;
-
-        var was = questionIsUp;
-        questionIsUp = true;
-
-        try
-        {
-            return await AskAboutUnsavedAsync(
-                "Unsaved text",
-                $"Saving as {name} makes the canvas the document and empties this text, which has "
-                + "not been saved: its comments, its names and its defs go with it. Save it as "
-                + $"{GlobalConstants.ApplicationName} text to keep them.",
-                discard: "Save without the text",
-                offerSave: false) == Unsaved.Discard;
-        }
-        finally
-        {
-            questionIsUp = was;
-        }
-    }
-
-    /// <summary>
-    /// Puts the three answers up and does what the answer says, for whoever is
-    /// about to lose something.
-    /// </summary>
-    private async Task<bool> AnsweredAsync(string about, string question)
-    {
-        // A question is already up. Whatever asked is refused rather than queued
-        // behind the first answer: it is the same document and the same three
-        // buttons, and one set of them is already on the screen.
-        if (questionIsUp) return false;
-
-        questionIsUp = true;
-
-        try
-        {
-            return await AskAboutUnsavedAsync(about, question) switch
-            {
-                // A canceled save picker is a canceled close: somebody who asked
-                // to save and then thought better of where has not agreed to lose
-                // the patch, and the safe reading of that is to stay put.
-                Unsaved.Save => await SavePatchAsync(),
-                Unsaved.Discard => true,
-                _ => false,
-            };
-        }
-        finally
-        {
-            questionIsUp = false;
-        }
-    }
-
-    /// <summary>
-    /// The three answers, as a window rather than as a system message box — there
-    /// is no such thing here, and one built by hand is the same three buttons in
-    /// the same palette as the rest of the shell.
-    /// </summary>
-    /// <remarks>
-    /// Closing it by its own frame is Cancel, which is why Cancel is the enum's
-    /// default too: a dialog closed without setting a result comes back as
-    /// <c>default</c>, so the answer nobody gave is harmless by the language's own
-    /// rule.
-    /// </remarks>
-    /// <param name="discard">What the answer that goes ahead is called.</param>
-    /// <param name="offerSave">Whether saving is one of the answers, which it is not where saving is what asked.</param>
-    private async Task<Unsaved> AskAboutUnsavedAsync(
-        string about,
-        string question,
-        string discard = "Discard changes",
-        bool offerSave = true)
-    {
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-        };
-
-        if (offerSave) buttons.Children.Add(Answering("Save…", Unsaved.Save));
-
-        buttons.Children.Add(Answering(discard, Unsaved.Discard, wide: true));
-        buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
-
-        var asking = new StackPanel
-        {
-            Margin = new Thickness(20),
-            Spacing = 16,
-            MaxWidth = 420,
-            Children =
-            {
-                new TextBlock
-                {
-                    Text = question,
-                    TextWrapping = TextWrapping.Wrap,
-                },
-                buttons,
-            },
-        };
-
-        return await this.ShowDialog<Unsaved>(about, asking);
-
-        static Button Answering(string text, Unsaved with, bool wide = false)
-        {
-            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
-            button.Click += (_, _) => Dialog.Close(button, with);
-
-            return button;
-        }
-    }
-
-    /// <summary>
-    /// Nothing may block inside a closing handler, so a window with unsaved work
-    /// in it cancels the close, asks, and closes itself again on the way back.
-    /// </summary>
     /// <summary>
     /// Closes without asking about unsaved work, for a test tearing its window
     /// down: there is nobody to answer the question, and a canceled close would
@@ -1032,10 +746,14 @@ public sealed class MainWindow : Window
     /// </summary>
     internal void CloseWithoutAsking()
     {
-        leaving = true;
+        unsaved.Leave();
         Close();
     }
 
+    /// <summary>
+    /// Nothing may block inside a closing handler, so a window with unsaved work
+    /// in it cancels the close, asks, and closes itself again on the way back.
+    /// </summary>
     protected override async void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
@@ -1047,14 +765,14 @@ public sealed class MainWindow : Window
         // as it is.
         RememberLayout();
 
-        if (leaving) return;
+        if (unsaved.Leaving) return;
 
         // Already asking. The close is refused and nothing else happens: putting
         // the question up a second time is the one response that would make the
         // window look broken, and there is nothing else to do with a close that
         // arrived while the same close is still being answered. The settings
         // window is refused the same way, for the answer it is still waiting on.
-        if (questionIsUp || settingsAreUp)
+        if (unsaved.Asking || settingsAreUp)
         {
             e.Cancel = true;
             return;
@@ -1082,13 +800,13 @@ public sealed class MainWindow : Window
         // whether to save. Closing calls it off whatever the answer (ADR-0090).
         Recording.CallOffCount();
 
-        if (!SomethingToLose) return;
+        if (!unsaved.SomethingToLose) return;
 
         e.Cancel = true;
 
-        if (!await MayReplaceThePatchAsync()) return;
+        if (!await unsaved.MayReplaceThePatchAsync()) return;
 
-        leaving = true;
+        unsaved.Leave();
         Close();
     }
 
@@ -1216,7 +934,7 @@ public sealed class MainWindow : Window
                 break;
 
             case Key.S:
-                _ = SavePatchAsync();
+                _ = unsaved.SavePatchAsync();
                 e.Handled = true;
                 break;
         }
@@ -1320,7 +1038,7 @@ public sealed class MainWindow : Window
 
         // A dot rather than the word, because the title bar is read at a glance
         // and the question it answers is only whether there is anything to lose.
-        Title = SomethingToLose ? named + " •" : named;
+        Title = unsaved.SomethingToLose ? named + " •" : named;
     }
 
     #endregion
@@ -1342,15 +1060,6 @@ public sealed class MainWindow : Window
     /// </summary>
     internal bool IsBundle => files.IsBundle;
 
-    /// <summary>Puts a patch that has just been read on the canvas, from its beginning.</summary>
-    private void Show(Patch patch)
-    {
-        ClearPresetSelection();
-
-        editor.History.Open(patch);
-        RewindToZero();
-    }
-
     /// <summary>
     /// The Open gesture whole: what is unsaved is asked about, and then the
     /// picker. The toolbar's button and Ctrl+O both come through here, so the
@@ -1358,7 +1067,7 @@ public sealed class MainWindow : Window
     /// </summary>
     private async Task OpenAnotherPatchAsync()
     {
-        if (await MayReplaceThePatchAsync() && await files.PickOpenAsync() is { } file) await OpenFileAsync(file);
+        if (await unsaved.MayReplaceThePatchAsync() && await files.PickOpenAsync() is { } file) await OpenFileAsync(file);
     }
 
     /// <summary>
@@ -1450,30 +1159,11 @@ public sealed class MainWindow : Window
             return;
         }
 
-        if (PluginPackage.Named(file.Name) || await MayReplaceThePatchAsync()) await OpenFileAsync(file);
+        if (PluginPackage.Named(file.Name) || await unsaved.MayReplaceThePatchAsync()) await OpenFileAsync(file);
     }
 
-    /// <returns>Whether the document was saved. A canceled picker is not a save, and nor is a copy.</returns>
-    private async Task<bool> SavePatchAsync() =>
-        await files.PickSaveAsync() is { } file && await SaveToAsync(file);
-
-    /// <summary>Writes the document to a file the picker handed back, as the kind its name says.</summary>
-    /// <returns>
-    /// Whether the document was saved — which writing a file is, except where the
-    /// file is a printing of a patch the graph owns: that is a copy, and leaves
-    /// whatever was unsaved as unsaved as it was.
-    /// </returns>
-    internal async Task<bool> SaveToAsync(IStorageFile file)
-    {
-        // A copy saves nothing, so whatever asked for a save has not had one: the
-        // unsaved-changes question reads this, and going ahead on the strength of
-        // a printing would shut the only whole patch there is.
-        if (PatchFileKinds.Sourced(file.Name)) return await files.SaveSourceAsync(file) && !SomethingToLose;
-
-        // Either of the other two hands the patch to the graph and empties the
-        // text, so text that is nowhere else is asked about first — ADR-0068.
-        return await MayLoseTheTextToAsync(file.Name) && await files.SavePatchFileAsync(file);
-    }
+    /// <inheritdoc cref="UnsavedWork.SaveToAsync"/>
+    internal Task<bool> SaveToAsync(IStorageFile file) => unsaved.SaveToAsync(file);
 
     #endregion
 
@@ -1502,7 +1192,7 @@ public sealed class MainWindow : Window
         // typing not on disk yet is asked about as it is when a document is closed over.
         source.HandBackRequested += async (_, _) =>
         {
-            if (document.Owned && await MayLoseTheTextAsync()) document.HandBack();
+            if (document.Owned && await unsaved.MayLoseTheTextAsync()) document.HandBack();
         };
 
         // Caught on the way up and after whoever handled it, because a slider
@@ -1650,13 +1340,7 @@ public sealed class MainWindow : Window
     // What the window does with the settings OutputSections shows: puts
     // them in force, and writes them out.
 
-    /// <summary>
-    /// What the Graphics, Recording and Sound sections were last saved as, and so
-    /// what closing the settings window without Save puts them back to.
-    /// </summary>
-    private OutputSettings outputSettings = new();
-
-    /// <summary>Where <see cref="outputSettings"/> is kept, or null to keep it nowhere.</summary>
+    /// <summary>Where the output settings are kept, or null to keep them nowhere.</summary>
     private readonly string? outputSettingsPath;
 
     /// <summary>
@@ -1695,8 +1379,8 @@ public sealed class MainWindow : Window
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
-        outputSections.Show(outputSettings);
-        UseOutputSettings(outputSettings);
+        outputSections.Show(outputSections.Saved);
+        UseOutputSettings(outputSections.Saved);
     }
 
     /// <summary>
@@ -1726,47 +1410,24 @@ public sealed class MainWindow : Window
     /// </summary>
     private void SaveOutputSettings()
     {
-        var before = outputSettings;
+        var before = outputSections.Saved;
+        var saved = outputSections.Saved = outputSections.Read(before);
 
-        outputSettings = outputSections.Read(before);
+        UseOutputSettings(saved);
 
-        UseOutputSettings(outputSettings);
-
-        if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds || outputSections.SoundChanged(before, outputSettings))
-            playback.ReopenAudio(outputSettings);
+        if (saved.LatencyMilliseconds != before.LatencyMilliseconds || outputSections.SoundChanged(before, saved))
+            playback.ReopenAudio(saved);
 
         if (outputSettingsPath is null) return;
 
         try
         {
-            outputSettings.Save(outputSettingsPath);
+            saved.Save(outputSettingsPath);
         }
         catch (Exception ex)
         {
             Report($"Could not save the output settings: {ex.Message}", outputSettingsPath);
         }
-    }
-
-    /// <summary>
-    /// Picks the startup patch from the gallery the toolbar opens, with nothing in
-    /// it to save or delete: what is chosen here is a name, and Cancel drops it.
-    /// </summary>
-    private async Task<string?> PickStartupPatchAsync(string current)
-    {
-        var showing = OrderedPresets().FirstOrDefault(preset => preset.Name == current);
-
-        var gallery = PresetGallery.Build(
-            [.. plugins.Presets.OrderBy(p => p.Kind)],
-            showing,
-            thumbnails,
-            audition.PointedAt,
-            presets.Yours()?.ToPickFrom());
-
-        var chosen = await this.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
-
-        audition.PointedAt(null);
-
-        return chosen?.Name;
     }
 
     #endregion
@@ -1988,7 +1649,7 @@ public sealed class MainWindow : Window
             return;
         }
 
-        if (MonitorPlacement.FullScreenTarget(this, outputSettings.FullScreen, outputSettings.FullScreenMonitor) is { } screen)
+        if (MonitorPlacement.FullScreenTarget(this, outputSections.Saved.FullScreen, outputSections.Saved.FullScreenMonitor) is { } screen)
             ShowPictureOn(screen);
         else
             ShowFullScreenPreview(true);
@@ -2453,15 +2114,6 @@ public sealed class MainWindow : Window
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper? keeper;
 
-    /// <summary>The document as a crash would lose it, or null while there is nothing to lose.</summary>
-    private RecoveredWork? Work() => !SomethingToLose ? null : new(
-        files.Name,
-        files.SoundFolder.Beside,
-        PatchIO.ToJson(editor.History.Patch),
-        document.Owned ? document.Text : null,
-        assistant?.ConversationToSave(),
-        files.Carried?.Bytes);
-
     /// <summary>
     /// Puts work a crash left behind back on the canvas, as the document it was and
     /// unsaved — it is on no disk anybody chose.
@@ -2485,10 +2137,7 @@ public sealed class MainWindow : Window
             work.Beside,
             work.Files is { } held ? new BundleFiles(held, files.SoundFolder, files.PictureFolder) : null);
 
-        ClearPresetSelection();
-
-        editor.History.Open(loaded.Patch);
-        RewindToZero();
+        playback.Show(loaded.Patch);
 
         if (work.Source is { } text)
         {
@@ -2509,144 +2158,6 @@ public sealed class MainWindow : Window
         Report($"Restored {work.Name ?? "the patch"} after a crash. It has not been saved.");
 
         return true;
-    }
-
-    #endregion
-
-    #region Plugins and the preset site
-
-    // What the window keeps for PluginInstalls and PresetSlot: where plugins go, where the site is, and how to start again.
-
-    /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
-    private readonly string? pluginFolder;
-
-    /// <summary>
-    /// Starts Flyback again once this window has closed, with a patch for it to open,
-    /// or null where a restart is not offered.
-    /// </summary>
-    private readonly Action<Reopen?>? relaunch;
-
-    /// <summary>
-    /// The patch the plugins window was opened for, which a restart from inside it opens
-    /// again — by then Flyback has the plugin it was refused for. Null at every other
-    /// moment, so installing something unrelated reopens nothing.
-    /// </summary>
-    private Reopen? refused;
-
-    /// <summary>Where the gallery lists shared presets from and the plugins window shared plugins, or null for nowhere.</summary>
-    private readonly Uri? presetSite;
-
-    /// <summary>Shared by every question put to the preset site, as an <see cref="HttpClient"/> is meant to be.</summary>
-    private static readonly Lazy<HttpClient> SiteClient = new(() => new HttpClient { Timeout = TimeSpan.FromMinutes(5) });
-
-    /// <summary>What the site is asked with in place of <see cref="SiteClient"/>, for a test.</summary>
-    internal HttpClient? SiteHttp { get; init; }
-
-    /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and where the patch and its key go, or null where none is chosen.</summary>
-    private (string Assembly, string Said)? Assisting()
-    {
-        if (assistant?.Chosen is not { } chosen || plugins.Provider(chosen) is not { } info) return null;
-        if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
-
-        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
-    }
-
-    /// <summary>What the gallery asks for shared presets, or null where this window has no site.</summary>
-    private PresetSite? PresetSite() => presetSite is null ? null : new PresetSite(SiteHttp ?? SiteClient.Value, presetSite);
-
-    /// <summary>The shared preset this launch was told to open again, or null.</summary>
-    private readonly string? openShared;
-
-    /// <summary>
-    /// Closes the window, asking about unsaved work as any close does, and starts
-    /// Flyback again behind it. False where the window stays: the question was
-    /// canceled, or a recording is running, which only its own button should end.
-    /// </summary>
-    private async Task<bool> RestartAsync()
-    {
-        if (Recording.InHand || !await MayReplaceThePatchAsync()) return false;
-
-        relaunch!(refused);
-
-        leaving = true;
-        Close();
-
-        return true;
-    }
-
-    #endregion
-
-    #region Missing plugins
-
-    // Offering the plugins a patch names that this Flyback does not have (ADR-0135).
-
-    /// <summary>How long the site is given before the offer is dropped and the refusal stands alone.</summary>
-    private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
-
-    /// <summary>
-    /// Offers what <paramref name="loaded"/> was refused for, where the plugin site has a
-    /// build of it for this system. Silent where it has none or there is no site: the
-    /// refusal has been reported already, and an offer of nothing is worse than none.
-    /// </summary>
-    /// <param name="open">
-    /// What this patch was, so that it can be opened again: a file on disk, or a preset
-    /// the site shared. Installing from the offer restarts Flyback, and this is what it
-    /// opens when it comes back up with the plugin.
-    /// </param>
-    private async Task OfferMissingPluginsAsync(PatchLoad loaded, Reopen? open = null)
-    {
-        if (loaded.MissingProviders.Count == 0 || presetSite is null) return;
-
-        using var cancel = new CancellationTokenSource(Looking);
-
-        var site = new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        var found = await MissingPlugins.FoundAsync(site, loaded, cancel.Token);
-
-        if (found.Count == 0) return;
-
-        if (!await this.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
-
-        // Live only while that window is up: coming back from it is nothing having been
-        // installed, or something having been that a restart was not asked for.
-        refused = open;
-        pluginInstalls.Awaited = found;
-
-        try
-        {
-            await pluginInstalls.ShowAsync(found);
-        }
-        finally
-        {
-            refused = null;
-            pluginInstalls.Awaited = [];
-        }
-    }
-
-    #endregion
-
-    #region Letters to the author
-
-    // Writing to the author, which the status bar's last glyph opens (ADR-0136).
-
-    private async Task WriteToTheAuthorAsync()
-    {
-        if (presetSite is not { } root)
-        {
-            Report("There is nowhere to send a letter: this copy has no site.");
-            return;
-        }
-
-        var http = SiteHttp ?? SiteClient.Value;
-
-        // Built once and both shown and sent, so what was read is what goes.
-        var about = SiteLetters.About(plugins, playback.Sound);
-
-        var said = await LetterView.AskAsync(
-            this,
-            about,
-            (mood, message, contact, cancel) => SiteLetters.SendAsync(http, root, mood, message, contact, about, cancel));
-
-        if (said is not null) Report(said);
     }
 
     #endregion

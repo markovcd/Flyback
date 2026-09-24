@@ -20,7 +20,7 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class PresetSlot
 {
-    private readonly Window owner;
+    private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PatchFiles files;
@@ -30,11 +30,11 @@ internal sealed class PresetSlot
     private readonly PresetThumbnails thumbnails;
     private readonly PresetAudition audition;
     private readonly PresetLibrary? saved;
-    private readonly Func<PresetSite?> site;
+    private readonly SiteAccess site;
     private readonly Func<AssistantPanel?> assistant;
-    private readonly Func<Task<bool>> mayReplace;
-    private readonly Action<Patch> show;
-    private readonly Func<PatchLoad, Reopen?, Task> offerMissing;
+    private readonly UnsavedWork unsaved;
+    private readonly Playback playback;
+    private readonly PluginInstalls installs;
 
     /// <summary>
     /// Not shown, and never opened: what this holds is which preset is on the
@@ -64,22 +64,22 @@ internal sealed class PresetSlot
     /// that did not ask for a folder, which must not see the ones on the machine
     /// running it.
     /// </param>
-    /// <param name="site">What the gallery asks for shared presets, or null where there is no site.</param>
-    /// <param name="mayReplace">The question every route out of a patch asks first.</param>
-    /// <param name="show">Puts a patch that has just arrived on the canvas, from its beginning.</param>
-    /// <param name="offerMissing">Offers the plugins a shared preset that could not be opened is short of.</param>
+    /// <param name="site">Where the gallery asks for shared presets.</param>
+    /// <param name="unsaved">The question every route out of a patch asks first.</param>
+    /// <param name="playback">Puts a patch that has just arrived on the canvas, from its beginning.</param>
+    /// <param name="installs">Offers the plugins a shared preset that could not be opened is short of.</param>
     public PresetSlot(
         Shell shell,
         PatchFiles files,
         PresetThumbnails thumbnails,
         PresetAudition audition,
         PresetLibrary? saved,
-        Func<PresetSite?> site,
-        Func<Task<bool>> mayReplace,
-        Action<Patch> show,
-        Func<PatchLoad, Reopen?, Task> offerMissing)
+        SiteAccess site,
+        UnsavedWork unsaved,
+        Playback playback,
+        PluginInstalls installs)
     {
-        owner = shell.Owner;
+        this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
         this.files = files;
@@ -91,9 +91,12 @@ internal sealed class PresetSlot
         this.saved = saved;
         this.site = site;
         assistant = () => shell.Assistant;
-        this.mayReplace = mayReplace;
-        this.show = show;
-        this.offerMissing = offerMissing;
+        this.unsaved = unsaved;
+        this.playback = playback;
+        this.installs = installs;
+
+        // Whatever preset the list still showed is not the patch that arrived.
+        playback.Showing += (_, _) => Clear();
 
         offered = Ordered();
 
@@ -130,6 +133,28 @@ internal sealed class PresetSlot
 
     /// <summary>Every preset the gallery and the "Startup patch" list offer, in <see cref="PresetLibrary.Ordered"/>'s order.</summary>
     public List<PatchPreset> Ordered() => PresetLibrary.Ordered(plugins.Presets, saved);
+
+    /// <summary>
+    /// Picks the startup patch from the same gallery, with nothing in it to save or
+    /// delete: what is chosen is a name, and Cancel drops it.
+    /// </summary>
+    public async Task<string?> PickStartupPatchAsync(string current)
+    {
+        var named = Ordered().FirstOrDefault(preset => preset.Name == current);
+
+        var gallery = PresetGallery.Build(
+            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            named,
+            thumbnails,
+            audition.PointedAt,
+            Yours()?.ToPickFrom());
+
+        var chosen = await shell.Owner.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+
+        audition.PointedAt(null);
+
+        return chosen?.Name;
+    }
 
     /// <summary>
     /// Takes the selection off the list, for a document that arrived by some other
@@ -194,7 +219,7 @@ internal sealed class PresetSlot
     /// </summary>
     public async Task OpenSharedAgainAsync(string id)
     {
-        if (site() is not { } at) return;
+        if (site.Presets() is not { } at) return;
 
         SitePreset? shared;
 
@@ -221,8 +246,8 @@ internal sealed class PresetSlot
     private async Task ShowGalleryAsync()
     {
         var current = picker.SelectedItem as PatchPreset;
-        var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], current, thumbnails, audition.PointedAt, Yours(), site());
-        var chosen = await owner.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
+        var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], current, thumbnails, audition.PointedAt, Yours(), site.Presets());
+        var chosen = await shell.Owner.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
 
         audition.PointedAt(null);
 
@@ -250,7 +275,7 @@ internal sealed class PresetSlot
 
         var wanted = picker.SelectedIndex;
 
-        if (!await mayReplace())
+        if (!await unsaved.MayReplaceThePatchAsync())
         {
             PutTheBoxBack();
             return;
@@ -261,7 +286,7 @@ internal sealed class PresetSlot
             // A preset from a plugin is built here, not when it was registered,
             // so this is where a plugin that offered a patch using modules it
             // failed to add finally shows up.
-            show(Arrive(preset));
+            playback.Show(Arrive(preset));
 
             // A preset has no file to have saved a conversation with, so it
             // arrives with none — ADR-0072.
@@ -412,7 +437,7 @@ internal sealed class PresetSlot
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
-        if (site() is not { } at || !await mayReplace()) return;
+        if (site.Presets() is not { } at || !await unsaved.MayReplaceThePatchAsync()) return;
 
         report.Say($"Downloading “{shared.Name}” from the preset site…");
 
@@ -440,7 +465,7 @@ internal sealed class PresetSlot
                 if (bundle.Load is { IsComplete: false } lacking)
                 {
                     report.Say($"Not opened. {lacking.Summary}", lacking.Detail);
-                    await offerMissing(lacking, new Reopen(Shared: shared.Id));
+                    await installs.OfferMissingAsync(lacking, new Reopen(Shared: shared.Id));
                     return;
                 }
 
@@ -455,7 +480,7 @@ internal sealed class PresetSlot
                 if (!loaded.IsComplete)
                 {
                     report.Say($"Not opened. {loaded.Summary}", loaded.Detail);
-                    await offerMissing(loaded, new Reopen(Shared: shared.Id));
+                    await installs.OfferMissingAsync(loaded, new Reopen(Shared: shared.Id));
                     return;
                 }
 
@@ -465,7 +490,7 @@ internal sealed class PresetSlot
 
             usage.Count(Used.Opened);
 
-            show(patch);
+            playback.Show(patch);
             document.DropSource();
             assistant()?.Open(conversation);
 

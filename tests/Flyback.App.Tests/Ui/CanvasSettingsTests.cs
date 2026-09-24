@@ -46,7 +46,7 @@ public sealed class CanvasSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null)
     {
-        var window = Owned(new MainWindow(new EditorSetup { CanvasSettingsPath = settingsPath }));
+        var window = NewMainWindow(new EditorSetup { CanvasSettingsPath = settingsPath });
 
         window.Show();
         Settle(window);

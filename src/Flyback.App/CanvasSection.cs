@@ -46,11 +46,11 @@ internal sealed class CanvasSection
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
-    internal CanvasSection(string? path, Control canvas, Action<string, string?> report)
+    public CanvasSection(EditorSetup setup, NodeEditor canvas, ReportLine report)
     {
-        this.path = path;
+        path = setup.CanvasSettingsPath;
         this.canvas = canvas;
-        this.report = report;
+        this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = CanvasSettings.Load(path);
 

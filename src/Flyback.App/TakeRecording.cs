@@ -75,10 +75,10 @@ internal sealed class TakeRecording
     private readonly Action<string, bool> report;
 
     /// <summary>
-    /// That what a take is may have changed, which the rest of the transport
-    /// follows: a take running takes Pause away, and finishing gives it back.
+    /// What a take is may have changed, which the rest of the transport follows: a
+    /// take running takes Pause away, and finishing gives it back.
     /// </summary>
-    private readonly Action marked;
+    public event EventHandler? Marked;
 
     /// <summary>Takes the patch back to zero seconds, which is where a counted-in take begins.</summary>
     private readonly Action rewind;
@@ -114,30 +114,26 @@ internal sealed class TakeRecording
     /// <summary>Set once the window has closed, after which nothing may be reported.</summary>
     private bool gone;
 
-    internal TakeRecording(
-        Button button,
-        ComboBox size,
+    public TakeRecording(
+        Toolbar toolbar,
+        OutputSections sections,
         PreviewHost preview,
         AudioEngine audio,
         Usage usage,
-        Func<Patch> patch,
-        Func<OutputSettings> settings,
-        Action<string, bool> report,
-        Action marked,
-        Action rewind,
-        Action syncAudio)
+        NodeEditor editor,
+        ReportLine report,
+        Playback playback)
     {
-        this.button = button;
-        this.size = size;
+        button = toolbar.Record;
+        size = sections.Resolution;
         this.preview = preview;
         this.audio = audio;
         this.usage = usage;
-        this.patch = patch;
-        this.settings = settings;
-        this.report = report;
-        this.marked = marked;
-        this.rewind = rewind;
-        this.syncAudio = syncAudio;
+        patch = () => editor.History.Patch;
+        settings = () => sections.Saved;
+        this.report = (message, progress) => report.Say(message, progress: progress);
+        rewind = playback.Rewind;
+        syncAudio = playback.SyncAudioToVolume;
     }
 
     /// <summary>Whether a take is running.</summary>
@@ -175,7 +171,7 @@ internal sealed class TakeRecording
             : kinds.Count > 0 ? RecordTip
             : NothingToRecord);
 
-        marked();
+        Marked?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

@@ -49,10 +49,9 @@ internal sealed class OutputSections
         "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
         "compare the two, or if a long session starts to look stepped.";
 
-    private readonly TopLevel owner;
+    private readonly Shell shell;
     private readonly PluginCatalog plugins;
-    private readonly Func<IReadOnlyList<PatchPreset>> presets;
-    private readonly Func<string, Task<string?>> pickStartupPatch;
+    private readonly Lazy<PresetSlot> presets;
 
     /// <summary>Size, preview rate, renderer, full screen and the startup patch.</summary>
     public StackPanel Graphics { get; } = new() { Spacing = 8, Width = 280 };
@@ -236,17 +235,21 @@ internal sealed class OutputSections
         TextWrapping = TextWrapping.Wrap,
     };
 
-    /// <param name="presets">The presets the startup patch is named from.</param>
-    /// <param name="pickStartupPatch">Picks a startup patch from the one showing, or null for none picked.</param>
-    public OutputSections(
-        Shell shell,
-        Func<IReadOnlyList<PatchPreset>> presets,
-        Func<string, Task<string?>> pickStartupPatch)
+    /// <summary>
+    /// What the sections were last saved as: what is in force, and what closing the
+    /// settings window without Save puts them back to.
+    /// </summary>
+    public OutputSettings Saved { get; set; } = new();
+
+    /// <param name="setup">Where the settings are kept.</param>
+    /// <param name="presets">The presets the startup patch is named and picked from.</param>
+    public OutputSections(Shell shell, EditorSetup setup, Lazy<PresetSlot> presets)
     {
-        owner = shell.Owner;
+        this.shell = shell;
         plugins = shell.Plugins;
         this.presets = presets;
-        this.pickStartupPatch = pickStartupPatch;
+
+        if (setup.OutputSettingsPath is { } path) Saved = OutputSettings.Load(path);
 
         BuildGraphics();
         BuildRecording();
@@ -464,7 +467,7 @@ internal sealed class OutputSections
 
         defaultPreset.Click += async (_, _) =>
         {
-            if (await pickStartupPatch(startupPatch) is { } chosen) ShowStartupPatch(chosen);
+            if (await presets.Value.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
         };
 
         ToolTip.SetTip(fullScreenOn,
@@ -590,7 +593,7 @@ internal sealed class OutputSections
     /// <summary>Asks where ffmpeg is, and looks at what was picked.</summary>
     private async Task PickFfmpegAsync()
     {
-        var file = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var file = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Find ffmpeg",
             AllowMultiple = false,
@@ -620,7 +623,7 @@ internal sealed class OutputSections
     /// </remarks>
     private void ShowStartupPatch(string chosen)
     {
-        var offered = presets();
+        var offered = presets.Value.Ordered();
 
         startupPatch = chosen.Length > 0 ? chosen : offered[PresetLibrary.Opening(offered, chosen)].Name;
         defaultPresetName.Text = startupPatch;
@@ -632,7 +635,7 @@ internal sealed class OutputSections
     /// </summary>
     private void ShowFullScreen(OutputSettings settings)
     {
-        var screens = owner.Screens?.All ?? [];
+        var screens = shell.Owner.Screens?.All ?? [];
 
         fullScreenMonitors = [.. screens.Select(s => MonitorPlacement.Describe(s)!)];
 

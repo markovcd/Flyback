@@ -25,15 +25,15 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class PatchFiles
 {
-    private readonly TopLevel owner;
+    private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly Usage usage;
     private readonly Func<AssistantPanel?> assistant;
-    private readonly Action<Patch> show;
-    private readonly Func<PatchLoad, Reopen?, Task> offerMissing;
+    private readonly Playback playback;
+    private readonly PluginInstalls installs;
 
     /// <summary>
     /// Whether this document is a bundle. What it decides is small and worth
@@ -54,22 +54,19 @@ internal sealed class PatchFiles
     /// <summary>What the patch names is measured from somewhere else now, so it has to be read again.</summary>
     public event EventHandler? Moved;
 
-    /// <param name="show">Puts a patch that has just been read on the canvas, from its beginning.</param>
-    /// <param name="offerMissing">Offers the plugins a patch that could not be opened is short of.</param>
-    public PatchFiles(
-        Shell shell,
-        Action<Patch> show,
-        Func<PatchLoad, Reopen?, Task> offerMissing)
+    /// <param name="playback">Puts a patch that has just been read on the canvas, from its beginning.</param>
+    /// <param name="installs">Offers the plugins a patch that could not be opened is short of.</param>
+    public PatchFiles(Shell shell, Playback playback, PluginInstalls installs)
     {
-        owner = shell.Owner;
+        this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
         plugins = shell.Plugins;
         report = shell.Report;
         usage = shell.Usage;
         assistant = () => shell.Assistant;
-        this.show = show;
-        this.offerMissing = offerMissing;
+        this.playback = playback;
+        this.installs = installs;
     }
 
     /// <summary>
@@ -210,7 +207,7 @@ internal sealed class PatchFiles
             Patterns = [.. PatchFileKinds.OpenKinds().SelectMany(o => o.Patterns ?? [])]
         };
 
-        var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var files = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open patch",
             AllowMultiple = false,
@@ -251,7 +248,7 @@ internal sealed class PatchFiles
             if (!loaded.IsComplete)
             {
                 report.Say($"Not opened. {loaded.Summary}", loaded.Detail);
-                await offerMissing(loaded, new Reopen(Path: file.TryGetLocalPath()));
+                await installs.OfferMissingAsync(loaded, new Reopen(Path: file.TryGetLocalPath()));
                 return;
             }
 
@@ -264,7 +261,7 @@ internal sealed class PatchFiles
             usage.Count(Used.Opened);
 
             // Whatever preset the list still showed is not this patch.
-            show(loaded.Patch);
+            playback.Show(loaded.Patch);
 
             // Whatever was said about this patch was kept beside it, if anything
             // was and the file is still what it was saved as — ADR-0072.
@@ -479,7 +476,7 @@ internal sealed class PatchFiles
             usage.Count(Used.Opened);
 
             // Whatever preset the list still showed is not this patch.
-            show(load.Patch);
+            playback.Show(load.Patch);
 
             // The text is the document now, and the canvas is a view of it —
             // ADR-0068. Said by opening on it, because somebody who opened a
@@ -535,7 +532,7 @@ internal sealed class PatchFiles
             if (bundle.Load is { IsComplete: false } lacking)
             {
                 report.Say($"Not opened. {lacking.Summary}", lacking.Detail);
-                await offerMissing(lacking, new Reopen(Path: file.TryGetLocalPath()));
+                await installs.OfferMissingAsync(lacking, new Reopen(Path: file.TryGetLocalPath()));
                 return;
             }
 
@@ -550,7 +547,7 @@ internal sealed class PatchFiles
             usage.Count(Used.Opened);
 
             // Whatever preset the list still showed is not this patch.
-            show(bundle.Patch);
+            playback.Show(bundle.Patch);
             document.DropSource();
 
             // A bundle carries its conversation inside it — ADR-0072.
@@ -568,7 +565,7 @@ internal sealed class PatchFiles
 
     /// <summary>Asks where to save, or null where the picker was canceled.</summary>
     public async Task<IStorageFile?> PickSaveAsync() =>
-        await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        await shell.Owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save patch",
             // What it is called now, or "patch" for one nobody has named — the

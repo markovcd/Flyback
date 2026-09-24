@@ -6,6 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -93,9 +94,11 @@ internal sealed class Toolbar
     public event EventHandler<bool>? Tidied;
 
     /// <param name="presets">The preset slot, first on the bar.</param>
-    /// <param name="assistants">Whether any assistant plugin is installed.</param>
-    public Toolbar(Control presets, bool assistants)
+    /// <param name="plugins">Whether any assistant plugin is installed.</param>
+    public Toolbar(PresetSlot presets, PluginCatalog plugins)
     {
+        var assistants = plugins.Assistants.Count > 0;
+
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it. The same for a patch with
         // no picture to swap in, and for Record grayed out during a take.
@@ -137,7 +140,7 @@ internal sealed class Toolbar
         // with the files, because it is an edit and is taken back like one.
         var patchwork = ToolbarButtons.Group();
 
-        patchwork.Children.Add(presets);
+        patchwork.Children.Add(presets.View);
         patchwork.Children.Add(Open);
         patchwork.Children.Add(Save);
         patchwork.Children.Add(ToolbarButtons.Separator());

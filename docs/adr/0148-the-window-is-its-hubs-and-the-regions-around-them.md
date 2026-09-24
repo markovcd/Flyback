@@ -54,10 +54,9 @@ What nearly every region reads (the window, the canvas, the document, the
 plugins, the report line, the usage counts and the assistant) is one `Shell`,
 built once and handed to each; a region takes anything else on its own.
 
-The wiring is written out in the window's constructor, with no container. Two
-pairs need each other (the take and the playback, the files and the playback),
-and a lazy `Func` or an event settles each where it is built; a container would
-need the same and move the order things are built in out of sight.
+The hubs, the regions and the window are composed in a container
+([0150](0150-the-editor-is-composed-in-a-container.md)). Two pairs need each other
+(the take and the playback, the files and the playback), and a `Lazy` settles each.
 
 ## Consequences
 

@@ -117,6 +117,7 @@ context, decision, consequences.
 | [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
 | [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
 | [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) | The window is its hubs and the regions around them *(user-directed)* |
+| [0150](0150-the-editor-is-composed-in-a-container.md) | The editor is composed in a container *(user-directed)* |
 | [0149](0149-compact-modules-share-rows-and-tip-their-values.md) | Compact modules share rows and put their values in the tooltip *(user-directed)* |
 
 ### Sound

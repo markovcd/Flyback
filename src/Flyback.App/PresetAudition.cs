@@ -3,6 +3,7 @@ using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
@@ -49,20 +50,22 @@ internal sealed class PresetAudition
     /// <summary>The preset's picture playing on its tile, while it is being tried.</summary>
     private PresetMotion? motion;
 
-    internal PresetAudition(
+    public PresetAudition(
         AudioEngine audio,
         IlCompiler compiler,
-        ModuleCatalog modules,
+        PluginCatalog plugins,
         PresetLibrary? saved,
-        Func<bool> audible,
-        Action syncAudio)
+        Playback playback,
+        Lazy<TakeRecording> recording)
     {
         this.audio = audio;
         this.compiler = compiler;
-        this.modules = modules;
+        modules = plugins.Modules;
         this.saved = saved;
-        this.audible = audible;
-        this.syncAudio = syncAudio;
+
+        // A take records what the speakers play, and a preset tried on the way past is not part of it.
+        audible = () => playback.CanSound && !recording.Value.Running;
+        syncAudio = playback.SyncAudioToVolume;
     }
 
     /// <summary>

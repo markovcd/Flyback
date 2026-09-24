@@ -31,7 +31,7 @@ public class SavedPresetTests : UiTest
 
     private MainWindow Open()
     {
-        var window = Owned(new MainWindow(new EditorSetup { PresetFolder = folder }));
+        var window = NewMainWindow(new EditorSetup { PresetFolder = folder });
 
         window.Show();
         window.UpdateLayout();

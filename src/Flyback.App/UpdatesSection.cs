@@ -30,10 +30,10 @@ internal sealed class UpdatesSection
 
     private readonly Action<string, string?> report;
 
-    internal UpdatesSection(string? path, Action<string, string?> report)
+    public UpdatesSection(EditorSetup setup, ReportLine report)
     {
-        this.path = path;
-        this.report = report;
+        path = setup.UpdateSettingsPath;
+        this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = UpdateSettings.Load(path);
 
