@@ -96,7 +96,9 @@ internal static class Restart
 
         if (at < 0 || at + 1 >= args.Length) return args;
 
-        if (int.TryParse(args[at + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var id))
+        // Positive, since no process has id 0: on Unix it names the caller's own
+        // process group, which would read as alive for the whole wait.
+        if (int.TryParse(args[at + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id > 0)
         {
             try
             {
