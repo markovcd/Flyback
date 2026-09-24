@@ -53,6 +53,9 @@ public sealed partial class NodeEditor
 
                 if (Math.Abs(graph.Y - center.Y) > NodeGeometry.RowHeight / 2) continue;
 
+                // A shared row's right half is its output's.
+                if (NodeGeometry.Compact && graph.X >= NodeGeometry.Bounds(node, def).Center.X) break;
+
                 (nodeId, port) = (node.Id, i);
                 return true;
             }
@@ -87,13 +90,21 @@ public sealed partial class NodeEditor
         DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
         bool connected, bool follow, Func<double, double, double, IBrush, IBrush> ink)
     {
-        if (LinkingControl is { } linking && !connected && Linkable(port))
-        {
-            var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight);
-            context.FillRectangle(ControlMap.Of(node, index)?.Control == linking ? LinkedWash : LinkableWash, row);
-        }
+        DrawLinkWash(context, node, port, index, bounds, center, connected);
 
         return !connected && DrawLinkedValue(context, node, port, index, bounds, center, follow, ink);
+    }
+
+    /// <summary>Tints an input's row while linking: its half of a shared row on a compact module.</summary>
+    private void DrawLinkWash(
+        DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center, bool connected)
+    {
+        if (LinkingControl is not { } linking || connected || !Linkable(port)) return;
+
+        var width = NodeGeometry.Compact ? bounds.Width / 2 : bounds.Width;
+        var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, width, NodeGeometry.RowHeight);
+
+        context.FillRectangle(ControlMap.Of(node, index)?.Control == linking ? LinkedWash : LinkableWash, row);
     }
 
     /// <summary>A linked socket's value in the knob's color, and whether there was one to draw.</summary>

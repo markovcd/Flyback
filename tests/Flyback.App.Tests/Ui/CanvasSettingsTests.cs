@@ -41,6 +41,7 @@ public sealed class CanvasSettingsTests : UiTest
         // A setting of the running program, not of the window — see ModuleSkins.
         ModuleSkins.Honored = true;
         ModuleSkins.Animated = true;
+        NodeGeometry.Compact = false;
     }
 
     private MainWindow Open(string? settingsPath = null)
@@ -89,6 +90,9 @@ public sealed class CanvasSettingsTests : UiTest
     private static CheckBox Animation(ModalOverlay dialog) =>
         All<CheckBox>(dialog).Single(c => c.Name == "animateSkins");
 
+    private static CheckBox Compact(ModalOverlay dialog) =>
+        All<CheckBox>(dialog).Single(c => c.Name == "compactModules");
+
     [AvaloniaFact]
     public void A_plugin_paints_its_own_modules_until_switched_off()
     {
@@ -96,6 +100,25 @@ public sealed class CanvasSettingsTests : UiTest
 
         Skins(dialog).IsChecked.ShouldBe(true);
         Animation(dialog).IsChecked.ShouldBe(true);
+        Compact(dialog).IsChecked.ShouldBe(false);
+    }
+
+    [AvaloniaFact]
+    public void Switching_compact_modules_on_puts_inputs_beside_outputs()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+        var filter = NodeCatalog.Require(NodeCatalog.FilterTypeId);
+        var node = NodeInstance.Create(filter, 0, 0);
+
+        Compact(dialog).IsChecked = true;
+        Close(window, dialog, "Save");
+
+        NodeGeometry.Compact.ShouldBeTrue();
+        NodeGeometry.InputPort(node, filter, 0).Y.ShouldBe(NodeGeometry.OutputPort(node, 0).Y);
+        CanvasSettings.Load(settingsPath).CompactModules.ShouldBeTrue();
+
+        Compact(OpenSettings(Open(settingsPath))).IsChecked.ShouldBe(true);
     }
 
     /// <summary>

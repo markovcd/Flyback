@@ -48,6 +48,12 @@ public static class PatchLayout
         double GroupHandleHeight)
     {
         /// <summary>
+        /// Whether an input and the output of the same index share a row, as the canvas's
+        /// compact modules draw them, rather than every output above every input.
+        /// </summary>
+        public bool SharedRows { get; init; }
+
+        /// <summary>
         /// The editor's own numbers, for a caller that has no editor. Pinned to
         /// the real ones by a test rather than by a reference, because the shape
         /// of a node is the view's to decide and the engine should not be asking.
@@ -55,25 +61,27 @@ public static class PatchLayout
         public static Metrics Default => new(196d, 26d, 20d, 8d, 108d, 40d, 24d, 20d);
 
         public double Height(NodeDef def) =>
-            HeaderHeight + (def.Inputs.Count + def.Outputs.Count) * RowHeight + FooterPadding;
+            HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
+
+        private int Rows(int inputs, int outputs) => SharedRows ? Math.Max(inputs, outputs) : inputs + outputs;
 
         /// <summary>How far below a node's top edge one of its output sockets sits.</summary>
         public double OutputPort(int index) => HeaderHeight + (index + 0.5d) * RowHeight;
 
-        /// <summary>The same for an input, which is below every output — the Blender order.</summary>
+        /// <summary>The same for an input: below every output in the Blender order, or beside its output on a shared row.</summary>
         public double InputPort(NodeDef def, int index) =>
-            HeaderHeight + (def.Outputs.Count + index + 0.5d) * RowHeight;
+            HeaderHeight + ((SharedRows ? index : def.Outputs.Count + index) + 0.5d) * RowHeight;
 
         /// <summary>
-        /// How tall the box of a collapsed group is: a header, a row for every
-        /// socket on its edge, and a floor to stand on whatever crosses it.
+        /// How tall the box of a collapsed group is: a header, its socket rows,
+        /// and a floor to stand on whatever crosses it.
         /// </summary>
         public double GroupHeight(GroupSockets sockets) =>
-            HeaderHeight + Math.Max(sockets.Rows, 1) * RowHeight + FooterPadding;
+            HeaderHeight + Math.Max(Rows(sockets.Inputs.Count, sockets.Outputs.Count), 1) * RowHeight + FooterPadding;
 
         /// <summary>How far below that box's top edge one of its socket rows sits.</summary>
         public double GroupPort(GroupSockets sockets, int row, bool isOutput) =>
-            HeaderHeight + ((isOutput ? row : sockets.Outputs.Count + row) + 0.5d) * RowHeight;
+            HeaderHeight + ((isOutput || SharedRows ? row : sockets.Outputs.Count + row) + 0.5d) * RowHeight;
     }
 
     /// <summary>

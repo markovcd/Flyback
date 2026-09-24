@@ -513,12 +513,13 @@ public sealed partial class NodeEditor
         if (Scene.Named(socket) is not var (label, spec)) return;
 
         // An unwired input shows what it rests at, as the module's own row does.
-        var resting = !socket.IsOutput
+        var resting = !NodeGeometry.Compact
+            && !socket.IsOutput
             && patch.IncomingTo(socket.Node, socket.Port) is null
             && patch.Find(socket.Node) is { } node
             && DrawRestingOf(context, node, spec, socket.Port, bounds, center);
 
-        var width = resting ? bounds.Width * 0.55 : bounds.Width - SocketLabelRoom;
+        var width = BoxLabelRoom(bounds, resting);
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
         context.DrawText(
@@ -545,4 +546,8 @@ public sealed partial class NodeEditor
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>
     private const double SocketLabelRoom = 26;
+
+    /// <summary>How wide a box socket's label may be drawn: beside its value, on half a shared row, or across the box.</summary>
+    private static double BoxLabelRoom(Rect bounds, bool resting) =>
+        resting ? bounds.Width * 0.55 : NodeGeometry.Compact ? HalfRow(bounds) : bounds.Width - SocketLabelRoom;
 }

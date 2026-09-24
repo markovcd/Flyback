@@ -67,3 +67,8 @@ handles length changes but not reordering. And there is no way to give a color
 port a default: `PortSpec.Default` is a single float, so an unwired color input
 compiles to a broadcast grey. In practice color inputs are essentially always
 patched, so this has not bitten.
+
+## Amendment, 2026-09-24: compact modules
+
+With Settings → Canvas → Compact modules on, an input's value is in its tooltip rather than on its row; see
+[0149](0149-compact-modules-share-rows-and-tip-their-values.md).

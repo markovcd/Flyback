@@ -31,7 +31,7 @@ context, decision, consequences.
 | [0006](0006-scalar-interpreter-parallel-over-rows.md) | Scalar interpreter parallelised over rows, not SIMD |
 | [0007](0007-register-slots-with-scalar-broadcast.md) | Values are register slots; scalars broadcast to colors |
 | [0008](0008-modules-as-data-in-one-catalogue.md) | Modules are data in a single catalogue |
-| [0009](0009-editable-defaults-on-every-input.md) | Every input port carries an editable default *(color ports and Output's `left` exempted by [0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md))* |
+| [0009](0009-editable-defaults-on-every-input.md) | Every input port carries an editable default *(color ports and Output's `left` exempted by [0084](0084-a-socket-with-nothing-to-dial-gets-no-knob.md); values moved to the tooltip on compact modules by [0149](0149-compact-modules-share-rows-and-tip-their-values.md))* |
 | [0010](0010-any-typed-ports-for-polymorphic-maths.md) | `Any`-typed ports make maths modules polymorphic |
 | [0011](0011-compile-backwards-from-output.md) | Compile backwards from the Output node *(unread ops inside a reached module swept by [0096](0096-an-op-nothing-reads-is-left-out.md))* |
 | [0012](0012-feedback-as-a-module-not-a-cycle.md) | Feedback is an explicit module, not a graph cycle *(cycles superseded by [0075](0075-a-cycle-carries-its-own-delay.md))* |
@@ -117,6 +117,7 @@ context, decision, consequences.
 | [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
 | [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
 | [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) | The window is its hubs and the regions around them *(user-directed)* |
+| [0149](0149-compact-modules-share-rows-and-tip-their-values.md) | Compact modules share rows and put their values in the tooltip *(user-directed)* |
 
 ### Sound
 

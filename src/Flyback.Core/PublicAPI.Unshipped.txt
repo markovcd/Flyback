@@ -152,3 +152,6 @@ Flyback.Core.Graph.PortSpec.Standard.init -> void
 static Flyback.Core.Graph.SocketHelp.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Flyback.Core.Graph.SocketHelp.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 Flyback.Core.Graph.Patch.Exposable(Flyback.Core.Graph.NodeGroup! group, Flyback.Core.Graph.GroupSocket socket) -> bool
+
+Flyback.Core.Graph.PatchLayout.Metrics.SharedRows.get -> bool
+Flyback.Core.Graph.PatchLayout.Metrics.SharedRows.init -> void

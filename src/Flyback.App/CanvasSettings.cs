@@ -39,6 +39,12 @@ public sealed class CanvasSettings
     /// </remarks>
     public bool AnimateSkins { get; set; } = true;
 
+    /// <summary>
+    /// Whether modules are drawn compact: an input and an output share each row, and
+    /// a knob's value is in its socket's tooltip rather than on the row.
+    /// </summary>
+    public bool CompactModules { get; set; }
+
     /// <summary>The text editor's font size, set by Ctrl+scroll over it.</summary>
     public double EditorFontSize { get; set; } = DefaultEditorFontSize;
 

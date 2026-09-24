@@ -18,18 +18,29 @@ internal static class NodeGeometry
     public const double HitPadding = 5;
     public const double CornerRadius = 6;
 
-    /// <summary>Outputs are listed first, then inputs — the Blender convention.</summary>
+    /// <summary>
+    /// Whether modules are drawn compact: an input and the output of the same index
+    /// share a row and knob values move to the socket's tooltip. Otherwise outputs
+    /// are listed first, then inputs, the Blender convention. Set from Settings, Canvas.
+    /// </summary>
+    public static bool Compact { get; set; }
+
+    private static int Rows(int inputs, int outputs) => Compact ? Math.Max(inputs, outputs) : inputs + outputs;
+
     public static double Height(NodeDef def) =>
-        HeaderHeight + (def.Inputs.Count + def.Outputs.Count) * RowHeight + FooterPadding;
+        HeaderHeight + Rows(def.Inputs.Count, def.Outputs.Count) * RowHeight + FooterPadding;
 
     public static Rect Bounds(NodeInstance node, NodeDef def) =>
         new(node.X, node.Y, Width, Height(def));
 
+    /// <summary>The middle of row <paramref name="index"/>, measured from the top of the module.</summary>
+    public static double Row(int index) => HeaderHeight + (index + 0.5) * RowHeight;
+
     public static Point OutputPort(NodeInstance node, int index) =>
-        new(node.X + Width, node.Y + HeaderHeight + (index + 0.5) * RowHeight);
+        new(node.X + Width, node.Y + Row(index));
 
     public static Point InputPort(NodeInstance node, NodeDef def, int index) =>
-        new(node.X, node.Y + HeaderHeight + (def.Outputs.Count + index + 0.5) * RowHeight);
+        new(node.X, node.Y + Row(Compact ? index : def.Outputs.Count + index));
 
     // --- a collapsed group ---------------------------------------------------
     //
@@ -43,7 +54,7 @@ internal static class NodeGeometry
     /// boundary — a group nothing is wired into or out of is still a box.
     /// </summary>
     public static double GroupHeight(GroupSockets sockets) =>
-        HeaderHeight + Math.Max(sockets.Rows, 1) * RowHeight + FooterPadding;
+        HeaderHeight + Math.Max(Rows(sockets.Inputs.Count, sockets.Outputs.Count), 1) * RowHeight + FooterPadding;
 
     /// <summary>
     /// Where the box sits: the top left of the modules it stands for.
@@ -76,11 +87,10 @@ internal static class NodeGeometry
         return new Rect(x, y, Width, GroupHeight(sockets));
     }
 
-    public static Point GroupOutputPort(Rect bounds, int index) =>
-        new(bounds.Right, bounds.Y + HeaderHeight + (index + 0.5) * RowHeight);
+    public static Point GroupOutputPort(Rect bounds, int index) => new(bounds.Right, bounds.Y + Row(index));
 
     public static Point GroupInputPort(Rect bounds, GroupSockets sockets, int index) =>
-        new(bounds.X, bounds.Y + HeaderHeight + (sockets.Outputs.Count + index + 0.5) * RowHeight);
+        new(bounds.X, bounds.Y + Row(Compact ? index : sockets.Outputs.Count + index));
 
     // --- an open group -------------------------------------------------------
     //
@@ -112,5 +122,5 @@ internal static class NodeGeometry
         ColumnGap: 108,
         RowGap: 40,
         GroupPadding,
-        GroupHandleHeight);
+        GroupHandleHeight) { SharedRows = Compact };
 }

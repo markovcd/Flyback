@@ -55,7 +55,8 @@ public sealed partial class NodeEditor
             && (isOutput ? ownerDef.Outputs : ownerDef.Inputs) is var ports
             && portIndex >= 0 && portIndex < ports.Count)
         {
-            return ((portNode, portIndex, isOutput), ports[portIndex].Help);
+            var said = SocketTip(owner, ownerDef, portIndex, isOutput);
+            return ((portNode, portIndex, isOutput, said), said);
         }
 
         // A box's socket row, by the half of the box its label is drawn in.
@@ -65,18 +66,16 @@ public sealed partial class NodeEditor
 
             for (var p = 0; p < sockets.Outputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupOutputPort(bounds, p), graph, bounds, left: false)
-                    && Scene.Named(sockets.Outputs[p]) is var (label, _)
-                    && CanvasText.Overflows(label, CanvasText.RowSize, bounds.Width - SocketLabelRoom))
+                    && BoxRowTip(sockets.Outputs[p], bounds) is { } said)
                 {
-                    return (sockets.Outputs[p], label);
+                    return ((sockets.Outputs[p], said), said);
                 }
 
             for (var p = 0; p < sockets.Inputs.Count; p++)
                 if (OnRow(NodeGeometry.GroupInputPort(bounds, sockets, p), graph, bounds, left: true)
-                    && Scene.Named(sockets.Inputs[p]) is var (label, _)
-                    && CanvasText.Overflows(label, CanvasText.RowSize, bounds.Width - SocketLabelRoom))
+                    && BoxRowTip(sockets.Inputs[p], bounds) is { } said)
                 {
-                    return (sockets.Inputs[p], label);
+                    return ((sockets.Inputs[p], said), said);
                 }
 
             return (null, null);
@@ -101,9 +100,28 @@ public sealed partial class NodeEditor
             {
                 return ((node.Id, "formula"), formula);
             }
+
+            if (SocketTips.RowAt(graph, bounds, def, out var row, out var output) && SocketTip(node, def, row, output) is { } said)
+                return ((node.Id, row, output, said), said);
         }
 
         return (null, null);
+    }
+
+    /// <summary>
+    /// A box socket row's tooltip: its label where that is drawn cut short, and on a
+    /// compact box what an input rests at.
+    /// </summary>
+    private string? BoxRowTip(GroupSocket socket, Rect bounds)
+    {
+        if (Scene.Named(socket) is not var (label, spec)) return null;
+
+        var cut = CanvasText.Overflows(label, CanvasText.RowSize, BoxLabelRoom(bounds, resting: false)) ? label : null;
+        var resting = NodeGeometry.Compact && !socket.IsOutput && patch.Find(socket.Node) is { } node
+            ? SocketTips.Resting(patch, node, spec, socket.Port)
+            : null;
+
+        return SocketTips.Lines(cut, resting);
     }
 
     private static bool OnRow(Point port, Point graph, Rect bounds, bool left) =>

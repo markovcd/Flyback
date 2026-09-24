@@ -490,7 +490,8 @@ public sealed partial class NodeEditor
         {
             var port = def.Outputs[i];
             var center = NodeGeometry.OutputPort(node, i);
-            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width - 24, true);
+            var room = NodeGeometry.Compact ? HalfRow(bounds) : bounds.Width - 24;
+            var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
 
             context.DrawText(label, new Point(bounds.Right - 14 - label.Width, center.Y - label.Height / 2));
             NodeSkin.DrawPort(context, center, port.Kind);
@@ -501,6 +502,12 @@ public sealed partial class NodeEditor
             var port = def.Inputs[i];
             var center = NodeGeometry.InputPort(node, def, i);
             var connected = patch.IncomingTo(node.Id, i) is not null;
+
+            if (NodeGeometry.Compact)
+            {
+                DrawCompactInput(context, node, port, i, bounds, center, connected, follow, spans, Ink);
+                continue;
+            }
 
             var linked = DrawLinkedRow(context, node, port, i, bounds, center, connected, follow, Ink);
 
@@ -541,7 +548,7 @@ public sealed partial class NodeEditor
 
         if (i >= node.InputValues.Length || (formula is not null && !FormulaLayout.Reads(formula, i))) return false;
 
-        var (said, flagged) = RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
+        var (said, flagged) = SocketTips.RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
         var value = CanvasText.Text(
             said,
             CanvasText.RowSize,
@@ -560,17 +567,4 @@ public sealed partial class NodeEditor
 
     private static readonly IBrush FlagBrush = new SolidColorBrush(Colors.Attention);
     private static readonly Pen FlagPen = new(FlagBrush, 1);
-
-    /// <summary>
-    /// What an Auto remap's range knob comes to at the far end of its wire, or, flagged,
-    /// its plain number where that end has no range; null for every other socket.
-    /// </summary>
-    private static (string, bool)? RemapValue(RemapSpans? spans, int port, float value)
-    {
-        if (spans is null || port == AutoRemap.In) return null;
-
-        return (port is AutoRemap.InLow or AutoRemap.InHigh ? spans.In : spans.Out) is { } span
-            ? (span.Format(value), false)
-            : (value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture), true);
-    }
 }

@@ -67,7 +67,7 @@ internal static class FormulaLayout
 
     /// <summary>
     /// How much of the right of the body the formula keeps clear of: the output's
-    /// name, and the value of each knob the formula reads.
+    /// name, and the value of each knob the formula reads unless modules are compact.
     /// </summary>
     private static double Reserve(Patch patch, NodeInstance node, NodeDef def, Rect bounds, string formula)
     {
@@ -75,6 +75,8 @@ internal static class FormulaLayout
 
         foreach (var port in def.Outputs)
             reserve = Math.Max(reserve, CanvasText.Text(port.Name, CanvasText.RowSize, CanvasText.LabelBrush, bounds.Width - 24, true).Width + 22);
+
+        if (NodeGeometry.Compact) return reserve;
 
         for (var i = 0; i < def.Inputs.Count && i < node.InputValues.Length; i++)
         {
