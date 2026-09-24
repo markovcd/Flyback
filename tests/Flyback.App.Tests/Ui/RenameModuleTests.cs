@@ -1,9 +1,12 @@
-﻿using Avalonia;
+﻿using System.Reflection;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -129,6 +132,46 @@ public class RenameModuleTests : UiTest
         var box = Box(window).ShouldNotBeNull("the title should have become a box");
         box.Text.ShouldBeNullOrEmpty();
         box.PlaceholderText.ShouldBe("Sine");
+    }
+
+    /// <summary>
+    /// The caret is where the text is: at the right edge of an empty box, and
+    /// after the last letter of a typed one, since the name is set flush right.
+    /// </summary>
+    /// <remarks>
+    /// Read from the points the presenter draws the caret between, which is the
+    /// thing that went wrong: its caret rectangle, asked for directly, measures
+    /// itself again and comes back right.
+    /// </remarks>
+    [AvaloniaFact]
+    public void The_caret_stands_at_the_right_edge_with_the_name()
+    {
+        var window = Open(out _);
+
+        DoubleClickTitle(window);
+        var box = Box(window).ShouldNotBeNull("the title should have become a box");
+
+        Caret(box).ShouldBeGreaterThan(box.Bounds.Width - 2, "an empty box's caret stands at its right edge");
+
+        Type(window, "Wobble");
+        box.CaretIndex = box.Text!.Length;
+        Settle(window);
+
+        Caret(box).ShouldBeGreaterThan(box.Bounds.Width - 2, "the caret follows the last letter");
+    }
+
+    /// <summary>Where the presenter draws the caret, across the box.</summary>
+    private static double Caret(TextBox box)
+    {
+        var presenter = box.GetVisualDescendants().OfType<TextPresenter>().Single();
+
+        var points = typeof(TextPresenter)
+            .GetMethod("GetCaretPoints", BindingFlags.Instance | BindingFlags.NonPublic)
+            .ShouldNotBeNull("Avalonia no longer has the method its render draws the caret from")
+            .Invoke(presenter, null)
+            .ShouldBeOfType<(Point, Point)>();
+
+        return presenter.TranslatePoint(points.Item1, box).ShouldNotBeNull().X;
     }
 
     [AvaloniaFact]

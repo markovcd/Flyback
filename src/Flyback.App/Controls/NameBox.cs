@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 
@@ -75,6 +76,11 @@ internal static class NameBox
             MinHeight = 0,
             Classes = { ModulePlate.NameBoxClass },
         };
+
+        // A name fits the panel, so the box never scrolls sideways. Scrolling would
+        // measure the text at infinite width, and Avalonia then draws a right-aligned
+        // caret at the left edge while the text sits at the right.
+        ScrollViewer.SetHorizontalScrollBarVisibility(box, ScrollBarVisibility.Disabled);
 
         // Enter takes the focus off the box as it closes it, which would bring
         // the focus handler round a second time. Every way out goes through the

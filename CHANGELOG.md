@@ -75,6 +75,7 @@
 - Noise read off a fast clock no longer sticks at full level after a day or more of playing.
 - A picture drawn on the graphics card no longer stutters after hours or days of playing.
 - Fracture lights the same squares on the graphics card as on the processor.
+- Renaming a module or a group in the panel puts the caret beside the name rather than at the panel's left edge.
 
 ## 0.4.0 — 2026-09-21
 
