@@ -28,6 +28,9 @@ public sealed partial class MainWindow
 
         playback.TransportChanged += (_, _) => SyncTransport();
 
+        // A patch saved somewhere new reads what it names from there.
+        files.Moved += (_, _) => playback.Recompile();
+
         // The patch is playing, which is the moment what is in it is worth
         // counting (ADR-0094). Not at a compile: a patch is recompiled on every
         // knob frame, and what it is made of is only interesting where somebody

@@ -20,12 +20,12 @@ public sealed partial class MainWindow
 
     /// <summary>The document as a crash would lose it, or null while there is nothing to lose.</summary>
     private RecoveredWork? Work() => !SomethingToLose ? null : new(
-        patchName,
-        soundFolder.Beside,
+        files.Name,
+        files.SoundFolder.Beside,
         PatchIO.ToJson(editor.Patch),
         document.Owned ? document.Text : null,
         assistant?.ConversationToSave(),
-        carried?.Bytes);
+        files.Carried?.Bytes);
 
     /// <summary>
     /// Puts work a crash left behind back on the canvas, as the document it was and
@@ -45,10 +45,10 @@ public sealed partial class MainWindow
             return false;
         }
 
-        Became(
+        files.Became(
             work.Name,
             work.Beside,
-            work.Files is { } files ? new BundleFiles(files, soundFolder, pictureFolder) : null);
+            work.Files is { } held ? new BundleFiles(held, files.SoundFolder, files.PictureFolder) : null);
 
         ClearPresetSelection();
 

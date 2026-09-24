@@ -69,38 +69,9 @@ public sealed partial class MainWindow : Window
     /// <summary>Which of the canvas and the text owns the patch.</summary>
     private readonly Document document;
 
-    /// <summary>
-    /// The sound files the patch names, read once each and kept. Owned by the
-    /// window because it is the window that knows where the patch was opened
-    /// from, and handed to every compile from here.
-    /// </summary>
-    private readonly SampleLibrary soundFolder = new();
+    /// <summary>Which file the patch is, and opening and saving it.</summary>
+    private readonly PatchFiles files;
 
-    /// <summary>The pictures a patch shows, cached the way its sounds are.</summary>
-    private readonly ImageLibrary pictureFolder = new();
-
-    /// <summary>
-    /// The files a bundle carries, while one is open, and null while the document
-    /// is a loose patch backed by a folder.
-    /// </summary>
-    /// <remarks>
-    /// Held rather than unpacked, which is what makes a bundle a document here
-    /// rather than an archive to spill onto a disk first: nothing is written
-    /// anywhere until they save. It costs one copy of the compressed bytes and
-    /// costs the undo history nothing — the history is snapshots of the patch, and
-    /// the patch is paths (ADR-0052).
-    /// </remarks>
-    private BundleFiles? carried;
-
-    /// <summary>
-    /// Where a sound is looked for: the bundle first while one is open, and the
-    /// folder behind it — because a module pointed at a file on this machine
-    /// while a bundle is open means the file on this machine.
-    /// </summary>
-    private ISampleLibrary Sounds => carried ?? (ISampleLibrary)soundFolder;
-
-    /// <inheritdoc cref="Sounds"/>
-    private IImageLibrary Pictures => carried ?? (IImageLibrary)pictureFolder;
     private readonly PreviewHost preview = new();
 
     /// <summary>
@@ -418,7 +389,23 @@ public sealed partial class MainWindow : Window
             () => outputSettings.Keyboard,
             groupFolder);
 
-        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, soundFolder, pictureFolder, () => palette.Groups, palette.SaveGroup);
+
+        files = new PatchFiles(
+            this,
+            editor,
+            document,
+            plugins,
+            report,
+            this.usage,
+            () => assistant,
+            Show,
+            OfferMissingPluginsAsync);
+
+        // Where the last document's knobs were left says nothing about this one's.
+        files.Arrived += (_, _) => knobs.Hub.Forget();
+        files.Saved += (_, _) => ClearPresetSelection();
+
+        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, files.SoundFolder, files.PictureFolder, () => palette.Groups, palette.SaveGroup);
 
         playback = new Playback(
             editor,
@@ -429,8 +416,8 @@ public sealed partial class MainWindow : Window
             report,
             plugins,
             sound,
-            () => Sounds,
-            () => Pictures,
+            () => files.Sounds,
+            () => files.Pictures,
             // The take is made next, and needs the playback to make it.
             () => Recording is { Running: true },
             () => assistant?.Summary);
@@ -657,8 +644,8 @@ public sealed partial class MainWindow : Window
             // thing Report takes is about how a line ages in the log and the
             // panel has no business knowing there is one.
             (message, detail) => Report(message, detail),
-            samples: Sounds,
-            pictures: Pictures,
+            samples: files.Sounds,
+            pictures: files.Pictures,
             asked: usage.Assistant,
             presets: () => OrderedPresets())
         {

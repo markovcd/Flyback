@@ -1,6 +1,6 @@
 # ADR-0039: One window class, across a file per region
 
-**Status:** Superseded by [0148](0148-the-window-is-two-hubs-and-the-regions-around-them.md) · accepted 2026-08-18 · amended 2026-09-09, where a region grows past the size this promised and the fix is a shared row rather than another file; amended 2026-09-21, where the pieces that need nothing of the window become classes
+**Status:** Superseded by [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) · accepted 2026-08-18 · amended 2026-09-09, where a region grows past the size this promised and the fix is a shared row rather than another file; amended 2026-09-21, where the pieces that need nothing of the window become classes
 
 ## Context
 

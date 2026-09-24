@@ -39,17 +39,17 @@ public sealed partial class MainWindow
         {
             var bundle = saved.Open(plugins.Modules);
 
-            Became(
+            files.Became(
                 preset.Name,
                 beside: null,
-                bundle.Files.Count > 0 ? new BundleFiles(bundle.Files, soundFolder, pictureFolder) : null);
+                bundle.Files.Count > 0 ? new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder) : null);
 
             return bundle.Patch;
         }
 
         var built = preset.Build(plugins.Modules);
 
-        Became(preset.Name, beside: null);
+        files.Became(preset.Name, beside: null);
 
         return built;
     }
@@ -90,7 +90,7 @@ public sealed partial class MainWindow
 
         try
         {
-            var kept = savedPresets.Save(name, editor.Patch, Bytes, plugins.Modules);
+            var kept = savedPresets.Save(name, editor.Patch, files.Bytes, plugins.Modules);
 
             RefreshPresetList();
 

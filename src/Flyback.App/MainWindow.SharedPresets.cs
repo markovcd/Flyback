@@ -84,7 +84,7 @@ public sealed partial class MainWindow
                     return;
                 }
 
-                Became(shared.Name, beside: null, new BundleFiles(bundle.Files, soundFolder, pictureFolder));
+                files.Became(shared.Name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder));
                 patch = bundle.Patch;
                 conversation = bundle.Conversation;
             }
@@ -99,7 +99,7 @@ public sealed partial class MainWindow
                     return;
                 }
 
-                Became(shared.Name, beside: null);
+                files.Became(shared.Name, beside: null);
                 patch = loaded.Patch;
             }
 

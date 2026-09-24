@@ -25,25 +25,6 @@ public sealed partial class MainWindow
     private const string BaseTitle = GlobalConstants.ApplicationName;
 
     /// <summary>
-    /// What the patch on the canvas is called, or null for one with no name of its
-    /// own yet.
-    /// </summary>
-    /// <remarks>
-    /// The file it was opened from or last written to, or the preset it was built
-    /// from. Kept rather than worked out, because after a Save As there is no other
-    /// record of which file on the disk is the one on screen. Without the
-    /// extension, because a preset has none — and a picker adds one itself.
-    /// </remarks>
-    private string? patchName;
-
-    /// <summary>
-    /// Whether this document is a bundle. What it decides is small and worth
-    /// having: which kind the save dialog offers first, so that a bundle saved
-    /// again stays one without anybody typing an extension.
-    /// </summary>
-    private bool bundled;
-
-    /// <summary>
     /// Set once the question about unsaved work has been asked and answered, so
     /// the second Close does not ask it again. A close has to be canceled to
     /// put a dialog up at all — nothing may block inside OnClosing — so the way
@@ -544,7 +525,7 @@ public sealed partial class MainWindow
         // The name first and the program second, which is the way round every
         // other window on the machine says it: what is on screen is the patch,
         // and which program is drawing it is the thing already known.
-        var named = patchName is null ? BaseTitle : $"{patchName} — {BaseTitle}";
+        var named = files.Name is null ? BaseTitle : $"{files.Name} — {BaseTitle}";
 
         // A dot rather than the word, because the title bar is read at a glance
         // and the question it answers is only whether there is anything to lose.

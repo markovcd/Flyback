@@ -50,7 +50,7 @@ public sealed partial class MainWindow
         {
             Title = "Record",
             FileTypeChoices = kinds,
-            SuggestedFileName = Takes.FileNameFor(patchName),
+            SuggestedFileName = Takes.FileNameFor(files.Name),
             DefaultExtension = kinds[0].Patterns?[0].TrimStart('*', '.'),
         });
 
