@@ -64,9 +64,11 @@ internal static class Program
         };
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
+        var exports = ExportDefaults.Load(ExportDefaults.PathIn(args) ?? ExportDefaults.File);
+
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
-            Render(plugins, patch),
+            Render(plugins, patch, exports),
             Check(plugins, patch, json),
             Info(plugins, patch, json),
             Print(plugins, patch),
@@ -250,7 +252,7 @@ internal static class Program
         return command;
     }
 
-    private static Command Render(Plugins plugins, Argument<FileInfo> patch)
+    private static Command Render(Plugins plugins, Argument<FileInfo> patch, ExportDefaults defaults)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -263,7 +265,7 @@ internal static class Program
         var size = new Option<(int Width, int Height)>("--size")
         {
             Description = "Frame size, as WIDTHxHEIGHT.",
-            DefaultValueFactory = _ => (1920, 1080),
+            DefaultValueFactory = _ => (defaults.Width, defaults.Height),
             CustomParser = Size,
         };
 
@@ -281,14 +283,14 @@ internal static class Program
         var fps = new Option<double>("--fps")
         {
             Description = "Frames a second, for a clip.",
-            DefaultValueFactory = _ => MovieRenderer.DefaultFrameRate,
+            DefaultValueFactory = _ => defaults.Fps,
         };
 
         var quality = new Option<int>("--quality")
         {
             Description = "How good the picture is, 1 to 100 — a JPEG quality in an AVI, "
                 + "and a rate factor everywhere else.",
-            DefaultValueFactory = _ => JpegWriter.DefaultQuality,
+            DefaultValueFactory = _ => defaults.Quality,
         };
 
         var format = new Option<string>("--format")
@@ -301,8 +303,14 @@ internal static class Program
 
         var ffmpeg = new Option<string>("--ffmpeg")
         {
-            Description = $"The ffmpeg to encode with. Left out, the first on PATH is used, and "
-                + $"only {ClipFormats.MotionJpegAvi.Id} and {ClipFormats.Wav.Id} need none at all.",
+            Description = $"The ffmpeg to encode with. Left out, the one the editor's settings name, or else "
+                + $"the first on PATH; only {ClipFormats.MotionJpegAvi.Id} and {ClipFormats.Wav.Id} need none at all.",
+        };
+
+        var settings = new Option<string>("--settings")
+        {
+            HelpName = "path",
+            Description = "Read the defaults from another output.json than the editor's.",
         };
 
         var loudness = new Option<bool>("--loudness")
@@ -316,9 +324,12 @@ internal static class Program
             Description = "Keep the patch on the interpreter rather than compiling it. Same bytes, slower.",
         };
 
-        var command = new Command("render", "Write a patch to a picture, a sound, or a clip of both.")
+        var command = new Command(
+            "render",
+            "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
+            + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
-            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted,
+            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, settings,
         };
 
         command.SetAction((result, cancellation) =>
@@ -337,17 +348,18 @@ internal static class Program
             var (loaded, samples, pictures) = opened;
 
             var (width, height) = result.GetValue(size);
+            var into = result.GetRequiredValue(output);
 
             var options = new RenderOptions(
-                result.GetRequiredValue(output),
+                into,
                 width,
                 height,
                 result.GetValue(at),
                 result.GetValue(seconds),
                 result.GetValue(fps),
                 result.GetValue(quality),
-                result.GetValue(format),
-                result.GetValue(ffmpeg),
+                result.GetValue(format) ?? defaults.FormatFor(into.Name),
+                result.GetValue(ffmpeg) ?? defaults.Ffmpeg,
                 result.GetValue(loudness),
                 result.GetValue(interpreted));
 

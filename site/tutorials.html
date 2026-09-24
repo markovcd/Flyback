@@ -518,7 +518,9 @@ out.volume = 0.5</code></pre>
 
     <h3>Render exactly with the command line</h3>
     <p><code>flyback-cli</code> ships beside the app and runs the same engine without the window. A render is
-    repeatable: the same patch and the same options give the same file.</p>
+    repeatable: the same patch and the same options give the same file. A size, frame rate, quality, format or
+    ffmpeg left out is the editor's, from its preview size and <strong>Settings → Recording</strong>, and
+    <code>--settings</code> reads them from another <code>output.json</code>.</p>
 
 <pre><code># a still frame, 2.5 seconds in
 flyback-cli render drone.fbk -o drone.png --size 1920x1080 --at 2.5

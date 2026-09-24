@@ -37,6 +37,18 @@ public class OutputSettingsFileTests : IDisposable
         settings.Gpu.ShouldBeTrue();
     }
 
+    /// <summary>The names <c>flyback-cli render</c> reads its defaults by, from a file it cannot open through this class.</summary>
+    [Fact]
+    public void The_fields_a_render_reads_are_saved_under_the_names_it_reads()
+    {
+        new OutputSettings { FfmpegPath = "ffmpeg" }.Save(File);
+
+        using var saved = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(File));
+
+        foreach (var name in new[] { "width", "height", "frameRate", "jpegQuality", "videoFormat", "soundFormat", "ffmpegPath" })
+            saved.RootElement.TryGetProperty(name, out _).ShouldBeTrue(name);
+    }
+
     [Fact]
     public void What_is_saved_comes_back()
     {
