@@ -42,6 +42,12 @@ public sealed class Binder
     /// <summary>What the text calls each module it has a word for.</summary>
     private readonly Dictionary<Guid, string> named = [];
 
+    /// <summary>Every id <see cref="Next"/> has handed out.</summary>
+    private readonly HashSet<Guid> issued = [];
+
+    /// <summary>The line that wired each socket the text wires.</summary>
+    private readonly Dictionary<(Guid Node, int Port), int> wired = [];
+
     private Guid coordinates;
     private Guid clock;
 
@@ -162,16 +168,41 @@ public sealed class Binder
     /// <summary>Names in sight, and the names the enclosing scope had.</summary>
     private sealed class Scope(Scope? parent)
     {
-        private readonly Dictionary<string, Value> names = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, (Value Value, int Line)> names = new(StringComparer.Ordinal);
 
-        public void Set(string name, Value value) => names[name] = value;
+        /// <param name="line">Where the name is bound, for a second binding to point back at.</param>
+        public void Set(string name, Value value, int line) => names[name] = (value, line);
 
-        public Value? Find(string name) =>
-            names.TryGetValue(name, out var value) ? value : parent?.Find(name);
+        public Value? Find(string name) => Entry(name)?.Value;
+
+        public (Value Value, int Line)? Entry(string name) =>
+            names.TryGetValue(name, out var entry) ? entry : parent?.Entry(name);
     }
 
     private void Complain(int line, int column, string message) =>
         issues.Add(new LanguageIssue(line, column, message));
+
+    /// <summary>
+    /// Whether <paramref name="name"/> may be bound here, said where it may not.
+    /// A name means one thing, so no reader has to work out which binding a word
+    /// reaches.
+    /// </summary>
+    private bool Free(string name, Scope scope, int line, int column)
+    {
+        if (Builtin(name) is { } what)
+        {
+            Complain(line, column, $"'{name}' is already {what}. Call this something else.");
+            return false;
+        }
+
+        if (scope.Entry(name) is { } first)
+        {
+            Complain(line, column, $"'{name}' is already bound on line {first.Line}. A name is bound once.");
+            return false;
+        }
+
+        return true;
+    }
 
     // --- statements ----------------------------------------------------------
 
@@ -230,13 +261,26 @@ public sealed class Binder
             case DefStatement def:
                 if (!defs.TryAdd(def.Name, def))
                     Complain(def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
+
+                for (var i = 0; i < def.Parameters.Count; i++)
+                {
+                    var parameter = def.Parameters[i];
+
+                    if (Builtin(parameter) is { } what)
+                        Complain(def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
+                    else if (def.Parameters.Take(i).Contains(parameter, StringComparer.Ordinal))
+                        Complain(def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
+                }
+
                 break;
 
             case LetStatement let:
+                if (!Free(let.Name, scope, let.Line, let.Column)) break;
+
                 if (Bind(let.Value, scope) is { } value)
                 {
                     Label(value, let.Name);
-                    scope.Set(let.Name, value);
+                    scope.Set(let.Name, value, let.Line);
                     Owns(value);
 
                     if (value is Placed placed) named.TryAdd(placed.Id, let.Name);
@@ -308,7 +352,20 @@ public sealed class Binder
         (where, placedHere, unnamedHere) = outer;
 
     /// <summary>The name for the next module placed where the binder is standing.</summary>
-    private Guid Next() => Identity($"{where}#{placedHere++}");
+    /// <remarks>
+    /// Only text that is already wrong names one place twice, such as two
+    /// pipelines into <c>out.color</c>. It gets a second id, so the mistake is
+    /// reported instead of two modules sharing one.
+    /// </remarks>
+    private Guid Next()
+    {
+        var name = $"{where}#{placedHere++}";
+        var id = Identity(name);
+
+        for (var again = 1; !issued.Add(id); again++) id = Identity($"{name}'{again}");
+
+        return id;
+    }
 
     /// <summary>
     /// A guid from a name, the same one every time.
@@ -367,6 +424,19 @@ public sealed class Binder
 
     private void Destructure(LetTupleStatement statement, Scope scope)
     {
+        for (var i = 0; i < statement.Names.Count; i++)
+        {
+            var name = statement.Names[i];
+
+            if (!Free(name, scope, statement.Line, statement.Column)) return;
+
+            if (statement.Names.Take(i).Contains(name, StringComparer.Ordinal))
+            {
+                Complain(statement.Line, statement.Column, $"'{name}' is written twice. A name is bound once.");
+                return;
+            }
+        }
+
         if (Bind(statement.Value, scope) is not { } value) return;
 
         if (value is not Several several)
@@ -386,7 +456,7 @@ public sealed class Binder
         for (var i = 0; i < statement.Names.Count; i++)
         {
             Label(several.Items[i], statement.Names[i]);
-            scope.Set(statement.Names[i], several.Items[i]);
+            scope.Set(statement.Names[i], several.Items[i], statement.Line);
         }
     }
 
@@ -462,11 +532,11 @@ public sealed class Binder
         // go on being visible after it — which is what lets one group wire into
         // the next, as the largest preset does throughout.
         foreach (var child in statement.Body)
-            if (child is LetStatement let && inner.Find(let.Name) is { } value)
-                scope.Set(let.Name, value);
+            if (child is LetStatement let && inner.Entry(let.Name) is { } value)
+                scope.Set(let.Name, value.Value, value.Line);
             else if (child is LetTupleStatement tuple)
                 foreach (var name in tuple.Names)
-                    if (inner.Find(name) is { } item) scope.Set(name, item);
+                    if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
     }
 
     // --- expressions ---------------------------------------------------------
@@ -835,6 +905,15 @@ public sealed class Binder
         return new Socket(placed.Id, port);
     }
 
+    /// <summary>What a word every patch already has stands for, if it is one.</summary>
+    private static string? Builtin(string name) => name switch
+    {
+        "t" => "the clock",
+        "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
+        "out" => "the Output",
+        _ => null,
+    };
+
     /// <summary>The shared Coordinates or Time a bare word stands for, if it is one.</summary>
     private Value? Source(string name)
     {
@@ -1125,11 +1204,11 @@ public sealed class Binder
         switch (value)
         {
             case Socket socket:
-                patch.Connect(socket.Id, socket.Port, target, port);
+                Wire(socket.Id, socket.Port, target, port, line, column);
                 break;
 
             case Placed placed:
-                patch.Connect(placed.Id, 0, target, port);
+                Wire(placed.Id, 0, target, port, line, column);
                 break;
 
             case Several several when several.Items.Count > index:
@@ -1146,6 +1225,28 @@ public sealed class Binder
                 Complain(line, column, "this is not a signal, so nothing can be wired from it.");
                 break;
         }
+    }
+
+    /// <summary>
+    /// A wire, refused where the text already wired that socket: the graph keeps
+    /// one, and dropping the other without a word is a patch that reads wrong.
+    /// </summary>
+    private void Wire(Guid source, int output, Guid target, int port, int line, int column)
+    {
+        if (wired.TryGetValue((target, port), out var first))
+        {
+            if (patch.IncomingTo(target, port) is { } wire && wire.SourceNode == source && wire.SourcePort == output) return;
+
+            var socket = patch.Find(target) is { } node && modules.Get(node.TypeId) is { } def
+                ? (named.GetValueOrDefault(target) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
+                : "this socket";
+
+            Complain(line, column, $"'{socket}' is already wired on line {first}. A socket takes one wire.");
+            return;
+        }
+
+        wired[(target, port)] = line;
+        patch.Connect(source, output, target, port);
     }
 
     /// <summary>
@@ -1443,7 +1544,7 @@ public sealed class Binder
             // share no module — a value that should be shared is passed in.
             var inner = new Scope(null);
 
-            for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i], arguments[i]);
+            for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i], arguments[i], macro.Line);
 
             foreach (var statement in macro.Body) Run(statement, inner);
 

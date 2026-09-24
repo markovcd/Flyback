@@ -554,6 +554,20 @@ internal static class Program
 
             var file = result.GetRequiredValue(patch);
 
+            // Text that does not read is a patch with something wrong with it, not
+            // a file that could not be looked at, so it answers the way a compile
+            // error does.
+            if (Patches.Sourced(file) && file.Exists
+                && PatchLanguage.Build(File.ReadAllText(file.FullName)) is { Ok: false } unread)
+            {
+                return CheckCommand.Unread(
+                    unread.Issues,
+                    file.Name,
+                    result.GetValue(json),
+                    result.InvocationConfiguration.Output,
+                    result.InvocationConfiguration.Error);
+            }
+
             return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
                 ? Exit.Failed
                 : CheckCommand.Run(

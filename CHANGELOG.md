@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, and a socket wired twice, and `flyback-cli check --json` reports it by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.
 - `flyback-cli render` takes the size, frame rate, quality, format and ffmpeg it is not given from the editor's settings.

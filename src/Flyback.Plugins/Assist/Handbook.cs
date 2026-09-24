@@ -68,11 +68,13 @@ internal static class Handbook
           `remap(in_low: -1, out_high: 1)`. A socket not named keeps its
           default.
         - **`let` names a signal.** Reading it twice is two wires out of one
-          module, not two modules.
+          module, not two modules. A name is bound once, and a socket takes
+          one wire.
         - **`out` is the Output** every patch already has: `|> out.color`,
           `|> out.left`, `out.volume = 0.6`.
         - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are
-          Coordinates and Time, one shared module each. `+ - * / %` are the
+          Coordinates and Time, one shared module each, and cannot be bound
+          to anything else. `+ - * / %` are the
           maths modules. `A3` and `C#4` are notes, on sockets that read notes.
         - **A length of time is written as one**: `attack: 10ms`, `1.5s`.
           These sockets hold a power of ten, so a bare number is refused.

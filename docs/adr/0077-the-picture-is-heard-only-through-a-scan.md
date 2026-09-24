@@ -123,3 +123,9 @@ could be a shape other than that.
 **Hearing the picture now always takes a module.** That is more wiring than
 turning a knob, and it is also the only form that can be mixed, modulated, and
 seen on the canvas.
+
+## Amendment, 2026-09-24: a reserved word cannot be bound
+
+`let aspect = …` is an error now, not a name nobody can read back. The same
+goes for `t`, `x`, `y`, `radius`, `angle` and `out`: a word every patch already
+has means that on every line.

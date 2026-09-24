@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 
 namespace Flyback.Cli;
 
@@ -9,7 +11,9 @@ namespace Flyback.Cli;
 /// The module it is about, by name rather than by id: a Guid is what the file
 /// says and not what a person can find on a canvas.
 /// </param>
-internal sealed record Complaint(string Severity, string? Module, string Message);
+/// <param name="Line">Where in a text patch, for a complaint about the text.</param>
+/// <param name="Column">Where on that line.</param>
+internal sealed record Complaint(string Severity, string? Module, string Message, int? Line = null, int? Column = null);
 
 /// <summary>
 /// Compiles a patch for both sinks and says what is wrong with it.
@@ -64,6 +68,34 @@ internal static class CheckCommand
         // an error is a patch that does not mean what it says — unless a build has
         // decided otherwise, which is what --strict is.
         return errors > 0 || (strict && complaints.Length > 0) ? Exit.Problems : Exit.Ok;
+    }
+
+    /// <summary>Says what is wrong with a text patch that does not build.</summary>
+    public static int Unread(
+        IReadOnlyList<LanguageIssue> issues,
+        string name,
+        bool json,
+        TextWriter output,
+        TextWriter error)
+    {
+        if (json)
+        {
+            var complaints = issues
+                .Select(i => new Complaint("error", null, i.Message, i.Line, i.Column))
+                .ToArray();
+
+            output.WriteLine(JsonSerializer.Serialize(
+                new { patch = name, errors = complaints.Length, warnings = 0, issues = complaints },
+                Writing.Json));
+        }
+        else
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: {name}: this patch does not read.");
+
+            foreach (var issue in issues) error.WriteLine($"    {name}:{issue.Line}:{issue.Column}: {issue.Message}");
+        }
+
+        return Exit.Problems;
     }
 
     private static void Write(string name, Complaint[] complaints, int errors, TextWriter output)

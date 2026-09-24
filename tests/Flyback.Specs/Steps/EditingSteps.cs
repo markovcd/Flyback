@@ -119,6 +119,9 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [Then("it suggests {string}")]
     public void ThenItSuggests(string name) => Text.Report.ShouldContain(name);
 
+    [Then("the complaint says {string}")]
+    public void ThenTheComplaintSays(string words) => Text.Report.ShouldContain(words);
+
     // --- undo -----------------------------------------------------------------
 
     [Given("the patch has just been opened")]

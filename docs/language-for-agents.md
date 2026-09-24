@@ -151,16 +151,18 @@ dialect. A person who wants the dense form still writes it.
 
 ## 6. A name is bound once
 
-Shadowing is currently unspecified in all four of its forms, and each behaves
-differently. All four become errors, beside the two guards the binder already
-has for a duplicate `def` and a second `keyboard`:
+**Done.**
 
-| Written | Today | Proposed |
-|---|---|---|
-| `let a` twice | unhandled exception, raw guid | error, naming both lines |
-| `let t = …` | silently replaces the clock | error |
-| `let out = …` | accepted; a confusing error later | error |
-| `let sine = …` | accepted | legal — §4 means modules are full ids, so there is no collision |
+| Written | Is |
+|---|---|
+| `let a` twice, in a group or a tuple too | error, naming the line of the first |
+| `let t = …`, `let x = …`, `def f(x)` | error: the word is already the clock or a coordinate |
+| `let out = …` | error |
+| a socket wired twice (`\|> out.color`, `<-`) | error, naming the line of the first |
+| `let sine = …` | legal — §4 means modules are full ids, so there is no collision |
+
+`check --json` reports text that does not build with line and column. What is
+still open from §9 is a stable `code` per issue.
 
 ## 7. A patch says what it needs
 

@@ -60,7 +60,7 @@ public class MangledSourceTests
             string.Join(Environment.NewLine + "---" + Environment.NewLine, failures.Distinct().Take(5)));
     }
 
-    /// <summary>A few edits to a source: a character cut, dropped in, swapped, or the tail taken off.</summary>
+    /// <summary>A few edits to a source: a character cut, dropped in, swapped, the tail taken off, or a line said twice.</summary>
     private static string Mangle(string source, Random random)
     {
         const string alphabet = "()[]{}|><:,.\"'-+*/ \t\r\n0123456789abcxyzt_=#";
@@ -73,15 +73,23 @@ public class MangledSourceTests
 
             var at = random.Next(text.Length);
 
-            text = random.Next(4) switch
+            text = random.Next(5) switch
             {
                 0 => text.Remove(at, 1),
                 1 => text.Insert(at, alphabet[random.Next(alphabet.Length)].ToString()),
                 2 => text[..at] + alphabet[random.Next(alphabet.Length)] + text[(at + 1)..],
-                _ => text[..at],
+                3 => text[..at],
+                _ => Again(text, random),
             };
         }
 
         return text;
+    }
+
+    private static string Again(string text, Random random)
+    {
+        var lines = text.Split('\n');
+
+        return text + '\n' + lines[random.Next(lines.Length)];
     }
 }

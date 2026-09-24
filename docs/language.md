@@ -195,6 +195,17 @@ case-insensitively: `in low` becomes `in_low` and `gate length` becomes
 `gate_length`. Arguments may be positional or named; positional arguments fill
 unnamed inputs left to right, after the pipe has taken its own.
 
+**A name is bound once.** A second `let` of the same name is an error naming
+the line of the first, including one inside a `group`, since a group's names are
+visible after it. `t`, `x`, `y`, `radius`, `angle`, `aspect` and `out` are
+already bound in every patch, so a `let` or a `def` parameter by one of those
+names is an error too. A word therefore means the same thing on every line
+that reads it.
+
+**A socket takes one wire.** Wiring a socket that the text already wired, by a
+second `|> out.color` or a second `<-`, is an error naming the line of the
+first. It is not quietly replaced.
+
 ---
 
 ## 5. Sugar

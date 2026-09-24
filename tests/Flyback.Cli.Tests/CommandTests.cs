@@ -1,6 +1,8 @@
+using System.CommandLine;
 using Flyback.Core.Render;
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
@@ -118,6 +120,34 @@ public class CommandTests
         read.RootElement.GetProperty("issues").GetArrayLength().ShouldBe(
             read.RootElement.GetProperty("errors").GetInt32()
             + read.RootElement.GetProperty("warnings").GetInt32());
+    }
+
+    /// <summary>
+    /// Text that does not build is a patch with something wrong with it, said
+    /// where in the text, and in JSON when JSON was asked for.
+    /// </summary>
+    [Fact]
+    public void Text_that_does_not_build_is_reported_by_line_as_json()
+    {
+        using var directory = new Scratch();
+        var file = directory.File("twice.fbks");
+
+        File.WriteAllText(file.FullName, "x |> color.hsv() |> out.color\ny |> color.hsv() |> out.color\n");
+
+        var output = new StringWriter();
+        var code = Program.Run(
+            ["check", file.FullName, "--json"],
+            new Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = output, Error = TextWriter.Null });
+
+        code.ShouldBe(Exit.Problems);
+
+        using var read = JsonDocument.Parse(output.ToString());
+        var issue = read.RootElement.GetProperty("issues").EnumerateArray().ShouldHaveSingleItem();
+
+        issue.GetProperty("severity").GetString().ShouldBe("error");
+        issue.GetProperty("line").GetInt32().ShouldBe(2);
+        issue.GetProperty("message").GetString().ShouldNotBeNull().ShouldContain("already wired on line 1");
     }
 
     /// <summary>Machine-readable means machine-readable: nothing but the document on stdout.</summary>
