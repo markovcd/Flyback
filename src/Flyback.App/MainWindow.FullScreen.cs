@@ -58,10 +58,7 @@ public sealed partial class MainWindow
     private static GridLength Everything => new(1, GridUnitType.Star);
 
     /// <summary>The window holding the preview on another monitor, while it is there.</summary>
-    private Window? pictureWindow;
-
-    /// <summary>The dots and transport over the picture in <see cref="pictureWindow"/>.</summary>
-    private TransportOverlay? pictureTransport;
+    private PictureWindow? pictureWindow;
 
     /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
     private void ToggleFullScreenPreview()
@@ -109,62 +106,18 @@ public sealed partial class MainWindow
 
         preview.Renew();
 
-        var away = knobs.Away = new StageKnobs();
+        var window = pictureWindow = new PictureWindow(screen, preview);
 
-        away.Show(editor.Patch);
-        away.Turning += knobs.Turn;
-        away.TurnEnded += document.LetGoOfKnob;
+        knobs.Away = window.Knobs;
+        window.Knobs.Show(editor.Patch);
+        window.Knobs.Turning += knobs.Turn;
+        window.Knobs.TurnEnded += document.LetGoOfKnob;
 
-        var picture = new Panel();
+        window.Transport.PauseClicked += TogglePause;
+        window.Transport.MuteClicked += playback.ToggleMute;
+        window.Transport.RewindClicked += RewindToZero;
 
-        picture.Children.Add(preview);
-        picture.Children.Add(away);
-
-        // Not activated, so the keyboard stays with the editor.
-        var window = pictureWindow = new Window
-        {
-            Title = "Flyback picture",
-            Background = Brushes.Black,
-            ShowInTaskbar = false,
-            ShowActivated = false,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Width = 160,
-            Height = 90,
-            Content = picture,
-        };
-
-        var transport = pictureTransport = new TransportOverlay();
-
-        transport.PauseClicked += TogglePause;
-        transport.MuteClicked += playback.ToggleMute;
-        transport.RewindClicked += RewindToZero;
-
-        picture.Children.Add(transport);
-
-        window.DoubleTapped += (_, e) =>
-        {
-            window.Close();
-            e.Handled = true;
-        };
-
-        window.KeyDown += (_, e) =>
-        {
-            var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
-
-            if (command && e.Key == Key.P) TogglePause();
-            else if (e.Key == Key.Escape) window.Close();
-            else return;
-
-            e.Handled = true;
-        };
-
-        // Moved only once it is open: Windows tells a hidden window nothing when it
-        // crosses to a monitor of another scale, and it would draw at the old one.
-        window.Opened += (_, _) =>
-        {
-            window.Position = screen.Bounds.Position;
-            window.WindowState = WindowState.FullScreen;
-        };
+        window.PauseRequested += (_, _) => TogglePause();
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
@@ -172,16 +125,12 @@ public sealed partial class MainWindow
         knobs.SyncStages();
     }
 
-    private void BringPictureBack(Window window)
+    private void BringPictureBack(PictureWindow window)
     {
         if (pictureWindow != window || previewBox is null) return;
 
         pictureWindow = null;
         knobs.Away = null;
-        pictureTransport = null;
-
-        if (window.Content is Panel picture) picture.Children.Clear();
-        window.Content = null;
 
         preview.Renew();
         previewBox.Child = preview;

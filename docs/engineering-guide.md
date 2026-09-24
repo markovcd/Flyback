@@ -429,10 +429,10 @@ undo lands; `Playback` owns compiling, the sound device, pause and mute;
 is a class that takes the hubs and the shared things it reads (the canvas, the
 preview, the plugins), owns its own fields and raises events: `Inspector`,
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
-`Toolbar`, `PresetSlot`, `StatusBar`. `MainWindow` builds them by hand in its
-constructor, lays them out, and keeps its layout, its keys, full screen and the
-closing question as `partial` files. There are no view models, and that has been
-decided twice.
+`Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. `MainWindow` builds them
+by hand in its constructor, lays them out, and keeps its layout, its keys, full
+screen and the closing question as `partial` files. There are no view models, and
+that has been decided twice.
 
 **The node editor is one control**
 ([0017](adr/0017-draw-the-node-editor-in-one-control.md)). `NodeEditor` overrides

@@ -53,5 +53,5 @@ public sealed partial class MainWindow
 
     /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
     private IEnumerable<TransportOverlay> Transports =>
-        new[] { transportOverlay, pictureTransport }.OfType<TransportOverlay>();
+        new[] { transportOverlay, pictureWindow?.Transport }.OfType<TransportOverlay>();
 }
