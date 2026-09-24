@@ -186,6 +186,22 @@ public readonly record struct PortSpec(
     public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer;
 
     /// <summary>
+    /// What this socket is for, in words that stand on their own: the inspector
+    /// shows them as the tip on the socket's row, and the assistant reads them
+    /// after the socket's name. Empty where the name says it all.
+    /// </summary>
+    /// <remarks>
+    /// Only what is true of this one socket. What the module is for, and how its
+    /// sockets work together, is <see cref="NodeDef.Description"/>. Left empty, a
+    /// socket takes the standard help for its name — see <see cref="SocketHelp"/>.
+    /// </remarks>
+    public string Help
+    {
+        get => field ?? string.Empty;
+        init;
+    }
+
+    /// <summary>
     /// How far above the bottom of the range a control stops sweeping evenly and
     /// starts sweeping in decades, or 0 for an even sweep throughout. Only the
     /// editor reads it; the stored value is the value.

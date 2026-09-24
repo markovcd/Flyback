@@ -40,7 +40,18 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             CoordTypeId, "Coordinates", ModuleCategories.Sources,
-            [], [Num("x"), Num("y", 0f, -1f, 1f), Num("radius"), Num("angle", 0f, -MathF.PI, MathF.PI), Num("aspect")],
+            [],
+            [
+                Num("x") with { Help = "Normalized, and widened by the aspect ratio." },
+                Num("y", 0f, -1f, 1f) with { Help = "Normalized." },
+                Num("radius") with { Help = "Distance from the center." },
+                Num("angle", 0f, -MathF.PI, MathF.PI) with { Help = "Around the center, in radians." },
+                Num("aspect") with
+                {
+                    Help = "How far x reaches either side, the same everywhere on the frame. "
+                        + "Multiply a -1..1 signal by it to cross the whole width.",
+                },
+            ],
             (em, _) =>
             {
                 var x = em.Load(OpCode.LoadX);
@@ -54,10 +65,8 @@ public partial class NodeCatalog
                     em.Load(OpCode.LoadAspect),
                 ];
             },
-            "Screen position. x and y are normalized; x is widened by the aspect ratio. "
-            + "Use radius or angle when a module needs polar coordinates. 'aspect' is how far "
-            + "x reaches either side, the same everywhere on the frame — multiply a -1..1 "
-            + "signal by it to cross the whole width.");
+            "Screen position, as x and y, or as 'radius' and 'angle' when a module needs polar "
+            + "coordinates.");
 
         // No rate knob, and that is the decision rather than an omission — see
         // ADR-0048. It was a second, hidden speed control: a Time at 0.2 feeding
@@ -67,19 +76,22 @@ public partial class NodeCatalog
         // other signal in the catalog.
         yield return new NodeDef(
             TimeTypeId, "Time", ModuleCategories.Sources,
-            [], [Num("t")],
+            [], [Num("t") with { Help = "Seconds since the patch started." }],
             (em, _) => [em.Load(OpCode.LoadT)],
-            "Elapsed seconds since the patch started. Use it for motion or time-varying signals. "
-            + "Scale it with Multiply when you want a slower rhythm.");
+            "The clock, for motion or time-varying signals. Scale it with Multiply when you want "
+            + "a slower rhythm.");
 
         yield return new NodeDef(
             SampleTypeId, "Sample", ModuleCategories.Sources,
-            [Domain("in"), Num("level", 1f, 0f, 2f), Num("trigger", 0f, 0f, 1f) with { Lenient = true }],
-            [Num("out"), Num("length")],
+            [
+                Domain("in", "The playback position, in seconds. Time without a wire, so it plays from the start."),
+                Num("level", 1f, 0f, 2f) with { Help = "Multiplies the sound." },
+                Num("trigger", 0f, 0f, 1f) with { Lenient = true, Help = "Restarts from zero as it rises." },
+            ],
+            [Num("out"), Num("length") with { Help = "The clip's length in seconds, for loop timing or scrubbing." }],
             EmitSample,
-            "Plays a WAV file. 'in' is playback position in seconds; 'trigger' restarts from zero. "
-            + "Use 'length' for loop timing or scrubbing. The file path is stored with the patch, "
-            + "so moving or renaming it will break playback.")
+            "Plays a WAV file. The file path is stored with the patch, so moving or renaming it "
+            + "will break playback.")
         {
             Extras = [new SampleExtra()],
             Sinks = ModuleSinks.Audio,
@@ -90,8 +102,8 @@ public partial class NodeCatalog
             [..Position()],
             [Col("color")],
             EmitPicture,
-            "Loads an image file. x and y sample the image at that position; outside the image, "
-            + "the result is black. Scale, translate, rotate, and warp control how it is mapped.")
+            "Loads an image file, black outside the image. Scale, translate, rotate, and warp "
+            + "control how it is mapped.")
         {
             Extras = [new PictureExtra()],
             Sinks = ModuleSinks.Video,

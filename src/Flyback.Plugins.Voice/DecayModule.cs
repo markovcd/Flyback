@@ -26,17 +26,28 @@ internal static class DecayModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Decay", ModuleCategories.Timing,
         [
-            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
-            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration),
-            new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration),
-            new PortSpec("curve", PortKind.Scalar, 0.6f, 0f, 1f),
+            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Lenient = true,
+                Help = "Each rise starts it, without waiting for the fall. A hit mid-fall rises from where it is.",
+            },
+            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration)
+            {
+                Help = "How long the rise to full takes.",
+            },
+            new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration)
+            {
+                Help = "How long the fall to silence takes.",
+            },
+            new PortSpec("curve", PortKind.Scalar, 0.6f, 0f, 1f)
+            {
+                Help = "The fall's shape: straight at 0, and turned up it drops fast with a long tail, like a drum.",
+            },
         ],
         [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f)],
         Emit,
-        "A percussive envelope. Each rise of 'trigger' sends it up over 'attack' and back to "
-        + "silence over 'decay', without waiting for the trigger to fall; a hit mid-fall rises "
-        + "from where it is. 'curve' 0 falls straight; turned up it drops fast with a long "
-        + "tail, like a drum. Audio only: the picture gets the trigger.")
+        "A percussive envelope: up over 'attack', then back to silence over 'decay'. Audio "
+        + "only: the picture gets the trigger.")
     {
         Sinks = ModuleSinks.Audio,
     };

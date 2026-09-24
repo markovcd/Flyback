@@ -24,13 +24,18 @@ internal static class LineModule
             Field.Distance("y1") with { Default = -0.3f },
             Field.Distance("x2") with { Default = 0.5f },
             Field.Distance("y2") with { Default = 0.3f },
-            Field.Size("width", 0.02f, 0.5f),
+            Field.Size("width", 0.02f, 0.5f) with { Help = "How far it reaches either side." },
         ],
-        [Field.Distance("distance"), new PortSpec("along", PortKind.Scalar, 0f, 0f, 1f)],
+        [
+            Field.Distance("distance"),
+            new PortSpec("along", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "Runs 0 to 1 from the first end to the second, for a fade, a color or dashes.",
+            },
+        ],
         Emit,
         "A straight stroke from (x1, y1) to (x2, y2), as a distance, with round ends: patch "
-        + "it into a Fill. 'width' is how far it reaches either side. 'along' runs 0 to 1 from "
-        + "the first end to the second, for a fade, a color or dashes.")
+        + "it into a Fill.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

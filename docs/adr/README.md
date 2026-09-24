@@ -115,6 +115,7 @@ context, decision, consequences.
 | [0129](0129-full-screen-on-another-monitor-is-a-window-of-its-own.md) | Full screen on another monitor is a window of its own *(user-directed)* |
 | [0122](0122-the-panel-wears-the-block-it-is-about.md) | The panel wears the block it is about *(user-directed; the face it borrows is [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md))* |
 | [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
+| [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
 
 ### Sound
 

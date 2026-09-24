@@ -40,19 +40,23 @@ public partial class NodeCatalog
         const int dx = 5;
         const int dy = 6;
         const int persist = 7;
+        const string slide = "Slides the trail a little each frame.";
 
         return new NodeDef(
             "feedback.trails", "Trails", ModuleCategories.Feedback,
             [
-                Col("in"),
+                Col("in") with { Help = "The new picture." },
                 ..Position(),
-                Num("zoom", 1f, 0.5f, 2f),
-                Num("angle", 0f, -0.5f, 0.5f),
-                Num("dx", 0f, -0.1f, 0.1f),
-                Num("dy", 0f, -0.1f, 0.1f),
-                Num("persist", 0.9f, 0f, 1f),
+                Num("zoom", 1f, 0.5f, 2f) with { Help = "Just over 1 draws the trail inward. Small changes go a long way." },
+                Num("angle", 0f, -0.5f, 0.5f) with { Help = "In radians. A small one spirals the trail." },
+                Num("dx", 0f, -0.1f, 0.1f) with { Help = slide },
+                Num("dy", 0f, -0.1f, 0.1f) with { Help = slide },
+                Num("persist", 0.9f, 0f, 1f) with { Help = "What the last frame is dimmed by: 0.8 is a short ghost, 0.98 fades over seconds." },
             ],
-            [Col("color"), Col("tail")],
+            [
+                Col("color") with { Help = "The brighter of the trail and 'in'. Patch it into the Output." },
+                Col("tail") with { Help = "The dimmed last frame alone." },
+            ],
             (em, i) =>
             {
                 var x = em.Mul(i[1], i[zoom]);
@@ -72,12 +76,8 @@ public partial class NodeCatalog
 
                 return [em.Binary(OpCode.Max, tail, i[0]), tail];
             },
-            "Leaves a trail behind 'in'. The last frame is read back through 'zoom', 'angle', "
-            + "'dx' and 'dy', dimmed by 'persist', and the brighter of that and the new picture is "
-            + "'color': patch it into the Output. 'zoom' just over 1 draws the trail inward and a "
-            + "small 'angle' spirals it; small numbers go a long way. 'persist' 0.8 is a short "
-            + "ghost, 0.98 fades over seconds. 'tail' is the dimmed last frame alone. A Warp into "
-            + "'x' and 'y' bends the trail.")
+            "Leaves a trail behind 'in': the last frame, read back through 'zoom', 'angle', 'dx' "
+            + "and 'dy' and dimmed by 'persist'. A Warp into 'x' and 'y' bends the trail.")
         {
             Sinks = ModuleSinks.Video,
         };
@@ -113,10 +113,17 @@ public partial class NodeCatalog
             [
                 Col("in"),
                 ..Position(),
-                Num("radius", 0.02f, 0f, 0.1f),
-                Num("amount", 0.7f, 0f, 1f),
+                Num("radius", 0.02f, 0f, 0.1f) with { Help = "In coordinate units: how far apart the readings sit." },
+                Num("amount", 0.7f, 0f, 1f) with
+                {
+                    Help = "How much of each pass survives into the next, which sets the width you see: "
+                        + "0 is a wire, 0.7 soft, 0.95 fog, 1 dissolves.",
+                },
             ],
-            [Col("color"), Col("soft")],
+            [
+                Col("color") with { Help = "The picture softened. Patch it into the Output: the loop closes through the screen." },
+                Col("soft") with { Help = "The average alone, for a Layer." },
+            ],
             (em, i) =>
             {
                 var left = em.Sub(i[1], i[radius]);
@@ -144,11 +151,7 @@ public partial class NodeCatalog
                 return [em.Ternary(OpCode.Mix, i[0], soft, mix), soft];
             },
             "Softens the picture by averaging the last frame at nine places around each pixel. "
-            + "Patch 'color' into the Output, since the loop closes through the screen. 'radius' is "
-            + "how far apart the readings sit, in coordinate units; 'amount' is how much of each "
-            + "pass survives into the next, and sets the width you see: 0 is a wire, 0.7 soft, 0.95 "
-            + "fog, 1 dissolves. Moving things smear. 'soft' is the average alone, for a Layer. A "
-            + "Warp into 'x' and 'y' drags the blur in a direction.")
+            + "Moving things smear. A Warp into 'x' and 'y' drags the blur in a direction.")
         {
             Sinks = ModuleSinks.Video,
         };

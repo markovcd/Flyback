@@ -31,18 +31,23 @@ internal static class FillModule
         TypeId, "Fill", ModuleCategories.Forms,
         [
             Field.Distance("distance"),
-            Field.Size("softness", 0.01f, 0.5f),
-            Field.Size("width", 0.02f, 1f),
+            Field.Size("softness", 0.01f, 0.5f) with { Help = "How wide the edge is, on both outputs." },
+            Field.Size("width", 0.02f, 1f) with { Help = "How wide the outline is." },
         ],
         [
-            new PortSpec("fill", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("outline", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("fill", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "1 inside, 0 outside, with an edge 'softness' wide.",
+            },
+            new PortSpec("outline", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "The shape's edge instead, 'width' across.",
+            },
         ],
         Emit,
-        "Turns a distance into ink: 1 inside, 0 outside, with an edge 'softness' wide. "
-        + "'outline' is the shape's edge instead, 'width' across. Both 0..1, for a color's "
-        + "'value' or a Mixer. Sizes are in picture units, so it looks the same at any "
-        + "resolution.")
+        "Turns a distance into ink, filled and outlined at once. Both outputs run 0 to 1, for "
+        + "a color's 'value' or a Mixer. Sizes are in picture units, so it looks the same at "
+        + "any resolution.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

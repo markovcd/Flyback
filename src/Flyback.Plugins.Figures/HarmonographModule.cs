@@ -43,30 +43,40 @@ internal static class HarmonographModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Harmonograph", FiguresPlugin.Category,
         [
-            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
-            new PortSpec("velocity", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("speed", PortKind.Scalar, 0.4f, 0.05f, 4f),
-            new PortSpec("pitch", PortKind.Scalar, 220f, 20f, 4000f) { Knee = 20f },
-            new PortSpec("ratio", PortKind.Scalar, 1.5f, 0.5f, 4f),
-            new PortSpec("twist", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("damping", PortKind.Scalar, 8f, 0.5f, 30f),
-            new PortSpec("persist", PortKind.Scalar, 0.6f, 0f, 1f),
-            new PortSpec("size", PortKind.Scalar, 0.8f, 0f, 2f),
+            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Lenient = true,
+                Help = "Each rise sets the pendulums swinging afresh.",
+            },
+            new PortSpec("velocity", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "How hard a strike swings them: the chord's loudness and the line's darkness.",
+            },
+            new PortSpec("speed", PortKind.Scalar, 0.4f, 0.05f, 4f) { Help = "The pen's turns a second." },
+            new PortSpec("pitch", PortKind.Scalar, 220f, 20f, 4000f)
+            {
+                Knee = 20f,
+                Help = "In hertz: the pendulums' rate for the chord.",
+            },
+            new PortSpec("ratio", PortKind.Scalar, 1.5f, 0.5f, 4f)
+            {
+                Help = "The second pendulum against the first: a fifth at 1.5, an octave at 2.",
+            },
+            new PortSpec("twist", PortKind.Scalar, 0f, 0f, 1f) { Help = "The lag between the axes." },
+            new PortSpec("damping", PortKind.Scalar, 8f, 0.5f, 30f) { Help = "How long the drawing and the chord last." },
+            new PortSpec("persist", PortKind.Scalar, 0.6f, 0f, 1f) { Help = "How much of the line is left after a second." },
+            new PortSpec("size", PortKind.Scalar, 0.8f, 0f, 2f) { Help = "How much of the screen the pen reaches." },
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
         ],
         [
-            new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("right", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("figure", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f) { Help = "The pendulums one way, at 'pitch'." },
+            new PortSpec("right", PortKind.Scalar, 0f, -1f, 1f) { Help = "The pendulums the other way, at 'pitch'." },
+            new PortSpec("figure", PortKind.Scalar, 0f, 0f, 1f) { Help = "The line the pen draws, fading by 'persist'." },
         ],
         Emit,
-        "A pen on two pendulums each way, set swinging by 'trigger'. 'figure' is the line it "
-        + "draws, fading by 'persist' a second; 'left' and 'right' are the same pendulums at "
-        + "'pitch', a chord that dies as the drawing does. 'speed' is the pen's turns a second, "
-        + "'ratio' the second pendulum against the first (a fifth at 1.5, an octave at 2), 'twist' "
-        + "the lag between the axes, 'damping' how long both last, 'size' how much of the screen "
-        + "the pen reaches.")
+        "A pen on two pendulums each way, set swinging by 'trigger'. The drawing and the chord "
+        + "are the same pendulums, so the chord dies as the drawing does.")
     {
         Skin = Art.Skin("harmonograph"),
     };

@@ -35,15 +35,17 @@ internal static class HsvModule
         TypeId, "To HSV", ModuleCategories.Color,
         [new PortSpec("color", PortKind.Color)],
         [
-            new PortSpec("hue", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("hue", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "A gray's is 0, which is red: threshold 'saturation' if that matters.",
+            },
             new PortSpec("saturation", PortKind.Scalar, 0f, 0f, 1f),
             new PortSpec("value", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
         "A color pulled apart into hue, saturation and value, 0 to 1 each: HSV backwards. "
         + "Rotate a hue by adding to it and rebuilding, key on one by thresholding, or "
-        + "desaturate without changing the color. A gray's hue is 0, which is red: threshold "
-        + "the saturation if that matters.");
+        + "desaturate without changing the color.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

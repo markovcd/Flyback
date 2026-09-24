@@ -70,13 +70,19 @@ internal static class MaximizerModule
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("amount", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("style", PortKind.Scalar, 1f, 1f, Display: PortDisplay.Integer),
+            new PortSpec("amount", PortKind.Scalar, 0.5f, 0f, 1f)
+            {
+                Help = "How hard it works: the thresholds, the makeup and the style's tilt follow it.",
+            },
+            new PortSpec("style", PortKind.Scalar, 1f, 1f, Display: PortDisplay.Integer)
+            {
+                Help = "1 glues, 2 punches, 3 brightens, 4 is loudest.",
+            },
         ],
         [new PortSpec("left"), new PortSpec("right")],
         Emit,
         "One knob to make a mix louder and denser: three bands compressed, then limited to -1 "
-        + "dB. 'style' 1 glues, 2 punches, 3 brightens, 4 is loudest.")
+        + "dB.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))

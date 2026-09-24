@@ -50,16 +50,20 @@ internal static class TextModule
         TypeId, "Text", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Size("size", 0.2f),
-            new PortSpec("line", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
-            new PortSpec("reveal", PortKind.Scalar, 1f, 0f, 1f),
+            Field.Size("size", 0.2f) with { Help = "A capital's height." },
+            new PortSpec("line", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer)
+            {
+                Help = "Which line shows. Wraps past the last, so a counter pages through them.",
+            },
+            new PortSpec("reveal", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "Types the line out from the left as it goes from 0 to 1.",
+            },
         ],
         [Field.Distance("distance")],
         Emit,
         "Lines of text in a pixel font, as the distance to the letters: patch it into a Fill. "
-        + "The lines and the font (Pixel, or the blockier one-case Tiny) are set on the node. "
-        + "'line' picks which shows and wraps past the last, so a counter pages through them. "
-        + "'reveal' 0 to 1 types the line out from the left. 'size' is a capital's height.")
+        + "The lines and the font (Pixel, or the blockier one-case Tiny) are set on the node.")
     {
         Extras = [new LinesExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))

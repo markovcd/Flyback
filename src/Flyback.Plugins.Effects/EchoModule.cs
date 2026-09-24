@@ -40,19 +40,24 @@ internal static class EchoModule
         TypeId, "Echo", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("tempo", PortKind.Scalar, 2f, 0.25f, 8f),
-            new PortSpec("left", PortKind.Scalar, 3f, 0.25f, 16f),
-            new PortSpec("right", PortKind.Scalar, 2f, 0.25f, 16f),
-            new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f),
-            new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f),
+            new PortSpec("tempo", PortKind.Scalar, 2f, 0.25f, 8f) { Help = "Beats per second: patch a Tempo here." },
+            new PortSpec("left", PortKind.Scalar, 3f, 0.25f, 16f) { Help = "The left tap's time, in steps." },
+            new PortSpec("right", PortKind.Scalar, 2f, 0.25f, 16f)
+            {
+                Help = "The right tap's time, in steps. In a row it repeats the left tap this much later.",
+            },
+            new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f)
+            {
+                Help = "How much comes round for the next repeat. In a row only the left tap feeds back.",
+            },
+            new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f) { Help = "Dry against wet: 1 is a send." },
         ],
         [new PortSpec("left"), new PortSpec("right")],
         Emit,
-        "A stereo echo that keeps time. Patch a Tempo into 'tempo' and 'left' and 'right' are "
-        + "counted in steps: 3 and 2 at four steps a beat is a dotted eighth and the beat "
-        + "after. 'feedback' is how much comes round; 'mix' at 1 is a send. Set on the node: "
-        + "steps per beat, and whether the taps are in a row (the repeats cross over) or side "
-        + "by side. Two seconds at most. Audio only.")
+        "A stereo echo that keeps time: with a Tempo in 'tempo', 'left' and 'right' are counted "
+        + "in steps, so 3 and 2 at four steps a beat are a dotted eighth and the beat after. Set "
+        + "on the node: steps per beat, and whether the taps are in a row (the repeats cross "
+        + "over) or side by side. Two seconds at most. Audio only.")
     {
         Extras =
         [

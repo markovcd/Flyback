@@ -23,17 +23,25 @@ internal static class StrokeModule
         TypeId, "Stroke", ModuleCategories.Timing,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("rate", PortKind.Scalar, 1f, 0f, 32f),
-            new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
-            new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
+            new PortSpec("rate", PortKind.Scalar, 1f, 0f, 32f) { Help = "Strokes for each unit of 'in'." },
+            new PortSpec("offset", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Lenient = true,
+                Help = "Slides the hits by a share of a stroke.",
+            },
+            new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f) { Help = "The fall's shape: 1 is straight, 3 a pluck, 8 a click." },
         ],
-        [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f)],
+        [
+            new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "Jumps to 1 at each stroke and falls to 0 by its end.",
+            },
+            new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f) { Help = "How far through the stroke, 0 to 1." },
+        ],
         Emit,
         "A drum hit without a trigger. 'in' times 'rate' counts strokes: a count of beats in "
-        + "and a 'rate' of 4 is every sixteenth. 'out' jumps to 1 at each stroke and falls to 0 "
-        + "by its end; 'curve' 1 is straight, 3 a pluck, 8 a click. 'offset' slides the hits by "
-        + "a share of a stroke: 'rate' 0.5 and 'offset' 0.5 is beats two and four. 'phase' is 0 "
-        + "to 1 through the stroke. The same on the picture as in the speakers.")
+        + "and a 'rate' of 4 is every sixteenth, and 'rate' 0.5 with 'offset' 0.5 is beats two "
+        + "and four. The same on the picture as in the speakers.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {

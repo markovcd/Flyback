@@ -30,13 +30,21 @@ internal static class CrossoverModule
         TypeId, "Crossover", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("low", PortKind.Scalar, 200f, 20f, 2_000f) { Knee = 20f },
-            new PortSpec("high", PortKind.Scalar, 2_000f, 200f, 16_000f) { Knee = 200f },
+            new PortSpec("low", PortKind.Scalar, 200f, 20f, 2_000f)
+            {
+                Knee = 20f,
+                Help = "In hertz: the corner between the low band and the mid.",
+            },
+            new PortSpec("high", PortKind.Scalar, 2_000f, 200f, 16_000f)
+            {
+                Knee = 200f,
+                Help = "In hertz: the corner between the mid band and the high. Never under 'low'.",
+            },
         ],
         [new PortSpec("low"), new PortSpec("mid"), new PortSpec("high")],
         Emit,
-        "Splits 'in' at 'low' and 'high' (Hz) into three bands that add back up to it. Into "
-        + "Compressors, a multiband compressor.")
+        "Splits 'in' into three bands that add back up to it. Into Compressors, a multiband "
+        + "compressor.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))

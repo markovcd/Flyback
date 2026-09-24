@@ -39,11 +39,14 @@ internal static class ChorusModule
             Sweep.Depth(0.5f),
             Sweep.Mix(0.5f),
         ],
-        [new PortSpec("out"), new PortSpec("wide"), Sweep.Motion],
+        [
+            new PortSpec("out") { Help = "One side, or the whole of it in mono." },
+            new PortSpec("wide") { Help = "Swept opposite to 'out', for the other side." },
+            Sweep.Motion,
+        ],
         Emit,
         "One voice heard as several: a short delay swept slowly under the dry signal. 'out' "
-        + "and 'wide' sweep in opposite directions: both for stereo, or 'out' alone. 'lfo' is "
-        + "the sweep and works on the picture; otherwise it is audio only, a wire.")
+        + "and 'wide' are a stereo pair. Audio only but for 'lfo': on the picture it is a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

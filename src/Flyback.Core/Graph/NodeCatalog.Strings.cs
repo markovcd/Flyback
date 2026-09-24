@@ -20,18 +20,18 @@ public partial class NodeCatalog
         yield return new NodeDef(
             StringTypeId, "String", ModuleCategories.Oscillators,
             [
-                Num("in", 0f, -1f, 1f),
-                Num("trigger", 0f, 0f, 1f) with { Lenient = true },
-                Num("freq", 220f, LowestString, 2_000f) with { Knee = LowestString },
-                Seconds("decay", 0.3f),
-                Num("brightness", 0.5f, 0f, 1f),
+                Num("in", 0f, -1f, 1f) with
+                {
+                    Help = "Excites it continuously: noise bows it, a drum sets it ringing in sympathy.",
+                },
+                Num("trigger", 0f, 0f, 1f) with { Lenient = true, Help = "Each rise plucks it with a period of noise." },
+                Num("freq", 220f, LowestString, 2_000f) with { Knee = LowestString, Help = "The pitch it rings at, in hertz." },
+                Seconds("decay", 0.3f) with { Help = "About how long it rings." },
+                Num("brightness", 0.5f, 0f, 1f) with { Help = "0 is soft and dark, 1 bright and metallic." },
             ],
             [Num("out", 0f, -1f, 1f)],
             EmitString,
-            "A plucked string. Each rise of 'trigger' plucks it with a period of noise, and it "
-            + "rings at 'freq' for about 'decay'. 'brightness' 0 is soft and dark, 1 bright and "
-            + "metallic. 'in' excites it continuously: noise bows it, a drum sets it ringing in "
-            + "sympathy. Audio only: on the picture 'in' passes through.")
+            "A plucked string. Audio only: on the picture 'in' passes through.")
         {
             Sinks = ModuleSinks.Audio,
         };

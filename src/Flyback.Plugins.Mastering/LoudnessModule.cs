@@ -62,10 +62,14 @@ internal static class LoudnessModule
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: 0, PatchOnly: true),
         ],
-        [new PortSpec("momentary"), new PortSpec("short"), new PortSpec("peak")],
+        [
+            new PortSpec("momentary") { Help = "LUFS over the last 0.4 s, floored at -70." },
+            new PortSpec("short") { Help = "LUFS over the last 3 s, floored at -70." },
+            new PortSpec("peak") { Help = "In dBFS, falling 20 dB in 1.7 s." },
+        ],
         Emit,
-        "BS.1770 loudness in LUFS: 'momentary' over 0.4 s, 'short' over 3 s, floored at -70. "
-        + "'peak' is dBFS, falling 20 dB in 1.7 s.")
+        "A running BS.1770 loudness meter for a stereo pair: momentary and short-term "
+        + "loudness, and a peak.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Measurement))

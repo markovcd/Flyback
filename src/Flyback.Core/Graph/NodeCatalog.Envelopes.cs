@@ -25,15 +25,19 @@ public partial class NodeCatalog
         yield return new NodeDef(
             AdsrTypeId, "ADSR", ModuleCategories.Timing,
             [
-                Num("gate", 0f, 0f, 1f) with { Lenient = true },
-                Seconds("attack", -2f),
-                Seconds("decay", -1f),
-                Num("sustain", 0.7f, 0f, 1f),
-                Seconds("release", -0.6f),
+                Num("gate", 0f, 0f, 1f) with
+                {
+                    Lenient = true,
+                    Help = "Holds the note: attack and decay while it is up, release once it falls.",
+                },
+                Seconds("attack", -2f) with { Help = "How long the rise to full takes." },
+                Seconds("decay", -1f) with { Help = "How long the fall from the peak to 'sustain' takes." },
+                Num("sustain", 0.7f, 0f, 1f) with { Help = "The level held while the gate stays up." },
+                Seconds("release", -0.6f) with { Help = "How long the fall to silence takes once the gate drops." },
             ],
-            [Num("out", 0f, 0f, 1f)],
+            [Num("out", 0f, 0f, 1f) with { Help = "The shaped level. On the picture, the gate itself." }],
             EmitAdsr,
-            "ADSR envelope. Gate in, shaped level out. Attack, decay, sustain, and release define the note contour.")
+            "ADSR envelope: a gate in, the note's contour out.")
         {
             Sinks = ModuleSinks.Audio,
         };

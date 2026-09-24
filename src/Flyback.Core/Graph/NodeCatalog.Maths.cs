@@ -36,9 +36,9 @@ public partial class NodeCatalog
 
         yield return Unary("math.abs", "Absolute", OpCode.Abs, "Drops the sign. Mirrors a signal about zero.");
         yield return Unary("math.neg", "Negate", OpCode.Neg, "Flips the sign.");
-        yield return Unary("math.sin", "Sin", OpCode.Sin, "Sine, in radians.");
-        yield return Unary("math.cos", "Cos", OpCode.Cos, "Cosine, in radians.");
-        yield return Unary("math.tan", "Tan", OpCode.Tan, "Tangent, in radians.");
+        yield return Unary("math.sin", "Sin", OpCode.Sin, "Sine.", Radians);
+        yield return Unary("math.cos", "Cos", OpCode.Cos, "Cosine.", Radians);
+        yield return Unary("math.tan", "Tan", OpCode.Tan, "Tangent.", Radians);
         yield return Unary("math.sqrt", "Square root", OpCode.Sqrt, "Square root, and 0 for negatives.");
         yield return Unary("math.floor", "Floor", OpCode.Floor, "Rounds down. Quantizes a smooth signal into steps.");
         yield return Unary("math.fract", "Fraction", OpCode.Fract, "Just the part after the decimal point. Wraps to 0..1.");
@@ -48,31 +48,49 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "math.clamp", "Clamp", ModuleCategories.Maths,
-            [Any("in"), Any("low", -1f), Any("high", 1f)], [Any("out")],
+            [
+                Any("in"),
+                Any("low", -1f) with { Help = "The bottom of the range." },
+                Any("high", 1f) with { Help = "The top of the range." },
+            ],
+            [Any("out")],
             (em, i) => [em.Ternary(OpCode.Clamp, i[0], i[1], i[2])],
             "Holds the signal inside a range.");
 
         yield return new NodeDef(
             "math.mix", "Mix", ModuleCategories.Maths,
-            [Any("a"), Any("b", 1f), Any("t", 0.5f, 0f, 1f)], [Any("out")],
+            [Any("a"), Any("b", 1f), Any("t", 0.5f, 0f, 1f)],
+            [Any("out")],
             (em, i) => [em.Ternary(OpCode.Mix, i[0], i[1], i[2])],
-            "Blends from a to b as t goes 0 to 1.");
+            "Blends from 'a' to 'b'.");
 
         yield return new NodeDef(
             "math.smoothstep", "Smoothstep", ModuleCategories.Maths,
-            [Any("edge0"), Any("edge1", 1f), Any("in")], [Any("out")],
+            [
+                Any("edge0") with { Help = "Where the ramp starts: 0 below it." },
+                Any("edge1", 1f) with { Help = "Where the ramp ends: 1 above it." },
+                Any("in"),
+            ],
+            [Any("out")],
             (em, i) => [em.Ternary(OpCode.Smoothstep, i[0], i[1], i[2])],
             "A soft 0-to-1 ramp between the two edges. The anti-aliased threshold.");
 
         yield return new NodeDef(
             "math.step", "Threshold", ModuleCategories.Maths,
-            [Any("edge"), Any("in")], [Any("out")],
+            [Any("edge") with { Help = "Where it flips: 0 below it, 1 above it." }, Any("in")],
+            [Any("out")],
             (em, i) => [em.Binary(OpCode.Step, i[0], i[1])],
-            "0 below the edge, 1 above it. A hard threshold.");
+            "A hard threshold on 'in'.");
 
         yield return new NodeDef(
             "math.remap", "Remap", ModuleCategories.Maths,
-            [Any("in"), Num("in low", -1f), Num("in high", 1f), Num("out low"), Num("out high", 1f)],
+            [
+                Any("in"),
+                Num("in low", -1f) with { Help = "The value of 'in' that comes out as 'out low'." },
+                Num("in high", 1f) with { Help = "The value of 'in' that comes out as 'out high'." },
+                Num("out low") with { Help = "Where 'in low' lands." },
+                Num("out high", 1f) with { Help = "Where 'in high' lands." },
+            ],
             [Any("out")],
             (em, i) =>
             {
@@ -83,13 +101,18 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             AutoRemapTypeId, "Auto remap", ModuleCategories.Maths,
-            [Any("in"), Num("in low", 0f, 0f, 1f), Num("in high", 1f, 0f, 1f), Num("out low", 0f, 0f, 1f), Num("out high", 1f, 0f, 1f)],
+            [
+                Any("in"),
+                Num("in low", 0f, 0f, 1f) with { Help = "Where it starts, as a fraction of the range of what feeds 'in'." },
+                Num("in high", 1f, 0f, 1f) with { Help = "Where it ends, as a fraction of the range of what feeds 'in'." },
+                Num("out low", 0f, 0f, 1f) with { Help = "Where 'in low' lands, as a fraction of the range of the socket 'out' feeds." },
+                Num("out high", 1f, 0f, 1f) with { Help = "Where 'in high' lands, as a fraction of the range of the socket 'out' feeds." },
+            ],
             [Any("out")],
             EmitAutoRemap,
-            "A Remap that reads its ranges off its wires. 'in low' and 'in high' are how far along "
-            + "the range of whatever feeds it, 'out low' and 'out high' how far along the range of "
-            + "the socket it feeds, 0 to 1 each, swept the way that socket's own knob sweeps. Where "
-            + "a wire's far end has no range, that pair is plain numbers, as on Remap.");
+            "A Remap that reads its ranges off its wires. Each knob is 0 to 1 of the range at "
+            + "its wire's far end, swept the way that socket's own knob sweeps. Where a wire's far "
+            + "end has no range, that pair is plain numbers, as on Remap.");
     }
 
     public const string AutoRemapTypeId = "math.autoremap";
@@ -139,9 +162,11 @@ public partial class NodeCatalog
         return em.Add(em.Mul(em.Add(rise, -1f), span.Knee), MathF.Min(span.Min, span.Max));
     }
 
-    private static NodeDef Unary(string id, string name, OpCode code, string description) => new(
-        id, name, ModuleCategories.Maths, [Any("in")], [Any("out")],
+    private static NodeDef Unary(string id, string name, OpCode code, string description, string help = "") => new(
+        id, name, ModuleCategories.Maths, [Any("in") with { Help = help }], [Any("out")],
         (em, i) => [em.Unary(code, i[0])], description);
+
+    private const string Radians = "An angle, in radians.";
 
     private static NodeDef Binary(
         string id, string name, OpCode code, float defaultB, string description) => new(
@@ -168,7 +193,7 @@ public partial class NodeCatalog
         for (var ch = 0; ch < channels; ch++)
         {
             ports[ch * 2] = Any($"in {ch + 1}");
-            ports[ch * 2 + 1] = Any($"level {ch + 1}", 1f, 0f, 1f);
+            ports[ch * 2 + 1] = Any($"level {ch + 1}", 1f, 0f, 1f) with { Help = $"Multiplies 'in {ch + 1}' before the sum." };
         }
 
         return new NodeDef(
@@ -181,7 +206,7 @@ public partial class NodeCatalog
                     sum = em.Add(sum, em.Mul(i[ch * 2], i[ch * 2 + 1]));
                 return [sum];
             },
-            "Four signals summed, each through its own level. It sums rather than averages, so "
+            "Four signals summed, each through its level. It sums rather than averages, so "
             + "four at full is four times as loud. An unused input adds nothing. Colors mix too: "
             + "the levels are a four-way blend of pictures.");
     }
@@ -211,17 +236,29 @@ public partial class NodeCatalog
         for (var ch = 0; ch < channels; ch++)
         {
             ports[ch * 3] = new PortSpec($"left {ch + 1}", PatchOnly: true);
-            ports[ch * 3 + 1] = new PortSpec($"right {ch + 1}", NormalledFrom: ch * 3, PatchOnly: true);
-            ports[ch * 3 + 2] = Num($"level {ch + 1}", 1f, 0f, 1f);
+            ports[ch * 3 + 1] = new PortSpec($"right {ch + 1}", NormalledFrom: ch * 3, PatchOnly: true)
+            {
+                Help = $"Carries 'left {ch + 1}' while unpatched, so a mono voice is one wire.",
+            };
+            ports[ch * 3 + 2] = Num($"level {ch + 1}", 1f, 0f, 1f) with { Help = $"Multiplies both 'left {ch + 1}' and 'right {ch + 1}'." };
         }
 
-        ports[busLeft] = new PortSpec("bus left", PatchOnly: true);
-        ports[busRight] = new PortSpec("bus right", PatchOnly: true);
-        ports[trim] = Num("trim", 1f, 0f, 2f);
+        ports[busLeft] = new PortSpec("bus left", PatchOnly: true) { Help = "Another Desk's 'bus left', added in at full level." };
+        ports[busRight] = new PortSpec("bus right", PatchOnly: true) { Help = "Another Desk's 'bus right', added in at full level." };
+        ports[trim] = Num("trim", 1f, 0f, 2f) with { Help = "Multiplies the sum before it is held to -1..1." };
+
+        const string master = "The sum times 'trim', held to -1..1: patch it into the Output.";
+        const string chain = "The sum before 'trim' and the rails, for the same 'bus' input on the next Desk.";
 
         return new NodeDef(
             DeskTypeId, "Desk", ModuleCategories.Routing,
-            ports, [Num("left"), Num("right"), Num("bus left"), Num("bus right")],
+            ports,
+            [
+                Num("left") with { Help = master },
+                Num("right") with { Help = master },
+                Num("bus left") with { Help = chain },
+                Num("bus right") with { Help = chain },
+            ],
             (em, i) =>
             {
                 var left = Side(0, busLeft);
@@ -241,10 +278,8 @@ public partial class NodeCatalog
                     em.Ternary(OpCode.Clamp, em.Mul(sum, i[trim]), em.Constant(-1f), em.Constant(1f));
             },
             "A stereo mixer for the end of a patch: four channels, each a 'left', a 'right' and "
-            + "one 'level'; an unpatched 'right' carries the left. 'left' and 'right' out are the "
-            + "sum times 'trim', held to -1..1: patch them into the Output. For more channels chain "
-            + "Desks: 'bus left' and 'bus right' out, before the trim and the rails, go into the "
-            + "next Desk's 'bus' inputs at full level, and the last Desk is the master.");
+            + "one 'level'. For more channels chain Desks, 'bus' out into the next one's 'bus' in, "
+            + "and the last Desk is the master.");
     }
 
     /// <summary>
@@ -260,7 +295,7 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Expression(IReadOnlyDictionary<string, NodeDef> functions) => new(
         ExpressionTypeId, "Expression", ModuleCategories.Maths,
-        [Any("a"), Any("b", 1f), Any("c"), Any("d")], [Any("out")],
+        [Operand("a"), Operand("b", 1f), Operand("c"), Operand("d")], [Any("out")],
         (em, i) =>
             [i.Extra<Formula>(FormulaExtra.StateKey) is { } formula ? formula.Lower(em, i.Resolve) : em.Constant(0f)],
         "A formula over its four sockets: 'a * b + c', 'smoothstep(0.2, 0.8, a) * b'. "
@@ -272,6 +307,9 @@ public partial class NodeCatalog
         Extras = [new FormulaExtra(functions)],
         AsksForItsInputs = true,
     };
+
+    private static PortSpec Operand(string name, float value = 0f) =>
+        Any(name, value) with { Help = $"Read as '{name}' in the formula." };
 
     public const string ExpressionTypeId = "math.expression";
 

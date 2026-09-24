@@ -221,6 +221,8 @@ the four things needed to write correct text:
 - **defaults**, so an agent knows what it may leave out;
 - **what a module carries** — a step block, a file, a plugin's fields.
 
+Each socket also carries its help, the words the inspector shows as its tip.
+
 With those one call away, the invented-module failure mode mostly goes away,
 with no syntax touched.
 

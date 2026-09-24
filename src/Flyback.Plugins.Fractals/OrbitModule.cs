@@ -69,27 +69,30 @@ internal static class OrbitModule
         [
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
-            new PortSpec("re", PortKind.Scalar, -0.12f, -2f, 1f),
-            new PortSpec("im", PortKind.Scalar, 0.75f, -1.5f, 1.5f),
-            new PortSpec("rate", PortKind.Scalar, 330f, 20f, 8000f) { Knee = 20f },
+            new PortSpec("re", PortKind.Scalar, -0.12f, -2f, 1f) { Help = "The real part of c." },
+            new PortSpec("im", PortKind.Scalar, 0.75f, -1.5f, 1.5f) { Help = "The imaginary part of c." },
+            new PortSpec("rate", PortKind.Scalar, 330f, 20f, 8000f)
+            {
+                Knee = 20f,
+                Help = "Steps a second.",
+            },
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("start re", PortKind.Scalar, 0f, -2f, 2f),
-            new PortSpec("start im", PortKind.Scalar, 0f, -2f, 2f),
+            new PortSpec("start re", PortKind.Scalar, 0f, -2f, 2f) { Help = "The real part of where z starts, in Julia mode." },
+            new PortSpec("start im", PortKind.Scalar, 0f, -2f, 2f) { Help = "The imaginary part of where z starts, in Julia mode." },
         ],
         [
-            new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("right", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("color", PortKind.Color),
-            new PortSpec("trace", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f) { Help = "The orbit's real part." },
+            new PortSpec("right", PortKind.Scalar, 0f, -1f, 1f) { Help = "The orbit's imaginary part." },
+            new PortSpec("color", PortKind.Color) { Help = "The path, white through gold, early steps first." },
+            new PortSpec("trace", PortKind.Scalar, 0f, 0f, 1f) { Help = "The path, with a dot where it starts." },
         ],
         Emit,
-        "The orbit of z under z² + c, stepped 'rate' times a second: 'left' is its real part and "
-        + "'right' its imaginary. An orbit settling into a cycle of n is a tone at rate over n, "
-        + "one that never settles is noise, and one that escapes starts again, a tone for how "
-        + "fast it left. Set on the node: Mandelbrot mode starts z at nought, so 're' and 'im' "
+        "The orbit of z under z² + c. An orbit settling into a cycle of n is a tone at 'rate' "
+        + "over n, one that never settles is noise, and one that escapes starts again, a tone for "
+        + "how fast it left. Set on the node: Mandelbrot mode starts z at nought, so 're' and 'im' "
         + "are a point on a Mandelbrot's map; Julia mode starts it at 'start re' and 'start im', "
-        + "a pixel of the Julia set whose c is 're' and 'im'. 'trace' and 'color' draw the path "
-        + "on that module's plane at rest, with a dot where it starts, so the two line up.")
+        + "a pixel of the Julia set whose c is 're' and 'im'. The path is drawn on that module's "
+        + "plane at rest, so the two line up.")
     {
         Extras =
         [

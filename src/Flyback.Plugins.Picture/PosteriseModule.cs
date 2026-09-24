@@ -28,14 +28,17 @@ internal static class PosteriseModule
         TypeId, "Posterise", ModuleCategories.Color,
         [
             new PortSpec("color", PortKind.Color),
-            new PortSpec("levels", PortKind.Scalar, 4f, 2f, 32f, Display: PortDisplay.Integer),
+            new PortSpec("levels", PortKind.Scalar, 4f, 2f, 32f, Display: PortDisplay.Integer)
+            {
+                Help = "Steps for each channel, black and white included, so 2 is the eight colors "
+                    + "of a very old machine. Rounded down, never below two.",
+            },
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Holds each channel to 'levels' steps, turning a gradient into flat bands. The steps "
-        + "include black and white, so 2 is the eight colors of a very old machine. Rounded "
-        + "down, never below two. The channels step apart, so the result has more than 'levels' "
-        + "colors. Sweep it from an oscillator to make a picture resolve.");
+        "Holds each channel to a few steps, turning a gradient into flat bands. The channels "
+        + "step apart, so the result has more than 'levels' colors. Sweep 'levels' from an "
+        + "oscillator to make a picture resolve.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

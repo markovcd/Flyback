@@ -40,19 +40,24 @@ internal static class HissModule
         TypeId, "Hiss", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("cutoff", PortKind.Scalar, 8000f, 20f, 12_000f) { Knee = 20f },
-            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f),
-            new PortSpec("gain", PortKind.Scalar, 1f, 0f),
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "An envelope: a Stroke, a Decay, a Euclid's 'stroke'.",
+            },
+            new PortSpec("cutoff", PortKind.Scalar, 8000f, 20f, 12_000f)
+            {
+                Knee = 20f,
+                Help = "The filter's corner, in hertz. 8000 on the high band is a hat, 1900 on the "
+                    + "band a snare, and swept upwards a riser.",
+            },
+            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = "Peaks the corner, until it rings on a sharp edge." },
+            new PortSpec("gain", PortKind.Scalar, 1f, 0f) { Help = "Makes up what a narrow band takes away." },
             new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
         ],
         [new PortSpec("out")],
         Emit,
-        "A hi-hat, a snare's wires, a clap, a riser: noise through a filter. Patch an "
-        + "envelope into 'level': a Stroke, a Decay, a Euclid's 'stroke'. A 'cutoff' of 8000 on "
-        + "the high band is a hat, 1900 on the band a snare, and swept upwards a riser. 'gain' "
-        + "makes up what a narrow band takes away. White or pink, and low, band or high, are "
-        + "set on the node. Audio only.")
+        "A hi-hat, a snare's wires, a clap, a riser: noise through a filter. White or pink, "
+        + "and low, band or high, are set on the node. Audio only.")
     {
         Extras =
         [

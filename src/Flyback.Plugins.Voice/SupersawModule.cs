@@ -63,17 +63,25 @@ internal static class SupersawModule
             // one saw holds.
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             NodeCatalog.Freq,
-            new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f),
-            new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f),
+            new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f) { Help = "Spreads the seven saws apart in pitch." },
+            new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f)
+            {
+                Help = "Fades the six outer voices in against the center. At 0 it is exactly a plain Saw.",
+            },
             new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
-        [new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("wide", PortKind.Scalar, 0f, -1f, 1f)],
+        [
+            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("wide", PortKind.Scalar, 0f, -1f, 1f)
+            {
+                Help = "The same voices at other weights, so it drifts away from 'out' as they spread.",
+            },
+        ],
         Emit,
-        "Seven detuned saws in one module. 'detune' spreads them apart, 'mix' fades the "
-        + "six outer voices in against the center — at 0 it is exactly a plain Saw. "
-        + "Patch 'out' and 'wide' to the two channels for stereo, or use 'out' alone.")
+        "Seven detuned saws in one module. Patch 'out' and 'wide' to the two channels for "
+        + "stereo, or use 'out' alone.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

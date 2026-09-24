@@ -26,32 +26,37 @@ public partial class NodeCatalog
             MidiTypeId, "MIDI In", ModuleCategories.Sources,
             [],
             [
-                new PortSpec("pitch", PortKind.Scalar, 60f, 0f, 127f, -1, PortDisplay.Note),
-                Num("gate", 0f, 0f, 1f),
-                Num("velocity", 0f, 0f, 1f),
-                Num("trigger", 0f, 0f, 1f),
+                new PortSpec("pitch", PortKind.Scalar, 60f, 0f, 127f, -1, PortDisplay.Note) { Help = "The current note." },
+                Num("gate", 0f, 0f, 1f) with
+                {
+                    Help = "High while a key is held. Drops for an instant as each new note lands, so "
+                        + "legato notes still retrigger an envelope.",
+                },
+                Num("velocity", 0f, 0f, 1f) with { Help = "Follows note strength." },
+                Num("trigger", 0f, 0f, 1f) with { Help = "Fires on each note start." },
             ],
             EmitMidi,
-            "Keyboard or MIDI input. 'pitch' is the current note; 'gate' is high while a key is held; "
-            + "'velocity' follows note strength; 'trigger' fires on each note start. The index selects a polyphonic voice; "
-            + "'channel' hears one of an instrument's channels, or every one at 0." )
+            "Keyboard or MIDI input. The index selects a polyphonic voice; 'channel' hears one of "
+            + "an instrument's channels, or every one at 0.")
         {
             Extras = [new MidiExtra()],
         };
 
         yield return new NodeDef(
             ClockTypeId, "Clock In", ModuleCategories.Timing,
-            [Domain("in")],
+            [Domain("in", "The clock the beat is carried forward on between ticks: Time without a wire.")],
             [
-                Num("beats"),
-                Num("bpm", 120f, 20f, 300f),
-                Num("running", 0f, 0f, 1f),
-                Num("reset", 0f, 0f, 1f),
+                Num("beats") with
+                {
+                    Help = "The beats since it pressed Start, held while it is stopped. Patch it into "
+                        + "the 'in' of a sequencer for one step per beat.",
+                },
+                Num("bpm", 120f, 20f, 300f) with { Help = "The tempo it is sending." },
+                Num("running", 0f, 0f, 1f) with { Help = "High between Start and Stop." },
+                Num("reset", 0f, 0f, 1f) with { Help = "Fires on Start." },
             ],
             EmitClock,
-            "The clock of a drum machine or sequencer, followed. 'beats' counts the beats since it pressed Start "
-            + "and holds while it is stopped: patch it into the 'in' of a sequencer for one step per beat. "
-            + "'bpm' is the tempo it is sending, 'running' is high between Start and Stop, and 'reset' fires on Start.")
+            "The clock of a drum machine or sequencer, followed.")
         {
             Extras = [new MidiClockExtra()],
         };

@@ -43,18 +43,19 @@ internal static class CombineModule
         [
             Field.Distance("a"),
             Field.Distance("b"),
-            Field.Size("smoothness", 0f, 1f),
+            Field.Size("smoothness", 0f, 1f) with
+            {
+                Help = "Melts the seam. At 0 it is exactly a Minimum and a Maximum.",
+            },
         ],
         [
-            Field.Distance("union"),
-            Field.Distance("intersection"),
-            Field.Distance("difference"),
+            Field.Distance("union") with { Help = "Both shapes." },
+            Field.Distance("intersection") with { Help = "Only the overlap." },
+            Field.Distance("difference") with { Help = "'a' with 'b' cut out." },
         ],
         Emit,
-        "Two shapes into one, three ways: 'union' is both, 'intersection' only the overlap, "
-        + "'difference' a with b cut out. 'smoothness' melts the seam; at 0 it is exactly a "
-        + "Minimum and a Maximum. The outputs are distances, so they chain, fill or outline "
-        + "like any shape.")
+        "Two shapes into one, three ways. The outputs are distances, so they chain, fill or "
+        + "outline like any shape.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

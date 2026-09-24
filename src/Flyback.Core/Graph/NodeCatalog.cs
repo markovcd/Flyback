@@ -108,8 +108,8 @@ public static partial class NodeCatalog
     /// catalog is built through here, so this one line is the whole of "an
     /// oscillator runs unless you say otherwise".
     /// </remarks>
-    private static PortSpec Domain(string name) =>
-        new(name, NormalledTo: Clock, Domain: true);
+    private static PortSpec Domain(string name, string help = "") =>
+        new(name, NormalledTo: Clock, Domain: true) { Help = help };
 
     /// <summary>
     /// Where on the screen a module is being asked about, normalled to Coordinates
@@ -123,6 +123,7 @@ public static partial class NodeCatalog
         new("x", NormalledTo: Across),
         new("y", NormalledTo: Down),
     ];
+
 
     private static PortSpec Any(string name, float value = 0f, float min = -4f, float max = 4f) =>
         new(name, PortKind.Any, value, min, max);

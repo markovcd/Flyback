@@ -729,6 +729,30 @@ public class CommandTests
         output.ShouldMatch(@"attack\s+10 ms\s+100 µs to 31\.62 s");
     }
 
+    /// <summary>Each socket's help is under its row, and in the JSON beside it, outputs included.</summary>
+    [Fact]
+    public void A_described_module_says_what_each_socket_is_for()
+    {
+        var filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+
+        var (_, prose, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, filter.TypeId, false, o, e));
+        var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, filter.TypeId, true, o, e));
+
+        using var document = JsonDocument.Parse(json);
+
+        var helped = document.RootElement.GetProperty("inputs").EnumerateArray()
+            .Concat(document.RootElement.GetProperty("outputs").EnumerateArray())
+            .ToDictionary(port => port.GetProperty("name").GetString()!, port => port.GetProperty("help").GetString());
+
+        foreach (var (port, input) in filter.Inputs.Select(p => (p, true)).Concat(filter.Outputs.Select(p => (p, false))))
+        {
+            var help = SocketHelp.For(port, input);
+
+            helped[port.Name].ShouldBe(help);
+            if (help.Length > 0) prose.ShouldContain(help);
+        }
+    }
+
     /// <summary>The palette's name finds a module as well as its type id, whichever case it is typed in.</summary>
     [Fact]
     public void A_module_is_found_by_its_name_as_well_as_its_type_id()

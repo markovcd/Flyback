@@ -43,27 +43,34 @@ internal static class OvertonesModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Overtones", FiguresPlugin.Category,
         [
-            new PortSpec("spectrum", PortKind.Any, Swept: true),
+            new PortSpec("spectrum", PortKind.Any, Swept: true)
+            {
+                Help = "The picture to hear. Read across the screen, one point per partial.",
+            },
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("freq", PortKind.Scalar, 110f, 20f, 4000f) { Knee = 20f },
-            new PortSpec("row", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("tilt", PortKind.Scalar, 0f, -12f, 12f),
-            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
+            new PortSpec("freq", PortKind.Scalar, 110f, 20f, 4000f)
+            {
+                Knee = 20f,
+                Help = "In hertz, the fundamental.",
+            },
+            new PortSpec("row", PortKind.Scalar, 0.5f, 0f, 1f)
+            {
+                Help = "Which row is read: 0 the top, 1 the bottom. Sweep it to scan the picture as a wavetable.",
+            },
+            new PortSpec("tilt", PortKind.Scalar, 0f, -12f, 12f) { Help = "In dB an octave, on top of the readings." },
+            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f) { Help = "Multiplies the tone." },
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
         ],
         [
             new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("bars", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("wave", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("bars", PortKind.Scalar, 0f, 0f, 1f) { Help = "The readings, drawn as bars." },
+            new PortSpec("wave", PortKind.Scalar, 0f, 0f, 1f) { Help = "One cycle of the tone, drawn." },
         ],
         Emit,
-        "Hears a picture as a tone. Whatever is patched into 'spectrum' is read across the "
-        + "screen along 'row' (0 the top, 1 the bottom), one point per partial, and each reading "
-        + "is that overtone's height over 'freq'. Sweep 'row' to scan the picture as a wavetable. "
-        + "'tilt' is decibels an octave on top. 'bars' draws the readings, 'wave' one cycle of the "
-        + "result. The partial count is set on the node, and each partial is another copy of whatever "
-        + "feeding 'spectrum' reads the place.")
+        "Hears a picture as a tone: each point of 'spectrum' read along 'row' is that "
+        + "overtone's height over 'freq'. The partial count is set on the node, and each partial "
+        + "is another copy of whatever feeding 'spectrum' reads the place.")
     {
         Extras = [new PartialsExtra()],
         Skin = Art.Skin("overtones"),

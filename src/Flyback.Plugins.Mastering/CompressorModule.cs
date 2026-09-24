@@ -53,19 +53,31 @@ internal static class CompressorModule
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("key", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("threshold", PortKind.Scalar, -18f, -60f, 0f),
-            new PortSpec("ratio", PortKind.Scalar, 4f, 1f, 20f),
-            new PortSpec("attack", PortKind.Scalar, -2f, -4f, 0f, Display: PortDisplay.Duration),
-            new PortSpec("release", PortKind.Scalar, -1f, -3f, 1f, Display: PortDisplay.Duration),
-            new PortSpec("knee", PortKind.Scalar, 6f, 0f, 24f),
-            new PortSpec("makeup", PortKind.Scalar, 0f, 0f, 24f),
+            new PortSpec("key", NormalledFrom: Left, PatchOnly: true)
+            {
+                Help = "Patch it to duck: the gain then follows this instead of the two sides.",
+            },
+            new PortSpec("threshold", PortKind.Scalar, -18f, -60f, 0f) { Help = "In dB. What is over it is turned down." },
+            new PortSpec("ratio", PortKind.Scalar, 4f, 1f, 20f) { Help = "How many dB over 'threshold' come out as one." },
+            new PortSpec("attack", PortKind.Scalar, -2f, -4f, 0f, Display: PortDisplay.Duration)
+            {
+                Help = "How fast the gain comes down.",
+            },
+            new PortSpec("release", PortKind.Scalar, -1f, -3f, 1f, Display: PortDisplay.Duration)
+            {
+                Help = "How fast the gain comes back up.",
+            },
+            new PortSpec("knee", PortKind.Scalar, 6f, 0f, 24f) { Help = "In dB: how widely the corner is rounded." },
+            new PortSpec("makeup", PortKind.Scalar, 0f, 0f, 24f) { Help = "In dB, lifting what comes out." },
         ],
-        [new PortSpec("left"), new PortSpec("right"), new PortSpec("gain")],
+        [
+            new PortSpec("left"),
+            new PortSpec("right"),
+            new PortSpec("gain") { Help = "The gain applied, before 'makeup'." },
+        ],
         Emit,
-        "Turns loud passages down. Over 'threshold' (dB), 'ratio' dB in comes out as one; 'knee' "
-        + "(dB) rounds the corner, 'makeup' (dB) lifts it. Patch 'key' to duck. 'gain' is the "
-        + "gain applied.")
+        "Turns loud passages down, so they come nearer the quiet ones. Both sides are turned "
+        + "down together.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))

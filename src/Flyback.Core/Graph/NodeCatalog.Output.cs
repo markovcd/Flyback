@@ -54,11 +54,18 @@ public partial class NodeCatalog
         new NodeDef(
             MeterTypeId, "Meter", ModuleCategories.Measurement,
             [
-                Swept("in"),
-                Seconds("window", -1.3f),
-                Num("scale", 1f, 0.01f, 16f),
+                Swept("in") with { Help = "Patch the Output's 'left' here for everything, one voice for just that." },
+                Seconds("window", -1.3f) with
+                {
+                    Help = "How far back both readings look. A few milliseconds follows every drum; "
+                        + "half a second leans into the music.",
+                },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "Divides both readings." },
             ],
-            [Num("level"), Num("peak")],
+            [
+                Num("level") with { Help = "The loudness over 'window', about 1 at full scale." },
+                Num("peak") with { Help = "The furthest from silence, about 1 at full scale. The one that hits." },
+            ],
             (em, node) =>
             {
                 // Nought where there is no instance to be addressed as — the
@@ -74,13 +81,9 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Div, em.Live(MeterSignals.Key(node.Node, MeterSignals.Peak)), scale),
                 ];
             },
-            "How loud the sound is, as a number to draw with. Patch a signal into 'in' (the "
-            + "Output's 'left' for everything, one voice for just that) and drive a hue, a size or "
-            + "a brightness from it. 'level' is the loudness over the last 'window' seconds; 'peak' "
-            + "is the furthest from silence, and is the one that hits. Both are about 1 at full "
-            + "scale, divided by 'scale'. A few milliseconds of 'window' follows every drum; half a "
-            + "second leans into the music. Costs the picture nothing and keeps the GPU. Reads "
-            + "nothing where no sound runs, as in an exported still.")
+            "How loud the sound is, as a number to draw with: patch a signal into 'in' and drive a "
+            + "hue, a size or a brightness from 'level' or 'peak'. Costs the picture nothing and "
+            + "keeps the GPU. Reads nothing where no sound runs, as in an exported still.")
         {
             // Tapped but not charted: what it wants from the ring is two numbers
             // rather than a buffer, so no chart is allocated for it and nothing
@@ -115,10 +118,13 @@ public partial class NodeCatalog
         yield return new NodeDef(
             OutputTypeId, "Output", ModuleCategories.Output,
             [
-                Col("color"),
-                Num("left", 0f, -1f, 1f) with { PatchOnly = true },
-                Normalled("right", OutputLeftPort, -1f, 1f),
-                Num("volume", 0.5f, 0f, 1f),
+                Col("color") with { Help = "The screen." },
+                Num("left", 0f, -1f, 1f) with { PatchOnly = true, Help = "The left speaker." },
+                Normalled("right", OutputLeftPort, -1f, 1f) with { Help = "The right speaker, carrying 'left' when nothing is patched." },
+                Num("volume", 0.5f, 0f, 1f) with
+                {
+                    Help = "Multiplies both speakers. Nought closes them rather than feeding them silence.",
+                },
             ],
             [],
 
@@ -126,19 +132,24 @@ public partial class NodeCatalog
             // the speakers the other two. Which of them a given program
             // takes is the only difference between the two compilations.
             (em, i) => [i[0], em.Mul(i[1], i[3]), em.Mul(i[2], i[3])],
-            "The patch's one Output. 'color' is the screen; 'left' and 'right' are the speakers. "
-            + "'volume' at nought closes the speakers rather than feeding them silence.");
+            "The patch's one Output: the screen and the speakers.");
 
         yield return new NodeDef(
             "audio.note", "Note", ModuleCategories.Pitch,
             [
-                Pitched("note", 57f),
-                new PortSpec("octave", PortKind.Scalar, 0f, -4f, 4f, Display: PortDisplay.Integer),
-                Num("cents", 0f, -100f, 100f),
+                Pitched("note", 57f) with { Help = "A signal is snapped to the nearest semitone; the knob is a direct note value." },
+                new PortSpec("octave", PortKind.Scalar, 0f, -4f, 4f, Display: PortDisplay.Integer)
+                {
+                    Help = "Whole octaves, added before the snap.",
+                },
+                Num("cents", 0f, -100f, 100f) with { Help = "Hundredths of a semitone, added after the snap: the one way between two notes." },
             ],
-            [Num("hz"), Num("note")],
+            [
+                Num("hz") with { Help = "The frequency, for an oscillator's 'freq'." },
+                Num("note") with { Help = "The semitone it snapped to." },
+            ],
             (em, i) => Sounded(em, i[0], i[1], i[2]),
-            "Pitch in note numbers. Patch in a signal to snap it to the nearest semitone, or use the knob for a direct note value.");
+            "Pitch in note numbers, turned into a frequency.");
 
         yield return Quantiser();
         yield return Tune();
@@ -314,15 +325,21 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Quantiser() => new(
         QuantiserTypeId, "Quantiser", ModuleCategories.Pitch,
-        [Pitched("in", 57f), Num("hold", 0f, 0f, 1f) with { Lenient = true }],
-        [Num("note")],
+        [
+            Pitched("in", 57f),
+            Num("hold", 0f, 0f, 1f) with
+            {
+                Lenient = true,
+                Help = "Freezes the note while it is up. Patch the envelope's gate here so the pitch "
+                    + "cannot slide mid-note.",
+            },
+        ],
+        [Num("note") with { Help = "A note number: patch it into a Note to hear it." }],
         EmitQuantiser,
         "Snaps what arrives to the nearest note the scale has switched on, in any octave, so "
         + "a sweep becomes a run up the scale. The switches are pitch classes: A on is every A. "
-        + "Patch 'note' into a Note to hear it. All twelve on is the nearest semitone; none on "
-        + "is a wire. 'hold' freezes the note while it is up: patch the envelope's gate into it "
-        + "so the pitch cannot slide mid-note. Audio only, like every hold: the picture snaps "
-        + "continuously.")
+        + "All twelve on is the nearest semitone; none on is a wire. Audio only, like every "
+        + "hold: the picture snaps continuously.")
     {
         Extras = [new ScaleExtra(Major)],
     };
@@ -352,8 +369,15 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Tune() => new(
         "audio.tune", "Tune", ModuleCategories.Pitch,
-        [Pitched("in", 57f), Num("transpose", 0f, -48f, 48f), Num("hold", 0f, 0f, 1f) with { Lenient = true }],
-        [Num("hz"), Num("note")],
+        [
+            Pitched("in", 57f),
+            Num("transpose", 0f, -48f, 48f) with { Help = "Semitones, added first: a chord's root, or 12 for an octave up." },
+            Num("hold", 0f, 0f, 1f) with { Lenient = true, Help = "Freezes the note while it is up, as a Quantiser's does." },
+        ],
+        [
+            Num("hz") with { Help = "For an oscillator's 'freq'." },
+            Num("note") with { Help = "The same pitch as a note number." },
+        ],
         (em, i) =>
         {
             var nought = em.Constant(0f);
@@ -361,10 +385,7 @@ public partial class NodeCatalog
 
             return Sounded(em, snapped, nought, nought);
         },
-        "A Quantiser and a Note in one: a note number in, a frequency in the scale out. "
-        + "'transpose' is added first, in semitones: a chord's root, or 12 for an octave up. "
-        + "'hz' goes to an oscillator's 'freq'; 'note' is the same as a number. 'hold' freezes "
-        + "it, as a Quantiser's does.")
+        "A Quantiser and a Note in one: a note number in, a frequency in the scale out.")
     {
         Extras = [new ScaleExtra(Major)],
     };
@@ -487,10 +508,10 @@ public partial class NodeCatalog
             ProbeTypeId, "Probe", ModuleCategories.Measurement,
             [
                 Swept("in"),
-                Seconds("window", 0.3f),
-                Num("scale", 1f, 0.01f, 16f),
+                Seconds("window", 0.3f) with { Help = "The timebase: a grid square across is an eighth of it." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "The value at the top edge. A grid square up is a quarter of it." },
             ],
-            [Col("out")],
+            [Col("out") with { Help = "The chart as a color." }],
             (em, node) =>
             {
                 var zero = em.Constant(0f);
@@ -523,10 +544,9 @@ public partial class NodeCatalog
                 return [Charted(em, x, y, height, now: zero)];
             },
             "A chart of 'in' in place of the picture while it is selected: the middle column is "
-            + "now, the left the past, the right the future. A grid square is an eighth of 'window' "
-            + "across and a quarter of 'scale' up. 'out' is the chart as a color. It cannot show "
-            + "memory: drawn rather than heard, an oscillator does not accumulate phase and a delay "
-            + "passes straight through. A Scope shows what the speakers actually played.")
+            + "now, the left the past, the right the future. It cannot show memory: drawn rather "
+            + "than heard, an oscillator does not accumulate phase and a delay passes straight "
+            + "through. A Scope shows what the speakers actually played.")
         {
             Sinks = ModuleSinks.Video,
         };
@@ -554,10 +574,10 @@ public partial class NodeCatalog
                 // chain into the picture's program to compute a value nothing
                 // would look at.
                 Swept("in"),
-                Seconds("window", -1.7f),
-                Num("scale", 1f, 0.01f, 16f),
+                Seconds("window", -1.7f) with { Help = "How much is shown across the frame. A grid square is an eighth of it." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "The value at the top edge. A grid square up is a quarter of it." },
             ],
-            [Col("out")],
+            [Col("out") with { Help = "The chart as a color." }],
             (em, node) =>
             {
                 var x = em.Load(OpCode.LoadX);
@@ -598,11 +618,9 @@ public partial class NodeCatalog
                 ];
             },
             "A chart of what the speakers actually played: select it and the screen shows the "
-            + "last 'window' seconds of 'in', newest at the right edge. A grid square is an eighth "
-            + "of 'window' across and a quarter of 'scale' up. Unlike a Probe it shows memory (an "
-            + "oscillator's phase, a delay's tail, a sample, an envelope) but only what reaches the "
-            + "Output's 'left' or 'right', and nothing while sound is off. 'out' is the chart as a "
-            + "color.")
+            + "last 'window' seconds of 'in', newest at the right edge. Unlike a Probe it shows "
+            + "memory (an oscillator's phase, a delay's tail, a sample, an envelope) but only what "
+            + "reaches the Output's 'left' or 'right', and nothing while sound is off.")
         {
             TapsSignal = true,
             ChartsSignal = true,
@@ -642,11 +660,11 @@ public partial class NodeCatalog
             [
                 // Swept and never resolved, for the Scope's reason.
                 Swept("in"),
-                Seconds("window", -1f),
-                Num("range", 96f, 12f, 144f),
-                Num("scale", 1f, 0.01f, 16f),
+                Seconds("window", -1f) with { Help = "How long it listens. Short follows every note, long settles." },
+                Num("range", 96f, 12f, 144f) with { Help = "In dB: how far below the top edge the bottom is." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "The top edge is a full-scale sine divided by this." },
             ],
-            [Col("out")],
+            [Col("out") with { Help = "The chart as a color." }],
             (em, node) =>
             {
                 var x = em.Load(OpCode.LoadX);
@@ -694,11 +712,9 @@ public partial class NodeCatalog
             },
             "A spectrum of what the speakers actually played: select it and the screen shows how "
             + "loud each frequency of 'in' was over the last 'window' seconds, 20 Hz to 20 kHz on a "
-            + "log scale, gridded at 100 Hz, 1 kHz and 10 kHz. The top edge is a full-scale sine "
-            + "divided by 'scale' and the bottom is 'range' dB below it; a bar along the top is "
-            + "louder than the chart. A short 'window' follows every note, a long one settles. "
-            + "Resolution is about 12 Hz. Like a Scope, it shows only what reaches the Output's "
-            + "'left' or 'right', and nothing while sound is off. 'out' is the chart as a color.")
+            + "log scale, gridded at 100 Hz, 1 kHz and 10 kHz. A bar along the top is louder than "
+            + "the chart. Resolution is about 12 Hz. Like a Scope, it shows only what reaches the "
+            + "Output's 'left' or 'right', and nothing while sound is off.")
         {
             TapsSignal = true,
             ChartsSignal = true,
@@ -739,15 +755,18 @@ public partial class NodeCatalog
         return new NodeDef(
             ScanTypeId, "Scan", ModuleCategories.Measurement,
             [
-                Swept("in"),
-                Domain("clock"),
-                Num("rate", 220f, 0f, 4000f) with { Knee = 0.02f },
-                Num("radius", 0.5f, 0f),
-                Num("x", 0f, -2f, 2f),
-                Num("y", 0f, -2f, 2f),
-                Num("scale", 1f, 0.01f, 16f),
+                Swept("in") with { Help = "What is read along the loop: the wavetable." },
+                Domain("clock", "What carries the sweep round the loop: Time without a wire."),
+                Num("rate", 220f, 0f, 4000f) with { Knee = 0.02f, Help = "Turns a second: the pitch, in hertz." },
+                Num("radius", 0.5f, 0f) with { Help = "The size of the loop." },
+                Num("x", 0f, -2f, 2f) with { Help = "The loop's center, across." },
+                Num("y", 0f, -2f, 2f) with { Help = "The loop's center, up." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = "The value that pushes the drawn trace half a radius off the loop." },
             ],
-            [Num("out"), Col("view")],
+            [
+                Num("out") with { Help = "The sample." },
+                Col("view") with { Help = "The loop drawn over the picture." },
+            ],
             (em, node) =>
             {
                 var one = em.Constant(1f);
@@ -819,12 +838,11 @@ public partial class NodeCatalog
             "Hears the picture. A circle is swept round the image 'rate' times a second and 'in' "
             + "is read along it, so one turn is one cycle of a waveform and 'rate' is the pitch. "
             + "'radius', 'x' and 'y' pick the loop: the image is the wavetable, and moving them "
-            + "sweeps through it. 'clock' carries the sweep and runs off Time until something is "
-            + "patched in. 'out' is the sample; 'view' is the loop drawn over the picture. A loop "
-            + "along the picture's own contours reads a constant and is silent: a circle centered "
-            + "on Rings hears nothing, and moving it off center hears everything. At 'radius' 0, "
-            + "'x' and 'y' are the path: a sawtooth into 'x' times Coordinates' 'aspect', with a "
-            + "slow one into 'y', is a raster scan, retrace edge and all.");
+            + "sweeps through it. A loop along the picture's own contours reads a constant and is "
+            + "silent: a circle centered on Rings hears nothing, and moving it off center hears "
+            + "everything. At 'radius' 0, 'x' and 'y' are the path: a sawtooth into 'x' times "
+            + "Coordinates' 'aspect', with a slow one into 'y', is a raster scan, retrace edge "
+            + "and all.");
     }
     
     /// <summary>An input that carries an earlier one through when left unpatched.</summary>

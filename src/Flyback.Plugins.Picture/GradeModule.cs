@@ -47,16 +47,16 @@ internal static class GradeModule
         TypeId, "Grade", ModuleCategories.Color,
         [
             new PortSpec("color", PortKind.Color),
-            new PortSpec("saturation", PortKind.Scalar, 1f, 0f, 3f),
-            new PortSpec("contrast", PortKind.Scalar, 1f, 0f),
-            new PortSpec("gamma", PortKind.Scalar, 1f, 0.1f),
+            new PortSpec("saturation", PortKind.Scalar, 1f, 0f, 3f) { Help = "0 is grayscale, and past 1 keeps going." },
+            new PortSpec("contrast", PortKind.Scalar, 1f, 0f) { Help = "Pivots on middle gray, so black and white stay put." },
+            new PortSpec("gamma", PortKind.Scalar, 1f, 0.1f)
+            {
+                Help = "Above 1 deepens the shadows and leaves the highlights, for a picture that is too pale.",
+            },
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire. "
-        + "'saturation' 0 is grayscale and past 1 keeps going. 'contrast' pivots on middle "
-        + "gray, so black and white stay put. 'gamma' above 1 deepens the shadows and leaves "
-        + "the highlights, for a picture that is too pale.");
+        "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

@@ -8,7 +8,8 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             "space.rotate", "Rotate", ModuleCategories.Geometry,
-            [..Position(), Num("angle", 0f, -Tau, Tau)], [Num("x"), Num("y")],
+            [..Position(), Num("angle", 0f, -Tau, Tau) with { Help = "In radians. An oscillator here makes it turn." }],
+            [Num("x"), Num("y")],
             (em, i) =>
             {
                 var cos = em.Unary(OpCode.Cos, i[2]);
@@ -19,13 +20,14 @@ public partial class NodeCatalog
                     em.Binary(OpCode.Add, em.Mul(i[0], sin), em.Mul(i[1], cos)),
                 ];
             },
-            "Spins the coordinate system. Feed the angle from an oscillator to make it turn.");
+            "Spins the coordinate system.");
 
         yield return new NodeDef(
             "space.scale", "Scale", ModuleCategories.Geometry,
-            [..Position(), Num("scale", 1f, 0f, 16f)], [Num("x"), Num("y")],
+            [..Position(), Num("scale", 1f, 0f, 16f) with { Help = "Multiplies the coordinate. Larger packs more pattern in." }],
+            [Num("x"), Num("y")],
             (em, i) => [em.Mul(i[0], i[2]), em.Mul(i[1], i[2])],
-            "Zooms the coordinate system. Larger scale packs more pattern in.");
+            "Zooms the coordinate system.");
 
         yield return new NodeDef(
             "space.translate", "Translate", ModuleCategories.Geometry,
@@ -37,13 +39,18 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.polar", "To polar", ModuleCategories.Geometry,
-            [..Position()], [Num("radius"), Num("angle")],
+            [..Position()],
+            [
+                Num("radius") with { Help = "Distance from the center." },
+                Num("angle") with { Help = "In radians, round the center: -pi to pi." },
+            ],
             (em, i) => [em.Binary(OpCode.Hypot, i[0], i[1]), em.Binary(OpCode.Atan2, i[1], i[0])],
             "Cartesian to polar. Patterns built on radius and angle go circular.");
 
         yield return new NodeDef(
             "space.tile", "Tile", ModuleCategories.Geometry,
-            [..Position(), Num("tiles", 3f, 1f, 16f)], [Num("x"), Num("y")],
+            [..Position(), Num("tiles", 3f, 1f, 16f) with { Help = "How many cells fit across -1 to 1." }],
+            [Num("x") with { Help = TileCellHelp }, Num("y") with { Help = TileCellHelp }],
             (em, i) =>
             {
                 return [Cell(i[0]), Cell(i[1])];
@@ -61,7 +68,8 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.kaleidoscope", "Kaleidoscope", ModuleCategories.Geometry,
-            [..Position(), Num("segments", 6f, 1f, 24f)], [Num("x"), Num("y")],
+            [..Position(), Num("segments", 6f, 1f, 24f) with { Help = "How many wedges make the full circle." }],
+            [Num("x"), Num("y")],
             (em, i) =>
             {
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
@@ -80,7 +88,12 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "space.warp", "Warp", ModuleCategories.Geometry,
-            [..Position(), Num("by"), Num("amount", 0.5f, 0f, 2f)], [Num("x"), Num("y")],
+            [
+                ..Position(),
+                Num("by") with { Help = "The signal that pushes: added to 'x', and through a sine to 'y'." },
+                Num("amount", 0.5f, 0f, 2f) with { Help = "Multiplies 'by' before it pushes." },
+            ],
+            [Num("x"), Num("y")],
             (em, i) =>
             {
                 var push = em.Mul(i[2], i[3]);
@@ -93,6 +106,9 @@ public partial class NodeCatalog
             "Displaces coordinates by another signal. This is where patches stop looking geometric.");
     }
 
+
+    private const string TileCellHelp = "Where in its cell the pixel is, -1 to 1 across it.";
+
     /// <summary>What a Transform's settings are filed under, and the one it has.</summary>
     public const string TransformStateKey = "transform";
 
@@ -102,6 +118,8 @@ public partial class NodeCatalog
     public const string TurnThenZoom = "turn";
 
     private const string ZoomThenTurn = "zoom";
+
+    private const string TransformSlideHelp = "Moves the pattern, as on Translate.";
 
     /// <summary>
     /// Scale, Rotate and Translate in one module, which is how a plane is nearly
@@ -117,7 +135,13 @@ public partial class NodeCatalog
     /// </remarks>
     private static NodeDef Transform() => new(
         "space.transform", "Transform", ModuleCategories.Geometry,
-        [..Position(), Num("zoom", 1f, 0f, 16f), Num("angle", 0f, -Tau, Tau), Num("dx", 0f, -2f, 2f), Num("dy", 0f, -2f, 2f)],
+        [
+            ..Position(),
+            Num("zoom", 1f, 0f, 16f) with { Help = "Multiplies the coordinate, as on Scale." },
+            Num("angle", 0f, -Tau, Tau),
+            Num("dx", 0f, -2f, 2f) with { Help = TransformSlideHelp },
+            Num("dy", 0f, -2f, 2f) with { Help = TransformSlideHelp },
+        ],
         [Num("x"), Num("y")],
         (em, i) =>
         {
@@ -140,8 +164,7 @@ public partial class NodeCatalog
             return [em.Binary(OpCode.Sub, x, i[4]), em.Binary(OpCode.Sub, y, i[5])];
         },
         "Zooms, turns and slides the coordinate system: a Scale, a Rotate and a Translate in "
-        + "one. 'angle' is in radians, and 'dx' and 'dy' move the pattern. Whether it zooms or "
-        + "turns first is set on the node.")
+        + "one. Whether it zooms or turns first is set on the node.")
     {
         Extras =
         [

@@ -28,13 +28,15 @@ public partial class NodeCatalog
         DriveTypeId, "Drive", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Any, 0f, -1f, 1f),
-            new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f),
+            new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f)
+            {
+                Help = "How hard it is pushed. Normalized, so more is dirtier and never louder.",
+            },
         ],
         [new PortSpec("out", PortKind.Any)],
         DriveEmit,
-        "Soft saturation: rounds the peaks off rather than folding them back. Normalized, so "
-        + "more drive is dirtier and never louder, and it doubles as a compressor. Untyped; on "
-        + "the screen it is contrast that never clips.");
+        "Soft saturation: rounds the peaks off rather than folding them back, and doubles as "
+        + "a compressor. Untyped; on the screen it is contrast that never clips.");
 
     private static Slot[] DriveEmit(Emitter em, EmitContext inputs)
     {

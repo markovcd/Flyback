@@ -22,9 +22,18 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "color.hsv", "HSV", ModuleCategories.Color,
-            [Num("hue", 0f, 0f, 1f) with { Lenient = true }, Num("saturation", 1f, 0f, 1f), Num("value", 1f, 0f, 1f)], [Col("color")],
+            [
+                Num("hue", 0f, 0f, 1f) with
+                {
+                    Lenient = true,
+                    Help = "Round the color wheel: 1 is once round, so it wraps. Sweeping it is the fastest route to rainbows.",
+                },
+                Num("saturation", 1f, 0f, 1f) with { Help = "How much color: 0 is gray." },
+                Num("value", 1f, 0f, 1f) with { Help = "Brightness: 0 is black." },
+            ],
+            [Col("color")],
             (em, i) => [em.Triple(OpCode.HsvToRgb, i[0], i[1], i[2])],
-            "Hue, saturation, value. Sweeping hue is the fastest route to rainbows.");
+            "Builds a color from hue, saturation and value.");
 
         yield return new NodeDef(
             "color.split", "Split", ModuleCategories.Color,
@@ -40,7 +49,12 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             "color.gain", "Gain", ModuleCategories.Color,
-            [Col("color"), Any("gain", 1f, 0f), Any("bias", 0f, -1f, 1f)], [Col("color")],
+            [
+                Col("color"),
+                Any("gain", 1f, 0f) with { Help = "Multiplies every channel. A color here tints." },
+                Any("bias", 0f, -1f, 1f) with { Help = "Added after 'gain', lifting or sinking every channel." },
+            ],
+            [Col("color")],
             (em, i) => [em.Binary(OpCode.Add, em.Binary(OpCode.Mul, i[0], i[1]), i[2])],
             "Brightness and contrast, as multiply then add.");
 
@@ -72,8 +86,8 @@ public partial class NodeCatalog
     private static NodeDef Ink() => new(
         "color.ink", "Ink", ModuleCategories.Color,
         [
-            Col("under"),
-            Num("mask", 1f, 0f),
+            Col("under") with { Help = "The picture so far." },
+            Num("mask", 1f, 0f) with { Help = "The shape to draw, 1 inside and 0 out: a Fill, a Smoothstep." },
             Num("r", 1f, 0f, 1f),
             Num("g", 1f, 0f, 1f),
             Num("b", 1f, 0f, 1f),
@@ -87,10 +101,9 @@ public partial class NodeCatalog
                 ? [em.Ternary(OpCode.Mix, i[0], ink, i[1])]
                 : [em.Binary(OpCode.Add, i[0], em.Binary(OpCode.Mul, ink, i[1]))];
         },
-        "Draws in one color. Patch a shape into 'mask' — a Fill, a Smoothstep — set the color "
-        + "on 'r', 'g' and 'b', and patch the picture so far into 'under', one Ink into the "
-        + "next. The mode is set on the node: add lays the color on as light, over covers like "
-        + "paint.")
+        "Draws in one color, set on 'r', 'g' and 'b'. Chain them by patching one Ink's 'color' "
+        + "into the next one's 'under'. The mode is set on the node: add lays the color on as "
+        + "light, over covers like paint.")
     {
         Extras =
         [
@@ -120,11 +133,11 @@ public partial class NodeCatalog
         [
             Col("color"),
             ..Position(),
-            Num("from", 0.5f, 0f),
-            Num("to", 2f, 0f),
-            Num("dark", 0.35f, 0f, 1f),
+            Num("from", 0.5f, 0f) with { Help = "The radius out to which nothing is touched, as Coordinates measures it." },
+            Num("to", 2f, 0f) with { Help = "The radius where it reaches 'dark'." },
+            Num("dark", 0.35f, 0f, 1f) with { Help = "The share of its brightness the picture keeps at 'to'." },
         ],
-        [Col("color"), Num("shade")],
+        [Col("color"), Num("shade") with { Help = "The darkening alone, for a Multiply." }],
         (em, i) =>
         {
             var radius = em.Binary(OpCode.Hypot, i[1], i[2]);
@@ -138,9 +151,7 @@ public partial class NodeCatalog
 
             return [em.Binary(OpCode.Mul, i[0], shade), shade];
         },
-        "Darkens the corners. The picture is untouched out to 'from', measured as Coordinates' "
-        + "radius is, and falls to 'dark' of its brightness by 'to'. 'shade' is the darkening "
-        + "alone, for a Multiply.")
+        "Darkens the corners, from untouched at 'from' to 'dark' at 'to'.")
     {
         Sinks = ModuleSinks.Video,
     };

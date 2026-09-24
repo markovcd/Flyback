@@ -60,7 +60,9 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
             .Where(d => d.TypeId.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || d.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
+                || d.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || d.Inputs.Any(p => SocketHelp.For(p, input: true).Contains(query, StringComparison.OrdinalIgnoreCase))
+                || d.Outputs.Any(p => SocketHelp.For(p, input: false).Contains(query, StringComparison.OrdinalIgnoreCase)))
             .Take(30)
             .ToArray();
 
@@ -114,11 +116,15 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
             text.Append("  in  ").Append(i).Append(' ').Append(port.Name)
                 .Append(" = ").Append(port.Format(port.Default))
                 .Append(" [").Append(Number(port.Min)).Append("..").Append(Number(port.Max)).Append(']')
-                .AppendLine(port.Kind == PortKind.Color ? " color" : port.Kind == PortKind.Any ? " any" : "");
+                .Append(port.Kind == PortKind.Color ? " color" : port.Kind == PortKind.Any ? " any" : "");
+            Helped(SocketHelp.For(port, input: true));
         }
 
         for (var i = 0; i < def.Outputs.Count; i++)
-            text.Append("  out ").Append(i).Append(' ').AppendLine(def.Outputs[i].Name);
+        {
+            text.Append("  out ").Append(i).Append(' ').Append(def.Outputs[i].Name);
+            Helped(SocketHelp.For(def.Outputs[i], input: false));
+        }
 
         // What the module carries that is neither a socket nor a knob, which
         // the two loops above cannot show — the whole reason a model asking
@@ -126,5 +132,7 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
         foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
 
         if (def.Description.Length > 0) text.AppendLine(def.Description);
+
+        void Helped(string help) => text.AppendLine(help.Length > 0 ? $" — {help}" : string.Empty);
     }
 }

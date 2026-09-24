@@ -24,15 +24,19 @@ internal static class FoldModule
         TypeId, "Fold", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Any, 0f, -1f, 1f),
-            new PortSpec("drive", PortKind.Scalar, 1f, 0f, 8f),
-            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
+            new PortSpec("drive", PortKind.Scalar, 1f, 0f, 8f)
+            {
+                Help = "Multiplies 'in' before the fold. 1 is a wire; turned up, a sine grows a spectrum.",
+            },
+            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f)
+            {
+                Help = "Added after 'drive', so the folds go asymmetric and even harmonics appear.",
+            },
         ],
         [new PortSpec("out", PortKind.Any)],
         Emit,
-        "Folds a signal back where it runs past full scale, adding harmonics. 'drive' 1 is a "
-        + "wire; turned up, a sine grows a spectrum. 'bias' shifts it first, so the folds go "
-        + "asymmetric and even harmonics appear. Untyped: it folds a color too, and on the "
-        + "screen turns a gradient into bands.")
+        "Folds a signal back where it runs past full scale, adding harmonics. Untyped: it folds "
+        + "a color too, and on the screen turns a gradient into bands.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

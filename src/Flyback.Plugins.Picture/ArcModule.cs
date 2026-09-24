@@ -22,16 +22,17 @@ internal static class ArcModule
         TypeId, "Arc", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Size("radius", 0.5f),
-            new PortSpec("sweep", PortKind.Scalar, 0.75f, 0f, 1f),
-            Field.Size("width", 0.1f, 1f),
+            Field.Size("radius", 0.5f) with { Help = "To the middle of the band." },
+            new PortSpec("sweep", PortKind.Scalar, 0.75f, 0f, 1f)
+            {
+                Help = "How much of the circle it covers: 0 is a dot at the top, 1 a whole ring.",
+            },
+            Field.Size("width", 0.1f, 1f) with { Help = "Across the band." },
         ],
         [Field.Distance("distance")],
         Emit,
-        "Part of a ring, as a distance, centered on the top and opening both ways. 'radius' "
-        + "is to the middle of the band, 'width' is across it, and 'sweep' is how much of the "
-        + "circle it covers: 0 is a dot at the top, 1 a whole ring. The ends are round. Exact, "
-        + "so a sweep driven by a signal fills it like a dial.")
+        "Part of a ring, as a distance, centered on the top and opening both ways, with round "
+        + "ends. Exact, so a sweep driven by a signal fills it like a dial.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

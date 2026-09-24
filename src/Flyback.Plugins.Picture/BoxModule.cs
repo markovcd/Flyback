@@ -27,14 +27,13 @@ internal static class BoxModule
         TypeId, "Box", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Size("width", 0.5f),
-            Field.Size("height", 0.5f),
-            Field.Size("corner", 0f, 1f),
+            Field.Size("width", 0.5f) with { Help = "Half the width, reaching from the middle as a radius does." },
+            Field.Size("height", 0.5f) with { Help = "Half the height, reaching from the middle as a radius does." },
+            Field.Size("corner", 0f, 1f) with { Help = "Rounds the corners, up to a capsule and then a disc." },
         ],
         [Field.Distance("distance")],
         Emit,
-        "A rectangle, as a distance. 'width' and 'height' are half-sizes, reaching from the "
-        + "middle as a radius does. 'corner' rounds it, up to a capsule and then a disc.")
+        "A rectangle, as a distance, with corners that can be rounded off.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

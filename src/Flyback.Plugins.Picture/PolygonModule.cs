@@ -41,14 +41,15 @@ internal static class PolygonModule
         TypeId, "Polygon", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Size("radius", 0.5f),
-            new PortSpec("sides", PortKind.Scalar, 5f, 3f, 16f, Display: PortDisplay.Integer),
+            Field.Size("radius", 0.5f) with { Help = "To the corners, so it touches a Circle of the same radius." },
+            new PortSpec("sides", PortKind.Scalar, 5f, 3f, 16f, Display: PortDisplay.Integer)
+            {
+                Help = "Rounded down and never below three, so the knob steps between whole polygons.",
+            },
         ],
         [Field.Distance("distance")],
         Emit,
-        "A regular polygon, as a distance, with a corner at the top. 'radius' is to the "
-        + "corners, so it touches a Circle of the same radius. 'sides' is rounded down and "
-        + "never below three, so the knob steps between whole polygons. Costs the same at any "
+        "A regular polygon, as a distance, with a corner at the top. Costs the same at any "
         + "count.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))

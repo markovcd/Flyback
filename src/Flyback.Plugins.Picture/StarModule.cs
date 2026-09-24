@@ -30,15 +30,19 @@ internal static class StarModule
         TypeId, "Star", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Size("radius", 0.5f),
-            new PortSpec("points", PortKind.Scalar, 5f, 2f, 16f, Display: PortDisplay.Integer),
-            new PortSpec("sharpness", PortKind.Scalar, 0.45f, 0f, 1f),
+            Field.Size("radius", 0.5f) with { Help = "To the tips." },
+            new PortSpec("points", PortKind.Scalar, 5f, 2f, 16f, Display: PortDisplay.Integer)
+            {
+                Help = "Rounded down like a Polygon's 'sides'. 2 is a lens.",
+            },
+            new PortSpec("sharpness", PortKind.Scalar, 0.45f, 0f, 1f)
+            {
+                Help = "From a polygon at 0 to needles at 1, growing the points.",
+            },
         ],
         [Field.Distance("distance")],
         Emit,
-        "A star, as a distance, with a point at the top. 'radius' is to the tips. 'sharpness' "
-        + "runs from a polygon at 0 to needles at 1, growing the points. 'points' is rounded "
-        + "down like a Polygon's 'sides', and 2 is a lens. Exact, so an outline is its stated "
+        "A star, as a distance, with a point at the top. Exact, so an outline is its stated "
         + "width even at the tips.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))

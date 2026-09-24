@@ -531,7 +531,7 @@ public sealed partial class MainWindow
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(BuildInputRow(def, node, def.Inputs[i], i, reading));
+            inspector.Children.Add(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), SocketHelp.For(def.Inputs[i], input: true)));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -550,6 +550,8 @@ public sealed partial class MainWindow
                 Foreground = Text.Muted,
                 FontSize = Text.Body,
             });
+
+        BuildOutputs(def);
 
         // The Output cannot be deleted, so it gets no button for it. What the
         // picture is drawn at and by is a property of the machine rather than of
@@ -670,6 +672,54 @@ public sealed partial class MainWindow
             button.Click += (_, _) => gesture();
             actions.Children.Add(button);
         }
+    }
+
+    /// <summary>
+    /// What the module puts out, under everything that can be set: a heading and a
+    /// row per output, each with its help as the tip.
+    /// </summary>
+    private void BuildOutputs(NodeDef def)
+    {
+        if (def.Outputs.Count == 0) return;
+
+        inspector.Children.Add(new TextBlock
+        {
+            Text = "Outputs",
+            FontSize = Text.Small,
+            FontWeight = FontWeight.SemiBold,
+            Opacity = 0.7,
+            Margin = new Thickness(0, 10, 0, 2),
+        });
+
+        foreach (var port in def.Outputs)
+        {
+            var row = InspectorRows.Row("*");
+            var caption = InspectorRows.Caption(port.Name);
+
+            caption.Width = double.NaN;
+            caption.Margin = new Thickness(0, 2, 0, 2);
+            Grid.SetColumnSpan(caption, 2);
+
+            row.Children.Add(caption);
+            inspector.Children.Add(Helped(row, SocketHelp.For(port, input: false)));
+        }
+    }
+
+    /// <summary>
+    /// A socket's row with the socket's help as its tip, over the whole row rather
+    /// than the name alone. A row whose socket has none is handed back as it was.
+    /// </summary>
+    private static Control Helped(Control row, string help)
+    {
+        if (help.Length == 0) return row;
+
+        // A panel with no background is only hit where its children are, which
+        // would leave the gaps between them without the tip.
+        if (row is Panel { Background: null } panel) panel.Background = Brushes.Transparent;
+
+        ToolTip.SetTip(row, help);
+
+        return row;
     }
 
     /// <summary>

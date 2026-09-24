@@ -45,15 +45,21 @@ public partial class NodeCatalog
         FilterTypeId, "Filter", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f) { Knee = 20f },
-            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f),
+            new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f)
+            {
+                Knee = 20f,
+                Help = "The corner, in hertz. Meant to be swept by an oscillator or an envelope.",
+            },
+            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = "Peaks the corner, until it rings on a sharp edge." },
         ],
-        [new PortSpec("low"), new PortSpec("band"), new PortSpec("high")],
+        [
+            new PortSpec("low") { Help = "What is under the cutoff. On the picture, 'in' unchanged." },
+            new PortSpec("band") { Help = "What is around the cutoff. Silent on the picture." },
+            new PortSpec("high") { Help = "What is over the cutoff. Silent on the picture." },
+        ],
         (em, i) => FilterResponses(em, i[0], i[1], i[2]),
-        "A resonant filter, all three responses at once. 'cutoff' is in hertz and is meant to "
-        + "be swept by an oscillator or an envelope. 'resonance' peaks the corner and rings on "
-        + "a sharp edge. Audio only: on the picture 'low' passes straight through and the other "
-        + "two are silent.");
+        "A resonant filter, all three responses at once. Audio only: the picture gets 'in' "
+        + "through 'low' and nothing through the other two.");
 
     /// <summary>
     /// Low, band and high of <paramref name="dry"/>, for a module with a filter

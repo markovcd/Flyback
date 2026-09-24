@@ -41,10 +41,10 @@ public partial class NodeCatalog
         yield return new NodeDef(
             SendTypeId, "Send", ModuleCategories.Routing,
             [Any("in")],
-            [Any("out")],
+            [Any("out") with { Help = "The same as 'in', so a Send can sit in a chain." }],
             (_, i) => [i[0]],
             "Puts 'in' on a bus, for a Receive on the same bus to play anywhere in the patch "
-            + "without a wire across it. 'out' is 'in', so a Send can sit in a chain.")
+            + "without a wire across it.")
         {
             Extras = [BusExtra],
         };

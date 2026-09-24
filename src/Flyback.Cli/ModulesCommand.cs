@@ -16,6 +16,7 @@ internal sealed record Module(
 /// <param name="Min">Null where the socket declares no range.</param>
 /// <param name="Display">How the text writes a value for it: a number, a note, a duration or a whole number.</param>
 /// <param name="WiredOnly">True where the socket has no knob and does nothing until wired.</param>
+/// <param name="Help">What the socket is for, and empty where its name says it all.</param>
 internal sealed record Input(
     int Index,
     string Name,
@@ -24,7 +25,8 @@ internal sealed record Input(
     float Default,
     float? Min,
     float? Max,
-    bool WiredOnly);
+    bool WiredOnly,
+    string Help);
 
 /// <summary>What a module carries that is neither a socket nor a knob.</summary>
 internal sealed record Carried(string Key, string Says);
@@ -63,8 +65,8 @@ internal static class ModulesCommand
     }
 
     /// <summary>
-    /// One module, found by its type id or its name: every socket with its default
-    /// and range, what it carries besides, and its description.
+    /// One module, found by its type id or its name: every socket with its default,
+    /// range and help, what it carries besides, and its description.
     /// </summary>
     public static int Describe(ModuleCatalog catalog, string wanted, bool json, TextWriter output, TextWriter error)
     {
@@ -94,7 +96,7 @@ internal static class ModulesCommand
                     piped = piped.Select(port => def.Inputs[port].Name),
                     pipedColor = piped.Length == 0 && Tinted(def) is { } colored ? def.Inputs[colored].Name : null,
                     inputs,
-                    outputs = def.Outputs.Select((port, index) => new { index, name = port.Name }),
+                    outputs = def.Outputs.Select((port, index) => new { index, name = port.Name, help = SocketHelp.For(port, input: false) }),
                     carries = carried,
                 },
                 Writing.Json));
@@ -120,7 +122,10 @@ internal static class ModulesCommand
         if (def.Inputs.Count == 0) output.WriteLine("  none");
 
         for (var i = 0; i < def.Inputs.Count; i++)
+        {
             output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {At(def.Inputs[i]).PadRight(at)}  {Turns(def.Inputs[i])}".TrimEnd());
+            Helped(SocketHelp.For(def.Inputs[i], input: true));
+        }
 
         var tinted = piped.Length == 0 ? Tinted(def) : null;
 
@@ -140,7 +145,10 @@ internal static class ModulesCommand
         if (def.Outputs.Count == 0) output.WriteLine("  none");
 
         for (var i = 0; i < def.Outputs.Count; i++)
+        {
             output.WriteLine($"  {i,2} {def.Outputs[i].Name}");
+            Helped(SocketHelp.For(def.Outputs[i], input: false));
+        }
 
         if (carried.Length > 0)
         {
@@ -151,6 +159,12 @@ internal static class ModulesCommand
         }
 
         return Exit.Ok;
+
+        // Under the socket's row, indented past its number.
+        void Helped(string help)
+        {
+            if (help.Length > 0) output.WriteLine($"       {help}");
+        }
     }
 
     /// <summary>A type id first, then a name, neither minding case.</summary>
@@ -213,7 +227,8 @@ internal static class ModulesCommand
         port.Default,
         port.Ranged ? port.Min : null,
         port.Ranged ? port.Max : null,
-        port.NeedsAWire);
+        port.NeedsAWire,
+        SocketHelp.For(port, input: true));
 
     /// <summary>What an input sits at unwired, or that it has nothing to sit at.</summary>
     private static string At(PortSpec port) => port.NeedsAWire ? "wired only" : port.Format(port.Default);

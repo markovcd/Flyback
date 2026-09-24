@@ -27,15 +27,20 @@ internal static class BellModule
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("ratio", PortKind.Scalar, 2.76f, 0.25f, 16f),
-            new PortSpec("index", PortKind.Scalar, 0.3f, 0f, 2f),
+            new PortSpec("ratio", PortKind.Scalar, 2.76f, 0.25f, 16f)
+            {
+                Help = "Places the overtone above 'freq': a whole number is an organ tone, 2.76 a "
+                    + "bronze bar, 1.41 a bright chime, 3.5 glass.",
+            },
+            new PortSpec("index", PortKind.Scalar, 0.3f, 0f, 2f)
+            {
+                Help = "How much overtone there is at the strike, fading with the level.",
+            },
         ],
         [new PortSpec("out")],
         Emit,
         "A bell, a gong, a chime. Patch an envelope into 'level' (a Stroke, a Decay) and a "
-        + "frequency into 'freq'. 'ratio' places the overtone: a whole number is an organ tone, "
-        + "2.76 a bronze bar, 1.41 a bright chime, 3.5 glass. 'index' is how much of it there "
-        + "is at the strike, fading with the level.")
+        + "frequency into 'freq'.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

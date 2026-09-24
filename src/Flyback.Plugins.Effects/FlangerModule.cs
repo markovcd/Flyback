@@ -35,15 +35,16 @@ internal static class FlangerModule
             Sweep.Input,
             Sweep.Rate(0.3f, 5f),
             Sweep.Depth(0.8f),
-            new PortSpec("feedback", PortKind.Scalar, 0.5f, -0.95f, 0.95f),
+            new PortSpec("feedback", PortKind.Scalar, 0.5f, -0.95f, 0.95f)
+            {
+                Help = "Sharpens the notches. Negative moves them to where the peaks were.",
+            },
             Sweep.Mix(0.5f),
         ],
         [new PortSpec("out"), Sweep.Motion],
         Emit,
         "A very short chorus whose copy cancels the original, sweeping a comb of notches "
-        + "through the sound. 'feedback' sharpens them, and negative moves them to where the "
-        + "peaks were. 'lfo' is the sweep and works on the picture; otherwise it is audio only, "
-        + "a wire.")
+        + "through the sound. Audio only but for 'lfo': on the picture it is a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

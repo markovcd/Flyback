@@ -41,19 +41,34 @@ internal static class EqModule
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("low cut", PortKind.Scalar, 0f, 0f, 300f) { Knee = 20f },
-            new PortSpec("low freq", PortKind.Scalar, 100f, 20f, 1_000f) { Knee = 20f },
-            new PortSpec("low gain", PortKind.Scalar, 0f, -12f, 12f),
-            new PortSpec("mid freq", PortKind.Scalar, 1_000f, 100f, 10_000f) { Knee = 100f },
-            new PortSpec("mid gain", PortKind.Scalar, 0f, -12f, 12f),
-            new PortSpec("mid q", PortKind.Scalar, 0.7f, 0.3f, 3f),
-            new PortSpec("high freq", PortKind.Scalar, 8_000f, 1_000f, 16_000f) { Knee = 1_000f },
-            new PortSpec("high gain", PortKind.Scalar, 0f, -12f, 12f),
+            new PortSpec("low cut", PortKind.Scalar, 0f, 0f, 300f)
+            {
+                Knee = 20f,
+                Help = "In hertz, and 0 is off. Removes rumble under it.",
+            },
+            new PortSpec("low freq", PortKind.Scalar, 100f, 20f, 1_000f)
+            {
+                Knee = 20f,
+                Help = "In hertz: the low shelf is under it.",
+            },
+            new PortSpec("low gain", PortKind.Scalar, 0f, -12f, 12f) { Help = "The low shelf, in dB." },
+            new PortSpec("mid freq", PortKind.Scalar, 1_000f, 100f, 10_000f)
+            {
+                Knee = 100f,
+                Help = "In hertz: the middle of the bell.",
+            },
+            new PortSpec("mid gain", PortKind.Scalar, 0f, -12f, 12f) { Help = "The bell, in dB." },
+            new PortSpec("mid q", PortKind.Scalar, 0.7f, 0.3f, 3f) { Help = "How narrow the bell is." },
+            new PortSpec("high freq", PortKind.Scalar, 8_000f, 1_000f, 16_000f)
+            {
+                Knee = 1_000f,
+                Help = "In hertz: the high shelf is over it.",
+            },
+            new PortSpec("high gain", PortKind.Scalar, 0f, -12f, 12f) { Help = "The high shelf, in dB." },
         ],
         [new PortSpec("left"), new PortSpec("right")],
         Emit,
-        "Tone: 'low cut' (Hz, 0 is off) removes rumble, then a shelf under 'low freq', a bell "
-        + "at 'mid freq' and a shelf over 'high freq', gains in dB.")
+        "Tone shaping for a stereo pair: a low cut, then a low shelf, a bell and a high shelf.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))

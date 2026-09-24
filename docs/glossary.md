@@ -37,6 +37,9 @@ has patched a hardware synthesizer should already know most of them.
 | **catalog** | Every module this run knows: the built-ins plus what plugins added. | `NodeCatalog` (built-ins), `ModuleCatalog` (the whole set) | catalogue |
 | **socket** | An input or an output on a module. | `PortSpec`, `PortKind`, a port index | port, jack, pin, inlet, outlet |
 | **input**, **output** | The two kinds of socket. | `Inputs`, `Outputs` | — |
+| **description** | What a module is for and how its sockets work together. It heads the inspector and follows the module in the assistant's briefing. | `NodeDef.Description` | summary, blurb |
+| **help** | What one socket is for, in words that stand alone: the tip on its row in the inspector, and the line after its name the assistant reads. | `PortSpec.Help` | tooltip (that is where it shows), hint, doc |
+| **standard socket** | A socket name that means the same on every module, described once: `x`, `freq`, `mix` and the rest, and every domain input. A socket of that name with no help of its own takes the standard help. | `SocketHelp` | common port, default help |
 | **Output** | The one module every patch has. Its `color` goes to the screen; its `left`, `right` and `volume` go to the speakers. Capitalized, because it is a module's name. | type id `output` | output block, master, sink (see [sink](#picture-and-sound)) |
 | **wire** | Joins an output socket to an input socket. | `Connection` | connection, cable, edge, link, patch cord |
 | **knob** | The value an input socket holds when nothing is wired into it, dialed on the canvas and in the inspector. | `InputValues`; its starting value is `PortSpec.Default` | parameter, param, setting, value alone |

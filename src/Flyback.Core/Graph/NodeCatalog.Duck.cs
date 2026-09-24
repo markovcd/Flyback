@@ -26,18 +26,16 @@ public partial class NodeCatalog
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: 0, PatchOnly: true),
-            new PortSpec("key", PatchOnly: true),
+            new PortSpec("key", PatchOnly: true) { Help = "What to make room for: a kick or its envelope." },
             Num("depth", 0.5f, 0f, 1f),
             Num("full", 1f, 0.01f, 2f),
-            Seconds("attack", -3f),
-            Seconds("release", -0.8f),
+            Seconds("attack", -3f) with { Help = "How fast it follows the key getting louder." },
+            Seconds("release", -0.8f) with { Help = "How fast it lets go as the key gets quieter." },
         ],
-        [new PortSpec("left"), new PortSpec("right"), new PortSpec("gain")],
+        [new PortSpec("left"), new PortSpec("right"), new PortSpec("gain") { Help = "The level applied, to duck anything else with." }],
         EmitDuck,
-        "Turns 'left' and 'right' down while 'key' is loud: patch a kick or its envelope into "
-        + "'key' to make room for it. A key as loud as 'full' ducks by 'depth'; 'attack' and "
-        + "'release' are how fast it follows. 'gain' is the level applied, to duck anything "
-        + "else with.")
+        "Turns 'left' and 'right' down while 'key' is loud. A key as loud as 'full' ducks by "
+        + "'depth'.")
     {
         Sinks = ModuleSinks.Audio,
     };

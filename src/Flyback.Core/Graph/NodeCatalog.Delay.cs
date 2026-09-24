@@ -22,15 +22,17 @@ public partial class NodeCatalog
         DelayTypeId, "Delay", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest) { Knee = 0.001f },
-            new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f),
-            new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f),
+            new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest)
+            {
+                Knee = 0.001f,
+                Help = "Seconds. Can be swept: the line interpolates, so it glides rather than steps.",
+            },
+            new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f) { Help = "How much comes back round for the next repeat." },
+            new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f) { Help = "A crossfade: 0 is a wire, 1 only the echoes." },
         ],
         [new PortSpec("out")],
         (em, inputs) => [DelayEchoed(em, inputs[0], inputs[1], inputs[2], inputs[3])],
-        "An echo. 'time' is in seconds and can be swept — the line interpolates, so it glides "
-        + "rather than steps. 'feedback' is how much comes back round for the next repeat. "
-        + "Audio only: with no picture to remember, it passes straight through.");
+        "An echo. Audio only: with no picture to remember, it passes straight through.");
 
     /// <summary>One Delay's worth of ops, for a module with a Delay inside it — see the Effects plugin's Echo.</summary>
     public static Slot DelayEchoed(Emitter em, Slot dry, Slot time, Slot feedback, Slot mix)

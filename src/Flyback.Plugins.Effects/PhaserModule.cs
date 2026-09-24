@@ -60,14 +60,14 @@ internal static class PhaserModule
             Sweep.Input,
             Sweep.Rate(0.4f, 5f),
             Sweep.Depth(0.7f),
-            new PortSpec("feedback", PortKind.Scalar, 0.4f, 0f, Most),
+            new PortSpec("feedback", PortKind.Scalar, 0.4f, 0f, Most) { Help = "Sharpens the notches." },
             Sweep.Mix(0.5f),
         ],
         [new PortSpec("out"), Sweep.Motion],
         Emit,
         "Two unrelated notches swept through the sound, from four allpass stages over the dry "
-        + "signal, so it sweeps where a flanger whooshes. 'feedback' sharpens them. 'lfo' is "
-        + "the sweep and works on the picture; otherwise it is audio only, a wire.")
+        + "signal, so it sweeps where a flanger whooshes. Audio only but for 'lfo': on the "
+        + "picture it is a wire.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.TimeEffects))
         {

@@ -29,22 +29,21 @@ internal static class JuliaModule
         [
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
-            new PortSpec("re", PortKind.Scalar, -0.8f, -2f, 1f),
-            new PortSpec("im", PortKind.Scalar, 0.156f, -1.5f, 1.5f),
-            new PortSpec("zoom", PortKind.Scalar, 0f, 0f, 12f),
-            new PortSpec("shift", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("re", PortKind.Scalar, -0.8f, -2f, 1f) { Help = "The real part of c." },
+            new PortSpec("im", PortKind.Scalar, 0.156f, -1.5f, 1.5f) { Help = "The imaginary part of c." },
+            new PortSpec("zoom", PortKind.Scalar, 0f, 0f, 12f) { Help = "Halves the view about the middle each step." },
+            new PortSpec("shift", PortKind.Scalar, 0f, 0f, 1f) { Help = MandelbrotModule.ShiftHelp },
         ],
         [
-            new PortSpec("color", PortKind.Color),
-            new PortSpec("escape", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("inside", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("color", PortKind.Color) { Help = MandelbrotModule.ColorHelp },
+            new PortSpec("escape", PortKind.Scalar, 0f, 0f, 1f) { Help = MandelbrotModule.EscapeHelp },
+            new PortSpec("inside", PortKind.Scalar, 0f, 0f, 1f) { Help = MandelbrotModule.InsideHelp },
         ],
         Emit,
-        "The Julia set of c, whose 're' and 'im' are the point: patch the same two into a "
-        + "Mandelbrot and an Orbit to see where c is and hear it. A c inside the Mandelbrot set "
-        + "gives one piece, a c outside gives dust, and the edge between is where the famous "
-        + "ones are. 'zoom' halves the view about the middle each step. 'color', 'shift', "
-        + "'escape' and 'inside' are the Mandelbrot's, and so is the iteration count on the node.")
+        "The Julia set of c: patch the same 're' and 'im' into a Mandelbrot and an Orbit to see "
+        + "where c is and hear it. A c inside the Mandelbrot set gives one piece, a c outside "
+        + "gives dust, and the edge between is where the famous ones are. The iteration count on "
+        + "the node is the Mandelbrot's.")
     {
         Extras = [Escape.Extra],
         Skin = Art.Skin("julia"),

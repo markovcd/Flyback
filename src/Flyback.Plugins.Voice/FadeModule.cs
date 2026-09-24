@@ -22,17 +22,19 @@ internal static class FadeModule
         TypeId, "Fade", ModuleCategories.Timing,
         [
             new PortSpec("in", PortKind.Any, 1f, -1f, 1f),
-            new PortSpec("level", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("level", PortKind.Scalar, 0f, 0f, 1f) { Help = "How far the track has got." },
             new PortSpec("from", PortKind.Scalar, 0f, 0f, 1f),
             new PortSpec("to", PortKind.Scalar, 1f, 0f, 1f),
         ],
-        [new PortSpec("out", PortKind.Any), new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f)],
+        [
+            new PortSpec("out", PortKind.Any),
+            new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f) { Help = "The fade alone, 0 to 1." },
+        ],
         Emit,
         "Brings a part in: 'in' is silent while 'level' is under 'from', full over 'to', and "
-        + "fades between. Drive every part's 'level' from one Sequencer that says how far the "
-        + "track has got, each with its own 'from' and 'to', for a whole arrangement on one "
-        + "lane; 'from' above 'to' fades out instead. 'gate' is the fade alone, 0 to 1. "
-        + "Untyped: it fades a picture as readily as a voice.");
+        + "fades between; 'from' above 'to' fades out instead. Drive every part's 'level' from "
+        + "one Sequencer, each with its own 'from' and 'to', for a whole arrangement on one "
+        + "lane. Untyped: it fades a picture as readily as a voice.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

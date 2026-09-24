@@ -22,15 +22,20 @@ internal static class CrushModule
         TypeId, "Crush", ModuleCategories.Shaping,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("bits", PortKind.Scalar, 8f, 1f, 16f, Display: PortDisplay.Integer),
-            new PortSpec("rate", PortKind.Scalar, 8_000f, 50f, 48_000f) { Knee = 50f },
+            new PortSpec("bits", PortKind.Scalar, 8f, 1f, 16f, Display: PortDisplay.Integer)
+            {
+                Help = "How many levels are left across full scale. On the picture it bands a gradient.",
+            },
+            new PortSpec("rate", PortKind.Scalar, 8_000f, 50f, 48_000f)
+            {
+                Knee = 50f,
+                Help = "Samples taken and held a second. Below the pitch it aliases into new notes; "
+                    + "on the picture it holds nothing.",
+            },
         ],
         [new PortSpec("out")],
         Emit,
-        "Crunches a signal down to fewer levels and fewer samples. 'bits' is how many levels are "
-        + "left across full scale; 'rate' is how many times a second a sample is taken and held, "
-        + "and below the pitch it aliases into new notes. On the picture 'bits' bands a gradient "
-        + "and 'rate' holds nothing.")
+        "Crunches a signal down to fewer levels and fewer samples.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

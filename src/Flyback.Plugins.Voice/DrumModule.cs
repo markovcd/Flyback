@@ -32,18 +32,26 @@ internal static class DrumModule
         TypeId, "Drum", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f) { Knee = 20f },
-            new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f) { Knee = 10f },
-            new PortSpec("bend", PortKind.Scalar, 4f, 0.5f, 8f),
-            new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f),
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "An envelope: a Stroke, a Decay, an ADSR. It sets both the loudness and the pitch drop.",
+            },
+            new PortSpec("pitch", PortKind.Scalar, 50f, 20f, 400f)
+            {
+                Knee = 20f,
+                Help = "In hertz, where it rests: 45 a kick, 100 to 250 a tom.",
+            },
+            new PortSpec("sweep", PortKind.Scalar, 120f, 0f, 1000f)
+            {
+                Knee = 10f,
+                Help = "In hertz, how far above 'pitch' it starts.",
+            },
+            new PortSpec("bend", PortKind.Scalar, 4f, 0.5f, 8f) { Help = "How fast the pitch falls: high clicks, low dives." },
+            new PortSpec("drive", PortKind.Scalar, 2f, 0f, 16f) { Help = "Thickens it without making it louder. 0 is clean." },
         ],
         [new PortSpec("out")],
         Emit,
-        "A kick or a tom. Patch an envelope into 'level' (a Stroke, a Decay, an ADSR) and it "
-        + "sets both the loudness and the pitch drop. 'pitch' is where it rests, in hertz: 45 a "
-        + "kick, 100 to 250 a tom. 'sweep' is how far above that it starts, 'bend' how fast it "
-        + "falls: high clicks, low dives. 'drive' thickens it without making it louder.")
+        "A kick or a tom: a sine whose pitch drops as its envelope falls.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

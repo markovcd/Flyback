@@ -23,18 +23,22 @@ internal static class WanderModule
         TypeId, "Wander", ModuleCategories.Oscillators,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("rate", PortKind.Scalar, 0.1f, 0f, 8f),
-            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f),
+            new PortSpec("rate", PortKind.Scalar, 0.1f, 0f, 8f)
+            {
+                Help = "New values a second: 0.05 drifts like weather, 4 wobbles.",
+            },
+            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f)
+            {
+                Help = "Which walk it takes. Two with the same 'seed' and 'rate' move together.",
+            },
             new PortSpec("low"),
             new PortSpec("high", PortKind.Scalar, 1f),
         ],
         [new PortSpec("out")],
         Emit,
-        "A smooth random value that never repeats, between 'low' and 'high'. 'rate' is how "
-        + "many new values a second: 0.05 drifts like weather, 4 wobbles. For anything that "
-        + "should keep changing: a cutoff, a level, a hue. The same 'seed' and 'rate' move "
-        + "together. On the picture it is one value at every pixel, the one the speakers "
-        + "follow.")
+        "A smooth random value that never repeats, between 'low' and 'high'. For anything that "
+        + "should keep changing: a cutoff, a level, a hue. On the picture it is one value at "
+        + "every pixel, the one the speakers follow.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))
         {

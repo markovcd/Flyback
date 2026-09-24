@@ -58,22 +58,25 @@ internal static class CellsModule
         [
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
-            new PortSpec("z"),
-            new PortSpec("scale", PortKind.Scalar, 4f, 0f, 32f),
-            new PortSpec("jitter", PortKind.Scalar, 1f, 0f, 1f),
+            new PortSpec("z") { Help = "Drifts the points." },
+            new PortSpec("scale", PortKind.Scalar, 4f, 0f, 32f) { Help = "Cells to a unit of the picture: bigger is smaller cells." },
+            new PortSpec("jitter", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "At 1 scatters the points, and at 0 pins them to a grid.",
+            },
         ],
         [
-            new PortSpec("distance", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("edge", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("cell", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("distance", PortKind.Scalar, 0f, 0f, 1f) { Help = "Shades each cell outward from its point." },
+            new PortSpec("edge", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "0 on the line between two cells, so a Threshold on it is a crack.",
+            },
+            new PortSpec("cell", PortKind.Scalar, 0f, 0f, 1f) { Help = "One number per cell, a flat mosaic." },
         ],
         Emit,
         "Scattered points and the distance to the nearest: cells, cracks, scales, stone, the "
-        + "edges smooth noise cannot make. 'distance' shades each cell outward from its point. "
-        + "'edge' is 0 on the line between two cells, so a Threshold on it is a crack. 'cell' "
-        + "is one number per cell, a flat mosaic. 'jitter' at 1 scatters the points and at 0 "
-        + "pins them to a grid. 'z' drifts them. The dearest module in the catalog: fine on the "
-        + "GPU, slow on the processor a command-line render uses.")
+        + "edges smooth noise cannot make. The dearest module in the catalog: fine on the GPU, "
+        + "slow on the processor a command-line render uses.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))
         {

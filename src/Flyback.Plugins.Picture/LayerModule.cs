@@ -19,13 +19,15 @@ internal static class LayerModule
         [
             new PortSpec("base", PortKind.Color),
             new PortSpec("top", PortKind.Color),
-            new PortSpec("amount", PortKind.Scalar, 1f, 0f, 1f),
+            new PortSpec("amount", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "How much of 'top' shows. Patch a Fill into it to show the layer only inside a shape.",
+            },
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
-        "Lays 'top' over 'base' like an image editor's layer. 'amount' is how much shows; "
-        + "patch a Fill into it to show the layer only inside a shape. The mode is set on the "
-        + "node: normal, add, screen, multiply, overlay, difference, lighten or darken.")
+        "Lays 'top' over 'base' like an image editor's layer. The mode is set on the node: "
+        + "normal, add, screen, multiply, overlay, difference, lighten or darken.")
     {
         Extras = [new ModeExtra()],
     };

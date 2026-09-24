@@ -29,13 +29,21 @@ internal static class WidthModule
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("width", PortKind.Scalar, 1f, 0f, 2f),
-            new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f) { Knee = 20f },
+            new PortSpec("width", PortKind.Scalar, 1f, 0f, 2f) { Help = "Scales the side: 0 is mono, 2 twice as wide." },
+            new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f)
+            {
+                Knee = 20f,
+                Help = "In hertz, and 0 is off. Centers the bass under it.",
+            },
         ],
-        [new PortSpec("left"), new PortSpec("right"), new PortSpec("mid"), new PortSpec("side")],
+        [
+            new PortSpec("left"),
+            new PortSpec("right"),
+            new PortSpec("mid") { Help = "The halved sum of the two sides." },
+            new PortSpec("side") { Help = "Their halved difference, after 'width' and 'mono below'." },
+        ],
         Emit,
-        "'width' 0 is mono, 2 twice as wide; 'mono below' (Hz, 0 is off) centers the bass. "
-        + "'mid' and 'side' are the halved sum and difference.")
+        "Stereo width, by way of mid and side: what the two sides share, and how they differ.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {

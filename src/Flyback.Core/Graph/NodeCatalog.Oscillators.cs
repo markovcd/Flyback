@@ -29,8 +29,8 @@ public partial class NodeCatalog
         yield return new NodeDef(
             PulseTypeId, "Pulse", ModuleCategories.Oscillators,
             [
-                Domain("in"), Freq, Num("phase", 0f, 0f, 1f) with { Lenient = true }, Num("width", 0.5f, 0f, 1f),
-                Num("amp", 1f, 0f, 2f), Num("bias", 0f, -2f, 2f)
+                Domain("in"), Freq, Phase, Num("width", 0.5f, 0f, 1f) with { Help = "Where in each cycle it flips from low to high: 0.5 is a square." },
+                Amp, Bias,
             ],
             [Num("out", 0f, -1f, 1f)],
             (em, i) =>
@@ -55,13 +55,7 @@ public partial class NodeCatalog
     private static NodeDef Oscillator(
         string id, string name, Func<Emitter, Slot, Slot> waveform, string description) => new(
         id, name, ModuleCategories.Oscillators,
-        [
-            Domain("in"),
-            Freq,
-            Num("phase", 0f, 0f, 1f) with { Lenient = true },
-            Num("amp", 1f, 0f, 2f),
-            Num("bias", 0f, -2f, 2f),
-        ],
+        [Domain("in"), Freq, Phase, Amp, Bias],
         [Num("out", 0f, -1f, 1f)],
         (em, i) =>
         {
@@ -69,4 +63,10 @@ public partial class NodeCatalog
             return [em.Add(em.Mul(waveform(em, phase), i[3]), i[4])];
         },
         description);
+
+    private static PortSpec Phase => Num("phase", 0f, 0f, 1f) with { Lenient = true };
+
+    private static PortSpec Amp => Num("amp", 1f, 0f, 2f);
+
+    private static PortSpec Bias => Num("bias", 0f, -2f, 2f);
 }

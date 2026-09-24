@@ -25,21 +25,34 @@ internal static class EuclidModule
         TypeId, "Euclid", ModuleCategories.Timing,
         [
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("rate", PortKind.Scalar, 4f, 0f, 32f),
-            new PortSpec("steps", PortKind.Scalar, 8f, 1f, MostSteps, Display: PortDisplay.Integer),
-            new PortSpec("hits", PortKind.Scalar, 3f, 0f, MostSteps, Display: PortDisplay.Integer),
-            new PortSpec("rotate", PortKind.Scalar, 0f, 0f, MostSteps, Display: PortDisplay.Integer),
-            new PortSpec("gate length", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f),
+            new PortSpec("rate", PortKind.Scalar, 4f, 0f, 32f) { Help = "Steps a second." },
+            new PortSpec("steps", PortKind.Scalar, 8f, 1f, MostSteps, Display: PortDisplay.Integer)
+            {
+                Help = "How long the loop is.",
+            },
+            new PortSpec("hits", PortKind.Scalar, 3f, 0f, MostSteps, Display: PortDisplay.Integer)
+            {
+                Help = "How many of the steps are hits.",
+            },
+            new PortSpec("rotate", PortKind.Scalar, 0f, 0f, MostSteps, Display: PortDisplay.Integer)
+            {
+                Help = "Slides the pattern by whole steps.",
+            },
+            new PortSpec("gate length", PortKind.Scalar, 0.5f, 0f, 1f) { Help = "The share of each hit step 'gate' stays open." },
+            new PortSpec("curve", PortKind.Scalar, 3f, 0.1f, 16f) { Help = "Bends the fall of 'stroke'." },
         ],
-        [new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("hit", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("index", PortKind.Scalar, 0f, 0f, 1f), new PortSpec("stroke", PortKind.Scalar, 0f, 0f, 1f)],
+        [
+            new PortSpec("gate", PortKind.Scalar, 0f, 0f, 1f) { Help = "Opens on each hit, for a Decay or an ADSR." },
+            new PortSpec("hit", PortKind.Scalar, 0f, 0f, 1f) { Help = "At 1 for the whole of each hit step." },
+            new PortSpec("index", PortKind.Scalar, 0f, 0f, 1f) { Help = "Where the loop is, 0 to 1." },
+            new PortSpec("stroke", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "Falls from 1 to 0 across each hit step, for a Drum's 'level'.",
+            },
+        ],
         Emit,
-        "A Euclidean rhythm: 'hits' spread as evenly as possible over 'steps', at 'rate' "
-        + "steps a second; 3 in 8 is the tresillo. 'rotate' slides the pattern by whole steps. "
-        + "'gate' opens for 'gate length' of each hit, for a Decay or an ADSR; 'hit' is 1 for "
-        + "the whole step; 'index' is 0 to 1 through the loop. 'stroke' falls from 1 to 0 "
-        + "across each hit step, bent by 'curve', for a Drum's 'level'. On the picture it runs "
-        + "across its domain like a Sequencer.")
+        "A Euclidean rhythm: 'hits' spread as evenly as possible over 'steps'; 3 in 8 is the "
+        + "tresillo. On the picture it runs across its domain like a Sequencer.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Timing))
         {

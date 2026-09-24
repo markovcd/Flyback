@@ -54,31 +54,49 @@ internal static class PlateModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Plate", FiguresPlugin.Category,
         [
-            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
-            new PortSpec("velocity", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("freq", PortKind.Scalar, 110f, 20f, 4000f) { Knee = 20f },
-            new PortSpec("aspect", PortKind.Scalar, 1.3f, 1f, 2f),
-            new PortSpec("decay", PortKind.Scalar, 3f, 0.1f, 8f),
-            new PortSpec("brightness", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("strike x", PortKind.Scalar, 0.3f, 0f, 1f),
-            new PortSpec("strike y", PortKind.Scalar, 0.4f, 0f, 1f),
+            new PortSpec("trigger", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Lenient = true,
+                Help = "Each rise strikes it.",
+            },
+            new PortSpec("velocity", PortKind.Scalar, 1f, 0f, 1f)
+            {
+                Help = "How hard it is struck: how loud it rings and how much sand it throws.",
+            },
+            new PortSpec("freq", PortKind.Scalar, 110f, 20f, 4000f)
+            {
+                Knee = 20f,
+                Help = "In hertz, the lowest mode.",
+            },
+            new PortSpec("aspect", PortKind.Scalar, 1.3f, 1f, 2f) { Help = "The plate's shape: at 1 it is square, and modes pair up." },
+            new PortSpec("decay", PortKind.Scalar, 3f, 0.1f, 8f)
+            {
+                Help = "Seconds: how long the lowest mode rings. The higher modes fall sooner.",
+            },
+            new PortSpec("brightness", PortKind.Scalar, 0.5f, 0f, 1f) { Help = "How much the high modes get and keep." },
+            new PortSpec("strike x", PortKind.Scalar, 0.3f, 0f, 1f)
+            {
+                Help = "Where across it is hit, from the left. Halfway only wakes the odd modes.",
+            },
+            new PortSpec("strike y", PortKind.Scalar, 0.4f, 0f, 1f)
+            {
+                Help = "Where down it is hit, from the top. Halfway only wakes the odd modes.",
+            },
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
         ],
         [
-            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("figure", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("motion", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f) { Help = "The ring." },
+            new PortSpec("figure", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "The sand: a strike throws it off, it settles back along the lines of whichever "
+                    + "modes are still ringing, and a plate left alone is covered.",
+            },
+            new PortSpec("motion", PortKind.Scalar, 0f, 0f, 1f) { Help = "How much each point swings." },
         ],
         Emit,
-        "A plate struck on 'trigger', as hard as 'velocity'. 'out' rings. 'figure' is the sand "
-        + "on the plate: a strike throws it off, it settles back along the lines of whichever "
-        + "modes are still ringing, and a plate left alone is covered. 'motion' is how much each "
-        + "point swings. "
-        + "'freq' is the lowest mode, 'aspect' the plate's shape: square, and modes pair up. "
-        + "'strike x' and 'strike y' are where it is hit, and the center only wakes the odd modes. "
-        + "'brightness' is how much the high modes get and keep. The mode count is set on the "
-        + "node, and each mode costs a few ops.")
+        "A struck plate: its ring to the ear, and to the eye the sand figure its modes settle "
+        + "into. The mode count is set on the node, and each mode costs a few ops.")
     {
         Extras = [new ModesExtra()],
         Skin = Art.Skin("plate"),

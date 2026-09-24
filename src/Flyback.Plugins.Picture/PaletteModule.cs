@@ -43,20 +43,23 @@ internal static class PaletteModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Palette", ModuleCategories.Color,
         [
-            new PortSpec("t", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("cycles", PortKind.Scalar, 1f, 0f, 8f),
-            new PortSpec("spread", PortKind.Scalar, Rainbow, 0f, 1f),
-            new PortSpec("brightness", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("contrast", PortKind.Scalar, 0.5f, 0f, 1f),
+            new PortSpec("t", PortKind.Scalar, 0f, 0f, 1f) { Help = "Where in the palette." },
+            new PortSpec("cycles", PortKind.Scalar, 1f, 0f, 8f) { Help = "Repeats the palette across 't'." },
+            new PortSpec("spread", PortKind.Scalar, Rainbow, 0f, 1f)
+            {
+                Help = "The knob to reach for: how far apart the channels are. A third is the "
+                    + "rainbow, small is tints of one color, 0 is gray.",
+            },
+            new PortSpec("brightness", PortKind.Scalar, 0.5f, 0f, 1f) { Help = "The palette's middle." },
+            new PortSpec("contrast", PortKind.Scalar, 0.5f, 0f, 1f)
+            {
+                Help = "How far either side of 'brightness' it reaches. 0 is one flat color.",
+            },
         ],
         [new PortSpec("color", PortKind.Color)],
         Emit,
         "A signal into a color from a palette: where a hue sweep passes through every color, "
-        + "this passes through a handful that go together. 't' is where in the palette, 0 to 1. "
-        + "'spread' is the knob to reach for, how far apart the channels are: a third is the "
-        + "rainbow, small is tints of one color, 0 is gray. 'cycles' repeats the palette across "
-        + "'t'. 'brightness' and 'contrast' are its middle and how far either side; 'contrast' "
-        + "0 is one flat color.");
+        + "this passes through a handful that go together.");
 
     private static Slot[] Emit(Emitter em, EmitContext node)
     {

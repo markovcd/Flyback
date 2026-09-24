@@ -82,17 +82,22 @@ public partial class NodeCatalog
         // difference.
         yield return new NodeDef(
             TempoTypeId, "Tempo", ModuleCategories.Timing,
-            [Num("bpm", 120f, 20f, 300f), Domain("in")],
-            [Num("out"), Num("beats")],
+            [Num("bpm", 120f, 20f, 300f), Domain("in", "What 'beats' counts across: Time without a wire.")],
+            [
+                Num("out") with { Help = "Beats per second. Patch it into a sequencer's rate for one step per beat." },
+                Num("beats") with
+                {
+                    Help = "The count of beats so far, 'in' multiplied by the tempo. Patch it into the "
+                        + "'in' of whatever should keep to it.",
+                },
+            ],
             (em, node) =>
             {
                 var rate = em.Mul(node[0], 1f / Minute);
 
                 return [rate, em.Mul(node[1], rate)];
             },
-            "Tempo in BPM, converted to beats per second. Patch it into a sequencer's rate for one step per beat. "
-            + "'beats' is the count of beats so far, Time multiplied by the tempo: patch it into the "
-            + "'in' of whatever should keep to it.");
+            "A tempo, set in BPM and handed on in beats per second.");
 
         yield return new NodeDef(
             HoldTypeId, "Sample & Hold", ModuleCategories.Timing,
@@ -109,27 +114,32 @@ public partial class NodeCatalog
             ChanceTypeId, "Chance", ModuleCategories.Timing,
             [
                 Num("gate", 0f, 0f, 1f) with { Lenient = true },
-                Num("chance", 0.5f, 0f, 1f),
+                Num("chance", 0.5f, 0f, 1f) with
+                {
+                    Help = "How often a note plays on 'gate'. At 0 nothing gets through, at 1 everything does.",
+                },
                 new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
             ],
-            [Num("gate", 0f, 0f, 1f), Num("else", 0f, 0f, 1f)],
+            [
+                Num("gate", 0f, 0f, 1f) with { Help = "The notes the coin lets through." },
+                Num("else", 0f, 0f, 1f) with { Help = "The rest of the notes." },
+            ],
             EmitChance,
-            "Flips a coin for each note on 'gate': it plays on 'gate' as often as 'chance' says, "
-            + "and on 'else' the rest of the time, whole from start to end. At 0 nothing gets "
-            + "through, at 1 everything does. Give each Chance its own 'seed'. On the picture "
-            + "it flips a new coin every frame.")
+            "Flips a coin for each note on 'gate' and sends it, whole from start to end, to one "
+            + "output or the other. On the picture it flips a new coin every frame.")
         {
             Sinks = ModuleSinks.Audio,
         };
 
         yield return StepSequencer(
             "seq.notes", "Note Sequencer", DefaultRiff, PortDisplay.Note, (0f, 127f),
-            "Step sequence of notes. Use 'out' as a pitch source and 'gate' to shape note timing. "
-            + "The sequence index is exposed for pattern control and display.");
+            "Step sequence of notes.",
+            "The note, as a pitch source.");
 
         yield return StepSequencer(
             "seq.values", "Sequencer", DefaultShape, PortDisplay.Number, (0f, 1f),
-            "Step sequence of ordinary signals. It follows the incoming domain, so reversing or speeding up 'in' also reverses or speeds up the pattern.");
+            "Step sequence of ordinary signals.",
+            "The step's value.");
     }
 
     
@@ -146,21 +156,30 @@ public partial class NodeCatalog
     /// <param name="range">The span a note's value is edited within.</param>
     /// <param name="id">The module's type id, which is what a saved patch names it by.</param>
     /// <param name="description">The line the inspector shows under it.</param>
+    /// <param name="output">What 'out' carries.</param>
     private static NodeDef StepSequencer(
         string id,
         string name,
         Step[] notes,
         PortDisplay display,
         (float Min, float Max) range,
-        string description) => new(
+        string description,
+        string output) => new(
         id, name, ModuleCategories.Timing,
         [
-            Domain("in"),
-            Num("rate", 4f, 0f, 32f),
+            Domain("in", "What it steps across: Time without a wire. Reversing or speeding it up does the same to the pattern."),
+            Num("rate", 4f, 0f, 32f) with { Help = "Steps for each unit of 'in': steps a second while it runs on Time." },
             Num("gate length", 0.5f, 0f, 1f),
-            Num("shape", 0.02f, 0f, WidestGateEdge),
+            Num("shape", 0.02f, 0f, WidestGateEdge) with
+            {
+                Help = "How long the gate's edges ramp, as a fraction of a step. At the top a note is one smooth hump.",
+            },
         ],
-        [Num("out"), Num("gate", 0f, 0f, 1f), Num("index", 0f, 0f, 1f)],
+        [
+            Num("out") with { Help = output },
+            Num("gate", 0f, 0f, 1f) with { Help = "Open while a step plays, to shape note timing." },
+            Num("index", 0f, 0f, 1f) with { Help = "Which step is playing, as a fraction of the pattern, for pattern control and display." },
+        ],
         EmitSequence,
         description)
     {

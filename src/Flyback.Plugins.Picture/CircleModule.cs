@@ -17,10 +17,10 @@ internal static class CircleModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Circle", ModuleCategories.Forms,
         [..Field.Position(), Field.Size("radius", 0.5f)],
-        [Field.Distance("distance")],
+        [Field.Distance("distance") with { Help = "Negative inside, zero on the rim, positive outside." }],
         Emit,
-        "A circle, as the distance to its rim: negative inside, zero on it, positive outside. "
-        + "Patch it into a Fill. Exact everywhere, so it smooths well in a Combine.")
+        "A circle, as the distance to its rim. Patch it into a Fill. Exact everywhere, so it "
+        + "smooths well in a Combine.")
     {
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Forms))
         {

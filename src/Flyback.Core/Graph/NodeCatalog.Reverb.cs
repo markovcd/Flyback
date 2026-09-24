@@ -106,17 +106,20 @@ public partial class NodeCatalog
         ReverbTypeId, "Reverb", ModuleCategories.TimeEffects,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("size", PortKind.Scalar, 0.5f, 0f, 1f),
-            new PortSpec("decay", PortKind.Scalar, 0.6f, 0f, 1f),
-            new PortSpec("mix", PortKind.Scalar, 0.3f, 0f, 1f),
+            new PortSpec("size", PortKind.Scalar, 0.5f, 0f, 1f)
+            {
+                Help = "Stretches every delay and the first reflection, from a bathroom to a hall.",
+            },
+            new PortSpec("decay", PortKind.Scalar, 0.6f, 0f, 1f) { Help = "How long the tail lasts, darkening as it goes." },
+            new PortSpec("mix", PortKind.Scalar, 0.3f, 0f, 1f)
+            {
+                Help = "A straight crossfade, since the tail comes out at about the level that went in.",
+            },
         ],
         [new PortSpec("out"), new PortSpec("wide")],
         ReverbEmit,
-        "A room. 'size' stretches every delay and the first reflection, from a bathroom to a "
-        + "hall; 'decay' is how long the tail lasts, darkening as it goes. The tail comes out "
-        + "at about the level that went in, so 'mix' is a straight crossfade. 'out' and 'wide' "
-        + "are the tail smeared two ways: both for stereo, or 'out' alone. Audio only: a wire "
-        + "on the picture.");
+        "A room. 'out' and 'wide' are the tail smeared two ways: both for stereo, or 'out' "
+        + "alone. Audio only: a wire on the picture.");
 
     private static Slot[] ReverbEmit(Emitter em, EmitContext inputs)
     {

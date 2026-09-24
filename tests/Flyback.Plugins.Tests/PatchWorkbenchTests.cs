@@ -300,6 +300,50 @@ public class PatchWorkbenchTests
         Bench().Briefing.ShouldContain(NodeCatalog.BuiltIn.Require("osc.sine").Description);
     }
 
+    /// <summary>
+    /// The words the panel shows as a socket's tip, after the socket's name in the
+    /// briefing and beside it where the module is looked up.
+    /// </summary>
+    [Fact]
+    public async Task The_briefing_and_a_lookup_say_what_each_socket_is_for()
+    {
+        var bench = Bench();
+        var filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
+
+        var described = await Call(bench, "describe_module", $$"""{"type_id":"{{filter.TypeId}}"}""");
+
+        described.Ok.ShouldBeTrue(described.Text);
+
+        foreach (var port in filter.Inputs.Concat(filter.Outputs).Where(port => port.Help.Length > 0))
+        {
+            bench.Briefing.ShouldContain($"{port.Name}: {port.Help}");
+            described.Text.ShouldContain(port.Help);
+        }
+    }
+
+    /// <summary>A socket that means the same everywhere is told once, and a lookup still says it.</summary>
+    [Fact]
+    public async Task A_standard_socket_is_told_once_and_still_said_on_a_lookup()
+    {
+        var bench = Bench();
+        var standard = SocketHelp.Inputs["freq"];
+
+        bench.Briefing.ShouldContain($"freq: {standard}");
+        bench.Briefing.ShouldNotContain($"  freq: {standard}");
+
+        var described = await Call(bench, "describe_module", """{"type_id":"osc.sine"}""");
+
+        described.Text.ShouldContain(standard);
+    }
+
+    [Fact]
+    public async Task A_module_is_found_by_what_one_of_its_sockets_is_for()
+    {
+        var found = await Call(Bench(), "find_modules", """{"query":"meant to be swept"}""");
+
+        found.Text.ShouldContain(NodeCatalog.FilterTypeId);
+    }
+
     [Fact]
     public void Rendering_is_offered_only_when_the_model_can_see()
     {

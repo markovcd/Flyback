@@ -53,21 +53,24 @@ internal static class FractalModule
         [
             new PortSpec("x", NormalledTo: NodeCatalog.Across),
             new PortSpec("y", NormalledTo: NodeCatalog.Down),
-            new PortSpec("z"),
-            new PortSpec("scale", PortKind.Scalar, 2f, 0f, 32f),
-            new PortSpec("roughness", PortKind.Scalar, 0.5f, 0f, 1f),
+            new PortSpec("z") { Help = "Boils it. Scaled with x and y, so fine detail churns faster." },
+            new PortSpec("scale", PortKind.Scalar, 2f, 0f, 32f) { Help = "How fine the broadest octave is." },
+            new PortSpec("roughness", PortKind.Scalar, 0.5f, 0f, 1f)
+            {
+                Help = "How much each octave keeps of the last: 0 is a single Clouds, 1 is sand.",
+            },
         ],
         [
-            new PortSpec("smooth", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("folded", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("smooth", PortKind.Scalar, 0f, 0f, 1f) { Help = "The plain sum, which looks like weather." },
+            new PortSpec("folded", PortKind.Scalar, 0f, 0f, 1f)
+            {
+                Help = "Creased wherever the noise crossed its middle, like smoke or hammered "
+                    + "metal. One minus it is ridges.",
+            },
         ],
         Emit,
-        "Clouds at several sizes at once: cloud, coastline, marble. 'smooth' is the plain sum "
-        + "and looks like weather; 'folded' creases the field wherever the noise crossed its "
-        + "middle, like smoke or hammered metal, and one minus it is ridges. 'roughness' is how "
-        + "much each octave keeps of the last: 0 is a single Clouds, 1 is sand. Both run 0 to "
-        + "1. 'z' boils it. The octave count is set on the node, and each octave costs a noise "
-        + "lookup.")
+        "Clouds at several sizes at once: cloud, coastline, marble. Both outputs run 0 to 1. "
+        + "The octave count is set on the node, and each octave costs a noise lookup.")
     {
         Extras = [new OctaveExtra()],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Patterns))

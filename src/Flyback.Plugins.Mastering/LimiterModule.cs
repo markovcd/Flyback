@@ -61,14 +61,24 @@ internal static class LimiterModule
         [
             new PortSpec("left", PatchOnly: true),
             new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
-            new PortSpec("ceiling", PortKind.Scalar, -1f, -24f, 0f),
-            new PortSpec("release", PortKind.Scalar, -1f, -3f, 0.5f, Display: PortDisplay.Duration),
-            new PortSpec("lookahead", PortKind.Scalar, 1.5f, 0.1f, Longest * 1000f),
+            new PortSpec("ceiling", PortKind.Scalar, -1f, -24f, 0f) { Help = "In dB. Nothing leaves louder." },
+            new PortSpec("release", PortKind.Scalar, -1f, -3f, 0.5f, Display: PortDisplay.Duration)
+            {
+                Help = "How fast the gain comes back up.",
+            },
+            new PortSpec("lookahead", PortKind.Scalar, 1.5f, 0.1f, Longest * 1000f)
+            {
+                Help = "In milliseconds: how early it sees a peak. The sound is delayed by as much.",
+            },
         ],
-        [new PortSpec("left"), new PortSpec("right"), new PortSpec("gain")],
+        [
+            new PortSpec("left"),
+            new PortSpec("right"),
+            new PortSpec("gain") { Help = "The gain applied." },
+        ],
         Emit,
-        "Nothing leaves louder than 'ceiling' (dB): it sees peaks 'lookahead' ms early and "
-        + "delays the sound by as much. 'gain' is the gain applied.")
+        "A brickwall limiter: nothing leaves louder than 'ceiling', and the gain is already "
+        + "down when a peak arrives.")
     {
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))

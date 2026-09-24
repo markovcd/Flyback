@@ -24,14 +24,19 @@ public partial class NodeCatalog
         SlewTypeId, "Slew", ModuleCategories.Timing,
         [
             new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
-            new PortSpec("rise", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration),
-            new PortSpec("fall", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration),
+            new PortSpec("rise", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration)
+            {
+                Help = "How long it takes to catch a move up, whatever the distance.",
+            },
+            new PortSpec("fall", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration)
+            {
+                Help = "How long it takes to catch a move down, whatever the distance.",
+            },
         ],
         [new PortSpec("out")],
         SlewEmit,
         "Follows 'in', taking its time: between a Note Sequencer and a Note it is glide, and "
-        + "after a gate it smooths the steps. 'rise' and 'fall' are how long it takes to catch "
-        + "a move up or down, whatever the distance. Audio only: a wire on the picture.")
+        + "after a gate it smooths the steps. Audio only: a wire on the picture.")
     {
         Sinks = ModuleSinks.Audio,
     };

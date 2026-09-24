@@ -184,6 +184,11 @@ public delegate Slot[] EmitFn(Emitter emitter, EmitContext node);
 /// Adding a new module to the synth means adding one of these to
 /// <see cref="NodeCatalog"/> — nothing else in the pipeline needs to change.
 /// </summary>
+/// <param name="Description">
+/// What the module is for and how its sockets work together: the top of the
+/// inspector, and the assistant's line about it. What one socket is for is that
+/// socket's <see cref="PortSpec.Help"/>.
+/// </param>
 public sealed record NodeDef(
     string TypeId,
     string Name,

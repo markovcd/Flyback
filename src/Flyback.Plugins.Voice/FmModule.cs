@@ -47,22 +47,21 @@ internal static class FmModule
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
             new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f },
             new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
-            new PortSpec("tone", PortKind.Scalar, 1f, 0f, 2f),
-            new PortSpec("ratio2", PortKind.Scalar, 1f, 0.25f, 16f),
-            new PortSpec("ratio3", PortKind.Scalar, 2f, 0.25f, 16f),
-            new PortSpec("ratio4", PortKind.Scalar, 3f, 0.25f, 16f),
-            new PortSpec("index2", PortKind.Scalar, 0.4f, 0f, 2f),
-            new PortSpec("index3", PortKind.Scalar, 0.2f, 0f, 2f),
-            new PortSpec("index4", PortKind.Scalar, 0f, 0f, 2f),
+            new PortSpec("tone", PortKind.Scalar, 1f, 0f, 2f) { Help = "Scales every index." },
+            new PortSpec("ratio2", PortKind.Scalar, 1f, 0.25f, 16f) { Help = "Operator two's pitch over 'freq'." },
+            new PortSpec("ratio3", PortKind.Scalar, 2f, 0.25f, 16f) { Help = "Operator three's pitch over 'freq'." },
+            new PortSpec("ratio4", PortKind.Scalar, 3f, 0.25f, 16f) { Help = "Operator four's pitch over 'freq'." },
+            new PortSpec("index2", PortKind.Scalar, 0.4f, 0f, 2f) { Help = "How hard operator two bends what it feeds." },
+            new PortSpec("index3", PortKind.Scalar, 0.2f, 0f, 2f) { Help = "How hard operator three bends what it feeds." },
+            new PortSpec("index4", PortKind.Scalar, 0f, 0f, 2f) { Help = "How hard operator four bends what it feeds." },
         ],
         [new PortSpec("out")],
         Emit,
         "A four-operator FM synth: electric piano, brass, slap bass, bell. Patch an envelope "
-        + "into 'level' and a frequency into 'freq'. Operator one sounds at the pitch; "
-        + "'ratio2'..'ratio4' place the others above it and 'index2'..'index4' set how hard "
-        + "each bends what it feeds, fading with the level. 'tone' scales every index. The "
-        + "algorithm is set on the node: stack (4→3→2→1), branch (4→3, 3 and 2 → 1), fan (2, 3 "
-        + "and 4 → 1), pair (2→1 beside 4→3) or organ (all four heard).")
+        + "into 'level' and a frequency into 'freq'. Operator one sounds at the pitch, and "
+        + "every index fades with the level. The algorithm is set on the node: stack "
+        + "(4→3→2→1), branch (4→3, 3 and 2 → 1), fan (2, 3 and 4 → 1), pair (2→1 beside 4→3) "
+        + "or organ (all four heard).")
     {
         Extras =
         [

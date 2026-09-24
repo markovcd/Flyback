@@ -34,19 +34,20 @@ public partial class NodeCatalog
     private static NodeDef Noise() => new(
         NoiseTypeId, "Noise", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: Clock, Domain: true),
-            new PortSpec("rate", PortKind.Scalar, 4f, 0f, 64f),
+            Domain("in", "What it runs across: Time without a wire. On the picture, Time makes the frame flicker and a coordinate makes grain."),
+            new PortSpec("rate", PortKind.Scalar, 4f, 0f, 64f) { Help = "New values a second for 'random' and 'drift'." },
             new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
-            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
+            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f) { Help = "Multiplies every output, which each swing -1 to 1." },
             new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
         ],
-        [new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("pink", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("random", PortKind.Scalar, 0f, -1f, 1f), new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f)],
+        [
+            new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f) { Help = "Bright hiss, for hats and snares." },
+            new PortSpec("pink", PortKind.Scalar, 0f, -1f, 1f) { Help = "Darker, like rain." },
+            new PortSpec("random", PortKind.Scalar, 0f, -1f, 1f) { Help = "Jumps to a new value 'rate' times a second and holds it." },
+            new PortSpec("drift", PortKind.Scalar, 0f, -1f, 1f) { Help = "Glides between the values 'random' jumps to." },
+        ],
         NoiseEmit,
-        "Noise and chance, each -1 to 1 before 'amp' and 'bias'. 'white' is bright hiss for "
-        + "hats and snares; 'pink' is darker, like rain. 'random' jumps to a new value 'rate' "
-        + "times a second and holds it; 'drift' glides between the same values. Give each Noise "
-        + "its own 'seed'. On the picture it runs across its domain: on Time the frame "
-        + "flickers, on a coordinate it is grain. For a smooth field, use Clouds.");
+        "Noise and chance. For a smooth field, use Clouds.");
 
     /// <summary>
     /// White and pink over a domain, each -1 to 1, for a module that is noise
