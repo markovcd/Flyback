@@ -20,21 +20,29 @@ public sealed class JpegWriter
     /// <summary>One MCU is four luma blocks over one of each chroma, so 16x16 pixels.</summary>
     private const int McuSize = 16;
 
+    private const int BlocksPerMcu = 6;
+
+    /// <summary>One core left alone, as <see cref="SynthRenderer"/> leaves it, for the audio callback of a live recording.</summary>
+    private static readonly ParallelOptions Spare = new()
+    {
+        MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1),
+    };
+
     private readonly byte[] lumaQuant = new byte[64];
     private readonly byte[] chromaQuant = new byte[64];
 
-    // Full-resolution luma, half-resolution chroma. Grown to fit, never shrunk.
+    // Full-resolution luma, half-resolution chroma, and every block's quantized
+    // coefficients in zigzag order. Grown to fit, never shrunk.
     private byte[] luma = [];
     private byte[] blueChroma = [];
     private byte[] redChroma = [];
+    private short[] quantized = [];
     private int lumaWidth;
     private int lumaHeight;
     private int chromaWidth;
     private int chromaHeight;
-
-    private readonly double[] samples = new double[64];
-    private readonly double[] frequencies = new double[64];
-    private readonly int[] coefficients = new int[64];
+    private int across;
+    private int down;
 
     /// <param name="quality">
     /// 1 to 100, scaling the Annex K tables the way every other encoder does it.
@@ -60,7 +68,8 @@ public sealed class JpegWriter
         if (bgra.Length < (long)stride * (height - 1) + width * 4)
             throw new ArgumentException("Source is smaller than the frame it describes.", nameof(bgra));
 
-        Separate(bgra, width, height, stride);
+        EnsurePlanes(width, height);
+        Prepare(bgra, stride);
 
         WriteMarker(output, 0xD8);                          // SOI
         WriteApp0(output);
@@ -72,19 +81,40 @@ public sealed class JpegWriter
         WriteMarker(output, 0xD9);                          // EOI
     }
 
+    /// <summary>
+    /// Converts and quantizes a row of macroblocks per task. A band reads only its
+    /// own sixteen rows of source, edge replication included, so the bands share
+    /// nothing; the entropy coding after them runs in order and writes the same
+    /// bytes a single thread would.
+    /// </summary>
+    private unsafe void Prepare(ReadOnlySpan<byte> bgra, int stride)
+    {
+        fixed (byte* pinned = bgra)
+        {
+            var origin = (nint)pinned;
+            var length = bgra.Length;
+
+            Parallel.For(0, down, Spare, band =>
+            {
+                Separate(new ReadOnlySpan<byte>((byte*)origin, length), stride, band);
+                Quantize(band);
+            });
+        }
+    }
+
     // --- color ------------------------------------------------------------------
 
     /// <summary>
-    /// BGRA to three planes of BT.601 YCbCr, chroma boxed down to half in each
-    /// direction. Done for the whole frame rather than per block: the chroma
+    /// BGRA to three planes of BT.601 YCbCr for one band, chroma boxed down to
+    /// half in each direction. Done for the band rather than per block: the chroma
     /// average spans a 2x2 of source pixels, and reading those from the block
     /// loop would convert every pixel twice.
     /// </summary>
-    private void Separate(ReadOnlySpan<byte> bgra, int width, int height, int stride)
+    private void Separate(ReadOnlySpan<byte> bgra, int stride, int band)
     {
-        EnsurePlanes(width, height);
+        int width = lumaWidth, height = lumaHeight;
 
-        for (var y = 0; y < height; y++)
+        for (var y = band * McuSize; y < Math.Min(height, (band + 1) * McuSize); y++)
         {
             var source = bgra.Slice(y * stride, width * 4);
             var target = y * width;
@@ -96,7 +126,7 @@ public sealed class JpegWriter
             }
         }
 
-        for (var y = 0; y < chromaHeight; y++)
+        for (var y = band * 8; y < Math.Min(chromaHeight, (band + 1) * 8); y++)
         {
             // The odd row and column of an odd-sized frame have no partner, so
             // the box shrinks rather than reading past the edge.
@@ -140,8 +170,13 @@ public sealed class JpegWriter
         lumaHeight = height;
         chromaWidth = (width + 1) / 2;
         chromaHeight = (height + 1) / 2;
+        across = (width + McuSize - 1) / McuSize;
+        down = (height + McuSize - 1) / McuSize;
 
         if (luma.Length < width * height) luma = new byte[width * height];
+
+        var coefficients = across * down * BlocksPerMcu * 64;
+        if (quantized.Length < coefficients) quantized = new short[coefficients];
 
         var chroma = chromaWidth * chromaHeight;
         if (blueChroma.Length < chroma)
@@ -153,40 +188,36 @@ public sealed class JpegWriter
 
     private static byte Clamp8(double v) => (byte)Math.Clamp(Math.Round(v), 0d, 255d);
 
-    // --- entropy-coded data ------------------------------------------------------
+    // --- transform ---------------------------------------------------------------
 
     /// <summary>
-    /// Walks the frame in 16x16 macroblocks, each of them four luma blocks and
-    /// one block of each chroma. DC is coded as a difference from the previous
-    /// block of the same component, so the three predictors run the length of
-    /// the scan.
+    /// Transforms and quantizes the six blocks of each macroblock in one band:
+    /// four luma, then one of each chroma, which is the order the scan codes them.
     /// </summary>
-    private void WriteScan(Stream output)
+    private void Quantize(int band)
     {
-        var bits = new BitWriter(output);
+        Span<double> samples = stackalloc double[64];
+        Span<double> frequencies = stackalloc double[64];
 
-        int lumaDc = 0, blueDc = 0, redDc = 0;
-
-        var across = (lumaWidth + McuSize - 1) / McuSize;
-        var down = (lumaHeight + McuSize - 1) / McuSize;
-
-        for (var mcuY = 0; mcuY < down; mcuY++)
         for (var mcuX = 0; mcuX < across; mcuX++)
         {
+            var at = (band * across + mcuX) * BlocksPerMcu * 64;
+
             for (var block = 0; block < 4; block++)
             {
-                Gather(luma, lumaWidth, lumaHeight, mcuX * McuSize + block % 2 * 8, mcuY * McuSize + block / 2 * 8);
-                lumaDc = Encode(bits, lumaQuant, LumaDcCodes, LumaAcCodes, lumaDc);
+                Gather(luma, lumaWidth, lumaHeight, mcuX * McuSize + block % 2 * 8, band * McuSize + block / 2 * 8, samples);
+                Transform(samples, frequencies);
+                Store(frequencies, lumaQuant, quantized.AsSpan(at + block * 64, 64));
             }
 
-            Gather(blueChroma, chromaWidth, chromaHeight, mcuX * 8, mcuY * 8);
-            blueDc = Encode(bits, chromaQuant, ChromaDcCodes, ChromaAcCodes, blueDc);
+            Gather(blueChroma, chromaWidth, chromaHeight, mcuX * 8, band * 8, samples);
+            Transform(samples, frequencies);
+            Store(frequencies, chromaQuant, quantized.AsSpan(at + 4 * 64, 64));
 
-            Gather(redChroma, chromaWidth, chromaHeight, mcuX * 8, mcuY * 8);
-            redDc = Encode(bits, chromaQuant, ChromaDcCodes, ChromaAcCodes, redDc);
+            Gather(redChroma, chromaWidth, chromaHeight, mcuX * 8, band * 8, samples);
+            Transform(samples, frequencies);
+            Store(frequencies, chromaQuant, quantized.AsSpan(at + 5 * 64, 64));
         }
-
-        bits.Flush();
     }
 
     /// <summary>
@@ -195,7 +226,7 @@ public sealed class JpegWriter
     /// rather than padded with a color — a hard edge against gray is a step the
     /// transform then has to spend its coefficients describing.
     /// </summary>
-    private void Gather(byte[] plane, int width, int height, int left, int top)
+    private static void Gather(byte[] plane, int width, int height, int left, int top, Span<double> samples)
     {
         for (var y = 0; y < 8; y++)
         {
@@ -206,12 +237,9 @@ public sealed class JpegWriter
         }
     }
 
-    /// <summary>Transforms, quantizes and codes the block now in <see cref="samples"/>.</summary>
-    /// <returns>The DC coefficient, which the next block of this component predicts from.</returns>
-    private int Encode(BitWriter bits, byte[] quant, HuffmanCode[] dc, HuffmanCode[] ac, int previousDc)
+    /// <summary>Quantizes a transformed block into zigzag order.</summary>
+    private static void Store(ReadOnlySpan<double> frequencies, byte[] quant, Span<short> coefficients)
     {
-        Transform();
-
         for (var i = 0; i < 64; i++)
         {
             var zigzag = Zigzag[i];
@@ -221,9 +249,42 @@ public sealed class JpegWriter
             // when the block is the basis function at full contrast, and the
             // standard AC table stops at ten. A synthesised checkerboard at
             // quality 100 gets there, which is the sort of picture this makes.
-            coefficients[i] = Math.Clamp((int)Math.Round(frequencies[zigzag] / quant[zigzag]), -1023, 1023);
+            coefficients[i] = (short)Math.Clamp((int)Math.Round(frequencies[zigzag] / quant[zigzag]), -1023, 1023);
+        }
+    }
+
+    // --- entropy-coded data ------------------------------------------------------
+
+    /// <summary>
+    /// Codes every block in scan order: 16x16 macroblocks, each of them four luma
+    /// blocks and one block of each chroma. DC is coded as a difference from the
+    /// previous block of the same component, so the three predictors run the
+    /// length of the scan.
+    /// </summary>
+    private void WriteScan(Stream output)
+    {
+        var bits = new BitWriter(output);
+
+        int lumaDc = 0, blueDc = 0, redDc = 0;
+
+        for (var mcu = 0; mcu < across * down; mcu++)
+        {
+            var at = mcu * BlocksPerMcu * 64;
+
+            for (var block = 0; block < 4; block++)
+                lumaDc = Encode(bits, quantized.AsSpan(at + block * 64, 64), LumaDcCodes, LumaAcCodes, lumaDc);
+
+            blueDc = Encode(bits, quantized.AsSpan(at + 4 * 64, 64), ChromaDcCodes, ChromaAcCodes, blueDc);
+            redDc = Encode(bits, quantized.AsSpan(at + 5 * 64, 64), ChromaDcCodes, ChromaAcCodes, redDc);
         }
 
+        bits.Flush();
+    }
+
+    /// <summary>Codes one quantized block.</summary>
+    /// <returns>The DC coefficient, which the next block of this component predicts from.</returns>
+    private static int Encode(BitWriter bits, ReadOnlySpan<short> coefficients, HuffmanCode[] dc, HuffmanCode[] ac, int previousDc)
+    {
         var difference = coefficients[0] - previousDc;
         var size = BitLength(difference);
         bits.Write(dc[size]);
@@ -262,11 +323,9 @@ public sealed class JpegWriter
 
     /// <summary>
     /// The forward DCT, separably: eight-point transform along each row, then
-    /// along each column of the result. Written as two matrix passes rather than
-    /// as one of the fast factorisations because the cost that matters in an
-    /// export is evaluating the patch, not this.
+    /// along each column of the result, as two matrix passes.
     /// </summary>
-    private void Transform()
+    private static void Transform(ReadOnlySpan<double> samples, Span<double> frequencies)
     {
         Span<double> intermediate = stackalloc double[64];
 
