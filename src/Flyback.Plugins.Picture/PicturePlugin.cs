@@ -83,7 +83,7 @@ public sealed class PicturePlugin : IFlybackPlugin
             new PatchPreset(
                 FourFormsPreset.Name,
                 FourFormsPreset.Build,
-                "Four forms on a turning ring, with the seam between them opening and closing."),
+                "Four forms on a turning ring round a slowly filling arc, with the seam between them opening and closing."),
             new PatchPreset(
                 ShapesPreset.Name,
                 ShapesPreset.Build,

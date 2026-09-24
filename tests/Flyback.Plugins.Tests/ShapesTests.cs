@@ -559,8 +559,8 @@ public class ShapesTests
     }
 
     /// <summary>
-    /// The showcase: all four forms, three Combines and one Fill, with the seam
-    /// and the pulse width on one wire between them.
+    /// The showcase: all five forms, four Combines and one Fill, with the seam
+    /// on one wire between them.
     /// </summary>
     [Fact]
     public void The_showcase_preset_holds_every_form_and_compiles_for_both_sinks()
@@ -570,10 +570,10 @@ public class ShapesTests
 
         var types = patch.Nodes.Select(n => n.TypeId).ToList();
 
-        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, FillType })
+        foreach (var typeId in new[] { CircleType, BoxType, PolygonType, StarType, ArcType, FillType })
             types.ShouldContain(typeId);
 
-        types.Count(t => t == CombineType).ShouldBe(3);
+        types.Count(t => t == CombineType).ShouldBe(4);
 
         var video = patch.CompileForVideo(loaded.Modules);
         var audio = patch.CompileForAudio(loaded.Modules);
@@ -589,7 +589,7 @@ public class ShapesTests
 
     }
     /// <summary>
-    /// One sweep drives the three seams and the hue, which is the whole argument
+    /// One sweep drives the four seams and the hue, which is the whole argument
     /// for the preset: the topology changing and the color changing are the same
     /// number arriving in four places. A patch where they had a sweep each would
     /// look the same at any one moment and would drift apart over a minute, which
@@ -601,9 +601,9 @@ public class ShapesTests
         var loaded = ShippedPlugins.Loaded;
         var patch = loaded.Presets.Single(p => p.Name == FormsPresetName).Build(loaded.Modules);
 
-        // The only oscillators left are the two sweeps: the rock and the melt.
+        // The only oscillators are the three sweeps: the rock, the melt and the Arc's fill.
         var sweeps = patch.Nodes.Where(n => n.TypeId == "osc.sine").ToList();
-        sweeps.Count.ShouldBe(2);
+        sweeps.Count.ShouldBe(3);
 
         patch.Nodes.ShouldNotContain(
             n => n.TypeId == "osc.pulse",
@@ -612,8 +612,8 @@ public class ShapesTests
         var melt = sweeps.Single(sweep => patch.Connections.Count(w => w.SourceNode == sweep.Id) > 1);
         var driven = patch.Connections.Where(w => w.SourceNode == melt.Id).ToList();
 
-        // Three seams and the hue.
-        driven.Count(w => Type(patch, w.TargetNode) == CombineType).ShouldBe(3);
+        // Four seams and the hue.
+        driven.Count(w => Type(patch, w.TargetNode) == CombineType).ShouldBe(4);
         driven.Count(w => Type(patch, w.TargetNode) == "color.hsv").ShouldBe(1);
     }
 

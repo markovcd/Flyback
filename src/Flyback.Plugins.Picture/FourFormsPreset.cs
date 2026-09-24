@@ -3,8 +3,9 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// All four forms on a ring, turning, with the seam between them opening and
-/// closing — so they are four shapes and then one, and then four again.
+/// All four forms on a ring, turning, round an Arc filling and emptying in the
+/// middle, with the seam between them opening and closing — so they are five
+/// shapes and then one, and then five again.
 /// </summary>
 /// <remarks>
 /// Built round the one gesture none of the modules can make alone. A Minimum would
@@ -12,8 +13,9 @@ namespace Flyback.Plugins.Picture;
 /// crease where two forms meet, and four shapes sharing corners look like four
 /// shapes overlapping. Swept from nothing to a quarter of the picture, the seam
 /// walks the whole way from four separate things to one — a topology changing on a
-/// knob. The hole left in the middle is the arrangement rather than an accident:
-/// the ring is set so the four close on their neighbours and not on the center.
+/// knob. The ring is set so the four close on their neighbors and not on the
+/// center, which leaves the middle to the Arc: small enough to stay its own shape
+/// until the seam is at its widest.
 /// <para>
 /// A ring rather than a row because a row would need the whole width of the frame.
 /// It rocks rather than spins: through a whole revolution the four would swap
@@ -34,6 +36,7 @@ internal static class FourFormsPreset
         // The two sweeps, and neither is heard or seen directly.
         var rock = b.Add("osc.sine", (1, 0.05f), (3, 1.2f));
         var melt = b.Add("osc.sine", (1, 0.09f), (3, 0.24f), (4, 0.26f));
+        var fill = b.Add("osc.sine", (1, 0.037f), (3, 0.5f), (4, 0.5f));
 
         // Here for the same reason the Supersaw preset has a Coordinates: 'x' and
         // 'y' are normalled to the pixel's own position, so reading a form
@@ -49,7 +52,13 @@ internal static class FourFormsPreset
             Place(b, -Ring, -Ring, StarModule.TypeId, (2, 0.34f), (3, 5f), (4, 0.45f)),
         };
 
-        b.Wire(rock, 0, turn, 2);
+        // At the center, so the Rotate turns it about itself: the opening rocks.
+        var dial = b.Add(ArcModule.TypeId, (2, 0.13f), (4, 0.05f));
+
+        b.Wire(rock, 0, turn, 2)
+         .Wire(turn, 0, dial, 0)
+         .Wire(turn, 1, dial, 1)
+         .Wire(fill, 0, dial, 3);
 
         foreach (var (move, shape) in forms)
         {
@@ -60,24 +69,25 @@ internal static class FourFormsPreset
         }
 
         b.Group("Sweeps", rock, melt, turn);
+        b.Group("Arc", fill, dial);
 
         string[] formNames = ["Circle", "Box", "Polygon", "Star"];
 
         for (var i = 0; i < forms.Length; i++)
             b.Group(formNames[i], forms[i].Move, forms[i].Shape);
 
-        // Chained, because a Combine takes two: three of them for four forms, and
+        // Chained, because a Combine takes two: four of them for five forms, and
         // the field coming out of one is a distance like the ones going in, which
         // is the whole reason they chain at all.
         var merged = forms[0].Shape;
         var combines = new List<NodeInstance>();
 
-        for (var i = 1; i < forms.Length; i++)
+        foreach (var next in forms.Skip(1).Select(form => form.Shape).Append(dial))
         {
             var combine = b.Add(CombineModule.TypeId);
 
             b.Wire(merged, 0, combine, 0)
-             .Wire(forms[i].Shape, 0, combine, 1)
+             .Wire(next, 0, combine, 1)
              .Wire(melt, 0, combine, 2);
 
             merged = combine;
