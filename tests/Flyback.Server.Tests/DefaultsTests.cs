@@ -30,11 +30,11 @@ public sealed class DefaultsTests : IDisposable
     private WebApplicationFactory<Program> Start(string? defaults = null) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
-            web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
-            web.UseSetting("Presets:Media", Path.Combine(folder, "media"));
-            web.UseSetting("Presets:Defaults", defaults ?? Shipped);
-            web.UseSetting("Presets:Admin:User", "admin");
-            web.UseSetting("Presets:Admin:Password", "hunter2");
+            web.UseSetting("Site:Database", Path.Combine(folder, "presets.db"));
+            web.UseSetting("Site:Media", Path.Combine(folder, "media"));
+            web.UseSetting("Site:Defaults", defaults ?? Shipped);
+            web.UseSetting("Site:Admin:User", "admin");
+            web.UseSetting("Site:Admin:Password", "hunter2");
         });
 
     private void Ship(string fileName, string description)

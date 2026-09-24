@@ -23,8 +23,8 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 string Setting(string name, string otherwise) =>
     Path.GetFullPath(builder.Configuration[name] ?? otherwise, builder.Environment.ContentRootPath);
 
-var database = Setting("Presets:Database", "/data/presets.db");
-var admin = new Admin(builder.Configuration["Presets:Admin:User"], builder.Configuration["Presets:Admin:Password"]);
+var database = Setting("Site:Database", "/data/presets.db");
+var admin = new Admin(builder.Configuration["Site:Admin:User"], builder.Configuration["Site:Admin:Password"]);
 
 builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = uploadLimit);
 
@@ -41,10 +41,10 @@ builder.WebHost.ConfigureKestrel(kestrel => kestrel.Limits.MaxRequestBodySize = 
 //
 // The default is the private ranges a container's proxy reaches it from, which
 // is the other half of "nothing but the proxy may reach the port" in
-// deploy/presets/README.md. Presets:KnownProxies replaces it with a
+// deploy/site/README.md. Site:KnownProxies replaces it with a
 // comma-separated list of addresses or networks.
 string[] believed =
-    (builder.Configuration["Presets:KnownProxies"] ?? string.Empty)
+    (builder.Configuration["Site:KnownProxies"] ?? string.Empty)
         .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 if (believed.Length == 0)
@@ -59,7 +59,7 @@ foreach (var proxy in believed)
 {
     if (IPAddress.TryParse(proxy, out var one)) knownProxies.Add(one);
     else if (System.Net.IPNetwork.TryParse(proxy, out var range)) knownNetworks.Add(range);
-    else throw new InvalidOperationException($"Presets:KnownProxies holds \"{proxy}\", which is neither an address nor a network.");
+    else throw new InvalidOperationException($"Site:KnownProxies holds \"{proxy}\", which is neither an address nor a network.");
 }
 
 builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
@@ -83,7 +83,7 @@ builder.Services.AddRateLimiter(limits =>
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:PostsPerHour", 20),
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:PostsPerHour", 20),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("sign-in", http => RateLimitPartition.GetFixedWindowLimiter(
@@ -93,21 +93,21 @@ builder.Services.AddRateLimiter(limits =>
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:ReportsPerHour", 10),
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:ReportsPerHour", 10),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("letter", http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:LettersPerHour", 5),
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:LettersPerHour", 5),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("rate", http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Presets:RatingsPerHour", 60),
+            PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:RatingsPerHour", 60),
             Window = TimeSpan.FromHours(1),
         }));
 });
@@ -135,13 +135,13 @@ var plugins = new PluginStore(database);
 Defaults.Seed(
     store,
     plugins,
-    Setting("Presets:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")),
-    Setting("Presets:Builds", Path.Combine(AppContext.BaseDirectory, "plugins")),
+    Setting("Site:Defaults", Path.Combine(AppContext.BaseDirectory, "Defaults")),
+    Setting("Site:Builds", Path.Combine(AppContext.BaseDirectory, "plugins")),
     () => builder.Configuration[ReleaseKey.Variable] is { Length: > 0 } pem
         ? pem
         : ReleaseKey.Kept() ?? (PackageSigner.Checked ? ReleaseKey.Make() : null),
     DateTimeOffset.UtcNow);
-var media = new MediaFolder(Setting("Presets:Media", "/media"));
+var media = new MediaFolder(Setting("Site:Media", "/media"));
 
 Directory.CreateDirectory(media.Root);
 

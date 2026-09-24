@@ -28,11 +28,11 @@ public sealed class PluginTests : IDisposable
     {
         host = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
-            web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
-            web.UseSetting("Presets:Defaults", Path.Combine(folder, "no-defaults"));
-            web.UseSetting("Presets:Media", Path.Combine(folder, "media"));
-            web.UseSetting("Presets:Admin:User", "admin");
-            web.UseSetting("Presets:Admin:Password", "hunter2");
+            web.UseSetting("Site:Database", Path.Combine(folder, "presets.db"));
+            web.UseSetting("Site:Defaults", Path.Combine(folder, "no-defaults"));
+            web.UseSetting("Site:Media", Path.Combine(folder, "media"));
+            web.UseSetting("Site:Admin:User", "admin");
+            web.UseSetting("Site:Admin:Password", "hunter2");
         });
         client = host.CreateClient();
     }
@@ -217,9 +217,9 @@ public sealed class PluginTests : IDisposable
 
         using var earlier = new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
-            web.UseSetting("Presets:Database", database);
-            web.UseSetting("Presets:Defaults", Path.Combine(folder, "no-defaults"));
-            web.UseSetting("Presets:Media", Path.Combine(folder, "earlier", "media"));
+            web.UseSetting("Site:Database", database);
+            web.UseSetting("Site:Defaults", Path.Combine(folder, "no-defaults"));
+            web.UseSetting("Site:Media", Path.Combine(folder, "earlier", "media"));
         });
         using var reader = earlier.CreateClient();
 

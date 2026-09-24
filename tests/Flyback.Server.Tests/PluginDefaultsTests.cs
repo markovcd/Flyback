@@ -40,13 +40,13 @@ public sealed class PluginDefaultsTests : IDisposable
     private WebApplicationFactory<Program> Start() =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(web =>
         {
-            web.UseSetting("Presets:Database", Path.Combine(folder, "presets.db"));
-            web.UseSetting("Presets:Media", Path.Combine(folder, "media"));
-            web.UseSetting("Presets:Defaults", Shipped);
-            web.UseSetting("Presets:Builds", Builds);
+            web.UseSetting("Site:Database", Path.Combine(folder, "presets.db"));
+            web.UseSetting("Site:Media", Path.Combine(folder, "media"));
+            web.UseSetting("Site:Defaults", Shipped);
+            web.UseSetting("Site:Builds", Builds);
             web.UseSetting("RELEASE_SIGNING_KEY", ReleaseKey);
-            web.UseSetting("Presets:Admin:User", "admin");
-            web.UseSetting("Presets:Admin:Password", "hunter2");
+            web.UseSetting("Site:Admin:User", "admin");
+            web.UseSetting("Site:Admin:Password", "hunter2");
         });
 
     /// <summary>Figures laid out beside the site the way a build lays it out.</summary>

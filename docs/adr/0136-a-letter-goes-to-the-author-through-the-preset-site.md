@@ -27,7 +27,7 @@ this repository, and the glossary allows one word per thing.
 **Letters go to the preset site,** `POST /api/v1/letters`, into the same SQLite
 file beside the presets, the reports and the ratings. The admin page lists them
 newest first with a Dismiss, as it lists reports. No new service, no key in the
-binary, nothing a desktop build has to hold a secret for. `Presets__Letters
+binary, nothing a desktop build has to hold a secret for. `Site__Letters
 PerHour` caps them at five an hour per address, lower than the twenty a
 submission gets, because there is no honest reason to write six.
 
