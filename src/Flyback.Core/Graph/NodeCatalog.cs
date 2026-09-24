@@ -96,7 +96,7 @@ public static partial class NodeCatalog
     /// An oscillator's rate, from standing still to the top of hearing: the lower
     /// half of the knob's travel is LFO territory up to 20 Hz, the upper half is pitch.
     /// </summary>
-    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f };
+    public static PortSpec Freq => new("freq", PortKind.Scalar, 1f, 0f, 20_000f) { Knee = 0.02f, Help = SocketHelp.Freq };
 
     /// <summary>
     /// The axis a module is read across rather than a value it uses. Named at the
@@ -108,7 +108,7 @@ public static partial class NodeCatalog
     /// catalog is built through here, so this one line is the whole of "an
     /// oscillator runs unless you say otherwise".
     /// </remarks>
-    private static PortSpec Domain(string name, string help = "") =>
+    private static PortSpec Domain(string name, string help = SocketHelp.Domain) =>
         new(name, NormalledTo: Clock, Domain: true) { Help = help };
 
     /// <summary>
@@ -120,8 +120,8 @@ public static partial class NodeCatalog
     /// </summary>
     private static PortSpec[] Position() =>
     [
-        new("x", NormalledTo: Across),
-        new("y", NormalledTo: Down),
+        new("x", NormalledTo: Across) { Help = SocketHelp.Position },
+        new("y", NormalledTo: Down) { Help = SocketHelp.Position },
     ];
 
 

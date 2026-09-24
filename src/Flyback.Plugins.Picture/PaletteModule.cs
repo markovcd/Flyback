@@ -56,7 +56,7 @@ internal static class PaletteModule
                 Help = "How far either side of 'brightness' it reaches. 0 is one flat color.",
             },
         ],
-        [new PortSpec("color", PortKind.Color)],
+        [new PortSpec("color", PortKind.Color) { Help = "The palette's color at 't'." }],
         Emit,
         "A signal into a color from a palette: where a hue sweep passes through every color, "
         + "this passes through a handful that go together.");

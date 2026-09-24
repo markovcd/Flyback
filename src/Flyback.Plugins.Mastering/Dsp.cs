@@ -12,6 +12,9 @@ internal readonly record struct Svf(Slot Low, Slot Band, Slot High);
 /// </summary>
 internal static class Dsp
 {
+    /// <summary>The help on a stereo module's left input.</summary>
+    public const string LeftIn = "The sound, or its left side when 'right' is patched too.";
+
     /// <summary>ln(10) / 20: decibels to nepers, so a level is one <c>Exp</c> away.</summary>
     public const float Nepers = 0.115129255f;
 

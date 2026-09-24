@@ -36,9 +36,9 @@ public partial class NodeCatalog
         [
             Domain("in", "What it runs across: Time without a wire. On the picture, Time makes the frame flicker and a coordinate makes grain."),
             new PortSpec("rate", PortKind.Scalar, 4f, 0f, 64f) { Help = "New values a second for 'random' and 'drift'." },
-            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer),
+            new PortSpec("seed", PortKind.Scalar, 0f, 0f, 16f, Display: PortDisplay.Integer) { Help = SocketHelp.Seed },
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f) { Help = "Multiplies every output, which each swing -1 to 1." },
-            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
+            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f) { Help = SocketHelp.Bias },
         ],
         [
             new PortSpec("white", PortKind.Scalar, 0f, -1f, 1f) { Help = "Bright hiss, for hats and snares." },

@@ -167,6 +167,10 @@ public partial class NodeCatalog
     /// </summary>
     private const float Division = 0.25f;
 
+    /// <summary>The help on the sockets the charts share.</summary>
+    private const string ChartHelp = "The chart as a color.",
+        TopEdgeHelp = "The value at the top edge. A grid square up is a quarter of it.";
+
     /// <summary>
     /// A chart, given where the signal sits: the trace, the fill under it, the
     /// grid it is read against, and the bar along whichever edge it has run off.
@@ -326,7 +330,7 @@ public partial class NodeCatalog
     private static NodeDef Quantiser() => new(
         QuantiserTypeId, "Quantiser", ModuleCategories.Pitch,
         [
-            Pitched("in", 57f),
+            Pitched("in", 57f) with { Help = "A note number to snap: a sequence, a sweep, a MIDI note." },
             Num("hold", 0f, 0f, 1f) with
             {
                 Lenient = true,
@@ -370,7 +374,7 @@ public partial class NodeCatalog
     private static NodeDef Tune() => new(
         "audio.tune", "Tune", ModuleCategories.Pitch,
         [
-            Pitched("in", 57f),
+            Pitched("in", 57f) with { Help = "A note number: a sequence, a MIDI note." },
             Num("transpose", 0f, -48f, 48f) with { Help = "Semitones, added first: a chord's root, or 12 for an octave up." },
             Num("hold", 0f, 0f, 1f) with { Lenient = true, Help = "Freezes the note while it is up, as a Quantiser's does." },
         ],
@@ -507,11 +511,11 @@ public partial class NodeCatalog
         new NodeDef(
             ProbeTypeId, "Probe", ModuleCategories.Measurement,
             [
-                Swept("in"),
+                Swept("in") with { Help = "What to chart, drawn across time around now." },
                 Seconds("window", 0.3f) with { Help = "The timebase: a grid square across is an eighth of it." },
-                Num("scale", 1f, 0.01f, 16f) with { Help = "The value at the top edge. A grid square up is a quarter of it." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = TopEdgeHelp },
             ],
-            [Col("out") with { Help = "The chart as a color." }],
+            [Col("out") with { Help = ChartHelp }],
             (em, node) =>
             {
                 var zero = em.Constant(0f);
@@ -573,11 +577,11 @@ public partial class NodeCatalog
                 // input. Lowering the signal here as well would put the whole
                 // chain into the picture's program to compute a value nothing
                 // would look at.
-                Swept("in"),
+                Swept("in") with { Help = "The sound to show, as it was played." },
                 Seconds("window", -1.7f) with { Help = "How much is shown across the frame. A grid square is an eighth of it." },
-                Num("scale", 1f, 0.01f, 16f) with { Help = "The value at the top edge. A grid square up is a quarter of it." },
+                Num("scale", 1f, 0.01f, 16f) with { Help = TopEdgeHelp },
             ],
-            [Col("out") with { Help = "The chart as a color." }],
+            [Col("out") with { Help = ChartHelp }],
             (em, node) =>
             {
                 var x = em.Load(OpCode.LoadX);
@@ -659,12 +663,12 @@ public partial class NodeCatalog
             AnalyzerTypeId, "Analyzer", ModuleCategories.Measurement,
             [
                 // Swept and never resolved, for the Scope's reason.
-                Swept("in"),
+                Swept("in") with { Help = "The sound whose frequencies are shown." },
                 Seconds("window", -1f) with { Help = "How long it listens. Short follows every note, long settles." },
                 Num("range", 96f, 12f, 144f) with { Help = "In dB: how far below the top edge the bottom is." },
                 Num("scale", 1f, 0.01f, 16f) with { Help = "The top edge is a full-scale sine divided by this." },
             ],
-            [Col("out") with { Help = "The chart as a color." }],
+            [Col("out") with { Help = ChartHelp }],
             (em, node) =>
             {
                 var x = em.Load(OpCode.LoadX);

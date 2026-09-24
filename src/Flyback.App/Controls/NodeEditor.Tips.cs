@@ -55,7 +55,7 @@ public sealed partial class NodeEditor
             && (isOutput ? ownerDef.Outputs : ownerDef.Inputs) is var ports
             && portIndex >= 0 && portIndex < ports.Count)
         {
-            return ((portNode, portIndex, isOutput), SocketHelp.For(ports[portIndex], input: !isOutput));
+            return ((portNode, portIndex, isOutput), ports[portIndex].Help);
         }
 
         // A box's socket row, by the half of the box its label is drawn in.

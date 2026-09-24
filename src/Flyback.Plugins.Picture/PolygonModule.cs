@@ -47,7 +47,7 @@ internal static class PolygonModule
                 Help = "Rounded down and never below three, so the knob steps between whole polygons.",
             },
         ],
-        [Field.Distance("distance")],
+        [Field.Shape()],
         Emit,
         "A regular polygon, as a distance, with a corner at the top. Costs the same at any "
         + "count.")

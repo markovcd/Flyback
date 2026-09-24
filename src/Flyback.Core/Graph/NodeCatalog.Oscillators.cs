@@ -32,7 +32,7 @@ public partial class NodeCatalog
                 Domain("in"), Freq, Phase, Num("width", 0.5f, 0f, 1f) with { Help = "Where in each cycle it flips from low to high: 0.5 is a square." },
                 Amp, Bias,
             ],
-            [Num("out", 0f, -1f, 1f)],
+            [Num("out", 0f, -1f, 1f) with { Help = Wave }],
             (em, i) =>
             {
                 var phase = em.Phase(i[0], i[1], i[2]);
@@ -56,7 +56,7 @@ public partial class NodeCatalog
         string id, string name, Func<Emitter, Slot, Slot> waveform, string description) => new(
         id, name, ModuleCategories.Oscillators,
         [Domain("in"), Freq, Phase, Amp, Bias],
-        [Num("out", 0f, -1f, 1f)],
+        [Num("out", 0f, -1f, 1f) with { Help = Wave }],
         (em, i) =>
         {
             var phase = em.Phase(i[0], i[1], i[2]);
@@ -64,9 +64,11 @@ public partial class NodeCatalog
         },
         description);
 
-    private static PortSpec Phase => Num("phase", 0f, 0f, 1f) with { Lenient = true };
+    private const string Wave = "The wave, after 'amp' and 'bias'.";
 
-    private static PortSpec Amp => Num("amp", 1f, 0f, 2f);
+    private static PortSpec Phase => Num("phase", 0f, 0f, 1f) with { Lenient = true, Help = SocketHelp.Phase };
 
-    private static PortSpec Bias => Num("bias", 0f, -2f, 2f);
+    private static PortSpec Amp => Num("amp", 1f, 0f, 2f) with { Help = SocketHelp.Amp };
+
+    private static PortSpec Bias => Num("bias", 0f, -2f, 2f) with { Help = SocketHelp.Bias };
 }

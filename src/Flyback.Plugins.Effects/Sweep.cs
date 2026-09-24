@@ -25,7 +25,7 @@ internal static class Sweep
     public static Slot Of(Emitter em, Slot rate) =>
         em.Unary(OpCode.Sin, em.Mul(em.Phase(em.Load(OpCode.LoadT), rate, em.Constant(0f)), MathF.Tau));
 
-    public static PortSpec Input => new("in", PortKind.Scalar, 0f, -1f, 1f);
+    public static PortSpec Input => new("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to sweep." };
 
     /// <summary>Cycles per second, and slow: past a few hertz all three stop being effects and start being tremolo.</summary>
     public static PortSpec Rate(float value, float most) =>
@@ -37,14 +37,17 @@ internal static class Sweep
 
     /// <summary>How far the sweep swings, as a fraction of what the module allows.</summary>
     public static PortSpec Depth(float value) =>
-        new("depth", PortKind.Scalar, value, 0f, 1f);
+        new("depth", PortKind.Scalar, value, 0f, 1f) { Help = SocketHelp.Depth };
 
     /// <summary>
     /// Dry against wet. At 0 every module here is exactly a wire, which is the
     /// same promise the Delay makes and worth keeping for the same reason.
     /// </summary>
     public static PortSpec Mix(float value) =>
-        new("mix", PortKind.Scalar, value, 0f, 1f);
+        new("mix", PortKind.Scalar, value, 0f, 1f) { Help = SocketHelp.Mix };
 
-    public static PortSpec Motion => new("lfo");
+    /// <summary>What a flanger or a phaser puts out.</summary>
+    public static PortSpec Output => new("out") { Help = "The swept sound, mixed by 'mix'." };
+
+    public static PortSpec Motion => new("lfo") { Help = SocketHelp.Lfo };
 }

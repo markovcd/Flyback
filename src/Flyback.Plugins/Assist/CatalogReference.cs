@@ -61,8 +61,8 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
                 || d.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Category.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || d.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || d.Inputs.Any(p => SocketHelp.For(p, input: true).Contains(query, StringComparison.OrdinalIgnoreCase))
-                || d.Outputs.Any(p => SocketHelp.For(p, input: false).Contains(query, StringComparison.OrdinalIgnoreCase)))
+                || d.Inputs.Any(p => p.Help.Contains(query, StringComparison.OrdinalIgnoreCase))
+                || d.Outputs.Any(p => p.Help.Contains(query, StringComparison.OrdinalIgnoreCase)))
             .Take(30)
             .ToArray();
 
@@ -117,13 +117,13 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
                 .Append(" = ").Append(port.Format(port.Default))
                 .Append(" [").Append(Number(port.Min)).Append("..").Append(Number(port.Max)).Append(']')
                 .Append(port.Kind == PortKind.Color ? " color" : port.Kind == PortKind.Any ? " any" : "");
-            Helped(SocketHelp.For(port, input: true));
+            Helped(port.Help);
         }
 
         for (var i = 0; i < def.Outputs.Count; i++)
         {
             text.Append("  out ").Append(i).Append(' ').Append(def.Outputs[i].Name);
-            Helped(SocketHelp.For(def.Outputs[i], input: false));
+            Helped(def.Outputs[i].Help);
         }
 
         // What the module carries that is neither a socket nor a knob, which

@@ -31,10 +31,7 @@ internal static class DecayModule
                 Lenient = true,
                 Help = "Each rise starts it, without waiting for the fall. A hit mid-fall rises from where it is.",
             },
-            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration)
-            {
-                Help = "How long the rise to full takes.",
-            },
+            new PortSpec("attack", PortKind.Scalar, -3f, -4f, 1.5f, Display: PortDisplay.Duration) { Help = SocketHelp.Attack },
             new PortSpec("decay", PortKind.Scalar, -0.7f, -4f, 1.5f, Display: PortDisplay.Duration)
             {
                 Help = "How long the fall to silence takes.",
@@ -44,7 +41,7 @@ internal static class DecayModule
                 Help = "The fall's shape: straight at 0, and turned up it drops fast with a long tail, like a drum.",
             },
         ],
-        [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f)],
+        [new PortSpec("out", PortKind.Scalar, 0f, 0f, 1f) { Help = "The envelope, 0 to 1." }],
         Emit,
         "A percussive envelope: up over 'attack', then back to silence over 'decay'. Audio "
         + "only: the picture gets the trigger.")

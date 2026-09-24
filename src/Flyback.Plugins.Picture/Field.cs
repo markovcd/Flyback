@@ -34,8 +34,8 @@ internal static class Field
     /// </summary>
     public static PortSpec[] Position() =>
     [
-        new("x", NormalledTo: NodeCatalog.Across),
-        new("y", NormalledTo: NodeCatalog.Down),
+        new("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+        new("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
     ];
 
     /// <summary>
@@ -44,6 +44,9 @@ internal static class Field
     /// nothing on screen is further than about two units from anything else.
     /// </summary>
     public static PortSpec Distance(string name) => new(name, PortKind.Scalar, 0f, -2f, 2f);
+
+    /// <summary>A shape's distance out.</summary>
+    public static PortSpec Shape() => Distance("distance") with { Help = SocketHelp.Distance };
 
     /// <summary>A size, which is never usefully negative.</summary>
     public static PortSpec Size(string name, float value, float most = 2f) =>

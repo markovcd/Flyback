@@ -23,7 +23,7 @@ public partial class NodeCatalog
     private static NodeDef Slew() => new(
         SlewTypeId, "Slew", ModuleCategories.Timing,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The value to follow." },
             new PortSpec("rise", PortKind.Scalar, -1f, -4f, 1.5f, Display: PortDisplay.Duration)
             {
                 Help = "How long it takes to catch a move up, whatever the distance.",
@@ -33,7 +33,7 @@ public partial class NodeCatalog
                 Help = "How long it takes to catch a move down, whatever the distance.",
             },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The value, catching up with 'in' as fast as 'rise' and 'fall' let it." }],
         SlewEmit,
         "Follows 'in', taking its time: between a Note Sequencer and a Note it is glide, and "
         + "after a gate it smooths the steps. Audio only: a wire on the picture.")

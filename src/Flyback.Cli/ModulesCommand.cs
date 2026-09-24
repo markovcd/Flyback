@@ -16,7 +16,7 @@ internal sealed record Module(
 /// <param name="Min">Null where the socket declares no range.</param>
 /// <param name="Display">How the text writes a value for it: a number, a note, a duration or a whole number.</param>
 /// <param name="WiredOnly">True where the socket has no knob and does nothing until wired.</param>
-/// <param name="Help">What the socket is for, and empty where its name says it all.</param>
+/// <param name="Help">What the socket is for, and empty only for a plugin that says nothing.</param>
 internal sealed record Input(
     int Index,
     string Name,
@@ -96,7 +96,7 @@ internal static class ModulesCommand
                     piped = piped.Select(port => def.Inputs[port].Name),
                     pipedColor = piped.Length == 0 && Tinted(def) is { } colored ? def.Inputs[colored].Name : null,
                     inputs,
-                    outputs = def.Outputs.Select((port, index) => new { index, name = port.Name, help = SocketHelp.For(port, input: false) }),
+                    outputs = def.Outputs.Select((port, index) => new { index, name = port.Name, help = port.Help }),
                     carries = carried,
                 },
                 Writing.Json));
@@ -124,7 +124,7 @@ internal static class ModulesCommand
         for (var i = 0; i < def.Inputs.Count; i++)
         {
             output.WriteLine($"{(piped.Contains(i) ? "|>" : "  ")}{i,2} {def.Inputs[i].Name.PadRight(name)}  {At(def.Inputs[i]).PadRight(at)}  {Turns(def.Inputs[i])}".TrimEnd());
-            Helped(SocketHelp.For(def.Inputs[i], input: true));
+            Helped(def.Inputs[i].Help);
         }
 
         var tinted = piped.Length == 0 ? Tinted(def) : null;
@@ -147,7 +147,7 @@ internal static class ModulesCommand
         for (var i = 0; i < def.Outputs.Count; i++)
         {
             output.WriteLine($"  {i,2} {def.Outputs[i].Name}");
-            Helped(SocketHelp.For(def.Outputs[i], input: false));
+            Helped(def.Outputs[i].Help);
         }
 
         if (carried.Length > 0)
@@ -228,7 +228,7 @@ internal static class ModulesCommand
         port.Ranged ? port.Min : null,
         port.Ranged ? port.Max : null,
         port.NeedsAWire,
-        SocketHelp.For(port, input: true));
+        port.Help);
 
     /// <summary>What an input sits at unwired, or that it has nothing to sit at.</summary>
     private static string At(PortSpec port) => port.NeedsAWire ? "wired only" : port.Format(port.Default);

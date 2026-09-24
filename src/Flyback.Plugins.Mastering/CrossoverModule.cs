@@ -29,7 +29,7 @@ internal static class CrossoverModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Crossover", ModuleCategories.Shaping,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to split." },
             new PortSpec("low", PortKind.Scalar, 200f, 20f, 2_000f)
             {
                 Knee = 20f,
@@ -41,7 +41,11 @@ internal static class CrossoverModule
                 Help = "In hertz: the corner between the mid band and the high. Never under 'low'.",
             },
         ],
-        [new PortSpec("low"), new PortSpec("mid"), new PortSpec("high")],
+        [
+            new PortSpec("low") { Help = "What is under the 'low' corner." },
+            new PortSpec("mid") { Help = "What is between the two corners." },
+            new PortSpec("high") { Help = "What is over the 'high' corner." },
+        ],
         Emit,
         "Splits 'in' into three bands that add back up to it. Into Compressors, a multiband "
         + "compressor.")

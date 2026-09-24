@@ -10,7 +10,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             FeedbackTypeId, "Feedback", ModuleCategories.Feedback,
-            [..Position()], [Col("color")],
+            [..Position()], [Col("color") with { Help = "The previous frame, read where 'x' and 'y' say." }],
             (em, i) => [em.Triple(OpCode.SampleFeedback, i[0], i[1])],
             "Reads the previous frame. Feed it back through space transforms to make a self-referential loop.")
         {
@@ -111,7 +111,7 @@ public partial class NodeCatalog
         return new NodeDef(
             "feedback.blur", "Blur", ModuleCategories.Feedback,
             [
-                Col("in"),
+                Col("in") with { Help = "The picture to soften." },
                 ..Position(),
                 Num("radius", 0.02f, 0f, 0.1f) with { Help = "In coordinate units: how far apart the readings sit." },
                 Num("amount", 0.7f, 0f, 1f) with

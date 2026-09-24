@@ -25,6 +25,9 @@ internal static class CompressorModule
 {
     public const string TypeId = "flyback.mastering.compressor";
 
+    /// <summary>The help on the release the Limiter shares.</summary>
+    public const string ReleaseHelp = "How fast the gain comes back up.";
+
     /// <summary>
     /// The quietest level the gain computer reads, in linear terms (-100 dB).
     /// The log of silence is minus infinity, and nothing is ever turned down
@@ -51,8 +54,8 @@ internal static class CompressorModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Compressor", ModuleCategories.Shaping,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
             new PortSpec("key", NormalledFrom: Left, PatchOnly: true)
             {
                 Help = "Patch it to duck: the gain then follows this instead of the two sides.",
@@ -65,14 +68,14 @@ internal static class CompressorModule
             },
             new PortSpec("release", PortKind.Scalar, -1f, -3f, 1f, Display: PortDisplay.Duration)
             {
-                Help = "How fast the gain comes back up.",
+                Help = ReleaseHelp,
             },
             new PortSpec("knee", PortKind.Scalar, 6f, 0f, 24f) { Help = "In dB: how widely the corner is rounded." },
             new PortSpec("makeup", PortKind.Scalar, 0f, 0f, 24f) { Help = "In dB, lifting what comes out." },
         ],
         [
-            new PortSpec("left"),
-            new PortSpec("right"),
+            new PortSpec("left") { Help = "The left side, turned down." },
+            new PortSpec("right") { Help = "The right side, turned down." },
             new PortSpec("gain") { Help = "The gain applied, before 'makeup'." },
         ],
         Emit,

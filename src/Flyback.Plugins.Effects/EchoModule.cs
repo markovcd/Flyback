@@ -39,7 +39,7 @@ internal static class EchoModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Echo", ModuleCategories.TimeEffects,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to echo on the beat." },
             new PortSpec("tempo", PortKind.Scalar, 2f, 0.25f, 8f) { Help = "Beats per second: patch a Tempo here." },
             new PortSpec("left", PortKind.Scalar, 3f, 0.25f, 16f) { Help = "The left tap's time, in steps." },
             new PortSpec("right", PortKind.Scalar, 2f, 0.25f, 16f)
@@ -52,7 +52,10 @@ internal static class EchoModule
             },
             new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f) { Help = "Dry against wet: 1 is a send." },
         ],
-        [new PortSpec("left"), new PortSpec("right")],
+        [
+            new PortSpec("left") { Help = "The sound and the left tap's repeats." },
+            new PortSpec("right") { Help = "The sound and the right tap's repeats." },
+        ],
         Emit,
         "A stereo echo that keeps time: with a Tempo in 'tempo', 'left' and 'right' are counted "
         + "in steps, so 3 and 2 at four steps a beat are a dotted eighth and the beat after. Set "

@@ -40,7 +40,7 @@ public partial class NodeCatalog
     {
         yield return new NodeDef(
             SendTypeId, "Send", ModuleCategories.Routing,
-            [Any("in")],
+            [Any("in") with { Help = "What goes on the bus." }],
             [Any("out") with { Help = "The same as 'in', so a Send can sit in a chain." }],
             (_, i) => [i[0]],
             "Puts 'in' on a bus, for a Receive on the same bus to play anywhere in the patch "
@@ -52,7 +52,7 @@ public partial class NodeCatalog
         yield return new NodeDef(
             ReceiveTypeId, "Receive", ModuleCategories.Routing,
             [],
-            [Any("out")],
+            [Any("out") with { Help = "What the Send on this bus carries, or 0 while there is none." }],
             (em, _) => [em.Constant(0f)],
             "Whatever the Send on the same bus is carrying. Any number of Receives may listen to "
             + "one Send.")

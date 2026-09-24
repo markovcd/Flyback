@@ -301,11 +301,11 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
-    /// The words the panel shows as a socket's tip, after the socket's name in the
-    /// briefing and beside it where the module is looked up.
+    /// The words the panel shows as a socket's tip are beside it where the module is
+    /// looked up, and left out of the briefing.
     /// </summary>
     [Fact]
-    public async Task The_briefing_and_a_lookup_say_what_each_socket_is_for()
+    public async Task A_lookup_says_what_each_socket_is_for_and_the_briefing_does_not()
     {
         var bench = Bench();
         var filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
@@ -314,26 +314,11 @@ public class PatchWorkbenchTests
 
         described.Ok.ShouldBeTrue(described.Text);
 
-        foreach (var port in filter.Inputs.Concat(filter.Outputs).Where(port => port.Help.Length > 0))
+        foreach (var port in filter.Inputs.Concat(filter.Outputs))
         {
-            bench.Briefing.ShouldContain($"{port.Name}: {port.Help}");
+            bench.Briefing.ShouldNotContain(port.Help);
             described.Text.ShouldContain(port.Help);
         }
-    }
-
-    /// <summary>A socket that means the same everywhere is told once, and a lookup still says it.</summary>
-    [Fact]
-    public async Task A_standard_socket_is_told_once_and_still_said_on_a_lookup()
-    {
-        var bench = Bench();
-        var standard = SocketHelp.Inputs["freq"];
-
-        bench.Briefing.ShouldContain($"freq: {standard}");
-        bench.Briefing.ShouldNotContain($"  freq: {standard}");
-
-        var described = await Call(bench, "describe_module", """{"type_id":"osc.sine"}""");
-
-        described.Text.ShouldContain(standard);
     }
 
     [Fact]

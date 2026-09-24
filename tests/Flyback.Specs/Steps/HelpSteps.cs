@@ -50,8 +50,8 @@ public sealed class HelpSteps
     public void ThenItReadsEachSocketsHelp()
     {
         var filter = Modules.Require(NodeCatalog.FilterTypeId);
-        var helped = filter.Inputs.Select(port => SocketHelp.For(port, input: true))
-            .Concat(filter.Outputs.Select(port => SocketHelp.For(port, input: false)))
+        var helped = filter.Inputs.Select(port => port.Help)
+            .Concat(filter.Outputs.Select(port => port.Help))
             .Where(help => help.Length > 0)
             .ToList();
 
@@ -63,24 +63,28 @@ public sealed class HelpSteps
     [Given("every shipped module")]
     public void GivenEveryModule() => shipped = Modules.All;
 
-    [Then("the assistant is told what each standard socket is for once")]
-    public void ThenEachStandardIsToldOnce()
+    [Then("the assistant's briefing says what each module is for")]
+    public void ThenTheBriefingDescribesEachModule()
     {
         read = new PatchWorkbench(Modules, new Patch()).Briefing;
 
-        var lines = read.Split(Environment.NewLine);
-
-        // A line, not a substring: a module's own help may open the way a standard one does.
-        foreach (var help in SocketHelp.Inputs.Values.Concat(SocketHelp.Outputs.Values).Append(SocketHelp.Domain).Distinct())
-            lines.Count(line => line.EndsWith($": {help}", StringComparison.Ordinal)).ShouldBe(1, help);
+        Each(def => ExpressionFusion.Retired(def) || read.Contains(def.Description) ? null : "is not described");
     }
 
-    [Then("a module tells the assistant about a socket only where it means something of its own")]
-    public void ThenOnlyOwnHelpIsToldOnTheModule() => EachSocket((port, input) =>
-        port.Help.Length > 0 && !SocketHelp.Own(port, input) ? "repeats the standard help it would get anyway" : null);
+    /// <summary>A line, not a substring: a description may quote words a socket's help uses.</summary>
+    [Then("it says what no socket is for")]
+    public void ThenTheBriefingSaysNoSocketsHelp()
+    {
+        var lines = read.Split(Environment.NewLine).Select(line => line.Trim()).ToHashSet(StringComparer.Ordinal);
+
+        EachSocket((port, _) => lines.Any(line => line.EndsWith($": {port.Help}", StringComparison.Ordinal)) ? "is in the briefing" : null);
+    }
 
     [Then("each one says what it is for")]
     public void ThenEachIsDescribed() => Each(def => def.Description.Length > 0 ? null : "no description");
+
+    [Then("every socket says what it is for")]
+    public void ThenEverySocketIsHelped() => EachSocket((port, _) => port.Help.Length > 0 ? null : "says nothing");
 
     /// <summary>
     /// The name is beside the help wherever it is read, so help that opens with it
@@ -89,12 +93,12 @@ public sealed class HelpSteps
     [Then("no socket's help opens with the socket's own name")]
     public void ThenNoHelpOpensWithItsName() => EachSocket((port, input) =>
         new[] { $"'{port.Name}'", $"{port.Name} is ", $"{port.Name} are ", $"{port.Name}:" }
-            .Any(opening => SocketHelp.For(port, input).StartsWith(opening, StringComparison.OrdinalIgnoreCase))
+            .Any(opening => port.Help.StartsWith(opening, StringComparison.OrdinalIgnoreCase))
             ? "opens with its own name"
             : null);
 
     [Then("every socket's help is written in sentences")]
-    public void ThenHelpIsSentences() => EachSocket((port, input) => SocketHelp.For(port, input) switch
+    public void ThenHelpIsSentences() => EachSocket((port, input) => port.Help switch
     {
         "" => null,
         var help when !char.IsLower(help[0]) && help.TrimEnd().EndsWith('.') => null,
@@ -105,7 +109,7 @@ public sealed class HelpSteps
     {
         var faults = def.Inputs.Select(port => (Port: port, Input: true))
             .Concat(def.Outputs.Select(port => (Port: port, Input: false)))
-            .Select(p => fault(p.Port, p.Input) is { } said ? $"'{p.Port.Name}' {said}: {SocketHelp.For(p.Port, p.Input)}" : null)
+            .Select(p => fault(p.Port, p.Input) is { } said ? $"'{p.Port.Name}' {said}: {p.Port.Help}" : null)
             .OfType<string>()
             .ToList();
 

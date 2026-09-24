@@ -31,7 +31,7 @@ internal static class BoxModule
             Field.Size("height", 0.5f) with { Help = "Half the height, reaching from the middle as a radius does." },
             Field.Size("corner", 0f, 1f) with { Help = "Rounds the corners, up to a capsule and then a disc." },
         ],
-        [Field.Distance("distance")],
+        [Field.Shape()],
         Emit,
         "A rectangle, as a distance, with corners that can be rounded off.")
     {

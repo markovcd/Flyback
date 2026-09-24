@@ -44,13 +44,13 @@ public partial class NodeCatalog
     private static NodeDef Filter() => new(
         FilterTypeId, "Filter", ModuleCategories.Shaping,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to filter." },
             new PortSpec("cutoff", PortKind.Scalar, 800f, 20f, 12_000f)
             {
                 Knee = 20f,
                 Help = "The corner, in hertz. Meant to be swept by an oscillator or an envelope.",
             },
-            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = "Peaks the corner, until it rings on a sharp edge." },
+            new PortSpec("resonance", PortKind.Scalar, 0.2f, 0f, 1f) { Help = SocketHelp.Resonance },
         ],
         [
             new PortSpec("low") { Help = "What is under the cutoff. On the picture, 'in' unchanged." },

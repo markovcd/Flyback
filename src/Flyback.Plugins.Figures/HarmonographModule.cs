@@ -66,8 +66,8 @@ internal static class HarmonographModule
             new PortSpec("damping", PortKind.Scalar, 8f, 0.5f, 30f) { Help = "How long the drawing and the chord last." },
             new PortSpec("persist", PortKind.Scalar, 0.6f, 0f, 1f) { Help = "How much of the line is left after a second." },
             new PortSpec("size", PortKind.Scalar, 0.8f, 0f, 2f) { Help = "How much of the screen the pen reaches." },
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
         ],
         [
             new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f) { Help = "The pendulums one way, at 'pitch'." },

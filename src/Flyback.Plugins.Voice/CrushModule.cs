@@ -21,7 +21,7 @@ internal static class CrushModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Crush", ModuleCategories.Shaping,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to crush." },
             new PortSpec("bits", PortKind.Scalar, 8f, 1f, 16f, Display: PortDisplay.Integer)
             {
                 Help = "How many levels are left across full scale. On the picture it bands a gradient.",
@@ -33,7 +33,7 @@ internal static class CrushModule
                     + "on the picture it holds nothing.",
             },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The sound, crushed." }],
         Emit,
         "Crunches a signal down to fewer levels and fewer samples.")
     {

@@ -46,7 +46,7 @@ internal static class GradeModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Grade", ModuleCategories.Color,
         [
-            new PortSpec("color", PortKind.Color),
+            new PortSpec("color", PortKind.Color) { Help = "The picture to grade." },
             new PortSpec("saturation", PortKind.Scalar, 1f, 0f, 3f) { Help = "0 is grayscale, and past 1 keeps going." },
             new PortSpec("contrast", PortKind.Scalar, 1f, 0f) { Help = "Pivots on middle gray, so black and white stay put." },
             new PortSpec("gamma", PortKind.Scalar, 1f, 0.1f)
@@ -54,7 +54,7 @@ internal static class GradeModule
                 Help = "Above 1 deepens the shadows and leaves the highlights, for a picture that is too pale.",
             },
         ],
-        [new PortSpec("color", PortKind.Color)],
+        [new PortSpec("color", PortKind.Color) { Help = "The picture, graded." }],
         Emit,
         "Saturation, contrast and gamma, in a grading desk's order; all three at 1 is a wire.");
 

@@ -27,10 +27,10 @@ internal static class JuliaModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Julia", FractalsPlugin.Category,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
-            new PortSpec("re", PortKind.Scalar, -0.8f, -2f, 1f) { Help = "The real part of c." },
-            new PortSpec("im", PortKind.Scalar, 0.156f, -1.5f, 1.5f) { Help = "The imaginary part of c." },
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
+            new PortSpec("re", PortKind.Scalar, -0.8f, -2f, 1f) { Help = MandelbrotModule.ReHelp },
+            new PortSpec("im", PortKind.Scalar, 0.156f, -1.5f, 1.5f) { Help = MandelbrotModule.ImHelp },
             new PortSpec("zoom", PortKind.Scalar, 0f, 0f, 12f) { Help = "Halves the view about the middle each step." },
             new PortSpec("shift", PortKind.Scalar, 0f, 0f, 1f) { Help = MandelbrotModule.ShiftHelp },
         ],

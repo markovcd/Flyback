@@ -24,7 +24,6 @@ Flyback.Core.Graph.ControlLink.Knee.get -> float
 Flyback.Core.Graph.ControlLink.Knee.init -> void
 static Flyback.Core.Graph.ControlLink.For(System.Guid control, Flyback.Core.Graph.PortSpec socket, float resting) -> Flyback.Core.Graph.ControlLink
 Flyback.Core.Graph.ControlLink.Swept(bool inDecades, Flyback.Core.Graph.PortSpec socket) -> Flyback.Core.Graph.ControlLink
-
 Flyback.Core.Graph.AutoRemap
 Flyback.Core.Graph.EmitContext.Spans.get -> Flyback.Core.Graph.RemapSpans?
 Flyback.Core.Graph.EmitContext.Spans.init -> void
@@ -88,12 +87,6 @@ Flyback.Core.Graph.PortSpec.Lenient.init -> void
 Flyback.Core.Graph.PortSpec.Help.get -> string!
 Flyback.Core.Graph.PortSpec.Help.init -> void
 Flyback.Core.Graph.SocketHelp
-const Flyback.Core.Graph.SocketHelp.Domain = "What it runs across: Time without a wire, so it moves. A coordinate lays it across the screen instead." -> string!
-static Flyback.Core.Graph.SocketHelp.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Flyback.Core.Graph.SocketHelp.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Flyback.Core.Graph.SocketHelp.Standard(Flyback.Core.Graph.PortSpec port, bool input) -> string!
-static Flyback.Core.Graph.SocketHelp.For(Flyback.Core.Graph.PortSpec port, bool input) -> string!
-static Flyback.Core.Graph.SocketHelp.Own(Flyback.Core.Graph.PortSpec port, bool input) -> bool
 *REMOVED*const Flyback.Core.Graph.NodeCatalog.NoiseTypeId = "pattern.noise" -> string!
 *REMOVED*const Flyback.Core.Graph.NodeCatalog.RandomTypeId = "audio.random" -> string!
 *REMOVED*static Flyback.Core.Graph.NodeCatalog.RandomNoise(Flyback.Core.Compile.Emitter! em, Flyback.Core.Compile.Slot domain, Flyback.Core.Compile.Slot seed) -> (Flyback.Core.Compile.Slot White, Flyback.Core.Compile.Slot Pink)
@@ -146,3 +139,22 @@ Flyback.Core.Compile.Emitter.Once(string! key, Flyback.Core.Compile.Slot[]! inpu
 static Flyback.Core.Graph.Presets.HeadsOrTails(Flyback.Core.Graph.ModuleCatalog! modules) -> Flyback.Core.Graph.Patch!
 Flyback.Core.Graph.PatchControl.Word.get -> string?
 Flyback.Core.Graph.PatchControl.Word.set -> void
+const Flyback.Core.Graph.SocketHelp.Domain = "What it runs across: Time without a wire, so it moves. A coordinate lays it across the screen instead." -> string!
+const Flyback.Core.Graph.SocketHelp.Position = "Where on the picture it is read: the pixel's own without a wire. A Geometry module in between moves, turns or bends it." -> string!
+const Flyback.Core.Graph.SocketHelp.Freq = "Cycles for each unit of 'in': hertz while it runs on Time." -> string!
+const Flyback.Core.Graph.SocketHelp.Phase = "Where in the cycle it starts. 1 is once round, so it wraps." -> string!
+const Flyback.Core.Graph.SocketHelp.Amp = "Multiplies what comes out, which swings -1 to 1 before it." -> string!
+const Flyback.Core.Graph.SocketHelp.Bias = "Added after 'amp', moving the whole output up or down." -> string!
+const Flyback.Core.Graph.SocketHelp.Right = "Carries 'left' when nothing is patched." -> string!
+const Flyback.Core.Graph.SocketHelp.Mix = "Dry against wet: 0 is a wire, 1 the effect alone." -> string!
+const Flyback.Core.Graph.SocketHelp.Resonance = "Peaks the corner, until it rings on a sharp edge." -> string!
+const Flyback.Core.Graph.SocketHelp.Attack = "How long the rise to full takes." -> string!
+const Flyback.Core.Graph.SocketHelp.Depth = "How far the sweep swings." -> string!
+const Flyback.Core.Graph.SocketHelp.Seed = "Which random run it takes. Give each module its own; two with the same seed move together." -> string!
+const Flyback.Core.Graph.SocketHelp.Angle = "In radians." -> string!
+const Flyback.Core.Graph.SocketHelp.Blend = "How far along: 0 is all 'a', 1 is all 'b'." -> string!
+const Flyback.Core.Graph.SocketHelp.GateLength = "How much of each step the gate stays open." -> string!
+const Flyback.Core.Graph.SocketHelp.Moved = "The moved coordinate. Patch it into the 'x' and 'y' of the pattern to be moved." -> string!
+const Flyback.Core.Graph.SocketHelp.Lfo = "The sweep itself, -1 to 1. It works on the picture too." -> string!
+const Flyback.Core.Graph.SocketHelp.Radius = "Distance from the center." -> string!
+const Flyback.Core.Graph.SocketHelp.Distance = "Negative inside, zero on the edge, positive outside." -> string!

@@ -27,8 +27,8 @@ internal static class WidthModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Width", ModuleCategories.Shaping,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
             new PortSpec("width", PortKind.Scalar, 1f, 0f, 2f) { Help = "Scales the side: 0 is mono, 2 twice as wide." },
             new PortSpec("mono below", PortKind.Scalar, 0f, 0f, 500f)
             {
@@ -37,8 +37,8 @@ internal static class WidthModule
             },
         ],
         [
-            new PortSpec("left"),
-            new PortSpec("right"),
+            new PortSpec("left") { Help = "The left side, at the new width." },
+            new PortSpec("right") { Help = "The right side, at the new width." },
             new PortSpec("mid") { Help = "The halved sum of the two sides." },
             new PortSpec("side") { Help = "Their halved difference, after 'width' and 'mono below'." },
         ],

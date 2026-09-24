@@ -59,12 +59,12 @@ internal static class LimiterModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Limiter", ModuleCategories.Shaping,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
             new PortSpec("ceiling", PortKind.Scalar, -1f, -24f, 0f) { Help = "In dB. Nothing leaves louder." },
             new PortSpec("release", PortKind.Scalar, -1f, -3f, 0.5f, Display: PortDisplay.Duration)
             {
-                Help = "How fast the gain comes back up.",
+                Help = CompressorModule.ReleaseHelp,
             },
             new PortSpec("lookahead", PortKind.Scalar, 1.5f, 0.1f, Longest * 1000f)
             {
@@ -72,8 +72,8 @@ internal static class LimiterModule
             },
         ],
         [
-            new PortSpec("left"),
-            new PortSpec("right"),
+            new PortSpec("left") { Help = "The left side, held under 'ceiling'." },
+            new PortSpec("right") { Help = "The right side, held under 'ceiling'." },
             new PortSpec("gain") { Help = "The gain applied." },
         ],
         Emit,

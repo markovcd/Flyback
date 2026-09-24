@@ -30,7 +30,7 @@ internal static class FillModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Fill", ModuleCategories.Forms,
         [
-            Field.Distance("distance"),
+            Field.Distance("distance") with { Help = "The shape to fill: any shape's 'distance', or a Combine's." },
             Field.Size("softness", 0.01f, 0.5f) with { Help = "How wide the edge is, on both outputs." },
             Field.Size("width", 0.02f, 1f) with { Help = "How wide the outline is." },
         ],

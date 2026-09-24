@@ -51,8 +51,8 @@ internal static class FractalModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Fractal", ModuleCategories.Patterns,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
             new PortSpec("z") { Help = "Boils it. Scaled with x and y, so fine detail churns faster." },
             new PortSpec("scale", PortKind.Scalar, 2f, 0f, 32f) { Help = "How fine the broadest octave is." },
             new PortSpec("roughness", PortKind.Scalar, 0.5f, 0f, 1f)

@@ -19,14 +19,17 @@ internal static class BellModule
 {
     public const string TypeId = "flyback.voice.bell";
 
+    /// <summary>The help on the level the FM synth shares.</summary>
+    public const string LevelHelp = "An envelope: a Stroke, a Decay, an ADSR.";
+
     private const float Tau = 6.283185307179586f;
 
     public static NodeDef Definition { get; } = new(
         TypeId, "Bell", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f },
-            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f, Help = SocketHelp.Freq },
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f) { Help = LevelHelp },
             new PortSpec("ratio", PortKind.Scalar, 2.76f, 0.25f, 16f)
             {
                 Help = "Places the overtone above 'freq': a whole number is an organ tone, 2.76 a "
@@ -37,7 +40,7 @@ internal static class BellModule
                 Help = "How much overtone there is at the strike, fading with the level.",
             },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The bell's sound." }],
         Emit,
         "A bell, a gong, a chime. Patch an envelope into 'level' (a Stroke, a Decay) and a "
         + "frequency into 'freq'.")

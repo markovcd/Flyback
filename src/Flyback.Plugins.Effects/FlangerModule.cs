@@ -41,7 +41,7 @@ internal static class FlangerModule
             },
             Sweep.Mix(0.5f),
         ],
-        [new PortSpec("out"), Sweep.Motion],
+        [Sweep.Output, Sweep.Motion],
         Emit,
         "A very short chorus whose copy cancels the original, sweeping a comb of notches "
         + "through the sound. Audio only but for 'lfo': on the picture it is a wire.")

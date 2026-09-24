@@ -23,7 +23,7 @@ internal static class FoldModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Fold", ModuleCategories.Shaping,
         [
-            new PortSpec("in", PortKind.Any, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Any, 0f, -1f, 1f) { Help = "The sound or the picture to fold." },
             new PortSpec("drive", PortKind.Scalar, 1f, 0f, 8f)
             {
                 Help = "Multiplies 'in' before the fold. 1 is a wire; turned up, a sine grows a spectrum.",
@@ -33,7 +33,7 @@ internal static class FoldModule
                 Help = "Added after 'drive', so the folds go asymmetric and even harmonics appear.",
             },
         ],
-        [new PortSpec("out", PortKind.Any)],
+        [new PortSpec("out", PortKind.Any) { Help = "What went in, folded back on itself." }],
         Emit,
         "Folds a signal back where it runs past full scale, adding harmonics. Untyped: it folds "
         + "a color too, and on the screen turns a gradient into bands.")

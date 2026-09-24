@@ -20,14 +20,14 @@ internal static class LineModule
         TypeId, "Line", ModuleCategories.Forms,
         [
             ..Field.Position(),
-            Field.Distance("x1") with { Default = -0.5f },
-            Field.Distance("y1") with { Default = -0.3f },
-            Field.Distance("x2") with { Default = 0.5f },
-            Field.Distance("y2") with { Default = 0.3f },
+            Field.Distance("x1") with { Default = -0.5f, Help = "Where the first end is across." },
+            Field.Distance("y1") with { Default = -0.3f, Help = "Where the first end is up and down." },
+            Field.Distance("x2") with { Default = 0.5f, Help = "Where the second end is across." },
+            Field.Distance("y2") with { Default = 0.3f, Help = "Where the second end is up and down." },
             Field.Size("width", 0.02f, 0.5f) with { Help = "How far it reaches either side." },
         ],
         [
-            Field.Distance("distance"),
+            Field.Shape(),
             new PortSpec("along", PortKind.Scalar, 0f, 0f, 1f)
             {
                 Help = "Runs 0 to 1 from the first end to the second, for a fade, a color or dashes.",

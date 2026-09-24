@@ -29,7 +29,7 @@ public partial class NodeCatalog
                 Seconds("decay", 0.3f) with { Help = "About how long it rings." },
                 Num("brightness", 0.5f, 0f, 1f) with { Help = "0 is soft and dark, 1 bright and metallic." },
             ],
-            [Num("out", 0f, -1f, 1f)],
+            [Num("out", 0f, -1f, 1f) with { Help = "The string's sound." }],
             EmitString,
             "A plucked string. Audio only: on the picture 'in' passes through.")
         {

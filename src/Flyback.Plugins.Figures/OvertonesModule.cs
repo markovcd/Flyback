@@ -47,7 +47,7 @@ internal static class OvertonesModule
             {
                 Help = "The picture to hear. Read across the screen, one point per partial.",
             },
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
             new PortSpec("freq", PortKind.Scalar, 110f, 20f, 4000f)
             {
                 Knee = 20f,
@@ -59,11 +59,11 @@ internal static class OvertonesModule
             },
             new PortSpec("tilt", PortKind.Scalar, 0f, -12f, 12f) { Help = "In dB an octave, on top of the readings." },
             new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f) { Help = "Multiplies the tone." },
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
         ],
         [
-            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f) { Help = "The tone the picture makes." },
             new PortSpec("bars", PortKind.Scalar, 0f, 0f, 1f) { Help = "The readings, drawn as bars." },
             new PortSpec("wave", PortKind.Scalar, 0f, 0f, 1f) { Help = "One cycle of the tone, drawn." },
         ],

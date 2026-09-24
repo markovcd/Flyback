@@ -24,7 +24,7 @@ internal static class EuclidModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Euclid", ModuleCategories.Timing,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
             new PortSpec("rate", PortKind.Scalar, 4f, 0f, 32f) { Help = "Steps a second." },
             new PortSpec("steps", PortKind.Scalar, 8f, 1f, MostSteps, Display: PortDisplay.Integer)
             {

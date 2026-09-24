@@ -68,8 +68,8 @@ internal static class MaximizerModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Maximizer", ModuleCategories.Shaping,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
             new PortSpec("amount", PortKind.Scalar, 0.5f, 0f, 1f)
             {
                 Help = "How hard it works: the thresholds, the makeup and the style's tilt follow it.",
@@ -79,7 +79,7 @@ internal static class MaximizerModule
                 Help = "1 glues, 2 punches, 3 brightens, 4 is loudest.",
             },
         ],
-        [new PortSpec("left"), new PortSpec("right")],
+        [new PortSpec("left") { Help = "The left side, louder and held under -1 dB." }, new PortSpec("right") { Help = "The right side, louder and held under -1 dB." }],
         Emit,
         "One knob to make a mix louder and denser: three bands compressed, then limited to -1 "
         + "dB.")

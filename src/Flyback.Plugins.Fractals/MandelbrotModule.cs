@@ -32,11 +32,14 @@ internal static class MandelbrotModule
         EscapeHelp = "How long each point took to run away, smooth and 0 to 1. For a Palette of your own.",
         InsideHelp = "One on the set, nought off it.";
 
+    /// <summary>The help on the sockets that set c on a Julia set and an orbit.</summary>
+    public const string ReHelp = "The real part of c.", ImHelp = "The imaginary part of c.";
+
     public static NodeDef Definition { get; } = new(
         TypeId, "Mandelbrot", FractalsPlugin.Category,
         [
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
             new PortSpec("re", PortKind.Scalar, Middle, -2f, 1f) { Help = "The real part of the c in the middle of the picture." },
             new PortSpec("im", PortKind.Scalar, 0f, -1.5f, 1.5f) { Help = "The imaginary part of the c in the middle of the picture." },
             new PortSpec("zoom", PortKind.Scalar, 0f, 0f, 12f)

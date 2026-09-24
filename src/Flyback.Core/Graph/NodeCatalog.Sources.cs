@@ -44,7 +44,7 @@ public partial class NodeCatalog
             [
                 Num("x") with { Help = "Normalized, and widened by the aspect ratio." },
                 Num("y", 0f, -1f, 1f) with { Help = "Normalized." },
-                Num("radius") with { Help = "Distance from the center." },
+                Num("radius") with { Help = SocketHelp.Radius },
                 Num("angle", 0f, -MathF.PI, MathF.PI) with { Help = "Around the center, in radians." },
                 Num("aspect") with
                 {
@@ -88,7 +88,7 @@ public partial class NodeCatalog
                 Num("level", 1f, 0f, 2f) with { Help = "Multiplies the sound." },
                 Num("trigger", 0f, 0f, 1f) with { Lenient = true, Help = "Restarts from zero as it rises." },
             ],
-            [Num("out"), Num("length") with { Help = "The clip's length in seconds, for loop timing or scrubbing." }],
+            [Num("out") with { Help = "The sound, times 'level'. Silent while no file is loaded." }, Num("length") with { Help = "The clip's length in seconds, for loop timing or scrubbing." }],
             EmitSample,
             "Plays a WAV file. The file path is stored with the patch, so moving or renaming it "
             + "will break playback.")
@@ -100,7 +100,7 @@ public partial class NodeCatalog
         yield return new NodeDef(
             PictureTypeId, "Image", ModuleCategories.Sources,
             [..Position()],
-            [Col("color")],
+            [Col("color") with { Help = "The image's color where 'x' and 'y' read it." }],
             EmitPicture,
             "Loads an image file, black outside the image. Scale, translate, rotate, and warp "
             + "control how it is mapped.")
@@ -111,7 +111,7 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             ValueTypeId, "Value", ModuleCategories.Sources,
-            [Num("value", 0.5f)], [Num("out")],
+            [Num("value", 0.5f) with { Help = "The number it holds." }], [Num("out") with { Help = "The number, for as many sockets as want it." }],
             (_, i) => [i[0]],
             "A knob. Handy when several modules should share one number.");
     }

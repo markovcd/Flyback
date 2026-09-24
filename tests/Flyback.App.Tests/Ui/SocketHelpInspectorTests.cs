@@ -82,7 +82,7 @@ public class SocketHelpInspectorTests : UiTest
         }
     }
 
-    /// <summary>A socket with no help of its own shows the standard help for its name.</summary>
+    /// <summary>A socket that takes a standard help shows the standard's words.</summary>
     [AvaloniaFact]
     public void A_standard_socket_shows_the_standard_help()
     {
@@ -90,8 +90,8 @@ public class SocketHelpInspectorTests : UiTest
 
         var freq = NodeCatalog.BuiltIn.Require(NodeCatalog.SineTypeId).Inputs.Single(port => port.Name == "freq");
 
-        freq.Help.ShouldBeEmpty();
-        ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Inputs["freq"]);
+        freq.Help.ShouldBe(SocketHelp.Freq);
+        ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Freq);
     }
 
     /// <summary>The Output puts nothing out, so it gets no heading for it.</summary>

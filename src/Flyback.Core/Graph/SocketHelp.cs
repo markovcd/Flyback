@@ -5,10 +5,9 @@ namespace Flyback.Core.Graph;
 /// than on every module that has one.
 /// </summary>
 /// <remarks>
-/// A socket with no <see cref="PortSpec.Help"/> of its own takes the standard help for
-/// its name; one whose name means something else on its module says so in its own
-/// help, which wins. The assistant is told the standard list once and a module's
-/// own help only where it differs, while the inspector shows whichever applies.
+/// A socket opts in by taking one of these as its <see cref="PortSpec.Help"/>; nothing
+/// is filled in by name, so a socket whose name means something else on its module
+/// cannot pick up words that are wrong for it.
 /// </remarks>
 public static class SocketHelp
 {
@@ -19,41 +18,58 @@ public static class SocketHelp
     public const string Domain =
         "What it runs across: Time without a wire, so it moves. A coordinate lays it across the screen instead.";
 
-    /// <summary>The standard inputs, by name.</summary>
-    public static IReadOnlyDictionary<string, string> Inputs { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["x"] = "Where on the picture it is read: the pixel's own without a wire. A Geometry module in between moves, turns or bends it.",
-        ["y"] = "Where on the picture it is read: the pixel's own without a wire. A Geometry module in between moves, turns or bends it.",
-        ["freq"] = "Cycles for each unit of 'in': hertz while it runs on Time.",
-        ["phase"] = "Where in the cycle it starts. 1 is once round, so it wraps.",
-        ["amp"] = "Multiplies what comes out, which swings -1 to 1 before it.",
-        ["bias"] = "Added after 'amp', moving the whole output up or down.",
-        ["right"] = "Carries 'left' when nothing is patched.",
-        ["mix"] = "Dry against wet: 0 is a wire, 1 the effect alone.",
-        ["depth"] = "How far the sweep swings.",
-        ["seed"] = "Which random run it takes. Give each module its own; two with the same seed move together.",
-        ["angle"] = "In radians.",
-        ["t"] = "How far along: 0 is all 'a', 1 is all 'b'.",
-        ["gate length"] = "How much of each step the gate stays open.",
-    };
+    /// <summary>A position's x or y, normalled to Coordinates.</summary>
+    public const string Position =
+        "Where on the picture it is read: the pixel's own without a wire. A Geometry module in between moves, turns or bends it.";
 
-    /// <summary>The standard outputs, by name.</summary>
-    public static IReadOnlyDictionary<string, string> Outputs { get; } = new Dictionary<string, string>(StringComparer.Ordinal)
-    {
-        ["x"] = "The moved coordinate. Patch it into the 'x' and 'y' of the pattern to be moved.",
-        ["y"] = "The moved coordinate. Patch it into the 'x' and 'y' of the pattern to be moved.",
-        ["lfo"] = "The sweep itself, -1 to 1. It works on the picture too.",
-    };
+    /// <summary>An oscillator's rate across its domain.</summary>
+    public const string Freq = "Cycles for each unit of 'in': hertz while it runs on Time.";
 
-    /// <summary>What a socket of this name and kind is for wherever it appears, or empty where there is no standard.</summary>
-    public static string Standard(PortSpec port, bool input) =>
-        input && port.Domain
-            ? Domain
-            : (input ? Inputs : Outputs).GetValueOrDefault(port.Name, string.Empty);
+    /// <summary>Where a cycle starts.</summary>
+    public const string Phase = "Where in the cycle it starts. 1 is once round, so it wraps.";
 
-    /// <summary>What the socket is for: its own help, or the standard for its name.</summary>
-    public static string For(PortSpec port, bool input) => port.Help.Length > 0 ? port.Help : Standard(port, input);
+    /// <summary>An oscillator's gain.</summary>
+    public const string Amp = "Multiplies what comes out, which swings -1 to 1 before it.";
 
-    /// <summary>Whether the socket says something the standard list does not, and so has to be told on its module.</summary>
-    public static bool Own(PortSpec port, bool input) => port.Help.Length > 0 && port.Help != Standard(port, input);
+    /// <summary>An oscillator's offset.</summary>
+    public const string Bias = "Added after 'amp', moving the whole output up or down.";
+
+    /// <summary>A stereo module's right input, normalled from its left.</summary>
+    public const string Right = "Carries 'left' when nothing is patched.";
+
+    /// <summary>An effect's dry and wet balance.</summary>
+    public const string Mix = "Dry against wet: 0 is a wire, 1 the effect alone.";
+
+    /// <summary>A filter's resonance.</summary>
+    public const string Resonance = "Peaks the corner, until it rings on a sharp edge.";
+
+    /// <summary>An envelope's rise.</summary>
+    public const string Attack = "How long the rise to full takes.";
+
+    /// <summary>A sweep effect's depth.</summary>
+    public const string Depth = "How far the sweep swings.";
+
+    /// <summary>Which random run a module takes.</summary>
+    public const string Seed = "Which random run it takes. Give each module its own; two with the same seed move together.";
+
+    /// <summary>An angle.</summary>
+    public const string Angle = "In radians.";
+
+    /// <summary>A blend's position between 'a' and 'b'.</summary>
+    public const string Blend = "How far along: 0 is all 'a', 1 is all 'b'.";
+
+    /// <summary>A sequencer's gate length.</summary>
+    public const string GateLength = "How much of each step the gate stays open.";
+
+    /// <summary>A Geometry module's x or y out.</summary>
+    public const string Moved = "The moved coordinate. Patch it into the 'x' and 'y' of the pattern to be moved.";
+
+    /// <summary>A sweep effect's modulation out.</summary>
+    public const string Lfo = "The sweep itself, -1 to 1. It works on the picture too.";
+
+    /// <summary>A polar radius out.</summary>
+    public const string Radius = "Distance from the center.";
+
+    /// <summary>A shape's signed distance out.</summary>
+    public const string Distance = "Negative inside, zero on the edge, positive outside.";
 }

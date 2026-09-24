@@ -105,7 +105,7 @@ public partial class NodeCatalog
     private static NodeDef Reverb() => new(
         ReverbTypeId, "Reverb", ModuleCategories.TimeEffects,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to put in the room." },
             new PortSpec("size", PortKind.Scalar, 0.5f, 0f, 1f)
             {
                 Help = "Stretches every delay and the first reflection, from a bathroom to a hall.",
@@ -116,7 +116,10 @@ public partial class NodeCatalog
                 Help = "A straight crossfade, since the tail comes out at about the level that went in.",
             },
         ],
-        [new PortSpec("out"), new PortSpec("wide")],
+        [
+            new PortSpec("out") { Help = "The sound in the room, mixed by 'mix'. Alone it is the mono room." },
+            new PortSpec("wide") { Help = "The tail smeared the other way, for the other side to 'out'." },
+        ],
         ReverbEmit,
         "A room. 'out' and 'wide' are the tail smeared two ways: both for stereo, or 'out' "
         + "alone. Audio only: a wire on the picture.");

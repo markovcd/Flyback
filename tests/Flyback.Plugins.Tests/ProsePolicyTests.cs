@@ -86,7 +86,8 @@ public sealed class ProsePolicyTests : IDisposable
         var bench = new PatchWorkbench(Shipped, new Patch());
 
         bench.Briefing.Length.ShouldBeLessThan(AssistantSettings.DefaultProseBudget * 4 / 5);
-        bench.Tools.Select(t => t.Name).ShouldNotContain("describe_module", "there is nothing to look up");
+        bench.Tools.Select(t => t.Name).ShouldNotContain("find_modules", "there is nothing to search for");
+        bench.Tools.Select(t => t.Name).ShouldContain("describe_module", "what each socket is for is only there");
     }
 
     [Fact]

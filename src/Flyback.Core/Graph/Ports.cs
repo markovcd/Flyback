@@ -188,12 +188,12 @@ public readonly record struct PortSpec(
     /// <summary>
     /// What this socket is for, in words that stand on their own: the inspector
     /// shows them as the tip on the socket's row, and the assistant reads them
-    /// after the socket's name. Empty where the name says it all.
+    /// after the socket's name. Every shipped socket has it.
     /// </summary>
     /// <remarks>
     /// Only what is true of this one socket. What the module is for, and how its
-    /// sockets work together, is <see cref="NodeDef.Description"/>. Left empty, a
-    /// socket takes the standard help for its name — see <see cref="SocketHelp"/>.
+    /// sockets work together, is <see cref="NodeDef.Description"/>. A
+    /// socket that means the same everywhere takes its words from <see cref="SocketHelp"/>.
     /// </remarks>
     public string Help
     {

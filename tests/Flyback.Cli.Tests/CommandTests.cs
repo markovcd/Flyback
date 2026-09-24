@@ -746,7 +746,7 @@ public class CommandTests
 
         foreach (var (port, input) in filter.Inputs.Select(p => (p, true)).Concat(filter.Outputs.Select(p => (p, false))))
         {
-            var help = SocketHelp.For(port, input);
+            var help = port.Help;
 
             helped[port.Name].ShouldBe(help);
             if (help.Length > 0) prose.ShouldContain(help);

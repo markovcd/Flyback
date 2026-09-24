@@ -109,9 +109,10 @@ public sealed partial class PatchWorkbench
         var briefing = Handbook.Render(modules, Undescribed, hearing);
         Briefing = briefing + Handbook.Presets(readable, policy.Budget - briefing.Length);
 
-        // Only where there is something the briefing did not say. Offered on every
-        // run they would be two more tools to weigh on every turn, for looking up
-        // what is already in front of the model.
+        // find_modules only where some description was left out: offered on every
+        // run it would be one more tool to weigh on every turn, for searching what
+        // is already in front of the model. describe_module always has what the
+        // briefing leaves to it, what each socket is for.
         var vocabulary = BuildTools(vision, hearing, lookups: Undescribed.Count > 0, readsPresets: readable.Count > 0);
 
         Tools = [.. vocabulary.Where(tool => tool.Offered).Select(tool => tool.Spec)];
@@ -1288,12 +1289,11 @@ public sealed partial class PatchWorkbench
                 offered: hearing is not Listener.None),
 
             Does("describe_module", catalog.DescribeModule,
-                "Everything about one module: its ports, their defaults and ranges, and what it is "
-                + "for.",
+                "Everything about one module: what it is for, and each port's default, range and "
+                + "what it is for.",
                 """
                 { "properties": { "type_id": { "type": "string" } }, "required": ["type_id"] }
-                """,
-                offered: lookups),
+                """),
 
             Does("find_modules", catalog.FindModules,
                 "Searches the module list by type id, name, category or description.",

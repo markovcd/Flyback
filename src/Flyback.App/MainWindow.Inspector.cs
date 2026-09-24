@@ -531,7 +531,7 @@ public sealed partial class MainWindow
         var reading = InspectorRows.ShowsReading(def) || def.TypeId == NodeCatalog.AutoRemapTypeId;
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            inspector.Children.Add(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), SocketHelp.For(def.Inputs[i], input: true)));
+            inspector.Children.Add(Helped(BuildInputRow(def, node, def.Inputs[i], i, reading), def.Inputs[i].Help));
 
         // Whatever the module carries that is not a knob, each kind edited by the
         // control that suits it. This mapping lives here rather than on the extra
@@ -701,7 +701,7 @@ public sealed partial class MainWindow
             Grid.SetColumnSpan(caption, 2);
 
             row.Children.Add(caption);
-            inspector.Children.Add(Helped(row, SocketHelp.For(port, input: false)));
+            inspector.Children.Add(Helped(row, port.Help));
         }
     }
 

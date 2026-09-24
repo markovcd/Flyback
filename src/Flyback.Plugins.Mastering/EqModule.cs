@@ -39,8 +39,8 @@ internal static class EqModule
     public static NodeDef Definition { get; } = new(
         TypeId, "EQ", ModuleCategories.Shaping,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: Left, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: Left, PatchOnly: true) { Help = SocketHelp.Right },
             new PortSpec("low cut", PortKind.Scalar, 0f, 0f, 300f)
             {
                 Knee = 20f,
@@ -66,7 +66,7 @@ internal static class EqModule
             },
             new PortSpec("high gain", PortKind.Scalar, 0f, -12f, 12f) { Help = "The high shelf, in dB." },
         ],
-        [new PortSpec("left"), new PortSpec("right")],
+        [new PortSpec("left") { Help = "The left side, equalized." }, new PortSpec("right") { Help = "The right side, equalized." }],
         Emit,
         "Tone shaping for a stereo pair: a low cut, then a low shelf, a bell and a high shelf.")
     {

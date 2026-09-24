@@ -368,10 +368,9 @@ internal static class Handbook
         # The modules
 
         Format: `type id | name | category`, then inputs and outputs as
-        `index name`, then what it is for, then `name: ...` for each socket whose
-        meaning is its own rather than the standard one listed below. A knob's
-        default and range follow its
-        name. `~` marks a color port, `*` a port that takes whatever is plugged
+        `index name`, then what it is for. What each socket is for is not
+        listed here: `describe_module` gives it. A knob's default and range
+        follow its name. `~` marks a color port, `*` a port that takes whatever is plugged
         in, `->n` an input that falls back to input `n` when nothing is wired to
         it, and `note` a knob that reads as a note name rather than a number.
         `<-Module` in place of a default marks a normalled input: it has no knob
@@ -530,8 +529,6 @@ internal static class Handbook
 
         if (undescribed.Count > 0) text.Append(Unexplained);
 
-        Standard(text);
-
         // Catalog order, not sorted: it is already deterministic (built-ins in
         // declaration order, then each plugin in load order) and re-sorting here
         // would be one more thing that could quietly stop matching itself.
@@ -592,37 +589,12 @@ internal static class Handbook
     }
 
     /// <summary>
-    /// The module's description, then a line for each socket whose help is its own
-    /// rather than the standard for its name, as the briefing writes them.
+    /// The module's description, as the briefing writes it. What each socket is for
+    /// is left to <c>describe_module</c>.
     /// </summary>
     private static IEnumerable<string> Prose(NodeDef def)
     {
         if (def.Description.Length > 0) yield return def.Description;
-
-        foreach (var port in def.Inputs.Where(port => SocketHelp.Own(port, input: true))
-                     .Concat(def.Outputs.Where(port => SocketHelp.Own(port, input: false))))
-            yield return $"{port.Name}: {port.Help}";
-    }
-
-    /// <summary>The sockets that mean the same on every module, told once ahead of the modules.</summary>
-    private static void Standard(StringBuilder text)
-    {
-        text.AppendLine("Standard sockets, the same on every module that has one:");
-        text.Append("  in, any input marked `<-Time`: ").AppendLine(SocketHelp.Domain);
-
-        Said("in", SocketHelp.Inputs);
-        Said("out", SocketHelp.Outputs);
-
-        text.AppendLine();
-
-        // Names sharing one text are one line: x and y are one thing.
-        void Said(string side, IReadOnlyDictionary<string, string> standard)
-        {
-            foreach (var same in standard.GroupBy(socket => socket.Value, StringComparer.Ordinal))
-                text.Append("  ").Append(side).Append(' ')
-                    .Append(string.Join(", ", same.Select(socket => socket.Key)))
-                    .Append(": ").AppendLine(same.Key);
-        }
     }
 
     private static void Describe(StringBuilder text, NodeDef def, ModuleCatalog modules, bool prose)

@@ -27,14 +27,14 @@ internal static class PosteriseModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Posterise", ModuleCategories.Color,
         [
-            new PortSpec("color", PortKind.Color),
+            new PortSpec("color", PortKind.Color) { Help = "The picture to band." },
             new PortSpec("levels", PortKind.Scalar, 4f, 2f, 32f, Display: PortDisplay.Integer)
             {
                 Help = "Steps for each channel, black and white included, so 2 is the eight colors "
                     + "of a very old machine. Rounded down, never below two.",
             },
         ],
-        [new PortSpec("color", PortKind.Color)],
+        [new PortSpec("color", PortKind.Color) { Help = "The picture in flat bands." }],
         Emit,
         "Holds each channel to a few steps, turning a gradient into flat bands. The channels "
         + "step apart, so the result has more than 'levels' colors. Sweep 'levels' from an "

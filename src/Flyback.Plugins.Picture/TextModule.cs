@@ -60,7 +60,7 @@ internal static class TextModule
                 Help = "Types the line out from the left as it goes from 0 to 1.",
             },
         ],
-        [Field.Distance("distance")],
+        [Field.Shape()],
         Emit,
         "Lines of text in a pixel font, as the distance to the letters: patch it into a Fill. "
         + "The lines and the font (Pixel, or the blockier one-case Tiny) are set on the node.")

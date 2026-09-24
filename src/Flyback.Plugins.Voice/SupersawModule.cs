@@ -61,19 +61,19 @@ internal static class SupersawModule
             // module the engine ships, and this is the one worth naming. Left on
             // a knob it was seven saws holding still, which is the same nothing
             // one saw holds.
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
             NodeCatalog.Freq,
             new PortSpec("detune", PortKind.Scalar, 0.3f, 0f, 1f) { Help = "Spreads the seven saws apart in pitch." },
             new PortSpec("mix", PortKind.Scalar, 0.75f, 0f, 1f)
             {
                 Help = "Fades the six outer voices in against the center. At 0 it is exactly a plain Saw.",
             },
-            new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true },
-            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f),
-            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f),
+            new PortSpec("phase", PortKind.Scalar, 0f, 0f, 1f) { Lenient = true, Help = SocketHelp.Phase },
+            new PortSpec("amp", PortKind.Scalar, 1f, 0f, 2f) { Help = SocketHelp.Amp },
+            new PortSpec("bias", PortKind.Scalar, 0f, -2f, 2f) { Help = SocketHelp.Bias },
         ],
         [
-            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f) { Help = "The voices together, after 'amp' and 'bias'." },
             new PortSpec("wide", PortKind.Scalar, 0f, -1f, 1f)
             {
                 Help = "The same voices at other weights, so it drifts away from 'out' as they spread.",

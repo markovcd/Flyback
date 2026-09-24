@@ -59,8 +59,8 @@ internal static class LoudnessModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Loudness", ModuleCategories.Measurement,
         [
-            new PortSpec("left", PatchOnly: true),
-            new PortSpec("right", NormalledFrom: 0, PatchOnly: true),
+            new PortSpec("left", PatchOnly: true) { Help = Dsp.LeftIn },
+            new PortSpec("right", NormalledFrom: 0, PatchOnly: true) { Help = SocketHelp.Right },
         ],
         [
             new PortSpec("momentary") { Help = "LUFS over the last 0.4 s, floored at -70." },

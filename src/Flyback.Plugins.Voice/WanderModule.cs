@@ -22,7 +22,7 @@ internal static class WanderModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Wander", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
             new PortSpec("rate", PortKind.Scalar, 0.1f, 0f, 8f)
             {
                 Help = "New values a second: 0.05 drifts like weather, 4 wobbles.",
@@ -31,10 +31,10 @@ internal static class WanderModule
             {
                 Help = "Which walk it takes. Two with the same 'seed' and 'rate' move together.",
             },
-            new PortSpec("low"),
-            new PortSpec("high", PortKind.Scalar, 1f),
+            new PortSpec("low") { Help = "The bottom of the range it wanders in." },
+            new PortSpec("high", PortKind.Scalar, 1f) { Help = "The top of the range it wanders in." },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The wandering value." }],
         Emit,
         "A smooth random value that never repeats, between 'low' and 'high'. For anything that "
         + "should keep changing: a cutoff, a level, a hue. On the picture it is one value at "

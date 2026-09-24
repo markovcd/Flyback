@@ -33,14 +33,14 @@ internal static class HsvModule
 
     public static NodeDef Definition { get; } = new(
         TypeId, "To HSV", ModuleCategories.Color,
-        [new PortSpec("color", PortKind.Color)],
+        [new PortSpec("color", PortKind.Color) { Help = "The color to read the three from." }],
         [
             new PortSpec("hue", PortKind.Scalar, 0f, 0f, 1f)
             {
                 Help = "A gray's is 0, which is red: threshold 'saturation' if that matters.",
             },
-            new PortSpec("saturation", PortKind.Scalar, 0f, 0f, 1f),
-            new PortSpec("value", PortKind.Scalar, 0f, 0f, 1f),
+            new PortSpec("saturation", PortKind.Scalar, 0f, 0f, 1f) { Help = "How much color: 0 is gray." },
+            new PortSpec("value", PortKind.Scalar, 0f, 0f, 1f) { Help = "Brightness: 0 is black." },
         ],
         Emit,
         "A color pulled apart into hue, saturation and value, 0 to 1 each: HSV backwards. "

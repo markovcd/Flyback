@@ -82,8 +82,8 @@ internal static class PlateModule
             {
                 Help = "Where down it is hit, from the top. Halfway only wakes the odd modes.",
             },
-            new PortSpec("x", NormalledTo: NodeCatalog.Across),
-            new PortSpec("y", NormalledTo: NodeCatalog.Down),
+            new PortSpec("x", NormalledTo: NodeCatalog.Across) { Help = SocketHelp.Position },
+            new PortSpec("y", NormalledTo: NodeCatalog.Down) { Help = SocketHelp.Position },
         ],
         [
             new PortSpec("out", PortKind.Scalar, 0f, -1f, 1f) { Help = "The ring." },

@@ -40,7 +40,7 @@ internal static class StarModule
                 Help = "From a polygon at 0 to needles at 1, growing the points.",
             },
         ],
-        [Field.Distance("distance")],
+        [Field.Shape()],
         Emit,
         "A star, as a distance, with a point at the top. Exact, so an outline is its stated "
         + "width even at the tips.")

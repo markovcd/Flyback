@@ -21,7 +21,7 @@ public partial class NodeCatalog
     private static NodeDef Delay() => new(
         DelayTypeId, "Delay", ModuleCategories.TimeEffects,
         [
-            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f),
+            new PortSpec("in", PortKind.Scalar, 0f, -1f, 1f) { Help = "The sound to echo." },
             new PortSpec("time", PortKind.Scalar, 0.25f, 0.001f, Longest)
             {
                 Knee = 0.001f,
@@ -30,7 +30,7 @@ public partial class NodeCatalog
             new PortSpec("feedback", PortKind.Scalar, 0.45f, 0f, 0.95f) { Help = "How much comes back round for the next repeat." },
             new PortSpec("mix", PortKind.Scalar, 0.4f, 0f, 1f) { Help = "A crossfade: 0 is a wire, 1 only the echoes." },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The sound and its echoes, mixed by 'mix'." }],
         (em, inputs) => [DelayEchoed(em, inputs[0], inputs[1], inputs[2], inputs[3])],
         "An echo. Audio only: with no picture to remember, it passes straight through.");
 

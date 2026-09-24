@@ -41,8 +41,8 @@ internal static class CombineModule
     public static NodeDef Definition { get; } = new(
         TypeId, "Combine", ModuleCategories.Forms,
         [
-            Field.Distance("a"),
-            Field.Distance("b"),
+            Field.Distance("a") with { Help = "One shape's distance." },
+            Field.Distance("b") with { Help = "The other shape's distance." },
             Field.Size("smoothness", 0f, 1f) with
             {
                 Help = "Melts the seam. At 0 it is exactly a Minimum and a Maximum.",

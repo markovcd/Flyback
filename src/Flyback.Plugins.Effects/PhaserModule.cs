@@ -63,7 +63,7 @@ internal static class PhaserModule
             new PortSpec("feedback", PortKind.Scalar, 0.4f, 0f, Most) { Help = "Sharpens the notches." },
             Sweep.Mix(0.5f),
         ],
-        [new PortSpec("out"), Sweep.Motion],
+        [Sweep.Output, Sweep.Motion],
         Emit,
         "Two unrelated notches swept through the sound, from four allpass stages over the dry "
         + "signal, so it sweeps where a flanger whooshes. Audio only but for 'lfo': on the "

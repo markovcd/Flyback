@@ -29,7 +29,7 @@ internal static class ArcModule
             },
             Field.Size("width", 0.1f, 1f) with { Help = "Across the band." },
         ],
-        [Field.Distance("distance")],
+        [Field.Shape()],
         Emit,
         "Part of a ring, as a distance, centered on the top and opening both ways, with round "
         + "ends. Exact, so a sweep driven by a signal fills it like a dial.")

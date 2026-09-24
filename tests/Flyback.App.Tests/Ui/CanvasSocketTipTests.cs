@@ -39,7 +39,7 @@ public class CanvasSocketTipTests : UiTest
         window.MouseMove(at);
         Settle(window);
 
-        ToolTip.GetTip(editor).ShouldBe(SocketHelp.For(Filter.Inputs[1], input: true));
+        ToolTip.GetTip(editor).ShouldBe(Filter.Inputs[1].Help);
 
         window.MouseMove(new Point(at.X - 60, at.Y - 60));
         Settle(window);

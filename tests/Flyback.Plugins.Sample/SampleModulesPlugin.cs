@@ -33,12 +33,12 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
         new NodeDef(
             "flyback.sample.ripple", "Ripple", "Sample",
             [
-                new PortSpec("x"),
-                new PortSpec("y"),
-                new PortSpec("freq", PortKind.Scalar, 4f, 0f, 32f),
-                new PortSpec("offset"),
+                new PortSpec("x") { Help = SocketHelp.Position },
+                new PortSpec("y") { Help = SocketHelp.Position },
+                new PortSpec("freq", PortKind.Scalar, 4f, 0f, 32f) { Help = "Rings to each unit out from the middle." },
+                new PortSpec("offset") { Help = "Shifts the rings, one whole ring at 1." },
             ],
-            [new PortSpec("out")],
+            [new PortSpec("out") { Help = "The rings, -1 to 1." }],
             (em, i) =>
             {
                 var radius = em.Binary(OpCode.Hypot, i[0], i[1]);
@@ -58,8 +58,8 @@ public sealed class SampleModulesPlugin : IFlybackPlugin
 
         new NodeDef(
             "flyback.sample.halve", "Halve", "Sample",
-            [new PortSpec("in", PortKind.Any)],
-            [new PortSpec("out", PortKind.Any)],
+            [new PortSpec("in", PortKind.Any) { Help = "A number or a color." }],
+            [new PortSpec("out", PortKind.Any) { Help = "Half of it." }],
             (em, i) => [em.Mul(i[0], 0.5f)],
             "Halves whatever arrives — scalar or color.")
         {

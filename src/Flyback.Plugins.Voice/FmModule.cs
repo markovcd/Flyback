@@ -44,9 +44,9 @@ internal static class FmModule
     public static NodeDef Definition { get; } = new(
         TypeId, "FM", ModuleCategories.Oscillators,
         [
-            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
-            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f },
-            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f),
+            new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Help = SocketHelp.Domain },
+            new PortSpec("freq", PortKind.Scalar, 440f, 20f, 4000f) { Knee = 20f, Help = SocketHelp.Freq },
+            new PortSpec("level", PortKind.Scalar, 1f, 0f, 1f) { Help = BellModule.LevelHelp },
             new PortSpec("tone", PortKind.Scalar, 1f, 0f, 2f) { Help = "Scales every index." },
             new PortSpec("ratio2", PortKind.Scalar, 1f, 0.25f, 16f) { Help = "Operator two's pitch over 'freq'." },
             new PortSpec("ratio3", PortKind.Scalar, 2f, 0.25f, 16f) { Help = "Operator three's pitch over 'freq'." },
@@ -55,7 +55,7 @@ internal static class FmModule
             new PortSpec("index3", PortKind.Scalar, 0.2f, 0f, 2f) { Help = "How hard operator three bends what it feeds." },
             new PortSpec("index4", PortKind.Scalar, 0f, 0f, 2f) { Help = "How hard operator four bends what it feeds." },
         ],
-        [new PortSpec("out")],
+        [new PortSpec("out") { Help = "The synth's sound." }],
         Emit,
         "A four-operator FM synth: electric piano, brass, slap bass, bell. Patch an envelope "
         + "into 'level' and a frequency into 'freq'. Operator one sounds at the pitch, and "
