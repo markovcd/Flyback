@@ -6,10 +6,12 @@ using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>What the editor's module panel says about a module's wires.</summary>
+/// <summary>What the editor's panel says about the wires on a module or a box.</summary>
 [Binding]
 public sealed class EditorSteps(PatchContext context)
 {
+    private NodeGroup? box;
+
     [Given("a sine driven by Time")]
     public void GivenASineDrivenByTime()
     {
@@ -33,6 +35,28 @@ public sealed class EditorSteps(PatchContext context)
     public void ThenTheOutputReads(string port, string text) =>
         WireEnds.OutOf(context.Patch, context.Node("Time").Id, Port(NodeCatalog.TimeTypeId, port, output: true))
             .ShouldBe(text);
+
+    [Given("the sine is drawn in one box with a Multiply it feeds")]
+    public void GivenTheSineIsBoxed()
+    {
+        context.Add("Multiply", "math.mul");
+        context.Wire("Sine", "out", "Multiply", "a");
+
+        box = context.Patch.Group([context.Node("Sine").Id, context.Node("Multiply").Id]);
+    }
+
+    [Then("the box's {string} reads {string}")]
+    public void ThenTheBoxSocketReads(string label, string text)
+    {
+        var sockets = context.Patch.SocketsOf(box.ShouldNotBeNull());
+        var scene = new CanvasScene(context.Patch);
+
+        var socket = sockets.Inputs.Concat(sockets.Outputs).Single(s => scene.Named(s)?.Label == label);
+
+        (socket.IsOutput
+            ? WireEnds.OutOf(context.Patch, socket.Node, socket.Port)
+            : WireEnds.Into(context.Patch, socket.Node, socket.Port)).ShouldBe(text);
+    }
 
     private static int Port(string typeId, string name, bool output)
     {

@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -142,6 +143,91 @@ public class GroupInspectorTests : UiTest
         // crosses nothing, so it is not on the edge.
         lines.ShouldNotContain("Sine.out");
         lines.ShouldNotContain("Multiply.a");
+    }
+
+    /// <summary>A socket's row reads as the module's own row for that port does.</summary>
+    [AvaloniaFact]
+    public void A_patched_socket_names_the_far_end_of_its_wire()
+    {
+        var window = Open(out _);
+        var lines = Lines(window);
+
+        lines.ShouldContain("◀ patched from Time.t");
+        lines.ShouldContain(l => l.StartsWith("▶ patched to ") && l.EndsWith(".left"));
+    }
+
+    /// <summary>
+    /// The box labels an Expression's input by what feeds it, and the row already
+    /// says that, so the caption names the socket inside instead.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_expression_socket_is_captioned_by_its_own_name()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var time = b.Add("time", 40, 200);
+        var sum = b.Add(NodeCatalog.ExpressionTypeId, 300, 60);
+        var osc = b.Add("osc.sine", 560, 160);
+        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+
+        b.Wire(time, 0, sum, 0)
+         .Wire(sum, 0, osc, 1)
+         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort);
+
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        var editor = Editor(window);
+        editor.Patch = b.Patch;
+        Settle(window);
+
+        var group = editor.Patch.Group([sum.Id, osc.Id])!;
+        editor.NotifyPatchChanged();
+        SelectBox(window, editor.Patch, group);
+
+        var lines = Lines(window);
+
+        lines.ShouldContain("Expression.a");
+        lines.ShouldContain("◀ patched from Time.t");
+        lines.ShouldNotContain("Time.t");
+    }
+
+    [AvaloniaFact]
+    public void A_socket_row_carries_the_help_its_module_row_does()
+    {
+        var window = Open(out _);
+        var freq = NodeCatalog.Require(NodeCatalog.SineTypeId).Inputs[1];
+
+        All<Control>(Panel(window))
+            .ShouldContain(c => ToolTip.GetTip(c) as string == freq.Help && c.GetVisualDescendants()
+                .OfType<TextBlock>().Any(t => t.Text == "Sine.freq"));
+    }
+
+    /// <summary>
+    /// Unplugged, a socket stays on the edge and its row becomes the slider the
+    /// module's panel has for it, turning the module inside.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_unpatched_socket_is_the_modules_own_slider()
+    {
+        var window = Open(out var group);
+        var editor = Editor(window);
+        var sine = editor.Patch.Find(group.Members[0])!;
+
+        editor.Patch.Disconnect(sine.Id, 1);
+        editor.NotifyPatchChanged();
+        Settle(window);
+
+        Lines(window).ShouldNotContain("◀ patched from Time.t");
+
+        All<Slider>(Panel(window)).ShouldHaveSingleItem();
+
+        All<NumericUpDown>(Panel(window)).Single().Value = 3;
+        Settle(window);
+
+        sine.InputValues[1].ShouldBe(3f);
     }
 
     [AvaloniaFact]

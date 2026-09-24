@@ -236,7 +236,7 @@ public sealed partial class MainWindow
         editor.InputLetGo += (_, pick) =>
         {
             HandCameOff();
-            if (editor.SelectedNode?.Id == pick.Node) BuildInspector();
+            if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) BuildInspector();
         };
     }
 
@@ -547,13 +547,13 @@ public sealed partial class MainWindow
     /// A socket that follows a knob, in the inspector: which knob, the range it
     /// follows it over, and a button to let it go.
     /// </summary>
-    private Control LinkedRow(NodeInstance node, PortSpec spec, int index, ControlLink link, PatchControl knob)
+    private Control LinkedRow(NodeInstance node, PortSpec spec, string caption, int index, ControlLink link, PatchControl knob)
     {
         var row = InspectorRows.Row("*,58,14,58,26");
 
-        var caption = InspectorRows.Caption(spec.Name);
-        Grid.SetColumn(caption, 0);
-        row.Children.Add(caption);
+        var label = InspectorRows.Caption(caption);
+        Grid.SetColumn(label, 0);
+        row.Children.Add(label);
 
         var name = new TextBlock
         {

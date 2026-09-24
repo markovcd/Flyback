@@ -36,10 +36,14 @@ internal static class InspectorShape
             // row when the wire comes off, but it grows the button that takes it
             // off the edge — so unplugging changes the panel without changing
             // which sockets are on it.
+            // And what each row shows, which is a module's row for the same socket.
             foreach (var socket in sockets.Inputs.Concat(sockets.Outputs))
                 shape.Append(
                     $"{(socket.IsOutput ? 'o' : 'i')}{socket.Node:N}.{socket.Port}"
-                    + $"{(editor.Patch.Wired(group, socket) ? '+' : '-')}");
+                    + $"{(editor.Patch.Wired(group, socket) ? '+' : '-')}"
+                    + (socket.IsOutput
+                        ? $"{WireEnds.OutOf(editor.Patch, socket.Node, socket.Port)}|"
+                        : Input(editor.Patch, editor.Patch.Find(socket.Node), socket.Port)));
 
             return shape.ToString();
         }
@@ -50,9 +54,7 @@ internal static class InspectorShape
         var patched = new StringBuilder();
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            patched.Append(WireEnds.Into(editor.Patch, node.Id, i) is { } from ? $"{from}|"
-                : ControlMap.Of(node, i) is { } link && editor.Patch.Control(link.Control) is not null ? "k"
-                : ".");
+            patched.Append(Input(editor.Patch, node, i));
 
         // Each row names the far end of its wires, so a rewire or a rename there
         // changes the panel.
@@ -81,4 +83,11 @@ internal static class InspectorShape
 
         return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}";
     }
+
+    /// <summary>Whether an input's row is a wire, a panel knob or a slider, and what the row names.</summary>
+    private static string Input(Patch patch, NodeInstance? node, int port) =>
+        node is null ? ""
+        : WireEnds.Into(patch, node.Id, port) is { } from ? $"{from}|"
+        : ControlMap.Of(node, port) is { } link && patch.Control(link.Control) is { } knob ? $"k{knob.Name}{link.Min}{link.Max}|"
+        : ".";
 }

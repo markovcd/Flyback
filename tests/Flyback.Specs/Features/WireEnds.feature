@@ -16,3 +16,8 @@ Feature: The panel says where each wire goes
     Given a sine driven by Time
     When Time is renamed "beat"
     Then the sine's "freq" reads "◀ patched from beat.t"
+
+  Scenario: A socket on a box names the far end of its wire as the module's row does
+    Given a sine driven by Time
+    And the sine is drawn in one box with a Multiply it feeds
+    Then the box's "Sine.freq" reads "◀ patched from Time.t"

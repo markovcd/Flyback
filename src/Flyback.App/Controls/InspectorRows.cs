@@ -49,7 +49,7 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     /// count needs no such column, but lands on whole numbers for the same reason a
     /// note does.
     /// </summary>
-    private static bool Named(PortSpec spec) => spec.Display != PortDisplay.Number;
+    internal static bool Named(PortSpec spec) => spec.Display != PortDisplay.Number;
 
     /// <summary>Whether any socket or field on this module has a reading to show.</summary>
     /// <remarks>

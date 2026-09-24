@@ -692,37 +692,40 @@ public sealed partial class MainWindow
         });
 
         for (var i = 0; i < def.Outputs.Count; i++)
+            inspector.Children.Add(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help));
+    }
+
+    /// <summary>An output's name, and what it feeds beside it.</summary>
+    private Grid BuildOutputRow(NodeInstance node, string name, int index)
+    {
+        var row = InspectorRows.Row("*");
+        var caption = InspectorRows.Caption(name);
+        var feeds = WireEnds.OutOf(editor.Patch, node.Id, index);
+
+        caption.Margin = new Thickness(0, 2, 0, 2);
+        row.Children.Add(caption);
+
+        if (feeds is null)
         {
-            var port = def.Outputs[i];
-            var row = InspectorRows.Row("*");
-            var caption = InspectorRows.Caption(port.Name);
-            var feeds = WireEnds.OutOf(editor.Patch, node.Id, i);
-
-            caption.Margin = new Thickness(0, 2, 0, 2);
-            row.Children.Add(caption);
-
-            if (feeds is null)
-            {
-                caption.Width = double.NaN;
-                Grid.SetColumnSpan(caption, 2);
-            }
-            else
-            {
-                var wired = new TextBlock
-                {
-                    Text = feeds,
-                    FontSize = Text.Body,
-                    Foreground = Text.Muted,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                };
-
-                Grid.SetColumn(wired, 1);
-                row.Children.Add(wired);
-            }
-
-            inspector.Children.Add(Helped(row, port.Help));
+            caption.Width = double.NaN;
+            Grid.SetColumnSpan(caption, 2);
         }
+        else
+        {
+            var wired = new TextBlock
+            {
+                Text = feeds,
+                FontSize = Text.Body,
+                Foreground = Text.Muted,
+                VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+            };
+
+            Grid.SetColumn(wired, 1);
+            row.Children.Add(wired);
+        }
+
+        return row;
     }
 
     /// <summary>
@@ -773,6 +776,8 @@ public sealed partial class MainWindow
     /// </remarks>
     private void BuildGroupInspector(NodeGroup group)
     {
+        const double SocketGutter = 140;
+
         // The box's own face, in the grays the canvas draws one in — a box belongs to
         // no category, so there is no accent to carry over.
         var plate = ModulePlate.Box();
@@ -806,6 +811,12 @@ public sealed partial class MainWindow
         });
 
         var sockets = editor.Patch.SocketsOf(group);
+
+        // Reserved for every slider on the edge if any one of them has a reading,
+        // as a module's panel does.
+        var reading = sockets.Inputs.Any(s =>
+            editor.Patch.Find(s.Node) is { } inner && NodeCatalog.Get(inner.TypeId) is { } def
+            && (InspectorRows.Named(def.Inputs[s.Port]) || def.TypeId == NodeCatalog.AutoRemapTypeId));
 
         Edge("In", sockets.Inputs);
         Edge("Out", sockets.Outputs);
@@ -885,9 +896,8 @@ public sealed partial class MainWindow
 
         plate.Under.Children.Insert(above, actions);
 
-        // One heading and a row per socket, each named for the module and port
-        // inside that it stands for — which is exactly what the box draws, so
-        // the panel and the canvas read the same.
+        // One heading and a row per socket, each named for the module and socket
+        // inside that it stands for.
         void Edge(string heading, IReadOnlyList<GroupSocket> sockets)
         {
             if (sockets.Count == 0) return;
@@ -902,30 +912,35 @@ public sealed partial class MainWindow
             });
 
             foreach (var socket in sockets)
-                if (editor.Scene.Named(socket) is var (label, spec))
-                    inspector.Children.Add(Socket(socket, label, spec));
+                if (editor.Scene.Named(socket) is var (_, spec) && editor.Patch.Find(socket.Node) is { } node)
+                    inspector.Children.Add(Socket(socket, node, spec));
         }
 
-        // A row, and — on one with nothing plugged into it — the way to take it
-        // off the edge again. Only there while it is unwired: a socket a wire is
-        // on comes back the moment anything asks, so a button offering to remove
-        // one would appear to do nothing.
-        Control Socket(GroupSocket socket, string label, PortSpec spec)
+        // The row the module's own panel has for the port, and — on one with nothing plugged into it — the way to
+        // take it off the edge again. Only there while it is unwired: a socket a
+        // wire is on comes back the moment anything asks, so a button offering
+        // to remove one would appear to do nothing.
+        Control Socket(GroupSocket socket, NodeInstance node, PortSpec spec)
         {
             var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
 
-            var text = new TextBlock
-            {
-                Text = label,
-                FontSize = Text.Body,
-                Opacity = 0.85,
-                TextTrimming = TextTrimming.CharacterEllipsis,
-                VerticalAlignment = VerticalAlignment.Center,
-                Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind)),
-            };
+            // The inner socket itself, not the box's label for it: an Expression's
+            // is named for what feeds it, which the row already says.
+            var name = WireEnds.Name(editor.Patch, socket.Node, socket.Port, socket.IsOutput);
 
-            // A label cut short here is usually a formula, whole in the tooltip.
-            ToolTip.SetTip(text, label);
+            var body = socket.IsOutput
+                ? BuildOutputRow(node, name, socket.Port)
+                : BuildInputRow(NodeCatalog.Get(node.TypeId)!, node, spec, socket.Port, reading, name);
+
+            // A module's gutter fits a socket's name, and this caption is a module's as well.
+            if (body is Grid grid && grid.Children.OfType<TextBlock>().FirstOrDefault() is { } caption)
+            {
+                grid.ColumnDefinitions[0].Width = new GridLength(SocketGutter);
+                if (!double.IsNaN(caption.Width)) caption.Width = SocketGutter;
+
+                caption.Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind));
+                ToolTip.SetTip(caption, spec.Help.Length == 0 ? name : $"{name}: {spec.Help}");
+            }
 
             if (!editor.Patch.Wired(group, socket) && !editor.Locked)
             {
@@ -946,8 +961,8 @@ public sealed partial class MainWindow
                 row.Children.Add(remove);
             }
 
-            row.Children.Add(text);
-            return row;
+            row.Children.Add(body);
+            return Helped(row, spec.Help);
         }
 
         Button Act(string name, Control icon, string tip, Action gesture)
@@ -1797,11 +1812,14 @@ public sealed partial class MainWindow
         MimeTypes = ["image/png"],
     };
 
-    private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading)
+    /// <param name="name">What the row is captioned, the socket's own name unless given.</param>
+    private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading, string? name = null)
     {
+        name ??= spec.Name;
+
         var patched = WireEnds.Into(editor.Patch, node.Id, index);
 
-        var label = InspectorRows.Caption(spec.Name);
+        var label = InspectorRows.Caption(name);
 
         var row = InspectorRows.KnobRow(reading);
         Grid.SetColumn(label, 0);
@@ -1883,14 +1901,14 @@ public sealed partial class MainWindow
         }
 
         if (ControlMap.Of(node, index) is { } link && editor.Patch.Control(link.Control) is { } knob)
-            return LinkedRow(node, spec, index, link, knob);
+            return LinkedRow(node, spec, name, index, link, knob);
 
         var value = index < node.InputValues.Length ? node.InputValues[index] : spec.Default;
         var (reads, flag) = RemapReading(def, node, index);
 
         // Named after the socket, so a slider dragged across its range is one
         // step to undo rather than one per frame of the drag.
-        return Rows.ValueRow(spec.Name, spec, value, $"{node.Id} input {index}", next =>
+        return Rows.ValueRow(name, spec, value, $"{node.Id} input {index}", next =>
         {
             if (index < node.InputValues.Length) node.InputValues[index] = next;
 
