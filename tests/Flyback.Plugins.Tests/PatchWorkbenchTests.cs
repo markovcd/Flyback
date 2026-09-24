@@ -1330,6 +1330,27 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
+    /// A refusal names each mistake by its code, and carries the edit where there
+    /// is exactly one, so the next attempt is a repair rather than a guess.
+    /// </summary>
+    [Fact]
+    public async Task A_refusal_gives_each_mistake_its_code_and_its_one_fix()
+    {
+        var bench = await Lit(0.25f);
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = "rotate() |> kaleidoscop(segments: 6) |> clouds() |> color.hsv(hue: _) |> out.color\n"
+                + "pulse(freq: 2) |> adsr(decay: 240ms) |> out.left",
+        }));
+
+        written.Ok.ShouldBeFalse();
+        written.Text.ShouldContain("[unknown-module]");
+        written.Text.ShouldContain("fix: 'kaleidoscop' at 1:13 becomes 'kaleidoscope'");
+        written.Text.ShouldContain("[pipe-lands-nowhere]");
+    }
+
+    /// <summary>
     /// How large a patch is is not the workbench's to refuse: Whole band has more
     /// modules than anything a person would write by hand.
     /// </summary>

@@ -190,7 +190,9 @@ which is the 0033 test.
 its line and column, the message, and a `fix` — a span and its replacement —
 where there is exactly one repair. That is only a misspelled module today: a
 pipe with nowhere to land and a bare number on a time socket each have a choice
-in them, and a fix applied blindly would be the old guess back.
+in them, and a fix applied blindly would be the old guess back. The assistant's
+`write_patch` refuses with the same codes, in brackets, and a `fix:` line under
+each mistake that has one.
 
 And a crash is a diagnostic that did not get written. There should be none.
 

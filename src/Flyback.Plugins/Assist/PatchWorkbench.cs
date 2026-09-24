@@ -771,13 +771,50 @@ public sealed partial class PatchWorkbench
         // half of which was not what anybody wrote, and the complaints carry a
         // line and a column apiece, which is enough to fix it and try again.
         if (!load.Ok)
-            return ToolOutcome.Refused($"this patch does not read:{Environment.NewLine}{load.Report}");
+            return ToolOutcome.Refused($"this patch does not read:{Environment.NewLine}{Complaints(load)}");
 
         Adopt(load.Patch);
         proposal = null;
         Edits++;
 
         return Fine($"written. {DescribePatch()}");
+    }
+
+    /// <summary>
+    /// What is wrong with text that does not read, each complaint with its code,
+    /// the line it is on and a caret under it, and the fix where it has exactly
+    /// one — which a model can make as it stands.
+    /// </summary>
+    private static string Complaints(LanguageLoad load)
+    {
+        var lines = load.Source.ReplaceLineEndings("\n").Split('\n');
+        var text = new StringBuilder();
+
+        foreach (var issue in load.Issues)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"{issue.Line}:{issue.Column} [{issue.Code}] {issue.Message}").AppendLine();
+
+            if (issue.Line >= 1 && issue.Line <= lines.Length)
+            {
+                var line = lines[issue.Line - 1];
+
+                text.Append("    ").AppendLine(line);
+                text.Append("    ").Append(' ', Math.Clamp(issue.Column - 1, 0, line.Length)).AppendLine("^");
+            }
+
+            if (issue.Fix is { } fix)
+            {
+                var from = fix.Line >= 1 && fix.Line <= lines.Length ? lines[fix.Line - 1] : string.Empty;
+                var at = Math.Clamp(fix.Column - 1, 0, from.Length);
+                var was = from.Substring(at, Math.Min(fix.Length, from.Length - at));
+
+                text.AppendLine(fix.Length == 0
+                    ? $"    fix: insert '{fix.Text}' at {fix.Line}:{fix.Column}"
+                    : $"    fix: '{was}' at {fix.Line}:{fix.Column} becomes '{fix.Text}'");
+            }
+        }
+
+        return text.ToString().TrimEnd();
     }
 
     private ToolOutcome Propose(JsonElement arguments)

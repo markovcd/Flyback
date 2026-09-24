@@ -9,7 +9,7 @@
 - A patch's knob panel is written in the text, `panel cutoff = 0.4, cc: 21, device: "…"`, with the sockets that follow each knob, so a played patch keeps its knobs through the text view and `flyback-cli print`.
 - A patch written out as text follows its own chain, with what the chain reads in the brackets.
 - In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
-- `flyback-cli check --json` gives each complaint about a text patch a stable code, and the fix where there is exactly one.
+- `flyback-cli check --json` and the assistant's `write_patch` give each complaint about a text patch a stable code, and the fix where there is exactly one.
 - The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice and a knob set twice, and `flyback-cli check --json` reports it by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.
