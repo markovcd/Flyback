@@ -68,8 +68,6 @@ public class SavedGroupTests : UiTest
         return window;
     }
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static ModulePalette Palette(MainWindow window) => All<ModulePalette>(window).Single();
 
     private static void SelectBox(MainWindow window, Patch patch, NodeGroup group)

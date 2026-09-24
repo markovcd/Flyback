@@ -50,8 +50,6 @@ public sealed class MidiKeyboardDefaultTests : UiTest
         return window;
     }
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static void AddFromPalette(MainWindow window, string name, string typeId)
     {
         var editor = Editor(window);

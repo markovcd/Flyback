@@ -16,22 +16,11 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class SwapPreviewTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
 
     private static ToggleButton Swap(MainWindow window) =>
         All<ToggleButton>(window).Single(b => b.Name == "swap");
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static void Press(MainWindow window, ToggleButton button)
     {

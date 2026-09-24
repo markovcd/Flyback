@@ -22,21 +22,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class InspectorWiringTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        Editor(window).History.Open(patch);
-        Settle(window);
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     /// <summary>
     /// An oscillator, a clock beside it to patch one of its inputs from, and the
@@ -70,11 +55,6 @@ public class InspectorWiringTests : UiTest
         return editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
             ?? throw new InvalidOperationException("the editor is not in this window");
     }
-
-    /// <summary>The middle of a module's header, which is where a click selects it.</summary>
-    private static Point Body(NodeInstance node) => new(
-        node.X + NodeGeometry.Width / 2,
-        node.Y + NodeGeometry.HeaderHeight / 2);
 
     private static void Select(MainWindow window, NodeInstance node)
     {

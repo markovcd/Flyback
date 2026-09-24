@@ -26,8 +26,6 @@ public class AbortGestureTests : UiTest
     private const string Sine = "osc.sine";
     private const string Add = "math.add";
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static Point OnWindow(MainWindow window, Point graph)
     {
         var editor = Editor(window);
@@ -41,9 +39,6 @@ public class AbortGestureTests : UiTest
 
     private static Point Output(NodeInstance node, int index = 0) =>
         NodeGeometry.OutputPort(node, index);
-
-    private static Point Body(NodeInstance node) =>
-        new(node.X + (NodeGeometry.Width / 2), node.Y + 10);
 
     private static void Escape(MainWindow window)
     {

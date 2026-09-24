@@ -55,8 +55,6 @@ public sealed class SitePresetTests : UiTest
 
     private static string? Status(GalleryParts parts) => All<TextBlock>(parts.Tiles).Single(t => t.Name == "site-status").Text;
 
-    private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     private static byte[] PatchFile()
     {
         var patch = new Patch();

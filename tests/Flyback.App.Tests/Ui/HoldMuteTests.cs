@@ -15,9 +15,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class HoldMuteTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     private static Patch Chain(out NodeInstance clock, out NodeInstance osc, out NodeInstance sink)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -31,23 +28,9 @@ public class HoldMuteTests : UiTest
         return builder.Patch;
     }
 
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
     private static Point On(NodeEditor editor, Window window, Point graph) =>
         editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
         ?? throw new InvalidOperationException("the editor is not in this window");
-
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
 
     private static Point Header(NodeEditor editor, NodeGroup group)
     {

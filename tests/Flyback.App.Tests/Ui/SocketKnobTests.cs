@@ -16,9 +16,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class SocketKnobTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     private static Patch Chain(out NodeInstance clock, out NodeInstance osc)
     {
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -32,16 +29,9 @@ public class SocketKnobTests : UiTest
         return builder.Patch;
     }
 
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall, services => services.AddSingleton<Func<Visual, IPointerAnchor?>>(_ => (IPointerAnchor?)null));
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
+    /// <summary>A canvas whose turns leave the pointer free, since there is no real pointer to hold.</summary>
+    private (NodeEditor Editor, Window Window) Editing(Patch patch) =>
+        Editing(patch, services => services.AddSingleton<Func<Visual, IPointerAnchor?>>(_ => (IPointerAnchor?)null));
 
     /// <summary>The first input on <paramref name="node"/> that has a knob of its own.</summary>
     private static int Turnable(Patch patch, NodeInstance node)

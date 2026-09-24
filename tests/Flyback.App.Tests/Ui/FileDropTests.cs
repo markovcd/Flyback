@@ -52,18 +52,6 @@ public sealed class FileDropTests : UiTest
         return path;
     }
 
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     /// <summary>
     /// A real <see cref="IStorageFile"/> over a file on disk, which is what a drop
     /// actually hands the window — <c>IStorageFile</c> itself may not be

@@ -22,9 +22,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class CopyPasteTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     private static Patch Chain(out NodeInstance time, out NodeInstance osc, out NodeInstance sink)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -36,31 +33,6 @@ public class CopyPasteTests : UiTest
         b.Wire(time, 0, osc, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
 
         return b.Patch;
-    }
-
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
-
-    private static void Click(
-        NodeEditor editor, Window window, NodeInstance node, RawInputModifiers modifiers = RawInputModifiers.None)
-    {
-        var at = editor.TranslatePoint(editor.GraphToScreen.Transform(Body(node)), window)
-            ?? throw new InvalidOperationException("the editor is not in this window");
-
-        window.MouseDown(at, MouseButton.Left, modifiers);
-        window.MouseUp(at, MouseButton.Left, modifiers);
-        Settle(window);
     }
 
     private static IClipboard Clipboard(Window window) =>

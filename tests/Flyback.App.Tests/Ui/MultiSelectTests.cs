@@ -20,9 +20,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class MultiSelectTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     /// <summary>Three modules well apart, so that a click lands on exactly one of them.</summary>
     private static Patch Three(out NodeInstance a, out NodeInstance b, out NodeInstance c)
     {
@@ -35,49 +32,6 @@ public class MultiSelectTests : UiTest
 
         return builder.Patch;
     }
-
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
-    /// <summary>The middle of a module's title bar — somewhere no socket is.</summary>
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
-
-    private static Point Screen(NodeEditor editor, Window window, Point graph) =>
-        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
-        ?? throw new InvalidOperationException("the editor is not in this window");
-
-    private static void Click(
-        NodeEditor editor, Window window, Point graph, RawInputModifiers modifiers = RawInputModifiers.None)
-    {
-        var at = Screen(editor, window, graph);
-
-        window.MouseDown(at, MouseButton.Left, modifiers);
-        window.MouseUp(at, MouseButton.Left, modifiers);
-        Settle(window);
-    }
-
-    private static void Drag(NodeEditor editor, Window window, Point fromGraph, Point toGraph)
-    {
-        var from = Screen(editor, window, fromGraph);
-        var to = Screen(editor, window, toGraph);
-
-        window.MouseDown(from, MouseButton.Left);
-        window.MouseMove(to);
-        window.MouseUp(to, MouseButton.Left);
-        Settle(window);
-    }
-
-    private static string[] Selected(NodeEditor editor) =>
-        [.. editor.Selection.Nodes.Select(n => n.TypeId).Order()];
 
     // --- what a click does --------------------------------------------------
 

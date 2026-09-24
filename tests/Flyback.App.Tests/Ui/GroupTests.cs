@@ -21,9 +21,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class GroupTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     /// <summary>
     /// A chain with a module either side of the middle pair, so grouping the
     /// pair gives a boundary with one wire crossing each way.
@@ -43,42 +40,6 @@ public class GroupTests : UiTest
                .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
 
         return builder.Patch;
-    }
-
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
-
-    private static Point Screen(NodeEditor editor, Window window, Point graph) =>
-        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
-        ?? throw new InvalidOperationException("the editor is not in this window");
-
-    private static void Click(
-        NodeEditor editor,
-        Window window,
-        Point graph,
-        RawInputModifiers modifiers = RawInputModifiers.None,
-        int count = 1)
-    {
-        var at = Screen(editor, window, graph);
-
-        for (var i = 0; i < count; i++)
-        {
-            window.MouseDown(at, MouseButton.Left, modifiers);
-            window.MouseUp(at, MouseButton.Left, modifiers);
-        }
-
-        Settle(window);
     }
 
     /// <summary>Two pairs, far enough apart that neither box reaches the other.</summary>

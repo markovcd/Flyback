@@ -21,8 +21,6 @@ public sealed class MissingPluginsViewTests : UiTest
         Preview: null,
         SiteRating.None);
 
-    private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     [AvaloniaFact]
     public void Every_plugin_found_for_it_is_named()
     {

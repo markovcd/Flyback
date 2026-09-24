@@ -21,9 +21,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class MarqueeSelectTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     /// <summary>
     /// A row of three, spaced so a band can take any one, any two, or all of
     /// them — and the sink far enough off to be reached only on purpose.
@@ -40,21 +37,6 @@ public class MarqueeSelectTests : UiTest
         return builder.Patch;
     }
 
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
-    private static Point Screen(NodeEditor editor, Window window, Point graph) =>
-        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
-        ?? throw new InvalidOperationException("the editor is not in this window");
-
     /// <summary>Presses at one point in graph space, moves to another, and lets go.</summary>
     private static void Sweep(
         NodeEditor editor,
@@ -69,20 +51,6 @@ public class MarqueeSelectTests : UiTest
         window.MouseUp(Screen(editor, window, toGraph), button, modifiers);
         Settle(window);
     }
-
-    private static void Click(NodeEditor editor, Window window, NodeInstance node)
-    {
-        var at = Screen(editor, window, new Point(
-            node.X + NodeGeometry.Width / 2,
-            node.Y + NodeGeometry.HeaderHeight / 2));
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        Settle(window);
-    }
-
-    private static string[] Selected(NodeEditor editor) =>
-        [.. editor.Selection.Nodes.Select(n => n.TypeId).Order()];
 
     // --- what the band takes ------------------------------------------------
 

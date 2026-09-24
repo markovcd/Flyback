@@ -24,19 +24,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class MidiInputTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        All<NodeEditor>(window).Single().History.Open(patch);
-        Settle(window);
-
-        return window;
-    }
 
     /// <summary>A MIDI In whose pitch reaches the picture, and the Output it feeds.</summary>
     private static (Patch Patch, NodeInstance Midi) Board(bool wired = true)

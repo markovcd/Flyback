@@ -61,8 +61,6 @@ public class OutputSettingsTests : UiTest
         return window;
     }
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static void Select(MainWindow window, NodeInstance node)
     {
         var editor = Editor(window);

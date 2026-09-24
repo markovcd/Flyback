@@ -23,16 +23,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class PickerTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
 
     /// <summary>The toolbar's list of patches to start from.</summary>
     private static ComboBox Presets(MainWindow window) => All<ComboBox>(window)

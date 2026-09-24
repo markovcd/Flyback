@@ -26,18 +26,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class SourceViewTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static ToggleButton CodeButton(MainWindow window) =>
         All<ToggleButton>(window).Single(b => b.Name == "code");
@@ -523,9 +511,6 @@ public class SourceViewTests : UiTest
 
     private static Button Redo(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "redo");
-
-    private static void Press(Button button) =>
-        button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>
     /// The layout button lays out what is showing. On the canvas that is the

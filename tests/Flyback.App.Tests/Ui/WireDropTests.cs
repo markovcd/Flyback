@@ -25,22 +25,10 @@ public class WireDropTests : UiTest
 {
     private MainWindow Open()
     {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-
         // A patch of one module, so the canvas is nearly all bare and the
         // sockets under test are the only ones a drop could land on.
-        Editor(window).History.Open(new Patch());
-        Settle(window);
-
-        return window;
+        return Open(new Patch());
     }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static ModulePalette? Palette(MainWindow window) =>
         All<ModulePalette>(window).FirstOrDefault();

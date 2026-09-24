@@ -19,25 +19,16 @@ public class PatchCreditsTests : UiTest
 {
     private MainWindow Open()
     {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var osc = b.Add(NodeCatalog.SineTypeId, 360, 40);
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
 
-        Editor(window).History.Open(b.Patch);
-        Settle(window);
+        var window = Open(b.Patch);
 
         Editor(window).Selection.Focused.ShouldBeNull();
         return window;
     }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static TextBlock Line(MainWindow window, string name) =>
         All<TextBlock>(window).Single(t => t.Name == name);

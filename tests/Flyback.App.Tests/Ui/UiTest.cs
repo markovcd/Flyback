@@ -1,6 +1,8 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -113,6 +115,95 @@ public class UiTest : IDisposable
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>
     internal static Action<IServiceCollection> Site(HttpMessageHandler site) =>
         services => services.AddKeyedSingleton(SiteAccess.Client, new HttpClient(site));
+
+    /// <summary>A window of the editor this test owns, shown and laid out, on <paramref name="patch"/> where one is given.</summary>
+    internal MainWindow Open(Patch? patch = null, EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
+    {
+        var window = NewMainWindow(setup, replace);
+
+        window.Show();
+        Settle(window);
+
+        if (patch is null) return window;
+
+        Editor(window).History.Open(patch);
+        Settle(window);
+
+        return window;
+    }
+
+    /// <summary>The canvas in an editor's window.</summary>
+    internal static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
+
+    /// <summary>
+    /// A canvas on its own, 1200 by 800, in a window of its own and showing
+    /// <paramref name="patch"/>, for a gesture that needs nothing else of the editor.
+    /// </summary>
+    internal (NodeEditor Editor, Window Window) Editing(Patch patch, Action<IServiceCollection>? replace = null) =>
+        Editing(patch, 1200, 800, replace);
+
+    /// <summary>The same, at a size of the test's own.</summary>
+    internal (NodeEditor Editor, Window Window) Editing(Patch patch, double width, double height, Action<IServiceCollection>? replace = null)
+    {
+        var editor = NewCanvas(width, height, replace);
+        var window = Show(editor, width);
+
+        editor.History.Open(patch);
+        Settle(window);
+
+        return (editor, window);
+    }
+
+    /// <summary>The middle of a module's title bar: somewhere on it no socket is.</summary>
+    internal static Point Body(NodeInstance node) =>
+        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
+
+    /// <summary>Where a point of the patch is on the window, for the pointer to be put there.</summary>
+    internal static Point Screen(NodeEditor editor, Window window, Point graph) =>
+        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
+        ?? throw new InvalidOperationException("the editor is not in this window");
+
+    /// <summary>Clicks the left button at a point of the patch, <paramref name="count"/> times over for a double-click.</summary>
+    internal static void Click(
+        NodeEditor editor,
+        Window window,
+        Point graph,
+        RawInputModifiers modifiers = RawInputModifiers.None,
+        int count = 1)
+    {
+        var at = Screen(editor, window, graph);
+
+        for (var i = 0; i < count; i++)
+        {
+            window.MouseDown(at, MouseButton.Left, modifiers);
+            window.MouseUp(at, MouseButton.Left, modifiers);
+        }
+
+        Settle(window);
+    }
+
+    /// <summary>Clicks a module's title bar.</summary>
+    internal static void Click(NodeEditor editor, Window window, NodeInstance node, RawInputModifiers modifiers = RawInputModifiers.None) =>
+        Click(editor, window, Body(node), modifiers);
+
+    /// <summary>Drags with the left button from one point of the patch to another, in one move.</summary>
+    internal static void Drag(NodeEditor editor, Window window, Point fromGraph, Point toGraph)
+    {
+        var from = Screen(editor, window, fromGraph);
+        var to = Screen(editor, window, toGraph);
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(to);
+        window.MouseUp(to, MouseButton.Left);
+        Settle(window);
+    }
+
+    /// <summary>The type ids of what is selected, in order, so a selection reads the same way twice.</summary>
+    internal static string[] Selected(NodeEditor editor) =>
+        [.. editor.Selection.Nodes.Select(n => n.TypeId).Order()];
+
+    /// <summary>Presses a button the way a click would, without a pointer.</summary>
+    internal static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
     /// <summary>Hands a window this test made over to be closed when it ends.</summary>
     protected T Owned<T>(T window) where T : Window

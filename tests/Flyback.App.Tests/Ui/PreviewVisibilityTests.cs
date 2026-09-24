@@ -20,21 +20,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class PreviewVisibilityTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        Editor(window).History.Open(patch);
-
-        Settle(window);
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();
 

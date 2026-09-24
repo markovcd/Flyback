@@ -100,8 +100,6 @@ public sealed class PluginHubTests : UiTest
 
     private static string? Status(PluginHub hub, string name) => All<TextBlock>(hub.View).Single(t => t.Name == name).Text;
 
-    private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     /// <summary>What a patch was short of gets a section of its own, above everything.</summary>
     [AvaloniaFact]
     public async Task The_plugins_a_patch_needs_have_a_section_of_their_own()

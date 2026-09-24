@@ -22,43 +22,11 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class DragBoundsTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     /// <summary>
     /// The furthest a module's corner may go: the edge of the canvas, less the
     /// module itself, since what has to fit inside is the whole of it.
     /// </summary>
     private static readonly double Wall = NodeInstance.Across - NodeGeometry.Width;
-
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
-
-    /// <summary>The middle of a module's title bar — somewhere no socket is.</summary>
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
-
-    private static Point Screen(NodeEditor editor, Window window, Point graph) =>
-        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
-        ?? throw new InvalidOperationException("the editor is not in this window");
-
-    private static void Click(
-        NodeEditor editor, Window window, Point graph, RawInputModifiers modifiers = RawInputModifiers.None)
-    {
-        var at = Screen(editor, window, graph);
-
-        window.MouseDown(at, MouseButton.Left, modifiers);
-        window.MouseUp(at, MouseButton.Left, modifiers);
-        Settle(window);
-    }
 
     /// <summary>
     /// Drags whatever is under <paramref name="fromGraph"/> by a vector given in

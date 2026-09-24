@@ -17,21 +17,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class KnobPanelTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        Editor(window).History.Open(patch);
-        Settle(window);
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static ControlsPanel Panel(MainWindow window) => All<ControlsPanel>(window).Single();
 

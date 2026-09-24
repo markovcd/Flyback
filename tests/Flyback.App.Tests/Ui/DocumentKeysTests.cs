@@ -20,15 +20,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class DocumentKeysTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
 
     /// <summary>Whether the window dealt with the keystroke itself.</summary>
     private static bool Claims(MainWindow window, PhysicalKey key)

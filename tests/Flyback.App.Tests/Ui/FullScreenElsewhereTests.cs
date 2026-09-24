@@ -19,15 +19,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class FullScreenElsewhereTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
 
     private static PreviewHost Preview(MainWindow window) =>
         window.OwnedWindows.SelectMany(All<PreviewHost>).SingleOrDefault()

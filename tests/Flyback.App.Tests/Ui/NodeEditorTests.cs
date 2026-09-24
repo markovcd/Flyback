@@ -23,25 +23,13 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class NodeEditorTests : UiTest
 {
-    private const double Wide = 900;
-    private const double Tall = 700;
-
     private static NodeDef Sink => NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
 
     /// <summary>
     /// An editor showing a patch, laid out large enough that framing it does not
     /// shrink the nodes to nothing.
     /// </summary>
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
-    }
+    private (NodeEditor Editor, Window Window) Editing(Patch patch) => Editing(patch, 900, 700);
 
     /// <summary>A source with one output, and the Output block to wire it into.</summary>
     private static Patch Pair(out NodeInstance source, out NodeInstance sink)
@@ -52,22 +40,6 @@ public class NodeEditorTests : UiTest
         sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
 
         return builder.Patch;
-    }
-
-    /// <summary>Where a point on the canvas is on the window, through the transform painting uses.</summary>
-    private static Point Screen(NodeEditor editor, Window window, Point graph) =>
-        editor.TranslatePoint(editor.GraphToScreen.Transform(graph), window)
-        ?? throw new InvalidOperationException("the editor is not in this window");
-
-    private static void Drag(NodeEditor editor, Window window, Point fromGraph, Point toGraph)
-    {
-        var from = Screen(editor, window, fromGraph);
-        var to = Screen(editor, window, toGraph);
-
-        window.MouseDown(from, MouseButton.Left);
-        window.MouseMove(to);
-        window.MouseUp(to, MouseButton.Left);
-        Settle(window);
     }
 
     private static void ClickAt(NodeEditor editor, Window window, Point graph)
@@ -692,10 +664,6 @@ public class NodeEditorTests : UiTest
         editor.History.Redo().ShouldBeTrue();
         Now(editor, source).ShouldBeNull("and redo brings it round again");
     }
-
-    /// <summary>The middle of a node's header, which is body rather than socket.</summary>
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
 
     // --- cycles -------------------------------------------------------------
 

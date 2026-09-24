@@ -17,9 +17,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class TidySelectionTests : UiTest
 {
-    private const double Wide = 1200;
-    private const double Tall = 800;
-
     /// <summary>
     /// Two chains far apart, each tangled enough that laying it out moves it, and
     /// each far enough from the other that neither is in the other's way.
@@ -45,17 +42,6 @@ public class TidySelectionTests : UiTest
         far = [coord, rings];
 
         return b.Patch;
-    }
-
-    private (NodeEditor Editor, Window Window) Editing(Patch patch)
-    {
-        var editor = NewCanvas(Wide, Tall);
-        var window = Show(editor, Wide);
-
-        editor.History.Open(patch);
-        Settle(window);
-
-        return (editor, window);
     }
 
     private static Dictionary<Guid, (double X, double Y)> Where(Patch patch) =>
@@ -186,20 +172,6 @@ public class TidySelectionTests : UiTest
     }
 
     // --- the key and the button ---------------------------------------------
-
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static Button Tidy(MainWindow window) =>
         All<Button>(window).Single(b => b.Name == "tidy");

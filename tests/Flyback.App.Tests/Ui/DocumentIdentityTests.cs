@@ -19,16 +19,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class DocumentIdentityTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
 
     private static ComboBox PresetList(MainWindow window) => All<ComboBox>(window)
         .First(box => box.ItemsSource?.OfType<PatchPreset>().Any(p => p.Name == "Plasma") == true);

@@ -21,19 +21,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class ModulePaletteTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-        window.UpdateLayout();
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     /// <summary>The palette, wherever it currently is — it is not in the window's own tree once shown in a flyout.</summary>
     private static ModulePalette? Palette(MainWindow window) =>
@@ -204,7 +191,7 @@ public class ModulePaletteTests : UiTest
         Settle(window);
 
         var palette = Palette(window).ShouldNotBeNull();
-        Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
+        PressFocused(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
         var added = editor.History.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
@@ -344,7 +331,7 @@ public class ModulePaletteTests : UiTest
         var palette = Palette(window).ShouldNotBeNull();
         var button = All<Button>(palette).First(b => b.Content as string == "Sine");
 
-        Press(button);
+        PressFocused(button);
         Settle(window);
 
         var added = editor.History.Patch.Nodes.LastOrDefault(n => n.TypeId == "osc.sine").ShouldNotBeNull();
@@ -365,7 +352,7 @@ public class ModulePaletteTests : UiTest
         RightClick(window, Empty(window));
 
         var palette = Palette(window).ShouldNotBeNull();
-        Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
+        PressFocused(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
         editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
@@ -406,7 +393,7 @@ public class ModulePaletteTests : UiTest
         All<TextBox>(palette).First().Text = "multiply";
         Settle(window);
 
-        Press(All<Button>(palette).Single(b => b.Content as string == "Multiply: a * b"));
+        PressFocused(All<Button>(palette).Single(b => b.Content as string == "Multiply: a * b"));
 
         var added = Editor(window).Selection.Focused.ShouldNotBeNull();
 
@@ -480,7 +467,8 @@ public class ModulePaletteTests : UiTest
         headings.ShouldNotContain("SHAPE");
     }
 
-    private static void Press(Button button)
+    /// <summary>Focuses a button and presses it, as a key or a click would leave the focus.</summary>
+    private static void PressFocused(Button button)
     {
         button.Focus();
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));

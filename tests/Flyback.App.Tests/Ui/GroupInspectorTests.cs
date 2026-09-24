@@ -57,8 +57,6 @@ public class GroupInspectorTests : UiTest
         return window;
     }
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static void SelectBox(MainWindow window, Patch patch, NodeGroup group, bool adding = false)
     {
         var editor = Editor(window);

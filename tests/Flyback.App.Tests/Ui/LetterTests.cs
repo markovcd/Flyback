@@ -37,8 +37,6 @@ public sealed class LetterTests : UiTest
 
     private static TextBox Box(Control page, string name) => All<TextBox>(page).Single(t => t.Name == name);
 
-    private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(global::Avalonia.Controls.Button.ClickEvent));
-
     private static void Choose(Control page, string mood) =>
         All<RadioButton>(page).Single(r => (string?)r.Tag == mood).IsChecked = true;
 

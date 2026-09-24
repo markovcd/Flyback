@@ -19,16 +19,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class PresetListTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
 
     /// <summary>What holds which preset is on the canvas.</summary>
     private static ComboBox Presets(MainWindow window) =>

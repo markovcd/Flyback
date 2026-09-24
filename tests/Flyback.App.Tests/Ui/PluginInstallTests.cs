@@ -83,8 +83,6 @@ public sealed class PluginInstallTests : UiTest
 
     private static Button Named(Control dialog, string name) => All<Button>(dialog).Single(b => b.Name == name);
 
-    private static void Press(Button button) => button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-
     private static IEnumerable<string?> Texts(Control dialog) => All<SelectableTextBlock>(dialog).Select(t => t.Text);
 
     [AvaloniaFact]

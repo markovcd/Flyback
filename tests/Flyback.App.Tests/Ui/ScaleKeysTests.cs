@@ -48,7 +48,8 @@ public class ScaleKeysTests : UiTest
         Keys(window).Single(b =>
             b.Content is TextBlock text && text.Text == Pitch.ClassName(pitchClass));
 
-    private static void Press(Button button)
+    /// <summary>Focuses a button and presses it, as a key or a click would leave the focus.</summary>
+    private static void PressFocused(Button button)
     {
         button.Focus();
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
@@ -85,7 +86,7 @@ public class ScaleKeysTests : UiTest
 
         ScaleExtra.Of(node).ShouldNotContain(1);
 
-        Press(Key(window, 1));
+        PressFocused(Key(window, 1));
 
         ScaleExtra.Of(node).ShouldContain(1);
         edits().ShouldBe(1);
@@ -98,7 +99,7 @@ public class ScaleKeysTests : UiTest
 
         ScaleExtra.Of(node).ShouldContain(4);
 
-        Press(Key(window, 4));
+        PressFocused(Key(window, 4));
 
         ScaleExtra.Of(node).ShouldNotContain(4);
     }
@@ -114,9 +115,9 @@ public class ScaleKeysTests : UiTest
 
         ScaleExtra.Set(node, []);
 
-        Press(Key(window, 7));
-        Press(Key(window, 0));
-        Press(Key(window, 4));
+        PressFocused(Key(window, 7));
+        PressFocused(Key(window, 0));
+        PressFocused(Key(window, 4));
 
         ScaleExtra.Of(node).ShouldBe([0, 4, 7]);
     }
@@ -130,7 +131,7 @@ public class ScaleKeysTests : UiTest
     {
         var window = Open(out var node, out _);
 
-        foreach (var pitchClass in Major) Press(Key(window, pitchClass));
+        foreach (var pitchClass in Major) PressFocused(Key(window, pitchClass));
 
         ScaleExtra.Of(node).ShouldBeEmpty();
     }
@@ -191,7 +192,7 @@ public class ScaleKeysTests : UiTest
 
         on.Background.ShouldNotBe(off.Background);
 
-        Press(on);
+        PressFocused(on);
 
         // And the paint follows the state rather than the press: the key that
         // was on now matches the one that was always off.
@@ -246,12 +247,12 @@ public class ScaleKeysTests : UiTest
 
         foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes))
             if (!ScaleExtra.Of(node).Contains(pitchClass))
-                Press(Key(window, pitchClass));
+                PressFocused(Key(window, pitchClass));
 
         Summary(window).ShouldContain("nearest semitone");
 
         foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes))
-            Press(Key(window, pitchClass));
+            PressFocused(Key(window, pitchClass));
 
         Summary(window).ShouldContain("passes straight through");
 
@@ -271,10 +272,10 @@ public class ScaleKeysTests : UiTest
     {
         var window = Open(out var node, out _);
 
-        Press(Shortcut(window, "All"));
+        PressFocused(Shortcut(window, "All"));
         ScaleExtra.Of(node).Count.ShouldBe(Pitch.Classes);
 
-        Press(Shortcut(window, "None"));
+        PressFocused(Shortcut(window, "None"));
         ScaleExtra.Of(node).ShouldBeEmpty();
 
         static Button Shortcut(Window window, string label) =>

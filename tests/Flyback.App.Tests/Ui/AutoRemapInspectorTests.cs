@@ -19,21 +19,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public class AutoRemapInspectorTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        Editor(window).History.Open(patch);
-        Settle(window);
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static Point OnWindow(MainWindow window, Point graph)
     {

@@ -49,10 +49,6 @@ public class WirePanTests : UiTest
     private const RawInputModifiers LeftAndMiddleHeld =
         RawInputModifiers.LeftMouseButton | RawInputModifiers.MiddleMouseButton;
 
-    /// <summary>The middle of a module's title bar — somewhere no socket is.</summary>
-    private static Point Body(NodeInstance node) =>
-        new(node.X + NodeGeometry.Width / 2, node.Y + NodeGeometry.HeaderHeight / 2);
-
     [AvaloniaFact]
     public void A_wire_survives_a_pan_taken_in_the_middle_of_the_drag()
     {

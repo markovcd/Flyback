@@ -36,22 +36,10 @@ public sealed class WindowTitleTests : UiTest
         if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
     /// <summary>The toolbar's list of patches to start from.</summary>
 
     private static ComboBox PresetList(MainWindow window) => All<ComboBox>(window)
         .First(box => box.ItemsSource?.OfType<PatchPreset>().Any(p => p.Name == "Plasma") == true);
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     [AvaloniaFact]
     public void The_title_names_the_patch_the_window_opened_on()

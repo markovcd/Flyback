@@ -22,19 +22,8 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class FullScreenPreviewTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     /// <summary>
     /// The grid the shell's panels are laid across, canvas to inspector. Found

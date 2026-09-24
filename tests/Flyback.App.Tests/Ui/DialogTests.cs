@@ -23,15 +23,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class DialogTests : UiTest
 {
-    private MainWindow Open()
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        Settle(window);
-
-        return window;
-    }
 
     /// <summary>Presses a toolbar button and waits for what it puts up.</summary>
     private static ModalOverlay Show(MainWindow window, string named)

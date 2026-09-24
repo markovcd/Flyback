@@ -73,8 +73,6 @@ public class WireLiftTests : UiTest
         }
     }
 
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
-
     private static Point OnWindow(MainWindow window, Point graph)
     {
         var editor = Editor(window);

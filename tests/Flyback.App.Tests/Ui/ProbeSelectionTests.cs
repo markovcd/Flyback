@@ -23,23 +23,6 @@ namespace Flyback.App.Tests.Ui;
 /// </remarks>
 public class ProbeSelectionTests : UiTest
 {
-    private MainWindow Open(Patch patch)
-    {
-        var window = NewMainWindow();
-
-        window.Show();
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        Editor(window).History.Open(patch);
-
-        window.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
-
-        return window;
-    }
-
-    private static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
     private static CompiledPatch Showing(MainWindow window) => All<PreviewHost>(window).Single().Program;
 
