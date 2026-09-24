@@ -56,6 +56,12 @@ Every new feature gets at least one Gherkin scenario in `tests/Flyback.Specs`,
 in the same commit as the feature. C# tests still cover the edges; the scenario
 states the requirement.
 
+A feature is something a user patches, plays or does: a module, a setting, a
+command, an editor gesture. A change to how the engine runs what they already
+had (compiling, scheduling, when a program starts, speed) is not one, however
+noticeable, and is covered by C# tests alone. The user asked for the specs to
+stay high level after an engine tweak arrived with a scenario of its own.
+
 The scenario reads as a business requirement, not a script of actions. It says
 what someone patching or playing Flyback can rely on, in their words, and leaves
 the wiring, port indexes and op codes to the step definitions.
