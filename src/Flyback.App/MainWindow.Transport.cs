@@ -9,12 +9,6 @@ namespace Flyback.App;
 /// </summary>
 public sealed partial class MainWindow
 {
-    private const string PauseTip = "Pause the patch, in the picture and in the sound.  (Ctrl+P)";
-
-    private const string PlayTip = "Play the patch on from where it stopped.  (Ctrl+P)";
-
-    private readonly Button pauseButton = new();
-
     /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
     private TransportOverlay? transportOverlay;
 
@@ -42,12 +36,12 @@ public sealed partial class MainWindow
         if (pauseShowsPlay != paused)
         {
             pauseShowsPlay = paused;
-            pauseButton.Content = paused ? Glyphs.Play() : Glyphs.Pause();
+            toolbar.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
         }
 
-        pauseButton.IsEnabled = !Recording.InHand && !Recording.Counting;
+        toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
 
-        ToolTip.SetTip(pauseButton, paused ? PlayTip : PauseTip);
+        ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
 
         foreach (var overlay in Transports)
         {

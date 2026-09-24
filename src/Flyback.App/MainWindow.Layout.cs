@@ -62,14 +62,14 @@ public sealed partial class MainWindow
         // share, so both are set and the panel then put where it was.
         assistantShare = new GridLength(saved.AssistantWidth, GridUnitType.Pixel);
         if (assistant is { IsVisible: true }) assistantColumn.Width = assistantShare;
-        assistantButton.IsChecked = saved.AssistantOpen && assistantButton.IsEnabled;
+        toolbar.Assistant.IsChecked = saved.AssistantOpen && toolbar.Assistant.IsEnabled;
 
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
         if (ControlsRow is { } controlsRow && knobs.View.IsVisible) controlsRow.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
 
         // Only while there is a picture to swap in, which is the button's own rule.
-        swapButton.IsChecked = saved.Swapped && swapButton.IsEnabled;
+        toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
 
         if (saved.Code) document.ShowCode(true);
     }
@@ -141,7 +141,7 @@ public sealed partial class MainWindow
             ControlsOpen = knobs.View.IsVisible,
 
             Code = document.ShowingCode,
-            Swapped = swapButton.IsChecked == true,
+            Swapped = toolbar.Swap.IsChecked == true,
         };
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;

@@ -1,4 +1,6 @@
+using Avalonia.Controls;
 using Flyback.App.Controls;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
@@ -142,5 +144,141 @@ public sealed partial class MainWindow
 
         presetsPicker.ItemsSource = offeredPresets;
         presetsPicker.SelectedIndex = presetShowing;
+    }
+
+    /// <summary>
+    /// The preset slot at the head of the toolbar: a button that opens the gallery,
+    /// over the hidden list whose selection is which preset is on the canvas.
+    /// </summary>
+    private Control BuildPresetSlot()
+    {
+        offeredPresets = OrderedPresets();
+
+        // Not shown, and never opened: what this holds is which preset is on the
+        // canvas, and its selection changing is how a pick from the gallery
+        // reaches the code below. A Picker rather than a plain list because it
+        // was the dropdown before the gallery, and its refusal to move on a
+        // keystroke is still what keeps an arrow at it from discarding the patch.
+        var presets = new Picker
+        {
+            Name = "presets",
+            ItemsSource = offeredPresets,
+            SelectedIndex = offeredPresets.FindIndex(preset => preset.Kind != PresetKind.Blank),
+            Width = 34,
+            Height = 30,
+            Opacity = 0,
+            IsHitTestVisible = false,
+            IsTabStop = false,
+        };
+
+        presetsPicker = presets;
+
+        // The toolbar button: the same square, glyph-only shape as open, save and
+        // tidy. It opens the gallery, and a tile picked there is a row of the
+        // picker above chosen, so there is one road to changing the preset and it
+        // is the one that asks about unsaved work.
+        var presetsButton = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
+        presetsButton.Click += async (_, _) =>
+        {
+            var showing = presets.SelectedItem as PatchPreset;
+            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, audition.PointedAt, Yours(), PresetSite());
+            var chosen = await this.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
+
+            audition.PointedAt(null);
+
+            switch (chosen)
+            {
+                // Looked up in the list as it is now, which a save in the gallery may have changed.
+                case PatchPreset preset:
+                    presets.SelectedIndex = offeredPresets.IndexOf(preset);
+                    break;
+
+                case SitePreset shared:
+                    await OpenSharedPresetAsync(shared);
+                    break;
+            }
+        };
+
+        // Stacked in one cell so the toolbar keeps the one slot it had.
+        var presetsSlot = new Grid();
+        presetsSlot.Children.Add(presets);
+        presetsSlot.Children.Add(presetsButton);
+
+        // Which preset is on the canvas, so a refused change can put the box
+        // back where it was. Setting the index raises this same handler, hence
+        // the flag around it.
+        var restoring = false;
+
+        presets.SelectionChanged += async (_, _) =>
+        {
+            if (restoring) return;
+
+            // Nothing on no selection, and nothing on a heading either — which
+            // no pointer can land on, and so can only have been set from here.
+            if (presets.SelectedItem is not PatchPreset preset) return;
+            if (presets.SelectedIndex == presetShowing) return;
+
+            var wanted = presets.SelectedIndex;
+
+            if (!await MayReplaceThePatchAsync())
+            {
+                PutTheBoxBack();
+                return;
+            }
+
+            try
+            {
+                // A preset from a plugin is built here, not when it was
+                // registered, so this is where a plugin that offered a patch
+                // using modules it failed to add finally shows up.
+                //
+                // Named before it is shown, because showing it is what redraws the
+                // title — and named at all because a preset is one of the three ways a
+                // patch arrives and the only one with no file to be named after. It has
+                // no folder either, and disowns whatever the last document was carrying:
+                // a preset naming a sound means the one beside the program, or the one
+                // in its own bundle, not the one inside a bundle somebody happened to
+                // open first.
+                editor.Patch = Arrive(preset);
+                RewindToZero();
+
+                // A preset has no file to have saved a conversation with, so it
+                // arrives with none — ADR-0072.
+                assistant?.Open(null);
+
+                // A preset arrives as a graph and no text describes it, so the
+                // canvas owns it — ADR-0068.
+                document.DropSource();
+
+                // Unless it was picked from the text view, where it is read into
+                // text there and then: which view somebody picks a preset from
+                // says which of the two they mean to work in.
+                if (document.ShowingCode) document.ReadIntoText();
+
+                presetShowing = wanted;
+
+                usage.Count(Used.Preset);
+
+                // The question above may have been answered with a save, and a
+                // save takes the selection off this list: what was saved is a
+                // file, and no preset. The row that was picked is picked again,
+                // or the title would name a preset the list does not show.
+                PutTheBoxBack();
+            }
+            catch (Exception ex)
+            {
+                Report($"Could not build the '{preset.Name}' preset: {ex.Message}");
+                PutTheBoxBack();
+            }
+        };
+
+        return presetsSlot;
+
+        void PutTheBoxBack()
+        {
+            restoring = true;
+            presets.SelectedIndex = presetShowing;
+            restoring = false;
+        }
     }
 }

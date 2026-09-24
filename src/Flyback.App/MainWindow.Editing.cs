@@ -519,8 +519,8 @@ public sealed partial class MainWindow
     {
         // Literally the answer the gesture gives, rather than a second statement of
         // the same rule — see UndoLandsOn.
-        undoButton.IsEnabled = document.CanUndo;
-        redoButton.IsEnabled = document.CanRedo;
+        toolbar.Undo.IsEnabled = document.CanUndo;
+        toolbar.Redo.IsEnabled = document.CanRedo;
 
         // The name first and the program second, which is the way round every
         // other window on the machine says it: what is on screen is the patch,

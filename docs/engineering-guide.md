@@ -428,9 +428,10 @@ undo lands; `Playback` owns compiling, the sound device, pause and mute;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes the hubs and the shared things it reads (the canvas, the
 preview, the plugins), owns its own fields and raises events: `Inspector`,
-`Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`.
-`MainWindow` builds them by hand in its constructor, lays them out, and keeps
-its keys, its toolbar, full screen and the closing question as `partial` files.
+`Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
+`Toolbar`. `MainWindow` builds them by hand in its constructor, lays them out,
+and keeps its layout, its keys, full screen and the closing question as
+`partial` files.
 There are no view models, and that has been decided twice.
 
 **The node editor is one control**

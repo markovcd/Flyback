@@ -23,30 +23,8 @@ namespace Flyback.App;
 
 public sealed partial class MainWindow : Window
 {
-    /// <summary>
-    /// Writes a performance, knobs and all, to a file. On the toolbar rather
-    /// than the Output's panel — ADR-0080 — so the one control every session
-    /// reaches for is never a click away behind a selection. The same button
-    /// stops a take; its glyph swaps between the dot and the square rather
-    /// than its label, since a toolbar button here carries no text at all. A
-    /// deterministic render of a frozen patch is `flyback-cli render`'s job
-    /// now — ADR-0078.
-    /// </summary>
-    private readonly Button recordButton = new();
-
-    /// <summary>
-    /// Takes the patch back to zero seconds, in the picture and in the sound.
-    /// Beside recordButton rather than on the Output's panel — ADR-0081, the
-    /// same move ADR-0080 made for Record.
-    /// </summary>
-    private readonly Button rewindButton = new();
-
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
     private void RewindToZero() => playback.Rewind();
-
-    /// <summary>What the rewind button does — the same sentence its Output-panel tip used to carry.</summary>
-    private const string RewindTip =
-        "Take the patch back to zero seconds, in the picture and in the sound.";
 
     /// <summary>The Graphics, Recording and Sound sections, and what they were last saved as.</summary>
     private readonly OutputSections outputSections;
@@ -63,9 +41,6 @@ public sealed partial class MainWindow : Window
 
     private readonly SourceView source = new();
 
-    private readonly ToggleButton codeButton =
-        ToolbarButtons.Toggle("code", "{ }", "Show the patch as text  (F2)");
-
     /// <summary>Which of the canvas and the text owns the patch.</summary>
     private readonly Document document;
 
@@ -81,7 +56,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private Grid? columns;
     private Border? previewBox;
-    private Control? toolbar;
     private Control? statusBar;
 
     /// <summary>
@@ -132,20 +106,8 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private bool previewHideWaiting;
 
-    /// <summary>
-    /// Puts the picture in the wide column and the canvas where the picture
-    /// was. Enabled only while there is a picture to put there — see
-    /// <see cref="ShowPreview"/>.
-    /// </summary>
-    private readonly ToggleButton swapButton = ToolbarButtons.Toggle("swap", "⇄", NoPictureToSwapTip);
-
-    /// <summary>What the swap button says while it can be pressed.</summary>
-    private const string SwapTip =
-        "Swap the preview and the canvas, for a bigger picture while you patch.";
-
-    /// <summary>What it says while it cannot.</summary>
-    private const string NoPictureToSwapTip =
-        "Nothing is wired into the Output's 'color', so there is no picture to swap in.";
+    /// <summary>The bar along the top.</summary>
+    private readonly Toolbar toolbar;
 
     /// <summary>The palette, opened at the pointer (ADR-0046).</summary>
     private readonly Palette palette;
@@ -179,25 +141,8 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly ReportLine report = new();
 
-    private readonly ToggleButton assistantButton =
-        ToolbarButtons.Toggle("assistant", "✦", "Describe a patch and have one built.");
-
     /// <summary>Said on the status line while a patch just opened is compiled, before it starts.</summary>
     private readonly Shimmer compiling = new("Compiling…");
-
-    private readonly Button undoButton = ToolbarButtons.Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
-    private readonly Button redoButton = ToolbarButtons.Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
-
-    /// <summary>
-    /// Held because what laying out means, and whether it is worth doing at
-    /// all, depends on which view is showing — see <see cref="ShowOwnership"/>.
-    /// </summary>
-    private Button? tidyButton;
-
-    /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
-    private const string TidyTip =
-        "Lay the modules out so the patch reads left to right  (Ctrl+L). "
-        + "Ctrl+click lays out only what is selected, leaving the rest where it is  (Ctrl+Shift+L)";
 
     private AssistantPanel? assistant;
     private ColumnDefinition? assistantColumn;
@@ -352,6 +297,8 @@ public sealed partial class MainWindow : Window
 
         document = new Document(editor, source, report, this.usage);
 
+        toolbar = new Toolbar(BuildPresetSlot(), plugins.Assistants.Count > 0);
+
         outputSections = new OutputSections(this, plugins, OrderedPresets, PickStartupPatchAsync);
 
         // Before anything is compiled, so no build is started only to be taken off.
@@ -439,7 +386,7 @@ public sealed partial class MainWindow : Window
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.
         Recording = new TakeRecording(
-            recordButton,
+            toolbar.Record,
             outputSections.Resolution,
             preview,
             audio,
@@ -669,9 +616,9 @@ public sealed partial class MainWindow : Window
             inspector.Build();
         };
 
-        toolbar = BuildToolbar();
+        WireToolbar();
         statusBar = BuildStatusBar();
-        DockPanel.SetDock(toolbar, Dock.Top);
+        DockPanel.SetDock(toolbar.View, Dock.Top);
         DockPanel.SetDock(statusBar, Dock.Bottom);
 
         // The two flexible columns are star-sized: GridSplitter redistributes
@@ -757,7 +704,7 @@ public sealed partial class MainWindow : Window
         // application has none.
         ShowAssistant(false);
 
-        root.Children.Add(toolbar);
+        root.Children.Add(toolbar.View);
         root.Children.Add(statusBar);
         root.Children.Add(columns);
 
@@ -803,21 +750,21 @@ public sealed partial class MainWindow : Window
         // Pulling the wire off 'color' swapped back would move the canvas out from
         // under the hand still holding that wire, so nothing moves until the
         // button comes up — see the editor's GestureFinished, which asks again.
-        previewHideWaiting = !shown && swapButton.IsChecked == true && editor.Gesturing;
+        previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gesturing;
         if (previewHideWaiting) return;
 
         // Ahead of the full screen guard, so the button is right by the time the
         // toolbar comes back.
-        swapButton.IsEnabled = shown;
-        ToolTip.SetTip(swapButton, shown ? SwapTip : NoPictureToSwapTip);
+        toolbar.Swap.IsEnabled = shown;
+        ToolTip.SetTip(toolbar.Swap, shown ? Toolbar.SwapTip : Toolbar.NoPictureToSwapTip);
 
         if (previewIsFullScreen) return;
         if (previewBox is null || previewRow is null || previewSplitter is null) return;
 
         // A picture that has gone gives the canvas its column back before the row
         // it would stand in is put away. Unticking is what moves it — see the
-        // button's handler in BuildToolbar.
-        if (!shown) swapButton.IsChecked = false;
+        // button's handler in WireToolbar.
+        if (!shown) toolbar.Swap.IsChecked = false;
 
         if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
 
@@ -878,258 +825,30 @@ public sealed partial class MainWindow : Window
     /// <summary>Every preset the toolbar and the "Startup patch" list offer, in <see cref="PresetLibrary.Ordered"/>'s order.</summary>
     private List<PatchPreset> OrderedPresets() => PresetLibrary.Ordered(plugins.Presets, savedPresets);
 
-    private Control BuildToolbar()
+    /// <summary>What each button on the toolbar does. Called once, as the window is built.</summary>
+    private void WireToolbar()
     {
-        offeredPresets = OrderedPresets();
-
-        // Not shown, and never opened: what this holds is which preset is on the
-        // canvas, and its selection changing is how a pick from the gallery
-        // reaches the code below. A Picker rather than a plain list because it
-        // was the dropdown before the gallery, and its refusal to move on a
-        // keystroke is still what keeps an arrow at it from discarding the patch.
-        var presets = new Picker
-        {
-            Name = "presets",
-            ItemsSource = offeredPresets,
-            SelectedIndex = offeredPresets.FindIndex(preset => preset.Kind != PresetKind.Blank),
-            Width = 34,
-            Height = 30,
-            Opacity = 0,
-            IsHitTestVisible = false,
-            IsTabStop = false,
-        };
-
-        presetsPicker = presets;
-
-        // The toolbar button: the same square, glyph-only shape as open, save and
-        // tidy. It opens the gallery, and a tile picked there is a row of the
-        // picker above chosen, so there is one road to changing the preset and it
-        // is the one that asks about unsaved work.
-        var presetsButton = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
-        presetsButton.Click += async (_, _) =>
-        {
-            var showing = presets.SelectedItem as PatchPreset;
-            var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], showing, thumbnails, audition.PointedAt, Yours(), PresetSite());
-            var chosen = await this.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
-
-            audition.PointedAt(null);
-
-            switch (chosen)
-            {
-                // Looked up in the list as it is now, which a save in the gallery may have changed.
-                case PatchPreset preset:
-                    presets.SelectedIndex = offeredPresets.IndexOf(preset);
-                    break;
-
-                case SitePreset shared:
-                    await OpenSharedPresetAsync(shared);
-                    break;
-            }
-        };
-
-        // Stacked in one cell so the toolbar keeps the one slot it had.
-        var presetsSlot = new Grid();
-        presetsSlot.Children.Add(presets);
-        presetsSlot.Children.Add(presetsButton);
-
-        // Which preset is on the canvas, so a refused change can put the box
-        // back where it was. Setting the index raises this same handler, hence
-        // the flag around it.
-        var restoring = false;
-
-        presets.SelectionChanged += async (_, _) =>
-        {
-            if (restoring) return;
-
-            // Nothing on no selection, and nothing on a heading either — which
-            // no pointer can land on, and so can only have been set from here.
-            if (presets.SelectedItem is not PatchPreset preset) return;
-            if (presets.SelectedIndex == presetShowing) return;
-
-            var wanted = presets.SelectedIndex;
-
-            if (!await MayReplaceThePatchAsync())
-            {
-                PutTheBoxBack();
-                return;
-            }
-
-            try
-            {
-                // A preset from a plugin is built here, not when it was
-                // registered, so this is where a plugin that offered a patch
-                // using modules it failed to add finally shows up.
-                //
-                // Named before it is shown, because showing it is what redraws the
-                // title — and named at all because a preset is one of the three ways a
-                // patch arrives and the only one with no file to be named after. It has
-                // no folder either, and disowns whatever the last document was carrying:
-                // a preset naming a sound means the one beside the program, or the one
-                // in its own bundle, not the one inside a bundle somebody happened to
-                // open first.
-                editor.Patch = Arrive(preset);
-                RewindToZero();
-
-                // A preset has no file to have saved a conversation with, so it
-                // arrives with none — ADR-0072.
-                assistant?.Open(null);
-
-                // A preset arrives as a graph and no text describes it, so the
-                // canvas owns it — ADR-0068.
-                document.DropSource();
-
-                // Unless it was picked from the text view, where it is read into
-                // text there and then: which view somebody picks a preset from
-                // says which of the two they mean to work in.
-                if (document.ShowingCode) document.ReadIntoText();
-
-                presetShowing = wanted;
-
-                usage.Count(Used.Preset);
-
-                // The question above may have been answered with a save, and a
-                // save takes the selection off this list: what was saved is a
-                // file, and no preset. The row that was picked is picked again,
-                // or the title would name a preset the list does not show.
-                PutTheBoxBack();
-            }
-            catch (Exception ex)
-            {
-                Report($"Could not build the '{preset.Name}' preset: {ex.Message}");
-                PutTheBoxBack();
-            }
-        };
-
-        var open = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
-        open.Click += async (_, _) => await OpenAnotherPatchAsync();
-
-        var save = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
-        save.Click += async (_, _) => await SavePatchAsync();
+        toolbar.Open.Click += async (_, _) => await OpenAnotherPatchAsync();
+        toolbar.Save.Click += async (_, _) => await SavePatchAsync();
 
         // All three go to whichever view is showing — see Document.
-        undoButton.Click += (_, _) => document.Undo();
-        redoButton.Click += (_, _) => document.Redo();
+        toolbar.Undo.Click += (_, _) => document.Undo();
+        toolbar.Redo.Click += (_, _) => document.Redo();
+        toolbar.Tidied += (_, onlySelected) => document.Tidy(onlySelected);
 
-        var tidy = tidyButton = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
+        toolbar.Swap.IsCheckedChanged += (_, _) => SwapPreview(toolbar.Swap.IsChecked == true);
 
-        // A locked canvas says why in its tip, and that is wasted unless a
-        // disabled button is still allowed to show it — see the same call on
-        // recordButton.
-        ToolTip.SetShowOnDisabled(tidy, true);
+        toolbar.Pause.Click += (_, _) => TogglePause();
+        toolbar.Rewind.Click += (_, _) => RewindToZero();
+        toolbar.Record.Click += async (_, _) => await ToggleRecordAsync();
 
-        // A Click says which button was pressed and nothing about what was held
-        // down while it was, so that is read on the way in. The key offers both
-        // layouts and so does the button, because a modifier is how a toolbar
-        // offers the narrower of two things without a second glyph for it.
-        var modifiers = KeyModifiers.None;
-
-        tidy.AddHandler(
-            PointerPressedEvent,
-            (object? _, PointerPressedEventArgs e) => modifiers = e.KeyModifiers,
-            RoutingStrategies.Tunnel);
-
-        tidy.Click += (_, _) =>
-        {
-            document.Tidy((modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0);
-            modifiers = KeyModifiers.None;
-        };
-
-        // The same, for a patch with no picture to swap in.
-        ToolTip.SetShowOnDisabled(swapButton, true);
-        swapButton.IsCheckedChanged += (_, _) => SwapPreview(swapButton.IsChecked == true);
-
-        // The glyph and the tip are set here, alongside every other toolbar
-        // button; what the tip actually says is decided per patch by
-        // TakeRecording.Mark, which runs before this is ever shown.
-        ToolbarButtons.Marked(recordButton, "record", Glyphs.Record(), TakeRecording.RecordTip);
-
-        ToolbarButtons.Marked(pauseButton, "pause", Glyphs.Pause(), PauseTip);
-        pauseButton.Click += (_, _) => TogglePause();
-
-        ToolbarButtons.Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
-        rewindButton.Click += (_, _) => RewindToZero();
+        toolbar.Assistant.IsCheckedChanged += (_, _) => ShowAssistant(toolbar.Assistant.IsChecked == true);
+        toolbar.Settings.Click += async (_, _) => await ShowSettingsAsync();
+        toolbar.Plugins.Click += async (_, _) => await pluginInstalls.ShowAsync();
+        toolbar.About.Click += async (_, _) => await ShowAboutAsync();
 
         WireDocument();
         RefreshEditState();
-
-        // What is done to the patch, in the order it is done: pick one, open or
-        // save one, take an edit back. Tidy sits with undo and redo rather than
-        // with the files, because it is an edit and is taken back like one.
-        var patchwork = ToolbarButtons.Group();
-
-        patchwork.Children.Add(presetsSlot);
-        patchwork.Children.Add(open);
-        patchwork.Children.Add(save);
-        patchwork.Children.Add(ToolbarButtons.Separator());
-        patchwork.Children.Add(undoButton);
-        patchwork.Children.Add(redoButton);
-        patchwork.Children.Add(tidy);
-        patchwork.Children.Add(ToolbarButtons.Separator());
-        patchwork.Children.Add(codeButton);
-        patchwork.Children.Add(controlsButton);
-        patchwork.Children.Add(swapButton);
-
-        // On its own, between what is done to the patch and what is done to
-        // the program: pausing, rewinding and recording are neither — all are
-        // facts about the performance, not an edit Ctrl+Z takes back.
-        var transport = ToolbarButtons.Group();
-        transport.Children.Add(pauseButton);
-        transport.Children.Add(rewindButton);
-        transport.Children.Add(recordButton);
-
-        assistantButton.IsEnabled = plugins.Assistants.Count > 0;
-        ToolTip.SetTip(assistantButton, plugins.Assistants.Count > 0
-            ? "Describe a patch and have one built. Nothing is sent until you ask, and what "
-              + "comes back is an edit Ctrl+Z takes off again."
-            : "No assistant plugin is installed. See About for where plugins are looked for.");
-        assistantButton.IsCheckedChanged += (_, _) => ShowAssistant(assistantButton.IsChecked == true);
-
-        var settings = ToolbarButtons.Glyph("settings", "⚙", "Open the settings.");
-        settings.Click += async (_, _) => await ShowSettingsAsync();
-
-        var pluginsButton = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.");
-        pluginsButton.Click += async (_, _) => await pluginInstalls.ShowAsync();
-
-        var about = ToolbarButtons.Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
-        about.Click += async (_, _) => await ShowAboutAsync();
-
-        // The other end of the bar, because none of these is about the patch:
-        // they are the program itself, and a thing reached for once a session
-        // does not belong in the path of the things reached for constantly.
-        var program = ToolbarButtons.Group();
-
-        program.Children.Add(assistantButton);
-        program.Children.Add(settings);
-        program.Children.Add(pluginsButton);
-        program.Children.Add(about);
-
-        // One row, left to right, rather than the program group docked to the
-        // far edge — everything reached from the toolbar sits together at the
-        // near side instead of one end chasing the window's width. Unmargined
-        // itself: patchwork and program each carry their own margin already,
-        // from ToolbarButtons.Group(), and stacking a second one here would double the gaps.
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-
-        bar.Children.Add(patchwork);
-        bar.Children.Add(ToolbarButtons.Separator());
-        bar.Children.Add(transport);
-        bar.Children.Add(ToolbarButtons.Separator());
-        bar.Children.Add(program);
-
-        return new Border
-        {
-            Background = new SolidColorBrush(Colors.Toolbar),
-            BorderBrush = new SolidColorBrush(Colors.Edge),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Child = bar,
-        };
-
-        void PutTheBoxBack()
-        {
-            restoring = true;
-            presets.SelectedIndex = presetShowing;
-            restoring = false;
-        }
     }
 
     /// <summary>

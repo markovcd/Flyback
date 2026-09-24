@@ -17,10 +17,10 @@ public sealed partial class MainWindow
         document.OwnershipChanged += (_, _) => ShowOwnership();
         document.ViewChanged += (_, _) =>
         {
-            if (codeButton.IsChecked != document.ShowingCode) codeButton.IsChecked = document.ShowingCode;
+            if (toolbar.Code.IsChecked != document.ShowingCode) toolbar.Code.IsChecked = document.ShowingCode;
         };
 
-        codeButton.IsCheckedChanged += (_, _) => document.ShowCode(codeButton.IsChecked == true);
+        toolbar.Code.IsCheckedChanged += (_, _) => document.ShowCode(toolbar.Code.IsChecked == true);
 
         source.EditorFontSize = canvasSection.EditorFontSize;
         source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
@@ -75,17 +75,14 @@ public sealed partial class MainWindow
         // Laying out is off only where it would not last: a locked canvas is
         // re-laid on the next evaluation, so tidying one is work thrown away.
         // Showing the text, the same button folds the lines instead.
-        if (tidyButton is not null)
-        {
-            tidyButton.IsEnabled = document.ShowingCode || !document.Owned;
+        toolbar.Tidy.IsEnabled = document.ShowingCode || !document.Owned;
 
-            ToolTip.SetTip(tidyButton, document.ShowingCode
-                ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
-                : document.Owned
-                    ? "The text is the document, so the canvas is laid out from it on every "
-                      + "apply. Fold the text instead."
-                    : TidyTip);
-        }
+        ToolTip.SetTip(toolbar.Tidy, document.ShowingCode
+            ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
+            : document.Owned
+                ? "The text is the document, so the canvas is laid out from it on every "
+                  + "apply. Fold the text instead."
+                : Toolbar.TidyTip);
 
         // What the empty panel says is a list of gestures, and half of them
         // have just been switched off or back on.

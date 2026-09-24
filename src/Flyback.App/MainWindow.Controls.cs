@@ -29,12 +29,9 @@ public sealed partial class MainWindow
     /// </summary>
     private GridLength controlsShare = new(118);
 
-    private readonly ToggleButton controlsButton =
-        ToolbarButtons.Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
-
     private void WireControls()
     {
-        controlsButton.IsCheckedChanged += (_, _) => ShowControls(controlsButton.IsChecked == true);
+        toolbar.Knobs.IsCheckedChanged += (_, _) => ShowControls(toolbar.Knobs.IsChecked == true);
 
         knobs.Wanted += (_, _) => ShowControls(true);
 
@@ -71,7 +68,7 @@ public sealed partial class MainWindow
         panel.IsVisible = shown;
         controlsSplitter.IsVisible = shown;
 
-        if (controlsButton.IsChecked != shown) controlsButton.IsChecked = shown;
+        if (toolbar.Knobs.IsChecked != shown) toolbar.Knobs.IsChecked = shown;
 
         if (!shown) knobs.Link(null);
     }

@@ -18,7 +18,7 @@ public sealed partial class MainWindow
     /// </summary>
     private async Task ToggleRecordAsync()
     {
-        if (!recordButton.IsEnabled) return;
+        if (!toolbar.Record.IsEnabled) return;
 
         if (Recording.Counting)
         {

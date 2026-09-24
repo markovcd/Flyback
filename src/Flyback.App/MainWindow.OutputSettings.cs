@@ -54,12 +54,6 @@ public sealed partial class MainWindow
         // recording, and what would follow is the same frame for ever.
         preview.CaptureLost += Recording.Stop;
 
-        // Shown while it is grayed out too, because a disabled control that will
-        // not say why is the most annoying thing a panel can contain.
-        ToolTip.SetShowOnDisabled(recordButton, true);
-
-        recordButton.Click += async (_, _) => await ToggleRecordAsync();
-
         knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.KeyboardLayout);
 
         // Quietly, because nobody asked for anything yet: a saved answer is
