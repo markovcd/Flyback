@@ -125,6 +125,8 @@ public static partial class Presets
             "Stereo from one voice: left and right fed differently rather than panned."),
         new("Staircase", Staircase,
             "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune."),
+        new("Heads or tails", HeadsOrTails,
+            "One riff and a coin for every note: heads plays it on the left, tails an octave down on the right, and the odds drift."),
         new("Nebula", Nebula,
             "Everything the video side can do, folded, warped and trailing its own frames."),
 
@@ -1280,6 +1282,55 @@ public static partial class Presets
          .Wire(tone, 0, voice, 0)
          .Wire(pluck, 0, voice, 1)
          .Wire(voice, 0, output, NodeCatalog.OutputLeftPort);
+
+        return b.Build();
+    }
+
+    /// <summary>
+    /// One riff and a coin for every note: heads plays it on the left, tails an
+    /// octave down on the right, and the odds drift from one side to the other.
+    /// </summary>
+    public static Patch HeadsOrTails(ModuleCatalog modules)
+    {
+        var b = new PatchBuilder(modules);
+
+        var riff = b.Add("seq.notes", (1, 8f));
+        StepsExtra.Set(riff,
+        [
+            new Step(57f), new Step(60f), new Step(64f), new Step(67f),
+            new Step(69f), new Step(67f), new Step(64f), new Step(62f),
+        ]);
+
+        // Heads from nine in ten down to one in ten and back, over a quarter of a minute.
+        var odds = b.Add("osc.sine", (1, 0.07f), (3, 0.4f), (4, 0.5f));
+        var coin = b.Add(NodeCatalog.ChanceTypeId);
+
+        var high = b.Add("audio.note");
+        var heads = b.Add("osc.triangle");
+        var headsPluck = b.Add(NodeCatalog.AdsrTypeId, (1, -2.52f), (2, -0.82f), (3, 0.1f), (4, -1.1f));
+        var headsVoice = b.Add("math.mul");
+
+        var low = b.Add("audio.note", (1, -1f));
+        var tails = b.Add("osc.sine");
+        var tailsPluck = b.Add(NodeCatalog.AdsrTypeId, (1, -2.52f), (2, -0.6f), (3, 0.3f), (4, -0.92f));
+        var tailsVoice = b.Add("math.mul");
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
+
+        b.Wire(riff, 1, coin, 0)
+         .Wire(odds, 0, coin, 1)
+         .Wire(riff, 0, high, 0)
+         .Wire(high, 0, heads, 1)
+         .Wire(coin, 0, headsPluck, 0)
+         .Wire(heads, 0, headsVoice, 0)
+         .Wire(headsPluck, 0, headsVoice, 1)
+         .Wire(headsVoice, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(riff, 0, low, 0)
+         .Wire(low, 0, tails, 1)
+         .Wire(coin, 1, tailsPluck, 0)
+         .Wire(tails, 0, tailsVoice, 0)
+         .Wire(tailsPluck, 0, tailsVoice, 1)
+         .Wire(tailsVoice, 0, output, NodeCatalog.OutputRightPort);
 
         return b.Build();
     }

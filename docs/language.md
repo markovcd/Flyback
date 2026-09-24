@@ -896,6 +896,26 @@ out.volume = 0.5
 The one clock goes to the Hold's `trigger` and the envelope's `gate`, so a pitch
 is caught on the same edge that plucks it.
 
+### Heads or tails — [:1293](../src/Flyback.Core/Graph/Presets.cs)
+
+```
+description "One riff and a coin for every note: heads plays it on the left, tails an"
+  "octave down on the right, and the odds drift."
+
+let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
+let coin = riff.gate |> chance(chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
+
+triangle(freq: note(riff)) * (coin |> adsr(attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
+  |> out.left
+sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
+  |> out.right
+
+out.volume = 0.5
+```
+
+`coin` is Chance's `gate` and `coin.else` the notes it let fall, so every note of
+the riff plays on exactly one side.
+
 ### Drone — [:319](../src/Flyback.Core/Graph/Presets.cs)
 
 ```

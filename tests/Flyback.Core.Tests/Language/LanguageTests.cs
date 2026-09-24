@@ -317,6 +317,19 @@ public class LanguageTests
         """);
 
     [Fact]
+    public void HeadsOrTails() => Alike("Heads or tails", """
+        let riff = notes(rate: 8) [ A3 C4 E4 G4 A4 G4 E4 D4 ]
+        let coin = riff.gate |> chance(chance: sine(freq: 0.07, amp: 0.4, bias: 0.5))
+
+        triangle(freq: note(riff)) * (coin |> adsr(attack: 3ms, decay: 150ms, sustain: 0.1, release: 80ms))
+          |> out.left
+        sine(freq: note(riff, octave: -1)) * (coin.else |> adsr(attack: 3ms, decay: 250ms, sustain: 0.3, release: 120ms))
+          |> out.right
+
+        out.volume = 0.5
+        """);
+
+    [Fact]
     public void Staircase() => Alike("Staircase", """
         let clock = pulse(freq: 6)
         let slope = sine(freq: 0.11) + sine(freq: 0.37, amp: 0.5)
