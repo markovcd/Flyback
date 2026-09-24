@@ -164,6 +164,9 @@ internal sealed class Playback
     /// <summary>The cue the patch last opened starts on. Edits made before it goes wait with it.</summary>
     private Cue? opening;
 
+    /// <summary>Whether the patch last opened is still waiting to start.</summary>
+    public bool Starting => opening?.Waiting == true;
+
     /// <summary>
     /// Selecting a Probe is what puts its chart on the screen and selecting
     /// anything else is what takes it off again. No other selection changes the

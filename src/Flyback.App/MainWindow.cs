@@ -182,6 +182,9 @@ public sealed partial class MainWindow : Window
     private readonly ToggleButton assistantButton =
         ToolbarButtons.Toggle("assistant", "✦", "Describe a patch and have one built.");
 
+    /// <summary>Said on the status line while a patch just opened is compiled, before it starts.</summary>
+    private readonly Shimmer compiling = new("Compiling…");
+
     private readonly Button undoButton = ToolbarButtons.Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
     private readonly Button redoButton = ToolbarButtons.Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
 
@@ -505,6 +508,7 @@ public sealed partial class MainWindow : Window
         editor.PatchChanged += (_, _) =>
         {
             playback.Recompile(opened: editor.Opening);
+            if (editor.Opening) compiling.Watch(() => playback.Starting);
 
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
@@ -1279,12 +1283,21 @@ public sealed partial class MainWindow : Window
             Margin = new Thickness(10, 0, 0, 0),
         };
 
+        // In the report's place while it shows: what is said meanwhile is about a
+        // patch that has not started, and is read once it has.
+        compiling.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == IsVisibleProperty) report.IsVisible = !compiling.IsVisible;
+        };
+
         Grid.SetColumn(report, 0);
+        Grid.SetColumn(compiling, 0);
         Grid.SetColumn(status, 1);
         Grid.SetColumn(rule, 2);
         Grid.SetColumn(letter, 3);
 
         bar.Children.Add(report);
+        bar.Children.Add(compiling);
         bar.Children.Add(status);
         bar.Children.Add(rule);
         bar.Children.Add(letter);
