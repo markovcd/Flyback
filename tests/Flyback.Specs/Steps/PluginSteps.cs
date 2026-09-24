@@ -41,11 +41,27 @@ public sealed class PluginSteps
     public void GivenAJuliaSet(float re, float im) => Show(Julia, ("re", re), ("im", im));
 
     [Given("the orbit of {float}, {float} stepping {float} times a second")]
-    public void GivenAnOrbit(float re, float im, float rate)
+    public void GivenAnOrbit(float re, float im, float rate) =>
+        Play(Set(NodeInstance.Create(Modules.Require(Orbit), 0, 0), ("re", re), ("im", im), ("rate", rate)));
+
+    [Given("the Julia orbit of {float}, {float} from the pixel {float}, {float} stepping {float} times a second")]
+    public void GivenAJuliaOrbit(float re, float im, float startRe, float startIm, float rate)
+    {
+        var orbit = Set(
+            NodeInstance.Create(Modules.Require(Orbit), 0, 0),
+            ("re", re), ("im", im), ("start re", startRe), ("start im", startIm), ("rate", rate));
+
+        orbit.SetState("orbit", new System.Text.Json.Nodes.JsonObject { ["mode"] = "julia" });
+
+        Play(orbit);
+    }
+
+    /// <summary>One second of <paramref name="orbit"/>'s left side, sample by sample.</summary>
+    private void Play(NodeInstance orbit)
     {
         var b = new PatchBuilder(Modules);
+        b.Patch.Nodes.Add(orbit);
 
-        var orbit = Set(b.Add(Orbit), ("re", re), ("im", im), ("rate", rate));
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
         b.Wire(orbit, 0, output, NodeCatalog.OutputLeftPort);
 

@@ -33,12 +33,19 @@ rather than 4, so the smooth count has no seams.
 channel, navy through white and gold, cycled by 'shift', with the set black.
 `escape`, 0 to 1, is there for a Palette of anybody's own.
 
+**Orbit has a Mandelbrot mode and a Julia mode, as a setting on the node.**
+The Mandelbrot orbit of c is the Julia orbit of nought, so the modes are one
+iteration with two starts: nought, or the point on 'start re' and 'start im', a
+pixel of the Julia set of c. The mode also picks the plane the path is drawn
+on, the Mandelbrot's at rest or the Julia's, so the path lines up drawn over the
+module of the same name. It is a setting rather than a socket because a plane
+is not something to sweep.
+
 **Orbit keeps its steps in cells.** Only the speakers have them. On the screen
-the path is iterated afresh, 24 steps, on the Mandelbrot's plane at rest, so
-the two line up drawn one over the other. An orbit that escapes starts again
-from nought, so a c outside the set is a tone too, one period for each step it
-took to leave. Each side goes through a DC blocker at twenty hertz, because an
-orbit rarely centers on nought.
+the path is iterated afresh, 24 steps. An orbit that escapes goes back to its
+start, so an escaping one is a tone too, one period for each step it took to
+leave. Each side goes through a DC blocker at twenty hertz, because an orbit
+rarely centers on nought.
 
 **Each module's artwork is drawn by the module itself**, as PNGs darkened so
 white labels read over them. The `.fbks` that drew each one is kept beside it.
@@ -56,5 +63,5 @@ and sign from. No release carries it.
 - Orbit's picture program carries its cells and phase, reading nought, because
   an emit function cannot know its sink.
 - Dive zooms the Mandelbrot into Seahorse Valley and back. Julia walk takes one
-  c round |c| = 0.7885, its Julia set on the screen and its orbit in the
-  speakers.
+  c round |c| = 0.7885: its Julia set on the screen with a Julia-mode Orbit's
+  path summed over it, and that orbit in the speakers.

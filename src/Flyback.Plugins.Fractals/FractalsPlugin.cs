@@ -51,8 +51,9 @@ public sealed class FractalsPlugin : IFlybackPlugin
             new PatchPreset(
                 JuliaWalkPreset.Name,
                 JuliaWalkPreset.Build,
-                "One c going slowly round a circle: its Julia set on the screen and its orbit in the "
-                + "speakers, a tone where the orbit settles and a hiss where it never does.",
+                "One c going slowly round a circle: its Julia set on the screen, and the orbit of one "
+                + "of its pixels drawn over it and heard, a tone where the orbit settles and a hiss "
+                + "where it never does.",
                 PresetKind.Interplay),
         ]);
     }

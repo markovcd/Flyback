@@ -1,21 +1,27 @@
+using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
 namespace Flyback.Plugins.Fractals;
 
 /// <summary>
-/// The orbit of one c, 0, c, c² + c and on, heard a step at a time and drawn as
-/// the path it takes.
+/// The orbit of z under z → z² + c, heard a step at a time and drawn as the path
+/// it takes: from nought in Mandelbrot mode, from a start point in Julia mode.
 /// </summary>
 /// <remarks>
+/// The two modes are one iteration with a different start, since the Mandelbrot
+/// orbit of c is the Julia orbit of nought. What the mode changes besides is the
+/// plane the path is drawn on, the Mandelbrot's at rest or the Julia's, so that
+/// it lines up drawn over the module of the same name.
+/// <para>
 /// The sound keeps the two latest points in cells and glides from one to the
 /// next across each step, so it is a wave through the orbit rather than a
-/// staircase. An orbit that leaves |z| ≤ 2 starts again from nought, so a c
-/// outside the set is a tone too, one step for each it took to escape; inside,
-/// an orbit settling into a cycle of three is a tone a third of 'rate', and one
-/// that never settles is noise. A cell reads nought on the screen, so the path is
-/// iterated afresh there, a fixed number of steps, on the Mandelbrot's plane at
-/// rest so that the two line up.
+/// staircase. An orbit that leaves |z| ≤ 2 goes back to its start, so an
+/// escaping one is a tone too, one step for each it took to escape; one settling
+/// into a cycle of three is a tone a third of 'rate', and one that never settles
+/// is noise. A cell reads nought on the screen, so the path is iterated afresh
+/// there, a fixed number of steps.
+/// </para>
 /// </remarks>
 internal static class OrbitModule
 {
@@ -25,11 +31,18 @@ internal static class OrbitModule
     public const int ImPort = 3;
     public const int RatePort = 4;
     public const int InPort = 5;
+    public const int StartRePort = 6;
+    public const int StartImPort = 7;
 
     public const int LeftPort = 0;
     public const int RightPort = 1;
     public const int ColorPort = 2;
     public const int TracePort = 3;
+
+    public const string StateKey = "orbit";
+    public const string ModeKey = "mode";
+    public const string Mandelbrot = "mandelbrot";
+    public const string Julia = "julia";
 
     /// <summary>How many steps of the path the picture draws.</summary>
     public const int Steps = 24;
@@ -40,7 +53,7 @@ internal static class OrbitModule
     /// <summary>Half the width of the path, on the plane.</summary>
     private const float Line = 0.008f;
 
-    /// <summary>The radius of the dot at c, on the plane.</summary>
+    /// <summary>The radius of the dot where the path starts, on the plane.</summary>
     private const float Dot = 0.035f;
 
     /// <summary>Further than any segment can be, so the first always wins.</summary>
@@ -60,6 +73,8 @@ internal static class OrbitModule
             new PortSpec("im", PortKind.Scalar, 0.75f, -1.5f, 1.5f),
             new PortSpec("rate", PortKind.Scalar, 330f, 20f, 8000f) { Knee = 20f },
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true),
+            new PortSpec("start re", PortKind.Scalar, 0f, -2f, 2f),
+            new PortSpec("start im", PortKind.Scalar, 0f, -2f, 2f),
         ],
         [
             new PortSpec("left", PortKind.Scalar, 0f, -1f, 1f),
@@ -68,40 +83,72 @@ internal static class OrbitModule
             new PortSpec("trace", PortKind.Scalar, 0f, 0f, 1f),
         ],
         Emit,
-        "The orbit of c, 0, c, c² + c and on, stepped 'rate' times a second: 'left' is its real "
-        + "part and 'right' its imaginary. Inside the Mandelbrot set an orbit settling into a "
-        + "cycle of n is a tone at rate over n, and one that never settles is noise; outside, it "
-        + "escapes and starts again, a tone for how fast it left. 'trace' and 'color' draw the "
-        + "path on the Mandelbrot's plane at rest, with a dot at c, so the two line up. 're' and "
-        + "'im' are the same point as a Julia's.")
+        "The orbit of z under z² + c, stepped 'rate' times a second: 'left' is its real part and "
+        + "'right' its imaginary. An orbit settling into a cycle of n is a tone at rate over n, "
+        + "one that never settles is noise, and one that escapes starts again, a tone for how "
+        + "fast it left. Set on the node: Mandelbrot mode starts z at nought, so 're' and 'im' "
+        + "are a point on a Mandelbrot's map; Julia mode starts it at 'start re' and 'start im', "
+        + "a pixel of the Julia set whose c is 're' and 'im'. 'trace' and 'color' draw the path "
+        + "on that module's plane at rest, with a dot where it starts, so the two line up.")
     {
+        Extras =
+        [
+            new SettingsExtra(StateKey,
+            [
+                new ExtraField.Choice(
+                    ModeKey, "mode",
+                    [
+                        new ChoiceOption(Mandelbrot, "Mandelbrot: from nought"),
+                        new ChoiceOption(Julia, "Julia: from the start point"),
+                    ],
+                    Mandelbrot),
+            ]),
+        ],
         Skin = Art.Skin("orbit"),
     };
 
+    /// <summary>Sets an instance's mode, for a preset assembling one in code.</summary>
+    public static NodeInstance InMode(NodeInstance node, string mode)
+    {
+        node.SetState(StateKey, new JsonObject { [ModeKey] = mode });
+
+        return node;
+    }
+
+    /// <summary>The c the orbit is taken under, where it starts, and whether it is a Julia orbit.</summary>
+    private readonly record struct Point(Slot Cx, Slot Cy, Slot StartX, Slot StartY, bool Julia);
+
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
-        var cx = Escape.Held(em, node[RePort]);
-        var cy = Escape.Held(em, node[ImPort]);
+        var julia = node.Extra<ExtraState>(StateKey)?.Chosen(ModeKey) == Julia;
+        var zero = em.Constant(0f);
 
-        var (left, right) = Heard(em, node, cx, cy);
-        var (color, trace) = Drawn(em, node, cx, cy);
+        var point = new Point(
+            Escape.Held(em, node[RePort]),
+            Escape.Held(em, node[ImPort]),
+            julia ? Escape.Held(em, node[StartRePort]) : zero,
+            julia ? Escape.Held(em, node[StartImPort]) : zero,
+            julia);
+
+        var (left, right) = Heard(em, node, point);
+        var (color, trace) = Drawn(em, node, point);
 
         return [left, right, color, trace];
     }
 
-    /// <summary>One step of the orbit, back to nought once it has escaped.</summary>
-    private static (Slot X, Slot Y) Next(Emitter em, Slot zx, Slot zy, Slot cx, Slot cy)
+    /// <summary>One step of the orbit, back to its start once it has escaped.</summary>
+    private static (Slot X, Slot Y) Next(Emitter em, Slot zx, Slot zy, Point point)
     {
         var xx = em.Mul(zx, zx);
         var yy = em.Mul(zy, zy);
-        var stay = em.Sub(em.Constant(1f), em.Binary(OpCode.Step, em.Constant(Escaped), em.Add(xx, yy)));
+        var gone = em.Binary(OpCode.Step, em.Constant(Escaped), em.Add(xx, yy));
 
         return (
-            em.Mul(em.Add(em.Sub(xx, yy), cx), stay),
-            em.Mul(em.Add(em.Mul(em.Add(zx, zx), zy), cy), stay));
+            em.Ternary(OpCode.Mix, em.Add(em.Sub(xx, yy), point.Cx), point.StartX, gone),
+            em.Ternary(OpCode.Mix, em.Add(em.Mul(em.Add(zx, zx), zy), point.Cy), point.StartY, gone));
     }
 
-    private static (Slot Left, Slot Right) Heard(Emitter em, EmitContext node, Slot cx, Slot cy)
+    private static (Slot Left, Slot Right) Heard(Emitter em, EmitContext node, Point point)
     {
         var phase = em.Phase(node[InPort], node[RatePort], em.Constant(0f));
 
@@ -115,7 +162,20 @@ internal static class OrbitModule
 
         var (fromX, fromY) = (em.UnitRead(ax), em.UnitRead(ay));
         var (toX, toY) = (em.UnitRead(bx), em.UnitRead(by));
-        var (nextX, nextY) = Next(em, toX, toY, cx, cy);
+
+        // Cells begin at nought, which is a Mandelbrot orbit's start but not a
+        // Julia orbit's, so the first evaluation takes the start point instead.
+        if (point.Julia)
+        {
+            var held = em.HasMemory();
+
+            fromX = em.Ternary(OpCode.Mix, point.StartX, fromX, held);
+            fromY = em.Ternary(OpCode.Mix, point.StartY, fromY, held);
+            toX = em.Ternary(OpCode.Mix, point.StartX, toX, held);
+            toY = em.Ternary(OpCode.Mix, point.StartY, toY, held);
+        }
+
+        var (nextX, nextY) = Next(em, toX, toY, point);
 
         fromX = em.Ternary(OpCode.Mix, fromX, toX, tick);
         fromY = em.Ternary(OpCode.Mix, fromY, toY, tick);
@@ -152,24 +212,28 @@ internal static class OrbitModule
         return em.Ternary(OpCode.Clamp, em.Mul(output, 0.5f), em.Constant(-1f), em.Constant(1f));
     }
 
-    private static (Slot Color, Slot Trace) Drawn(Emitter em, EmitContext node, Slot cx, Slot cy)
+    private static (Slot Color, Slot Trace) Drawn(Emitter em, EmitContext node, Point point)
     {
         var zero = em.Constant(0f);
         var one = em.Constant(1f);
 
-        var (px, py) = Escape.Plane(
-            em, node[0], node[1], em.Constant(MandelbrotModule.Middle), zero, zero, MandelbrotModule.Span);
+        var (px, py) = point.Julia
+            ? Escape.Plane(em, node[0], node[1], zero, zero, zero, JuliaModule.Span)
+            : Escape.Plane(em, node[0], node[1], em.Constant(MandelbrotModule.Middle), zero, zero, MandelbrotModule.Span);
 
         var nearest = em.Constant(Beyond);
         var along = zero;
 
-        var (fromX, fromY) = (cx, cy);
+        // A Mandelbrot orbit is drawn from c, its first step from nought and the
+        // one point on its plane it is the orbit of.
+        var (startX, startY) = point.Julia ? (point.StartX, point.StartY) : (point.Cx, point.Cy);
+        var (fromX, fromY) = (startX, startY);
 
         for (var step = 1; step < Steps; step++)
         {
-            // Held where it left rather than sent back to nought, so an escape
+            // Held where it left rather than sent back to its start, so an escape
             // is drawn as the one long stroke out.
-            var (toX, toY) = Next(em, fromX, fromY, cx, cy);
+            var (toX, toY) = Next(em, fromX, fromY, point);
             var left = em.Binary(
                 OpCode.Step, em.Constant(Escaped), em.Add(em.Mul(fromX, fromX), em.Mul(fromY, fromY)));
 
@@ -188,7 +252,9 @@ internal static class OrbitModule
         var stroke = em.Sub(one, em.Ternary(OpCode.Smoothstep, zero, em.Constant(Line), nearest));
         var dot = em.Sub(
             one,
-            em.Ternary(OpCode.Smoothstep, zero, em.Constant(Dot), em.Binary(OpCode.Hypot, em.Sub(px, cx), em.Sub(py, cy))));
+            em.Ternary(
+                OpCode.Smoothstep, zero, em.Constant(Dot),
+                em.Binary(OpCode.Hypot, em.Sub(px, startX), em.Sub(py, startY))));
 
         var trace = em.Binary(OpCode.Max, stroke, dot);
 

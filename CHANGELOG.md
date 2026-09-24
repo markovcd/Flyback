@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The preset site starts with Fractals, a plugin of three modules about one point c: Mandelbrot, which maps every c in the classic colors, Julia, its picture, and Orbit, its sound, with Dive and Julia walk as presets.
+- The preset site starts with Fractals, a plugin of three modules about one point c: Mandelbrot, which maps every c in the classic colors, Julia, its picture, and Orbit, its sound, from nought or from a pixel of the Julia set, with Dive and Julia walk as presets.
 - A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
 - A patch's groups are written in its text and read back, a group built from text opens shut, and the cursor on a group's block in the text view shows the group in the panel.
 - A text patch names the plugins it needs, `requires flyback.picture`, and a build without one says so once.
