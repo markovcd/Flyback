@@ -194,7 +194,7 @@ public sealed partial class MainWindow
 
         // All four arrive together when the layout is built, so this is one
         // question rather than four. Before that there is nothing to show.
-        if (columns is null || previewBox is null || statusBar is null) return;
+        if (columns is null || previewBox is null) return;
 
         previewIsFullScreen = full;
         knobs.OverPicture = full;
@@ -205,7 +205,7 @@ public sealed partial class MainWindow
         else Restore();
 
         toolbar.View.IsVisible = !full;
-        statusBar.IsVisible = !full;
+        statusBar.View.IsVisible = !full;
 
         // Remembered, since the assistant and the knobs stand in this grid and
         // are as often hidden as not.

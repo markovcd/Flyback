@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
@@ -10,8 +9,8 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App;
 
 /// <summary>
-/// What the window shows of <see cref="Playback"/>: the status bar, and the one
-/// place anything is said to the user.
+/// What the window shows of <see cref="Playback"/>, and the one place anything is
+/// said to the user.
 /// </summary>
 [SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
 public sealed partial class MainWindow
@@ -82,22 +81,4 @@ public sealed partial class MainWindow
         base.OnClosed(e);
     }
 
-    private void UpdateStatus()
-    {
-        var nodes = editor.Patch.Nodes.Count;
-        var wires = editor.Patch.Connections.Count;
-        var ops = preview.Program.Ops.Length;
-
-        // Which renderer produced the rate is part of what it means, so it is
-        // said alongside — what is actually drawing, not what was asked for.
-        var backend = preview.Backend == PreviewBackend.Gpu ? "GPU" : "CPU";
-
-        // Only while the window is somebody's: a window behind others is drawn
-        // at whatever rate the system leaves it, which says nothing about Flyback.
-        if (IsActive) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
-
-        status.Text = string.Create(
-            CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
-    }
 }

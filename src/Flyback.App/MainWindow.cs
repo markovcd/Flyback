@@ -56,7 +56,6 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private Grid? columns;
     private Border? previewBox;
-    private Control? statusBar;
 
     /// <summary>
     /// The presets somebody saved, or null for a window that keeps none — every
@@ -104,6 +103,9 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private bool previewHideWaiting;
 
+    /// <summary>The bar along the bottom.</summary>
+    private readonly StatusBar statusBar;
+
     /// <summary>The bar along the top.</summary>
     private readonly Toolbar toolbar;
 
@@ -119,28 +121,11 @@ public sealed partial class MainWindow : Window
     /// <summary>The panel on the right, under the preview.</summary>
     private readonly Inspector inspector;
 
-    private readonly TextBlock status = new()
-    {
-        VerticalAlignment = VerticalAlignment.Center,
-        FontSize = Text.Body,
-
-        // Every line on this bar shares one row of a narrow window, so this one
-        // gives way the same way the report beside it does rather than being
-        // sheared off at whatever character the edge fell on.
-        TextTrimming = TextTrimming.CharacterEllipsis,
-
-        // On the right of the bar, against the edge the report is not on.
-        TextAlignment = TextAlignment.Right,
-    };
-
     /// <summary>
     /// The one line anything is said on, and the log of what has been said. See
     /// <see cref="Report"/>, which is the only thing that writes to it.
     /// </summary>
     private readonly ReportLine report = new();
-
-    /// <summary>Said on the status line while a patch just opened is compiled, before it starts.</summary>
-    private readonly Shimmer compiling = new("Compiling…");
 
     private AssistantPanel? assistant;
     private ColumnDefinition? assistantColumn;
@@ -408,6 +393,8 @@ public sealed partial class MainWindow : Window
 
         toolbar = new Toolbar(presets.View, plugins.Assistants.Count > 0);
 
+        statusBar = new StatusBar(report, editor, preview, this.usage, () => IsActive, WriteToTheAuthorAsync);
+
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.
         Recording = new TakeRecording(
@@ -471,7 +458,7 @@ public sealed partial class MainWindow : Window
         editor.PatchChanged += (_, _) =>
         {
             playback.Recompile(opened: editor.Opening);
-            if (editor.Opening) compiling.Watch(() => playback.Starting);
+            if (editor.Opening) statusBar.Compiling.Watch(() => playback.Starting);
 
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
@@ -536,10 +523,6 @@ public sealed partial class MainWindow : Window
         if (whatsNew is null && updateNote is not null) Report(updateNote);
 
         ApplyPanelLayout();
-
-        var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
-        ticker.Tick += (_, _) => UpdateStatus();
-        ticker.Start();
 
         if (recoveryFolder is not null) keeper = new WorkKeeper(recoveryFolder, Work);
 
@@ -606,9 +589,12 @@ public sealed partial class MainWindow : Window
         };
 
         WireToolbar();
-        statusBar = BuildStatusBar();
+        // The popups behind the report and a module's name hang off the window
+        // rather than off the control, so what they look like is said here.
+        Styles.Add(ReportLine.Trim());
+        Styles.Add(ModulePlate.Naming());
         DockPanel.SetDock(toolbar.View, Dock.Top);
-        DockPanel.SetDock(statusBar, Dock.Bottom);
+        DockPanel.SetDock(statusBar.View, Dock.Bottom);
 
         // The two flexible columns are star-sized: GridSplitter redistributes
         // star weights, and a fixed-pixel column next to one just gets squeezed.
@@ -694,7 +680,7 @@ public sealed partial class MainWindow : Window
         ShowAssistant(false);
 
         root.Children.Add(toolbar.View);
-        root.Children.Add(statusBar);
+        root.Children.Add(statusBar.View);
         root.Children.Add(columns);
 
         return root;
@@ -932,121 +918,4 @@ public sealed partial class MainWindow : Window
     private async Task ShowAboutAsync() =>
         await this.ShowDialog("About", About.View());
 
-    /// <summary>
-    /// The bar along the bottom: what the patch costs, and whatever there is to
-    /// say about it.
-    /// </summary>
-    /// <remarks>
-    /// A grid rather than a row of controls, because a row hands every child the
-    /// width it asks for and lets the last fall off the end — and the report is
-    /// the one thing here that is worth trimming last. The count on the right is
-    /// sized to its own text rather than a share of the bar, so the report only
-    /// gives up width the count is actually using. Which sound backend is open
-    /// and which assistant is chosen are said in the About window, not here.
-    /// <para>
-    /// The letter is last, at the far edge, behind a rule: it is the one thing on
-    /// the bar that is not about the patch, and it is reached for rarely enough
-    /// that being out of the way is the point (ADR-0136). The rule is the
-    /// toolbar's, which divides the patch's buttons from the program's for the
-    /// same reason.
-    /// </para>
-    /// </remarks>
-    private Control BuildStatusBar()
-    {
-        var bar = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
-            Margin = new Thickness(12, 5),
-        };
-
-        // The popup behind the report hangs off the window rather than off the
-        // line, so what it is to look like has to be said here — the same way
-        // the palette's is, and for the same reason.
-        Styles.Add(ReportLine.Trim());
-        Styles.Add(ModulePlate.Naming());
-
-        // The gap a StackPanel gives for free, added by hand here since this is
-        // a grid. On the children rather than the grid, so the first column
-        // starts at the margin and the last one keeps every pixel it is given.
-        status.Margin = new Thickness(8, 0, 0, 0);
-
-        var letter = StatusGlyph(
-            "letter", Glyphs.Letter(), "Write to Flyback's author. Anything you like, good or bad.");
-
-        letter.Click += async (_, _) => await WriteToTheAuthorAsync();
-
-        // The same bar the count divides itself with, at the same size and color:
-        // a drawn rule here would be a second kind of separator on one line.
-        var rule = new TextBlock
-        {
-            Name = "statusRule",
-            Text = "|",
-            FontSize = Text.Body,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(10, 0, 0, 0),
-        };
-
-        // In the report's place while it shows: what is said meanwhile is about a
-        // patch that has not started, and is read once it has.
-        compiling.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == IsVisibleProperty) report.IsVisible = !compiling.IsVisible;
-        };
-
-        Grid.SetColumn(report, 0);
-        Grid.SetColumn(compiling, 0);
-        Grid.SetColumn(status, 1);
-        Grid.SetColumn(rule, 2);
-        Grid.SetColumn(letter, 3);
-
-        bar.Children.Add(report);
-        bar.Children.Add(compiling);
-        bar.Children.Add(status);
-        bar.Children.Add(rule);
-        bar.Children.Add(letter);
-
-        return new Border
-        {
-            Background = new SolidColorBrush(Colors.Panel),
-            BorderBrush = new SolidColorBrush(Colors.Edge),
-            BorderThickness = new Thickness(0, 1, 0, 0),
-            Child = bar,
-        };
-    }
-
-    /// <summary>
-    /// A button for the status bar: the same quiet flat square the dialog frame
-    /// closes with, sized so the bar stays as tall as its one line of prose.
-    /// </summary>
-    /// <remarks>
-    /// Not <see cref="ToolbarButtons.Glyph"/>, which is a toolbar's 34 by 30 and
-    /// would make the bar half again as tall. The theme's own minimum has to be
-    /// undone for that, which is what the two zeroes are. Drawn rather than
-    /// typed, since the shipped font has no envelope and what stands in for one
-    /// is the platform's emoji face.
-    /// </remarks>
-    private static Button StatusGlyph(string name, Control glyph, string tip)
-    {
-        var button = new Button
-        {
-            Name = name,
-            Content = glyph,
-            Width = 22,
-            Height = 18,
-            MinWidth = 0,
-            MinHeight = 0,
-            Padding = new Thickness(0),
-            Margin = new Thickness(8, 0, 0, 0),
-            Background = Brushes.Transparent,
-            BorderThickness = new Thickness(0),
-            Foreground = Text.Muted,
-            HorizontalContentAlignment = HorizontalAlignment.Center,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ToolTip.SetTip(button, tip);
-
-        return button;
-    }
 }
