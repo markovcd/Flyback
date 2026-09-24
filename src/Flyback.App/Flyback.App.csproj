@@ -167,33 +167,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="MainWindow.Editing.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Engine.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Files.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.FullScreen.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Inspector.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Palette.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Recording.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Source.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Updates.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
     <Compile Update="Controls\NodeEditor.Buses.cs">
       <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
@@ -209,47 +182,14 @@
     <Compile Update="Controls\NodeEditor.Tips.cs">
       <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
-    <Compile Update="MainWindow.Controls.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
+    <Compile Update="Controls\NodeEditor.Compact.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
-    <Compile Update="MainWindow.Encoding.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
+    <Compile Update="Controls\NodeEditor.Dial.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
-    <Compile Update="MainWindow.Layout.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Presets.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Recovery.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Transport.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Usage.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Document.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Letters.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.MissingPlugins.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.OutputSettings.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.Playback.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.PluginInstall.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
-    </Compile>
-    <Compile Update="MainWindow.RightPanel.cs">
-      <DependentUpon>MainWindow.cs</DependentUpon>
+    <Compile Update="Controls\NodeEditor.Remap.cs">
+      <DependentUpon>NodeEditor.cs</DependentUpon>
     </Compile>
   </ItemGroup>
 
