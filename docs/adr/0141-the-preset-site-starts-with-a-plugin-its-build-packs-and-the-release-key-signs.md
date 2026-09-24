@@ -50,7 +50,7 @@ already covers is left to the package, so the image, which has the signed
 
 **Every key is `RELEASE_SIGNING_KEY`.** The Release workflow reads its secret
 into that variable, and everything else reads the same variable: the site's
-image build, `deploy.sh`, and a run of the site that packs a build. On a
+image build, `publish-dev.sh`, and a run of the site that packs a build. On a
 developer's machine it holds a local test key, which `release-key.sh` and a
 Release run of the site make and keep in the user environment where there is
 none. A Debug build checks no keys at any stage, so a Debug site packs a build

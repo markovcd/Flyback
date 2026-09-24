@@ -5,13 +5,21 @@
 #
 #   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 #
-# Add --platform linux/arm64 for an ARM NAS. See deploy/site/README.md.
+# The Release workflow pushes it to ghcr.io/markovcd/flyback-site for amd64 and
+# arm64, and deploy/site/publish-dev.sh pushes a local build as :dev. See
+# deploy/site/README.md.
 
 ARG SDK=mcr.microsoft.com/dotnet/sdk:10.0
 ARG RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0
 
-FROM ${SDK} AS build
+# The build runs on the builder's own processor whatever the target: a
+# framework-dependent publish runs anywhere, so an arm64 image needs no emulation.
+FROM --platform=$BUILDPLATFORM ${SDK} AS build
 WORKDIR /src
+
+# What the site and its plugins report themselves as. Blank leaves it to
+# Directory.Build.props; the Release workflow passes the release's.
+ARG VERSION=""
 
 # Directory.Packages.props among them: it carries every package version, so a
 # restore without it has none.
@@ -33,9 +41,10 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     done 3< /tmp/site-plugins
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish src/Flyback.Server -c Release -o /app
+    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -o /app
 
 FROM ${RUNTIME}
+LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback
 WORKDIR /app
 COPY --from=build /app .
 

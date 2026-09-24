@@ -1,10 +1,19 @@
 # The site on the NAS. See README.md beside this file.
+#
+# One folder per channel, each with this file, its own data/ and media/, and a
+# .env choosing the image and the port:
+#
+#   flyback-site/.env        (nothing: the latest release on 8080)
+#   flyback-site-dev/.env    TAG=dev
+#                            PORT=8081
+#
+# Update with: docker compose pull && docker compose up -d
 services:
   presets:
-    image: flyback-site
+    image: ghcr.io/markovcd/flyback-site:${TAG:-latest}
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "${PORT:-8080}:8080"
     environment:
       # The admin at /admin.html, who can rename, unpublish and delete presets. Blank turns admin mode off.
       Site__Admin__User: ""

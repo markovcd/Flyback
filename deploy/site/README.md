@@ -13,38 +13,55 @@ browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
 
 ## The site
 
-`deploy.sh` does all of this over ssh: it builds the image for the NAS's processor, loads it there, sets up the folder the first time and restarts the container.
+The site is an image on GitHub's registry, `ghcr.io/markovcd/flyback-site`, for amd64 and arm64, in two channels:
+
+| Tag | Pushed by | Plugins signed with |
+|---|---|---|
+| `latest` and `X.Y.Z` | the Release workflow, after each release | the release key |
+| `dev` and `dev-<commit>` | `deploy/site/publish-dev.sh`, from this machine | the local test key |
+
+The NAS runs one folder per channel, each holding `compose.yaml` and its own `data/` and `media/`. A `.env` beside it picks the channel and the port:
 
 ```bash
-deploy/site/deploy.sh nas flyback-site
+mkdir -p flyback-site/data flyback-site/media && sudo chown 1654 flyback-site/data
+cp compose.yaml flyback-site/                      # latest, on 8080
+
+mkdir -p flyback-site-dev/data flyback-site-dev/media && sudo chown 1654 flyback-site-dev/data
+cp compose.yaml flyback-site-dev/
+printf 'TAG=dev
+PORT=8081
+' > flyback-site-dev/.env
 ```
 
-Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if the NAS needs it. `compose.yaml` is copied only when the NAS has none, so the admin's password set there survives a deploy.
+Start or update either one from its folder:
 
-The build packs each plugin the site starts with (the `PluginProject` items in `Flyback.Server.csproj`) and signs it with `RELEASE_SIGNING_KEY`, the variable the Release workflow reads its secret into, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On a developer's machine that variable holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none.
+```bash
+docker compose pull && docker compose up -d
+```
+
+The container runs as user 1654, so `data/` has to be writable by that user. `media/` only needs to be readable. `compose.yaml` holds the admin's password, so each folder's copy is its own.
+
+To publish the dev channel, log in to the registry once with a GitHub token that has `write:packages`, then run the script:
+
+```bash
+docker login ghcr.io -u markovcd
+```
+
+```bash
+deploy/site/publish-dev.sh
+```
+
+The first push makes the package private. Make it public once, under the package's settings on GitHub, so the NAS can pull without logging in.
+
+The build packs each plugin the site starts with (the `PluginProject` items in `Flyback.Server.csproj`) and signs it with `RELEASE_SIGNING_KEY`, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On GitHub that is the release key; on a developer's machine it holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none. A dev site's plugins therefore install only into a local build of Flyback.
 
 Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), the build lays those plugins out beside the site instead, and the site packs them again at every start, so the shelf always holds what was just built and a Flyback pointed at `http://localhost:8790` installs it. The default presets are read from the build the same way, and a changed one replaces the stored copy. A Debug run checks no keys and signs with `RELEASE_SIGNING_KEY` only where it is set; a Release run signs with it, and makes one where there is none.
 
-By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
+To build the image here without pushing it:
 
 ```bash
 docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 ```
-
-To build on this machine and load the image on the NAS instead:
-
-```bash
-docker save flyback-site | ssh nas docker load
-```
-
-On the NAS, put `compose.yaml` in a folder, create `data/` and `media/` next to it, and start it:
-
-```bash
-mkdir -p data media && sudo chown 1654 data
-docker compose up -d
-```
-
-The container runs as user 1654, so `data/` has to be writable by that user. `media/` only needs to be readable.
 
 It listens on port 8080. Put the NAS reverse proxy in front of it for HTTPS. The site reads the client's address from `X-Forwarded-For`, which is what the per-address rate limits count by, and believes that header only from the private ranges a proxy reaches a container over — so nothing but the proxy may be able to reach port 8080. Set `Site__KnownProxies` if the proxy is somewhere else; anything reaching the port from an address that is not on the list is counted by the address it actually connected from.
 
@@ -105,6 +122,7 @@ A patch that wires only a picture gets no track, one that wires only a sound get
 
 ## Looking after it
 
+- **Roll back** by setting `TAG` in `.env` to an earlier version or `dev-<commit>`.
 - **Back up** by copying `data/presets.db` (with the site stopped, or with `sqlite3 presets.db ".backup copy.db"`) and `media/`.
 - **Take a preset down** from admin mode: Unpublish hides it, Delete removes it. The site cannot write `media/`, so a deleted preset's files stay there until removed by hand:
 
