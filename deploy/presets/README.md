@@ -21,9 +21,9 @@ deploy/presets/deploy.sh nas flyback-presets
 
 Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if the NAS needs it. `compose.yaml` is copied only when the NAS has none, so the admin's password set there survives a deploy.
 
-The build packs the Figures plugin the site starts with and signs it with `RELEASE_SIGNING_KEY`, the variable the Release workflow reads its secret into, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On a developer's machine that variable holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none.
+The build packs each plugin the site starts with (the `PluginProject` items in `Flyback.Server.csproj`) and signs it with `RELEASE_SIGNING_KEY`, the variable the Release workflow reads its secret into, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On a developer's machine that variable holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none.
 
-Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), the build lays Figures out beside the site instead, and the site packs it again at every start, so the shelf always holds what was just built and a Flyback pointed at `http://localhost:8790` installs it. The default presets are read from the build the same way, and a changed one replaces the stored copy. A Debug run checks no keys and signs with `RELEASE_SIGNING_KEY` only where it is set; a Release run signs with it, and makes one where there is none.
+Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), the build lays those plugins out beside the site instead, and the site packs them again at every start, so the shelf always holds what was just built and a Flyback pointed at `http://localhost:8790` installs it. The default presets are read from the build the same way, and a changed one replaces the stored copy. A Debug run checks no keys and signs with `RELEASE_SIGNING_KEY` only where it is set; a Release run signs with it, and makes one where there is none.
 
 By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
 

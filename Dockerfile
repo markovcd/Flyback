@@ -140,11 +140,13 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 FROM scratch AS coverage
 COPY --from=measured /src/TestResults/ /
 
-# The Figures plugin as a signed package, which the preset site starts with and
-# the release carries (ADR-0141), at the release's version. The key arrives as a
-# build secret and leaves no trace in any layer:
+# Every plugin the preset site starts with (Flyback.Server.csproj's PluginProject
+# items) as a signed package, at the release's version. The site is what hands
+# them out (ADR-0141), so only release.sh off GitHub asks for them, beside the
+# release in dist/. The key arrives as a build secret and leaves no trace in any
+# layer:
 #
-#   docker build --target figures --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
+#   docker build --target site-plugins --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
 #
 # pack-plugin publishes the project, checks the package the way the editor
 # will, loads it once, and writes nothing the editor would refuse. Version
@@ -155,10 +157,15 @@ ARG VERSION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
-    Version=${VERSION} dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
-      pack-plugin src/Flyback.Plugins.Figures -o /out/Flyback.Plugins.Figures.fbkp --key /run/secrets/release-key
+    set -eu; \
+    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    mkdir -p /out; \
+    while IFS='|' read -r project name <&3; do \
+      Version=${VERSION} dotnet run --project src/Flyback.Cli -c ${CONFIGURATION} --no-build -- \
+        pack-plugin "$project" -o "/out/$name.fbkp" --key /run/secrets/release-key; \
+    done 3< /tmp/site-plugins
 
-FROM scratch AS figures
+FROM scratch AS site-plugins
 COPY --from=packed /out/ /
 
 FROM gate AS publish
@@ -207,8 +214,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     done
 
 # A release as the Release workflow publishes it: a zip of each platform's
-# folder, the Figures package, and SHA256SUMS with its signature. release.sh
-# runs it, on GitHub and on a machine with a local test key:
+# folder and SHA256SUMS with its signature. release.sh runs it, on GitHub and on
+# a machine with a local test key:
 #
 #   docker build --target release --build-arg VERSION=1.4.0 --secret id=release-key,env=RELEASE_SIGNING_KEY --output dist .
 #
@@ -226,12 +233,12 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=publish /out/ /artifacts/
-COPY --from=packed /out/ /dist/
 
 WORKDIR /artifacts
 
 RUN --mount=type=secret,id=release-key,required=true \
     set -eu; \
+    mkdir -p /dist; \
     for platform in *; do \
       case ${PACKAGE} in \
         zips) zip -qr /dist/flyback-${VERSION}-${platform}.zip ${platform} ;; \

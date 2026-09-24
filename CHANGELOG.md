@@ -61,7 +61,7 @@
 - Added Irrational: seven concentric orbits a turn apart every four minutes, each on a knob, drawing together into an alignment that is never quite exact and striking a degree of A minor into a long delay and a large room.
 - Installing a plugin a patch was refused for opens that patch again once Flyback has restarted.
 - The preset site starts with Tranquility: psytrance in G sharp with an FM lead that talks, on nine panel knobs, a rolling FM bass ducked under the kick, three builds that each land on a drop and Apollo 11 on the radio, subtitled, down a tunnel with a moon at the end.
-- The preset site starts with Figures, a plugin of three modules that are each a picture and a sound: Plate, a struck plate and the sand figure it settles into; Harmonograph, damped pendulums whose drawing is their chord; and Overtones, any picture read along a row as the overtones of a tone. Vigil, its preset, is dark ambient in D phrygian dominant played on all three. A release carries the package too.
+- The preset site starts with Figures, a plugin of three modules that are each a picture and a sound: Plate, a struck plate and the sand figure it settles into; Harmonograph, damped pendulums whose drawing is their chord; and Overtones, any picture read along a row as the overtones of a tone. Vigil, its preset, is dark ambient in D phrygian dominant played on all three.
 - The envelope at the end of the status bar writes to Flyback's author, with what build it was written from.
 - Noise read off a fast clock no longer sticks at full level after a day or more of playing.
 - A picture drawn on the graphics card no longer stutters after hours or days of playing.

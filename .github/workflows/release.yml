@@ -1,6 +1,5 @@
 # Builds a release with release.sh, tags it, and publishes it as a GitHub
-# Release: every platform zipped, the Figures plugin package, and a signed
-# SHA256SUMS, which is what lets Flyback install the release as an update.
+# Release: every platform zipped and a signed SHA256SUMS, which is what lets Flyback install the release as an update.
 # Everything but the publishing is release.sh, which runs the same on a machine
 # with a local test key.
 #
@@ -54,7 +53,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: |
             dist/*.zip
-            dist/*.fbkp
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
           generate_release_notes: true

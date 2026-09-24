@@ -31,15 +31,17 @@ reports survive; one the admin deleted stays deleted. A file that is neither a
 patch nor an installable package stops the site, as a bad setting does.
 
 **The package is made by the site's image build, signed with the release key
-handed in as a Docker build secret.** The site's Dockerfile runs
-`flyback-cli pack-plugin` on the Figures project with the `release-key` secret,
-which it requires, and writes `Defaults/Figures.fbkp` before publishing the site.
-The key is in no layer. A rebuilt image carries a fresh signature and so a new
+handed in as a Docker build secret.** The site's plugins are the `PluginProject`
+items in `Flyback.Server.csproj`, and its `ListSitePlugins` target names them for
+the builds that pack them, so another plugin is one line there. The site's
+Dockerfile runs `flyback-cli pack-plugin` on each with the `release-key` secret,
+which it requires, and writes `Defaults/<FolderName>.fbkp` before publishing the
+site. The key is in no layer. A rebuilt image carries a fresh signature and so a new
 file, which replaces the stored one; the version decides whether the plugins
 window offers anything.
 
 **A plugin built beside the site stands in for a package nobody shipped.** The
-site's build lays Figures out under `plugins/Figures/`, in Debug and Release
+site's build lays each out under `plugins/<FolderName>/`, in Debug and Release
 alike and never in its publish, and at every start the site packs any plugin
 build it finds there as a build for any system and seeds it like a package, so
 a run from the source lists what was just built. A plugin a shipped package
@@ -65,13 +67,19 @@ local builds, and nothing built locally installs a local release over a real one
 
 **The release is `release.sh`, and it runs off GitHub too.** It checks the key
 and the changelog, then builds the root Dockerfile's `release` stage: the gate,
-the publishes, Figures packed at the release's version, a zip per platform (a
-folder to run, off GitHub) and a signed `SHA256SUMS`, into `dist/`. The workflow
-runs it and publishes `dist/`. Run elsewhere it signs with the local test key
-and publishes nothing, and it is the local build of anything on `main`. Only
-GitHub stops at a key that does not pair with the committed public key or at a
-missing changelog heading. A Figures installed from a release and one installed
-from the site are one plugin to the editor's update rule.
+the publishes, a zip per platform (a folder to run, off GitHub) and a signed
+`SHA256SUMS`, into `dist/`. The workflow runs it and publishes `dist/`. Run
+elsewhere it signs with the local test key, publishes nothing, and is the local
+build of anything on `main`. Only GitHub stops at a key that does not pair with
+the committed public key or at a missing changelog heading.
+
+**The site's plugins reach people from the site, never from a release.** The
+GitHub release carries no `.fbkp`: the site is the one place such a plugin is
+listed, updated and rated, and a second copy on the releases page would be one
+the site knows nothing about. Off GitHub, `release.sh` also builds the root
+Dockerfile's `site-plugins` stage, which packs the same list at the release's
+version, and puts the packages beside the rest of `dist/`, outside the checksum
+list.
 
 **The plugin is not in the box.** It is not in the app's plugin list, so a
 crash in it counts as a stranger's, and the test projects load it as an

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # The preset site, as the NAS runs it. Built from the repository root, with the
-# release key the Figures plugin is signed with:
+# release key the site's plugins are signed with:
 #
 #   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-presets .
 #
@@ -17,19 +17,20 @@ WORKDIR /src
 # restore without it has none.
 COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
 COPY site/assets site/assets
-COPY src/Flyback.Core src/Flyback.Core
-COPY src/Flyback.Engine src/Flyback.Engine
-COPY src/Flyback.Plugins src/Flyback.Plugins
-COPY src/Flyback.Cli src/Flyback.Cli
-COPY src/Flyback.Plugins.Figures src/Flyback.Plugins.Figures
-COPY src/Flyback.Server src/Flyback.Server
+# All of src/, since the plugins the site starts with are whatever
+# Flyback.Server.csproj lists.
+COPY src src
 
-# The plugin the site starts with, packed and signed here with the release key
+# Each plugin the site starts with, packed and signed here with the release key
 # handed in as a build secret, so the site never holds a key (ADR-0141).
 RUN --mount=type=cache,target=/root/.nuget/packages \
     --mount=type=secret,id=release-key,required=true \
-    dotnet run --project src/Flyback.Cli -c Release -- pack-plugin src/Flyback.Plugins.Figures \
-      -o src/Flyback.Server/Defaults/Figures.fbkp --key /run/secrets/release-key
+    set -eu; \
+    dotnet msbuild src/Flyback.Server -t:ListSitePlugins -p:SitePluginsFile=/tmp/site-plugins -nologo -v:q; \
+    while IFS='|' read -r project name <&3; do \
+      dotnet run --project src/Flyback.Cli -c Release -- pack-plugin "$project" \
+        -o "src/Flyback.Server/Defaults/$name.fbkp" --key /run/secrets/release-key; \
+    done 3< /tmp/site-plugins
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish src/Flyback.Server -c Release -o /app

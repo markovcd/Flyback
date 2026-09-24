@@ -5,7 +5,7 @@
 #
 # host defaults to nas and folder to flyback-presets, relative to the remote home.
 # DOCKER overrides the remote docker command, for a NAS that wants "sudo docker".
-# RELEASE_SIGNING_KEY signs the Figures plugin the site starts with, as it signs a
+# RELEASE_SIGNING_KEY signs the plugins the site starts with, as it signs a
 # release; release-key.sh finds it or makes a local test key. The build takes it
 # as a secret and the image keeps no copy.
 set -euo pipefail

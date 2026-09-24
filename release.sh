@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Builds a release into dist/: every platform zipped, the Figures package, and a
-# signed SHA256SUMS. The Release workflow runs this and publishes dist/; run here,
-# it is the same build signed with a local test key, each platform is a folder to
-# run rather than a zip, and nothing is published.
+# Builds a release into dist/: every platform zipped and a signed SHA256SUMS. The
+# Release workflow runs this and publishes dist/; run here, it is the same build
+# signed with a local test key, each platform is a folder to run rather than a
+# zip, the packages of the plugins the preset site hands out land beside it, and
+# nothing is published.
 #
 #   ./release.sh [version]
 #
@@ -92,6 +93,14 @@ docker build --build-arg VERSION="$version" "${here[@]}" --target release \
 # What every copy of Flyback will check it against, before anything is published.
 if $github; then
   openssl dgst -sha256 -verify src/Flyback.App/Updates/release-key.pem -signature dist/SHA256SUMS.sig dist/SHA256SUMS
+fi
+
+# The preset site's plugins reach people from the site, never from a release.
+# The same arguments as above, so everything up to the pack comes from the cache.
+if ! $github; then
+  docker build --build-arg VERSION="$version" "${here[@]}" --target site-plugins \
+    --secret id=release-key,env=RELEASE_SIGNING_KEY --output "$temp/site-plugins" .
+  cp "$temp/site-plugins/"*.fbkp dist/
 fi
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then

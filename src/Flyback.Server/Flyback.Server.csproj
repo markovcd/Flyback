@@ -24,13 +24,18 @@
   </ItemGroup>
 
   <!--
-    A run from the source has no packed Figures, so the build lays the plugin out
-    beside the site, under plugins\Figures\, and the site packs it at every start.
-    Not published: the image gets the signed package instead.
+    The plugins the site starts with. A run from the source lays each out beside
+    the site, under plugins\<FolderName>\, and the site packs it at every start.
+    Not published: the image and release.sh pack each into <FolderName>.fbkp.
   -->
   <ItemGroup>
     <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" Publish="false" />
   </ItemGroup>
+
+  <!-- Writes each as "project|FolderName", a line apiece, for the builds that pack them. -->
+  <Target Name="ListSitePlugins">
+    <WriteLinesToFile File="$(SitePluginsFile)" Lines="@(PluginProject->'%(FullPath)|%(FolderName)')" Overwrite="true" />
+  </Target>
 
   <!-- The Pages site's own stylesheet, script and logo, so the two sites cannot drift apart. -->
   <ItemGroup>
