@@ -378,6 +378,42 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
+    /// <summary>
+    /// Everything an export can get wrong at once: noise needs its seed, the
+    /// filter and the delay carry state, and feedback remembers the frame before.
+    /// </summary>
+    [Given("a drifting rainbow that trails, with noise through a filter and a delay at the speakers")]
+    public void GivenAnEverythingPatch()
+    {
+        context.Add("clock", NodeCatalog.TimeTypeId);
+        context.Add("coords", "coord");
+        context.Add("drift", "math.add");
+        context.Add("tint", "color.hsv");
+        context.Add("dim", "color.gain");
+        context.Add("previous", "feedback");
+        context.Add("fade", "color.gain");
+        context.Add("trail", "math.add");
+        context.SetInput("dim", "gain", 0.5f);
+        context.SetInput("fade", "gain", 0.5f);
+        context.Wire("coords", "x", "drift", "a");
+        context.Wire("clock", "t", "drift", "b");
+        context.Wire("drift", "out", "tint", "hue");
+        context.Wire("tint", "color", "dim", "color");
+        context.Wire("previous", "color", "fade", "color");
+        context.Wire("dim", "color", "trail", "a");
+        context.Wire("fade", "color", "trail", "b");
+        Show("trail");
+
+        context.Add("noise", NodeCatalog.NoiseTypeId);
+        context.Add("filter", NodeCatalog.FilterTypeId);
+        context.Add("delay", NodeCatalog.DelayTypeId);
+        context.Wire("clock", "t", "noise", "in");
+        context.Wire("noise", "random", "filter", "in");
+        context.Wire("filter", "low", "delay", "in");
+        context.Wire("delay", "out", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+    }
+
     /// <summary>A Threshold on Time picks between the two pitches, so the frequency moves with no edit.</summary>
     [Given("a sine whose frequency jumps from {float} Hz to {float} Hz at {float} seconds")]
     public void GivenAJumpingSine(float from, float to, float seconds)
