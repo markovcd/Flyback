@@ -82,8 +82,11 @@ internal static class Handbook
           `|> out.left`, `out.volume = 0.6`.
         - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are
           Coordinates and Time, one shared module each, and cannot be bound
-          to anything else. `+ - * / %` are the
-          maths modules. `A3` and `C#4` are notes, on sockets that read notes.
+          to anything else. `+ - * / %` make one Expression of a whole sum,
+          and `floor`, `fract`, `abs`, `sin`, `pow`, `step` and the other one-
+          and two-socket maths functions join it with their sockets in order:
+          `floor(x * 8) / 8`. A panel knob stands in a sum as itself,
+          `t * rate(0..2)`. `A3` and `C#4` are notes, on sockets that read notes.
         - **A length of time is written as one**: `attack: 10ms`, `1.5s`.
           These sockets hold a power of ten, so a bare number is refused.
         - **A tune or a scale is a block** after the call:

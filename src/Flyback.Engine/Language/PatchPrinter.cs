@@ -311,10 +311,12 @@ public static class PatchPrinter
             // A sum places its Expression at its operator, and has no brackets of
             // its own for anything to be written into.
             if (written[i] is not CallExpr call) continue;
+            if (patch.Find(node) is not { } instance || modules.Get(instance.TypeId) is not { } def) continue;
+
+            // A function inside a sum is the Expression's too, and its brackets are the function's.
+            if (instance.TypeId == NodeCatalog.ExpressionTypeId && call.Target is not ("expression" or NodeCatalog.ExpressionTypeId)) continue;
 
             calls[node] = site;
-
-            if (patch.Find(node) is not { } instance || modules.Get(instance.TypeId) is not { } def) continue;
 
             foreach (var argument in call.Arguments)
             {
@@ -1243,12 +1245,44 @@ public static class PatchPrinter
         {
             if (def.Extra<FormulaExtra>() is not { } extra) return false;
 
-            var reads = new List<(int Socket, bool After)>();
+            var reads = new List<int>();
 
-            if (Formula.Infix(FormulaExtra.Of(node), extra.Functions, _ => "0", _ => "a", reads) is null) return false;
+            if (!Spellable(node, extra, reads)) return false;
 
-            return reads.All(read => Forward(node.Id, read.Socket) is not null);
+            return reads.Where(read => read >= 0).All(port =>
+                Forward(node.Id, port) is not null
+                || (patch.IncomingTo(node.Id, port) is null && Linked(node, def, port) is not null));
         }
+
+        /// <summary>Whether a formula has a spelling as the text's arithmetic, with what it reads in <paramref name="reads"/>.</summary>
+        private bool Spellable(NodeInstance node, FormulaExtra extra, List<int> reads)
+        {
+            var called = false;
+
+            var text = Formula.Infix(
+                FormulaExtra.Of(node),
+                extra.Functions,
+                function =>
+                {
+                    var name = Function(function);
+                    called |= name is not null;
+                    return name;
+                },
+                value => value.ToString("R", CultureInfo.InvariantCulture),
+                _ => "a",
+                reads);
+
+            // A call is folded back in only as far as a formula may run, and never
+            // into a module switched off, which would pass the call on instead.
+            return text is not null && (!called || (text.Length <= ExpressionFusion.Longest && !node.Off));
+        }
+
+        /// <summary>
+        /// A function as the call the text reads back into the same Expression:
+        /// one the fusing folds in, under a name no panel knob has.
+        /// </summary>
+        private string? Function(NodeDef function) =>
+            ExpressionFusion.Retired(function) && !plan.Panel.ContainsValue(Short(function)) ? Short(function) : null;
 
         /// <summary>A whole module, for a pipe that carries a position on.</summary>
         private Part Whole(Guid id)
@@ -1368,20 +1402,31 @@ public static class PatchPrinter
             if (def.Extra<FormulaExtra>() is not { } extra) return null;
 
             var formula = FormulaExtra.Of(node);
-            var reads = new List<(int Socket, bool After)>();
+            var reads = new List<int>();
 
             // A formula that is one socket and nothing else has no operator to
             // stand at, so written as a sum it would be its source alone and the
             // module would be gone. The call keeps it.
             if (formula.Trim() is "a" or "b" or "c" or "d") return null;
 
-            if (Formula.Infix(formula, extra.Functions, _ => "0", _ => "a", reads) is null) return null;
+            if (!Spellable(node, extra, reads)) return null;
 
-            var read = reads.Select(r => r.Socket).ToHashSet();
+            var read = reads.Where(r => r >= 0).ToHashSet();
+            var parts = new Dictionary<int, Part>();
 
             for (var port = 0; port < def.Inputs.Count; port++)
             {
                 var incoming = patch.IncomingTo(node.Id, port);
+
+                // A panel knob stands in the sum as itself, once: read twice it
+                // would read back as two sockets.
+                if (incoming is null && read.Contains(port) && Linked(node, def, port) is { } knob)
+                {
+                    if (reads.Count(r => r == port) > 1) return null;
+
+                    parts[port] = Part.Of(knob);
+                    continue;
+                }
 
                 if (read.Contains(port) != (incoming is not null)) return null;
                 if (incoming is null) continue;
@@ -1393,9 +1438,7 @@ public static class PatchPrinter
                     Name(inner);
             }
 
-            var parts = new Dictionary<int, Part>();
-
-            foreach (var port in read)
+            foreach (var port in read.Where(port => !parts.ContainsKey(port)))
             {
                 var wire = Forward(node.Id, port)!;
                 var part = From(wire);
@@ -1403,7 +1446,7 @@ public static class PatchPrinter
                 // A module written in full where the sum reads it twice would read
                 // back as two modules, and a pipeline would need brackets the layout
                 // cannot fold: either is said by name, so the sum stays a sum.
-                if ((part.Calls.Count > 0 && reads.Count(r => r.Socket == port) > 1) || !Atom(part.Text))
+                if ((part.Calls.Count > 0 && reads.Count(r => r == port) > 1) || !Atom(part.Text))
                 {
                     if (patch.Find(wire.SourceNode) is not { } source
                         || wire.SourceNode == plan.Coord
@@ -1426,19 +1469,14 @@ public static class PatchPrinter
             var text = Formula.Infix(
                 formula,
                 extra.Functions,
+                Function,
                 value => Value(value, PortDisplay.Number),
                 port => parts[port].Text,
                 reads);
 
             if (text is null) return null;
 
-            return new Part(
-                text,
-                [
-                    .. reads.Where(r => !r.After).SelectMany(r => parts[r.Socket].Calls),
-                    node.Id,
-                    .. reads.Where(r => r.After).SelectMany(r => parts[r.Socket].Calls),
-                ]);
+            return new Part(text, [.. reads.SelectMany(r => r < 0 ? [node.Id] : parts[r].Calls)]);
         }
 
         /// <summary>

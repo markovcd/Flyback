@@ -38,8 +38,9 @@ the socket reads a number, so a duration socket takes `20ms..400ms`.
 **A knob is a name like a `let`**, bound once and never a word every patch
 has. It is not a module's name either, since a knob with a range is written
 like a call; the printer turns a clash into `drive_knob`. It is not a signal: it
-is not piped, added to or wired, and a socket that follows one takes no number
-as well. A `def` declares none, since every call would add another to the panel.
+is not piped or wired, and a socket that follows one takes no number as well. A
+sum reads one as a socket of its Expression that follows the knob, so
+`t * rate(0..2)` is written the way it is meant. A `def` declares none, since every call would add another to the panel.
 
 **`print` writes the panel first**, and every socket that follows a knob names
 it, with the range and knee only where they are not the socket's own.

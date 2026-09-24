@@ -28,6 +28,26 @@ Feature: A patch can be written as text
     Then the text has the line "bent * x |> out.color"
     And the picture is as it was
 
+  Scenario: Arithmetic calling a function is written out as arithmetic
+    Given the text:
+      """
+      floor(x * 8) / 8 |> out.color
+      """
+    When the patch is written out as text and read back
+    Then the text has the line "floor(x * 8) / 8 |> out.color"
+    And the picture is as it was
+
+  Scenario: A panel knob scales a sum it stands in
+    Given the text:
+      """
+      panel level = 0
+      sine(freq: 220) * level(0..1) |> out.left
+      """
+    Then it reads without complaint
+    And the speakers are silent
+    When the patch is written out as text and read back
+    Then the text has the line "sine(freq: 220) * level(0..1) |> out.left"
+
   Scenario: Arithmetic nobody named is written out named after what it drives
     Given the text:
       """

@@ -33,7 +33,7 @@ public static class ExpressionFusion
     /// The longest a formula folded may run, so it reads on a line of text and
     /// most of it fits a module's title.
     /// </summary>
-    private const int Longest = 60;
+    internal const int Longest = 60;
 
     /// <summary>The Maths modules the language writes as an operator.</summary>
     private static readonly Dictionary<string, char> Operators = new()

@@ -306,10 +306,13 @@ A printing writes an Expression back as its sum
 ([0107](adr/0107-an-expression-is-printed-as-the-sum-it-is.md)) wherever that
 reads back as the same module. What is wired into it and cannot stand in a sum
 written out — a pipeline, another sum, a module the sum reads twice — is given
-a `let` and named there, so the sum stays a sum. Otherwise it writes the call,
-`x |> expression(a: _, formula: "floor(a * 8) / 8")`. That happens when the
-formula uses a function, `pi` or `tau`, or when a socket it reads rests on its
-knob.
+a `let` and named there, so the sum stays a sum. A function the formula calls
+is written as the call, `floor(x * 8) / 8`, with every argument, and a socket
+that follows a panel knob as the knob, `t * rate(0..2)`. Otherwise it writes
+the call, `x |> expression(a: _, formula: "clamp(a * 8, 0, 1)")`. That happens
+when the formula calls a Maths module of three sockets or more, which stays a
+module of its own; calls one function twice; is longer than a fused formula may
+run; is switched off; or reads a socket that rests on its knob.
 
 ### Duration literals
 
@@ -563,8 +566,10 @@ it hears the controller on any channel.
 
 A knob is a name like a `let`: bound once, never one of the words every patch
 already has, and never a module's name, since `cutoff(200..4000)` is written
-like a call. It is not a signal, so it is neither piped nor added to, and a
-socket that follows one takes no number as well. A `def` declares none, since
+like a call. It is not a signal, so it is never piped, and a socket that follows
+one takes no number as well. A sum may read one, `sine(freq: 3) * level` or
+`t * rate(0..2)`: each mention is a socket of the sum's Expression following the
+knob, over the range written or the socket's own. A `def` declares none, since
 every call would put another on the panel; a knob is declared outside and
 passed in.
 

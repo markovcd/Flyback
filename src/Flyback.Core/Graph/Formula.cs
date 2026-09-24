@@ -140,35 +140,49 @@ internal sealed class Formula
     /// where that would not read back as this formula.
     /// </summary>
     /// <remarks>
-    /// Only operators, numbers and sockets have a spelling there: a call is a
-    /// module of its own in the language and <c>pi</c> is a word it does not
-    /// know. Two numbers either side of an operator have none either, because the
+    /// Operators, numbers and sockets have a spelling there, and so does a call
+    /// to a function <paramref name="function"/> names, which the language reads
+    /// as that module and folds back in. <c>pi</c> is written as the number it is.
+    /// Two numbers either side of an operator have no spelling, because the
     /// language would fold them into one — and the formula only leaves them
     /// unfolded where folding would not be what it computes, as with <c>%</c>.
     /// </remarks>
+    /// <param name="function">What a call to a module is written as, or null where it has no spelling.</param>
     /// <param name="number">How a number is written.</param>
     /// <param name="socket">What stands for a socket, which is read as a single value.</param>
     /// <param name="reads">
-    /// Filled with each socket as the text reads it, and whether it stands after
-    /// the operator that joins the whole — which is where the language places the
-    /// module.
+    /// Filled, in the order the text reads them, with each socket, and with -1
+    /// wherever the language places the module: at a call, and at the operator
+    /// of a sum that is not part of a larger one.
     /// </param>
     public static string? Infix(
         string text,
         IReadOnlyDictionary<string, NodeDef> functions,
+        Func<NodeDef, string?> function,
         Func<float, string> number,
         Func<int, string> socket,
-        List<(int Socket, bool After)> reads)
+        List<int> reads)
     {
         if (Read(text, functions, out _) is not { root: var root }) return null;
 
-        return root is Call { Arguments.Count: 2 } whole && Operators.ContainsKey(whole.Module.TypeId)
-            ? Spell(whole, after: null)
-            : Spell(root, after: true);
+        // A call written twice is computed once here and would read back as two modules.
+        var called = new Dictionary<string, int>();
 
-        // 'after' is null only for the operator that joins the whole: what is on
-        // its left stands before it and what is on its right after.
-        string? Spell(Term term, bool? after)
+        Count(root);
+
+        return Spell(root, summing: false);
+
+        void Count(Term term)
+        {
+            if (term is not Call call) return;
+
+            if (!Operators.ContainsKey(call.Module.TypeId) && call.Module.TypeId != "math.neg")
+                called[call.ToString()] = called.GetValueOrDefault(call.ToString()) + 1;
+
+            foreach (var argument in call.Arguments) Count(argument);
+        }
+
+        string? Spell(Term term, bool summing)
         {
             switch (term)
             {
@@ -176,12 +190,13 @@ internal sealed class Formula
                     return number(literal.Value);
 
                 case Socket read:
-                    reads.Add((read.Index, after ?? false));
+                    reads.Add(read.Index);
                     return socket(read.Index);
 
                 case Call { Module.TypeId: "math.neg", Arguments: [var operand] } when operand is not Literal:
                 {
-                    if (Spell(operand, after ?? true) is not { } inner) return null;
+                    if (!summing) reads.Add(-1);
+                    if (Spell(operand, summing: true) is not { } inner) return null;
 
                     return Strength(operand) < Strength(term) ? $"-({inner})" : $"-{inner}";
                 }
@@ -190,8 +205,9 @@ internal sealed class Formula
                     when Operators.TryGetValue(call.Module.TypeId, out var sign)
                         && !(left is Literal && right is Literal):
                 {
-                    if (Spell(left, after ?? false) is not { } l) return null;
-                    if (Spell(right, after ?? true) is not { } r) return null;
+                    if (Spell(left, summing: true) is not { } l) return null;
+                    if (!summing) reads.Add(-1);
+                    if (Spell(right, summing: true) is not { } r) return null;
 
                     var strength = Strength(call);
 
@@ -199,6 +215,25 @@ internal sealed class Formula
                     if (Strength(right) <= strength) r = $"({r})";
 
                     return $"{l} {sign} {r}";
+                }
+
+                case Call call when !Operators.ContainsKey(call.Module.TypeId) && function(call.Module) is { } name:
+                {
+                    if (called[call.ToString()] > 1) return null;
+
+                    reads.Add(-1);
+
+                    // Every argument, since one left off would read back as the
+                    // knob it rests on and be written in the next time round.
+                    var arguments = new List<string>();
+
+                    foreach (var argument in call.Arguments.Concat(call.Module.Inputs.Skip(call.Arguments.Count).Select(port => (Term)new Literal(port.Default))))
+                    {
+                        if (Spell(argument, summing: false) is not { } spelled) return null;
+                        arguments.Add(spelled);
+                    }
+
+                    return $"{name}({string.Join(", ", arguments)})";
                 }
 
                 default:
@@ -212,7 +247,7 @@ internal sealed class Formula
     {
         Call { Module.TypeId: "math.neg" } => 3,
         Call { Module.TypeId: "math.add" or "math.sub" } => 1,
-        Call => 2,
+        Call call when Operators.ContainsKey(call.Module.TypeId) => 2,
         Literal { Value: < 0 } => 3,
         _ => 4,
     };

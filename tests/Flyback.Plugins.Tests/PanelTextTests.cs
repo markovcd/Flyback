@@ -64,14 +64,19 @@ public class PanelTextTests
         }
     }
 
-    /// <summary>Which knob each socket follows and how, by the knob's name rather than its id, sorted.</summary>
+    /// <summary>
+    /// Which knob each socket follows and how, by the knob's name rather than its
+    /// id, sorted. An Expression's sockets are lettered in the order its sum
+    /// reads them, so for one of those it is the knob that counts, not the letter.
+    /// </summary>
     private static List<string> Links(Patch patch) =>
     [
         .. patch.Nodes
             .SelectMany(node => ControlMap.All(node).Select(linked => (node, linked.Port, linked.Link)))
             .Where(linked => Catalog.Get(linked.node.TypeId) is { } def && Catalog.Normalled(def.Inputs[linked.Port]) is null)
             .Select(linked =>
-                $"{linked.node.TypeId}:{linked.Port} <- {patch.Control(linked.Link.Control)?.Name} "
+                $"{linked.node.TypeId}:{(linked.node.TypeId == NodeCatalog.ExpressionTypeId ? "?" : linked.Port)} "
+                + $"<- {patch.Control(linked.Link.Control)?.Name} "
                 + $"{linked.Link.Min}..{linked.Link.Max} {linked.Link.Knee}")
             .Order(StringComparer.Ordinal),
     ];

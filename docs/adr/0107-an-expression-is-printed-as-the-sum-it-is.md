@@ -57,3 +57,21 @@ sound. Printing the printing again gives the same text.
 **The printer writes a module's input as a pipe, as before.** `fract(t * 60)`
 read in comes back as `(t * 60 |> fract())`. That is how the printer writes
 every module whose input is wired, and nothing here changes it.
+
+## Amendment, 2026-09-24: functions and panel knobs are written in the sum
+
+A call in the text to a Maths module of one or two sockets is fused back into
+the Expression it sits in ([0109](0109-the-expression-stands-for-the-small-maths-modules.md)),
+so a formula's function has a spelling after all: the call, with every argument
+written, `pow(1 - abs(fract(a - b + 0.5) - 0.5) * 2, 6)` over what is wired in.
+A socket that follows a panel knob is written as the knob, which the binder now
+reads in a sum as a socket of its Expression.
+
+The call stays where the function would read back as something else: a Maths
+module of three sockets or more, which the fusing keeps as a module; one call
+written twice, which the formula computes once and the text would place twice;
+a formula longer than a fused one may run; and a module switched off, which
+would pass the called module on instead. The source map counts each call in a
+sum as the Expression's, with no brackets for a knob.
+
+Across the shipped presets the calls left fall from 284 to 54.

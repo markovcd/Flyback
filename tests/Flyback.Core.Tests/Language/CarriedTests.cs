@@ -356,17 +356,17 @@ public class CarriedTests
     [Fact]
     public void A_formula_is_a_named_string_both_ways()
     {
-        const string source = "expression(x, formula: \"floor(a * 45) / 45\") |> out.left";
+        const string source = "expression(x, formula: \"clamp(a * 45, 0, 1)\") |> out.left";
 
         var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
 
         load.Issues.ShouldBeEmpty(load.Report);
 
         var node = load.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
-        node.StateOf("expression")?["formula"]?.GetValue<string>().ShouldBe("floor(a * 45) / 45");
+        node.StateOf("expression")?["formula"]?.GetValue<string>().ShouldBe("clamp(a * 45, 0, 1)");
 
         var printed = PatchPrinter.Print(load.Patch, NodeCatalog.BuiltIn);
-        printed.ShouldContain("formula: \"floor(a * 45) / 45\"");
+        printed.ShouldContain("formula: \"clamp(a * 45, 0, 1)\"");
 
         var fresh = PatchLanguage.Build("expression(x) |> out.left", NodeCatalog.BuiltIn);
         PatchPrinter.Print(fresh.Patch, NodeCatalog.BuiltIn).ShouldNotContain("formula");

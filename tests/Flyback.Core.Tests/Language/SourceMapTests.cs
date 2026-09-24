@@ -221,6 +221,7 @@ public class SourceMapTests
                 // A sum written as arithmetic has no brackets to take a knob, and
                 // the only one it leaves unwired is a socket its formula never reads.
                 if ("+-*/%".Contains(printing.Source[span.From])) continue;
+                if (node.TypeId == NodeCatalog.ExpressionTypeId && !printing.Source[span.From..].StartsWith("expression(", StringComparison.Ordinal)) continue;
 
                 var socket = def.Inputs[port].Name.Replace(' ', '_');
 

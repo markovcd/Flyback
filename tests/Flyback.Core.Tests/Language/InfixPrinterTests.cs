@@ -91,20 +91,68 @@ public class InfixPrinterTests
         printed.ShouldBe("(x * 2 - 1) * (y + 0.5) - -x / 3 |> out.color\n");
     }
 
-    /// <summary>A formula with a function in it has no arithmetic to be written as, so it is the call.</summary>
-    [Fact]
-    public void A_formula_calling_a_function_is_printed_as_a_call()
+    /// <summary>A function the sum calls is written in it, and reads back folded into the one Expression.</summary>
+    [Theory]
+    [InlineData("floor(a * 8) / 8", "floor(x * 8) / 8 |> out.color")]
+    [InlineData("pow(1 - abs(fract(a + 0.5) - 0.5) * 2, 6)", "pow(1 - abs(fract(x + 0.5) - 0.5) * 2, 6) |> out.color")]
+    [InlineData("-floor(a)", "(-floor(x)) |> out.color")]
+    [InlineData("step(0.5, a) * 2", "step(0.5, x) * 2 |> out.color")]
+    [InlineData("pow(a)", "pow(x, 2) |> out.color")]
+    public void A_formula_calling_a_function_is_printed_as_the_sum(string formula, string line)
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var coord = b.Add(NodeCatalog.CoordTypeId);
-        var steps = Expression(b, "floor(a * 8) / 8", coord);
+        var steps = Expression(b, formula, coord);
         var sink = b.Add(NodeCatalog.OutputTypeId);
         b.Wire(steps, 0, sink, NodeCatalog.OutputColorPort);
 
         var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
+        var again = Build(printed);
 
-        printed.ShouldContain("expression(a: _, formula: \"floor(a * 8) / 8\")");
+        printed.ShouldBe(line + "\n");
+        Expressions(again).ShouldBe(1);
+        again.Nodes.Count(n => n.TypeId.StartsWith("math.", StringComparison.Ordinal)).ShouldBe(1);
+        SameInstrument(b.Patch, again, printed);
+        PatchPrinter.Print(again, NodeCatalog.BuiltIn).ShouldBe(printed);
+    }
+
+    /// <summary>
+    /// A function that keeps its knobs as a module of its own, one the formula
+    /// computes once but the text would write twice, and one in a module that is
+    /// switched off would each read back as something else, so those are the call.
+    /// </summary>
+    [Theory]
+    [InlineData("clamp(a * 8, 0, 1)", false)]
+    [InlineData("sin(a * 3) * sin(a * 3)", false)]
+    [InlineData("floor(a * 8) / 8", true)]
+    public void A_function_that_would_not_read_back_as_this_module_keeps_the_call(string formula, bool off)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var steps = Expression(b, formula, coord);
+        var sink = b.Add(NodeCatalog.OutputTypeId);
+        b.Wire(steps, 0, sink, NodeCatalog.OutputColorPort);
+        steps.Off = off;
+
+        var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
+
+        printed.ShouldContain($"formula: \"{formula}\"");
         SameInstrument(b.Patch, Build(printed), printed);
+    }
+
+    /// <summary>A socket that follows a panel knob is written in the sum as the knob.</summary>
+    [Theory]
+    [InlineData("panel level = 0.5\nsine(freq: 3) * level |> out.left", "sine(freq: 3) * level |> out.left")]
+    [InlineData("panel level = 0.5\nt * level(0..0.125) |> out.left", "t * level(0..0.125) |> out.left")]
+    public void A_panel_knob_stands_in_a_sum(string source, string line)
+    {
+        var original = Build(source);
+        var printed = PatchPrinter.Print(original, NodeCatalog.BuiltIn);
+
+        printed.ShouldContain(line);
+        printed.ShouldNotContain("expression(");
+        SameInstrument(original, Build(printed), printed);
+        PatchPrinter.Print(Build(printed), NodeCatalog.BuiltIn).ShouldBe(printed);
     }
 
     /// <summary>

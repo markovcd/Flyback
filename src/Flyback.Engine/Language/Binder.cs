@@ -864,6 +864,10 @@ public sealed class Binder
 
                 if (value is Figure figure) return new Operand(figure);
 
+                // A panel knob is a socket of the Expression that follows it, one
+                // per mention since each may read it over a range of its own.
+                if (value is Dial) return new Signal(value, (Guid.NewGuid(), 0));
+
                 if (Output(value) is { } from) return new Signal(value, from);
 
                 Complain(IssueCode.NotASignal, expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
