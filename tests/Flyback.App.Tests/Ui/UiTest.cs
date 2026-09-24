@@ -7,7 +7,9 @@ using Avalonia.VisualTree;
 using Avalonia.Themes.Fluent;
 using Xunit.Sdk;
 using Xunit.v3;
+using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.App.Tests.Ui;
 
@@ -82,6 +84,23 @@ public class UiTest : IDisposable
         Settle(window);
 
         return window;
+    }
+
+    /// <summary>
+    /// A canvas built the way the editor builds one, from its container, at the size
+    /// given. <paramref name="replace"/> swaps any of its services for a test's own.
+    /// </summary>
+    internal static NodeEditor NewCanvas(double width, double height, Action<IServiceCollection>? replace = null)
+    {
+        var services = new ServiceCollection().AddCanvas();
+        replace?.Invoke(services);
+
+        var canvas = services.BuildServiceProvider().GetRequiredService<NodeEditor>();
+
+        canvas.Width = width;
+        canvas.Height = height;
+
+        return canvas;
     }
 
     /// <summary>A shell whose window this test owns, and which is closed with it.</summary>

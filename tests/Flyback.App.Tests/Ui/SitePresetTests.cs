@@ -164,7 +164,7 @@ public sealed class SitePresetTests : UiTest
 
         window.Title.ShouldBe($"Nebula — {Program}");
         All<ModalOverlay>(window).ShouldBeEmpty();
-        All<NodeEditor>(window).Single().Patch.Nodes.ShouldContain(n => n.TypeId == "value");
+        All<NodeEditor>(window).Single().History.Patch.Nodes.ShouldContain(n => n.TypeId == "value");
     }
 
     [AvaloniaFact]

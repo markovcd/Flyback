@@ -66,7 +66,7 @@ public class AbortGestureTests : UiTest
         var source = b.Add(Sine, 40, 40);
         var fed = b.Add(Add, 400, 40);
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
         return (window, source, fed);
@@ -83,24 +83,24 @@ public class AbortGestureTests : UiTest
         var (window, source, fed) = Open();
         var editor = Editor(window);
 
-        editor.Patch.Connect(source.Id, 0, fed.Id, 0);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connect(source.Id, 0, fed.Id, 0);
+        editor.History.Record();
         Settle(window);
 
         window.MouseDown(OnWindow(window, Input(fed, 0)), MouseButton.Left);
         window.MouseMove(OnWindow(window, new Point(fed.X + 120, fed.Y + 200)));
         Settle(window);
 
-        editor.Patch.Connections.ShouldBeEmpty("the wire is in the hand, not on the socket");
+        editor.History.Patch.Connections.ShouldBeEmpty("the wire is in the hand, not on the socket");
 
         Escape(window);
 
-        var back = editor.Patch.Connections.ShouldHaveSingleItem();
+        var back = editor.History.Patch.Connections.ShouldHaveSingleItem();
         back.SourceNode.ShouldBe(source.Id);
         back.TargetNode.ShouldBe(fed.Id);
         back.TargetPort.ShouldBe(0);
 
-        editor.Gesturing.ShouldBeFalse();
+        editor.Gestures.Gesturing.ShouldBeFalse();
 
         // Letting go over another socket now patches nothing: the gesture the
         // button began is over, so this is a release and not a choice.
@@ -110,12 +110,12 @@ public class AbortGestureTests : UiTest
         window.MouseUp(elsewhere, MouseButton.Left);
         Settle(window);
 
-        editor.Patch.Connections.ShouldHaveSingleItem().TargetPort.ShouldBe(0);
+        editor.History.Patch.Connections.ShouldHaveSingleItem().TargetPort.ShouldBe(0);
 
         // And the whole lift cost no step, so one undo reaches past it to the
         // wire being made in the first place.
-        editor.Undo().ShouldBeTrue();
-        editor.Patch.Connections.ShouldBeEmpty();
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.Patch.Connections.ShouldBeEmpty();
     }
 
     /// <summary>A wire drawn new has nothing to put back, and is simply dropped.</summary>
@@ -129,11 +129,11 @@ public class AbortGestureTests : UiTest
         window.MouseMove(OnWindow(window, new Point(source.X + 200, source.Y + 40)));
         Settle(window);
 
-        editor.Gesturing.ShouldBeTrue("a wire is being drawn");
+        editor.Gestures.Gesturing.ShouldBeTrue("a wire is being drawn");
 
         Escape(window);
 
-        editor.Gesturing.ShouldBeFalse();
+        editor.Gestures.Gesturing.ShouldBeFalse();
 
         var socket = OnWindow(window, Input(fed, 0));
 
@@ -141,8 +141,8 @@ public class AbortGestureTests : UiTest
         window.MouseUp(socket, MouseButton.Left);
         Settle(window);
 
-        editor.Patch.Connections.ShouldBeEmpty("the wire was let go of, not plugged in");
-        editor.CanUndo.ShouldBeFalse("and nothing about the patch changed");
+        editor.History.Patch.Connections.ShouldBeEmpty("the wire was let go of, not plugged in");
+        editor.History.CanUndo.ShouldBeFalse("and nothing about the patch changed");
     }
 
     /// <summary>
@@ -161,13 +161,13 @@ public class AbortGestureTests : UiTest
         window.MouseMove(OnWindow(window, new Point(source.X + 160, source.Y + 90)));
         Settle(window);
 
-        var dragged = editor.Patch.Find(source.Id).ShouldNotBeNull();
+        var dragged = editor.History.Patch.Find(source.Id).ShouldNotBeNull();
         (dragged.X, dragged.Y).ShouldNotBe(was, "the module is in the hand");
 
         Escape(window);
 
         (dragged.X, dragged.Y).ShouldBe(was);
-        editor.Gesturing.ShouldBeFalse();
+        editor.Gestures.Gesturing.ShouldBeFalse();
 
         // Moving on with the button still down carries nothing, and the release
         // records no step.
@@ -176,7 +176,7 @@ public class AbortGestureTests : UiTest
         Settle(window);
 
         (dragged.X, dragged.Y).ShouldBe(was);
-        editor.CanUndo.ShouldBeFalse("a drag that was backed out of is not a step");
+        editor.History.CanUndo.ShouldBeFalse("a drag that was backed out of is not a step");
     }
 
     /// <summary>
@@ -189,7 +189,7 @@ public class AbortGestureTests : UiTest
         var (window, source, fed) = Open();
         var editor = Editor(window);
 
-        editor.Select(source.Id);
+        editor.Selection.Select(source.Id);
         Settle(window);
 
         var empty = OnWindow(window, new Point(fed.X - 80, fed.Y - 30));
@@ -198,12 +198,12 @@ public class AbortGestureTests : UiTest
         window.MouseMove(OnWindow(window, new Point(fed.X + NodeGeometry.Width, fed.Y + 40)));
         Settle(window);
 
-        editor.SelectedNodes.ShouldHaveSingleItem().Id.ShouldBe(fed.Id, "the band swept the other module");
+        editor.Selection.Nodes.ShouldHaveSingleItem().Id.ShouldBe(fed.Id, "the band swept the other module");
 
         Escape(window);
 
-        editor.SelectedNodes.ShouldHaveSingleItem().Id.ShouldBe(source.Id);
-        editor.Gesturing.ShouldBeFalse();
+        editor.Selection.Nodes.ShouldHaveSingleItem().Id.ShouldBe(source.Id);
+        editor.Gestures.Gesturing.ShouldBeFalse();
     }
 
     /// <summary>
@@ -223,7 +223,7 @@ public class AbortGestureTests : UiTest
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        editor.Gesturing.ShouldBeFalse();
+        editor.Gestures.Gesturing.ShouldBeFalse();
 
         var handled = false;
 

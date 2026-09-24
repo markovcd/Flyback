@@ -38,10 +38,10 @@ public class MultiSelectTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -77,7 +77,7 @@ public class MultiSelectTests : UiTest
     }
 
     private static string[] Selected(NodeEditor editor) =>
-        [.. editor.SelectedNodes.Select(n => n.TypeId).Order()];
+        [.. editor.Selection.Nodes.Select(n => n.TypeId).Order()];
 
     // --- what a click does --------------------------------------------------
 
@@ -144,15 +144,15 @@ public class MultiSelectTests : UiTest
         var (editor, window) = Editing(patch);
 
         Click(editor, window, Body(a));
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("value");
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("value");
 
         Click(editor, window, Body(b), RawInputModifiers.Control);
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("time");
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("time");
 
         // And taking the focused one back out moves the focus rather than
         // leaving the panel showing a module that is no longer selected.
         Click(editor, window, Body(b), RawInputModifiers.Control);
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("value");
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("value");
     }
 
     [AvaloniaFact]
@@ -231,9 +231,9 @@ public class MultiSelectTests : UiTest
         var from = Body(a);
 
         Drag(editor, window, from, from + new Vector(80, 0));
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        foreach (var node in editor.Patch.Nodes)
+        foreach (var node in editor.History.Patch.Nodes)
             (node.X, node.Y).ShouldBe(before[node.Id]);
     }
 
@@ -270,13 +270,13 @@ public class MultiSelectTests : UiTest
         Click(editor, window, Body(a));
         Click(editor, window, Body(b), RawInputModifiers.Control);
 
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
 
         patch.Nodes.ShouldNotContain(n => n.TypeId == "value" || n.TypeId == "time");
-        editor.SelectedNodes.ShouldBeEmpty();
+        editor.Selection.Nodes.ShouldBeEmpty();
 
-        editor.Undo().ShouldBeTrue();
-        editor.Patch.Nodes.Count(n => n.TypeId is "value" or "time")
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.Patch.Nodes.Count(n => n.TypeId is "value" or "time")
             .ShouldBe(2, "one gesture removed both, so one undo brings both back");
     }
 
@@ -295,7 +295,7 @@ public class MultiSelectTests : UiTest
         Click(editor, window, Body(a));
         Click(editor, window, Body(sink), RawInputModifiers.Control);
 
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
 
         patch.Nodes.ShouldNotContain(n => n.TypeId == "value");
         patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
@@ -318,7 +318,7 @@ public class MultiSelectTests : UiTest
         Click(editor, window, Body(a));
         Click(editor, window, Body(b), RawInputModifiers.Control);
 
-        editor.AddNode("osc.sine").ShouldNotBeNull();
+        editor.Edits.AddNode("osc.sine").ShouldNotBeNull();
 
         Selected(editor).ShouldBe(["osc.sine"]);
     }
@@ -337,7 +337,7 @@ public class MultiSelectTests : UiTest
         Click(editor, window, Body(a));
         Click(editor, window, Body(b), RawInputModifiers.Control);
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
         Selected(editor).ShouldBe(["time", "value"]);
     }
@@ -358,7 +358,7 @@ public class MultiSelectTests : UiTest
         var from = Body(a);
         Drag(editor, window, from, from + new Vector(60, 0));
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
         Selected(editor).ShouldBe(["time", "value"]);
     }
@@ -377,19 +377,19 @@ public class MultiSelectTests : UiTest
         var patch = Three(out _, out _, out _);
         var (editor, window) = Editing(patch);
 
-        editor.AddNode("osc.sine").ShouldNotBeNull();
+        editor.Edits.AddNode("osc.sine").ShouldNotBeNull();
         Settle(window);
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
         Settle(window);
 
-        editor.SelectedNodes.Count.ShouldBe(5);
+        editor.Selection.Nodes.Count.ShouldBe(5);
 
-        editor.Undo();
+        editor.History.Undo();
         Settle(window);
 
-        editor.SelectedNodes.Count.ShouldBe(4, "the four that were there before are still selected");
-        editor.SelectedNode.ShouldNotBeNull("and one of them is what the inspector is about");
+        editor.Selection.Nodes.Count.ShouldBe(4, "the four that were there before are still selected");
+        editor.Selection.Focused.ShouldNotBeNull("and one of them is what the inspector is about");
     }
 
     // --- selecting everything -----------------------------------------------
@@ -404,10 +404,10 @@ public class MultiSelectTests : UiTest
         var patch = Three(out _, out _, out _);
         var (editor, _) = Editing(patch);
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
 
         Selected(editor).ShouldBe(["coord", NodeCatalog.OutputTypeId, "time", "value"]);
-        editor.SelectedNode.ShouldNotBeNull("something has to be the one the inspector is about");
+        editor.Selection.Focused.ShouldNotBeNull("something has to be the one the inspector is about");
     }
 
     /// <summary>
@@ -422,10 +422,10 @@ public class MultiSelectTests : UiTest
 
         var (editor, _) = Editing(patch);
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
 
         Selected(editor).ShouldNotContain("nobody.knows");
-        editor.SelectedNodes.Count.ShouldBe(4);
+        editor.Selection.Nodes.Count.ShouldBe(4);
     }
 
     [AvaloniaFact]
@@ -433,7 +433,7 @@ public class MultiSelectTests : UiTest
     {
         var (editor, _) = Editing(new Patch());
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
 
         Selected(editor).ShouldBe([NodeCatalog.OutputTypeId], "every patch has one (ADR-0037)");
     }
@@ -449,8 +449,8 @@ public class MultiSelectTests : UiTest
         var patch = Three(out _, out _, out _);
         var (editor, _) = Editing(patch);
 
-        editor.SelectAll();
-        editor.DeleteSelected();
+        editor.Selection.SelectAll();
+        editor.Edits.DeleteSelected();
 
         patch.Nodes.Select(n => n.TypeId).ShouldBe([NodeCatalog.OutputTypeId]);
     }
@@ -496,7 +496,7 @@ public class MultiSelectTests : UiTest
         editor.RaiseEvent(pressed);
 
         pressed.Handled.ShouldBeFalse();
-        editor.SelectedNodes.ShouldBeEmpty();
+        editor.Selection.Nodes.ShouldBeEmpty();
     }
 
     /// <summary>
@@ -509,7 +509,7 @@ public class MultiSelectTests : UiTest
         var patch = Three(out _, out _, out _);
         var (editor, _) = Editing(patch);
 
-        var added = editor.AddNode("math.pow").ShouldNotBeNull();
+        var added = editor.Edits.AddNode("math.pow").ShouldNotBeNull();
 
         added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
         NodeCatalog.FormulaOf(added).ShouldBe("pow(a, b)");

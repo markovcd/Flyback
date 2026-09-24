@@ -85,12 +85,12 @@ public class PluginPreviewShotTests : UiTest
             x += NodeGeometry.Width + Gap;
         }
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
-        editor.FrameAll();
+        editor.View.FrameAll();
         Settle(window);
 
         var crop = box!.Value.TransformToAABB(editor.GraphToScreen).Inflate(Margin);

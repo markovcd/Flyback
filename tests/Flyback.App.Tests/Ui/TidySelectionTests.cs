@@ -49,10 +49,10 @@ public class TidySelectionTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -92,7 +92,7 @@ public class TidySelectionTests : UiTest
 
         var before = Where(patch);
 
-        editor.Tidy(onlySelected: true);
+        editor.Edits.Tidy(onlySelected: true);
 
         foreach (var node in far)
             (node.X, node.Y).ShouldBe(before[node.Id], $"{node.TypeId} is not selected");
@@ -114,7 +114,7 @@ public class TidySelectionTests : UiTest
 
         var before = Where(patch);
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
         // ReSharper disable once CompareOfFloatsByEqualityOperator
         far.ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y);
@@ -134,10 +134,10 @@ public class TidySelectionTests : UiTest
 
         var before = Where(patch);
 
-        editor.Tidy(onlySelected: true);
-        editor.Undo().ShouldBeTrue();
+        editor.Edits.Tidy(onlySelected: true);
+        editor.History.Undo().ShouldBeTrue();
 
-        foreach (var node in editor.Patch.Nodes)
+        foreach (var node in editor.History.Patch.Nodes)
             (node.X, node.Y).ShouldBe(before[node.Id]);
     }
 
@@ -156,7 +156,7 @@ public class TidySelectionTests : UiTest
 
         var before = editor.GraphToScreen;
 
-        editor.Tidy(onlySelected: true);
+        editor.Edits.Tidy(onlySelected: true);
         Settle(window);
 
         editor.GraphToScreen.ShouldBe(before);
@@ -173,11 +173,11 @@ public class TidySelectionTests : UiTest
         var (editor, _) = Editing(patch);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
         var before = Where(patch);
 
-        editor.Tidy(onlySelected: true);
+        editor.Edits.Tidy(onlySelected: true);
 
         said.ShouldContain("Nothing is selected");
 
@@ -210,7 +210,7 @@ public class TidySelectionTests : UiTest
         var window = Open();
         var patch = Apart(out var near, out var far);
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
@@ -238,7 +238,7 @@ public class TidySelectionTests : UiTest
 
         Pick(Editor(window), window, near);
 
-        var before = Where(Editor(window).Patch);
+        var before = Where(Editor(window).History.Patch);
 
         window.RaiseEvent(new KeyEventArgs
         {
@@ -267,7 +267,7 @@ public class TidySelectionTests : UiTest
 
         Pick(Editor(window), window, near);
 
-        var before = Where(Editor(window).Patch);
+        var before = Where(Editor(window).History.Patch);
 
         window.RaiseEvent(new KeyEventArgs
         {
@@ -295,7 +295,7 @@ public class TidySelectionTests : UiTest
 
         Pick(Editor(window), window, near);
 
-        var before = Where(Editor(window).Patch);
+        var before = Where(Editor(window).History.Patch);
 
         Press(window, RawInputModifiers.Control);
 
@@ -316,7 +316,7 @@ public class TidySelectionTests : UiTest
 
         Pick(Editor(window), window, near);
 
-        var before = Where(Editor(window).Patch);
+        var before = Where(Editor(window).History.Patch);
 
         Press(window, RawInputModifiers.None);
 

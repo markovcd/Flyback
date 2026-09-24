@@ -30,10 +30,10 @@ public class PatchDescriptionTests : UiTest
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldBeNull();
+        Editor(window).Selection.Focused.ShouldBeNull();
         return window;
     }
 
@@ -84,7 +84,7 @@ public class PatchDescriptionTests : UiTest
 
         Describe(window, "A green hum.");
 
-        Editor(window).Patch.Description.ShouldBe("A green hum.");
+        Editor(window).History.Patch.Description.ShouldBe("A green hum.");
         Description(window).Text.ShouldBe("A green hum.");
         Box(window).ShouldBeNull();
     }
@@ -95,10 +95,10 @@ public class PatchDescriptionTests : UiTest
         var window = Open();
 
         Describe(window, "A green hum.");
-        Editor(window).Undo().ShouldBeTrue();
+        Editor(window).History.Undo().ShouldBeTrue();
         Settle(window);
 
-        Editor(window).Patch.Description.ShouldBeNull();
+        Editor(window).History.Patch.Description.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -109,7 +109,7 @@ public class PatchDescriptionTests : UiTest
         Describe(window, "A green hum.");
         Describe(window, "  ");
 
-        Editor(window).Patch.Description.ShouldBeNull();
+        Editor(window).History.Patch.Description.ShouldBeNull();
     }
 
     /// <summary>On a canvas the text owns, the panel writes the line into the text.</summary>
@@ -127,16 +127,16 @@ public class PatchDescriptionTests : UiTest
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeTrue();
+        Editor(window).History.Locked.ShouldBeTrue();
 
         // Back on the canvas, with the caret's module let go of.
         All<Avalonia.Controls.Primitives.ToggleButton>(window).Single(b => b.Name == "code").IsChecked = false;
-        Editor(window).Select(null);
+        Editor(window).Selection.Select(null);
         Settle(window);
 
         Describe(window, "A hum.");
 
         text.Text.ShouldStartWith("description \"A hum.\"");
-        Editor(window).Patch.Description.ShouldBe("A hum.");
+        Editor(window).History.Patch.Description.ShouldBe("A hum.");
     }
 }

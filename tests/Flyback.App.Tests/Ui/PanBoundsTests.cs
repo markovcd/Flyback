@@ -23,8 +23,8 @@ public class PanBoundsTests : UiTest
     private const double Wide = 1200;
     private const double Tall = 800;
 
-    private const double ReachAcross = NodeEditor.ViewReachAcross;
-    private const double ReachDown = NodeEditor.ViewReachDown;
+    private const double ReachAcross = Viewport.ViewReachAcross;
+    private const double ReachDown = Viewport.ViewReachDown;
 
     private (NodeEditor Editor, Window Window) Editing()
     {
@@ -32,10 +32,10 @@ public class PanBoundsTests : UiTest
         builder.Add("value", 0, 0);
         builder.Add(NodeCatalog.OutputTypeId, 520, 0);
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         return (editor, window);
@@ -198,10 +198,10 @@ public class PanBoundsTests : UiTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
-        var editor = new NodeEditor { Width = veryWide, Height = Tall };
+        var editor = NewCanvas(veryWide, Tall);
         var window = Show(editor, veryWide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         var at = new Point(veryWide / 2, Tall / 2);
@@ -235,8 +235,8 @@ public class PanBoundsTests : UiTest
     [AvaloniaFact]
     public void The_view_reaches_a_little_past_the_canvas()
     {
-        NodeEditor.ViewReachAcross.ShouldBeGreaterThan(NodeInstance.Across);
-        NodeEditor.ViewReachDown.ShouldBeGreaterThan(NodeInstance.Down);
+        Viewport.ViewReachAcross.ShouldBeGreaterThan(NodeInstance.Across);
+        Viewport.ViewReachDown.ShouldBeGreaterThan(NodeInstance.Down);
 
         var (editor, window) = Editing();
 
@@ -261,13 +261,13 @@ public class PanBoundsTests : UiTest
         builder.Add("value", -NodeInstance.Across, 0);
         builder.Add(NodeCatalog.OutputTypeId, NodeInstance.Across, 0);
 
-        var editor = new NodeEditor { Width = veryWide, Height = Tall };
+        var editor = NewCanvas(veryWide, Tall);
         var window = Show(editor, veryWide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
-        editor.FrameAll();
+        editor.View.FrameAll();
         Settle(window);
 
         var inverse = editor.GraphToScreen.Invert();

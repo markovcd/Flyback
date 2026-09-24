@@ -57,12 +57,12 @@ public class SkinShotTests : UiTest
             var builder = new PatchBuilder(added.Catalog);
             var node = builder.Add(def.TypeId, Across, Down);
 
-            var editor = new NodeEditor { Width = Wide, Height = Tall };
+            var editor = NewCanvas(Wide, Tall);
             var window = Show(editor, Wide);
 
-            editor.Patch = builder.Patch;
+            editor.History.Open(builder.Patch);
             Settle(window);
-            editor.FrameAll();
+            editor.View.FrameAll();
             Settle(window);
 
             var bounds = NodeGeometry.Bounds(node, def);
@@ -185,16 +185,16 @@ public class SkinShotTests : UiTest
             // Large enough that the fit reaches its own 1.4 ceiling rather than
             // shrinking to hold the patch: a fresh patch has an Output in it as
             // well, and the view frames both.
-            var editor = new NodeEditor { Width = Wide, Height = Tall };
+            var editor = NewCanvas(Wide, Tall);
             var window = Show(editor, Wide);
 
-            editor.Patch = builder.Patch;
+            editor.History.Open(builder.Patch);
             Settle(window);
 
             // Again now the control has a size. The fit that runs when the patch
             // arrives sees whatever bounds the layout had got to, which for a
             // window still being laid out is not the ones it ends up with.
-            editor.FrameAll();
+            editor.View.FrameAll();
             Settle(window);
 
             // Read off the transform rather than hunted for in the pixels, and

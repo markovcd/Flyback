@@ -88,7 +88,7 @@ internal sealed class PanelKnobs
             Dispatcher.UIThread.Post(ShowHeard);
         };
 
-        View.Reading = (id, value) => StageKnobs.Reading(editor.Patch, id, value);
+        View.Reading = (id, value) => StageKnobs.Reading(editor.History.Patch, id, value);
 
         View.Label = binding => Instruments.Label(binding, Source(binding.Device));
         View.Explain = binding => Instruments.Describe(binding, Source(binding.Device));
@@ -101,18 +101,18 @@ internal sealed class PanelKnobs
 
         View.BindRequested += (id, binding) =>
         {
-            if (editor.Patch.Control(id) is not { } control) return;
+            if (editor.History.Patch.Control(id) is not { } control) return;
 
             learning?.Cancel();
             control.Midi = binding;
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
             report.Say($"'{control.Name}' follows {Instruments.Describe(binding, Source(binding.Device))}.");
         };
 
         View.Describe = id =>
         {
-            var names = ControlMap.Following(editor.Patch, id)
+            var names = ControlMap.Following(editor.History.Patch, id)
                 .Select(f => NodeCatalog.Get(f.Node.TypeId) is { } def && f.Port < def.Inputs.Count
                     ? $"{f.Node.Title(def)} › {def.Inputs[f.Port].Name}"
                     : null)
@@ -124,9 +124,9 @@ internal sealed class PanelKnobs
 
         View.AddRequested += () =>
         {
-            var added = editor.Patch.AddControl();
+            var added = editor.History.Patch.AddControl();
 
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
             Link(added.Id);
         };
@@ -136,41 +136,41 @@ internal sealed class PanelKnobs
         View.TurnEnded += document.LetGoOfKnob;
         Stage.TurnEnded += document.LetGoOfKnob;
 
-        View.LinkRequested += id => Link(editor.LinkingControl == id ? null : id);
+        View.LinkRequested += id => Link(editor.Linking.Control == id ? null : id);
 
         View.LearnRequested += id => _ = LearnAsync(id);
         View.LearnOnwardRequested += id => _ = LearnAsync(id, onward: true);
 
         View.ForgetRequested += id =>
         {
-            if (editor.Patch.Control(id) is not { } control) return;
+            if (editor.History.Patch.Control(id) is not { } control) return;
 
             control.Midi = null;
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
         };
 
         View.Renamed += (id, name) =>
         {
-            if (editor.Patch.Control(id) is not { } control) return;
+            if (editor.History.Patch.Control(id) is not { } control) return;
 
             control.Name = name;
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
         };
 
         View.Logarithmic = id =>
         {
-            var links = ControlMap.Following(editor.Patch, id).ToList();
+            var links = ControlMap.Following(editor.History.Patch, id).ToList();
 
             return links.Count == 0 ? null : links.All(f => f.Link.Knee > 0f);
         };
 
         View.LogarithmicRequested += (id, inDecades) =>
         {
-            if (editor.Patch.Control(id) is not { } knob) return;
+            if (editor.History.Patch.Control(id) is not { } knob) return;
 
-            var following = ControlMap.Following(editor.Patch, id).ToList();
+            var following = ControlMap.Following(editor.History.Patch, id).ToList();
 
             foreach (var (node, port, link) in following)
             {
@@ -187,35 +187,35 @@ internal sealed class PanelKnobs
                 }
             }
 
-            editor.NotifyPatchChanged();
+            editor.History.Record();
         };
 
         View.MoveRequested += (id, index) =>
         {
-            if (!editor.Patch.MoveControl(id, index)) return;
+            if (!editor.History.Patch.MoveControl(id, index)) return;
 
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
         };
 
         View.RemoveRequested += id =>
         {
-            if (editor.LinkingControl == id) Link(null);
+            if (editor.Linking.Control == id) Link(null);
             if (View.Learning == id) learning?.Cancel();
 
-            if (!editor.Patch.RemoveControl(id)) return;
+            if (!editor.History.Patch.RemoveControl(id)) return;
 
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             document.PanelEdited();
         };
 
-        editor.SocketPicked += (_, pick) => PickSocket(pick);
+        editor.Linking.SocketPicked += (_, pick) => PickSocket(pick);
     }
 
     /// <summary>A knob turned by hand, on the panel or over the picture.</summary>
     public void Turn(Guid id, float value)
     {
-        if (editor.Patch.Control(id) is not { } control) return;
+        if (editor.History.Patch.Control(id) is not { } control) return;
 
         control.Value = value;
         Hub.Set(id, value);
@@ -286,26 +286,26 @@ internal sealed class PanelKnobs
     /// <summary>Redraws the panel from the patch. Called after every recompile.</summary>
     public void Refresh()
     {
-        var knobs = editor.Patch.Controls ?? [];
+        var knobs = editor.History.Patch.Controls ?? [];
 
-        Hub.Follow(editor.Patch, preview.Live, audio.Live);
+        Hub.Follow(editor.History.Patch, preview.Live, audio.Live);
         View.Show(knobs);
-        foreach (var stage in Stages) stage.Show(editor.Patch);
+        foreach (var stage in Stages) stage.Show(editor.History.Patch);
         SyncStages();
 
         if (knobs.Count > 0 && knobsShown == 0) Wanted?.Invoke(this, EventArgs.Empty);
         knobsShown = knobs.Count;
 
-        if (editor.LinkingControl is { } linking && editor.Patch.Control(linking) is null) Link(null);
+        if (editor.Linking.Control is { } linking && editor.History.Patch.Control(linking) is null) Link(null);
     }
 
     /// <summary>Starts linking sockets to a knob, or stops with null.</summary>
     public void Link(Guid? control)
     {
-        editor.LinkingControl = control;
+        editor.Linking.Control = control;
         View.Linking = control;
 
-        if (control is { } id && editor.Patch.Control(id) is { } knob)
+        if (control is { } id && editor.History.Patch.Control(id) is { } knob)
         {
             Wanted?.Invoke(this, EventArgs.Empty);
             report.Say($"Click sockets on the canvas to link them to '{knob.Name}', or a linked one to let it go. Esc when done.");
@@ -315,14 +315,14 @@ internal sealed class PanelKnobs
     /// <summary>Links a clicked socket to the knob being linked, or lets it go if it already follows it.</summary>
     private void PickSocket(SocketPick pick)
     {
-        if (editor.LinkingControl is not { } id || editor.Patch.Control(id) is not { } knob) return;
-        if (editor.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
+        if (editor.Linking.Control is not { } id || editor.History.Patch.Control(id) is not { } knob) return;
+        if (editor.History.Patch.Find(pick.Node) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
         if (pick.Port >= def.Inputs.Count) return;
 
         var spec = def.Inputs[pick.Port];
         var socket = $"{node.Title(def)} › {spec.Name}";
 
-        if (editor.Patch.IncomingTo(node.Id, pick.Port) is not null || !NodeEditor.Linkable(spec))
+        if (editor.History.Patch.IncomingTo(node.Id, pick.Port) is not null || !KnobLinking.Linkable(spec))
         {
             report.Say($"'{socket}' cannot follow a knob: only a socket resting on its own knob can.");
             return;
@@ -333,7 +333,7 @@ internal sealed class PanelKnobs
             if (pick.Port < node.InputValues.Length) node.InputValues[pick.Port] = existing.At(knob.Value);
 
             ControlMap.Unlink(node, pick.Port);
-            editor.NotifyPatchChanged();
+            editor.History.Record();
             report.Say($"'{socket}' no longer follows '{knob.Name}'.");
             return;
         }
@@ -343,14 +343,14 @@ internal sealed class PanelKnobs
 
         // A knob linked for the first time is turned to where the socket already is,
         // so linking changes nothing that is heard or seen.
-        if (!ControlMap.Following(editor.Patch, id).Any())
+        if (!ControlMap.Following(editor.History.Patch, id).Any())
         {
             knob.Value = link.Inverse(resting);
             Hub.Set(id, knob.Value);
         }
 
         ControlMap.Link(node, pick.Port, link);
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         report.Say($"'{socket}' follows '{knob.Name}' from {spec.Format(link.Min)} to {spec.Format(link.Max)}. Esc when done.");
     }
 
@@ -362,7 +362,7 @@ internal sealed class PanelKnobs
     /// </summary>
     private async Task LearnAsync(Guid id, bool onward = false)
     {
-        if (editor.Patch.Control(id) is null) return;
+        if (editor.History.Patch.Control(id) is null) return;
 
         learning?.Cancel();
 
@@ -374,7 +374,7 @@ internal sealed class PanelKnobs
             return;
         }
 
-        var knobs = editor.Patch.Controls ?? [];
+        var knobs = editor.History.Patch.Controls ?? [];
         var from = knobs.FindIndex(knob => knob.Id == id);
         var run = onward ? knobs.Skip(from).Select(knob => knob.Id).ToList() : [id];
 
@@ -392,7 +392,7 @@ internal sealed class PanelKnobs
 
             for (var i = 0; i < run.Count; i++)
             {
-                if (editor.Patch.Control(run[i]) is not { } knob) continue;
+                if (editor.History.Patch.Control(run[i]) is not { } knob) continue;
 
                 showing = knob.Id;
                 View.Learning = knob.Id;
@@ -402,13 +402,13 @@ internal sealed class PanelKnobs
 
                 var moved = await Hub.LearnAsync(devices, cancel.Token, last);
 
-                if (moved is null || editor.Patch.Control(knob.Id) is not { } still) return;
+                if (moved is null || editor.History.Patch.Control(knob.Id) is not { } still) return;
 
                 var source = Source(moved.Device);
                 var binding = Settled(moved, source);
 
                 still.Midi = binding;
-                editor.NotifyPatchChanged();
+                editor.History.Record();
                 document.PanelEdited();
                 last = moved;
 
@@ -447,7 +447,7 @@ internal sealed class PanelKnobs
     /// <summary>Stops linking and learning, and says whether there was either to stop.</summary>
     public bool StopModes()
     {
-        var stopped = editor.LinkingControl is not null || learning is not null;
+        var stopped = editor.Linking.Control is not null || learning is not null;
 
         learning?.Cancel();
         Link(null);
@@ -469,7 +469,7 @@ internal sealed class PanelKnobs
 
         foreach (var (id, value) in moved)
         {
-            if (editor.Patch.Control(id) is not { } control) continue;
+            if (editor.History.Patch.Control(id) is not { } control) continue;
 
             control.Value = value;
             View.Move(id, value, heard: true);

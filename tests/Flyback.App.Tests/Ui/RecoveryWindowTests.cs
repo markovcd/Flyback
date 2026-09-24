@@ -53,7 +53,7 @@ public class RecoveryWindowTests : UiTest
 
         window.Recover(Work(patch)).ShouldBeTrue();
 
-        All<NodeEditor>(window).Single().Patch.Nodes.Count.ShouldBe(patch.Nodes.Count);
+        All<NodeEditor>(window).Single().History.Patch.Nodes.Count.ShouldBe(patch.Nodes.Count);
         window.Title.ShouldBe($"drift — {GlobalConstants.ApplicationName} •");
     }
 
@@ -86,7 +86,7 @@ public class RecoveryWindowTests : UiTest
         Recovery.Orphans(folder).ShouldBeEmpty("the snapshot was restored, so nothing is left to offer");
 
         // Saved, so the close asks nothing and lets go of the lock.
-        All<NodeEditor>(window).Single().MarkSaved();
+        All<NodeEditor>(window).Single().History.MarkSaved();
         window.Close();
     }
 
@@ -101,7 +101,7 @@ public class RecoveryWindowTests : UiTest
         Recovery.Orphans(folder).ShouldBeEmpty("the window that restored it is still running");
 
         // Saved, so the close asks nothing and goes through.
-        All<NodeEditor>(window).Single().MarkSaved();
+        All<NodeEditor>(window).Single().History.MarkSaved();
         window.Close();
 
         Directory.EnumerateFiles(folder).ShouldBeEmpty("a window closed on purpose leaves nothing to offer");

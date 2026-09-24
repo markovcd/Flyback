@@ -27,7 +27,7 @@ public class PreviewVisibilityTests : UiTest
         window.Show();
         Settle(window);
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
 
         Settle(window);
 
@@ -90,11 +90,11 @@ public class PreviewVisibilityTests : UiTest
         var window = Open(WiredTo(NodeCatalog.OutputColorPort));
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
 
-        Editor(window).Patch = WiredTo(NodeCatalog.OutputLeftPort);
+        Editor(window).History.Open(WiredTo(NodeCatalog.OutputLeftPort));
         Settle(window);
         Preview(window).IsEffectivelyVisible.ShouldBeFalse();
 
-        Editor(window).Patch = WiredTo(NodeCatalog.OutputColorPort);
+        Editor(window).History.Open(WiredTo(NodeCatalog.OutputColorPort));
         Settle(window);
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
     }
@@ -112,8 +112,8 @@ public class PreviewVisibilityTests : UiTest
         Preview(window).IsEffectivelyVisible.ShouldBeTrue();
 
         var editor = Editor(window);
-        editor.Patch.Connections.Clear();
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connections.Clear();
+        editor.History.Record();
         Dispatcher.UIThread.RunJobs();
         Settle(window);
 

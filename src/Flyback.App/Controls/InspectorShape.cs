@@ -17,9 +17,9 @@ internal static class InspectorShape
         // selection change and would otherwise leave a stale list on screen.
         // Whether it is open is in here for the same reason: the button that
         // opens it says which way it goes.
-        if (editor.SelectedGroup is { } group)
+        if (editor.Selection.Group is { } group)
         {
-            var sockets = editor.Patch.SocketsOf(group);
+            var sockets = editor.History.Patch.SocketsOf(group);
 
             // The name is in here as well, because the panel does not only show
             // it: the button that keeps a group in the module list is offered on
@@ -30,7 +30,7 @@ internal static class InspectorShape
             // it goes.
             var shape = new StringBuilder(
                 $"g{group.Id:N}{(group.Collapsed ? 'c' : 'o')}"
-                + $"{(editor.SelectionIsOff ? '-' : '+')}{group.Name}");
+                + $"{(editor.Edits.SelectionIsOff ? '-' : '+')}{group.Name}");
 
             // Whether each is wired as well as which they are: a socket keeps its
             // row when the wire comes off, but it grows the button that takes it
@@ -40,49 +40,49 @@ internal static class InspectorShape
             foreach (var socket in sockets.Inputs.Concat(sockets.Outputs))
                 shape.Append(
                     $"{(socket.IsOutput ? 'o' : 'i')}{socket.Node:N}.{socket.Port}"
-                    + $"{(editor.Patch.Wired(group, socket) ? '+' : '-')}"
+                    + $"{(editor.History.Patch.Wired(group, socket) ? '+' : '-')}"
                     + (socket.IsOutput
-                        ? $"{WireEnds.OutOf(editor.Patch, socket.Node, socket.Port)}|"
-                        : Input(editor.Patch, editor.Patch.Find(socket.Node), socket.Port)));
+                        ? $"{WireEnds.OutOf(editor.History.Patch, socket.Node, socket.Port)}|"
+                        : Input(editor.History.Patch, editor.History.Patch.Find(socket.Node), socket.Port)));
 
             return shape.ToString();
         }
 
-        if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
+        if (editor.Selection.Focused is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
             return string.Empty;
 
         var patched = new StringBuilder();
 
         for (var i = 0; i < def.Inputs.Count; i++)
-            patched.Append(Input(editor.Patch, node, i));
+            patched.Append(Input(editor.History.Patch, node, i));
 
         // Each row names the far end of its wires, so a rewire or a rename there
         // changes the panel.
         for (var i = 0; i < def.Outputs.Count; i++)
-            patched.Append($"{WireEnds.OutOf(editor.Patch, node.Id, i)}|");
+            patched.Append($"{WireEnds.OutOf(editor.History.Patch, node.Id, i)}|");
 
         // A knob's name and range are drawn on its row, so renaming it or changing
         // the range from elsewhere has to rebuild the panel.
         var linked = string.Concat(ControlMap.All(node).Select(l =>
-            $"{l.Port}{editor.Patch.Control(l.Link.Control)?.Name}{l.Link.Min}{l.Link.Max}"));
+            $"{l.Port}{editor.History.Patch.Control(l.Link.Control)?.Name}{l.Link.Min}{l.Link.Max}"));
 
         // Which groups the selection touches and which way round each is drawn,
         // because that is what the open and close buttons are offered on.
         var groups = new StringBuilder();
 
-        foreach (var touched in editor.SelectedGroups)
+        foreach (var touched in editor.Selection.Groups)
             groups.Append($"{touched.Id:N}{(touched.Collapsed ? 'c' : 'o')}");
 
         // Switching a module off is not a selection change either, and the button
         // that does it says which way it goes.
-        var switched = editor.SelectionIsOff ? '-' : '+';
+        var switched = editor.Edits.SelectionIsOff ? '-' : '+';
 
         // An Auto remap's rows read the ranges at the far ends of its wires, which
         // move when its output is patched or the module feeding it is turned.
-        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.Patch, node).ToString() : "";
+        var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.History.Patch, node).ToString() : "";
 
         // A row not on its box's edge carries the button that puts it there.
-        var edge = editor.Patch.GroupOf(node.Id) is { } home
+        var edge = editor.History.Patch.GroupOf(node.Id) is { } home
             ? string.Concat(home.Exposed.Where(s => s.Node == node.Id).Select(s => $"{(s.IsOutput ? 'o' : 'i')}{s.Port}"))
             : "";
 

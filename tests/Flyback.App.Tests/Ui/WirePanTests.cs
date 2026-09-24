@@ -26,10 +26,10 @@ public class WirePanTests : UiTest
         var fed = builder.Add("math.add", 500, 300);
         builder.Add(NodeCatalog.OutputTypeId, 900, 40);
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         return (editor, window, source, fed);
@@ -80,7 +80,7 @@ public class WirePanTests : UiTest
         window.MouseUp(OnScreen(editor, to), MouseButton.Left);
         Settle(window);
 
-        editor.Patch.IncomingTo(fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(source.Id);
+        editor.History.Patch.IncomingTo(fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(source.Id);
     }
 
     [AvaloniaFact]
@@ -144,8 +144,8 @@ public class WirePanTests : UiTest
 
         new Point(source.X, source.Y).ShouldNotBe(start, "the module was moved");
 
-        editor.CanUndo.ShouldBeTrue("a module that moved is a step to take back");
-        editor.IsModified.ShouldBeTrue("and work that has not been saved");
+        editor.History.CanUndo.ShouldBeTrue("a module that moved is a step to take back");
+        editor.History.IsModified.ShouldBeTrue("and work that has not been saved");
     }
 
     /// <summary>
@@ -177,6 +177,6 @@ public class WirePanTests : UiTest
 
         new Point(source.X, source.Y).ShouldNotBe(start, "the module was moved");
 
-        editor.CanUndo.ShouldBeTrue("a module that moved is a step to take back");
+        editor.History.CanUndo.ShouldBeTrue("a module that moved is a step to take back");
     }
 }

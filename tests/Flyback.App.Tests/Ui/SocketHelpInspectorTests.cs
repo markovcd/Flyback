@@ -33,10 +33,10 @@ public class SocketHelpInspectorTests : UiTest
 
         var editor = All<NodeEditor>(window).Single();
 
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        editor.Select(module.Id);
+        editor.Selection.Select(module.Id);
         Settle(window);
 
         return window;

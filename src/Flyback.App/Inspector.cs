@@ -131,7 +131,7 @@ internal sealed class Inspector
         // gestures that are switched off would be worse than saying nothing: a
         // person following them would conclude the program was broken rather
         // than that the patch belongs to the text — see ADR-0068.
-        if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
+        if (editor.Selection.Focused is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
         {
             wash.Clear();
             plateHost.Content = null;
@@ -144,7 +144,7 @@ internal sealed class Inspector
             {
                 Text = document.IsAdrift
                     ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
-                    : editor.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
+                    : editor.History.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = Text.Muted,
                 FontSize = Text.Body,
@@ -156,7 +156,7 @@ internal sealed class Inspector
         // whichever of its modules the pointer last came down on. Ahead of
         // everything below, because none of it applies: a box has no knobs, no
         // description and no category — what it has is an edge.
-        if (editor.SelectedGroup is { } group)
+        if (editor.Selection.Group is { } group)
         {
             BuildGroupInspector(group);
             return;
@@ -242,7 +242,7 @@ internal sealed class Inspector
         // a locked canvas is written back into the text (ADR-0068); a module
         // deleted from one could not be, so the button is not offered rather
         // than offered and undone by the next apply.
-        if (editor.Locked)
+        if (editor.History.Locked)
         {
             Undescribed();
             return;
@@ -254,11 +254,11 @@ internal sealed class Inspector
         // the patch does rather than how it is drawn. It counts the selection the
         // way delete does, and leaves the Output out of the count for the same
         // reason: that one is never switched off.
-        var switching = editor.Switchable;
+        var switching = editor.Edits.Switchable;
 
         if (switching > 0)
         {
-            var back = editor.SelectionIsOff;
+            var back = editor.Edits.SelectionIsOff;
 
             Act(
                 "switch-modules",
@@ -271,7 +271,7 @@ internal sealed class Inspector
                     (false, false) =>
                         "Switch this module off, passing what is patched into it straight through  (Ctrl+B)",
                 },
-                editor.SwitchSelected);
+                editor.Edits.SwitchSelected);
         }
 
         // Grouping comes ahead of deleting, so the destructive button is at the far
@@ -281,14 +281,14 @@ internal sealed class Inspector
         // is offered on the same terms Ctrl+G is: a button offering to group one
         // module would offer something the graph refuses. Ungrouping is not here,
         // because a selection that is exactly a group gets a panel of its own.
-        if (editor.Groupable >= NodeGroup.Fewest)
-            Act("group", Glyphs.Group(), $"Draw these {editor.Groupable} modules as one box  (Ctrl+G)", editor.GroupSelected);
+        if (editor.Edits.Groupable >= NodeGroup.Fewest)
+            Act("group", Glyphs.Group(), $"Draw these {editor.Edits.Groupable} modules as one box  (Ctrl+G)", editor.Edits.GroupSelected);
 
         // For a selection that reaches into groups without being one: the group
         // panel above answers only a selection that is exactly one, and a
         // double-click only the box it lands on.
-        var shut = editor.SelectedGroups.Count(g => g.Collapsed);
-        var open = editor.SelectedGroups.Count(g => !g.Collapsed);
+        var shut = editor.Selection.Groups.Count(g => g.Collapsed);
+        var open = editor.Selection.Groups.Count(g => !g.Collapsed);
 
         if (shut > 0)
             Act(
@@ -297,7 +297,7 @@ internal sealed class Inspector
                 shut > 1
                     ? $"Open the {shut} boxes the selection touches  (Ctrl+E)"
                     : "Open the box, showing the modules in it  (Ctrl+E)",
-                editor.OpenSelectedGroups);
+                editor.Edits.OpenSelectedGroups);
 
         if (open > 0)
             Act(
@@ -306,19 +306,19 @@ internal sealed class Inspector
                 open > 1
                     ? $"Close the {open} boxes the selection touches  (Ctrl+Shift+E)"
                     : "Close the box, drawing its modules as one  (Ctrl+Shift+E)",
-                editor.CloseSelectedGroups);
+                editor.Edits.CloseSelectedGroups);
 
         // Delete takes the whole selection, the same as the key does, so the tip
         // counts it. Sinks are left out of the count because the graph refuses
         // them: a button offering to delete three when it can only manage two
         // would be lying about what pressing it does.
-        var going = editor.SelectedNodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+        var going = editor.Selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
         Act(
             "delete-modules",
             Glyphs.Delete(),
             going > 1 ? $"Delete these {going} modules  (Delete)" : "Delete this module  (Delete)",
-            editor.DeleteSelected);
+            editor.Edits.DeleteSelected);
 
         plate.Under.Children.Insert(above, actions);
 
@@ -328,7 +328,7 @@ internal sealed class Inspector
         // assistant, and the one thing on the panel not about the patch.
         void Undescribed()
         {
-            if (!editor.Undescribed.Contains(def.TypeId)) return;
+            if (!editor.Tags.Types.Contains(def.TypeId)) return;
 
             panel.Children.Add(new TextBlock
             {
@@ -379,9 +379,9 @@ internal sealed class Inspector
     {
         var socket = new GroupSocket(node.Id, port, output);
 
-        if (editor.Locked
-            || editor.Patch.GroupOf(node.Id) is not { } group
-            || !editor.Patch.Exposable(group, socket))
+        if (editor.History.Locked
+            || editor.History.Patch.GroupOf(node.Id) is not { } group
+            || !editor.History.Patch.Exposable(group, socket))
             return row;
 
         var expose = new Button
@@ -396,7 +396,7 @@ internal sealed class Inspector
         };
 
         ToolTip.SetTip(expose, $"Put this socket on the edge of “{group.Title()}”.");
-        expose.Click += (_, _) => editor.ExposeSocket(group, socket);
+        expose.Click += (_, _) => editor.Edits.ExposeSocket(group, socket);
 
         var edged = new DockPanel();
 
@@ -412,7 +412,7 @@ internal sealed class Inspector
     {
         var row = InspectorRows.Row("*");
         var caption = InspectorRows.Caption(name);
-        var feeds = WireEnds.OutOf(editor.Patch, node.Id, index);
+        var feeds = WireEnds.OutOf(editor.History.Patch, node.Id, index);
 
         caption.Margin = new Thickness(0, 2, 0, 2);
         row.Children.Add(caption);
@@ -495,7 +495,7 @@ internal sealed class Inspector
         var plate = ModulePlate.Box();
 
         wash.ShowBox();
-        wash.Off = editor.SelectionIsOff;
+        wash.Off = editor.Edits.SelectionIsOff;
 
         plate.Named.Children.Add(BuildGroupTitle(group, plate.Ink));
 
@@ -522,12 +522,12 @@ internal sealed class Inspector
             Margin = new Thickness(0, 4, 0, 6),
         });
 
-        var sockets = editor.Patch.SocketsOf(group);
+        var sockets = editor.History.Patch.SocketsOf(group);
 
         // Reserved for every slider on the edge if any one of them has a reading,
         // as a module's panel does.
         var reading = sockets.Inputs.Any(s =>
-            editor.Patch.Find(s.Node) is { } inner && NodeCatalog.Get(inner.TypeId) is { } def
+            editor.History.Patch.Find(s.Node) is { } inner && NodeCatalog.Get(inner.TypeId) is { } def
             && (InspectorRows.Named(def.Inputs[s.Port]) || def.TypeId == NodeCatalog.AutoRemapTypeId));
 
         Edge("In", sockets.Inputs);
@@ -545,24 +545,24 @@ internal sealed class Inspector
         // A box on a locked canvas is drawn from the text's group statements, so
         // everything that would change one is left off for the same reason
         // deleting a module is — see Build.
-        if (editor.Locked) return;
+        if (editor.History.Locked) return;
 
         var actions = ActionRow();
 
         // First in the row, as it is on a module's panel: the one action here that
         // changes what the patch does rather than how it is drawn. It switches the
         // modules, since that is all a group is — a box round some of them.
-        var switching = editor.Switchable;
+        var switching = editor.Edits.Switchable;
 
         if (switching > 0)
             Act(
                 "switch-group",
                 Glyphs.Switch(),
-                editor.SelectionIsOff
+                editor.Edits.SelectionIsOff
                     ? $"Switch the {switching} modules in this box back on  (Ctrl+B)"
                     : $"Switch the {switching} modules in this box off, passing what is patched "
                       + "into it straight through  (Ctrl+B)",
-                editor.SwitchSelected);
+                editor.Edits.SwitchSelected);
 
         Act(
             group.Collapsed ? "open-group" : "close-group",
@@ -570,7 +570,7 @@ internal sealed class Inspector
             group.Collapsed
                 ? "Open the box, showing the modules in it  (Ctrl+E)"
                 : "Close the box, drawing its modules as one  (Ctrl+Shift+E)",
-            editor.ToggleSelectedGroup);
+            editor.Edits.ToggleSelectedGroup);
 
         // Keeping one is not an edit to the patch, so it sits with the one that is
         // not either and ahead of the two that are. What the module list will call
@@ -598,13 +598,13 @@ internal sealed class Inspector
         // same for the same reason.
         ToolTip.SetShowOnDisabled(keep, true);
 
-        Act("ungroup", Glyphs.Ungroup(), "Take the box off, leaving the modules where they are  (Ctrl+Shift+G)", editor.UngroupSelected);
+        Act("ungroup", Glyphs.Ungroup(), "Take the box off, leaving the modules where they are  (Ctrl+Shift+G)", editor.Edits.UngroupSelected);
 
         Act(
             "delete-group",
             Glyphs.Delete(),
             $"Delete the box and the {group.Members.Count} modules in it  (Delete)",
-            editor.DeleteSelected);
+            editor.Edits.DeleteSelected);
 
         plate.Under.Children.Insert(above, actions);
 
@@ -624,7 +624,7 @@ internal sealed class Inspector
             });
 
             foreach (var socket in sockets)
-                if (editor.Scene.Named(socket) is var (_, spec) && editor.Patch.Find(socket.Node) is { } node)
+                if (editor.Selection.Scene.Named(socket) is var (_, spec) && editor.History.Patch.Find(socket.Node) is { } node)
                     panel.Children.Add(Socket(socket, node, spec));
         }
 
@@ -638,7 +638,7 @@ internal sealed class Inspector
 
             // The inner socket itself, not the box's label for it: an Expression's
             // is named for what feeds it, which the row already says.
-            var name = WireEnds.Name(editor.Patch, socket.Node, socket.Port, socket.IsOutput);
+            var name = WireEnds.Name(editor.History.Patch, socket.Node, socket.Port, socket.IsOutput);
 
             var body = socket.IsOutput
                 ? BuildOutputRow(node, name, socket.Port)
@@ -654,7 +654,7 @@ internal sealed class Inspector
                 ToolTip.SetTip(caption, spec.Help.Length == 0 ? name : $"{name}: {spec.Help}");
             }
 
-            if (!editor.Patch.Wired(group, socket) && !editor.Locked)
+            if (!editor.History.Patch.Wired(group, socket) && !editor.History.Locked)
             {
                 var remove = new Button
                 {
@@ -667,7 +667,7 @@ internal sealed class Inspector
                 };
 
                 ToolTip.SetTip(remove, "Take this socket off the edge. A wire puts it back.");
-                remove.Click += (_, _) => editor.HideSocket(group, socket);
+                remove.Click += (_, _) => editor.Edits.HideSocket(group, socket);
 
                 DockPanel.SetDock(remove, Dock.Right);
                 row.Children.Add(remove);
@@ -745,7 +745,7 @@ internal sealed class Inspector
 
             // Struck through while every module in the box is off — see
             // ADR-0117, and BuildTitle's own strike for a single module.
-            TextDecorations = editor.SelectionIsOff ? TextDecorations.Strikethrough : null,
+            TextDecorations = editor.Edits.SelectionIsOff ? TextDecorations.Strikethrough : null,
         };
 
         ToolTip.SetTip(title, group.Name is null
@@ -767,7 +767,7 @@ internal sealed class Inspector
                 typed => group.Rename(typed),
                 () => group.Name,
                 () => BuildGroupTitle(group, ink),
-                () => editor.NotifyPatchChanged());
+                () => editor.History.Record());
         };
 
         return title;
@@ -784,26 +784,26 @@ internal sealed class Inspector
     /// </remarks>
     private Control BuildPatchDescription() => BuildPatchLine(
         "patch-description",
-        editor.Patch.Description,
-        editor.Patch.Description,
+        editor.History.Patch.Description,
+        editor.History.Patch.Description,
         "Double-click to say what this patch is for.",
         "What is this patch for?",
         Patch.DescriptionLimit,
-        typed => editor.Patch.Describe(typed),
-        () => editor.Patch.Description,
+        typed => editor.History.Patch.Describe(typed),
+        () => editor.History.Patch.Description,
         BuildPatchDescription,
         new Thickness(0, 0, 0, 6));
 
     /// <summary>Who made the patch, under its description, edited the same way.</summary>
     private Control BuildPatchAuthor() => BuildPatchLine(
         "patch-author",
-        editor.Patch.Author is { } author ? "by " + author : null,
-        editor.Patch.Author,
+        editor.History.Patch.Author is { } author ? "by " + author : null,
+        editor.History.Patch.Author,
         "Double-click to say who made it.",
         "Who made this patch?",
         Patch.AuthorLimit,
-        typed => editor.Patch.Credit(typed),
-        () => editor.Patch.Author,
+        typed => editor.History.Patch.Credit(typed),
+        () => editor.History.Patch.Author,
         BuildPatchAuthor,
         new Thickness(0, 0, 0, 6));
 
@@ -813,13 +813,13 @@ internal sealed class Inspector
     /// </summary>
     private Control BuildPatchTags() => BuildPatchLine(
         "patch-tags",
-        editor.Patch.Tags is { } tags ? string.Join(", ", tags) : null,
-        editor.Patch.Tags is { } held ? string.Join(' ', held) : null,
+        editor.History.Patch.Tags is { } tags ? string.Join(", ", tags) : null,
+        editor.History.Patch.Tags is { } held ? string.Join(' ', held) : null,
         "Double-click to tag it.",
         "drone slow ambient",
         Patch.TagCount * (Patch.TagLimit + 2),
-        typed => editor.Patch.Tag(typed?.Replace(',', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
-        () => editor.Patch.Tags is { } now ? string.Join(' ', now) : null,
+        typed => editor.History.Patch.Tag(typed?.Replace(',', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
+        () => editor.History.Patch.Tags is { } now ? string.Join(' ', now) : null,
         BuildPatchTags,
         new Thickness(0, 0, 0, 14));
 
@@ -884,7 +884,7 @@ internal sealed class Inspector
                     // Finished as it closes: Enter takes the box away before any
                     // key comes up in the panel to say so.
                     document.Relaid();
-                    editor.NotifyPatchChanged();
+                    editor.History.Record();
                     document.HandCameOff();
                 },
                 prose: true);
@@ -909,10 +909,10 @@ internal sealed class Inspector
         var title = new TextBlock
         {
             // The same heading the canvas draws — a Send or a Receive names its
-            // bus alongside its own name (NodeEditor.Buses.Heading) — so the
+            // bus alongside its own name (CanvasPainter.Heading) — so the
             // panel and the block read the same. The rename box beneath this
             // still edits node.Name, not the bus suffix.
-            Text = NodeEditor.Heading(node, def),
+            Text = CanvasPainter.Heading(node, def),
             FontSize = Text.Title,
             FontWeight = FontWeight.SemiBold,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -927,7 +927,7 @@ internal sealed class Inspector
         // A name on a source-built module is the name the `let` gave it, so
         // renaming here would be renaming the wrong copy — the text would put
         // the old one back on the next apply.
-        if (editor.Locked)
+        if (editor.History.Locked)
         {
             ToolTip.SetTip(title, "The text names this module. Rename it there.");
             return title;
@@ -971,7 +971,7 @@ internal sealed class Inspector
             typed => node.Rename(def, typed),
             () => node.Name,
             () => BuildTitle(node, def, ink),
-            () => editor.NotifyPatchChanged());
+            () => editor.History.Record());
 
     /// <summary>
     /// What is driving this module's unpatched sockets, and why nothing on the
@@ -990,7 +990,7 @@ internal sealed class Inspector
 
         for (var i = 0; i < def.Inputs.Count; i++)
         {
-            if (editor.Patch.IncomingTo(node.Id, i) is not null) continue;
+            if (editor.History.Patch.IncomingTo(node.Id, i) is not null) continue;
             if (NodeCatalog.Normalled(def.Inputs[i]) is not { } source) continue;
 
             reading.Add($"'{def.Inputs[i].Name}' is reading {source}");
@@ -1110,16 +1110,16 @@ internal sealed class Inspector
 
         panel.Children.Add(Rows.ChoiceRow(
             layout,
-            editor.Patch.KeyboardScale is null ? Piano : ByScale,
+            editor.History.Patch.KeyboardScale is null ? Piano : ByScale,
             picked =>
             {
                 // A scale left behind is picked up again, so trying the piano
                 // for a moment does not cost the notes that had been chosen.
-                if (picked == ByScale) editor.Patch.KeyboardScale = [.. (IEnumerable<int>?)keptKeyboardScale ?? Major];
+                if (picked == ByScale) editor.History.Patch.KeyboardScale = [.. (IEnumerable<int>?)keptKeyboardScale ?? Major];
                 else
                 {
-                    keptKeyboardScale = editor.Patch.KeyboardScale;
-                    editor.Patch.KeyboardScale = null;
+                    keptKeyboardScale = editor.History.Patch.KeyboardScale;
+                    editor.History.Patch.KeyboardScale = null;
                 }
 
                 document.Relaid();
@@ -1129,15 +1129,15 @@ internal sealed class Inspector
                 Dispatcher.UIThread.Post(Build);
             }));
 
-        if (editor.Patch.KeyboardScale is not null)
+        if (editor.History.Patch.KeyboardScale is not null)
             panel.Children.Add(new ScaleKeys(
                 Colors.Palette(def).Accent,
-                () => [.. editor.Patch.KeyboardScale ?? []],
+                () => [.. editor.History.Patch.KeyboardScale ?? []],
                 scale =>
                 {
-                    editor.Patch.KeyboardScale = scale;
+                    editor.History.Patch.KeyboardScale = scale;
                     document.Relaid();
-                    editor.NotifyPatchChanged();
+                    editor.History.Record();
                 },
                 played: true).View);
 
@@ -1156,7 +1156,7 @@ internal sealed class Inspector
     private InspectorRows? rows;
 
     /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
-    private InspectorRows Rows => rows ??= new InspectorRows(because => editor.NotifyPatchChanged(because), document.HandCameOff);
+    private InspectorRows Rows => rows ??= new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
 
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
@@ -1242,7 +1242,7 @@ internal sealed class Inspector
                 }
 
                 // A Send's only text is its bus, and its Receives go where it goes.
-                foreach (var receive in BusEdits.Rename(editor.Patch, node, next)) document.Restated(receive.Id, field.Key);
+                foreach (var receive in BusEdits.Rename(editor.History.Patch, node, next)) document.Restated(receive.Id, field.Key);
 
                 document.Restated(node.Id, field.Key);
             },
@@ -1408,7 +1408,7 @@ internal sealed class Inspector
     {
         name ??= spec.Name;
 
-        var patched = WireEnds.Into(editor.Patch, node.Id, index);
+        var patched = WireEnds.Into(editor.History.Patch, node.Id, index);
 
         var label = InspectorRows.Caption(name);
 
@@ -1491,7 +1491,7 @@ internal sealed class Inspector
             return row;
         }
 
-        if (ControlMap.Of(node, index) is { } link && editor.Patch.Control(link.Control) is { } knob)
+        if (ControlMap.Of(node, index) is { } link && editor.History.Patch.Control(link.Control) is { } knob)
             return LinkedRow(node, spec, name, index, link, knob);
 
         var value = index < node.InputValues.Length ? node.InputValues[index] : spec.Default;
@@ -1517,7 +1517,7 @@ internal sealed class Inspector
     {
         if (def.TypeId != NodeCatalog.AutoRemapTypeId || index == AutoRemap.In) return (null, null);
 
-        var spans = AutoRemap.Of(editor.Patch, node);
+        var spans = AutoRemap.Of(editor.History.Patch, node);
         var input = index is AutoRemap.InLow or AutoRemap.InHigh;
 
         // Fractions of 0..1 are the numbers themselves, so an unwired side says nothing more.
@@ -1581,7 +1581,7 @@ internal sealed class Inspector
             if (index < node.InputValues.Length) node.InputValues[index] = link.At(knob.Value);
 
             ControlMap.Unlink(node, index);
-            editor.NotifyPatchChanged();
+            editor.History.Record();
         };
 
         Grid.SetColumn(name, 1);
@@ -1624,7 +1624,7 @@ internal sealed class Inspector
                 // first digit, a box taking its value a keystroke at a time.
                 inspectorShape = InspectorShape.Of(editor);
 
-                editor.NotifyPatchChanged($"{node.Id} range {index}");
+                editor.History.Record($"{node.Id} range {index}");
             };
 
             return Boxed.NeverBlank(box);

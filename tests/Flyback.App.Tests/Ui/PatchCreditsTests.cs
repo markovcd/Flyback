@@ -30,10 +30,10 @@ public class PatchCreditsTests : UiTest
         var screen = b.Add(NodeCatalog.OutputTypeId, 700, 40);
         b.Wire(osc, 0, screen, NodeCatalog.OutputColorPort);
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldBeNull();
+        Editor(window).Selection.Focused.ShouldBeNull();
         return window;
     }
 
@@ -80,7 +80,7 @@ public class PatchCreditsTests : UiTest
 
         Type(window, "patch-author", "Ada");
 
-        Editor(window).Patch.Author.ShouldBe("Ada");
+        Editor(window).History.Patch.Author.ShouldBe("Ada");
         Line(window, "patch-author").Text.ShouldBe("by Ada");
     }
 
@@ -91,7 +91,7 @@ public class PatchCreditsTests : UiTest
 
         Type(window, "patch-tags", "Drone, slow  ambient,drone");
 
-        Editor(window).Patch.Tags.ShouldBe(["drone", "slow", "ambient"]);
+        Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow", "ambient"]);
         Line(window, "patch-tags").Text.ShouldBe("drone, slow, ambient");
     }
 
@@ -101,10 +101,10 @@ public class PatchCreditsTests : UiTest
         var window = Open();
 
         Type(window, "patch-tags", "drone");
-        Editor(window).Undo().ShouldBeTrue();
+        Editor(window).History.Undo().ShouldBeTrue();
         Settle(window);
 
-        Editor(window).Patch.Tags.ShouldBeNull();
+        Editor(window).History.Patch.Tags.ShouldBeNull();
     }
 
     /// <summary>On a canvas the text owns, the panel writes the lines into the text.</summary>
@@ -123,14 +123,14 @@ public class PatchCreditsTests : UiTest
         Settle(window);
 
         All<Avalonia.Controls.Primitives.ToggleButton>(window).Single(b => b.Name == "code").IsChecked = false;
-        Editor(window).Select(null);
+        Editor(window).Selection.Select(null);
         Settle(window);
 
         Type(window, "patch-author", "Ada");
         Type(window, "patch-tags", "drone slow");
 
         text.Text.ShouldStartWith("description \"A hum.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\n");
-        Editor(window).Patch.Author.ShouldBe("Ada");
-        Editor(window).Patch.Tags.ShouldBe(["drone", "slow"]);
+        Editor(window).History.Patch.Author.ShouldBe("Ada");
+        Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow"]);
     }
 }

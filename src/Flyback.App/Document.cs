@@ -51,11 +51,11 @@ internal sealed class Document
         // The canvas opens on a preset, which is a patch the graph owns. Said
         // before the first one reaches it, so the earliest step in its history
         // knows whose the patch was.
-        editor.Mark = Owning();
+        editor.History.Mark = Owning();
 
         // While the text is the document its stack is the history, so a step the
         // canvas records is one that stack has to be able to take back.
-        editor.Recorded += (_, _) =>
+        editor.History.Recorded += (_, _) =>
         {
             if (sourceOwned) unstacked++;
 
@@ -237,7 +237,7 @@ internal sealed class Document
     /// </remarks>
     public void HandCameOff()
     {
-        editor.GestureEnded();
+        editor.History.GestureEnded();
         WriteBack();
     }
 
@@ -272,7 +272,7 @@ internal sealed class Document
             else
             {
                 map = printed == text
-                    ? PatchPrinter.Locate(editor.Patch, text, printedOrder)
+                    ? PatchPrinter.Locate(editor.History.Patch, text, printedOrder)
                     : SourceMap.Empty;
 
                 // A printing is made from the patch on the canvas, so the two
@@ -315,14 +315,14 @@ internal sealed class Document
         // moved on to, and says so the way a module does.
         if (Map.GroupAt(at) is { } boxed)
         {
-            var group = editor.Patch.Groups?.FirstOrDefault(g => g.Id == boxed);
+            var group = editor.History.Patch.Groups?.FirstOrDefault(g => g.Id == boxed);
             var shifted = (group is null) != adrift || (group is null && !adriftBox);
 
             adrift = group is null;
             adriftBox = group is null;
 
-            if (group is null) editor.Select(null);
-            else editor.SelectGroup(group);
+            if (group is null) editor.Selection.Select(null);
+            else editor.Selection.SelectGroup(group);
 
             if (shifted && group is null) PanelStale?.Invoke(this, EventArgs.Empty);
 
@@ -339,13 +339,13 @@ internal sealed class Document
         adrift = lost;
         adriftBox = false;
 
-        editor.Select(lost ? null : named);
+        editor.Selection.Select(lost ? null : named);
 
         // And where the selection did not change — a caret moving between two
         // words the patch has both moved on from — the panel is asked again
         // anyway, since what it has to say has changed even though what is
         // selected has not.
-        if (moved && editor.SelectedNode is null) PanelStale?.Invoke(this, EventArgs.Empty);
+        if (moved && editor.Selection.Focused is null) PanelStale?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -361,7 +361,7 @@ internal sealed class Document
     /// module swapped for another of its kind — where the knobs are the same row.
     /// </remarks>
     private bool Adrift(Guid id) =>
-        means is { } text && text.Find(id)?.TypeId != editor.Patch.Find(id)?.TypeId;
+        means is { } text && text.Find(id)?.TypeId != editor.History.Patch.Find(id)?.TypeId;
 
     /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
     public void Turned(Guid node, int port) => turned.Add((node, port));
@@ -398,7 +398,7 @@ internal sealed class Document
     public void Edited(NodeInstance node, string? because = null)
     {
         Restated(node.Id);
-        editor.NotifyPatchChanged(because);
+        editor.History.Record(because);
     }
 
     /// <summary>
@@ -503,7 +503,7 @@ internal sealed class Document
         var taken = new HashSet<string>(words.Values.Concat(given.Values), StringComparer.Ordinal);
         var lines = new List<string>();
 
-        foreach (var control in editor.Patch.Controls ?? [])
+        foreach (var control in editor.History.Patch.Controls ?? [])
         {
             if (!words.TryGetValue(control.Id, out var word) && !given.TryGetValue(control.Id, out word))
             {
@@ -540,7 +540,7 @@ internal sealed class Document
     /// <summary>Puts where a panel knob rests into its <c>panel</c> line, where the text has one.</summary>
     private void Rest(Guid id)
     {
-        if (editor.Patch.Control(id) is not { } control) return;
+        if (editor.History.Patch.Control(id) is not { } control) return;
 
         var change = Map.Knob(id, PatchPrinter.PanelKnob, PatchPrinter.Knob(control.Value, PortDisplay.Number));
 
@@ -554,7 +554,7 @@ internal sealed class Document
     /// <summary>Puts one knob into the text, or counts it as one that could not go.</summary>
     private void Write(Guid id, int port, ref int lost)
     {
-        if (editor.Patch.Find(id) is not { } node
+        if (editor.History.Patch.Find(id) is not { } node
             || NodeCatalog.Get(node.TypeId) is not { } def
             || port >= def.Inputs.Count
             || port >= node.InputValues.Length)
@@ -576,7 +576,7 @@ internal sealed class Document
     /// </summary>
     private void Carry(Guid id, string? key, ref int lost)
     {
-        if (editor.Patch.Find(id) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
+        if (editor.History.Patch.Find(id) is not { } node || NodeCatalog.Get(node.TypeId) is not { } def) return;
 
         if (key is not null)
         {
@@ -617,10 +617,10 @@ internal sealed class Document
     /// </summary>
     private void Lay()
     {
-        Put(Map.Description(PatchPrinter.Description(editor.Patch.Description)));
-        Put(Map.Author(PatchPrinter.Author(editor.Patch.Author)));
-        Put(Map.Tags(PatchPrinter.Tags(editor.Patch.Tags)));
-        Put(Map.Keyboard(PatchPrinter.Keyboard(editor.Patch.KeyboardScale)));
+        Put(Map.Description(PatchPrinter.Description(editor.History.Patch.Description)));
+        Put(Map.Author(PatchPrinter.Author(editor.History.Patch.Author)));
+        Put(Map.Tags(PatchPrinter.Tags(editor.History.Patch.Tags)));
+        Put(Map.Keyboard(PatchPrinter.Keyboard(editor.History.Patch.KeyboardScale)));
 
         void Put(Change? change)
         {
@@ -690,7 +690,7 @@ internal sealed class Document
     /// </remarks>
     private Landing? UndoLandsOn =>
         TextInPlay && source.CanUndo ? Landing.Text
-        : editor.CanUndo ? Landing.Canvas
+        : editor.History.CanUndo ? Landing.Canvas
         : null;
 
     /// <remarks>
@@ -699,7 +699,7 @@ internal sealed class Document
     /// </remarks>
     private Landing? RedoLandsOn =>
         (TextInPlay || sinceHandover == 0) && source.CanRedo ? Landing.Text
-        : editor.CanRedo ? Landing.Canvas
+        : editor.History.CanRedo ? Landing.Canvas
         : null;
 
     /// <summary>Whether the text owns the patch or is the view showing.</summary>
@@ -741,7 +741,7 @@ internal sealed class Document
                 break;
 
             case Landing.Canvas:
-                editor.Undo();
+                editor.History.Undo();
                 Owed(-1);
                 if (sinceHandover is { } behind) sinceHandover = behind + 1;
                 Stepped();
@@ -762,7 +762,7 @@ internal sealed class Document
                 break;
 
             case Landing.Canvas:
-                editor.Redo();
+                editor.History.Redo();
                 Owed(1);
                 if (sinceHandover is { } behind) sinceHandover = Math.Max(0, behind - 1);
                 Stepped();
@@ -830,7 +830,7 @@ internal sealed class Document
     /// pointer with no sign of why. Ignored rather than answered: letting go
     /// leaves the press to be made again.
     /// </remarks>
-    private bool Gesturing => editor.Gesturing;
+    private bool Gesturing => editor.Gestures.Gesturing;
 
     /// <summary>
     /// Puts the patch steps taken since the last of these on the text's stack, as
@@ -861,7 +861,7 @@ internal sealed class Document
         try
         {
             for (var step = 0; step < steps; step++)
-                if (back ? editor.Undo() : editor.Redo())
+                if (back ? editor.History.Undo() : editor.History.Redo())
                     Handed();
         }
         finally
@@ -886,7 +886,7 @@ internal sealed class Document
     /// </remarks>
     private void Handed()
     {
-        if (editor.Mark is not Ownership was || was.Owned == sourceOwned) return;
+        if (editor.History.Mark is not Ownership was || was.Owned == sourceOwned) return;
 
         sourceOwned = was.Owned;
         sourceOnDisk = was.OnDisk;
@@ -923,7 +923,7 @@ internal sealed class Document
         if (Gesturing) return;
 
         if (Coding) source.Tidy();
-        else editor.Tidy(onlySelected);
+        else editor.Edits.Tidy(onlySelected);
     }
 
     /// <summary>
@@ -975,7 +975,7 @@ internal sealed class Document
     {
         if (source.Source.Length != 0 && source.Source != printed) return;
 
-        var writing = PatchPrinter.Written(editor.Patch);
+        var writing = PatchPrinter.Written(editor.History.Patch);
 
         // Everything about the new text before the text itself, because putting
         // it in the view is a change the view reports at once — and what it
@@ -997,7 +997,7 @@ internal sealed class Document
         // applying this printing is recorded as a step back to here, and what
         // that step hands back on Ctrl+Z has to include the printing — or the
         // text would come back as somebody's typing, never to be printed again.
-        editor.Note(Owning());
+        editor.History.Note(Owning());
     }
 
     /// <summary>
@@ -1006,7 +1006,7 @@ internal sealed class Document
     /// </summary>
     private string Reading()
     {
-        var groups = editor.Patch.Groups?.Count ?? 0;
+        var groups = editor.History.Patch.Groups?.Count ?? 0;
 
         var lost = groups == 0
             ? string.Empty
@@ -1044,7 +1044,7 @@ internal sealed class Document
         // Before the patch is replaced, so what is counted is how much of the
         // one that was playing is still here. It is the honest measure of an
         // edit: everything named on both sides kept whatever it was carrying.
-        var was = editor.Patch;
+        var was = editor.History.Patch;
         var kept = load.Patch.Nodes.Count(node => was.Find(node.Id) is not null);
 
         // Applying a printing is how somebody takes a patch into text. Said
@@ -1062,10 +1062,10 @@ internal sealed class Document
         // Who owns the patch is settled before the edit is recorded, so the
         // step that edit makes is one the text owns — and taking the step back
         // hands the patch to the canvas along with it.
-        editor.Mark = Owning();
+        editor.History.Mark = Owning();
 
         CarryControls(was, load.Patch);
-        editor.ApplyEdit(load.Patch);
+        editor.History.Apply(load.Patch);
 
         // And on the text's stack, where the typing that led to it already is:
         // applying is the last thing somebody did, so it is the first thing that
@@ -1117,7 +1117,7 @@ internal sealed class Document
     {
         if (!sourceOwned)
         {
-            editor.ApplyEdit(patch);
+            editor.History.Apply(patch);
             Reprint();
 
             return;
@@ -1165,7 +1165,7 @@ internal sealed class Document
         // rather than an edit anybody made, so both stacks forget it: left on the
         // canvas's, one press would hand back the patch that was open before the
         // preset was picked.
-        editor.MarkOpened();
+        editor.History.MarkOpened();
         source.ForgetSteps();
         MarkSourceSaved();
         EditStateChanged?.Invoke(this, EventArgs.Empty);
@@ -1176,7 +1176,7 @@ internal sealed class Document
         // one, so the answer would be a nought against a patch a moment old.
         source.Clear();
 
-        report.Say($"Read into text — {editor.Patch.Nodes.Count} modules. The text is the "
+        report.Say($"Read into text — {editor.History.Patch.Nodes.Count} modules. The text is the "
             + "document, so the canvas is a view of it until you hand it back.");
     }
 
@@ -1226,7 +1226,7 @@ internal sealed class Document
         // The steps behind this belong to the document that has just arrived,
         // not to the one it replaced — and no edit was made to bring it, so
         // there is no step for an undo to find the change on.
-        editor.Remark(Owning());
+        editor.History.Remark(Owning());
 
         RefreshOwnership();
         ShowCode(true);
@@ -1254,7 +1254,7 @@ internal sealed class Document
         source.Clear();
 
         Forget();
-        editor.Remark(Owning());
+        editor.History.Remark(Owning());
         RefreshOwnership();
 
         // Straight away rather than on the next look, because this is the look:
@@ -1296,7 +1296,7 @@ internal sealed class Document
 
         var saved = sourceOnDisk;
 
-        editor.Remark(mark => mark is Ownership { Owned: true } was ? was with { OnDisk = saved } : mark);
+        editor.History.Remark(mark => mark is Ownership { Owned: true } was ? was with { OnDisk = saved } : mark);
     }
 
     /// <summary>
@@ -1310,11 +1310,11 @@ internal sealed class Document
     /// </remarks>
     private void RefreshOwnership()
     {
-        editor.Locked = sourceOwned;
+        editor.History.Locked = sourceOwned;
 
         // And what the canvas notes beside every step it records from here on,
         // so that an undo across an evaluation hands the patch back.
-        editor.Mark = Owning();
+        editor.History.Mark = Owning();
 
         source.Notice = sourceOwned ? null : Reading();
         source.Editable = true;

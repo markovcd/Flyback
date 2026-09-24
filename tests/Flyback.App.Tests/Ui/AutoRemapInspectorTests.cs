@@ -27,7 +27,7 @@ public class AutoRemapInspectorTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
         Settle(window);
 
         return window;
@@ -116,16 +116,16 @@ public class AutoRemapInspectorTests : UiTest
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        var remap = editor.Patch.Nodes.Where(n => n.TypeId == NodeCatalog.AutoRemapTypeId).ShouldHaveSingleItem();
-        editor.Patch.IncomingTo(remap.Id, AutoRemap.In)!.SourceNode.ShouldBe(sine.Id);
-        editor.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(remap.Id);
-        editor.SelectedNode.ShouldBe(remap);
+        var remap = editor.History.Patch.Nodes.Where(n => n.TypeId == NodeCatalog.AutoRemapTypeId).ShouldHaveSingleItem();
+        editor.History.Patch.IncomingTo(remap.Id, AutoRemap.In)!.SourceNode.ShouldBe(sine.Id);
+        editor.History.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(remap.Id);
+        editor.Selection.Focused.ShouldBe(remap);
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Settle(window);
 
-        editor.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.AutoRemapTypeId);
-        editor.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(sine.Id);
+        editor.History.Patch.Nodes.ShouldNotContain(n => n.TypeId == NodeCatalog.AutoRemapTypeId);
+        editor.History.Patch.IncomingTo(filter.Id, 1)!.SourceNode.ShouldBe(sine.Id);
     }
 
     [AvaloniaFact]
@@ -150,7 +150,7 @@ public class AutoRemapInspectorTests : UiTest
         window.MouseUp(to, MouseButton.Left);
         Settle(window);
 
-        Editor(window).Patch.SoleOutgoingFrom(remap.Id, 0).ShouldNotBeNull();
+        Editor(window).History.Patch.SoleOutgoingFrom(remap.Id, 0).ShouldNotBeNull();
         Outlined(window).ShouldBe([false, false, true, true]);
     }
 }

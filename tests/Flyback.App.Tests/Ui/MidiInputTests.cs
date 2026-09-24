@@ -32,7 +32,7 @@ public class MidiInputTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        All<NodeEditor>(window).Single().Patch = patch;
+        All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
         return window;
@@ -227,8 +227,8 @@ public class MidiInputTests : UiTest
         Settle(window);
 
         // Any edit at all: what matters is that the patch is compiled again.
-        editor.Patch.Nodes.First(n => n.Id == midi.Id).X += 10;
-        editor.NotifyPatchChanged("moved");
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X += 10;
+        editor.History.Record("moved");
         Settle(window);
 
         Held(preview, MidiSignal.Gate).ShouldBe(1d);
@@ -286,8 +286,8 @@ public class MidiInputTests : UiTest
         // otherwise there is nothing for framing to do and a gesture that did
         // nothing would look exactly like one that worked.
         editor.Focus();
-        editor.Patch.Nodes.First(n => n.Id == midi.Id).X += 2400;
-        editor.NotifyPatchChanged("moved a long way");
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X += 2400;
+        editor.History.Record("moved a long way");
         Settle(window);
 
         var stale = editor.GraphToScreen.Transform(new Point(0, 0));
@@ -317,17 +317,17 @@ public class MidiInputTests : UiTest
         var window = Open(patch);
         var editor = All<NodeEditor>(window).Single();
 
-        var moved = editor.Patch.Nodes.First(n => n.Id == midi.Id);
+        var moved = editor.History.Patch.Nodes.First(n => n.Id == midi.Id);
         var was = moved.X;
 
         moved.X += 120;
-        editor.NotifyPatchChanged("moved");
+        editor.History.Record("moved");
         Settle(window);
 
         window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
         Settle(window);
 
-        editor.Patch.Nodes.First(n => n.Id == midi.Id).X.ShouldBe(was);
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X.ShouldBe(was);
         Held(All<PreviewHost>(window).Single(), MidiSignal.Gate).ShouldBe(0d);
     }
 
@@ -503,7 +503,7 @@ public class MidiInputTests : UiTest
         layout.SelectedIndex = 1;
         Settle(window);
 
-        All<NodeEditor>(window).Single().Patch.KeyboardScale.ShouldBe([0, 2, 4, 5, 7, 9, 11]);
+        All<NodeEditor>(window).Single().History.Patch.KeyboardScale.ShouldBe([0, 2, 4, 5, 7, 9, 11]);
         All<Button>(window).ShouldContain(b => b.Classes.Contains(ScaleKeys.KeyTag));
 
         window.KeyPressQwerty(PhysicalKey.S, RawInputModifiers.None);

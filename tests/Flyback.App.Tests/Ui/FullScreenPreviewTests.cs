@@ -245,23 +245,23 @@ public class FullScreenPreviewTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var output = editor.Patch.Output;
-        var color = editor.Patch.IncomingTo(output.Id, Core.Graph.NodeCatalog.OutputColorPort)
+        var output = editor.History.Patch.Output;
+        var color = editor.History.Patch.IncomingTo(output.Id, Core.Graph.NodeCatalog.OutputColorPort)
             .ShouldNotBeNull();
 
         // A patch with no picture, and then the one edit that gives it one — so
         // that taking the edit back is what takes the picture away.
-        editor.Patch.Disconnect(output.Id, Core.Graph.NodeCatalog.OutputColorPort);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Disconnect(output.Id, Core.Graph.NodeCatalog.OutputColorPort);
+        editor.History.Record();
         Settle(window);
 
         var box = All<Border>(window).First(b => b.Child is PreviewHost);
 
         box.IsVisible.ShouldBeFalse("nothing reaches 'color'");
 
-        editor.Patch.Connect(
+        editor.History.Patch.Connect(
             color.SourceNode, color.SourcePort, output.Id, Core.Graph.NodeCatalog.OutputColorPort);
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         box.IsVisible.ShouldBeTrue("and now something does");
@@ -271,7 +271,7 @@ public class FullScreenPreviewTests : UiTest
         window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
         Settle(window);
 
-        editor.Patch.IncomingTo(output.Id, Core.Graph.NodeCatalog.OutputColorPort)
+        editor.History.Patch.IncomingTo(output.Id, Core.Graph.NodeCatalog.OutputColorPort)
             .ShouldBeNull("the wire was taken back");
 
         PressEscape(window);

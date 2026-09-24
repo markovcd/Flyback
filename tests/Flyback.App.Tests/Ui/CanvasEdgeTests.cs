@@ -41,10 +41,10 @@ public class CanvasEdgeTests : UiTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, Edge - 4000, 0);
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         var from = new Point(Wide / 2, Tall / 2);
@@ -168,10 +168,10 @@ public class CanvasEdgeTests : UiTest
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
         builder.Add(NodeCatalog.OutputTypeId, 0, 0);
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         var pixels = Frame(window);

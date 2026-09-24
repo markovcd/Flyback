@@ -144,7 +144,7 @@ public class PresetListTests : UiTest
     {
         var window = Open();
         var editor = All<NodeEditor>(window).Single();
-        var before = editor.Patch.Nodes.Select(n => n.Id).ToList();
+        var before = editor.History.Patch.Nodes.Select(n => n.Id).ToList();
 
         OpenGallery(window);
 
@@ -152,7 +152,7 @@ public class PresetListTests : UiTest
         Settle(window);
 
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Kaleidoscope");
-        editor.Patch.Nodes.Select(n => n.Id).ShouldNotBe(before);
+        editor.History.Patch.Nodes.Select(n => n.Id).ShouldNotBe(before);
         All<ModalOverlay>(window).ShouldBeEmpty("picking one is answering the dialog");
     }
 

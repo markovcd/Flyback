@@ -47,7 +47,7 @@ public class WireLiftTests : UiTest
         var fed = b.Add(Add, 400, 40);
         var spare = b.Add(Add, 400, 300);
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
         return new Board(window, source, other, fed, spare);
@@ -62,13 +62,13 @@ public class WireLiftTests : UiTest
     {
         public NodeEditor Editor => WireLiftTests.Editor(Window);
 
-        public Patch Patch => Editor.Patch;
+        public Patch Patch => Editor.History.Patch;
 
         /// <summary>Wires the Sine into the first Add and records it, so a drag is the next edit.</summary>
         public Board Wired()
         {
             Patch.Connect(Source.Id, 0, Fed.Id, 0);
-            Editor.NotifyPatchChanged();
+            Editor.History.Record();
             return this;
         }
     }
@@ -176,7 +176,7 @@ public class WireLiftTests : UiTest
         var board = Open().Wired();
 
         board.Patch.Connect(board.Source.Id, 0, board.Spare.Id, 0);
-        board.Editor.NotifyPatchChanged();
+        board.Editor.History.Record();
 
         Drag(board.Window, Output(board.Source), Input(board.Spare, 1), RawInputModifiers.Control);
 
@@ -240,17 +240,17 @@ public class WireLiftTests : UiTest
         // never happened.
         board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Other.Id);
 
-        editor.Undo();
+        editor.History.Undo();
         Settle(board.Window);
 
-        editor.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Source.Id);
+        editor.History.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Source.Id);
 
         // And the press before that goes back past the wire set up here, which
         // says the gesture did not fold into the edit before it.
-        editor.Undo();
+        editor.History.Undo();
         Settle(board.Window);
 
-        editor.Patch.Connections.ShouldBeEmpty();
+        editor.History.Patch.Connections.ShouldBeEmpty();
     }
 
     /// <summary>A wire picked up and put straight back is not an edit.</summary>
@@ -270,11 +270,11 @@ public class WireLiftTests : UiTest
         // history opens on them, and the one lifted is not the last in the list.
         board.Patch.Connect(board.Source.Id, 0, board.Fed.Id, 0);
         board.Patch.Connect(board.Other.Id, 0, board.Spare.Id, 0);
-        editor.Patch = board.Patch;
+        editor.History.Open(board.Patch);
         Settle(board.Window);
 
-        editor.CanUndo.ShouldBeFalse();
-        editor.IsModified.ShouldBeFalse();
+        editor.History.CanUndo.ShouldBeFalse();
+        editor.History.IsModified.ShouldBeFalse();
 
         var port = OnWindow(board.Window, Input(board.Fed, 0));
 
@@ -285,11 +285,11 @@ public class WireLiftTests : UiTest
         board.Window.MouseUp(port, MouseButton.Left);
         Settle(board.Window);
 
-        editor.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull("the wire is back where it was");
-        editor.Patch.Connections.Count.ShouldBe(2);
+        editor.History.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull("the wire is back where it was");
+        editor.History.Patch.Connections.Count.ShouldBe(2);
 
-        editor.IsModified.ShouldBeFalse("nothing changed, so there is nothing to save");
-        editor.CanUndo.ShouldBeFalse("and nothing to take back");
+        editor.History.IsModified.ShouldBeFalse("nothing changed, so there is nothing to save");
+        editor.History.CanUndo.ShouldBeFalse("and nothing to take back");
     }
 
     /// <summary>

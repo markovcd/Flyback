@@ -19,6 +19,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -44,7 +45,7 @@ public sealed class MainWindow : Window
 
     private readonly FilesSection filesSection;
 
-    private readonly NodeEditor editor = new();
+    private readonly NodeEditor editor;
 
     private readonly SourceView source = new();
 
@@ -176,6 +177,8 @@ public sealed class MainWindow : Window
     {
         setup ??= new EditorSetup();
 
+        editor = new ServiceCollection().AddSingleton(report).AddCanvas().BuildServiceProvider().GetRequiredService<NodeEditor>();
+
         this.pluginFolder = setup.PluginFolder;
         this.relaunch = setup.Relaunch;
         this.presetSite = setup.PresetSite;
@@ -286,7 +289,7 @@ public sealed class MainWindow : Window
             preview,
             audio,
             this.usage,
-            () => editor.Patch,
+            () => editor.History.Patch,
             () => outputSettings,
             (message, progress) => Report(message, progress: progress),
             SyncTransport,
@@ -338,10 +341,10 @@ public sealed class MainWindow : Window
         Background = new SolidColorBrush(Colors.Window);
         ApplyWindowLayout();
 
-        editor.PatchChanged += (_, _) =>
+        editor.History.PatchChanged += (_, _) =>
         {
-            playback.Recompile(opened: editor.Opening);
-            if (editor.Opening) statusBar.Compiling.Watch(() => playback.Starting);
+            playback.Recompile(opened: editor.History.Opening);
+            if (editor.History.Opening) statusBar.Compiling.Watch(() => playback.Starting);
 
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
@@ -349,20 +352,19 @@ public sealed class MainWindow : Window
             inspector.Sync();
         };
 
-        editor.SelectionChanged += (_, _) =>
+        editor.Selection.Changed += (_, _) =>
         {
             inspector.Build();
             playback.ProbeSelectionChanged();
         };
-        editor.HistoryChanged += (_, _) => RefreshEditState();
+        editor.History.HistoryChanged += (_, _) => RefreshEditState();
 
         // Asked again rather than simply put away: the wire may have been dropped
         // back onto 'color', and then there is nothing to put back.
-        editor.GestureFinished += (_, _) =>
+        editor.Gestures.GestureFinished += (_, _) =>
         {
             if (previewHideWaiting) ShowPreview(playback.HasPicture);
         };
-        editor.Reported += (_, message) => Report(message);
 
         // The other copy of everything said: a status bar is written over by the
         // next compile and the log behind it is five deep, so a run watched from a
@@ -437,7 +439,7 @@ public sealed class MainWindow : Window
         // Before the bars, because both of them ask it what it is called.
         assistant = new AssistantPanel(
             plugins,
-            () => editor.Patch,
+            () => editor.History.Patch,
             // An edit rather than a new document, so it undoes like every other
             // edit and there is nothing to ask about first: what it replaced is
             // one press of Ctrl+Z away rather than gone.
@@ -464,10 +466,10 @@ public sealed class MainWindow : Window
 
         // Which modules the assistant is not told about is a question about the
         // catalog and the settings, so it moves only when settings are saved.
-        editor.Undescribed = assistant.Undescribed;
+        editor.Tags.Types = assistant.Undescribed;
         assistant.UndescribedChanged += (_, _) =>
         {
-            editor.Undescribed = assistant.Undescribed;
+            editor.Tags.Types = assistant.Undescribed;
             inspector.Build();
         };
 
@@ -608,7 +610,7 @@ public sealed class MainWindow : Window
         // Pulling the wire off 'color' swapped back would move the canvas out from
         // under the hand still holding that wire, so nothing moves until the
         // button comes up — see the editor's GestureFinished, which asks again.
-        previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gesturing;
+        previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
         if (previewHideWaiting) return;
 
         // Ahead of the full screen guard, so the button is right by the time the
@@ -856,7 +858,7 @@ public sealed class MainWindow : Window
 
         return await AnsweredAsync(
             "Unsaved changes",
-            editor.IsModified || document.IsUnapplied
+            editor.History.IsModified || document.IsUnapplied
                 ? "This patch has changes that have not been saved. Closing it now would lose them."
                 : "The conversation about this patch has not been saved. Closing it now would lose it.");
     }
@@ -872,7 +874,7 @@ public sealed class MainWindow : Window
     /// and by the dot in the title, so the three cannot come to disagree.
     /// </remarks>
     private bool SomethingToLose =>
-        editor.IsModified || document.IsUnapplied || assistant?.ConversationUnsaved == true;
+        editor.History.IsModified || document.IsUnapplied || assistant?.ConversationUnsaved == true;
 
     /// <summary>Whether the window could close without asking anything.</summary>
     internal bool HoldsNoWork => !SomethingToLose;
@@ -1345,7 +1347,7 @@ public sealed class MainWindow : Window
     {
         ClearPresetSelection();
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         RewindToZero();
     }
 
@@ -1595,8 +1597,8 @@ public sealed class MainWindow : Window
         // knob frame, and what it is made of is only interesting where somebody
         // is listening to it.
         playback.Started += (_, _) => usage.Played(
-            editor.Patch.Nodes.Select(node => node.TypeId),
-            editor.Patch.Connections.Count,
+            editor.History.Patch.Nodes.Select(node => node.TypeId),
+            editor.History.Patch.Connections.Count,
             presets.Showing?.Name);
     }
 
@@ -1891,11 +1893,11 @@ public sealed class MainWindow : Window
 
         // A socket's own knob on the canvas: heard as it turns, written into the
         // text and the panel when the hand comes off it.
-        editor.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
-        editor.InputLetGo += (_, pick) =>
+        editor.Dial.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
+        editor.Dial.InputLetGo += (_, pick) =>
         {
             document.HandCameOff();
-            if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) inspector.Build();
+            if (editor.Selection.Focused?.Id == pick.Node || editor.Selection.Group?.Members.Contains(pick.Node) == true) inspector.Build();
         };
     }
 
@@ -2026,7 +2028,7 @@ public sealed class MainWindow : Window
         var window = pictureWindow = new PictureWindow(screen, preview);
 
         knobs.Away = window.Knobs;
-        window.Knobs.Show(editor.Patch);
+        window.Knobs.Show(editor.History.Patch);
         window.Knobs.Turning += knobs.Turn;
         window.Knobs.TurnEnded += document.LetGoOfKnob;
 
@@ -2455,7 +2457,7 @@ public sealed class MainWindow : Window
     private RecoveredWork? Work() => !SomethingToLose ? null : new(
         files.Name,
         files.SoundFolder.Beside,
-        PatchIO.ToJson(editor.Patch),
+        PatchIO.ToJson(editor.History.Patch),
         document.Owned ? document.Text : null,
         assistant?.ConversationToSave(),
         files.Carried?.Bytes);
@@ -2485,7 +2487,7 @@ public sealed class MainWindow : Window
 
         ClearPresetSelection();
 
-        editor.Patch = loaded.Patch;
+        editor.History.Open(loaded.Patch);
         RewindToZero();
 
         if (work.Source is { } text)
@@ -2499,7 +2501,7 @@ public sealed class MainWindow : Window
         }
 
         assistant?.Open(work.Conversation);
-        editor.MarkUnsaved();
+        editor.History.MarkUnsaved();
 
         // Kept at once, since the orphan it came from is about to go.
         keeper?.Keep(later: false);

@@ -113,8 +113,8 @@ internal sealed class StatusBar
     /// <summary>Says what the patch costs and where its clock is.</summary>
     private void Update()
     {
-        var nodes = editor.Patch.Nodes.Count;
-        var wires = editor.Patch.Connections.Count;
+        var nodes = editor.History.Patch.Nodes.Count;
+        var wires = editor.History.Patch.Connections.Count;
         var ops = preview.Program.Ops.Length;
 
         // Which renderer produced the rate is part of what it means, so it is

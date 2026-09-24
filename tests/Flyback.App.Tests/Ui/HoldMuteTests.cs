@@ -33,10 +33,10 @@ public class HoldMuteTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -51,7 +51,7 @@ public class HoldMuteTests : UiTest
 
     private static Point Header(NodeEditor editor, NodeGroup group)
     {
-        var patch = editor.Patch;
+        var patch = editor.History.Patch;
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
 
         return new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
@@ -88,7 +88,7 @@ public class HoldMuteTests : UiTest
     {
         var (editor, window) = Editing(Chain(out var clock, out var osc, out _));
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
         Down(editor, window, Body(osc));
 
         osc.Off.ShouldBeTrue();
@@ -152,13 +152,13 @@ public class HoldMuteTests : UiTest
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
         var changes = 0;
-        editor.PatchChanged += (_, _) => changes++;
+        editor.History.PatchChanged += (_, _) => changes++;
 
         Down(editor, window, Body(osc));
         Up(editor, window, Body(osc));
 
         changes.ShouldBe(2);
-        editor.Undo().ShouldBeFalse();
+        editor.History.Undo().ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -166,7 +166,7 @@ public class HoldMuteTests : UiTest
     {
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
-        editor.Locked = true;
+        editor.History.Locked = true;
         Down(editor, window, Body(osc));
 
         osc.Off.ShouldBeFalse();
@@ -179,10 +179,10 @@ public class HoldMuteTests : UiTest
     {
         var (editor, window) = Editing(Chain(out var clock, out var osc, out _));
 
-        editor.Select(clock.Id);
+        editor.Selection.Select(clock.Id);
         Down(editor, window, Body(osc));
 
-        editor.SelectedNodes.Select(n => n.Id).ShouldBe([clock.Id]);
+        editor.Selection.Nodes.Select(n => n.Id).ShouldBe([clock.Id]);
 
         Up(editor, window, Body(osc));
     }
@@ -226,7 +226,7 @@ public class HoldMuteTests : UiTest
         var group = patch.Group([clock.Id, osc.Id]).ShouldNotBeNull();
         var (editor, window) = Editing(patch);
 
-        editor.ToggleBox(group);
+        editor.Edits.ToggleBox(group);
         Settle(window);
         group.Collapsed.ShouldBeFalse();
 

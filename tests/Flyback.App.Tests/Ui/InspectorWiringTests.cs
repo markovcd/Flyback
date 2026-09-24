@@ -30,7 +30,7 @@ public class InspectorWiringTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
         Settle(window);
 
         return window;
@@ -139,7 +139,7 @@ public class InspectorWiringTests : UiTest
 
         // Nothing has been selected in between: this is the same panel, asked
         // again because the patch changed under it.
-        Editor(window).Patch.IncomingTo(sine.Id, 1).ShouldNotBeNull();
+        Editor(window).History.Patch.IncomingTo(sine.Id, 1).ShouldNotBeNull();
         Knobs(window).ShouldBe(SineKnobs - 1);
         Wired(window).ShouldBe(1);
     }
@@ -160,7 +160,7 @@ public class InspectorWiringTests : UiTest
         // would open the module list instead, which is a different gesture.
         DragFrom(window, Input(sine, 1), Body(sine));
 
-        Editor(window).Patch.IncomingTo(sine.Id, 1).ShouldBeNull();
+        Editor(window).History.Patch.IncomingTo(sine.Id, 1).ShouldBeNull();
         Knobs(window).ShouldBe(SineKnobs);
         Wired(window).ShouldBe(0);
     }
@@ -193,8 +193,8 @@ public class InspectorWiringTests : UiTest
         var window = Open(patch);
         var editor = Editor(window);
 
-        editor.Patch.Connect(clock.Id, 0, sine.Id, 2);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connect(clock.Id, 0, sine.Id, 2);
+        editor.History.Record();
 
         Select(window, clock);
 
@@ -212,7 +212,7 @@ public class InspectorWiringTests : UiTest
         Select(window, sine);
 
         clock.Name = "beat";
-        editor.NotifyPatchChanged();
+        editor.History.Record();
 
         Says(window, $"◀ patched from beat.{End(clock, 0, output: true).Split('.')[1]}").ShouldBeTrue();
     }
@@ -233,13 +233,13 @@ public class InspectorWiringTests : UiTest
 
         DragFrom(window, NodeGeometry.OutputPort(clock, 0), Input(sine, 0));
 
-        Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldNotBeNull();
+        Editor(window).History.Patch.IncomingTo(sine.Id, 0).ShouldNotBeNull();
         Normalled(window).ShouldBe(0);
         Wired(window).ShouldBe(1);
 
         DragFrom(window, Input(sine, 0), Body(sine));
 
-        Editor(window).Patch.IncomingTo(sine.Id, 0).ShouldBeNull();
+        Editor(window).History.Patch.IncomingTo(sine.Id, 0).ShouldBeNull();
         Normalled(window).ShouldBe(1);
     }
 
@@ -257,7 +257,7 @@ public class InspectorWiringTests : UiTest
     {
         var window = Open(Presets.Empty(NodeCatalog.BuiltIn));
 
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         Knobs(window).ShouldBe(1, "volume is the only socket worth dialing");
         NotPatched(window).ShouldBe(2, "color and left have nothing to fall back to");
@@ -273,22 +273,22 @@ public class InspectorWiringTests : UiTest
     {
         var window = Open(Presets.Empty(NodeCatalog.BuiltIn));
         var editor = Editor(window);
-        var output = editor.Patch.Output;
+        var output = editor.History.Patch.Output;
 
-        var tone = editor.AddNode("osc.sine", new Point(600, 300));
+        var tone = editor.Edits.AddNode("osc.sine", new Point(600, 300));
         tone.ShouldNotBeNull();
 
         Select(window, output);
         NotPatched(window).ShouldBe(2);
 
-        editor.Patch.Connect(tone.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connect(tone.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
+        editor.History.Record();
 
         NotPatched(window).ShouldBe(1, "left is now patched");
         Wired(window).ShouldBe(1);
 
-        editor.Patch.Disconnect(output.Id, NodeCatalog.OutputLeftPort);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Disconnect(output.Id, NodeCatalog.OutputLeftPort);
+        editor.History.Record();
 
         NotPatched(window).ShouldBe(2, "unplugging brings the row back");
         Wired(window).ShouldBe(0);
@@ -361,21 +361,21 @@ public class InspectorWiringTests : UiTest
         Release(knob);
         Settle(window);
 
-        var first = Editor(window).Patch.Find(sine.Id).ShouldNotBeNull().InputValues[1];
+        var first = Editor(window).History.Patch.Find(sine.Id).ShouldNotBeNull().InputValues[1];
 
         knob.Value = at + 0.5;
         Settle(window);
         Release(knob);
         Settle(window);
 
-        Editor(window).Undo().ShouldBeTrue();
+        Editor(window).History.Undo().ShouldBeTrue();
 
-        Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
+        Editor(window).History.Patch.Find(sine.Id).ShouldNotBeNull()
             .InputValues[1].ShouldBe(first, 0.001f, "the second drag is what came back");
 
-        Editor(window).Undo().ShouldBeTrue("and the first is still there to take back");
+        Editor(window).History.Undo().ShouldBeTrue("and the first is still there to take back");
 
-        Editor(window).Patch.Find(sine.Id).ShouldNotBeNull()
+        Editor(window).History.Patch.Find(sine.Id).ShouldNotBeNull()
             .InputValues[1].ShouldBe(was, 0.001f);
     }
 
@@ -392,7 +392,7 @@ public class InspectorWiringTests : UiTest
 
         // Through the file format, which is how one arrives.
         var window = Open(PatchIO.Read(PatchIO.ToJson(patch)).Patch);
-        var opened = Editor(window).Patch.Find(sine.Id).ShouldNotBeNull();
+        var opened = Editor(window).History.Patch.Find(sine.Id).ShouldNotBeNull();
 
         Should.NotThrow(() => Select(window, opened));
 

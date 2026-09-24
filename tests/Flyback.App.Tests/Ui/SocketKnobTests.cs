@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -33,10 +34,10 @@ public class SocketKnobTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall, KnobAnchor = _ => null };
+        var editor = NewCanvas(Wide, Tall, services => services.AddSingleton<Func<Visual, IPointerAnchor?>>(_ => (IPointerAnchor?)null));
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -48,7 +49,7 @@ public class SocketKnobTests : UiTest
         var def = NodeCatalog.Get(node.TypeId).ShouldNotBeNull();
 
         return Enumerable.Range(0, def.Inputs.Count)
-            .First(i => NodeEditor.Linkable(def.Inputs[i]) && patch.IncomingTo(node.Id, i) is null);
+            .First(i => KnobLinking.Linkable(def.Inputs[i]) && patch.IncomingTo(node.Id, i) is null);
     }
 
     private static Point Socket(NodeInstance node, int port) =>
@@ -106,10 +107,10 @@ public class SocketKnobTests : UiTest
         window.MouseUp(from - new Point(0, 40), MouseButton.Right);
         Settle(window);
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        editor.Patch.Find(osc.Id)!.InputValues[port].ShouldBe(was);
-        editor.Undo().ShouldBeFalse();
+        editor.History.Patch.Find(osc.Id)!.InputValues[port].ShouldBe(was);
+        editor.History.Undo().ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -151,8 +152,8 @@ public class SocketKnobTests : UiTest
 
         var turned = 0;
         var letGo = new List<SocketPick>();
-        editor.InputTurned += (_, _) => turned++;
-        editor.InputLetGo += (_, pick) => letGo.Add(pick);
+        editor.Dial.InputTurned += (_, _) => turned++;
+        editor.Dial.InputLetGo += (_, pick) => letGo.Add(pick);
 
         Turn(window, On(editor, window, Socket(osc, port)), 40);
 

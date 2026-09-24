@@ -43,7 +43,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        if (patch is not null) Editor(window).Patch = patch;
+        if (patch is not null) Editor(window).History.Open(patch);
 
         Settle(window);
 
@@ -70,7 +70,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
         PressKey(box, Key.Enter);
         Settle(window);
 
-        editor.Patch.Nodes.ShouldContain(n => n.TypeId == typeId);
+        editor.History.Patch.Nodes.ShouldContain(n => n.TypeId == typeId);
     }
 
     private static void PressKey(InputElement target, Key key) =>
@@ -88,7 +88,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).Patch.KeyboardScale.ShouldBe(CMajor);
+        Editor(window).History.Patch.KeyboardScale.ShouldBe(CMajor);
     }
 
     [AvaloniaFact]
@@ -98,7 +98,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -112,7 +112,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -123,7 +123,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
-        Editor(window).Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -137,7 +137,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).Patch.KeyboardScale.ShouldBe([0, 3, 7]);
+        Editor(window).History.Patch.KeyboardScale.ShouldBe([0, 3, 7]);
     }
 
     [AvaloniaFact]

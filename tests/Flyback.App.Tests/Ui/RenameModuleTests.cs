@@ -39,12 +39,12 @@ public class RenameModuleTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
         // The patch on the canvas is the one just handed over, so the module in
         // it is the same object — nothing here reopens or round-trips it.
-        sine = Editor(window).Patch.Find(osc.Id)
+        sine = Editor(window).History.Patch.Find(osc.Id)
             ?? throw new InvalidOperationException("the oscillator did not survive being opened");
 
         Select(window, sine);
@@ -206,14 +206,14 @@ public class RenameModuleTests : UiTest
         Type(window, "Wobble");
         Press(window, Key.Enter);
 
-        editor.CanUndo.ShouldBeTrue("renaming is an edit like any other");
-        editor.IsModified.ShouldBeTrue();
+        editor.History.CanUndo.ShouldBeTrue("renaming is an edit like any other");
+        editor.History.IsModified.ShouldBeTrue();
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
         // Undo restores a patch read back from the history, so the module is a
         // fresh object with the same id rather than the one renamed above.
-        editor.Patch.Find(sine.Id).ShouldNotBeNull().Name.ShouldBeNull();
+        editor.History.Patch.Find(sine.Id).ShouldNotBeNull().Name.ShouldBeNull();
         Title(window).Text.ShouldBe("Sine");
     }
 
@@ -260,8 +260,8 @@ public class RenameModuleTests : UiTest
         DoubleClickTitle(window);
         Press(window, Key.Enter);
 
-        Editor(window).CanUndo.ShouldBeFalse();
-        Editor(window).IsModified.ShouldBeFalse();
+        Editor(window).History.CanUndo.ShouldBeFalse();
+        Editor(window).History.IsModified.ShouldBeFalse();
     }
 
     /// <summary>
@@ -274,7 +274,7 @@ public class RenameModuleTests : UiTest
     public void Clicking_away_keeps_what_was_typed()
     {
         var window = Open(out var sine);
-        var screen = Editor(window).Patch.Output;
+        var screen = Editor(window).History.Patch.Output;
 
         DoubleClickTitle(window);
         Type(window, "Wobble");

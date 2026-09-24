@@ -86,7 +86,7 @@ internal sealed class Playback
     public bool CanSound => Sound.Output is not null && !blocked;
 
     /// <summary>Whether the speakers would be heard: there is a device, and the Output's Volume is up.</summary>
-    public bool Audible => CanSound && Audio.Sound.VolumeIsUp(editor.Patch);
+    public bool Audible => CanSound && Audio.Sound.VolumeIsUp(editor.History.Patch);
 
     public bool Paused { get; private set; }
 
@@ -146,13 +146,13 @@ internal sealed class Playback
     /// screen is doing.
     /// </remarks>
     private NodeInstance? Probed =>
-        editor.SelectedNode is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
+        editor.Selection.Focused is { } selected && NodeCatalog.IsChart(selected.TypeId) ? selected : null;
 
     /// <summary>
     /// Whether there is anything for the preview to show. A chart rooted at a Probe
     /// is a picture like any other, whatever the Output's own 'color' says.
     /// </summary>
-    public bool HasPicture => Probed is not null || editor.Patch.Reaches().Picture;
+    public bool HasPicture => Probed is not null || editor.History.Patch.Reaches().Picture;
 
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
@@ -198,8 +198,8 @@ internal sealed class Playback
         var images = pictures();
 
         var result = probe is null
-            ? editor.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
-            : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
+            ? editor.History.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
+            : editor.History.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
 
         // Not a picture that is never drawn: a hidden preview would hold the cue until it gave up.
         if (start is not null && HasPicture) result.Program.WaitFor(start);
@@ -207,7 +207,7 @@ internal sealed class Playback
         preview.Program = result.Program;
         if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
 
-        audio.Update(editor.Patch, samples, start);
+        audio.Update(editor.History.Patch, samples, start);
         start?.Give();
 
         // Both programs are new, so both of their blocks are, and whatever is
@@ -215,7 +215,7 @@ internal sealed class Playback
         // next buffer. Turning a knob while playing a note recompiles the patch,
         // and the note must not be cut off by the edit.
         preview.Live = new LiveValues(result.Program.LiveInputs);
-        var relaid = midi.Lay(editor.Patch.KeyboardScale);
+        var relaid = midi.Lay(editor.History.Patch.KeyboardScale);
         midi.Follow(preview.Live, audio.Live);
 
         Compiled?.Invoke(this, EventArgs.Empty);
@@ -225,7 +225,7 @@ internal sealed class Playback
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
         var said = result.Issues
-            .Concat(editor.Patch.CompileForAudio(samples: samples).Issues)
+            .Concat(editor.History.Patch.CompileForAudio(samples: samples).Issues)
             .Select(i => i.Message)
             .Distinct();
 

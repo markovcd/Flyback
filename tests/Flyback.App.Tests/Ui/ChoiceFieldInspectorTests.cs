@@ -31,10 +31,10 @@ public class ChoiceFieldInspectorTests : UiTest
 
         var editor = All<NodeEditor>(window).Single();
 
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        ink = editor.Patch.Find(placed.Id)
+        ink = editor.History.Patch.Find(placed.Id)
             ?? throw new InvalidOperationException("the ink did not survive being opened");
 
         var body = new Point(ink.X + NodeGeometry.Width / 2, ink.Y + NodeGeometry.HeaderHeight / 2);

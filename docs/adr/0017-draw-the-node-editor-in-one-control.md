@@ -1,6 +1,6 @@
 # ADR-0017: Draw the node editor in one custom control
 
-**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region; amended 2026-09-21, where what reads only the patch leaves the control
+**Status:** Accepted · 2026-08-11 · amended 2026-09-09, where the one control becomes one class across a file per region; amended 2026-09-21, where what reads only the patch leaves the control; amended 2026-09-24, where the regions become services and the control one file
 
 ## Context
 
@@ -93,3 +93,30 @@ patch is. The wire curves are `WirePath`, an Expression's formula block is
 `NodeEditor.Selection.cs`. There is still one control and one `Render`; the
 editor keeps the gestures, the selection and the painting of modules, which share
 its state and would need it passed in.
+
+## Amendment, 2026-09-24: the regions are services, and the control is one file
+
+The partial files were the seams [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md)
+found in the window, and they come apart the same way. Three hubs hold the state
+every region reads: `CanvasHistory` (the patch shown, its history and the mark
+beside each step), `CanvasSelection` (the selected modules, the focus and the box
+being looked into, and the `CanvasScene` over them) and `Viewport` (zoom, pan and
+the control's size). The regions take the hubs they use and own their own fields:
+`CanvasEdits` (adding, deleting, switching off, grouping, pasting, laying out),
+`CanvasClipboard`, `CanvasGestures` (the pointer's five gestures), `SocketDial`,
+`HeldModules`, `KnobLinking`, `RemapMarks`, `UndescribedTags`, `CanvasTips` and
+`CanvasPainter`. `Repaint` is how any of them asks for a frame.
+
+A hub says what changed by events. `CanvasHistory.Replaced` is raised whenever
+the patch becomes a different object, before anybody hears that it changed, and
+the selection, the gestures and the view each answer it for themselves: a
+document opened clears the selection and frames the view, a step through the
+history keeps what survived and leaves the view alone.
+
+`NodeEditor` is one file again, and what is left in it is what only a control can
+be: its size, its keys, where its pointer goes, and `Render` handing the context to
+the painter. There is still one control and one `Render`, and socket positions
+still come from `NodeGeometry` alone. The services are built together in a
+container ([0150](0150-the-editor-is-composed-in-a-container.md)), and a caller
+reaches the one it needs (`editor.History`, `editor.Selection`, `editor.Edits`)
+rather than a member of the control.

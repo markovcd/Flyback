@@ -34,7 +34,7 @@ public class WireDropTests : UiTest
 
         // A patch of one module, so the canvas is nearly all bare and the
         // sockets under test are the only ones a drop could land on.
-        Editor(window).Patch = new Patch();
+        Editor(window).History.Open(new Patch());
         Settle(window);
 
         return window;
@@ -80,7 +80,7 @@ public class WireDropTests : UiTest
         var editor = Editor(window);
         var at = editor.GraphToScreen.Invert().Transform(new Point(120, 90));
 
-        var node = editor.AddNode(typeId, at).ShouldNotBeNull();
+        var node = editor.Edits.AddNode(typeId, at).ShouldNotBeNull();
         Settle(window);
         return node;
     }
@@ -125,7 +125,7 @@ public class WireDropTests : UiTest
     {
         var window = Open();
         var time = Place(window, "time");
-        var sink = Editor(window).Patch.Output;
+        var sink = Editor(window).History.Patch.Output;
 
         var body = OnWindow(window, new Point(
             sink.X + NodeGeometry.Width / 2,
@@ -147,8 +147,8 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), dropped);
         Pick(window, "Sine");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
-        var wire = editor.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull();
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
+        var wire = editor.History.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull();
 
         wire.SourceNode.ShouldBe(time.Id);
         wire.SourcePort.ShouldBe(0);
@@ -173,10 +173,10 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Sine");
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        editor.Patch.Nodes.ShouldNotContain(n => n.TypeId == "osc.sine");
-        editor.Patch.Connections.ShouldBeEmpty("the wire went with it");
+        editor.History.Patch.Nodes.ShouldNotContain(n => n.TypeId == "osc.sine");
+        editor.History.Patch.Connections.ShouldBeEmpty("the wire went with it");
     }
 
     // --- which socket -------------------------------------------------------
@@ -196,10 +196,10 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Sine");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
 
-        editor.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull("'in' is the domain port");
-        editor.Patch.IncomingTo(added.Id, 1).ShouldBeNull("'freq' is not");
+        editor.History.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull("'in' is the domain port");
+        editor.History.Patch.IncomingTo(added.Id, 1).ShouldBeNull("'freq' is not");
     }
 
     /// <summary>
@@ -217,10 +217,10 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Probe");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ProbeTypeId);
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ProbeTypeId);
 
-        editor.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull("'in' is the swept port");
-        editor.Patch.IncomingTo(added.Id, 1).ShouldBeNull("'window' is the timebase");
+        editor.History.Patch.IncomingTo(added.Id, 0).ShouldNotBeNull("'in' is the swept port");
+        editor.History.Patch.IncomingTo(added.Id, 1).ShouldBeNull("'window' is the timebase");
     }
 
     /// <summary>
@@ -238,11 +238,11 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Blend");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == "color.mix");
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == "color.mix");
         var def = NodeCatalog.BuiltIn.Require("color.mix");
 
         var landed = Enumerable.Range(0, def.Inputs.Count)
-            .Single(p => editor.Patch.IncomingTo(added.Id, p) is not null);
+            .Single(p => editor.History.Patch.IncomingTo(added.Id, p) is not null);
 
         def.Inputs[landed].Kind.ShouldBe(PortKind.Scalar);
         def.Inputs[landed].Name.ShouldBe("t");
@@ -258,7 +258,7 @@ public class WireDropTests : UiTest
     {
         var window = Open();
         var editor = Editor(window);
-        var sink = editor.Patch.Output;
+        var sink = editor.History.Patch.Output;
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
 
         // Dragged backwards, out of the Output's color socket.
@@ -269,8 +269,8 @@ public class WireDropTests : UiTest
 
         Pick(window, "Scan");
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ScanTypeId);
-        var wire = editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == NodeCatalog.ScanTypeId);
+        var wire = editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
 
         wire.SourceNode.ShouldBe(added.Id);
         wire.SourcePort.ShouldBe(1, "'view' is the color one; 'out' is a scalar");
@@ -290,8 +290,8 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Coordinates");
 
-        editor.Patch.Nodes.ShouldContain(n => n.TypeId == "coord");
-        editor.Patch.Connections.ShouldBeEmpty("there was no input to plug into");
+        editor.History.Patch.Nodes.ShouldContain(n => n.TypeId == "coord");
+        editor.History.Patch.Connections.ShouldBeEmpty("there was no input to plug into");
     }
 
     /// <summary>
@@ -308,7 +308,7 @@ public class WireDropTests : UiTest
         DragFrom(window, NodeGeometry.OutputPort(time, 0), Bare(window));
         Pick(window, "Sine");
 
-        var wires = editor.Patch.Connections.Count;
+        var wires = editor.History.Patch.Connections.Count;
 
         // The other corner: the module just added is standing on the one the
         // wire was dropped in, and a right-click there would be over it.
@@ -320,6 +320,6 @@ public class WireDropTests : UiTest
 
         Pick(window, "Rings");
 
-        editor.Patch.Connections.Count.ShouldBe(wires, "nothing new should be plugged in");
+        editor.History.Patch.Connections.Count.ShouldBe(wires, "nothing new should be plugged in");
     }
 }

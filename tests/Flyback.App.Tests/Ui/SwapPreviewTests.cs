@@ -43,12 +43,12 @@ public class SwapPreviewTests : UiTest
     private static Connection Unwire(MainWindow window)
     {
         var editor = Editor(window);
-        var output = editor.Patch.Output;
+        var output = editor.History.Patch.Output;
 
-        var color = editor.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
+        var color = editor.History.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort).ShouldNotBeNull();
 
-        editor.Patch.Disconnect(output.Id, NodeCatalog.OutputColorPort);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Disconnect(output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Record();
         Settle(window);
 
         return color;
@@ -171,9 +171,9 @@ public class SwapPreviewTests : UiTest
         editor.Bounds.Width.ShouldBe(canvasWas, 0.5, "the canvas has its column back");
 
         // And the picture coming back does not swap it again by itself.
-        var output = editor.Patch.Output;
-        editor.Patch.Connect(color.SourceNode, color.SourcePort, output.Id, NodeCatalog.OutputColorPort);
-        editor.NotifyPatchChanged();
+        var output = editor.History.Patch.Output;
+        editor.History.Patch.Connect(color.SourceNode, color.SourcePort, output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Record();
         Settle(window);
 
         Swap(window).IsEnabled.ShouldBeTrue();
@@ -204,12 +204,12 @@ public class SwapPreviewTests : UiTest
 
         // Framed in the narrow cell, so the Output's socket is somewhere a
         // pointer can reach.
-        editor.FrameAll();
+        editor.View.FrameAll();
         Settle(window);
 
         var swappedWidth = editor.Bounds.Width;
 
-        var output = editor.Patch.Output;
+        var output = editor.History.Patch.Output;
         var socket = NodeGeometry.InputPort(
             output, NodeCatalog.BuiltIn.Require(output.TypeId), NodeCatalog.OutputColorPort);
 
@@ -221,7 +221,7 @@ public class SwapPreviewTests : UiTest
         window.MouseMove(OnWindow(window, body));
         Settle(window);
 
-        editor.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort)
+        editor.History.Patch.IncomingTo(output.Id, NodeCatalog.OutputColorPort)
             .ShouldBeNull("the wire comes off at the press");
         Swap(window).IsChecked.ShouldBe(true, "but nothing moves while the wire is held");
         editor.Bounds.Width.ShouldBe(swappedWidth, 0.5);

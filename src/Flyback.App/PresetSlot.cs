@@ -173,7 +173,7 @@ internal sealed class PresetSlot
         // nothing: the patch below is already built.
         showing = at;
 
-        editor.Patch = opened;
+        editor.History.Open(opened);
         picker.SelectedIndex = at;
     }
 
@@ -354,7 +354,7 @@ internal sealed class PresetSlot
 
         try
         {
-            var kept = saved.Save(name, editor.Patch, files.Bytes, plugins.Modules);
+            var kept = saved.Save(name, editor.History.Patch, files.Bytes, plugins.Modules);
 
             Refresh();
 

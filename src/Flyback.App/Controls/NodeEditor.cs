@@ -2,510 +2,223 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// The patch bay. Everything is drawn directly rather than built from controls,
-/// which keeps panning and zooming over a few hundred modules cheap and puts
-/// layout, painting and hit-testing in one place.
+/// The canvas: one control that draws the patch and hands the pointer and the keys to
+/// the services around it (ADR-0017, ADR-0150).
 /// </summary>
-public sealed partial class NodeEditor : Control
+/// <remarks>
+/// Everything is drawn rather than built from controls, which keeps panning and
+/// zooming over a few hundred modules cheap. What the canvas holds and does is in its
+/// services, which the container builds together: the patch and its history, the
+/// selection, the view, the edits, the gestures and the painting. What is left here is
+/// what only a control can be: its size, its keys, and where its pointer goes.
+/// </remarks>
+internal sealed class NodeEditor : Control
 {
-    private enum Drag
+    private readonly CanvasPainter painter;
+    private readonly ReportLine report;
+
+    public NodeEditor(
+        CanvasHistory history,
+        CanvasSelection selection,
+        Viewport view,
+        CanvasEdits edits,
+        CanvasClipboard clipboard,
+        CanvasGestures gestures,
+        CanvasTips tips,
+        SocketDial dial,
+        KnobLinking linking,
+        UndescribedTags tags,
+        CanvasPainter painter,
+        Repaint repaint,
+        ReportLine report)
     {
-        None,
-        Pan,
-        Node,
-        Wire,
-        Marquee,
-    }
+        History = history;
+        Selection = selection;
+        View = view;
+        Edits = edits;
+        Clipboard = clipboard;
+        Gestures = gestures;
+        Tips = tips;
+        Dial = dial;
+        Linking = linking;
+        Tags = tags;
 
-    private static readonly IBrush Background = new SolidColorBrush(Colors.Canvas);
-    private static readonly IBrush NormalBrush = new SolidColorBrush(Colors.Normalled);
-    private static readonly IBrush HeaderTextBrush = Brushes.White;
-    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
-    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colors.GridMajor));
-    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colors.Attention), 2);
+        this.painter = painter;
+        this.report = report;
 
-    /// <summary>
-    /// Selected, but not the one the inspector is showing. The same color at
-    /// half strength rather than a second color: what these modules are is
-    /// selected, and the difference between them and the bright one is which of
-    /// them the panel on the right is currently about.
-    /// </summary>
-    private static readonly IPen SelectionPenSecondary =
-        new Pen(new SolidColorBrush(Colors.Attention, 0.5), 2);
-
-    /// <summary>
-    /// The rubber band. Dashed, because it is a gesture in progress rather than
-    /// anything in the patch, and drawn over the canvas rather than in it — so
-    /// the dashes and the hairline stay the same size however far the view is
-    /// zoomed out.
-    /// </summary>
-    private static readonly IPen MarqueePen = new Pen(
-        new SolidColorBrush(Colors.Attention),
-        1,
-        new DashStyle([4, 3], 0));
-
-    /// <summary>
-    /// How strongly a module that is switched off is drawn, and its wires with
-    /// it. Faint enough to read as out of the patch at any zoom, and not so faint
-    /// that what it is wired to cannot be followed.
-    /// </summary>
-    private const double OffOpacity = 0.38;
-
-    /// <summary>The line through the name of a module that is switched off.</summary>
-    private static readonly IPen OffStrike = new Pen(HeaderTextBrush, 1.5);
-
-    private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
-
-    /// <summary>
-    /// The dashed ring round a group that is open — see OpenGroup.
-    /// </summary>
-    /// <remarks>
-    /// In the separator color at half strength rather than the outline one: a
-    /// box's border is drawn on a module, where a gray darker than the canvas
-    /// reads as an edge, and this is drawn on the canvas itself. Half strength and
-    /// dashed because an open group is furniture marking a region, and furniture
-    /// that shouts is furniture in the way.
-    /// </remarks>
-    private static readonly IPen OpenGroupPen = new Pen(
-        new SolidColorBrush(Colors.Separator, 0.5),
-        1.5,
-        new DashStyle([6, 4], 0));
-
-    /// <summary>
-    /// The same ring while everything inside it is selected.
-    /// </summary>
-    /// <remarks>
-    /// A shut box turns its border the selected color, so without this the one
-    /// picture saying which modules a gesture is about goes missing exactly when
-    /// the group is opened to work on. Held well under
-    /// <see cref="SelectionPen"/>: the modules inside are already ringed one by
-    /// one, and this is the line round the lot of them.
-    /// </remarks>
-    private static readonly IPen OpenGroupPenSelected = new Pen(
-        new SolidColorBrush(Colors.Attention, 0.55),
-        1.5,
-        new DashStyle([6, 4], 0));
-
-    /// <summary>
-    /// The ground inside the ring. Faint to the edge of being nothing, on
-    /// purpose: it is drawn under the wires and under the modules both, so it
-    /// has to say "this area" at a glance without becoming a second background
-    /// for everything standing on it.
-    /// </summary>
-    /// <remarks>
-    /// Brightest where it meets the strip the title is on and falling away to
-    /// nothing at the floor, so the region reads as light coming off the strip
-    /// rather than as a panel laid over the canvas.
-    /// </remarks>
-    private static readonly IBrush OpenGroupFill = NodeSkin.Down(
-        Colors.Faded(Colors.Separator, 0.12), Colors.Faded(Colors.Separator, 0.025));
-
-    /// <summary>
-    /// The tab the title sits on, above the ring.
-    /// </summary>
-    /// <remarks>
-    /// The strip used to be bare, which left the name adrift over the canvas
-    /// with nothing joining it to the region it names. A tab is what a named
-    /// region wears everywhere; it is still not a header, because it is only as
-    /// wide as the name.
-    /// </remarks>
-    private static readonly IBrush OpenGroupTab = new SolidColorBrush(Colors.Separator, 0.22);
-
-    private static readonly IBrush OpenGroupTabSelected = new SolidColorBrush(Colors.Attention, 0.22);
-
-    /// <summary>The ring round a box being looked into: solid, because it is over everything.</summary>
-    private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
-
-    /// <summary>The ground inside a box being looked into: slightly transparent, so the canvas under it still shows.</summary>
-    private static readonly IBrush PeekGround = new SolidColorBrush(Colors.Canvas, 0.70);
-
-    /// <summary>What the canvas outside a box being looked into is dimmed under.</summary>
-    private static readonly IBrush PeekScrim = new SolidColorBrush(Colors.Edge, 0.78);
-
-    /// <summary>
-    /// How strongly a wire leaving a box being looked into is drawn at its far end,
-    /// against full strength where it leaves the box. It reaches nothing, so no edge
-    /// is left against the socket it runs into.
-    /// </summary>
-    private const double PeekWireFar = 0, PeekWireNear = 0.7;
-
-    /// <summary>How much wider than its title a tab is drawn, and how far in the title sits.</summary>
-    private const double TabPadding = 9;
-
-    /// <summary>
-    /// How round a region's corners are. Softer than a module's, because it is a
-    /// region and not a thing.
-    /// </summary>
-    private const double GroupCornerRadius = 10;
-
-    private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
-
-    /// <summary>
-    /// The edge of the canvas. Brighter than any grid line and a little heavier,
-    /// because it is the one line out there that means something other than
-    /// "this is where another forty-eight units went".
-    /// </summary>
-    private static readonly IPen EdgePen = new Pen(new SolidColorBrush(Colors.Separator), 2);
-
-    /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
-    private const double WireThickness = 2.2;
-
-    private const double RestingWireOpacity = 0.85;
-
-    /// <summary>
-    /// A wire on the module being dragged. Heavier rather than differently
-    /// colored, because a wire's color already says what flows down it and
-    /// that is not what has changed about this one.
-    /// </summary>
-    private const double LiftedWireThickness = 3.4;
-
-    private static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
-    private static readonly Cursor PortCursor = new(StandardCursorType.Cross);
-    private static readonly Cursor NodeCursor = new(StandardCursorType.SizeAll);
-
-    /// <summary>
-    /// While the middle button is dragging the view.
-    /// </summary>
-    /// <remarks>
-    /// A hand rather than the four-way arrow a module gets, because what is moving
-    /// is not in the patch: the sheet goes under the pointer and nothing on it has
-    /// changed. The pointing hand and not a grabbing one because there is no
-    /// grabbing one to have — Windows ships no hand but this, and
-    /// <c>DragMove</c> is the OLE drag icon, which falls back to an up arrow when
-    /// ole32 declines it.
-    /// </remarks>
-    private static readonly Cursor PanCursor = new(StandardCursorType.Hand);
-
-    private readonly PatchHistory history = new();
-
-    /// <summary>
-    /// How far past the canvas the view may be scrolled, in graph units: a strip of
-    /// the ground beyond, so the edge reads as an edge with something on the far
-    /// side rather than as the window's own frame.
-    /// </summary>
-    /// <remarks>
-    /// Nothing is ever out there to be looked at — a module is held wholly inside
-    /// the canvas — so this is as much room as the line needs and no more. Scaled
-    /// by the zoom like everything else in graph units.
-    /// </remarks>
-    internal const double ViewMargin = 160;
-
-    /// <summary>
-    /// How far out the view may zoom, whether by the wheel or by framing. Set by
-    /// the width of the canvas: at this much the whole of it fits a window about
-    /// two thousand pixels wide, and any less and a module dragged to the far edge
-    /// could not be framed.
-    /// </summary>
-    internal const double MinZoom = 0.13;
-
-    /// <summary>How far from the origin the view may see, to either side.</summary>
-    internal const double ViewReachAcross = NodeInstance.Across + ViewMargin;
-
-    /// <summary>The same going down, since the canvas is wider than it is tall.</summary>
-    internal const double ViewReachDown = NodeInstance.Down + ViewMargin;
-
-    /// <summary>
-    /// The canvas itself, in graph units: the ground a module may stand on. Drawn
-    /// rather than merely enforced, because a bound with nothing to show is a wall
-    /// in the dark.
-    /// </summary>
-    internal static readonly Rect CanvasBounds = new(
-        -NodeInstance.Across,
-        -NodeInstance.Down,
-        NodeInstance.Across * 2,
-        NodeInstance.Down * 2);
-
-    private Patch patch = new();
-    private double zoom = 1;
-    private Point pan = new(40, 40);
-
-    /// <summary>
-    /// Every selected module. A set rather than one id, so that a gesture can
-    /// name several — which is what dragging a group and copying one need, and
-    /// neither of those can be built on a selection that holds one thing.
-    /// </summary>
-    private readonly HashSet<Guid> selection = [];
-
-    /// <summary>
-    /// Which of the selected modules the inspector is about. Always one of
-    /// <see cref="selection"/> or nothing at all, and it is the last one the
-    /// pointer named: a panel has room for one module's values, and the one
-    /// just clicked is the one that was being asked about.
-    /// </summary>
-    private Guid? focus;
-
-    private bool framePending = true;
-    private Drag drag;
-
-    /// <summary>
-    /// Where on the canvas a module drag took hold, in the patch's own coordinates.
-    /// </summary>
-    /// <remarks>
-    /// The canvas's rather than the screen's, because the view may move under a drag
-    /// — the middle button pans mid-gesture and the wheel zooms — and a distance in
-    /// pixels means something else after either. The point of the canvas under the
-    /// pointer is what both of them hold still, so measured from there a module
-    /// stays in the hand through a pan and a zoom with nothing to put right after.
-    /// </remarks>
-    private Point dragOrigin;
-
-    /// <summary>
-    /// What the middle button put on hold to pan, and where the pan itself
-    /// started. <see cref="Drag.None"/> when the pan has nothing under it,
-    /// which is the ordinary case and needs nothing restored when it ends.
-    /// </summary>
-    private Drag panSuspended = Drag.None;
-    private Point panOrigin;
-
-    /// <summary>
-    /// Where each module of the selection was when the drag began. Recorded for
-    /// all of them rather than tracked as one offset, so that a drag ending
-    /// exactly where it started can be told from one that moved — which is what
-    /// decides whether the history gains a step.
-    /// </summary>
-    private readonly Dictionary<Guid, Point> dragOrigins = [];
-
-    /// <summary>
-    /// A module pressed while it was already part of a larger selection, which is a
-    /// click that cannot be resolved until the button comes back up. Pressing must
-    /// not narrow the selection, or a set could never be dragged by one of its
-    /// members; releasing without a drag must, or one module could never be picked
-    /// out of a set.
-    /// </summary>
-    /// <remarks>
-    /// "Narrow" rather than "collapse", which since <see cref="NodeGroup"/> means
-    /// drawing several modules as one box.
-    /// </remarks>
-    private Guid? pendingNarrow;
-
-    /// <summary>
-    /// The two corners of the rubber band, in graph space so that it stays over
-    /// the same modules whatever the zoom.
-    /// </summary>
-    private Point marqueeFrom;
-    private Point marqueeTo;
-
-    /// <summary>
-    /// What was selected when the rubber band was started. A band with the
-    /// modifier held adds to it, so the modules it sweeps have to be added to
-    /// something that does not itself change as the band moves — sweeping back
-    /// off a module must take it out again, and it cannot if the previous frame
-    /// has already been folded in.
-    /// </summary>
-    private readonly HashSet<Guid> marqueeBase = [];
-
-    /// <summary>
-    /// What was selected when the rubber band was started, which is what backing
-    /// out of one puts back. Not <see cref="marqueeBase"/>: that holds what the
-    /// band adds to, which is nothing at all for a band without the modifier —
-    /// and a band abandoned has to give back the selection it swept away either
-    /// way.
-    /// </summary>
-    private readonly HashSet<Guid> marqueeWas = [];
-
-    /// <summary>
-    /// Where the pointer was last seen, in graph space. Kept so that a gesture
-    /// with no position of its own — the space bar — can still open the module
-    /// list where the hand is rather than in the middle of the view.
-    /// </summary>
-    private Point? lastPointer;
-
-    private Guid wireNode;
-    private int wirePort;
-    private bool wireFromOutput;
-
-    /// <summary>
-    /// Which re-patch this is. Unplugging an input and plugging it in somewhere
-    /// else is two edits and one gesture, so both carry this and fold into one
-    /// step — while two unpluggings in a row stay two, which counting is what
-    /// tells them apart.
-    /// </summary>
-    private int wireGesture;
-
-    /// <summary>The name this re-patch records its edits under.</summary>
-    private string WireGesture => $"wire {wireGesture}";
-
-    private Point wireEnd;
-
-    /// <summary>
-    /// The wire this re-patch picked up and where in the patch's list it was, or
-    /// null for a wire being drawn new.
-    /// </summary>
-    private (Connection Wire, int At)? lifted;
-
-    public NodeEditor()
-    {
         Focusable = true;
         ClipToBounds = true;
+
+        repaint.Requested += InvalidateVisual;
+        history.PatchChanged += (_, _) => InvalidateVisual();
     }
 
-    /// <summary>Raised whenever the graph itself changed and needs recompiling.</summary>
-    public event EventHandler? PatchChanged;
+    internal CanvasHistory History { get; }
 
-    /// <summary>Raised when a different node becomes selected.</summary>
-    public event EventHandler? SelectionChanged;
+    internal CanvasSelection Selection { get; }
 
-    /// <summary>
-    /// Raised when what can be undone or redone changed. Separate from
-    /// <see cref="PatchChanged"/> because the two do not always coincide: moving
-    /// a module is an edit worth taking back and not one the program can hear,
-    /// so it goes in the history without asking anything to recompile.
-    /// </summary>
-    public event EventHandler? HistoryChanged;
+    internal Viewport View { get; }
 
-    /// <summary>
-    /// Raised when something the canvas was asked to do has to be explained
-    /// rather than done — a paste of something that is not a patch, or of one
-    /// naming a module this build has not got. The canvas has nowhere to say it;
-    /// the window does.
-    /// </summary>
-    public event EventHandler<string>? Reported;
+    internal CanvasEdits Edits { get; }
 
-    /// <summary>
-    /// Raised by a right-click on empty canvas, carrying the point in graph space
-    /// that was clicked — what is picked from the palette belongs there rather than
-    /// wherever the view is centered.
-    /// </summary>
-    /// <remarks>
-    /// A click and not a drag, since the right button still pans: this waits for
-    /// the button to come up and asks whether the pointer went anywhere. Not over a
-    /// module, because a right-click there is about that module.
-    /// </remarks>
-    public event EventHandler<Point>? MenuRequested;
+    internal CanvasClipboard Clipboard { get; }
 
-    /// <summary>
-    /// Raised when a wire is let go over empty canvas, carrying the loose end
-    /// and where it was dropped. What the shell puts there is the module list,
-    /// narrowed to what could actually take the wire — and whatever is picked
-    /// arrives already plugged in.
-    /// </summary>
-    public event EventHandler<WireDrop>? WireDropped;
+    internal CanvasGestures Gestures { get; }
 
-    /// <summary>Whether the <see cref="PatchChanged"/> being raised is a patch opened rather than edited.</summary>
-    public bool Opening { get; private set; }
+    internal CanvasTips Tips { get; }
 
-    public Patch Patch
+    internal SocketDial Dial { get; }
+
+    internal KnobLinking Linking { get; }
+
+    internal UndescribedTags Tags { get; }
+
+    /// <summary>The line the canvas says things on: the window's, in the editor.</summary>
+    internal ReportLine Report => report;
+
+    /// <summary>The graph-to-control matrix, for a test asking where a socket ended up on the control.</summary>
+    internal Matrix GraphToScreen => View.GraphToScreen;
+
+    public override void Render(DrawingContext context) => painter.Render(context);
+
+    protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
-        get => patch;
-        set
+        base.OnSizeChanged(e);
+
+        View.Resize(e.NewSize);
+    }
+
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
+    {
+        base.OnPointerPressed(e);
+        Focus();
+
+        Gestures.Pressed(this, e);
+    }
+
+    protected override void OnPointerMoved(PointerEventArgs e)
+    {
+        base.OnPointerMoved(e);
+
+        Gestures.Moved(this, e);
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+
+        Gestures.Released(this, e);
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+
+        Gestures.CaptureLost(this);
+    }
+
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+
+        Gestures.Wheel(this, e);
+    }
+
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+
+        Tips.Down(this);
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        // Backing out of the gesture under way, as Escape does everywhere else here.
+        // Before the modifier check, because the hand may still hold the Ctrl that
+        // began it; unhandled with nothing under way, so the window still gets it.
+        if (e.Key == Key.Escape && (Gestures.Abort(this) || Selection.EndPeek()))
         {
-            patch = value;
+            e.Handled = true;
+            return;
+        }
 
-            // The last gate before a patch is shown. Presets, files and the
-            // assistant all place one already; this is what makes "every patch
-            // has an Output" true of anything that reaches the canvas, rather
-            // than true of each route to it separately.
-            patch.EnsureOutput();
+        var editable = Gestures.Editable;
 
-            // And the same gate for where its modules stand. A file written
-            // before the canvas was bounded, or by hand, may put one half off
-            // the edge — brought in here, before the history opens on it, so
-            // that what a patch was opened as is a patch that fits.
-            Scene.HoldInside();
+        // Copy and paste here rather than on the window: Ctrl+C in a text box means the
+        // text in it, and the canvas only sees these while it has the focus.
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0)
+        {
+            var shift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
 
-            // A different document rather than an edit to this one, so what
-            // came before it is not something to undo into.
-            history.Opened(patch, Mark);
-
-            selection.Clear();
-            focus = null;
-            peek = null;
-            EndGesture();
-            FrameAll();
-            SelectionChanged?.Invoke(this, EventArgs.Empty);
-
-            Opening = true;
-            try
+            // Copy, select-all and framing only look, so a locked canvas keeps them.
+            Action? command = e.Key switch
             {
-                PatchChanged?.Invoke(this, EventArgs.Empty);
-            }
-            finally
-            {
-                Opening = false;
-            }
+                Key.C => () => UseClipboard(Clipboard.CopyAsync),
+                Key.X when editable => () => UseClipboard(Clipboard.CutAsync),
+                Key.V when editable => () => UseClipboard(Clipboard.PasteAsync),
 
-            HistoryChanged?.Invoke(this, EventArgs.Empty);
+                // Duplicate leaves the clipboard alone, so what was copied earlier survives.
+                Key.D when editable => Edits.DuplicateSelection,
+                Key.A => Selection.SelectAll,
+
+                // Shift tells group from ungroup, and shut from open, the pairing undo and redo use.
+                Key.G when editable => shift ? Edits.UngroupSelected : Edits.GroupSelected,
+                Key.E when editable => shift ? Edits.CloseSelectedGroups : Edits.OpenSelectedGroups,
+
+                // Bypass, on the letter a desk uses for it; a module is off or it is on.
+                Key.B when editable => Edits.SwitchSelected,
+
+                // Under Control, since every bare letter belongs to the instrument.
+                Key.F => View.FrameAll,
+                _ => null,
+            };
+
+            // Anything else with a modifier on it is the window's: undo and redo.
+            if (command is null) return;
+
+            command();
+            e.Handled = true;
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Key.Delete or Key.Back when editable:
+                Edits.DeleteSelected();
+                e.Handled = true;
+                break;
+
+            // The palette, from the keyboard, where the pointer last was.
+            case Key.Space when editable:
+                Gestures.RequestMenu();
+                e.Handled = true;
+                break;
         }
     }
 
-    /// <summary>What the canvas shows of the patch, and what is under a point on it.</summary>
-    internal CanvasScene Scene => new(patch, Peeked);
-
     /// <summary>
-    /// Whether the patch belongs to somebody else, and this is a view of it.
+    /// Runs one of the clipboard gestures against this window's clipboard and says
+    /// whatever it has to say.
     /// </summary>
     /// <remarks>
-    /// A canvas showing a patch built from source (ADR-0068). Everything that looks
-    /// stays — selecting, panning, zooming, framing, copying — and everything that
-    /// changes it goes, since the next evaluation would overwrite it.
-    /// <para>
-    /// Gated at the gestures rather than by refusing the methods behind them: those
-    /// are the shell's to call, and a public method that silently did nothing is
-    /// worse to hand a caller than a button that is visibly off.
-    /// </para>
+    /// Void and asynchronous, which is what a key press is: an exception escaping would
+    /// have no caller to reach and would take the program with it.
     /// </remarks>
-    public bool Locked { get; set; }
-
-    /// <summary>
-    /// The module the inspector is about — the last one the pointer named, of
-    /// however many are selected. Null when nothing is.
-    /// </summary>
-    public NodeInstance? SelectedNode => focus is { } id ? patch.Find(id) : null;
-
-    /// <summary>
-    /// Every selected module, in the order the patch holds them so that what
-    /// comes out of a selection reads the same way twice. Empty when nothing is
-    /// selected, and one entry deep for the ordinary click.
-    /// </summary>
-    public IReadOnlyList<NodeInstance> SelectedNodes =>
-        [.. patch.Nodes.Where(node => selection.Contains(node.Id))];
-
-    public bool CanUndo => history.CanUndo;
-
-    public bool CanRedo => history.CanRedo;
-
-    /// <summary>
-    /// Whether a gesture is under way on the canvas: a module being moved, a wire
-    /// drawn, the view panned or a marquee drawn out. For the shell, which takes
-    /// the keyboard while the pointer is held; the canvas asks its own state.
-    /// </summary>
-    public bool Gesturing => drag != Drag.None;
-
-    /// <summary>
-    /// A gesture has ended — the button came up, or the pointer was taken away —
-    /// and <see cref="Gesturing"/> is false again. For the shell, which holds back
-    /// moving the canvas while the pointer is on it.
-    /// </summary>
-    public event EventHandler? GestureFinished;
-
-    /// <summary>
-    /// What the owner of this canvas keeps beside the patch, noted with every step
-    /// so an undo hands back the state that step was taken in.
-    /// </summary>
-    /// <remarks>
-    /// Opaque on purpose: the canvas records a step for every gesture it has, and
-    /// would otherwise have to know about each thing outside it an edit can change.
-    /// Set it before making the edit — and see <see cref="Remark"/> for the changes
-    /// no edit is made for.
-    /// </remarks>
-    public object? Mark { get; set; }
-
-    /// <summary>
-    /// A step has just been added to the history. Not raised for an undo or redo,
-    /// nor for an edit that made no step, so a caller keeping a history of its own
-    /// hears once per thing somebody did.
-    /// </summary>
-    public event EventHandler? Recorded;
-
-    /// <summary>
-    /// Whether the patch differs from the one that was opened, or from the last
-    /// one written out. Undoing back to where it started clears it again, since
-    /// what is being compared is the document rather than whether anybody typed.
-    /// </summary>
-    public bool IsModified => history.IsModified;
+    private async void UseClipboard(Func<Avalonia.Input.Platform.IClipboard?, Task<string?>> gesture)
+    {
+        try
+        {
+            if (await gesture(TopLevel.GetTopLevel(this)?.Clipboard) is { } trouble) report.Say(trouble);
+        }
+        catch (Exception ex)
+        {
+            report.Say($"Clipboard unavailable: {ex.Message}");
+        }
+    }
 }

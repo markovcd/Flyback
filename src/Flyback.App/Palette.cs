@@ -46,11 +46,11 @@ internal sealed class Palette
     {
         if (typeId != NodeCatalog.MidiTypeId
             || keyboard() != KeyboardLayout.Scale
-            || editor.Patch.KeyboardScale is not null
-            || editor.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
+            || editor.History.Patch.KeyboardScale is not null
+            || editor.History.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
             return;
 
-        editor.Patch.KeyboardScale = [.. Inspector.Major];
+        editor.History.Patch.KeyboardScale = [.. Inspector.Major];
         document.Relaid();
     }
 
@@ -75,7 +75,7 @@ internal sealed class Palette
         Flyout.Content = list;
         Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 
-        editor.MenuRequested += (_, at) =>
+        editor.Gestures.MenuRequested += (_, at) =>
         {
             wiring = null;
             Show(at);
@@ -83,7 +83,7 @@ internal sealed class Palette
 
         // A wire let go over bare canvas asks the same question with one more
         // thing known: what it is going to be plugged into.
-        editor.WireDropped += (_, drop) =>
+        editor.Gestures.WireDropped += (_, drop) =>
         {
             wiring = drop;
             Show(drop.At);
@@ -98,8 +98,8 @@ internal sealed class Palette
 
             LayFirstKeyboard(typeId);
 
-            if (wiring is { } drop) editor.AddNodeWired(typeId, drop);
-            else editor.AddNode(typeId, addingAt);
+            if (wiring is { } drop) editor.Edits.AddNodeWired(typeId, drop);
+            else editor.Edits.AddNode(typeId, addingAt);
 
             usage.Count(Used.Added);
 
@@ -114,7 +114,7 @@ internal sealed class Palette
         {
             Flyout.Hide();
 
-            var added = editor.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules), addingAt);
+            var added = editor.Edits.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules), addingAt);
 
             usage.Count(Used.Added);
             report.Say(wiring is null
@@ -139,7 +139,7 @@ internal sealed class Palette
                 return;
             }
 
-            var added = editor.AddFragment(entry.Fragment, addingAt);
+            var added = editor.Edits.AddFragment(entry.Fragment, addingAt);
 
             // A wire dropped on bare canvas asked what to plug into, and a box
             // has more than one answer to that — so it is left where it was and
@@ -173,7 +173,7 @@ internal sealed class Palette
 
         try
         {
-            var kept = Groups.Save(group, editor.Patch);
+            var kept = Groups.Save(group, editor.History.Patch);
 
             report.Say(
                 replacing

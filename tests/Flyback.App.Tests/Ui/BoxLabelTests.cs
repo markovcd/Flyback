@@ -67,15 +67,15 @@ public class BoxLabelTests : UiTest
         var group = b.Patch.Group([inner.Id, tail.Id]).ShouldNotBeNull();
         group.Collapsed = true;
 
-        var editor = new NodeEditor { Width = 1200, Height = 800 };
+        var editor = NewCanvas(1200, 800);
         var window = Show(editor, 1200);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
         var sockets = b.Patch.SocketsOf(group);
 
-        editor.Scene.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
-        editor.Scene.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
+        editor.Selection.Scene.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
+        editor.Selection.Scene.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
     }
 
     /// <summary>
@@ -105,15 +105,15 @@ public class BoxLabelTests : UiTest
         var named = Expression(b, "a * 2", 600);
         named.Name = "gain";
 
-        var editor = new NodeEditor { Width = 1200, Height = 800 };
+        var editor = NewCanvas(1200, 800);
         var window = Show(editor, 1200);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId);
 
         double Height(NodeInstance node) =>
-            FormulaLayout.FormulaBlock(editor.Patch, node, def, NodeGeometry.Bounds(node, def), static _ => CanvasText.ValueBrush)
+            FormulaLayout.FormulaBlock(editor.History.Patch, node, def, NodeGeometry.Bounds(node, def), static _ => CanvasText.ValueBrush)
                 .ShouldNotBeNull().Text.Height;
 
         Height(named).ShouldBe(Height(shortOne), "a name does not move the formula out of the body");

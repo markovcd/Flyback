@@ -40,10 +40,10 @@ public class CopyPasteTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -82,7 +82,7 @@ public class CopyPasteTests : UiTest
         var (editor, window) = Editing(patch);
 
         Click(editor, window, time);
-        (await editor.CopySelectionAsync()).ShouldBeNull();
+        (await editor.Clipboard.CopyAsync(Clipboard(window))).ShouldBeNull();
 
         var copied = (await Clipboard(window).TryGetTextAsync()).ShouldNotBeNull();
 
@@ -90,9 +90,9 @@ public class CopyPasteTests : UiTest
         window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);
         Settle(window);
 
-        Count(editor.Patch, "osc.sine").ShouldBe(2);
+        Count(editor.History.Patch, "osc.sine").ShouldBe(2);
 
-        var made = editor.SelectedNodes.ShouldHaveSingleItem();
+        var made = editor.Selection.Nodes.ShouldHaveSingleItem();
         made.Id.ShouldNotBe(osc.Id, "what is selected is the copy, ready to be dragged off");
         (made.X, made.Y).ShouldBe((osc.X + 28, osc.Y + 28));
 
@@ -110,13 +110,13 @@ public class CopyPasteTests : UiTest
         var (editor, window) = Editing(patch);
 
         var said = new List<string>();
-        editor.Reported += (_, line) => said.Add(line);
+        editor.Report.Said += (_, line) => said.Add(line);
 
         Click(editor, window, sink);
         window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);
         Settle(window);
 
-        Count(editor.Patch, NodeCatalog.OutputTypeId).ShouldBe(1);
+        Count(editor.History.Patch, NodeCatalog.OutputTypeId).ShouldBe(1);
         said.ShouldHaveSingleItem().ShouldContain("cannot be duplicated");
     }
 
@@ -136,7 +136,7 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        (await editor.CopySelectionAsync()).ShouldBeNull();
+        (await editor.Clipboard.CopyAsync(Clipboard(window))).ShouldBeNull();
 
         var text = await Clipboard(window).TryGetTextAsync();
         var loaded = PatchIO.Read(text.ShouldNotBeNull(), NodeCatalog.BuiltIn);
@@ -154,7 +154,7 @@ public class CopyPasteTests : UiTest
 
         await Clipboard(window).SetTextAsync("something else");
 
-        (await editor.CopySelectionAsync()).ShouldBeNull("an empty selection has nothing to say");
+        (await editor.Clipboard.CopyAsync(Clipboard(window))).ShouldBeNull("an empty selection has nothing to say");
         (await Clipboard(window).TryGetTextAsync()).ShouldBe("something else");
     }
 
@@ -170,7 +170,7 @@ public class CopyPasteTests : UiTest
 
         Click(editor, window, sink);
 
-        (await editor.CopySelectionAsync()).ShouldNotBeNullOrWhiteSpace();
+        (await editor.Clipboard.CopyAsync(Clipboard(window))).ShouldNotBeNullOrWhiteSpace();
     }
 
     // --- pasting ------------------------------------------------------------
@@ -184,13 +184,13 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        await editor.CopySelectionAsync();
-        (await editor.PasteAsync()).ShouldBeNull();
+        await editor.Clipboard.CopyAsync(Clipboard(window));
+        (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldBeNull();
 
         Count(patch, "time").ShouldBe(2);
         Count(patch, "osc.sine").ShouldBe(2);
 
-        var pasted = editor.SelectedNodes.Single(n => n.TypeId == "osc.sine");
+        var pasted = editor.Selection.Nodes.Single(n => n.TypeId == "osc.sine");
         patch.IncomingTo(pasted.Id, 0).ShouldNotBeNull("the wire came with them");
     }
 
@@ -203,12 +203,12 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        await editor.CopySelectionAsync();
-        await editor.PasteAsync();
+        await editor.Clipboard.CopyAsync(Clipboard(window));
+        await editor.Clipboard.PasteAsync(Clipboard(window));
 
-        editor.SelectedNodes.Count.ShouldBe(2);
-        editor.SelectedNodes.ShouldNotContain(n => n.Id == time.Id || n.Id == osc.Id);
-        editor.SelectedNode.ShouldNotBeNull();
+        editor.Selection.Nodes.Count.ShouldBe(2);
+        editor.Selection.Nodes.ShouldNotContain(n => n.Id == time.Id || n.Id == osc.Id);
+        editor.Selection.Focused.ShouldNotBeNull();
     }
 
     /// <summary>
@@ -222,13 +222,13 @@ public class CopyPasteTests : UiTest
         var (editor, window) = Editing(patch);
 
         Click(editor, window, time);
-        await editor.CopySelectionAsync();
+        await editor.Clipboard.CopyAsync(Clipboard(window));
 
-        await editor.PasteAsync();
-        var first = editor.SelectedNodes.Single();
+        await editor.Clipboard.PasteAsync(Clipboard(window));
+        var first = editor.Selection.Nodes.Single();
 
-        await editor.PasteAsync();
-        var second = editor.SelectedNodes.Single();
+        await editor.Clipboard.PasteAsync(Clipboard(window));
+        var second = editor.Selection.Nodes.Single();
 
         (second.X, second.Y).ShouldNotBe((first.X, first.Y));
         (first.X, first.Y).ShouldNotBe((time.X, time.Y));
@@ -243,13 +243,13 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        await editor.CopySelectionAsync();
-        await editor.PasteAsync();
+        await editor.Clipboard.CopyAsync(Clipboard(window));
+        await editor.Clipboard.PasteAsync(Clipboard(window));
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        Count(editor.Patch, "time").ShouldBe(1);
-        Count(editor.Patch, "osc.sine").ShouldBe(1);
+        Count(editor.History.Patch, "time").ShouldBe(1);
+        Count(editor.History.Patch, "osc.sine").ShouldBe(1);
     }
 
     /// <summary>
@@ -266,7 +266,7 @@ public class CopyPasteTests : UiTest
         var before = patch.Nodes.Count;
         await Clipboard(window).SetTextAsync("this is not a patch");
 
-        (await editor.PasteAsync()).ShouldNotBeNullOrWhiteSpace();
+        (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldNotBeNullOrWhiteSpace();
         patch.Nodes.Count.ShouldBe(before);
     }
 
@@ -278,7 +278,7 @@ public class CopyPasteTests : UiTest
 
         await Clipboard(window).ClearAsync();
 
-        (await editor.PasteAsync()).ShouldBeNull();
+        (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldBeNull();
         patch.Nodes.Count.ShouldBe(3);
     }
 
@@ -296,7 +296,7 @@ public class CopyPasteTests : UiTest
         var drone = Presets.Drone(NodeCatalog.BuiltIn);
         await Clipboard(window).SetTextAsync(PatchIO.ToJson(drone, NodeCatalog.BuiltIn));
 
-        (await editor.PasteAsync()).ShouldBeNull();
+        (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldBeNull();
 
         patch.Nodes.Count.ShouldBe(3 + drone.Nodes.Count - 1);
         patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
@@ -318,20 +318,20 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        editor.GroupSelected();
+        editor.Edits.GroupSelected();
         Settle(window);
 
-        var box = editor.SelectedGroup.ShouldNotBeNull();
+        var box = editor.Selection.Group.ShouldNotBeNull();
         box.Rename("Voice");
 
-        (await editor.CopySelectionAsync()).ShouldBeNull();
-        (await editor.PasteAsync()).ShouldBeNull();
+        (await editor.Clipboard.CopyAsync(Clipboard(window))).ShouldBeNull();
+        (await editor.Clipboard.PasteAsync(Clipboard(window))).ShouldBeNull();
 
         patch.Groups.ShouldNotBeNull().Count.ShouldBe(2);
 
         // What arrived is what is selected, and it is exactly a box — so the
         // very next Ctrl+Shift+G has something to put back.
-        var pasted = editor.SelectedGroup.ShouldNotBeNull();
+        var pasted = editor.Selection.Group.ShouldNotBeNull();
 
         pasted.Id.ShouldNotBe(box.Id);
         pasted.Title().ShouldBe("Voice");
@@ -350,12 +350,12 @@ public class CopyPasteTests : UiTest
         Click(editor, window, time);
         Click(editor, window, osc, RawInputModifiers.Control);
 
-        (await editor.CutSelectionAsync()).ShouldBeNull();
+        (await editor.Clipboard.CutAsync(Clipboard(window))).ShouldBeNull();
 
         Count(patch, "time").ShouldBe(0);
         Count(patch, "osc.sine").ShouldBe(0);
 
-        await editor.PasteAsync();
+        await editor.Clipboard.PasteAsync(Clipboard(window));
 
         Count(patch, "time").ShouldBe(1);
         Count(patch, "osc.sine").ShouldBe(1);
@@ -370,7 +370,7 @@ public class CopyPasteTests : UiTest
 
         Click(editor, window, sink);
 
-        (await editor.CutSelectionAsync()).ShouldNotBeNullOrWhiteSpace();
+        (await editor.Clipboard.CutAsync(Clipboard(window))).ShouldNotBeNullOrWhiteSpace();
         patch.FirstOf(NodeCatalog.OutputTypeId).ShouldNotBeNull();
     }
 

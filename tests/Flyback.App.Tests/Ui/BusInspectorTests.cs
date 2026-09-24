@@ -36,11 +36,11 @@ public class BusInspectorTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
-        send = Editor(window).Patch.Find(sent.Id)!;
-        receive = Editor(window).Patch.Find(heard.Id)!;
+        send = Editor(window).History.Patch.Find(sent.Id)!;
+        receive = Editor(window).History.Patch.Find(heard.Id)!;
 
         return window;
     }
@@ -84,7 +84,7 @@ public class BusInspectorTests : UiTest
         window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
         Settle(window);
 
-        var patch = Editor(window).Patch;
+        var patch = Editor(window).History.Patch;
 
         NodeCatalog.BusOf(patch.Find(send.Id)!).ShouldBe("kick");
         NodeCatalog.BusOf(patch.Find(receive.Id)!).ShouldBe("kick");

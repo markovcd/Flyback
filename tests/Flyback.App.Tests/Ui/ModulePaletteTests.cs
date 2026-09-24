@@ -118,7 +118,7 @@ public class ModulePaletteTests : UiTest
     {
         var window = Open();
         var editor = Editor(window);
-        var node = editor.Patch.Nodes[0];
+        var node = editor.History.Patch.Nodes[0];
 
         var body = editor.GraphToScreen.Transform(new Point(
             node.X + NodeGeometry.Width / 2,
@@ -207,7 +207,7 @@ public class ModulePaletteTests : UiTest
         Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
-        var added = editor.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
+        var added = editor.History.Patch.Nodes.Last(n => n.TypeId == "osc.sine");
         var def = NodeCatalog.BuiltIn.Require("osc.sine");
 
         (added.X + NodeGeometry.Width / 2).ShouldBe(spot.X, 1);
@@ -235,7 +235,7 @@ public class ModulePaletteTests : UiTest
         PressKey(box, Key.Enter);
         Settle(window);
 
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("space.kaleidoscope");
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("space.kaleidoscope");
     }
 
     /// <summary>
@@ -270,7 +270,7 @@ public class ModulePaletteTests : UiTest
         // Down twice and up once is the second of them.
         var wanted = NodeCatalog.BuiltIn.All.First(d => d.Name == names[1]).TypeId;
 
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe(wanted);
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe(wanted);
     }
 
     /// <summary>
@@ -297,7 +297,7 @@ public class ModulePaletteTests : UiTest
         PressKey(box, Key.Enter);
         Settle(window);
 
-        var added = editor.SelectedNode.ShouldNotBeNull();
+        var added = editor.Selection.Focused.ShouldNotBeNull();
 
         NodeCatalog.BuiltIn.Require(added.TypeId).Name.ShouldBe(first);
     }
@@ -312,7 +312,7 @@ public class ModulePaletteTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var before = editor.Patch.Nodes.Count;
+        var before = editor.History.Patch.Nodes.Count;
 
         RightClick(window, Empty(window));
 
@@ -320,7 +320,7 @@ public class ModulePaletteTests : UiTest
         PressKey(All<TextBox>(palette).First(), Key.Space);
         Settle(window);
 
-        editor.Patch.Nodes.Count.ShouldBe(before, "nothing should have been added");
+        editor.History.Patch.Nodes.Count.ShouldBe(before, "nothing should have been added");
         Palette(window).ShouldNotBeNull("and the list should still be up");
     }
 
@@ -347,7 +347,7 @@ public class ModulePaletteTests : UiTest
         Press(button);
         Settle(window);
 
-        var added = editor.Patch.Nodes.LastOrDefault(n => n.TypeId == "osc.sine").ShouldNotBeNull();
+        var added = editor.History.Patch.Nodes.LastOrDefault(n => n.TypeId == "osc.sine").ShouldNotBeNull();
         var def = NodeCatalog.BuiltIn.Require("osc.sine");
 
         // Centered on the click, which is what "lands here" means for a block
@@ -368,7 +368,7 @@ public class ModulePaletteTests : UiTest
         Press(All<Button>(palette).First(b => b.Content as string == "Sine"));
         Settle(window);
 
-        editor.SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+        editor.Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
         Palette(window).ShouldBeNull("the list closes behind what was picked");
     }
 
@@ -408,7 +408,7 @@ public class ModulePaletteTests : UiTest
 
         Press(All<Button>(palette).Single(b => b.Content as string == "Multiply: a * b"));
 
-        var added = Editor(window).SelectedNode.ShouldNotBeNull();
+        var added = Editor(window).Selection.Focused.ShouldNotBeNull();
 
         added.TypeId.ShouldBe(NodeCatalog.ExpressionTypeId);
         NodeCatalog.FormulaOf(added).ShouldBe("a * b");

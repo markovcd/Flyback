@@ -72,7 +72,7 @@ public class DocumentKeysTests : UiTest
 
         // A real edit: the history compares snapshots, so announcing a change is
         // not enough to make there be one.
-        All<NodeEditor>(window).Single().AddNode("value").ShouldNotBeNull();
+        All<NodeEditor>(window).Single().Edits.AddNode("value").ShouldNotBeNull();
         Settle(window);
 
         window.KeyPressQwerty(PhysicalKey.O, RawInputModifiers.Control);

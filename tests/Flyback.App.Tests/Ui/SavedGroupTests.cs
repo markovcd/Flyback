@@ -54,15 +54,15 @@ public class SavedGroupTests : UiTest
         Dispatcher.UIThread.RunJobs();
 
         var editor = Editor(window);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        var patch = editor.Patch;
+        var patch = editor.History.Patch;
 
         group = patch.Group([time.Id, osc.Id]) ?? throw new InvalidOperationException("no group");
         group.Rename(named);
 
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         SelectBox(window, patch, group);
 
         return window;
@@ -164,7 +164,7 @@ public class SavedGroupTests : UiTest
         ToolTip.GetTip(grayed).ShouldNotBeNull();
 
         group.Rename("Voice");
-        Editor(window).NotifyPatchChanged();
+        Editor(window).History.Record();
         Settle(window);
 
         Button(window, Keep).IsEnabled.ShouldBeTrue("named, it can be kept");
@@ -198,10 +198,10 @@ public class SavedGroupTests : UiTest
         OpenList(window);
         Press(window, Palette(window), "Voice");
 
-        editor.Patch.Nodes.Count(n => n.TypeId == "time").ShouldBe(2, "a second copy arrived");
-        editor.Patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
+        editor.History.Patch.Nodes.Count(n => n.TypeId == "time").ShouldBe(2, "a second copy arrived");
+        editor.History.Patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
 
-        var groups = editor.Patch.Groups.ShouldNotBeNull();
+        var groups = editor.History.Patch.Groups.ShouldNotBeNull();
 
         groups.Count.ShouldBe(2, "the box came with the modules");
         groups.Select(g => g.Name).ShouldAllBe(name => name == "Voice");
@@ -234,11 +234,11 @@ public class SavedGroupTests : UiTest
         var editor = Editor(window);
         var at = new Point(2000, 1500);
 
-        editor.AddFragment(fragment, at);
+        editor.Edits.AddFragment(fragment, at);
         Settle(window);
 
-        var added = editor.Patch.Groups.ShouldNotBeNull().Where(g => g.Id != already.Id).ShouldHaveSingleItem();
-        var bounds = NodeGeometry.GroupBounds(editor.Patch, added, editor.Patch.SocketsOf(added));
+        var added = editor.History.Patch.Groups.ShouldNotBeNull().Where(g => g.Id != already.Id).ShouldHaveSingleItem();
+        var bounds = NodeGeometry.GroupBounds(editor.History.Patch, added, editor.History.Patch.SocketsOf(added));
 
         bounds.Inflate(40).Contains(at).ShouldBeTrue(
             $"asked for at {at}, and the box is drawn at {bounds}");
@@ -409,16 +409,16 @@ public class SavedGroupTests : UiTest
 
         // A different group under the same name, which is exactly how somebody
         // loses one by accident.
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
 
-        var other = editor.AddNode("math.mul", new Point(200, 400)).ShouldNotBeNull();
-        var third = editor.AddNode("value", new Point(400, 400)).ShouldNotBeNull();
+        var other = editor.Edits.AddNode("math.mul", new Point(200, 400)).ShouldNotBeNull();
+        var third = editor.Edits.AddNode("value", new Point(400, 400)).ShouldNotBeNull();
 
-        var second = editor.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
+        var second = editor.History.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
 
         second.Rename("Voice");
-        editor.NotifyPatchChanged();
-        SelectBox(window, editor.Patch, second);
+        editor.History.Record();
+        SelectBox(window, editor.History.Patch, second);
 
         Press(window, window, Keep);
         Press(window, window, "✕");
@@ -440,16 +440,16 @@ public class SavedGroupTests : UiTest
 
         var before = File.ReadAllText(Directory.GetFiles(folder).Single());
 
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
 
-        var other = editor.AddNode("math.mul", new Point(200, 400)).ShouldNotBeNull();
-        var third = editor.AddNode("value", new Point(400, 400)).ShouldNotBeNull();
+        var other = editor.Edits.AddNode("math.mul", new Point(200, 400)).ShouldNotBeNull();
+        var third = editor.Edits.AddNode("value", new Point(400, 400)).ShouldNotBeNull();
 
-        var second = editor.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
+        var second = editor.History.Patch.Group([other.Id, third.Id]).ShouldNotBeNull();
 
         second.Rename("Voice");
-        editor.NotifyPatchChanged();
-        SelectBox(window, editor.Patch, second);
+        editor.History.Record();
+        SelectBox(window, editor.History.Patch, second);
 
         Press(window, window, Keep);
         Press(window, window, "✔");

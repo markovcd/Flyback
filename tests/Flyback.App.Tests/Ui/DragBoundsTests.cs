@@ -33,10 +33,10 @@ public class DragBoundsTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -163,7 +163,7 @@ public class DragBoundsTests : UiTest
         Click(editor, window, Body(near));
         Click(editor, window, Body(behind), RawInputModifiers.Control);
 
-        editor.SelectedNodes.Count.ShouldBe(2, "both modules should be selected");
+        editor.Selection.Nodes.Count.ShouldBe(2, "both modules should be selected");
 
         DragBy(editor, window, Body(near), new Vector(500, 0));
 

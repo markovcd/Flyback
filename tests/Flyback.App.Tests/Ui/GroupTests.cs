@@ -47,10 +47,10 @@ public class GroupTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -114,10 +114,10 @@ public class GroupTests : UiTest
         NodeInstance lowLeft,
         NodeInstance lowRight)
     {
-        var top = editor.Patch.Group([topLeft.Id, topRight.Id]).ShouldNotBeNull();
-        var low = editor.Patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
+        var top = editor.History.Patch.Group([topLeft.Id, topRight.Id]).ShouldNotBeNull();
+        var low = editor.History.Patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
 
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         return (top, low);
@@ -133,7 +133,7 @@ public class GroupTests : UiTest
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
         Settle(window);
 
-        return editor.Patch.Groups.ShouldNotBeNull().Single();
+        return editor.History.Patch.Groups.ShouldNotBeNull().Single();
     }
 
     [AvaloniaFact]
@@ -164,7 +164,7 @@ public class GroupTests : UiTest
         var (editor, window) = Editing(patch);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
         Click(editor, window, Body(first));
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
@@ -175,7 +175,7 @@ public class GroupTests : UiTest
 
         // And the selection is left exactly as it was, so the next thing tried
         // is tried on what was already picked.
-        editor.SelectedNodes.ShouldBe([first]);
+        editor.Selection.Nodes.ShouldBe([first]);
     }
 
     /// <summary>
@@ -211,18 +211,18 @@ public class GroupTests : UiTest
 
         var low = patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
         low.Name = "Voice";
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         // A click on the shut box selects it, members and all.
         Click(editor, window, BoxHeader(patch, low));
 
-        editor.SelectedGroup.ShouldBe(low);
+        editor.Selection.Group.ShouldBe(low);
 
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
         Settle(window);
 
-        var kept = editor.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        var kept = editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
         kept.Name.ShouldBe("Voice", "the box was already a group, and grouping it again cost it its name");
     }
 
@@ -243,7 +243,7 @@ public class GroupTests : UiTest
         // drawn from the top left of the two and is narrower than they are wide.
         Click(editor, window, Body(second));
 
-        editor.SelectedNodes.ShouldNotContain(second);
+        editor.Selection.Nodes.ShouldNotContain(second);
     }
 
     /// <summary>
@@ -268,17 +268,17 @@ public class GroupTests : UiTest
 
         var (editor, window) = Editing(builder.Patch);
 
-        var box = editor.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
-        editor.NotifyPatchChanged();
+        var box = editor.History.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.History.Record();
         Settle(window);
 
-        var bounds = NodeGeometry.GroupBounds(editor.Patch, box, editor.Patch.SocketsOf(box));
+        var bounds = NodeGeometry.GroupBounds(editor.History.Patch, box, editor.History.Patch.SocketsOf(box));
         bounds.Contains(Body(under)).ShouldBeTrue("the box is drawn over the module this test is about");
 
         Click(editor, window, Body(under));
 
-        editor.SelectedNodes.Select(n => n.Id).ShouldNotContain(under.Id, "the module under the box cannot be seen");
-        editor.SelectedGroup.ShouldBe(box, "the click landed on the box");
+        editor.Selection.Nodes.Select(n => n.Id).ShouldNotContain(under.Id, "the module under the box cannot be seen");
+        editor.Selection.Group.ShouldBe(box, "the click landed on the box");
     }
 
     [AvaloniaFact]
@@ -290,11 +290,11 @@ public class GroupTests : UiTest
         var group = GroupTheMiddle(editor, window, first, second);
 
         Click(editor, window, Body(feed));
-        editor.SelectedNodes.ShouldBe([feed]);
+        editor.Selection.Nodes.ShouldBe([feed]);
 
         Click(editor, window, BoxHeader(patch, group));
 
-        editor.SelectedNodes.Select(n => n.Id).ShouldBe(group.Members, ignoreOrder: true);
+        editor.Selection.Nodes.Select(n => n.Id).ShouldBe(group.Members, ignoreOrder: true);
     }
 
     [AvaloniaFact]
@@ -305,7 +305,7 @@ public class GroupTests : UiTest
 
         var group = GroupTheMiddle(editor, window, first, second);
 
-        editor.ToggleBox(group);
+        editor.Edits.ToggleBox(group);
         Settle(window);
 
         Click(editor, window, OpenHandle(patch, group), count: 2);
@@ -327,18 +327,18 @@ public class GroupTests : UiTest
         var group = GroupTheMiddle(editor, window, first, second);
 
         var steps = 0;
-        editor.Recorded += (_, _) => steps++;
+        editor.History.Recorded += (_, _) => steps++;
 
         Click(editor, window, BoxHeader(patch, group), count: 2);
 
-        editor.Peeked.ShouldBe(group);
+        editor.Selection.Peeked.ShouldBe(group);
         group.Collapsed.ShouldBeTrue("looking is not opening");
         steps.ShouldBe(0, "looking into a box is not an edit");
 
         // The modules are on the canvas, and answer a click where they stand.
         Click(editor, window, Body(second));
-        editor.SelectedNodes.ShouldBe([second]);
-        editor.Peeked.ShouldBe(group);
+        editor.Selection.Nodes.ShouldBe([second]);
+        editor.Selection.Peeked.ShouldBe(group);
     }
 
     /// <summary>
@@ -360,18 +360,18 @@ public class GroupTests : UiTest
 
         var (editor, window) = Editing(builder.Patch);
 
-        var group = editor.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
-        editor.NotifyPatchChanged();
+        var group = editor.History.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.History.Record();
         Settle(window);
 
         Click(editor, window, Body(right));
-        editor.SelectedNodes.ShouldBe([neighbor], "shut, the box's modules are not on the canvas");
+        editor.Selection.Nodes.ShouldBe([neighbor], "shut, the box's modules are not on the canvas");
 
-        editor.Peek(group);
+        editor.Selection.Peek(group);
         Settle(window);
 
         Click(editor, window, Body(right));
-        editor.SelectedNodes.ShouldBe([right], "the module inside is over the one laid out beside the box");
+        editor.Selection.Nodes.ShouldBe([right], "the module inside is over the one laid out beside the box");
     }
 
     [AvaloniaFact]
@@ -382,17 +382,17 @@ public class GroupTests : UiTest
 
         var group = GroupTheMiddle(editor, window, first, second);
 
-        editor.Peek(group);
+        editor.Selection.Peek(group);
         Settle(window);
 
         Click(editor, window, Body(first));
-        editor.SelectedNodes.ShouldBe([first]);
+        editor.Selection.Nodes.ShouldBe([first]);
 
         window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
         Settle(window);
 
-        editor.Peeked.ShouldBeNull();
-        editor.SelectedGroup.ShouldBe(group, "a module behind a box is selected with the rest of it or not at all");
+        editor.Selection.Peeked.ShouldBeNull();
+        editor.Selection.Group.ShouldBe(group, "a module behind a box is selected with the rest of it or not at all");
     }
 
     /// <summary>A click outside puts the box back, and is still the click it was.</summary>
@@ -404,13 +404,13 @@ public class GroupTests : UiTest
 
         var group = GroupTheMiddle(editor, window, first, second);
 
-        editor.Peek(group);
+        editor.Selection.Peek(group);
         Settle(window);
 
         Click(editor, window, Body(sink));
 
-        editor.Peeked.ShouldBeNull();
-        editor.SelectedNodes.ShouldBe([sink]);
+        editor.Selection.Peeked.ShouldBeNull();
+        editor.Selection.Nodes.ShouldBe([sink]);
     }
 
     /// <summary>
@@ -426,8 +426,8 @@ public class GroupTests : UiTest
         var group = GroupTheMiddle(editor, window, first, second);
 
         patch.Disconnect(first.Id, 0);
-        editor.NotifyPatchChanged();
-        editor.Peek(group);
+        editor.History.Record();
+        editor.Selection.Peek(group);
         Settle(window);
 
         var from = NodeGeometry.OutputPort(feed, 0);
@@ -439,7 +439,7 @@ public class GroupTests : UiTest
         Settle(window);
 
         patch.IncomingTo(first.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(feed.Id);
-        editor.Peeked.ShouldBe(group);
+        editor.Selection.Peeked.ShouldBe(group);
     }
 
     /// <summary>Only one box is looked into at a time.</summary>
@@ -452,10 +452,10 @@ public class GroupTests : UiTest
         var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
         Click(editor, window, BoxHeader(patch, top), count: 2);
-        editor.Peeked.ShouldBe(top);
+        editor.Selection.Peeked.ShouldBe(top);
 
         Click(editor, window, BoxHeader(patch, low), count: 2);
-        editor.Peeked.ShouldBe(low);
+        editor.Selection.Peeked.ShouldBe(low);
         top.Collapsed.ShouldBeTrue();
     }
 
@@ -471,14 +471,14 @@ public class GroupTests : UiTest
 
         var group = GroupTheMiddle(editor, window, first, second);
 
-        editor.Peek(group);
+        editor.Selection.Peek(group);
         Settle(window);
 
-        var added = editor.AddNode("osc.sine", Body(first)).ShouldNotBeNull();
+        var added = editor.Edits.AddNode("osc.sine", Body(first)).ShouldNotBeNull();
         Settle(window);
 
-        editor.Peeked.ShouldBeNull();
-        editor.SelectedNodes.ShouldBe([added]);
+        editor.Selection.Peeked.ShouldBeNull();
+        editor.Selection.Nodes.ShouldBe([added]);
     }
 
     /// <summary>
@@ -529,7 +529,7 @@ public class GroupTests : UiTest
 
         // And the module it covered answers a click again.
         Click(editor, window, Body(second));
-        editor.SelectedNodes.ShouldBe([second]);
+        editor.Selection.Nodes.ShouldBe([second]);
     }
 
     /// <summary>
@@ -545,7 +545,7 @@ public class GroupTests : UiTest
         var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
         Click(editor, window, BoxHeader(patch, top));
         Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
@@ -558,7 +558,7 @@ public class GroupTests : UiTest
         said.ShouldBe("Opened 2 groups.");
 
         // What came out stays selected, so the next gesture has both groups.
-        editor.SelectedNodes.Select(n => n.Id)
+        editor.Selection.Nodes.Select(n => n.Id)
             .ShouldBe([topLeft.Id, topRight.Id, lowLeft.Id, lowRight.Id], ignoreOrder: true);
     }
 
@@ -584,7 +584,7 @@ public class GroupTests : UiTest
 
         // Behind boxes again, so a press where one sits does not reach it.
         Click(editor, window, Body(topRight));
-        editor.SelectedNodes.ShouldNotContain(topRight);
+        editor.Selection.Nodes.ShouldNotContain(topRight);
     }
 
     /// <summary>
@@ -600,9 +600,9 @@ public class GroupTests : UiTest
         var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
-        editor.ToggleBox(low);
+        editor.Edits.ToggleBox(low);
         Settle(window);
 
         Click(editor, window, BoxHeader(patch, top));
@@ -635,19 +635,19 @@ public class GroupTests : UiTest
 
         var (_, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
-        editor.ToggleBox(low);
+        editor.Edits.ToggleBox(low);
         Settle(window);
         low.Collapsed.ShouldBeFalse("the box is open, so its members can be clicked");
 
         Click(editor, window, Body(lowLeft));
-        editor.SelectedNodes.Select(n => n.Id).ShouldBe([lowLeft.Id]);
+        editor.Selection.Nodes.Select(n => n.Id).ShouldBe([lowLeft.Id]);
 
         window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control | RawInputModifiers.Shift);
         Settle(window);
 
         low.Collapsed.ShouldBeTrue("Ctrl+Shift+E shut the box");
 
-        var selected = editor.SelectedNodes.Select(n => n.Id).ToHashSet();
+        var selected = editor.Selection.Nodes.Select(n => n.Id).ToHashSet();
 
         // Either answer is a whole one: the box, or nothing. One hidden member
         // is neither.
@@ -710,7 +710,7 @@ public class GroupTests : UiTest
 
         // The wire is drawn from where it was grabbed, not from where the module
         // behind the socket would have put it.
-        editor.PendingWireFrom.ShouldNotBeNull().ShouldBe(socket);
+        editor.Gestures.PendingWireFrom.ShouldNotBeNull().ShouldBe(socket);
 
         window.MouseUp(Screen(editor, window, socket + new Vector(80, 80)), MouseButton.Left);
         Settle(window);
@@ -733,7 +733,7 @@ public class GroupTests : UiTest
         before.Inputs.ShouldNotBeEmpty();
 
         patch.Disconnect(first.Id, 0);
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         patch.SocketsOf(group).Inputs.ShouldBe(before.Inputs);
@@ -753,7 +753,7 @@ public class GroupTests : UiTest
         var group = GroupTheMiddle(editor, window, first, second);
 
         patch.Disconnect(first.Id, 0);
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         var sockets = patch.SocketsOf(group);
@@ -783,10 +783,10 @@ public class GroupTests : UiTest
 
         GroupTheMiddle(editor, window, first, second);
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Settle(window);
 
-        editor.Patch.Groups.ShouldBeNull();
+        editor.History.Patch.Groups.ShouldBeNull();
     }
 
     /// <summary>
@@ -816,7 +816,7 @@ public class GroupTests : UiTest
         Hover(editor, window, BoxHeader(patch, group));
         editor.Cursor.ShouldBeSameAs(onModule);
 
-        editor.ToggleBox(group);
+        editor.Edits.ToggleBox(group);
         Settle(window);
 
         Hover(editor, window, OpenHandle(patch, group));

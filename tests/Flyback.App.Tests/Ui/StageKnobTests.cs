@@ -45,7 +45,7 @@ public class StageKnobTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        All<NodeEditor>(window).Single().Patch = patch;
+        All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
         var preview = All<PreviewHost>(window).Single();
@@ -216,7 +216,7 @@ public class StageKnobTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        All<NodeEditor>(window).Single().Patch = patch;
+        All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
         window.ShowPictureOn(window.Screens.ScreenFromWindow(window)!);

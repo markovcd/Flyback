@@ -166,7 +166,7 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
 
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         ShowingSettings(window).ShouldBeFalse();
     }
@@ -292,18 +292,18 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
         var editor = Editor(window);
-        var before = editor.Patch;
+        var before = editor.History.Patch;
 
         var dialog = OpenSettings(window);
 
         PickStartupPreset(window, dialog, Patches[2]);
 
         StartupName(dialog).ShouldBe(Patches[2]);
-        editor.Patch.ShouldBeSameAs(before);
+        editor.History.Patch.ShouldBeSameAs(before);
 
         CloseSettings(window, dialog, save: true);
 
-        editor.Patch.ShouldBeSameAs(before);
+        editor.History.Patch.ShouldBeSameAs(before);
     }
 
     [AvaloniaFact]
@@ -696,7 +696,7 @@ public class OutputSettingsTests : UiTest
 
         Named<Button>(window, "about").ShouldNotBeNull();
 
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         Named<Button>(window, "about").ShouldNotBeNull();
     }
@@ -968,7 +968,7 @@ public class OutputSettingsTests : UiTest
 
         Record(window).ShouldNotBeNull();
 
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         Record(window).ShouldNotBeNull();
     }
@@ -1006,7 +1006,7 @@ public class OutputSettingsTests : UiTest
 
         Rewind(window).ShouldNotBeNull();
 
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         Rewind(window).ShouldNotBeNull();
     }
@@ -1030,7 +1030,7 @@ public class OutputSettingsTests : UiTest
     public void The_record_button_is_offered_when_the_patch_reaches_something()
     {
         var window = Open();
-        Select(window, Editor(window).Patch.Output);
+        Select(window, Editor(window).History.Patch.Output);
 
         Record(window).IsEnabled.ShouldBeTrue();
     }
@@ -1046,8 +1046,8 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
-        Select(window, editor.Patch.Output);
+        editor.History.Open(Presets.Empty(NodeCatalog.BuiltIn));
+        Select(window, editor.History.Patch.Output);
 
         Record(window).IsEnabled.ShouldBeFalse();
     }
@@ -1062,16 +1062,16 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
-        Select(window, editor.Patch.Output);
+        editor.History.Open(Presets.Empty(NodeCatalog.BuiltIn));
+        Select(window, editor.History.Patch.Output);
         Record(window).IsEnabled.ShouldBeFalse();
 
-        var knob = editor.AddNode("value");
+        var knob = editor.Edits.AddNode("value");
         knob.ShouldNotBeNull();
-        editor.Patch.Connect(knob.Id, 0, editor.Patch.Output.Id, NodeCatalog.OutputColorPort);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connect(knob.Id, 0, editor.History.Patch.Output.Id, NodeCatalog.OutputColorPort);
+        editor.History.Record();
 
-        Select(window, editor.Patch.Output);
+        Select(window, editor.History.Patch.Output);
 
         Record(window).IsEnabled.ShouldBeTrue();
     }
@@ -1154,7 +1154,7 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
 
-        Editor(window).AddNode("value").ShouldNotBeNull();
+        Editor(window).Edits.AddNode("value").ShouldNotBeNull();
 
         var counting = window.Recording.CountInAsync(TakePath(ClipFormats.MotionJpegAvi.Extension), Unhurried);
         Settle(window);
@@ -1253,8 +1253,8 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        editor.Patch = Presets.Empty(NodeCatalog.BuiltIn);
-        Select(window, editor.Patch.Output);
+        editor.History.Open(Presets.Empty(NodeCatalog.BuiltIn));
+        Select(window, editor.History.Patch.Output);
 
         var button = Record(window);
 
@@ -1269,7 +1269,7 @@ public class OutputSettingsTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var sequencer = editor.AddNode("seq.notes");
+        var sequencer = editor.Edits.AddNode("seq.notes");
         sequencer.ShouldNotBeNull();
 
         window.UpdateLayout();

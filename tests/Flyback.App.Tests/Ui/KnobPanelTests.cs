@@ -25,7 +25,7 @@ public class KnobPanelTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
         Settle(window);
 
         return window;
@@ -113,14 +113,14 @@ public class KnobPanelTests : UiTest
         Settle(window);
         AddKnob(window);
 
-        var knob = Editor(window).Patch.Controls.ShouldHaveSingleItem();
-        Editor(window).LinkingControl.ShouldBe(knob.Id);
+        var knob = Editor(window).History.Patch.Controls.ShouldHaveSingleItem();
+        Editor(window).Linking.Control.ShouldBe(knob.Id);
 
-        Editor(window).Undo().ShouldBeTrue();
+        Editor(window).History.Undo().ShouldBeTrue();
         Settle(window);
 
-        Editor(window).Patch.Controls.ShouldBeNull();
-        Editor(window).LinkingControl.ShouldBeNull();
+        Editor(window).History.Patch.Controls.ShouldBeNull();
+        Editor(window).Linking.Control.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -133,11 +133,11 @@ public class KnobPanelTests : UiTest
         Settle(window);
         AddKnob(window);
 
-        var placed = Editor(window).Patch.Find(value.Id)!;
+        var placed = Editor(window).History.Patch.Find(value.Id)!;
         ClickInputRow(window, placed, 0);
 
-        var knob = Editor(window).Patch.Controls!.Single();
-        var link = ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull();
+        var knob = Editor(window).History.Patch.Controls!.Single();
+        var link = ControlMap.Of(Editor(window).History.Patch.Find(value.Id)!, 0).ShouldNotBeNull();
 
         link.Control.ShouldBe(knob.Id);
         link.At(knob.Value).ShouldBe(0.2f, 1e-4f);
@@ -153,20 +153,20 @@ public class KnobPanelTests : UiTest
         window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
         Settle(window);
         AddKnob(window);
-        ClickInputRow(window, Editor(window).Patch.Find(value.Id)!, 0);
+        ClickInputRow(window, Editor(window).History.Patch.Find(value.Id)!, 0);
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Settle(window);
 
-        var knob = Editor(window).Patch.Controls!.Single();
+        var knob = Editor(window).History.Patch.Controls!.Single();
         var before = knob.Value;
         var program = All<PreviewHost>(window).Single().Program;
-        var modified = Editor(window).IsModified;
+        var modified = Editor(window).History.IsModified;
 
         Turn(window, up: 40);
 
         knob.Value.ShouldBeGreaterThan(before);
         All<PreviewHost>(window).Single().Program.ShouldBeSameAs(program);
-        Editor(window).IsModified.ShouldBe(modified);
+        Editor(window).History.IsModified.ShouldBe(modified);
     }
 
     [AvaloniaFact]
@@ -235,7 +235,7 @@ public class KnobPanelTests : UiTest
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Settle(window);
 
-        Editor(window).LinkingControl.ShouldBeNull();
+        Editor(window).Linking.Control.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -256,7 +256,7 @@ public class KnobPanelTests : UiTest
         remove.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
         Settle(window);
 
-        Editor(window).Patch.Controls!.ShouldNotContain(c => c.Name == "Glow");
+        Editor(window).History.Patch.Controls!.ShouldNotContain(c => c.Name == "Glow");
     }
 
     /// <summary>
@@ -277,15 +277,15 @@ public class KnobPanelTests : UiTest
         window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control);
         Settle(window);
         AddKnob(window);
-        ClickInputRow(window, Editor(window).Patch.Find(value.Id)!, 0);
+        ClickInputRow(window, Editor(window).History.Patch.Find(value.Id)!, 0);
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Settle(window);
 
-        ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull("the knob is linked to the socket");
+        ControlMap.Of(Editor(window).History.Patch.Find(value.Id)!, 0).ShouldNotBeNull("the knob is linked to the socket");
 
         Turn(window, up: 60);
 
-        var left = Editor(window).Patch.Controls!.Single().Value;
+        var left = Editor(window).History.Patch.Controls!.Single().Value;
         left.ShouldNotBe(0.5f, "the knob was turned");
 
         var more = All<Button>(Panel(window)).First(b => b.Name == "knob-menu");
@@ -295,13 +295,13 @@ public class KnobPanelTests : UiTest
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
         Settle(window);
 
-        (Editor(window).Patch.Controls?.Count ?? 0).ShouldBe(0);
+        (Editor(window).History.Patch.Controls?.Count ?? 0).ShouldBe(0);
 
         All<Button>(window).Single(b => b.Name == "undo")
             .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        Editor(window).Patch.Controls!.Single().Value.ShouldBe(left, 1e-4f, "where a hand left a knob is not something Ctrl+Z takes back");
+        Editor(window).History.Patch.Controls!.Single().Value.ShouldBe(left, 1e-4f, "where a hand left a knob is not something Ctrl+Z takes back");
     }
 
     /// <summary>
@@ -324,7 +324,7 @@ public class KnobPanelTests : UiTest
 
         var window = Open(patch);
 
-        Editor(window).Select(value.Id);
+        Editor(window).Selection.Select(value.Id);
         Settle(window);
 
         var inspector = All<StackPanel>(window).Single(p => p.Name == "inspector");
@@ -396,7 +396,7 @@ public class KnobPanelTests : UiTest
     }
 
     private static string Order(MainWindow window) =>
-        string.Join(",", Editor(window).Patch.Controls!.Select(c => c.Name));
+        string.Join(",", Editor(window).History.Patch.Controls!.Select(c => c.Name));
 
     [AvaloniaFact]
     public void Dragging_a_knob_by_its_name_moves_it_and_undo_puts_it_back()
@@ -417,9 +417,9 @@ public class KnobPanelTests : UiTest
         Settle(window);
 
         Order(window).ShouldBe("Knob 2,Knob 3,Knob 1");
-        Editor(window).LinkingControl.ShouldBeNull("a drag is not a click");
+        Editor(window).Linking.Control.ShouldBeNull("a drag is not a click");
 
-        Editor(window).Undo().ShouldBeTrue();
+        Editor(window).History.Undo().ShouldBeTrue();
         Settle(window);
 
         Order(window).ShouldBe("Knob 1,Knob 2,Knob 3");
@@ -459,13 +459,13 @@ public class KnobPanelTests : UiTest
         log.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
         Settle(window);
 
-        var swept = ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull();
+        var swept = ControlMap.Of(Editor(window).History.Patch.Find(value.Id)!, 0).ShouldNotBeNull();
         swept.At(0.5f).ShouldBe(1000f, 1f);
 
         log.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
         Settle(window);
 
-        ControlMap.Of(Editor(window).Patch.Find(value.Id)!, 0).ShouldNotBeNull().Knee.ShouldBe(0f);
+        ControlMap.Of(Editor(window).History.Patch.Find(value.Id)!, 0).ShouldNotBeNull().Knee.ShouldBe(0f);
     }
 
     /// <summary>

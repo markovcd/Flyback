@@ -64,7 +64,7 @@ public class MidDragTests : UiTest
         var source = b.Add(Sine, 40, 40);
         var fed = b.Add(Add, 400, 40);
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
         return (window, source, fed);
@@ -86,22 +86,22 @@ public class MidDragTests : UiTest
         var editor = Editor(window);
 
         // Something to take back, so a press that worked would show.
-        editor.Patch.Connect(source.Id, 0, fed.Id, 0);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Connect(source.Id, 0, fed.Id, 0);
+        editor.History.Record();
         Settle(window);
 
-        editor.CanUndo.ShouldBeTrue();
+        editor.History.CanUndo.ShouldBeTrue();
 
         window.MouseDown(OnWindow(window, Body(source)), MouseButton.Left);
         window.MouseMove(OnWindow(window, new Point(source.X + 120, source.Y + 60)));
         Settle(window);
 
-        editor.Gesturing.ShouldBeTrue("the module is being dragged");
+        editor.Gestures.Gesturing.ShouldBeTrue("the module is being dragged");
 
         Press(window, "undo");
         Settle(window);
 
-        editor.Patch.Connections.Count.ShouldBe(1, "the wire is still there, so nothing was taken back");
+        editor.History.Patch.Connections.Count.ShouldBe(1, "the wire is still there, so nothing was taken back");
 
         window.MouseUp(OnWindow(window, new Point(source.X + 120, source.Y + 60)), MouseButton.Left);
         Settle(window);
@@ -114,7 +114,7 @@ public class MidDragTests : UiTest
         Press(window, "undo");
         Settle(window);
 
-        editor.Patch.Connections.ShouldBeEmpty("the move came back, and the wire behind it");
+        editor.History.Patch.Connections.ShouldBeEmpty("the move came back, and the wire behind it");
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public class MidDragTests : UiTest
         window.MouseMove(OnWindow(window, new Point(source.X + 200, source.Y + 40)));
         Settle(window);
 
-        editor.Gesturing.ShouldBeTrue("a wire is being drawn");
+        editor.Gestures.Gesturing.ShouldBeTrue("a wire is being drawn");
 
         // The assistant answers with a patch this oscillator is not in.
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -145,11 +145,11 @@ public class MidDragTests : UiTest
         b.Add(NodeCatalog.OutputTypeId, 900, 40);
         var fed = b.Add(Add, 400, 40);
 
-        editor.ApplyEdit(b.Patch);
+        editor.History.Apply(b.Patch);
         Settle(window);
 
-        editor.Gesturing.ShouldBeFalse("the patch it was started on is not there any more");
-        editor.Patch.Find(source.Id).ShouldBeNull("nor is the end it was holding");
+        editor.Gestures.Gesturing.ShouldBeFalse("the patch it was started on is not there any more");
+        editor.History.Patch.Find(source.Id).ShouldBeNull("nor is the end it was holding");
 
         // Letting go over a socket does nothing, so no wire names the module
         // that has gone. Measured after the patch arrived, because showing it
@@ -157,7 +157,7 @@ public class MidDragTests : UiTest
         window.MouseUp(OnWindow(window, Input(fed, 0)), MouseButton.Left);
         Settle(window);
 
-        editor.Patch.Connections.ShouldBeEmpty();
+        editor.History.Patch.Connections.ShouldBeEmpty();
     }
 
     /// <summary>
@@ -183,20 +183,20 @@ public class MidDragTests : UiTest
         window.MouseMove(OnWindow(window, new Point(source.X + 120, source.Y + 60)));
         Settle(window);
 
-        editor.Gesturing.ShouldBeTrue("the module is being dragged");
+        editor.Gestures.Gesturing.ShouldBeTrue("the module is being dragged");
 
         pointer.ShouldNotBeNull().Capture(null);
         Settle(window);
 
-        var dragged = editor.Patch.Find(source.Id).ShouldNotBeNull();
+        var dragged = editor.History.Patch.Find(source.Id).ShouldNotBeNull();
         var left = (dragged.X, dragged.Y);
 
         window.MouseMove(OnWindow(window, new Point(source.X + 300, source.Y + 200)));
         Settle(window);
 
         (dragged.X, dragged.Y).ShouldBe(left, "a pointer moving with no button down drags nothing");
-        editor.Gesturing.ShouldBeFalse("nothing is holding the module any more");
-        editor.CanUndo.ShouldBeTrue("and where it was left is a step to take back");
+        editor.Gestures.Gesturing.ShouldBeFalse("nothing is holding the module any more");
+        editor.History.CanUndo.ShouldBeTrue("and where it was left is a step to take back");
     }
 
     /// <summary>
@@ -210,19 +210,19 @@ public class MidDragTests : UiTest
         var (window, source, fed) = Open();
         var editor = Editor(window);
 
-        editor.Select(source.Id);
+        editor.Selection.Select(source.Id);
         Settle(window);
 
         window.MouseDown(OnWindow(window, Output(source)), MouseButton.Left);
         window.MouseMove(OnWindow(window, new Point(source.X + 250, source.Y + 40)));
         Settle(window);
 
-        editor.Gesturing.ShouldBeTrue("a wire is being drawn");
+        editor.Gestures.Gesturing.ShouldBeTrue("a wire is being drawn");
 
         window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
         Settle(window);
 
-        editor.Patch.Find(source.Id).ShouldNotBeNull("the module the wire is held by is still there");
+        editor.History.Patch.Find(source.Id).ShouldNotBeNull("the module the wire is held by is still there");
 
         var target = OnWindow(window, Input(fed, 0));
 
@@ -230,14 +230,14 @@ public class MidDragTests : UiTest
         window.MouseUp(target, MouseButton.Left);
         Settle(window);
 
-        editor.Patch.Connections.ShouldHaveSingleItem().SourceNode.ShouldBe(source.Id);
+        editor.History.Patch.Connections.ShouldHaveSingleItem().SourceNode.ShouldBe(source.Id);
 
         // And the press works again the moment the hand is off.
         window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
         Settle(window);
 
-        editor.Patch.Find(source.Id).ShouldBeNull();
-        editor.Patch.Connections.ShouldBeEmpty("a wire has a module at both ends");
+        editor.History.Patch.Find(source.Id).ShouldBeNull();
+        editor.History.Patch.Connections.ShouldBeEmpty("a wire has a module at both ends");
     }
 
     /// <summary>
@@ -250,7 +250,7 @@ public class MidDragTests : UiTest
         var (window, source, fed) = Open();
         var editor = Editor(window);
 
-        editor.Select(source.Id);
+        editor.Selection.Select(source.Id);
         Settle(window);
 
         var other = OnWindow(window, Body(fed));
@@ -259,9 +259,9 @@ public class MidDragTests : UiTest
         window.MouseUp(other, MouseButton.Left, RawInputModifiers.Control);
         Settle(window);
 
-        editor.SelectedNodes.Count.ShouldBe(2, "both modules are selected");
+        editor.Selection.Nodes.Count.ShouldBe(2, "both modules are selected");
 
-        var held = OnWindow(window, Body(editor.Patch.Find(source.Id)!));
+        var held = OnWindow(window, Body(editor.History.Patch.Find(source.Id)!));
 
         window.MouseDown(held, MouseButton.Left);
         Settle(window);
@@ -272,11 +272,11 @@ public class MidDragTests : UiTest
         window.MouseUp(held, MouseButton.Left);
         Settle(window);
 
-        editor.Patch.Find(source.Id).ShouldNotBeNull();
-        editor.Patch.Find(fed.Id).ShouldNotBeNull();
+        editor.History.Patch.Find(source.Id).ShouldNotBeNull();
+        editor.History.Patch.Find(fed.Id).ShouldNotBeNull();
 
         // A press that was not a drag picks the one module out of the set, and
         // what it picked is a module that is there.
-        editor.SelectedNodes.ShouldHaveSingleItem().Id.ShouldBe(source.Id);
+        editor.Selection.Nodes.ShouldHaveSingleItem().Id.ShouldBe(source.Id);
     }
 }

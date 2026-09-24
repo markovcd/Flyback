@@ -438,8 +438,10 @@ view models, and that has been decided twice.
 **The node editor is one control**
 ([0017](adr/0017-draw-the-node-editor-in-one-control.md)). `NodeEditor` overrides
 `Render` and the pointer handlers, and nothing inside it is a control. It is
-split the same way (`Painting`, `Interaction`, `HitTesting`, `Groups`,
-`Clipboard`…). `NodeGeometry` is the single source of measurement that both
+split the way the window is: hubs (`CanvasHistory`, `CanvasSelection`,
+`Viewport`) and regions that take them (`CanvasEdits`, `CanvasClipboard`,
+`CanvasGestures`, `CanvasPainter`, `SocketDial` and the rest), with the control
+one file that hands its pointer, keys and `Render` to them. `NodeGeometry` is the single source of measurement that both
 painting and hit-testing call, which is what keeps a socket where it is drawn. A
 module is drawn as its category, or as itself if it is a standout or a plugin
 paints it ([0116](adr/0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md),
@@ -582,9 +584,9 @@ new code should be indistinguishable from the file it lands in.
 - **No interface without a second implementation.** Interfaces exist at the plugin
   boundary and almost nowhere else. A shell calls the engine's concrete types.
 - **Split a big class by region, not by pattern.** A region that owns its own
-  state becomes a class of its own (`MainWindow`'s, ADR-0148); a file per concern
-  of one partial class is for what cannot be pulled apart (`NodeEditor`,
-  `NodeCatalog`).
+  state becomes a class of its own (`MainWindow`'s, ADR-0148; `NodeEditor`'s,
+  ADR-0017); a file per concern of one partial class is for what cannot be pulled
+  apart (`NodeCatalog`).
 
 ### Drivable by an agent
 

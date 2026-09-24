@@ -50,9 +50,9 @@ public sealed class UnsavedDialogTests : UiTest
         // snapshots and records nothing for a patch that has not changed, so
         // announcing a change is not enough to make there be one.
         var editor = All<NodeEditor>(window).Single();
-        editor.AddNode("value").ShouldNotBeNull();
+        editor.Edits.AddNode("value").ShouldNotBeNull();
 
-        editor.IsModified.ShouldBeTrue("the window should have something to ask about");
+        editor.History.IsModified.ShouldBeTrue("the window should have something to ask about");
 
         return window;
     }
@@ -107,7 +107,7 @@ public sealed class UnsavedDialogTests : UiTest
         Pick(All<ComboBox>(window).First(box => box.Name == "presets"), "Kaleidoscope");
         Settle(window);
 
-        All<NodeEditor>(window).Single().IsModified
+        All<NodeEditor>(window).Single().History.IsModified
             .ShouldBeFalse("the patch itself is untouched, which is the whole point");
 
         // Through the document, which is what typing is.
@@ -185,7 +185,7 @@ public sealed class UnsavedDialogTests : UiTest
         Press(Asking(window), "Cancel");
 
         window.IsVisible.ShouldBeTrue("canceling should have kept the window");
-        All<NodeEditor>(window).Single().IsModified.ShouldBeTrue("and the work in it");
+        All<NodeEditor>(window).Single().History.IsModified.ShouldBeTrue("and the work in it");
     }
 
     // --- the ways out that are not buttons -----------------------------------
@@ -221,7 +221,7 @@ public sealed class UnsavedDialogTests : UiTest
         Dispatcher.UIThread.RunJobs();
 
         window.IsVisible.ShouldBeTrue("dismissing the question should not have answered it");
-        All<NodeEditor>(window).Single().IsModified.ShouldBeTrue();
+        All<NodeEditor>(window).Single().History.IsModified.ShouldBeTrue();
         All<ModalOverlay>(window).ShouldBeEmpty("and should have taken the question down");
     }
 
@@ -302,7 +302,7 @@ public sealed class UnsavedDialogTests : UiTest
     {
         var window = OpenAndEdit();
         var editor = All<NodeEditor>(window).Single();
-        var nodes = editor.Patch.Nodes.Count;
+        var nodes = editor.History.Patch.Nodes.Count;
 
         window.Close();
         Asking(window);
@@ -310,7 +310,7 @@ public sealed class UnsavedDialogTests : UiTest
         window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
         Dispatcher.UIThread.RunJobs();
 
-        editor.Patch.Nodes.Count.ShouldBe(nodes, "Ctrl+Z should not have reached the canvas");
+        editor.History.Patch.Nodes.Count.ShouldBe(nodes, "Ctrl+Z should not have reached the canvas");
     }
 
     /// <summary>
@@ -325,7 +325,7 @@ public sealed class UnsavedDialogTests : UiTest
         var window = OpenAndEdit();
         var editor = All<NodeEditor>(window).Single();
 
-        var selected = editor.SelectedNode.ShouldNotBeNull("adding a module should have selected it").Id;
+        var selected = editor.Selection.Focused.ShouldNotBeNull("adding a module should have selected it").Id;
 
         // A corner of the canvas that is on screen and has nothing on it.
         var empty = editor.TranslatePoint(new Point(24, editor.Bounds.Height - 24), window)
@@ -336,12 +336,12 @@ public sealed class UnsavedDialogTests : UiTest
         var dialog = Asking(window);
 
         Click(window, empty);
-        editor.SelectedNode?.Id.ShouldBe(selected, "the click should have stopped at the sheet");
+        editor.Selection.Focused?.Id.ShouldBe(selected, "the click should have stopped at the sheet");
 
         Press(dialog, "Cancel");
 
         Click(window, empty);
-        editor.SelectedNode.ShouldBeNull("and reached the canvas once the question was gone");
+        editor.Selection.Focused.ShouldBeNull("and reached the canvas once the question was gone");
 
         void Click(Window on, Point at)
         {
@@ -386,7 +386,7 @@ public sealed class UnsavedDialogTests : UiTest
         All<Button>(window).Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("the text is the document");
+        All<NodeEditor>(window).Single().History.Locked.ShouldBeTrue("the text is the document");
 
         return window;
     }
@@ -430,7 +430,7 @@ public sealed class UnsavedDialogTests : UiTest
         Finished(saving).ShouldBeFalse("nothing was saved");
         File.Exists(path).ShouldBeFalse();
 
-        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("and the text is still the document");
+        All<NodeEditor>(window).Single().History.Locked.ShouldBeTrue("and the text is still the document");
         All<AvaloniaEdit.TextEditor>(window).Single(b => b.Name == "source").Text.ShouldContain("a note about it");
     }
 
@@ -450,7 +450,7 @@ public sealed class UnsavedDialogTests : UiTest
         Finished(saving).ShouldBeTrue();
         File.Exists(path).ShouldBeTrue();
 
-        All<NodeEditor>(window).Single().Locked.ShouldBeFalse("a patch file is the document, so the graph owns it");
+        All<NodeEditor>(window).Single().History.Locked.ShouldBeFalse("a patch file is the document, so the graph owns it");
     }
 
     /// <summary>Saved as text there is nothing to lose, and nothing is asked.</summary>
@@ -492,7 +492,7 @@ public sealed class UnsavedDialogTests : UiTest
         var went = Finished(window.SaveToAsync(RealStorageFile(Path.Combine(folder, "copy.fbks"))));
         Settle(window);
 
-        editor.IsModified.ShouldBeTrue("a printing is a copy, and the patch is as unsaved as it was");
+        editor.History.IsModified.ShouldBeTrue("a printing is a copy, and the patch is as unsaved as it was");
 
         went.ShouldBeFalse("so the question that asked for a save has not had one, and must not go ahead");
     }
@@ -525,7 +525,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         window.Became("nebula", beside: null, new BundleFiles(
             new Dictionary<string, byte[]> { [carriedPath] = [1, 2, 3, 4] }));
-        All<NodeEditor>(window).Single().Patch = b.Patch;
+        All<NodeEditor>(window).Single().History.Open(b.Patch);
         Settle(window);
 
         window.IsBundle.ShouldBeTrue();
@@ -537,7 +537,7 @@ public sealed class UnsavedDialogTests : UiTest
         All<Button>(window).Single(a => a.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
 
-        All<NodeEditor>(window).Single().Locked.ShouldBeTrue("the text is the document");
+        All<NodeEditor>(window).Single().History.Locked.ShouldBeTrue("the text is the document");
 
         Directory.CreateDirectory(folder);
 

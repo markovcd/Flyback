@@ -3,26 +3,28 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Flipping a module for as long as the right button is down on it: off if it is
-/// on, on if it is off. A way to hear what it contributes by taking it away or
-/// bringing it in, with nothing to undo afterward.
+/// Flipping a module for as long as the right button is down on it: off if it is on,
+/// on if it is off. A way to hear what it contributes, with nothing to undo afterward.
 /// </summary>
 /// <remarks>
-/// Not an edit. The patch is sounded with the module flipped and put back exactly
-/// as it was, so nothing reaches the history. A box flips together: it goes on
-/// only where every module in it is off, the way <see cref="SelectionIsOff"/> reads.
+/// Not an edit: the patch is sounded with the module flipped and put back exactly as it
+/// was, so nothing reaches the history. A box flips together, going on only where every
+/// module in it is off.
 /// </remarks>
-public sealed partial class NodeEditor
+internal sealed class HeldModules(CanvasHistory history, Repaint repaint)
 {
     /// <summary>The modules the press flipped, and whether each was off before.</summary>
     private readonly List<(Guid Id, bool WasOff)> held = [];
 
-    private void Hold(IEnumerable<Guid> ids)
+    /// <summary>Whether a press is holding anything flipped.</summary>
+    public bool Holding => held.Count > 0;
+
+    public void Hold(IEnumerable<Guid> ids)
     {
-        if (Locked) return;
+        if (history.Locked) return;
 
         var nodes = ids
-            .Select(patch.Find)
+            .Select(history.Patch.Find)
             .OfType<NodeInstance>()
             .Where(node => !NodeCatalog.IsSink(node.TypeId))
             .ToArray();
@@ -40,12 +42,12 @@ public sealed partial class NodeEditor
         if (held.Count > 0) Sounded();
     }
 
-    private void ReleaseHeld()
+    public void Release()
     {
         if (held.Count == 0) return;
 
         foreach (var (id, wasOff) in held)
-            if (patch.Find(id) is { } node)
+            if (history.Patch.Find(id) is { } node)
                 node.Off = wasOff;
 
         held.Clear();
@@ -54,7 +56,7 @@ public sealed partial class NodeEditor
 
     private void Sounded()
     {
-        InvalidateVisual();
-        PatchChanged?.Invoke(this, EventArgs.Empty);
+        repaint.Request();
+        history.Sounded();
     }
 }

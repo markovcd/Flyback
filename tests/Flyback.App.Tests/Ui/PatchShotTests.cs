@@ -107,16 +107,16 @@ public class PatchShotTests : UiTest
 
     private void Shoot(string folder, string name, Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         // Again now the control has a size. The fit that runs when the patch
         // arrives sees whatever bounds the layout had got to, which for a window
         // still being laid out is not the ones it ends up with.
-        editor.FrameAll();
+        editor.View.FrameAll();
         Settle(window);
 
         // Read off the transform rather than hunted for in the pixels, and read

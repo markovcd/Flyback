@@ -167,7 +167,7 @@ internal sealed class PatchFiles
         // of its own — the preset is where it started, not what it is now.
         Saved?.Invoke(this, EventArgs.Empty);
 
-        editor.MarkSaved();
+        editor.History.MarkSaved();
 
         usage.Count(Used.Saved);
     }
@@ -302,7 +302,7 @@ internal sealed class PatchFiles
             // The conversation goes inside, since a bundle is the whole of the
             // document wherever it is taken — ADR-0072.
             packing = PatchBundle.Write(
-                packed, editor.Patch, Bytes, plugins.Modules, assistant()?.ConversationToSave());
+                packed, editor.History.Patch, Bytes, plugins.Modules, assistant()?.ConversationToSave());
 
             packed.Position = 0;
 
@@ -347,7 +347,7 @@ internal sealed class PatchFiles
 
         var written = 0;
 
-        foreach (var path in PatchBundle.Files(editor.Patch, plugins.Modules))
+        foreach (var path in PatchBundle.Files(editor.History.Patch, plugins.Modules))
         {
             if (!held.Bytes.TryGetValue(path, out var bytes)) continue;
             if (PatchPaths.Inside(folder, path) is not { } into || File.Exists(into)) continue;
@@ -392,7 +392,7 @@ internal sealed class PatchFiles
     /// </remarks>
     public async Task<bool> SaveSourceAsync(IStorageFile file)
     {
-        var written = document.Owned ? document.Text : PatchPrinter.Print(editor.Patch);
+        var written = document.Owned ? document.Text : PatchPrinter.Print(editor.History.Patch);
 
         try
         {
@@ -433,7 +433,7 @@ internal sealed class PatchFiles
             // Said only where there is something to have lost. A patch with no
             // groups in it loses nothing anybody would miss, and warning about
             // it every time would teach people to stop reading.
-            var groups = editor.Patch.Groups?.Count ?? 0;
+            var groups = editor.History.Patch.Groups?.Count ?? 0;
 
             report.Say(groups == 0
                 ? $"Wrote {file.Name}. It is a copy: what is open is still {Name ?? "the patch"}."
@@ -589,7 +589,7 @@ internal sealed class PatchFiles
 
         try
         {
-            var written = PatchIO.ToJson(editor.Patch);
+            var written = PatchIO.ToJson(editor.History.Patch);
 
             await using (var stream = await file.OpenWriteAsync())
             await using (var writer = new StreamWriter(stream))

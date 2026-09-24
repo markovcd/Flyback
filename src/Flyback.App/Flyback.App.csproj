@@ -116,6 +116,12 @@
       shell, which already carries Avalonia, Skia and a font.
     -->
     <PackageReference Include="Svg.Controls.Skia.Avalonia" />
+
+    <!--
+      The container the editor's window and its canvas are composed in (ADR-0150).
+      Microsoft's own, with nothing under it but its abstractions.
+    -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
 
   <ItemGroup>

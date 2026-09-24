@@ -36,6 +36,9 @@
     -->
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
+
+    <!-- The editor's container (ADR-0150): the runtime's own, versioned with it. -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
   </ItemGroup>
 
   <!-- The command line, the preset site, and the two platform plugins that need something. -->

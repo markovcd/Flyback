@@ -41,10 +41,10 @@ public class SwitchOffTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -146,10 +146,10 @@ public class SwitchOffTests : UiTest
         Click(editor, window, osc, RawInputModifiers.Control);
         Switch(window);
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        editor.Patch.Find(clock.Id).ShouldNotBeNull().Off.ShouldBeFalse();
-        editor.Patch.Find(osc.Id).ShouldNotBeNull().Off.ShouldBeFalse();
+        editor.History.Patch.Find(clock.Id).ShouldNotBeNull().Off.ShouldBeFalse();
+        editor.History.Patch.Find(osc.Id).ShouldNotBeNull().Off.ShouldBeFalse();
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public class SwitchOffTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        All<NodeEditor>(window).Single().Patch = patch;
+        All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
         return window;
@@ -275,7 +275,7 @@ public class SwitchOffTests : UiTest
 
     private static void ClickBox(NodeEditor editor, Window window, NodeGroup group)
     {
-        var patch = editor.Patch;
+        var patch = editor.History.Patch;
         var bounds = NodeGeometry.GroupBounds(patch, group, patch.SocketsOf(group));
         var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
 
@@ -317,13 +317,13 @@ public class SwitchOffTests : UiTest
 
         clock.Off.ShouldBeTrue();
         osc.Off.ShouldBeTrue();
-        editor.Scene.SwitchedOff(group).ShouldBeTrue();
+        editor.Selection.Scene.SwitchedOff(group).ShouldBeTrue();
 
         Switch(window);
 
         clock.Off.ShouldBeFalse();
         osc.Off.ShouldBeFalse();
-        editor.Scene.SwitchedOff(group).ShouldBeFalse();
+        editor.Selection.Scene.SwitchedOff(group).ShouldBeFalse();
     }
 
     /// <summary>
@@ -339,7 +339,7 @@ public class SwitchOffTests : UiTest
 
         clock.Off = true;
 
-        editor.Scene.SwitchedOff(group).ShouldBeFalse();
+        editor.Selection.Scene.SwitchedOff(group).ShouldBeFalse();
     }
 
     /// <summary>

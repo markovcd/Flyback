@@ -34,10 +34,10 @@ public class NodeEditorTests : UiTest
     /// </summary>
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -250,13 +250,13 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         ClickAt(editor, window, Body(sink));
-        editor.SelectedNode.ShouldBe(sink);
+        editor.Selection.Focused.ShouldBe(sink);
 
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
         Settle(window);
 
         patch.Nodes.ShouldContain(sink, "the Output cannot be removed");
-        editor.SelectedNode.ShouldBe(sink, "and stays selected, or its panel would vanish");
+        editor.Selection.Focused.ShouldBe(sink, "and stays selected, or its panel would vanish");
     }
 
     [AvaloniaFact]
@@ -266,9 +266,9 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         ClickAt(editor, window, Body(source));
-        editor.SelectedNode.ShouldBe(source);
+        editor.Selection.Focused.ShouldBe(source);
 
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
         Settle(window);
 
         patch.Nodes.ShouldNotContain(source);
@@ -457,16 +457,16 @@ public class NodeEditorTests : UiTest
     /// set of objects, so nothing a test held before an undo means anything
     /// after one — which is the property worth writing the lookup out for.
     /// </summary>
-    private static NodeInstance? Now(NodeEditor editor, NodeInstance node) => editor.Patch.Find(node.Id);
+    private static NodeInstance? Now(NodeEditor editor, NodeInstance node) => editor.History.Patch.Find(node.Id);
 
     [AvaloniaFact]
     public void There_is_nothing_to_undo_on_a_patch_nobody_has_edited()
     {
         var (editor, _) = Editing(Pair(out _, out _));
 
-        editor.CanUndo.ShouldBeFalse();
-        editor.CanRedo.ShouldBeFalse();
-        editor.Undo().ShouldBeFalse();
+        editor.History.CanUndo.ShouldBeFalse();
+        editor.History.CanRedo.ShouldBeFalse();
+        editor.History.Undo().ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -474,13 +474,13 @@ public class NodeEditorTests : UiTest
     {
         var (editor, window) = Editing(Pair(out _, out _));
 
-        var added = editor.AddNode("math.mixer").ShouldNotBeNull();
+        var added = editor.Edits.AddNode("math.mixer").ShouldNotBeNull();
         Settle(window);
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Now(editor, added).ShouldBeNull();
 
-        editor.Redo().ShouldBeTrue();
+        editor.History.Redo().ShouldBeTrue();
         Now(editor, added).ShouldNotBeNull();
     }
 
@@ -498,15 +498,15 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         ClickAt(editor, window, Body(source));
-        editor.DeleteSelected();
+        editor.Edits.DeleteSelected();
         Settle(window);
 
-        editor.Patch.Connections.ShouldBeEmpty();
+        editor.History.Patch.Connections.ShouldBeEmpty();
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
         Now(editor, source).ShouldNotBeNull();
-        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
+        editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
     }
 
     [AvaloniaFact]
@@ -521,8 +521,8 @@ public class NodeEditorTests : UiTest
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
 
-        editor.Undo().ShouldBeTrue();
-        editor.Patch.Connections.ShouldBeEmpty();
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.Patch.Connections.ShouldBeEmpty();
     }
 
     /// <summary>
@@ -544,9 +544,9 @@ public class NodeEditorTests : UiTest
 
         patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull("the wire moved");
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        editor.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
+        editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
             .ShouldNotBeNull("and goes back to the socket it came off, in one press");
     }
 
@@ -562,16 +562,16 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         var recompiles = 0;
-        editor.PatchChanged += (_, _) => recompiles++;
+        editor.History.PatchChanged += (_, _) => recompiles++;
 
         var from = Body(source);
         Drag(editor, window, from, from + new Vector(180, 120));
 
         Now(editor, source).ShouldNotBeNull().X.ShouldBe(180, 1);
         recompiles.ShouldBe(0, "where a module sits is not in the program");
-        editor.CanUndo.ShouldBeTrue();
+        editor.History.CanUndo.ShouldBeTrue();
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Now(editor, source).ShouldNotBeNull().X.ShouldBe(0, 1);
     }
 
@@ -584,17 +584,17 @@ public class NodeEditorTests : UiTest
     {
         var (editor, window) = Editing(Pair(out _, out _));
 
-        editor.AddNode("math.mixer");
+        editor.Edits.AddNode("math.mixer");
         Settle(window);
-        editor.CanUndo.ShouldBeTrue();
+        editor.History.CanUndo.ShouldBeTrue();
 
-        editor.Patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        editor.History.Open(Presets.Plasma(NodeCatalog.BuiltIn));
         Settle(window);
 
-        editor.CanUndo.ShouldBeFalse(
+        editor.History.CanUndo.ShouldBeFalse(
             "and the layout a preset arrives already placed by is not an edit either — ADR-0070");
 
-        editor.CanRedo.ShouldBeFalse();
+        editor.History.CanRedo.ShouldBeFalse();
     }
 
     /// <summary>
@@ -611,16 +611,16 @@ public class NodeEditorTests : UiTest
         ClickAt(editor, window, Body(source));
 
         source.InputValues[0] = 0.5f;
-        editor.NotifyPatchChanged();
+        editor.History.Record();
 
-        editor.Undo().ShouldBeTrue();
-        editor.SelectedNode.ShouldNotBeNull().Id.ShouldBe(source.Id);
+        editor.History.Undo().ShouldBeTrue();
+        editor.Selection.Focused.ShouldNotBeNull().Id.ShouldBe(source.Id);
 
-        var added = editor.AddNode("math.mixer").ShouldNotBeNull();
-        editor.SelectedNode.ShouldNotBeNull().Id.ShouldBe(added.Id);
+        var added = editor.Edits.AddNode("math.mixer").ShouldNotBeNull();
+        editor.Selection.Focused.ShouldNotBeNull().Id.ShouldBe(added.Id);
 
-        editor.Undo().ShouldBeTrue();
-        editor.SelectedNode.ShouldBeNull("what was selected is no longer there");
+        editor.History.Undo().ShouldBeTrue();
+        editor.Selection.Focused.ShouldBeNull("what was selected is no longer there");
     }
 
     /// <summary>
@@ -633,24 +633,24 @@ public class NodeEditorTests : UiTest
     {
         var (editor, window) = Editing(Pair(out _, out _));
 
-        editor.IsModified.ShouldBeFalse("nothing has been done to it yet");
+        editor.History.IsModified.ShouldBeFalse("nothing has been done to it yet");
 
-        editor.AddNode("math.mixer");
+        editor.Edits.AddNode("math.mixer");
         Settle(window);
-        editor.IsModified.ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue();
 
-        editor.Undo().ShouldBeTrue();
-        editor.IsModified.ShouldBeFalse("undone back to the patch that was opened");
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.IsModified.ShouldBeFalse("undone back to the patch that was opened");
 
-        editor.AddNode("math.mixer");
+        editor.Edits.AddNode("math.mixer");
         Settle(window);
 
-        editor.MarkSaved();
-        editor.IsModified.ShouldBeFalse("written out is written out");
-        editor.CanUndo.ShouldBeTrue("and saving is not a reason to stop being able to undo");
+        editor.History.MarkSaved();
+        editor.History.IsModified.ShouldBeFalse("written out is written out");
+        editor.History.CanUndo.ShouldBeTrue("and saving is not a reason to stop being able to undo");
 
-        editor.Undo().ShouldBeTrue();
-        editor.IsModified.ShouldBeTrue("undone back past what was written out");
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue("undone back past what was written out");
     }
 
     [AvaloniaFact]
@@ -658,14 +658,14 @@ public class NodeEditorTests : UiTest
     {
         var (editor, window) = Editing(Pair(out _, out _));
 
-        editor.AddNode("math.mixer");
+        editor.Edits.AddNode("math.mixer");
         Settle(window);
-        editor.IsModified.ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue();
 
-        editor.Patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        editor.History.Open(Presets.Plasma(NodeCatalog.BuiltIn));
         Settle(window);
 
-        editor.IsModified.ShouldBeFalse();
+        editor.History.IsModified.ShouldBeFalse();
     }
 
     /// <summary>
@@ -679,17 +679,17 @@ public class NodeEditorTests : UiTest
         var patch = Pair(out var source, out _);
         var (editor, window) = Editing(patch);
 
-        editor.ApplyEdit(Presets.Plasma(NodeCatalog.BuiltIn));
+        editor.History.Apply(Presets.Plasma(NodeCatalog.BuiltIn));
         Settle(window);
 
         Now(editor, source).ShouldBeNull("the new patch is on the canvas");
-        editor.CanUndo.ShouldBeTrue();
-        editor.IsModified.ShouldBeTrue("and none of it has been saved");
+        editor.History.CanUndo.ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue("and none of it has been saved");
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Now(editor, source).ShouldNotBeNull("undo puts back what was there before it");
 
-        editor.Redo().ShouldBeTrue();
+        editor.History.Redo().ShouldBeTrue();
         Now(editor, source).ShouldBeNull("and redo brings it round again");
     }
 
@@ -766,10 +766,10 @@ public class NodeEditorTests : UiTest
             NodeGeometry.OutputPort(gain, 0),
             NodeGeometry.InputPort(osc, sine, 2));
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        editor.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("the wire is gone");
-        Cycles.Backwards(editor.Patch).ShouldBeEmpty("and with it the loop");
+        editor.History.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("the wire is gone");
+        Cycles.Backwards(editor.History.Patch).ShouldBeEmpty("and with it the loop");
     }
 
     /// <summary>
@@ -836,7 +836,7 @@ public class NodeEditorTests : UiTest
         Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
 
         patch.Disconnect(osc.Id, 2);
-        editor.NotifyPatchChanged();
+        editor.History.Record();
 
         Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
 
@@ -911,14 +911,14 @@ public class NodeEditorTests : UiTest
 
         var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
 
-        editor.Tidy();
-        editor.Patch.Nodes
+        editor.Edits.Tidy();
+        editor.History.Patch.Nodes
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             .ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y, "something should have moved");
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
 
-        foreach (var node in editor.Patch.Nodes)
+        foreach (var node in editor.History.Patch.Nodes)
             (node.X, node.Y).ShouldBe(before[node.Id]);
     }
 
@@ -953,15 +953,15 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(builder.Patch);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
         var before = builder.Patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
         said.ShouldContain("too big to draw");
 
-        foreach (var node in editor.Patch.Nodes)
+        foreach (var node in editor.History.Patch.Nodes)
             (node.X, node.Y).ShouldBe(before[node.Id], "nothing should have moved");
     }
 
@@ -1003,15 +1003,15 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(builder.Patch);
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
         said.ShouldContain("wider than the canvas");
         said.ShouldContain("Chain ");
         said.ShouldContain("shut");
 
-        editor.Patch.Groups!.ShouldContain(group => group.Collapsed);
+        editor.History.Patch.Groups!.ShouldContain(group => group.Collapsed);
     }
 
     /// <summary>And one that fits says nothing, since a patch that laid out is a patch that laid out.</summary>
@@ -1021,9 +1021,9 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(Presets.Drone(NodeCatalog.BuiltIn));
 
         var said = string.Empty;
-        editor.Reported += (_, message) => said = message;
+        editor.Report.Said += (_, message) => said = message;
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
         said.ShouldBeEmpty();
     }
@@ -1040,8 +1040,8 @@ public class NodeEditorTests : UiTest
 
         var before = patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops;
 
-        editor.Tidy();
+        editor.Edits.Tidy();
 
-        editor.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops.ShouldBe(before);
+        editor.History.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops.ShouldBe(before);
     }
 }

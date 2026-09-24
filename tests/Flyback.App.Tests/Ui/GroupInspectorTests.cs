@@ -44,16 +44,16 @@ public class GroupInspectorTests : UiTest
         Dispatcher.UIThread.RunJobs();
 
         var editor = Editor(window);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        var sine = editor.Patch.Find(osc.Id)!;
-        var mul = editor.Patch.Find(product.Id)!;
+        var sine = editor.History.Patch.Find(osc.Id)!;
+        var mul = editor.History.Patch.Find(product.Id)!;
 
-        group = editor.Patch.Group([sine.Id, mul.Id])!;
-        editor.NotifyPatchChanged();
+        group = editor.History.Patch.Group([sine.Id, mul.Id])!;
+        editor.History.Record();
 
-        SelectBox(window, editor.Patch, group);
+        SelectBox(window, editor.History.Patch, group);
         return window;
     }
 
@@ -120,8 +120,8 @@ public class GroupInspectorTests : UiTest
         var editor = Editor(window);
         var mul = group.Members[1];
 
-        editor.ToggleBox(group);
-        editor.Select(mul);
+        editor.Edits.ToggleBox(group);
+        editor.Selection.Select(mul);
         Settle(window);
 
         // Multiply's 'b' is its only unwired input; its 'out' crosses the edge.
@@ -202,12 +202,12 @@ public class GroupInspectorTests : UiTest
         Settle(window);
 
         var editor = Editor(window);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        var group = editor.Patch.Group([sum.Id, osc.Id])!;
-        editor.NotifyPatchChanged();
-        SelectBox(window, editor.Patch, group);
+        var group = editor.History.Patch.Group([sum.Id, osc.Id])!;
+        editor.History.Record();
+        SelectBox(window, editor.History.Patch, group);
 
         var lines = Lines(window);
 
@@ -236,10 +236,10 @@ public class GroupInspectorTests : UiTest
     {
         var window = Open(out var group);
         var editor = Editor(window);
-        var sine = editor.Patch.Find(group.Members[0])!;
+        var sine = editor.History.Patch.Find(group.Members[0])!;
 
-        editor.Patch.Disconnect(sine.Id, 1);
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Disconnect(sine.Id, 1);
+        editor.History.Record();
         Settle(window);
 
         Lines(window).ShouldNotContain("◀ patched from Time.t");
@@ -297,7 +297,7 @@ public class GroupInspectorTests : UiTest
         var window = Open(out var group);
 
         group.Rename("Voice");
-        Editor(window).NotifyPatchChanged();
+        Editor(window).History.Record();
         Settle(window);
 
         var icon = Button(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
@@ -445,17 +445,17 @@ public class GroupInspectorTests : UiTest
         Dispatcher.UIThread.RunJobs();
 
         var editor = Editor(window);
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
-        top = editor.Patch.Group([clock.Id, osc.Id])!;
-        low = editor.Patch.Group([second.Id, other.Id])!;
+        top = editor.History.Patch.Group([clock.Id, osc.Id])!;
+        low = editor.History.Patch.Group([second.Id, other.Id])!;
 
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
-        SelectBox(window, editor.Patch, top);
-        SelectBox(window, editor.Patch, low, adding: true);
+        SelectBox(window, editor.History.Patch, top);
+        SelectBox(window, editor.History.Patch, low, adding: true);
 
         return window;
     }

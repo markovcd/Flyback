@@ -501,10 +501,10 @@ internal readonly struct CanvasScene(Patch patch, NodeGroup? peek = null)
     /// leaves the body outside.
     /// </summary>
     private static Rect Room(NodeDef def) => new(
-        NodeEditor.CanvasBounds.X,
-        NodeEditor.CanvasBounds.Y,
-        Math.Max(0, NodeEditor.CanvasBounds.Width - NodeGeometry.Width),
-        Math.Max(0, NodeEditor.CanvasBounds.Height - NodeGeometry.Height(def)));
+        Viewport.CanvasBounds.X,
+        Viewport.CanvasBounds.Y,
+        Math.Max(0, Viewport.CanvasBounds.Width - NodeGeometry.Width),
+        Math.Max(0, Viewport.CanvasBounds.Height - NodeGeometry.Height(def)));
 
     /// <summary>
     /// Puts every module wholly inside the canvas.

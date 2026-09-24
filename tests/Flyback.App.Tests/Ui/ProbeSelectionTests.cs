@@ -31,7 +31,7 @@ public class ProbeSelectionTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = patch;
+        Editor(window).History.Open(patch);
 
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();

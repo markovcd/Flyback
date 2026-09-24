@@ -30,7 +30,7 @@ public class CanvasSocketTipTests : UiTest
 
         var editor = All<NodeEditor>(window).Single();
 
-        editor.Patch = b.Patch;
+        editor.History.Open(b.Patch);
         Settle(window);
 
         var port = NodeGeometry.InputPort(module, Filter, 1);

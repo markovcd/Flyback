@@ -167,7 +167,7 @@ public sealed class FileDropTests : UiTest
 
         window.Title.ShouldBe($"nebula — {Program}");
 
-        var patch = Editor(window).Patch;
+        var patch = Editor(window).History.Patch;
         patch.Nodes.Count.ShouldBe(2, "the Output and the one module written into the file");
         patch.Nodes.ShouldContain(n => n.TypeId == "value");
     }
@@ -213,8 +213,8 @@ public sealed class FileDropTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        editor.AddNode("value").ShouldNotBeNull();
-        editor.IsModified.ShouldBeTrue("the window should have something to lose");
+        editor.Edits.AddNode("value").ShouldNotBeNull();
+        editor.History.IsModified.ShouldBeTrue("the window should have something to lose");
 
         var named = window.Title;
         var path = WritePatch("nebula");
@@ -237,8 +237,8 @@ public sealed class FileDropTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        editor.AddNode("value").ShouldNotBeNull();
-        var nodes = editor.Patch.Nodes.Count;
+        editor.Edits.AddNode("value").ShouldNotBeNull();
+        var nodes = editor.History.Patch.Nodes.Count;
 
         var path = WritePatch("nebula");
 
@@ -252,7 +252,7 @@ public sealed class FileDropTests : UiTest
         Settle(window);
         Dispatcher.UIThread.RunJobs();
 
-        editor.Patch.Nodes.Count.ShouldBe(nodes, "canceling should have left the edited patch alone");
+        editor.History.Patch.Nodes.Count.ShouldBe(nodes, "canceling should have left the edited patch alone");
     }
 
     /// <summary>
@@ -280,7 +280,7 @@ public sealed class FileDropTests : UiTest
 
         var window = Open();
         var title = window.Title;
-        var modules = Editor(window).Patch.Nodes.Count;
+        var modules = Editor(window).History.Patch.Nodes.Count;
 
         modules.ShouldBeGreaterThan(1, "the window opens on a preset");
 
@@ -288,7 +288,7 @@ public sealed class FileDropTests : UiTest
         WaitForReport(window, "Not opened.");
 
         window.IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
-        Editor(window).Patch.Nodes.Count.ShouldBe(modules, "and what was open is still open");
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(modules, "and what was open is still open");
         window.Title.ShouldBe(title);
     }
 
@@ -357,12 +357,12 @@ public sealed class FileDropTests : UiTest
         Drop(window, Carrying(RealStorageFile(quiet)));
         WaitForTitleChange(window, named);
 
-        Editor(window).Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.2f);
+        Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.2f);
 
         named = window.Title;
         Drop(window, Carrying(RealStorageFile(loud)));
         WaitForTitleChange(window, named);
 
-        Editor(window).Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.8f);
+        Editor(window).History.Patch.Control(knob.Id).ShouldNotBeNull().Value.ShouldBe(0.8f);
     }
 }

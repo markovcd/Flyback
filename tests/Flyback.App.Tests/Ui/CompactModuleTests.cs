@@ -66,7 +66,7 @@ public class CompactModuleTests : UiTest
 
             var editor = All<NodeEditor>(window).Single();
 
-            editor.Patch = b.Patch;
+            editor.History.Open(b.Patch);
             Settle(window);
 
             // On the row's name rather than its socket, which is where a value used to be read.

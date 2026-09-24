@@ -41,10 +41,10 @@ public class ExpressionInspectorTests : UiTest
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        Editor(window).Patch = b.Patch;
+        Editor(window).History.Open(b.Patch);
         Settle(window);
 
-        expression = Editor(window).Patch.Find(formula.Id)
+        expression = Editor(window).History.Patch.Find(formula.Id)
             ?? throw new InvalidOperationException("the expression did not survive being opened");
 
         Select(window, expression);
@@ -253,7 +253,7 @@ public class ExpressionInspectorTests : UiTest
         text.CaretOffset = text.Text.IndexOf('*');
         Settle(window);
 
-        All<NodeEditor>(window).Single().SelectedNode.ShouldNotBeNull().Id.ShouldBe(expression.Id);
+        All<NodeEditor>(window).Single().Selection.Focused.ShouldNotBeNull().Id.ShouldBe(expression.Id);
 
         Formula(window).Text = "a * 3 - 1";
         Press(window, Key.Enter);

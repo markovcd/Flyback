@@ -42,10 +42,10 @@ public class MarqueeSelectTests : UiTest
 
     private (NodeEditor Editor, Window Window) Editing(Patch patch)
     {
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = patch;
+        editor.History.Open(patch);
         Settle(window);
 
         return (editor, window);
@@ -82,7 +82,7 @@ public class MarqueeSelectTests : UiTest
     }
 
     private static string[] Selected(NodeEditor editor) =>
-        [.. editor.SelectedNodes.Select(n => n.TypeId).Order()];
+        [.. editor.Selection.Nodes.Select(n => n.TypeId).Order()];
 
     // --- what the band takes ------------------------------------------------
 
@@ -249,7 +249,7 @@ public class MarqueeSelectTests : UiTest
         foreach (var node in patch.Nodes)
             (node.X, node.Y).ShouldBe(before[node.Id]);
 
-        editor.CanUndo.ShouldBeFalse("selecting is not an edit");
+        editor.History.CanUndo.ShouldBeFalse("selecting is not an edit");
     }
 
     // --- the buttons that did not change --------------------------------------
@@ -265,7 +265,7 @@ public class MarqueeSelectTests : UiTest
         // The same drag that would draw a band with the left button.
         Sweep(editor, window, new Point(-40, -40), new Point(240, 300), MouseButton.Middle);
 
-        editor.SelectedNodes.ShouldBeEmpty("the middle button pans, it does not select");
+        editor.Selection.Nodes.ShouldBeEmpty("the middle button pans, it does not select");
         editor.GraphToScreen.Transform(new Point(0, 0)).ShouldNotBe(before, "the view should have moved");
     }
 
@@ -285,7 +285,7 @@ public class MarqueeSelectTests : UiTest
         Sweep(editor, window, new Point(-40, -40), new Point(240, 300), MouseButton.Right);
 
         editor.GraphToScreen.Transform(new Point(0, 0)).ShouldBe(before, "the view should not have moved");
-        editor.SelectedNodes.ShouldBeEmpty();
+        editor.Selection.Nodes.ShouldBeEmpty();
     }
 
     /// <summary>

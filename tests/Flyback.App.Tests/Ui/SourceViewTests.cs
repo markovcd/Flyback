@@ -120,7 +120,7 @@ public class SourceViewTests : UiTest
 
         // Still the graph's patch: nothing is locked, and the inspector still
         // turns knobs.
-        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).History.Locked.ShouldBeFalse();
         Inspector(window).IsEnabled.ShouldBeTrue();
 
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
@@ -197,7 +197,7 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, Hum);
 
-        var patch = Editor(window).Patch;
+        var patch = Editor(window).History.Patch;
 
         // The clock, the oscillator and the Output — and nothing of whatever
         // preset the window opened on.
@@ -225,16 +225,16 @@ public class SourceViewTests : UiTest
         Press(text, Avalonia.Input.KeyModifiers.Control);
         Settle(window);
 
-        Editor(window).Patch.Nodes.Count.ShouldBe(3);
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(3);
 
         // And a bare Enter is still the box's own, so typing a patch out over
         // several lines does not apply it four times on the way.
-        var before = Editor(window).Patch;
+        var before = Editor(window).History.Patch;
 
         Press(text, Avalonia.Input.KeyModifiers.None);
         Settle(window);
 
-        Editor(window).Patch.ShouldBeSameAs(before);
+        Editor(window).History.Patch.ShouldBeSameAs(before);
     }
 
     /// <summary>
@@ -249,7 +249,7 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, Hum);
 
-        Editor(window).Locked.ShouldBeTrue();
+        Editor(window).History.Locked.ShouldBeTrue();
         Notice(window).ShouldBeNull("the text is the document now, so there is nothing to warn about");
 
         Inspector(window).IsEnabled
@@ -295,13 +295,13 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, Hum);
 
-        var applied = Editor(window).Patch.Nodes.Count;
+        var applied = Editor(window).History.Patch.Nodes.Count;
 
         HandBack(window);
 
-        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).History.Locked.ShouldBeFalse();
         Editor(window).IsVisible.ShouldBeTrue("the canvas is what somebody was trying to get to");
-        Editor(window).Patch.Nodes.Count.ShouldBe(applied, "nothing was rebuilt to hand it over");
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(applied, "nothing was rebuilt to hand it over");
 
         // And the text is a reading of that patch again, printed afresh over a
         // buffer the handover emptied.
@@ -336,7 +336,7 @@ public class SourceViewTests : UiTest
         Text(window).Text.ShouldNotBeNullOrWhiteSpace();
         Text(window).Text.ShouldNotBe(before);
 
-        Editor(window).Locked.ShouldBeTrue("the text is the document, so the canvas is a view");
+        Editor(window).History.Locked.ShouldBeTrue("the text is the document, so the canvas is a view");
         Notice(window).ShouldBeNull("a printing that has been taken is not still offered");
     }
 
@@ -356,7 +356,7 @@ public class SourceViewTests : UiTest
         Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
-        Editor(window).IsModified.ShouldBeFalse();
+        Editor(window).History.IsModified.ShouldBeFalse();
         window.Title.ShouldNotBeNull().ShouldNotContain("•");
     }
 
@@ -380,7 +380,7 @@ public class SourceViewTests : UiTest
         Undo(window).IsEnabled.ShouldBeFalse("nothing has been done to this patch yet");
 
         var read = Text(window).Text;
-        var modules = Editor(window).Patch.Nodes.Count;
+        var modules = Editor(window).History.Patch.Nodes.Count;
 
         // Pressed anyway, since the two stacks are what answer for the gesture
         // and a button that only looks off would still be answered by them.
@@ -389,8 +389,8 @@ public class SourceViewTests : UiTest
 
         Text(window).IsVisible.ShouldBeTrue("undo has nowhere to go, so the view does not move");
         Text(window).Text.ShouldBe(read);
-        Editor(window).Patch.Nodes.Count.ShouldBe(modules);
-        Editor(window).Locked.ShouldBeTrue("the text is still the document");
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(modules);
+        Editor(window).History.Locked.ShouldBeTrue("the text is still the document");
     }
 
     /// <summary>
@@ -405,7 +405,7 @@ public class SourceViewTests : UiTest
         Pick(Presets(window), "Kaleidoscope");
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).History.Locked.ShouldBeFalse();
         Notice(window).ShouldBeNull("nothing has printed it — the text view has not been opened");
 
         ShowCode(window);
@@ -478,7 +478,7 @@ public class SourceViewTests : UiTest
         Press(All<Button>(dialog).Single(b => b.Content as string == "Cancel"));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeTrue("the question was refused, so nothing changed hands");
+        Editor(window).History.Locked.ShouldBeTrue("the question was refused, so nothing changed hands");
         Text(window).Text.ShouldBe(Hum);
     }
 
@@ -492,12 +492,12 @@ public class SourceViewTests : UiTest
     public void A_text_that_does_not_read_leaves_the_patch_alone()
     {
         var window = Open();
-        var before = Editor(window).Patch.Nodes.Count;
+        var before = Editor(window).History.Patch.Nodes.Count;
 
         Evaluate(window, "t |> sine(freq: 220) |> out.leftt");
 
-        Editor(window).Patch.Nodes.Count.ShouldBe(before);
-        Editor(window).Locked.ShouldBeFalse("nothing was applied, so nothing changed hands");
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(before);
+        Editor(window).History.Locked.ShouldBeFalse("nothing was applied, so nothing changed hands");
     }
 
     /// <summary>And says where the mistake is, in the words the language uses.</summary>
@@ -736,7 +736,7 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, Hum);
 
-        var applied = Editor(window).Patch.Nodes.Count;
+        var applied = Editor(window).History.Patch.Nodes.Count;
 
         ShowCode(window).Text = Hum + "\n# and some more typing";
         Settle(window);
@@ -744,13 +744,13 @@ public class SourceViewTests : UiTest
         CodeButton(window).IsChecked = false;
         Settle(window);
 
-        Editor(window).Patch.Nodes.Count.ShouldBe(applied);
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(applied);
 
         Press(Undo(window));
         Settle(window);
 
         // Back to the preset the window opened on, which the evaluation replaced.
-        Editor(window).Patch.Nodes.Count.ShouldNotBe(applied);
+        Editor(window).History.Patch.Nodes.Count.ShouldNotBe(applied);
     }
 
     /// <summary>
@@ -770,7 +770,7 @@ public class SourceViewTests : UiTest
 
         Evaluate(window, Hum);
 
-        Editor(window).Locked.ShouldBeTrue("applying is how the text becomes the document");
+        Editor(window).History.Locked.ShouldBeTrue("applying is how the text becomes the document");
 
         // Pressed at the text view, which is where applying leaves somebody.
         // Nothing was typed to make this printing, so the text has nothing of
@@ -778,14 +778,14 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse("the evaluation that took it into text went back too");
+        Editor(window).History.Locked.ShouldBeFalse("the evaluation that took it into text went back too");
         Editor(window).IsVisible.ShouldBeTrue("and the view went back with it");
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
 
         Press(Redo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeTrue("and putting the evaluation back takes it into text");
+        Editor(window).History.Locked.ShouldBeTrue("and putting the evaluation back takes it into text");
         Editor(window).IsVisible.ShouldBeFalse("which is something done at the text view");
     }
 
@@ -812,13 +812,13 @@ public class SourceViewTests : UiTest
         Press(Redo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeTrue("the evaluation came back with the first press");
+        Editor(window).History.Locked.ShouldBeTrue("the evaluation came back with the first press");
         Redo(window).IsEnabled.ShouldBeFalse("there is nothing left to put again");
 
         Press(Redo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeTrue("a second press had nothing to do and did nothing");
+        Editor(window).History.Locked.ShouldBeTrue("a second press had nothing to do and did nothing");
         Undo(window).IsEnabled.ShouldBeTrue("the evaluation is still one press back, not two");
     }
 
@@ -839,7 +839,7 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).History.Locked.ShouldBeFalse();
         Editor(window).IsVisible.ShouldBeTrue("which is where they already were");
     }
 
@@ -863,12 +863,12 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         text.Text.ShouldBe(Hum);
-        Editor(window).Locked.ShouldBeTrue("the typing was what there was to take back");
+        Editor(window).History.Locked.ShouldBeTrue("the typing was what there was to take back");
 
         Press(Undo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse("and now there is nothing but the handover");
+        Editor(window).History.Locked.ShouldBeFalse("and now there is nothing but the handover");
     }
 
     /// <summary>
@@ -886,14 +886,14 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
 
-        editor.Patch.Nodes[0].X += 40;
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Nodes[0].X += 40;
+        editor.History.Record();
         Settle(window);
 
         Press(Undo(window));
         Settle(window);
 
-        editor.Locked.ShouldBeFalse("the canvas was given the patch back and still has it");
+        editor.History.Locked.ShouldBeFalse("the canvas was given the patch back and still has it");
     }
 
     /// <summary>
@@ -912,14 +912,14 @@ public class SourceViewTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var reading = Core.Language.PatchPrinter.Print(editor.Patch);
+        var reading = Core.Language.PatchPrinter.Print(editor.History.Patch);
 
         // An edit on the canvas, before the text view has ever been opened, so
         // nothing writes it into a printing on the way.
-        editor.Patch.Remove(editor.Patch.Nodes
+        editor.History.Patch.Remove(editor.History.Patch.Nodes
             .First(node => node.TypeId != Core.Graph.NodeCatalog.OutputTypeId).Id);
 
-        editor.NotifyPatchChanged();
+        editor.History.Record();
         Settle(window);
 
         var text = ShowCode(window);
@@ -951,7 +951,7 @@ public class SourceViewTests : UiTest
         text.CaretOffset = text.Text.IndexOf('(');
         Settle(window);
 
-        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+        var chosen = Editor(window).Selection.Focused.ShouldNotBeNull();
         var was = chosen.InputValues[0];
         var reading = text.Text;
 
@@ -963,13 +963,13 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         text.Text.ShouldBe(reading, "the reading is made afresh from the patch that came back");
-        Editor(window).Patch.Find(chosen.Id).ShouldNotBeNull().InputValues[0].ShouldBe(was);
+        Editor(window).History.Patch.Find(chosen.Id).ShouldNotBeNull().InputValues[0].ShouldBe(was);
 
         // And it is the printing again, so the caret still points the panel.
         text.CaretOffset = text.Text.IndexOf('(');
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
+        Editor(window).Selection.Focused.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
     }
 
     /// <summary>
@@ -988,8 +988,8 @@ public class SourceViewTests : UiTest
         var editor = Editor(window);
 
         // On the canvas, which is where the window opens and where it still is.
-        editor.Patch.Nodes[0].X += 40;
-        editor.NotifyPatchChanged();
+        editor.History.Patch.Nodes[0].X += 40;
+        editor.History.Record();
         Settle(window);
 
         var text = ShowCode(window);
@@ -997,7 +997,7 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        editor.Locked.ShouldBeFalse("the canvas had the patch all along");
+        editor.History.Locked.ShouldBeFalse("the canvas had the patch all along");
         editor.IsVisible.ShouldBeFalse("and nobody asked to be taken off the text");
         Notice(window).ShouldNotBeNull().ShouldContain("still the document");
 
@@ -1006,7 +1006,7 @@ public class SourceViewTests : UiTest
         text.CaretOffset = text.Text.IndexOf('(');
         Settle(window);
 
-        editor.SelectedNode.ShouldNotBeNull();
+        editor.Selection.Focused.ShouldNotBeNull();
     }
 
     /// <summary>
@@ -1031,18 +1031,18 @@ public class SourceViewTests : UiTest
         Press(Undo(window));
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse("the patch is the canvas's again");
+        Editor(window).History.Locked.ShouldBeFalse("the patch is the canvas's again");
 
         CodeButton(window).IsChecked = false;
         Settle(window);
 
-        Editor(window).AddNode("value").ShouldNotBeNull();
+        Editor(window).Edits.AddNode("value").ShouldNotBeNull();
         Settle(window);
 
         ShowCode(window);
 
         text.Text.ShouldBe(
-            Core.Language.PatchPrinter.Print(Editor(window).Patch),
+            Core.Language.PatchPrinter.Print(Editor(window).History.Patch),
             "nothing was typed, so the text is a printing of what is on the canvas");
     }
 
@@ -1069,7 +1069,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, "math.mix(a: 0.25) |> out.left");
 
         Click(window, "math.mix");
-        Editor(window).SelectedNode.ShouldNotBeNull("the caret points the panel to begin with");
+        Editor(window).Selection.Focused.ShouldNotBeNull("the caret points the panel to begin with");
 
         // Typed in ahead of it, which is what gives the Mix a new name.
         text.Document.Insert("math.mix(".Length, "b: _, ");
@@ -1080,14 +1080,14 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         Click(window, "math.mix");
-        Editor(window).SelectedNode.ShouldNotBeNull("applied, so the two agree again");
+        Editor(window).Selection.Focused.ShouldNotBeNull("applied, so the two agree again");
 
         Press(Undo(window));
         Settle(window);
 
         Click(window, "math.mix");
 
-        Editor(window).SelectedNode.ShouldBeNull("the patch that came back has no such module");
+        Editor(window).Selection.Focused.ShouldBeNull("the patch that came back has no such module");
         Panel(window).ShouldContain("moved on from the patch");
 
         // And the way out is said as well as the reason.
@@ -1126,7 +1126,7 @@ public class SourceViewTests : UiTest
         // patch still has for the Mix.
         Click(window, "sine");
 
-        Editor(window).SelectedNode.ShouldBeNull("that name means another module now");
+        Editor(window).Selection.Focused.ShouldBeNull("that name means another module now");
         Panel(window).ShouldContain("moved on from the patch");
     }
 
@@ -1158,12 +1158,12 @@ public class SourceViewTests : UiTest
 
         Click(window, "math.mix");
 
-        Editor(window).SelectedNode.ShouldNotBeNull("nothing was renamed, so the name still means it");
+        Editor(window).Selection.Focused.ShouldNotBeNull("nothing was renamed, so the name still means it");
     }
 
     /// <summary>The one knob the patches used here have.</summary>
     private static float Knob(MainWindow window) =>
-        Editor(window).Patch.Nodes.Single(node => node.TypeId == "math.mix").InputValues[0];
+        Editor(window).History.Patch.Nodes.Single(node => node.TypeId == "math.mix").InputValues[0];
 
     /// <summary>
     /// Applying is a thing done to the document, so it goes on the document's stack
@@ -1274,10 +1274,10 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
 
-        editor.SelectAll();
+        editor.Selection.SelectAll();
         editor.Focus();
 
-        var before = editor.Patch.Nodes.Count;
+        var before = editor.History.Patch.Nodes.Count;
 
         window.KeyPress(
             Avalonia.Input.Key.Delete,
@@ -1286,7 +1286,7 @@ public class SourceViewTests : UiTest
             null);
         Settle(window);
 
-        editor.Patch.Nodes.Count.ShouldBe(before);
+        editor.History.Patch.Nodes.Count.ShouldBe(before);
     }
 
     /// <summary>
@@ -1323,8 +1323,8 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
 
-        editor.SelectAll();
-        editor.SelectedNodes.Count.ShouldBe(editor.Patch.Nodes.Count);
+        editor.Selection.SelectAll();
+        editor.Selection.Nodes.Count.ShouldBe(editor.History.Patch.Nodes.Count);
     }
 
     // --- the caret points the panel -----------------------------------------
@@ -1360,18 +1360,18 @@ public class SourceViewTests : UiTest
 
         Click(window, "group \"Voice\"");
 
-        Editor(window).SelectedGroup.ShouldNotBeNull().Name.ShouldBe("Voice");
+        Editor(window).Selection.Group.ShouldNotBeNull().Name.ShouldBe("Voice");
         Panel(window).ShouldContain("drawn as one");
 
         Click(window, "sine");
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+        Editor(window).Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
 
         // The blank line between the two bindings, inside the block.
         var text = Text(window);
         text.CaretOffset = text.Text.IndexOf("let b", StringComparison.Ordinal) - 3;
         Settle(window);
 
-        Editor(window).SelectedGroup.ShouldNotBeNull().Name.ShouldBe("Voice");
+        Editor(window).Selection.Group.ShouldNotBeNull().Name.ShouldBe("Voice");
     }
 
     /// <summary>
@@ -1398,12 +1398,12 @@ public class SourceViewTests : UiTest
 
         Click(window, "group \"Chorus\"");
 
-        Editor(window).SelectedNode.ShouldBeNull();
+        Editor(window).Selection.Focused.ShouldBeNull();
         Panel(window).ShouldContain("this group is not there to show yet");
 
         // Renaming a group moves the modules in it too, but not one outside it.
         Click(window, "filter");
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("audio.filter");
+        Editor(window).Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("audio.filter");
     }
 
     /// <summary>
@@ -1418,7 +1418,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, Hum);
         Click(window, "sine");
 
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+        Editor(window).Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
     }
 
     /// <summary>
@@ -1434,7 +1434,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, "math.mix(a: 1.5524476) |> out.left");
         Click(window, "math.mix");
 
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("math.mix");
+        Editor(window).Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("math.mix");
     }
 
     /// <summary>
@@ -1456,7 +1456,7 @@ public class SourceViewTests : UiTest
         text.CaretOffset = call;
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldNotBeNull();
+        Editor(window).Selection.Focused.ShouldNotBeNull();
     }
 
     // --- and a knob turned in it reaches the text ---------------------------
@@ -1467,7 +1467,7 @@ public class SourceViewTests : UiTest
         var slider = All<Slider>(window).First();
 
         // The first knob's slider, which on a socket with a knee is travel rather than value.
-        var node = Editor(window).SelectedNode.ShouldNotBeNull();
+        var node = Editor(window).Selection.Focused.ShouldNotBeNull();
         var spec = NodeCatalog.Require(node.TypeId).Inputs.First(p => NodeCatalog.Normalled(p) is null && !p.NeedsAWire);
 
         slider.Value = spec.Knee > 0f ? spec.Travel((float)to, spec.Min, spec.Max) : to;
@@ -1522,7 +1522,7 @@ public class SourceViewTests : UiTest
         Evaluate(window, "panel level = 0.5, cc: 7, device: \"midi:test\"\nsine(freq: 220, amp: level) |> out.left");
         TurnPanelKnob(window, 40);
 
-        var rests = Editor(window).Patch.Controls.ShouldNotBeNull().Single().Value;
+        var rests = Editor(window).History.Patch.Controls.ShouldNotBeNull().Single().Value;
 
         rests.ShouldBeGreaterThan(0.5f);
         Text(window).Text.ShouldStartWith($"panel level = {PatchPrinter.Knob(rests, PortDisplay.Number)}, cc: 7,");
@@ -1541,10 +1541,10 @@ public class SourceViewTests : UiTest
 
         TurnPanelKnob(window, 40);
 
-        var rests = Editor(window).Patch.Controls.ShouldNotBeNull().Single().Value;
+        var rests = Editor(window).History.Patch.Controls.ShouldNotBeNull().Single().Value;
 
         text.Text.ShouldContain($"panel level = {PatchPrinter.Knob(rests, PortDisplay.Number)}");
-        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).Patch));
+        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).History.Patch));
     }
 
     /// <summary>
@@ -1591,7 +1591,7 @@ public class SourceViewTests : UiTest
         KnobMenu(window, 0, "Move right");
 
         text.Text.ShouldStartWith("panel tone = 0.25\npanel level = 0.5\n");
-        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).Patch));
+        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).History.Patch));
     }
 
     private static void KnobMenu(MainWindow window, int knob, string item)
@@ -1636,7 +1636,7 @@ public class SourceViewTests : UiTest
 
         // And the engine has it all the same, which is the point of turning a
         // knob while a patch is playing.
-        Editor(window).SelectedNode.ShouldNotBeNull().InputValues[0].ShouldBe(2f);
+        Editor(window).Selection.Focused.ShouldNotBeNull().InputValues[0].ShouldBe(2f);
     }
 
     /// <summary>
@@ -1653,7 +1653,7 @@ public class SourceViewTests : UiTest
         text.CaretOffset = text.Text.IndexOf('(');
         Settle(window);
 
-        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+        var chosen = Editor(window).Selection.Focused.ShouldNotBeNull();
         var before = text.Text;
 
         Turn(window, 0.375d);
@@ -1663,14 +1663,14 @@ public class SourceViewTests : UiTest
 
         // Still the canvas's patch, and still pointed at: a printing written
         // into by this is a printing still.
-        Editor(window).Locked.ShouldBeFalse();
+        Editor(window).History.Locked.ShouldBeFalse();
         Notice(window).ShouldNotBeNull();
 
         text.CaretOffset = 0;
         text.CaretOffset = text.Text.IndexOf('(');
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
+        Editor(window).Selection.Focused.ShouldNotBeNull().Id.ShouldBe(chosen.Id);
     }
 
     /// <summary>
@@ -1689,11 +1689,11 @@ public class SourceViewTests : UiTest
         text.CaretOffset = text.Text.IndexOf(')');
         Settle(window);
 
-        var chosen = Editor(window).SelectedNode.ShouldNotBeNull();
+        var chosen = Editor(window).Selection.Focused.ShouldNotBeNull();
 
         Turn(window, 0.375d);
 
-        Editor(window).SelectedNode
+        Editor(window).Selection.Focused
             .ShouldNotBeNull("the panel emptied itself while the knob was being let go of")
             .Id.ShouldBe(chosen.Id);
 
@@ -1706,7 +1706,7 @@ public class SourceViewTests : UiTest
         text.CaretOffset = second;
         Settle(window);
 
-        Editor(window).SelectedNode.ShouldNotBeNull("the caret stopped pointing the panel");
+        Editor(window).Selection.Focused.ShouldNotBeNull("the caret stopped pointing the panel");
     }
 
     /// <summary>
@@ -1879,15 +1879,15 @@ public class SourceViewTests : UiTest
         CodeButton(window).IsChecked = false;
         Settle(window);
 
-        var before = Editor(window).Patch.Nodes.Count;
+        var before = Editor(window).History.Patch.Nodes.Count;
 
-        Editor(window).AddNode("value").ShouldNotBeNull();
+        Editor(window).Edits.AddNode("value").ShouldNotBeNull();
         Settle(window);
 
         Press(Undo(window));
         Settle(window);
 
-        Editor(window).Patch.Nodes.Count.ShouldBe(before, "the module just added is what came back");
+        Editor(window).History.Patch.Nodes.Count.ShouldBe(before, "the module just added is what came back");
         text.Text.ShouldStartWith("# a note to myself", customMessage: "and the typing was left alone");
 
         // With nothing left on the canvas's stack the button goes gray, rather
@@ -1927,11 +1927,11 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         var editor = Editor(window);
-        var turned = editor.Patch.Nodes.First(n =>
+        var turned = editor.History.Patch.Nodes.First(n =>
             n.TypeId != Core.Graph.NodeCatalog.OutputTypeId
             && Core.Graph.NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
 
-        editor.Select(turned.Id);
+        editor.Selection.Select(turned.Id);
         Settle(window);
 
         var slider = All<Slider>(window).First();
@@ -1971,7 +1971,7 @@ public class SourceViewTests : UiTest
             Settle(window);
         });
 
-        Editor(window).SelectedNode.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
+        Editor(window).Selection.Focused.ShouldNotBeNull().TypeId.ShouldBe("osc.sine");
     }
 
     // --- a locked canvas, and a box on it --------------------------------------
@@ -1995,23 +1995,23 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
 
-        editor.Locked.ShouldBeTrue();
+        editor.History.Locked.ShouldBeTrue();
 
         CodeButton(window).IsChecked = false;
         Settle(window);
 
-        var group = editor.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        var group = editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
 
         group.Collapsed.ShouldBeTrue("a group built from text arrives shut");
 
-        var box = NodeGeometry.GroupBounds(editor.Patch, group, editor.Patch.SocketsOf(group));
+        var box = NodeGeometry.GroupBounds(editor.History.Patch, group, editor.History.Patch.SocketsOf(group));
 
         var at = editor.TranslatePoint(
                 editor.GraphToScreen.Transform(new Point(box.X + (box.Width / 2), box.Y + 8)), window)
             ?? throw new InvalidOperationException("the editor is not in this window");
 
         var steps = 0;
-        editor.Recorded += (_, _) => steps++;
+        editor.History.Recorded += (_, _) => steps++;
 
         for (var click = 0; click < 2; click++)
         {
@@ -2023,8 +2023,8 @@ public class SourceViewTests : UiTest
 
         group.Collapsed.ShouldBeTrue();
         steps.ShouldBe(0, "nothing done to a locked canvas is an edit to the patch");
-        editor.Peeked.ShouldBe(group);
-        editor.SelectedGroup.ShouldBe(group, "the press still selects what the box stands for");
+        editor.Selection.Peeked.ShouldBe(group);
+        editor.Selection.Group.ShouldBe(group, "the press still selects what the box stands for");
     }
 
     // --- an assistant's patch, and the text ---------------------------------
@@ -2080,7 +2080,7 @@ public class SourceViewTests : UiTest
         AssistantApplies(window)(Drone());
         Settle(window);
 
-        Editor(window).Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
+        Editor(window).History.Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
         Notice(window).ShouldNotBeNull();
 
         Oscillators(Core.Language.PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
@@ -2103,8 +2103,8 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
 
-        editor.Locked.ShouldBeTrue("the text is still the document");
-        Oscillators(editor.Patch).ShouldBe(2, "the assistant's patch is on the canvas");
+        editor.History.Locked.ShouldBeTrue("the text is still the document");
+        Oscillators(editor.History.Patch).ShouldBe(2, "the assistant's patch is on the canvas");
         Oscillators(Core.Language.PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
     }
 
@@ -2138,7 +2138,7 @@ public class SourceViewTests : UiTest
         Settle(window);
 
         text.Text.ShouldBe(written);
-        Oscillators(Editor(window).Patch).ShouldBe(1, "the patch the text describes is back with it");
-        Editor(window).Locked.ShouldBeTrue();
+        Oscillators(Editor(window).History.Patch).ShouldBe(1, "the patch the text describes is back with it");
+        Editor(window).History.Locked.ShouldBeTrue();
     }
 }

@@ -124,7 +124,7 @@ public class PickerTests : UiTest
         var editor = All<NodeEditor>(window).Single();
         var presets = Presets(window);
 
-        var before = editor.Patch.Nodes.Select(node => node.Id).ToList();
+        var before = editor.History.Patch.Nodes.Select(node => node.Id).ToList();
 
         presets.Focus();
         Settle(window);
@@ -133,7 +133,7 @@ public class PickerTests : UiTest
         window.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
         Settle(window);
 
-        editor.Patch.Nodes.Select(node => node.Id).ShouldBe(before);
+        editor.History.Patch.Nodes.Select(node => node.Id).ShouldBe(before);
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public class PickerTests : UiTest
 
         var window = Open();
 
-        All<NodeEditor>(window).Single().Patch = b.Patch;
+        All<NodeEditor>(window).Single().History.Open(b.Patch);
         Settle(window);
 
         Presets(window).Focus();
@@ -190,7 +190,7 @@ public class PickerTests : UiTest
 
         var window = Open();
 
-        All<NodeEditor>(window).Single().Patch = b.Patch;
+        All<NodeEditor>(window).Single().History.Open(b.Patch);
         Settle(window);
 
         // The settings window, which is where the preview size lives.

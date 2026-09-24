@@ -34,8 +34,8 @@ public class UndescribedTagTests : UiTest
 
         var editor = Editor(window);
 
-        editor.Patch = b.Patch;
-        editor.Undescribed = new HashSet<string> { "osc.sine" };
+        editor.History.Open(b.Patch);
+        editor.Tags.Types = new HashSet<string> { "osc.sine" };
         Settle(window);
 
         return (window, sine, clock);

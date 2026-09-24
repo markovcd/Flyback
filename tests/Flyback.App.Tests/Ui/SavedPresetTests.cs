@@ -116,20 +116,20 @@ public class SavedPresetTests : UiTest
     {
         var window = Open();
         var editor = All<NodeEditor>(window).Single();
-        var saved = editor.Patch.Nodes.Select(n => n.TypeId).Order().ToList();
+        var saved = editor.History.Patch.Nodes.Select(n => n.TypeId).Order().ToList();
 
         OpenGallery(window);
         SaveAs(window, "Mine");
 
         // Somewhere else first, so arriving back is visibly the saved one.
         Click(All<Button>(window).Single(b => b.Name == "tile" && ((PatchPreset)b.Tag!).Name == "Empty"), window);
-        editor.Patch.Nodes.Count.ShouldBe(1);
+        editor.History.Patch.Nodes.Count.ShouldBe(1);
 
         OpenGallery(window);
         Click(All<Button>(Yours(window)).Single(b => b.Name == "tile"), window);
 
         (Presets(window).SelectedItem as PatchPreset)!.Name.ShouldBe("Mine");
-        editor.Patch.Nodes.Select(n => n.TypeId).Order().ShouldBe(saved);
+        editor.History.Patch.Nodes.Select(n => n.TypeId).Order().ShouldBe(saved);
     }
 
     [AvaloniaFact]
@@ -366,7 +366,7 @@ public class SavedPresetTests : UiTest
     public void A_saved_preset_is_found_by_its_tags_and_its_author()
     {
         var window = Open();
-        var patch = All<NodeEditor>(window).Single().Patch;
+        var patch = All<NodeEditor>(window).Single().History.Patch;
 
         patch.Credit("Wendelin");
         patch.Tag(["drone", "quokka"]);

@@ -15,7 +15,7 @@ namespace Flyback.App.Tests.Ui;
 /// <summary>
 /// Three ways a module is drawn differently from plain and unselected: switched
 /// off (ADR-0117), selected, and carrying the tag the assistant panel puts on a
-/// module it was not told about (<see cref="NodeEditor.Undescribed"/>).
+/// module it was not told about (<see cref="UndescribedTags.Types"/>).
 /// </summary>
 /// <remarks>
 /// Each test draws the same one-node patch twice, changes one thing about it,
@@ -36,8 +36,8 @@ public class ModuleStateShotTests : UiTest
 
         var on = At(window, editor, header);
 
-        editor.Select(node.Id);
-        editor.SwitchSelected();
+        editor.Selection.Select(node.Id);
+        editor.Edits.SwitchSelected();
         Settle(window);
 
         var off = At(window, editor, header);
@@ -60,7 +60,7 @@ public class ModuleStateShotTests : UiTest
 
         var unselected = At(window, editor, floor);
 
-        editor.Select(node.Id);
+        editor.Selection.Select(node.Id);
         Settle(window);
 
         var selected = At(window, editor, floor);
@@ -81,7 +81,7 @@ public class ModuleStateShotTests : UiTest
 
         var before = Brightest(window, editor, tagArea);
 
-        editor.Undescribed = new HashSet<string> { def.TypeId };
+        editor.Tags.Types = new HashSet<string> { def.TypeId };
         Settle(window);
 
         var after = Brightest(window, editor, tagArea);
@@ -97,14 +97,14 @@ public class ModuleStateShotTests : UiTest
         var node = builder.Add("osc.sine", Across, Down);
         var def = catalog.Require("osc.sine");
 
-        var editor = new NodeEditor { Width = Wide, Height = Tall };
+        var editor = NewCanvas(Wide, Tall);
         var window = Show(editor, Wide);
 
-        editor.Patch = builder.Patch;
+        editor.History.Open(builder.Patch);
         Settle(window);
 
         // Again now the control has a size — see PatchShotTests.
-        editor.FrameAll();
+        editor.View.FrameAll();
         Settle(window);
 
         return (editor, window, node, def);

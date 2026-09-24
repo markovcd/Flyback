@@ -96,12 +96,12 @@ public sealed class WindowTitleTests : UiTest
 
         named.ShouldNotEndWith("•");
 
-        editor.AddNode("value").ShouldNotBeNull();
+        editor.Edits.AddNode("value").ShouldNotBeNull();
         Settle(window);
 
         window.Title.ShouldBe(named + " •");
 
-        editor.Undo().ShouldBeTrue();
+        editor.History.Undo().ShouldBeTrue();
         Settle(window);
 
         window.Title.ShouldBe(named, "back to what was last saved, and still named");
@@ -194,7 +194,7 @@ public sealed class WindowTitleTests : UiTest
         Press(window, "undo");
         Press(window, "redo");
 
-        Editor(window).Locked.ShouldBeTrue("the text is the document again");
+        Editor(window).History.Locked.ShouldBeTrue("the text is the document again");
         window.Title.ShouldNotBeNull().ShouldNotEndWith("•", customMessage: "and it is the text that was saved");
     }
 
