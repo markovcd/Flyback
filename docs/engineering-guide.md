@@ -424,7 +424,7 @@ drift. The site's CSS mirrors `Colors.cs`.
 **Two hubs and the regions around them**
 ([0148](adr/0148-the-window-is-two-hubs-and-the-regions-around-them.md)).
 `Document` owns who owns the patch, the write-back into the text and where an
-undo lands; `Engine` owns compiling, the sound and the status bar. A region is a
+undo lands; `Playback` owns compiling, the sound device, pause and mute. A region is a
 class that takes the hubs and the shared things it reads (the canvas, the
 preview, the plugins), owns its own fields and raises events. `MainWindow` builds
 them and lays them out. Regions not yet moved are still `partial` files of the

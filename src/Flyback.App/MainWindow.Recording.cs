@@ -57,7 +57,7 @@ public sealed partial class MainWindow
         if (file?.TryGetLocalPath() is not { } path) return;
 
         // A take is of a patch that is playing, and a paused one has no sound to record.
-        Resume();
+        playback.Resume();
 
         // Before the count rather than only as the file is opened: a count-in is
         // three seconds of standing ready, and spending them to be told there is

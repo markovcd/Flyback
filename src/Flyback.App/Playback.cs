@@ -1,7 +1,6 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
@@ -10,18 +9,96 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App;
 
 /// <summary>
-/// The join between the window and the instrument: opening a sound device, turning an
-/// edited patch back into two programs, and saying what came of either. Everything
-/// the status bar carries originates here.
+/// The instrument itself: turning an edited patch back into two programs, the sound
+/// device that plays one of them, and pausing or muting the pair (ADR-0148).
 /// </summary>
 /// <remarks>
 /// A patch is recompiled whole on every edit, which keeps this to one handler and no
 /// invalidation to get wrong. The device comes from a plugin, so nothing here knows
 /// what a backend is called.
+/// <para>
+/// Paused is the same as in the viewer: the device stops and the picture is timed by a
+/// clock that holds still, so an edit still redraws and a resume adds one frame rather
+/// than the whole pause. Rewinding while paused stays paused, on the first frame.
+/// </para>
 /// </remarks>
-[SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
-public sealed partial class MainWindow
+internal sealed class Playback
 {
+    private readonly NodeEditor editor;
+    private readonly PreviewHost preview;
+    private readonly AudioEngine audio;
+    private readonly IlCompiler compiler;
+    private readonly MidiHub midi;
+    private readonly ReportLine report;
+    private readonly PluginCatalog plugins;
+    private readonly Func<ISampleLibrary> sounds;
+    private readonly Func<IImageLibrary> pictures;
+    private readonly Func<bool> recording;
+    private readonly Func<string?> assistantSummary;
+
+    /// <summary>The patch has just been compiled, and the picture and the sound are playing it.</summary>
+    public event EventHandler? Compiled;
+
+    /// <summary>The device has just started playing the patch.</summary>
+    public event EventHandler? Started;
+
+    /// <summary>Paused, muted or audible may have changed.</summary>
+    public event EventHandler? TransportChanged;
+
+    /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
+    /// <param name="assistantSummary">What the assistant plugins came to, for a sound failure's detail.</param>
+    public Playback(
+        NodeEditor editor,
+        PreviewHost preview,
+        AudioEngine audio,
+        IlCompiler compiler,
+        MidiHub midi,
+        ReportLine report,
+        PluginCatalog plugins,
+        AudioSetup sound,
+        Func<ISampleLibrary> sounds,
+        Func<IImageLibrary> pictures,
+        Func<bool> recording,
+        Func<string?> assistantSummary)
+    {
+        this.editor = editor;
+        this.preview = preview;
+        this.audio = audio;
+        this.compiler = compiler;
+        this.midi = midi;
+        this.report = report;
+        this.plugins = plugins;
+        this.sounds = sounds;
+        this.pictures = pictures;
+        this.recording = recording;
+        this.assistantSummary = assistantSummary;
+
+        Sound = sound;
+    }
+
+    /// <summary>The sound backend and the device it opened.</summary>
+    public AudioSetup Sound { get; private set; }
+
+    /// <summary>
+    /// Set once a device has refused to start, so a Volume left above nought does
+    /// not retry it on every edit. Only a different device clears it — saved in the
+    /// Sound settings, or found at the next launch — see ADR-0079 and ADR-0085.
+    /// </summary>
+    private bool blocked;
+
+    /// <summary>Whether there is a device that has not refused to start.</summary>
+    public bool CanSound => Sound.Output is not null && !blocked;
+
+    /// <summary>Whether the speakers would be heard: there is a device, and the Output's Volume is up.</summary>
+    public bool Audible => CanSound && Audio.Sound.VolumeIsUp(editor.Patch);
+
+    public bool Paused { get; private set; }
+
+    public bool Muted { get; private set; }
+
+    /// <summary>Where the picture is held while <see cref="Paused"/>.</summary>
+    private double frozenAt;
+
     /// <summary>
     /// Puts the Sound settings just saved in force: a device made from them takes
     /// the old one's place, and the sound carries on through it where it was.
@@ -33,14 +110,14 @@ public sealed partial class MainWindow
     /// so a device that is busy or gone says so when it is started — through
     /// <see cref="SetAudioEnabled"/>, the same as at launch.
     /// </remarks>
-    private void ReopenAudio()
+    public void ReopenAudio(OutputSettings settings)
     {
-        var next = Sound.Open(plugins, outputSettings);
+        var next = Audio.Sound.Open(plugins, settings);
 
         if (next.Failure is { } failure)
         {
             next.Device.Dispose();
-            Report($"Could not open sound: {failure}", PluginSummary.Text(plugins, sound.Failure, assistant?.Summary));
+            report.Say($"Could not open sound: {failure}", FailureDetail());
             return;
         }
 
@@ -49,16 +126,18 @@ public sealed partial class MainWindow
         if (!audio.Use(next.Device))
         {
             next.Device.Dispose();
-            Report("That device plays at another rate, so it is used from the next time Flyback starts.");
+            report.Say("That device plays at another rate, so it is used from the next time Flyback starts.");
             SyncAudioToVolume();
             return;
         }
 
-        sound = next;
-        audioBlocked = false;
+        Sound = next;
+        blocked = false;
 
         SyncAudioToVolume();
     }
+
+    private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, assistantSummary());
 
     /// <summary>
     /// The chart the picture is rooted at: the selected module, when that is a Probe,
@@ -77,7 +156,7 @@ public sealed partial class MainWindow
     /// Whether there is anything for the preview to show. A chart rooted at a Probe
     /// is a picture like any other, whatever the Output's own 'color' says.
     /// </summary>
-    private bool HasPicture => Probed is not null || editor.Patch.Reaches().Picture;
+    public bool HasPicture => Probed is not null || editor.Patch.Reaches().Picture;
 
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
@@ -87,7 +166,7 @@ public sealed partial class MainWindow
     /// anything else is what takes it off again. No other selection changes the
     /// picture, so this recompiles only when that one does.
     /// </summary>
-    private void ProbeSelectionChanged()
+    public void ProbeSelectionChanged()
     {
         if (Probed?.Id != showingProbe) Recompile();
     }
@@ -97,21 +176,22 @@ public sealed partial class MainWindow
     /// sound is off, so switching it on is instant and the status line can show
     /// what the ear would cost.
     /// </summary>
-    private void Recompile()
+    public void Recompile()
     {
         var probe = Probed;
         showingProbe = probe?.Id;
 
+        var samples = sounds();
+        var images = pictures();
+
         var result = probe is null
-            ? editor.Patch.CompileForVideo(samples: Sounds, pictures: Pictures, played: true)
-            : editor.Patch.CompileForProbe(probe.Id, samples: Sounds, pictures: Pictures, played: true);
+            ? editor.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
+            : editor.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
 
         preview.Program = result.Program;
         if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
 
-        audio.Update(editor.Patch, Sounds);
-
-        ShowPreview(HasPicture);
+        audio.Update(editor.Patch, samples);
 
         // Both programs are new, so both of their blocks are, and whatever is
         // being held has to be written into them before the next frame or the
@@ -120,14 +200,15 @@ public sealed partial class MainWindow
         preview.Live = new LiveValues(result.Program.LiveInputs);
         var relaid = midi.Lay(editor.Patch.KeyboardScale);
         midi.Follow(preview.Live, audio.Live);
-        RefreshControls();
+
+        Compiled?.Invoke(this, EventArgs.Empty);
 
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
         var said = result.Issues
-            .Concat(editor.Patch.CompileForAudio(samples: Sounds).Issues)
+            .Concat(editor.Patch.CompileForAudio(samples: samples).Issues)
             .Select(i => i.Message)
             .Distinct();
 
@@ -155,32 +236,56 @@ public sealed partial class MainWindow
 
         // Each of them, rather than one sentence with bullets between: they are
         // separate problems, they arrive and are fixed separately, and the log
-        // behind the line gives each its own row. The bar joins them back up,
-        // because there is only one line to say them on.
-        Report(said.ToList());
+        // behind the line gives each its own row.
+        report.Say(said.ToList());
 
-        Recording.Mark();
         SyncAudioToVolume();
     }
 
-    /// <summary>
-    /// The one place anything is said to the user. <paramref name="detail"/> is for
-    /// what will not fit on a status bar — a list of missing plugins, say.
-    /// </summary>
-    /// <param name="detail"></param>
-    /// <param name="progress">
-    /// That this is the last message again with a new number in it, so the log keeps
-    /// one entry for the run rather than one per update.
-    /// </param>
-    /// <param name="message"></param>
-    internal void Report(string message, string? detail = null, bool progress = false) =>
-        report.Say(message, detail, progress);
+    public void Pause()
+    {
+        if (Paused) return;
 
-    /// <summary>
-    /// The same, for everything a compile found at once. Each is a line of its
-    /// own in the log; the bar joins them, having only the one line.
-    /// </summary>
-    private void Report(IReadOnlyList<string> messages) => report.Say(messages);
+        frozenAt = preview.Time;
+        Paused = true;
+
+        SetAudioEnabled(false);
+        TransportChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Resume()
+    {
+        if (!Paused) return;
+
+        Paused = false;
+
+        // The device puts the audio clock back when it starts; with none, the picture runs on its own.
+        preview.Clock = null;
+
+        SyncAudioToVolume();
+    }
+
+    /// <summary>Silences the speakers without stopping the device, so the clock does not drift.</summary>
+    public void ToggleMute()
+    {
+        Muted = !Muted;
+        audio.Gain = Muted ? 0f : 1f;
+
+        TransportChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Takes the picture and the sound back to zero seconds.</summary>
+    public void Rewind()
+    {
+        audio.Rewind();
+        preview.Rewind();
+
+        // A paused clock reads the time it froze at, so the next tick would undo the rewind.
+        if (!Paused) return;
+
+        frozenAt = 0;
+        preview.Time = 0;
+    }
 
     /// <summary>
     /// Brings the audio device into line with what Volume now says, turning it on
@@ -195,18 +300,18 @@ public sealed partial class MainWindow
     /// device, and a recompile happens on every knob frame while a slider is
     /// dragged (ADR-0021).
     /// </remarks>
-    private void SyncAudioToVolume()
+    public void SyncAudioToVolume()
     {
-        SyncTransport();
+        TransportChanged?.Invoke(this, EventArgs.Empty);
 
-        var wanted = !paused && Audible;
+        var wanted = !Paused && Audible;
 
         // Never off in the middle of a take. One with sound in it is paced by the
         // samples it is handed, so a device stopped under it stops the file —
         // picture and all — at that instant, and fading Volume to nought is how
         // a take is ended. It records the silence instead, and the device is
         // asked about again when the take is over.
-        if (!wanted && Recording.Running) return;
+        if (!wanted && recording()) return;
 
         // Nor while a preset from the gallery is being heard through it, which
         // is what started it if the patch had not.
@@ -220,8 +325,8 @@ public sealed partial class MainWindow
         if (enabled)
         {
             // Not audio.Update — Recompile, the only caller that reaches here,
-            // has already handed the engine a program built from Sounds, and a
-            // second one built without it would undo that with the wrong one.
+            // has already handed the engine a program built from the patch's
+            // sounds, and a second one built without them would undo that.
             try
             {
                 audio.Start();
@@ -233,29 +338,20 @@ public sealed partial class MainWindow
                 // rather than retried: whatever it is will not have fixed itself
                 // by the next edit, and ADR-0025 promises that nothing a plugin
                 // does takes the shell down.
-                Report($"Sound could not start — {ex.Message}", PluginSummary.Text(plugins, sound.Failure, assistant?.Summary));
-                audioBlocked = true;
+                report.Say($"Sound could not start — {ex.Message}", FailureDetail());
+                blocked = true;
                 return;
             }
 
-            // The patch is playing, which is the moment what is in it is worth
-            // counting (ADR-0094). Here rather than at a compile: a patch is
-            // recompiled on every knob frame, and what it is made of is only
-            // interesting where somebody is listening to it.
-            usage.Played(
-                editor.Patch.Nodes.Select(node => node.TypeId),
-                editor.Patch.Connections.Count,
-                OrderedPresets().ElementAtOrDefault(presetShowing)?.Name);
+            Started?.Invoke(this, EventArgs.Empty);
 
             // Sound cannot stretch, so it leads and the picture follows — and
             // the same tick is where the picture is told what the speakers have
             // just played: a Scope's chart refilled, and a Meter's reading put
             // where the frame will read it. Here rather than in the renderer
             // because this is the one moment in the loop when the two paths are
-            // both stopped: the callback is not mid-buffer as far as anything
-            // here can tell, and the frame has not started. It is also the exact
-            // scope of the promise both modules make — no clock, no sound, and
-            // nothing new to hear.
+            // both stopped. It is also the exact scope of the promise both
+            // modules make — no clock, no sound, and nothing new to hear.
             preview.Clock = () =>
             {
                 audio.Listen(preview.Program, preview.Live);
@@ -264,7 +360,7 @@ public sealed partial class MainWindow
         }
         else
         {
-            preview.Clock = paused ? () => frozenAt : null;
+            preview.Clock = Paused ? () => frozenAt : null;
             audio.Stop();
 
             // The picture goes on being drawn with nothing playing, so every
@@ -273,46 +369,5 @@ public sealed partial class MainWindow
             // of the past and a measurement of now.
             audio.Deafen(preview.Live);
         }
-    }
-
-    protected override void OnClosed(EventArgs e)
-    {
-        // Before the device goes, and before anything else: a take whose header
-        // was never patched is not a file, so a window closed mid-recording
-        // waits here for it rather than abandoning it. OnClosing has normally
-        // dealt with it already, and this is for the close that could not be
-        // put off.
-        Recording.FinishNow();
-
-        // Whatever there was to lose has been asked about by now, and answered.
-        keeper?.Stop();
-
-        audio.Dispose();
-        compiler.Dispose();
-
-        // And the instruments, which are hardware somebody else may want back. A
-        // port left open outlives the window that was reading it.
-        midi.Dispose();
-
-        base.OnClosed(e);
-    }
-
-    private void UpdateStatus()
-    {
-        var nodes = editor.Patch.Nodes.Count;
-        var wires = editor.Patch.Connections.Count;
-        var ops = preview.Program.Ops.Length;
-
-        // Which renderer produced the rate is part of what it means, so it is
-        // said alongside — what is actually drawing, not what was asked for.
-        var backend = preview.Backend == PreviewBackend.Gpu ? "GPU" : "CPU";
-
-        // Only while the window is somebody's: a window behind others is drawn
-        // at whatever rate the system leaves it, which says nothing about Flyback.
-        if (IsActive) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
-
-        status.Text = string.Create(
-            CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
     }
 }

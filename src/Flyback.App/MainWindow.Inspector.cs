@@ -313,7 +313,7 @@ public sealed partial class MainWindow
         UseOutputSettings(outputSettings);
 
         if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds || soundChanged)
-            ReopenAudio();
+            playback.ReopenAudio(outputSettings);
 
         if (outputSettingsPath is null) return;
 
@@ -408,7 +408,7 @@ public sealed partial class MainWindow
         var overlay = transportOverlay = new TransportOverlay() { IsVisible = false };
 
         overlay.PauseClicked += TogglePause;
-        overlay.MuteClicked += ToggleMute;
+        overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += RewindToZero;
 
         grid.Children.Add(previewBox);

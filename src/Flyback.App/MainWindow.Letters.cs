@@ -16,7 +16,7 @@ public sealed partial class MainWindow
         var http = SiteHttp ?? SiteClient.Value;
 
         // Built once and both shown and sent, so what was read is what goes.
-        var about = SiteLetters.About(plugins, sound);
+        var about = SiteLetters.About(plugins, playback.Sound);
 
         var said = await LetterView.AskAsync(
             this,

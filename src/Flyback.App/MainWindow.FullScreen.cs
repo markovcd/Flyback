@@ -193,7 +193,7 @@ public sealed partial class MainWindow
         var transport = pictureTransport = new TransportOverlay();
 
         transport.PauseClicked += TogglePause;
-        transport.MuteClicked += ToggleMute;
+        transport.MuteClicked += playback.ToggleMute;
         transport.RewindClicked += RewindToZero;
 
         picture.Children.Add(transport);
@@ -288,7 +288,7 @@ public sealed partial class MainWindow
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has
         // just been given back the height it was dragged to.
-        if (!full && !HasPicture) ShowPreview(false);
+        if (!full && !playback.HasPicture) ShowPreview(false);
 
         void Over(Control control)
         {

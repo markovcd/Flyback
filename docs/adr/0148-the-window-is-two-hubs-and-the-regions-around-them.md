@@ -13,15 +13,17 @@ twenty files, and one scope over all of them.
 
 Counting which region calls into which shows where that coupling actually runs.
 Of the calls one region makes into another, most land on two files:
-`MainWindow.Engine.cs` (88: recompile, report, status, reopen the sound) and
+`MainWindow.Engine.cs` (88, of which 77 are `Report`, a one-line wrapper around
+the `ReportLine` control, and the rest recompile, pause and reopen the sound) and
 `MainWindow.Source.cs` (60: a knob turned, a hand come off, undo, redo, the text
 taken or dropped). Of the window's 154 fields, six are read across regions: the
 canvas, the preview, the sound, the plugins, the assistant and the output
 settings. Everything else belongs to one region, or at most two.
 
-So the regions are not coupled to each other. They are coupled to two hubs that
-exist only as methods on the window, and a region extracted alone has to reach
-back into the window for them. That is the cost 0039 measured.
+So the regions are not coupled to each other. They are coupled to a report line
+that is already a class, and to two hubs that exist only as methods on the
+window, so a region extracted alone has to reach back into the window for them.
+That is the cost 0039 measured.
 
 ## Decision
 
@@ -31,7 +33,10 @@ The hubs become classes that own no controls of the window's:
   (0068), the write-back from the panel into the text, and which stack an undo
   lands on (0071). Regions tell it what happened (`Turned`, `Edited`,
   `HandCameOff`) and it decides what is written.
-- **`Engine`** owns compiling, the sound device and what the status bar says.
+- **`Playback`** owns compiling, the sound device, and pausing, muting and
+  rewinding the pair.
+
+A region that has something to say takes the `ReportLine` itself.
 
 Each region then becomes a class that takes the hubs and whichever of the six
 shared things it needs, owns its own fields, and raises events rather than

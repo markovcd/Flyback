@@ -443,7 +443,7 @@ public sealed partial class MainWindow
 
                 soundFolder.Beside = folder;
                 pictureFolder.Beside = folder;
-                Recompile();
+                playback.Recompile();
 
                 Report(spilled > 0
                     ? $"Saved {file.Name}, and {spilled} file(s) beside it."
@@ -663,7 +663,7 @@ public sealed partial class MainWindow
 
             soundFolder.Beside = folder;
             pictureFolder.Beside = folder;
-            Recompile();
+            playback.Recompile();
 
             if (spilled > 0) Report($"Saved {file.Name}, and {spilled} file(s) beside it.");
 

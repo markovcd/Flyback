@@ -111,7 +111,7 @@ public sealed partial class MainWindow
     private async Task ShowPluginsAsync(IReadOnlyList<SitePlugin>? wanted = null)
     {
         var site = presetSite is null ? null : new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
-        var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, sound);
+        var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
         using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting, troubles)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.

@@ -42,17 +42,7 @@ public sealed partial class MainWindow : Window
     private readonly Button rewindButton = new();
 
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
-    private void RewindToZero()
-    {
-        audio.Rewind();
-        preview.Rewind();
-
-        // A paused clock reads the time it froze at, so the next tick would undo the rewind.
-        if (!paused) return;
-
-        frozenAt = 0;
-        preview.Time = 0;
-    }
+    private void RewindToZero() => playback.Rewind();
 
     /// <summary>What the rewind button does — the same sentence its Output-panel tip used to carry.</summary>
     private const string RewindTip =
@@ -414,15 +404,10 @@ public sealed partial class MainWindow : Window
     /// </summary>
     private readonly PluginCatalog plugins = Startup.Plugins;
 
-    private AudioSetup sound;
     private readonly AudioEngine audio;
 
-    /// <summary>
-    /// Set once a device has refused to start, so a Volume left above nought does
-    /// not retry it on every edit. Only a different device clears it — saved in the
-    /// Sound settings, or found at the next launch — see ADR-0079 and ADR-0085.
-    /// </summary>
-    private bool audioBlocked;
+    /// <summary>The patch compiled and played, paused or muted.</summary>
+    private readonly Playback playback;
 
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
@@ -576,13 +561,33 @@ public sealed partial class MainWindow : Window
         canvasSection = new CanvasSection(canvasSettingsPath, editor, (message, detail) => Report(message, detail));
         filesSection = new FilesSection(fileTypeSettingsPath, fileTypes, (message, detail) => Report(message, detail));
 
-        sound = Sound.Open(plugins, outputSettings);
+        var sound = Sound.Open(plugins, outputSettings);
 
         // Here rather than at the launch, because what a run started as includes
         // which backend actually opened, and that is only known once one has been
         // asked for.
         this.usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), sound.Output?.Id, ScreenHeights());
         audio = new AudioEngine(sound.Device) { Compiler = compiler };
+
+        // Nothing is opened by this. The backend is asked what is plugged in
+        // when a picker is drawn, and asked for a device only once a compiled
+        // program is actually reading one — see MidiHub.Listen.
+        midi = new MidiHub(plugins.PreferredMidiInput);
+
+        playback = new Playback(
+            editor,
+            preview,
+            audio,
+            compiler,
+            midi,
+            report,
+            plugins,
+            sound,
+            () => Sounds,
+            () => Pictures,
+            // The take is made next, and needs the playback to make it.
+            () => Recording is { Running: true },
+            () => assistant?.Summary);
 
         // Before anything recompiles, because a recompile asks the take what the
         // record button should say and whether the device may be stopped.
@@ -597,7 +602,7 @@ public sealed partial class MainWindow : Window
             (message, progress) => Report(message, progress: progress),
             SyncTransport,
             RewindToZero,
-            SyncAudioToVolume);
+            playback.SyncAudioToVolume);
 
         audition = new PresetAudition(
             audio,
@@ -606,13 +611,10 @@ public sealed partial class MainWindow : Window
             savedPresets,
             // A take records what the speakers play, and a preset tried on the
             // way past is not part of it.
-            () => sound.Output is not null && !audioBlocked && !Recording.Running,
-            SyncAudioToVolume);
+            () => playback.CanSound && !Recording.Running,
+            playback.SyncAudioToVolume);
 
-        // Nothing is opened by this. The backend is asked what is plugged in
-        // when a picker is drawn, and asked for a device only once a compiled
-        // program is actually reading one — see MidiHub.Listen.
-        midi = new MidiHub(plugins.PreferredMidiInput);
+        WirePlayback();
 
         // Before anything is compiled and before a panel is drawn, because a
         // MIDI In asks this what there is to listen to as soon as either
@@ -658,7 +660,7 @@ public sealed partial class MainWindow : Window
 
         editor.PatchChanged += (_, _) =>
         {
-            Recompile();
+            playback.Recompile();
 
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
@@ -669,7 +671,7 @@ public sealed partial class MainWindow : Window
         editor.SelectionChanged += (_, _) =>
         {
             BuildInspector();
-            ProbeSelectionChanged();
+            playback.ProbeSelectionChanged();
         };
         editor.HistoryChanged += (_, _) => RefreshEditState();
 
@@ -677,7 +679,7 @@ public sealed partial class MainWindow : Window
         // back onto 'color', and then there is nothing to put back.
         editor.GestureFinished += (_, _) =>
         {
-            if (previewHideWaiting) ShowPreview(HasPicture);
+            if (previewHideWaiting) ShowPreview(playback.HasPicture);
         };
         editor.Reported += (_, message) => Report(message);
 
@@ -737,7 +739,7 @@ public sealed partial class MainWindow : Window
         // that patch assignment just ran already brought sound up to match its
         // default (ADR-0079). What is left to say only where turning it up would
         // not help: nothing was there to open it with.
-        if (sound.Output is null)
+        if (playback.Sound.Output is null)
             Report("No sound backend is installed, so Volume will do nothing. "
                 + "See About for where plugins are looked for.");
 
