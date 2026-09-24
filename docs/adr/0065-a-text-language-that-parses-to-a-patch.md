@@ -244,3 +244,10 @@ knob by naming it where a number goes
 `requires flyback.picture, flyback.effects` names them, is read before anything
 else so a missing one is said once rather than once a module, and is always
 printed for a patch that uses a plugin's modules.
+
+## Amendment, 2026-09-24: groups survive a printing
+
+A printing writes each group as a block, cutting a chain at a box's edge with a
+`let` so a block places only its own group's modules. Blocks with the same name
+are one group, so a group whose modules cannot be written together is opened
+again, and a group built from text is shut.

@@ -48,6 +48,9 @@ public sealed class Binder
     /// <summary>The line that wired each socket the text wires.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> wired = [];
 
+    /// <summary>Each group the text opens and the modules its blocks placed, a name's blocks gathered into one.</summary>
+    private readonly List<(string? Name, List<Guid> Members)> boxes = [];
+
     /// <summary>Plugins a <c>requires</c> line named that this build does not have.</summary>
     private readonly List<string> missing = [];
 
@@ -115,6 +118,22 @@ public sealed class Binder
         foreach (var requires in statements.OfType<RequiresStatement>()) Require(requires);
 
         foreach (var statement in statements) Run(statement, scope);
+
+        // Once every block has been read, since a group may be opened more than
+        // once and its first block may hold fewer modules than a box can be.
+        // Named from the text, so the same text builds the same boxes as it builds
+        // the same modules.
+        for (var i = 0; i < boxes.Count; i++)
+        {
+            var (name, members) = boxes[i];
+
+            if (patch.Group(members) is not { } made) continue;
+
+            var group = made.Clone(Identity(name is null ? $"group #{i}" : "group " + name));
+
+            group.Rename(name);
+            patch.Groups![patch.Groups.IndexOf(made)] = group;
+        }
 
         // A call to a Maths module the Expression stands for, and the sums and
         // calls around it, arrive as the Expressions a preset's do (ADR-0109).
@@ -707,7 +726,12 @@ public sealed class Binder
         // inside it" means once a def has been expanded in there too.
         var made = patch.Nodes.Where(n => !before.Contains(n.Id)).Select(n => n.Id).ToList();
 
-        if (patch.Group(made) is { } group) group.Rename(statement.Name);
+        // A name opened again is the same group, which is how a printing says one
+        // whose modules do not come out next to each other.
+        var index = statement.Name is null ? -1 : boxes.FindIndex(box => box.Name == statement.Name);
+
+        if (index >= 0) boxes[index].Members.AddRange(made);
+        else boxes.Add((statement.Name, made));
 
         // A group is a box on the canvas and nothing more, so the names it made
         // go on being visible after it — which is what lets one group wire into

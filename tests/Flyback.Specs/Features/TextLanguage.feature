@@ -125,3 +125,17 @@ Feature: A patch can be written as text
     Then the complaint quotes line 1
     And the complaint says "no plugin 'nobody.here'"
     And that is the only complaint
+
+  # A box drawn on the canvas is part of the patch, and the text keeps it.
+  Scenario: A patch's groups are written in its text and read back shut
+    Given the text:
+      """
+      group "Voice" {
+        let tone = sine(freq: 220)
+        let shaped = tone |> drive(drive: 2)
+      }
+      shaped |> out.left
+      """
+    When the patch is written out as text and read back
+    Then the patch has a shut group "Voice" of 2 modules
+    And the speakers are not silent

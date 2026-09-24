@@ -34,13 +34,15 @@ public static class PatchPrinter
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
     /// <param name="Taken">Every name given out, for one given while writing.</param>
     /// <param name="Panel">What the text calls each panel knob.</param>
+    /// <param name="Boxes">What each group is called in the text, null for one with no name.</param>
     private sealed record Plan(
         Dictionary<Guid, string> Names,
         HashSet<Guid> Bound,
         HashSet<string> Taken,
         Guid Coord,
         Guid Clock,
-        Dictionary<Guid, string> Panel);
+        Dictionary<Guid, string> Panel,
+        Dictionary<Guid, string?> Boxes);
 
     /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
     /// <remarks>
@@ -388,6 +390,10 @@ public static class PatchPrinter
                 names.Add(back.Target);
                 Inside(back.Value, calls, names);
                 break;
+
+            case GroupStatement group:
+                foreach (var inside in group.Body) Gather(inside, calls, names, turns, principals);
+                break;
         }
     }
 
@@ -511,9 +517,10 @@ public static class PatchPrinter
         // One Coordinates and one Time become the bare words the language has
         // for them. A second of either is an ordinary module, since only one can
         // be what 'x' means — and so is one that is switched off, which has to
-        // keep a name of its own to be said as off.
-        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId && !n.Off)?.Id ?? Guid.Empty;
-        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId && !n.Off)?.Id ?? Guid.Empty;
+        // keep a name of its own to be said as off, and one in a box, which the
+        // bare word would leave wherever it is first read rather than in there.
+        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
+        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
 
         // Where a wire runs backwards into a module, that module is written as a
         // name and the wire as a back-wire onto it — the one statement in the
@@ -527,8 +534,19 @@ public static class PatchPrinter
             if (NodeCatalog.IsSink(node.TypeId)) continue;
 
             var leaving = patch.Connections.Where(c => c.SourceNode == node.Id).ToList();
+            var home = patch.GroupOf(node.Id)?.Id;
+
+            // A chain stops at a box's edge, so a module whose wire leaves its
+            // group is said by name, and every statement in a group's block
+            // places only that group's modules. The Output is in no group and
+            // takes a group's last line inside the block.
+            var crossing = leaving.Any(c =>
+                patch.GroupOf(c.TargetNode)?.Id != home
+                && patch.Find(c.TargetNode) is { } target
+                && !NodeCatalog.IsSink(target.TypeId));
 
             var must = called is not null
+                || crossing
                 || looped.Contains(node.Id)
                 || leaving.Count != 1
                 || leaving.Any(c => c.SourcePort != 0)
@@ -547,7 +565,26 @@ public static class PatchPrinter
             names[node.Id] = Unique(wanted, taken);
         }
 
-        return new Plan(names, bound, taken, coord, clock, panel);
+        // Two boxes with one name would read back as one, so the second is told apart.
+        var boxes = new Dictionary<Guid, string?>();
+        var labels = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var group in patch.Groups ?? [])
+        {
+            if (group.Name is not { } label || Quotable(label) is null)
+            {
+                boxes[group.Id] = null;
+                continue;
+            }
+
+            var unique = label;
+
+            for (var n = 2; !labels.Add(unique); n++) unique = $"{label} {n}";
+
+            boxes[group.Id] = unique;
+        }
+
+        return new Plan(names, bound, taken, coord, clock, panel, boxes);
     }
 
     /// <summary>
@@ -715,13 +752,79 @@ public static class PatchPrinter
                 text.AppendLine();
             }
 
-            foreach (var statement in ordered) text.AppendLine(statement.Text);
+            Boxed(ordered, text);
 
             // Where the modules go is worked out after the graph is built and
             // where the lines break is worked out after the text is written, by
             // a pass that knows nothing about how either was made — see
             // SourceLayout, and PatchLayout on the other side of it.
             return (SourceLayout.Wrap(text.ToString()), [.. ordered.SelectMany(part => part.Calls)]);
+        }
+
+        /// <summary>
+        /// Writes the statements, each group's inside a block of its own. A group
+        /// whose statements are not next to each other is opened again further
+        /// down, which reads back as the one group.
+        /// </summary>
+        private void Boxed(List<Part> ordered, StringBuilder text)
+        {
+            Guid? open = null;
+            var fresh = true;
+
+            foreach (var statement in ordered)
+            {
+                if (statement.Text.Length == 0)
+                {
+                    Close();
+                    text.AppendLine();
+                    fresh = true;
+                    continue;
+                }
+
+                var home = Home(statement);
+
+                if (home != open)
+                {
+                    Close();
+
+                    if (home is { } group)
+                    {
+                        if (!fresh) text.AppendLine();
+
+                        text.AppendLine(plan.Boxes.GetValueOrDefault(group) is { } name
+                            ? $"group {Quotable(name)} {{"
+                            : "group {");
+                    }
+
+                    open = home;
+                }
+
+                var indent = open is null ? string.Empty : "  ";
+
+                foreach (var line in statement.Text.Split('\n')) text.AppendLine(indent + line);
+
+                fresh = false;
+            }
+
+            Close();
+
+            void Close()
+            {
+                if (open is null) return;
+
+                text.AppendLine("}");
+                text.AppendLine();
+                open = null;
+                fresh = true;
+            }
+        }
+
+        /// <summary>The group a statement belongs to: the one every module it places is in, or none.</summary>
+        private Guid? Home(Part statement)
+        {
+            var groups = statement.Calls.Select(id => patch.GroupOf(id)?.Id).Distinct().ToList();
+
+            return groups is [{ } only] ? only : null;
         }
 
         /// <summary>
@@ -761,7 +864,7 @@ public static class PatchPrinter
             // Output's own lines were queued before any of them — so those are
             // moved to the end, where a reader expects the point of the patch.
             var sinks = statements.Where(Sink).ToList();
-            var rest = statements.Where(part => !Sink(part)).ToList();
+            var rest = Gathered(statements.Where(part => !Sink(part)).ToList());
 
             // The blank line between them goes in only where there is something
             // on both sides of it. A patch whose Output is fed by one expression
@@ -773,6 +876,56 @@ public static class PatchPrinter
 
             static bool Sink(Part part) =>
                 part.Text.Contains("|> out.") || part.Text.StartsWith("out.", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// The bindings reordered so a group's come out together wherever what
+        /// they read allows: the group being written goes on while any of its
+        /// bindings has everything it reads above it, and only then does the
+        /// next one start.
+        /// </summary>
+        /// <remarks>
+        /// Statements that place no module — a back-wire onto a name, an
+        /// <c>off</c> — keep their places after the rest, as they were written.
+        /// </remarks>
+        private List<Part> Gathered(List<Part> written)
+        {
+            var placing = written.Where(part => part.Calls.Count > 0).ToList();
+            var after = written.Where(part => part.Calls.Count == 0).ToList();
+
+            var placedBy = new Dictionary<Guid, int>();
+
+            for (var i = 0; i < placing.Count; i++)
+                foreach (var id in placing[i].Calls)
+                    placedBy.TryAdd(id, i);
+
+            // What each binding reads from another: a wire into one of its
+            // modules from a module some other binding places.
+            var reads = placing.Select((part, i) => part.Calls
+                    .SelectMany(id => patch.Connections.Where(wire => wire.TargetNode == id && !backwards.Contains(wire)))
+                    .Select(wire => placedBy.TryGetValue(wire.SourceNode, out var from) ? from : -1)
+                    .Where(from => from >= 0 && from != i)
+                    .ToHashSet())
+                .ToList();
+
+            var done = new HashSet<int>();
+            var order = new List<Part>();
+            Guid? writing = null;
+
+            while (done.Count < placing.Count)
+            {
+                var ready = Enumerable.Range(0, placing.Count)
+                    .Where(i => !done.Contains(i) && reads[i].IsSubsetOf(done))
+                    .ToList();
+
+                var next = ready.Where(i => Home(placing[i]) == writing).DefaultIfEmpty(ready[0]).First();
+
+                done.Add(next);
+                order.Add(placing[next]);
+                writing = Home(placing[next]);
+            }
+
+            return [.. order, .. after];
         }
 
         /// <summary>Writes a module's binding if it has not been written yet.</summary>

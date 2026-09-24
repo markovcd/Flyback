@@ -242,10 +242,5 @@ declarations right, and it already exists.
 
 ## Open
 
-- Whether `group` can survive `print` under §4. 0065 gives ordering as the
-  reason it cannot: a binding is written the moment something first needs it, and
-  a group's members are not contiguous in that order. One binding per node
-  loosens exactly that constraint, so it is worth rechecking rather than
-  assuming.
 - Whether `def` earns its place. No specimen reached for it, and a macro hides
   what a call site costs. Four voices is the argument for keeping it.

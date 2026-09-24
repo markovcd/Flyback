@@ -126,6 +126,10 @@ public sealed class EditingSteps(PatchContext context, Session session)
     public void ThenThePanelHasAKnob(string name, float value) =>
         context.Patch.Controls.ShouldNotBeNull().ShouldContain(knob => knob.Name == name && Math.Abs(knob.Value - value) < 1e-6f);
 
+    [Then("the patch has a shut group {string} of {int} modules")]
+    public void ThenTheGroup(string name, int count) =>
+        context.Patch.Groups.ShouldNotBeNull().ShouldContain(group => group.Name == name && group.Collapsed && group.Members.Count == count);
+
     [Then("that is the only complaint")]
     public void ThenThatIsTheOnlyComplaint() => Text.Issues.ShouldHaveSingleItem(Text.Report);
 

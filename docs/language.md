@@ -619,9 +619,27 @@ group "Bass" {
 }
 ```
 
-Members are the nodes declared inside the block. Whether a group is collapsed,
-and which of its sockets are exposed, stay editor state and do not survive a
-`print`.
+Members are the nodes declared inside the block. A group built from text is
+shut, and the sockets on its edge are the ones its wires cross. A group with no
+name is `group { … }`.
+
+**A group may be opened more than once.** Blocks with the same name are one
+group, which is how a printing says a group whose modules cannot all be written
+together:
+
+```
+group "Bass" {
+  let root = beat.beats |> values(rate: 0.25) [ 0 -2 -4 -5 ]
+}
+
+group "Lead" {
+  let lead = root |> tune(transpose: 12) [ C D E G A ]
+}
+
+group "Bass" {
+  let answer = lead |> slew(time: 80ms)
+}
+```
 
 ---
 
@@ -686,12 +704,13 @@ each paying only for what it reaches
 |---|---|
 | modules, wires, knob values | node ids, which are regenerated |
 | what a module carries — notes, scales, file paths | canvas positions, re-laid by `PatchLayout.Arrange` |
-| a plugin's declared fields, as named arguments | **groups**, entirely — name, membership and all |
+| a plugin's declared fields, as named arguments | whether a group is open, and a socket on its edge with no wire |
 | `let` names, as the node's own label | comments, formatting, and every `def`, expanded |
 | plugin requirements, recomputed on write | — |
 | which modules are switched off | — |
 | the panel's knobs, what each follows, and every socket following one | — |
 | which plugins the patch needs, as its `requires` line | — |
+| groups, their names and what is in each | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A
 printing is for reading, and every module restating its whole shape would bury
@@ -710,12 +729,15 @@ across several. Every one of those is a break the lexer joins straight back up
 — §2's continuation rules are what make it safe — so a folded printing builds
 to the patch the unfolded one did.
 
-**Groups are the one thing the printer drops that the parser can say.** A
-`group` block builds one, and printing does not put one back. The reason is
-ordering: the printer writes a binding at the moment something first needs it,
-and a group's members are not generally contiguous in that order — so a group
-would have to be opened and closed and opened again, which is not a group. It is
-worth fixing and it is not fixed.
+**A printing writes a group as blocks.** A chain stops at a box's edge: a
+module whose wire leaves its group gets a `let` inside the group, and whatever
+reads it outside uses the name, so every statement in a block places only that
+group's modules. The bindings are ordered so a group's come out together as far
+as what they read allows, and a group that still cannot is opened again further
+down. Two boxes that share a name are written apart as "Bass" and "Bass 2". A
+Coordinates or a Time in a box is written as the module it is,
+`let time = time()`, rather than as the bare word, which would put it wherever
+it is first read.
 
 A `let` name becomes the node's rename label, so a patch built from text opens
 in the editor already labeled, and printing recovers the names somebody chose.
@@ -753,7 +775,7 @@ statement  = comment
            | "off" ident
            | "panel" ident "=" number { "," ident ":" ( number | string ) }
            | "requires" plugin { "," plugin }
-           | "group" string "{" { statement } "}"
+           | "group" [ string ] "{" { statement } "}"
            | "description" string { string }
            | "author" string
            | "tags" string { string } ;

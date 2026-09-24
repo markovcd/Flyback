@@ -326,14 +326,19 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         at++;
 
-        if (Current.Kind != TokenKind.Text)
+        // A group with no name goes straight to its brace.
+        string? name = null;
+
+        if (Current.Kind == TokenKind.Text)
         {
-            Complain(IssueCode.Syntax, "expected a name in quotes after 'group'.");
+            name = Current.Text;
+            at++;
+        }
+        else if (Current.Kind != TokenKind.OpenBrace)
+        {
+            Complain(IssueCode.Syntax, "expected a name in quotes, or '{', after 'group'.");
             return null;
         }
-
-        var name = Current.Text;
-        at++;
 
         if (!Expect(TokenKind.OpenBrace, "'{' after the name")) return null;
 

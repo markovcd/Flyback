@@ -7,30 +7,32 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The shipped patches that have a panel, written out as text and read back:
-/// the same knobs, and every socket following the same knob over the same range.
+/// Every shipped patch written out as text and read back: the same programs,
+/// played and not, the same panel with every socket following the same knob
+/// over the same range, and the same boxes round the same modules.
 /// </summary>
 public class PanelTextTests
 {
     private static ModuleCatalog Catalog => ShippedPlugins.Loaded.Modules;
 
-    public static TheoryData<string> Played =>
-    [
-        .. ShippedPlugins.Loaded.Presets
-            .Where(preset => preset.Build(Catalog).Controls is { Count: > 0 })
-            .Select(preset => preset.Name),
-    ];
+    public static TheoryData<string> Shipped => [.. ShippedPlugins.Loaded.Presets.Select(preset => preset.Name)];
 
     [Fact]
-    public void Some_shipped_preset_has_a_panel() => Played.ShouldNotBeEmpty();
+    public void Some_shipped_preset_has_a_panel_and_some_has_boxes()
+    {
+        var built = ShippedPlugins.Loaded.Presets.Select(preset => preset.Build(Catalog)).ToList();
+
+        built.ShouldContain(patch => patch.Controls != null && patch.Controls.Count > 0);
+        built.ShouldContain(patch => patch.Groups != null && patch.Groups.Count > 0);
+    }
 
     [Theory]
-    [MemberData(nameof(Played))]
-    public void A_played_preset_keeps_its_panel_through_the_text(string name) =>
+    [MemberData(nameof(Shipped))]
+    public void A_shipped_preset_is_the_same_patch_through_the_text(string name) =>
         Survives(ShippedPlugins.Loaded.Presets.Single(preset => preset.Name == name).Build(Catalog));
 
     [Fact]
-    public void The_preset_sites_played_default_keeps_its_panel_through_the_text()
+    public void The_preset_sites_played_default_is_the_same_patch_through_the_text()
     {
         using var archive = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "Defaults", "Tranquility.fbkb"));
 
@@ -46,10 +48,11 @@ public class PanelTextTests
 
         var again = load.Patch;
 
-        again.Controls.ShouldNotBeNull().Select(c => (c.Name, c.Value, c.Midi))
-            .ShouldBe(patch.Controls!.Select(c => (c.Name, c.Value, c.Midi)));
+        (again.Controls ?? []).Select(c => (c.Name, c.Value, c.Midi))
+            .ShouldBe((patch.Controls ?? []).Select(c => (c.Name, c.Value, c.Midi)));
 
         Links(again).ShouldBe(Links(patch), source);
+        Boxes(again).ShouldBe(Boxes(patch), source);
 
         foreach (var played in new[] { false, true })
         {
@@ -70,6 +73,22 @@ public class PanelTextTests
             .Select(linked =>
                 $"{linked.node.TypeId}:{linked.Port} <- {patch.Control(linked.Link.Control)?.Name} "
                 + $"{linked.Link.Min}..{linked.Link.Max} {linked.Link.Knee}")
+            .Order(StringComparer.Ordinal),
+    ];
+
+    /// <summary>
+    /// Each box by its name and the kinds of module in it, sorted. The engine's
+    /// shared Coordinates and Time are left out: the text has one of each for the
+    /// whole patch, placed wherever it is first read.
+    /// </summary>
+    private static List<string> Boxes(Patch patch) =>
+    [
+        .. (patch.Groups ?? []).Select(group =>
+                $"{group.Name}: " + string.Join(", ", group.Members
+                    .Select(id => patch.Find(id)?.TypeId)
+                    .OfType<string>()
+                    .Where(type => type is not (NodeCatalog.CoordTypeId or NodeCatalog.TimeTypeId))
+                    .Order(StringComparer.Ordinal)))
             .Order(StringComparer.Ordinal),
     ];
 

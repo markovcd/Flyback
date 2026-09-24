@@ -196,8 +196,9 @@ public sealed record AuthorStatement(string Text, int Line, int Column) : Statem
 public sealed record TagsStatement(IReadOnlyList<string> Tags, int Line, int Column) : Statement(Line, Column);
 
 /// <summary><c>group "Name" { ... }</c>, a box drawn round what is declared inside it.</summary>
+/// <param name="Name">Null for a group with no name; blocks with the same name are one group.</param>
 public sealed record GroupStatement(
-    string Name,
+    string? Name,
     IReadOnlyList<Statement> Body,
     int Line,
     int Column) : Statement(Line, Column);
