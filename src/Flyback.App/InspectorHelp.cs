@@ -62,7 +62,7 @@ internal static class InspectorHelp
 
     /// <summary>
     /// What the panel says for a caret standing on a module the patch has moved on
-    /// from — see <see cref="MainWindow.Adrift"/>. Said rather than left blank: a panel that
+    /// from — see <see cref="Document.IsAdrift"/>. Said rather than left blank: a panel that
     /// quietly stops cannot be told apart from a caret in the wrong place.
     /// </summary>
     internal const string Adrifting =

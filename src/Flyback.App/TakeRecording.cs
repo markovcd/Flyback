@@ -315,7 +315,7 @@ internal sealed class TakeRecording
         finishing = closing.IsCompleted ? null : closing;
 
         // The device was kept running for the take whatever Volume said, so it
-        // is asked again now there is none — see MainWindow.SyncAudioToVolume.
+        // is asked again now there is none — see Playback.SyncAudioToVolume.
         syncAudio();
 
         Mark();

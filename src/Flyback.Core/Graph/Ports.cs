@@ -112,7 +112,7 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// value nobody dials, kept only so the compiler has something to read when
 /// nothing is wired in. The editor draws no knob for one: a row that moved
 /// nothing would be worse than a row that is not there, so it names what the
-/// socket does instead — see <c>MainWindow.BuildInputRow</c>. Every
+/// socket does instead — see <c>Inspector.BuildInputRow</c>. Every
 /// <see cref="PortKind.Color"/> input qualifies on its kind alone, per
 /// <c>docs/adr/0009-editable-defaults-on-every-input.md</c>: a single float
 /// cannot hold a color, so an unwired one is a broadcast gray nothing chose.

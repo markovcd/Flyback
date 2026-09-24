@@ -432,8 +432,8 @@ it reads, owns its own fields and raises events: `Inspector`,
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. `MainWindow` builds them
 by hand in its constructor, lays them out, and keeps its layout, its keys, full
-screen and the closing question as `partial` files. There are no view models, and
-that has been decided twice.
+screen and the closing question in one file, a `#region` per part. There are no
+view models, and that has been decided twice.
 
 **The node editor is one control**
 ([0017](adr/0017-draw-the-node-editor-in-one-control.md)). `NodeEditor` overrides
@@ -581,8 +581,10 @@ new code should be indistinguishable from the file it lands in.
   the look.
 - **No interface without a second implementation.** Interfaces exist at the plugin
   boundary and almost nowhere else. A shell calls the engine's concrete types.
-- **Split a big class by region, not by pattern.** A large partial class with a
-  file per concern is the house shape (`MainWindow`, `NodeEditor`, `NodeCatalog`).
+- **Split a big class by region, not by pattern.** A region that owns its own
+  state becomes a class of its own (`MainWindow`'s, ADR-0148); a file per concern
+  of one partial class is for what cannot be pulled apart (`NodeEditor`,
+  `NodeCatalog`).
 
 ### Drivable by an agent
 

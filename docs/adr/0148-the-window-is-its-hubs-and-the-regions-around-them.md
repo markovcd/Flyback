@@ -65,8 +65,10 @@ A field is private to the region that owns it, and the compiler enforces the
 split that 0039 could only keep by convention.
 
 The regions move one at a time, each in a commit that builds and passes on its
-own. What stays a partial file of the window is what the window is: its layout,
-what each toolbar button does, its keys, the closing question, and full screen.
+own. What stays is what the window is — its layout, what each toolbar button
+does, its keys, the closing question and full screen — and it stays as one class
+in one file, a `#region` per part, rather than as partial files: once the regions
+are classes, what is left is small enough to read top to bottom.
 
 There is still no binding layer and no view model: state lives in the `Patch`,
 wiring is event handlers, and 0016 stands as written.

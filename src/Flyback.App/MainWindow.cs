@@ -1,27 +1,36 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Midi;
+using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
+using Flyback.Core;
 using Flyback.Core.Compile;
-using Flyback.Core.Render;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
 
-public sealed partial class MainWindow : Window
+/// <summary>
+/// The editor's window: it builds the hubs and the regions around them, lays them
+/// out, and keeps its own keys, full screen and the closing question (ADR-0148).
+/// </summary>
+[SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
+public sealed class MainWindow : Window
 {
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
     private void RewindToZero() => playback.Rewind();
@@ -579,7 +588,7 @@ public sealed partial class MainWindow : Window
         // splitter, then the inspector or, swapped, the knobs — and the patch
         // spans all three in the other. One grid, so the preview and the canvas
         // trade places by changing cells: the preview is never taken off its
-        // parent, which would tear its GPU context down (see MainWindow.FullScreen).
+        // parent, which would tear its GPU context down (see ShowFullScreenPreview).
         columns = new Grid
         {
             // Named because the fullscreen preview's test has to find exactly
@@ -891,4 +900,1877 @@ public sealed partial class MainWindow : Window
     private async Task ShowAboutAsync() =>
         await this.ShowDialog("About", About.View());
 
+    #region Keys, undo and the unsaved question
+
+    // The editing session as opposed to the patch: undo and redo from wherever the
+    // focus is, what the title bar says about unsaved work, and the question every
+    // route out of a patch has to ask first.
+    // The canvas owns the history and answers whether there is anything to lose;
+    // what is here is the asking. One method fronts every way a patch can be closed,
+    // so none of those callers has to know whether anything was edited.
+
+    /// <summary>The window title, before anything is said about the patch in it.</summary>
+    private const string BaseTitle = GlobalConstants.ApplicationName;
+
+    /// <summary>
+    /// Set once the question about unsaved work has been asked and answered, so
+    /// the second Close does not ask it again. A close has to be canceled to
+    /// put a dialog up at all — nothing may block inside OnClosing — so the way
+    /// back out is to close again once there is an answer.
+    /// </summary>
+    private bool leaving;
+
+    /// <summary>
+    /// Set while the question is on the screen and being answered. The dialog is
+    /// a panel over this window rather than a window of its own, so the frame's
+    /// cross stays live underneath it; a second close arriving while the first
+    /// is still being dealt with is ignored rather than allowed to stack a
+    /// second copy of the same question.
+    /// </summary>
+    private bool questionIsUp;
+
+    /// <summary>Set while a close is waiting for a take to be finished, so a second close does not wait twice.</summary>
+    private bool waitingOnTake;
+
+    /// <summary>What to do about a patch that has been edited and not written out.</summary>
+    private enum Unsaved
+    {
+        /// <summary>Refused, and whatever asked should not go ahead.</summary>
+        Cancel,
+
+        Save,
+
+        Discard,
+    }
+
+    /// <summary>
+    /// Whether the thing about to replace or close the patch may go ahead. Asks
+    /// only when there is something to lose, so every caller can front its own
+    /// action with this and none of them has to know whether anything was
+    /// edited.
+    /// </summary>
+    private async Task<bool> MayReplaceThePatchAsync()
+    {
+        if (!SomethingToLose) return true;
+
+        return await AnsweredAsync(
+            "Unsaved changes",
+            editor.IsModified || document.IsUnapplied
+                ? "This patch has changes that have not been saved. Closing it now would lose them."
+                : "The conversation about this patch has not been saved. Closing it now would lose it.");
+    }
+
+    /// <summary>
+    /// Whether this document has anything in it that closing would lose.
+    /// </summary>
+    /// <remarks>
+    /// Three parts, because there are three places work can be: typing that has not
+    /// been applied is the one the editor's history cannot know about, and a
+    /// conversation is saved with the patch it is about (ADR-0072) without being
+    /// any part of the patch. Asked by the question, by the close that puts it up
+    /// and by the dot in the title, so the three cannot come to disagree.
+    /// </remarks>
+    private bool SomethingToLose =>
+        editor.IsModified || document.IsUnapplied || assistant?.ConversationUnsaved == true;
+
+    /// <summary>Whether the window could close without asking anything.</summary>
+    internal bool HoldsNoWork => !SomethingToLose;
+
+    /// <summary>
+    /// Whether text about to stop being the document may go. Asks only about typing
+    /// that is nowhere else: text already written out as <c>.fbks</c> is on disk.
+    /// </summary>
+    /// <remarks>
+    /// The patch is deliberately not asked about, because it is not going anywhere:
+    /// handing it back to the canvas changes who owns it and not what it is, so the
+    /// question a file asks is still there to be asked.
+    /// </remarks>
+    private async Task<bool> MayLoseTheTextAsync()
+    {
+        if (!document.IsUnapplied) return true;
+
+        return await AnsweredAsync(
+            "Unsaved text",
+            "This text has not been saved. Handing the patch back to the canvas empties it, "
+            + "and its comments, its names and its defs go with it — the patch itself is "
+            + "untouched.");
+    }
+
+    /// <summary>
+    /// Whether a save that makes <paramref name="name"/> the document may empty text
+    /// that is written nowhere else.
+    /// </summary>
+    /// <remarks>
+    /// Two answers rather than three: Save… is how this was reached. It may be
+    /// reached from inside the unsaved question, whose own dialog is down by then,
+    /// so it puts its own up rather than going through <see cref="AnsweredAsync"/>
+    /// — and holds <see cref="questionIsUp"/> for as long as it is.
+    /// </remarks>
+    private async Task<bool> MayLoseTheTextToAsync(string name)
+    {
+        if (!document.IsUnapplied) return true;
+
+        var was = questionIsUp;
+        questionIsUp = true;
+
+        try
+        {
+            return await AskAboutUnsavedAsync(
+                "Unsaved text",
+                $"Saving as {name} makes the canvas the document and empties this text, which has "
+                + "not been saved: its comments, its names and its defs go with it. Save it as "
+                + $"{GlobalConstants.ApplicationName} text to keep them.",
+                discard: "Save without the text",
+                offerSave: false) == Unsaved.Discard;
+        }
+        finally
+        {
+            questionIsUp = was;
+        }
+    }
+
+    /// <summary>
+    /// Puts the three answers up and does what the answer says, for whoever is
+    /// about to lose something.
+    /// </summary>
+    private async Task<bool> AnsweredAsync(string about, string question)
+    {
+        // A question is already up. Whatever asked is refused rather than queued
+        // behind the first answer: it is the same document and the same three
+        // buttons, and one set of them is already on the screen.
+        if (questionIsUp) return false;
+
+        questionIsUp = true;
+
+        try
+        {
+            return await AskAboutUnsavedAsync(about, question) switch
+            {
+                // A canceled save picker is a canceled close: somebody who asked
+                // to save and then thought better of where has not agreed to lose
+                // the patch, and the safe reading of that is to stay put.
+                Unsaved.Save => await SavePatchAsync(),
+                Unsaved.Discard => true,
+                _ => false,
+            };
+        }
+        finally
+        {
+            questionIsUp = false;
+        }
+    }
+
+    /// <summary>
+    /// The three answers, as a window rather than as a system message box — there
+    /// is no such thing here, and one built by hand is the same three buttons in
+    /// the same palette as the rest of the shell.
+    /// </summary>
+    /// <remarks>
+    /// Closing it by its own frame is Cancel, which is why Cancel is the enum's
+    /// default too: a dialog closed without setting a result comes back as
+    /// <c>default</c>, so the answer nobody gave is harmless by the language's own
+    /// rule.
+    /// </remarks>
+    /// <param name="discard">What the answer that goes ahead is called.</param>
+    /// <param name="offerSave">Whether saving is one of the answers, which it is not where saving is what asked.</param>
+    private async Task<Unsaved> AskAboutUnsavedAsync(
+        string about,
+        string question,
+        string discard = "Discard changes",
+        bool offerSave = true)
+    {
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        if (offerSave) buttons.Children.Add(Answering("Save…", Unsaved.Save));
+
+        buttons.Children.Add(Answering(discard, Unsaved.Discard, wide: true));
+        buttons.Children.Add(Answering("Cancel", Unsaved.Cancel));
+
+        var asking = new StackPanel
+        {
+            Margin = new Thickness(20),
+            Spacing = 16,
+            MaxWidth = 420,
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = question,
+                    TextWrapping = TextWrapping.Wrap,
+                },
+                buttons,
+            },
+        };
+
+        return await this.ShowDialog<Unsaved>(about, asking);
+
+        static Button Answering(string text, Unsaved with, bool wide = false)
+        {
+            var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
+            button.Click += (_, _) => Dialog.Close(button, with);
+
+            return button;
+        }
+    }
+
+    /// <summary>
+    /// Nothing may block inside a closing handler, so a window with unsaved work
+    /// in it cancels the close, asks, and closes itself again on the way back.
+    /// </summary>
+    /// <summary>
+    /// Closes without asking about unsaved work, for a test tearing its window
+    /// down: there is nobody to answer the question, and a canceled close would
+    /// leave the window and its engine running for the rest of the assembly.
+    /// </summary>
+    internal void CloseWithoutAsking()
+    {
+        leaving = true;
+        Close();
+    }
+
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        base.OnClosing(e);
+
+        if (e.Cancel) return;
+
+        // Every attempt, not only the one that goes through: the window's monitor
+        // is no longer asked for once it has closed, and a refused close leaves it
+        // as it is.
+        RememberLayout();
+
+        if (leaving) return;
+
+        // Already asking. The close is refused and nothing else happens: putting
+        // the question up a second time is the one response that would make the
+        // window look broken, and there is nothing else to do with a close that
+        // arrived while the same close is still being answered. The settings
+        // window is refused the same way, for the answer it is still waiting on.
+        if (questionIsUp || settingsAreUp)
+        {
+            e.Cancel = true;
+            return;
+        }
+
+        // A take first, since it is the one thing here that cannot be had again:
+        // its file is closed, and then the close is tried once more.
+        if (Recording.InHand)
+        {
+            e.Cancel = true;
+
+            if (waitingOnTake) return;
+
+            waitingOnTake = true;
+            await Recording.FinishAsync();
+            waitingOnTake = false;
+
+            Close();
+            return;
+        }
+
+        // A count is not a take — nothing is being written yet — but it would
+        // become one under the question below, which can stay up for as long as
+        // it likes: the patch rewound and a file opened behind a dialog asking
+        // whether to save. Closing calls it off whatever the answer (ADR-0090).
+        Recording.CallOffCount();
+
+        if (!SomethingToLose) return;
+
+        e.Cancel = true;
+
+        if (!await MayReplaceThePatchAsync()) return;
+
+        leaving = true;
+        Close();
+    }
+
+    /// <summary>
+
+    /// Undo and redo, from wherever the focus happens to be. Handled on the window
+    /// rather than on the canvas because an edit is as likely to have been made in
+    /// the inspector, and anything that already dealt with the key keeps it — a
+    /// text box undoing its own typing is doing the same job at its own scale.
+    /// </summary>
+    /// <remarks>
+    /// Command as well as Control, so the shortcut is the one the machine uses.
+    /// Both are accepted everywhere rather than asked which platform this is, since
+    /// neither is a gesture anything else here claims.
+    /// </remarks>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        // A dialog lets the keys typed into its own boxes through unhandled, so
+        // whatever it is over must not act on them.
+        if (e.Handled || this.HasDialogUp) return;
+
+        // Before the modifier check, because Escape carries none. Only while the
+        // picture is full screen: everywhere else Escape belongs to the module
+        // filter, which handles its own before this is ever reached.
+        if (e.Key == Key.Escape && (previewIsFullScreen || pictureWindow is not null))
+        {
+            LeaveFullScreen();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && knobs.StopModes())
+        {
+            Report("Done.");
+            e.Handled = true;
+            return;
+        }
+
+        // Before the instrument, because F2 is not a note and never will be:
+        // the keyboard-as-instrument maps letters, and a function key is free
+        // for the shell in a way no letter is any more.
+        if (e.Key == Key.F2)
+        {
+            document.ShowCode(!document.ShowingCode);
+            e.Handled = true;
+            return;
+        }
+
+        // The computer's keyboard as an instrument. A note is a bare keystroke
+        // and nothing else, so a key carrying a command modifier is left for
+        // whatever claimed it: Ctrl+Z is undo, and it stays undo in a patch
+        // being played with a hand on the Z. Only while something is actually
+        // listening, so a patch with no MIDI In in it types the way it always
+        // did.
+        if (Bare(e.KeyModifiers) && Playing && PlayKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
+
+        var again = (e.KeyModifiers & KeyModifiers.Shift) != 0;
+
+        switch (e.Key)
+        {
+            // All three go to whichever view is showing. Reached only where the
+            // view did not want the keystroke itself: the code editor handles
+            // its own undo, and this is the end of the bubble.
+            case Key.Z:
+                if (again) document.Redo();
+                else document.Undo();
+                e.Handled = true;
+                break;
+
+            // The other half of the convention Windows carries: Ctrl+Y is redo
+            // where Ctrl+Shift+Z is, and somebody who reaches for one is not
+            // going to enjoy discovering which this program wanted.
+            case Key.Y:
+                document.Redo();
+                e.Handled = true;
+                break;
+
+            // Lay out. Beside the two above because it is the same kind of
+            // thing: an edit that Ctrl+Z takes off again — the modules across
+            // the canvas, or the lines down the page. With Shift, only the
+            // selected modules move (ADR-0110).
+            case Key.L:
+                document.Tidy(again);
+                e.Handled = true;
+                break;
+
+            // Not an edit — nothing here is on either undo stack — but routed
+            // through the same dispatch as the rest of the toolbar's
+            // shortcuts, and guarded the same way a click on a disabled
+            // button already is: see ToggleRecordAsync.
+            case Key.R:
+                _ = ToggleRecordAsync();
+                e.Handled = true;
+                break;
+
+            // The panel has no room while the picture has the window.
+            case Key.K:
+                if (!previewIsFullScreen) ShowControls(!knobs.View.IsVisible);
+
+                e.Handled = true;
+                break;
+
+            // With Ctrl because the bare letter is a note, and Space adds a module.
+            case Key.P:
+                TogglePause();
+                e.Handled = true;
+                break;
+
+            // The document itself, on the letters every program uses for it.
+            // Both were the toolbar's alone, and the hand that has just
+            // finished an edit is on the keyboard rather than the pointer.
+            // Saving is one gesture here — the picker is where a name is
+            // chosen — so there is no second key for saving under another one.
+            case Key.O:
+                _ = OpenAnotherPatchAsync();
+                e.Handled = true;
+                break;
+
+            case Key.S:
+                _ = SavePatchAsync();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Lets a note go, whatever else is going on.
+    /// </summary>
+    /// <remarks>
+    /// None of the guards that stand in front of pressing a key stand here, and
+    /// that asymmetry is the point: a key going down can start something, and one
+    /// coming up can only ever stop one. Every guard is a way for a release to be
+    /// missed, and a missed release is a note that sounds for the rest of the
+    /// session. Releasing one that was never played does nothing, which is what
+    /// makes ignoring the guards safe.
+    /// </remarks>
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+
+        midi.KeyUp(e.Key);
+    }
+
+    /// <summary>
+    /// Whether a keystroke is a plain one, with nothing held that turns a letter
+    /// into a command.
+    /// </summary>
+    /// <remarks>
+    /// Shift is deliberately not one of them: it is part of typing a letter, and no
+    /// gesture in the shell is Shift and a letter, so a capital Z still plays.
+    /// </remarks>
+    private static bool Bare(KeyModifiers modifiers) =>
+        (modifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
+
+    /// <summary>
+    /// Whether the computer's keyboard is an instrument right now — whether either
+    /// of the running programs is reading it.
+    /// </summary>
+    /// <remarks>
+    /// Asked of the compiled programs rather than of the patch, which is what makes
+    /// it exact: a MIDI In wired to nothing is read by neither and should not take
+    /// keystrokes from the editor, and one wired only to the speakers should. Dead
+    /// -code elimination has already answered both (ADR-0022).
+    /// </remarks>
+    private bool Playing =>
+        !Typing
+        && (Reads(preview.Program.LiveInputs) || Reads(audio.Live.Keys));
+
+    private static bool Reads(IReadOnlyList<string> inputs) =>
+        inputs.Any(key => key.StartsWith(MidiSources.Keyboard + "/", StringComparison.Ordinal));
+
+    /// <summary>
+    /// Whether the keystroke belongs to something being typed into rather than to
+    /// the instrument.
+    /// </summary>
+    /// <remarks>
+    /// The whole reason the notes can be on bare letters: a text box does not mark
+    /// an ordinary key press handled, so without this, naming a patch would play a
+    /// tune. AvalonEdit is not a <see cref="TextBox"/> and the focus check never
+    /// sees it, so it is asked about separately — and only where the text is the
+    /// document, since a printing (ADR-0068) is a reading rather than a place
+    /// anybody is composing.
+    /// </remarks>
+    private bool Typing =>
+        FocusManager.GetFocusedElement() is TextBox
+        || (document.ShowingCode && document.Owned);
+
+    /// <summary>
+    /// One key, as either a note or the pair that moves the two rows. Null-ish by
+    /// design: anything that is neither is left alone and goes on meaning
+    /// whatever it meant.
+    /// </summary>
+    private bool PlayKey(Key key)
+    {
+        if (midi.Shift(key) is { } moved)
+        {
+            Report(moved);
+            return true;
+        }
+
+        return midi.KeyDown(key);
+    }
+
+    /// <summary>
+    /// Grays the two out when there is nothing behind or ahead — the same
+    /// question a button would answer by doing nothing, asked where it can be
+    /// seen instead — and says in the title what the patch is and whether there
+    /// is unsaved work in it.
+    /// </summary>
+    private void RefreshEditState()
+    {
+        // Literally the answer the gesture gives, rather than a second statement of
+        // the same rule — see UndoLandsOn.
+        toolbar.Undo.IsEnabled = document.CanUndo;
+        toolbar.Redo.IsEnabled = document.CanRedo;
+
+        // The name first and the program second, which is the way round every
+        // other window on the machine says it: what is on screen is the patch,
+        // and which program is drawing it is the thing already known.
+        var named = files.Name is null ? BaseTitle : $"{files.Name} — {BaseTitle}";
+
+        // A dot rather than the word, because the title bar is read at a glance
+        // and the question it answers is only whether there is anything to lose.
+        Title = SomethingToLose ? named + " •" : named;
+    }
+
+    #endregion
+
+    #region Opening and saving
+
+    // The routes into and out of PatchFiles: the Open and Save gestures,
+    // a drop, an activation and a path named on the command line, each asking first
+    // whatever has to be asked.
+
+    /// <inheritdoc cref="PatchFiles.Became"/>
+    internal void Became(string? name, string? beside, BundleFiles? files = null) => this.files.Became(name, beside, files);
+
+    /// <summary>
+    /// Whether the document is a bundle, which is what the next save offers first.
+    /// Readable from the tests, as <see cref="Became"/> is callable from them:
+    /// every route that opens a document is behind a file picker the headless
+    /// platform does not put up.
+    /// </summary>
+    internal bool IsBundle => files.IsBundle;
+
+    /// <summary>Puts a patch that has just been read on the canvas, from its beginning.</summary>
+    private void Show(Patch patch)
+    {
+        ClearPresetSelection();
+
+        editor.Patch = patch;
+        RewindToZero();
+    }
+
+    /// <summary>
+    /// The Open gesture whole: what is unsaved is asked about, and then the
+    /// picker. The toolbar's button and Ctrl+O both come through here, so the
+    /// question cannot be stepped round by reaching for the keyboard.
+    /// </summary>
+    private async Task OpenAnotherPatchAsync()
+    {
+        if (await MayReplaceThePatchAsync() && await files.PickOpenAsync() is { } file) await OpenFileAsync(file);
+    }
+
+    /// <summary>
+    /// Opens a file handed back by any of the routes that produce one — a
+    /// picker, a drop from the file explorer, a path named on the command
+    /// line, or a file macOS hands the program through an activation — so the
+    /// extension decides which kind it is exactly as it does for the picker.
+    /// </summary>
+    private async Task OpenFileAsync(IStorageFile file)
+    {
+        if (PluginPackage.Named(file.Name)) await pluginInstalls.InstallAsync(file);
+        else await files.OpenFileAsync(file);
+    }
+
+    /// <summary>
+    /// Opens a file already sitting on disk rather than one a picker handed
+    /// back — named on the command line when the program started, or resolved
+    /// from a plain path some other way.
+    /// </summary>
+    private async Task OpenPathAsync(string path)
+    {
+        IStorageFile? file;
+
+        try
+        {
+            file = await StorageProvider.TryGetFileFromPathAsync(path);
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not open {Path.GetFileName(path)}: {ex.Message}");
+            return;
+        }
+
+        if (file is null)
+        {
+            Report($"Could not open {Path.GetFileName(path)}.");
+            return;
+        }
+
+        await OpenFileAsync(file);
+    }
+
+    /// <summary>
+    /// Lets a patch, a bundle or a text file be opened by dropping it in from
+    /// the file explorer — the same three kinds the picker offers, arriving
+    /// without one.
+    /// </summary>
+    private void WireFileDrop()
+    {
+        DragDrop.SetAllowDrop(this, true);
+
+        // Refused under a dialog, and shown as refused, for the reason
+        // OpenActivatedFileAsync gives.
+        AddHandler(DragDrop.DragOverEvent, (_, e) =>
+            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) && !this.HasDialogUp
+                ? DragDropEffects.Copy
+                : DragDropEffects.None);
+
+        AddHandler(DragDrop.DropEvent, async (_, e) =>
+        {
+            // Only the first: one window holds one patch, and a picker never
+            // offers more than that either.
+            if (e.DataTransfer.TryGetFiles()?.OfType<IStorageFile>().FirstOrDefault() is not { } file) return;
+
+            e.Handled = true;
+
+            await OpenActivatedFileAsync(file);
+        });
+    }
+
+    /// <summary>
+    /// Opens a file handed to the program from outside a picker or a drop —
+    /// which on macOS is how "open this file" arrives at all: Finder delivers
+    /// it as an activation rather than as a command-line argument, whether
+    /// that launches the program or lands on its Dock icon while it is
+    /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
+    /// </summary>
+    /// <remarks>
+    /// Not while a dialog is up. A dialog stops the pointer and the keyboard and
+    /// neither of these arrives by them, so with nothing unsaved to ask about the
+    /// document would be replaced behind the sheet — and a text one takes the
+    /// focus with it, out of a dialog that then no longer hears Escape.
+    /// </remarks>
+    internal async Task OpenActivatedFileAsync(IStorageFile file)
+    {
+        if (this.HasDialogUp)
+        {
+            Report($"{file.Name} was not opened: there is a dialog to answer first.");
+            return;
+        }
+
+        if (PluginPackage.Named(file.Name) || await MayReplaceThePatchAsync()) await OpenFileAsync(file);
+    }
+
+    /// <returns>Whether the document was saved. A canceled picker is not a save, and nor is a copy.</returns>
+    private async Task<bool> SavePatchAsync() =>
+        await files.PickSaveAsync() is { } file && await SaveToAsync(file);
+
+    /// <summary>Writes the document to a file the picker handed back, as the kind its name says.</summary>
+    /// <returns>
+    /// Whether the document was saved — which writing a file is, except where the
+    /// file is a printing of a patch the graph owns: that is a copy, and leaves
+    /// whatever was unsaved as unsaved as it was.
+    /// </returns>
+    internal async Task<bool> SaveToAsync(IStorageFile file)
+    {
+        // A copy saves nothing, so whatever asked for a save has not had one: the
+        // unsaved-changes question reads this, and going ahead on the strength of
+        // a printing would shut the only whole patch there is.
+        if (PatchFileKinds.Sourced(file.Name)) return await files.SaveSourceAsync(file) && !SomethingToLose;
+
+        // Either of the other two hands the patch to the graph and empties the
+        // text, so text that is nowhere else is asked about first — ADR-0068.
+        return await MayLoseTheTextToAsync(file.Name) && await files.SavePatchFileAsync(file);
+    }
+
+    #endregion
+
+    #region The document's buttons and write-back gestures
+
+    // What the window shows of the Document: the code button, the tidy
+    // button, and the panel's gestures that end in a write-back.
+
+    /// <summary>Called once, as the window is built.</summary>
+    private void WireDocument()
+    {
+        document.EditStateChanged += (_, _) => RefreshEditState();
+        document.PanelStale += (_, _) => inspector.Build();
+        document.OwnershipChanged += (_, _) => ShowOwnership();
+        document.ViewChanged += (_, _) =>
+        {
+            if (toolbar.Code.IsChecked != document.ShowingCode) toolbar.Code.IsChecked = document.ShowingCode;
+        };
+
+        toolbar.Code.IsCheckedChanged += (_, _) => document.ShowCode(toolbar.Code.IsChecked == true);
+
+        source.EditorFontSize = canvasSection.EditorFontSize;
+        source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
+
+        // The buffer is emptied by the handover and written nowhere on the way, so
+        // typing not on disk yet is asked about as it is when a document is closed over.
+        source.HandBackRequested += async (_, _) =>
+        {
+            if (document.Owned && await MayLoseTheTextAsync()) document.HandBack();
+        };
+
+        // Caught on the way up and after whoever handled it, because a slider
+        // captures the pointer: letting go halfway across the window is still
+        // letting go of the slider, and the value written should be the one the
+        // control finished on.
+        inspector.Panel.AddHandler(
+            PointerReleasedEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
+        // A number typed rather than dragged has no gesture to wait for, and the
+        // focus going is the surest end of one.
+        inspector.Panel.AddHandler(LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
+
+        // And a key let go of, because a number box takes what is typed as it is
+        // typed. On the way up rather than down, because the character is taken
+        // between the two; any key, since an arrow steps the value and a backspace
+        // clears it without giving up the focus.
+        inspector.Panel.AddHandler(
+            KeyUpEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
+        // And a notch of the wheel, the one way a number box moves that touches
+        // neither the pointer's button nor the focus. Each notch is finished the
+        // moment it lands.
+        inspector.Panel.AddHandler(
+            PointerWheelChangedEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+    }
+
+    /// <summary>
+    /// Puts the tidy button, the panel and the edit state in step with who owns the
+    /// patch and which view is showing.
+    /// </summary>
+    private void ShowOwnership()
+    {
+        // Laying out is off only where it would not last: a locked canvas is
+        // re-laid on the next evaluation, so tidying one is work thrown away.
+        // Showing the text, the same button folds the lines instead.
+        toolbar.Tidy.IsEnabled = document.ShowingCode || !document.Owned;
+
+        ToolTip.SetTip(toolbar.Tidy, document.ShowingCode
+            ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
+            : document.Owned
+                ? "The text is the document, so the canvas is laid out from it on every "
+                  + "apply. Fold the text instead."
+                : Toolbar.TidyTip);
+
+        // What the empty panel says is a list of gestures, and half of them
+        // have just been switched off or back on.
+        inspector.Build();
+        RefreshEditState();
+
+        ToolTip.SetTip(
+            inspector.Panel,
+            document.Owned
+                ? "The text is the document. A knob turned here is written back into it "
+                  + "where it already says it."
+                : null);
+    }
+
+    #endregion
+
+    #region Playback, reporting and closing down
+
+    // What the window shows of Playback, and the one place anything is
+    // said to the user.
+
+    /// <summary>Called once, before anything compiles.</summary>
+    private void WirePlayback()
+    {
+        playback.Compiled += (_, _) =>
+        {
+            ShowPreview(playback.HasPicture);
+            knobs.Refresh();
+            Recording.Mark();
+        };
+
+        playback.TransportChanged += (_, _) => SyncTransport();
+
+        // A patch saved somewhere new reads what it names from there.
+        files.Moved += (_, _) => playback.Recompile();
+
+        // The patch is playing, which is the moment what is in it is worth
+        // counting (ADR-0094). Not at a compile: a patch is recompiled on every
+        // knob frame, and what it is made of is only interesting where somebody
+        // is listening to it.
+        playback.Started += (_, _) => usage.Played(
+            editor.Patch.Nodes.Select(node => node.TypeId),
+            editor.Patch.Connections.Count,
+            presets.Showing?.Name);
+    }
+
+    /// <summary>
+    /// The one place anything is said to the user. <paramref name="detail"/> is for
+    /// what will not fit on a status bar — a list of missing plugins, say.
+    /// </summary>
+    /// <param name="detail"></param>
+    /// <param name="progress">
+    /// That this is the last message again with a new number in it, so the log keeps
+    /// one entry for the run rather than one per update.
+    /// </param>
+    /// <param name="message"></param>
+    internal void Report(string message, string? detail = null, bool progress = false) =>
+        report.Say(message, detail, progress);
+
+    /// <summary>
+    /// The same, for everything a compile found at once. Each is a line of its
+    /// own in the log; the bar joins them, having only the one line.
+    /// </summary>
+    private void Report(IReadOnlyList<string> messages) => report.Say(messages);
+
+    protected override void OnClosed(EventArgs e)
+    {
+        // Before the device goes, and before anything else: a take whose header
+        // was never patched is not a file, so a window closed mid-recording
+        // waits here for it rather than abandoning it. OnClosing has normally
+        // dealt with it already, and this is for the close that could not be
+        // put off.
+        Recording.FinishNow();
+
+        // Whatever there was to lose has been asked about by now, and answered.
+        keeper?.Stop();
+
+        audio.Dispose();
+        compiler.Dispose();
+
+        // And the instruments, which are hardware somebody else may want back. A
+        // port left open outlives the window that was reading it.
+        midi.Dispose();
+
+        base.OnClosed(e);
+    }
+
+    #endregion
+
+    #region Output settings
+
+    // What the window does with the settings OutputSections shows: puts
+    // them in force, and writes them out.
+
+    /// <summary>
+    /// What the Graphics, Recording and Sound sections were last saved as, and so
+    /// what closing the settings window without Save puts them back to.
+    /// </summary>
+    private OutputSettings outputSettings = new();
+
+    /// <summary>Where <see cref="outputSettings"/> is kept, or null to keep it nowhere.</summary>
+    private readonly string? outputSettingsPath;
+
+    /// <summary>
+    /// Called once, from the constructor, rather than when the settings window
+    /// opens: what was last saved has to be in force before anybody has looked.
+    /// </summary>
+    private void WireOutputControls()
+    {
+        var gpu = outputSections.Gpu;
+
+        compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
+
+        preview.BackendChanged += message =>
+        {
+            // The picture's program is only worth compiling while the processor is
+            // the one drawing it; the shader has code of its own.
+            if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(preview.Program, IlLane.Picture);
+
+            // The choice rather than what is running: a patch the shader cannot
+            // draw puts the picture on the processor without anybody having
+            // asked, and a box that put itself back to CPU would then be read as
+            // the setting having changed — and would be saved as changed the next
+            // time anybody pressed Save.
+            gpu.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
+            gpu.IsEnabled = preview.GpuAvailable;
+            ToolTip.SetTip(gpu, preview.GpuAvailable ? OutputSections.GpuTip : message);
+            Report(message);
+        };
+
+        // The picture a take was reading has gone. Finishing the file is the only
+        // useful thing left to do with it — what is already written is a
+        // recording, and what would follow is the same frame for ever.
+        preview.CaptureLost += Recording.Stop;
+
+        knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.KeyboardLayout);
+
+        // Quietly, because nobody asked for anything yet: a saved answer is
+        // what the program starts in, not a change to report.
+        outputSections.Show(outputSettings);
+        UseOutputSettings(outputSettings);
+    }
+
+    /// <summary>
+    /// Hands <paramref name="settings"/> to the preview and the sound. The only way
+    /// anything in the Graphics section reaches either.
+    /// </summary>
+    private void UseOutputSettings(OutputSettings settings)
+    {
+        var size = OutputSections.SizeOf(settings);
+
+        preview.Resolution = size;
+        preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+        preview.FrameRate = settings.PreviewFrameRate;
+
+        // What a live Scan reaches with Coordinates' aspect (ADR-0077) — kept in
+        // step with the preview rather than fixed, now that the size list is not
+        // all one shape.
+        audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
+
+        knobs.Hub.Takeover = settings.Takeover;
+    }
+
+    /// <summary>
+    /// Takes what the sections hold as the settings, puts them in force, and writes
+    /// them out when there is somewhere to. A failure to write is said, not thrown:
+    /// they are in force for this run regardless.
+    /// </summary>
+    private void SaveOutputSettings()
+    {
+        var before = outputSettings;
+
+        outputSettings = outputSections.Read(before);
+
+        UseOutputSettings(outputSettings);
+
+        if (outputSettings.LatencyMilliseconds != before.LatencyMilliseconds || outputSections.SoundChanged(before, outputSettings))
+            playback.ReopenAudio(outputSettings);
+
+        if (outputSettingsPath is null) return;
+
+        try
+        {
+            outputSettings.Save(outputSettingsPath);
+        }
+        catch (Exception ex)
+        {
+            Report($"Could not save the output settings: {ex.Message}", outputSettingsPath);
+        }
+    }
+
+    /// <summary>
+    /// Picks the startup patch from the gallery the toolbar opens, with nothing in
+    /// it to save or delete: what is chosen here is a name, and Cancel drops it.
+    /// </summary>
+    private async Task<string?> PickStartupPatchAsync(string current)
+    {
+        var showing = OrderedPresets().FirstOrDefault(preset => preset.Name == current);
+
+        var gallery = PresetGallery.Build(
+            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            showing,
+            thumbnails,
+            audition.PointedAt,
+            presets.Yours()?.ToPickFrom());
+
+        var chosen = await this.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+
+        audition.PointedAt(null);
+
+        return chosen?.Name;
+    }
+
+    #endregion
+
+    #region The right-hand column
+
+    // The column on the right: the preview over the Inspector.
+
+    /// <summary>
+    /// The preview, the splitter under it and the inspector, down one column of
+    /// <paramref name="grid"/>, whose three rows are theirs.
+    /// </summary>
+    private void BuildRightPanel(Grid grid, int column)
+    {
+        previewBox = new Border
+        {
+            Background = Brushes.Black,
+            Child = preview,
+        };
+
+        // Double-click the picture and it takes the window; double-click it or
+        // press Escape to put everything back. The gesture every video player
+        // already has, on the one control here that is a video.
+        previewBox.DoubleTapped += (_, e) =>
+        {
+            ToggleFullScreenPreview();
+            e.Handled = true;
+        };
+
+        Grid.SetColumn(previewBox, column);
+        Grid.SetRow(previewBox, 0);
+
+        previewRow = grid.RowDefinitions[0];
+
+        var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
+        Grid.SetColumn(splitter, column);
+        Grid.SetRow(splitter, 1);
+
+        // The plate is docked rather than scrolled: what a block is and the buttons
+        // that act on it are wanted wherever the reading has been scrolled to.
+        var reading = new DockPanel();
+
+        var plateHost = inspector.PlateHost;
+        var wash = inspector.Wash;
+
+        DockPanel.SetDock(plateHost, Dock.Top);
+
+        reading.Children.Add(plateHost);
+        reading.Children.Add(new ScrollViewer
+        {
+            Content = inspector.Panel,
+
+            // Explicitly transparent: a theme that gave the scroll viewer a
+            // background would paint straight over the wash and the mark.
+            Background = Brushes.Transparent,
+        });
+
+        // The block's face sits behind the inspector rather than beside it, and
+        // never takes a click.
+        var inspectorBorder = inspectorBox = new Border
+        {
+            Background = new SolidColorBrush(Colors.Panel),
+            Child = new Panel { Children = { wash, reading } },
+        };
+
+        // The mark starts under the plate, whatever height the name and the buttons
+        // have left it at.
+        // The band and the mark are drawn on the wash, so it is told how deep the
+        // name's row is and how far down the plate reaches.
+        plateHost.PropertyChanged += (_, e) =>
+        {
+            if (e.Property != BoundsProperty) return;
+
+            wash.Below = plateHost.Bounds.Height;
+            wash.BandHeight = (plateHost.Content as ModulePlate)?.Band ?? 0;
+        };
+        Grid.SetColumn(inspectorBorder, column);
+        Grid.SetRow(inspectorBorder, 2);
+
+        // Over the preview's own cell while it has the window, and nowhere otherwise.
+        var overlay = transportOverlay = new TransportOverlay() { IsVisible = false };
+
+        overlay.PauseClicked += TogglePause;
+        overlay.MuteClicked += playback.ToggleMute;
+        overlay.RewindClicked += RewindToZero;
+
+        grid.Children.Add(previewBox);
+        grid.Children.Add(knobs.Stage);
+        grid.Children.Add(overlay);
+        grid.Children.Add(splitter);
+        grid.Children.Add(inspectorBorder);
+    }
+
+    #endregion
+
+    #region The knob panel's row
+
+    // Where the PanelKnobs stand: the row under the canvas, the edge
+    // above it, and the toolbar button that shows it.
+
+    /// <summary>The edge above the panel, dragged to give it more rows or fewer.</summary>
+    private readonly GridSplitter controlsSplitter = new()
+    {
+        Name = "controls-splitter",
+        Background = Brushes.Transparent,
+        Height = 5,
+        IsVisible = false,
+    };
+
+    /// <summary>The row the panel stands in, under the canvas or, swapped, under the preview.</summary>
+    private RowDefinition? ControlsRow => knobs.View.Parent is Grid grid ? grid.RowDefinitions[2] : null;
+
+    /// <summary>
+    /// The panel's height, kept while it is hidden. One row of knobs to start with;
+    /// more rows wrap in beneath once it is dragged taller.
+    /// </summary>
+    private GridLength controlsShare = new(118);
+
+    private void WireControls()
+    {
+        toolbar.Knobs.IsCheckedChanged += (_, _) => ShowControls(toolbar.Knobs.IsChecked == true);
+
+        knobs.Wanted += (_, _) => ShowControls(true);
+
+        // A socket's own knob on the canvas: heard as it turns, written into the
+        // text and the panel when the hand comes off it.
+        editor.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
+        editor.InputLetGo += (_, pick) =>
+        {
+            document.HandCameOff();
+            if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) inspector.Build();
+        };
+    }
+
+    /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
+    private void ShowControls(bool shown)
+    {
+        // The full screen preview owns every row, the knobs' too while swapped.
+        if (previewIsFullScreen) return;
+
+        var panel = knobs.View;
+
+        // Only on a change: showing a panel already shown would put back the height
+        // it had when last hidden, over whatever it has been dragged to since.
+        if (ControlsRow is { } controlsRow && shown != panel.IsVisible)
+        {
+            // A pixel row rather than an auto one, so the splitter has a height to
+            // change; zeroed while hidden, with its minimum, the way the assistant's is.
+            if (!shown && panel.IsVisible) controlsShare = controlsRow.Height;
+
+            controlsRow.MinHeight = shown ? 60d : 0d;
+            controlsRow.Height = shown ? controlsShare : new GridLength(0);
+        }
+
+        panel.IsVisible = shown;
+        controlsSplitter.IsVisible = shown;
+
+        if (toolbar.Knobs.IsChecked != shown) toolbar.Knobs.IsChecked = shown;
+
+        if (!shown) knobs.Link(null);
+    }
+
+    #endregion
+
+    #region Full screen
+
+    // The preview taking the whole window, or a whole monitor of its own, and giving it back.
+    // On the window's own monitor nothing is reparented: the preview stays where it is and
+    // the shell around it is put away instead. The GPU surface is an OpenGlControlBase,
+    // and moving one between parents tears its context down and builds it again — a picture
+    // that blinked every time somebody wanted a closer look. On another monitor the move is
+    // the point, so the preview goes to a window there and the renderer is built again once
+    // each way (ADR-0129).
+
+    /// <summary>
+    /// What each track was set to before the preview took over, in order.
+    /// </summary>
+    /// <remarks>
+    /// The sizes are copied out and restored, rather than swapping in a new grid
+    /// definition. That keeps the dragged layout when the preview is toggled.
+    /// </remarks>
+    private (GridLength Size, double Minimum)[]? columnsBefore;
+    private (GridLength Size, double Minimum)[]? rowsBefore;
+
+    /// <summary>
+    /// Whether the window was maximised, or merely open, before it went full
+    /// screen — the state Escape has to put back, which is not always Normal.
+    /// </summary>
+    private WindowState stateBefore;
+
+    /// <summary>Which of the grid's children were showing before the preview took over.</summary>
+    private Dictionary<Control, bool>? visibleBefore;
+
+    /// <summary>Whether the preview currently has the window.</summary>
+    private bool previewIsFullScreen;
+
+    /// <summary>
+    /// A track of no width at all, for the columns and rows the preview is not in.
+    /// </summary>
+    /// <remarks>
+    /// Hiding a child is not enough: a grid track holds the width it was given whether
+    /// or not anything visible stands in it. Zeroed rather than removed, because Grid
+    /// indexes its definitions directly — a child left pointing at column four of a
+    /// grid that now has one throws out of <c>MeasureOverride</c>.
+    /// </remarks>
+    private static GridLength None => new(0, GridUnitType.Pixel);
+
+    private static GridLength Everything => new(1, GridUnitType.Star);
+
+    /// <summary>The window holding the preview on another monitor, while it is there.</summary>
+    private PictureWindow? pictureWindow;
+
+    /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
+    private void ToggleFullScreenPreview()
+    {
+        if (previewIsFullScreen || pictureWindow is not null)
+        {
+            LeaveFullScreen();
+            return;
+        }
+
+        if (MonitorPlacement.FullScreenTarget(this, outputSettings.FullScreen, outputSettings.FullScreenMonitor) is { } screen)
+            ShowPictureOn(screen);
+        else
+            ShowFullScreenPreview(true);
+    }
+
+    private void LeaveFullScreen()
+    {
+        pictureWindow?.Close();
+        ShowFullScreenPreview(false);
+    }
+
+    /// <summary>
+    /// Moves the preview to a full-screen window on <paramref name="screen"/>, leaving
+    /// the editor as it is with a note where the picture was.
+    /// </summary>
+    internal void ShowPictureOn(Screen screen)
+    {
+        if (previewBox is null || pictureWindow is not null || previewIsFullScreen) return;
+
+        usage.Count(Used.FullScreen);
+
+        previewBox.Child = new TextBlock
+        {
+            Name = "pictureAway",
+            Text = $"The picture is on {screen.DisplayName ?? "another monitor"}. Double-click here or press Esc to bring it back.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(16),
+        };
+
+        preview.Renew();
+
+        var window = pictureWindow = new PictureWindow(screen, preview);
+
+        knobs.Away = window.Knobs;
+        window.Knobs.Show(editor.Patch);
+        window.Knobs.Turning += knobs.Turn;
+        window.Knobs.TurnEnded += document.LetGoOfKnob;
+
+        window.Transport.PauseClicked += TogglePause;
+        window.Transport.MuteClicked += playback.ToggleMute;
+        window.Transport.RewindClicked += RewindToZero;
+
+        window.PauseRequested += (_, _) => TogglePause();
+        window.Closed += (_, _) => BringPictureBack(window);
+
+        window.Show(this);
+        SyncTransport();
+        knobs.SyncStages();
+    }
+
+    private void BringPictureBack(PictureWindow window)
+    {
+        if (pictureWindow != window || previewBox is null) return;
+
+        pictureWindow = null;
+        knobs.Away = null;
+
+        preview.Renew();
+        previewBox.Child = preview;
+    }
+
+    /// <summary>Hands the window to the preview, or takes it back.</summary>
+    private void ShowFullScreenPreview(bool full)
+    {
+        if (full == previewIsFullScreen) return;
+
+        // All four arrive together when the layout is built, so this is one
+        // question rather than four. Before that there is nothing to show.
+        if (columns is null || previewBox is null) return;
+
+        previewIsFullScreen = full;
+        knobs.OverPicture = full;
+
+        if (full) usage.Count(Used.FullScreen);
+
+        if (full) Collapse();
+        else Restore();
+
+        toolbar.View.IsVisible = !full;
+        statusBar.View.IsVisible = !full;
+
+        // Remembered, since the assistant and the knobs stand in this grid and
+        // are as often hidden as not.
+        if (full) visibleBefore = columns.Children.ToDictionary(child => child, child => child.IsVisible);
+
+        foreach (var child in columns.Children)
+            child.IsVisible = full ? child == previewBox : visibleBefore?.GetValueOrDefault(child, true) ?? true;
+
+        // The controls stand over whichever cell the preview is in.
+        if (transportOverlay is { } overlay)
+        {
+            if (full)
+            {
+                Over(overlay);
+                SyncTransport();
+            }
+
+            overlay.IsVisible = full;
+        }
+
+        Over(knobs.Stage);
+        knobs.SyncStages();
+
+        // ShowPreview stands aside while the preview has the window, and the patch
+        // may have lost its picture meanwhile. Only ever put away here: the row has
+        // just been given back the height it was dragged to.
+        if (!full && !playback.HasPicture) ShowPreview(false);
+
+        void Over(Control control)
+        {
+            if (!full) return;
+
+            Grid.SetColumn(control, Grid.GetColumn(previewBox));
+            Grid.SetRow(control, Grid.GetRow(previewBox));
+            Grid.SetRowSpan(control, Grid.GetRowSpan(previewBox));
+        }
+
+        void Collapse()
+        {
+            stateBefore = WindowState;
+
+            columnsBefore = [.. columns.ColumnDefinitions.Select(c => (c.Width, c.MinWidth))];
+            rowsBefore = [.. columns.RowDefinitions.Select(r => (r.Height, r.MinHeight))];
+
+            // Which track to leave standing is read off the layout rather than
+            // written down here, since the preview is in the wide column while it
+            // is swapped with the canvas and in the narrow one otherwise.
+            var keepColumn = Grid.GetColumn(previewBox);
+            var keepRow = Grid.GetRow(previewBox);
+
+            for (var i = 0; i < columns.ColumnDefinitions.Count; i++)
+            {
+                var column = columns.ColumnDefinitions[i];
+
+                // The minimum first: it outranks a width of nothing, and a column
+                // zeroed while it still had one would hold that much of the shell
+                // open across the picture.
+                column.MinWidth = 0;
+                column.Width = i == keepColumn ? Everything : None;
+            }
+
+            for (var i = 0; i < columns.RowDefinitions.Count; i++)
+            {
+                var row = columns.RowDefinitions[i];
+
+                row.MinHeight = 0;
+                row.Height = i == keepRow ? Everything : None;
+            }
+
+            WindowState = WindowState.FullScreen;
+        }
+
+        void Restore()
+        {
+            if (columnsBefore is { } savedColumns)
+            {
+                for (var i = 0; i < savedColumns.Length && i < columns.ColumnDefinitions.Count; i++)
+                {
+                    columns.ColumnDefinitions[i].Width = savedColumns[i].Size;
+                    columns.ColumnDefinitions[i].MinWidth = savedColumns[i].Minimum;
+                }
+            }
+
+            if (rowsBefore is { } savedRows)
+            {
+                for (var i = 0; i < savedRows.Length && i < columns.RowDefinitions.Count; i++)
+                {
+                    columns.RowDefinitions[i].Height = savedRows[i].Size;
+                    columns.RowDefinitions[i].MinHeight = savedRows[i].Minimum;
+                }
+            }
+
+            WindowState = stateBefore;
+        }
+    }
+
+    #endregion
+
+    #region The layout, kept between runs
+
+    // Leaving the window as it was left: size, monitor, panels and views, kept in
+    // WindowLayout (ADR-0121).
+
+    /// <summary>Where the layout is kept, or null to keep it nowhere.</summary>
+    private readonly string? layoutPath;
+
+    /// <summary>The layout read at startup, then the one last written.</summary>
+    private WindowLayout? layout;
+
+    /// <summary>The last client size the window had while it was neither maximized nor full screen.</summary>
+    private Size? normalSize;
+
+    /// <summary>Size, state and monitor. Before the window is shown.</summary>
+    private void ApplyWindowLayout()
+    {
+        // Only a drag of the frame: maximizing resizes the window too, and that is
+        // not a size to come back to.
+        Resized += (_, e) =>
+        {
+            if (e.Reason == WindowResizeReason.User && WindowState == WindowState.Normal) normalSize = e.ClientSize;
+        };
+
+        if (layout is not { } saved) return;
+
+        if (saved.Width > 0 && saved.Height > 0)
+        {
+            Width = Math.Max(saved.Width, MinWidth);
+            Height = Math.Max(saved.Height, MinHeight);
+        }
+
+        normalSize = new Size(Width, Height);
+
+        if (saved.Maximized) WindowState = WindowState.Maximized;
+
+        // The platform places the window, so which monitor it chose is only known
+        // once it is up.
+        Opened += (_, _) => MonitorPlacement.Return(this, saved.Monitor);
+    }
+
+    /// <summary>The panels and the views. After the first patch is on the canvas.</summary>
+    private void ApplyPanelLayout()
+    {
+        if (layout is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
+
+        columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
+        columns.ColumnDefinitions[SideColumn].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
+
+        previewShare = new GridLength(saved.PreviewWeight, GridUnitType.Star);
+        if (previewBox is { IsVisible: true }) previewRow.Height = previewShare;
+        columns.RowDefinitions[2].Height = new GridLength(saved.InspectorWeight, GridUnitType.Star);
+
+        // A shown panel takes its width from the column and a hidden one from the
+        // share, so both are set and the panel then put where it was.
+        assistantShare = new GridLength(saved.AssistantWidth, GridUnitType.Pixel);
+        if (assistant is { IsVisible: true }) assistantColumn.Width = assistantShare;
+        toolbar.Assistant.IsChecked = saved.AssistantOpen && toolbar.Assistant.IsEnabled;
+
+        controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
+        if (ControlsRow is { } controlsRow && knobs.View.IsVisible) controlsRow.Height = controlsShare;
+        ShowControls(saved.ControlsOpen);
+
+        // Only while there is a picture to swap in, which is the button's own rule.
+        toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
+
+        if (saved.Code) document.ShowCode(true);
+    }
+
+    /// <summary>Writes the layout down. A settings file is not worth a failure to close.</summary>
+    private void RememberLayout()
+    {
+        if (layoutPath is null || columns is null) return;
+
+        try
+        {
+            layout = CaptureLayout();
+            layout.Save(layoutPath);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"Could not save the window layout: {ex.Message}");
+        }
+    }
+
+    private WindowLayout CaptureLayout()
+    {
+        // Full screen collapses every track, so the ones it put away are the layout.
+        var away = previewIsFullScreen;
+
+        double Column(int index) => Weight(away && columnsBefore is not null
+            ? columnsBefore[index].Size
+            : columns!.ColumnDefinitions[index].Width);
+
+        double Row(int index) => Weight(away && rowsBefore is not null
+            ? rowsBefore[index].Size
+            : columns!.RowDefinitions[index].Height);
+
+        // The row a panel stands in, whichever grid it is in while swapped. Full
+        // screen zeroes the outer grid's rows only.
+        double Under(Control? panel, Func<GridLength, double> measure) =>
+            panel?.Parent == columns && away && rowsBefore is not null
+                ? measure(rowsBefore[2].Size)
+                : measure((panel?.Parent as Grid)?.RowDefinitions[2].Height ?? new GridLength(1, GridUnitType.Star));
+
+        var state = away ? stateBefore : WindowState;
+        var size = WindowState == WindowState.Normal ? ClientSize : normalSize;
+
+        // A splitter leaves star weights in pixels, far past what the file accepts.
+        var (canvas, side) = Share(Column(WideColumn), Column(SideColumn),
+            WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
+
+        var (preview, inspector) = Share(
+            previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
+            Under(inspectorBox, Weight),
+            WindowLayout.DefaultPreviewWeight + WindowLayout.DefaultInspectorWeight);
+
+        return new WindowLayout
+        {
+            Maximized = state == WindowState.Maximized,
+            Width = size?.Width ?? layout?.Width ?? 0,
+            Height = size?.Height ?? layout?.Height ?? 0,
+            Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
+
+            CanvasWeight = canvas,
+            SideWeight = side,
+            PreviewWeight = preview,
+            InspectorWeight = inspector,
+
+            AssistantWidth = assistant is { IsVisible: true } ? assistantColumn!.Width.Value : assistantShare.Value,
+            AssistantOpen = assistant?.IsVisible == true,
+
+            ControlsHeight = knobs.View.IsVisible ? Under(knobs.View, length => length.Value) : controlsShare.Value,
+            ControlsOpen = knobs.View.IsVisible,
+
+            Code = document.ShowingCode,
+            Swapped = toolbar.Swap.IsChecked == true,
+        };
+
+        static double Weight(GridLength length) => length.IsStar ? length.Value : 1;
+
+        static (double, double) Share(double a, double b, double total) =>
+            a + b > 0 ? (a / (a + b) * total, b / (a + b) * total) : (total / 2, total / 2);
+    }
+
+    #endregion
+
+    #region Transport
+
+    // Play and pause, and the mute that goes with them, on the toolbar and on the
+    // full-screen preview.
+
+    /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
+    private TransportOverlay? transportOverlay;
+
+    private bool pauseShowsPlay;
+
+    internal bool Paused => playback.Paused;
+
+    internal bool Muted => playback.Muted;
+
+    private void TogglePause()
+    {
+        // A take is paced by the samples it is handed, so pausing under one would stop the file.
+        if (Recording.InHand || Recording.Counting) return;
+
+        if (playback.Paused) playback.Resume();
+        else playback.Pause();
+    }
+
+    /// <summary>Puts the toolbar button and the full-screen overlay in step with the transport.</summary>
+    private void SyncTransport()
+    {
+        // Recompiles call this on every knob frame, so the glyph is only swapped when it changes.
+        var paused = playback.Paused;
+
+        if (pauseShowsPlay != paused)
+        {
+            pauseShowsPlay = paused;
+            toolbar.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
+        }
+
+        toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
+
+        ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
+
+        foreach (var overlay in Transports)
+        {
+            overlay.Paused = paused;
+            overlay.Muted = playback.Muted;
+            overlay.Sounding = playback.Audible;
+        }
+    }
+
+    /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
+    private IEnumerable<TransportOverlay> Transports =>
+        new[] { transportOverlay, pictureWindow?.Transport }.OfType<TransportOverlay>();
+
+    #endregion
+
+    #region Recording
+
+    // The window's side of a take: which button press means what, and where the file
+    // goes. The take itself is TakeRecording.
+
+    /// <summary>The take this window is recording, counting in, or about to.</summary>
+    internal TakeRecording Recording { get; }
+
+    /// <summary>
+    /// What the toolbar button's press means: start a take, call off the count
+    /// before one, or end the one running. The same control does all three — a
+    /// take has no length, so stopping it is the only way it ever finishes.
+    /// </summary>
+    private async Task ToggleRecordAsync()
+    {
+        if (!toolbar.Record.IsEnabled) return;
+
+        if (Recording.Counting)
+        {
+            Recording.CallOffCount();
+            return;
+        }
+
+        if (Recording.Running)
+        {
+            Recording.Stop();
+            return;
+        }
+
+        await RecordAsync();
+    }
+
+    /// <summary>Asks where the take goes, counts it in, and starts it.</summary>
+    private async Task RecordAsync()
+    {
+        var kinds = Recording.Kinds();
+
+        if (kinds.Count == 0)
+        {
+            Report(TakeRecording.NothingToRecord);
+            return;
+        }
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Record",
+            FileTypeChoices = kinds,
+            SuggestedFileName = Takes.FileNameFor(files.Name),
+            DefaultExtension = kinds[0].Patterns?[0].TrimStart('*', '.'),
+        });
+
+        if (file?.TryGetLocalPath() is not { } path) return;
+
+        // A take is of a patch that is playing, and a paused one has no sound to record.
+        playback.Resume();
+
+        // Before the count rather than only as the file is opened: a count-in is
+        // three seconds of standing ready, and spending them to be told there is
+        // no ffmpeg is three seconds nobody gets back.
+        if (Recording.Refusal(path) is { } refused)
+        {
+            Report(refused);
+            return;
+        }
+
+        await Recording.CountInAsync(path, TakeRecording.CountInStep);
+    }
+
+    #endregion
+
+    #region Recovery
+
+    // What a crash would lose, and putting it back at the next start — ADR-0103.
+    // What is handed to WorkKeeper is the document as the unsaved question
+    // sees it — the patch, the text where the text is the document, what a bundle carried
+    // and the conversation — so that what comes back is what that question would have
+    // offered to save.
+
+    /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
+    private readonly WorkKeeper? keeper;
+
+    /// <summary>The document as a crash would lose it, or null while there is nothing to lose.</summary>
+    private RecoveredWork? Work() => !SomethingToLose ? null : new(
+        files.Name,
+        files.SoundFolder.Beside,
+        PatchIO.ToJson(editor.Patch),
+        document.Owned ? document.Text : null,
+        assistant?.ConversationToSave(),
+        files.Carried?.Bytes);
+
+    /// <summary>
+    /// Puts work a crash left behind back on the canvas, as the document it was and
+    /// unsaved — it is on no disk anybody chose.
+    /// </summary>
+    /// <returns>
+    /// Whether it came back. A patch naming a module no plugin now offers is refused
+    /// as a file would be, and kept for a start that has the plugin again.
+    /// </returns>
+    internal bool Recover(RecoveredWork work)
+    {
+        var loaded = PatchIO.Read(work.Patch);
+
+        if (!loaded.IsComplete)
+        {
+            Report($"Not restored. {loaded.Summary}", loaded.Detail);
+            return false;
+        }
+
+        files.Became(
+            work.Name,
+            work.Beside,
+            work.Files is { } held ? new BundleFiles(held, files.SoundFolder, files.PictureFolder) : null);
+
+        ClearPresetSelection();
+
+        editor.Patch = loaded.Patch;
+        RewindToZero();
+
+        if (work.Source is { } text)
+        {
+            // Written nowhere, so all of it is unsaved text.
+            document.TakeSource(text, saved: false);
+        }
+        else
+        {
+            document.DropSource();
+        }
+
+        assistant?.Open(work.Conversation);
+        editor.MarkUnsaved();
+
+        // Kept at once, since the orphan it came from is about to go.
+        keeper?.Keep(later: false);
+
+        Report($"Restored {work.Name ?? "the patch"} after a crash. It has not been saved.");
+
+        return true;
+    }
+
+    #endregion
+
+    #region Plugins and the preset site
+
+    // What the window keeps for PluginInstalls and PresetSlot: where plugins go, where the site is, and how to start again.
+
+    /// <summary>Where a package's plugin is installed, or null where this window installs nothing.</summary>
+    private readonly string? pluginFolder;
+
+    /// <summary>
+    /// Starts Flyback again once this window has closed, with a patch for it to open,
+    /// or null where a restart is not offered.
+    /// </summary>
+    private readonly Action<Reopen?>? relaunch;
+
+    /// <summary>
+    /// The patch the plugins window was opened for, which a restart from inside it opens
+    /// again — by then Flyback has the plugin it was refused for. Null at every other
+    /// moment, so installing something unrelated reopens nothing.
+    /// </summary>
+    private Reopen? refused;
+
+    /// <summary>Where the gallery lists shared presets from and the plugins window shared plugins, or null for nowhere.</summary>
+    private readonly Uri? presetSite;
+
+    /// <summary>Shared by every question put to the preset site, as an <see cref="HttpClient"/> is meant to be.</summary>
+    private static readonly Lazy<HttpClient> SiteClient = new(() => new HttpClient { Timeout = TimeSpan.FromMinutes(5) });
+
+    /// <summary>What the site is asked with in place of <see cref="SiteClient"/>, for a test.</summary>
+    internal HttpClient? SiteHttp { get; init; }
+
+    /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and where the patch and its key go, or null where none is chosen.</summary>
+    private (string Assembly, string Said)? Assisting()
+    {
+        if (assistant?.Chosen is not { } chosen || plugins.Provider(chosen) is not { } info) return null;
+        if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
+
+        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
+    }
+
+    /// <summary>What the gallery asks for shared presets, or null where this window has no site.</summary>
+    private PresetSite? PresetSite() => presetSite is null ? null : new PresetSite(SiteHttp ?? SiteClient.Value, presetSite);
+
+    /// <summary>The shared preset this launch was told to open again, or null.</summary>
+    private readonly string? openShared;
+
+    /// <summary>
+    /// Closes the window, asking about unsaved work as any close does, and starts
+    /// Flyback again behind it. False where the window stays: the question was
+    /// canceled, or a recording is running, which only its own button should end.
+    /// </summary>
+    private async Task<bool> RestartAsync()
+    {
+        if (Recording.InHand || !await MayReplaceThePatchAsync()) return false;
+
+        relaunch!(refused);
+
+        leaving = true;
+        Close();
+
+        return true;
+    }
+
+    #endregion
+
+    #region Missing plugins
+
+    // Offering the plugins a patch names that this Flyback does not have (ADR-0135).
+
+    /// <summary>How long the site is given before the offer is dropped and the refusal stands alone.</summary>
+    private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
+
+    /// <summary>
+    /// Offers what <paramref name="loaded"/> was refused for, where the plugin site has a
+    /// build of it for this system. Silent where it has none or there is no site: the
+    /// refusal has been reported already, and an offer of nothing is worse than none.
+    /// </summary>
+    /// <param name="open">
+    /// What this patch was, so that it can be opened again: a file on disk, or a preset
+    /// the site shared. Installing from the offer restarts Flyback, and this is what it
+    /// opens when it comes back up with the plugin.
+    /// </param>
+    private async Task OfferMissingPluginsAsync(PatchLoad loaded, Reopen? open = null)
+    {
+        if (loaded.MissingProviders.Count == 0 || presetSite is null) return;
+
+        using var cancel = new CancellationTokenSource(Looking);
+
+        var site = new PluginSite(SiteHttp ?? SiteClient.Value, presetSite);
+        var found = await MissingPlugins.FoundAsync(site, loaded, cancel.Token);
+
+        if (found.Count == 0) return;
+
+        if (!await this.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
+
+        // Live only while that window is up: coming back from it is nothing having been
+        // installed, or something having been that a restart was not asked for.
+        refused = open;
+        pluginInstalls.Awaited = found;
+
+        try
+        {
+            await pluginInstalls.ShowAsync(found);
+        }
+        finally
+        {
+            refused = null;
+            pluginInstalls.Awaited = [];
+        }
+    }
+
+    #endregion
+
+    #region Letters to the author
+
+    // Writing to the author, which the status bar's last glyph opens (ADR-0136).
+
+    private async Task WriteToTheAuthorAsync()
+    {
+        if (presetSite is not { } root)
+        {
+            Report("There is nowhere to send a letter: this copy has no site.");
+            return;
+        }
+
+        var http = SiteHttp ?? SiteClient.Value;
+
+        // Built once and both shown and sent, so what was read is what goes.
+        var about = SiteLetters.About(plugins, playback.Sound);
+
+        var said = await LetterView.AskAsync(
+            this,
+            about,
+            (mood, message, contact, cancel) => SiteLetters.SendAsync(http, root, mood, message, contact, about, cancel));
+
+        if (said is not null) Report(said);
+    }
+
+    #endregion
+
+    #region Usage
+
+    /// <summary>
+    /// What this run says about itself, which for every test and for a build with
+    /// nowhere to send anything is nothing at all.
+    /// </summary>
+    private readonly Usage usage;
+
+    /// <summary>
+    /// How tall each screen is in pixels, for what a run started as to put in a band;
+    /// empty where the platform will not say.
+    /// </summary>
+    private IReadOnlyList<int> ScreenHeights()
+    {
+        try
+        {
+            return Screens.All.Select(screen => screen.Bounds.Height).ToList();
+        }
+        catch (Exception)
+        {
+            return [];
+        }
+    }
+
+    #endregion
 }
