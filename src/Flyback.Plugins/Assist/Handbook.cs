@@ -76,8 +76,8 @@ internal static class Handbook
           `remap(in_low: -1, out_high: 1)`. A socket not named keeps its
           default.
         - **`let` names a signal.** Reading it twice is two wires out of one
-          module, not two modules. A name is bound once, and a socket takes
-          one wire.
+          module, not two modules. A name is bound once, a socket takes one
+          wire, and a knob is set once.
         - **`out` is the Output** every patch already has: `|> out.color`,
           `|> out.left`, `out.volume = 0.6`.
         - **Sugar**: `x`, `y`, `radius`, `angle`, `aspect` and `t` are

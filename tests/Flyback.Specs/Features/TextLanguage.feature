@@ -94,3 +94,12 @@ Feature: A patch can be written as text
     When the fixes it suggests are made
     Then it reads without complaint
     And the screen is not black
+
+  Scenario: Setting a knob twice is pointed out rather than the last one winning
+    Given the text:
+      """
+      out.volume = 0.5
+      out.volume = 0.6
+      """
+    Then the complaint quotes line 2
+    And the complaint says "already set on line 1"

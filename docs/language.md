@@ -247,6 +247,9 @@ that reads it.
 second `|> out.color` or a second `<-`, is an error naming the line of the
 first. It is not quietly replaced.
 
+**A knob is set once.** A second number for the same knob, in a call or as
+`name.port = …`, is an error naming the line of the first.
+
 ---
 
 ## 5. Sugar

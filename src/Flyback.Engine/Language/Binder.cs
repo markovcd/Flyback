@@ -48,6 +48,9 @@ public sealed class Binder
     /// <summary>The line that wired each socket the text wires.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> wired = [];
 
+    /// <summary>The line that set each knob the text sets.</summary>
+    private readonly Dictionary<(Guid Node, int Port), int> turned = [];
+
     private Guid coordinates;
     private Guid clock;
 
@@ -1350,17 +1353,20 @@ public sealed class Binder
         {
             if (patch.IncomingTo(target, port) is { } wire && wire.SourceNode == source && wire.SourcePort == output) return;
 
-            var socket = patch.Find(target) is { } node && modules.Get(node.TypeId) is { } def
-                ? (named.GetValueOrDefault(target) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
-                : "this socket";
-
-            Complain(IssueCode.WiredTwice, line, column, $"'{socket}' is already wired on line {first}. A socket takes one wire.");
+            Complain(IssueCode.WiredTwice, line, column,
+                $"'{SocketName(target, port)}' is already wired on line {first}. A socket takes one wire.");
             return;
         }
 
         wired[(target, port)] = line;
         patch.Connect(source, output, target, port);
     }
+
+    /// <summary>A socket as the text would say it: the module's name, a dot and the socket.</summary>
+    private string SocketName(Guid node, int port) =>
+        patch.Find(node) is { } instance && modules.Get(instance.TypeId) is { } def
+            ? (named.GetValueOrDefault(node) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
+            : "this socket";
 
     /// <summary>
     /// Sets a knob, having first asked whether the socket has one and whether it
@@ -1369,6 +1375,15 @@ public sealed class Binder
     private void Knob(NodeInstance node, NodeDef def, int port, Figure figure, int line, int column)
     {
         if (port < 0 || port >= def.Inputs.Count) return;
+
+        // One number per knob: a second would win without a word, and the first
+        // would read as though it still counted.
+        if (turned.TryGetValue((node.Id, port), out var first))
+        {
+            Complain(IssueCode.KnobSetTwice, line, column,
+                $"'{SocketName(node.Id, port)}' is already set on line {first}. A knob is set once.");
+            return;
+        }
 
         var spec = def.Inputs[port];
 
@@ -1418,6 +1433,7 @@ public sealed class Binder
         }
 
         node.InputValues[port] = (float)figure.Amount;
+        turned[(node.Id, port)] = line;
 
         // Only once a knob has actually been set, so that a refused number is
         // not offered as a place to write another one into. By the socket's own

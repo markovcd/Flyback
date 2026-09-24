@@ -145,6 +145,7 @@ dialect. A person who wants the dense form still writes it.
 | `let t = …`, `let x = …`, `def f(x)` | error: the word is already the clock or a coordinate |
 | `let out = …` | error |
 | a socket wired twice (`\|> out.color`, `<-`) | error, naming the line of the first |
+| a knob set twice (`a.freq = 3` after `sine(freq: 2)`) | error, naming the line of the first |
 | `let sine = …` | legal — §4 means modules are full ids, so there is no collision |
 
 `check --json` reports text that does not build with its line, column and

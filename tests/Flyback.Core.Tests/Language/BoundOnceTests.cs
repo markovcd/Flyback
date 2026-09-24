@@ -143,6 +143,31 @@ public class BoundOnceTests
     }
 
     [Fact]
+    public void A_knob_set_twice_points_at_the_first()
+    {
+        var issue = Refused(
+            """
+            let a = sine(freq: 2)
+            a.freq = 3
+            a |> out.left
+            """);
+
+        issue.Line.ShouldBe(2);
+        issue.Code.ShouldBe(IssueCode.KnobSetTwice);
+        issue.Message.ShouldContain("'a.freq' is already set on line 1");
+    }
+
+    [Fact]
+    public void A_knob_turned_by_two_statements_is_refused()
+    {
+        Refused(
+            """
+            out.volume = 0.5
+            out.volume = 0.6
+            """).Message.ShouldContain("'out.volume' is already set on line 1");
+    }
+
+    [Fact]
     public void A_socket_a_call_wired_takes_no_second_wire()
     {
         Refused(

@@ -50,6 +50,7 @@ public static class IssueCode
     public const string GivenTwice = "given-twice";
     public const string TooManyArguments = "too-many-arguments";
     public const string WiredTwice = "wired-twice";
+    public const string KnobSetTwice = "knob-set-twice";
     public const string NormalledSocket = "normalled-socket";
     public const string NotASignal = "not-a-signal";
     public const string KnobNeedsNumber = "knob-needs-number";
