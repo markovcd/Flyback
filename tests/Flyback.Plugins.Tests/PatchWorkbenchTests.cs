@@ -321,6 +321,20 @@ public class PatchWorkbenchTests
         }
     }
 
+    /// <summary>A lookup says what each setting on the node is for; the briefing names the setting only.</summary>
+    [Fact]
+    public async Task A_lookup_says_what_each_setting_is_for_and_the_briefing_does_not()
+    {
+        var bench = Bench();
+        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+
+        var described = await Call(bench, "describe_module", $$"""{"type_id":"{{NodeCatalog.ExpressionTypeId}}"}""");
+
+        formula.Help.ShouldNotBeEmpty();
+        described.Text.ShouldContain(formula.Help);
+        bench.Briefing.ShouldNotContain(formula.Help);
+    }
+
     [Fact]
     public async Task A_module_is_found_by_what_one_of_its_sockets_is_for()
     {

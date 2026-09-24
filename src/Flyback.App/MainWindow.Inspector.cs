@@ -539,7 +539,7 @@ public sealed partial class MainWindow
         // engine does not reference.
         foreach (var extra in def.Extras)
             if (EditorFor(extra, node, def, reading) is { } control)
-                inspector.Children.Add(control);
+                inspector.Children.Add(extra.Fields.Count == 0 ? Helped(control, extra.Help) : control);
 
         if (BuildKeyboardSection(node, def) is { } keyboard) inspector.Children.Add(keyboard);
 
@@ -706,8 +706,8 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// A socket's row with the socket's help as its tip, over the whole row rather
-    /// than the name alone. A row whose socket has none is handed back as it was.
+    /// A socket's or a setting's row with its help as its tip, over the whole row
+    /// rather than the name alone. A row with no help is handed back as it was.
     /// </summary>
     private static Control Helped(Control row, string help)
     {
@@ -1556,7 +1556,7 @@ public sealed partial class MainWindow
 
         foreach (var field in extra.Fields)
             if (BuildFieldRow(node, extra, field, reading) is { } control)
-                panel.Children.Add(control);
+                panel.Children.Add(Helped(control, field.Help));
 
         return panel;
     }

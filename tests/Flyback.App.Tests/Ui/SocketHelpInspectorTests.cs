@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -92,6 +93,19 @@ public class SocketHelpInspectorTests : UiTest
 
         freq.Help.ShouldBe(SocketHelp.Freq);
         ToolTip.GetTip(Row(window, "freq")).ShouldBe(SocketHelp.Freq);
+    }
+
+    /// <summary>A setting carried on the node has its help as the tip on its row, as a socket does.</summary>
+    [AvaloniaFact]
+    public void A_settings_row_carries_its_help_as_its_tip()
+    {
+        var window = Selected(NodeCatalog.ExpressionTypeId);
+
+        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+        var caption = All<TextBlock>(window).Single(t => t.Text == formula.Label);
+
+        formula.Help.ShouldNotBeEmpty();
+        caption.GetSelfAndVisualAncestors().OfType<Control>().Select(ToolTip.GetTip).ShouldContain(formula.Help);
     }
 
     /// <summary>The Output puts nothing out, so it gets no heading for it.</summary>

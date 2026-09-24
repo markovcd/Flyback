@@ -39,6 +39,17 @@ public abstract record ExtraField(string Key, string Label)
     public abstract string Format(JsonNode? stored);
 
     /// <summary>
+    /// What this value is for, in words that stand on their own: the inspector
+    /// shows them as the tip on its row, and a lookup reads them after its key.
+    /// Every shipped field has it.
+    /// </summary>
+    public string Help
+    {
+        get => field ?? string.Empty;
+        init;
+    }
+
+    /// <summary>
     /// A number, with everything a knob has: a range, a display and whether it
     /// rests between whole numbers.
     /// </summary>

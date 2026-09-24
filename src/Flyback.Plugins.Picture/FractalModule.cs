@@ -116,7 +116,7 @@ internal static class FractalModule
         /// </summary>
         public override IReadOnlyList<ExtraField> Fields =>
         [
-            new ExtraField.Choice(CountKey, "octaves", Counts, "4"),
+            new ExtraField.Choice(CountKey, "octaves", Counts, "4") { Help = "How many sizes of cloud it stacks. Each costs a noise lookup." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Counts { get; } =

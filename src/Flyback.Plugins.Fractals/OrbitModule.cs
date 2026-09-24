@@ -104,7 +104,7 @@ internal static class OrbitModule
                         new ChoiceOption(Mandelbrot, "Mandelbrot: from nought"),
                         new ChoiceOption(Julia, "Julia: from the start point"),
                     ],
-                    Mandelbrot),
+                    Mandelbrot) { Help = "Where the orbit starts: from nought, or from the point itself." },
             ]),
         ],
         Skin = Art.Skin("orbit"),

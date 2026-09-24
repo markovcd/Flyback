@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Every socket says what it is for: hovering an input's row in the panel shows it, the panel lists a module's outputs with theirs, and the assistant and `flyback-cli modules <module>` read the same words.
+- Every socket and every setting on a node says what it is for: hovering its row in the panel shows it, the panel lists a module's outputs with theirs, and the assistant and `flyback-cli modules <module>` read the same words.
 - The preset site starts with Fractals, a plugin of three modules about one point c: Mandelbrot, which maps every c in the classic colors, Julia, its picture, and Orbit, its sound, from nought or from a pixel of the Julia set, with Dive and Julia walk as presets.
 - A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
 - A patch's groups are written in its text and read back, a group built from text opens shut, and the cursor on a group's block in the text view shows the group in the panel.

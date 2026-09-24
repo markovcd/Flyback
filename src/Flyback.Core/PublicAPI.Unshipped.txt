@@ -158,3 +158,11 @@ const Flyback.Core.Graph.SocketHelp.Moved = "The moved coordinate. Patch it into
 const Flyback.Core.Graph.SocketHelp.Lfo = "The sweep itself, -1 to 1. It works on the picture too." -> string!
 const Flyback.Core.Graph.SocketHelp.Radius = "Distance from the center." -> string!
 const Flyback.Core.Graph.SocketHelp.Distance = "Negative inside, zero on the edge, positive outside." -> string!
+Flyback.Core.Graph.ExtraField.Help.get -> string!
+Flyback.Core.Graph.ExtraField.Help.init -> void
+virtual Flyback.Core.Graph.NodeExtra.Help.get -> string!
+Flyback.Core.Graph.NodeExtra.Explained() -> System.Collections.Generic.IEnumerable<(string! Name, string! Help)>!
+override Flyback.Core.Graph.StepsExtra.Help.get -> string!
+override Flyback.Core.Graph.ScaleExtra.Help.get -> string!
+override Flyback.Core.Graph.SampleExtra.Help.get -> string!
+override Flyback.Core.Graph.PictureExtra.Help.get -> string!

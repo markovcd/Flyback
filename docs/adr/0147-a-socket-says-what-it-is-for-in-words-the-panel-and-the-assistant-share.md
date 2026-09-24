@@ -35,8 +35,12 @@ a socket is for. Help on every socket is more than the briefing's budget
 should carry up front for words the assistant needs only on the module it is
 about to patch.
 
-**Every socket says what it is for.** No socket ships without help, outputs
-included; a shipped module with a silent socket fails its scenario.
+**Every socket says what it is for, and so does everything a module carries.**
+No socket ships without help, outputs included. An extra's fields each carry
+`ExtraField.Help`, and an engine kind edited by a control of its own (a
+sequencer's steps, a scale, a file) carries `NodeExtra.Help` instead; the panel
+shows it as the tip on the row, and the lookups print it beside the key. A
+shipped module with a silent socket or a silent setting fails its scenario.
 
 **A socket that means the same everywhere is described once, and opts in.**
 `SocketHelp` holds the standard texts as constants — a position's `x` and `y`,

@@ -23,5 +23,6 @@ Feature: Every socket says what it is for
     Given every shipped module
     Then each one says what it is for
     And every socket says what it is for
+    And everything a module carries says what it is for
     And no socket's help opens with the socket's own name
     And every socket's help is written in sentences

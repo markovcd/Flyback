@@ -385,7 +385,7 @@ internal sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functio
 
     public override string Key => StateKey;
 
-    public override IReadOnlyList<ExtraField> Fields { get; } = [new ExtraField.Text(FormulaField, "formula", Fresh)];
+    public override IReadOnlyList<ExtraField> Fields { get; } = [FieldOf];
 
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
     {
@@ -407,5 +407,8 @@ internal sealed record FormulaExtra(IReadOnlyDictionary<string, NodeDef> Functio
     public override string Announce() =>
         $"  {StateKey} {FormulaField}, the formula as a string — not a knob";
 
-    private static readonly ExtraField FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh);
+    private static readonly ExtraField FieldOf = new ExtraField.Text(FormulaField, "formula", Fresh)
+    {
+        Help = "The formula over 'a' to 'd', as typed. One that does not read gives 0.",
+    };
 }

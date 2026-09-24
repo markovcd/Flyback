@@ -129,7 +129,13 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
         // What the module carries that is neither a socket nor a knob, which
         // the two loops above cannot show — the whole reason a model asking
         // about a Sequencer or a Quantiser would otherwise miss half of it.
-        foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
+        foreach (var extra in def.Extras)
+        {
+            text.AppendLine(Vocabulary.Announce(extra));
+
+            foreach (var (name, help) in extra.Explained())
+                if (help.Length > 0) text.Append("    ").Append(name).Append(" — ").AppendLine(help);
+        }
 
         if (def.Description.Length > 0) text.AppendLine(def.Description);
 

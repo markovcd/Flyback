@@ -14,7 +14,7 @@ public partial class NodeCatalog
     private const string FirstBus = "bus";
 
     private static readonly SettingsExtra BusExtra =
-        new(BusKey, [new ExtraField.Text(BusField, "bus", FirstBus)]);
+        new(BusKey, [new ExtraField.Text(BusField, "bus", FirstBus) { Help = "The bus's name: a Send and a Receive with the same one are joined." }]);
 
     /// <summary>The bus a Send or a Receive is on, trimmed; null for any other module.</summary>
     public static string? BusOf(NodeInstance node) =>

@@ -40,7 +40,7 @@ internal static class Escape
         new ExtraField.Choice(
             CountKey, "iterations",
             [.. Counts.Select(n => new ChoiceOption(n.ToString(), $"{n} iterations"))],
-            Fallback),
+            Fallback) { Help = "How long each point is run before it counts as in the set. More is finer edges, and slower." },
     ]);
 
     /// <summary>Sets how many iterations an instance runs, for a preset assembling one in code.</summary>

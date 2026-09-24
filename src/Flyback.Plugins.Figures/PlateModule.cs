@@ -112,7 +112,7 @@ internal static class PlateModule
 
         public override IReadOnlyList<ExtraField> Fields =>
         [
-            new ExtraField.Choice(CountKey, "modes", Counts, "3"),
+            new ExtraField.Choice(CountKey, "modes", Counts, "3") { Help = "How many of the plate's modes ring at once. Each costs a few ops." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Counts { get; } =

@@ -83,6 +83,14 @@ public sealed class HelpSteps
     [Then("each one says what it is for")]
     public void ThenEachIsDescribed() => Each(def => def.Description.Length > 0 ? null : "no description");
 
+    [Then("everything a module carries says what it is for")]
+    public void ThenEveryExtraIsHelped() => Each(def =>
+    {
+        var silent = def.Extras.SelectMany(extra => extra.Explained()).Where(said => said.Help.Length == 0).Select(said => $"'{said.Name}'").ToList();
+
+        return silent.Count == 0 ? null : $"{string.Join(", ", silent)} says nothing";
+    });
+
     [Then("every socket says what it is for")]
     public void ThenEverySocketIsHelped() => EachSocket((port, _) => port.Help.Length > 0 ? null : "says nothing");
 

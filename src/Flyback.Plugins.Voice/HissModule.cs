@@ -65,12 +65,15 @@ internal static class HissModule
                 StateKey,
                 [
                     new ExtraField.Choice(
-                        NoiseKey, "noise", [new ChoiceOption(White, "White"), new ChoiceOption(Pink, "Pink")], White),
+                        NoiseKey, "noise", [new ChoiceOption(White, "White"), new ChoiceOption(Pink, "Pink")], White)
+                    {
+                        Help = "White is bright hiss; pink is darker, like rain.",
+                    },
                     new ExtraField.Choice(
                         BandKey,
                         "band",
                         [new ChoiceOption(Low, "Low"), new ChoiceOption(Band, "Band"), new ChoiceOption(High, "High")],
-                        High),
+                        High) { Help = "What the filter keeps: under 'cutoff', around it or over it." },
                 ]),
         ],
         Sinks = ModuleSinks.Audio,

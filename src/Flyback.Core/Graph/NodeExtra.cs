@@ -95,6 +95,16 @@ public abstract record NodeExtra
     /// </remarks>
     public virtual IReadOnlyList<ExtraField> Fields => [];
 
+    /// <summary>
+    /// What this kind is for, where it is edited by a control of its own rather
+    /// than from <see cref="Fields"/>, whose fields each say what they are for.
+    /// </summary>
+    public virtual string Help => string.Empty;
+
+    /// <summary>What this kind carries and what each is for: a field at a time, or the kind itself where it declares none.</summary>
+    public IEnumerable<(string Name, string Help)> Explained() =>
+        Fields.Count > 0 ? Fields.Select(field => (field.Key, field.Help)) : [(Key, Help)];
+
     /// <summary>What a freshly placed instance carries.</summary>
     /// <remarks>
     /// Seeding is here and copying is not: a copy is one deep clone of
@@ -312,6 +322,8 @@ public sealed record StepsExtra(StepSpec Spec) : NodeExtra
     public override string Announce() =>
         $"  notes  a list of up to {NodeCatalog.MaxSteps} — not knobs";
 
+    public override string Help => "The steps it plays in turn: add, remove and reorder them here.";
+
     private static string Number(float value) =>
         value.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
@@ -366,6 +378,8 @@ public sealed record ScaleExtra(IReadOnlyList<int> Default) : NodeExtra
 
     public override string Announce() =>
         $"  scale  which of the {Pitch.Classes} pitch classes are on — not knobs";
+
+    public override string Help => "The notes the scale keeps. A note switched on is on in every octave.";
 }
 
 /// <summary>The audio file a player reads.</summary>
@@ -448,6 +462,8 @@ public sealed record SampleExtra : NodeExtra
 
     public override string Announce() =>
         "  file   a path to a WAV — not a knob";
+
+    public override string Help => "The WAV it plays. The patch keeps its path, so moving the file breaks it.";
 }
 
 /// <summary>The picture a module shows.</summary>
@@ -532,4 +548,6 @@ public sealed record PictureExtra : NodeExtra
 
     public override string Announce() =>
         "  picture   a path to a PNG — not a knob";
+
+    public override string Help => "The PNG it shows. The patch keeps its path, so moving the file breaks it.";
 }

@@ -183,7 +183,7 @@ public partial class NodeCatalog
                         TransformOrderKey,
                         "order",
                         [new ChoiceOption(ZoomThenTurn, "Zoom, then turn"), new ChoiceOption(TurnThenZoom, "Turn, then zoom")],
-                        ZoomThenTurn),
+                        ZoomThenTurn) { Help = "Whether it zooms before it turns or after." },
                 ]),
         ],
     };

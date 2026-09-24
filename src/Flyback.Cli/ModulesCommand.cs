@@ -29,7 +29,8 @@ internal sealed record Input(
     string Help);
 
 /// <summary>What a module carries that is neither a socket nor a knob.</summary>
-internal sealed record Carried(string Key, string Says);
+/// <param name="Help">What each of its fields is for, or the extra itself where it has none.</param>
+internal sealed record Carried(string Key, string Says, IReadOnlyDictionary<string, string> Help);
 
 /// <summary>
 /// Says what modules this build has, or everything about one of them.
@@ -80,7 +81,12 @@ internal static class ModulesCommand
         var listed = Listed(catalog, def);
         var inputs = def.Inputs.Select(Described).ToArray();
         var piped = Piped(def);
-        var carried = def.Extras.Select(extra => new Carried(extra.Key, extra.Announce().Trim())).ToArray();
+        var carried = def.Extras
+            .Select(extra => new Carried(
+                extra.Key,
+                extra.Announce().Trim(),
+                extra.Explained().ToDictionary(said => said.Name, said => said.Help, StringComparer.Ordinal)))
+            .ToArray();
 
         if (json)
         {
@@ -155,7 +161,13 @@ internal static class ModulesCommand
             output.WriteLine();
             output.WriteLine("carries");
 
-            foreach (var extra in carried) output.WriteLine($"  {extra.Says}");
+            foreach (var extra in carried)
+            {
+                output.WriteLine($"  {extra.Says}");
+
+                foreach (var (field, help) in extra.Help)
+                    if (help.Length > 0) output.WriteLine($"       {field}: {help}");
+            }
         }
 
         return Exit.Ok;

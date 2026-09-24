@@ -78,7 +78,7 @@ internal static class FmModule
                             new ChoiceOption(Pair, "Pair"),
                             new ChoiceOption(Organ, "Organ"),
                         ],
-                        Stack),
+                        Stack) { Help = "Which operators feed which, and which are heard." },
                 ]),
         ],
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Oscillators))

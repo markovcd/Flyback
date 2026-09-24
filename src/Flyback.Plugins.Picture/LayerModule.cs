@@ -75,7 +75,7 @@ internal static class LayerModule
 
         public override IReadOnlyList<ExtraField> Fields =>
         [
-            new ExtraField.Choice(ModeKey, "mode", Options, Id(Mode.Normal)),
+            new ExtraField.Choice(ModeKey, "mode", Options, Id(Mode.Normal)) { Help = "How 'top' is laid over 'base', as in an image editor." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Options { get; } =

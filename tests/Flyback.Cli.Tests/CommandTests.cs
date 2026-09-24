@@ -753,6 +753,22 @@ public class CommandTests
         }
     }
 
+    /// <summary>What each setting on the node is for is under the one it belongs to, and in the JSON beside it.</summary>
+    [Fact]
+    public void A_described_module_says_what_each_setting_is_for()
+    {
+        var formula = NodeCatalog.BuiltIn.Require(NodeCatalog.ExpressionTypeId).Extras.Single().Fields.Single();
+
+        var (_, prose, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, NodeCatalog.ExpressionTypeId, false, o, e));
+        var (_, json, _) = Run((o, e) => ModulesCommand.Describe(NodeCatalog.BuiltIn, NodeCatalog.ExpressionTypeId, true, o, e));
+
+        using var document = JsonDocument.Parse(json);
+
+        formula.Help.ShouldNotBeEmpty();
+        prose.ShouldContain($"{formula.Key}: {formula.Help}");
+        document.RootElement.GetProperty("carries")[0].GetProperty("help").GetProperty(formula.Key).GetString().ShouldBe(formula.Help);
+    }
+
     /// <summary>The palette's name finds a module as well as its type id, whichever case it is typed in.</summary>
     [Fact]
     public void A_module_is_found_by_its_name_as_well_as_its_type_id()

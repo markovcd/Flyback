@@ -130,7 +130,7 @@ public partial class NodeCatalog
                         InkModeKey,
                         "mode",
                         [new ChoiceOption(InkAdd, "Add"), new ChoiceOption(InkOver, "Over")],
-                        InkAdd),
+                        InkAdd) { Help = "Add lays the ink on as light; over covers what is under it, like paint." },
                 ]),
         ],
     };

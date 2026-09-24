@@ -86,7 +86,7 @@ internal static class OvertonesModule
 
         public override IReadOnlyList<ExtraField> Fields =>
         [
-            new ExtraField.Choice(CountKey, "partials", Counts, "8"),
+            new ExtraField.Choice(CountKey, "partials", Counts, "8") { Help = "How many overtones it reads off the picture. Each is another read of it." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Counts { get; } =

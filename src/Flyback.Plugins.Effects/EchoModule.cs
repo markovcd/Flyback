@@ -34,7 +34,10 @@ internal static class EchoModule
     private static readonly ExtraField.Number Division = new(
         DivisionKey,
         "steps per beat",
-        new PortSpec("steps per beat", PortKind.Scalar, 4f, 1f, 16f, -1, PortDisplay.Integer));
+        new PortSpec("steps per beat", PortKind.Scalar, 4f, 1f, 16f, -1, PortDisplay.Integer))
+    {
+        Help = "What 'left' and 'right' count in: 4 makes a step a sixteenth.",
+    };
 
     public static NodeDef Definition { get; } = new(
         TypeId, "Echo", ModuleCategories.TimeEffects,
@@ -71,7 +74,7 @@ internal static class EchoModule
                         TapsKey,
                         "taps",
                         [new ChoiceOption(InARow, "In a row"), new ChoiceOption(SideBySide, "Side by side")],
-                        InARow),
+                        InARow) { Help = "In a row, the repeats cross from side to side; side by side, each side repeats alone." },
                     Division,
                 ]),
         ],

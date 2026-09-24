@@ -117,8 +117,8 @@ internal static class TextModule
 
         public override IReadOnlyList<ExtraField> Fields =>
         [
-            new ExtraField.Text(LinesKey, "lines", Greeting, Multiline: true),
-            new ExtraField.Choice(FontKey, "font", Fonts, BitmapFont.Pixel.Id),
+            new ExtraField.Text(LinesKey, "lines", Greeting, Multiline: true) { Help = "The text, a line to a row. 'line' picks which one shows." },
+            new ExtraField.Choice(FontKey, "font", Fonts, BitmapFont.Pixel.Id) { Help = "Pixel, or Tiny: blockier, and one case." },
         ];
 
         private static IReadOnlyList<ChoiceOption> Fonts { get; } =
