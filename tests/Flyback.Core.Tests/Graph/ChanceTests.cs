@@ -101,6 +101,16 @@ public class ChanceTests
     [Theory]
     [InlineData(0)]
     [InlineData(1)]
+    public void A_pulse_s_low_half_is_silence_on_both(int port)
+    {
+        var rig = new Rig(port);
+
+        for (var i = 0; i < 50; i++) rig.Step(-1f, 0.5f).ShouldBe(0d);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
     public void Gate_and_else_never_both_play_a_note_and_between_them_play_every_one(int port)
     {
         var mine = new Rig(port);

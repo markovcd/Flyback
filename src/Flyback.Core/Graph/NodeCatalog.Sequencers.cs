@@ -226,7 +226,10 @@ public partial class NodeCatalog
 
         em.UnitWrite(cell, next);
 
-        return [em.Mul(gate, next), em.Mul(gate, em.Sub(one, next))];
+        // A Pulse's low half is a shut gate, and is silence on both.
+        var open = em.Binary(OpCode.Max, gate, em.Constant(0f));
+
+        return [em.Mul(open, next), em.Mul(open, em.Sub(one, next))];
     }
 
     private static Slot[] EmitHold(Emitter em, EmitContext node)
