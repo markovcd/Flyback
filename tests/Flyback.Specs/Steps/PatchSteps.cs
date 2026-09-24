@@ -337,6 +337,7 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = Math.Max(from, to);
     }
 
+    [Given("its frequency is turned to {float} Hz")]
     [When("its frequency is turned to {float} Hz")]
     public void WhenTheFrequencyIsTurned(float frequency)
     {
