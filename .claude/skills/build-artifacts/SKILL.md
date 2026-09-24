@@ -16,15 +16,21 @@ The version is the next minor after the latest tag, and a missing changelog head
 a warning here, not a failure. The build is marked a local one, so its runs count as debug
 in the usage statistics, and it trusts only the local key.
 
-## Run it from the main checkout
+## Run it on `main`, in the main worktree
 
-Run it once `main` has been fast-forwarded, from the main checkout rather than a worktree, so
-what is built is the commit that landed and the output is where the user looks:
+Only ever run `release.sh` in the main worktree with `main` checked out, never in a
+`.claude/worktrees/...` worktree and never on a side branch. Anywhere else it builds a commit
+that has not landed, and `dist/` ends up in a folder the user does not look in. Fast-forward
+`main` first, then check the branch before starting:
 
 ```bash
 MAIN="$(git rev-parse --path-format=absolute --git-common-dir)/.."
-cd "$MAIN" && ./release.sh > /tmp/release.log 2>&1; echo "exit $?"
+cd "$MAIN" && [ "$(git branch --show-current)" = main ] \
+  && ./release.sh > /tmp/release.log 2>&1; echo "exit $?"
 ```
+
+If the main worktree is on another branch, it is someone's work in progress: do not switch it.
+Say so and leave the build for the user.
 
 Run it in the background: the gate alone is a couple of minutes and the publishes add a few
 more, and nothing else in the session waits on it. One build at a time; a second

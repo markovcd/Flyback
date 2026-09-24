@@ -24,7 +24,7 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.
 - `site-screenshots`: retaking `site/assets/shots` from the real app.
 - `site-audio-tracks`: rebuilding the website's listening-row MP3s.
-- `build-artifacts`: running `release.sh` after a feature lands on `main`, so the build is under `dist/`.
+- `build-artifacts`: running `release.sh` after a feature lands on `main`, only ever on `main` in the main worktree, so the build is under `dist/`.
 - `performance`: the open leads for making a patch run faster, what has been ruled out, and how to measure it.
 
 `vibe-check`, which finds what the catalog is missing by reading what an unchecked agent reaches for, lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
