@@ -1168,85 +1168,9 @@ public sealed partial class MainWindow : Window
     {
         if (assistant is not { } panel) return;
 
-        // Every section is a set of controls lent to the window rather than
-        // built for it, so what they were last set to is still on them the next
-        // time this is opened. The window around them is built fresh, so each
-        // section the window owns has to be taken back from the last one first.
-        foreach (var section in new[]
-                 { outputSections.Graphics, canvasSection.View, outputSections.Recording, outputSections.Sound, midiSection, filesSection.View, updatesSection.View, usageSection.View })
-            if (section.Parent is ContentControl lender) lender.Content = null;
-
-        var save = new Button { Content = "Save", Width = 84 };
-
-        // Asked as the window opens rather than kept from the last time: ffmpeg
-        // may have been installed, moved or taken away since, and the Recording
-        // tab's note is only worth anything if it is about now. Not awaited —
-        // the window opens while the search runs and the note fills itself in.
+        // Asked as the window opens rather than kept from the last time, and not
+        // awaited: the window opens while the search runs and the note fills itself in.
         _ = outputSections.ShowFfmpegAsync();
-
-        // Tabs rather than one long column, so moving between sections is a
-        // click rather than a scroll, listed down the left so a section added
-        // later is one more row rather than a strip running out of width. A
-        // fixed size, so the window does not jump as the sections are flicked
-        // through; a section taller than that scrolls inside its own tab. Save
-        // sits under them all, because it saves them all — not only the tab
-        // showing.
-        var tabs = new TabControl
-        {
-            Name = "settingsTabs",
-            TabStripPlacement = Dock.Left,
-            Width = SettingsWidth,
-            Height = SettingsHeight,
-            Padding = new Thickness(4, 6, 0, 0),
-        };
-
-        tabs.Items.Add(SectionTab("Graphics", outputSections.Graphics));
-        tabs.Items.Add(SectionTab("Canvas", canvasSection.View));
-        tabs.Items.Add(SectionTab("Recording", outputSections.Recording));
-        tabs.Items.Add(SectionTab("Sound", outputSections.Sound));
-        tabs.Items.Add(SectionTab("MIDI", midiSection));
-        tabs.Items.Add(SectionTab("Assistant", panel.SettingsSection()));
-        tabs.Items.Add(SectionTab("Files", filesSection.View));
-        tabs.Items.Add(SectionTab("Updates", updatesSection.View));
-        tabs.Items.Add(SectionTab("Usage", usageSection.View));
-
-        var content = new StackPanel { Spacing = 12, Margin = new Thickness(18, 4, 18, 18) };
-
-        // Cancel answers exactly what the cross and Escape answer, so all three
-        // take the one way out below rather than each undoing things itself.
-        var cancel = new Button { Content = "Cancel", Width = 84 };
-
-        var buttons = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            Children = { save, cancel },
-        };
-
-        // A line rather than a box around the tabs, so it reads as one sheet
-        // that ends before the buttons rather than a bordered pane sitting on
-        // another.
-        var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
-
-        content.Children.Add(tabs);
-        content.Children.Add(divider);
-        content.Children.Add(buttons);
-
-        save.Click += (_, _) =>
-        {
-            panel.SaveSettings();
-            SaveOutputSettings();
-            updatesSection.Save();
-            usageSection.Save();
-            canvasSection.Save();
-            filesSection.Save();
-
-            // Saving is the end of the errand, so the window goes with it.
-            Dialog.Close(save, true);
-        };
-
-        cancel.Click += (_, _) => Dialog.Close(cancel, false);
 
         bool saved;
 
@@ -1256,19 +1180,38 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            saved = await this.ShowDialog<bool>("Settings", content);
+            saved = await SettingsDialog.ShowAsync(this,
+            [
+                ("Graphics", outputSections.Graphics),
+                ("Canvas", canvasSection.View),
+                ("Recording", outputSections.Recording),
+                ("Sound", outputSections.Sound),
+                ("MIDI", midiSection),
+                ("Assistant", panel.SettingsSection()),
+                ("Files", filesSection.View),
+                ("Updates", updatesSection.View),
+                ("Usage", usageSection.View),
+            ]);
         }
         finally
         {
             settingsAreUp = false;
         }
 
-        // Cancel, the cross and Escape all answer false — see Dialog.ShowDialog —
-        // which is every way out of this window that is not Save. Whatever was typed
-        // or picked since it opened belongs to this window, and only Save is
-        // allowed to keep it.
-        if (saved) return;
+        if (saved)
+        {
+            panel.SaveSettings();
+            SaveOutputSettings();
+            updatesSection.Save();
+            usageSection.Save();
+            canvasSection.Save();
+            filesSection.Save();
 
+            return;
+        }
+
+        // Whatever was typed or picked since it opened belongs to that window, and
+        // only Save is allowed to keep it.
         panel.DiscardSettings();
         outputSections.Show(outputSettings);
         updatesSection.Show();
@@ -1276,48 +1219,6 @@ public sealed partial class MainWindow : Window
         canvasSection.Show();
         filesSection.Show();
     }
-
-    /// <summary>
-    /// One section of the settings window as a tab. The header is a text block
-    /// sized like the rest of the window, because the theme's own tab header is
-    /// set at page-title size.
-    /// </summary>
-    /// <remarks>
-    /// The section scrolls in its own viewer, since the tabs are a fixed height
-    /// and an assistant's form is as long as its provider declares it to be.
-    /// </remarks>
-    private static TabItem SectionTab(string name, Control section)
-    {
-
-        section.HorizontalAlignment = HorizontalAlignment.Left;
-
-        return new TabItem
-        {
-            Header = new TextBlock { Text = name, FontSize = Text.Emphasis, FontWeight = FontWeight.SemiBold },
-            Content = new Border
-            {
-                Padding = new Thickness(16),
-                Child = new ScrollViewer
-                {
-                    HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                    Content = section,
-                },
-            },
-            Padding = new Thickness(4, 6, 12, 6),
-            Height = 46,
-            Width = 120,
-        };
-    }
-
-    /// <summary>
-    /// The settings tabs' size, list and section together: wide enough for the
-    /// list beside a 280-pixel section with room for its scroll bar, and tall
-    /// enough for every tab in one column and an assistant's usual form without a scroll bar.
-    /// </summary>
-    private const double SettingsWidth = 480;
-
-    /// <inheritdoc cref="SettingsWidth"/>
-    private const double SettingsHeight = 460;
 
     /// <summary>
     /// The About window. Its contents are built fresh each time rather than kept
