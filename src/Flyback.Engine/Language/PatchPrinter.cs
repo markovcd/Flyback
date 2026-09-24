@@ -825,17 +825,17 @@ public static class PatchPrinter
                 used.Add(0);
                 used.Add(1);
             }
-            else if (signal < 0 && Forward(node.Id, 0) is { } leading)
+            else if (signal < 0 && MainLine(node, def) is var (port, wire))
             {
-                // Otherwise the first socket, said with '_'. It is what turns a
-                // patch into the chain it was built as, rather than a name bound
-                // for every module that has no 'in'.
-                var part = From(leading);
+                // Otherwise the socket the longest chain arrives on, said with
+                // '_'. It is what turns a patch into the chain it was built as,
+                // rather than a name bound for every module that has no 'in'.
+                var part = From(wire);
 
                 piped = part.Text;
                 before.AddRange(part.Calls);
-                used.Add(0);
-                landing = 0;
+                used.Add(port);
+                landing = port;
             }
 
             var arguments = new List<string>();
@@ -886,6 +886,73 @@ public static class PatchPrinter
                 [.. before, node.Id, .. after]);
         }
 
+        /// <summary>
+        /// The socket a module with no <c>in</c> is piped into: the one the longest
+        /// chain of written-out calls arrives on, else the first, else none.
+        /// </summary>
+        /// <remarks>
+        /// A name, a coordinate or a sum reads as well inside the brackets as
+        /// before the pipe, so only a call counts toward a chain. Ties go to the
+        /// earlier socket.
+        /// </remarks>
+        private (int Port, Connection Wire)? MainLine(NodeInstance node, NodeDef def)
+        {
+            (int Port, Connection Wire)? best = null;
+            var longest = 0;
+
+            for (var port = 0; port < def.Inputs.Count; port++)
+            {
+                if (Forward(node.Id, port) is not { } wire) continue;
+
+                var length = Chain(wire.SourceNode);
+
+                if (length <= longest) continue;
+
+                longest = length;
+                best = (port, wire);
+            }
+
+            return best ?? (Forward(node.Id, 0) is { } leading ? (0, leading) : null);
+        }
+
+        private readonly Dictionary<Guid, int> chains = [];
+
+        /// <summary>How many written-out calls a module's text is a chain of, counting itself.</summary>
+        private int Chain(Guid id)
+        {
+            if (chains.TryGetValue(id, out var known)) return known;
+
+            // Settled before the walk, so a loop the backwards wires missed ends here.
+            chains[id] = 0;
+
+            if (id == plan.Coord || id == plan.Clock || plan.Bound.Contains(id)) return 0;
+            if (patch.Find(id) is not { } node || modules.Get(node.TypeId) is not { } def) return 0;
+
+            var longest = 0;
+
+            for (var port = 0; port < def.Inputs.Count; port++)
+                if (Forward(id, port) is { } wire)
+                    longest = Math.Max(longest, Chain(wire.SourceNode));
+
+            // A sum over names is written as the sum and reads as one; a sum
+            // reading a chain, or one the arithmetic cannot say, is the call.
+            if (longest == 0 && Summed(node, def)) return 0;
+
+            return chains[id] = longest + 1;
+        }
+
+        /// <summary>Whether an Expression can be written as its sum, as far as its own formula and sockets say.</summary>
+        private bool Summed(NodeInstance node, NodeDef def)
+        {
+            if (def.Extra<FormulaExtra>() is not { } extra) return false;
+
+            var reads = new List<(int Socket, bool After)>();
+
+            if (Formula.Infix(FormulaExtra.Of(node), extra.Functions, _ => "0", _ => "a", reads) is null) return false;
+
+            return reads.All(read => Forward(node.Id, read.Socket) is not null);
+        }
+
         /// <summary>A whole module, for a pipe that carries a position on.</summary>
         private Part Whole(Guid id)
         {
@@ -912,6 +979,7 @@ public static class PatchPrinter
 
             plan.Bound.Add(node.Id);
             plan.Names[node.Id] = Unique(Wanted(node, modules), plan.Taken);
+            chains.Clear();
 
             return From(wire);
         }

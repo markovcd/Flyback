@@ -671,8 +671,10 @@ The printer emits a `let` for any module that more than one wire leaves, that
 nothing leaves, whose output is read from a socket other than the first — a
 Sequencer's `gate` reads better off a name than off the end of the call that
 wrote its tune — or that somebody named. It inlines everything else into
-chains, writing `_` where the pipe lands on a socket that is not `in`, and it
-gives a `let` to anything that would otherwise be a pipeline inside an argument.
+chains, and gives a `let` to anything that would otherwise be a pipeline inside
+an argument. A module with no `in` is piped on the socket the longest chain
+arrives at, written `_`, so the line follows the patch's own spine and the names
+and coordinates it reads go in the brackets.
 
 Numbers are written to whatever precision reads back as the same knob, and no
 further: a twelfth prints as `0.083333336` rather than `0.083333`, because the

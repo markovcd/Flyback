@@ -225,6 +225,27 @@ public class PrinterTests
             .ShouldBe("drums.wav");
     }
 
+    /// <summary>
+    /// A module with no <c>in</c> is piped on the socket its chain arrives at,
+    /// wherever that sits, and the names and coordinates go in the brackets.
+    /// Piped on its first socket, the chain would be lifted out as a binding
+    /// and a coordinate would stand at the head of the line.
+    /// </summary>
+    [Fact]
+    public void The_chain_is_the_line_and_the_rest_is_arguments()
+    {
+        var built = PatchLanguage.Build(
+            "t |> fract() |> rings(freq: _) |> color.hsv(hue: x, saturation: _, value: y) |> out.color",
+            NodeCatalog.BuiltIn).Patch;
+
+        var again = Reread(built, out var source);
+
+        source.ShouldContain("|> color.hsv(hue: x, saturation: _, value: y)");
+        source.ShouldNotContain("let ");
+        Fingerprint(again.CompileForVideo(NodeCatalog.BuiltIn).Program)
+            .ShouldBe(Fingerprint(built.CompileForVideo(NodeCatalog.BuiltIn).Program));
+    }
+
     [Fact]
     public void An_empty_patch_prints_to_nothing_much() =>
         PatchLanguage.Build(PatchPrinter.Print(Preset("Empty"), NodeCatalog.BuiltIn), NodeCatalog.BuiltIn)

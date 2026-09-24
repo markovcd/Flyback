@@ -3,6 +3,7 @@
 ## Unreleased
 
 - A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
+- A patch written out as text follows its own chain, with what the chain reads in the brackets.
 - In the text language a pipe lands on `in`, a position or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
 - The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, and a socket wired twice, and `flyback-cli check --json` reports it by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
