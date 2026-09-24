@@ -170,6 +170,16 @@ Feature: A patch can be written as text
     Then the panel has a knob "Level" resting at 0.8
     And the speakers are not silent
 
+  Scenario: A panel knob left somewhere by hand rests there in the text
+    Given the text:
+      """
+      panel level = 0.8
+      sine(freq: 220, amp: level) |> out.left
+      """
+    When the panel knob "level" is left at 0.25
+    Then the text has the line "panel level = 0.25"
+    And the panel has a knob "level" resting at 0.25
+
   Scenario: A patch needing a plugin this build lacks says so once, by name
     Given the text:
       """

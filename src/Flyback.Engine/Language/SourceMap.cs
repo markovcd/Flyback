@@ -423,6 +423,114 @@ public sealed class SourceMap
         return found;
     }
 
+    /// <summary>Each panel knob the text declares, by the id the binder gives it, and the word it is called by.</summary>
+    public IReadOnlyDictionary<Guid, string> PanelWords =>
+        Panels().ToDictionary(panel => Binder.PanelId(panel.Word), panel => panel.Word);
+
+    /// <summary>
+    /// The edit that makes the text's panel knobs the ones <paramref name="lines"/>
+    /// says, in that order, or null where they already are.
+    /// </summary>
+    /// <remarks>
+    /// Each statement is rewritten where it stands, and whatever is between two of
+    /// them stays, so a comment or a group between knobs is kept. One line fewer
+    /// takes out the last statement and its line break; one more goes after the
+    /// last, or at the top where there is none.
+    /// </remarks>
+    /// <param name="lines">What <see cref="PatchPrinter.PanelLine"/> writes, one per knob.</param>
+    public Change? Panel(IReadOnlyList<string> lines)
+    {
+        var found = Panels();
+
+        if (found.Count == 0)
+        {
+            if (lines.Count == 0) return null;
+
+            var joined = string.Join('\n', lines);
+
+            return Statements().FirstOrDefault(statement => statement.Word == "requires") is { Word: not null } requires
+                ? new Change(requires.To, 0, "\n\n" + joined)
+                : new Change(0, 0, joined + "\n\n");
+        }
+
+        var text = new System.Text.StringBuilder();
+
+        for (var i = 0; i < found.Count; i++)
+        {
+            var gap = i == 0 ? string.Empty : source[found[i - 1].To..found[i].From];
+
+            if (i < lines.Count) text.Append(gap).Append(lines[i]);
+
+            // Gone, with the break that led to it — or, with nothing kept before
+            // it, the break that followed the one before.
+            else if (lines.Count > 0) text.Append(gap.TrimEnd(' ', '\t').TrimEnd('\n').TrimEnd('\r'));
+            else text.Append(Unbroken(gap));
+        }
+
+        for (var i = found.Count; i < lines.Count; i++) text.Append('\n').Append(lines[i]);
+
+        var from = found[0].From;
+        var to = found[^1].To;
+
+        if (lines.Count == 0) to = source.Length - Unbroken(source[to..]).Length;
+
+        var said = text.ToString();
+
+        return source[from..to] == said ? null : new Change(from, to - from, said);
+    }
+
+    /// <summary>Text without the line break it opens with.</summary>
+    private static string Unbroken(string text)
+    {
+        var at = 0;
+
+        while (at < text.Length && text[at] is ' ' or '\t') at++;
+        if (at < text.Length && text[at] == '\r') at++;
+        if (at < text.Length && text[at] == '\n') at++;
+
+        return text[at..];
+    }
+
+    /// <summary>Every <c>panel</c> statement, with the word it declares and where it stands.</summary>
+    private List<(string Word, int From, int To)> Panels() =>
+    [
+        .. Statements()
+            .Where(statement => statement.Word == "panel" && statement.Declares is not null)
+            .Select(statement => (statement.Declares!, statement.From, statement.To)),
+    ];
+
+    /// <summary>
+    /// Every statement: the word it opens with, the name an <c>=</c> after that
+    /// declares where there is one, and where it stands.
+    /// </summary>
+    private List<(string? Word, string? Declares, int From, int To)> Statements()
+    {
+        var found = new List<(string? Word, string? Declares, int From, int To)>();
+        var statements = Lexer.Statements(tokens);
+
+        for (var i = 0; i < statements.Count; i++)
+        {
+            if (statements[i].Kind is TokenKind.NewLine or TokenKind.OpenBrace or TokenKind.CloseBrace) continue;
+
+            var first = i;
+
+            while (i + 1 < statements.Count && statements[i + 1].Kind is not (TokenKind.NewLine or TokenKind.OpenBrace or TokenKind.CloseBrace)) i++;
+
+            var end = statements[i];
+            var word = statements[first].Kind == TokenKind.Identifier ? statements[first].Text : null;
+
+            var declares = first + 2 <= i
+                && statements[first + 1].Kind == TokenKind.Identifier
+                && statements[first + 2].Kind == TokenKind.Assign
+                    ? statements[first + 1].Text
+                    : null;
+
+            found.Add((word, declares, Offset(statements[first]), Offset(end) + end.Text.Length + (end.Kind == TokenKind.Text ? 2 : 0)));
+        }
+
+        return found;
+    }
+
     /// <summary>The offset a line and a column name, clamped to the text.</summary>
     private int Offset(Site site)
     {

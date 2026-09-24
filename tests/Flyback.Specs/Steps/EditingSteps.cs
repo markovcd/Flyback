@@ -118,6 +118,16 @@ public sealed class EditingSteps(PatchContext context, Session session)
         Read(output.ToString());
     }
 
+    /// <summary>What the text view does when the hand comes off a panel knob.</summary>
+    [When("the panel knob {string} is left at {float}")]
+    public void WhenAPanelKnobIsLeft(string name, float value)
+    {
+        var knob = context.Patch.Controls.ShouldNotBeNull().Single(control => control.Name == name);
+        var change = Text.Map.Knob(knob.Id, PatchPrinter.PanelKnob, PatchPrinter.Knob(value, PortDisplay.Number)).ShouldNotBeNull();
+
+        Read(Text.Source[..change.Offset] + change.Text + Text.Source[(change.Offset + change.Length)..]);
+    }
+
     [Given("its modules were never named")]
     public void GivenNeverNamed()
     {

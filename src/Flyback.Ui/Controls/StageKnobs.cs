@@ -67,6 +67,9 @@ public sealed class StageKnobs : TuckedAway
     /// <summary>A hand turned a knob: its id and where it now sits.</summary>
     public event Action<Guid, float>? Turning;
 
+    /// <summary>The hand came off a knob it had turned.</summary>
+    public event Action<Guid>? TurnEnded;
+
     /// <summary>Whether there is a knob to show at all.</summary>
     public bool Any => knobs.Count > 0;
 
@@ -96,6 +99,7 @@ public sealed class StageKnobs : TuckedAway
                 var knob = new StageKnob();
 
                 knob.Turned += turned => Turning?.Invoke(id, (float)turned);
+                knob.Released += () => TurnEnded?.Invoke(id);
 
                 knobs[id] = knob;
                 row.Children.Add(knob);

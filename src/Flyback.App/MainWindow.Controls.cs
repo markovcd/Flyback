@@ -125,6 +125,7 @@ public sealed partial class MainWindow
             learning?.Cancel();
             control.Midi = binding;
             editor.NotifyPatchChanged();
+            PanelEdited();
             Report($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
         };
 
@@ -145,11 +146,14 @@ public sealed partial class MainWindow
             var added = editor.Patch.AddControl();
 
             editor.NotifyPatchChanged();
+            PanelEdited();
             Link(added.Id);
         };
 
         controlsPanel.Turning += TurnKnob;
         stageKnobs.Turning += TurnKnob;
+        controlsPanel.TurnEnded += LetGoOfKnob;
+        stageKnobs.TurnEnded += LetGoOfKnob;
 
         controlsPanel.LinkRequested += id => Link(editor.LinkingControl == id ? null : id);
 
@@ -162,6 +166,7 @@ public sealed partial class MainWindow
 
             control.Midi = null;
             editor.NotifyPatchChanged();
+            PanelEdited();
         };
 
         controlsPanel.Renamed += (id, name) =>
@@ -170,6 +175,7 @@ public sealed partial class MainWindow
 
             control.Name = name;
             editor.NotifyPatchChanged();
+            PanelEdited();
         };
 
         controlsPanel.Logarithmic = id =>
@@ -205,7 +211,10 @@ public sealed partial class MainWindow
 
         controlsPanel.MoveRequested += (id, index) =>
         {
-            if (editor.Patch.MoveControl(id, index)) editor.NotifyPatchChanged();
+            if (!editor.Patch.MoveControl(id, index)) return;
+
+            editor.NotifyPatchChanged();
+            PanelEdited();
         };
 
         controlsPanel.RemoveRequested += id =>
@@ -213,7 +222,10 @@ public sealed partial class MainWindow
             if (editor.LinkingControl == id) Link(null);
             if (controlsPanel.Learning == id) learning?.Cancel();
 
-            if (editor.Patch.RemoveControl(id)) editor.NotifyPatchChanged();
+            if (!editor.Patch.RemoveControl(id)) return;
+
+            editor.NotifyPatchChanged();
+            PanelEdited();
         };
 
         editor.SocketPicked += (_, pick) => PickSocket(pick);
@@ -461,6 +473,7 @@ public sealed partial class MainWindow
 
                 still.Midi = binding;
                 editor.NotifyPatchChanged();
+                PanelEdited();
                 last = heard;
 
                 Report(instruments.For(source ?? default) is not null

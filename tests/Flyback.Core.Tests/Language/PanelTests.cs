@@ -30,6 +30,52 @@ public class PanelTests
 
     private static NodeInstance Only(Patch patch, string typeId) => patch.Nodes.Single(n => n.TypeId == typeId);
 
+    private static string Changed(string source, Change? change) =>
+        change is { } edit ? source[..edit.Offset] + edit.Text + source[(edit.Offset + edit.Length)..] : source;
+
+    /// <summary>Where a knob rests is written back into its own line, in text and in a printing alike.</summary>
+    [Fact]
+    public void Where_a_knob_rests_is_written_where_its_line_says_it()
+    {
+        const string source = "panel level = 0.5, cc: 7, device: \"midi:test\"\nsine(amp: level) |> out.left\n";
+
+        var load = Build(source);
+        var id = load.Patch.Controls.ShouldNotBeNull().Single().Id;
+
+        Changed(source, load.Map.Knob(id, PatchPrinter.PanelKnob, "0.8"))
+            .ShouldStartWith("panel level = 0.8, cc: 7,");
+
+        var printing = PatchPrinter.Written(load.Patch, NodeCatalog.BuiltIn);
+
+        Changed(printing.Source, printing.Map.Knob(id, PatchPrinter.PanelKnob, "0.8"))
+            .ShouldStartWith("panel level = 0.8, cc: 7,");
+    }
+
+    /// <summary>
+    /// The panel lines are rewritten where they stand: what is between two of them
+    /// stays, one taken away takes its line break, and one added goes after the last.
+    /// </summary>
+    [Theory]
+    [InlineData(new[] { "panel b = 0.2", "panel a = 0.1" }, "panel b = 0.2\nlet w = sine()\npanel a = 0.1\nw |> out.left\n")]
+    [InlineData(new[] { "panel a = 0.1" }, "panel a = 0.1\nlet w = sine()\nw |> out.left\n")]
+    [InlineData(new[] { "panel a = 0.1", "panel b = 0.2", "panel c = 0.3" }, "panel a = 0.1\nlet w = sine()\npanel b = 0.2\npanel c = 0.3\nw |> out.left\n")]
+    [InlineData(new string[0], "let w = sine()\nw |> out.left\n")]
+    public void The_panel_lines_are_rewritten_where_they_stand(string[] lines, string expected)
+    {
+        const string source = "panel a = 0.1\nlet w = sine()\npanel b = 0.2\nw |> out.left\n";
+
+        Changed(source, Build(source).Map.Panel(lines)).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void A_panel_line_for_a_text_with_none_goes_under_its_requires()
+    {
+        const string source = "requires flyback.picture\n\nsine() |> out.left\n";
+
+        Changed(source, Build(source).Map.Panel(["panel a = 0.1"]))
+            .ShouldBe("requires flyback.picture\n\npanel a = 0.1\n\nsine() |> out.left\n");
+    }
+
     [Fact]
     public void A_panel_knob_is_put_on_the_panel_with_what_it_follows()
     {

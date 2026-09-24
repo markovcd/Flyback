@@ -6,7 +6,7 @@
 - A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
 - A patch's groups are written in its text and read back, a group built from text opens shut, and the cursor on a group's block in the text view shows the group in the panel.
 - A text patch names the plugins it needs, `requires flyback.picture`, and a build without one says so once.
-- A patch's knob panel is written in the text, `panel cutoff = 0.4, cc: 21, device: "…"`, with the sockets that follow each knob and the sums that read one, `t * rate(0..2)`, so a played patch keeps its knobs through the text view and `flyback-cli print`.
+- A patch's knob panel is written in the text, `panel cutoff = 0.4, cc: 21, device: "…"`, with the sockets that follow each knob and the sums that read one, `t * rate(0..2)`, so a played patch keeps its knobs through the text view and `flyback-cli print`, and a knob turned by hand, moved, renamed, learned, added or removed on the panel is written back into it.
 - A patch written out as text follows its own chain, with what the chain reads in the brackets, keeps its arithmetic as arithmetic, functions and panel knobs included, and names a sum after what it drives.
 - In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
 - `flyback-cli check --json` and the assistant's `write_patch` give each complaint about a text patch a stable code, and the fix where there is exactly one.

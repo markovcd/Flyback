@@ -31,6 +31,12 @@ public sealed record Printing(string Source, SourceMap Map, IReadOnlyList<Guid> 
 /// </remarks>
 public static class PatchPrinter
 {
+    /// <summary>
+    /// What a panel knob's resting value is filed under in a map, beside its id:
+    /// <c>Map.Knob(control, PanelKnob, value)</c> writes it into its <c>panel</c> line.
+    /// </summary>
+    public const string PanelKnob = "panel";
+
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
     /// <param name="Taken">Every name given out, for one given while writing.</param>
     /// <param name="Panel">What the text calls each panel knob.</param>
@@ -348,6 +354,13 @@ public static class PatchPrinter
                 if (Canonical(shape, turn.Target.Port!) is { } name)
                     values[(sink.Id, name)] = Wrote(turn.Value);
         }
+
+        // Where each panel knob rests, under its own id.
+        var knobs = plan.Panel.ToDictionary(pair => pair.Value, pair => pair.Key, StringComparer.Ordinal);
+
+        foreach (var knob in read.OfType<PanelStatement>())
+            if (knobs.TryGetValue(knob.Name, out var control))
+                values[(control, PanelKnob)] = Wrote(knob.Value);
 
         // Each block by a module it places, which is how a printing knows which
         // group it is: a group with no name, or one opened twice, has nothing
@@ -693,6 +706,20 @@ public static class PatchPrinter
 
             if (taken.Add(tried)) return tried;
         }
+    }
+
+    /// <summary>A panel knob's statement, under the word the text calls it by.</summary>
+    public static string PanelLine(PatchControl control, string word) => Writer.PanelLine(control, word);
+
+    /// <summary>
+    /// The word for a panel knob the text has none for yet: its label where that
+    /// is one, spelled where not, and never a module's name.
+    /// </summary>
+    public static string PanelWord(string label, ModuleCatalog? against = null)
+    {
+        var word = Usable(label) ? label : Spelled(label);
+
+        return new ModuleNames(against ?? NodeCatalog.Current).Knows(word) ? word + "_knob" : word;
     }
 
     /// <summary>A label made into a word the text can say: <c>Filter cutoff</c> as <c>filter_cutoff</c>.</summary>
@@ -1546,9 +1573,10 @@ public static class PatchPrinter
         }
 
         /// <summary>A panel knob's statement: where it rests, and what it is labeled and follows where that is said.</summary>
-        private string Panel(PatchControl control)
+        private string Panel(PatchControl control) => PanelLine(control, plan.Panel[control.Id]);
+
+        internal static string PanelLine(PatchControl control, string word)
         {
-            var word = plan.Panel[control.Id];
             var line = new StringBuilder($"panel {word} = {Number(control.Value)}");
 
             if (control.Name != word && Quotable(control.Name) is { } label) line.Append($", label: {label}");

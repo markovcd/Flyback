@@ -52,5 +52,10 @@ it, with the range and knee only where they are not the socket's own.
   them to it.
 - A knob's id comes from its name, so rebuilding the same text keeps the same
   knob, as a module's does ([0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md)).
+- The `panel` lines follow the panel in the text view. Where a knob is left by
+  hand is written into its line when the hand comes off it; a controller's turns
+  are not, since they would rewrite the line on every message. A knob moved,
+  renamed, learned, forgotten, added or removed rewrites the `panel` lines where
+  they stand, and a printing is printed again.
 - Writing the knobs out found the printer leaving out a knob within 1e-7 of its
   default; only one exactly at its default is left out now.

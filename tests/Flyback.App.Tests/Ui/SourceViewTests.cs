@@ -3,10 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Threading;
 using AvaloniaEdit;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -1506,6 +1508,111 @@ public class SourceViewTests : UiTest
         Turn(window, 2d);
 
         Text(window).Text.Trim().ShouldBe("math.mix(a: 2) |> out.left");
+    }
+
+    /// <summary>
+    /// A panel knob turned by hand rests where it was left, and the <c>panel</c>
+    /// line says so, or applying the text again would put it back.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_panel_knob_turned_by_hand_is_written_into_its_panel_line()
+    {
+        var window = Open();
+
+        Evaluate(window, "panel level = 0.5, cc: 7, device: \"midi:test\"\nsine(freq: 220, amp: level) |> out.left");
+        TurnPanelKnob(window, 40);
+
+        var rests = Editor(window).Patch.Controls.ShouldNotBeNull().Single().Value;
+
+        rests.ShouldBeGreaterThan(0.5f);
+        Text(window).Text.ShouldStartWith($"panel level = {PatchPrinter.Knob(rests, PortDisplay.Number)}, cc: 7,");
+    }
+
+    /// <summary>The same over a printing, which stays a true reading of the canvas.</summary>
+    [AvaloniaFact]
+    public void A_panel_knob_turned_over_a_printing_keeps_the_printing_true()
+    {
+        var window = Open();
+
+        Evaluate(window, "panel level = 0.5\nsine(freq: 220, amp: level) |> out.left");
+        HandBack(window);
+
+        var text = ShowCode(window);
+
+        TurnPanelKnob(window, 40);
+
+        var rests = Editor(window).Patch.Controls.ShouldNotBeNull().Single().Value;
+
+        text.Text.ShouldContain($"panel level = {PatchPrinter.Knob(rests, PortDisplay.Number)}");
+        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).Patch));
+    }
+
+    /// <summary>
+    /// Moving, removing and adding a knob on the panel is said by the text's
+    /// <c>panel</c> lines, and nothing else in the text is touched.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_knob_moved_removed_or_added_on_the_panel_rewrites_the_panel_lines()
+    {
+        var window = Open();
+
+        Evaluate(window, "# the knobs\npanel level = 0.5\npanel tone = 0.25\npanel spare = 0.75\nsine(freq: 220, amp: level) |> out.left\nout.volume = tone");
+
+        KnobMenu(window, 0, "Move right");
+        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\npanel spare = 0.75\n");
+
+        KnobMenu(window, 2, "Remove knob");
+        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\nsine(");
+
+        var add = All<Button>(window).Single(b => b.Name == "add-knob");
+        var at = add.TranslatePoint(new Point(add.Bounds.Width / 2, add.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
+        Settle(window);
+
+        Text(window).Text.ShouldStartWith("# the knobs\npanel tone = 0.25\npanel level = 0.5\npanel knob_1 = 0.5, label: \"Knob 1\"\nsine(");
+        PatchLanguage.Build(Text(window).Text).Issues.ShouldBeEmpty();
+    }
+
+    /// <summary>The same over a printing, which is printed again.</summary>
+    [AvaloniaFact]
+    public void A_knob_moved_on_the_panel_over_a_printing_reprints_it()
+    {
+        var window = Open();
+
+        Evaluate(window, "panel level = 0.5\npanel tone = 0.25\nsine(freq: 220, amp: level) |> out.left\nout.volume = tone");
+        HandBack(window);
+
+        var text = ShowCode(window);
+
+        KnobMenu(window, 0, "Move right");
+
+        text.Text.ShouldStartWith("panel tone = 0.25\npanel level = 0.5\n");
+        text.Text.ShouldBe(PatchPrinter.Print(Editor(window).Patch));
+    }
+
+    private static void KnobMenu(MainWindow window, int knob, string item)
+    {
+        var more = All<Button>(All<ControlsPanel>(window).Single()).Where(b => b.Name == "knob-menu").ElementAt(knob);
+        var menu = more.Flyout.ShouldBeOfType<MenuFlyout>();
+
+        menu.Items.OfType<MenuItem>().Single(i => (i.Header as string) == item)
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(MenuItem.ClickEvent));
+        Settle(window);
+    }
+
+    private static void TurnPanelKnob(MainWindow window, double up)
+    {
+        var knob = All<Knob>(All<ControlsPanel>(window).Single()).Single();
+        var from = knob.TranslatePoint(new Point(knob.Bounds.Width / 2, knob.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from - new Point(0, up));
+        window.MouseUp(from - new Point(0, up), MouseButton.Left);
+        Settle(window);
     }
 
     /// <summary>

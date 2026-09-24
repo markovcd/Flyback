@@ -431,9 +431,12 @@ public sealed class Binder
     /// statements added around it. SHA-256 cut to sixteen bytes: this is a name
     /// and not a secret.
     /// </remarks>
-    private static Guid Identity(string name) =>
+    internal static Guid Identity(string name) =>
         new(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(name)).AsSpan(0, 16));
+
+    /// <summary>The id a panel knob the text calls <paramref name="word"/> is given.</summary>
+    internal static Guid PanelId(string word) => Identity("panel " + word);
 
     /// <summary>
     /// Gives a node the name it was bound to, which the editor shows on it. Only
@@ -674,7 +677,7 @@ public sealed class Binder
 
         var control = new PatchControl
         {
-            Id = Identity("panel " + statement.Name),
+            Id = PanelId(statement.Name),
             Name = label ?? statement.Name,
             Value = (float)resting.Amount,
             Midi = controller is { } cc ? new MidiBinding(device!, channel, cc) : null,
@@ -682,6 +685,9 @@ public sealed class Binder
 
         (patch.Controls ??= []).Add(control);
         scope.Set(statement.Name, new Dial(control, statement.Name), line);
+
+        // So a knob turned on the panel can be written back where it rests.
+        written[(control.Id, PatchPrinter.PanelKnob)] = resting.Where;
     }
 
     /// <summary>A panel knob called with the range a socket reads it over: <c>cutoff(200..4000, knee: 20)</c>.</summary>

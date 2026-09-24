@@ -94,6 +94,18 @@ public sealed partial class MainWindow
     /// </summary>
     private readonly HashSet<(Guid Node, string? Key)> restated = [];
 
+    /// <summary>
+    /// Panel knobs turned by hand since the same moment. One turned by a controller
+    /// is left out: it would rewrite its line on every message it sent.
+    /// </summary>
+    private readonly HashSet<Guid> dialed = [];
+
+    /// <summary>
+    /// The word each knob added from the panel was written under, since the id
+    /// the canvas gave it is not the one the text would give it until it is applied.
+    /// </summary>
+    private readonly Dictionary<Guid, string> given = [];
+
     /// <summary>The text as it was last opened or written, for the unsaved question.</summary>
     private string sourceOnDisk = string.Empty;
 
@@ -367,6 +379,13 @@ public sealed partial class MainWindow
     /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
     private void Turned(Guid node, int port) => turned.Add((node, port));
 
+    /// <summary>The hand has come off a panel knob: where it rests goes into its <c>panel</c> line.</summary>
+    private void LetGoOfKnob(Guid control)
+    {
+        dialed.Add(control);
+        HandCameOff();
+    }
+
     /// <summary>
     /// Notes something a module carries that the panel has just changed.
     /// </summary>
@@ -408,10 +427,11 @@ public sealed partial class MainWindow
     /// </remarks>
     private void WriteBack()
     {
-        if ((turned.Count == 0 && restated.Count == 0 && !relaid) || writingBack || stepping) return;
+        if ((turned.Count == 0 && restated.Count == 0 && dialed.Count == 0 && !relaid) || writingBack || stepping) return;
 
         var knobs = turned.ToArray();
         var kept = restated.ToArray();
+        var panel = dialed.ToArray();
         var lost = 0;
 
         // Asked before anything is written, which is what makes the text differ
@@ -424,6 +444,7 @@ public sealed partial class MainWindow
 
         turned.Clear();
         restated.Clear();
+        dialed.Clear();
         relaid = false;
         writingBack = true;
 
@@ -437,6 +458,7 @@ public sealed partial class MainWindow
             {
                 foreach (var (id, port) in knobs) Write(id, port, ref lost);
                 foreach (var (id, key) in kept) Carry(id, key, ref lost);
+                foreach (var id in panel) Rest(id);
 
                 if (keyboard) Lay();
             }
@@ -473,6 +495,74 @@ public sealed partial class MainWindow
     /// place — a formula printed as the sum it is has no argument to write into.
     /// </summary>
     private bool reprint;
+
+    /// <summary>
+    /// The panel's knobs have changed in a way their <c>panel</c> lines say: moved,
+    /// renamed, bound to a controller or let go of one, added or taken away.
+    /// </summary>
+    /// <remarks>
+    /// A printing is printed again. Text somebody wrote has its <c>panel</c> lines
+    /// rewritten where they stand, and nothing else touched.
+    /// </remarks>
+    private void PanelEdited()
+    {
+        if (!sourceOwned)
+        {
+            Reprint();
+            return;
+        }
+
+        var words = Map.PanelWords;
+        var taken = new HashSet<string>(words.Values.Concat(given.Values), StringComparer.Ordinal);
+        var lines = new List<string>();
+
+        foreach (var control in editor.Patch.Controls ?? [])
+        {
+            if (!words.TryGetValue(control.Id, out var word) && !given.TryGetValue(control.Id, out word))
+            {
+                var wanted = PatchPrinter.PanelWord(control.Name);
+
+                word = wanted;
+                for (var n = 2; !taken.Add(word); n++) word = wanted + n.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                given[control.Id] = word;
+            }
+
+            lines.Add(PatchPrinter.PanelLine(control, word));
+        }
+
+        if (Map.Panel(lines) is not { } change) return;
+
+        writingBack = true;
+
+        using (source.Together())
+        {
+            try
+            {
+                if (source.Apply(change)) mapped = null;
+            }
+            finally
+            {
+                writingBack = false;
+            }
+
+            RememberPatchSteps();
+        }
+    }
+
+    /// <summary>Puts where a panel knob rests into its <c>panel</c> line, where the text has one.</summary>
+    private void Rest(Guid id)
+    {
+        if (editor.Patch.Control(id) is not { } control) return;
+
+        var change = Map.Knob(id, PatchPrinter.PanelKnob, PatchPrinter.Knob(control.Value, PortDisplay.Number));
+
+        if (change is not { } edit || !source.Apply(edit)) return;
+
+        if (!sourceOwned) printed = source.Source;
+
+        mapped = null;
+    }
 
     /// <summary>Puts one knob into the text, or counts it as one that could not go.</summary>
     private void Write(Guid id, int port, ref int lost)
@@ -1202,6 +1292,8 @@ public sealed partial class MainWindow
         means = null;
         turned.Clear();
         restated.Clear();
+        dialed.Clear();
+        given.Clear();
         relaid = false;
         unstacked = 0;
         sinceHandover = null;
