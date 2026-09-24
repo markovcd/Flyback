@@ -38,6 +38,23 @@ public sealed class CanvasEditingSteps(PatchContext context, Editor editor)
     [When("the selection is duplicated")]
     public void WhenDuplicated() => editor.PressCtrl(PhysicalKey.D);
 
+    [Given("the clock on its own")]
+    public void GivenTheClock() => context.Add("clock", "time");
+
+    [When("a wire from the clock is dropped on bare canvas")]
+    public void WhenAWireIsDropped() => editor.DropWireFrom(context.Node("clock").Id, 0);
+
+    [When("{string} is picked from the list that opens")]
+    public void WhenPicked(string name) => editor.PickFromList(name);
+
+    [Then("a sine is fed by the clock")]
+    public void ThenASineIsFed()
+    {
+        var sine = context.Patch.Nodes.Where(node => node.TypeId == NodeCatalog.SineTypeId).ShouldHaveSingleItem();
+
+        context.Patch.Connections.ShouldContain(wire => wire.SourceNode == context.Node("clock").Id && wire.TargetNode == sine.Id);
+    }
+
     [Then("the level and the halving module are drawn as one box")]
     public void ThenThePairIsOneBox() =>
         context.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members

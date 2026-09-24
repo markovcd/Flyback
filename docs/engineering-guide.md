@@ -610,10 +610,10 @@ that only a person watching the screen can check is not finished.
   last resort (`running-the-app.md`), not the test.
 - **The editor without a window.** What a gesture or a key does lives in a service
   the container builds (ADR-0150), and the control only hands the pointer and the
-  keys on. So a command can be run and checked with no window at all:
-  `CanvasEditingSteps` drives the canvas's deleting, grouping, switching off and
-  undo from `new ServiceCollection().AddCanvas()`. A feature whose logic can only
-  be reached through a control's event handler is not finished.
+  keys on. So a command can be run and checked headless: the specs' `Editor`
+  opens the window the container builds and presses its keys, picks its presets
+  and answers its questions. A feature whose logic can only be reached through a
+  control's event handler is not finished.
 - **Say where it went wrong.** A failure names the module, the socket, the second
   or the frame, the way `compare` says where two patches part, so the next step
   is a fix rather than a bisect.
@@ -861,9 +861,13 @@ The wiring behind each phrase lives in the steps: `PatchSteps` builds and edits
 patches, `ScreenSteps`, `SpeakerSteps` and `CompilerSteps` check the picture, the
 sound and what the compiler says, `EditingSteps` saves, opens, writes out, undoes
 and pastes, `PresetSteps` checks every shipped preset, `ExportSteps` exports
-with `flyback-cli render` and plays through the editor's sound engine, and
-`KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub. They share a fresh
-`PatchContext` and `Session` per scenario.
+with `flyback-cli render` and plays through the editor's sound engine,
+`KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub,
+`CanvasEditingSteps` and `UnsavedWorkSteps` press keys and answer questions in the
+editor's own window, headless, and `CliSteps` runs `flyback-cli` on files. They
+share a fresh `PatchContext`, `Session` and `Editor` per scenario. A step drives
+the program the way somebody would; a scenario that composes services by hand
+is testing the wiring, and belongs in `Flyback.App.Tests`.
 The project references every program and library and lays out every shipped
 plugin under `plugins\`, so a feature of the editor, the viewer, the CLI, the
 preset site or a plugin takes its scenario here like any other.

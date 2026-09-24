@@ -162,6 +162,7 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
 
     // --- undo -----------------------------------------------------------------
 
+    [Given("the level is deleted")]
     [When("the level is deleted")]
     public void WhenTheLevelIsDeleted()
     {

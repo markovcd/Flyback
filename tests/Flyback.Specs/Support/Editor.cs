@@ -1,6 +1,8 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
@@ -21,7 +23,9 @@ namespace Flyback.Specs.Support;
 /// by then, and closed with the scenario. Every step that touches it runs on the
 /// one UI thread the session keeps, and hands the patch the editor now holds back
 /// to <see cref="PatchContext"/>, so the screen and the speakers are checked
-/// against what is on the canvas.
+/// against what is on the canvas. Scenarios that open it queue for that thread, so
+/// in a parallel run their durations are mostly waiting: one takes a tenth of a
+/// second or so on its own, after the first window's two.
 /// </remarks>
 public sealed class Editor(PatchContext context) : IDisposable
 {
@@ -41,14 +45,84 @@ public sealed class Editor(PatchContext context) : IDisposable
     /// <summary>What is selected on the canvas, as the editor holds it now.</summary>
     internal IReadOnlyList<NodeInstance> Selected => Read(canvas => canvas.Selection.Nodes);
 
+    /// <summary>The window's title: the document's name, then the program's.</summary>
+    public string Title => ReadWindow(open => open.Title ?? string.Empty);
+
     /// <summary>Whether the title says there is work to lose.</summary>
     public bool Unsaved => Read(_ => window!.Title?.EndsWith('•') == true);
 
     /// <summary>Whether the toolbar's undo has anything to take back.</summary>
     public bool CanUndo => Read(canvas => canvas.History.CanUndo);
 
-    /// <summary>Opens the window on the scenario's patch, if it is not open already.</summary>
+    /// <summary>
+    /// Where the editor keeps and looks for unsaved work, and whether it opens on the
+    /// scenario's patch. Said before anything opens it.
+    /// </summary>
+    public EditorSetup Setup { get; set; } = new();
+
+    /// <summary>Whether the window opens on the scenario's patch, rather than on whatever it starts with itself.</summary>
+    public bool OnThePatch { get; set; } = true;
+
+    /// <summary>Opens the window, if it is not open already.</summary>
     public void Open() => Do(_ => { });
+
+    /// <summary>The question up over the window, as its words, or null while there is none.</summary>
+    public string? Asking => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<ModalOverlay>().FirstOrDefault() is { } dialog
+            ? string.Join(" ", dialog.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text))
+            : null);
+
+    /// <summary>The preset the toolbar says is on the canvas, or null for a document that is none.</summary>
+    public string? Showing => ReadWindow(open => (Presets(open).SelectedItem as PatchPreset)?.Name);
+
+    /// <summary>Everything the window's report line has said.</summary>
+    public IReadOnlyList<string> Reported => ReadWindow(open => open.GetVisualDescendants().OfType<ReportLine>().Single().History);
+
+    /// <summary>Picks a preset from the toolbar's list, which is where the gallery's tiles land too.</summary>
+    public void PickPreset(string name) =>
+        DoWindow((open, _) =>
+        {
+            var presets = Presets(open);
+            var row = presets.ItemsSource!.Cast<object>().ToList().FindIndex(item => item is PatchPreset preset && preset.Name == name);
+
+            presets.SelectedIndex = row >= 0 ? row : throw new InvalidOperationException($"No preset called {name}.");
+        });
+
+    /// <summary>Answers the question up over the window with the button so labeled.</summary>
+    public void Answer(string label) =>
+        DoWindow((open, _) =>
+        {
+            var dialog = open.GetVisualDescendants().OfType<ModalOverlay>().Single();
+
+            dialog.GetVisualDescendants().OfType<Button>().Single(b => b.Content as string == label)
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        });
+
+    /// <summary>Drags a wire out of a module's output and lets it go over bare canvas, low on the left.</summary>
+    public void DropWireFrom(Guid node, int output) =>
+        DoWindow((open, canvas) =>
+        {
+            var from = canvas.TranslatePoint(
+                canvas.GraphToScreen.Transform(NodeGeometry.OutputPort(canvas.History.Patch.Find(node)!, output)), open)!.Value;
+            var bare = canvas.TranslatePoint(new Point(40, canvas.Bounds.Height - 40), open)!.Value;
+
+            open.MouseDown(from, MouseButton.Left);
+            open.MouseMove(bare);
+            open.MouseUp(bare, MouseButton.Left);
+        });
+
+    /// <summary>Picks a module by name from the list that is open.</summary>
+    public void PickFromList(string name) =>
+        DoWindow((open, _) =>
+        {
+            var list = open.GetVisualDescendants().OfType<ModulePalette>().FirstOrDefault()
+                ?? throw new InvalidOperationException("no list of modules is open");
+
+            var entry = list.GetVisualDescendants().OfType<Button>().First(b => b.Content as string == name);
+
+            entry.Focus();
+            entry.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        });
 
     /// <summary>Makes the selection exactly these modules, which is what clicking them with Ctrl held does.</summary>
     public void Select(params Guid[] ids) => Do(canvas => canvas.Selection.Take(ids));
@@ -69,10 +143,13 @@ public sealed class Editor(PatchContext context) : IDisposable
         Press(key, RawInputModifiers.Control | (shift ? RawInputModifiers.Shift : RawInputModifiers.None));
 
     /// <summary>Runs what a step does to the canvas, where no key does it: a panel's button, say.</summary>
-    internal void Do(Action<NodeEditor> act) =>
+    internal void Do(Action<NodeEditor> act) => DoWindow((_, canvas) => act(canvas));
+
+    /// <summary>Runs what a step does to the window, and gives the thread its turns to answer.</summary>
+    internal void DoWindow(Action<MainWindow, NodeEditor> act) =>
         Run(async () =>
         {
-            act(Canvas());
+            act(Window(), Canvas());
 
             // A clipboard answers asynchronously, off this thread and back onto it,
             // so the thread is given real turns rather than only its queue emptied.
@@ -88,9 +165,13 @@ public sealed class Editor(PatchContext context) : IDisposable
 
     internal T Read<T>(Func<NodeEditor, T> read) => Run(() => read(Canvas()));
 
+    private T ReadWindow<T>(Func<MainWindow, T> read) => Run(() => read(Window()));
+
     public void Dispose()
     {
         if (window is not { } open) return;
+
+        window = null;
 
         Run(() =>
         {
@@ -99,23 +180,35 @@ public sealed class Editor(PatchContext context) : IDisposable
         });
     }
 
-    /// <summary>The canvas, opening the window on the scenario's patch the first time.</summary>
-    private NodeEditor Canvas()
+    /// <summary>The window, opened the first time, on the scenario's patch where it is to be.</summary>
+    private MainWindow Window()
     {
-        if (window is null)
-        {
-            window = EditorServices.Window();
-            window.Show();
-            Settle();
+        if (window is not null) return window;
 
-            CanvasIn(window).Report.Said += (_, line) => said.Add(line);
-            CanvasIn(window).History.Open(context.Patch);
-            CanvasIn(window).Focus();
-            Settle();
+        window = EditorServices.Window(Setup);
+        window.Show();
+        Settle();
+
+        var canvas = CanvasIn(window);
+
+        canvas.Report.Said += (_, line) => said.Add(line);
+        // As a file arrives: the canvas holds it, and no preset is said to be showing.
+        if (OnThePatch)
+        {
+            window.ClearPresetSelection();
+            canvas.History.Open(context.Patch);
         }
 
-        return CanvasIn(window);
+        canvas.Focus();
+        Settle();
+
+        return window;
     }
+
+    private NodeEditor Canvas() => CanvasIn(Window());
+
+    private static ComboBox Presets(MainWindow window) =>
+        window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");
 
     private static NodeEditor CanvasIn(MainWindow window) =>
         window.GetVisualDescendants().OfType<NodeEditor>().Single();
