@@ -407,6 +407,9 @@ public class MultiSelectTests : UiTest
         editor.Edits.DeleteSelected();
 
         patch.Nodes.Select(n => n.TypeId).ShouldBe([NodeCatalog.OutputTypeId]);
+
+        // Still selected, so its panel stays up rather than the inspector emptying.
+        Selected(editor).ShouldBe([NodeCatalog.OutputTypeId]);
     }
 
     [AvaloniaFact]

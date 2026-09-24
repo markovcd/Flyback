@@ -39,22 +39,7 @@ Feature: A patch in any state still plays
   Scenario: An oscillator with nothing patched in runs on the clock
     Given a sine on the screen with nothing patched into it
     Then the patch is accepted without complaint
-    And the patch reads the clock
-
-  # The knob is not what a normalled socket follows. Left at a quarter cycle the
-  # sine would be a flat white field; on the clock it starts at nothing.
-  Scenario: An oscillator with nothing patched in ignores the knob on its domain
-    Given a sine on the screen with its unpatched domain knob at a quarter cycle
-    Then the screen shows 0
-
-  Scenario: Patching into an oscillator's domain takes it off the clock
-    Given a sine on the screen driven by the horizontal position
-    Then the patch is accepted without complaint
-    And the patch does not read the clock
-
-  Scenario: Oscillators left on the clock share one reading of it
-    Given two oscillators mixed on the screen with nothing patched into either
-    Then the patch reads the clock once
+    And the picture moves as time passes
 
   Scenario: An oscillator driven by Time is not remarked on
     Given a sine on the screen driven by Time

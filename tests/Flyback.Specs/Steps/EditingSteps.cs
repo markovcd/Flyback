@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using Avalonia.Input;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
@@ -11,7 +12,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Saving, opening, writing out as text, undoing and pasting.</summary>
 [Binding]
-public sealed class EditingSteps(PatchContext context, Session session)
+public sealed class EditingSteps(PatchContext context, Session session, Editor editor)
 {
     private const string Stranger = "module.from.the.future";
 
@@ -159,42 +160,29 @@ public sealed class EditingSteps(PatchContext context, Session session)
     public void ThenTheGroup(string name, int count) =>
         context.Patch.Groups.ShouldNotBeNull().ShouldContain(group => group.Name == name && group.Collapsed && group.Members.Count == count);
 
-    [Then("that is the only complaint")]
-    public void ThenThatIsTheOnlyComplaint() => Text.Issues.ShouldHaveSingleItem(Text.Report);
-
-    [Then("the complaint says {string}")]
-    public void ThenTheComplaintSays(string words) => Text.Report.ShouldContain(words);
-
     // --- undo -----------------------------------------------------------------
-
-    [Given("the patch has just been opened")]
-    public void GivenJustOpened()
-    {
-        session.History = new PatchHistory(NodeCatalog.BuiltIn);
-        session.History.Opened(context.Patch);
-    }
 
     [When("the level is deleted")]
     public void WhenTheLevelIsDeleted()
     {
-        context.Remove("level");
-        History.Record(context.Patch);
+        editor.Select(context.Node("level").Id);
+        editor.Press(PhysicalKey.Delete);
     }
 
     [When("that is undone")]
-    public void WhenUndone() => context.Replace(History.Undo().ShouldNotBeNull("there was nothing to undo"));
+    public void WhenUndone() => editor.PressCtrl(PhysicalKey.Z);
 
     [When("it is redone")]
-    public void WhenRedone() => context.Replace(History.Redo().ShouldNotBeNull("there was nothing to redo"));
+    public void WhenRedone() => editor.PressCtrl(PhysicalKey.Y);
 
     [Then("there is nothing to undo")]
-    public void ThenNothingToUndo() => History.CanUndo.ShouldBeFalse();
+    public void ThenNothingToUndo() => editor.CanUndo.ShouldBeFalse();
 
     [Then("the patch has unsaved changes")]
-    public void ThenModified() => History.IsModified.ShouldBeTrue();
+    public void ThenModified() => editor.Unsaved.ShouldBeTrue();
 
     [Then("the patch has no unsaved changes")]
-    public void ThenUnmodified() => History.IsModified.ShouldBeFalse();
+    public void ThenUnmodified() => editor.Unsaved.ShouldBeFalse();
 
     // --- copy and paste -------------------------------------------------------
 
@@ -228,7 +216,13 @@ public sealed class EditingSteps(PatchContext context, Session session)
         NodeCatalog.BusOf(Pasted(NodeCatalog.ReceiveTypeId)).ShouldBe(bus);
 
     [When("everything is copied and pasted")]
-    public void WhenEverythingIsPasted() => Paste([.. context.Patch.Nodes.Select(n => n.Id)]);
+    public void WhenEverythingIsPasted()
+    {
+        editor.Open();
+        editor.PressCtrl(PhysicalKey.A);
+        editor.PressCtrl(PhysicalKey.C);
+        editor.PressCtrl(PhysicalKey.V);
+    }
 
     [Then("there are two levels and two halving modules")]
     public void ThenTwoOfEach()
@@ -253,8 +247,6 @@ public sealed class EditingSteps(PatchContext context, Session session)
 
     private LanguageLoad Text => session.Text.ShouldNotBeNull("no text has been read");
 
-    private PatchHistory History => session.History.ShouldNotBeNull("the patch was never opened");
-
     private NodeInstance Pasted(string typeId) => session.Pasted.Single(n => n.TypeId == typeId);
 
     private void Read(string source)
@@ -263,11 +255,15 @@ public sealed class EditingSteps(PatchContext context, Session session)
         context.Replace(session.Text.Patch);
     }
 
+    /// <summary>Selects the modules in the editor, copies them and pastes them, with the keys.</summary>
     private void Paste(Guid[] ids)
     {
-        var fragment = PatchClipboard.Copy(context.Patch, ids);
-        session.Pasted = PatchClipboard.Paste(context.Patch, fragment, 40, 40);
-        context.Replace(context.Patch);
+        editor.Select(ids);
+        editor.PressCtrl(PhysicalKey.C);
+        editor.PressCtrl(PhysicalKey.V);
+
+        // What was pasted is left selected.
+        session.Pasted = editor.Selected;
     }
 
     // --- somebody else's files ------------------------------------------------

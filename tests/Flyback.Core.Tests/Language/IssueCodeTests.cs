@@ -79,4 +79,15 @@ public class IssueCodeTests
         load.Ok.ShouldBeFalse();
         load.Issues.ShouldHaveSingleItem(load.Report).Line.ShouldBeLessThanOrEqualTo(2);
     }
+
+    /// <summary>A heading written the way other languages write one is told the comment sign, and that a group is where headings go.</summary>
+    [Fact]
+    public void A_slash_comment_is_told_the_comment_sign_and_where_a_heading_goes()
+    {
+        var issue = Build("// --- CLOCK & TIMING ---\nlet tempo = tempo(bpm: 100)").Issues.ShouldHaveSingleItem();
+
+        issue.Line.ShouldBe(1);
+        issue.Message.ShouldContain("a comment starts with '#'");
+        issue.Message.ShouldContain("group");
+    }
 }

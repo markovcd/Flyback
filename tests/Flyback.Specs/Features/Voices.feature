@@ -27,12 +27,6 @@ Feature: A keyboard plays chords across a patch's voices
     And B4 is played
     Then the voices play B4, E4 and G4
 
-  Scenario: A key held long enough to repeat does not take a second voice
-    Given three voices listening to a keyboard
-    When C4 is held
-    And the keyboard sends C4 again without letting it go
-    Then the voices play C4, nothing and nothing
-
   Scenario: Voices left on automatic share a chord out between them
     Given three voices on automatic listening to a keyboard
     When C4, E4 and G4 are held

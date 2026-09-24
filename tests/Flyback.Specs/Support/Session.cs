@@ -21,8 +21,6 @@ public sealed class Session
 
     public LanguageLoad? Text { get; set; }
 
-    public PatchHistory? History { get; set; }
-
     public IReadOnlyList<NodeInstance> Pasted { get; set; } = [];
 
     public IReadOnlyList<PatchPreset> Presets { get; set; } = [];

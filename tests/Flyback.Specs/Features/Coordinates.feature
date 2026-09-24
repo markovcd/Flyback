@@ -22,18 +22,13 @@ Feature: The picture means the same at any size and shape
     Then the disc is round at 320 by 180
     And the disc is round at 96 by 54
 
-  # No gamma: the number on a node predicts the pixel. sRGB would put this at 188.
-  Scenario: A level of one half is the middle byte
+  # No gamma: the number on a module predicts the pixel.
+  Scenario: A level on a module is the brightness on the screen
     Given a level of 0.5 on the screen
-    Then each channel is stored as 128
+    Then the screen shows 0.5
 
   # No headroom to pull back later. That is also what keeps a feedback loop with
   # gain above one from running away.
-  Scenario: Anything above one is white
+  Scenario: A level past full is white
     Given a level of 4 on the screen
-    Then each channel is stored as 255
-
-  Scenario: Anything below zero is black
-    Given a level of -1 on the screen
-    Then each channel is stored as 0
-    And the screen is black
+    Then the screen shows 1

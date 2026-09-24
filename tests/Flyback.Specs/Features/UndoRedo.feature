@@ -6,7 +6,7 @@ Feature: Every edit can be undone
 
   Background:
     Given a level of 0.25 on the screen
-    And the patch has just been opened
+    And the patch is open in the editor
 
   Scenario: A freshly opened patch has nothing to undo
     Then there is nothing to undo

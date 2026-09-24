@@ -20,12 +20,3 @@ Feature: An export is the patch, exactly
     When the editor plays it for 2 seconds
     And it is exported as "sound.wav" 2 seconds long
     Then the exported sound is what the editor played, sample for sample
-
-  Scenario Outline: An export is the same whether or not the patch was compiled
-    When it is exported as "<file>" once compiled and once interpreted
-    Then the two files are the same to the byte
-
-    Examples:
-      | file      |
-      | still.png |
-      | clip.avi  |

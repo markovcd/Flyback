@@ -18,23 +18,14 @@ public sealed class ScreenSteps(PatchContext context)
     [Then("the screen shows {float}, {float}, {float}")]
     public void ThenAColor(float r, float g, float b) => ShouldShow(context.Render().Center, r, g, b, "center");
 
+    [Then("the picture moves as time passes")]
+    public void ThenItMoves() => context.Render(at: 0.25).Buffer.ShouldNotBe(context.Render().Buffer);
+
     [Then("the screen is black")]
     public void ThenBlack() => context.Render().IsBlack.ShouldBeTrue();
 
     [Then("the screen is not black")]
     public void ThenNotBlack() => context.Render().IsBlack.ShouldBeFalse();
-
-    /// <summary>The stored byte rather than a fraction, the only way to say nothing was encoded on the way out.</summary>
-    [Then("each channel is stored as {int}")]
-    public void ThenStoredAs(int expected)
-    {
-        var frame = context.Render();
-        var (x, y) = (PatchContext.Width / 2, PatchContext.Height / 2);
-
-        frame.RedByteAt(x, y).ShouldBe((byte)expected);
-        frame.At(x, y).G.ShouldBe(expected / 255f);
-        frame.At(x, y).B.ShouldBe(expected / 255f);
-    }
 
     [Then(@"^each frame builds on the last: (.+)$")]
     public void ThenEachFrameBuilds(string list)

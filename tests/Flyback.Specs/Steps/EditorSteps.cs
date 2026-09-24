@@ -8,7 +8,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>What the editor's panel says about the wires on a module or a box.</summary>
 [Binding]
-public sealed class EditorSteps(PatchContext context)
+public sealed class EditorSteps(PatchContext context, Editor editor)
 {
     private NodeGroup? box;
 
@@ -62,9 +62,10 @@ public sealed class EditorSteps(PatchContext context)
     public void WhenTheMultiplysSocketIsExposed(string port)
     {
         var socket = new GroupSocket(context.Node("Multiply").Id, Port("math.mul", port, output: false), IsOutput: false);
+        var group = box.ShouldNotBeNull();
 
-        context.Patch.Exposable(box.ShouldNotBeNull(), socket).ShouldBeTrue();
-        box.Expose(socket);
+        // What the box's panel does when the socket's row is ticked.
+        editor.Do(canvas => canvas.Edits.ExposeSocket(group, socket));
     }
 
     [Then("the Multiply's {string} cannot be put on the box's edge")]

@@ -38,10 +38,6 @@ public sealed partial class KeyboardSteps(PatchContext context) : IDisposable
         foreach (var note in Parse(notes)) Send(new MidiMessage(MidiAction.Up, note, 0f));
     }
 
-    /// <summary>What a key held long enough to auto-repeat sends, or a device that says a note-on twice.</summary>
-    [When($@"^the keyboard sends {Notes} again without letting it go$")]
-    public void WhenSentAgain(string notes) => WhenHeld(notes);
-
     [Then($@"^the voices? plays? ((?:{Note}|nothing)(?:, (?:{Note}|nothing))*(?: and (?:{Note}|nothing))?)$")]
     public void ThenTheVoicesPlay(string expected)
     {

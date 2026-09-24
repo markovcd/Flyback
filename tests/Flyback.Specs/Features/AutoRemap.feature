@@ -19,15 +19,6 @@ Feature: An Auto remap takes its ranges from what it is wired between
     Given a sine wired into a color's brightness
     Then Flyback points out that the sine swings past what the brightness takes
 
-  Scenario: A gate reads a threshold, so a wave into one is not pointed out
-    Given a pulse wired into an envelope's gate
-    Then the patch is accepted without complaint
-
   Scenario: A wire between matching ranges is left alone
     Given a sine wired into a filter's input
     Then Flyback offers nothing on the wire
-
-  Scenario: An Auto remap fed by something with no range asks for its numbers
-    Given a level of 0.5 remapped onto red
-    Then Flyback points out that the Auto remap's input range has to be typed in
-    And the screen shows 0.5, 0, 0

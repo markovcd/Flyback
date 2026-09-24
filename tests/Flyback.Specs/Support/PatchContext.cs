@@ -284,7 +284,8 @@ public sealed class PatchContext
     /// Renders from a cold renderer each time, so a scenario that asks about
     /// frame 3 is not affected by one that asked about frame 1.
     /// </summary>
-    public Frame Render(int frames = 1, int width = Width, int height = Height)
+    /// <param name="at">How many seconds into the patch the frames are drawn.</param>
+    public Frame Render(int frames = 1, int width = Width, int height = Height, double at = 0)
     {
         var program = Picture.Program;
         var renderer = new SynthRenderer();
@@ -292,7 +293,7 @@ public sealed class PatchContext
         var buffer = new byte[stride * height];
 
         for (var frame = 0; frame < frames; frame++)
-            renderer.Render(program, 0f, width, height, buffer, stride);
+            renderer.Render(program, at, width, height, buffer, stride);
 
         return new Frame(buffer, width, height);
     }

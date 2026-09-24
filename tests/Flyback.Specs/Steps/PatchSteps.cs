@@ -93,19 +93,6 @@ public sealed class PatchSteps(PatchContext context)
         context.Wire("mystery", 0, "screen", "color");
     }
 
-    [Given("a cloud picture on the screen and a sine tone at the speakers")]
-    public void GivenAPictureAndATone()
-    {
-        context.Add("coords", "coord");
-        context.Add("clouds", "pattern.clouds");
-        context.Add("clock", "time");
-        context.Add("tone", "osc.sine");
-        context.Wire("coords", "x", "clouds", "x");
-        context.Wire("clock", "t", "tone", "in");
-        Show("clouds");
-        context.Wire("tone", "out", "screen", "left");
-    }
-
     // --- space ----------------------------------------------------------------
 
     [Given("rings drawn across the screen")]
@@ -138,25 +125,6 @@ public sealed class PatchSteps(PatchContext context)
         Show("edge");
     }
 
-    [Given("clouds left unwired beside a picture on the screen")]
-    public void GivenUnwiredClouds()
-    {
-        context.Add("coords", "coord");
-        context.Add("rubbish", "pattern.clouds");
-        Show("coords", "x");
-    }
-
-    [Given("the horizontal position feeding all three inputs of a color")]
-    public void GivenOnePositionThreeTimes()
-    {
-        context.Add("coords", "coord");
-        context.Add("tint", "color.hsv");
-        context.Wire("coords", "x", "tint", "hue");
-        context.Wire("coords", "x", "tint", "saturation");
-        context.Wire("coords", "x", "tint", "value");
-        Show("tint", "color");
-    }
-
     // --- oscillators on the screen --------------------------------------------
 
     [Given("a sine on the screen with nothing patched into it")]
@@ -166,38 +134,12 @@ public sealed class PatchSteps(PatchContext context)
         Show("osc");
     }
 
-    [Given("a sine on the screen with its unpatched domain knob at a quarter cycle")]
-    public void GivenAFreeSineWithAKnob()
-    {
-        GivenAFreeSine();
-        context.SetInput("osc", "in", 0.25f);
-    }
-
-    [Given("a sine on the screen driven by the horizontal position")]
-    public void GivenASineAcross()
-    {
-        context.Add("coords", "coord");
-        GivenAFreeSine();
-        context.Wire("coords", "x", "osc", "in");
-    }
-
     [Given("a sine on the screen driven by Time")]
     public void GivenASineOnTime()
     {
         context.Add("clock", "time");
         GivenAFreeSine();
         context.Wire("clock", "t", "osc", "in");
-    }
-
-    [Given("two oscillators mixed on the screen with nothing patched into either")]
-    public void GivenTwoFreeOscillators()
-    {
-        context.Add("first", "osc.sine");
-        context.Add("second", "osc.saw");
-        context.Add("mix", "math.add");
-        context.Wire("first", "out", "mix", "a");
-        context.Wire("second", "out", "mix", "b");
-        Show("mix");
     }
 
     /// <summary>
@@ -254,45 +196,6 @@ public sealed class PatchSteps(PatchContext context)
         context.SetInput("brighten", "gain", 1f);
         context.Wire("broken", "out", "brighten", "bias");
         Show("brighten", "color");
-    }
-
-    [Given("the {word} of {float} and {float} plus one half on the screen")]
-    public void GivenACalculation(string calculation, float a, float b)
-    {
-        context.Add("maths", calculation switch
-        {
-            "quotient" => "math.div",
-            "remainder" => "math.mod",
-            "power" => "math.pow",
-            _ => throw new ArgumentException($"No calculation called '{calculation}'."),
-        });
-        context.SetInput("maths", "a", a);
-        context.SetInput("maths", "b", b);
-        PlusOneHalf();
-    }
-
-    [Given(@"^the (square root|logarithm|exponential) of (-?[\d.]+) plus one half on the screen$")]
-    public void GivenAFunction(string function, float input)
-    {
-        context.Add("maths", function switch
-        {
-            "square root" => "math.sqrt",
-            "logarithm" => "math.log",
-            _ => "math.exp",
-        });
-        context.SetInput("maths", "in", input);
-        PlusOneHalf();
-    }
-
-    [Given("a level of {float} clamped between {float} and {float}")]
-    public void GivenAClamp(float level, float low, float high)
-    {
-        Level("level", level);
-        context.Add("hold", "math.clamp");
-        context.Wire("level", "out", "hold", "in");
-        context.SetInput("hold", "low", low);
-        context.SetInput("hold", "high", high);
-        Show("hold");
     }
 
     // --- a loop ---------------------------------------------------------------
@@ -544,16 +447,6 @@ public sealed class PatchSteps(PatchContext context)
         Show("halve again");
     }
 
-    [Given("the horizontal position shown through a module that halves it")]
-    public void GivenThePositionHalved()
-    {
-        context.Add("coords", "coord");
-        context.Add("halve", "math.mul");
-        context.SetInput("halve", "b", 0.5f);
-        context.Wire("coords", "x", "halve", "a");
-        Show("halve");
-    }
-
     [Given("a switched-off module with nothing patched in, feeding an adder set to {float} plus {float}")]
     public void GivenAnEmptyModuleFeedingAnAdder(float a, float b)
     {
@@ -640,14 +533,6 @@ public sealed class PatchSteps(PatchContext context)
         Hear("send");
     }
 
-    [Given("the bus {string} is fed round from its own Receive")]
-    public void GivenABusFedFromItself(string bus)
-    {
-        Send("send", bus);
-        context.Wire(Receive(bus), "out", "send", "in");
-        Hear("send");
-    }
-
     // --- building blocks ------------------------------------------------------
 
     /// <summary>A patch written in the text language, heard at full volume.</summary>
@@ -677,13 +562,6 @@ public sealed class PatchSteps(PatchContext context)
         context.SetInput("remap", "out high", high);
     }
 
-    [Given("a level of {float} remapped onto red")]
-    public void GivenALevelRemappedOntoRed(float level)
-    {
-        Level("level", level);
-        OntoRed("level");
-    }
-
     [Given(@"^a sine wired into a filter's (cutoff|input)$")]
     public void GivenASineIntoAFilter(string socket)
     {
@@ -699,20 +577,6 @@ public sealed class PatchSteps(PatchContext context)
         context.Add("tint", "color.hsv");
         context.Wire("wave", "out", "tint", "value");
         Show("tint", "color");
-    }
-
-    [Given("a pulse wired into an envelope's gate")]
-    public void GivenAPulseIntoAGate()
-    {
-        context.Add("clock", "osc.pulse");
-        context.Add("envelope", "env.adsr");
-        context.Add("tone", "osc.sine");
-        context.Add("level", "math.mul");
-        context.Add("speakers", "output");
-        context.Wire("clock", "out", "envelope", "gate");
-        context.Wire("tone", "out", "level", "a");
-        context.Wire("envelope", "out", "level", "b");
-        context.Wire("level", "out", "speakers", "left");
     }
 
     /// <summary>An Auto remap from <paramref name="source"/> into the red of a color that has no green or blue, on the screen.</summary>

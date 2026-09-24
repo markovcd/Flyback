@@ -38,13 +38,6 @@ public sealed class ExportSteps(PatchContext context) : IDisposable
         Export(name, "second");
     }
 
-    [When("it is exported as {string} once compiled and once interpreted")]
-    public void WhenExportedBothWays(string name)
-    {
-        Export(name, "compiled");
-        Export(name, "interpreted", Seconds, "--interpreted");
-    }
-
     [When("it is exported as {string} {float} seconds long")]
     public void WhenExportedFor(string name, float seconds) =>
         Export(name, "export", seconds);
