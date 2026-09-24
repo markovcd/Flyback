@@ -15,9 +15,20 @@ name: Site
 on:
   push:
     branches: [main]
+    # Only what the image is built from: the server, the projects it references
+    # and the plugins it starts with (PluginProject in Flyback.Server.csproj).
+    # The app, the CLI, the viewer and the other plugins are in the build context
+    # but not in the image, so a change to them publishes nothing. A new
+    # reference or site plugin has to be added here.
     paths:
-      - "src/**"
+      - "src/Flyback.Server/**"
+      - "src/Flyback.Engine/**"
+      - "src/Flyback.Core/**"
+      - "src/Flyback.Plugins/**"
+      - "src/Flyback.Plugins.Figures/**"
+      - "src/Flyback.Plugins.Fractals/**"
       - "site/**"
+      - ".editorconfig"
       - "Directory.Build.props"
       - "Directory.Build.targets"
       - "Directory.Packages.props"
