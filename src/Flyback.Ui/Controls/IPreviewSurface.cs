@@ -31,6 +31,9 @@ public interface IPreviewSurface
     /// <summary>Frames reaching the screen each second, for the status readout.</summary>
     double FramesPerSecond { get; }
 
+    /// <summary>How long the last frame took to draw, in milliseconds.</summary>
+    double FrameMilliseconds { get; }
+
     /// <summary>
     /// How often the preview redraws itself, or 0 to run as fast as the host
     /// timer allows. Independent of a take's own frame rate (Recording

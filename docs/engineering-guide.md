@@ -867,8 +867,10 @@ and pastes, `PresetSteps` checks every shipped preset, `ExportSteps` exports
 with `flyback-cli render` and plays through the editor's sound engine,
 `KeyboardSteps` plays a stand-in keyboard through the editor's MIDI hub,
 `CanvasEditingSteps`, `UnsavedWorkSteps` and `TransportSteps` press keys, answer
-questions and move the seek bar in the editor's own window, headless, and `CliSteps` runs `flyback-cli` on files. They
-share a fresh `PatchContext`, `Session` and `Editor` per scenario. A step drives
+questions and move the seek bar in the editor's own window, headless, `ViewerSteps`
+plays a patch through `flyback-viewer`'s own arguments and window, and `CliSteps` runs `flyback-cli` on files. They
+share a fresh `PatchContext`, `Session`, `Editor` and `ViewerRun` per scenario, and the
+two windows one headless UI thread (`Headless`). A step drives
 the program the way somebody would; a scenario that composes services by hand
 is testing the wiring, and belongs in `Flyback.App.Tests`.
 The project references every program and library and lays out every shipped

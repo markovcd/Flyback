@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Flyback.App;
 
-/// <summary>The time as the status bar and a take's progress show it.</summary>
+/// <summary>The time as the status bar, a take's progress and the stats over a picture show it.</summary>
 internal static class StatusClock
 {
     /// <summary>Seconds as minutes:seconds.hundredths, e.g. 1:05.25.</summary>

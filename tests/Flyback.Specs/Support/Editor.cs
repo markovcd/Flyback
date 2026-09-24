@@ -4,8 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Styling;
-using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App;
@@ -30,9 +28,6 @@ namespace Flyback.Specs.Support;
 /// </remarks>
 public sealed class Editor(PatchContext context) : IDisposable
 {
-    private static readonly Lazy<HeadlessUnitTestSession> Session =
-        new(() => HeadlessUnitTestSession.StartNew(typeof(EditorApp), AvaloniaTestIsolationLevel.PerAssembly));
-
     /// <summary>How many turns the UI thread is given after a step, enough for a clipboard's round trip.</summary>
     private const int Turns = 4;
 
@@ -241,6 +236,25 @@ public sealed class Editor(PatchContext context) : IDisposable
     /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
     public bool Paused => ReadWindow(open => ToolTip.GetTip(open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "pause")) as string == Toolbar.PlayTip);
 
+    /// <summary>Gives the picture the whole window, as a double-click on it does.</summary>
+    public void FullScreen() =>
+        DoWindow((open, _) =>
+        {
+            var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
+            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>What the line in the full-screen picture's corner says, or null while it is not showing.</summary>
+    public string? Stats => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats
+            ? stats.Said
+            : null);
+
     /// <summary>Makes the selection exactly these modules, which is what clicking them with Ctrl held does.</summary>
     public void Select(params Guid[] ids) =>
         Do(canvas =>
@@ -255,7 +269,12 @@ public sealed class Editor(PatchContext context) : IDisposable
         {
             var open = window!;
 
-            canvas.Focus();
+            // The keyboard is the whole program's, so the window takes it back first, onto
+            // the canvas or, where that is put away, onto whatever the window keeps it on.
+            open.Activate();
+
+            if (!canvas.Focus()) (open.FocusManager?.GetFocusedElement() as InputElement)?.Focus();
+
             open.KeyPressQwerty(key, modifiers);
             open.KeyReleaseQwerty(key, modifiers);
         });
@@ -364,26 +383,9 @@ public sealed class Editor(PatchContext context) : IDisposable
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Run(Action act) => Session.Value.Dispatch(act, CancellationToken.None).GetAwaiter().GetResult();
+    private static void Run(Action act) => Headless.Run(act);
 
-    private static T Run<T>(Func<T> act) => Session.Value.Dispatch(act, CancellationToken.None).GetAwaiter().GetResult();
+    private static T Run<T>(Func<T> act) => Headless.Run(act);
 
-    private static T Run<T>(Func<Task<T>> act) => Session.Value.Dispatch(act, CancellationToken.None).GetAwaiter().GetResult();
-}
-
-/// <summary>The theme the editor runs in, and nothing else of the program's own application.</summary>
-public sealed class EditorApp : Application
-{
-    public static AppBuilder BuildAvaloniaApp() => AppBuilder
-        .Configure<EditorApp>()
-        .UseSkia()
-        .WithInterFont()
-        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
-
-    public override void Initialize()
-    {
-        Styles.Add(new FluentTheme());
-        Styles.Add(FlybackApp.EditorStyles());
-        RequestedThemeVariant = ThemeVariant.Dark;
-    }
+    private static T Run<T>(Func<Task<T>> act) => Headless.Run(act);
 }

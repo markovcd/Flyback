@@ -843,6 +843,13 @@ internal sealed class MainWindow : Window
             return;
         }
 
+        if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None && (previewIsFullScreen || pictureWindow is not null))
+        {
+            ToggleStats();
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Escape && knobs.StopModes())
         {
             Report("Done.");
@@ -1445,11 +1452,15 @@ internal sealed class MainWindow : Window
     /// </summary>
     private void BuildRightPanel(Grid grid, int column)
     {
+        // Focusable, so the keys have somewhere to go while the picture has the window.
         previewBox = new Border
         {
             Background = Brushes.Black,
             Child = preview,
+            Focusable = true,
         };
+
+        KeyboardNavigation.SetIsTabStop(previewBox, false);
 
         // Double-click the picture and it takes the window; double-click it or
         // press Escape to put everything back. The gesture every video player
@@ -1517,7 +1528,10 @@ internal sealed class MainWindow : Window
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += RewindToZero;
 
+        statsOverlay = new StatsOverlay(preview);
+
         grid.Children.Add(previewBox);
+        grid.Children.Add(statsOverlay);
         grid.Children.Add(knobs.Stage);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);
@@ -1701,10 +1715,12 @@ internal sealed class MainWindow : Window
         window.Transport.RewindClicked += RewindToZero;
 
         window.PauseRequested += (_, _) => TogglePause();
+        window.StatsRequested += (_, _) => ToggleStats();
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
         SyncTransport();
+        SyncStats();
         knobs.SyncStages();
     }
 
@@ -1760,6 +1776,13 @@ internal sealed class MainWindow : Window
 
         Over(knobs.Stage);
         knobs.SyncStages();
+
+        if (statsOverlay is not null) Over(statsOverlay);
+        SyncStats();
+
+        // The keyboard goes with what is showing: the canvas it was on is put away.
+        if (full) previewBox.Focus();
+        else editor.Focus();
 
         // ShowPreview stands aside while the preview has the window, and the patch
         // may have lost its picture meanwhile. Only ever put away here: the row has
@@ -2034,6 +2057,25 @@ internal sealed class MainWindow : Window
     /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
     private IEnumerable<TransportOverlay> Transports =>
         new[] { transportOverlay, pictureWindow?.Transport }.OfType<TransportOverlay>();
+
+    /// <summary>The line saying how the picture is drawn, over the preview's cell while it has the window.</summary>
+    private StatsOverlay? statsOverlay;
+
+    /// <summary>Whether the full-screen picture carries that line, wherever it is shown. F3 says.</summary>
+    private bool statsShown;
+
+    /// <summary>Shows the line over a full-screen picture, or puts it away.</summary>
+    private void ToggleStats()
+    {
+        statsShown = !statsShown;
+        SyncStats();
+    }
+
+    private void SyncStats()
+    {
+        if (statsOverlay is not null) statsOverlay.IsVisible = statsShown && previewIsFullScreen;
+        if (pictureWindow is not null) pictureWindow.Stats.IsVisible = statsShown;
+    }
 
     #endregion
 

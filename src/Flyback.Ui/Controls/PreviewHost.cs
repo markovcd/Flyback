@@ -58,6 +58,8 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <summary>Frames reaching the screen each second, for the status readout.</summary>
     public double FramesPerSecond => active.FramesPerSecond;
 
+    public double FrameMilliseconds => active.FrameMilliseconds;
+
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the renderer allows.</summary>
     public double FrameRate
     {

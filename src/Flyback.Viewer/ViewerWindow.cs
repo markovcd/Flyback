@@ -115,6 +115,12 @@ internal sealed partial class ViewerWindow : Window
 
             layout.Children.Add(previewBox);
 
+            if (preview is not null)
+            {
+                Stats = new StatsOverlay(preview) { IsVisible = options.Stats };
+                layout.Children.Add(Stats);
+            }
+
             if (!options.NoOverlay)
             {
                 layout.Children.Add(BuildKnobs());
@@ -132,6 +138,8 @@ internal sealed partial class ViewerWindow : Window
             if (e.Key == Key.Escape && WindowState == WindowState.FullScreen) ToggleFullScreen();
 
             else if (bare && e.Key == Key.F11 && preview is not null) ToggleFullScreen();
+
+            else if (bare && e.Key == Key.F3 && Stats is not null) Stats.Toggle();
 
             // Space, which no layout plays, and the editor's Ctrl+P.
             else if ((bare && e.Key == Key.Space) || (command && e.Key == Key.P)) TogglePause();
@@ -167,6 +175,9 @@ internal sealed partial class ViewerWindow : Window
 
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
     internal TransportOverlay? Overlay { get; private set; }
+
+    /// <summary>The line saying how the picture is drawn, or null for a run with no picture.</summary>
+    internal StatsOverlay? Stats { get; }
 
     /// <summary>The knobs over the picture, or null for a run that asked for no overlay.</summary>
     internal StageKnobs? Knobs { get; private set; }

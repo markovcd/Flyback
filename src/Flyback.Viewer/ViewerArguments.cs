@@ -180,6 +180,11 @@ internal static class ViewerArguments
             Description = "No dots and no toolbar, so a capture has nothing of the viewer in it.",
         };
 
+        var stats = new Option<bool>("--stats")
+        {
+            Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the ops. F3 shows it and puts it away.",
+        };
+
         var title = new Option<string>("--title")
         {
             HelpName = "text",
@@ -202,13 +207,13 @@ internal static class ViewerArguments
         var root = new RootCommand(
             "Flyback Viewer — open a patch and play it, picture and sound, and write nothing. "
             + "A patch made to be played takes the computer's keys and its MIDI devices; "
-            + "Space, or Ctrl+P, pauses it, and F11 gives it the whole screen.")
+            + "Space, or Ctrl+P, pauses it, F11 gives it the whole screen, and F3 says how it is drawn.")
         {
             patch, preset, presets,
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency,
             from, paused, duration, loop,
-            background, hidden, noOverlay, title, top, interpreted, file,
+            background, hidden, noOverlay, stats, title, top, interpreted, file,
         };
 
         root.SetAction(result =>
@@ -245,6 +250,7 @@ internal static class ViewerArguments
                 Background = result.GetValue(background),
                 Hidden = result.GetValue(hidden),
                 NoOverlay = result.GetValue(noOverlay),
+                Stats = result.GetValue(stats),
                 Title = result.GetValue(title),
                 Top = result.GetValue(top),
                 Interpreted = result.GetValue(interpreted),
@@ -269,6 +275,7 @@ internal static class ViewerArguments
         : options.Window is not null ? "--window"
         : options.Top ? "--top"
         : options.NoOverlay ? "--no-overlay"
+        : options.Stats ? "--stats"
         : null;
 
     /// <summary>A size as it is typed: a short name or a row's label, or WIDTHxHEIGHT.</summary>

@@ -147,7 +147,8 @@
     </div>
 
     <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
-    back. Hover the bottom right corner of the full-screen picture for the sound, rewind and pause buttons. A patch
+    back. Hover the bottom right corner of the full-screen picture for the sound, rewind and pause buttons, and press
+    <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws and what each costs. A patch
     with knobs keeps them behind the dots at the bottom middle, to be played.
     <strong>Settings → Graphics → Full screen</strong> can send the picture to another monitor instead, or to one
     you pick, and the editor stays where it is. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
@@ -559,7 +560,8 @@ flyback-viewer --preset "Dub" --size 1080p --mute
 flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
     <p>Hover the bottom right corner of the window for the sound, rewind and pause buttons, and double-click the
     picture or press <kbd>F11</kbd> for full screen. A patch with no picture opens as just those buttons and its knobs.
-    <kbd>Space</kbd> pauses. <code>--hidden</code> opens no window at all, which is how
+    <kbd>Space</kbd> pauses, and <kbd>F3</kbd>, or <code>--stats</code> from the start, says in the corner how the
+    picture is drawn: frames a second, a frame's cost, the ops. <code>--hidden</code> opens no window at all, which is how
     to hear a patch without anything landing on the screen.</p>
     <p>A patch made to be played is played here too: the computer's keys are notes, a MIDI In hears its
     device, and a knob bound to a MIDI controller follows it. The knobs wait behind the dots at the bottom of the
@@ -642,6 +644,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Move the computer keyboard up or down an octave</td></tr>
           <tr><td>double-click a box</td><td>Look inside it, over the rest of the patch</td></tr>
           <tr><td>double-click the preview</td><td>Full-screen preview</td></tr>
+          <tr><td><kbd>F3</kbd> over the full-screen preview</td><td>Show or hide how the picture is drawn: frames a second, a frame's cost, the ops</td></tr>
         </tbody>
       </table>
     </div>

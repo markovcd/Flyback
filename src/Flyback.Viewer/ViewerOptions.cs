@@ -68,6 +68,9 @@ internal sealed record ViewerOptions
     /// <summary>Neither the dots nor the toolbar.</summary>
     public bool NoOverlay { get; init; }
 
+    /// <summary>Open with the line saying how the picture is drawn in its corner, which F3 shows and puts away.</summary>
+    public bool Stats { get; init; }
+
     public string? Title { get; init; }
 
     /// <summary>Keep the window above the others.</summary>

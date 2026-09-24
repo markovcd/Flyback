@@ -5,7 +5,7 @@ using Flyback.Specs.Support;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The editor's transport: pausing the patch and moving its clock along the seek bar.</summary>
+/// <summary>The editor's transport and its picture: pausing, moving the clock along the seek bar, and the picture full screen.</summary>
 [Binding]
 public sealed class TransportSteps(Editor editor)
 {
@@ -26,6 +26,15 @@ public sealed class TransportSteps(Editor editor)
 
     [Then("the patch is still paused")]
     public void ThenStillPaused() => editor.Paused.ShouldBeTrue();
+
+    [When("the picture is given the whole window")]
+    public void WhenFullScreen() => editor.FullScreen();
+
+    [When("F3 is pressed")]
+    public void WhenF3() => editor.Press(PhysicalKey.F3);
+
+    [Then("the editor's picture says how many frames a second it draws")]
+    public void ThenTheEditorSays() => editor.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
     [Then("the seek bar reaches {int} seconds")]
     public void ThenTheBarReaches(int seconds) => editor.SeekLength.ShouldBe(seconds);

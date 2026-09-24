@@ -123,6 +123,7 @@ public class ViewerOptionsTests
             "--loop", "4",
             "--background",
             "--no-overlay",
+            "--stats",
             "--title", "hello",
             "--top",
             "--interpreted");
@@ -144,6 +145,7 @@ public class ViewerOptionsTests
         options.Loop.ShouldBe(4);
         options.Background.ShouldBeTrue();
         options.NoOverlay.ShouldBeTrue();
+        options.Stats.ShouldBeTrue();
         options.Title.ShouldBe("hello");
         options.Top.ShouldBeTrue();
         options.Interpreted.ShouldBeTrue();
@@ -204,7 +206,7 @@ public class ViewerOptionsTests
         hidden.Hidden.ShouldBeTrue();
         hidden.Video.ShouldBeFalse();
 
-        foreach (var flag in new[] { "--full-screen", "--maximized", "--top", "--no-overlay" })
+        foreach (var flag in new[] { "--full-screen", "--maximized", "--top", "--no-overlay", "--stats" })
         {
             var ran = Run(Machine, "--hidden", flag);
 

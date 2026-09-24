@@ -88,7 +88,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     public double FramesPerSecond => meter.PerSecond;
 
     /// <summary>Cost of the last frame, which sets how long the next tick rests.</summary>
-    private double FrameMilliseconds { get; set; }
+    public double FrameMilliseconds { get; private set; }
 
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the dispatcher allows.</summary>
     public double FrameRate

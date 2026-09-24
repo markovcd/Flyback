@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops in the corner.
 - A seek bar on the toolbar moves the patch's clock anywhere along a length typed beside it.
 - Settings → Canvas → Compact modules puts each input beside an output on one row, with an input's value in its tooltip.
 - A patched socket in the panel names the socket at the other end of its wire, `◀ patched from Time.t`, and an output names every socket it feeds; a group's socket in the panel is its module's row, help and slider included.

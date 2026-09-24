@@ -28,6 +28,12 @@ internal sealed class PictureWindow : Window
     /// <summary>Ctrl+P was pressed over the picture.</summary>
     public event EventHandler? PauseRequested;
 
+    /// <summary>F3 was pressed over the picture.</summary>
+    public event EventHandler? StatsRequested;
+
+    /// <summary>The line saying how the picture is drawn, which the editor shows or puts away.</summary>
+    public StatsOverlay Stats { get; }
+
     public PictureWindow(Screen screen, PreviewHost preview)
     {
         Title = "Flyback picture";
@@ -38,7 +44,10 @@ internal sealed class PictureWindow : Window
         Width = 160;
         Height = 90;
 
+        Stats = new StatsOverlay(preview);
+
         picture.Children.Add(preview);
+        picture.Children.Add(Stats);
         picture.Children.Add(Knobs);
         picture.Children.Add(Transport);
 
@@ -55,6 +64,7 @@ internal sealed class PictureWindow : Window
             var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
             if (command && e.Key == Key.P) PauseRequested?.Invoke(this, EventArgs.Empty);
+            else if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None) StatsRequested?.Invoke(this, EventArgs.Empty);
             else if (e.Key == Key.Escape) Close();
             else return;
 

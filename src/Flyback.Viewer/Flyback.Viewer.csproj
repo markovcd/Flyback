@@ -47,6 +47,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 
 </Project>
