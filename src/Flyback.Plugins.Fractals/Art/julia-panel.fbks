@@ -1,0 +1,2 @@
+julia(x: y, y: 0 - x, zoom: -0.3, iterations: "128").color * 0.55 |> out.color
+out.volume = 0

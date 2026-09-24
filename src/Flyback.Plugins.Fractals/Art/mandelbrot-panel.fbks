@@ -1,0 +1,2 @@
+mandelbrot(x: y, y: 0 - x, re: -0.7460, im: 0.1120, zoom: 7.6, iterations: "256").color * 0.55 |> out.color
+out.volume = 0

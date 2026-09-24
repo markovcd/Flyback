@@ -42,8 +42,9 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
-    <!-- Not in the box: the preset site starts with it, and it is tested here the way an install loads it. -->
+    <!-- Not in the box: the preset site starts with these, and they are tested here the way an install loads them. -->
     <PluginProject Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
   </ItemGroup>
 
   <!-- The preset site's defaults, which have to open and compile against the plugins above (ADR-0138). -->

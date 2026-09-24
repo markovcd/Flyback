@@ -39,6 +39,7 @@
     <PluginProject Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
     <PluginProject Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
     <PluginProject Include="..\..\src\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />

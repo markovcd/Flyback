@@ -68,7 +68,7 @@ Settings, all optional, as environment variables:
 
 Set the admin's user and password in `compose.yaml` and sign in at `/admin.html`. Signed in, the shelf shows unpublished presets too, and every preset has Rename, Unpublish (or Publish) and Delete. An unpublished preset is gone from the shelf, its page and its download for everyone else, and is not rendered until it is published again.
 
-Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. The one the site starts with, Figures, is published from the start, like the default presets. Plugins are never rendered, and have nothing in `media/`.
+Plugins wait for the admin: a submitted `.fbkp` is unpublished until Publish is pressed on it at `/plugins.html`, and nobody else can see or download it before then. The ones the site starts with, Figures and Fractals, are published from the start, like the default presets. Plugins are never rendered, and have nothing in `media/`.
 
 Anyone can report a published preset or plugin, from its page or from the editor, with a reason and a line of detail. Reports are listed at `/admin.html` once signed in, each linking to what it is about, where it can be unpublished or deleted; Dismiss clears one, and deleting a preset or plugin clears its reports.
 

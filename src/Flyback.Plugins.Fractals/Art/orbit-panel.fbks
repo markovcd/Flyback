@@ -1,0 +1,4 @@
+let m = mandelbrot(x: x * 0.8 + 0.22, y: y * 0.8 + 0.2, iterations: "128")
+let o = orbit(x: x * 0.8 + 0.22, y: y * 0.8 + 0.2, re: -0.62, im: 0.42)
+(m.color * 0.35 + o.color) * 0.55 |> out.color
+out.volume = 0

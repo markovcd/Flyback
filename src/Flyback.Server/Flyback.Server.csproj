@@ -30,6 +30,7 @@
   -->
   <ItemGroup>
     <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" Publish="false" />
+    <PluginProject Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" Publish="false" />
   </ItemGroup>
 
   <!-- Writes each as "project|FolderName", a line apiece, for the builds that pack them. -->

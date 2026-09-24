@@ -7,6 +7,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Effects;
 using Flyback.Plugins.Figures;
+using Flyback.Plugins.Fractals;
 using Flyback.Plugins.Mastering;
 using Flyback.Plugins.Picture;
 using Flyback.Plugins.Voice;
@@ -36,6 +37,7 @@ public class PluginPreviewShotTests : UiTest
         ("effects", new EffectsPlugin(), ["echo", "chorus", "flanger", "phaser"]),
         ("mastering", new MasteringPlugin(), ["eq", "compressor", "limiter", "loudness"]),
         ("figures", new FiguresPlugin(), ["plate", "harmonograph", "overtones"]),
+        ("fractals", new FractalsPlugin(), ["mandelbrot", "julia", "orbit"]),
     ];
 
     private const double Wide = 2200, Tall = 1100;
