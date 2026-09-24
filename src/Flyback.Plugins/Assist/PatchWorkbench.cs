@@ -801,17 +801,6 @@ public sealed partial class PatchWorkbench
                 text.Append("    ").AppendLine(line);
                 text.Append("    ").Append(' ', Math.Clamp(issue.Column - 1, 0, line.Length)).AppendLine("^");
             }
-
-            if (issue.Fix is { } fix)
-            {
-                var from = fix.Line >= 1 && fix.Line <= lines.Length ? lines[fix.Line - 1] : string.Empty;
-                var at = Math.Clamp(fix.Column - 1, 0, from.Length);
-                var was = from.Substring(at, Math.Min(fix.Length, from.Length - at));
-
-                text.AppendLine(fix.Length == 0
-                    ? $"    fix: insert '{fix.Text}' at {fix.Line}:{fix.Column}"
-                    : $"    fix: '{was}' at {fix.Line}:{fix.Column} becomes '{fix.Text}'");
-            }
         }
 
         return text.ToString().TrimEnd();

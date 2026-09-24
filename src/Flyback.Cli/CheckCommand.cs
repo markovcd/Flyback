@@ -14,15 +14,13 @@ namespace Flyback.Cli;
 /// <param name="Line">Where in a text patch, for a complaint about the text.</param>
 /// <param name="Column">Where on that line.</param>
 /// <param name="Code">What kind of mistake the text holds, one of <see cref="IssueCode"/>.</param>
-/// <param name="Fix">The one edit that repairs it, where there is one.</param>
 internal sealed record Complaint(
     string Severity,
     string? Module,
     string Message,
     int? Line = null,
     int? Column = null,
-    string? Code = null,
-    LanguageFix? Fix = null);
+    string? Code = null);
 
 /// <summary>
 /// Compiles a patch for both sinks and says what is wrong with it.
@@ -90,7 +88,7 @@ internal static class CheckCommand
         if (json)
         {
             var complaints = issues
-                .Select(i => new Complaint("error", null, i.Message, i.Line, i.Column, i.Code, i.Fix))
+                .Select(i => new Complaint("error", null, i.Message, i.Line, i.Column, i.Code))
                 .ToArray();
 
             output.WriteLine(JsonSerializer.Serialize(

@@ -127,8 +127,7 @@ internal static class Handbook
 
         Nothing is adopted unless all of it reads, and a mistake comes back
         with its line and column and a code in brackets, such as
-        `[pipe-lands-nowhere]` or `[bound-twice]`. Where a mistake has exactly
-        one repair, a `fix:` line under it says the edit; make it as it stands.
+        `[pipe-lands-nowhere]` or `[bound-twice]`.
         `keyboard`, `description`, `author` and `tags` each go once in a patch.
 
         ## Putting a patch together

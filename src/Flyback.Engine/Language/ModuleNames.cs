@@ -28,12 +28,10 @@ internal sealed class ModuleNames
 
     /// <summary>The module a name means, or null and what to tell the writer instead.</summary>
     /// <param name="code">What kind of refusal it is, one of <see cref="IssueCode"/>.</param>
-    /// <param name="nearest">The name there is that is closest to it, where one is close enough.</param>
-    public NodeDef? Find(string name, out string refusal, out string code, out string? nearest)
+    public NodeDef? Find(string name, out string refusal, out string code)
     {
         refusal = string.Empty;
         code = string.Empty;
-        nearest = null;
 
         if (modules.Get(name) is { } exact) return exact;
 
@@ -51,70 +49,8 @@ internal sealed class ModuleNames
 
         if (byShortName.TryGetValue(name, out var def)) return def;
 
-        nearest = Nearest(name);
-        refusal = $"there is no module called '{name}'.{(nearest is null ? string.Empty : $" Did you mean '{nearest}'?")}";
+        refusal = $"there is no module called '{name}'.";
         code = IssueCode.UnknownModule;
         return null;
-    }
-
-    /// <summary>The closest name there is, where one is close enough to be worth offering.</summary>
-    private string? Nearest(string name)
-    {
-        var best = byShortName.Keys
-            .Select(k => (Name: k, Distance: Distance(k, name)))
-            .Where(k => k.Distance <= Math.Max(1, name.Length / 3))
-            .OrderBy(k => k.Distance)
-            .ThenBy(k => k.Name, StringComparer.Ordinal)
-            .Select(k => k.Name)
-            .FirstOrDefault();
-
-        return best;
-    }
-
-    /// <summary>
-    /// The one name among <paramref name="among"/> closest to <paramref name="name"/>,
-    /// where it is close enough to be the repair and no other is as close.
-    /// </summary>
-    public static string? Nearest(string name, IEnumerable<string> among)
-    {
-        var close = among
-            .Distinct(StringComparer.Ordinal)
-            .Select(k => (Name: k, Distance: Distance(k, name)))
-            .Where(k => k.Distance > 0 && k.Distance <= Math.Max(1, name.Length / 3))
-            .ToList();
-
-        if (close.Count == 0) return null;
-
-        var best = close.Min(k => k.Distance);
-        var nearest = close.Where(k => k.Distance == best).ToList();
-
-        return nearest.Count == 1 ? nearest[0].Name : null;
-    }
-
-    /// <summary>The question a complaint asks where there is a nearest name.</summary>
-    public static string Meant(string? nearest) => nearest is null ? string.Empty : $" Did you mean '{nearest}'?";
-
-    private static int Distance(string a, string b)
-    {
-        var previous = new int[b.Length + 1];
-        var current = new int[b.Length + 1];
-
-        for (var j = 0; j <= b.Length; j++) previous[j] = j;
-
-        for (var i = 1; i <= a.Length; i++)
-        {
-            current[0] = i;
-
-            for (var j = 1; j <= b.Length; j++)
-            {
-                var swap = char.ToLowerInvariant(a[i - 1]) == char.ToLowerInvariant(b[j - 1]) ? 0 : 1;
-
-                current[j] = Math.Min(Math.Min(current[j - 1] + 1, previous[j] + 1), previous[j - 1] + swap);
-            }
-
-            (previous, current) = (current, previous);
-        }
-
-        return previous[b.Length];
     }
 }

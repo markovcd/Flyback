@@ -934,9 +934,10 @@ public class LanguageTests
     public void A_type_id_written_in_full_settles_it() =>
         Build("math.mix(0, 1, 0.5) |> out.color").Nodes.ShouldContain(n => n.TypeId == "math.mix");
 
+    /// <summary>Said and not guessed at: the nearest name is as often the wrong one.</summary>
     [Fact]
-    public void A_module_that_does_not_exist_is_offered_the_nearest_one() =>
-        Try("kaleidoscop() |> out.color").Report.ShouldContain("kaleidoscope");
+    public void A_module_that_does_not_exist_is_named_and_nothing_is_guessed() =>
+        Try("kaleidoscop() |> out.color").Report.ShouldNotContain("kaleidoscope'");
 
     [Fact]
     public void A_socket_with_a_space_in_its_name_is_written_with_an_underscore() =>

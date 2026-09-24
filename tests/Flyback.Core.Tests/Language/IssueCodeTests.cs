@@ -5,10 +5,7 @@ using Shouldly;
 
 namespace Flyback.Core.Tests.Language;
 
-/// <summary>
-/// Every complaint about the text carries a code a program can match on, and
-/// the ones with exactly one repair carry it too.
-/// </summary>
+/// <summary>Every complaint about the text carries a code a program can match on.</summary>
 public class IssueCodeTests
 {
     private static readonly string[] Codes = [.. typeof(IssueCode)
@@ -57,48 +54,5 @@ public class IssueCodeTests
 
         foreach (var source in sources)
             Build(source).Issues.ShouldAllBe(issue => Codes.Contains(issue.Code));
-    }
-
-    /// <summary>A misspelling has one repair, and making it is what a repair loop does.</summary>
-    [Fact]
-    public void A_misspelled_module_is_repaired_by_its_fix()
-    {
-        const string source = "rotate() |> kaleidoscop(segments: 6) |> clouds() |> color.hsv(hue: _) |> out.color";
-
-        var fixedSource = LanguageFix.Apply(source, Build(source).Issues);
-
-        fixedSource.ShouldBe("rotate() |> kaleidoscope(segments: 6) |> clouds() |> color.hsv(hue: _) |> out.color");
-        Build(fixedSource).Issues.ShouldBeEmpty();
-    }
-
-    /// <summary>A misspelled socket, output or name is repaired to the one nearest it.</summary>
-    [Theory]
-    [InlineData("sine(frq: 3) |> out.left", "sine(freq: 3) |> out.left")]
-    [InlineData("sine(freq: 3) |> out.lft", "sine(freq: 3) |> out.left")]
-    [InlineData("sine(freq: 3) |> out.left\nout.volum = 0.5", "sine(freq: 3) |> out.left\nout.volume = 0.5")]
-    [InlineData("let wave = sine(freq: 3)\nwav |> out.left", "let wave = sine(freq: 3)\nwave |> out.left")]
-    [InlineData("let clock = tempo(bpm: 120)\nclock.beets |> fract() |> out.left", "let clock = tempo(bpm: 120)\nclock.beats |> fract() |> out.left")]
-    [InlineData("tempo(bpm: 120).beets |> fract() |> out.left", "tempo(bpm: 120).beats |> fract() |> out.left")]
-    public void A_misspelled_word_is_repaired_by_its_fix(string source, string repaired)
-    {
-        var fixedSource = LanguageFix.Apply(source, Build(source).Issues);
-
-        fixedSource.ShouldBe(repaired);
-        Build(fixedSource).Issues.ShouldBeEmpty();
-    }
-
-    /// <summary>
-    /// Where the writer has to choose, there is no fix to apply blindly: which
-    /// socket a pipe meant, whether a bare number was seconds or decades, or
-    /// which of two names as near as each other was meant.
-    /// </summary>
-    [Theory]
-    [InlineData("pulse() |> adsr(decay: 1ms) |> out.left")]
-    [InlineData("adsr(attack: 0.01) |> out.left")]
-    [InlineData("mix() |> out.color")]
-    [InlineData("let wave1 = sine()\nlet wave2 = sine()\nwave |> out.left")]
-    public void A_mistake_with_a_choice_in_it_has_no_fix(string source)
-    {
-        Build(source).Issues.ShouldAllBe(issue => issue.Fix == null);
     }
 }

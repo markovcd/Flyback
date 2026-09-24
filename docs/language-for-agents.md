@@ -198,14 +198,13 @@ which is the 0033 test.
 
 ## 9. A diagnostic is a repair instruction
 
-**Done.** Each complaint about the text carries a stable `code` (`IssueCode`),
-its line and column, the message, and a `fix` — a span and its replacement —
-where there is exactly one repair. That is a misspelled module, socket, output
-or name, repaired to the one nearest it where no other is as near: a pipe with
-nowhere to land and a bare number on a time socket each have a choice in them,
-and a fix applied blindly would be the old guess back. The assistant's
-`write_patch` refuses with the same codes, in brackets, and a `fix:` line under
-each mistake that has one.
+**Done, without fixes.** Each complaint about the text carries a stable `code`
+(`IssueCode`), its line and column and the message. The assistant's
+`write_patch` refuses with the same codes, in brackets. A `fix` carrying the
+nearest name for a misspelling was tried and taken out: the nearest name was
+often a different binding (`base` offered as `bass`) or one tied with another
+(`adr` as `add` rather than `adsr`), and a repair applied blindly then wired
+the wrong module without a word.
 
 And a crash is a diagnostic that did not get written. There should be none.
 

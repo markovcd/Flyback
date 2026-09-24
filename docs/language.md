@@ -66,10 +66,9 @@ continues the one before it. Whatever a statement leaves unread on its line is a
 something skipped.
 
 Every complaint has a line, a column and a stable code, one of `IssueCode` —
-`pipe-lands-nowhere`, `bound-twice`, `unknown-module` and the rest — and one
-with exactly one repair carries it as a fix. A misspelled module, socket, output
-or name is repaired to the one nearest it, where no other is as near.
-`flyback-cli check --json` writes all three.
+`pipe-lands-nowhere`, `bound-twice`, `unknown-module` and the rest.
+`flyback-cli check --json` writes all three. A misspelling is said and not
+guessed at: a nearest name offered as a repair is as often the wrong one.
 
 ---
 

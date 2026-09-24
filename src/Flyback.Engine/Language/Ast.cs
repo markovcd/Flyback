@@ -9,37 +9,9 @@ namespace Flyback.Core.Language;
 /// <param name="Line">Counting from one, as an editor does.</param>
 /// <param name="Column">Counting from one, as an editor does.</param>
 /// <param name="Code">One of <see cref="IssueCode"/>.</param>
-/// <param name="Fix">The edit that repairs it, where there is exactly one.</param>
-public sealed record LanguageIssue(int Line, int Column, string Code, string Message, LanguageFix? Fix = null)
+public sealed record LanguageIssue(int Line, int Column, string Code, string Message)
 {
     public override string ToString() => $"{Line}:{Column}: {Message}";
-}
-
-/// <summary>Replace <paramref name="Length"/> characters at a line and column with <paramref name="Text"/>.</summary>
-/// <param name="Length">Nought for an insertion.</param>
-public sealed record LanguageFix(int Line, int Column, int Length, string Text)
-{
-    /// <summary>
-    /// <paramref name="source"/> with every fix the issues carry made, last
-    /// first so each one's line and column still point where they did.
-    /// </summary>
-    public static string Apply(string source, IEnumerable<LanguageIssue> issues)
-    {
-        var lines = source.Split('\n').ToList();
-
-        foreach (var fix in issues.Select(i => i.Fix).OfType<LanguageFix>().Distinct()
-                     .OrderByDescending(f => f.Line).ThenByDescending(f => f.Column))
-        {
-            if (fix.Line < 1 || fix.Line > lines.Count) continue;
-
-            var line = lines[fix.Line - 1];
-            var at = Math.Clamp(fix.Column - 1, 0, line.Length);
-
-            lines[fix.Line - 1] = line[..at] + fix.Text + line[Math.Min(line.Length, at + fix.Length)..];
-        }
-
-        return string.Join('\n', lines);
-    }
 }
 
 // --- expressions ------------------------------------------------------------
@@ -64,8 +36,7 @@ public sealed record RangeExpr(Expr Low, Expr High, int Line, int Column) : Expr
 /// A name, and optionally one of its outputs: <c>riff</c>, <c>riff.gate</c>,
 /// <c>out.color</c>.
 /// </summary>
-/// <param name="PortColumn">Where the output's name starts, nought where it is not on the name's line.</param>
-public sealed record NameExpr(string Name, string? Port, int Line, int Column, int PortColumn = 0) : Expr(Line, Column);
+public sealed record NameExpr(string Name, string? Port, int Line, int Column) : Expr(Line, Column);
 
 /// <summary>One argument to a call, named or not.</summary>
 /// <param name="Name">The socket this is for, or null to take the next free one.</param>

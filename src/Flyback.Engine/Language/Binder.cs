@@ -221,15 +221,12 @@ public sealed class Binder
 
         public Value? Find(string name) => Entry(name)?.Value;
 
-        /// <summary>Every name in sight, for the nearest to one misspelled.</summary>
-        public IEnumerable<string> Names() => parent is null ? names.Keys : names.Keys.Concat(parent.Names());
-
         public (Value Value, int Line)? Entry(string name) =>
             names.TryGetValue(name, out var entry) ? entry : parent?.Entry(name);
     }
 
-    private void Complain(string code, int line, int column, string message, LanguageFix? fix = null) =>
-        issues.Add(new LanguageIssue(line, column, code, message, fix));
+    private void Complain(string code, int line, int column, string message) =>
+        issues.Add(new LanguageIssue(line, column, code, message));
 
     /// <summary>
     /// Whether <paramref name="name"/> may be bound here, said where it may not.
@@ -564,7 +561,7 @@ public sealed class Binder
 
         if (scope.Find(target.Name) is not { } value)
         {
-            Unknown(target, scope);
+            Unknown(target);
             return;
         }
 
@@ -1094,7 +1091,7 @@ public sealed class Binder
 
         if (scope.Find(expr.Name) is not { } value)
         {
-            Unknown(expr, scope);
+            Unknown(expr);
             return null;
         }
 
@@ -1107,18 +1104,11 @@ public sealed class Binder
         if (value is not Placed)
             return Refuse(IssueCode.NotAModule, expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
 
-        return Output(value, expr.Port, expr.Line, expr.Column, expr.PortColumn);
+        return Output(value, expr.Port, expr.Line, expr.Column);
     }
 
-    /// <summary>A name nothing is bound to, with the nearest one there is as its fix.</summary>
-    private void Unknown(NameExpr expr, Scope scope)
-    {
-        var nearest = ModuleNames.Nearest(expr.Name, scope.Names().Concat(["t", "x", "y", "radius", "angle", "aspect"]));
-
-        Complain(IssueCode.UnknownName, expr.Line, expr.Column,
-            $"nothing here is called '{expr.Name}'.{ModuleNames.Meant(nearest)}",
-            nearest is null ? null : new LanguageFix(expr.Line, expr.Column, expr.Name.Length, nearest));
-    }
+    private void Unknown(NameExpr expr) =>
+        Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
 
     /// <summary>
     /// One output of what an expression placed, which is a binding's selector
@@ -1134,12 +1124,11 @@ public sealed class Binder
             _ => Bind(expr.Source, scope),
         };
 
-        return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column, expr.Column);
+        return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column);
     }
 
     /// <summary>The output of <paramref name="value"/> called <paramref name="name"/>.</summary>
-    /// <param name="at">Where the output's name starts on the line, nought where that is not known.</param>
-    private Value? Output(Value value, string name, int line, int column, int at)
+    private Value? Output(Value value, string name, int line, int column)
     {
         // A def may hand back one output, several things or a number, and none
         // of those has outputs of its own to choose between.
@@ -1150,13 +1139,8 @@ public sealed class Binder
 
         if (port < 0)
         {
-            var nearest = ModuleNames.Nearest(name, placed.Def.Outputs.Select(output => output.Name.Replace(' ', '_')));
-
-            Complain(IssueCode.UnknownOutput, line, column,
-                $"'{placed.Def.Name}' has no output called '{name}'.{ModuleNames.Meant(nearest)} It has {List(placed.Def.Outputs)}.",
-                nearest is null || at == 0 ? null : new LanguageFix(line, at, name.Length, nearest));
-
-            return null;
+            return Refuse(IssueCode.UnknownOutput, line, column,
+                $"'{placed.Def.Name}' has no output called '{name}'. It has {List(placed.Def.Outputs)}.");
         }
 
         return new Socket(placed.Id, port);
@@ -1325,12 +1309,8 @@ public sealed class Binder
                     continue;
                 }
 
-                var nearest = ModuleNames.Nearest(argument.Name,
-                    def.Inputs.Select(input => input.Name.Replace(' ', '_')).Concat(def.Extras.SelectMany(extra => extra.Fields.Select(field => field.Key))));
-
                 Complain(IssueCode.UnknownSocket, argument.Line, argument.Column,
-                    $"'{def.Name}' has no socket called '{argument.Name}'.{ModuleNames.Meant(nearest)} It has {List(def.Inputs)}.",
-                    nearest is null ? null : new LanguageFix(argument.Line, argument.Column, argument.Name.Length, nearest));
+                    $"'{def.Name}' has no socket called '{argument.Name}'. It has {List(def.Inputs)}.");
                 continue;
             }
 
@@ -2042,13 +2022,13 @@ public sealed class Binder
 
     private NodeDef? Module(string name, int line, int column)
     {
-        if (moduleNames.Find(name, out var refusal, out var code, out var nearest) is { } def) return def;
+        if (moduleNames.Find(name, out var refusal, out var code) is { } def) return def;
 
         // Already said, once, by the requires line: the module is likely the
         // missing plugin's, and naming it again says nothing new.
         if (code == IssueCode.UnknownModule && missing.Count > 0) return null;
 
-        Complain(code, line, column, refusal, nearest is null ? null : new LanguageFix(line, column, name.Length, nearest));
+        Complain(code, line, column, refusal);
         return null;
     }
 
@@ -2101,7 +2081,7 @@ public sealed class Binder
         }
         else
         {
-            Unknown(target, scope);
+            Unknown(target);
             return null;
         }
 
@@ -2116,11 +2096,8 @@ public sealed class Binder
             return (node, def, port);
         }
 
-        var nearest = ModuleNames.Nearest(target.Port!, def.Inputs.Select(input => input.Name.Replace(' ', '_')));
-
         Complain(IssueCode.UnknownSocket, target.Line, target.Column,
-            $"'{def.Name}' has no socket called '{target.Port}'.{ModuleNames.Meant(nearest)} It has {List(def.Inputs)}.",
-            nearest is null || target.PortColumn == 0 ? null : new LanguageFix(target.Line, target.PortColumn, target.Port!.Length, nearest));
+            $"'{def.Name}' has no socket called '{target.Port}'. It has {List(def.Inputs)}.");
 
         return null;
     }

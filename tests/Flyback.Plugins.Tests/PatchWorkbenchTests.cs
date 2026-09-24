@@ -1329,12 +1329,9 @@ public class PatchWorkbenchTests
         bench.Snapshot().Nodes.ShouldContain(n => n.TypeId == "value");
     }
 
-    /// <summary>
-    /// A refusal names each mistake by its code, and carries the edit where there
-    /// is exactly one, so the next attempt is a repair rather than a guess.
-    /// </summary>
+    /// <summary>A refusal names each mistake by its code, which a program can match on.</summary>
     [Fact]
-    public async Task A_refusal_gives_each_mistake_its_code_and_its_one_fix()
+    public async Task A_refusal_gives_each_mistake_its_code()
     {
         var bench = await Lit(0.25f);
 
@@ -1346,7 +1343,7 @@ public class PatchWorkbenchTests
 
         written.Ok.ShouldBeFalse();
         written.Text.ShouldContain("[unknown-module]");
-        written.Text.ShouldContain("fix: 'kaleidoscop' at 1:13 becomes 'kaleidoscope'");
+        written.Text.ShouldNotContain("kaleidoscope'");
         written.Text.ShouldContain("[pipe-lands-nowhere]");
     }
 
