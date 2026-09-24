@@ -76,7 +76,7 @@ public static class StepNotation
                 continue;
             }
 
-            issues.Add(new LanguageIssue(line, 1, $"'{word}' is not a note of the octave."));
+            issues.Add(new LanguageIssue(line, 1, IssueCode.UnknownNote, $"'{word}' is not a note of the octave."));
         }
 
         return classes;
@@ -188,7 +188,7 @@ public static class StepNotation
             }
             else
             {
-                issues.Add(new LanguageIssue(line, at + 1, $"'{Current}' means nothing in a step block."));
+                issues.Add(new LanguageIssue(line, at + 1, IssueCode.StepSyntax, $"'{Current}' means nothing in a step block."));
                 at++;
                 return null;
             }
@@ -270,7 +270,7 @@ public static class StepNotation
 
             if (over <= 0)
             {
-                issues.Add(new LanguageIssue(line, at + 1, "a Euclidean pattern needs a length."));
+                issues.Add(new LanguageIssue(line, at + 1, IssueCode.EuclidNeedsLength, "a Euclidean pattern needs a length."));
                 return term;
             }
 
@@ -308,7 +308,7 @@ public static class StepNotation
 
                 if (Lexer.Note(word) is { } note) return (float)note;
 
-                issues.Add(new LanguageIssue(line, start + 1, $"'{word}' is not a note."));
+                issues.Add(new LanguageIssue(line, start + 1, IssueCode.UnknownNote, $"'{word}' is not a note."));
                 return null;
             }
 

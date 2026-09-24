@@ -179,8 +179,8 @@ public sealed class Binder
             names.TryGetValue(name, out var entry) ? entry : parent?.Entry(name);
     }
 
-    private void Complain(int line, int column, string message) =>
-        issues.Add(new LanguageIssue(line, column, message));
+    private void Complain(string code, int line, int column, string message, LanguageFix? fix = null) =>
+        issues.Add(new LanguageIssue(line, column, code, message, fix));
 
     /// <summary>
     /// Whether <paramref name="name"/> may be bound here, said where it may not.
@@ -191,13 +191,13 @@ public sealed class Binder
     {
         if (Builtin(name) is { } what)
         {
-            Complain(line, column, $"'{name}' is already {what}. Call this something else.");
+            Complain(IssueCode.ReservedName, line, column, $"'{name}' is already {what}. Call this something else.");
             return false;
         }
 
         if (scope.Entry(name) is { } first)
         {
-            Complain(line, column, $"'{name}' is already bound on line {first.Line}. A name is bound once.");
+            Complain(IssueCode.BoundTwice, line, column, $"'{name}' is already bound on line {first.Line}. A name is bound once.");
             return false;
         }
 
@@ -260,16 +260,16 @@ public sealed class Binder
         {
             case DefStatement def:
                 if (!defs.TryAdd(def.Name, def))
-                    Complain(def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
+                    Complain(IssueCode.DefTwice, def.Line, def.Column, $"'{def.Name}' is already the name of a def.");
 
                 for (var i = 0; i < def.Parameters.Count; i++)
                 {
                     var parameter = def.Parameters[i];
 
                     if (Builtin(parameter) is { } what)
-                        Complain(def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
+                        Complain(IssueCode.ReservedName, def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
                     else if (def.Parameters.Take(i).Contains(parameter, StringComparer.Ordinal))
-                        Complain(def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
+                        Complain(IssueCode.BoundTwice, def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
                 }
 
                 break;
@@ -432,7 +432,7 @@ public sealed class Binder
 
             if (statement.Names.Take(i).Contains(name, StringComparer.Ordinal))
             {
-                Complain(statement.Line, statement.Column, $"'{name}' is written twice. A name is bound once.");
+                Complain(IssueCode.BoundTwice, statement.Line, statement.Column, $"'{name}' is written twice. A name is bound once.");
                 return;
             }
         }
@@ -441,14 +441,14 @@ public sealed class Binder
 
         if (value is not Several several)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
                 "this hands back one thing, so it cannot be taken apart into several.");
             return;
         }
 
         if (several.Items.Count != statement.Names.Count)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.TupleMismatch, statement.Line, statement.Column,
                 $"this hands back {several.Items.Count} things and {statement.Names.Count} names are waiting for them.");
             return;
         }
@@ -467,7 +467,7 @@ public sealed class Binder
 
         if (value is not Figure figure)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.KnobNeedsNumber, statement.Line, statement.Column,
                 "a knob takes a number. Use '<-' to wire a signal into it.");
             return;
         }
@@ -492,7 +492,7 @@ public sealed class Binder
 
         if (target.Name == "out")
         {
-            Complain(target.Line, target.Column,
+            Complain(IssueCode.OutputCannotBeOff, target.Line, target.Column,
                 "the Output cannot be switched off. Switch off what is patched into it, "
                 + "or write 'out.volume = 0'.");
             return;
@@ -500,13 +500,13 @@ public sealed class Binder
 
         if (scope.Find(target.Name) is not { } value)
         {
-            Complain(target.Line, target.Column, $"nothing here is called '{target.Name}'.");
+            Complain(IssueCode.UnknownName, target.Line, target.Column, $"nothing here is called '{target.Name}'.");
             return;
         }
 
         if (value is not Placed placed || patch.Find(placed.Id) is not { } node)
         {
-            Complain(target.Line, target.Column,
+            Complain(IssueCode.NotAModule, target.Line, target.Column,
                 $"'{target.Name}' is not a module, so there is nothing to switch off.");
             return;
         }
@@ -550,13 +550,13 @@ public sealed class Binder
         CallExpr call => Call(call, scope, piped: null),
         SelectExpr select => Select(select, scope, piped: null),
         PipeExpr pipe => Pipe(pipe, scope),
-        RangeExpr range => Refuse(range.Line, range.Column, "a range only means something as an argument."),
+        RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument."),
         _ => null,
     };
 
-    private Value? Refuse(int line, int column, string message)
+    private Value? Refuse(string code, int line, int column, string message)
     {
-        Complain(line, column, message);
+        Complain(code, line, column, message);
         return null;
     }
 
@@ -644,7 +644,7 @@ public sealed class Binder
 
                 if (Output(value) is { } from) return new Signal(value, from);
 
-                Complain(expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
+                Complain(IssueCode.NotASignal, expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
                 return null;
             }
         }
@@ -660,7 +660,7 @@ public sealed class Binder
     {
         if (a.Style != NumberStyle.Plain || b.Style != NumberStyle.Plain)
         {
-            Complain(expr.Line, expr.Column, Scaled);
+            Complain(IssueCode.ScaledArithmetic, expr.Line, expr.Column, Scaled);
             return null;
         }
 
@@ -788,7 +788,7 @@ public sealed class Binder
 
                 if (figure.Style != NumberStyle.Plain)
                 {
-                    Complain(where.Line, where.Column, Scaled);
+                    Complain(IssueCode.ScaledArithmetic, where.Line, where.Column, Scaled);
                     return null;
                 }
 
@@ -796,7 +796,7 @@ public sealed class Binder
 
                 if (!float.IsFinite(value))
                 {
-                    Complain(where.Line, where.Column, "that number is too large to hold.");
+                    Complain(IssueCode.NumberTooLarge, where.Line, where.Column, "that number is too large to hold.");
                     return null;
                 }
 
@@ -850,15 +850,15 @@ public sealed class Binder
 
         if (expr.Name == "out")
         {
-            return Refuse(expr.Line, expr.Column,
+            return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
                 "the Output has nothing to read. Pipe something into 'out.color' or 'out.left'.");
         }
 
         if (Placeholder(expr))
-            return Refuse(expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
+            return Refuse(IssueCode.PlaceholderMisplaced, expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
 
         if (scope.Find(expr.Name) is not { } value)
-            return Refuse(expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
+            return Refuse(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
 
         // Reading a name is naming the module, so the word is somewhere to click
         // even though nothing is placed here.
@@ -867,7 +867,7 @@ public sealed class Binder
         if (expr.Port is null) return value;
 
         if (value is not Placed)
-            return Refuse(expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
+            return Refuse(IssueCode.NotAModule, expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
 
         return Output(value, expr.Port, expr.Line, expr.Column);
     }
@@ -895,13 +895,13 @@ public sealed class Binder
         // A def may hand back one output, several things or a number, and none
         // of those has outputs of its own to choose between.
         if (value is not Placed placed)
-            return Refuse(line, column, $"this is not a module, so it has no output called '{name}'.");
+            return Refuse(IssueCode.NotAModule, line, column, $"this is not a module, so it has no output called '{name}'.");
 
         var port = Find(placed.Def.Outputs, name);
 
         if (port < 0)
         {
-            return Refuse(line, column,
+            return Refuse(IssueCode.UnknownOutput, line, column,
                 $"'{placed.Def.Name}' has no output called '{name}'. It has {List(placed.Def.Outputs)}.");
         }
 
@@ -971,7 +971,7 @@ public sealed class Binder
 
             if (socket.Port is null)
             {
-                return Refuse(socket.Line, socket.Column,
+                return Refuse(IssueCode.SocketUnsaid, socket.Line, socket.Column,
                     $"'{socket.Name}' is a module, not a socket. Say which one to wire into.");
             }
 
@@ -988,7 +988,7 @@ public sealed class Binder
         // so it is the stage's output that is chosen and not the source's.
         if (expr.Stage is SelectExpr select) return Select(select, scope, value);
 
-        return Refuse(expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
+        return Refuse(IssueCode.BadStage, expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
     }
 
     /// <summary>How many signals a value carries when it is piped.</summary>
@@ -1015,7 +1015,7 @@ public sealed class Binder
 
         if (NodeCatalog.IsSink(def.TypeId))
         {
-            return Refuse(expr.Line, expr.Column,
+            return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
                 "every patch already has its Output. Wire into 'out.color' or 'out.left'.");
         }
 
@@ -1033,7 +1033,7 @@ public sealed class Binder
             {
                 if (Placeholder(argument.Value))
                 {
-                    Complain(argument.Line, argument.Column,
+                    Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column,
                         "'_' goes in a named argument, 'socket: _', so it says which socket.");
                 }
 
@@ -1056,23 +1056,23 @@ public sealed class Binder
                     continue;
                 }
 
-                Complain(argument.Line, argument.Column,
+                Complain(IssueCode.UnknownSocket, argument.Line, argument.Column,
                     $"'{def.Name}' has no socket called '{argument.Name}'. It has {List(def.Inputs)}.");
                 continue;
             }
 
             if (!taken.Add(port))
             {
-                Complain(argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
+                Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
                 continue;
             }
 
             if (Placeholder(argument.Value))
             {
                 if (piped is null)
-                    Complain(argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
+                    Complain(IssueCode.PlaceholderMisplaced, argument.Line, argument.Column, "'_' stands for what is piped in, and nothing is.");
                 else if (landing is not null)
-                    Complain(argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
+                    Complain(IssueCode.PlaceholderTwice, argument.Line, argument.Column, "'_' is written twice, and a pipe brings one signal.");
                 else
                     landing = port;
 
@@ -1111,7 +1111,7 @@ public sealed class Binder
             {
                 if (free.Count == 0)
                 {
-                    Complain(argument.Line, argument.Column,
+                    Complain(IssueCode.TooManyArguments, argument.Line, argument.Column,
                         $"'{def.Name}' has no socket left for this. It has {List(def.Inputs)}.");
                     break;
                 }
@@ -1188,7 +1188,7 @@ public sealed class Binder
 
         if (free.Count == 0)
         {
-            Complain(expr.Line, expr.Column, $"'{def.Name}' has no socket free for what is arriving.");
+            Complain(IssueCode.NoSocketFree, expr.Line, expr.Column, $"'{def.Name}' has no socket free for what is arriving.");
             return false;
         }
 
@@ -1227,7 +1227,7 @@ public sealed class Binder
             var example = def.Inputs[free[0]].Name.Replace(' ', '_');
             var why = signal >= 0 ? "its 'in' is already given" : "it has no socket called 'in'";
 
-            Complain(expr.Line, expr.Column,
+            Complain(IssueCode.PipeLandsNowhere, expr.Line, expr.Column,
                 $"'{def.Name}': {why}, so say where the pipe lands: "
                 + $"'{expr.Target}({example}: _)'. It has {List(def.Inputs)}.");
             return false;
@@ -1270,7 +1270,7 @@ public sealed class Binder
 
         var start = Leftmost(argument.Value);
 
-        Complain(start.Line, start.Column,
+        Complain(IssueCode.PipelineInArgument, start.Line, start.Column,
             "a pipeline cannot go inside an argument. Bind it with 'let' above and name it here.");
         return true;
     }
@@ -1335,7 +1335,7 @@ public sealed class Binder
                 break;
 
             default:
-                Complain(line, column, "this is not a signal, so nothing can be wired from it.");
+                Complain(IssueCode.NotASignal, line, column, "this is not a signal, so nothing can be wired from it.");
                 break;
         }
     }
@@ -1354,7 +1354,7 @@ public sealed class Binder
                 ? (named.GetValueOrDefault(target) ?? def.Name) + "." + def.Inputs[port].Name.Replace(' ', '_')
                 : "this socket";
 
-            Complain(line, column, $"'{socket}' is already wired on line {first}. A socket takes one wire.");
+            Complain(IssueCode.WiredTwice, line, column, $"'{socket}' is already wired on line {first}. A socket takes one wire.");
             return;
         }
 
@@ -1377,7 +1377,7 @@ public sealed class Binder
         // (ADR-0050). The same refusal the assistant's set_knobs makes.
         if (modules.Normalled(spec) is { } driver)
         {
-            Complain(line, column,
+            Complain(IssueCode.NormalledSocket, line, column,
                 $"'{spec.Name}' is normalled to {driver} and has no knob. "
                 + "Patch a Value in if it really should stand still.");
             return;
@@ -1394,7 +1394,7 @@ public sealed class Binder
         {
             var written = figure.Style == NumberStyle.Note ? "a note" : "a length of time";
 
-            Complain(line, column, $"'{spec.Name}' is not read as {written}.");
+            Complain(IssueCode.WrongLiteral, line, column, $"'{spec.Name}' is not read as {written}.");
             return;
         }
 
@@ -1404,7 +1404,7 @@ public sealed class Binder
         // about the value says which was meant, so the complaint says both.
         if (spec.Display == PortDisplay.Duration && figure.Style == NumberStyle.Plain)
         {
-            Complain(line, column,
+            Complain(IssueCode.BareDuration, line, column,
                 $"'{spec.Name}' is a length of time, and a bare number on one is a power of ten: "
                 + $"{Number(figure.Amount)} means {spec.Format((float)figure.Amount)}. "
                 + $"Write {Literal(figure.Amount)} if you meant {Number(figure.Amount)} seconds.");
@@ -1413,7 +1413,7 @@ public sealed class Binder
 
         if (!double.IsFinite(figure.Amount))
         {
-            Complain(line, column, $"'{spec.Name}' cannot hold that.");
+            Complain(IssueCode.OutOfRange, line, column, $"'{spec.Name}' cannot hold that.");
             return;
         }
 
@@ -1453,7 +1453,7 @@ public sealed class Binder
 
         if (def.Extra<SampleExtra>() is not null) SampleExtra.Set(instance, path);
         else if (def.Extra<PictureExtra>() is not null) PictureExtra.Set(instance, path);
-        else Complain(line, column, $"'{def.Name}' names no file.");
+        else Complain(IssueCode.NoFile, line, column, $"'{def.Name}' names no file.");
     }
 
     /// <summary>
@@ -1483,7 +1483,7 @@ public sealed class Binder
             return;
         }
 
-        Complain(line, column, $"'{def.Name}' carries nothing a block could say.");
+        Complain(IssueCode.NoBlock, line, column, $"'{def.Name}' carries nothing a block could say.");
     }
 
     /// <summary>Divides a sequencer's rate, by the knob where there is one and by a Multiply where there is not.</summary>
@@ -1517,7 +1517,7 @@ public sealed class Binder
     {
         if (laid)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the keyboard is already laid out further up. A patch has one keyboard, so it says so once.");
             return;
         }
@@ -1531,7 +1531,7 @@ public sealed class Binder
     {
         if (patch.Description is not null)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already described further up. It has one description, so it says so once.");
             return;
         }
@@ -1544,7 +1544,7 @@ public sealed class Binder
     {
         if (patch.Author is not null)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already credited further up. It has one author line, so it says so once.");
             return;
         }
@@ -1557,7 +1557,7 @@ public sealed class Binder
     {
         if (patch.Tags is not null)
         {
-            Complain(statement.Line, statement.Column,
+            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
                 "the patch is already tagged further up. It has one tags line, so it says so once.");
             return;
         }
@@ -1596,7 +1596,7 @@ public sealed class Binder
         };
 
         if (written is null)
-            Complain(argument.Line, argument.Column, $"'{field.Label}' is set to a value, not to a signal.");
+            Complain(IssueCode.FieldNeedsValue, argument.Line, argument.Column, $"'{field.Label}' is set to a value, not to a signal.");
 
         return written;
     }
@@ -1619,7 +1619,7 @@ public sealed class Binder
     {
         if (!expanding.Add(macro.Name))
         {
-            return Refuse(call.Line, call.Column,
+            return Refuse(IssueCode.DefCallsItself, call.Line, call.Column,
                 $"'{macro.Name}' calls itself, and a def is stamped out rather than run.");
         }
 
@@ -1635,10 +1635,10 @@ public sealed class Binder
             var placed = call.Arguments.Count(a => Placeholder(a.Value));
 
             if (placed > 1)
-                return Refuse(call.Line, call.Column, "'_' is written twice, and a pipe brings one signal.");
+                return Refuse(IssueCode.PlaceholderTwice, call.Line, call.Column, "'_' is written twice, and a pipe brings one signal.");
 
             if (placed == 1 && piped is null)
-                return Refuse(call.Line, call.Column, "'_' stands for what is piped in, and nothing is.");
+                return Refuse(IssueCode.PlaceholderMisplaced, call.Line, call.Column, "'_' stands for what is piped in, and nothing is.");
 
             if (piped is not null && placed == 0) arguments.Add(piped);
 
@@ -1650,7 +1650,7 @@ public sealed class Binder
 
             if (arguments.Count != macro.Parameters.Count)
             {
-                return Refuse(call.Line, call.Column,
+                return Refuse(IssueCode.DefArity, call.Line, call.Column,
                     $"'{macro.Name}' takes {macro.Parameters.Count} arguments and {arguments.Count} were given.");
             }
 
@@ -1703,9 +1703,9 @@ public sealed class Binder
 
     private NodeDef? Module(string name, int line, int column)
     {
-        if (moduleNames.Find(name, out var refusal) is { } def) return def;
+        if (moduleNames.Find(name, out var refusal, out var code, out var nearest) is { } def) return def;
 
-        Complain(line, column, refusal);
+        Complain(code, line, column, refusal, nearest is null ? null : new LanguageFix(line, column, name.Length, nearest));
         return null;
     }
 
@@ -1732,7 +1732,7 @@ public sealed class Binder
     {
         if (target.Port is null)
         {
-            Complain(target.Line, target.Column, "say which socket this is.");
+            Complain(IssueCode.SocketUnsaid, target.Line, target.Column, "say which socket this is.");
             return null;
         }
 
@@ -1753,12 +1753,12 @@ public sealed class Binder
         {
             // A name bound to one output, a number or a def's several results:
             // it is there, and it is not something with sockets.
-            Complain(target.Line, target.Column, $"'{target.Name}' is not a module, so it has no sockets.");
+            Complain(IssueCode.NotAModule, target.Line, target.Column, $"'{target.Name}' is not a module, so it has no sockets.");
             return null;
         }
         else
         {
-            Complain(target.Line, target.Column, $"nothing here is called '{target.Name}'.");
+            Complain(IssueCode.UnknownName, target.Line, target.Column, $"nothing here is called '{target.Name}'.");
             return null;
         }
 
@@ -1773,7 +1773,7 @@ public sealed class Binder
             return (node, def, port);
         }
 
-        Complain(target.Line, target.Column,
+        Complain(IssueCode.UnknownSocket, target.Line, target.Column,
             $"'{def.Name}' has no socket called '{target.Port}'. It has {List(def.Inputs)}.");
 
         return null;

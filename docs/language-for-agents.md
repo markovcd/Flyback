@@ -147,8 +147,8 @@ dialect. A person who wants the dense form still writes it.
 | a socket wired twice (`\|> out.color`, `<-`) | error, naming the line of the first |
 | `let sine = …` | legal — §4 means modules are full ids, so there is no collision |
 
-`check --json` reports text that does not build with line and column. What is
-still open from §9 is a stable `code` per issue.
+`check --json` reports text that does not build with its line, column and
+code (§9).
 
 ## 7. A patch says what it needs
 
@@ -182,9 +182,11 @@ which is the 0033 test.
 
 ## 9. A diagnostic is a repair instruction
 
-`check --json` already exists. Each issue should carry a stable `code`, the span,
-the message, and — where there is one — the replacement text, so a repair loop
-never parses prose.
+**Done.** Each complaint about the text carries a stable `code` (`IssueCode`),
+its line and column, the message, and a `fix` — a span and its replacement —
+where there is exactly one repair. That is only a misspelled module today: a
+pipe with nowhere to land and a bare number on a time socket each have a choice
+in them, and a fix applied blindly would be the old guess back.
 
 And a crash is a diagnostic that did not get written. There should be none.
 

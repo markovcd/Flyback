@@ -84,3 +84,13 @@ Feature: A patch can be written as text
       """
     Then the complaint quotes line 2
     And the complaint says "Bind it with 'let'"
+
+  # A repair a program can make on its own is carried with the complaint, and only where there is one.
+  Scenario: A misspelled module is repaired by the fix its complaint carries
+    Given the text:
+      """
+      rotate() |> kaleidoscop(segments: 6) |> clouds() |> color.hsv(hue: _) |> out.color
+      """
+    When the fixes it suggests are made
+    Then it reads without complaint
+    And the screen is not black

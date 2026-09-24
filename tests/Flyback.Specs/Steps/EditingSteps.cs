@@ -119,6 +119,9 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [Then("it suggests {string}")]
     public void ThenItSuggests(string name) => Text.Report.ShouldContain(name);
 
+    [When("the fixes it suggests are made")]
+    public void WhenTheFixesAreMade() => Read(LanguageFix.Apply(Text.Source, Text.Issues));
+
     [Then("the complaint says {string}")]
     public void ThenTheComplaintSays(string words) => Text.Report.ShouldContain(words);
 

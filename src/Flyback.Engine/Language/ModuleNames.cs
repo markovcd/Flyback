@@ -27,9 +27,13 @@ internal sealed class ModuleNames
         modules.Get(name) is not null || byShortName.ContainsKey(name) || ambiguous.Contains(name);
 
     /// <summary>The module a name means, or null and what to tell the writer instead.</summary>
-    public NodeDef? Find(string name, out string refusal)
+    /// <param name="code">What kind of refusal it is, one of <see cref="IssueCode"/>.</param>
+    /// <param name="nearest">The name there is that is closest to it, where one is close enough.</param>
+    public NodeDef? Find(string name, out string refusal, out string code, out string? nearest)
     {
         refusal = string.Empty;
+        code = string.Empty;
+        nearest = null;
 
         if (modules.Get(name) is { } exact) return exact;
 
@@ -41,17 +45,20 @@ internal sealed class ModuleNames
                 .Order(StringComparer.Ordinal);
 
             refusal = $"'{name}' could be {string.Join(" or ", both)}. Write the one you mean in full.";
+            code = IssueCode.AmbiguousModule;
             return null;
         }
 
         if (byShortName.TryGetValue(name, out var def)) return def;
 
-        refusal = $"there is no module called '{name}'.{Nearest(name)}";
+        nearest = Nearest(name);
+        refusal = $"there is no module called '{name}'.{(nearest is null ? string.Empty : $" Did you mean '{nearest}'?")}";
+        code = IssueCode.UnknownModule;
         return null;
     }
 
     /// <summary>The closest name there is, where one is close enough to be worth offering.</summary>
-    private string Nearest(string name)
+    private string? Nearest(string name)
     {
         var best = byShortName.Keys
             .Select(k => (Name: k, Distance: Distance(k, name)))
@@ -61,7 +68,7 @@ internal sealed class ModuleNames
             .Select(k => k.Name)
             .FirstOrDefault();
 
-        return best is null ? string.Empty : $" Did you mean '{best}'?";
+        return best;
     }
 
     private static int Distance(string a, string b)

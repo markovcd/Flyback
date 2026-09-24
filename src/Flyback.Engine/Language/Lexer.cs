@@ -149,7 +149,7 @@ public static class Lexer
 
                 if (at >= source.Length || source[at] != '"')
                 {
-                    issues.Add(new LanguageIssue(line, column, "this text is never closed."));
+                    issues.Add(new LanguageIssue(line, column, IssueCode.UnclosedText, "this text is never closed."));
                     i = at;
                     continue;
                 }
@@ -172,7 +172,7 @@ public static class Lexer
                     continue;
                 }
 
-                issues.Add(new LanguageIssue(line, column, "this block is never closed."));
+                issues.Add(new LanguageIssue(line, column, IssueCode.UnclosedBlock, "this block is never closed."));
                 i = source.Length;
                 continue;
             }
@@ -196,7 +196,7 @@ public static class Lexer
                 continue;
             }
 
-            issues.Add(new LanguageIssue(line, column, $"'{c}' means nothing here."));
+            issues.Add(new LanguageIssue(line, column, IssueCode.StrayCharacter, $"'{c}' means nothing here."));
             i++;
         }
 

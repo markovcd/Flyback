@@ -8,7 +8,7 @@ namespace Flyback.Core.Tests.Language;
 /// <summary>
 /// A patch in the source view is half-written most of the time it is read: the
 /// editor builds on every keystroke. Every one of those has to come back as
-/// issues, never as an exception.
+/// issues with a code, never as an exception.
 /// </summary>
 /// <remarks>
 /// Random single-character edits to sources that do parse, which is what a
@@ -29,6 +29,10 @@ public class MangledSourceTests
         "seq(steps: [0 3 7 12], rate: 4) |> out.left",
     ];
 
+    private static readonly HashSet<string> Codes = [.. typeof(IssueCode)
+        .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+        .Select(field => (string)field.GetValue(null)!)];
+
     [Fact]
     public void A_mangled_source_is_a_complaint_rather_than_a_crash()
     {
@@ -44,6 +48,10 @@ public class MangledSourceTests
                 try
                 {
                     var load = PatchLanguage.Build(mangled, NodeCatalog.BuiltIn);
+
+                    if (load.Issues.FirstOrDefault(issue => !Codes.Contains(issue.Code)) is { } uncoded)
+                        failures.Add($"no code: {uncoded}{Environment.NewLine}{mangled}");
+
                     if (load.Issues.Count > 0) continue;
 
                     var program = load.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;

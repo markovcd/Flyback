@@ -68,7 +68,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (Current.Kind is TokenKind.NewLine or TokenKind.End) return;
         if (inBraces && Current.Kind == TokenKind.CloseBrace) return;
 
-        Complain("the statement ended before this, and nothing reads what is left of the line.");
+        Complain(IssueCode.UnreadTail, "the statement ended before this, and nothing reads what is left of the line.");
     }
 
     private bool Take(TokenKind kind)
@@ -82,12 +82,12 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         if (Take(kind)) return true;
 
-        Complain($"expected {what}.");
+        Complain(IssueCode.Syntax, $"expected {what}.");
         return false;
     }
 
-    private void Complain(string message) =>
-        issues.Add(new LanguageIssue(Current.Line, Current.Column, message));
+    private void Complain(string code, string message) =>
+        issues.Add(new LanguageIssue(Current.Line, Current.Column, code, message));
 
     private bool AtWord(string word) =>
         Current.Kind == TokenKind.Identifier && Current.Text == word;
@@ -155,7 +155,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             {
                 if (Current.Kind != TokenKind.Identifier)
                 {
-                    Complain("expected a name inside the brackets.");
+                    Complain(IssueCode.Syntax, "expected a name inside the brackets.");
                     return null;
                 }
 
@@ -173,7 +173,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (Current.Kind != TokenKind.Identifier)
         {
-            Complain("expected a name after 'let'.");
+            Complain(IssueCode.Syntax, "expected a name after 'let'.");
             return null;
         }
 
@@ -192,7 +192,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (Current.Kind != TokenKind.Identifier)
         {
-            Complain("expected a name after 'def'.");
+            Complain(IssueCode.Syntax, "expected a name after 'def'.");
             return null;
         }
 
@@ -209,7 +209,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             {
                 if (Current.Kind != TokenKind.Identifier)
                 {
-                    Complain("expected a parameter name.");
+                    Complain(IssueCode.Syntax, "expected a parameter name.");
                     return null;
                 }
 
@@ -268,7 +268,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         }
 
         if (!Expect(TokenKind.CloseBrace, "'}' to close the body")) return null;
-        if (result is null && results is null) Complain("this body says nothing at the end of it.");
+        if (result is null && results is null) Complain(IssueCode.EmptyBody, "this body says nothing at the end of it.");
 
         return new DefStatement(name, parameters, body, result, results, line, column);
     }
@@ -321,7 +321,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (Current.Kind != TokenKind.Text)
         {
-            Complain("expected a name in quotes after 'group'.");
+            Complain(IssueCode.Syntax, "expected a name in quotes after 'group'.");
             return null;
         }
 
@@ -376,13 +376,13 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (layout != "scale")
         {
-            Complain($"'{layout}' is not a layout. The keyboard is 'piano' or 'scale [ ... ]'.");
+            Complain(IssueCode.UnknownLayout, $"'{layout}' is not a layout. The keyboard is 'piano' or 'scale [ ... ]'.");
             return null;
         }
 
         if (Current.Kind != TokenKind.Block)
         {
-            Complain("expected the notes of the scale in brackets after 'keyboard scale'.");
+            Complain(IssueCode.Syntax, "expected the notes of the scale in brackets after 'keyboard scale'.");
             return null;
         }
 
@@ -444,7 +444,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (piped && Current.Kind is TokenKind.Star or TokenKind.Slash or TokenKind.Percent
             or TokenKind.Plus or TokenKind.Minus)
         {
-            Complain(
+            Complain(IssueCode.ArithmeticAfterPipeline,
                 $"'{Current.Text}' cannot follow a pipeline. Put the pipeline in brackets to do "
                 + $"arithmetic on what it made: (a |> b) {Current.Text} 2.");
 
@@ -459,7 +459,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         if (Current.Kind != TokenKind.Identifier)
         {
-            Complain("expected a module or a socket after '|>'.");
+            Complain(IssueCode.Syntax, "expected a module or a socket after '|>'.");
             return null;
         }
 
@@ -576,7 +576,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
                 return NameOrCall(line, column);
 
             default:
-                Complain("expected a value here.");
+                Complain(IssueCode.Syntax, "expected a value here.");
                 return null;
         }
     }
@@ -606,7 +606,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
                 // Only a call can carry a full type id, since nothing reads an
                 // output off one.
-                _ => Refuse($"'{string.Join('.', parts)}' is not a name this can read."),
+                _ => Refuse(IssueCode.Syntax, $"'{string.Join('.', parts)}' is not a name this can read."),
             };
         }
 
@@ -651,7 +651,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         while (Take(TokenKind.Dot))
         {
             if (Current.Kind != TokenKind.Identifier)
-                return Refuse("expected the name of an output after '.'.");
+                return Refuse(IssueCode.Syntax, "expected the name of an output after '.'.");
 
             source = new SelectExpr(source, Current.Text, Current.Line, Current.Column);
             at++;
@@ -660,9 +660,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         return source;
     }
 
-    private Expr? Refuse(string message)
+    private Expr? Refuse(string code, string message)
     {
-        Complain(message);
+        Complain(code, message);
         return null;
     }
 

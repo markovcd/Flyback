@@ -146,6 +146,7 @@ public class CommandTests
         var issue = read.RootElement.GetProperty("issues").EnumerateArray().ShouldHaveSingleItem();
 
         issue.GetProperty("severity").GetString().ShouldBe("error");
+        issue.GetProperty("code").GetString().ShouldBe("wired-twice");
         issue.GetProperty("line").GetInt32().ShouldBe(2);
         issue.GetProperty("message").GetString().ShouldNotBeNull().ShouldContain("already wired on line 1");
     }

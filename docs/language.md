@@ -63,6 +63,11 @@ a line ending in `|>` or `,`, or a line beginning with `|>` or a string,
 continues the one before it. Whatever a statement leaves unread on its line is a complaint, never
 something skipped.
 
+Every complaint has a line, a column and a stable code, one of `IssueCode` —
+`pipe-lands-nowhere`, `bound-twice`, `unknown-module` and the rest — and one
+with exactly one repair carries it as a fix. `flyback-cli check --json` writes
+all three.
+
 ---
 
 ## 3. The pipe rule
