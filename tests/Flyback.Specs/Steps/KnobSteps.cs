@@ -2,7 +2,7 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>How a module's knob turns in the editor, read from the catalog.</summary>
 [Binding]

@@ -2,7 +2,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
-namespace Flyback.Core.Specs.Support;
+namespace Flyback.Specs.Support;
 
 /// <summary>
 /// State shared between the steps of one scenario. Reqnroll creates a fresh

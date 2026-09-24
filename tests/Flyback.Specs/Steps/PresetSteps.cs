@@ -3,9 +3,9 @@ using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>Every preset that ships, checked as a whole so a new one is covered the day it lands.</summary>
 [Binding]

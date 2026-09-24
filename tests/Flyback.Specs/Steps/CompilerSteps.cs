@@ -2,9 +2,9 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>What Flyback says about a patch, and what running it costs.</summary>
 [Binding]

@@ -52,7 +52,7 @@ it.
 
 ## A feature ships with a scenario
 
-Every new feature gets at least one Gherkin scenario in `tests/Flyback.Core.Specs`,
+Every new feature gets at least one Gherkin scenario in `tests/Flyback.Specs`,
 in the same commit as the feature. C# tests still cover the edges; the scenario
 states the requirement.
 

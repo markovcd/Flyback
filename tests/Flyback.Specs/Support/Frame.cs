@@ -1,4 +1,4 @@
-namespace Flyback.Core.Specs.Support;
+namespace Flyback.Specs.Support;
 
 /// <summary>
 /// One rendered frame, kept with the size it was rendered at so a step can ask

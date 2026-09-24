@@ -648,7 +648,7 @@ changed: saved patches name it.
 | Project | Tests | Notes |
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
-| `Flyback.Core.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
+| `Flyback.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
 | `Flyback.App.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
@@ -820,7 +820,7 @@ commit is a finding, not a chore.
 
 ### Specs
 
-`Flyback.Core.Specs` states what a patch author can rely on, as requirements a
+`Flyback.Specs` states what a patch author can rely on, as requirements a
 reader can check:
 
 ```gherkin

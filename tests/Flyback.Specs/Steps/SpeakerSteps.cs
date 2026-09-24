@@ -2,9 +2,9 @@ using System.Globalization;
 using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>What the speakers play, heard sample by sample across any edits.</summary>
 [Binding]

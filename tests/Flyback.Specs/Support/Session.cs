@@ -1,7 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 
-namespace Flyback.Core.Specs.Support;
+namespace Flyback.Specs.Support;
 
 /// <summary>
 /// What happened to the patch around its edits in one scenario: the file it went

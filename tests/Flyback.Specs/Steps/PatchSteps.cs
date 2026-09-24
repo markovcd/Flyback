@@ -4,9 +4,9 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>
 /// The patches the scenarios talk about, each built from a phrase a patch author

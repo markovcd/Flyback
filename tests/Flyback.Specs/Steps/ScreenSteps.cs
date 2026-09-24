@@ -1,9 +1,9 @@
 using System.Globalization;
 using Reqnroll;
 using Shouldly;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>What the screen shows, rendered from the patch as it stands.</summary>
 [Binding]

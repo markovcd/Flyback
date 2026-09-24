@@ -5,9 +5,9 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
-using Flyback.Core.Specs.Support;
+using Flyback.Specs.Support;
 
-namespace Flyback.Core.Specs.Steps;
+namespace Flyback.Specs.Steps;
 
 /// <summary>Saving, opening, writing out as text, undoing and pasting.</summary>
 [Binding]

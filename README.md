@@ -257,7 +257,7 @@ src/
 
 tests/
   Flyback.Core.Tests      core engine tests
-  Flyback.Core.Specs      specification-style tests and examples
+  Flyback.Specs           feature requirements as Gherkin scenarios
   Flyback.Core.Benchmarks engine benchmarks
   Flyback.App.Tests       app and UI tests
   Flyback.Cli.Tests       command line tests
