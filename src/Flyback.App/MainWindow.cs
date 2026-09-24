@@ -405,7 +405,7 @@ public sealed class MainWindow : Window
             Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
 
         // Last, so it is what the bar is showing when the window first appears.
-        if (setup.WhatsNew is null && setup.UpdateNote is not null) Report(setup.UpdateNote);
+        if (setup.WhatsNew is null && setup.OpeningNote is not null) Report(setup.OpeningNote);
 
         ApplyPanelLayout();
 

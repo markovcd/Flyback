@@ -32,7 +32,7 @@ public sealed class UpdateSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
     {
-        var window = Owned(new MainWindow(new EditorSetup { UpdateSettingsPath = settingsPath, UpdateNote = note, WhatsNew = whatsNew }));
+        var window = Owned(new MainWindow(new EditorSetup { UpdateSettingsPath = settingsPath, OpeningNote = note, WhatsNew = whatsNew }));
 
         window.Show();
         Settle(window);

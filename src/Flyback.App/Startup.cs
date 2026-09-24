@@ -72,6 +72,11 @@ internal static class Startup
     /// <summary>The plugins a package installed since the last launch, for the window to say once, or null.</summary>
     public static string? PluginNote { get; private set; }
 
+    /// <summary>What the window says once as it opens: the update's note and the plugins', or null for neither.</summary>
+    public static string? OpeningNote => UpdateNote is null ? PluginNote
+        : PluginNote is null ? UpdateNote
+        : $"{UpdateNote}  {PluginNote}";
+
     /// <summary>Whether a release Flyback downloaded itself installed just before this launch.</summary>
     public static bool Updated { get; private set; }
 

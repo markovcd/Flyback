@@ -73,7 +73,7 @@ public sealed class FlybackApp : Application
                 OpenPath = Startup.OpenPath,
                 OpenShared = Startup.OpenShared,
                 Interpreted = Startup.Interpreted,
-                UpdateNote = string.Join("  ", new[] { Startup.UpdateNote, Startup.PluginNote }.OfType<string>()) is { Length: > 0 } note ? note : null,
+                OpeningNote = Startup.OpeningNote,
                 WhatsNew = Startup.WhatsNew,
             });
             desktop.MainWindow = window;

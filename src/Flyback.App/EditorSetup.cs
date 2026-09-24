@@ -87,12 +87,12 @@ public sealed record EditorSetup
     /// </summary>
     public bool Interpreted { get; init; }
 
-    /// <summary>What the last update did, said once on the status bar.</summary>
-    public string? UpdateNote { get; init; }
+    /// <summary>What the last update and any plugin just installed did, said once on the status bar.</summary>
+    public string? OpeningNote { get; init; }
 
     /// <summary>
     /// What the release just installed changed, shown once in a dialog when the
-    /// window opens in place of <see cref="UpdateNote"/>.
+    /// window opens in place of <see cref="OpeningNote"/>.
     /// </summary>
     public ReleaseNotes? WhatsNew { get; init; }
 
