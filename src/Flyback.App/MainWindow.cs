@@ -314,6 +314,9 @@ internal sealed class MainWindow : Window
             if (previewHideWaiting) ShowPreview(playback.HasPicture);
         };
 
+        // What the canvas has to say goes on the one line everything is said on.
+        editor.Report.Said += (_, message) => Report(message);
+
         // The other copy of everything said: a status bar is written over by the
         // next compile and the log behind it is five deep, so a run watched from a
         // terminal would keep no account of itself. Trace rather than the console

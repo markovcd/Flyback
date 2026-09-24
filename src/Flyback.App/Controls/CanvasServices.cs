@@ -11,18 +11,13 @@ internal static class CanvasServices
     /// Registers one canvas. Singletons, because a container is one window's and a
     /// window has one canvas.
     /// </summary>
-    /// <remarks>
-    /// The report line is added only where nothing has added it, so a canvas on its
-    /// own says things somewhere and a canvas in a window says them on the window's.
-    /// </remarks>
     public static IServiceCollection AddCanvas(this IServiceCollection services)
     {
-        services.TryAddSingleton<ReportLine>();
-
         // The pointer held where a socket's turn began; a test hands over one that holds nothing.
         services.TryAddSingleton<Func<Visual, IPointerAnchor?>>(PointerAnchor.Take);
 
         services.AddSingleton<Repaint>();
+        services.AddSingleton<CanvasReport>();
         services.AddSingleton<CanvasHistory>();
         services.AddSingleton<CanvasSelection>();
         services.AddSingleton<Viewport>();

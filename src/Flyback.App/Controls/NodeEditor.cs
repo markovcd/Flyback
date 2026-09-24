@@ -19,7 +19,7 @@ namespace Flyback.App.Controls;
 internal sealed class NodeEditor : Control
 {
     private readonly CanvasPainter painter;
-    private readonly ReportLine report;
+    private readonly CanvasReport report;
 
     public NodeEditor(
         CanvasHistory history,
@@ -34,7 +34,7 @@ internal sealed class NodeEditor : Control
         UndescribedTags tags,
         CanvasPainter painter,
         Repaint repaint,
-        ReportLine report)
+        CanvasReport report)
     {
         History = history;
         Selection = selection;
@@ -77,8 +77,8 @@ internal sealed class NodeEditor : Control
 
     internal UndescribedTags Tags { get; }
 
-    /// <summary>The line the canvas says things on: the window's, in the editor.</summary>
-    internal ReportLine Report => report;
+    /// <summary>What the canvas has to say, which the window puts on its report line.</summary>
+    internal CanvasReport Report => report;
 
     /// <summary>The graph-to-control matrix, for a test asking where a socket ended up on the control.</summary>
     internal Matrix GraphToScreen => View.GraphToScreen;

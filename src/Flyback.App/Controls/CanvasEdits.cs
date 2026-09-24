@@ -17,7 +17,7 @@ internal sealed class CanvasEdits(
     CanvasSelection selection,
     Viewport view,
     Repaint repaint,
-    ReportLine report)
+    CanvasReport report)
 {
     /// <summary>How far a duplicate or a paste steps clear of what is already there.</summary>
     private const double Step = 28;

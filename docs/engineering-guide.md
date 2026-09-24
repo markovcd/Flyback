@@ -608,6 +608,12 @@ that only a person watching the screen can check is not finished.
 - **The editor headless.** A UI feature is reachable from a `UiTest` and, where
   it has a look, from `PatchShotTests`. Screen coordinates and `SendKeys` are the
   last resort (`running-the-app.md`), not the test.
+- **The editor without a window.** What a gesture or a key does lives in a service
+  the container builds (ADR-0150), and the control only hands the pointer and the
+  keys on. So a command can be run and checked with no window at all:
+  `CanvasEditingSteps` drives the canvas's deleting, grouping, switching off and
+  undo from `new ServiceCollection().AddCanvas()`. A feature whose logic can only
+  be reached through a control's event handler is not finished.
 - **Say where it went wrong.** A failure names the module, the socket, the second
   or the frame, the way `compare` says where two patches part, so the next step
   is a fix rather than a bisect.

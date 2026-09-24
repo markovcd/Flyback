@@ -56,7 +56,7 @@ public class EditorServicesTests : UiTest
     [AvaloniaFact]
     public void A_service_registered_again_takes_the_place_of_the_editors_own()
     {
-        var mine = new ReportLine();
+        var mine = new CanvasReport();
 
         var canvas = NewCanvas(400, 300, services => services.AddSingleton(mine));
 

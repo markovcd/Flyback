@@ -14,14 +14,14 @@ internal sealed class CanvasSelection
 {
     private readonly CanvasHistory history;
     private readonly Repaint repaint;
-    private readonly ReportLine report;
+    private readonly CanvasReport report;
 
     private readonly HashSet<Guid> ids = [];
 
     /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
     private Guid? peek;
 
-    public CanvasSelection(CanvasHistory history, Repaint repaint, ReportLine report)
+    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report)
     {
         this.history = history;
         this.repaint = repaint;
