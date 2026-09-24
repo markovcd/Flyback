@@ -230,6 +230,27 @@
     <Compile Update="MainWindow.Usage.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
+    <Compile Update="MainWindow.Document.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Letters.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.MissingPlugins.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.OutputSettings.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.Playback.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.PluginInstall.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Update="MainWindow.RightPanel.cs">
+      <DependentUpon>MainWindow.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
