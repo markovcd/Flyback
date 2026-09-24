@@ -97,6 +97,11 @@ internal static class Handbook
           patched into it comes straight out, and nothing where nothing is.
           `switch_module` does it to a patch that exists, and a patch you are
           shown keeps the line only if you write it again.
+        - **`panel cutoff = 0.4`**, on its own line, puts a knob on the panel,
+          resting from 0 to 1, with `label:`, and `cc:`, `channel:` and
+          `device:` for a MIDI controller. A socket follows it by naming it
+          where a number goes, `freq: cutoff`, or over a range of its own,
+          `cutoff(200..4000)`; the Output by a statement, `out.volume = level`.
         - **`keyboard scale [ C D E G A ]`**, on its own line, lays the
           computer keyboard out in that scale for a MIDI In. Leave it out for
           a piano.

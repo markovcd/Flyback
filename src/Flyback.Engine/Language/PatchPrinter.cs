@@ -33,7 +33,14 @@ public static class PatchPrinter
 {
     /// <summary>What a node is worth to the reader, and how it is written.</summary>
     /// <param name="Taken">Every name given out, for one given while writing.</param>
-    private sealed record Plan(Dictionary<Guid, string> Names, HashSet<Guid> Bound, HashSet<string> Taken, Guid Coord, Guid Clock);
+    /// <param name="Panel">What the text calls each panel knob.</param>
+    private sealed record Plan(
+        Dictionary<Guid, string> Names,
+        HashSet<Guid> Bound,
+        HashSet<string> Taken,
+        Guid Coord,
+        Guid Clock,
+        Dictionary<Guid, string> Panel);
 
     /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
     /// <remarks>
@@ -276,6 +283,11 @@ public static class PatchPrinter
 
         foreach (var statement in read) Gather(statement, written, mentioned, turns, principals);
 
+        // A panel knob given a range is written like a call and places nothing.
+        var panel = read.OfType<PanelStatement>().Select(statement => statement.Name).ToHashSet(StringComparer.Ordinal);
+
+        written.RemoveAll(expr => expr is CallExpr call && panel.Contains(call.Target));
+
         written.Sort((a, b) => a.Line == b.Line ? a.Column - b.Column : a.Line - b.Line);
 
         if (written.Count != order.Count) return SourceMap.Empty;
@@ -481,6 +493,19 @@ public static class PatchPrinter
     {
         var bound = new HashSet<Guid>();
         var taken = new HashSet<string>(StringComparer.Ordinal);
+
+        // The panel's knobs first, so a module is the one renamed on a clash:
+        // a knob's word is what every socket following it says.
+        var panel = new Dictionary<Guid, string>();
+        var moduleNames = new ModuleNames(modules);
+
+        foreach (var control in patch.Controls ?? [])
+        {
+            var word = Usable(control.Name) ? control.Name : Spelled(control.Name);
+
+            // Called like a module when it has a range, so never named like one.
+            panel[control.Id] = Unique(moduleNames.Knows(word) ? word + "_knob" : word, taken);
+        }
         var names = new Dictionary<Guid, string>();
 
         // One Coordinates and one Time become the bare words the language has
@@ -522,7 +547,7 @@ public static class PatchPrinter
             names[node.Id] = Unique(wanted, taken);
         }
 
-        return new Plan(names, bound, taken, coord, clock);
+        return new Plan(names, bound, taken, coord, clock, panel);
     }
 
     /// <summary>
@@ -564,6 +589,14 @@ public static class PatchPrinter
 
             if (taken.Add(tried)) return tried;
         }
+    }
+
+    /// <summary>A label made into a word the text can say: <c>Filter cutoff</c> as <c>filter_cutoff</c>.</summary>
+    private static string Spelled(string label)
+    {
+        var word = new string([.. label.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '_')]).Trim('_');
+
+        return Usable(word) ? word : "knob";
     }
 
     /// <summary>
@@ -632,7 +665,8 @@ public static class PatchPrinter
                         continue;
                     }
 
-                    if (Knob(sink, def, port) is { } value) statements.Add(Part.Of($"out.{name} = {value}"));
+                    if (Linked(sink, def, port) is { } knob) statements.Add(Part.Of($"out.{name} = {knob}"));
+                    else if (Knob(sink, def, port) is { } value) statements.Add(Part.Of($"out.{name} = {value}"));
                 }
             }
 
@@ -659,6 +693,12 @@ public static class PatchPrinter
             if (about.Any(line => line is not null))
             {
                 foreach (var line in about.OfType<string>()) text.AppendLine(line);
+                text.AppendLine();
+            }
+
+            if (patch.Controls is { Count: > 0 } controls)
+            {
+                foreach (var control in controls) text.AppendLine(Panel(control));
                 text.AppendLine();
             }
 
@@ -878,7 +918,8 @@ public static class PatchPrinter
                     continue;
                 }
 
-                if (Knob(node, def, port) is { } value) arguments.Add($"{name}: {value}");
+                if (Linked(node, def, port) is { } knob) arguments.Add($"{name}: {knob}");
+                else if (Knob(node, def, port) is { } value) arguments.Add($"{name}: {value}");
             }
 
             // A plugin's own fields, which are named arguments like any knob and
@@ -1194,6 +1235,57 @@ public static class PatchPrinter
             // hair from it is still a different knob.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             return value == spec.Default ? null : Value(value, spec.Display);
+        }
+
+        /// <summary>A panel knob's statement: where it rests, and what it is labeled and follows where that is said.</summary>
+        private string Panel(PatchControl control)
+        {
+            var word = plan.Panel[control.Id];
+            var line = new StringBuilder($"panel {word} = {Number(control.Value)}");
+
+            if (control.Name != word && Quotable(control.Name) is { } label) line.Append($", label: {label}");
+
+            if (control.Midi is { } midi && Quotable(midi.Device) is { } device)
+            {
+                line.Append(CultureInfo.InvariantCulture, $", cc: {midi.Controller}");
+                if (midi.Channel != 0) line.Append(CultureInfo.InvariantCulture, $", channel: {midi.Channel}");
+                line.Append($", device: {device}");
+            }
+
+            return line.ToString();
+        }
+
+        /// <summary>
+        /// The panel knob a socket follows, as the argument that says so: the
+        /// knob's word alone where it reads the socket's own range, and the
+        /// range and knee where they are its own.
+        /// </summary>
+        /// <remarks>
+        /// Null where there is no knob to say, and where the socket is normalled,
+        /// which reads its normal rather than any knob.
+        /// </remarks>
+        private string? Linked(NodeInstance node, NodeDef def, int port)
+        {
+            if (port >= def.Inputs.Count || ControlMap.Of(node, port) is not { } link) return null;
+            if (!plan.Panel.TryGetValue(link.Control, out var word)) return null;
+
+            var spec = def.Inputs[port];
+
+            if (modules.Normalled(spec) is not null) return null;
+
+            // What reading the word alone builds, which is the socket's range
+            // widened to take in its default.
+            var own = ControlLink.For(link.Control, spec, spec.Default);
+
+            // ReSharper disable CompareOfFloatsByEqualityOperator
+            if (link.Min == own.Min && link.Max == own.Max && link.Knee == own.Knee) return word;
+
+            var range = $"{Value(link.Min, spec.Display)}..{Value(link.Max, spec.Display)}";
+
+            return link.Knee == spec.Knee
+                ? $"{word}({range})"
+                : $"{word}({range}, knee: {Number(link.Knee)})";
+            // ReSharper restore CompareOfFloatsByEqualityOperator
         }
 
         /// <summary>The path a player or a picture names, or null where it names none.</summary>

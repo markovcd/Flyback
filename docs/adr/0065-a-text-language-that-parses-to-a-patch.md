@@ -232,3 +232,9 @@ A pipe lands on `socket: _`, else `in` or a module's only socket, else a
 leading `x` and `y`, else a module's one color socket for a color, and a
 pipeline inside an argument is an error
 ([0144](0144-a-pipe-lands-where-the-text-says.md)).
+
+## Amendment, 2026-09-24: the panel is written
+
+A patch's knob panel is a statement, `panel cutoff = 0.4`, and a socket follows a
+knob by naming it where a number goes
+([0145](0145-the-panel-is-written-in-the-text.md)).

@@ -121,6 +121,10 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // binding somebody happened to call 'off'.
         if (AtWord("off") && Ahead().Kind == TokenKind.Identifier) return Off(line, column);
 
+        // And again: 'panel' is a knob only when a name and an '=' follow it.
+        if (AtWord("panel") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.Assign)
+            return Panel(line, column);
+
         // A knob or a back-wire begins the same way an ordinary pipeline does,
         // so which it is only shows up at the operator after the name.
         if (Current.Kind == TokenKind.Identifier
@@ -282,7 +286,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         several = null;
         one = null;
 
-        if (AtWord("let") || AtWord("def") || AtWord("group")) return false;
+        if (AtWord("let") || AtWord("def") || AtWord("group") || AtWord("panel")) return false;
 
         if (Current.Kind == TokenKind.OpenParen)
         {
@@ -404,6 +408,32 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         at++;
 
         return new OffStatement(target, line, column);
+    }
+
+    /// <summary><c>panel name = value</c>, then its settings as named arguments.</summary>
+    private Statement? Panel(int line, int column)
+    {
+        var name = Ahead().Text;
+        at += 3;
+
+        if (Pipeline() is not { } value) return null;
+
+        var settings = new List<Argument>();
+
+        while (Take(TokenKind.Comma))
+        {
+            if (Current.Kind != TokenKind.Identifier || Ahead().Kind != TokenKind.Colon)
+            {
+                Complain(IssueCode.Syntax, "expected a setting such as 'cc: 21' after the comma.");
+                return null;
+            }
+
+            if (Argument() is not { } setting) return null;
+
+            settings.Add(setting);
+        }
+
+        return new PanelStatement(name, value, settings, line, column);
     }
 
     private void SkipToBreakOrBrace()

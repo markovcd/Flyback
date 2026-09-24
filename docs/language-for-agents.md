@@ -167,12 +167,14 @@ Optional to write, always printed.
 
 ## 8. The panel is spelled
 
-A `PatchControl` — a named panel knob, its range, and the MIDI CC it follows —
-has no spelling at all today. The binder cannot build one and the printer drops
-it, so a played patch printed and rebuilt is a different instrument.
+**Done**, spelled as the reference's section 9 has it: `panel cutoff = 0.4, cc: 21,
+device: "…"`, and a socket follows it by naming it, over its own range or one
+given, `cutoff(200..4000)`. The range belongs to each socket rather than to the
+knob, which is what the engine keeps, so a played patch printed and rebuilt is
+the same instrument.
 
 ```
-panel depth = 0.5 in 0..1 cc 21
+panel depth = 0.5, cc: 21, device: "midi:launchkey-49"
 
 let wash = color.vignette(amount: depth)
 ```
@@ -246,4 +248,3 @@ declarations right, and it already exists.
   assuming.
 - Whether `def` earns its place. No specimen reached for it, and a macro hides
   what a call site costs. Four voices is the argument for keeping it.
-- Whether `panel` belongs in the language or stays editor state.

@@ -122,6 +122,10 @@ public sealed class EditingSteps(PatchContext context, Session session)
     [When("the fixes it suggests are made")]
     public void WhenTheFixesAreMade() => Read(LanguageFix.Apply(Text.Source, Text.Issues));
 
+    [Then("the panel has a knob {string} resting at {float}")]
+    public void ThenThePanelHasAKnob(string name, float value) =>
+        context.Patch.Controls.ShouldNotBeNull().ShouldContain(knob => knob.Name == name && Math.Abs(knob.Value - value) < 1e-6f);
+
     [Then("the complaint says {string}")]
     public void ThenTheComplaintSays(string words) => Text.Report.ShouldContain(words);
 

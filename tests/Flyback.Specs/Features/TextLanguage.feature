@@ -103,3 +103,14 @@ Feature: A patch can be written as text
       """
     Then the complaint quotes line 2
     And the complaint says "already set on line 1"
+
+  # A played patch keeps its knobs through the text.
+  Scenario: A panel knob and the sockets that follow it are written in the text
+    Given the text:
+      """
+      panel level = 0.8, label: "Level", cc: 7, device: "midi:test"
+      sine(freq: 220, amp: level) |> out.left
+      """
+    When the patch is written out as text and read back
+    Then the panel has a knob "Level" resting at 0.8
+    And the speakers are not silent

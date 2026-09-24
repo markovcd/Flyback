@@ -91,6 +91,12 @@ public static class IssueCode
     public const string DefArity = "def-arity";
     public const string OutputCannotBeOff = "output-cannot-be-off";
 
+    // --- the panel -------------------------------------------------------------
+
+    public const string PanelInDef = "panel-in-def";
+    public const string PanelNotASignal = "panel-not-a-signal";
+    public const string UnknownSetting = "unknown-setting";
+
     /// <summary>A line a patch has once — keyboard, description, author, tags — said again.</summary>
     public const string SaidTwice = "said-twice";
 }

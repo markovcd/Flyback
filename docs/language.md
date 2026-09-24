@@ -40,7 +40,7 @@ a decision. `_` is where the pipe lands when the module has no `in` for it.
 
 ## 2. Statements
 
-Twelve forms, and no others.
+Thirteen forms, and no others.
 
 ```
 # a comment, to end of line
@@ -52,6 +52,7 @@ pipeline |> out.color            # a terminated pipeline: the only side effect
 NAME.port = 0.6                  # set a knob
 NAME.port <- pipeline            # back-wire, which is how a cycle is closed
 off NAME                         # switch a module off, so it is a wire
+panel NAME = 0.5, cc: 21, …      # a knob on the patch's panel
 group "Name" { statements }      # draw these together on the canvas
 description "What it is for"     # say what the patch is for, once
 author "Who made it"             # say who made the patch, once
@@ -527,7 +528,41 @@ and writing `~` there is a patch that plays the same and is not the same patch.
 
 ---
 
-## 9. `def` — a subgraph with holes in it
+## 9. The panel
+
+A patch's knob panel is written as the knobs it has, a line each, and a socket
+follows one by naming it where a number would go:
+
+```
+panel cutoff = 0.4, label: "Filter cutoff", cc: 21, channel: 2, device: "midi:elektron-syntakt"
+panel level  = 0.8
+
+saw(freq: 110) |> filter(cutoff: cutoff(200..4000), resonance: 0.3) |> out.left
+out.volume = level
+```
+
+The number is where the knob rests, from 0 to 1. It means nothing on its own
+scale: each socket that follows it reads it over a range, the socket's own
+unless the text gives one, as `cutoff(200..4000)` does, and swept in decades
+from a knee where the socket is or where `knee:` says. A range is written the
+way the socket reads a number, so a length of time is `snap(20ms..400ms)`. The
+Output's knobs are never in a call, so they follow one by a statement,
+`out.volume = level`.
+
+`label` is what the panel shows, where that is not the knob's own name. `cc`,
+`channel` and `device` are the MIDI controller it follows; without `channel`
+it hears the controller on any channel.
+
+A knob is a name like a `let`: bound once, never one of the words every patch
+already has, and never a module's name, since `cutoff(200..4000)` is written
+like a call. It is not a signal, so it is neither piped nor added to, and a
+socket that follows one takes no number as well. A `def` declares none, since
+every call would put another on the panel; a knob is declared outside and
+passed in.
+
+---
+
+## 10. `def` — a subgraph with holes in it
 
 ```
 def voice(note, bands, hue, rate, phase) =
@@ -563,7 +598,7 @@ four calls here.
 
 ---
 
-## 10. Groups
+## 11. Groups
 
 A group is a box drawn round nodes on the canvas. The compiler is never told
 about it, so it is presentation — but the largest preset in the box uses ten of
@@ -583,7 +618,7 @@ and which of its sockets are exposed, stay editor state and do not survive a
 
 ---
 
-## 11. Cycles
+## 12. Cycles
 
 A pipeline cannot express a loop, so the back-wire does:
 
@@ -609,7 +644,7 @@ other ([0074](adr/0074-a-cell-is-a-plane-on-the-video-path.md)). To read
 
 ---
 
-## 12. If you know TidalCycles
+## 13. If you know TidalCycles
 
 The step notation is borrowed, so expectations will arrive with it. Four
 differences, in the order they will bite.
@@ -638,7 +673,7 @@ each paying only for what it reaches
 
 ---
 
-## 13. What `print` loses
+## 14. What `print` loses
 
 | Survives | Lost |
 |---|---|
@@ -648,6 +683,7 @@ each paying only for what it reaches
 | `let` names, as the node's own label | comments, formatting, and every `def`, expanded |
 | plugin requirements, recomputed on write | — |
 | which modules are switched off | — |
+| the panel's knobs, what each follows, and every socket following one | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A
 printing is for reading, and every module restating its whole shape would bury
@@ -694,7 +730,7 @@ beside the first.
 
 ---
 
-## 14. Grammar
+## 15. Grammar
 
 ```ebnf
 patch      = { statement } ;
@@ -707,6 +743,7 @@ statement  = comment
            | selector "=" expr
            | selector "<-" pipeline
            | "off" ident
+           | "panel" ident "=" number { "," ident ":" ( number | string ) }
            | "group" string "{" { statement } "}"
            | "description" string { string }
            | "author" string
@@ -747,7 +784,7 @@ where the stage is a module.
 
 ---
 
-## 15. Every shipped preset, transliterated
+## 16. Every shipped preset, transliterated
 
 This is the proof that the syntax reaches the catalog. Each patch is read out
 of [`Presets.cs`](../src/Flyback.Core/Graph/Presets.cs) and written here. Where
@@ -1544,7 +1581,7 @@ rounded.
 
 ---
 
-## 16. What writing these out changed
+## 17. What writing these out changed
 
 The transliteration was done before any parser existed, precisely so that the
 holes would show up while the design was still cheap to move. Four did.

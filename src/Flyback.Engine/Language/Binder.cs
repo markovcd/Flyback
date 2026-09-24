@@ -168,6 +168,14 @@ public sealed class Binder
     /// <summary>A file a module names rather than carries (ADR-0052).</summary>
     private sealed record Named(string Path) : Value;
 
+    /// <summary>
+    /// A panel knob, and the range a socket reads it over where the text gives
+    /// one: <c>cutoff</c>, or <c>cutoff(200..4000, knee: 20)</c>.
+    /// </summary>
+    /// <param name="Word">What the text calls it.</param>
+    private sealed record Dial(PatchControl Control, string Word, Figure? Low = null, Figure? High = null, Figure? Knee = null)
+        : Value;
+
     /// <summary>Names in sight, and the names the enclosing scope had.</summary>
     private sealed class Scope(Scope? parent)
     {
@@ -236,6 +244,7 @@ public sealed class Binder
         GroupStatement group => "group " + group.Name,
         DefStatement def => "def " + def.Name,
         OffStatement off => "off " + off.Target.Name,
+        PanelStatement panel => "panel " + panel.Name,
         KeyboardStatement => "keyboard",
         DescriptionStatement => "description",
         AuthorStatement => "author",
@@ -329,6 +338,10 @@ public sealed class Binder
 
             case OffStatement off:
                 Switch(off, scope);
+                break;
+
+            case PanelStatement panel:
+                Declare(panel, scope);
                 break;
         }
     }
@@ -468,10 +481,16 @@ public sealed class Binder
         if (Input(statement.Target, scope) is not var (node, def, port)) return;
         if (Bind(statement.Value, scope) is not { } value) return;
 
+        if (value is Dial dial)
+        {
+            Link(node, def, port, dial, statement.Line, statement.Column);
+            return;
+        }
+
         if (value is not Figure figure)
         {
             Complain(IssueCode.KnobNeedsNumber, statement.Line, statement.Column,
-                "a knob takes a number. Use '<-' to wire a signal into it.");
+                "a knob takes a number or a panel knob. Use '<-' to wire a signal into it.");
             return;
         }
 
@@ -518,6 +537,143 @@ public sealed class Binder
         node.Off = true;
     }
 
+    /// <summary>
+    /// A knob on the patch's panel, named like a <c>let</c> so the sockets that
+    /// follow it can say so.
+    /// </summary>
+    private void Declare(PanelStatement statement, Scope scope)
+    {
+        var (line, column) = (statement.Line, statement.Column);
+
+        // Stamped out per call, a def would put a knob on the panel per call.
+        if (expanding.Count > 0)
+        {
+            Complain(IssueCode.PanelInDef, line, column,
+                "a panel knob belongs to the patch, so it is declared outside a def and passed in.");
+            return;
+        }
+
+        if (!Free(statement.Name, scope, line, column)) return;
+
+        // A knob given a range is written like a call, so it cannot share a
+        // module's name or a def's.
+        if (Known(statement.Name))
+        {
+            Complain(IssueCode.ReservedName, line, column,
+                $"'{statement.Name}' is already a module's name, and a knob is called like one. "
+                + $"Call this something else, such as '{statement.Name}_knob'.");
+            return;
+        }
+
+        if (Bind(statement.Value, scope) is not Figure { Style: NumberStyle.Plain } resting
+            || resting.Amount is < 0d or > 1d or double.NaN)
+        {
+            Complain(IssueCode.OutOfRange, line, column,
+                "a panel knob rests somewhere from 0 to 1, and the sockets that follow it say what that means to them.");
+            return;
+        }
+
+        string? label = null;
+        string? device = null;
+        int? controller = null;
+        var channel = 0;
+
+        foreach (var setting in statement.Settings)
+        {
+            switch (setting.Name, setting.Value)
+            {
+                case ("label", TextExpr text):
+                    label = text.Value;
+                    break;
+
+                case ("device", TextExpr text):
+                    device = text.Value;
+                    break;
+
+                case ("cc", NumberExpr { Value: >= 0 and <= 127 } number) when number.Value % 1 == 0:
+                    controller = (int)number.Value;
+                    break;
+
+                case ("channel", NumberExpr { Value: >= 1 and <= 16 } number) when number.Value % 1 == 0:
+                    channel = (int)number.Value;
+                    break;
+
+                default:
+                    Complain(IssueCode.UnknownSetting, setting.Line, setting.Column,
+                        "a panel knob takes 'label: \"…\"', 'cc: 0 to 127', 'channel: 1 to 16' and 'device: \"…\"'.");
+                    return;
+            }
+        }
+
+        if (controller is null && (device is not null || channel != 0))
+        {
+            Complain(IssueCode.UnknownSetting, line, column,
+                "'device' and 'channel' say which controller 'cc' is, so they come with one.");
+            return;
+        }
+
+        if (controller is not null && device is null)
+        {
+            Complain(IssueCode.UnknownSetting, line, column,
+                "a controller is known by its device: add 'device: \"…\"', as the instrument's profile names it.");
+            return;
+        }
+
+        var control = new PatchControl
+        {
+            Id = Identity("panel " + statement.Name),
+            Name = label ?? statement.Name,
+            Value = (float)resting.Amount,
+            Midi = controller is { } cc ? new MidiBinding(device!, channel, cc) : null,
+        };
+
+        (patch.Controls ??= []).Add(control);
+        scope.Set(statement.Name, new Dial(control, statement.Name), line);
+    }
+
+    /// <summary>A panel knob called with the range a socket reads it over: <c>cutoff(200..4000, knee: 20)</c>.</summary>
+    private Value? Ranged(Dial dial, CallExpr expr, Scope scope, Value? piped)
+    {
+        var (line, column) = (expr.Line, expr.Column);
+
+        if (piped is not null)
+        {
+            return Refuse(IssueCode.PanelNotASignal, line, column,
+                $"'{dial.Word}' is a panel knob, which a socket follows; nothing is piped into one.");
+        }
+
+        Figure? low = null;
+        Figure? high = null;
+        Figure? knee = null;
+
+        foreach (var argument in expr.Arguments)
+        {
+            if (argument is { Name: null, Value: RangeExpr range } && low is null
+                && Bind(range.Low, scope) is Figure from && Bind(range.High, scope) is Figure to)
+            {
+                (low, high) = (from, to);
+                continue;
+            }
+
+            if (argument.Name == "knee" && knee is null && Bind(argument.Value, scope) is Figure { Style: NumberStyle.Plain } bend)
+            {
+                knee = bend;
+                continue;
+            }
+
+            return Refuse(IssueCode.UnknownSetting, argument.Line, argument.Column,
+                $"a socket reads a panel knob over a range, and a knee where it sweeps in decades: '{dial.Word}(200..4000, knee: 20)'.");
+        }
+
+        if (knee is not null && low is null)
+        {
+            return Refuse(IssueCode.UnknownSetting, line, column,
+                $"a knee comes with the range it bends: '{dial.Word}(200..4000, knee: 20)'.");
+        }
+
+        return dial with { Low = low, High = high, Knee = knee };
+    }
+
     private void Box(GroupStatement statement, Scope scope)
     {
         var before = patch.Nodes.Select(n => n.Id).ToHashSet();
@@ -540,6 +696,8 @@ public sealed class Binder
             else if (child is LetTupleStatement tuple)
                 foreach (var name in tuple.Names)
                     if (inner.Entry(name) is { } item) scope.Set(name, item.Value, item.Line);
+            else if (child is PanelStatement panel && inner.Entry(panel.Name) is { } knob)
+                scope.Set(panel.Name, knob.Value, knob.Line);
     }
 
     // --- expressions ---------------------------------------------------------
@@ -961,6 +1119,14 @@ public sealed class Binder
     {
         if (Bind(expr.Source, scope) is not { } value) return null;
 
+        // A knob is followed, never piped: carried into a call it would link
+        // whatever socket the pipe happened to land on.
+        if (value is Dial dial)
+        {
+            return Refuse(IssueCode.PanelNotASignal, expr.Source.Line, expr.Source.Column,
+                $"'{dial.Word}' is a panel knob, which a socket follows where a number would go: 'freq: {dial.Word}'.");
+        }
+
         // A pipe into a socket is a wire into it, which is what puts a patch on
         // the screen: '|> out.color'.
         if (expr.Stage is NameExpr socket)
@@ -1012,6 +1178,7 @@ public sealed class Binder
 
     private Value? Call(CallExpr expr, Scope scope, Value? piped)
     {
+        if (scope.Find(expr.Target) is Dial dial) return Ranged(dial, expr, scope, piped);
         if (defs.TryGetValue(expr.Target, out var macro)) return Expand(macro, expr, scope, piped);
 
         if (Module(expr.Target, expr.Line, expr.Column) is not { } def) return null;
@@ -1308,6 +1475,7 @@ public sealed class Binder
         foreach (var (port, value) in inputs)
         {
             if (value is Figure figure) Knob(node, def, port, figure, line, column);
+            else if (value is Dial dial) Link(node, def, port, dial, line, column);
             else Feed(value, 0, node.Id, port, line, column);
         }
 
@@ -1335,6 +1503,11 @@ public sealed class Binder
                 if (patch.Find(target) is { } node && modules.Get(node.TypeId) is { } def)
                     Knob(node, def, port, figure, line, column);
 
+                break;
+
+            case Dial dial:
+                Complain(IssueCode.PanelNotASignal, line, column,
+                    $"'{dial.Word}' is a panel knob, which a socket follows where a number would go: 'freq: {dial.Word}'.");
                 break;
 
             default:
@@ -1374,7 +1547,54 @@ public sealed class Binder
     /// </summary>
     private void Knob(NodeInstance node, NodeDef def, int port, Figure figure, int line, int column)
     {
-        if (port < 0 || port >= def.Inputs.Count) return;
+        if (!Settable(node, def, port, line, column)) return;
+
+        var spec = def.Inputs[port];
+
+        if (!Reads(spec, figure, line, column)) return;
+
+        node.InputValues[port] = (float)figure.Amount;
+        turned[(node.Id, port)] = line;
+
+        // Only once a knob has actually been set, so that a refused number is
+        // not offered as a place to write another one into. By the socket's own
+        // spelling, because that is what a caller asking for it will have.
+        written[(node.Id, spec.Name.Replace(' ', '_'))] = figure.Where;
+    }
+
+    /// <summary>
+    /// Has a socket follow a panel knob, over the range the text gives or, where
+    /// it gives none, the socket's own.
+    /// </summary>
+    private void Link(NodeInstance node, NodeDef def, int port, Dial dial, int line, int column)
+    {
+        if (!Settable(node, def, port, line, column)) return;
+
+        var spec = def.Inputs[port];
+        ControlLink link;
+
+        if (dial is { Low: { } low, High: { } high })
+        {
+            if (!Reads(spec, low, line, column) || !Reads(spec, high, line, column)) return;
+
+            link = new ControlLink(dial.Control.Id, (float)low.Amount, (float)high.Amount)
+            {
+                Knee = dial.Knee is { } knee ? (float)knee.Amount : spec.Knee,
+            };
+        }
+        else
+        {
+            link = ControlLink.For(dial.Control.Id, spec, node.InputValues[port]);
+        }
+
+        ControlMap.Link(node, port, link);
+        turned[(node.Id, port)] = line;
+    }
+
+    /// <summary>Whether a socket's knob may be set here, said where it may not.</summary>
+    private bool Settable(NodeInstance node, NodeDef def, int port, int line, int column)
+    {
+        if (port < 0 || port >= def.Inputs.Count) return false;
 
         // One number per knob: a second would win without a word, and the first
         // would read as though it still counted.
@@ -1382,7 +1602,7 @@ public sealed class Binder
         {
             Complain(IssueCode.KnobSetTwice, line, column,
                 $"'{SocketName(node.Id, port)}' is already set on line {first}. A knob is set once.");
-            return;
+            return false;
         }
 
         var spec = def.Inputs[port];
@@ -1395,9 +1615,15 @@ public sealed class Binder
             Complain(IssueCode.NormalledSocket, line, column,
                 $"'{spec.Name}' is normalled to {driver} and has no knob. "
                 + "Patch a Value in if it really should stand still.");
-            return;
+            return false;
         }
 
+        return true;
+    }
+
+    /// <summary>Whether a number is written the way a socket reads, said where it is not.</summary>
+    private bool Reads(PortSpec spec, Figure figure, int line, int column)
+    {
         var wanted = figure.Style switch
         {
             NumberStyle.Note => PortDisplay.Note,
@@ -1410,7 +1636,7 @@ public sealed class Binder
             var written = figure.Style == NumberStyle.Note ? "a note" : "a length of time";
 
             Complain(IssueCode.WrongLiteral, line, column, $"'{spec.Name}' is not read as {written}.");
-            return;
+            return false;
         }
 
         // A bare number on a socket that holds time is the trap the literal was
@@ -1423,22 +1649,16 @@ public sealed class Binder
                 $"'{spec.Name}' is a length of time, and a bare number on one is a power of ten: "
                 + $"{Number(figure.Amount)} means {spec.Format((float)figure.Amount)}. "
                 + $"Write {Literal(figure.Amount)} if you meant {Number(figure.Amount)} seconds.");
-            return;
+            return false;
         }
 
         if (!double.IsFinite(figure.Amount))
         {
             Complain(IssueCode.OutOfRange, line, column, $"'{spec.Name}' cannot hold that.");
-            return;
+            return false;
         }
 
-        node.InputValues[port] = (float)figure.Amount;
-        turned[(node.Id, port)] = line;
-
-        // Only once a knob has actually been set, so that a refused number is
-        // not offered as a place to write another one into. By the socket's own
-        // spelling, because that is what a caller asking for it will have.
-        written[(node.Id, spec.Name.Replace(' ', '_'))] = figure.Where;
+        return true;
     }
 
     /// <summary>A number as it was written, for saying it back in a complaint.</summary>
