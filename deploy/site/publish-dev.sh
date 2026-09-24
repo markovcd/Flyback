@@ -17,15 +17,11 @@ image=ghcr.io/markovcd/flyback-site
 commit="$(git rev-parse --short HEAD)"
 git diff --quiet HEAD || commit="$commit-dirty"
 
-# A multi-platform push needs a builder of its own; Docker's default one cannot.
-builder=flyback-site
-docker buildx inspect "$builder" >/dev/null 2>&1 \
-  || docker buildx create --name "$builder" --driver docker-container >/dev/null
+echo "Building $image:dev ($commit)"
+docker build --platform linux/amd64 --secret id=release-key,env=RELEASE_SIGNING_KEY \
+  -f src/Flyback.Server/Dockerfile -t "$image:dev" -t "$image:dev-$commit" .
 
-echo "Pushing $image:dev ($commit)"
-docker buildx build --builder "$builder" --platform linux/amd64,linux/arm64 \
-  --secret id=release-key,env=RELEASE_SIGNING_KEY \
-  -f src/Flyback.Server/Dockerfile \
-  -t "$image:dev" -t "$image:dev-$commit" --push .
+docker push "$image:dev"
+docker push "$image:dev-$commit"
 
 echo "On the NAS, in the dev folder: docker compose pull && docker compose up -d"

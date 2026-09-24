@@ -1,18 +1,13 @@
-# The site on the NAS. See README.md beside this file.
+# The site on the NAS, one Docker project per channel. See README.md beside this file.
 #
-# One folder per channel, each with this file, its own data/ and media/, and a
-# .env choosing the image and the port:
-#
-#   flyback-site/.env        (nothing: the latest release on 8080)
-#   flyback-site-dev/.env    TAG=dev
-#                            PORT=8081
-#
-# Update with: docker compose pull && docker compose up -d
+# For the dev project, set TAG=dev and PORT=8081 in a .env beside this file, or
+# write them into the two lines below.
 services:
   presets:
     image: ghcr.io/markovcd/flyback-site:${TAG:-latest}
     restart: unless-stopped
     ports:
+      # The NAS's port, then the site's own, which is always 8080.
       - "${PORT:-8080}:8080"
     environment:
       # The admin at /admin.html, who can rename, unpublish and delete presets. Blank turns admin mode off.

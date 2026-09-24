@@ -5,20 +5,18 @@
 #
 #   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 #
-# The Release workflow pushes it to ghcr.io/markovcd/flyback-site for amd64 and
-# arm64, and deploy/site/publish-dev.sh pushes a local build as :dev. See
+# The Site workflow pushes it to ghcr.io/markovcd/flyback-site, and
+# deploy/site/publish-dev.sh pushes a local build as :dev. See
 # deploy/site/README.md.
 
 ARG SDK=mcr.microsoft.com/dotnet/sdk:10.0
 ARG RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0
 
-# The build runs on the builder's own processor whatever the target: a
-# framework-dependent publish runs anywhere, so an arm64 image needs no emulation.
-FROM --platform=$BUILDPLATFORM ${SDK} AS build
+FROM ${SDK} AS build
 WORKDIR /src
 
 # What the site and its plugins report themselves as. Blank leaves it to
-# Directory.Build.props; the Release workflow passes the release's.
+# Directory.Build.props; the Site workflow passes the latest release's.
 ARG VERSION=""
 
 # Directory.Packages.props among them: it carries every package version, so a

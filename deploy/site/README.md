@@ -13,47 +13,37 @@ browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
 
 ## The site
 
-The site is an image on GitHub's registry, `ghcr.io/markovcd/flyback-site`, for amd64 and arm64, in two channels:
+The site is an image on GitHub's registry, `ghcr.io/markovcd/flyback-site`, for amd64, in two channels:
 
 | Tag | Pushed by | Plugins signed with |
 |---|---|---|
-| `latest` and `X.Y.Z` | the Release workflow, after each release | the release key |
+| `dev` and `dev-<commit>` | the Site workflow, on every push to `main` that touches the site | the release key |
+| `latest` and `<commit>` | the Site workflow, run by hand (Actions → Site → Run workflow) | the release key |
 | `dev` and `dev-<commit>` | `deploy/site/publish-dev.sh`, from this machine | the local test key |
 
-The NAS runs one folder per channel, each holding `compose.yaml` and its own `data/` and `media/`. A `.env` beside it picks the channel and the port:
+The Site workflow is separate from the app's Release, and signs the plugins at the version of the latest `vX.Y.Z` tag.
+
+The NAS runs one Docker project per channel, each a folder holding `compose.yaml` and its own `data/` and `media/`. The dev project's `compose.yaml` names `:dev` and another host port, say `"8081:8080"`; the host port comes first, and the second is always 8080. The container runs as user 1654, so `data/` has to be writable by that user:
 
 ```bash
-mkdir -p flyback-site/data flyback-site/media && sudo chown 1654 flyback-site/data
-cp compose.yaml flyback-site/                      # latest, on 8080
-
-mkdir -p flyback-site-dev/data flyback-site-dev/media && sudo chown 1654 flyback-site-dev/data
-cp compose.yaml flyback-site-dev/
-printf 'TAG=dev
-PORT=8081
-' > flyback-site-dev/.env
+sudo mkdir -p data media && sudo chown -R 1654 data
 ```
 
-Start or update either one from its folder:
+`media/` only needs to be readable. Start or update a project from its folder, or with Redeploy in the NAS's Docker app:
 
 ```bash
 docker compose pull && docker compose up -d
 ```
 
-The container runs as user 1654, so `data/` has to be writable by that user. `media/` only needs to be readable. `compose.yaml` holds the admin's password, so each folder's copy is its own.
-
-To publish the dev channel, log in to the registry once with a GitHub token that has `write:packages`, then run the script:
-
-```bash
-docker login ghcr.io -u markovcd
-```
+To push a build of this checkout to the dev channel without pushing to `main`, log in to the registry once with a classic GitHub token that has `write:packages` (`gh auth refresh -s write:packages`, then `gh auth token | docker login ghcr.io -u markovcd --password-stdin`), and run:
 
 ```bash
 deploy/site/publish-dev.sh
 ```
 
-The first push makes the package private. Make it public once, under the package's settings on GitHub, so the NAS can pull without logging in.
+Its plugins are signed with the local test key, so only a local build of Flyback installs them, until the next push to `main` replaces `:dev`.
 
-The build packs each plugin the site starts with (the `PluginProject` items in `Flyback.Server.csproj`) and signs it with `RELEASE_SIGNING_KEY`, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On GitHub that is the release key; on a developer's machine it holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none. A dev site's plugins therefore install only into a local build of Flyback.
+The build packs each plugin the site starts with (the `PluginProject` items in `Flyback.Server.csproj`) and signs it with `RELEASE_SIGNING_KEY`, handed in as a Docker build secret, so the image and the NAS keep no copy of it. On a developer's machine it holds a local test key, and `release-key.sh` makes one and keeps it in the user environment where there is none.
 
 Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), the build lays those plugins out beside the site instead, and the site packs them again at every start, so the shelf always holds what was just built and a Flyback pointed at `http://localhost:8790` installs it. The default presets are read from the build the same way, and a changed one replaces the stored copy. A Debug run checks no keys and signs with `RELEASE_SIGNING_KEY` only where it is set; a Release run signs with it, and makes one where there is none.
 
@@ -122,7 +112,7 @@ A patch that wires only a picture gets no track, one that wires only a sound get
 
 ## Looking after it
 
-- **Roll back** by setting `TAG` in `.env` to an earlier version or `dev-<commit>`.
+- **Roll back** by naming an earlier `<commit>` or `dev-<commit>` tag in `compose.yaml` and redeploying.
 - **Back up** by copying `data/presets.db` (with the site stopped, or with `sqlite3 presets.db ".backup copy.db"`) and `media/`.
 - **Take a preset down** from admin mode: Unpublish hides it, Delete removes it. The site cannot write `media/`, so a deleted preset's files stay there until removed by hand:
 
