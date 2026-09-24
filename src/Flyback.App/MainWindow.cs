@@ -195,6 +195,14 @@ public sealed partial class MainWindow : Window
 
     private readonly NodeEditor editor = new();
 
+    private readonly SourceView source = new();
+
+    private readonly ToggleButton codeButton =
+        ToolbarButtons.Toggle("code", "{ }", "Show the patch as text  (F2)");
+
+    /// <summary>Which of the canvas and the text owns the patch.</summary>
+    private readonly Document document;
+
     /// <summary>
     /// The sound files the patch names, read once each and kept. Owned by the
     /// window because it is the window that knows where the patch was opened
@@ -318,7 +326,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Named so a test can find it. It is the one panel here that is switched
-    /// off whole — see <see cref="RefreshOwnership"/> — and there is nothing
+    /// off whole — see <see cref="ShowOwnership"/> — and there is nothing
     /// else about it to tell it apart by.
     /// </summary>
     private readonly StackPanel inspector = new()
@@ -380,7 +388,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// Held because what laying out means, and whether it is worth doing at
-    /// all, depends on which view is showing — see <see cref="RefreshOwnership"/>.
+    /// all, depends on which view is showing — see <see cref="ShowOwnership"/>.
     /// </summary>
     private Button? tidyButton;
 
@@ -552,6 +560,8 @@ public sealed partial class MainWindow : Window
         thumbnails = new PresetThumbnails(Startup.Plugins.Modules, compiler, thumbnailFolder) { Saved = savedPresets };
         this.outputSettingsPath = outputSettingsPath;
         this.usage = usage ?? Usage.Off;
+
+        document = new Document(editor, source, report, this.usage);
 
         // Before anything is compiled, so no build is started only to be taken off.
         compiler.Enabled = !interpreted;
@@ -781,7 +791,7 @@ public sealed partial class MainWindow : Window
             // one press of Ctrl+Z away rather than gone.
             patch =>
             {
-                TakeFromAssistant(patch);
+                document.TakeFromAssistant(patch);
                 preview.Rewind();
             },
             // Wrapped rather than handed over as it stands, because the third
@@ -1116,12 +1126,12 @@ public sealed partial class MainWindow : Window
 
                 // A preset arrives as a graph and no text describes it, so the
                 // canvas owns it — ADR-0068.
-                DropSource();
+                document.DropSource();
 
                 // Unless it was picked from the text view, where it is read into
                 // text there and then: which view somebody picks a preset from
                 // says which of the two they mean to work in.
-                if (showingCode) ReadIntoText();
+                if (document.ShowingCode) document.ReadIntoText();
 
                 presetShowing = wanted;
 
@@ -1146,9 +1156,9 @@ public sealed partial class MainWindow : Window
         var save = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
         save.Click += async (_, _) => await SavePatchAsync();
 
-        // All three go to whichever view is showing — see MainWindow.Source.
-        undoButton.Click += (_, _) => Undo();
-        redoButton.Click += (_, _) => Redo();
+        // All three go to whichever view is showing — see Document.
+        undoButton.Click += (_, _) => document.Undo();
+        redoButton.Click += (_, _) => document.Redo();
 
         var tidy = tidyButton = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
@@ -1170,7 +1180,7 @@ public sealed partial class MainWindow : Window
 
         tidy.Click += (_, _) =>
         {
-            Tidy((modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0);
+            document.Tidy((modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0);
             modifiers = KeyModifiers.None;
         };
 
@@ -1189,7 +1199,7 @@ public sealed partial class MainWindow : Window
         ToolbarButtons.Marked(rewindButton, "rewind", Glyphs.Rewind(), RewindTip);
         rewindButton.Click += (_, _) => RewindToZero();
 
-        WireSource();
+        WireDocument();
         RefreshEditState();
 
         // What is done to the patch, in the order it is done: pick one, open or

@@ -170,7 +170,7 @@ public sealed partial class MainWindow
 
         knobs.Show(editor.Patch);
         knobs.Turning += TurnKnob;
-        knobs.TurnEnded += LetGoOfKnob;
+        knobs.TurnEnded += document.LetGoOfKnob;
 
         var picture = new Panel();
 

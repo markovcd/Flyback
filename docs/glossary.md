@@ -105,8 +105,8 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **knob panel** | The row of panel knobs, turned by hand or from a MIDI controller. | `ControlsPanel` | controls panel, mixer |
 | **panel knob** | A knob on the knob panel. It moves every socket linked to it, and a MIDI controller can be learned for it. | `PatchControl`, `Patch.Controls` | control, macro, fader |
 | **link** | A socket following a panel knob over a range. | `ControlLink` | binding, mapping |
-| **text view** | The patch as text, over the canvas. | `SourceView`, `MainWindow.Source` | code view, source view, editor |
-| **the document** | Whichever of the canvas and the text owns the patch, decided by the file that was opened. | — | — |
+| **text view** | The patch as text, over the canvas. | `SourceView` | code view, source view, editor |
+| **the document** | Whichever of the canvas and the text owns the patch, decided by the file that was opened. | `Document` | — |
 | **assistant** | The AI that edits a patch through the workbench, in a column beside it. | `IPatchAssistant`, `AssistantPanel` | agent (that is the one building Flyback), AI, copilot, bot |
 | **workbench** | Everything an assistant may do to a patch, and its limits. | `PatchWorkbench` | tools |
 | **conversation** | What was said to an assistant, saved with the patch it is about. | — | chat, thread, session |

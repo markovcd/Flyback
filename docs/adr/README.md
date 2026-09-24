@@ -90,7 +90,7 @@ context, decision, consequences.
 | [0016](0016-build-the-ui-in-c-sharp-without-xaml.md) | Build the UI in C#, without XAML |
 | [0017](0017-draw-the-node-editor-in-one-control.md) | Draw the node editor in one custom control |
 | [0018](0018-never-render-frames-on-the-ui-thread.md) | Never render frames on the UI thread |
-| [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region |
+| [0039](0039-one-window-class-across-a-file-per-region.md) | One window class, across a file per region *(superseded by [0148](0148-the-window-is-two-hubs-and-the-regions-around-them.md))* |
 | [0044](0044-lay-patches-out-in-layers-not-with-springs.md) | Lay patches out in layers, not with springs *(user-directed; what becomes of a drawing too large for the canvas settled by [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md); runnable over a selection by [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md))* |
 | [0045](0045-what-is-copied-is-a-patch-file.md) | What is copied is a patch file *(user-directed)* |
 | [0046](0046-the-module-list-is-a-gesture-not-a-panel.md) | The module list is a gesture, not a panel *(user-directed)* |
@@ -116,6 +116,7 @@ context, decision, consequences.
 | [0122](0122-the-panel-wears-the-block-it-is-about.md) | The panel wears the block it is about *(user-directed; the face it borrows is [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md))* |
 | [0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md) | What two shells draw with is a project of its own *(user-directed)* |
 | [0147](0147-a-socket-says-what-it-is-for-in-words-the-panel-and-the-assistant-share.md) | A socket says what it is for, in words the panel and the assistant share *(user-directed)* |
+| [0148](0148-the-window-is-two-hubs-and-the-regions-around-them.md) | The window is two hubs and the regions around them *(user-directed)* |
 
 ### Sound
 

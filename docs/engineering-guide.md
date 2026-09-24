@@ -421,13 +421,14 @@ files in `Flyback.Ui/Controls`: `Colors.cs` (colors by role: `Window`, `Canvas`,
 the muted brush). A color or a font size written as a literal in a control is
 drift. The site's CSS mirrors `Colors.cs`.
 
-**One window class, a file per region**
-([0039](adr/0039-one-window-class-across-a-file-per-region.md)). `MainWindow` is
-one `sealed partial class` across `MainWindow.cs` and a file per region:
-`Inspector`, `Source`, `Files`, `Editing`, `Recording`, `Engine`, `Recovery`,
-`Layout`, `Palette`, `Presets` and the rest. Control fields stay in
-`MainWindow.cs`; methods, nested types and constants used by one region go in that
-region's file. There are no view models, and that has been decided twice.
+**Two hubs and the regions around them**
+([0148](adr/0148-the-window-is-two-hubs-and-the-regions-around-them.md)).
+`Document` owns who owns the patch, the write-back into the text and where an
+undo lands; `Engine` owns compiling, the sound and the status bar. A region is a
+class that takes the hubs and the shared things it reads (the canvas, the
+preview, the plugins), owns its own fields and raises events. `MainWindow` builds
+them and lays them out. Regions not yet moved are still `partial` files of the
+window. There are no view models, and that has been decided twice.
 
 **The node editor is one control**
 ([0017](adr/0017-draw-the-node-editor-in-one-control.md)). `NodeEditor` overrides
@@ -944,7 +945,7 @@ A first scan of the code surfaces these, and each has been decided:
 
 - **View models for `MainWindow`.** Declined by
   [0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md) and again by
-  [0039](adr/0039-one-window-class-across-a-file-per-region.md).
+  [0148](adr/0148-the-window-is-two-hubs-and-the-regions-around-them.md).
 - **Unifying the interpreter, IL and GLSL opcode switches.** The GLSL is a
   transcription because its builtins disagree with the specification
   ([0035](adr/0035-a-glsl-backend-for-the-video-path.md)). The coverage tests are

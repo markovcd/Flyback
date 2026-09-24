@@ -86,7 +86,7 @@ public sealed partial class MainWindow
 
         return await AnsweredAsync(
             "Unsaved changes",
-            editor.IsModified || SourceIsUnapplied
+            editor.IsModified || document.IsUnapplied
                 ? "This patch has changes that have not been saved. Closing it now would lose them."
                 : "The conversation about this patch has not been saved. Closing it now would lose it.");
     }
@@ -102,7 +102,7 @@ public sealed partial class MainWindow
     /// and by the dot in the title, so the three cannot come to disagree.
     /// </remarks>
     private bool SomethingToLose =>
-        editor.IsModified || SourceIsUnapplied || assistant?.ConversationUnsaved == true;
+        editor.IsModified || document.IsUnapplied || assistant?.ConversationUnsaved == true;
 
     /// <summary>Whether the window could close without asking anything.</summary>
     internal bool HoldsNoWork => !SomethingToLose;
@@ -118,7 +118,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private async Task<bool> MayLoseTheTextAsync()
     {
-        if (!SourceIsUnapplied) return true;
+        if (!document.IsUnapplied) return true;
 
         return await AnsweredAsync(
             "Unsaved text",
@@ -139,7 +139,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private async Task<bool> MayLoseTheTextToAsync(string name)
     {
-        if (!SourceIsUnapplied) return true;
+        if (!document.IsUnapplied) return true;
 
         var was = questionIsUp;
         questionIsUp = true;
@@ -362,7 +362,7 @@ public sealed partial class MainWindow
         // for the shell in a way no letter is any more.
         if (e.Key == Key.F2)
         {
-            ShowCode(!showingCode);
+            document.ShowCode(!document.ShowingCode);
             e.Handled = true;
             return;
         }
@@ -389,8 +389,8 @@ public sealed partial class MainWindow
             // view did not want the keystroke itself: the code editor handles
             // its own undo, and this is the end of the bubble.
             case Key.Z:
-                if (again) Redo();
-                else Undo();
+                if (again) document.Redo();
+                else document.Undo();
                 e.Handled = true;
                 break;
 
@@ -398,7 +398,7 @@ public sealed partial class MainWindow
             // where Ctrl+Shift+Z is, and somebody who reaches for one is not
             // going to enjoy discovering which this program wanted.
             case Key.Y:
-                Redo();
+                document.Redo();
                 e.Handled = true;
                 break;
 
@@ -407,7 +407,7 @@ public sealed partial class MainWindow
             // the canvas, or the lines down the page. With Shift, only the
             // selected modules move (ADR-0110).
             case Key.L:
-                Tidy(again);
+                document.Tidy(again);
                 e.Handled = true;
                 break;
 
@@ -510,7 +510,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private bool Typing =>
         FocusManager.GetFocusedElement() is TextBox
-        || (showingCode && sourceOwned);
+        || (document.ShowingCode && document.Owned);
 
     /// <summary>
     /// One key, as either a note or the pair that moves the two rows. Null-ish by
@@ -538,8 +538,8 @@ public sealed partial class MainWindow
     {
         // Literally the answer the gesture gives, rather than a second statement of
         // the same rule — see UndoLandsOn.
-        undoButton.IsEnabled = UndoLandsOn is not null;
-        redoButton.IsEnabled = RedoLandsOn is not null;
+        undoButton.IsEnabled = document.CanUndo;
+        redoButton.IsEnabled = document.CanRedo;
 
         // The name first and the program second, which is the way round every
         // other window on the machine says it: what is on screen is the patch,

@@ -2,7 +2,7 @@
 
 **Status:** Accepted · 2026-09-09 · records a mechanism that was already built,
 across `Graph/PatchHistory.cs`, `Controls/SourceView.cs`,
-`MainWindow.Source.cs` and `MainWindow.Editing.cs`; the half of
+`Document.cs` and `MainWindow.Editing.cs`; the half of
 [0068](0068-the-file-that-was-opened-decides-who-owns-the-patch.md) that says
 what ownership costs
 

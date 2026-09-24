@@ -109,11 +109,11 @@ public sealed partial class MainWindow
 
             editor.Patch = patch;
             RewindToZero();
-            DropSource();
+            document.DropSource();
             assistant?.Open(conversation);
 
             // Read into text where it was picked from the text view, as a preset is.
-            if (showingCode) ReadIntoText();
+            if (document.ShowingCode) document.ReadIntoText();
 
             Report($"Opened “{shared.Name}” from the preset site.");
         }

@@ -1,7 +1,7 @@
 # ADR-0068: The file that was opened decides who owns the patch
 
 **Status:** Accepted · 2026-09-02 · *user-directed* · the code view;
-implemented in `Controls/SourceView.cs`, `MainWindow.Source.cs` and
+implemented in `Controls/SourceView.cs`, `Document.cs` and
 `Language/SourceMap.cs`; rests on
 [0065](0065-a-text-language-that-parses-to-a-patch.md) and
 [0067](0067-a-module-keeps-its-name-and-its-memory-across-a-rebuild.md); does

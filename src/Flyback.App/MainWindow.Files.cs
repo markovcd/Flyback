@@ -211,7 +211,7 @@ public sealed partial class MainWindow
             assistant?.Open(ConversationFor(file, text));
 
             // A patch file is the document, so the graph owns it — ADR-0068.
-            DropSource();
+            document.DropSource();
         }
         catch (Exception ex)
         {
@@ -335,7 +335,7 @@ public sealed partial class MainWindow
 
             // Saved as a bundle, so a bundle is the document now and the graph
             // owns it — ADR-0068.
-            DropSource();
+            document.DropSource();
 
             Report(report.Whole
                 ? $"Saved {file.Name}, carrying {report.Carried.Count} file(s)."
@@ -414,7 +414,7 @@ public sealed partial class MainWindow
     /// </remarks>
     private async Task<bool> SaveSourceAsync(IStorageFile file)
     {
-        var written = sourceOwned ? source.Source : PatchPrinter.Print(editor.Patch);
+        var written = document.Owned ? document.Text : PatchPrinter.Print(editor.Patch);
 
         try
         {
@@ -424,7 +424,7 @@ public sealed partial class MainWindow
                 await writer.WriteAsync(written);
             }
 
-            if (sourceOwned)
+            if (document.Owned)
             {
                 // What a bundle was carrying goes beside the text, and the text
                 // measures its files from there now — both for the reason a save
@@ -434,7 +434,7 @@ public sealed partial class MainWindow
                 var spilled = folder is { Length: > 0 } ? Scatter(folder) : 0;
 
                 SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: false);
-                MarkSourceSaved();
+                document.MarkSourceSaved();
 
                 // The text is the document, so the conversation is kept beside
                 // it as it would be beside a patch file. A printing is a copy,
@@ -511,7 +511,7 @@ public sealed partial class MainWindow
             // The text is the document now, and the canvas is a view of it —
             // ADR-0068. Said by opening on it, because somebody who opened a
             // source file came to read or write source.
-            TakeSource(text);
+            document.TakeSource(text);
 
             // Kept beside the file, as for a patch file — ADR-0072.
             assistant?.Open(ConversationFor(file, text));
@@ -581,7 +581,7 @@ public sealed partial class MainWindow
 
             editor.Patch = bundle.Patch;
             RewindToZero();
-            DropSource();
+            document.DropSource();
 
             // A bundle carries its conversation inside it — ADR-0072.
             assistant?.Open(bundle.Conversation);
@@ -608,8 +608,8 @@ public sealed partial class MainWindow
             SuggestedFileName = patchName ?? "patch",
 
             // Whichever kind this document already is — see PatchFileKinds.SaveKinds.
-            DefaultExtension = PatchFileKinds.SaveExtension(bundled, sourceOwned),
-            FileTypeChoices = PatchFileKinds.SaveKinds(bundled, sourceOwned),
+            DefaultExtension = PatchFileKinds.SaveExtension(bundled, document.Owned),
+            FileTypeChoices = PatchFileKinds.SaveKinds(bundled, document.Owned),
         });
 
         return file is not null && await SaveToAsync(file);
@@ -659,7 +659,7 @@ public sealed partial class MainWindow
             KeepConversation(file, written);
 
             // Saved as a patch file, so that is the document now — ADR-0068.
-            DropSource();
+            document.DropSource();
 
             soundFolder.Beside = folder;
             pictureFolder.Beside = folder;

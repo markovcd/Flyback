@@ -4,7 +4,7 @@
 
 Flyback keeps about 70 ADRs in `docs/adr/`. They are not background reading: they pre-emptively decline the refactors a scan would otherwise surface first.
 
-- MVVM / view models for `MainWindow`: declined by ADR-0016 and again by ADR-0039.
+- MVVM / view models for `MainWindow`: declined by ADR-0016 and again by ADR-0148, which splits the window into hub and region classes instead.
 - Unifying the interpreter / GLSL / `OpShape` opcode switches: ADR-0035 requires the transcription, because GLSL builtins disagree with `CompiledPatch.Evaluate`, which is the specification. Already guarded by an opcode-coverage test.
 - Sharing the Gemini/OpenAi session tool loops: documented as deliberate in `GeminiSession.cs`'s own header.
 

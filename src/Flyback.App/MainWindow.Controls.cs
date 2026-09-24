@@ -125,7 +125,7 @@ public sealed partial class MainWindow
             learning?.Cancel();
             control.Midi = binding;
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
             Report($"'{control.Name}' follows {instruments.Describe(binding, Source(binding.Device))}.");
         };
 
@@ -146,14 +146,14 @@ public sealed partial class MainWindow
             var added = editor.Patch.AddControl();
 
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
             Link(added.Id);
         };
 
         controlsPanel.Turning += TurnKnob;
         stageKnobs.Turning += TurnKnob;
-        controlsPanel.TurnEnded += LetGoOfKnob;
-        stageKnobs.TurnEnded += LetGoOfKnob;
+        controlsPanel.TurnEnded += document.LetGoOfKnob;
+        stageKnobs.TurnEnded += document.LetGoOfKnob;
 
         controlsPanel.LinkRequested += id => Link(editor.LinkingControl == id ? null : id);
 
@@ -166,7 +166,7 @@ public sealed partial class MainWindow
 
             control.Midi = null;
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
         };
 
         controlsPanel.Renamed += (id, name) =>
@@ -175,7 +175,7 @@ public sealed partial class MainWindow
 
             control.Name = name;
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
         };
 
         controlsPanel.Logarithmic = id =>
@@ -214,7 +214,7 @@ public sealed partial class MainWindow
             if (!editor.Patch.MoveControl(id, index)) return;
 
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
         };
 
         controlsPanel.RemoveRequested += id =>
@@ -225,17 +225,17 @@ public sealed partial class MainWindow
             if (!editor.Patch.RemoveControl(id)) return;
 
             editor.NotifyPatchChanged();
-            PanelEdited();
+            document.PanelEdited();
         };
 
         editor.SocketPicked += (_, pick) => PickSocket(pick);
 
         // A socket's own knob on the canvas: heard as it turns, written into the
         // text and the panel when the hand comes off it.
-        editor.InputTurned += (_, pick) => Turned(pick.Node, pick.Port);
+        editor.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
         editor.InputLetGo += (_, pick) =>
         {
-            HandCameOff();
+            document.HandCameOff();
             if (editor.SelectedNode?.Id == pick.Node || editor.SelectedGroup?.Members.Contains(pick.Node) == true) BuildInspector();
         };
     }
@@ -299,26 +299,6 @@ public sealed partial class MainWindow
             "An instrument Flyback knows by name offers its tracks on a MIDI In's channel field, binds a knob "
             + "from the panel's menu without being touched, and names what a learned knob follows.");
         midiSection.Children.Add(instrumentsNote);
-    }
-
-    /// <summary>
-    /// Hands the knobs of a patch to the one built from its text, with the links of
-    /// every module the text kept. The text has no way to write either.
-    /// </summary>
-    private static void CarryControls(Patch from, Patch to)
-    {
-        if (from.Controls is null || to.Controls is not null) return;
-
-        to.Controls = [.. from.Controls.Select(c => c.Clone())];
-
-        foreach (var node in to.Nodes)
-        {
-            if (from.Find(node.Id) is not { } was || node.StateOf(ControlMap.StateKey) is not null) continue;
-
-            foreach (var (port, link) in ControlMap.All(was))
-                if (port < node.InputValues.Length)
-                    ControlMap.Link(node, port, link);
-        }
     }
 
     /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
@@ -473,7 +453,7 @@ public sealed partial class MainWindow
 
                 still.Midi = binding;
                 editor.NotifyPatchChanged();
-                PanelEdited();
+                document.PanelEdited();
                 last = heard;
 
                 Report(instruments.For(source ?? default) is not null

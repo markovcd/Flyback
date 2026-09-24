@@ -466,8 +466,8 @@ public sealed partial class MainWindow
 
             inspector.Children.Add(new TextBlock
             {
-                Text = adrift
-                    ? adriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
+                Text = document.IsAdrift
+                    ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
                     : editor.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = Text.Muted,
@@ -1180,7 +1180,7 @@ public sealed partial class MainWindow
             Margin = margin,
         };
 
-        if (adrift)
+        if (document.IsAdrift)
         {
             line.IsVisible = shown is not null;
             return line;
@@ -1207,9 +1207,9 @@ public sealed partial class MainWindow
                 {
                     // Finished as it closes: Enter takes the box away before any
                     // key comes up in the panel to say so.
-                    Relaid();
+                    document.Relaid();
                     editor.NotifyPatchChanged();
-                    HandCameOff();
+                    document.HandCameOff();
                 },
                 prose: true);
         };
@@ -1480,11 +1480,11 @@ public sealed partial class MainWindow
         // A sequencer's tune is a list rather than a row of knobs (ADR-0038),
         // so it is edited as one — added to, taken from and reordered.
         StepsExtra steps => new StepList(
-            node, steps.Spec, Colors.Palette(def).Accent, because => Edited(node, because)).View,
+            node, steps.Spec, Colors.Palette(def).Accent, because => document.Edited(node, because)).View,
 
         // A quantiser's scale is a set rather than a sequence, so it is edited
         // as the octave it is a subset of rather than as a list of numbers.
-        ScaleExtra => new ScaleKeys(node, def, because => Edited(node, because)).View,
+        ScaleExtra => new ScaleKeys(node, def, because => document.Edited(node, because)).View,
 
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
@@ -1567,7 +1567,7 @@ public sealed partial class MainWindow
                     editor.Patch.KeyboardScale = null;
                 }
 
-                Relaid();
+                document.Relaid();
 
                 // After the picker has finished with its own event, since what
                 // is rebuilt includes the picker.
@@ -1581,7 +1581,7 @@ public sealed partial class MainWindow
                 scale =>
                 {
                     editor.Patch.KeyboardScale = scale;
-                    Relaid();
+                    document.Relaid();
                     editor.NotifyPatchChanged();
                 },
                 played: true).View);
@@ -1601,7 +1601,7 @@ public sealed partial class MainWindow
     private InspectorRows? rows;
 
     /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
-    private InspectorRows Rows => rows ??= new InspectorRows(because => editor.NotifyPatchChanged(because), HandCameOff);
+    private InspectorRows Rows => rows ??= new InspectorRows(because => editor.NotifyPatchChanged(because), document.HandCameOff);
 
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.
@@ -1687,9 +1687,9 @@ public sealed partial class MainWindow
                 }
 
                 // A Send's only text is its bus, and its Receives go where it goes.
-                foreach (var receive in BusEdits.Rename(editor.Patch, node, next)) Restated(receive.Id, field.Key);
+                foreach (var receive in BusEdits.Rename(editor.Patch, node, next)) document.Restated(receive.Id, field.Key);
 
-                Restated(node.Id, field.Key);
+                document.Restated(node.Id, field.Key);
             },
 
             // An Expression's formula is the one field whose text is a language,
@@ -1718,7 +1718,7 @@ public sealed partial class MainWindow
 
         // Noted rather than written, for the reason a knob is: a field on a
         // slider is dragged, and the text should be edited once at the end of it.
-        Restated(node.Id, field.Key);
+        document.Restated(node.Id, field.Key);
     }
 
     /// <summary>
@@ -1813,14 +1813,14 @@ public sealed partial class MainWindow
             name.Opacity = 0.75;
             ToolTip.SetTip(name, picked);
 
-            Edited(node);
+            document.Edited(node);
 
             // Every other control in the panel is written into the text by the
             // hand coming off it, and the hand came off this button before the
             // dialog opened: the file arrives after that release, with nothing
             // left to flush it. Said here, because the gesture is over the
             // moment the picker answers.
-            HandCameOff();
+            document.HandCameOff();
         };
 
         Grid.SetColumn(caption, 0);
@@ -1950,7 +1950,7 @@ public sealed partial class MainWindow
 
             // Noted rather than written. A drag is a knob turned a hundred times
             // and the text should be edited once, when the hand comes off it.
-            Turned(node.Id, index);
+            document.Turned(node.Id, index);
         }, reading, reads, flag);
     }
 

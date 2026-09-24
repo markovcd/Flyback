@@ -1,6 +1,3 @@
-using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
@@ -10,7 +7,7 @@ namespace Flyback.App;
 
 /// <summary>
 /// The patch as text, beside the patch as a graph, and which of the two is the
-/// document.
+/// document (ADR-0148).
 /// </summary>
 /// <remarks>
 /// What owns the patch is the file that was opened rather than the view that
@@ -23,12 +20,81 @@ namespace Flyback.App;
 /// a printing is offered and labeled, never adopted behind somebody's back.
 /// </para>
 /// </remarks>
-public sealed partial class MainWindow
+internal sealed class Document
 {
-    private readonly SourceView source = new();
+    private readonly NodeEditor editor;
+    private readonly SourceView source;
+    private readonly ReportLine report;
+    private readonly Usage usage;
 
-    private readonly ToggleButton codeButton =
-        ToolbarButtons.Toggle("code", "{ }", "Show the patch as text  (F2)");
+    /// <summary>What an undo or a redo can do has changed, or the patch's unsaved state has.</summary>
+    public event EventHandler? EditStateChanged;
+
+    /// <summary>Who owns the patch has changed, or which view is showing has.</summary>
+    public event EventHandler? OwnershipChanged;
+
+    /// <summary>The text view was shown or hidden.</summary>
+    public event EventHandler? ViewChanged;
+
+    /// <summary>What the panel has to say has changed where the selection has not.</summary>
+    public event EventHandler? PanelStale;
+
+    public Document(NodeEditor editor, SourceView source, ReportLine report, Usage usage)
+    {
+        this.editor = editor;
+        this.source = source;
+        this.report = report;
+        this.usage = usage;
+
+        source.IsVisible = false;
+
+        // The canvas opens on a preset, which is a patch the graph owns. Said
+        // before the first one reaches it, so the earliest step in its history
+        // knows whose the patch was.
+        editor.Mark = Owning();
+
+        // While the text is the document its stack is the history, so a step the
+        // canvas records is one that stack has to be able to take back.
+        editor.Recorded += (_, _) =>
+        {
+            if (sourceOwned) unstacked++;
+
+            // A new step empties the canvas's redo stack.
+            sinceHandover = null;
+        };
+
+        source.EvaluateRequested += (_, _) => Evaluate();
+        source.Changed += (_, _) =>
+        {
+            // Typing empties the text's redo stack. A step being walked is not
+            // typing, and sets this for itself.
+            if (!stepping) sinceHandover = null;
+
+            EditStateChanged?.Invoke(this, EventArgs.Empty);
+        };
+        source.Moved += (_, at) => PointAt(at);
+    }
+
+    /// <summary>Whether the text is the document.</summary>
+    public bool Owned => sourceOwned;
+
+    /// <summary>Whether the text view is the one showing.</summary>
+    public bool ShowingCode => showingCode;
+
+    /// <summary>What the text view holds.</summary>
+    public string Text => source.Source;
+
+    /// <summary>Whether the caret stands on a module or a group the canvas has moved on from.</summary>
+    public bool IsAdrift => adrift;
+
+    /// <inheritdoc cref="adriftBox"/>
+    public bool IsAdriftBox => adriftBox;
+
+    /// <summary>Whether an undo would take anything back, from either stack.</summary>
+    public bool CanUndo => UndoLandsOn is not null;
+
+    /// <inheritdoc cref="CanUndo"/>
+    public bool CanRedo => RedoLandsOn is not null;
 
     /// <summary>
     /// Whether the text is the document. False for a patch that came from a
@@ -158,86 +224,7 @@ public sealed partial class MainWindow
     /// is the one thing that can be lost without the editor's history knowing
     /// about it, since nothing typed reaches the patch until it is applied.
     /// </summary>
-    private bool SourceIsUnapplied => sourceOwned && source.Source != sourceOnDisk;
-
-    /// <summary>Called once, as the window is built.</summary>
-    private void WireSource()
-    {
-        source.IsVisible = false;
-
-        // The canvas opens on a preset, which is a patch the graph owns. Said
-        // before the first one reaches it, so the earliest step in its history
-        // knows whose the patch was.
-        editor.Mark = Owning();
-
-        // While the text is the document its stack is the history, so a step the
-        // canvas records is one that stack has to be able to take back.
-        editor.Recorded += (_, _) =>
-        {
-            if (sourceOwned) unstacked++;
-
-            // A new step empties the canvas's redo stack.
-            sinceHandover = null;
-        };
-
-        source.EvaluateRequested += (_, _) => Evaluate();
-        source.Changed += (_, _) =>
-        {
-            // Typing empties the text's redo stack. A step being walked is not
-            // typing, and sets this for itself.
-            if (!stepping) sinceHandover = null;
-
-            RefreshEditState();
-        };
-        source.EditorFontSize = canvasSection.EditorFontSize;
-        source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
-        source.Moved += (_, at) => PointAt(at);
-        source.HandBackRequested += async (_, _) => await HandBackAsync();
-
-        codeButton.IsCheckedChanged += (_, _) => ShowCode(codeButton.IsChecked == true);
-
-        // Caught on the way up and after whoever handled it, because a slider
-        // captures the pointer: letting go halfway across the window is still
-        // letting go of the slider, and the value written should be the one the
-        // control finished on.
-        inspector.AddHandler(
-            PointerReleasedEvent,
-            (_, _) => HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        // A number typed rather than dragged has no gesture to wait for, and the
-        // focus going is the surest end of one: whatever the keys below did or
-        // did not catch, nothing typed survives the box being left.
-        inspector.AddHandler(LostFocusEvent, (_, _) => HandCameOff(), RoutingStrategies.Bubble);
-
-        // And a key let go of, because a number box takes what is typed as it is
-        // typed: the value is heard on every keystroke, so the text has to keep up
-        // keystroke by keystroke rather than waiting for the focus to go.
-        //
-        // On the way up rather than down, because the character is taken between
-        // the two. Any key rather than Enter alone, since an arrow steps the value
-        // and a backspace clears it, and neither gives up the focus. A key held
-        // down repeats its press without releasing, so an arrow leaned on writes
-        // once at the end of the run.
-        inspector.AddHandler(
-            KeyUpEvent,
-            (_, _) => HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        // And a notch of the wheel, which is the third way a number box moves
-        // and the last one that touches neither the pointer's button nor the
-        // focus. A notch is not a drag: there is nothing being held and nothing
-        // to let go of, so each one is finished the moment it lands, the way
-        // each keystroke is. Caught after the box has handled it and taken the
-        // value, for the reason every one of these is.
-        inspector.AddHandler(
-            PointerWheelChangedEvent,
-            (_, _) => HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-    }
+    public bool IsUnapplied => sourceOwned && source.Source != sourceOnDisk;
 
     /// <summary>
     /// The hand has come off whatever it was holding in the panel: the gesture is
@@ -248,7 +235,7 @@ public sealed partial class MainWindow
     /// one slider is that same name, so this is the only thing that can tell the
     /// history one drag from the next.
     /// </remarks>
-    private void HandCameOff()
+    public void HandCameOff()
     {
         editor.GestureEnded();
         WriteBack();
@@ -337,7 +324,7 @@ public sealed partial class MainWindow
             if (group is null) editor.Select(null);
             else editor.SelectGroup(group);
 
-            if (shifted && group is null) BuildInspector();
+            if (shifted && group is null) PanelStale?.Invoke(this, EventArgs.Empty);
 
             return;
         }
@@ -358,7 +345,7 @@ public sealed partial class MainWindow
         // words the patch has both moved on from — the panel is asked again
         // anyway, since what it has to say has changed even though what is
         // selected has not.
-        if (moved && editor.SelectedNode is null) BuildInspector();
+        if (moved && editor.SelectedNode is null) PanelStale?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -377,10 +364,10 @@ public sealed partial class MainWindow
         means is { } text && text.Find(id)?.TypeId != editor.Patch.Find(id)?.TypeId;
 
     /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
-    private void Turned(Guid node, int port) => turned.Add((node, port));
+    public void Turned(Guid node, int port) => turned.Add((node, port));
 
     /// <summary>The hand has come off a panel knob: where it rests goes into its <c>panel</c> line.</summary>
-    private void LetGoOfKnob(Guid control)
+    public void LetGoOfKnob(Guid control)
     {
         dialed.Add(control);
         HandCameOff();
@@ -393,14 +380,14 @@ public sealed partial class MainWindow
     /// A plugin field's key, or null for the one thing a module carries that has
     /// no key — its tune, its scale or the file it names.
     /// </param>
-    private void Restated(Guid node, string? key = null) => restated.Add((node, key));
+    public void Restated(Guid node, string? key = null) => restated.Add((node, key));
 
     /// <summary>
     /// Notes that the computer keyboard has been laid out again in the panel, for
     /// the next write-back — the one thing the panel changes that is about no
     /// module.
     /// </summary>
-    private void Relaid() => relaid = true;
+    public void Relaid() => relaid = true;
 
     private bool relaid;
 
@@ -408,7 +395,7 @@ public sealed partial class MainWindow
     /// What a module carries has been edited: heard now, and written into the
     /// text when the hand comes off it.
     /// </summary>
-    private void Edited(NodeInstance node, string? because = null)
+    public void Edited(NodeInstance node, string? because = null)
     {
         Restated(node.Id);
         editor.NotifyPatchChanged(because);
@@ -486,7 +473,7 @@ public sealed partial class MainWindow
         if (reprint) Reprint();
 
         if (lost > 0)
-            Report($"{lost} value(s) could not be written into the text — "
+            report.Say($"{lost} value(s) could not be written into the text — "
                 + "the code says them in a form this cannot change in place.");
     }
 
@@ -504,7 +491,7 @@ public sealed partial class MainWindow
     /// A printing is printed again. Text somebody wrote has its <c>panel</c> lines
     /// rewritten where they stand, and nothing else touched.
     /// </remarks>
-    private void PanelEdited()
+    public void PanelEdited()
     {
         if (!sourceOwned)
         {
@@ -743,7 +730,7 @@ public sealed partial class MainWindow
     /// through when its stack is empty, or applying a printing — loaded rather than
     /// typed — would be the one thing nobody could take back.
     /// </remarks>
-    private void Undo()
+    public void Undo()
     {
         if (Gesturing) return;
 
@@ -761,10 +748,10 @@ public sealed partial class MainWindow
                 break;
         }
 
-        RefreshEditState();
+        EditStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void Redo()
+    public void Redo()
     {
         if (Gesturing) return;
 
@@ -782,7 +769,7 @@ public sealed partial class MainWindow
                 break;
         }
 
-        RefreshEditState();
+        EditStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -884,7 +871,7 @@ public sealed partial class MainWindow
 
         sinceHandover = back && owned && !sourceOwned ? 0 : null;
 
-        RefreshEditState();
+        EditStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -915,7 +902,7 @@ public sealed partial class MainWindow
         if (showingCode != sourceOwned) ShowCode(sourceOwned);
         else RefreshOwnership();
 
-        Report(sourceOwned
+        report.Say(sourceOwned
             ? "Put back — the text is the document again."
             : "Taken back — the canvas is the document again, so its modules can be "
               + "dragged, wired and grouped.");
@@ -931,7 +918,7 @@ public sealed partial class MainWindow
     /// Lay out only the selected modules. A canvas gesture: the text has no selected
     /// modules to lay out, so it folds whole either way.
     /// </param>
-    private void Tidy(bool onlySelected = false)
+    public void Tidy(bool onlySelected = false)
     {
         if (Gesturing) return;
 
@@ -947,7 +934,7 @@ public sealed partial class MainWindow
     /// patch, and showing both would ask the question this design exists to answer.
     /// Visibility rather than reparenting, as with the fullscreen preview.
     /// </remarks>
-    private void ShowCode(bool shown)
+    public void ShowCode(bool shown)
     {
         showingCode = shown;
 
@@ -958,7 +945,7 @@ public sealed partial class MainWindow
         source.IsVisible = shown;
         editor.IsVisible = !shown;
 
-        if (codeButton.IsChecked != shown) codeButton.IsChecked = shown;
+        ViewChanged?.Invoke(this, EventArgs.Empty);
 
         if (shown)
         {
@@ -1047,7 +1034,7 @@ public sealed partial class MainWindow
         if (!load.Ok)
         {
             source.Show(load);
-            Report(
+            report.Say(
                 $"The text does not read — {load.Issues.Count} thing(s) to fix. Nothing has changed.",
                 load.Report);
 
@@ -1106,7 +1093,7 @@ public sealed partial class MainWindow
 
         source.Show(load, applied ?? $"Applied — {total} modules, {kept} of them carried over.");
 
-        Report(taken
+        report.Say(taken
             ? $"Applied. The text is the document from here on — {total} modules."
             : $"Applied — {total} modules, {kept} carried over.");
 
@@ -1126,7 +1113,7 @@ public sealed partial class MainWindow
     /// printing and the build are one thing to take back, and taking them back
     /// returns the text as it was written, comments and all.
     /// </remarks>
-    private void TakeFromAssistant(Patch patch)
+    public void TakeFromAssistant(Patch patch)
     {
         if (!sourceOwned)
         {
@@ -1164,7 +1151,7 @@ public sealed partial class MainWindow
     /// instrument written another way, where a <c>.fbk</c> is somebody's own patch
     /// and its groups are their work.
     /// </remarks>
-    private void ReadIntoText()
+    public void ReadIntoText()
     {
         Evaluate();
 
@@ -1181,7 +1168,7 @@ public sealed partial class MainWindow
         editor.MarkOpened();
         source.ForgetSteps();
         MarkSourceSaved();
-        RefreshEditState();
+        EditStateChanged?.Invoke(this, EventArgs.Empty);
 
         // And no word under the text about what the build made of it. What
         // Evaluate leaves there answers "how much of what was playing survived",
@@ -1189,7 +1176,7 @@ public sealed partial class MainWindow
         // one, so the answer would be a nought against a patch a moment old.
         source.Clear();
 
-        Report($"Read into text — {editor.Patch.Nodes.Count} modules. The text is the "
+        report.Say($"Read into text — {editor.Patch.Nodes.Count} modules. The text is the "
             + "document, so the canvas is a view of it until you hand it back.");
     }
 
@@ -1202,16 +1189,12 @@ public sealed partial class MainWindow
     /// and then wanted to drag one wire would have to save the patch as a
     /// <c>.fbk</c> to be allowed to. Nothing is built and nothing rewound — the
     /// canvas already holds what the text made, and what changes hands is who owns
-    /// it, through the same door a <c>.fbk</c> arriving uses.
+    /// it, through the same door a <c>.fbk</c> arriving uses. The buffer is emptied
+    /// and written nowhere, so the caller asks about unsaved typing first.
     /// </remarks>
-    private async Task HandBackAsync()
+    public void HandBack()
     {
         if (!sourceOwned) return;
-
-        // The buffer is emptied by the handover and is written nowhere on the
-        // way, so typing that is not on disk yet is asked about here exactly as
-        // it is asked about when a document is closed over.
-        if (!await MayLoseTheTextAsync()) return;
 
         // To the canvas, which is the one thing this gesture is asked for: the
         // button is under the text and pressing it means somebody wants to draw.
@@ -1220,17 +1203,18 @@ public sealed partial class MainWindow
         ShowCode(false);
         DropSource();
 
-        Report("The canvas is the document from here on. The text view prints it afresh on "
+        report.Say("The canvas is the document from here on. The text view prints it afresh on "
             + "the next look, and applying that printing takes it back into text.");
     }
 
     /// <summary>
     /// Takes text that has just been opened as the document.
     /// </summary>
-    private void TakeSource(string text)
+    /// <param name="saved">Whether the text is on disk as it stands, which recovered work is not.</param>
+    public void TakeSource(string text, bool saved = true)
     {
         sourceOwned = true;
-        sourceOnDisk = text;
+        sourceOnDisk = saved ? text : string.Empty;
         printed = null;
         printedOrder = [];
 
@@ -1259,7 +1243,7 @@ public sealed partial class MainWindow
     /// patch. The one document that does move the view is a <c>.fbks</c>, which
     /// arrives as text and locks the canvas besides (<see cref="TakeSource"/>).
     /// </remarks>
-    private void DropSource()
+    public void DropSource()
     {
         sourceOwned = false;
         sourceOnDisk = string.Empty;
@@ -1306,7 +1290,7 @@ public sealed partial class MainWindow
     /// an unsaved document over a file that has it to the letter — Ctrl+Z and back
     /// across the apply that made the text the document is all it took.
     /// </remarks>
-    private void MarkSourceSaved()
+    public void MarkSourceSaved()
     {
         sourceOnDisk = source.Source;
 
@@ -1316,15 +1300,13 @@ public sealed partial class MainWindow
     }
 
     /// <summary>
-    /// Puts every control that edits the patch in step with who owns it.
+    /// Puts the canvas and the text in step with who owns the patch, and says so.
     /// </summary>
     /// <remarks>
     /// The canvas keeps everything that looks — selecting, panning, framing,
     /// copying — and loses everything that changes. The inspector stays live and is
     /// the one thing on a locked canvas that does, because everything a module
-    /// carries is written back into the text; what it loses is what the graph is
-    /// made of. Undo and redo are left alone: on a source-owned patch the history
-    /// is a history of evaluations.
+    /// carries is written back into the text.
     /// </remarks>
     private void RefreshOwnership()
     {
@@ -1334,26 +1316,6 @@ public sealed partial class MainWindow
         // so that an undo across an evaluation hands the patch back.
         editor.Mark = Owning();
 
-        // Laying out is off only where it would not last: a locked canvas is
-        // re-laid on the next evaluation, so tidying one is work thrown away.
-        // Showing the text, the same button folds the lines instead.
-        if (tidyButton is not null)
-        {
-            tidyButton.IsEnabled = Coding || !sourceOwned;
-
-            ToolTip.SetTip(tidyButton, Coding
-                ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
-                : sourceOwned
-                    ? "The text is the document, so the canvas is laid out from it on every "
-                      + "apply. Fold the text instead."
-                    : TidyTip);
-        }
-
-        // What the empty panel says is a list of gestures, and half of them
-        // have just been switched off or back on.
-        BuildInspector();
-        RefreshEditState();
-
         source.Notice = sourceOwned ? null : Reading();
         source.Editable = true;
 
@@ -1362,11 +1324,26 @@ public sealed partial class MainWindow
         // button that does nothing.
         source.Owns = sourceOwned;
 
-        ToolTip.SetTip(
-            inspector,
-            sourceOwned
-                ? "The text is the document. A knob turned here is written back into it "
-                  + "where it already says it."
-                : null);
+        OwnershipChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Hands the knobs of a patch to the one built from its text, with the links of
+    /// every module the text kept. The text has no way to write either.
+    /// </summary>
+    private static void CarryControls(Patch from, Patch to)
+    {
+        if (from.Controls is null || to.Controls is not null) return;
+
+        to.Controls = [.. from.Controls.Select(c => c.Clone())];
+
+        foreach (var node in to.Nodes)
+        {
+            if (from.Find(node.Id) is not { } was || node.StateOf(ControlMap.StateKey) is not null) continue;
+
+            foreach (var (port, link) in ControlMap.All(was))
+                if (port < node.InputValues.Length)
+                    ControlMap.Link(node, port, link);
+        }
     }
 }

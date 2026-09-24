@@ -23,7 +23,7 @@ public sealed partial class MainWindow
         patchName,
         soundFolder.Beside,
         PatchIO.ToJson(editor.Patch),
-        sourceOwned ? source.Source : null,
+        document.Owned ? document.Text : null,
         assistant?.ConversationToSave(),
         carried?.Bytes);
 
@@ -57,15 +57,12 @@ public sealed partial class MainWindow
 
         if (work.Source is { } text)
         {
-            TakeSource(text);
-
             // Written nowhere, so all of it is unsaved text.
-            sourceOnDisk = string.Empty;
-            editor.Remark(Owning());
+            document.TakeSource(text, saved: false);
         }
         else
         {
-            DropSource();
+            document.DropSource();
         }
 
         assistant?.Open(work.Conversation);

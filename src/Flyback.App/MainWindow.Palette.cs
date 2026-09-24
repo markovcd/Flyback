@@ -29,7 +29,7 @@ public sealed partial class MainWindow
             return;
 
         editor.Patch.KeyboardScale = [.. Major];
-        Relaid();
+        document.Relaid();
     }
 
     private void BuildPalette()

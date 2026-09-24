@@ -71,7 +71,7 @@ public sealed partial class MainWindow
         // Only while there is a picture to swap in, which is the button's own rule.
         swapButton.IsChecked = saved.Swapped && swapButton.IsEnabled;
 
-        if (saved.Code) ShowCode(true);
+        if (saved.Code) document.ShowCode(true);
     }
 
     /// <summary>Writes the layout down. A settings file is not worth a failure to close.</summary>
@@ -140,7 +140,7 @@ public sealed partial class MainWindow
             ControlsHeight = controlsPanel.IsVisible ? Under(controlsPanel, length => length.Value) : controlsShare.Value,
             ControlsOpen = controlsPanel.IsVisible,
 
-            Code = showingCode,
+            Code = document.ShowingCode,
             Swapped = swapButton.IsChecked == true,
         };
 
