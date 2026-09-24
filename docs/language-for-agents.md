@@ -188,9 +188,10 @@ which is the 0033 test.
 
 **Done.** Each complaint about the text carries a stable `code` (`IssueCode`),
 its line and column, the message, and a `fix` — a span and its replacement —
-where there is exactly one repair. That is only a misspelled module today: a
-pipe with nowhere to land and a bare number on a time socket each have a choice
-in them, and a fix applied blindly would be the old guess back. The assistant's
+where there is exactly one repair. That is a misspelled module, socket, output
+or name, repaired to the one nearest it where no other is as near: a pipe with
+nowhere to land and a bare number on a time socket each have a choice in them,
+and a fix applied blindly would be the old guess back. The assistant's
 `write_patch` refuses with the same codes, in brackets, and a `fix:` line under
 each mistake that has one.
 

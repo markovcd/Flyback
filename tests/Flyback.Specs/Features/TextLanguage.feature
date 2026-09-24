@@ -135,6 +135,16 @@ Feature: A patch can be written as text
     Then it reads without complaint
     And the screen is not black
 
+  Scenario: A misspelled socket or name is repaired by the fix its complaint carries
+    Given the text:
+      """
+      let wave = sine(frq: 220)
+      wav |> out.lft
+      """
+    When the fixes it suggests are made
+    Then it reads without complaint
+    And the speakers are not silent
+
   Scenario: Setting a knob twice is pointed out rather than the last one winning
     Given the text:
       """

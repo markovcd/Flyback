@@ -135,7 +135,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             && Ahead(2).Kind == TokenKind.Identifier
             && Ahead(3).Kind is TokenKind.Assign or TokenKind.BackWire)
         {
-            var target = new NameExpr(Current.Text, Ahead(2).Text, line, column);
+            var target = new NameExpr(Current.Text, Ahead(2).Text, line, column, Ahead(2).Line == line ? Ahead(2).Column : 0);
             var backWire = Ahead(3).Kind == TokenKind.BackWire;
 
             at += 4;
@@ -665,10 +665,13 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     private Expr? NameOrCall(int line, int column)
     {
         var parts = new List<string> { Current.Text };
+        var portColumn = 0;
         at++;
 
         while (Current.Kind == TokenKind.Dot && Ahead().Kind == TokenKind.Identifier)
         {
+            if (parts.Count == 1 && Ahead().Line == line) portColumn = Ahead().Column;
+
             parts.Add(Ahead().Text);
             at += 2;
         }
@@ -678,7 +681,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             return parts.Count switch
             {
                 1 => new NameExpr(parts[0], null, line, column),
-                2 => new NameExpr(parts[0], parts[1], line, column),
+                2 => new NameExpr(parts[0], parts[1], line, column, portColumn),
 
                 // Only a call can carry a full type id, since nothing reads an
                 // output off one.

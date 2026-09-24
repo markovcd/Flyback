@@ -71,6 +71,29 @@ internal sealed class ModuleNames
         return best;
     }
 
+    /// <summary>
+    /// The one name among <paramref name="among"/> closest to <paramref name="name"/>,
+    /// where it is close enough to be the repair and no other is as close.
+    /// </summary>
+    public static string? Nearest(string name, IEnumerable<string> among)
+    {
+        var close = among
+            .Distinct(StringComparer.Ordinal)
+            .Select(k => (Name: k, Distance: Distance(k, name)))
+            .Where(k => k.Distance > 0 && k.Distance <= Math.Max(1, name.Length / 3))
+            .ToList();
+
+        if (close.Count == 0) return null;
+
+        var best = close.Min(k => k.Distance);
+        var nearest = close.Where(k => k.Distance == best).ToList();
+
+        return nearest.Count == 1 ? nearest[0].Name : null;
+    }
+
+    /// <summary>The question a complaint asks where there is a nearest name.</summary>
+    public static string Meant(string? nearest) => nearest is null ? string.Empty : $" Did you mean '{nearest}'?";
+
     private static int Distance(string a, string b)
     {
         var previous = new int[b.Length + 1];

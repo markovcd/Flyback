@@ -64,7 +64,8 @@ public sealed record RangeExpr(Expr Low, Expr High, int Line, int Column) : Expr
 /// A name, and optionally one of its outputs: <c>riff</c>, <c>riff.gate</c>,
 /// <c>out.color</c>.
 /// </summary>
-public sealed record NameExpr(string Name, string? Port, int Line, int Column) : Expr(Line, Column);
+/// <param name="PortColumn">Where the output's name starts, nought where it is not on the name's line.</param>
+public sealed record NameExpr(string Name, string? Port, int Line, int Column, int PortColumn = 0) : Expr(Line, Column);
 
 /// <summary>One argument to a call, named or not.</summary>
 /// <param name="Name">The socket this is for, or null to take the next free one.</param>

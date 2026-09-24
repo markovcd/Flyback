@@ -67,8 +67,9 @@ something skipped.
 
 Every complaint has a line, a column and a stable code, one of `IssueCode` —
 `pipe-lands-nowhere`, `bound-twice`, `unknown-module` and the rest — and one
-with exactly one repair carries it as a fix. `flyback-cli check --json` writes
-all three.
+with exactly one repair carries it as a fix. A misspelled module, socket, output
+or name is repaired to the one nearest it, where no other is as near.
+`flyback-cli check --json` writes all three.
 
 ---
 

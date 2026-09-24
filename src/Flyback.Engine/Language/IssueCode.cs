@@ -30,6 +30,7 @@ public static class IssueCode
 
     // --- names -----------------------------------------------------------------
 
+    /// <summary>A name nothing is bound to; the fix is the nearest one in sight, where one alone is close.</summary>
     public const string UnknownName = "unknown-name";
 
     /// <summary>A module name nothing has; the fix is the nearest one, where one is close.</summary>
@@ -44,7 +45,10 @@ public static class IssueCode
 
     // --- calls and sockets -----------------------------------------------------
 
+    /// <summary>A socket the module has not; the fix is the nearest one it has, where one alone is close.</summary>
     public const string UnknownSocket = "unknown-socket";
+
+    /// <summary>An output the module has not; the fix is the nearest one it has, where one alone is close.</summary>
     public const string UnknownOutput = "unknown-output";
     public const string SocketUnsaid = "socket-unsaid";
     public const string GivenTwice = "given-twice";
