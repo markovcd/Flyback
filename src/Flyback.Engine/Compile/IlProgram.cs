@@ -400,17 +400,39 @@ internal sealed class IlMethods
     /// <summary>
     /// Calls each method once, with no state and nothing live, because a dynamic
     /// method is only compiled to machine code when it is first called — and the
-    /// first call must not be the audio callback's. A part that was not built
-    /// runs the interpreter here, which costs nothing worth avoiding.
+    /// first call must not be the audio callback's.
     /// </summary>
+    /// <remarks>
+    /// The chunks share nothing but read-only constants, so each is called on a
+    /// bank of its own and they go through the JIT side by side, on half the cores
+    /// and at the caller's priority to leave the audio and render threads theirs.
+    /// </remarks>
     private void Prepare(CompiledPatch patch)
     {
-        var program = IlProgram.Bind(this, patch);
-        var registers = patch.AllocateRegisters();
+        var context = IlContext.For(patch);
+        var priority = Thread.CurrentThread.Priority;
+        DynamicMethod[] chunks = [.. new[] { Whole, Frame, Row, Pixel }.SelectMany(part => part ?? []).Distinct()];
 
-        program.Evaluate(0d, 0d, 0d, registers, default);
-        program.EvaluateStage(EvaluationStage.Frame, 0d, 0d, 0d, registers, default);
-        program.EvaluateStage(EvaluationStage.Row, 0d, 0d, 0d, registers, default);
-        program.EvaluateStage(EvaluationStage.Pixel, 0d, 0d, 0d, registers, default);
+        Parallel.ForEach(
+            chunks,
+            new ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) },
+            chunk =>
+            {
+                var thread = Thread.CurrentThread;
+                var own = thread.Priority;
+                thread.Priority = priority;
+
+                try
+                {
+                    var registers = patch.AllocateRegisters();
+                    var feedback = default(FeedbackFrame);
+                    chunk.CreateDelegate<IlStage>(context)(
+                        ref MemoryMarshal.GetArrayDataReference(registers), 0d, 0d, 0d, 1d, ref feedback, null, null, default);
+                }
+                finally
+                {
+                    thread.Priority = own;
+                }
+            });
     }
 }

@@ -224,6 +224,7 @@ stopped. The ops and their order are unchanged, so the bits are too.
 
 Tranquility's sound runs at 2.27x real time where it ran at 0.96x. Chunks of 128,
 256 and 512 ops measured the same; 1,024 fell back to 1.13x, so 256 keeps well
-clear of the edge. Optimized code costs the JIT more: building Tranquility's sound
-takes 56 ms rather than 20, all of it on the compiler's thread, and the interpreted
-gap after an edit that changes the shape is that much longer.
+clear of the edge. Optimized code costs the JIT more, so the chunks, which share
+nothing but read-only constants, go through it side by side on half the cores, at
+the compiler thread's priority. Building Tranquility's sound takes 11-14 ms where one
+thread took 40, which is the interpreted gap after an edit that changes the shape.
