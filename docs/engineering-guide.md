@@ -484,7 +484,8 @@ never to a file.
 
 Both parse with `System.CommandLine` and both load plugins and install the
 catalog before building their command tree. The viewer is `ViewerPlayer` (the
-transport, with no window type in it) and `ViewerWindow`; `--hidden` runs the
+transport, with no window type in it) and `ViewerWindow`, composed in a container
+by `ViewerServices` as the editor is by `EditorServices`; `--hidden` runs the
 player with no preview at all. The CLI declares each command's options in
 `Program.cs` and runs each in its own file (`RenderCommand`, `CheckCommand`…).
 Commands take two `TextWriter`s and return an exit code, which is what makes them

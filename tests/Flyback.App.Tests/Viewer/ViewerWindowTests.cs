@@ -13,6 +13,7 @@ using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Viewer;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Flyback.App.Tests.Viewer;
@@ -70,7 +71,9 @@ public class ViewerWindowTests : UiTest
     /// <summary>A player with no window on a clock the test moves, begun.</summary>
     private static ViewerPlayer Clocked(ViewerOptions options, Func<double> seconds, IAudioDevice? device = null, Opened? opened = null)
     {
-        var player = new ViewerPlayer(opened ?? Plasma(), device, options, null) { Now = () => TimeSpan.FromSeconds(seconds()) };
+        var player = ViewerServices.Player(
+            new ViewerLaunch(opened ?? Plasma(), device, options),
+            services => services.AddSingleton<Func<TimeSpan>>(() => TimeSpan.FromSeconds(seconds())));
 
         player.Begin();
         player.Compiled().Wait();
@@ -103,7 +106,7 @@ public class ViewerWindowTests : UiTest
 
     private ViewerWindow Open(Opened opened, ViewerOptions options, IAudioDevice? device = null)
     {
-        var window = Owned(new ViewerWindow(opened, device, options));
+        var window = Owned(ViewerServices.Window(new ViewerLaunch(opened, device, options)));
 
         window.Show();
         Settle(window);
@@ -176,7 +179,9 @@ public class ViewerWindowTests : UiTest
     {
         var preview = new PreviewHost();
 
-        using var player = new ViewerPlayer(Plasma(), null, Options() with { Hidden = true }, preview);
+        using var player = ViewerServices.Player(
+            new ViewerLaunch(Plasma(), null, Options() with { Hidden = true }),
+            services => services.AddSingleton(preview));
 
         ReferenceEquals(preview.Program, CompiledPatch.Black).ShouldBeTrue();
     }

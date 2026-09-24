@@ -17,7 +17,11 @@ internal sealed record ViewerLaunch(
     IAudioDevice? Device,
     ViewerOptions Options,
     IMidiInput? Instruments = null,
-    Takeover Takeover = Takeover.Jump);
+    Takeover Takeover = Takeover.Jump)
+{
+    /// <summary>Whether there is a picture to show: one the patch draws, in a window, on a run that wants video.</summary>
+    public bool Pictured => !Options.Hidden && Options.Video && Opened.Patch.Reaches().Picture;
+}
 
 public sealed class ViewerApp : Application
 {
@@ -48,8 +52,7 @@ public sealed class ViewerApp : Application
                 // or Ctrl+C.
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                var player = new ViewerPlayer(
-                    launch.Opened, launch.Device, launch.Options, preview: null, launch.Instruments, launch.Takeover);
+                var player = ViewerServices.Player(launch);
 
                 player.Finished += () => desktop.Shutdown();
                 desktop.Exit += (_, _) => player.Dispose();
@@ -58,8 +61,7 @@ public sealed class ViewerApp : Application
             }
             else
             {
-                desktop.MainWindow = new ViewerWindow(
-                    launch.Opened, launch.Device, launch.Options, launch.Instruments, launch.Takeover);
+                desktop.MainWindow = ViewerServices.Window(launch);
             }
         }
 

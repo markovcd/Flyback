@@ -35,7 +35,7 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly ViewerOptions options;
     private readonly PreviewHost? preview;
     private readonly AudioEngine audio;
-    private readonly IlCompiler compiler = new();
+    private readonly IlCompiler compiler;
     private readonly MidiHub midi;
     private readonly ControlHub controls;
     private readonly bool keyed;
@@ -50,22 +50,27 @@ internal sealed class ViewerPlayer : IDisposable
     private double frozenAt;
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
-    /// <param name="device">The sound device, or null where there is none to play through.</param>
-    /// <param name="instruments">Where MIDI devices come from, or null where no plugin offers any.</param>
-    /// <param name="takeover">How a bound knob meets a controller that is somewhere else.</param>
+    /// <param name="audio">The sound engine, on the run's device or a silent one where it has none, compiling with <paramref name="compiler"/>.</param>
+    /// <param name="now">The wall clock <c>--for</c> and <c>--loop</c> count played time against.</param>
     public ViewerPlayer(
-        Opened opened,
-        IAudioDevice? device,
-        ViewerOptions options,
+        ViewerLaunch launch,
         PreviewHost? preview,
-        IMidiInput? instruments = null,
-        Takeover takeover = Takeover.Jump)
+        AudioEngine audio,
+        IlCompiler compiler,
+        MidiHub midi,
+        ControlHub controls,
+        Func<TimeSpan> now)
     {
+        var (opened, device, options, _, takeover) = launch;
+
         this.options = options;
         this.preview = options.Video ? preview : null;
+        this.audio = audio;
+        this.compiler = compiler;
+        this.midi = midi;
+        this.controls = controls;
 
-        compiler.Enabled = !options.Interpreted;
-        audio = new AudioEngine(device ?? new SilentAudioDevice()) { Compiler = compiler };
+        Now = now;
 
         var (patch, samples, pictures) = opened;
 
@@ -103,8 +108,7 @@ internal sealed class ViewerPlayer : IDisposable
 
         start.Give();
 
-        midi = new MidiHub(instruments);
-        controls = new ControlHub(midi) { Takeover = takeover };
+        controls.Takeover = takeover;
         controls.Turned += (id, value) => Turned?.Invoke(id, value);
 
         midi.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
@@ -183,7 +187,7 @@ internal sealed class ViewerPlayer : IDisposable
     public event Action? Finished;
 
     /// <summary>The wall clock <c>--for</c> and <c>--loop</c> count played time against.</summary>
-    internal Func<TimeSpan> Now { get; init; } = Watch();
+    private Func<TimeSpan> Now { get; }
 
     /// <summary>Starts playing, or holds the first frame where the run was asked to open paused.</summary>
     public void Begin()
@@ -330,13 +334,6 @@ internal sealed class ViewerPlayer : IDisposable
     private void Submit()
     {
         if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
-    }
-
-    private static Func<TimeSpan> Watch()
-    {
-        var watch = Stopwatch.StartNew();
-
-        return () => watch.Elapsed;
     }
 
     public void Dispose()

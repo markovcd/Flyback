@@ -489,6 +489,7 @@
           "Flyback.Engine": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
           "Flyback.Ui": "[0.1.0-dev, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.12, )",
           "System.CommandLine": "[2.0.12, )"
         }
       },

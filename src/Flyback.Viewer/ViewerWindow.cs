@@ -21,9 +21,9 @@ namespace Flyback.Viewer;
 /// A patch with no picture, or a run with no video, is the toolbar alone: the window
 /// fits it, and there is no surface to draw and no full screen to take.
 /// <para>
-/// Handed an already-opened patch, a device and settled options, and never a path: the
-/// program reads the file and opens the device, so the window can be built headless.
-/// Nothing here is written anywhere.
+/// Built by <see cref="ViewerServices"/> from an already-opened patch, a device and
+/// settled options, and never a path: the program reads the file and opens the device,
+/// so the window can be built headless. Nothing here is written anywhere.
 /// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The player is disposed when the window closes.")]
@@ -42,18 +42,16 @@ internal sealed partial class ViewerWindow : Window
     /// <summary>What the window was before it went full screen, for a maximized one does not return to normal.</summary>
     private WindowState stateBefore = WindowState.Normal;
 
-    public ViewerWindow(
-        Opened opened,
-        IAudioDevice? device,
-        ViewerOptions options,
-        IMidiInput? instruments = null,
-        Takeover takeover = Takeover.Jump)
+    /// <param name="preview">The picture's surface, or null where there is no picture to show.</param>
+    public ViewerWindow(ViewerLaunch launch, ViewerPlayer player, PreviewHost? preview)
     {
+        var options = launch.Options;
+
         Title = options.Title ?? "Flyback Viewer";
         Background = Brushes.Black;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
-        var pictured = options.Video && opened.Patch.Reaches().Picture;
+        var pictured = preview is not null;
         var toolbar = !pictured && !options.NoOverlay;
 
         if (toolbar)
@@ -78,10 +76,8 @@ internal sealed partial class ViewerWindow : Window
         // Focus stays where it was: the window is shown without being activated.
         ShowActivated = !options.Background;
 
-        // No surface at all without a picture: a PreviewHost in the tree renders on a timer.
-        if (pictured) preview = new PreviewHost();
-
-        player = new ViewerPlayer(opened, device, options, preview, instruments, takeover);
+        this.preview = preview;
+        this.player = player;
 
         previewBox = new Border { Background = Brushes.Black, Child = preview };
 

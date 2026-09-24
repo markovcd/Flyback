@@ -251,7 +251,7 @@ public class StageKnobTests : UiTest
     private ViewerWindow Viewer(Patch patch, bool noOverlay = false)
     {
         var options = new ViewerOptions { Gpu = false, Size = new PixelSize(320, 180), NoOverlay = noOverlay };
-        var window = Owned(new ViewerWindow(new Opened(patch, new SampleLibrary(), new ImageLibrary()), null, options));
+        var window = Owned(ViewerServices.Window(new ViewerLaunch(new Opened(patch, new SampleLibrary(), new ImageLibrary()), null, options)));
 
         window.Show();
         Settle(window);

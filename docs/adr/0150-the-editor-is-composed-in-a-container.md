@@ -1,4 +1,4 @@
-# ADR-0150: The editor is composed in a container
+# ADR-0150: The editor and the viewer are each composed in a container
 
 **Status:** Accepted · 2026-09-24 · *user-directed* · amends
 [0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md) and
@@ -46,14 +46,19 @@ tests both call.
   patch that has arrived on the canvas (`Playback.Show`).
 - **A test swaps a service by registering it again.** `UiTest.NewMainWindow` and
   `UiTest.NewCanvas` take a `replace` callback; the last registration wins.
+- **The viewer is composed the same way, one container per run.**
+  `ViewerServices.AddViewer(launch)` registers the player, its window and what
+  they play through; `ViewerServices.Window` and `ViewerServices.Player` build a
+  run with a window or without one. The clock `--for` counts against is a
+  `Func<TimeSpan>` a test registers again.
 
 ## Consequences
 
 The window's constructor takes what it lays out and wires the events between
 them; it no longer decides how anything is built or in what order. A region's
 constructor says what it depends on, and `ValidateOnBuild` fails a window whose
-container cannot build something, which `EditorServicesTests` checks for every
-registration.
+container cannot build something, which `EditorServicesTests` and `ViewerServicesTests` check
+for every registration.
 
 Exceptions, each kept on purpose:
 
@@ -62,17 +67,18 @@ Exceptions, each kept on purpose:
   handed is the window. `Shell.Attach` is the first line of its constructor, and
   a region reads `Shell.Owner` only once it is asked to do something.
 - **Factories for what is not the editor's own.** The compiler, the sound
-  device, MIDI, the thumbnails and the assistant's column are shared with the
-  viewer and with tests that build them by hand, so their constructors stay as
-  they are and `AddEditor` builds them in a factory. So does a value that may be
+  device, the sound engine, MIDI, the thumbnails and the assistant's column are
+  shared with tests that build them by hand, so their constructors stay as they
+  are and `AddEditor` and `AddViewer` build them in a factory. So does a value that may be
   absent (the saved presets, the recovery keeper): the container holds a null.
 - **The container is never disposed.** The window already tears down what it
   holds in `OnClosed`, in the order a take and a device need; disposing the
   container as well would dispose them twice.
 - **The plugins are still read before any window exists.** `Startup.Load` runs
   before Avalonia starts, and the container takes `Startup.Plugins` from there.
-- **The viewer is not composed in a container yet.** It is still wired by hand in
-  `ViewerWindow`, and is on the to-do list.
+- **The viewer's device and MIDI backend are opened before its container.**
+  `Program` opens them to say on the terminal what failed before any window
+  exists, and hands them over on the `ViewerLaunch`.
 
 No view models arrive with the container, and [0016](0016-build-the-ui-in-c-sharp-without-xaml.md)
 stands as written.
