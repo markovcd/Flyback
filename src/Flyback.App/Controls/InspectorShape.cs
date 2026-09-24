@@ -7,7 +7,7 @@ namespace Flyback.App.Controls;
 internal static class InspectorShape
 {
     /// <summary>
-    /// The selected module and which of its inputs are patched, as one string to
+    /// The selected module and what each of its sockets is patched to, as one string to
     /// compare against the one the panel standing was built from.
     /// </summary>
     internal static string Of(NodeEditor editor)
@@ -47,12 +47,17 @@ internal static class InspectorShape
         if (editor.SelectedNode is not { } node || NodeCatalog.Get(node.TypeId) is not { } def)
             return string.Empty;
 
-        var patched = new char[def.Inputs.Count];
+        var patched = new StringBuilder();
 
-        for (var i = 0; i < patched.Length; i++)
-            patched[i] = editor.Patch.IncomingTo(node.Id, i) is not null ? 'w'
-                : ControlMap.Of(node, i) is { } link && editor.Patch.Control(link.Control) is not null ? 'k'
-                : '.';
+        for (var i = 0; i < def.Inputs.Count; i++)
+            patched.Append(WireEnds.Into(editor.Patch, node.Id, i) is { } from ? $"{from}|"
+                : ControlMap.Of(node, i) is { } link && editor.Patch.Control(link.Control) is not null ? "k"
+                : ".");
+
+        // Each row names the far end of its wires, so a rewire or a rename there
+        // changes the panel.
+        for (var i = 0; i < def.Outputs.Count; i++)
+            patched.Append($"{WireEnds.OutOf(editor.Patch, node.Id, i)}|");
 
         // A knob's name and range are drawn on its row, so renaming it or changing
         // the range from elsewhere has to rebuild the panel.
@@ -74,6 +79,6 @@ internal static class InspectorShape
         // move when its output is patched or the module feeding it is turned.
         var spans = def.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(editor.Patch, node).ToString() : "";
 
-        return $"{node.Id:N}{new string(patched)}{groups}{linked}{switched}{spans}";
+        return $"{node.Id:N}{patched}{groups}{linked}{switched}{spans}";
     }
 }

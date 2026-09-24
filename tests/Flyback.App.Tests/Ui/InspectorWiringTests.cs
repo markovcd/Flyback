@@ -165,6 +165,58 @@ public class InspectorWiringTests : UiTest
         Wired(window).ShouldBe(0);
     }
 
+    /// <summary>A socket as the panel names the far end of a wire: <c>module.socket</c>.</summary>
+    private static string End(NodeInstance node, int port, bool output)
+    {
+        var def = NodeCatalog.BuiltIn.Require(node.TypeId);
+
+        return $"{node.Title(def)}.{(output ? def.Outputs : def.Inputs)[port].Name}";
+    }
+
+    private static bool Says(MainWindow window, string text) => All<TextBlock>(window).Any(t => t.Text == text);
+
+    [AvaloniaFact]
+    public void A_patched_input_names_the_socket_it_is_patched_from()
+    {
+        var (patch, sine, clock) = Board(wired: true);
+        var window = Open(patch);
+
+        Select(window, sine);
+
+        Says(window, $"◀ patched from {End(clock, 0, output: true)}").ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void A_patched_output_names_every_socket_it_feeds()
+    {
+        var (patch, sine, clock) = Board(wired: true);
+        var window = Open(patch);
+        var editor = Editor(window);
+
+        editor.Patch.Connect(clock.Id, 0, sine.Id, 2);
+        editor.NotifyPatchChanged();
+
+        Select(window, clock);
+
+        Says(window, $"▶ patched to {End(sine, 1, output: false)}, {End(sine, 2, output: false)}").ShouldBeTrue();
+    }
+
+    /// <summary>The far end's name is on the row, so renaming that module rewrites it.</summary>
+    [AvaloniaFact]
+    public void Renaming_the_far_module_rewrites_the_row()
+    {
+        var (patch, sine, clock) = Board(wired: true);
+        var window = Open(patch);
+        var editor = Editor(window);
+
+        Select(window, sine);
+
+        clock.Name = "beat";
+        editor.NotifyPatchChanged();
+
+        Says(window, $"◀ patched from beat.{End(clock, 0, output: true).Split('.')[1]}").ShouldBeTrue();
+    }
+
     /// <summary>
     /// A socket that is driven without a wire says so where its knob would have
     /// been, and goes back to saying it when a wire that was there is pulled.

@@ -551,7 +551,7 @@ public sealed partial class MainWindow
                 FontSize = Text.Body,
             });
 
-        BuildOutputs(def);
+        BuildOutputs(def, node);
 
         // The Output cannot be deleted, so it gets no button for it. What the
         // picture is drawn at and by is a property of the machine rather than of
@@ -676,9 +676,9 @@ public sealed partial class MainWindow
 
     /// <summary>
     /// What the module puts out, under everything that can be set: a heading and a
-    /// row per output, each with its help as the tip.
+    /// row per output, each with its help as the tip and what it feeds beside it.
     /// </summary>
-    private void BuildOutputs(NodeDef def)
+    private void BuildOutputs(NodeDef def, NodeInstance node)
     {
         if (def.Outputs.Count == 0) return;
 
@@ -691,16 +691,36 @@ public sealed partial class MainWindow
             Margin = new Thickness(0, 10, 0, 2),
         });
 
-        foreach (var port in def.Outputs)
+        for (var i = 0; i < def.Outputs.Count; i++)
         {
+            var port = def.Outputs[i];
             var row = InspectorRows.Row("*");
             var caption = InspectorRows.Caption(port.Name);
+            var feeds = WireEnds.OutOf(editor.Patch, node.Id, i);
 
-            caption.Width = double.NaN;
             caption.Margin = new Thickness(0, 2, 0, 2);
-            Grid.SetColumnSpan(caption, 2);
-
             row.Children.Add(caption);
+
+            if (feeds is null)
+            {
+                caption.Width = double.NaN;
+                Grid.SetColumnSpan(caption, 2);
+            }
+            else
+            {
+                var wired = new TextBlock
+                {
+                    Text = feeds,
+                    FontSize = Text.Body,
+                    Foreground = Text.Muted,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                };
+
+                Grid.SetColumn(wired, 1);
+                row.Children.Add(wired);
+            }
+
             inspector.Children.Add(Helped(row, port.Help));
         }
     }
@@ -1779,7 +1799,7 @@ public sealed partial class MainWindow
 
     private Control BuildInputRow(NodeDef def, NodeInstance node, PortSpec spec, int index, bool reading)
     {
-        var connected = editor.Patch.IncomingTo(node.Id, index) is not null;
+        var patched = WireEnds.Into(editor.Patch, node.Id, index);
 
         var label = InspectorRows.Caption(spec.Name);
 
@@ -1787,14 +1807,15 @@ public sealed partial class MainWindow
         Grid.SetColumn(label, 0);
         row.Children.Add(label);
 
-        if (connected)
+        if (patched is not null)
         {
             var wired = new TextBlock
             {
-                Text = "◀ patched",
+                Text = patched,
                 FontSize = Text.Body,
                 Foreground = Text.Muted,
                 VerticalAlignment = VerticalAlignment.Center,
+                TextTrimming = TextTrimming.CharacterEllipsis,
             };
             Grid.SetColumn(wired, 1);
             Grid.SetColumnSpan(wired, reading ? 3 : 2);

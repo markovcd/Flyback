@@ -50,8 +50,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The controls the inspector is built from are internal, and the UI tests drive them. -->
+    <!-- The controls the inspector is built from are internal, and the UI tests and scenarios drive them. -->
     <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 
   <!--
