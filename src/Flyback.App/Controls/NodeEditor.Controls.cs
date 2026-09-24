@@ -87,16 +87,21 @@ public sealed partial class NodeEditor
         DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
         bool connected, bool follow, Func<double, double, double, IBrush, IBrush> ink)
     {
-        var link = ControlMap.Of(node, index);
-        var control = link is { } l ? patch.Control(l.Control) : null;
-
         if (LinkingControl is { } linking && !connected && Linkable(port))
         {
             var row = new Rect(bounds.X, center.Y - NodeGeometry.RowHeight / 2, bounds.Width, NodeGeometry.RowHeight);
-            context.FillRectangle(link?.Control == linking ? LinkedWash : LinkableWash, row);
+            context.FillRectangle(ControlMap.Of(node, index)?.Control == linking ? LinkedWash : LinkableWash, row);
         }
 
-        if (connected || control is null || link is not { } found) return false;
+        return !connected && DrawLinkedValue(context, node, port, index, bounds, center, follow, ink);
+    }
+
+    /// <summary>A linked socket's value in the knob's color, and whether there was one to draw.</summary>
+    private bool DrawLinkedValue(
+        DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
+        bool follow, Func<double, double, double, IBrush, IBrush> ink)
+    {
+        if (ControlMap.Of(node, index) is not { } found || patch.Control(found.Control) is not { } control) return false;
 
         var brush = follow ? ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush) : LinkedBrush;
 

@@ -507,42 +507,55 @@ public sealed partial class NodeEditor
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
             context.DrawText(label, new Point(bounds.X + 14, center.Y - label.Height / 2));
 
-            // An unconnected input shows what it will compile to: the module
-            // normalled to it where there is one — no wire is drawn for a wire
-            // that is not in the patch — and otherwise the knob value.
-            if (!linked && !connected && NodeCatalog.Normalled(port) is { } source)
-            {
-                // Wider than the column a number gets, because this is a module
-                // name and a qualified one at that — "Coordinates x" does not
-                // fit where "0.25" does, and trimmed to "Coordinates…" it would
-                // stop telling x from y.
-                var name = CanvasText.Text(source, CanvasText.RowSize, Ink(center.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
-                context.DrawText(name, new Point(bounds.Right - 12 - name.Width, center.Y - name.Height / 2));
-            }
-            else if (!linked && !connected && i < node.InputValues.Length && (formula is null || FormulaLayout.Reads(formula, i)))
-            {
-                // A socket its formula never reads has a knob that turns nothing,
-                // so an Expression shows the values of the ones it does and no more.
-                var (said, flagged) = RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
-                var value = CanvasText.Text(
-                    said,
-                    CanvasText.RowSize,
-                    flagged ? FlagBrush : Ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush),
-                    bounds.Width * 0.4,
-                    true);
-                var spot = new Point(bounds.Right - 12 - value.Width, center.Y - value.Height / 2);
-
-                context.DrawText(value, spot);
-
-                if (flagged)
-                    context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
-            }
+            if (!linked && !connected) DrawResting(context, node, port, i, bounds, center, formula, spans, Ink);
 
             NodeSkin.DrawPort(context, center, port.Kind);
         }
 
         if (FormulaLayout.FormulaBlock(patch, node, def, bounds, y => Ink(y, RowInk, ValueFade, CanvasText.ValueBrush)) is var (text, at, _, _))
             context.DrawText(text, at);
+    }
+
+    /// <summary>
+    /// What an unwired, unlinked input compiles to, at the right of its row: the
+    /// module normalled to it where there is one, and otherwise its value. Whether
+    /// anything was drawn.
+    /// </summary>
+    /// <remarks>
+    /// No wire is drawn for a normal, since it is not in the patch. A socket its
+    /// formula never reads has a knob that turns nothing, so an Expression shows
+    /// the values of the ones it does and no more.
+    /// </remarks>
+    private static bool DrawResting(
+        DrawingContext context, NodeInstance node, PortSpec port, int i, Rect bounds, Point center,
+        string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink)
+    {
+        if (NodeCatalog.Normalled(port) is { } source)
+        {
+            // Wider than the column a number gets: "Coordinates x" does not fit
+            // where "0.25" does, and trimmed it would stop telling x from y.
+            var name = CanvasText.Text(source, CanvasText.RowSize, ink(center.Y, RowInk, NormalFade, NormalBrush), bounds.Width * 0.5, true);
+            context.DrawText(name, new Point(bounds.Right - 12 - name.Width, center.Y - name.Height / 2));
+            return true;
+        }
+
+        if (i >= node.InputValues.Length || (formula is not null && !FormulaLayout.Reads(formula, i))) return false;
+
+        var (said, flagged) = RemapValue(spans, i, node.InputValues[i]) ?? (port.Format(node.InputValues[i]), false);
+        var value = CanvasText.Text(
+            said,
+            CanvasText.RowSize,
+            flagged ? FlagBrush : ink(center.Y, RowInk, ValueFade, CanvasText.ValueBrush),
+            bounds.Width * 0.4,
+            true);
+        var spot = new Point(bounds.Right - 12 - value.Width, center.Y - value.Height / 2);
+
+        context.DrawText(value, spot);
+
+        if (flagged)
+            context.DrawRectangle(null, FlagPen, new Rect(spot.X - 3, spot.Y - 1, value.Width + 6, value.Height + 2), 3, 3);
+
+        return true;
     }
 
     private static readonly IBrush FlagBrush = new SolidColorBrush(Colors.Attention);

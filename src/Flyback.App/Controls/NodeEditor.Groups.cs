@@ -512,7 +512,13 @@ public sealed partial class NodeEditor
     {
         if (Scene.Named(socket) is not var (label, spec)) return;
 
-        var width = bounds.Width - SocketLabelRoom;
+        // An unwired input shows what it rests at, as the module's own row does.
+        var resting = !socket.IsOutput
+            && patch.IncomingTo(socket.Node, socket.Port) is null
+            && patch.Find(socket.Node) is { } node
+            && DrawRestingOf(context, node, spec, socket.Port, bounds, center);
+
+        var width = resting ? bounds.Width * 0.55 : bounds.Width - SocketLabelRoom;
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
         context.DrawText(
@@ -522,6 +528,19 @@ public sealed partial class NodeEditor
                 : new Point(bounds.X + 14, center.Y - text.Height / 2));
 
         NodeSkin.DrawPort(context, center, spec.Kind);
+    }
+
+    /// <summary>A box's unwired input, valued the way the module's row values it; whether anything was drawn.</summary>
+    private bool DrawRestingOf(DrawingContext context, NodeInstance node, PortSpec spec, int port, Rect bounds, Point center)
+    {
+        static IBrush Plain(double center, double height, double fade, IBrush plain) => plain;
+
+        if (DrawLinkedValue(context, node, spec, port, bounds, center, follow: false, Plain)) return true;
+
+        var formula = NodeCatalog.FormulaOf(node);
+        var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(patch, node) : null;
+
+        return DrawResting(context, node, spec, port, bounds, center, formula, spans, Plain);
     }
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>
