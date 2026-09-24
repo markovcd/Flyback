@@ -176,19 +176,8 @@ public sealed partial class MainWindow : Window
     private const string NoPictureToSwapTip =
         "Nothing is wired into the Output's 'color', so there is no picture to swap in.";
 
-    /// <summary>
-    /// The module list, shown at the pointer when the canvas is right-clicked
-    /// rather than standing open down one side — ADR-0046. Built once and kept,
-    /// because it holds which plugins are ticked and that is a setting rather
-    /// than something to be re-answered on every opening.
-    /// </summary>
-    private ModulePalette? palette;
-
-    private readonly Flyout paletteFlyout = new()
-    {
-        Placement = PlacementMode.Pointer,
-        ShowMode = FlyoutShowMode.Standard,
-    };
+    /// <summary>The palette, opened at the pointer (ADR-0046).</summary>
+    private readonly Palette palette;
 
     /// <summary>Installing and removing plugins, and the plugins window.</summary>
     private readonly PluginInstalls pluginInstalls;
@@ -272,13 +261,6 @@ public sealed partial class MainWindow : Window
     /// offered, which is declared below it.
     /// </summary>
     private readonly MidiHub midi;
-
-    /// <summary>
-    /// Where the kept groups are read from and written to, or null for the usual
-    /// place. Held because <see cref="BuildPalette"/> runs later than the
-    /// constructor's argument list does.
-    /// </summary>
-    private readonly string? groupFolder;
 
     /// <param name="groupFolder">
     /// Where the kept groups live. Null is the usual place; a path is for the
@@ -382,7 +364,6 @@ public sealed partial class MainWindow : Window
         Action<Reopen?>? relaunch = null,
         Uri? presetSite = null)
     {
-        this.groupFolder = groupFolder;
         this.pluginFolder = pluginFolder;
         this.relaunch = relaunch;
         this.presetSite = presetSite;
@@ -427,7 +408,17 @@ public sealed partial class MainWindow : Window
 
         knobs = new PanelKnobs(editor, document, preview, audio, midi, report);
 
-        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, soundFolder, pictureFolder, () => groups, SaveGroup);
+        palette = new Palette(
+            editor,
+            document,
+            plugins,
+            this.usage,
+            report,
+            knobs.View.Instruments,
+            () => outputSettings.Keyboard,
+            groupFolder);
+
+        inspector = new Inspector(this, editor, document, midi, knobs.Instruments, soundFolder, pictureFolder, () => palette.Groups, palette.SaveGroup);
 
         playback = new Playback(
             editor,
@@ -754,7 +745,7 @@ public sealed partial class MainWindow : Window
         patch.Children.Add(controlsSplitter);
         patch.Children.Add(knobs.View);
 
-        BuildPalette();
+        Styles.Add(ModulePalette.Trim());
 
         foreach (var (child, column) in new (Control, int)[]
                  {

@@ -1,21 +1,44 @@
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Flyback.App.Controls;
+using Flyback.App.Midi;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
 /// <summary>
-/// The module list, and the one gesture that opens it: a right-click on empty canvas.
+/// The palette, and the one gesture that opens it: a right-click on empty canvas
+/// (ADR-0046, ADR-0148).
 /// </summary>
 /// <remarks>
 /// The list itself is <see cref="ModulePalette"/> and knows nothing about how it is
-/// shown; all that is here is where it appears and what happens to what is picked
-/// (ADR-0046). One palette, built once and kept, because which plugins are ticked is
-/// a setting rather than something to re-answer every time.
+/// shown; all that is here is where it appears and what happens to what is picked.
+/// One palette, built once and kept, because which plugins are ticked is a setting
+/// rather than something to re-answer every time.
 /// </remarks>
-public sealed partial class MainWindow
+internal sealed class Palette
 {
+    private readonly NodeEditor editor;
+    private readonly Document document;
+    private readonly Func<KeyboardLayout> keyboard;
+    private readonly ModulePalette list;
+    private readonly PluginCatalog plugins;
+    private readonly Usage usage;
+    private readonly ReportLine report;
+
+    /// <summary>Where the palette is shown, at the pointer.</summary>
+    public Flyout Flyout { get; } = new()
+    {
+        Placement = PlacementMode.Pointer,
+        ShowMode = FlyoutShowMode.Standard,
+    };
+
+    /// <summary>The groups somebody kept, listed above the catalog.</summary>
+    public GroupLibrary Groups { get; }
+
     /// <summary>
     /// Lays the computer keyboard out by the MIDI section's default when the first
     /// MIDI In is about to join a patch, so the layout lands in the same edit as the module.
@@ -23,7 +46,7 @@ public sealed partial class MainWindow
     private void LayFirstKeyboard(string typeId)
     {
         if (typeId != NodeCatalog.MidiTypeId
-            || outputSettings.Keyboard != Midi.KeyboardLayout.Scale
+            || keyboard() != KeyboardLayout.Scale
             || editor.Patch.KeyboardScale is not null
             || editor.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
             return;
@@ -32,20 +55,35 @@ public sealed partial class MainWindow
         document.Relaid();
     }
 
-    private void BuildPalette()
+    /// <param name="keyboard">How the MIDI section lays out a first keyboard.</param>
+    /// <param name="groupFolder">Where kept groups are read from and written to, or null for the usual place.</param>
+    public Palette(
+        NodeEditor editor,
+        Document document,
+        PluginCatalog plugins,
+        Usage usage,
+        ReportLine report,
+        Func<IReadOnlyList<PanelInstrument>>? instruments,
+        Func<KeyboardLayout> keyboard,
+        string? groupFolder)
     {
-        groups = new GroupLibrary(plugins.Modules, groupFolder);
-        palette = new ModulePalette(plugins.Modules, Add, groups, AddGroup, knobs.View.Instruments, AddInstrument);
+        this.editor = editor;
+        this.document = document;
+        this.keyboard = keyboard;
+        this.plugins = plugins;
+        this.usage = usage;
+        this.report = report;
 
-        paletteFlyout.Content = palette;
-        paletteFlyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
+        Groups = new GroupLibrary(plugins.Modules, groupFolder);
+        list = new ModulePalette(plugins.Modules, Add, Groups, AddGroup, instruments, AddInstrument);
 
-        Styles.Add(ModulePalette.Trim());
+        Flyout.Content = list;
+        Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 
         editor.MenuRequested += (_, at) =>
         {
             wiring = null;
-            ShowPalette(at);
+            Show(at);
         };
 
         // A wire let go over bare canvas asks the same question with one more
@@ -53,7 +91,7 @@ public sealed partial class MainWindow
         editor.WireDropped += (_, drop) =>
         {
             wiring = drop;
-            ShowPalette(drop.At);
+            Show(drop.At);
         };
 
         // Where the last one was asked for, so that what is picked lands where
@@ -61,7 +99,7 @@ public sealed partial class MainWindow
         // here rather than passed through the flyout, which has no room for it.
         void Add(string typeId)
         {
-            paletteFlyout.Hide();
+            Flyout.Hide();
 
             LayFirstKeyboard(typeId);
 
@@ -79,12 +117,12 @@ public sealed partial class MainWindow
         // for the port it is on right now. See InstrumentScaffold.
         void AddInstrument(PanelInstrument instrument)
         {
-            paletteFlyout.Hide();
+            Flyout.Hide();
 
             var added = editor.AddFragment(InstrumentScaffold.Build(instrument.Id, instrument.Profile, plugins.Modules), addingAt);
 
             usage.Count(Used.Added);
-            Report(wiring is null
+            report.Say(wiring is null
                 ? $"Added {instrument.Profile.Name} — {added.Count} modules, one per track. Delete the tracks you will not use."
                 : $"Added {instrument.Profile.Name}. The wire was left loose: there is more than one module to choose from.");
 
@@ -95,13 +133,13 @@ public sealed partial class MainWindow
         // than as a module, because that is what one is. See GroupLibrary.
         void AddGroup(SavedGroup entry)
         {
-            paletteFlyout.Hide();
+            Flyout.Hide();
 
             // Refused by name rather than added with holes in it, which is the
             // same answer pasting such a fragment gives and the same sentence.
             if (!entry.IsComplete)
             {
-                Report($"“{entry.Name}” was not added. {entry.Load.Summary}", entry.Load.Detail);
+                report.Say($"“{entry.Name}” was not added. {entry.Load.Summary}", entry.Load.Detail);
                 editor.Focus();
                 return;
             }
@@ -112,7 +150,7 @@ public sealed partial class MainWindow
             // has more than one answer to that — so it is left where it was and
             // said so, rather than guessed at. Which socket a module gets is
             // Fitting's decision; a group has no such thing to consult.
-            Report(wiring is null
+            report.Say(wiring is null
                 ? $"Added “{entry.Name}” — {added.Count} modules."
                 : $"Added “{entry.Name}”. The wire was left loose: a box has more than one socket to choose from.");
 
@@ -121,11 +159,6 @@ public sealed partial class MainWindow
     }
 
 
-    /// <summary>
-    /// The groups somebody kept, listed above the catalog in the module list.
-    /// Built once beside the palette, because the palette is what shows it.
-    /// </summary>
-    private GroupLibrary? groups;
 
     /// <summary>
     /// Keeps a group, so it can be added again from the module list.
@@ -136,18 +169,18 @@ public sealed partial class MainWindow
     /// under a name already kept replaces it, the way saving anything under a
     /// name it already has does, and says which of the two happened.
     /// </remarks>
-    private void SaveGroup(NodeGroup group)
+    public void SaveGroup(NodeGroup group)
     {
-        if (groups is null || string.IsNullOrWhiteSpace(group.Name)) return;
+        if (string.IsNullOrWhiteSpace(group.Name)) return;
 
-        var replacing = groups.All.Any(entry =>
+        var replacing = Groups.All.Any(entry =>
             string.Equals(entry.Name, group.Name, StringComparison.CurrentCultureIgnoreCase));
 
         try
         {
-            var kept = groups.Save(group, editor.Patch);
+            var kept = Groups.Save(group, editor.Patch);
 
-            Report(
+            report.Say(
                 replacing
                     ? $"Replaced “{kept.Name}” in the module list."
                     : $"Kept “{kept.Name}”. It is under Groups in the module list.",
@@ -158,7 +191,7 @@ public sealed partial class MainWindow
             // Said rather than swallowed: silently failing to keep what somebody
             // just asked to keep is the one outcome they cannot see for
             // themselves until the day they go looking for it.
-            Report($"Could not keep “{group.Name}”: {ex.Message}", GroupLibrary.DefaultFolder);
+            report.Say($"Could not keep “{group.Name}”: {ex.Message}", GroupLibrary.DefaultFolder);
         }
     }
     /// <summary>Where the module about to be picked belongs, in graph space.</summary>
@@ -172,19 +205,17 @@ public sealed partial class MainWindow
     /// </summary>
     private WireDrop? wiring;
 
-    private void ShowPalette(Point at)
+    public void Show(Point at)
     {
-        if (palette is null) return;
-
         addingAt = at;
 
         // Opened at the pointer, which is the point that was clicked — so the
         // list appears under the hand and what comes out of it lands where the
         // hand was.
-        paletteFlyout.ShowAt(editor, showAtPointer: true);
+        Flyout.ShowAt(editor, showAtPointer: true);
 
         // After showing, because a control that is not yet in a visual tree
         // cannot take the keyboard.
-        palette.Reset();
+        list.Reset();
     }
 }
