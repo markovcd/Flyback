@@ -1,19 +1,14 @@
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
-using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
-using Flyback.Plugins;
-using Flyback.Plugins.Settings;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;

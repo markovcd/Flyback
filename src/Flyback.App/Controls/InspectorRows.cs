@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Core.Graph;
-using Flyback.Plugins;
 
 namespace Flyback.App.Controls;
 

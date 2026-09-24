@@ -2,7 +2,6 @@ using System.Text;
 using Avalonia.Controls;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
-using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;

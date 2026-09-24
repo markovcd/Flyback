@@ -3,7 +3,6 @@ using Reqnroll;
 using Shouldly;
 using Flyback.App.Midi;
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Midi;
 using Flyback.Specs.Support;
 

@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
 using Flyback.App.Statistics;

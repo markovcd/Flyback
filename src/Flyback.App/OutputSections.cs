@@ -8,7 +8,6 @@ using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins;
 using Flyback.Plugins.Hosting;
-using Flyback.Plugins.Settings;
 
 namespace Flyback.App;
 
