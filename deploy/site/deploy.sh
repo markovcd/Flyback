@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Builds the preset site here and starts it on the NAS over ssh. See README.md beside this file.
+# Builds the site here and starts it on the NAS over ssh. See README.md beside this file.
 #
-#   deploy/presets/deploy.sh [host] [folder]
+#   deploy/site/deploy.sh [host] [folder]
 #
-# host defaults to nas and folder to flyback-presets, relative to the remote home.
+# host defaults to nas and folder to flyback-site, relative to the remote home.
 # DOCKER overrides the remote docker command, for a NAS that wants "sudo docker".
 # RELEASE_SIGNING_KEY signs the Figures plugin the site starts with, as it signs a
 # release; release-key.sh finds it or makes a local test key. The build takes it
@@ -11,9 +11,9 @@
 set -euo pipefail
 
 host="${1:-nas}"
-dir="${2:-flyback-presets}"
+dir="${2:-flyback-site}"
 docker="${DOCKER:-docker}"
-image=flyback-presets
+image=flyback-site
 cd "$(dirname "$0")/../.."
 
 . ./release-key.sh
@@ -33,7 +33,7 @@ docker save "$image" | gzip | ssh "$host" "gunzip | $docker load"
 
 # compose.yaml is copied only once: the NAS copy holds the admin's password.
 ssh "$host" "mkdir -p '$dir/media' && test -e '$dir/compose.yaml'" \
-  || scp deploy/presets/compose.yaml "$host:$dir/compose.yaml"
+  || scp deploy/site/compose.yaml "$host:$dir/compose.yaml"
 
 # The container runs as user 1654 and writes data/.
 if ! ssh "$host" "test -d '$dir/data'"; then

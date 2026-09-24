@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
-# The preset site, as the NAS runs it. Built from the repository root, with the
+# The site, as the NAS runs it. Built from the repository root, with the
 # release key the Figures plugin is signed with:
 #
-#   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-presets .
+#   docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 #
-# Add --platform linux/arm64 for an ARM NAS. See deploy/presets/README.md.
+# Add --platform linux/arm64 for an ARM NAS. See deploy/site/README.md.
 
 ARG SDK=mcr.microsoft.com/dotnet/sdk:10.0
 ARG RUNTIME=mcr.microsoft.com/dotnet/aspnet:10.0
