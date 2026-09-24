@@ -1,4 +1,4 @@
-# The preset site
+# The site
 
 People submit presets and plugins to a small site on the NAS, and `flyback-cli render-presets` on another machine makes a picture, a loop and a sound of each one. The two share no API for media: the render machine writes files into a shared folder, and the site only reads that folder.
 
@@ -16,7 +16,7 @@ browser ──submit──▶ site (NAS, Docker) ──▶ data/presets.db
 `deploy.sh` does all of this over ssh: it builds the image for the NAS's processor, loads it there, sets up the folder the first time and restarts the container.
 
 ```bash
-deploy/presets/deploy.sh nas flyback-presets
+deploy/site/deploy.sh nas flyback-site
 ```
 
 Both arguments are optional and default to those. Set `DOCKER="sudo docker"` if the NAS needs it. `compose.yaml` is copied only when the NAS has none, so the admin's password set there survives a deploy.
@@ -28,13 +28,13 @@ Run from the source (the `presets` profile in Rider, or `dotnet run --project sr
 By hand: build the image from the repository root. Add `--platform linux/arm64` if the NAS has an ARM processor.
 
 ```bash
-docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-presets .
+docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 ```
 
 To build on this machine and load the image on the NAS instead:
 
 ```bash
-docker save flyback-presets | ssh nas docker load
+docker save flyback-site | ssh nas docker load
 ```
 
 On the NAS, put `compose.yaml` in a folder, create `data/` and `media/` next to it, and start it:

@@ -1,7 +1,7 @@
-# The preset site on the NAS. See README.md beside this file.
+# The site on the NAS. See README.md beside this file.
 services:
   presets:
-    image: flyback-presets
+    image: flyback-site
     restart: unless-stopped
     ports:
       - "8080:8080"
