@@ -591,7 +591,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     </ol>
 
     <p>Conversations are saved beside the patch they are about. <strong>Probe this model</strong>, in
-    <strong>Settings &rarr; Agent</strong>, asks the endpoint whether the model you have chosen is really there
+    <strong>Settings &rarr; Assistant</strong>, asks the endpoint whether the model you have chosen is really there
     and what it accepts. It goes out with the provider, the form and the key as they stand, saved or not, so a
     model, a key or an endpoint can be tried before any of them is kept. <code>flyback-cli probe</code> asks the
     same of every model the endpoint has, which is what fills the model list in for you. Both are billed traffic
@@ -602,7 +602,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     <strong>Settings → Assistant</strong>, 100,000 characters by default. With many plugins installed that can run
     out. The modules in <code>priority-modules.txt</code> are always described, and the settings show where
     that file is so you can edit it. A module left out gets a small dotted tag on its header. The assistant can
-    still look it up.</p>
+    still look it up. The briefing and what it looks up both show in the conversation; untick <strong>Show the
+    briefing it is handed</strong> or <strong>Show the handbook text it looks up</strong> to leave one out.</p>
   </section>
 
   <section id="keys">

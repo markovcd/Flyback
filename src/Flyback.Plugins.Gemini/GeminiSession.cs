@@ -188,6 +188,10 @@ internal sealed class GeminiSession : IPatchSession
 
                         yield return new PatchEvent.Heard(wav, said);
                     }
+                    else if (outcome.Reference)
+                    {
+                        yield return new PatchEvent.Read(said);
+                    }
                     else
                     {
                         yield return new PatchEvent.Did(said);

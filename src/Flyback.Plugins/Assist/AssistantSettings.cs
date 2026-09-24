@@ -60,6 +60,12 @@ public sealed class AssistantSettings
     /// </summary>
     public bool LogConversations { get; set; }
 
+    /// <summary>Whether the conversation shows the briefing the assistant is handed.</summary>
+    public bool ShowBriefing { get; set; } = true;
+
+    /// <summary>Whether the conversation shows the handbook text the assistant looks up.</summary>
+    public bool ShowLookups { get; set; } = true;
+
     /// <summary>What <see cref="TurnLimit"/> is until somebody changes it.</summary>
     public const int DefaultTurnLimit = 12;
 

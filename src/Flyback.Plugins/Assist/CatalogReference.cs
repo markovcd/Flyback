@@ -20,7 +20,7 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
 
         var text = new StringBuilder();
         Describe(text, typeId);
-        return ToolOutcome.Fine(text.ToString());
+        return ToolOutcome.Read(text.ToString());
     }
 
     public ToolOutcome DescribePreset(JsonElement arguments)
@@ -45,7 +45,7 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
             return ToolOutcome.Refused($"'{preset.Name}' cannot be built here: {ex.Message}");
         }
 
-        return ToolOutcome.Fine(
+        return ToolOutcome.Read(
             $"{preset.Name}: {preset.Description}{Environment.NewLine}"
             + PatchPrinter.Print(patch, modules) + Environment.NewLine
             + $"{patch.Nodes.Count} modules, {patch.Connections.Count} wires.");
@@ -66,9 +66,9 @@ internal sealed class CatalogReference(ModuleCatalog modules, IReadOnlyList<Patc
             .Take(30)
             .ToArray();
 
-        if (hits.Length == 0) return ToolOutcome.Fine($"nothing matches '{query}'.");
+        if (hits.Length == 0) return ToolOutcome.Read($"nothing matches '{query}'.");
 
-        return ToolOutcome.Fine(string.Join(
+        return ToolOutcome.Read(string.Join(
             Environment.NewLine,
             hits.Select(d => $"{d.TypeId} | {d.Name} | {d.Category}")));
     }

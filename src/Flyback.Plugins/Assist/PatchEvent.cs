@@ -22,6 +22,9 @@ public abstract record PatchEvent
     /// <summary>An edit that has already been made to the working patch.</summary>
     public sealed record Did(string Summary) : PatchEvent;
 
+    /// <summary>Handbook text it looked up: a module, a search of the catalog or a preset.</summary>
+    public sealed record Read(string Text) : PatchEvent;
+
     /// <summary>A frame it drew and looked at, as PNG bytes.</summary>
     public sealed record Saw(byte[] Png, string Caption) : PatchEvent;
 

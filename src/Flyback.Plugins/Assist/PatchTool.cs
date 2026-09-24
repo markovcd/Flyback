@@ -31,7 +31,13 @@ public sealed record PatchTool(string Name, string Description, string Schema);
 /// </param>
 public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null, byte[]? Wav = null)
 {
+    /// <summary>Handbook text looked up from the catalog or a preset, rather than anything done to the patch.</summary>
+    public bool Reference { get; init; }
+
     public static ToolOutcome Fine(string text) => new(true, text);
+
+    /// <summary>Handbook text it asked for — see <c>describe_module</c>.</summary>
+    public static ToolOutcome Read(string text) => new(true, text) { Reference = true };
 
     public static ToolOutcome Refused(string text) => new(false, text);
 

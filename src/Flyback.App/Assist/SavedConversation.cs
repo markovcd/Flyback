@@ -26,6 +26,12 @@ public enum Voice
     Proposed,
 
     Failed,
+
+    /// <summary>Handbook text it looked up, shown only while the settings say so.</summary>
+    Handbook,
+
+    /// <summary>The briefing it was handed, shown only while the settings say so.</summary>
+    Briefing,
 }
 
 /// <summary>One line of the transcript, as the panel showed it.</summary>

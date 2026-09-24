@@ -28,6 +28,7 @@
 - The module list offers a plugged-in instrument Flyback knows by name, under Instruments, and adds it whole: its clock and a MIDI In per track.
 - Flyback knows the Elektron Syntakt by name: a MIDI In offers its tracks, a knob binds to one of its knobs from the panel's menu, and a learned knob says what it follows in the box's own words. Other instruments are a `.json` file in the data folder's `instruments`.
 - Settings → Agent is now Settings → Assistant.
+- The assistant's conversation shows the briefing it is handed and the handbook text it looks up, each hidden by its own box in Settings → Assistant.
 - Patches carry an author and tags, edited in the panel and written as `author "..."` and `tags "..."` in the text, and found by in the preset gallery.
 - A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
 - Saving a preset under a name already saved asks first, in place.

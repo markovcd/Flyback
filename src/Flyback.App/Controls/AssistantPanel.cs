@@ -226,6 +226,22 @@ public sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly CheckBox logBox = new() { Content = "Log conversations to disk", FontSize = Text.Body };
 
+    /// <summary>Whether the briefing is shown — see <see cref="AssistantSettings.ShowBriefing"/>.</summary>
+    private readonly CheckBox briefingBox = new()
+    {
+        Name = "showBriefing",
+        Content = "Show the briefing it is handed",
+        FontSize = Text.Body,
+    };
+
+    /// <summary>Whether what it looks up is shown — see <see cref="AssistantSettings.ShowLookups"/>.</summary>
+    private readonly CheckBox lookupsBox = new()
+    {
+        Name = "showLookups",
+        Content = "Show the handbook text it looks up",
+        FontSize = Text.Body,
+    };
+
     /// <summary>
     /// How many turns a conversation may have — see
     /// <see cref="AssistantSettings.TurnLimit"/>. Whole numbers only, so a value
@@ -449,6 +465,10 @@ public sealed class AssistantPanel : UserControl
         // which the footer has to answer from the moment the panel exists.
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
+        briefingBox.IsChecked = settings.ShowBriefing;
+        lookupsBox.IsChecked = settings.ShowLookups;
+        transcript.Shows(Voice.Briefing, settings.ShowBriefing);
+        transcript.Shows(Voice.Handbook, settings.ShowLookups);
         turnBox.Value = settings.TurnLimit;
         proseBox.Value = settings.ProseBudget;
 
@@ -748,6 +768,8 @@ public sealed class AssistantPanel : UserControl
         fields.Children.Add(Text.Quiet("Turns per conversation"));
         fields.Children.Add(turnBox);
         fields.Children.Add(logBox);
+        fields.Children.Add(briefingBox);
+        fields.Children.Add(lookupsBox);
         fields.Children.Add(Text.Quiet("Briefing budget, in characters"));
         fields.Children.Add(proseBox);
         fields.Children.Add(Note(
@@ -836,6 +858,8 @@ public sealed class AssistantPanel : UserControl
         keyBox.Text = string.Empty;
         rememberBox.IsChecked = settings.RememberKey;
         logBox.IsChecked = settings.LogConversations;
+        briefingBox.IsChecked = settings.ShowBriefing;
+        lookupsBox.IsChecked = settings.ShowLookups;
         turnBox.Value = settings.TurnLimit;
         proseBox.Value = settings.ProseBudget;
 
@@ -918,6 +942,10 @@ public sealed class AssistantPanel : UserControl
 
         settings.RememberKey = rememberBox.IsChecked == true;
         settings.LogConversations = logBox.IsChecked == true;
+        settings.ShowBriefing = briefingBox.IsChecked == true;
+        settings.ShowLookups = lookupsBox.IsChecked == true;
+        transcript.Shows(Voice.Briefing, settings.ShowBriefing);
+        transcript.Shows(Voice.Handbook, settings.ShowLookups);
 
         // An emptied box keeps what was saved rather than becoming nought.
         if (turnBox.Value is { } turns)
@@ -1335,6 +1363,13 @@ public sealed class AssistantPanel : UserControl
             if (because is { Length: > 0 }) transcript.Put(Voice.Note, because);
         }
 
+        // Not saved with the patch: it is rebuilt for every conversation, and runs
+        // to the whole briefing budget.
+        var briefing = $"The briefing it was handed:{Environment.NewLine}{run.Workbench.Briefing}";
+
+        transcript.Put(Voice.Briefing, briefing, keep: false);
+        if (settings.ShowBriefing) log.Write("briefing", briefing);
+
         return run;
     }
 
@@ -1406,6 +1441,11 @@ public sealed class AssistantPanel : UserControl
             case PatchEvent.Did did:
                 transcript.Put(Voice.Note, did.Summary);
                 log.Write("did", did.Summary);
+                break;
+
+            case PatchEvent.Read read:
+                transcript.Put(Voice.Handbook, read.Text);
+                log.Write("read", read.Text);
                 break;
 
             case PatchEvent.Saw saw:

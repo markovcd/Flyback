@@ -34,6 +34,15 @@ internal sealed class TranscriptView : ScrollViewer
     /// </summary>
     private SelectableTextBlock? saying;
 
+    /// <summary>The blocks drawn for each voice <see cref="Shows"/> can hide, and the voices hidden now.</summary>
+    private readonly Dictionary<Voice, List<Control>> hideable = new()
+    {
+        [Voice.Briefing] = [],
+        [Voice.Handbook] = [],
+    };
+
+    private readonly HashSet<Voice> hidden = [];
+
     public TranscriptView()
     {
         // The live line below the transcript rather than in it, so nothing has to
@@ -67,6 +76,18 @@ internal sealed class TranscriptView : ScrollViewer
         IsVisible = false,
     };
 
+    /// <summary>
+    /// Whether the <see cref="Voice.Briefing"/> or <see cref="Voice.Handbook"/> lines
+    /// are drawn. Kept either way, so turning one back on shows all of it.
+    /// </summary>
+    public void Shows(Voice voice, bool shown)
+    {
+        if (shown) hidden.Remove(voice);
+        else hidden.Add(voice);
+
+        foreach (var block in hideable[voice]) block.IsVisible = shown;
+    }
+
     /// <summary>The lines that are saved with the patch.</summary>
     public IReadOnlyList<TranscriptLine> Lines => lines;
 
@@ -77,6 +98,7 @@ internal sealed class TranscriptView : ScrollViewer
     {
         saidPanel.Children.Clear();
         lines.Clear();
+        foreach (var blocks in hideable.Values) blocks.Clear();
         saying = null;
     }
 
@@ -110,6 +132,14 @@ internal sealed class TranscriptView : ScrollViewer
 
             case Voice.Failed:
                 Add(text, Amber, Text.Small);
+                break;
+
+            case Voice.Briefing or Voice.Handbook:
+                Add(text, Text.Muted, Text.Small);
+
+                var block = saidPanel.Children[^1];
+                block.IsVisible = !hidden.Contains(voice);
+                hideable[voice].Add(block);
                 break;
 
             default:

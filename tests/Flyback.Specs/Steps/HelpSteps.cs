@@ -15,20 +15,32 @@ public sealed class HelpSteps
     private static readonly ModuleCatalog Modules = PluginHost.Load().Modules;
 
     private string read = string.Empty;
+    private ToolOutcome? answered;
     private IReadOnlyList<NodeDef> shipped = [];
 
     [When("the assistant looks up the Filter")]
-    public async Task WhenTheAssistantLooksItUp()
+    public Task WhenTheAssistantLooksItUp() => Asks("describe_module");
+
+    [When("the assistant adds a Filter to the patch")]
+    public Task WhenTheAssistantAddsOne() => Asks("add_module");
+
+    [Then("what it read is handbook text")]
+    public void ThenItIsHandbook() => answered!.Reference.ShouldBeTrue();
+
+    [Then("what it did is not handbook text")]
+    public void ThenItIsNotHandbook() => answered!.Reference.ShouldBeFalse();
+
+    private async Task Asks(string tool)
     {
         var bench = new PatchWorkbench(Modules, new Patch());
 
-        var outcome = await bench.InvokeAsync(
-            "describe_module",
+        answered = await bench.InvokeAsync(
+            tool,
             System.Text.Json.JsonDocument.Parse($$"""{"type_id":"{{NodeCatalog.FilterTypeId}}"}""").RootElement,
             CancellationToken.None);
 
-        outcome.Ok.ShouldBeTrue(outcome.Text);
-        read = outcome.Text;
+        answered.Ok.ShouldBeTrue(answered.Text);
+        read = answered.Text;
     }
 
     [When("\"flyback-cli modules\" describes the Filter")]

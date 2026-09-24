@@ -401,6 +401,124 @@ public sealed class AssistantPanelTests : UiTest
         frame.Child.ShouldBeOfType<Image>().Source.ShouldNotBeNull();
     }
 
+    // --- handbook text the assistant looked up --------------------------------
+
+    private const string Looked = "core.filter | Filter | Filter";
+
+    /// <summary>One that looks a module up and then says something.</summary>
+    private sealed class Reads() : Provider(new AssistantSchema(
+        "reads",
+        [new AssistantModel("reads")],
+        "NONE",
+        "none needed"))
+    {
+        public override string Id => "reads";
+
+        public override string Name => "Looks one module up";
+
+        public override IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Read();
+    }
+
+    private sealed class Read : IPatchSession
+    {
+        public async IAsyncEnumerable<PatchEvent> Ask(
+            string instruction,
+            [EnumeratorCancellation] CancellationToken cancel)
+        {
+            await Task.Yield();
+
+            yield return new PatchEvent.Read(Looked);
+            yield return new PatchEvent.Said("a filter it is.");
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private Window Asked(AssistantSettings settings)
+    {
+        var window = Showing(With(new Reads()), settings);
+
+        Instruction(window).Text = "make something";
+        Settle(window);
+
+        SendButton(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+        Settle(window);
+
+        return window;
+    }
+
+    private static SelectableTextBlock Handbook(Window window) =>
+        All<SelectableTextBlock>(window).Single(block => block.Text == Looked);
+
+    [AvaloniaFact]
+    public void Handbook_text_the_assistant_looked_up_is_shown_by_default()
+    {
+        var window = Asked(Configured("reads"));
+
+        Handbook(window).IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Handbook_text_is_hidden_while_the_setting_is_off_and_shown_again_once_it_is_on()
+    {
+        var settings = Configured("reads");
+        settings.ShowLookups = false;
+
+        var window = Asked(settings);
+
+        Handbook(window).IsVisible.ShouldBeFalse();
+        All<SelectableTextBlock>(window).ShouldContain(block => block.Text == "a filter it is." && block.IsVisible);
+
+        var host = Settings(window);
+        All<CheckBox>(host).Single(c => c.Name == "showLookups").IsChecked = true;
+        Settle(host);
+
+        All<AssistantPanel>(window).Single().SaveSettings();
+        Settle(window);
+
+        settings.ShowLookups.ShouldBeTrue();
+        Handbook(window).IsVisible.ShouldBeTrue("kept all along, so turning it on shows what was already looked up");
+    }
+
+    /// <summary>The folded block the briefing arrives as.</summary>
+    private static Control Briefing(Window window) =>
+        (Control)All<Button>(window)
+            .Single(b => b.Name == "fold" && (b.Content as string ?? string.Empty).Contains("The briefing it was handed"))
+            .Parent!;
+
+    [AvaloniaFact]
+    public void The_briefing_the_assistant_was_handed_heads_the_conversation()
+    {
+        var window = Asked(Configured("reads"));
+
+        Briefing(window).IsVisible.ShouldBeTrue();
+        Handbook(window).IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void The_briefing_is_hidden_on_its_own_setting_and_the_lookups_stay()
+    {
+        var settings = Configured("reads");
+        settings.ShowBriefing = false;
+
+        var window = Asked(settings);
+
+        Briefing(window).IsVisible.ShouldBeFalse();
+        Handbook(window).IsVisible.ShouldBeTrue();
+
+        var host = Settings(window);
+        All<CheckBox>(host).Single(c => c.Name == "showBriefing").IsChecked = true;
+        Settle(host);
+
+        All<AssistantPanel>(window).Single().SaveSettings();
+        Settle(window);
+
+        Briefing(window).IsVisible.ShouldBeTrue();
+    }
+
     /// <summary>The settings, in a window of their own, as opening them makes one.</summary>
     private Window Settings(Window panel)
     {
