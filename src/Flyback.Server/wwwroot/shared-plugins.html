@@ -3,13 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flyback Presets — patches people made</title>
-<meta name="description" content="Presets Flyback users made and shared. Download one and open it in Flyback, or submit your own.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Flyback">
-<meta property="og:title" content="Flyback Presets — patches people made">
-<meta property="og:description" content="Presets Flyback users made and shared.">
-<meta property="og:image" content="assets/share.jpg">
+<title>Plugins — Flyback</title>
+<meta name="description" content="Plugins Flyback users built and shared. Download one and open it in Flyback, or submit your own.">
 <meta name="theme-color" content="#22252A">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,17 +12,18 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/presets.css">
+<link rel="stylesheet" href="assets/plugins.css">
 </head>
-<body data-page="shelf">
+<body data-page="plugins">
 
 <header class="toolbar">
   <div class="wrap">
-    <a class="brand" href="https://markovcd.github.io/Flyback/"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
+    <a class="brand" href="./"><img src="assets/logo.svg" alt=""><span>Flyback</span></a>
     <nav aria-label="Site">
-      <a href="https://markovcd.github.io/Flyback/" class="optional">Overview</a>
-      <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
-      <a href="plugins.html">Plugins</a>
-      <a href="./" aria-current="page">Presets</a>
+      <a href="./" class="optional">Overview</a>
+      <a href="tutorials.html">Tutorials</a>
+      <a href="shared-plugins.html" aria-current="page">Plugins</a>
+      <a href="presets.html">Presets</a>
       <span class="sep" aria-hidden="true"></span>
       <a href="https://github.com/markovcd/Flyback">GitHub</a>
       <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
@@ -38,25 +34,33 @@
 <div class="canvas">
   <div class="wrap">
     <header class="doc-head shelf-head">
-      <span class="eyebrow">Presets</span>
-      <h1>Patches people made.</h1>
-      <p class="lede">Presets Flyback users made and shared. Download one and open it in Flyback: it plays the
-        moment it opens, and every wire in it is yours to change.</p>
+      <span class="eyebrow">Plugins</span>
+      <h1>Modules people wrote.</h1>
+      <p class="lede">Plugins Flyback users built and shared. Download a <code>.fbkp</code> and open it in Flyback:
+        it shows what the plugin is and installs only when asked.</p>
       <div class="actions">
-        <a class="button primary" href="submit.html">Submit a preset</a>
+        <a class="button primary" href="submit-plugin.html">Submit a plugin</a>
+        <a class="button" href="plugins.html">Write one</a>
       </div>
     </header>
   </div>
 </div>
 
 <main class="wrap">
-  <div class="filters">
-    <input type="search" id="search" placeholder="Search names, authors and descriptions" aria-label="Search presets">
-    <div class="chips" id="tags" aria-label="Tags"></div>
+  <div class="note">
+    <span class="tag">Before you install one</span>
+    <p>A plugin runs inside Flyback with everything you can do: it can read your files and reach the network.
+      What is listed here is what the plugin's own metadata says, read without running it, and a review is not
+      an audit. Open the package in Flyback and read what it shows before pressing Install.</p>
   </div>
 
-  <div class="shelf" id="shelf" aria-live="polite"></div>
-  <p class="empty" id="empty" hidden>No presets match. <a href="submit.html">Submit one?</a></p>
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors, descriptions and tags" aria-label="Search plugins">
+    <div class="chips" id="platforms" aria-label="Systems"></div>
+  </div>
+
+  <div class="shelf plugins" id="shelf" aria-live="polite"></div>
+  <p class="empty" id="empty" hidden>No plugins match. <a href="submit-plugin.html">Submit one?</a></p>
 
   <nav class="pager" id="pager" aria-label="Pages" hidden>
     <button type="button" class="button small" id="previous">Newer</button>
@@ -68,8 +72,8 @@
 <footer class="site-foot">
   <div class="wrap">
     <span class="brand-foot"><img src="assets/logo.svg" alt="">Flyback · MIT License</span>
-    <a href="https://markovcd.github.io/Flyback/">Overview</a>
-    <a href="https://markovcd.github.io/Flyback/tutorials.html">Tutorials</a>
+    <a href="./">Overview</a>
+    <a href="tutorials.html">Tutorials</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
     <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
     <a href="https://github.com/markovcd/Flyback">GitHub</a>
@@ -78,6 +82,6 @@
 </footer>
 
 <script src="assets/ratings.js"></script>
-<script src="assets/presets.js"></script>
+<script src="assets/plugins.js"></script>
 </body>
 </html>

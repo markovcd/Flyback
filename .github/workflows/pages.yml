@@ -13,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "src/Flyback.Server/wwwroot/*.html"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -35,6 +36,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      # The site links the preset site's pages as neighbors, which they are on
+      # the preset site itself. Here they are elsewhere, at vars.PRESETS_URL.
+      - name: Point the preset site's pages at its address
+        if: vars.PRESETS_URL != ''
+        env:
+          PRESETS_URL: ${{ vars.PRESETS_URL }}
+        run: |
+          base="${PRESETS_URL%/}"
+          for page in src/Flyback.Server/wwwroot/*.html; do
+            name="$(basename "$page")"
+            find site -name '*.html' -exec sed -i -E "s#href=\"(\.\./)?$name#href=\"$base/$name#g" {} +
+          done
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

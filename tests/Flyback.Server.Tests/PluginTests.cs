@@ -346,7 +346,7 @@ public sealed class PluginTests : IDisposable
     [Fact]
     public async Task The_plugin_pages_are_served()
     {
-        foreach (var page in new[] { "/plugins.html", "/plugin.html", "/submit-plugin.html", "/assets/plugins.js" })
+        foreach (var page in new[] { "/shared-plugins.html", "/plugin.html", "/submit-plugin.html", "/assets/plugins.js" })
             (await Status(HttpMethod.Get, page)).ShouldBe(HttpStatusCode.OK, page);
     }
 

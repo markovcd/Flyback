@@ -38,10 +38,14 @@
     <WriteLinesToFile File="$(SitePluginsFile)" Lines="@(PluginProject->'%(FullPath)|%(FolderName)')" Overwrite="true" />
   </Target>
 
-  <!-- The Pages site's own stylesheet, script and logo, so the two sites cannot drift apart. -->
+  <!--
+    The whole Pages site, served beside the pages that need the server. Only the
+    files that name the github.io address stay behind.
+  -->
   <ItemGroup>
-    <Content Include="..\..\site\assets\site.css;..\..\site\assets\site.js;..\..\site\assets\logo.svg;..\..\site\assets\share.jpg;..\..\site\assets\donate-qr.svg"
-             Link="wwwroot\assets\%(Filename)%(Extension)"
+    <Content Include="..\..\site\**"
+             Exclude="..\..\site\sitemap.xml;..\..\site\google*.html"
+             Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

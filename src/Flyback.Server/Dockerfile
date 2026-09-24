@@ -16,7 +16,7 @@ WORKDIR /src
 # Directory.Packages.props among them: it carries every package version, so a
 # restore without it has none.
 COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
-COPY site/assets site/assets
+COPY site site
 # All of src/, since the plugins the site starts with are whatever
 # Flyback.Server.csproj lists.
 COPY src src

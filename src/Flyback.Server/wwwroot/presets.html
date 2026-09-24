@@ -3,8 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Submit a plugin — Flyback</title>
-<meta name="description" content="Share a Flyback plugin with everyone else who plays it.">
+<title>Flyback Presets — patches people made</title>
+<meta name="description" content="Presets Flyback users made and shared. Download one and open it in Flyback, or submit your own.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Flyback">
+<meta property="og:title" content="Flyback Presets — patches people made">
+<meta property="og:description" content="Presets Flyback users made and shared.">
+<meta property="og:image" content="assets/share.jpg">
 <meta name="theme-color" content="#22252A">
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,9 +17,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
 <link rel="stylesheet" href="assets/presets.css">
-<link rel="stylesheet" href="assets/plugins.css">
 </head>
-<body data-page="submit-plugin">
+<body data-page="shelf">
 
 <header class="toolbar">
   <div class="wrap">
@@ -22,8 +26,8 @@
     <nav aria-label="Site">
       <a href="./" class="optional">Overview</a>
       <a href="tutorials.html">Tutorials</a>
-      <a href="shared-plugins.html" aria-current="page">Plugins</a>
-      <a href="presets.html">Presets</a>
+      <a href="shared-plugins.html">Plugins</a>
+      <a href="presets.html" aria-current="page">Presets</a>
       <span class="sep" aria-hidden="true"></span>
       <a href="https://github.com/markovcd/Flyback">GitHub</a>
       <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
@@ -34,37 +38,31 @@
 <div class="canvas">
   <div class="wrap">
     <header class="doc-head shelf-head">
-      <span class="eyebrow">Plugins</span>
-      <h1>Submit a plugin.</h1>
-      <p class="lede">Pack it with <code>flyback-cli pack-plugin --key</code> and send the <code>.fbkp</code>. It is
-        listed once it has been reviewed.</p>
+      <span class="eyebrow">Presets</span>
+      <h1>Patches people made.</h1>
+      <p class="lede">Presets Flyback users made and shared. Download one and open it in Flyback: it plays the
+        moment it opens, and every wire in it is yours to change.</p>
+      <div class="actions">
+        <a class="button primary" href="submit.html">Submit a preset</a>
+      </div>
     </header>
   </div>
 </div>
 
 <main class="wrap">
-  <div class="submit">
-    <div class="note">
-      <span class="tag">Said by the plugin</span>
-      <p>The name, version, author and description come from the plugin assembly's own metadata:
-        <code>&lt;Product&gt;</code>, <code>&lt;Version&gt;</code>, <code>&lt;Authors&gt;</code> and
-        <code>&lt;Description&gt;</code> in its project. What it adds and what it reaches are read from its code.
-        The site runs none of it, and refuses a package the editor would refuse.</p>
-    </div>
-
-    <form id="submit">
-      <label>Plugin package <span class="quiet">A signed .fbkp made by flyback-cli pack-plugin, up to 64 MB</span>
-        <input type="file" name="file" id="file" accept=".fbkp" required>
-      </label>
-
-      <div>
-        <button type="submit" class="button primary" id="send">Submit</button>
-      </div>
-      <p class="status" id="status" role="status"></p>
-    </form>
-
-    <div id="received" hidden></div>
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors and descriptions" aria-label="Search presets">
+    <div class="chips" id="tags" aria-label="Tags"></div>
   </div>
+
+  <div class="shelf" id="shelf" aria-live="polite"></div>
+  <p class="empty" id="empty" hidden>No presets match. <a href="submit.html">Submit one?</a></p>
+
+  <nav class="pager" id="pager" aria-label="Pages" hidden>
+    <button type="button" class="button small" id="previous">Newer</button>
+    <span id="where"></span>
+    <button type="button" class="button small" id="next">Older</button>
+  </nav>
 </main>
 
 <footer class="site-foot">
@@ -79,6 +77,7 @@
   </div>
 </footer>
 
-<script src="assets/plugins.js"></script>
+<script src="assets/ratings.js"></script>
+<script src="assets/presets.js"></script>
 </body>
 </html>

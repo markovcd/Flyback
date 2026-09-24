@@ -268,7 +268,7 @@ public sealed class ServerTests : IDisposable
     [Fact]
     public async Task The_pages_and_the_shared_stylesheet_are_served()
     {
-        (await client.GetStringAsync(new Uri("/", UriKind.Relative), TestContext.Current.CancellationToken)).ShouldContain("Submit a preset");
+        (await client.GetStringAsync(new Uri("/presets.html", UriKind.Relative), TestContext.Current.CancellationToken)).ShouldContain("Submit a preset");
         (await client.GetStringAsync(new Uri("/assets/site.css", UriKind.Relative), TestContext.Current.CancellationToken)).ShouldContain("--attention");
     }
 

@@ -13,7 +13,7 @@ const long uploadLimit = 20 * 1024 * 1024;
 const int pageSize = 24;
 const int pendingLimit = 50;
 
-// The output's wwwroot, where the Pages site's linked assets land beside the pages.
+// The output's wwwroot, where the Pages site lands beside the server's own pages.
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,

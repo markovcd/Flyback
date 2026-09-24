@@ -123,7 +123,7 @@
       if (state.tag) query.set("tag", state.tag);
       if (state.page > 1) query.set("page", state.page);
       var text = query.toString();
-      history.replaceState(null, "", text ? "?" + text : "./");
+      history.replaceState(null, "", text ? "?" + text : "presets.html");
     }
 
     function card(preset) {
@@ -246,11 +246,11 @@
 
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: preset.file, download: preset.fileName }, "Download"));
-      actions.appendChild(make("a", { class: "button", href: "./" }, "All presets"));
+      actions.appendChild(make("a", { class: "button", href: "presets.html" }, "All presets"));
       text.appendChild(actions);
 
       if (signed) text.appendChild(tools(preset, function (what) {
-        if (what === "deleted") location.href = "./";
+        if (what === "deleted") location.href = "presets.html";
         else location.reload();
       }));
       else text.appendChild(FlybackReports.form("preset", preset.id, preset.name));

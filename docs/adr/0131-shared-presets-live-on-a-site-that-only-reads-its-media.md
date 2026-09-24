@@ -61,3 +61,15 @@ its page, its download and the render queue for everyone else.
   folder. The files are orphans until removed by hand.
 - The Pages top bar links to the site. The site's pages copy the Pages header,
   so a change to one header is a change to both.
+
+## Amendment, 2026-09-24: the site serves the whole website
+
+The site links in all of `site/`, not only `site/assets`, and its own pages
+are the ones that need it: the presets and plugins, a preset or plugin, the
+two submit pages and the admin's. So its root is the overview, and one host
+serves everything. Its pages take names `site/` does not use (`presets.html`,
+`shared-plugins.html`), and every link between the two sets is relative.
+
+On Pages those neighbors are elsewhere. `pages.yml` rewrites each link to a
+page in `src/Flyback.Server/wwwroot` to the address in the `PRESETS_URL`
+repository variable, and leaves them relative while it is unset.

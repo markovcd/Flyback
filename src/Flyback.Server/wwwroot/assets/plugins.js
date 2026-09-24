@@ -47,7 +47,7 @@
   function tagged(tags, into) {
     var row = make("div", { class: "chips" });
     tags.forEach(function (tag) {
-      row.appendChild(make("a", { class: "chip", href: "plugins.html?tag=" + encodeURIComponent(tag) }, tag));
+      row.appendChild(make("a", { class: "chip", href: "shared-plugins.html?tag=" + encodeURIComponent(tag) }, tag));
     });
     into.appendChild(row);
   }
@@ -120,7 +120,7 @@
       if (state.module) query.set("module", state.module);
       if (state.page > 1) query.set("page", state.page);
       var text = query.toString();
-      history.replaceState(null, "", text ? "?" + text : "plugins.html");
+      history.replaceState(null, "", text ? "?" + text : "shared-plugins.html");
     }
 
     function card(plugin) {
@@ -281,12 +281,12 @@
 
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: plugin.file, download: plugin.fileName }, "Download"));
-      actions.appendChild(make("a", { class: "button", href: "plugins.html" }, "All plugins"));
+      actions.appendChild(make("a", { class: "button", href: "shared-plugins.html" }, "All plugins"));
       text.appendChild(actions);
 
       if (!plugin.published) text.appendChild(make("span", { class: "badge" }, "Unpublished"));
       if (signed) text.appendChild(tools(plugin, function (what) {
-        if (what === "deleted") location.href = "plugins.html";
+        if (what === "deleted") location.href = "shared-plugins.html";
         else location.reload();
       }));
       else text.appendChild(FlybackReports.form("plugin", plugin.id, plugin.name));
