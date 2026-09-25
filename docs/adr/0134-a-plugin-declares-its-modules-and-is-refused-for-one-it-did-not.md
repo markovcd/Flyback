@@ -27,21 +27,19 @@ why 0132 has no manifest.
 
 An attribute's arguments are compile-time constants, so the list is in the
 assembly's metadata and is read without running anything. The contract gains the
-attribute, so it moves to 1.2.
+attribute.
 
-**The host holds a plugin to it.** After `Register`, a plugin compiled against 1.2
-or later that registered a module it did not declare, or declared under another
-name, is refused whole: everything it registered is taken back, and About says
-which module. A module declared and not registered is allowed, for one left out on
-some systems. A plugin compiled against an earlier contract is not checked, and the
-dialog says its modules are unlisted.
+**The host holds a plugin to it.** After `Register`, a plugin that registered a
+module it did not declare, or declared under another name, is refused whole:
+everything it registered is taken back, and About says which module. A module
+declared and not registered is allowed, for one left out on some systems.
 
 **`pack-plugin` runs the same check first.** It loads the build for the system it
 runs on from a copy, in a context it unloads afterwards, and writes no package if
 loading it would leave any problem. That runs the author's own code on the author's
 machine. A package with no build for that system is checked at its first load.
 
-**The dialog refuses what the host would.** A 1.2 plugin that adds modules and
+**The dialog refuses what the host would.** A plugin that adds modules and
 declares none has Install off.
 
 **The site lists the declared modules and finds a plugin by one**, with `module`

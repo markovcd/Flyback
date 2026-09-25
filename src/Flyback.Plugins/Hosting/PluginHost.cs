@@ -243,8 +243,7 @@ public static class PluginHost
             plugin.Register(registry);
 
             // Its code has run by now, but nothing it registered is kept unless it was declared.
-            if (ModuleDeclarations.Required(type.Assembly.GetReferencedAssemblies())
-                && ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(checkpoint)) is { } mismatch)
+            if (ModuleDeclarations.Mismatch(ModuleDeclarations.Of(type.Assembly), registry.OfferedSince(checkpoint)) is { } mismatch)
             {
                 registry.Restore(checkpoint);
                 problems.Add(new PluginProblem(Path.GetFileName(path), mismatch));

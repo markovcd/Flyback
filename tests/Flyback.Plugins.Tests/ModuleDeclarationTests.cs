@@ -105,17 +105,6 @@ public class ModuleDeclarationTests
         catalog.Problems.ShouldHaveSingleItem().Message.ShouldContain("declared as \"Tone\" and registered as \"Tune\"");
     }
 
-    [Theory]
-    [InlineData("1.0.0.0", false)]
-    [InlineData("1.1.0.0", false)]
-    [InlineData("1.2.0.0", true)]
-    [InlineData("2.0.0.0", true)]
-    public void Only_a_plugin_compiled_against_a_contract_with_declarations_is_held_to_them(string version, bool held)
-    {
-        AssemblyName[] references = [new(AssemblyFacts.Contract) { Version = Version.Parse(version) }];
-
-        ModuleDeclarations.Required(references).ShouldBe(held);
-    }
 
     /// <summary>What a shipped plugin declares is exactly what it registers, so the dialog lists no module that does not exist.</summary>
     [Theory]

@@ -377,19 +377,13 @@ internal sealed partial record PluginDescription(
     IReadOnlyList<DeclaredModule> Modules)
 {
     /// <summary>
-    /// Whether it adds modules and was compiled before a plugin declared them, so which
-    /// ones cannot be known until it runs.
-    /// </summary>
-    public bool ModulesUnlisted => Adds.Contains(AssemblyFacts.ModulesAdded) && Modules.Count == 0 && !ModuleDeclarations.Required(Compiled[0].References);
-
-    /// <summary>
     /// Why this build would not be loaded, or null where it would: an assembly compiled
-    /// against a contract this Flyback does not offer, or a plugin that knew to declare its
-    /// modules adding some without declaring one.
+    /// against a contract this Flyback does not offer, or a plugin adding modules without
+    /// declaring one.
     /// </summary>
     public string? Refusal() =>
         ContractRefusal()
-        ?? (Adds.Contains(AssemblyFacts.ModulesAdded) && Modules.Count == 0 && ModuleDeclarations.Required(Compiled[0].References)
+        ?? (Adds.Contains(AssemblyFacts.ModulesAdded) && Modules.Count == 0
             ? "It adds modules without declaring any with [assembly: FlybackModule(id, name)], so Flyback would refuse it."
             : null);
 

@@ -51,7 +51,6 @@ public sealed class PluginPackageTests : IDisposable
         var plugin = PluginPackage.Read(Packages.ForSample()).Description("win");
 
         plugin.Modules.ShouldBe([new DeclaredModule("flyback.sample.ripple", "Ripple"), new DeclaredModule("flyback.sample.halve", "Halve")]);
-        plugin.ModulesUnlisted.ShouldBeFalse();
     }
 
     private static PluginDescription Adding(string contract, params DeclaredModule[] modules) => new(
@@ -60,16 +59,7 @@ public sealed class PluginPackageTests : IDisposable
         modules);
 
     [Fact]
-    public void A_plugin_built_before_modules_were_declared_has_them_unlisted_and_still_installs()
-    {
-        var plugin = Adding("1.1.0.0");
-
-        plugin.ModulesUnlisted.ShouldBeTrue();
-        plugin.Refusal().ShouldBeNull();
-    }
-
-    [Fact]
-    public void A_plugin_that_knew_to_declare_its_modules_and_declares_none_is_refused()
+    public void A_plugin_that_adds_modules_and_declares_none_is_refused()
     {
         Adding(Packages.Contract.ToString()).Refusal().ShouldNotBeNull().ShouldContain("without declaring");
         Adding(Packages.Contract.ToString(), new DeclaredModule("flyback.ripple.ring", "Ring")).Refusal().ShouldBeNull();

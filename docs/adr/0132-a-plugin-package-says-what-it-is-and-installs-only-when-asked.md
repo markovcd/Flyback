@@ -63,8 +63,7 @@ refuses the package, since each is a mistake in the project rather than somethin
 to show around. Everything a package says about itself is in the assembly, so a
 plugin copied in by hand says the same. What it adds comes from which `IPluginRegistry` methods its code
 calls: modules, presets, a sound output, a MIDI input, an assistant, a secret store.
-Which modules, by name, come from its `FlybackModule` declarations, or are said to be
-unlisted for a plugin built before there were any.
+Which modules, by name, come from its `FlybackModule` declarations.
 What it reaches comes from what any assembly in the build names: the network, files,
 other programs, the registry, native code (a P/Invoke, or a binary with no metadata),
 and code it loads while running (reflection, `Emit`, a load context). The dialog

@@ -9,13 +9,6 @@ internal sealed record DeclaredModule(string TypeId, string Name);
 /// <summary>Holds a plugin to the modules it declares (<see cref="FlybackModuleAttribute"/>).</summary>
 internal static class ModuleDeclarations
 {
-    /// <summary>The contract version that brought <see cref="FlybackModuleAttribute"/>.</summary>
-    public static Version Since { get; } = new(1, 2);
-
-    /// <summary>Whether an assembly compiled against <paramref name="references"/> knew to declare its modules.</summary>
-    public static bool Required(IEnumerable<AssemblyName> references) => references.Any(r =>
-        string.Equals(r.Name, AssemblyFacts.Contract, StringComparison.OrdinalIgnoreCase) && r.Version is { } version && version >= Since);
-
     public static IReadOnlyList<DeclaredModule> Of(Assembly assembly) =>
         [.. assembly.GetCustomAttributes<FlybackModuleAttribute>().Select(a => new DeclaredModule(a.Id, a.Name))];
 

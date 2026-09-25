@@ -366,9 +366,8 @@ claim existing module ids. A module is refused unless its type id starts with
 **A plugin declares its modules**
 ([0134](adr/0134-a-plugin-declares-its-modules-and-is-refused-for-one-it-did-not.md))
 with `[assembly: FlybackModule(id, name)]`, which the install dialog and the
-shared plugins site read from metadata. After `Register`, a plugin compiled
-against contract 1.2 or later that registered a module it did not declare is
-rolled back whole and becomes a `PluginProblem`. `pack-plugin` runs the same load
+shared plugins site read from metadata. After `Register`, a plugin that
+registered a module it did not declare is rolled back whole and becomes a `PluginProblem`. `pack-plugin` runs the same load
 before writing a package.
 
 **The contract has its own version**
