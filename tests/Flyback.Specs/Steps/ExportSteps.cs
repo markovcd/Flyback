@@ -52,7 +52,7 @@ public sealed class ExportSteps(PatchContext context) : IDisposable
         const int buffer = 480;
 
         var device = new Loopback();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(context.Patch);
         engine.Start();

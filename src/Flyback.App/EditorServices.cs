@@ -28,9 +28,13 @@ internal static class EditorServices
         var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
         replace?.Invoke(services);
 
-        return services
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true })
-            .GetRequiredService<MainWindow>();
+        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+        var window = provider.GetRequiredService<MainWindow>();
+
+        // After OnClosed has finished the take: the engine, the compiler and MIDI go with the container.
+        window.Closed += (_, _) => provider.Dispose();
+
+        return window;
     }
 
     public static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)
@@ -57,8 +61,6 @@ internal static class EditorServices
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSections>().Saved));
 
-        // The device the run opened with; Playback hands the engine any later one.
-        services.AddSingleton(sp => sp.GetRequiredService<AudioSetup>().Device);
         services.AddSingleton<AudioEngine>();
 
         // Nothing is opened by this: the backend is asked for a device only once a

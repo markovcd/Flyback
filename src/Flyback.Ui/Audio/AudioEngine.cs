@@ -16,9 +16,9 @@ namespace Flyback.App.Audio;
 /// immutable <see cref="State"/> reference swapped with <see cref="Volatile"/>, so
 /// a recompile mid-buffer is a clean switch rather than a torn read.
 /// </remarks>
-/// <param name="device">What it plays through until <see cref="Use"/> hands it another.</param>
+/// <param name="sound">The device it plays through until <see cref="Use"/> hands it another. The engine owns each one.</param>
 /// <param name="compiler">What turns each program swapped in here into IL, or null for programs that are only ever interpreted.</param>
-public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null) : IDisposable
+internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null) : IDisposable
 {
     /// <summary>
     /// A program and everything that goes with it. The memory belongs here rather
@@ -35,10 +35,10 @@ public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null
         DelayState? Memory,
         LiveValues Live);
 
-    private readonly AudioRenderer renderer = new(device.SampleRate);
+    private readonly AudioRenderer renderer = new(sound.Device.SampleRate);
 
     /// <summary>What plays, which <see cref="Use"/> may replace while nothing is playing.</summary>
-    private IAudioDevice current = device;
+    private IAudioDevice current = sound.Device;
     private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
     private IAudioSink? capture;
 

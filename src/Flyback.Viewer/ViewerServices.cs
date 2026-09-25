@@ -45,8 +45,8 @@ internal static class ViewerServices
 
         services.AddSingleton<IlCompiler>();
 
-        // The engine's device, which it owns; a run with no sound plays nothing through a silent one.
-        services.AddSingleton<IAudioDevice>(launch.Device ?? new SilentAudioDevice());
+        // A run with no sound plays nothing through a silent device.
+        services.AddSingleton(new AudioSetup(launch.Device ?? new SilentAudioDevice()));
         services.AddSingleton<AudioEngine>();
 
         services.AddSingleton<MidiHub>();

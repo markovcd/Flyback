@@ -1,5 +1,8 @@
 using Avalonia.Headless.XUnit;
+using Flyback.App.Audio;
 using Flyback.App.Controls;
+using Flyback.Core;
+using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
@@ -17,8 +20,7 @@ public class EditorServicesTests : UiTest
     {
         var services = new ServiceCollection().AddEditor(new EditorSetup());
 
-        // Not disposed: the window tears down what it holds when it closes.
-        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
         var window = Owned(provider.GetRequiredService<MainWindow>());
 
@@ -29,9 +31,38 @@ public class EditorServicesTests : UiTest
     }
 
     [AvaloniaFact]
+    public void Closing_the_window_lets_its_sound_device_go()
+    {
+        var device = new Speakers();
+        var window = NewMainWindow(replace: services => services.AddSingleton(new AudioSetup(device)));
+        window.Show();
+        Settle(window);
+
+        window.CloseWithoutAsking();
+
+        device.Disposed.ShouldBeTrue();
+    }
+
+    /// <summary>A sound card that remembers being let go.</summary>
+    private sealed class Speakers : IAudioDevice
+    {
+        public bool Disposed { get; private set; }
+
+        public int SampleRate => GlobalConstants.SampleRate;
+
+        public bool IsRunning { get; private set; }
+
+        public void Start(AudioCallback fill) => IsRunning = true;
+
+        public void Stop() => IsRunning = false;
+
+        public void Dispose() => Disposed = true;
+    }
+
+    [AvaloniaFact]
     public void The_regions_are_in_the_window_the_container_built()
     {
-        var provider = new ServiceCollection().AddEditor(new EditorSetup()).BuildServiceProvider();
+        using var provider = new ServiceCollection().AddEditor(new EditorSetup()).BuildServiceProvider();
 
         var window = Owned(provider.GetRequiredService<MainWindow>());
         window.Show();

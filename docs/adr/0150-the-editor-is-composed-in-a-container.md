@@ -76,16 +76,16 @@ Exceptions, each kept on purpose:
   once it is used. Nothing may use one while the window is being built: the
   container would build a second window to answer it.
 - **Factories for what is only looked up.** Opening the sound device is a call
-  `AddEditor` makes in a factory, and the sound engine is given the device the run
-  opened with; `Playback` hands it any later one. A value that may be absent (the
+  `AddEditor` makes in a factory, and the sound engine is given the `AudioSetup` it
+  returns; `Playback` hands it any later device. A value that may be absent (the
   saved presets, the MIDI backend) is a factory returning null, and a class that
   reads one takes it as an optional parameter. A class that can do nothing on its
   own instead takes the setup and does nothing: the recovery keeper with no folder.
-- **The container is never disposed.** The window tears down what it holds in
-  `OnClosed`, in the order a take and a device need. The sound engine owns its
-  device and disposes the one it lets go of, so a container disposing the device
-  the run opened with would dispose it again, which a plugin's device is not
-  promised to survive.
+- **The window's container is disposed when the window closes.** `OnClosed`
+  finishes the take and stops the recovery keeper first; the container then
+  disposes the sound engine, the compiler and MIDI. The engine owns its device and
+  is handed it in an `AudioSetup`, so the container never owns a device the engine
+  may already have swapped and disposed.
 - **The plugins are still read before any window exists.** `Startup.Load` runs
   before Avalonia starts, and the window is handed what it loaded on
   `EditorSetup.Plugins`, which a test leaves at `PluginCatalog.Empty`.

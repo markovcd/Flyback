@@ -1333,13 +1333,6 @@ internal sealed class MainWindow : Window
         // Whatever there was to lose has been asked about by now, and answered.
         keeper.Stop();
 
-        audio.Dispose();
-        compiler.Dispose();
-
-        // And the instruments, which are hardware somebody else may want back. A
-        // port left open outlives the window that was reading it.
-        midi.Dispose();
-
         base.OnClosed(e);
     }
 

@@ -101,7 +101,7 @@ public class AudioEngineTests
         static float[] Play(bool edit)
         {
             using var device = new LoopbackDevice();
-            using var engine = new AudioEngine(device);
+            using var engine = new AudioEngine(new AudioSetup(device));
             var patch = Tone(220f);
 
             engine.Update(patch);
@@ -125,7 +125,7 @@ public class AudioEngineTests
     public void Turning_a_knob_during_playback_does_not_tear_the_waveform()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         var patch = Tone(220f);
 
         engine.Update(patch);
@@ -156,7 +156,7 @@ public class AudioEngineTests
     public void An_engine_that_has_been_given_no_patch_plays_silence()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Start();
 
@@ -168,7 +168,7 @@ public class AudioEngineTests
     public void A_patch_with_no_speaker_is_silent_rather_than_a_failure()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var tint = builder.Add("color.hsv", 0, 0);
@@ -193,7 +193,7 @@ public class AudioEngineTests
     public void The_engine_plays_a_patch_as_the_sound_of_whatever_frame_it_is_told()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
         var time = builder.Add("time", 0, 0);
@@ -231,7 +231,7 @@ public class AudioEngineTests
     public void A_scope_is_charted_from_what_the_engine_actually_played()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -271,7 +271,7 @@ public class AudioEngineTests
     public void A_meter_is_played_into_the_picture_from_what_the_engine_heard()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         var builder = new PatchBuilder(NodeCatalog.BuiltIn);
 
@@ -324,13 +324,13 @@ public class AudioEngineTests
         var patch = Presets.InKey(NodeCatalog.BuiltIn);
 
         using var fresh = new LoopbackDevice();
-        using var first = new AudioEngine(fresh);
+        using var first = new AudioEngine(new AudioSetup(fresh));
         first.Update(patch);
         first.Start();
         var opening = fresh.Pump(4_096);
 
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         engine.Update(patch);
         engine.Start();
 
@@ -346,7 +346,7 @@ public class AudioEngineTests
     public void Disposing_the_engine_closes_the_device()
     {
         var device = new LoopbackDevice();
-        var engine = new AudioEngine(device);
+        var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Start();
         device.IsRunning.ShouldBeTrue();
@@ -366,7 +366,7 @@ public class AudioEngineTests
         var patch = Tone(440);
 
         using var only = new LoopbackDevice();
-        using var unbroken = new AudioEngine(only);
+        using var unbroken = new AudioEngine(new AudioSetup(only));
         unbroken.Update(patch);
         unbroken.Start();
 
@@ -376,7 +376,7 @@ public class AudioEngineTests
 
         var speakers = new LoopbackDevice();
         using var headphones = new LoopbackDevice();
-        using var engine = new AudioEngine(speakers);
+        using var engine = new AudioEngine(new AudioSetup(speakers));
         engine.Update(patch);
         engine.Start();
 
@@ -393,7 +393,7 @@ public class AudioEngineTests
     public void A_device_is_not_changed_under_a_running_callback()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         using var other = new LoopbackDevice();
 
         engine.Start();
@@ -409,7 +409,7 @@ public class AudioEngineTests
     public void A_device_at_another_rate_is_refused()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         using var slower = new SilentAudioDevice(GlobalConstants.SampleRate / 2);
 
         engine.Use(slower).ShouldBeFalse();
@@ -432,7 +432,7 @@ public class AudioEngineTests
     public void An_audition_swells_in_and_stays_quieter_than_a_patch()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Start();
         engine.StartAudition(engine.PrepareAudition(Tone(220f)).ShouldNotBeNull());
@@ -454,7 +454,7 @@ public class AudioEngineTests
     public void A_patch_is_faded_out_under_an_audition_and_back_in_after()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(Tone(220f));
         engine.Start();
@@ -462,7 +462,7 @@ public class AudioEngineTests
 
         // The same preset heard with nothing under it, to tell the patch apart from it.
         using var aloneDevice = new LoopbackDevice();
-        using var alone = new AudioEngine(aloneDevice);
+        using var alone = new AudioEngine(new AudioSetup(aloneDevice));
         alone.Start();
 
         engine.StartAudition(engine.PrepareAudition(Tone(330f)).ShouldNotBeNull());
@@ -491,7 +491,7 @@ public class AudioEngineTests
     {
         using var device = new LoopbackDevice();
         using var compiler = new IlCompiler();
-        using var engine = new AudioEngine(device, compiler);
+        using var engine = new AudioEngine(new AudioSetup(device), compiler);
 
         var audition = engine.PrepareAudition(Tone(220f)).ShouldNotBeNull();
         await compiler.Settled();
@@ -503,7 +503,7 @@ public class AudioEngineTests
     public void A_patch_that_makes_no_sound_is_not_auditioned()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.PrepareAudition(new PatchBuilder(NodeCatalog.BuiltIn).Patch).ShouldBeNull();
     }
@@ -521,7 +521,7 @@ public class AudioEngineTests
         float[] Play(float? gain)
         {
             using var device = new LoopbackDevice();
-            using var engine = new AudioEngine(device);
+            using var engine = new AudioEngine(new AudioSetup(device));
 
             engine.Update(Tone(220f));
             if (gain is { } level) engine.Gain = level;
@@ -537,7 +537,7 @@ public class AudioEngineTests
     public void Zero_gain_is_silence_and_the_recording_still_hears_the_patch()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         var tap = new Tap();
 
         engine.Update(Tone(220f));
@@ -553,9 +553,9 @@ public class AudioEngineTests
     public void A_level_between_turns_the_speakers_down_by_that_much()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
         using var half = new LoopbackDevice();
-        using var reference = new AudioEngine(half);
+        using var reference = new AudioEngine(new AudioSetup(half));
 
         engine.Update(Tone(220f));
         engine.Gain = 0.5f;
@@ -571,7 +571,7 @@ public class AudioEngineTests
     public void Seeking_a_stopped_engine_starts_the_sound_there()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(Tone(220f));
         engine.SeekTo(12);
@@ -587,7 +587,7 @@ public class AudioEngineTests
     public void Seeking_a_running_engine_is_carried_out_by_the_next_buffer()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(Tone(220f));
         engine.Start();
@@ -604,7 +604,7 @@ public class AudioEngineTests
     public void A_rewind_after_a_seek_takes_it_back()
     {
         using var device = new LoopbackDevice();
-        using var engine = new AudioEngine(device);
+        using var engine = new AudioEngine(new AudioSetup(device));
 
         engine.Update(Tone(220f));
         engine.Start();
