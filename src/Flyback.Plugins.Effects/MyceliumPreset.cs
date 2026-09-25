@@ -109,7 +109,7 @@ internal static class MyceliumPreset
     private static readonly (string File, float[] At)[] Lines =
     [
         ("sleepy-voice.wav", [0.5f]),
-        ("who-are-you.wav", [1.5f, 1.75f, 6f]),
+        ("who-are-you.wav", [1.75f, 6f]),
         ("who-i-was.wav", [6.125f]),
         ("so-many-sizes.wav", [6.625f]),
         ("one-side.wav", [7.5f]),
