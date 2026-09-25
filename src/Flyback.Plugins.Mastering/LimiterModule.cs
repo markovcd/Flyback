@@ -8,30 +8,18 @@ namespace Flyback.Plugins.Mastering;
 /// the gain that makes it so is already down by the time the peak arrives.
 /// </summary>
 /// <remarks>
-/// The sound is delayed by the lookahead. The gain is worked out from the sound
-/// as it comes in, so every peak is seen a lookahead before it is heard. Three
-/// cells do it:
+/// The sound is delayed by the lookahead while the gain is computed from the
+/// undelayed input. Three cells:
 /// <list type="bullet">
-/// <item>An aim: the lowest gain any sample still in the delay needs. It is held
-/// for one lookahead after a lower one arrives.</item>
-/// <item>A second-lowest ("next"), for the samples that came in behind the one
-/// holding the aim. When the hold runs out the aim becomes it, held afresh. That
-/// is conservative, because those samples are younger than a whole lookahead.
-/// Nothing in the delay is ever left needing less gain than the aim.</item>
-/// <item>The gain itself. It falls in a straight line at a rate that gets from
-/// unity to the aim in exactly one lookahead, so it reaches any aim before the
-/// sample that set it is heard. It rises back on the release, as a one-pole
-/// lag.</item>
+/// <item>The aim: the lowest gain any sample in the delay needs, held for one
+/// lookahead.</item>
+/// <item>The next-lowest, which becomes the aim when the hold runs out.</item>
+/// <item>The gain, falling linearly from unity to the aim in one lookahead and
+/// recovering as a one-pole release.</item>
 /// </list>
-/// The limiting is exact. The clamp at the end is there for a lookahead swept
-/// while it runs, and for the last bit of rounding. A lookahead that holds still
-/// never reaches it. On the audio path the program runs oversampled, so a peak
-/// between two samples at the speakers' rate is a sample here, and the ceiling
-/// is close to a true-peak ceiling.
-/// <para>
-/// Every cell but the hold is kept as one minus what it means, so all of them
-/// start where they should: at unity gain, with nothing pending.
-/// </para>
+/// The final clamp only catches a swept lookahead and rounding. Oversampling
+/// makes the ceiling close to true-peak. Cells but the hold store one minus their
+/// value, so they start at unity with nothing pending.
 /// </remarks>
 internal static class LimiterModule
 {

@@ -50,30 +50,16 @@ public sealed partial class PatchWorkbench
     private Patch working = new();
     private string? proposal;
 
-    /// <param name="startingPoint"></param>
     /// <param name="vision">Whether the model may be shown a frame, which offers <c>render</c>.</param>
     /// <param name="hearing">
-    /// Whether the sound may be listened to, and by whom, which offers
-    /// <c>listen</c> and settles what it promises. Off by default, unlike
-    /// <paramref name="vision"/>: every model worth pointing this at can see, and
-    /// only a few can hear. Whose ear it is changes the tool's own description —
-    /// see <see cref="Listener"/>.
+    /// Whether and by whom the sound may be heard, which offers <c>listen</c>
+    /// (<see cref="Listener"/>). Off by default.
     /// </param>
-    /// <param name="limits"></param>
-    /// <param name="samples">
-    /// Where a Sample module's file is looked up, and null where nothing can look
-    /// one up — which makes every player silent and every path a complaint.
-    /// </param>
-    /// <param name="modules"></param>
-    /// <param name="pictures"></param>
-    /// <param name="prose">
-    /// How much of the catalog's prose the briefing carries, and <see cref="ProsePolicy.Default"/>
-    /// where nobody said.
-    /// </param>
+    /// <param name="samples">Where Sample files are looked up, or null for silence.</param>
+    /// <param name="prose">The briefing's prose budget, or <see cref="ProsePolicy.Default"/>.</param>
     /// <param name="presets">
-    /// The presets a model may read for ideas, and the ones that ship where nobody
-    /// said. Offered with <c>describe_preset</c>, and none offers neither the tool
-    /// nor the list.
+    /// The presets offered through <c>describe_preset</c>, defaulting to the shipped
+    /// ones; an empty list removes the tool.
     /// </param>
     public PatchWorkbench(
         ModuleCatalog modules,

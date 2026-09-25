@@ -6,25 +6,11 @@ namespace Flyback.Core.Graph;
 /// instead of this one — see ADR-0075.
 /// </summary>
 /// <remarks>
-/// The one answer, asked by everything that has to know: the compiler puts a
-/// plane on each of these, the canvas draws them dashed, the layout leaves them
-/// out of what it lays in layers, and the language writes them as the back-wires
-/// they are.
-/// <para>
-/// The walk runs backwards from the Output along the wires feeding each module,
-/// taking a module's inputs in socket order — the same direction and the same
-/// order the compiler resolves in. So the wire that is cut is the one that
-/// reaches furthest back: in a chain fed round from its end, the return itself.
-/// </para>
-/// <para>
-/// Rooted there rather than at "every node in turn", because the order modules
-/// are listed in is not a fact about the patch — the canvas moves a module to the
-/// end of the list to draw it in front, so every drag would otherwise be free to
-/// move the cut, which changes what a loop is carrying and therefore what the
-/// patch sounds like. What the Output cannot reach is walked afterwards in a
-/// stable order of its own, since there is nothing there to prefer and nothing
-/// listening either.
-/// </para>
+/// Shared by the compiler, the canvas, the layout and the text language. The
+/// walk goes back from the Output in socket order, as the compiler resolves, so
+/// the cut wire is a chain's return. Rooting at the Output rather than list
+/// order keeps a drag on the canvas from moving the cut; unreachable modules are
+/// walked afterwards in a stable order.
 /// </remarks>
 public static class Cycles
 {

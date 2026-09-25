@@ -78,44 +78,26 @@ public readonly record struct PortNormal(string TypeId, int Port = 0);
 /// <param name="Min">Lower end of the slider range in the editor.</param>
 /// <param name="Max">Upper end of the slider range in the editor.</param>
 /// <param name="NormalledFrom">
-/// Index of an earlier input this one falls back to when nothing is patched in,
-/// or -1 to fall back to <paramref name="Default"/> — the hardware normalled
-/// jack, where leaving the right channel unpatched carries the left through.
+/// Index of an earlier input this one falls back to when unpatched, or -1 for
+/// <paramref name="Default"/>, like a normalled right-channel jack.
 /// </param>
 /// <param name="Display">How the editor should write the value out.</param>
 /// <param name="NormalledTo">
-/// A hidden module driving this input while nothing is patched into it, or null
-/// to rest on <paramref name="Default"/>. A wire overrides it exactly as a wire
-/// overrides a knob, and unplugging brings it back. Such a socket has no knob to
-/// turn while the normal holds; a patch that wants a constant there adds a Value
-/// module.
+/// A hidden module driving this input while unpatched, or null to rest on
+/// <paramref name="Default"/>. Such a socket has no knob; a wire overrides it.
 /// </param>
 /// <param name="Domain">
 /// True when this input is the axis the module is read across rather than a value
-/// it uses. A constant is never sensible on one: an oscillator that does not move
-/// produces a fixed value and a sequencer sits on one step, both of which compile
-/// perfectly, which is what made a domain left alone the one mistake nothing
-/// could catch. Every domain in the catalog is <paramref name="NormalledTo"/>
-/// Time; the complaint survives for one normalled to nothing.
+/// it uses, so a constant on it is always a mistake.
 /// </param>
 /// <param name="Swept">
-/// True when the module reads this input over a domain of its own making rather
-/// than over the pixel's. The compiler leaves it unresolved and hands the module
-/// a way to resolve it itself, so whatever it does to the domain first is in
-/// force before everything upstream is lowered — see
-/// <see cref="EmitContext.Resolve"/>. The opposite of
-/// <paramref name="Domain"/>: read under a domain the module supplies rather than
-/// across one the port names.
+/// True when the module reads this input over a domain of its own making; the
+/// compiler leaves it for the module to resolve with <see cref="EmitContext.Resolve"/>.
 /// </param>
 /// <param name="PatchOnly">
-/// True when <paramref name="Default"/> is a filler rather than a setting — a
-/// value nobody dials, kept only so the compiler has something to read when
-/// nothing is wired in. The editor draws no knob for one: a row that moved
-/// nothing would be worse than a row that is not there, so it names what the
-/// socket does instead — see <c>Inspector.BuildInputRow</c>. Every
-/// <see cref="PortKind.Color"/> input qualifies on its kind alone, per
-/// <c>docs/adr/0009-editable-defaults-on-every-input.md</c>: a single float
-/// cannot hold a color, so an unwired one is a broadcast gray nothing chose.
+/// True when <paramref name="Default"/> is only a filler for the compiler, so
+/// the editor draws no knob for it. Every <see cref="PortKind.Color"/> input
+/// qualifies (ADR-0009).
 /// </param>
 public readonly record struct PortSpec(
     string Name,

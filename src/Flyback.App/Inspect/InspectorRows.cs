@@ -310,28 +310,15 @@ internal sealed class InspectorRows(Action<string?> changed, Action handOff)
     }
 
     /// <summary>
-    /// A label, a slider, a number box, and — where the number is not what it means
-    /// — what it does mean written beside them.
+    /// A label, a slider, a number box, and what the number means where it needs saying.
+    /// Shared by socket knobs and plugins' number fields.
     /// </summary>
-    /// <remarks>
-    /// Shared by a socket's knob and by a plugin's declared number field, so a
-    /// plugin gets snapping, formatting and the widened range for nothing. The
-    /// caller says where the value lives; nothing here knows whether that is an
-    /// input array or a stored object.
-    /// </remarks>
     /// <param name="label">What to write in the left column.</param>
     /// <param name="spec">The range, the display and whether it snaps.</param>
     /// <param name="value">What it starts at.</param>
-    /// <param name="because">
-    /// What to file the edit under, so dragging is one undo step rather than one
-    /// per frame.
-    /// </param>
+    /// <param name="because">The undo name, so a drag is one step.</param>
     /// <param name="store">Where the new value goes.</param>
-    /// <param name="reading">
-    /// Whether the panel reserves a column for a reading at all — see
-    /// <see cref="ShowsReading"/>. A row whose socket has nothing to say there
-    /// still gets the column when a neighbor needs it.
-    /// </param>
+    /// <param name="reading">Whether the panel reserves a reading column (<see cref="ShowsReading"/>).</param>
     /// <param name="reads">What the value means where the socket's own display cannot say, as an Auto remap's fraction does.</param>
     /// <param name="flag">Why the number box is outlined, or null to leave it plain.</param>
     internal Control ValueRow(

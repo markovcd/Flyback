@@ -3,36 +3,22 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A whole chiptune track — a hundred and four bars of a game's first level, from the
-/// title screen to the key change — played on the four voices a console had, then
-/// mastered the way nobody could master them at the time, under a side-scroller drawn a
-/// pixel at a time.
+/// A 104-bar chiptune track on a console's four voices, mastered, under a
+/// pixel-drawn side-scroller.
 /// </summary>
 /// <remarks>
-/// The voices are the console's and are built the way its chip built them. The two
-/// melodic ones are pulses with the three widths it had — an eighth, a quarter and a
-/// half — so a change of part is a change of width rather than of patch. The bass is a
-/// triangle read through sixteen steps, which is the buzz under a real one. And the drums
-/// are noise that is held for a sample of a slower clock rather than being white, which
-/// is what makes chip noise crunch instead of hiss. Chords are what the chip could not
-/// play, so as it did, the arp plays one a note at a time at thirty-seconds, fast enough
-/// that the ear hears the chord.
+/// The voices are built as the chip built them: pulses at an eighth, a quarter and a
+/// half width, a sixteen-step triangle bass, and noise held on a slower clock so it
+/// crunches rather than hisses. Chords are arpeggiated at thirty-seconds.
 /// <para>
-/// The harmony is written three times, once for each progression, as twenty-four bars
-/// on one list, and the arrangement chooses among them by moving the list's input: the
-/// count of beats into the phrase, plus thirty-two for each progression over the first.
-/// A melody is a list of its own, and a lane says which melody, if any, the lead plays.
-/// Nothing but the key change moves every part at once, and it is one number added to
-/// every pitch before its Note.
+/// The three progressions share one list, picked by offsetting its input by 32 beats
+/// per progression; each melody is a list of its own. The key change is one number
+/// added to every pitch.
 /// </para>
 /// <para>
-/// What is new is the end of the chain. Everything pitched goes through a Duck keyed by
-/// the kick, so the music ducks under every hit; then the drums are added
-/// back, and an EQ, a Width and a Limiter finish it. The width has something to widen
-/// because the arp leans left and the harmony right, as two pulse channels on a pair of
-/// speakers would. It is a Limiter rather than the Maximizer because the Maximizer is
-/// three compressors and a limiter on each side, which is as many ops again as the
-/// three melodies, and the sound has to run live.
+/// Everything pitched is ducked by the kick, then the drums rejoin through an EQ, a
+/// Width and a Limiter. A Limiter rather than the Maximizer, which would double the
+/// op count and not run live.
 /// </para>
 /// </remarks>
 internal sealed class OverworldPreset : PresetBench

@@ -85,22 +85,11 @@ public partial class NodeCatalog
     /// repeats. Schroeder's arrangement with Moorer's correction.
     /// </summary>
     /// <remarks>
-    /// A comb with a plain gain returns every repeat as bright as the one before,
-    /// which is the metallic ring that gives a cheap reverb away — no real space does
-    /// it, because air and soft surfaces take the top off every reflection. A
-    /// one-pole lowpass inside each loop is the whole of that, cornered at
-    /// <see cref="ReverbAbsorption"/>.
-    /// <para>
-    /// The rest is density: eight combs and four allpasses fill the gaps between
-    /// early repeats that would otherwise be heard as separate events. The comb
-    /// delays wander by a fraction of a percent under mutually prime sines, which
-    /// stops a sustained note settling into a standing pattern.
-    /// </para>
-    /// <para>
-    /// <c>out</c> and <c>wide</c> share one comb bank and part company at the
-    /// allpasses. Two full banks would decorrelate the tail's envelope as well as its
-    /// smear, and would double the seventeen delay lines this reads every sample.
-    /// </para>
+    /// A one-pole lowpass in each comb loop, cornered at
+    /// <see cref="ReverbAbsorption"/>, stops the metallic ring of a plain-gain comb.
+    /// The comb delays wander slightly under mutually prime sines so a held note
+    /// never settles into a standing pattern. <c>out</c> and <c>wide</c> share the
+    /// comb bank and split at the allpasses.
     /// </remarks>
     private static NodeDef Reverb() => new(
         ReverbTypeId, "Reverb", ModuleCategories.TimeEffects,

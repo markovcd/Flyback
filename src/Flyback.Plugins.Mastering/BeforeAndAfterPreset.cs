@@ -8,22 +8,10 @@ namespace Flyback.Plugins.Mastering;
 /// only thing that changes.
 /// </summary>
 /// <remarks>
-/// Mastering is heard by comparison or not at all: a mix that has been through a
-/// chain sounds like a mix, and only the same bars without it say what was done.
-/// So the patch is its own A/B. Four bars raw, four bars mastered, crossed over a
-/// fraction of a beat so the switch is a change rather than a click.
-/// <para>
-/// The mix is left the way a first mix usually is: the kick well over everything,
-/// the pluck too quiet to follow. That is the material a chain has something to
-/// say about — tone first, so the compressor is not pumped by rumble it would
-/// have cut anyway; then the compressor, which brings the kick down towards the
-/// rest; then the Maximizer, which brings all of it up to the ceiling.
-/// </para>
-/// <para>
-/// The three parts are the engine's own modules, so the preset asks for no plugin
-/// but this one. Nothing is drawn: every module in the chain keeps its state in
-/// cells, which the picture has none of.
-/// </para>
+/// The switch crossfades over a fraction of a beat so it does not click. The mix
+/// is deliberately rough (the kick too loud, the pluck too quiet): EQ removes
+/// rumble before the compressor tames the kick, and the Maximizer brings it all to
+/// the ceiling. No picture, since the chain's state lives in cells.
 /// </remarks>
 internal static class BeforeAndAfterPreset
 {

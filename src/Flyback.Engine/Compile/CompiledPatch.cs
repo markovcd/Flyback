@@ -270,30 +270,18 @@ public sealed class CompiledPatch(
     /// <summary>Runs the program for one pixel. <paramref name="registers"/> is reused across pixels.</summary>
     /// <param name="feedback">The frame before this one, for <see cref="OpCode.SampleFeedback"/> to read. Empty on the first frame and off the audio path.</param>
     /// <param name="delays">
-    /// Memory for the stateful ops, or null when there is none — which is what
-    /// the video path passes, since rows render in parallel and a shared delay
-    /// line has no meaning per pixel. Without it a delay hands its input straight
-    /// through, so a patch built for the speakers still shows a picture.
+    /// Memory for the stateful ops, or null on the picture path, where a delay
+    /// passes its input straight through.
     /// </param>
-    /// <param name="x">Horizontal position, widened by the aspect ratio. Pinned to zero on the audio path.</param>
-    /// <param name="y">Vertical position, -1 at the bottom to 1 at the top. Pinned to zero on the audio path.</param>
-    /// <param name="t">Seconds since the patch started, which is the only one of the three that moves for the ear.</param>
-    /// <param name="registers">Scratch for the whole program, sized by <see cref="RegisterCount"/> and reused across pixels.</param>
-    /// <param name="aspect">
-    /// How far <paramref name="x"/> reaches at the edge of the frame, for
-    /// <see cref="OpCode.LoadAspect"/>. Defaults to a square picture.
-    /// </param>
-    /// <param name="live">
-    /// What is being played into the program from outside it, or null when
-    /// nothing is — an offline render, a test and a headless compile all have
-    /// nobody at the keys, and there every live input reads zero.
-    /// </param>
+    /// <param name="x">Horizontal position, widened by the aspect ratio. Zero on the audio path.</param>
+    /// <param name="y">Vertical position, -1 at the bottom to 1 at the top. Zero on the audio path.</param>
+    /// <param name="t">Seconds since the patch started.</param>
+    /// <param name="registers">Scratch sized by <see cref="RegisterCount"/>.</param>
+    /// <param name="aspect">How far <paramref name="x"/> reaches at the frame's edge, for <see cref="OpCode.LoadAspect"/>.</param>
+    /// <param name="live">What is played in from outside, or null for all zeros.</param>
     /// <param name="planes">
-    /// This pixel's own cells, one per plane the program keeps, or empty where
-    /// there are none — which is what a caller with no picture to keep them for
-    /// passes, and there a loop reads zero and stays open. The speakers keep
-    /// theirs in <paramref name="delays"/> instead, since one evaluation follows
-    /// another there and a pixel's neighbours do not.
+    /// This pixel's plane cells, or empty for none, where a loop reads zero. The
+    /// speakers keep theirs in <paramref name="delays"/>.
     /// </param>
     public void Evaluate(
         double x,

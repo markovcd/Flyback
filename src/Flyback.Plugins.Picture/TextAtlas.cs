@@ -8,25 +8,12 @@ namespace Flyback.Plugins.Picture;
 /// green.
 /// </summary>
 /// <remarks>
-/// A picture because a program cannot hold a string and cannot index a list: the
-/// one thing it can look something up in by a number it computed is a texture,
-/// and <see cref="OpCode.SamplePicture"/> is that on both backends. So which line
-/// shows is where the picture is read, and choosing it costs one multiply rather
-/// than a window per line the way a sequencer's step does.
-/// <para>
-/// Distance rather than ink, because the texture is eight bits a channel and
-/// filtered: ink stretched to a whole frame would be a blur, where a distance
-/// filtered between two texels is still a distance and its zero is still a
-/// sharp edge. It is exact rather than estimated — a glyph is a union of squares,
-/// and the distance to a square has a formula — and good to <see cref="Reach"/>
-/// font pixels either side of an edge, past which it is held.
-/// </para>
-/// <para>
-/// Green is the share of the line that has to be revealed before the letter
-/// nearest this texel shows, so a typewriter is one comparison. Nearest rather
-/// than the cell the texel is in, so a hidden letter's edge never shows in the
-/// gap beside the letter before it.
-/// </para>
+/// A texture is the only thing a program can index by a computed number
+/// (<see cref="OpCode.SamplePicture"/>), so picking a line is one multiply.
+/// Distance rather than ink keeps edges sharp through 8-bit filtering; it is
+/// exact and clamped at <see cref="Reach"/> font pixels. Green belongs to the
+/// nearest letter, not the texel's cell, so a hidden letter never bleeds into
+/// its neighbor's gap.
 /// </remarks>
 /// <param name="Image">The bands, top to bottom.</param>
 /// <param name="Font">What the letters are drawn in.</param>

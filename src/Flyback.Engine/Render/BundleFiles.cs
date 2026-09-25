@@ -8,29 +8,16 @@ namespace Flyback.Core.Render;
 /// for a patch whose sounds and pictures are bytes in memory.
 /// </summary>
 /// <remarks>
-/// <see cref="SampleLibrary"/> and <see cref="ImageLibrary"/> answer for a folder;
-/// this answers for an archive, which is what lets the command line draw a bundle
-/// on a machine that has none of its files loose. One class for both kinds where
-/// the folder has two, because those share only their caching and this shares its
-/// whole contents — one dictionary of bytes, differing in which reader is handed
-/// the stream. Decoded on the first ask and kept, since every edit recompiles the
-/// whole patch (ADR-0021).
+/// The archive counterpart of <see cref="SampleLibrary"/> and
+/// <see cref="ImageLibrary"/>, one class since both read the same bytes. Decoded
+/// on first ask and kept, since every edit recompiles the whole patch (ADR-0021).
 /// </remarks>
-/// <param name="files">
-/// The archive's entries, keyed by the path the patch names them by — which is the
-/// path the packer wrote into it.
-/// </param>
+/// <param name="files">The archive's entries, keyed by the path the patch names them by.</param>
 /// <param name="behindSounds">
-/// Where a sound this does not hold is looked for instead, and null where there is
-/// nowhere.
+/// Where a sound the bundle lacks is looked for, or null. Lets an edited bundle
+/// point at files on disk.
 /// </param>
 /// <param name="behindPictures">The same, for a picture.</param>
-/// <remarks>
-/// The two behinds are what make a bundle editable rather than only readable:
-/// somebody working on one may point a module at something on their own machine,
-/// and asking the folder for it is the whole of what has to happen. The command
-/// line passes neither.
-/// </remarks>
 public sealed class BundleFiles(
     IReadOnlyDictionary<string, byte[]> files,
     ISampleLibrary? behindSounds = null,

@@ -8,23 +8,11 @@ namespace Flyback.Plugins.Picture;
 /// them as soft as it is asked to be.
 /// </summary>
 /// <remarks>
-/// The hard versions are already in the catalog — union is Minimum, intersection
-/// is Maximum, difference is the maximum of a and the negative of b — which is the
-/// argument for the distance convention rather than a fact about this module.
-/// <para>
-/// What this adds is the seam. A minimum has a crease wherever its arguments
-/// cross, so two blobs meeting under one look like two blobs overlapping; the
-/// polynomial smooth minimum replaces the crossing with a short quadratic blend,
-/// and what comes out still measures roughly what it did. All three are one blend
-/// read three ways, so intersection costs two ops on top of union; difference has
-/// to be worked out again, blending a against a shape turned inside out.
-/// </para>
-/// <para>
-/// At a smoothness of nothing all three are exactly the hard versions. The knob is
-/// held a hair above zero, because the blend divides by its own width and a Divide
-/// by nothing is nothing here — which would average the two shapes rather than
-/// choose between them.
-/// </para>
+/// The hard versions are Minimum, Maximum, and the maximum of a and -b; this adds
+/// the polynomial smooth minimum's quadratic blend at the seam. Intersection
+/// reuses union's blend; difference blends a against an inverted b. Smoothness is
+/// held a hair above zero, since Divide by zero gives zero here and would average
+/// the shapes.
 /// </remarks>
 internal static class CombineModule
 {

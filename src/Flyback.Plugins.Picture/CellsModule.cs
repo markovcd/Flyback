@@ -8,27 +8,16 @@ namespace Flyback.Plugins.Picture;
 /// scales, stone.
 /// </summary>
 /// <remarks>
-/// Worley's construction: the plane is cut into a grid, one point is scattered in
-/// each square, and every pixel measures the nine squares around it — a point next
-/// door can be nearer than your own, and there is no way to look at fewer in a
-/// program with no branches.
+/// Worley noise: one point per grid square, and every pixel checks the nine
+/// squares around it, since a program without branches cannot check fewer.
 /// <para>
-/// Each square costs two noise lookups, which is nearly all of the price. What is wanted
-/// is a hash, and the machine has no hash op: the usual
-/// <c>fract(sin(x) * 43758.5)</c> turns rounding error into randomness and gives
-/// a different answer at every precision, so the interpreter and the shader would
-/// draw different cells. The noise op is the only agreed randomness there is — sampled
-/// far apart, so squares next door land in unrelated parts of the field. That
-/// makes this the dearest module in the catalog: eighteen noise lookups a pixel
-/// against a Fractal's eight, which on the processor is seconds rather than
-/// milliseconds for a still.
+/// Each square takes two noise lookups in place of a hash, because the usual
+/// <c>fract(sin(x) * 43758.5)</c> differs between the interpreter and the shader.
+/// Eighteen lookups a pixel make this the dearest module in the catalog.
 /// </para>
 /// <para>
-/// Three readings off the one pass. 'distance' shades each cell from its middle
-/// outward; 'edge' is how much further the second nearest is, and so goes to
-/// nothing on the line between two cells; 'cell' is a number belonging to the
-/// square that won, which is the only value here constant across a region and
-/// discontinuous at its border.
+/// 'distance' is to the nearest point, 'edge' is how much further the second
+/// nearest is (zero on a border), and 'cell' is a number constant across each cell.
 /// </para>
 /// </remarks>
 internal static class CellsModule

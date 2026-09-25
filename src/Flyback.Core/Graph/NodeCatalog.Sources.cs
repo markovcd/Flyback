@@ -136,24 +136,13 @@ public partial class NodeCatalog
     /// arrives at as the start of the clip.
     /// </summary>
     /// <remarks>
-    /// The trigger runs no playhead of its own: it remembers where 'in' had got to
-    /// at the last edge, and what is read is the difference — so retriggering
-    /// falls out rather than being handled. An edge and not a level, the opposite
-    /// of the Quantiser's 'hold' and right for the opposite reason: "start again"
-    /// is an instant, so a trigger of any width works.
+    /// On a rising edge it remembers where 'in' was and reads the difference, so a
+    /// trigger of any width restarts the clip. Unwired, the trigger stays low and
+    /// the position is 'in' itself; wired, the clip still plays once at the start.
     /// <para>
-    /// The socket rests low, which is what lets it be optional: a knob at nought
-    /// never rises, so the position is <c>in</c> itself. Resting it high would
-    /// take the zero from wherever <c>in</c> was on the first evaluation, which is
-    /// not nought for a clip being played backwards. The cost is that a player
-    /// with a trigger wired in still plays once as the patch begins; a gate on the
-    /// output from the same trigger is the patch-level fix.
-    /// </para>
-    /// <para>
-    /// Two cells: where the clip is being read from, written as a clock rather
-    /// than a signal — see <see cref="Emitter.ClockWrite"/>, since a signal's
-    /// rails would stop it sixteen seconds in — and the trigger as it was, which
-    /// is what makes an edge an edge.
+    /// Two cells: the edge-time position, written with
+    /// <see cref="Emitter.ClockWrite"/> so it is not clamped at sixteen seconds,
+    /// and the previous trigger.
     /// </para>
     /// </remarks>
     private static Slot[] EmitSample(Emitter em, EmitContext node)

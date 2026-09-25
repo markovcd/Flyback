@@ -7,22 +7,11 @@ namespace Flyback.Core.Compile;
 /// fills.
 /// </summary>
 /// <remarks>
-/// <see cref="DelayState"/> for the eye, and much the cheaper of the two to
-/// reason about, because a plane is strictly local: a pixel sees only its own
-/// cells, so there is no second buffer to ping-pong and rows may still be drawn
-/// in parallel. <see cref="FeedbackFrame"/> is the nonlocal half — a whole frame
-/// kept because it may be sampled at any coordinate — and costs accordingly.
-/// <para>
-/// Laid out pixel-major: a pixel's planes sit next to each other, so a run of the
-/// program touches one short stretch of this rather than one word in each of
-/// several large arrays, and the renderer can hand the interpreter a span of
-/// exactly the cells that pixel owns.
-/// </para>
-/// <para>
-/// <see cref="float"/> where a register is double, for the reason
-/// <see cref="FeedbackFrame"/> is: this is the state whose size is counted per
-/// pixel, and at 1920×1080 one plane is 8 MB. See ADR-0074.
-/// </para>
+/// The picture's <see cref="DelayState"/>. A pixel sees only its own cells, so
+/// there is no ping-pong buffer and rows still draw in parallel, unlike
+/// <see cref="FeedbackFrame"/>. Laid out pixel-major so each pixel gets one
+/// contiguous span. Stored as <see cref="float"/>, since one 1080p plane is
+/// already 8 MB (ADR-0074).
 /// </remarks>
 public sealed class PlaneState
 {

@@ -8,24 +8,14 @@ namespace Flyback.Plugins.Picture;
 /// Clouds at several sizes at once, which is what makes it look like something.
 /// </summary>
 /// <remarks>
-/// One octave of value noise is a field of blobs all the same size, and nothing
-/// looks like that; everything looks like a large shape with a smaller one on it.
-/// Adding octaves — each twice the frequency and a fraction of the height of the
-/// one before — is the whole of how that is made.
+/// Each octave is twice the frequency and a fraction of the height of the last.
+/// 'smooth' sums them as they are (cloud); 'folded' sums their distance from the
+/// middle, creasing where the noise crosses it (smoke, flame, metal). One minus
+/// 'folded' gives ridges.
 /// <para>
-/// Two readings of the same sum: 'smooth' adds the octaves as they come and is
-/// cloud, where 'folded' adds their distance from the middle and is smoke, flame
-/// and beaten metal, because folding at the midline puts a crease everywhere the
-/// noise crossed it. Subtracting 'folded' from one turns those creases into
-/// ridges, which is one Subtract rather than a third output.
-/// </para>
-/// <para>
-/// The octave count is not a socket, because it decides how long the program is
-/// rather than what it computes: a socket would have to cover eight however few
-/// were asked for, and every patch would pay for the most anybody might want. So
-/// it is carried on the node (ADR-0051) and declared rather than drawn
-/// (ADR-0055). 'z' is scaled with x and y, so fine detail churns faster than the
-/// broad shape — which is what a cloud does.
+/// The octave count sets the program's length, so it is a node setting
+/// (ADR-0051, ADR-0055) rather than a socket. 'z' scales with x and y, so fine
+/// detail churns faster than the broad shape.
 /// </para>
 /// </remarks>
 internal static class FractalModule

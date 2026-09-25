@@ -14,27 +14,12 @@ public readonly record struct SettingOption(string Id, string Name);
 /// One setting a plugin has, described rather than drawn.
 /// </summary>
 /// <remarks>
-/// The declarative route ADR-0055 took for a plugin's carried state, taken again
-/// for its settings: the plugin says what it has and the App draws it, so no
-/// plugin ships a control. An assistant declares its form this way (ADR-0069),
-/// and so does a sound backend (ADR-0085).
-/// <para>
-/// <b>A credential is never a field</b> (ADR-0034): a plugin that declared
-/// somewhere to type one would be a plugin whose settings file held it in plain
-/// text. What an assistant says about its key is
-/// <see cref="Assist.AssistantCredential"/>.
-/// </para>
-/// <para>
-/// A value is a string whatever the shape — a switch is one or nought, a choice is
-/// the id it chose — which keeps the settings file readable by hand. The
-/// vocabulary is short on purpose, and every shape in it is public API that cannot
-/// be withdrawn.
-/// </para>
+/// The plugin declares, the App draws (ADR-0055, ADR-0069, ADR-0085). A
+/// credential is never a field, since it would land in the settings file in plain
+/// text (ADR-0034); see <see cref="Assist.AssistantCredential"/>. Every value is
+/// stored as a string, and every shape here is public API.
 /// </remarks>
-/// <param name="Key">
-/// What this value is filed under. Stable: it is in the settings file of everybody
-/// who has ever configured this plugin.
-/// </param>
+/// <param name="Key">What this value is filed under in the settings file; never change it.</param>
 /// <param name="Label">What the form writes beside it.</param>
 public abstract record SettingField(string Key, string Label)
 {

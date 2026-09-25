@@ -7,26 +7,12 @@ namespace Flyback.Plugins.Assist;
 /// prose it keeps when that is not all of it.
 /// </summary>
 /// <remarks>
-/// Every module's description goes into the briefing while the whole briefing fits
-/// in <paramref name="Budget"/> characters. Past that, the modules in
-/// <paramref name="Priority"/> keep theirs whatever it costs, the rest keep theirs
-/// in catalog order for as long as they fit in what is left, and the assistant is
-/// handed <c>describe_module</c> to look up the ones that did not. Filled rather
-/// than cut off, so one plugin too many costs the descriptions it does not have
-/// room for and no others.
-/// <para>
-/// Decided by the catalog and nothing else, so the canvas can mark the same
-/// modules the briefing leaves out without a conversation to ask, and the briefing
-/// stays the same bytes from one request to the next (see <see cref="Handbook"/>).
-/// </para>
-/// <para>
-/// The list of presets has room of its own, set aside before any of this, and takes
-/// whatever the modules leave: descriptions while they fit, then names while they do.
-/// </para>
-/// <para>
-/// The briefing runs over <paramref name="Budget"/> only by what cannot be cut: every
-/// module's header and sockets, the priority descriptions and the presets' notes.
-/// </para>
+/// Every description goes in while the briefing fits <paramref name="Budget"/>
+/// characters. Past that, <paramref name="Priority"/> keeps its descriptions, the
+/// rest fill what is left in catalog order, and <c>describe_module</c> covers the
+/// ones left out. It depends on the catalog alone, so the canvas can mark the
+/// same modules and the briefing stays byte-stable (<see cref="Handbook"/>).
+/// Presets have their own reserved room.
 /// </remarks>
 /// <param name="Budget">The most characters the whole briefing may run to.</param>
 /// <param name="Priority">Type ids whose descriptions are never left out.</param>

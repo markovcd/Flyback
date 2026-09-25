@@ -8,22 +8,16 @@ namespace Flyback.App.Midi;
 /// of a scale.
 /// </summary>
 /// <remarks>
-/// The piano is the tracker layout, which everybody who has played one already
-/// knows: the bottom row is the white notes with the black ones over the gaps
-/// above, and the two rows above that are the same shape an octave up.
+/// The piano is the tracker layout: white notes on the bottom row, black notes
+/// above the gaps, and the upper two rows the same an octave up.
 /// <para>
-/// The scale is a row an octave: the notes that are picked, next to each other
-/// from the left, with the home row where the piano's lower octave is, the row
-/// above it an octave up and the row below an octave down. A row holds as many
-/// notes as are picked and no more, so the keys past the last one play nothing
-/// — every key then means the same note wherever the octave is, and the key
-/// under a finger is always the same degree of the scale. The bottom row has
-/// ten keys, so a scale of eleven or twelve loses its top notes there.
+/// The scale puts one octave per row, home row in the middle, with the picked
+/// notes from the left and the rest of the row silent, so each key is always the
+/// same degree. The bottom row has ten keys, so it drops the top of an eleven- or
+/// twelve-note scale.
 /// </para>
 /// <para>
-/// Keyed by <see cref="Key"/> rather than the character typed, so it stays a piano on
-/// a keyboard whose letters are somewhere else. What it costs is that the printed
-/// letters will not match the notes — the same trade every game using WASD makes.
+/// Keyed by physical <see cref="Key"/>, so the layout holds on any keyboard language.
 /// </para>
 /// </remarks>
 internal sealed class ComputerKeyboard

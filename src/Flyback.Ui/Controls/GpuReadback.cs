@@ -11,24 +11,16 @@ namespace Flyback.App.Controls;
 /// recording. Nothing else in the program reads a pixel off the card.
 /// </summary>
 /// <remarks>
-/// <see cref="GlInterface"/> carries no <c>glReadPixels</c> — Avalonia binds what
-/// it draws with, and it never reads back — so the three entry points this needs
-/// come through <see cref="GlInterface.GetProcAddress"/>, the same door Avalonia's
-/// own bindings use.
+/// <see cref="GlInterface"/> lacks <c>glReadPixels</c>, so its entry points come
+/// through <see cref="GlInterface.GetProcAddress"/>.
 /// <para>
-/// Two pixel buffers, alternating: the read is issued into one while the other,
-/// last frame's, is mapped and copied. The frame handed on is one behind the
-/// screen, which is the whole price of not stopping the pipeline. Where buffers
-/// cannot be mapped the read goes straight into memory and stalls, which is better
-/// than no recording.
+/// Two alternating pixel buffers keep the pipeline moving at the cost of one frame
+/// of lag; without mappable buffers the read stalls instead.
 /// </para>
 /// <para>
-/// <b>The frame is resolved to eight bits before it is read.</b> Reading a float
-/// surface as bytes is not a combination <c>glReadPixels</c> must accept — ES
-/// answers <c>GL_INVALID_OPERATION</c> and leaves a buffer of zeroes that looks
-/// like a patch which drew black — so it is blitted into an <c>RGBA8</c> target
-/// first, which also keeps the transfer at four bytes a pixel. Every read is
-/// followed by <c>glGetError</c>, because silence is the failure mode that matters.
+/// The float surface is blitted to <c>RGBA8</c> before reading, since ES rejects
+/// a float-to-byte read and leaves a black frame. Every read checks
+/// <c>glGetError</c>, because the failure is otherwise silent.
 /// </para>
 /// </remarks>
 internal sealed class GpuReadback

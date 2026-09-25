@@ -169,29 +169,16 @@ public static class PatchLayout
     /// <param name="modules">Which catalog the type ids mean, defaulting to the installed one.</param>
     /// <param name="metrics">How big the nodes are, defaulting to the editor's own.</param>
     /// <param name="only">
-    /// The modules to place, or null for every one of them. Given a few, the rest of
-    /// the patch is not touched and the drawing lands on the middle of where those
-    /// few were rather than on the middle of the canvas, so a corner of a patch
-    /// tidies itself where it stands — over a module nobody picked, if that is where
-    /// it falls. A box with a module outside the set in it is left alone whole, since
-    /// a box is drawn from where all of its modules are. See ADR-0110.
+    /// The modules to place, or null for all. Given a few, the rest stay put and
+    /// the drawing centers on where those few were; a box holding any module
+    /// outside the set is left whole (ADR-0110).
     /// </param>
     /// <remarks>
-    /// A drawing wider than the canvas is narrowed by shutting a box rather than by
-    /// squeezing, because there is nothing there to squeeze: an open group is a ring
-    /// round a sub-drawing of its own, so a row of long ones can want half again the
-    /// room there is, and closing every gap in the drawing to nothing does not win
-    /// that back. Shut, a box is one module wide and the columns are otherwise
-    /// untouched — a group is one block either way, so what changes is a width and
-    /// not the shape of the drawing. Which box goes is <see cref="Worst"/>'s to say,
-    /// and the fewest go. See ADR-0092.
-    /// <para>
-    /// And where there is nothing left to shut and it is still too big, nothing
-    /// moves at all. <see cref="NodeInstance.X"/> holds every coordinate inside the
-    /// canvas, so writing that drawing would fold its far edges onto the boundary
-    /// and stack them — and a heap against the edge is worse than the tangle the
-    /// button was pressed on. It is the caller's to say so instead.
-    /// </para>
+    /// A drawing wider than the canvas is narrowed by shutting the fewest boxes
+    /// <see cref="Worst"/> picks, since an open group has no slack to squeeze
+    /// (ADR-0092). If it still does not fit, nothing moves:
+    /// <see cref="NodeInstance.X"/> clamps to the canvas and would pile the far
+    /// edges up, so the caller reports it instead.
     /// </remarks>
     public static Arrangement Arrange(
         Patch patch,

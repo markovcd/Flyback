@@ -21,25 +21,13 @@ public enum GlslDialect
 /// Length of the <c>uK</c> array. Every <see cref="OpCode.Const"/> is a uniform
 /// rather than a literal — see <see cref="GlslEmitter"/>.
 /// </param>
-/// <param name="UsesFeedback">
-/// Whether the fragment shader reads <c>uPrevious</c>. A patch without a Feedback
-/// module needs no texture bound and no previous frame kept.
-/// </param>
-/// <param name="LiveCount">
-/// Length of the <c>uLive</c> array. Uploaded per frame rather than per program,
-/// unlike <c>uK</c>: a knob changes when somebody edits the patch, a key while
-/// they are looking at it.
-/// </param>
-/// <param name="PictureCount">
-/// How many textures the fragment shader wants bound. They are the patch's own
-/// <see cref="CompiledPatch.Pictures"/>, in that order, so the uploader reads the
-/// pixels off the program rather than out of here.
-/// </param>
+/// <param name="UsesFeedback">Whether the fragment shader reads <c>uPrevious</c>.</param>
+/// <param name="LiveCount">Length of the <c>uLive</c> array, uploaded every frame.</param>
+/// <param name="PictureCount">How many textures to bind, from <see cref="CompiledPatch.Pictures"/> in order.</param>
 /// <param name="PlaneTargets">
-/// How many render targets the fragment shader writes besides the picture, one
-/// per four planes the patch carries — see <see cref="OpCode.PlaneRead"/>. Their
-/// outputs are named <c>outPlane0</c> upward and take locations 1 upward; the
-/// textures they were written to last frame come back as <c>uPlane0</c> upward.
+/// Extra render targets, one per four planes (<see cref="OpCode.PlaneRead"/>):
+/// written as <c>outPlane0</c> up at locations 1 up, read back next frame as
+/// <c>uPlane0</c> up.
 /// </param>
 public sealed record ShaderSource(
     string PatchVertex,

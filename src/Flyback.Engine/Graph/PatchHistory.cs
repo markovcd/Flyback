@@ -93,24 +93,13 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// </summary>
     /// <param name="patch">The document as it now stands, read rather than kept, so the caller may go on editing this.</param>
     /// <param name="coalesce">
-    /// Names the gesture an edit came from, when it is one a hand holds down: a
-    /// slider being dragged makes an edit a frame, and consecutive edits sharing a
-    /// name are one step. Null for anything discrete.
-    /// <para>
-    /// A name cannot say when a gesture is over — <see cref="GestureEnded"/> does
-    /// that — so a caller naming its gestures after the control they came from has
-    /// to say it, or every drag of that control is one step.
-    /// </para>
+    /// The held gesture this edit belongs to, or null. Consecutive edits with the
+    /// same name are one step until <see cref="GestureEnded"/>.
     /// </param>
-    /// <param name="mark">
-    /// Anything the caller keeps beside the patch that this edit also changed, so
-    /// stepping back through the edit steps back through that too. Held opaquely:
-    /// an undo hands back whatever was passed with the step it arrives at.
-    /// </param>
+    /// <param name="mark">Opaque caller state handed back when undo reaches this step.</param>
     /// <returns>
-    /// Whether this made a step — false for an edit that changed nothing, for a
-    /// frame of a gesture folded into the step before it, and for the first patch
-    /// a caller records without opening one.
+    /// Whether this made a step: false for no change, a coalesced frame, or the
+    /// first patch recorded without opening one.
     /// </returns>
     public bool Record(Patch patch, string? coalesce = null, object? mark = null)
     {

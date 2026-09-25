@@ -7,30 +7,12 @@ namespace Flyback.Plugins.Picture;
 /// A regular polygon, from a triangle up.
 /// </summary>
 /// <remarks>
-/// A convex polygon is the intersection of as many half-planes as it has edges,
-/// which written out would be one Max per side and a different program for every
-/// count. Written the other way about — the plane found by folding the bearing —
-/// the module is the same fifteen ops whether it draws a triangle or a
-/// sixteen-sided one, and the count can be a signal.
-/// <para>
-/// The fold is a <c>fract</c> rather than a <c>mod</c>: both wrap, and only the
-/// first has one meaning for a negative input on both backends. What comes out is
-/// the bearing to the nearest edge's midpoint, and <c>cos</c> of it is the
-/// distance to that edge's plane.
-/// </para>
-/// <para>
-/// The bearing is taken from straight up and the wedges hung either side, so there
-/// is always a corner at the top; the alternative puts a flat at the top of odd
-/// counts and a corner at the top of even ones. <see cref="StarModule"/> is folded
-/// the same way, so a star and a polygon of the same count point the same way.
-/// </para>
-/// <para>
-/// Exact inside, and outside everywhere the nearest thing is an edge; beyond a
-/// corner it reads a little less than the truth, which is invisible in a fill and
-/// worth knowing before dilating one by a large amount. 'sides' is floored,
-/// because a polygon of five and a half sides has a seam where the fold does not
-/// close.
-/// </para>
+/// Folding the bearing into one wedge finds the nearest edge, so any side count
+/// costs the same fifteen ops and can be a signal. The fold is <c>fract</c>, not
+/// <c>mod</c>, which disagrees across backends on negatives. A corner is always on
+/// top, as in <see cref="StarModule"/>. The distance undershoots past a corner, so
+/// large dilations round off; 'sides' is floored since a fractional count leaves
+/// a seam.
 /// </remarks>
 internal static class PolygonModule
 {

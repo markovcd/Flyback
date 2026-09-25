@@ -3,30 +3,21 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// Drum and bass at a hundred and seventy, turning into IDM: a break that is
-/// synthesized rather than sampled and then chopped anyway, over a Reese bass, and a
-/// picture that is cut into strips by the same list that cuts the drums.
+/// Drum and bass at 170 turning into IDM: a synthesized break, chopped, over a
+/// Reese bass, with a picture cut into strips by the same list that cuts the drums.
 /// </summary>
 /// <remarks>
-/// A sampled break is chopped by playing its slices out of order. There is no sample
-/// here, but there is the thing a sample is read by: every drum is a Stroke and a
-/// Sequencer, neither has a memory, and both follow whatever is on their 'in'. So the
-/// kit does not read the count of beats. It reads a second count made from it — which
-/// eighth of the bar, then how far through that eighth — and the chopping is done to
-/// that: a list says which eighth plays instead, a die multiplies the fraction so the
-/// slice repeats inside itself, and now and then the fraction runs backwards, which
-/// turns every envelope in the kit round and is a reversed drum. One bent clock, and
-/// the whole break goes with it.
+/// Every drum is a stateless Stroke and Sequencer, so the kit reads a bent clock
+/// (which eighth of the bar, and how far into it) instead of the beat count. A list
+/// swaps eighths, a die repeats a slice inside itself, and a reversed fraction plays
+/// a drum backwards.
 /// <para>
-/// The picture reads the same three numbers. The frame is eight strips for the eight
-/// slices, and they slide apart by how far the list has moved the slice from where it
-/// belongs, so the drums being whole is the picture being whole.
+/// The picture's eight strips slide apart by how far the list moved each slice, so
+/// an unchopped break is an unbroken frame.
 /// </para>
 /// <para>
-/// There are two themes and the track is the first, the second, and the first again.
-/// The first is a bass that sits on F and falls away from it, under bells a die
-/// plays. The second turns that over: a bass that climbs through the scale's three
-/// major chords, and a slow written tune sung over it in place of the bells.
+/// The form is ABA: a bass falling from F under dice-played bells, then a bass
+/// climbing through the scale's major chords under a written tune.
 /// </para>
 /// </remarks>
 internal sealed class FracturePreset : PresetBench

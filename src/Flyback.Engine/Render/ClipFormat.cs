@@ -7,24 +7,13 @@ namespace Flyback.Core.Render;
 /// <param name="Id">What a settings file and the command line call this format. Never translated, never reused.</param>
 /// <param name="Label">What the settings window shows.</param>
 /// <param name="Extension">Including the dot, and the only thing that decides a format from a file name.</param>
-/// <param name="HasPicture">
-/// False for the sound-only formats. A format with no picture takes no frames, so
-/// this is also what separates the two lists a caller picks from.
-/// </param>
+/// <param name="HasPicture">False for the sound-only formats.</param>
 /// <param name="Picture">
-/// ffmpeg's arguments for the video stream, or empty where the picture is written
-/// here. <c>{crf}</c> stands for the quality, mapped by <see cref="Crf"/>.
+/// ffmpeg's video stream arguments, or empty where Flyback writes the picture.
+/// <c>{crf}</c> is the quality, mapped by <see cref="Crf"/>.
 /// </param>
-/// <param name="Sound">
-/// ffmpeg's arguments for the audio stream, or empty where the sound is written
-/// here. Read on its own for a sound-only format, and when muxing sound into a
-/// video one.
-/// </param>
-/// <param name="Container">
-/// ffmpeg's arguments for the file itself rather than a stream in it. They go to
-/// whichever pass writes the finished file, since a mux rewrites the container
-/// and keeps nothing the encode asked of it.
-/// </param>
+/// <param name="Sound">ffmpeg's audio stream arguments, or empty where Flyback writes the sound.</param>
+/// <param name="Container">ffmpeg's file-level arguments, given to whichever pass writes the finished file.</param>
 public sealed record ClipFormat(
     string Id,
     string Label,

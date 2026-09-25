@@ -10,24 +10,14 @@ namespace Flyback.App.Midi;
 /// and the programs that are running.
 /// </summary>
 /// <remarks>
-/// The mirror of <c>AudioEngine</c>: that takes what the patch produces to a
-/// device, this takes what a device produces to the patch. Both are the shell
-/// rather than the engine (ADR-0025).
+/// The inbound mirror of <c>AudioEngine</c>, in the shell (ADR-0025). Values are
+/// pushed into the running programs' blocks, and the computer keyboard and
+/// <see cref="IMidiInput"/> hardware share one dictionary.
 /// <para>
-/// Values are pushed rather than pulled, because there is nothing to ask for: a
-/// key moves a few times a second, and between two presses every question has the
-/// same answer. A press writes into the blocks of whatever programs are running,
-/// and both renderers read plain floats with nobody to call. The computer's
-/// keyboard and hardware arriving through <see cref="IMidiInput"/> become entries
-/// in the same dictionary, so nothing below this line knows which is which.
-/// </para>
-/// <para>
-/// <b>Three threads and one rule.</b> Keys arrive on the UI thread, notes on a
-/// thread the driver owns, and both are read by the thread that plays. Everything
-/// here is guarded by <see cref="gate"/> and the reading thread takes no lock,
-/// because <see cref="LiveValues"/> is single floats. The rule is that a device
-/// is never opened or closed with the lock held: closing one waits for the
-/// driver's thread, which may be waiting for this lock.
+/// Writers hold <see cref="gate"/>; the playing thread reads
+/// <see cref="LiveValues"/> floats without a lock. Never open or close a device
+/// while holding the lock: closing waits on the driver's thread, which may be
+/// waiting on it.
 /// </para>
 /// </remarks>
 internal sealed class MidiHub(IMidiInput hardware) : IDisposable

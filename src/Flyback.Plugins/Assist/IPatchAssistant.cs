@@ -40,26 +40,16 @@ public sealed record AssistantModel(string Id, bool Vision = true, bool Hearing 
 /// in front of somebody.
 /// </summary>
 /// <remarks>
-/// A helper on the plugin's side of the boundary. Both adapters here ask the same
-/// five questions, so the declaration is written once and delegated to; a provider
-/// of some other shape declares its own <see cref="SettingField"/> list instead.
-/// It is also the one place that knows both directions of a setting — what the
-/// form offers (<see cref="Form"/>) and what a configured run means
-/// (<see cref="Read"/>) — which have to agree, since a switch shown for a model
-/// that refuses pictures would be a switch that lies.
+/// Shared by both adapters; another provider declares its own
+/// <see cref="SettingField"/> list. Keeps <see cref="Form"/> and
+/// <see cref="Read"/> in agreement.
 /// </remarks>
-/// <param name="DefaultModel">What a provider nobody has configured starts on.</param>
+/// <param name="DefaultModel">What an unconfigured provider starts on.</param>
 /// <param name="SuggestedModels">What the model box offers, and what is known about each.</param>
-/// <param name="EnvironmentVariable">
-/// The variable this provider is conventionally given its key in. The shell reads
-/// it, not the plugin: a plugin that went looking for a credential could keep one.
-/// </param>
+/// <param name="EnvironmentVariable">The variable conventionally holding the key, read by the shell and never the plugin.</param>
 /// <param name="CredentialHelp">One line saying where a key comes from, shown under the field.</param>
 /// <param name="DefaultBaseUrl">Null when the endpoint is not the caller's business.</param>
-/// <param name="BaseUrlEditable">
-/// True only where pointing somewhere else is the point — an OpenAI-shaped
-/// endpoint reaches a dozen providers and a local runtime besides.
-/// </param>
+/// <param name="BaseUrlEditable">True for an endpoint shape many providers share, such as OpenAI's.</param>
 public sealed record AssistantSchema(
     string DefaultModel,
     IReadOnlyList<AssistantModel> SuggestedModels,
@@ -325,29 +315,16 @@ public sealed record AssistantSchema(
 }
 
 /// <summary>
-/// A filled-in form of the ordinary shape, read back as the things it decides —
-/// what <see cref="AssistantSchema.Read"/> makes of a set of values. Nothing
-/// outside a plugin sees one.
+/// What <see cref="AssistantSchema.Read"/> makes of a filled-in form. Plugin-internal.
 /// </summary>
 /// <param name="Vision">Whether the model may be shown a rendered frame.</param>
 /// <param name="Hearing">
-/// Whether the patch's sound may be listened to at all. Off by default, and the
-/// asymmetry with <paramref name="Vision"/> is the point: every model this reaches
-/// can be shown a picture, and only some can be played a sound.
+/// Whether the patch's sound may be listened to at all. Off by default, since only
+/// some models take sound.
 /// </param>
 /// <param name="EarModel">
-/// The model asked to listen instead of the one doing the building, or null where
-/// no second model is wanted.
-/// <para>
-/// Null carries two situations the adapter tells apart from its own schema. Where
-/// the driving model takes a sound, there is nobody else to ask and the clip goes
-/// into the conversation; where it does not, nothing has been chosen and
-/// <paramref name="Hearing"/> has nothing to act on.
-/// </para>
-/// <para>
-/// A second model is the older arrangement and still the common one — ADR-0047
-/// records why the chat-completions format forces it.
-/// </para>
+/// A second model that listens for the builder (ADR-0047), or null. Null means the
+/// builder hears for itself if it can, and otherwise nothing is heard.
 /// </param>
 public sealed record AssistantChoices(
     string Model,

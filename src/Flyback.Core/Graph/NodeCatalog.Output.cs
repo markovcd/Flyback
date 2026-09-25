@@ -172,38 +172,14 @@ public partial class NodeCatalog
         TopEdgeHelp = "The value at the top edge. A grid square up is a quarter of it.";
 
     /// <summary>
-    /// A chart, given where the signal sits: the trace, the fill under it, the
-    /// grid it is read against, and the bar along whichever edge it has run off.
-    /// Shared by the Probe and the Scope, which arrive at
-    /// <paramref name="height"/> by opposite routes and are the same picture from
-    /// there on, so the two can be laid side by side and compared.
+    /// The trace, its fill, the grid and the off-edge bar, shared by the Probe and
+    /// the Scope so the two draw the same picture.
     /// </summary>
-    /// <param name="y"></param>
-    /// <param name="height">
-    /// Where the trace goes, in screen units — the value already divided by
-    /// whatever the top of the chart is worth.
-    /// </param>
-    /// <param name="now">
-    /// Where to rule the line marking the moment, or null for a chart whose
-    /// moment is the edge of the frame, where a rule would be half off it.
-    /// </param>
-    /// <param name="glow">
-    /// How brightly to draw the signal, per column, or null for evenly — a
-    /// phosphor fading behind the beam, which is how a chart of the past says
-    /// which end is now. The grid is not dimmed with it.
-    /// </param>
-    /// <param name="across">
-    /// How wide a grid square is, or null for the fixed <see cref="Division"/>.
-    /// A Scope rules eight across the frame however wide it is, so its squares
-    /// are a value rather than a constant.
-    /// </param>
-    /// <param name="ground">
-    /// Where the fill under the trace runs down to, or null for the middle of the
-    /// chart. A waveform swings either side of nought; a spectrum stands up from
-    /// the bottom edge.
-    /// </param>
-    /// <param name="em"></param>
-    /// <param name="x"></param>
+    /// <param name="height">The trace, already scaled to screen units.</param>
+    /// <param name="now">Where to rule the present moment, or null for none.</param>
+    /// <param name="across">A grid square's width, or null for <see cref="Division"/>.</param>
+    /// <param name="glow">Per-column trace brightness, or null for even.</param>
+    /// <param name="ground">Where the fill runs down to, or null for the middle.</param>
     private static Slot Charted(
         Emitter em,
         Slot x,

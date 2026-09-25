@@ -8,25 +8,16 @@ namespace Flyback.Plugins.Picture;
 /// gap is the lane you have to be in when the wall arrives.
 /// </summary>
 /// <remarks>
-/// The bottom row of the keyboard, Z to M, is the seven lanes, and the lane is
-/// the last note struck, so moving is playing: the gap chimes its note as it
-/// passes, and a clean run is the same tune twice. Any octave and any black key
-/// lands in the lane of its nearest white key.
+/// Z to M are the lanes and the lane is the last note struck, so a clean run
+/// plays the gaps' tune. Black keys and other octaves fall to the nearest white key.
 /// <para>
-/// The game is three loops of one (ADR-0075) and the arithmetic between them.
-/// Keys remembers the last pitch and gate and says when a new note was struck,
-/// since a MIDI trigger has no memory on the picture. Over is the moment the
-/// run ended, or -1 while it runs, and a strike 0.8 seconds after it starts the
-/// next. Start is when the run began, signed by whether Over was running when it
-/// last looked. Everything else (how far the walls have come, the score, the
-/// flash) is worked out afresh from those three and the clock, so nothing but
-/// them depends on how often it is evaluated.
+/// Three loops of one (ADR-0075) hold the state: Keys (last pitch and gate, and
+/// whether a note is new), Over (when the run ended, or -1) and Start (when it
+/// began). Everything else is derived from those and the clock.
 /// </para>
 /// <para>
-/// A cell holds ±16, so times are kept modulo 512 seconds and divided down: a
-/// run longer than eight and a half minutes starts over. The walls' gaps are a
-/// quadratic residue modulo 997, whole numbers all the way, so the picture and
-/// the sound agree on where every gap is.
+/// A cell holds ±16, so times wrap at 512 seconds. Gaps are a quadratic residue
+/// modulo 997, in whole numbers, so picture and sound agree.
 /// </para>
 /// </remarks>
 internal static class DodgePreset

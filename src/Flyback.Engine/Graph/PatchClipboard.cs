@@ -73,24 +73,12 @@ public static class PatchClipboard
     /// the modules that arrived.
     /// </summary>
     /// <remarks>
-    /// Every module gets a fresh id and the wires are rewritten to match, which is
-    /// what makes pasting twice give two of a thing. Any Output in the fragment is
-    /// dropped — one arrives whenever the text came through
-    /// <see cref="PatchIO.Read"/>, and whenever somebody pastes a whole saved
-    /// patch. Nothing here checks that the modules are ones this build has: that
-    /// is a thing to refuse with a sentence, and the caller is where there is
-    /// somewhere to say it — see <see cref="PatchLoad.IsComplete"/>.
-    /// <para>
-    /// A Send that arrives on a bus the patch already sends on is given one of its
-    /// own, with the Receives that came with it — see <see cref="BusEdits.Separate"/>.
-    /// </para>
-    /// <para>
-    /// A group is drawn again round the modules that arrived, with a fresh id and
-    /// its sockets pointed at their new ones — the unwired ones included, so a box
-    /// arrives with the edge somebody arranged. Made after the wires, so
-    /// <see cref="Patch.Connect"/> does not read them as crossing an edge and put
-    /// back sockets that had been taken off it.
-    /// </para>
+    /// Modules get fresh ids and the wires follow. Any Output is dropped. Unknown
+    /// modules are the caller's to refuse (<see cref="PatchLoad.IsComplete"/>). A
+    /// Send on a bus already in use gets a bus of its own
+    /// (<see cref="BusEdits.Separate"/>). Groups are rebuilt with their edge
+    /// sockets after the wires, so <see cref="Patch.Connect"/> does not re-add
+    /// sockets that had been taken off.
     /// </remarks>
     public static IReadOnlyList<NodeInstance> Paste(
         Patch into,

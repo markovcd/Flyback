@@ -9,22 +9,14 @@ namespace Flyback.Plugins.Mastering;
 /// style.
 /// </summary>
 /// <remarks>
-/// The kind of box a mix is put through at the end when there is no time to
-/// master it. The two sides are split at 150 Hz and 2.5 kHz. Each band is
-/// compressed on its own, both sides by one gain, so a kick pumping the bass does
-/// not pull the cymbals down with it. The bands are summed with makeup and a
-/// style's tilt, and limited to -1 dB.
+/// Bands split at 150 Hz and 2.5 kHz are compressed separately, both sides by one
+/// gain, then summed with makeup and the style's tilt and limited to -1 dB.
 /// <para>
-/// 'amount' is how far every threshold comes down and how much of the makeup and
-/// tilt is applied. At nought the thresholds sit at full scale and the tilt is
-/// flat, so what is left is the crossover's allpass, the limiter's latency and its
-/// ceiling. It is not a wet/dry mix: the crossover turns the phase and the limiter
-/// delays, so mixing the dry signal back in would comb-filter.
+/// 'amount' lowers every threshold and scales the makeup and tilt. There is no
+/// wet/dry mix, since the crossover's phase and the limiter's delay would comb-filter.
 /// </para>
 /// <para>
-/// The style is a socket rather than a setting because it changes only the
-/// numbers the ops are given, not which ops there are: ADR-0097's rule. The four
-/// are voiced by ear, not copied from anything.
+/// The style is a socket because it changes only numbers, not ops (ADR-0097).
 /// </para>
 /// </remarks>
 internal static class MaximizerModule

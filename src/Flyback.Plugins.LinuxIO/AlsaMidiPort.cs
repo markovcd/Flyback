@@ -8,24 +8,13 @@ namespace Flyback.Plugins.LinuxIO;
 /// outside this assembly knows the ALSA sequencer exists.
 /// </summary>
 /// <remarks>
-/// The odd one of the backends. winmm and CoreMIDI call us on a thread the driver
-/// owns; the sequencer is a file that has events in it, so this owns a thread —
-/// which changes nothing in the contract, since <see cref="MidiCallback"/> only
-/// ever said it is not the window's thread.
+/// Unlike winmm and CoreMIDI, the sequencer does not call back, so this owns a
+/// reader thread; <see cref="MidiCallback"/> only promises it is not the UI thread.
 /// <para>
-/// <b>The reader polls rather than blocks.</b> A device is opened and handed back
-/// whenever the patch is rewired, and a thread parked inside a read on a handle we
-/// are about to close is a crash, while one waiting for a note that may not come
-/// for an hour never sees that it was asked to stop. So the sequencer is opened
-/// non-blocking and the reader wakes every millisecond — a fortieth of the block
-/// the sound backend already asks for.
-/// </para>
-/// <para>
-/// Every call on the handle after the constructor is made from that thread, which
-/// is what alsa-lib asks for, so closing waits for the reader to finish. A device
-/// pulled out goes quiet rather than reporting itself gone: nothing above this
-/// line asks, since the hub opens and closes devices off what the compiled
-/// programs read.
+/// The reader polls a non-blocking handle every millisecond, since a blocked read
+/// would crash on close or never see a stop. All calls after the constructor come
+/// from that thread, as alsa-lib requires, so closing waits for it. An unplugged
+/// device just goes quiet.
 /// </para>
 /// </remarks>
 internal sealed unsafe class AlsaMidiPort : IMidiPort

@@ -3,30 +3,17 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A generative patch with no clock in it and five wires that run backwards.
-/// Four random voltages read out of a noise field choose the notes, open the
-/// voices and move the picture, so nothing is counting beats and there is no bar
-/// for any of it to come round on. What makes it change rather than merely vary
-/// is the loops: a drone that bends its own phase, an echo that darkens and
-/// smears itself every time round, two followers that let one voice push another
-/// down, and a picture steered by where it was bright a frame ago. Over that,
-/// four visitors come and go on random voltages of their own, and each marks the
-/// picture while it stays.
+/// A clockless generative patch with five feedback loops. Random voltages from a
+/// noise field pick the notes, open the voices and move the picture; the loops (a
+/// self-bending drone, a darkening echo, two ducking followers and a picture
+/// steered by last frame's light) make it evolve. Four visitors come and go and
+/// mark the picture while they stay.
 /// </summary>
 /// <remarks>
-/// A loop is one evaluation of delay (ADR-0075): a sample to the ear, and to the
-/// eye the frame before at this pixel and no other. Each loop here has a gain
-/// under one somewhere in it and says where, so every one of them is stable by
-/// construction and none of them by luck.
-/// <para>
-/// Nothing in it is bright on purpose. Every voice is a sine, a sine bent a
-/// little, one triangle or a dark plucked string, the wind, rain and thunder are
-/// pink noise through a filter, the echo
-/// passes a lowpass on every repeat and the room darkens as it rings — so the
-/// spectrum tilts down the way a quiet room's does, about three decibels an
-/// octave through the middle, and nothing above a kilohertz or so is ever the
-/// loudest thing in it.
-/// </para>
+/// A loop is one evaluation of delay (ADR-0075), and each has a gain under one
+/// that its comment points to. The voices are sines, a triangle and a dark pluck,
+/// the weather is filtered pink noise, and the echo and room darken as they ring,
+/// so the spectrum tilts down about 3 dB an octave.
 /// </remarks>
 internal sealed class SlowWeatherPreset : PresetBench
 {

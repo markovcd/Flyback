@@ -9,24 +9,17 @@ namespace Flyback.Plugins.Effects;
 /// are the performance.
 /// </summary>
 /// <remarks>
-/// The other big presets are finished tracks. This one is half of one, and the
-/// missing half is the player: the genre is a minor chord held down while somebody
-/// rides the filter, the echo and the room, so the chord is four MIDI Ins on voices
-/// 1 to 4 (ADR-0062) and everything worth riding is a knob on the panel (ADR-0086).
-/// Nothing is bound to a controller, because which controller is the player's to
-/// say: a knob learns one from the panel.
+/// The chord is four MIDI Ins on voices 1 to 4 (ADR-0062) and everything worth
+/// riding is a panel knob (ADR-0086), left unbound so the player picks a controller.
 /// <para>
-/// A knob moves the picture as well as the sound wherever the two are one idea. The
-/// echo's feedback is how long a ring's trail lasts, the room is how fast the trails
-/// drift outwards, the resonance is how far the rings wobble, and the cutoff is how
-/// much light is in the fog. Each voice is a ring: as wide as its note is high,
-/// colored by which of the twelve notes it is, and as bright as a Meter says the
-/// voice is loud — an envelope has no memory on the screen, and a Meter is told.
+/// Each knob moves the picture too: feedback is trail length, room is drift,
+/// resonance is wobble, cutoff is fog brightness. Each voice is a ring sized by
+/// pitch, colored by note name and lit by a Meter, since an envelope has no memory
+/// on the screen.
 /// </para>
 /// <para>
-/// The sub takes its root from the first voice, folded into one octave, so the
-/// first key of a chord names the bass under it. Until a key has been struck it
-/// stays on A, which is the key the bottom row of a computer keyboard plays in.
+/// The sub follows the first voice folded into one octave, and sits on A until a
+/// key is struck.
 /// </para>
 /// </remarks>
 internal sealed class DubPreset : PresetBench

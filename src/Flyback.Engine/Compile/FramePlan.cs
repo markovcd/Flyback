@@ -27,28 +27,13 @@ public enum EvaluationStage
 /// where it belongs instead of running all of them half a million times.
 /// </summary>
 /// <remarks>
-/// A patch says far more about a frame than about a pixel: of the largest preset
-/// in the catalog, 598 ops, eleven per cent depend on where you are and the rest
-/// is a frame's worth of arithmetic done once.
-/// <para>
-/// A reordering rather than three programs. A stage is the greatest of its
-/// inputs' stages, so an op never precedes something it reads and the three runs
-/// together evaluate exactly what one run of the original did.
-/// </para>
-/// <para>
-/// Only for a caller drawing a picture, and <see cref="CompiledPatch.Plan"/> is
-/// null elsewhere. Reordering is safe because the video path passes no
-/// <see cref="DelayState"/>: with none, every op is a pure function of its inputs
-/// — a delay hands its input through, a cell reads zero — so which ran first stops
-/// being a question. On the audio path it very much is one.
-/// </para>
-/// <para>
-/// A plane is the one thing the video path does carry
-/// (<see cref="OpCode.PlaneRead"/>), and the order that matters for it is kept:
-/// both halves are pinned to <see cref="EvaluationStage.Pixel"/> and the sort is
-/// stable, so a read still stands where it was emitted — ahead of every write —
-/// which is the frame of latency a cycle has.
-/// </para>
+/// A stage is the greatest of its inputs' stages, so the reordered program
+/// computes exactly what the original did. Picture path only
+/// (<see cref="CompiledPatch.Plan"/> is null elsewhere): without a
+/// <see cref="DelayState"/> every op is pure, so order is free. Plane ops
+/// (<see cref="OpCode.PlaneRead"/>) are pinned to
+/// <see cref="EvaluationStage.Pixel"/> and the sort is stable, so each read
+/// still precedes its writes.
 /// </remarks>
 public sealed class FramePlan
 {

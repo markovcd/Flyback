@@ -8,24 +8,10 @@ namespace Flyback.Plugins.Picture;
 /// wheel.
 /// </summary>
 /// <remarks>
-/// The catalog could already turn a signal into a color one way — into HSV's
-/// hue, which walks the whole wheel at full saturation — and that is why so much
-/// of what this machine draws looks the same: rainbow is the absence of a palette.
-/// <para>
-/// This is Iñigo Quílez's cosine palette:
-/// <c>brightness + contrast · cos(2π(cycles · t + offset))</c>, three times with
-/// the channels' offsets a fixed step apart. Because the three are the same wave
-/// at different phases, the colors it passes through are neighbours, and anything
-/// neighbouring looks deliberate.
-/// </para>
-/// <para>
-/// 'spread' is the step between those phases and changes the family rather than
-/// the position in it: a third is the rainbow, below that the channels move nearly
-/// together and the palette runs through tints of one color, and at nothing it is
-/// gray. Nothing is clamped — turning 'contrast' past 'brightness' pushes the
-/// palette outside 0 to 1, which the screen clips and a Multiply downstream does
-/// not.
-/// </para>
+/// Iñigo Quílez's cosine palette,
+/// <c>brightness + contrast · cos(2π(cycles · t + offset))</c>, per channel with
+/// offsets 'spread' apart. A third is the rainbow, less gives tints of one color,
+/// and zero is gray. Unclamped, so 'contrast' past 'brightness' leaves 0 to 1.
 /// </remarks>
 internal static class PaletteModule
 {

@@ -4,26 +4,14 @@ namespace Flyback.Plugins.Assist;
 /// What an assistant may spend before the workbench starts saying no.
 /// </summary>
 /// <remarks>
-/// Every one of these is reported to the model when it is reached rather than
-/// enforced behind its back: an agent told it has run out of room can finish tidily,
-/// where one silently refused keeps trying the same thing.
+/// Each limit is reported to the model when reached, so it can finish tidily
+/// rather than retry.
 /// </remarks>
-/// <param name="MaxToolCalls">The cost fuse. Tool calls are cheap; a run that never ends is not.</param>
+/// <param name="MaxToolCalls">The cost fuse against a run that never ends.</param>
 /// <param name="LatestTime">The furthest into a patch a render may look, in seconds.</param>
-/// <param name="WarmUpStep">
-/// The interval frames are stepped at while warming. Feedback reads the frame
-/// before it, so a render that jumped to its target time would show a history that
-/// never happened.
-/// </param>
-/// <param name="ListenRate">
-/// The sample rate a <c>listen</c> renders at, which is not the rate the speakers
-/// run at: what comes back is base64 in a request body, and 24 kHz still carries
-/// every pitch this instrument makes.
-/// </param>
-/// <param name="LongestListen">
-/// The most sound one call may render, in seconds. Short on purpose: a patch is
-/// judged by ear in a second or two, and this is paid per turn.
-/// </param>
+/// <param name="WarmUpStep">The frame interval stepped through before a render, so feedback has a real history.</param>
+/// <param name="ListenRate">The sample rate a <c>listen</c> renders at, kept low for the request size.</param>
+/// <param name="LongestListen">The most sound one call may render, in seconds.</param>
 public sealed record WorkbenchLimits(
     int MaxToolCalls = 200,
     int FrameWidth = 320,

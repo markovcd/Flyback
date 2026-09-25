@@ -190,35 +190,6 @@ public partial class NodeCatalog
     };
     
     /// <summary>
-    /// One cell for what is being held and one for the trigger as it was, which
-    /// is the whole module: an edge is a rise only if there was nothing to rise
-    /// from.
-    /// </summary>
-    /// <remarks>
-    /// Stateful, and holding that state in the one-evaluation cells
-    /// <see cref="Emitter.AllocateUnitSlot()"/> hands out rather than in an opcode
-    /// of its own — the same way the ADSR holds its level and ADR-0041 has a
-    /// plugin hold a filter's integrators. Nothing in the engine had to change
-    /// for it, which is the third time that has been true and is worth counting.
-    /// <para>
-    /// The level cell is read before it is written and both happen inside one
-    /// evaluation, so what comes out on the evaluation the trigger rises is the
-    /// <em>new</em> sample rather than the one before it. That matters here more
-    /// than it does for an envelope: the gate that fires this is usually the gate
-    /// that opens the envelope, so a value that arrived one evaluation late would
-    /// be the previous note's pitch heard at the start of this one.
-    /// </para>
-    /// <para>
-    /// <see cref="Emitter.HasMemory"/> answers no on the video path and on the
-    /// very first evaluation of an audio one, and both are handled by the same
-    /// term: it takes a sample. On the screen that makes it a wire, which is
-    /// what a hold means where there is no before; at the start of a program it
-    /// primes the cell, so the first note is the signal rather than the nothing a
-    /// cell begins at. Without that the patch would play one note of silence, or
-    /// worse, whatever nought means to whatever is downstream.
-    /// </para>
-    /// </remarks>
-    /// <summary>
     /// The coin is flipped on every evaluation the gate is shut and kept while it is
     /// open, so a note is decided before its first sample and never changes its
     /// mind halfway, however soft its edges.
@@ -254,6 +225,16 @@ public partial class NodeCatalog
         return [em.Mul(open, next), em.Mul(open, em.Sub(one, next))];
     }
 
+    /// <summary>
+    /// One <see cref="Emitter.AllocateUnitSlot()"/> cell holds the value and one
+    /// the trigger as it was, so a rise is an edge.
+    /// </summary>
+    /// <remarks>
+    /// The value out on the rising evaluation is the new sample, not the old one:
+    /// the same gate usually opens the envelope, and a late value would sound the
+    /// previous note's pitch. Where <see cref="Emitter.HasMemory"/> says no (the
+    /// picture, or the first sample), it passes its input straight through.
+    /// </remarks>
     private static Slot[] EmitHold(Emitter em, EmitContext node)
     {
         var one = em.Constant(1f);
