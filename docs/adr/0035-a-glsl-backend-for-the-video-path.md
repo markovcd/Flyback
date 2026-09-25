@@ -193,6 +193,10 @@ before that, and the stairstep after an hour is gone.
 band's 52,000-character shader took 1.7-2.1 s through ANGLE on an RTX 4070 SUPER, and
 the driver keeps no cache between runs. Where the context offers
 `KHR_parallel_shader_compile` (ANGLE does), the shader is handed to the driver's own
-threads and asked after once a frame without waiting; the preview repeats its last
-frame meanwhile, and no frame of that link blocked longer than 18 ms. Without the
+threads and asked after once a frame without waiting, and no frame of that link
+blocked longer than 18 ms. The program before it plays on meanwhile, with the
+constants, pictures, planes and live inputs it was built for, and the new patch's
+take over together when its shader does; a frozen frame for two seconds after every
+rewire read as the app hanging. A patch just opened is the exception: the old one
+holds its last frame, because the new picture starts with its sound. Without the
 extension it links as before.

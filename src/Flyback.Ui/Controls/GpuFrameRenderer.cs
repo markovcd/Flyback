@@ -72,13 +72,26 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     private bool parallel;
 
-    /// <summary>A patch's shader the driver is still building, while the last frame is shown.</summary>
+    /// <summary>
+    /// A patch's shader the driver is still building. The program before it goes
+    /// on drawing meanwhile, with the constants, pictures and planes it was built
+    /// for; the new patch's take over only when its shader does.
+    /// </summary>
     private Building? building;
 
     private sealed record Building(int Program, int Vertex, int Fragment, ShaderSource Shaders);
 
-    /// <summary>Whether a shader is still being built, so a frame drawn now repeats the last one.</summary>
+    /// <summary>Whether a shader is still being built.</summary>
     public bool Linking => building is not null;
+
+    /// <summary>
+    /// Whether the patch waiting on that shader has just been opened, so the one
+    /// before it holds its last frame rather than playing on beside a new file.
+    /// </summary>
+    private bool opening;
+
+    /// <summary>The time the last frame was drawn at, or NaN before the first.</summary>
+    private double drawnAt = double.NaN;
 
     /// <summary>The four corners of the unit square, in strip order.</summary>
     private static readonly IntPtr Quad = new(4);
@@ -112,6 +125,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// </summary>
     private int[] patchLive = [];
     private float[] played = [];
+
+    /// <summary>The live inputs of the program on the card, in the order <c>uLive</c> numbers them.</summary>
+    private IReadOnlyList<string> liveInputs = [];
+
     private bool usesFeedback;
 
     /// <summary>The textures the patch's pictures are in, and which pictures those are.</summary>
@@ -263,27 +280,16 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (shaders.PlaneTargets > 0 && dialect is GlslDialect.Glsl150 && bindFragDataLocation is null)
             return "This context cannot be told where a shader's outputs go, and a loop in the patch needs to say.";
 
-        // The attachments belong to the framebuffers, so a patch that gained or
-        // lost a loop is a reason to build them again. Forgetting the size is how
-        // that is asked for; Resize is the only thing that reads it.
-        if (shaders.PlaneTargets != planeTargets)
-        {
-            planeTargets = shaders.PlaneTargets;
-            size = default;
-        }
-
-        // The values behind the constants change with every knob; where they sit
-        // does not, so this is picked up whether or not the shader is rebuilt.
-        constants = GlslEmitter.Constants(patch);
-
-        // Before the early return below, because the pictures change without the
-        // text changing: a different photograph of the same shape is the same
-        // program reading a different texture.
-        Upload(gl, patch.Pictures);
-
-        if (shaders.PatchFragment == liveSource || shaders.PatchFragment == refusedSource)
+        if (shaders.PatchFragment == refusedSource)
         {
             Abandon(gl);
+            return null;
+        }
+
+        if (shaders.PatchFragment == liveSource)
+        {
+            Abandon(gl);
+            Adopt(gl, patch);
             return null;
         }
 
@@ -293,7 +299,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             building = Start(gl, shaders);
         }
 
-        // Asked without waiting; the frame repeats the last one until it is done.
+        opening = patch.Waiting;
+
+        // Asked without waiting; the program on the card draws until it is done.
         if (parallel && ProgramParameter(gl, building.Program, GlCompletionStatus) == 0) return null;
 
         var program = Finish(gl, building, out var error);
@@ -310,6 +318,17 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         patchProgram = compiled;
         liveSource = shaders.PatchFragment;
         usesFeedback = shaders.UsesFeedback;
+
+        // The attachments belong to the framebuffers, so a patch that gained or
+        // lost a loop is a reason to build them again. Forgetting the size is how
+        // that is asked for; Resize is the only thing that reads it.
+        if (shaders.PlaneTargets != planeTargets)
+        {
+            planeTargets = shaders.PlaneTargets;
+            size = default;
+        }
+
+        Adopt(gl, patch);
 
         patchTime = gl.GetUniformLocationString(compiled, "uTime");
         patchTimeLow = gl.GetUniformLocationString(compiled, "uTimeLo");
@@ -357,6 +376,18 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             patchPlanes[i] = gl.GetUniformLocationString(compiled, $"uPlane{i}");
 
         return null;
+    }
+
+    /// <summary>
+    /// Takes up what a patch hands the program on the card beside its text: the
+    /// values behind its constants, which move with every knob, its pictures,
+    /// which change without the text changing, and the names of its live inputs.
+    /// </summary>
+    private void Adopt(GlInterface gl, CompiledPatch patch)
+    {
+        constants = GlslEmitter.Constants(patch);
+        liveInputs = patch.LiveInputs;
+        Upload(gl, patch.Pictures);
     }
 
     /// <summary>
@@ -480,10 +511,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             clearPending = false;
         }
 
-        // The last frame again, or black before the first, while the shader is built.
-        if (building is null)
+        // While a shader is built, frames come whatever the clock says, and a loop
+        // drawn again at the same time would run on while paused. Black before the
+        // first program, and a new file's picture starts with its sound.
+        if (patchProgram != 0 && (building is null || (!opening && time != drawnAt)))
         {
             DrawPatch(gl, resolution, time, live);
+            drawnAt = time;
 
             // The frame just drawn becomes the one the next frame reads back.
             read = 1 - read;
@@ -531,7 +565,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (patchLive.Length > 0)
         {
             if (live is null) Array.Clear(played);
-            else live.CopyTo(played);
+            else Read(live);
 
             for (var i = 0; i < patchLive.Length && i < played.Length; i++)
                 if (patchLive[i] >= 0)
@@ -580,6 +614,28 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         }
 
         gl.DrawArrays(GlTriangleStrip, 0, Quad);
+    }
+
+    /// <summary>
+    /// Lays the block out in the order the program on the card numbers its live
+    /// inputs, by name: while the next shader is built, the block is the next
+    /// patch's. A handful of keys, so a scan each frame.
+    /// </summary>
+    private void Read(LiveValues live)
+    {
+        var keys = live.Keys;
+
+        for (var i = 0; i < played.Length; i++)
+        {
+            var at = -1;
+
+            if (i < liveInputs.Count)
+                for (var k = 0; k < keys.Count && at < 0; k++)
+                    if (keys[k] == liveInputs[i])
+                        at = k;
+
+            played[i] = (float)live.At(at);
+        }
     }
 
     private void DrawBlit(GlInterface gl, int framebuffer, PixelSize control, PixelSize resolution)
@@ -987,6 +1043,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         vertexArray = 0;
         size = default;
         liveSource = string.Empty;
+        drawnAt = double.NaN;
         clearPending = true;
     }
 }

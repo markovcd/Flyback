@@ -21,7 +21,7 @@
 - The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice, a knob set twice, a group, `panel` or `requires` inside a group and a group of one module, and `flyback-cli check --json` reports it by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - An opened preset or file starts its sound and picture together once both are compiled, from the beginning, and the status line says "Compiling…" while it waits.
-- A large patch no longer freezes the window while its shader is built.
+- A large patch no longer freezes the window while its shader is built, and its picture plays on until the new one is ready.
 - AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.
 - `flyback-cli render` takes the size, frame rate, quality, format and ffmpeg it is not given from the editor's settings.
 - `flyback-cli print --preset <name>` writes a shipped preset out as text.
