@@ -11,20 +11,21 @@ namespace Flyback.App;
 /// Asked on a timer rather than on every edit: a knob held and turned is an edit a
 /// frame, and what is worth keeping is where it was let go. What a snapshot holds is
 /// the window's to say, because the document a crash would lose is the one the
-/// unsaved question would have offered to save.
+/// unsaved question would have offered to save. A setup with no recovery folder
+/// keeps nothing, as does a folder that will not open.
 /// </remarks>
 internal sealed class WorkKeeper
 {
     /// <summary>How often unsaved work is looked at, and so the most a crash can cost.</summary>
     private static readonly TimeSpan Interval = TimeSpan.FromSeconds(2);
 
-    /// <summary>Where the snapshots are, for finding what a crash left behind.</summary>
-    private readonly string folder;
+    /// <summary>Where the snapshots are, for finding what a crash left behind. Null where none are kept.</summary>
+    private readonly string? folder;
 
     /// <summary>The document as a crash would lose it, or null while there is nothing to lose.</summary>
     private readonly Func<RecoveredWork?> work;
 
-    /// <summary>This window's snapshot, or null where the folder would not open.</summary>
+    /// <summary>This window's snapshot, or null where there is no folder or it would not open.</summary>
     private Recovery? recovery;
 
     /// <summary>
@@ -35,12 +36,12 @@ internal sealed class WorkKeeper
 
     private readonly DispatcherTimer? ticker;
 
-    internal WorkKeeper(string folder, Func<RecoveredWork?> work)
+    public WorkKeeper(EditorSetup setup, UnsavedWork unsaved)
     {
-        this.folder = folder;
-        this.work = work;
+        folder = setup.RecoveryFolder;
+        work = unsaved.Work;
 
-        recovery = Recovery.Open(folder);
+        recovery = folder is null ? null : Recovery.Open(folder);
 
         if (recovery is null) return;
 
@@ -98,7 +99,7 @@ internal sealed class WorkKeeper
     /// </param>
     internal void Restore(Func<RecoveredWork, bool> put)
     {
-        if (Recovery.Orphans(folder) is not [var path, ..]) return;
+        if (folder is null || Recovery.Orphans(folder) is not [var path, ..]) return;
 
         if (Recovery.Read(path) is { } left && !put(left)) return;
 

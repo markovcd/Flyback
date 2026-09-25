@@ -17,8 +17,8 @@ namespace Flyback.App;
 /// the editor's own is built from its constructor. Where two need each other, one
 /// takes a <see cref="Lazy{T}"/> of the other and asks for it only once it acts. The
 /// factories below are for what is not the editor's own, which the viewer and the
-/// tests build by hand as well: the sound, MIDI, the assistant's column and a value
-/// that may be absent.
+/// tests build by hand as well: the sound, the assistant's column and a value that
+/// may be absent.
 /// </remarks>
 internal static class EditorServices
 {
@@ -65,15 +65,13 @@ internal static class EditorServices
         });
 
         // Nothing is opened by this: the backend is asked for a device only once a
-        // compiled program is reading one.
-        services.AddSingleton(sp => new MidiHub(sp.GetRequiredService<PluginCatalog>().PreferredMidiInput));
+        // compiled program is reading one. Null where no plugin offers one.
+        services.AddSingleton(sp => sp.GetRequiredService<PluginCatalog>().PreferredMidiInput!);
+        services.AddSingleton<MidiHub>();
 
         services.AddSingleton(AssistantPanel);
 
-        // Null where no unsaved work is kept, which is every test.
-        services.AddSingleton(sp => setup.RecoveryFolder is { } folder
-            ? new WorkKeeper(folder, sp.GetRequiredService<UnsavedWork>().Work)
-            : null!);
+        services.AddSingleton<WorkKeeper>();
 
         services.AddSingleton<ReportLine>();
         services.AddCanvas();

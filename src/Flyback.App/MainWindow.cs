@@ -193,7 +193,7 @@ internal sealed class MainWindow : Window
         StatusBar statusBar,
         TakeRecording recording,
         AssistantPanel assistant,
-        WorkKeeper? keeper)
+        WorkKeeper keeper)
     {
         // First, so every region can reach the window it is in.
         shell.Attach(this);
@@ -371,7 +371,7 @@ internal sealed class MainWindow : Window
         {
             if (setup.WhatsNew is not null) await this.ShowDialog(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
 
-            keeper?.Restore(Recover);
+            keeper.Restore(Recover);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
             if (setup.OpenPath is { } path && (PluginPackage.Named(path) || await unsaved.MayReplaceThePatchAsync()))
@@ -1331,7 +1331,7 @@ internal sealed class MainWindow : Window
         Recording.FinishNow();
 
         // Whatever there was to lose has been asked about by now, and answered.
-        keeper?.Stop();
+        keeper.Stop();
 
         audio.Dispose();
         compiler.Dispose();
@@ -2158,7 +2158,7 @@ internal sealed class MainWindow : Window
     // offered to save.
 
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
-    private readonly WorkKeeper? keeper;
+    private readonly WorkKeeper keeper;
 
     /// <summary>
     /// Puts work a crash left behind back on the canvas, as the document it was and
@@ -2199,7 +2199,7 @@ internal sealed class MainWindow : Window
         editor.History.MarkUnsaved();
 
         // Kept at once, since the orphan it came from is about to go.
-        keeper?.Keep(later: false);
+        keeper.Keep(later: false);
 
         Report($"Restored {work.Name ?? "the patch"} after a crash. It has not been saved.");
 

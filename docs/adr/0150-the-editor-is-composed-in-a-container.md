@@ -72,11 +72,12 @@ Exceptions, each kept on purpose:
   handed is the window. `Shell.Attach` is the first line of its constructor, and
   a region reads `Shell.Owner` only once it is asked to do something.
 - **Factories for what is not the editor's own.** The sound device, the sound
-  engine, MIDI and the assistant's column are shared with tests that build them by
+  engine and the assistant's column are shared with tests that build them by
   hand, so their constructors stay as they are and `AddEditor` and `AddViewer`
-  build them in a factory. So does a value that may be absent
-  (the saved presets, the recovery keeper): the container holds a null, and a
-  class that reads one takes it as an optional parameter.
+  build them in a factory. So does a value that may be absent (the saved presets,
+  the MIDI backend): the container holds a null, and a class that reads one takes
+  it as an optional parameter. A class that can do nothing on its own instead
+  takes the setup and does nothing: the recovery keeper with no folder.
 - **The container is never disposed.** The window already tears down what it
   holds in `OnClosed`, in the order a take and a device need; disposing the
   container as well would dispose them twice.
