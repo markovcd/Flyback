@@ -635,6 +635,7 @@ internal sealed class SlowWeatherPreset : PresetBench
          .Wire(fresh, 0, combine, 1)
          .Wire(Span(wander, 0f, 1f, 0.12f, 0.35f), 0, combine, 2);
 
+        Follows(drift,  TrailsZoom, trailsSpin, 0.5f, 2f);
         Follows(drift, TrailsAngle, trailsSpin, -0.015f, 0.015f);
 
         Box("Picture: Color");
