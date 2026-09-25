@@ -236,7 +236,7 @@ flyback-viewer --preset "Whole band" --hidden --for 10
 flyback-viewer --help
 ```
 
-Hover the bottom right corner of the window for the sound, rewind and pause buttons; double-click the picture for full screen. A patch with no picture, or a run with `--no-video`, opens as just those buttons and its knobs. Space, or Ctrl+P, pauses. `--background` opens the window without taking focus, and `--hidden` opens none at all.
+Hover the top middle of the window for the transport: pause, rewind, the seek bar, loop and sound, with the knobs at the bottom (`--transport bottom` swaps them); double-click the picture for full screen. A patch with no picture, or a run with `--no-video`, opens as just the transport and its knobs. Space, or Ctrl+P, pauses. `--background` opens the window without taking focus, and `--hidden` opens none at all.
 
 A patch made to be played is played here too: the computer's keys are notes wherever the patch reads them, a MIDI In hears the device it names, and a panel knob bound to a MIDI controller follows it. There is no knob panel, so a knob with no controller stays where the patch left it.
 

@@ -67,10 +67,11 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
             ? stats.Said
             : null);
 
-    /// <summary>Whether a seek bar waits behind its dots at the top of the picture.</summary>
-    public bool SeekBarAtTheTop => Run(() =>
-        window!.GetVisualDescendants().OfType<SeekOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } seek
-        && seek.VerticalAlignment == Avalonia.Layout.VerticalAlignment.Top);
+    /// <summary>Which edge of the picture the transport waits at, or null where it has none.</summary>
+    public Avalonia.Layout.VerticalAlignment? TransportEdge => Run(() =>
+        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+            ? transport.VerticalAlignment
+            : (Avalonia.Layout.VerticalAlignment?)null);
 
     public void Dispose()
     {

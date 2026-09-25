@@ -1391,6 +1391,15 @@ internal sealed class MainWindow : Window
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
 
         knobs.Hub.Takeover = settings.Takeover;
+
+        LayOverlays(settings.Transport);
+    }
+
+    /// <summary>Stands every transport over a picture at <paramref name="edge"/>, and its knobs at the other.</summary>
+    private void LayOverlays(TransportEdge edge)
+    {
+        if (transportOverlay is not null) TransportOverlay.Lay(edge, transportOverlay, knobs.Stage);
+        if (pictureWindow is not null) TransportOverlay.Lay(edge, pictureWindow.Transport, pictureWindow.Knobs);
     }
 
     /// <summary>
@@ -1510,13 +1519,12 @@ internal sealed class MainWindow : Window
 
         statsOverlay = new StatsOverlay(preview);
 
-        seekOverlay = new SeekOverlay { IsVisible = false };
-        toolbar.Seek.Drive(seekOverlay);
+        toolbar.Seek.Drive(overlay);
+        TransportOverlay.Lay(outputSections.Saved.Transport, overlay, knobs.Stage);
 
         grid.Children.Add(previewBox);
         grid.Children.Add(statsOverlay);
         grid.Children.Add(knobs.Stage);
-        grid.Children.Add(seekOverlay);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);
         grid.Children.Add(inspectorBorder);
@@ -1698,7 +1706,8 @@ internal sealed class MainWindow : Window
         window.Transport.MuteClicked += playback.ToggleMute;
         window.Transport.RewindClicked += RewindToZero;
 
-        toolbar.Seek.Drive(window.Seek);
+        toolbar.Seek.Drive(window.Transport);
+        TransportOverlay.Lay(outputSections.Saved.Transport, window.Transport, window.Knobs);
 
         window.PauseRequested += (_, _) => TogglePause();
         window.StatsRequested += (_, _) => ToggleStats();
@@ -1716,7 +1725,7 @@ internal sealed class MainWindow : Window
 
         pictureWindow = null;
         knobs.Away = null;
-        toolbar.Seek.Drop(window.Seek);
+        toolbar.Seek.Drop(window.Transport);
 
         preview.Renew();
         previewBox.Child = preview;
@@ -1759,12 +1768,6 @@ internal sealed class MainWindow : Window
             }
 
             overlay.IsVisible = full;
-        }
-
-        if (seekOverlay is not null)
-        {
-            Over(seekOverlay);
-            seekOverlay.IsVisible = full;
         }
 
         Over(knobs.Stage);
@@ -2007,9 +2010,6 @@ internal sealed class MainWindow : Window
     /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
     private TransportOverlay? transportOverlay;
 
-    /// <summary>The seek bar over the preview's cell while it has the window.</summary>
-    private SeekOverlay? seekOverlay;
-
     private bool pauseShowsPlay;
 
     internal bool Paused => playback.Paused;
@@ -2039,9 +2039,6 @@ internal sealed class MainWindow : Window
 
         toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
         toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
-
-        foreach (var seek in new[] { seekOverlay, pictureWindow?.Seek }.OfType<SeekOverlay>())
-            seek.IsEnabled = toolbar.Seek.IsEnabled;
 
         ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
 

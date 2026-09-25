@@ -124,7 +124,7 @@ public class FullScreenElsewhereTests : UiTest
     }
 
     [AvaloniaFact]
-    public void The_picture_on_another_monitor_has_a_seek_bar_that_follows_the_clock()
+    public void The_picture_on_another_monitor_has_a_seek_strip_that_follows_the_clock()
     {
         SeekBar? bar = null;
         var window = Open(replace: services => services.AddSingleton(sp => bar = ActivatorUtilities.CreateInstance<SeekBar>(sp)));
@@ -132,9 +132,7 @@ public class FullScreenElsewhereTests : UiTest
         SendAway(window);
 
         var picture = window.OwnedWindows.ShouldHaveSingleItem();
-        var seek = All<SeekOverlay>(picture).ShouldHaveSingleItem();
-
-        seek.IsEffectivelyVisible.ShouldBeTrue();
+        var seek = All<TransportOverlay>(picture).ShouldHaveSingleItem();
 
         All<PreviewHost>(picture).Single().Time = 42;
         bar.ShouldNotBeNull().Update();

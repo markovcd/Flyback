@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.App;
 using Flyback.App.Controls;
 
 namespace Flyback.Viewer;
@@ -29,7 +30,7 @@ internal sealed partial class ViewerWindow : Window
     private static readonly PixelSize LargestStart = new(1280, 720);
 
     /// <summary>How wide a window of buttons alone is, so its title bar has room for the title.</summary>
-    private const double ToolbarWidth = 400;
+    private const double ToolbarWidth = 560;
 
     /// <summary>How often the seek bar follows the clock.</summary>
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(100);
@@ -97,25 +98,13 @@ internal sealed partial class ViewerWindow : Window
         {
             var knobs = BuildKnobs();
             var overlay = BuildOverlay();
-            var seek = BuildSeek();
 
             knobs.Pin();
             overlay.Pin();
-            seek.Pin();
 
-            Content = new StackPanel
-            {
-                Children =
-                {
-                    seek,
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        Children = { knobs, overlay },
-                    },
-                },
-            };
+            Content = options.Transport == TransportEdge.Top
+                ? new StackPanel { Children = { overlay, knobs } }
+                : new StackPanel { Children = { knobs, overlay } };
         }
         else
         {
@@ -131,9 +120,13 @@ internal sealed partial class ViewerWindow : Window
 
             if (!options.NoOverlay)
             {
-                layout.Children.Add(BuildKnobs());
-                layout.Children.Add(BuildSeek());
-                layout.Children.Add(BuildOverlay());
+                var knobs = BuildKnobs();
+                var overlay = BuildOverlay();
+
+                TransportOverlay.Lay(options.Transport, overlay, knobs);
+
+                layout.Children.Add(knobs);
+                layout.Children.Add(overlay);
             }
 
             Content = layout;
@@ -174,7 +167,7 @@ internal sealed partial class ViewerWindow : Window
         player.Finished += Close;
 
         // The player stops itself at the end of the patch's length, so the buttons follow it.
-        if (Seek is not null || Overlay is not null)
+        if (Overlay is not null)
         {
             var follow = new DispatcherTimer(DispatcherPriority.Background) { Interval = Follow };
 
@@ -192,9 +185,6 @@ internal sealed partial class ViewerWindow : Window
 
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
     internal TransportOverlay? Overlay { get; private set; }
-
-    /// <summary>The seek bar over the picture, or null for a run that asked for no overlay.</summary>
-    internal SeekOverlay? Seek { get; private set; }
 
     /// <summary>The line saying how the picture is drawn, or null for a run with no picture.</summary>
     internal StatsOverlay? Stats { get; }
@@ -233,31 +223,25 @@ internal sealed partial class ViewerWindow : Window
         overlay.PauseClicked += TogglePause;
 
         overlay.RewindClicked += player.Rewind;
-
-        return overlay;
-    }
-
-    private SeekOverlay BuildSeek()
-    {
-        var seek = Seek = new SeekOverlay();
-
-        seek.Sought += player.SeekTo;
-        seek.LoopClicked += () =>
+        overlay.Sought += player.SeekTo;
+        overlay.LoopClicked += () =>
         {
             player.Looped = !player.Looped;
             Followed();
         };
 
-        seek.Follow(player.Time, player.Length, player.Looped);
+        overlay.Follow(player.Time, player.Length, player.Looped);
 
-        return seek;
+        return overlay;
     }
 
-    /// <summary>Puts the seek bar and the pause button where the player is.</summary>
+    /// <summary>Puts the strip and the pause button where the player is.</summary>
     internal void Followed()
     {
-        Seek?.Follow(player.Time, player.Length, player.Looped);
-        if (Overlay is { } overlay) overlay.Paused = player.Paused;
+        if (Overlay is not { } overlay) return;
+
+        overlay.Follow(player.Time, player.Length, player.Looped);
+        overlay.Paused = player.Paused;
     }
 
     private void TogglePause()

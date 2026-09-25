@@ -42,15 +42,6 @@ public class TransportTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Pause_is_the_button_nearest_the_three_dots()
-    {
-        var window = Open();
-        var buttons = All<Button>(Overlay(window)).Select(b => ToolTip.GetTip(b) as string).ToList();
-
-        buttons.ShouldBe(["Sound on or off", "Back to the start", "Pause or play"]);
-    }
-
-    [AvaloniaFact]
     public void Pausing_holds_the_picture_on_a_clock_that_does_not_move()
     {
         var window = Open();

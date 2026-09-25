@@ -9,3 +9,4 @@ Full-window shots in `site/assets/shots` that no longer match the app, waiting f
 - `euclid-kit.webp` (tutorials.html): the toolbar has no seek bar between Rewind and Record. 2026-09-24.
 - `plasma.webp` (tutorials.html): the toolbar has no seek bar between Rewind and Record. 2026-09-24.
 - `tutorial-canvas.webp` (tutorials.html): the toolbar has no seek bar between Rewind and Record. 2026-09-24.
+- `settings.webp` (tutorials.html): the Graphics tab has no Controls row under Full screen. 2026-09-25.

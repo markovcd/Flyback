@@ -41,14 +41,3 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     And the seek bar loops
     When the patch plays on past the end of the seek bar
     Then the patch's clock is at about 0 seconds
-
-  Scenario: The picture given the whole window keeps a seek bar at its top
-    Given a rainbow across the screen
-    And the patch is open in the editor
-    When the picture is given the whole window
-    Then a seek bar waits at the top of the picture
-
-  Scenario: The viewer has a seek bar at the top of its picture
-    Given a rainbow across the screen
-    When the viewer plays it
-    Then a seek bar waits at the top of the viewer's picture

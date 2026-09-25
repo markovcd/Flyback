@@ -1,4 +1,5 @@
 using Avalonia;
+using Flyback.App;
 using Flyback.Core.Compile;
 
 namespace Flyback.Viewer;
@@ -68,6 +69,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
 
     /// <summary>Neither the dots nor the toolbar.</summary>
     public bool NoOverlay { get; init; }
+
+    /// <summary>Which edge of the picture the transport waits at; the knobs take the other.</summary>
+    public TransportEdge Transport { get; init; }
 
     /// <summary>Open with the line saying how the picture is drawn in its corner, which F3 shows and puts away.</summary>
     public bool Stats { get; init; }

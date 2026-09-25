@@ -407,10 +407,10 @@ public class ViewerWindowTests : UiTest
     }
 
     [AvaloniaFact]
-    public void The_seek_bar_waits_behind_dots_at_the_top_and_moves_the_clock()
+    public void The_transport_waits_behind_dots_at_the_top_and_its_strip_moves_the_clock()
     {
         var window = Open(Plasma(), Options() with { Size = new PixelSize(640, 360) });
-        var seek = window.Seek.ShouldNotBeNull();
+        var seek = window.Overlay.ShouldNotBeNull();
 
         seek.VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
         seek.IsOpen.ShouldBeFalse();
@@ -422,11 +422,24 @@ public class ViewerWindowTests : UiTest
         seek.IsOpen.ShouldBeTrue();
 
         var at = seek.Track.TranslatePoint(seek.Track.At(90), window)!.Value;
+        window.MouseMove(at);
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
         Settle(window);
 
-        window.Player.Time.ShouldBe(90, 1);
+        // A pixel of the strip is this many seconds, and a click lands on a whole one.
+        var pixel = seek.Track.Maximum / seek.Track.Bounds.Width;
+
+        window.Player.Time.ShouldBe(90, 2 * pixel);
+    }
+
+    [AvaloniaFact]
+    public void Transport_bottom_gives_the_top_to_the_knobs()
+    {
+        var window = Open(Plasma(), Options() with { Transport = TransportEdge.Bottom });
+
+        window.Overlay!.VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
+        window.Knobs!.VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
     }
 
     [AvaloniaFact]

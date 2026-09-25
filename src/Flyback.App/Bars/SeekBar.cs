@@ -17,7 +17,7 @@ namespace Flyback.App.Bars;
 /// <remarks>
 /// The length is the patch's, an edit like any other; the switch is the editor's, kept
 /// with the canvas settings. The end is caught on the thumb's own tick, so it lands
-/// within a tenth of a second. A seek bar over a full-screen picture follows this one.
+/// within a tenth of a second. The transport over a full-screen picture follows this bar.
 /// </remarks>
 internal sealed class SeekBar
 {
@@ -29,7 +29,7 @@ internal sealed class SeekBar
     private readonly NodeEditor editor;
     private readonly Document document;
 
-    private readonly List<SeekOverlay> overlays = [];
+    private readonly List<TransportOverlay> overlays = [];
 
     public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, Document document)
     {
@@ -61,7 +61,7 @@ internal sealed class SeekBar
 
         ToolTip.SetTip(Length, "How long the patch plays for: seconds, or minutes:seconds, to a hundredth.");
 
-        Loop = ToolbarButtons.Toggle("seekLoop", "⟲", "Play the patch's length round and round, from zero again at its end.");
+        Loop = ToolbarButtons.Marked(new ToggleButton(), "seekLoop", Glyphs.Loop(), "Play the patch's length round and round, from zero again at its end.");
         Loop.IsChecked = settings.SeekLoop;
         Loop.IsCheckedChanged += (_, _) =>
         {
@@ -113,22 +113,27 @@ internal sealed class SeekBar
     public bool IsEnabled
     {
         get => View.IsEnabled;
-        set => View.IsEnabled = value;
+        set
+        {
+            View.IsEnabled = value;
+            foreach (var overlay in overlays) overlay.CanSeek = value;
+        }
     }
 
-    /// <summary>Has a seek bar over a picture follow this one, and move the clock and switch the loop through it.</summary>
-    public void Drive(SeekOverlay overlay)
+    /// <summary>Has the transport over a picture follow this bar, and move the clock and switch the loop through it.</summary>
+    public void Drive(TransportOverlay overlay)
     {
         if (overlays.Contains(overlay)) return;
 
         overlays.Add(overlay);
+        overlay.CanSeek = View.IsEnabled;
         overlay.Sought += Seek;
         overlay.LoopClicked += FlipLoop;
         Update();
     }
 
-    /// <summary>Lets go of a seek bar over a picture that is going away.</summary>
-    public void Drop(SeekOverlay overlay)
+    /// <summary>Lets go of the transport over a picture that is going away.</summary>
+    public void Drop(TransportOverlay overlay)
     {
         if (!overlays.Remove(overlay)) return;
 

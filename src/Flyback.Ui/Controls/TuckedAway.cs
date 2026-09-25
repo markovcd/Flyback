@@ -44,6 +44,9 @@ public abstract class TuckedAway : Border
     private bool held;
     private bool pinned;
 
+    /// <summary>Set from the dots opening until the pointer leaves where they were.</summary>
+    private bool arriving;
+
     /// <summary>How big a bare glyph button over the picture is, either way.</summary>
     protected const double ToolSize = 40;
 
@@ -63,12 +66,10 @@ public abstract class TuckedAway : Border
             Opacity = Floor,
             Effect = Halo(),
             HorizontalAlignment = side,
-            VerticalAlignment = edge,
             Content = new Viewbox { Width = 24, Height = 24, Child = Glyphs.Dots() },
         };
 
         contents.HorizontalAlignment = side;
-        contents.VerticalAlignment = edge;
         contents.Opacity = 0;
         contents.IsHitTestVisible = false;
         contents.Transitions = new Transitions { new DoubleTransition { Property = OpacityProperty, Duration = TimeSpan.FromMilliseconds(160) } };
@@ -80,9 +81,20 @@ public abstract class TuckedAway : Border
 
         Child = layout;
         HorizontalAlignment = side;
-        VerticalAlignment = edge;
+        Edge = edge;
 
-        dots.PointerEntered += (_, _) => Shown();
+        dots.PointerEntered += (_, _) =>
+        {
+            Shown();
+            arriving = GuardsArrival;
+        };
+
+        AddHandler(PointerMovedEvent, (_, e) => arriving &= OnDots(e), RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerPressedEvent, (_, e) =>
+        {
+            if (arriving && OnDots(e)) e.Handled = true;
+        }, RoutingStrategies.Tunnel);
+
         PointerEntered += (_, _) => tuck.Stop();
         PointerExited += (_, _) => { if (!held && !pinned) tuck.Start(); };
 
@@ -110,6 +122,16 @@ public abstract class TuckedAway : Border
             Styles.Add(lit);
         }
 
+        // Nor a gray box for one that cannot be pressed: the glyph dims instead.
+        var off = new Style(x => x
+            .OfType<Button>().Class(":disabled")
+            .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
+
+        off.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent));
+        off.Setters.Add(new Setter(ContentPresenter.BorderBrushProperty, Brushes.Transparent));
+        off.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, new SolidColorBrush(Avalonia.Media.Colors.White, 0.3)));
+        Styles.Add(off);
+
         // Put away with the control, so it comes back the way it started.
         PropertyChanged += (_, e) =>
         {
@@ -119,6 +141,24 @@ public abstract class TuckedAway : Border
             Hidden();
             dots.Opacity = Floor;
         };
+    }
+
+    /// <summary>
+    /// Whether a click aimed at the dots is taken for nothing until the pointer has moved
+    /// off where they were, for contents where a click alone does something.
+    /// </summary>
+    protected bool GuardsArrival { get; init; }
+
+    /// <summary>Which edge of the picture the dots and what they open to stand at, the top or the bottom.</summary>
+    public VerticalAlignment Edge
+    {
+        get => VerticalAlignment;
+        set
+        {
+            VerticalAlignment = value;
+            dots.VerticalAlignment = value;
+            contents.VerticalAlignment = value;
+        }
     }
 
     /// <summary>The dots, for the tests that steer a pointer at them.</summary>
@@ -226,6 +266,8 @@ public abstract class TuckedAway : Border
 
     private void Left(object? sender, PointerEventArgs e) => dots.Opacity = Floor;
 
+    private bool OnDots(PointerEventArgs e) => new Rect(dots.Bounds.Size).Contains(e.GetPosition(dots));
+
     private void Approached(object? sender, PointerEventArgs e)
     {
         if (!IsVisible || IsOpen) return;
@@ -253,5 +295,6 @@ public abstract class TuckedAway : Border
         dots.Opacity = Floor;
         dots.IsHitTestVisible = true;
         Background = null;
+        arriving = false;
     }
 }

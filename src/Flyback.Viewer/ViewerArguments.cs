@@ -180,6 +180,15 @@ internal static class ViewerArguments
             Description = "No dots and no toolbar, so a capture has nothing of the viewer in it.",
         };
 
+        var transport = new Option<string>("--transport")
+        {
+            HelpName = "top|bottom",
+            Description = "Which edge of the picture the transport and the seek bar wait at; the knobs take the other.",
+            DefaultValueFactory = _ => settings.Transport == TransportEdge.Bottom ? "bottom" : "top",
+        };
+
+        transport.AcceptOnlyFromAmong("top", "bottom");
+
         var stats = new Option<bool>("--stats")
         {
             Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the ops. F3 shows it and puts it away.",
@@ -213,7 +222,7 @@ internal static class ViewerArguments
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency,
             from, paused, duration, loop,
-            background, hidden, noOverlay, stats, title, top, interpreted, file,
+            background, hidden, noOverlay, transport, stats, title, top, interpreted, file,
         };
 
         root.SetAction(result =>
@@ -250,6 +259,7 @@ internal static class ViewerArguments
                 Background = result.GetValue(background),
                 Hidden = result.GetValue(hidden),
                 NoOverlay = result.GetValue(noOverlay),
+                Transport = result.GetValue(transport) == "bottom" ? TransportEdge.Bottom : TransportEdge.Top,
                 Stats = result.GetValue(stats),
                 Title = result.GetValue(title),
                 Top = result.GetValue(top),

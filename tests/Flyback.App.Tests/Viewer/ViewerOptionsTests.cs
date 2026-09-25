@@ -21,6 +21,7 @@ public class ViewerOptionsTests
         Gpu = false,
         PreviewFrameRate = 30,
         LatencyMilliseconds = 60,
+        Transport = TransportEdge.Bottom,
     };
 
     private sealed record Ran(int Code, ViewerOptions? Options, string Error, int ParseErrors);
@@ -99,6 +100,7 @@ public class ViewerOptionsTests
         options.Window.ShouldBeNull();
         options.Patch.ShouldBeNull();
         options.Preset.ShouldBeNull();
+        options.Transport.ShouldBe(TransportEdge.Bottom);
     }
 
     [Fact]
@@ -124,6 +126,7 @@ public class ViewerOptionsTests
             "--background",
             "--no-overlay",
             "--stats",
+            "--transport", "top",
             "--title", "hello",
             "--top",
             "--interpreted");
@@ -146,6 +149,7 @@ public class ViewerOptionsTests
         options.Background.ShouldBeTrue();
         options.NoOverlay.ShouldBeTrue();
         options.Stats.ShouldBeTrue();
+        options.Transport.ShouldBe(TransportEdge.Top);
         options.Title.ShouldBe("hello");
         options.Top.ShouldBeTrue();
         options.Interpreted.ShouldBeTrue();
@@ -173,6 +177,10 @@ public class ViewerOptionsTests
         ran.Options.ShouldBeNull();
         ran.ParseErrors.ShouldBeGreaterThan(0);
     }
+
+    [Fact]
+    public void The_transport_is_at_the_top_or_the_bottom_and_nowhere_else() =>
+        Run(Machine, "--transport", "left").ParseErrors.ShouldBeGreaterThan(0);
 
     [Fact]
     public void The_renderers_are_each_other_s_opposite_and_one_is_enough()

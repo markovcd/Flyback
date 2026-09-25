@@ -147,10 +147,11 @@
     </div>
 
     <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
-    back. Hover the bottom right corner of the full-screen picture for the sound, rewind and pause buttons, the top
-    middle for the seek bar, and press
+    back. Hover the top middle of the full-screen picture for the transport, in the toolbar's order: pause, rewind,
+    the seek bar, the time against the patch's length, loop and sound. Press
     <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws and what each costs. A patch
-    with knobs keeps them behind the dots at the bottom middle, to be played.
+    with knobs keeps them behind the dots at the bottom middle, to be played;
+    <strong>Settings → Graphics → Controls</strong> swaps the two, knobs on top and the transport below.
     <strong>Settings → Graphics → Full screen</strong> can send the picture to another monitor instead, or to one
     you pick, and the editor stays where it is. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
     to zoom. <kbd>Ctrl</kbd>+<kbd>F</kbd> frames the whole patch. <kbd>Esc</kbd> backs out of a drag part way
@@ -560,16 +561,17 @@ flyback-cli render my-patch.fbks -o my-patch.png</code></pre>
 <pre><code>flyback-viewer drone.fbk
 flyback-viewer --preset "Dub" --size 1080p --mute
 flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
-    <p>Hover the bottom right corner of the window for the sound, rewind and pause buttons, and the top middle for
-    the seek bar, and double-click the picture or press <kbd>F11</kbd> for full screen. A patch with no picture opens as
-    just those buttons, the seek bar and its knobs. The patch stops at the end of its length unless the seek bar's
+    <p>Hover the top middle of the window for the same transport as the editor's full screen, and double-click the
+    picture or press <kbd>F11</kbd> for full screen. <code>--transport bottom</code> swaps it with the knobs, and
+    without the flag the viewer follows <strong>Settings → Graphics → Controls</strong>. A patch with no picture opens as
+    just the transport and its knobs. The patch stops at the end of its length unless the seek bar's
     loop is on or <code>--loop</code> was given, and a run with no window, or with <code>--for</code>, closes there.
     <kbd>Space</kbd> pauses, and <kbd>F3</kbd>, or <code>--stats</code> from the start, says in the corner how the
     picture is drawn: frames a second, a frame's cost, the ops. <code>--hidden</code> opens no window at all, which is how
     to hear a patch without anything landing on the screen.</p>
     <p>A patch made to be played is played here too: the computer's keys are notes, a MIDI In hears its
-    device, and a knob bound to a MIDI controller follows it. The knobs wait behind the dots at the bottom of the
-    picture, to be turned by hand.</p>
+    device, and a knob bound to a MIDI controller follows it. The knobs wait behind the dots at the other edge of the
+    picture from the transport, to be turned by hand.</p>
 
     <h3>Check, inspect and share</h3>
 <pre><code>flyback-cli check my-patch.fbk --strict     # exit code 0, 1 or 2; good for CI

@@ -7,8 +7,8 @@ using Flyback.App.Controls;
 namespace Flyback.App;
 
 /// <summary>
-/// The preview full screen on a monitor of its own, with the knobs, the seek bar
-/// and the transport over it (ADR-0129, ADR-0148).
+/// The preview full screen on a monitor of its own, with the knobs and the
+/// transport over it (ADR-0129, ADR-0148).
 /// </summary>
 /// <remarks>
 /// Not activated, so the keyboard stays with the editor. Double-clicking the
@@ -22,11 +22,8 @@ internal sealed class PictureWindow : Window
     /// <summary>The knobs over the picture.</summary>
     public StageKnobs Knobs { get; } = new();
 
-    /// <summary>The dots and transport over the picture.</summary>
+    /// <summary>The dots and transport over the top of the picture.</summary>
     public TransportOverlay Transport { get; } = new();
-
-    /// <summary>The dots and seek bar over the top of the picture.</summary>
-    public SeekOverlay Seek { get; } = new();
 
     /// <summary>Ctrl+P was pressed over the picture.</summary>
     public event EventHandler? PauseRequested;
@@ -52,7 +49,6 @@ internal sealed class PictureWindow : Window
         picture.Children.Add(preview);
         picture.Children.Add(Stats);
         picture.Children.Add(Knobs);
-        picture.Children.Add(Seek);
         picture.Children.Add(Transport);
 
         Content = picture;

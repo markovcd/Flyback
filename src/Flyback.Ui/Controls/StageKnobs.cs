@@ -49,21 +49,6 @@ public sealed class StageKnobs : TuckedAway
         DoubleTapped += (_, e) => e.Handled = true;
     }
 
-    /// <summary>
-    /// The transport opens on the same row, so its corner is kept clear on both sides
-    /// and a long row wraps upward instead; a picture too narrow for that gets the lot.
-    /// Pinned, the transport sits beside the row, not on it.
-    /// </summary>
-    protected override Size MeasureOverride(Size availableSize)
-    {
-        var clear = TransportOverlay.Span - Margin.Left + 8;
-        var margin = !IsPinned && availableSize.Width >= 2 * clear + 3 * 54 ? new Thickness(clear, 0) : default;
-
-        if (row.Margin != margin) row.Margin = margin;
-
-        return base.MeasureOverride(availableSize);
-    }
-
     /// <summary>A hand turned a knob: its id and where it now sits.</summary>
     public event Action<Guid, float>? Turning;
 

@@ -13,7 +13,7 @@ public sealed class ViewerSteps(ViewerRun viewer)
     public void WhenPlayed() => viewer.Play();
 
     [When("the viewer plays it with {string}")]
-    public void WhenPlayedWith(string flag) => viewer.Play(flag);
+    public void WhenPlayedWith(string flags) => viewer.Play(flags.Split(' '));
 
     [When("F3 is pressed over the viewer's picture")]
     public void WhenF3() => viewer.Press(PhysicalKey.F3);
@@ -21,8 +21,11 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [Then("the viewer's picture says how many frames a second it draws")]
     public void ThenItSays() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
-    [Then("a seek bar waits at the top of the viewer's picture")]
-    public void ThenASeekBarAtTheTop() => viewer.SeekBarAtTheTop.ShouldBeTrue();
+    [Then("the viewer's transport waits at the top of its picture")]
+    public void ThenTheTransportAtTheTop() => viewer.TransportEdge.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
+
+    [Then("the viewer's transport waits at the bottom of its picture")]
+    public void ThenTheTransportAtTheBottom() => viewer.TransportEdge.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
 
     [Then("the viewer's picture says nothing about how it is drawn")]
     public void ThenItSaysNothing() => viewer.Stats.ShouldBeNull();

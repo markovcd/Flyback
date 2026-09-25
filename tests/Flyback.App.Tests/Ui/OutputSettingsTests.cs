@@ -287,6 +287,20 @@ public class OutputSettingsTests : UiTest
         StartupName(OpenSettings(window)).ShouldBe(Patches[0]);
     }
 
+    [AvaloniaFact]
+    public void Giving_the_knobs_the_top_moves_the_transport_to_the_bottom_and_is_kept()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        All<ComboBox>(dialog).Single(c => c.Name == "transportEdge").SelectedIndex = 1;
+        CloseSettings(window, dialog, save: true);
+
+        All<TransportOverlay>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
+        All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
+        OutputSettings.Load(settingsPath).Transport.ShouldBe(TransportEdge.Bottom);
+    }
+
     /// <summary>What is picked here is a launch's business, not this one's.</summary>
     [AvaloniaFact]
     public void Picking_a_startup_preset_does_not_change_the_canvas()

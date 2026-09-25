@@ -269,10 +269,15 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         return true;
     }
 
-    /// <summary>Whether a seek bar waits behind its dots at the top of the full-screen picture.</summary>
-    public bool SeekBarAtTheTop => ReadWindow(open =>
-        open.GetVisualDescendants().OfType<SeekOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } seek
-        && seek.VerticalAlignment == Avalonia.Layout.VerticalAlignment.Top);
+    /// <summary>Which edge of the full-screen picture the transport waits at, or null while it is not showing.</summary>
+    public Avalonia.Layout.VerticalAlignment? TransportEdge => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+            ? transport.VerticalAlignment
+            : (Avalonia.Layout.VerticalAlignment?)null);
+
+    /// <summary>Which edge of the full-screen picture the knobs wait at.</summary>
+    public Avalonia.Layout.VerticalAlignment KnobsEdge => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<StageKnobs>().Single().VerticalAlignment);
 
     /// <summary>Types a length into the box beside the seek bar, and presses Enter.</summary>
     public void SetSeekLength(string typed) =>

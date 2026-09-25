@@ -151,6 +151,9 @@ public sealed class OutputSettings
     /// </summary>
     public MonitorSpot? FullScreenMonitor { get; set; }
 
+    /// <summary>Which edge of a full-screen picture the transport waits at — the Graphics section.</summary>
+    public TransportEdge Transport { get; set; }
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -245,6 +248,7 @@ public sealed class OutputSettings
             if (!Enum.IsDefined(settings.Takeover)) settings.Takeover = Takeover.Jump;
             if (!Enum.IsDefined(settings.Keyboard)) settings.Keyboard = KeyboardLayout.Piano;
             if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
+            if (!Enum.IsDefined(settings.Transport)) settings.Transport = TransportEdge.Top;
 
             return settings;
         }
