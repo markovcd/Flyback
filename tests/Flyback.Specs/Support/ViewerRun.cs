@@ -15,7 +15,7 @@ namespace Flyback.Specs.Support;
 /// its own file read, then the window its container builds. Silent, and drawn on the
 /// processor, since there is no sound card and no graphics card here.
 /// </summary>
-public sealed class ViewerRun(PatchContext context) : IDisposable
+public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDisposable
 {
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-viewer-specs");
 
@@ -40,7 +40,7 @@ public sealed class ViewerRun(PatchContext context) : IDisposable
         var (opened, _) = ViewerSource.Resolve(options, settings, PluginCatalog.Empty, new PresetLibrary(folder.FullName), error)
             ?? throw new InvalidOperationException($"flyback-viewer could not open the patch: {error}");
 
-        Headless.Run(() =>
+        Run(() =>
         {
             window = ViewerServices.Window(new ViewerLaunch(opened, null, options));
             window.Show();
@@ -50,7 +50,7 @@ public sealed class ViewerRun(PatchContext context) : IDisposable
 
     /// <summary>Presses a key over the picture.</summary>
     public void Press(PhysicalKey key) =>
-        Headless.Run(() =>
+        Run(() =>
         {
             var open = window ?? throw new InvalidOperationException("the viewer is not playing");
 
@@ -62,24 +62,43 @@ public sealed class ViewerRun(PatchContext context) : IDisposable
         });
 
     /// <summary>What the line in the picture's corner says, or null while it is not showing.</summary>
-    public string? Stats => Headless.Run(() =>
+    public string? Stats => Run(() =>
         window!.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats
             ? stats.Said
             : null);
 
     public void Dispose()
     {
-        if (window is { } open)
+        try
         {
-            window = null;
-            Headless.Run(() =>
+            if (window is { } open)
             {
-                open.Close();
-                Dispatcher.UIThread.RunJobs();
-            });
+                window = null;
+                Run(() =>
+                {
+                    open.Close();
+                    Dispatcher.UIThread.RunJobs();
+                });
+            }
+        }
+        finally
+        {
+            turn.Leave(this);
         }
 
         folder.Delete(recursive: true);
+    }
+
+    private void Run(Action act)
+    {
+        turn.Take(this);
+        Headless.Run(act);
+    }
+
+    private T Run<T>(Func<T> act)
+    {
+        turn.Take(this);
+        return Headless.Run(act);
     }
 
     private void Settle()
