@@ -2,6 +2,7 @@ using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
+using Flyback.Core.Compile;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
@@ -16,7 +17,7 @@ namespace Flyback.App;
 /// or the settings of the machine running it. The program itself starts from
 /// <see cref="ThisMachine"/>.
 /// </remarks>
-public sealed record EditorSetup
+public sealed record EditorSetup : IIlCompilerSetup
 {
     /// <summary>
     /// Where the kept groups live. Null is the usual place; a path is for the

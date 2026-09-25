@@ -16,6 +16,13 @@ public enum IlLane
     AuditionSound,
 }
 
+/// <summary>What a run asks of its <see cref="IlCompiler"/>.</summary>
+public interface IIlCompilerSetup
+{
+    /// <summary>Keep every program on the interpreter.</summary>
+    bool Interpreted { get; }
+}
+
 /// <summary>
 /// Puts IL under programs that are already playing: a program is interpreted the
 /// moment it is compiled, and runs as machine code from whenever that is ready.
@@ -65,8 +72,10 @@ public sealed class IlCompiler : IDisposable
     private bool enabled = true;
     private bool disposed;
 
-    public IlCompiler()
+    public IlCompiler(IIlCompilerSetup? setup = null)
     {
+        enabled = setup is not { Interpreted: true };
+
         // Below the audio callback and the render loop, which are what this is
         // trying to make cheaper: a build that took the processor from either of
         // them would cost the thing it exists to save.

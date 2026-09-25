@@ -1,4 +1,5 @@
 using Avalonia;
+using Flyback.Core.Compile;
 
 namespace Flyback.Viewer;
 
@@ -7,7 +8,7 @@ namespace Flyback.Viewer;
 /// line gave. Settled before anything opens, so the window is handed numbers and never
 /// asks where they came from.
 /// </summary>
-internal sealed record ViewerOptions
+internal sealed record ViewerOptions : IIlCompilerSetup
 {
     /// <summary>The patch to play, as a path; null when <see cref="Preset"/> or the startup preset stands in.</summary>
     public string? Patch { get; init; }

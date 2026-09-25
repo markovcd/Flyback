@@ -17,8 +17,8 @@ namespace Flyback.App;
 /// the editor's own is built from its constructor. Where two need each other, one
 /// takes a <see cref="Lazy{T}"/> of the other and asks for it only once it acts. The
 /// factories below are for what is not the editor's own, which the viewer and the
-/// tests build by hand as well: the compiler, the sound, MIDI, the assistant's
-/// column and a value that may be absent.
+/// tests build by hand as well: the sound, MIDI, the assistant's column and a value
+/// that may be absent.
 /// </remarks>
 internal static class EditorServices
 {
@@ -39,6 +39,7 @@ internal static class EditorServices
         services.AddTransient(typeof(Lazy<>), typeof(Deferred<>));
 
         services.AddSingleton(setup);
+        services.AddSingleton<IIlCompilerSetup>(setup);
         services.AddSingleton(setup.Usage ?? Usage.Off);
 
         // Read before any window existed, and already installed in the catalog.
@@ -46,8 +47,7 @@ internal static class EditorServices
 
         services.AddKeyedSingleton(SiteAccess.Client, (_, _) => SiteAccess.Shared);
 
-        // Before anything is compiled, so no build is started only to be taken off.
-        services.AddSingleton(_ => new IlCompiler { Enabled = !setup.Interpreted });
+        services.AddSingleton<IlCompiler>();
 
         // Null for a window that keeps none: every test that did not ask for a folder,
         // which must not see the presets on the machine running it.

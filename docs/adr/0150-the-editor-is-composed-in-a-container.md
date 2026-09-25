@@ -33,6 +33,9 @@ tests both call.
   `EditorSetup`. A test that builds one by hand hands it the same: a
   `PluginCatalog.Empty` rather than a module catalog, an `EditorSetup` rather
   than a folder. Everything is a singleton, since the container is one window's.
+- **A class below Flyback.App declares the setup it reads as an interface.**
+  `IlCompiler` takes an `IIlCompilerSetup`, which `EditorSetup` and the viewer's
+  `ViewerOptions` both implement, and a test that builds one by hand passes none.
 - **A cycle is a `Lazy<T>`.** The take and the playback, the files and the
   playback, the plugins window and the unsaved question, the settings and the
   preset slot: one side takes the other lazily and asks for it only once it acts.
@@ -68,10 +71,10 @@ Exceptions, each kept on purpose:
   window, since the window is built from them, so the one thing they cannot be
   handed is the window. `Shell.Attach` is the first line of its constructor, and
   a region reads `Shell.Owner` only once it is asked to do something.
-- **Factories for what is not the editor's own.** The compiler, the sound
-  device, the sound engine, MIDI and the assistant's column are shared with tests
-  that build them by hand, so their constructors stay as they are and `AddEditor`
-  and `AddViewer` build them in a factory. So does a value that may be absent
+- **Factories for what is not the editor's own.** The sound device, the sound
+  engine, MIDI and the assistant's column are shared with tests that build them by
+  hand, so their constructors stay as they are and `AddEditor` and `AddViewer`
+  build them in a factory. So does a value that may be absent
   (the saved presets, the recovery keeper): the container holds a null, and a
   class that reads one takes it as an optional parameter.
 - **The container is never disposed.** The window already tears down what it
