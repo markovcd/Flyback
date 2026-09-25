@@ -71,6 +71,7 @@ public sealed class FlybackApp : Application
                 OpenPath = Startup.OpenPath,
                 OpenShared = Startup.OpenShared,
                 Interpreted = Startup.Interpreted,
+                Plugins = Startup.Plugins,
                 OpeningNote = Startup.OpeningNote,
                 WhatsNew = Startup.WhatsNew,
             });

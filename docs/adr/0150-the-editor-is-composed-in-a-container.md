@@ -81,11 +81,14 @@ Exceptions, each kept on purpose:
   saved presets, the MIDI backend) is a factory returning null, and a class that
   reads one takes it as an optional parameter. A class that can do nothing on its
   own instead takes the setup and does nothing: the recovery keeper with no folder.
-- **The container is never disposed.** The window already tears down what it
-  holds in `OnClosed`, in the order a take and a device need; disposing the
-  container as well would dispose them twice.
+- **The container is never disposed.** The window tears down what it holds in
+  `OnClosed`, in the order a take and a device need. The sound engine owns its
+  device and disposes the one it lets go of, so a container disposing the device
+  the run opened with would dispose it again, which a plugin's device is not
+  promised to survive.
 - **The plugins are still read before any window exists.** `Startup.Load` runs
-  before Avalonia starts, and the container takes `Startup.Plugins` from there.
+  before Avalonia starts, and the window is handed what it loaded on
+  `EditorSetup.Plugins`, which a test leaves at `PluginCatalog.Empty`.
 - **The viewer's device and MIDI backend are opened before its container.**
   `Program` opens them to say on the terminal what failed before any window
   exists, and hands them over on the `ViewerLaunch`.

@@ -65,8 +65,11 @@ public sealed record EditorSetup : IIlCompilerSetup
     /// <summary>What the Files section tells the operating system.</summary>
     public FileTypes? FileTypes { get; init; }
 
-    /// <summary>What this run says about itself (ADR-0094). Null says nothing.</summary>
-    public Usage? Usage { get; init; }
+    /// <summary>What this run says about itself (ADR-0094).</summary>
+    public Usage Usage { get; init; } = Usage.Off;
+
+    /// <summary>The plugins loaded before any window existed, already installed in the module catalog.</summary>
+    public PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
 
     /// <summary>
     /// Starts Flyback again once this window has closed, which is what loads a plugin
