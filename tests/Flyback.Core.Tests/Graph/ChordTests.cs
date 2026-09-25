@@ -68,7 +68,7 @@ public class ChordTests
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.AutoChordTypeId);
 
-        def.Inputs.Select(p => p.Name).ShouldBe(["tonic", "root"]);
+        def.Inputs.Select(p => p.Name).ShouldBe(["tonic", "root", "note"]);
         def.Outputs.Select(p => p.Name).ShouldBe(["hz1", "hz2", "hz3", "hz4"]);
 
         var scale = def.Extra<SettingsExtra>()!.Fields.OfType<ExtraField.Choice>().Single();
@@ -132,6 +132,61 @@ public class ChordTests
                 Heard(program, root).ShouldBe(Notes(62, Chords.Diatonic(scale, root)), 1e-3, $"{scale.Name} on {root}");
         }
     }
+
+    [Theory]
+    [InlineData("ionian", 60, 62, 0, new[] { 62, 65, 69, 72 })]
+    [InlineData("ionian", 60, 61, 0, new[] { 62, 65, 69, 72 })]
+    [InlineData("ionian", 60, 59, 0, new[] { 59, 62, 65, 69 })]
+    [InlineData("ionian", 60, 74, 0, new[] { 74, 77, 81, 84 })]
+    [InlineData("ionian", 60, 48, 0, new[] { 48, 52, 55, 59 })]
+    [InlineData("ionian", 60, 62, 1, new[] { 64, 67, 71, 74 })]
+    [InlineData("ionian", 60, 62, -2, new[] { 59, 62, 65, 69 })]
+    [InlineData("harmonic-minor", 57, 64, 0, new[] { 64, 68, 71, 74 })]
+    [InlineData("harmonic-minor", 57, 54, 0, new[] { 53, 57, 60, 64 })]
+    public void A_played_note_picks_the_chord_and_the_root_moves_it_on(
+        string scale, int tonic, int note, int root, int[] notes)
+    {
+        Heard(b =>
+        {
+            var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, tonic), (1, root), (2, note));
+            b.Wire(b.Add("value", (0, (float)note)), 0, chord, 2);
+            Scaled(chord, scale);
+            return chord;
+        }, 0).ShouldBe(notes.Select(n => (double)Pitch.Frequency(n)).ToArray(), 1e-3);
+    }
+
+    [Fact]
+    public void A_played_note_plays_every_chord_of_every_scale()
+    {
+        foreach (var scale in Chords.Scales)
+        {
+            var program = Compiled(b =>
+            {
+                var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, 62f));
+                Scaled(chord, scale.Id);
+                b.Wire(b.Add("coord"), 0, chord, 2);
+                return chord;
+            });
+
+            for (var note = 30; note <= 100; note++)
+            {
+                var root = Chords.Steps(scale, note - 62);
+
+                Heard(program, note).ShouldBe(Notes(62, Chords.Diatonic(scale, root)), 1e-3, $"{scale.Name} on {note}");
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 1)]
+    [InlineData(2, 1)]
+    [InlineData(-1, -1)]
+    [InlineData(11, 6)]
+    [InlineData(12, 7)]
+    [InlineData(-13, -8)]
+    public void A_note_counts_as_the_steps_of_the_nearest_note_on_the_scale(int semitones, int steps) =>
+        Chords.Steps(Chords.Scale("ionian"), semitones).ShouldBe(steps);
 
     [Fact]
     public void A_patched_root_is_rounded_to_a_step() =>

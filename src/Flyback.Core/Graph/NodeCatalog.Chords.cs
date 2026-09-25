@@ -53,9 +53,9 @@ public partial class NodeCatalog
     /// the scale above it.
     /// </summary>
     /// <remarks>
-    /// The scale is a setting rather than a socket: it decides the table the root is
-    /// looked up in. The root is a signal, so the table has a row for each of the
-    /// seven notes, and the octave is added after.
+    /// The scale is a setting rather than a socket: it decides the tables the note and
+    /// the root are looked up in. Both are signals, so a table has a row for each note
+    /// of an octave, and the octave is added after.
     /// </remarks>
     private static NodeDef AutoChord() => new(
         AutoChordTypeId, "Auto Chord", ModuleCategories.Pitch,
@@ -64,7 +64,13 @@ public partial class NodeCatalog
             new PortSpec("root", PortKind.Scalar, 0f, -14f, 14f, Display: PortDisplay.Integer)
             {
                 Help = "The chord's root, in steps of the scale from the tonic: 0 the tonic, 1 the next note up, "
-                    + "-1 the note below, 7 the tonic an octave up. A signal is rounded.",
+                    + "-1 the note below, 7 the tonic an octave up. Added to 'note'. A signal is rounded.",
+            },
+            Pitched("note", 60f) with
+            {
+                NormalledFrom = 0,
+                Help = "A note number to build the chord on, such as a MIDI In's pitch, carrying 'tonic' when "
+                    + "nothing is patched. A note off the scale moves to the nearest one on it, up on a tie.",
             },
         ],
         ChordOutputs(),
@@ -73,7 +79,19 @@ public partial class NodeCatalog
             var scale = Chords.Scale(i.Extra<ExtraState>(AutoChordStateKey)?.Chosen(AutoChordScaleField) ?? string.Empty);
 
             var steps = scale.Classes.Length;
-            var root = em.Unary(OpCode.Floor, em.Add(i[1], 0.5f));
+            var tonic = em.Unary(OpCode.Floor, em.Add(i[0], 0.5f));
+            var note = em.Unary(OpCode.Floor, em.Add(i[2], 0.5f));
+
+            // The note in steps of the scale: whole octaves of it, rounded because
+            // seven twelfths is not exact, and where in its octave it lands.
+            var semitones = em.Sub(note, tonic);
+            var above = em.Binary(OpCode.Mod, semitones, em.Constant(Pitch.Semitones));
+            var whole = em.Mul(em.Sub(semitones, above), steps / Pitch.Semitones);
+            var played = em.Add(
+                em.Unary(OpCode.Floor, em.Add(whole, 0.5f)),
+                Picked(em, above, [.. Enumerable.Range(0, Pitch.Classes).Select(s => new[] { Chords.Steps(scale, s) })])[0]);
+
+            var root = em.Add(em.Unary(OpCode.Floor, em.Add(i[1], 0.5f)), played);
             var degree = em.Binary(OpCode.Mod, root, em.Constant(steps));
             var octaves = em.Mul(em.Sub(root, degree), Pitch.Semitones / steps);
 
@@ -83,8 +101,9 @@ public partial class NodeCatalog
         },
         "The four-note chord a scale builds on one of its notes: that note and the scale's third, "
         + "fifth and seventh above it, as four frequencies for four oscillators. Pick the scale on "
-        + "the module and count 'root' in steps from the tonic: in C major, 1 gives D minor 7, "
-        + "4 gives G 7 and -1 the B half-diminished below.")
+        + "the module, then play the note into 'note', count it in steps from the tonic on 'root', "
+        + "or both, and the two add up: in C major, D on 'note' or 1 on 'root' gives D minor 7, "
+        + "and -1 on 'root' the B half-diminished below.")
     {
         Extras =
         [

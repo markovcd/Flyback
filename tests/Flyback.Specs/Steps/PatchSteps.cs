@@ -441,6 +441,19 @@ public sealed class PatchSteps(PatchContext context)
         Chorded($"autochord(tonic: {tonic}, root: {root}, scale: \"{mode.Id}\")", NodeCatalog.AutoChordTypeId);
     }
 
+    [Given(@"^an Auto Chord in the (.+) scale of (\S+), played (\S+)$")]
+    public void GivenAPlayedAutoChord(string scale, string tonic, string note) =>
+        GivenAPlayedAutoChordMoved(scale, tonic, note, 0);
+
+    [Given(@"^an Auto Chord in the (.+) scale of (\S+), played (\S+) and moved (-?\d+) steps?$")]
+    public void GivenAPlayedAutoChordMoved(string scale, string tonic, string note, int root)
+    {
+        var mode = Chords.Scales.Single(s => s.Name.Equals(scale, StringComparison.OrdinalIgnoreCase));
+        var played = Number(SpeakerSteps.Note(note));
+
+        Chorded($"autochord(tonic: {tonic}, note: value({played}), root: {root}, scale: \"{mode.Id}\")", NodeCatalog.AutoChordTypeId);
+    }
+
     /// <summary>A chord module, named "chord", with its root on the left speaker.</summary>
     private void Chorded(string call, string typeId)
     {

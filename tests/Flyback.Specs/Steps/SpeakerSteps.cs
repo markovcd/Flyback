@@ -78,7 +78,7 @@ public sealed class SpeakerSteps(PatchContext context)
     }
 
     /// <summary>A note as it is written, "G#4", as its number.</summary>
-    private static float Note(string written)
+    internal static float Note(string written)
     {
         var sharp = written.Length > 1 && written[1] == '#';
         var octave = int.Parse(written[(sharp ? 2 : 1)..], CultureInfo.InvariantCulture);

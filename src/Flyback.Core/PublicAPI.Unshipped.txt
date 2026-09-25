@@ -44,3 +44,4 @@ static Flyback.Core.Graph.Chords.Scales.get -> System.Collections.Generic.IReadO
 static Flyback.Core.Graph.Chords.Voiced(int index) -> int[]!
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
+static Flyback.Core.Graph.Chords.Steps(Flyback.Core.Graph.ScaleMode! scale, int semitones) -> int

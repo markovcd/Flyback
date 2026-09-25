@@ -122,6 +122,30 @@ public static class Chords
     public static ScaleMode Scale(string id) => Scales.FirstOrDefault(s => s.Id == id) ?? Scales[0];
 
     /// <summary>
+    /// How many steps of the scale a note <paramref name="semitones"/> above its tonic
+    /// is. A note off the scale counts as the nearest one on it, the higher on a tie.
+    /// </summary>
+    public static int Steps(ScaleMode scale, int semitones)
+    {
+        var classes = scale.Classes;
+        var octave = (int)Math.Floor(semitones / 12.0);
+        var above = semitones - 12 * octave;
+
+        // The tonic an octave up is a candidate too, so a note just under it
+        // moves up to it rather than down a whole gap.
+        var (step, nearest) = (0, 0);
+
+        for (var i = 0; i <= classes.Length; i++)
+        {
+            var at = i == classes.Length ? 12 : classes[i];
+
+            if (Math.Abs(above - at) <= Math.Abs(above - nearest)) (step, nearest) = (i, at);
+        }
+
+        return octave * classes.Length + step;
+    }
+
+    /// <summary>
     /// The seventh chord a scale builds on its note <paramref name="degree"/> steps
     /// from the tonic, as semitones above the tonic. Seven steps is an octave, and a
     /// step below nought counts down from the tonic.

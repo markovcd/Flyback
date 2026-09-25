@@ -1,8 +1,8 @@
 Feature: A chord is played from one root note
   A Chord plays a chord picked by number on a root note, as four frequencies
   for four oscillators. An Auto Chord builds the four-note chord a scale has on
-  one of its notes, counted in steps from the tonic, so a line of steps plays
-  the scale's own chords.
+  one of its notes, played as a note or counted in steps from the tonic, so a
+  keyboard or a line of steps plays the scale's own chords.
 
   Scenario: A four-note chord plays its four notes
     Given a Chord on C4 playing maj7
@@ -35,3 +35,15 @@ Feature: A chord is played from one root note
   Scenario: Seven steps up is the tonic's chord an octave up
     Given an Auto Chord in the Ionian (major) scale of C4, 7 steps from the tonic
     Then its notes are C5, E5, G5 and B5
+
+  Scenario: A note played in a major key picks the chord on it
+    Given an Auto Chord in the Ionian (major) scale of C4, played D4
+    Then its notes are D4, F4, A4 and C5
+
+  Scenario: A played note off the scale moves to the nearest note on it
+    Given an Auto Chord in the Ionian (major) scale of C4, played C#4
+    Then its notes are D4, F4, A4 and C5
+
+  Scenario: A played note and a count of steps add up
+    Given an Auto Chord in the Ionian (major) scale of C4, played D4 and moved 1 step
+    Then its notes are E4, G4, B4 and D5
