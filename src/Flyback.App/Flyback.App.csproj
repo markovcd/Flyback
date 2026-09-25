@@ -118,10 +118,11 @@
     <PackageReference Include="Svg.Controls.Skia.Avalonia" />
 
     <!--
-      The container the editor's window and its canvas are composed in (ADR-0150).
-      Microsoft's own, with nothing under it but its abstractions.
+      The container the editor's window and its canvas are composed in, and the
+      HTTP clients it makes (ADR-0150). Microsoft's own.
     -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
 
   <ItemGroup>

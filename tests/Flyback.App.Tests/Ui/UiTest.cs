@@ -117,7 +117,10 @@ public class UiTest : IDisposable
 
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>
     internal static Action<IServiceCollection> Site(HttpMessageHandler site) =>
-        services => services.AddKeyedSingleton(SiteAccess.Client, new HttpClient(site));
+        // Kept for the whole test, so the factory never retires and disposes it.
+        services => services.AddHttpClient(SiteAccess.Client)
+            .ConfigurePrimaryHttpMessageHandler(() => site)
+            .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
 
     /// <summary>A window of the editor this test owns, shown and laid out, on <paramref name="patch"/> where one is given.</summary>
     internal MainWindow Open(Patch? patch = null, EditorSetup? setup = null, Action<IServiceCollection>? replace = null)

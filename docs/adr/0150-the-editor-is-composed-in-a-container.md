@@ -40,9 +40,9 @@ tests both call.
   playback, the plugins window and the unsaved question, the settings and the
   preset slot: one side takes the other lazily and asks for it only once it acts.
   `Lazy<>` is registered once, as an open generic.
-- **A type registered twice under one meaning is keyed.** The site's
-  `HttpClient` is registered under `SiteAccess.Client`, so a test hands over its
-  own without the window knowing there is a test.
+- **The site's `HttpClient` is a named client of `AddHttpClient`.** `SiteAccess`
+  asks the factory for `SiteAccess.Client`, and a test gives that client a handler
+  of its own without the window knowing there is a test.
 - **What the window called back into itself for became a service.** The unsaved
   question and saving (`UnsavedWork`), where the preset site is and what it is
   asked with (`SiteAccess`), offering a plugin a patch lacks (`PluginInstalls`),

@@ -44,7 +44,8 @@ internal static class EditorServices
         // Read before any window existed, and already installed in the catalog.
         services.AddSingleton(_ => Startup.Plugins);
 
-        services.AddKeyedSingleton(SiteAccess.Client, (_, _) => SiteAccess.Shared);
+        // Long enough for a plugin to download.
+        services.AddHttpClient(SiteAccess.Client, http => http.Timeout = TimeSpan.FromMinutes(5));
 
         services.AddSingleton<IlCompiler>();
 
