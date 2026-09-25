@@ -198,5 +198,7 @@ blocked longer than 18 ms. The program before it plays on meanwhile, with the
 constants, pictures, planes and live inputs it was built for, and the new patch's
 take over together when its shader does; a frozen frame for two seconds after every
 rewire read as the app hanging. A patch just opened is the exception: the old one
-holds its last frame, because the new picture starts with its sound. Without the
-extension it links as before.
+holds its last frame, because the new picture starts with its sound. The last eight
+programs to leave the card are kept, keyed by their text, so an undo or a redo
+switches at once rather than linking again, which froze the preview on an undo
+through ANGLE. Without the extension it links as before.

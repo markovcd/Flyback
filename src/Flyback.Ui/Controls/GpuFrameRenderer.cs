@@ -81,6 +81,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private sealed record Building(int Program, int Vertex, int Fragment, ShaderSource Shaders);
 
+    /// <summary>
+    /// Programs that have been on the card, oldest first, for an undo or a redo
+    /// to come back to: linking one again is seconds on a large patch.
+    /// </summary>
+    private readonly List<(string Source, int Program)> linked = [];
+
+    private const int Remembered = 8;
+
     /// <summary>Whether a shader is still being built.</summary>
     public bool Linking => building is not null;
 
@@ -296,6 +304,15 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (building?.Shaders.PatchFragment != shaders.PatchFragment)
         {
             Abandon(gl);
+
+            // Undo and redo come back to a program linked before, which is still
+            // on the card and needs nothing from the driver.
+            if (Recall(shaders.PatchFragment) is { } kept)
+            {
+                Install(gl, kept, shaders, patch);
+                return null;
+            }
+
             building = Start(gl, shaders);
         }
 
@@ -313,7 +330,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             return $"The patch would not compile as a shader. {error}";
         }
 
-        if (patchProgram != 0) gl.DeleteProgram(patchProgram);
+        Install(gl, compiled, shaders, patch);
+        return null;
+    }
+
+    /// <summary>Puts a linked program on the card in place of the one there, which is kept for an undo.</summary>
+    private void Install(GlInterface gl, int compiled, ShaderSource shaders, CompiledPatch patch)
+    {
+        if (patchProgram != 0) Keep(gl, liveSource, patchProgram);
 
         patchProgram = compiled;
         liveSource = shaders.PatchFragment;
@@ -374,8 +398,28 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
         for (var i = 0; i < patchPlanes.Length; i++)
             patchPlanes[i] = gl.GetUniformLocationString(compiled, $"uPlane{i}");
+    }
 
-        return null;
+    /// <summary>The program linked from <paramref name="source"/>, taken out of the ones kept, or null.</summary>
+    private int? Recall(string source)
+    {
+        var at = linked.FindIndex(kept => kept.Source == source);
+        if (at < 0) return null;
+
+        var program = linked[at].Program;
+        linked.RemoveAt(at);
+
+        return program;
+    }
+
+    /// <summary>Keeps a program that has left the card, and lets the oldest kept one go.</summary>
+    private void Keep(GlInterface gl, string source, int program)
+    {
+        linked.Add((source, program));
+        if (linked.Count <= Remembered) return;
+
+        gl.DeleteProgram(linked[0].Program);
+        linked.RemoveAt(0);
     }
 
     /// <summary>
@@ -1025,6 +1069,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             Abandon(gl);
 
             if (patchProgram != 0) gl.DeleteProgram(patchProgram);
+            foreach (var (_, program) in linked) gl.DeleteProgram(program);
             if (blitProgram != 0) gl.DeleteProgram(blitProgram);
             if (vertexArray != 0) gl.DeleteVertexArray(vertexArray);
         }
@@ -1037,6 +1082,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         // already done this would bind whatever those numbers now belong to.
         pictures = [];
         shown = [];
+        linked.Clear();
 
         patchProgram = 0;
         blitProgram = 0;
