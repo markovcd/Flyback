@@ -3,8 +3,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
-using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;

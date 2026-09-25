@@ -6,10 +6,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
-using Flyback.App.Midi;
-using Flyback.Core.Graph;
-using Flyback.Plugins.Audio;
-using Flyback.Plugins.Midi;
 
 namespace Flyback.Viewer;
 

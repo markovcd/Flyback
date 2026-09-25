@@ -10,7 +10,6 @@ using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.App.Statistics;
 using Flyback.Core;
-using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;

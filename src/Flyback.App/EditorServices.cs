@@ -1,7 +1,6 @@
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
-using Flyback.App.Statistics;
 using Flyback.Core.Compile;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;

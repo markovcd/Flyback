@@ -12,7 +12,6 @@ using Avalonia.Threading;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
-using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;

@@ -1,9 +1,6 @@
 ﻿using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
 

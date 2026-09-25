@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using Avalonia.Interactivity;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
 using Shouldly;
