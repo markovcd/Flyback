@@ -117,7 +117,7 @@ public static class StepNotation
     }
 
     /// <summary>Where a character of a block stands in the file, counted from the block's '['.</summary>
-    internal static (int Line, int Column) Where(string block, int index, int line, int column)
+    private static (int Line, int Column) Where(string block, int index, int line, int column)
     {
         var at = (Line: line, Column: column + 1);
 

@@ -137,7 +137,7 @@ public static class PatchPrinter
     /// for the piano, which is what a patch that says nothing is.
     /// </summary>
     public static string? Keyboard(KeyboardScale? scale) =>
-        scale is null ? null : $"keyboard scale [ {Pitch.ClassName(scale.TonicClass)} {scale.Mode.Id} ]";
+        scale is null ? null : $"keyboard scale [ {string.Join(' ', scale.Row.Select(Pitch.ClassName))} ]";
 
     /// <summary>
     /// What the patch is for, as the statement that says it, or null where it says

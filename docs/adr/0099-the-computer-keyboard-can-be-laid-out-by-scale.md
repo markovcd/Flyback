@@ -44,9 +44,9 @@ the next octave: the key under a finger is then always the same degree of the
 scale. A layout that changes lets go of what is held, for the reason moving
 the octave does.
 
-**The text says it once, on a line of its own:** `keyboard scale [ D dorian ]`,
-a tonic and a scale by id, or `keyboard piano`, which is what saying nothing
-means. A printing puts it first. It is a statement rather than a module's argument because it is about no
+**The text says it once, on a line of its own:** `keyboard scale [ D E F G A B C ]`,
+the scale's notes from its tonic, or `keyboard piano`, which is what saying
+nothing means. Notes that are not one of the Auto Chord's scales are refused. A printing puts it first. It is a statement rather than a module's argument because it is about no
 module, and it is named rather than numbered so adding it renames nothing below
 it. Saying it twice is refused. When the text is the document, a change in the
 panel rewrites that line, adds it at the top, or takes it out for a piano. The

@@ -475,13 +475,13 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (layout != "scale")
         {
-            Complain(IssueCode.UnknownLayout, $"'{layout}' is not a layout. The keyboard is 'piano' or 'scale [ D dorian ]'.");
+            Complain(IssueCode.UnknownLayout, $"'{layout}' is not a layout. The keyboard is 'piano' or 'scale [ ... ]'.");
             return null;
         }
 
         if (Current.Kind != TokenKind.Block)
         {
-            Complain(IssueCode.Syntax, "expected a tonic and a scale in brackets after 'keyboard scale', as in 'keyboard scale [ D dorian ]'.");
+            Complain(IssueCode.Syntax, "expected the notes of the scale in brackets after 'keyboard scale'.");
             return null;
         }
 

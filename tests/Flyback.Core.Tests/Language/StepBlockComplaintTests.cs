@@ -39,7 +39,6 @@ public class StepBlockComplaintTests
     [Fact]
     public void A_scale_complaint_points_at_the_word()
     {
-        SyntaxComplaintTests.Says("keyboard scale [ H dorian ]\nsine() |> out.left", 1, 18, IssueCode.UnknownNote, "'H'");
-        SyntaxComplaintTests.Says("keyboard scale [ D dorain ]\nsine() |> out.left", 1, 20, IssueCode.UnknownScale, "'dorain'");
+        SyntaxComplaintTests.Says("keyboard scale [C x]\nsine() |> out.left", 1, 19, IssueCode.UnknownNote, "'x'");
     }
 }

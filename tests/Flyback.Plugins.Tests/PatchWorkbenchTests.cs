@@ -862,7 +862,7 @@ public class PatchWorkbenchTests
         var set = await Call(bench, "set_keyboard", """{"layout":"scale","tonic":9,"scale":"aeolian"}""");
 
         set.Ok.ShouldBeTrue(set.Text);
-        set.Text.ShouldContain("keyboard scale [ A aeolian ]");
+        set.Text.ShouldContain("keyboard scale [ A B C D E F G ]");
         bench.Snapshot().Keyboard.ShouldBe(new KeyboardScale(9, "aeolian"));
 
         (await Call(bench, "set_keyboard", """{"layout":"piano"}""")).Ok.ShouldBeTrue();

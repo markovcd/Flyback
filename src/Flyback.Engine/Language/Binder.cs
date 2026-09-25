@@ -1984,33 +1984,35 @@ public sealed class Binder
         patch.Keyboard = statement.Scale is { } block ? Scale(block, statement.BlockLine, statement.BlockColumn) : null;
     }
 
-    /// <summary>A tonic and a scale: <c>[ D dorian ]</c>.</summary>
+    /// <summary>
+    /// The notes of a scale from its tonic, <c>[ D E F G A B C ]</c>, which have to
+    /// be one of the scales an Auto Chord builds in.
+    /// </summary>
     private KeyboardScale? Scale(string block, int line, int column)
     {
-        var words = block.Split([' ', '\t', '\r', '\n', ','], StringSplitOptions.RemoveEmptyEntries);
+        var said = issues.Count;
+        var notes = StepNotation.Classes(block, line, column, issues);
 
-        if (words.Length != 2)
+        // A word that is not a note has been said already, and the scale it spoils is not worth saying too.
+        if (issues.Count > said) return null;
+
+        if (notes.Count == 0)
         {
-            Complain(IssueCode.Syntax, line, column,
-                "a keyboard scale is a tonic and a scale, as in 'keyboard scale [ D dorian ]'.");
+            Complain(IssueCode.UnknownScale, line, column,
+                "the keyboard's scale has no notes. Spell one from its tonic, as in 'keyboard scale [ D E F G A B C ]'.");
             return null;
         }
 
-        // Read as a block of its own that opens just before the word, so a complaint points at it.
-        var (tonicLine, tonicColumn) = StepNotation.Where(block, block.IndexOf(words[0], StringComparison.Ordinal), line, column);
-        var tonic = StepNotation.Classes(words[0], tonicLine, tonicColumn - 1, issues);
+        var tonic = notes[0];
+        var classes = Pitch.Scale(notes.Select(note => (note - tonic + Pitch.Classes) % Pitch.Classes));
 
-        if (Chords.Scales.FirstOrDefault(scale => scale.Id == words[1]) is not { } mode)
-        {
-            var (at, where) = StepNotation.Where(block, block.IndexOf(words[1], StringComparison.Ordinal), line, column);
+        if (Chords.Scales.FirstOrDefault(scale => scale.Classes.SequenceEqual(classes)) is { } mode)
+            return new KeyboardScale(tonic, mode.Id);
 
-            Complain(IssueCode.UnknownScale, at, where,
-                $"'{words[1]}' is not a scale. The scales are {string.Join(", ", Chords.Scales.Select(scale => scale.Id))}.");
-
-            return null;
-        }
-
-        return tonic.Count == 1 ? new KeyboardScale(tonic[0], mode.Id) : null;
+        Complain(IssueCode.UnknownScale, line, column,
+            $"{string.Join(" ", notes.Select(Pitch.ClassName))} is not a scale from {Pitch.ClassName(tonic)}. "
+            + "The keyboard plays the seven-note scales an Auto Chord builds in, from the first note.");
+        return null;
     }
 
     /// <summary>Says what the patch is for, once.</summary>

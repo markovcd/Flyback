@@ -5,7 +5,7 @@ using Shouldly;
 namespace Flyback.Core.Tests.Language;
 
 /// <summary>
-/// <c>keyboard scale [ D dorian ]</c>: how the computer keyboard is laid out, which
+/// <c>keyboard scale [ D E F G A B C ]</c>: how the computer keyboard is laid out, which
 /// the patch carries rather than any module in it (ADR-0099).
 /// </summary>
 public class KeyboardLineTests
@@ -25,9 +25,9 @@ public class KeyboardLineTests
     [Fact]
     public void A_scale_line_lays_the_keyboard_out()
     {
-        Built("keyboard scale [ D dorian ]\nmidi.in().pitch |> out.left")
+        Built("keyboard scale [ D E F G A B C ]\nmidi.in().pitch |> out.left")
             .Patch.Keyboard.ShouldBe(new KeyboardScale(2, "dorian"));
-        Built("keyboard scale [ F# harmonic-minor ]\nmidi.in().pitch |> out.left")
+        Built("keyboard scale [ F# G# A B C# D F ]\nmidi.in().pitch |> out.left")
             .Patch.Keyboard.ShouldBe(new KeyboardScale(6, "harmonic-minor"));
     }
 
@@ -38,23 +38,26 @@ public class KeyboardLineTests
         Built("keyboard piano\nmidi.in().pitch |> out.left").Patch.Keyboard.ShouldBeNull();
     }
 
+    /// <summary>The first note is the tonic; the rest may come in any order.</summary>
     [Fact]
-    public void A_scale_it_does_not_have_is_refused_by_name()
+    public void The_first_note_is_the_tonic()
     {
-        var load = PatchLanguage.Build("keyboard scale [ D dorain ]\nmidi.in().pitch |> out.left", NodeCatalog.BuiltIn);
-
-        load.Issues.ShouldContain(issue => issue.Code == IssueCode.UnknownScale && issue.Message.Contains("'dorain'"));
-        load.Patch.Keyboard.ShouldBeNull();
+        Built("keyboard scale [ A C B E D G F ]\nmidi.in().pitch |> out.left")
+            .Patch.Keyboard.ShouldBe(new KeyboardScale(9, "aeolian"));
+        Built("keyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left")
+            .Patch.Keyboard.ShouldBe(KeyboardScale.Major);
     }
 
     [Theory]
     [InlineData("keyboard scale [ C D E G A ]")]
-    [InlineData("keyboard scale [ dorian ]")]
+    [InlineData("keyboard scale [ C C# D D# E F F# G G# A A# B ]")]
     [InlineData("keyboard scale [ ]")]
-    public void A_scale_that_is_not_a_tonic_and_a_scale_is_refused(string line)
+    public void Notes_that_are_not_one_of_the_scales_are_refused(string line)
     {
-        PatchLanguage.Build(line + "\nmidi.in().pitch |> out.left", NodeCatalog.BuiltIn)
-            .Issues.ShouldContain(issue => issue.Message.Contains("a tonic and a scale"));
+        var load = PatchLanguage.Build(line + "\nmidi.in().pitch |> out.left", NodeCatalog.BuiltIn);
+
+        load.Issues.ShouldContain(issue => issue.Code == IssueCode.UnknownScale, load.Report);
+        load.Patch.Keyboard.ShouldBeNull();
     }
 
     /// <summary>The line only reads as one with a layout after it.</summary>
@@ -71,7 +74,7 @@ public class KeyboardLineTests
     public void Saying_it_twice_is_refused()
     {
         var load = PatchLanguage.Build(
-            "keyboard scale [ E phrygian ]\nkeyboard piano\nmidi.in().pitch |> out.left", NodeCatalog.BuiltIn);
+            "keyboard scale [ E F G A B C D ]\nkeyboard piano\nmidi.in().pitch |> out.left", NodeCatalog.BuiltIn);
 
         load.Issues.ShouldContain(issue => issue.Message.Contains("already laid out"));
         load.Patch.Keyboard.ShouldBe(new KeyboardScale(4, "phrygian"));
@@ -92,7 +95,7 @@ public class KeyboardLineTests
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
-        source.ShouldStartWith("keyboard scale [ A# lydian-dominant ]");
+        source.ShouldStartWith("keyboard scale [ A# C D E F G G# ]");
         Built(source).Patch.Keyboard.ShouldBe(new KeyboardScale(10, "lydian-dominant"));
     }
 
@@ -111,7 +114,7 @@ public class KeyboardLineTests
     public void Adding_the_line_leaves_every_module_its_identity()
     {
         var without = Built("midi.in().pitch |> sine() |> out.left").Patch;
-        var with = Built("keyboard scale [ C ionian ]\nmidi.in().pitch |> sine() |> out.left").Patch;
+        var with = Built("keyboard scale [ C D E F G A B ]\nmidi.in().pitch |> sine() |> out.left").Patch;
 
         with.Nodes.Select(n => n.Id).ShouldBe(without.Nodes.Select(n => n.Id));
     }
@@ -121,26 +124,26 @@ public class KeyboardLineTests
     {
         const string source = "midi.in().pitch |> out.left\n";
 
-        var change = Built(source).Map.Keyboard("keyboard scale [ C ionian ]");
+        var change = Built(source).Map.Keyboard("keyboard scale [ C D E F G A B ]");
 
         change.ShouldNotBeNull();
-        Applied(source, change.Value).ShouldBe("keyboard scale [ C ionian ]\n\nmidi.in().pitch |> out.left\n");
+        Applied(source, change.Value).ShouldBe("keyboard scale [ C D E F G A B ]\n\nmidi.in().pitch |> out.left\n");
     }
 
     [Fact]
     public void The_panel_changes_the_line_where_it_stands()
     {
-        const string source = "# lead\nkeyboard scale [ C ionian ]\nmidi.in().pitch |> out.left\n";
+        const string source = "# lead\nkeyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left\n";
 
-        var change = Built(source).Map.Keyboard("keyboard scale [ G mixolydian ]");
+        var change = Built(source).Map.Keyboard("keyboard scale [ G A B C D E F ]");
 
-        Applied(source, change!.Value).ShouldBe("# lead\nkeyboard scale [ G mixolydian ]\nmidi.in().pitch |> out.left\n");
+        Applied(source, change!.Value).ShouldBe("# lead\nkeyboard scale [ G A B C D E F ]\nmidi.in().pitch |> out.left\n");
     }
 
     [Fact]
     public void Going_back_to_a_piano_takes_the_line_out()
     {
-        const string source = "keyboard scale [ C ionian ]\nmidi.in().pitch |> out.left\n";
+        const string source = "keyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left\n";
 
         var change = Built(source).Map.Keyboard(null);
 
@@ -150,7 +153,7 @@ public class KeyboardLineTests
     [Fact]
     public void A_text_that_already_says_it_is_left_alone()
     {
-        Built("keyboard scale [ C ionian ]\nmidi.in().pitch |> out.left").Map.Keyboard("keyboard scale [ C ionian ]").ShouldBeNull();
+        Built("keyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left").Map.Keyboard("keyboard scale [ C D E F G A B ]").ShouldBeNull();
         Built("midi.in().pitch |> out.left").Map.Keyboard(null).ShouldBeNull();
     }
 
