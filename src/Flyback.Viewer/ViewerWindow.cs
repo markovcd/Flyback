@@ -163,8 +163,6 @@ internal sealed partial class ViewerWindow : Window
         };
 
         player.Finished += Close;
-
-        Closed += (_, _) => player.Dispose();
     }
 
     /// <summary>The player behind the window, for whoever drives it.</summary>

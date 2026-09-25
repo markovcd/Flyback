@@ -21,16 +21,24 @@ namespace Flyback.Viewer;
 internal static class ViewerServices
 {
     /// <summary>The window <paramref name="launch"/> plays in, with any registration <paramref name="replace"/> swaps.</summary>
-    public static ViewerWindow Window(ViewerLaunch launch, Action<IServiceCollection>? replace = null) =>
-        Build(launch, replace).GetRequiredService<ViewerWindow>();
+    /// <remarks>Closing it disposes the container, and with it the player, the engine, the compiler and MIDI.</remarks>
+    public static ViewerWindow Window(ViewerLaunch launch, Action<IServiceCollection>? replace = null)
+    {
+        var provider = Build(launch, replace);
+        var window = provider.GetRequiredService<ViewerWindow>();
+
+        window.Closed += (_, _) => provider.Dispose();
+
+        return window;
+    }
 
     /// <summary>The player alone, for a run with no window and so no picture.</summary>
-    public static ViewerPlayer Player(ViewerLaunch launch, Action<IServiceCollection>? replace = null) =>
-        Build(launch, services =>
+    public static PlayerRun Player(ViewerLaunch launch, Action<IServiceCollection>? replace = null) =>
+        new(Build(launch, services =>
         {
             services.AddSingleton(_ => (PreviewHost)null!);
             replace?.Invoke(services);
-        }).GetRequiredService<ViewerPlayer>();
+        }));
 
     public static IServiceCollection AddViewer(this IServiceCollection services, ViewerLaunch launch)
     {
@@ -68,4 +76,12 @@ internal static class ViewerServices
 
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
     }
+}
+
+/// <summary>A run with no window: its player, and everything the container built for it, let go together.</summary>
+internal sealed class PlayerRun(ServiceProvider services) : IDisposable
+{
+    public ViewerPlayer Player { get; } = services.GetRequiredService<ViewerPlayer>();
+
+    public void Dispose() => services.Dispose();
 }

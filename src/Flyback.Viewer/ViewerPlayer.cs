@@ -334,14 +334,10 @@ internal sealed class ViewerPlayer : IDisposable
         if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
     }
 
+    /// <summary>Stops playing. The container disposes the engine, the compiler and MIDI after it.</summary>
     public void Dispose()
     {
         ticker?.Stop();
-
-        midi.Dispose();
-
         audio.Stop();
-        audio.Dispose();
-        compiler.Dispose();
     }
 }

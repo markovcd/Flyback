@@ -54,12 +54,12 @@ public sealed class ViewerApp : Application
                 // or Ctrl+C.
                 desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                var player = ViewerServices.Player(launch);
+                var run = ViewerServices.Player(launch);
 
-                player.Finished += () => desktop.Shutdown();
-                desktop.Exit += (_, _) => player.Dispose();
+                run.Player.Finished += () => desktop.Shutdown();
+                desktop.Exit += (_, _) => run.Dispose();
 
-                Dispatcher.UIThread.Post(player.Begin);
+                Dispatcher.UIThread.Post(run.Player.Begin);
             }
             else
             {

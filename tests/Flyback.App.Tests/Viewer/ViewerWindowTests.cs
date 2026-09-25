@@ -77,16 +77,16 @@ public class ViewerWindowTests : UiTest
     }
 
     /// <summary>A player with no window on a clock the test moves, begun.</summary>
-    private static ViewerPlayer Clocked(ViewerOptions options, Func<double> seconds, IAudioDevice? device = null, Opened? opened = null)
+    private static PlayerRun Clocked(ViewerOptions options, Func<double> seconds, IAudioDevice? device = null, Opened? opened = null)
     {
-        var player = ViewerServices.Player(
+        var run = ViewerServices.Player(
             new ViewerLaunch(opened ?? Plasma(), device, options),
             services => services.AddSingleton<TimeProvider>(new Moved(seconds)));
 
-        player.Begin();
-        player.Compiled().Wait();
+        run.Player.Begin();
+        run.Player.Compiled().Wait();
 
-        return player;
+        return run;
     }
 
     private static Opened Plasma() => Files(Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn));
@@ -182,12 +182,49 @@ public class ViewerWindowTests : UiTest
         window.Overlay!.IsOpen.ShouldBeTrue();
     }
 
+    /// <summary>A sound card that remembers being let go.</summary>
+    private sealed class Kept : IAudioDevice
+    {
+        public bool Disposed { get; private set; }
+
+        public int SampleRate => GlobalConstants.SampleRate;
+
+        public bool IsRunning { get; private set; }
+
+        public void Start(AudioCallback callback) => IsRunning = true;
+
+        public void Stop() => IsRunning = false;
+
+        public void Dispose() => Disposed = true;
+    }
+
+    [AvaloniaFact]
+    public void Closing_the_window_lets_its_sound_device_go()
+    {
+        var device = new Kept();
+        var window = Open(Files(Tone()), Options(), device);
+
+        window.Close();
+
+        device.Disposed.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void Ending_a_run_with_no_window_lets_its_sound_device_go()
+    {
+        var device = new Kept();
+
+        ViewerServices.Player(new ViewerLaunch(Files(Tone()), device, Options() with { Hidden = true })).Dispose();
+
+        device.Disposed.ShouldBeTrue();
+    }
+
     [AvaloniaFact]
     public void A_hidden_run_draws_nothing_even_when_handed_a_surface()
     {
         var preview = new PreviewHost();
 
-        using var player = ViewerServices.Player(
+        using var run = ViewerServices.Player(
             new ViewerLaunch(Plasma(), null, Options() with { Hidden = true }),
             services => services.AddSingleton(preview));
 
@@ -234,7 +271,8 @@ public class ViewerWindowTests : UiTest
     public void A_run_opened_paused_does_not_count_down_its_for()
     {
         var now = 0.0;
-        using var player = Clocked(Options() with { Paused = true, For = 3 }, () => now);
+        using var run = Clocked(Options() with { Paused = true, For = 3 }, () => now);
+        var player = run.Player;
         var finished = false;
         player.Finished += () => finished = true;
 
@@ -248,7 +286,8 @@ public class ViewerWindowTests : UiTest
     public void A_pause_holds_the_for_countdown()
     {
         var now = 0.0;
-        using var player = Clocked(Options() with { For = 3 }, () => now);
+        using var run = Clocked(Options() with { For = 3 }, () => now);
+        var player = run.Player;
         var finished = 0;
         player.Finished += () => finished++;
 
@@ -275,7 +314,8 @@ public class ViewerWindowTests : UiTest
     {
         var now = 0.0;
         var device = new Loopback();
-        using var player = Clocked(Options() with { Loop = 2 }, () => now, device, Files(Tone()));
+        using var run = Clocked(Options() with { Loop = 2 }, () => now, device, Files(Tone()));
+        var player = run.Player;
 
         device.Pump(GlobalConstants.SampleRate / 2);
         now = 1.5;
@@ -306,7 +346,8 @@ public class ViewerWindowTests : UiTest
     public void A_device_that_will_not_start_is_asked_once()
     {
         var device = new Refusing();
-        using var player = Clocked(Options(), () => 0, device, Files(Tone()));
+        using var run = Clocked(Options(), () => 0, device, Files(Tone()));
+        var player = run.Player;
 
         player.Sounding.ShouldBeFalse();
 

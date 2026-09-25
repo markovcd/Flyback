@@ -55,8 +55,10 @@ tests both call.
 - **The viewer is composed the same way, one container per run.**
   `ViewerServices.AddViewer(launch)` registers the player, its window and what
   they play through; `ViewerServices.Window` and `ViewerServices.Player` build a
-  run with a window or without one. The clock `--for` counts against is a
-  `WallClock` over a `TimeProvider`, which a test registers again.
+  run with a window or without one. The container is disposed when the window
+  closes, or when the windowless `PlayerRun` is, and disposes the player before
+  the engine, the compiler and MIDI it plays through. The clock `--for` counts
+  against is a `WallClock` over a `TimeProvider`, which a test registers again.
 
 ## Consequences
 

@@ -59,8 +59,8 @@ public class ViewerServicesTests : UiTest
     [AvaloniaFact]
     public void A_player_on_its_own_plays_without_a_surface()
     {
-        using var player = ViewerServices.Player(Launch(Options()));
+        using var run = ViewerServices.Player(Launch(Options()));
 
-        player.Time.ShouldBe(player.Audio.Time);
+        run.Player.Time.ShouldBe(run.Player.Audio.Time);
     }
 }
