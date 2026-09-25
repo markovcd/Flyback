@@ -50,6 +50,23 @@ Not a note for later. An outlier found while running the suite for another reaso
 is fixed in a commit of its own, before or after the work in hand but not inside
 it.
 
+## Run what the change touches, and the suites once per commit
+
+While iterating, run only the test classes a change touches:
+
+```bash
+./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
+```
+
+Build only the test project those classes live in, not the whole solution. Run
+the full suites once, just before each commit, and not again after an edit that
+only touches comments, docs or a test's own file. Proving a new test fails
+without the fix is one run of that test, never of the suite.
+
+**Why:** App.Tests takes about two minutes, and a session that ran it after every
+edit spent most of its cloud credit on runs that could only pass. The per-commit
+run still catches what the narrow runs miss.
+
 ## A feature ships with a scenario
 
 Every new feature gets at least one Gherkin scenario in `tests/Flyback.Specs`,
