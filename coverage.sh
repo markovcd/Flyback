@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Measures how much of the code the tests run, into coverage/: one Cobertura report
-# per test project, and summary.md, a table of lines and branches per assembly. The
+# Measures how much of the code the tests run, into coverage/: a folder of Cobertura
+# reports per test project, and summary.md, a table of lines and branches per
+# assembly for every test but the specs, and the specs' own figure beneath it. The
 # Coverage workflow runs this and keeps coverage/; run here, it is the same
 # measurement.
 #
@@ -30,38 +31,50 @@ rm -rf coverage
 python=python3
 "$python" -c '' 2>/dev/null || python=python
 
-# One report per test project, each naming every assembly that project loaded, so
-# the engine is in all of them. A line is covered if any report covered it; adding
-# the reports' totals would count it once per project and call it missed wherever
-# another project ran it.
+# One folder per test project, each report naming every assembly that project
+# loaded, so the engine is in all of them. A line is covered if any report covered
+# it; adding the reports' totals would count it once per project and call it missed
+# wherever another project ran it.
+#
+# The specs are left out of the sum and given a number of their own: they drive the
+# whole program to state requirements, so what they reach says what is specified,
+# not what is tested.
 "$python" - > coverage/summary.md <<'PY'
-import collections, glob, re, xml.etree.ElementTree as ET
+import collections, glob, os, re, xml.etree.ElementTree as ET
 
-hit = {}
-taken = {}
+SPECS = "Flyback.Specs"
 
-for path in sorted(glob.glob("coverage/*.cobertura.xml")):
-    for package in ET.parse(path).getroot().iter("package"):
-        for cls in package.iter("class"):
-            for line in cls.iter("line"):
-                key = (package.get("name"), cls.get("filename"), line.get("number"))
-                hit[key] = hit.get(key, False) or int(line.get("hits")) > 0
+def measure(paths):
+    hit = {}
+    taken = {}
 
-                conditions = re.search(r"\((\d+)/(\d+)\)", line.get("condition-coverage") or "")
-                if conditions:
-                    was = taken.get(key, (0, 0))
-                    taken[key] = (max(was[0], int(conditions[1])), max(was[1], int(conditions[2])))
+    for path in paths:
+        for package in ET.parse(path).getroot().iter("package"):
+            for cls in package.iter("class"):
+                for line in cls.iter("line"):
+                    key = (package.get("name"), cls.get("filename"), line.get("number"))
+                    hit[key] = hit.get(key, False) or int(line.get("hits")) > 0
 
-lines = collections.defaultdict(lambda: [0, 0])
-branches = collections.defaultdict(lambda: [0, 0])
+                    conditions = re.search(r"\((\d+)/(\d+)\)", line.get("condition-coverage") or "")
+                    if conditions:
+                        was = taken.get(key, (0, 0))
+                        taken[key] = (max(was[0], int(conditions[1])), max(was[1], int(conditions[2])))
 
-for (assembly, _, _), covered in hit.items():
-    lines[assembly][0] += covered
-    lines[assembly][1] += 1
+    lines = collections.defaultdict(lambda: [0, 0])
+    branches = collections.defaultdict(lambda: [0, 0])
 
-for (assembly, _, _), (covered, total) in taken.items():
-    branches[assembly][0] += covered
-    branches[assembly][1] += total
+    for (assembly, _, _), covered in hit.items():
+        lines[assembly][0] += covered
+        lines[assembly][1] += 1
+
+    for (assembly, _, _), (covered, total) in taken.items():
+        branches[assembly][0] += covered
+        branches[assembly][1] += total
+
+    return lines, branches
+
+def total(pairs):
+    return [sum(p[0] for p in pairs.values()), sum(p[1] for p in pairs.values())]
 
 def rate(pair):
     return f"{pair[0] / pair[1]:.1%}" if pair[1] else "n/a"
@@ -69,14 +82,24 @@ def rate(pair):
 def row(name, line, branch):
     print(f"| {name} | {line[0]} / {line[1]} | {rate(line)} | {branch[0]} / {branch[1]} | {rate(branch)} |")
 
+reports = sorted(glob.glob("coverage/*/*.cobertura.xml"))
+specs = [path for path in reports if os.path.basename(os.path.dirname(path)) == SPECS]
+tests = [path for path in reports if path not in specs]
+
+lines, branches = measure(tests)
+spec_lines, spec_branches = measure(specs)
+
 print("| | Lines | | Branches | |")
 print("|---|---|---|---|---|")
-row("**All**",
-    [sum(p[0] for p in lines.values()), sum(p[1] for p in lines.values())],
-    [sum(p[0] for p in branches.values()), sum(p[1] for p in branches.values())])
+row("**All tests but the specs**", total(lines), total(branches))
 
 for assembly in sorted(lines, key=lambda a: -lines[a][1]):
     row(assembly, lines[assembly], branches[assembly])
+
+print()
+print("| | Lines | | Branches | |")
+print("|---|---|---|---|---|")
+row("**The specs alone**", total(spec_lines), total(spec_branches))
 PY
 
 cat coverage/summary.md
