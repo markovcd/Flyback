@@ -153,6 +153,8 @@ public partial class NodeCatalog
 
         yield return Quantiser();
         yield return Tune();
+        yield return Chord();
+        yield return AutoChord();
         yield return Probe();
         yield return Scope();
         yield return Analyzer();

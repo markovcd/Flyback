@@ -63,6 +63,30 @@ public sealed class SpeakerSteps(PatchContext context)
     [Then("the speakers are not silent")]
     public void ThenNotSilent() => context.RenderAudio().Any(v => Math.Abs(v) > 0.01f).ShouldBeTrue();
 
+    /// <summary>Each of the chord's four outputs on the left speaker in turn.</summary>
+    [Then(@"^its notes are (\S+), (\S+), (\S+) and (\S+)$")]
+    public void ThenItsNotes(string first, string second, string third, string fourth)
+    {
+        string[] notes = [first, second, third, fourth];
+
+        for (var n = 0; n < notes.Length; n++)
+        {
+            context.Wire("chord", $"hz{n + 1}", "screen", "left");
+
+            context.Listen(0, 1)[0].ShouldBe(Pitch.Frequency(Note(notes[n])), 1e-2, $"note {n + 1}");
+        }
+    }
+
+    /// <summary>A note as it is written, "G#4", as its number.</summary>
+    private static float Note(string written)
+    {
+        var sharp = written.Length > 1 && written[1] == '#';
+        var octave = int.Parse(written[(sharp ? 2 : 1)..], CultureInfo.InvariantCulture);
+        var step = "C D EF G A B".IndexOf(written[0]) + (sharp ? 1 : 0);
+
+        return (octave + 1) * Pitch.Classes + step;
+    }
+
     [Then("the note that comes out is {float}")]
     public void ThenTheNote(float note) => context.SampleAt(0).ShouldBe(note, Tolerance);
 

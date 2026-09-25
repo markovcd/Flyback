@@ -18,6 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Graph\NodeCatalog.Chords.cs">
+      <DependentUpon>NodeCatalog.cs</DependentUpon>
+    </Compile>
     <Compile Update="Graph\NodeCatalog.Color.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>
     </Compile>

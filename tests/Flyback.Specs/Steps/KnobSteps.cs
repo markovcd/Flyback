@@ -22,6 +22,9 @@ public sealed class KnobSteps
     public void GivenAKnob(string socket, string name) =>
         knob = NodeCatalog.All.Single(d => d.Name == name).Inputs.Single(p => p.Name == socket);
 
+    [Then("at {int} it reads {string}")]
+    public void ThenItReads(int value, string shown) => knob.Format(value).ShouldBe(shown);
+
     [Then("each half of its travel covers the same number of octaves")]
     public void ThenOctavesAreEven() =>
         At(0.5).ShouldBe(MathF.Sqrt(knob.Min * knob.Max), knob.Min * 1e-3f);

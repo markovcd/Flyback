@@ -1695,7 +1695,7 @@ public static class PatchPrinter
         {
             PortDisplay.Note => Whole(value) ? Pitch.Name(value) : Number(value),
             PortDisplay.Duration => Seconds(value),
-            PortDisplay.Integer => value.ToString("0", CultureInfo.InvariantCulture),
+            PortDisplay.Integer or PortDisplay.Chord => value.ToString("0", CultureInfo.InvariantCulture),
             _ => Number(value),
         };
 

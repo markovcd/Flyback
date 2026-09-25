@@ -1,1 +1,46 @@
 #nullable enable
+Flyback.Core.Graph.ChordShape
+Flyback.Core.Graph.ChordShape.<Clone>$() -> Flyback.Core.Graph.ChordShape!
+Flyback.Core.Graph.ChordShape.ChordShape(string! Name, int[]! Intervals) -> void
+Flyback.Core.Graph.ChordShape.Deconstruct(out string! Name, out int[]! Intervals) -> void
+Flyback.Core.Graph.ChordShape.Equals(Flyback.Core.Graph.ChordShape? other) -> bool
+Flyback.Core.Graph.ChordShape.Intervals.get -> int[]!
+Flyback.Core.Graph.ChordShape.Intervals.init -> void
+Flyback.Core.Graph.ChordShape.Name.get -> string!
+Flyback.Core.Graph.ChordShape.Name.init -> void
+Flyback.Core.Graph.Chords
+Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
+Flyback.Core.Graph.ScaleMode
+Flyback.Core.Graph.ScaleMode.<Clone>$() -> Flyback.Core.Graph.ScaleMode!
+Flyback.Core.Graph.ScaleMode.Classes.get -> int[]!
+Flyback.Core.Graph.ScaleMode.Classes.init -> void
+Flyback.Core.Graph.ScaleMode.Deconstruct(out string! Id, out string! Name, out int[]! Classes) -> void
+Flyback.Core.Graph.ScaleMode.Equals(Flyback.Core.Graph.ScaleMode? other) -> bool
+Flyback.Core.Graph.ScaleMode.Id.get -> string!
+Flyback.Core.Graph.ScaleMode.Id.init -> void
+Flyback.Core.Graph.ScaleMode.Name.get -> string!
+Flyback.Core.Graph.ScaleMode.Name.init -> void
+Flyback.Core.Graph.ScaleMode.ScaleMode(string! Id, string! Name, int[]! Classes) -> void
+const Flyback.Core.Graph.Chords.Major = 4 -> int
+const Flyback.Core.Graph.Chords.Notes = 4 -> int
+const Flyback.Core.Graph.NodeCatalog.AutoChordScaleField = "scale" -> string!
+const Flyback.Core.Graph.NodeCatalog.AutoChordStateKey = "autochord" -> string!
+const Flyback.Core.Graph.NodeCatalog.AutoChordTypeId = "audio.autochord" -> string!
+const Flyback.Core.Graph.NodeCatalog.ChordTypeId = "audio.chord" -> string!
+override Flyback.Core.Graph.ChordShape.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ChordShape.GetHashCode() -> int
+override Flyback.Core.Graph.ChordShape.ToString() -> string!
+override Flyback.Core.Graph.ScaleMode.Equals(object? obj) -> bool
+override Flyback.Core.Graph.ScaleMode.GetHashCode() -> int
+override Flyback.Core.Graph.ScaleMode.ToString() -> string!
+static Flyback.Core.Graph.ChordShape.operator !=(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
+static Flyback.Core.Graph.ChordShape.operator ==(Flyback.Core.Graph.ChordShape? left, Flyback.Core.Graph.ChordShape? right) -> bool
+static Flyback.Core.Graph.Chords.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ChordShape!>!
+static Flyback.Core.Graph.Chords.Diatonic(Flyback.Core.Graph.ScaleMode! scale, int degree) -> int[]!
+static Flyback.Core.Graph.Chords.Index(float value) -> int
+static Flyback.Core.Graph.Chords.Label(float value) -> string!
+static Flyback.Core.Graph.Chords.Scale(string! id) -> Flyback.Core.Graph.ScaleMode!
+static Flyback.Core.Graph.Chords.Scales.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ScaleMode!>!
+static Flyback.Core.Graph.Chords.Voiced(int index) -> int[]!
+static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
+static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool

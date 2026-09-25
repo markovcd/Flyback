@@ -424,6 +424,30 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenAPitchInKey(float pitch, string scale) =>
         Written($"value({Number(pitch)}) |> quantiser() [ {(scale == "C major" ? "C D E F G A B" : "C C# D D# E F F# G G# A A# B")} ] |> out.left");
 
+    [Given(@"^a Chord on (\S+) playing (.+)$")]
+    public void GivenAChord(string root, string chord)
+    {
+        var index = Chords.All.Select(c => c.Name).ToList().IndexOf(chord);
+        index.ShouldBeGreaterThanOrEqualTo(0, $"no chord called {chord}");
+
+        Chorded($"chord(note: {root}, chord: {index})", NodeCatalog.ChordTypeId);
+    }
+
+    [Given(@"^an Auto Chord in the (.+) scale of (\S+), (-?\d+) steps? from the tonic$")]
+    public void GivenAnAutoChord(string scale, string tonic, int root)
+    {
+        var mode = Chords.Scales.Single(s => s.Name.Equals(scale, StringComparison.OrdinalIgnoreCase));
+
+        Chorded($"autochord(tonic: {tonic}, root: {root}, scale: \"{mode.Id}\")", NodeCatalog.AutoChordTypeId);
+    }
+
+    /// <summary>A chord module, named "chord", with its root on the left speaker.</summary>
+    private void Chorded(string call, string typeId)
+    {
+        Written($"let c = {call}{(char)10}c.hz1 |> out.left");
+        context.Name("chord", context.Patch.Nodes.Single(n => n.TypeId == typeId));
+    }
+
     /// <summary>The gate is open from the start and closes at half a second.</summary>
     [Given("an envelope with a {int} ms attack, {int} ms decay, sustain of {float} and {int} ms release, held for half a second")]
     public void GivenAnEnvelope(int attack, int decay, float sustain, int release) =>

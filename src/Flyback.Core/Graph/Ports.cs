@@ -30,6 +30,9 @@ public enum PortDisplay
 
     /// <summary>A whole-number setting.</summary>
     Integer,
+
+    /// <summary>A Chord's pick, shown as the chord's name: 4 reads as "maj".</summary>
+    Chord,
 }
 
 /// <summary>What flows down a wire.</summary>
@@ -139,6 +142,7 @@ public readonly record struct PortSpec(
         PortDisplay.Note => Pitch.Name(value),
         PortDisplay.Duration => Time(value),
         PortDisplay.Integer => value.ToString("0", CultureInfo.InvariantCulture),
+        PortDisplay.Chord => Chords.Label(value),
         _ => value.ToString("0.###", CultureInfo.InvariantCulture),
     };
 
@@ -165,7 +169,7 @@ public readonly record struct PortSpec(
     }
 
     /// <summary>Whether the editor should let this value rest only on whole numbers.</summary>
-    public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer;
+    public bool Stepped => Display is PortDisplay.Note or PortDisplay.Integer or PortDisplay.Chord;
 
     /// <summary>
     /// What this socket is for, in words that stand on their own: the inspector
