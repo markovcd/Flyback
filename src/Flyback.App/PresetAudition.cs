@@ -33,7 +33,7 @@ internal sealed class PresetAudition
     private readonly ModuleCatalog modules;
 
     /// <summary>The presets somebody saved, whose bundles carry what they play.</summary>
-    private readonly PresetLibrary? saved;
+    private readonly PresetLibrary saved;
 
     /// <summary>Whether a preset may be heard at all: there is a device, and no take is reading it.</summary>
     private readonly Func<bool> audible;
@@ -54,7 +54,7 @@ internal sealed class PresetAudition
         AudioEngine audio,
         IlCompiler compiler,
         PluginCatalog plugins,
-        PresetLibrary? saved,
+        PresetLibrary saved,
         Playback playback,
         Lazy<TakeRecording> recording)
     {

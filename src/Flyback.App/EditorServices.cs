@@ -51,9 +51,8 @@ internal static class EditorServices
 
         services.AddSingleton<IlCompiler>();
 
-        // Null for a window that keeps none: every test that did not ask for a folder,
-        // which must not see the presets on the machine running it.
-        services.AddSingleton(_ => setup.PresetFolder is { } folder ? new PresetLibrary(folder) : null!);
+        services.AddSingleton<IPresetFolder>(setup);
+        services.AddSingleton<PresetLibrary>();
 
         services.AddSingleton<PresetThumbnails>();
 

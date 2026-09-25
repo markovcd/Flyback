@@ -29,7 +29,7 @@ internal sealed class PresetSlot
     private readonly Usage usage;
     private readonly PresetThumbnails thumbnails;
     private readonly PresetAudition audition;
-    private readonly PresetLibrary? saved;
+    private readonly PresetLibrary saved;
     private readonly SiteAccess site;
     private readonly Lazy<AssistantPanel> assistant;
     private readonly UnsavedWork unsaved;
@@ -78,7 +78,7 @@ internal sealed class PresetSlot
         PatchFiles files,
         PresetThumbnails thumbnails,
         PresetAudition audition,
-        PresetLibrary? saved,
+        PresetLibrary saved,
         SiteAccess site,
         UnsavedWork unsaved,
         Playback playback,
@@ -209,7 +209,7 @@ internal sealed class PresetSlot
     }
 
     /// <summary>What the gallery is told about the saved run, or null where there is none.</summary>
-    public YourPresets? Yours() => saved is null
+    public YourPresets? Yours() => !saved.Keeps
         ? null
         : new YourPresets(
             () => [.. saved.All.Select(entry => entry.Preset)],
@@ -340,7 +340,7 @@ internal sealed class PresetSlot
     /// </remarks>
     private Patch Arrive(PatchPreset preset)
     {
-        if (saved?.Holding(preset) is { } kept)
+        if (saved.Holding(preset) is { } kept)
         {
             var bundle = kept.Open(plugins.Modules);
 
@@ -361,7 +361,7 @@ internal sealed class PresetSlot
 
     private (bool Allowed, string Hint) CheckName(string name)
     {
-        if (saved is null) return (false, "");
+        if (!saved.Keeps) return (false, "");
 
         if (name.Trim().Length == 0) return (false, "");
 
@@ -379,7 +379,7 @@ internal sealed class PresetSlot
 
     private bool Keep(string name)
     {
-        if (saved is null) return false;
+        if (!saved.Keeps) return false;
 
         var replacing = saved.Named(name) is not null;
 
@@ -404,7 +404,7 @@ internal sealed class PresetSlot
 
     private void Remove(PatchPreset preset)
     {
-        if (saved?.Holding(preset) is not { } kept) return;
+        if (saved.Holding(preset) is not { } kept) return;
 
         try
         {

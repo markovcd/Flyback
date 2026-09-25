@@ -53,6 +53,16 @@ public class PresetLibraryTests : IDisposable
         return file.ToArray();
     }
 
+    [Fact]
+    public void A_library_with_no_folder_keeps_nothing_and_saves_nothing()
+    {
+        var none = new PresetLibrary((string?)null);
+
+        none.Keeps.ShouldBeFalse();
+        none.All.ShouldBeEmpty();
+        Should.Throw<InvalidOperationException>(() => none.Save("Tone", Tone(), Nothing, NodeCatalog.BuiltIn));
+    }
+
     /// <summary>
     /// A preset saved with the picture it shows is opened with it, and its tile is
     /// drawn from it.

@@ -70,7 +70,7 @@ internal static class Program
 
     private static int Play(ViewerOptions options, OutputSettings settings, PluginCatalog plugins)
     {
-        var library = new PresetLibrary();
+        var library = new PresetLibrary(PresetLibrary.DefaultFolder);
 
         if (options.ListPresets)
         {

@@ -66,8 +66,16 @@ public sealed class SavedPreset(string name, string path)
     }
 }
 
+/// <summary>Where a window keeps the presets somebody saved.</summary>
+public interface IPresetFolder
+{
+    /// <summary>The folder, or null to keep none.</summary>
+    string? PresetFolder { get; }
+}
+
 /// <summary>
-/// The presets somebody saved, as files in a folder of their own.
+/// The presets somebody saved, as files in a folder of their own, or none where
+/// there is no folder.
 /// </summary>
 /// <remarks>
 /// The same shape as <c>GroupLibrary</c>: a file per preset and no index,
@@ -114,15 +122,24 @@ public sealed class PresetLibrary
 
     private List<SavedPreset> kept = [];
 
-    /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
-    public PresetLibrary(string? folder = null)
+    public PresetLibrary(IPresetFolder setup)
+        : this(setup.PresetFolder)
     {
-        Folder = folder ?? DefaultFolder;
+    }
+
+    /// <param name="folder">Where the presets are kept, or null to keep none.</param>
+    public PresetLibrary(string? folder)
+    {
+        Folder = folder;
 
         Reload();
     }
 
-    public string Folder { get; }
+    /// <summary>Where the presets are kept, or null where none are.</summary>
+    public string? Folder { get; }
+
+    /// <summary>Whether a preset can be saved here, which it cannot without a folder.</summary>
+    public bool Keeps => Folder is not null;
 
     /// <summary>What was in the folder as of the last <see cref="Reload"/>, by name.</summary>
     public IReadOnlyList<SavedPreset> All => kept;
@@ -131,6 +148,8 @@ public sealed class PresetLibrary
     public void Reload()
     {
         var found = new List<SavedPreset>();
+
+        if (Folder is null) return;
 
         try
         {
@@ -202,15 +221,18 @@ public sealed class PresetLibrary
     /// </summary>
     /// <param name="open">Hands back the bytes of a file the patch names — see <see cref="PatchBundle.Write"/>.</param>
     /// <exception cref="ArgumentException">The name cannot be a file name — see <see cref="Refusal"/>.</exception>
+    /// <exception cref="InvalidOperationException">No presets are kept here — see <see cref="Keeps"/>.</exception>
     public SavedPreset Save(string name, Patch patch, Func<string, byte[]?> open, ModuleCatalog catalog)
     {
         if (Refusal(name) is { } refused) throw new ArgumentException(refused, nameof(name));
 
+        var folder = Folder ?? throw new InvalidOperationException("No presets are kept here.");
+
         name = name.Trim();
 
-        Directory.CreateDirectory(Folder);
+        Directory.CreateDirectory(folder);
 
-        var path = Path.Combine(Folder, name + PatchBundle.Extension);
+        var path = Path.Combine(folder, name + PatchBundle.Extension);
 
         // Into memory first, so a patch that fails to pack leaves the one it
         // would have replaced where it was.
