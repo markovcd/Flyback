@@ -4,6 +4,8 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Compare the preset snapshots as pixels, as their comment already claims.** They compare PNG bytes today, so all 25 fail wherever .NET's zlib differs from the one that wrote the approved files. Diagnosis, proof and the fix to make are in [docs/handoff/preset-snapshots-compare-bytes.md](docs/handoff/preset-snapshots-compare-bytes.md). Make and check it on Windows.
 
+- **Find why an undo freezes the window on a large patch.** Ctrl+Z on Mycelium stops the whole window for about two seconds on Windows; an edit does not. What is ruled out, what is left and how to find it are in [docs/handoff/undo-freezes-the-window.md](docs/handoff/undo-freezes-the-window.md). Find and fix it on Windows.
+
 - **Account for every `Lazy<>` in the editor's container, and plan their removal.** List each `Lazy<T>` a constructor takes in `src/Flyback.App` and `src/Flyback.Viewer`, say which cycle it breaks and why the two classes need each other, and propose a refactor strategy (an event, a service split out of one side, or moving the call) that would let the container build both without one.
 - **Loop any stretch of the seek bar.** Two handles on the bar set where a loop starts and ends, so a passage in the middle of a piece repeats rather than always the start.
 - **A patch says how long it is.** A length in the patch file, to a fraction of a second, sets how far the seek bar spans when the patch opens, in place of the length last set on the bar.
