@@ -26,7 +26,7 @@ public sealed class TransportSteps(Editor editor)
     public void WhenPastTheEnd()
     {
         editor.Seek(editor.SeekLength);
-        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2));
+        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2)).ShouldBeTrue("the clock never came round");
     }
 
     [When("the seek bar's length is set to {string}")]
