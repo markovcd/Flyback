@@ -638,7 +638,7 @@ internal sealed class CanvasPainter(
     }
 
     private static readonly IBrush FlagBrush = new SolidColorBrush(Colors.Attention);
-    private static readonly Pen FlagPen = new(FlagBrush, 1);
+    private static readonly Pen FlagPen = new(FlagBrush);
 
     /// <summary>
     /// The ring, the ground inside it and the title above it, for every group that

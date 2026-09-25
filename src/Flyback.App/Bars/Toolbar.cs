@@ -121,7 +121,7 @@ internal sealed class Toolbar
 
         Tidy.AddHandler(
             InputElement.PointerPressedEvent,
-            (object? _, PointerPressedEventArgs e) => modifiers = e.KeyModifiers,
+            (_, e) => modifiers = e.KeyModifiers,
             RoutingStrategies.Tunnel);
 
         Tidy.Click += (_, _) =>
