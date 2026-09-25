@@ -105,7 +105,8 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 SlowWeatherPreset.Build,
                 "A generative ambient patch with no clock in it and five loops: a drone that bends "
                 + "its own phase, an echo that darkens every time round, voices that push each other "
-                + "down, and a picture steered by where it was bright a frame ago.",
+                + "down, and a picture steered by where it was bright a frame ago. Six panel knobs — "
+                + "echo, chime decay, reverb, warp, color and trails spin — ride on top of it.",
                 PresetKind.Showcase),
             new PatchPreset(
                 DubPreset.Name,

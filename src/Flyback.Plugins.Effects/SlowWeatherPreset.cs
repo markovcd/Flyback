@@ -3,17 +3,24 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// A clockless generative patch with five feedback loops. Random voltages from a
-/// noise field pick the notes, open the voices and move the picture; the loops (a
-/// self-bending drone, a darkening echo, two ducking followers and a picture
-/// steered by last frame's light) make it evolve. Four visitors come and go and
-/// mark the picture while they stay.
+/// A clockless generative patch with five feedback loops and six panel knobs.
+/// Random voltages from a noise field pick the notes, open the voices and move
+/// the picture; the loops (a self-bending drone, a darkening echo, two ducking
+/// followers and a picture steered by last frame's light) make it evolve. Four
+/// visitors come and go and mark the picture while they stay.
 /// </summary>
 /// <remarks>
 /// A loop is one evaluation of delay (ADR-0075), and each has a gain under one
 /// that its comment points to. The voices are sines, a triangle and a dark pluck,
 /// the weather is filtered pink noise, and the echo and room darken as they ring,
 /// so the spectrum tilts down about 3 dB an octave.
+/// <para>
+/// The six knobs (ADR-0086) ride on top of what the wanders already drive rather
+/// than replacing it: Echo Level and Reverb Space scale the send and the rooms'
+/// mix, Visual Warp and Trails Spin scale the warp on the rings and turn the
+/// trails, Chime Decay stretches the music box's string, and Color Shift offsets
+/// the hue.
+/// </para>
 /// </remarks>
 internal sealed class SlowWeatherPreset : PresetBench
 {
@@ -94,12 +101,20 @@ internal sealed class SlowWeatherPreset : PresetBench
     /// at its longest and softest, which makes it a hump a note rather than a
     /// switch: the voices below use it as their swell.
     /// </summary>
-    private NodeInstance Quantized(NodeInstance voltage, float[] notes, int from = 0)
+    private NodeInstance Quantized(NodeInstance voltage, float[] notes, int from = 0, float gateLength = 1f)
     {
-        var steps = b.Add("seq.notes", (1, notes.Length), (2, 1f), (3, 0.5f));
+        var steps = b.Add("seq.notes", (1, notes.Length), (2, gateLength), (3, 0.5f));
         StepsExtra.Set(steps, [.. notes.Select(n => new Step(n))]);
         b.Wire(voltage, from, steps, 0);
         return steps;
+    }
+
+    /// <summary>A panel knob's own value, mapped from <paramref name="low"/> to <paramref name="high"/>.</summary>
+    private NodeInstance Knob(PatchControl knob, float low, float high)
+    {
+        var node = b.Add("math.add");
+        Follows(node, 0, knob, low, high);
+        return node;
     }
 
     /// <summary>
@@ -149,6 +164,17 @@ internal sealed class SlowWeatherPreset : PresetBench
 
     private Patch Assemble()
     {
+        b.Patch.Length = 1800; // 30 minutes.
+
+        // --- the panel ---------------------------------------------------------
+
+        var echoLevel = Panel("Echo Level", 0.5f);
+        var chimeDecay = Panel("Chime Decay", 0.5f);
+        var reverbSpace = Panel("Reverb Space", 0.5f);
+        var visualWarp = Panel("Visual Warp", 0.5f);
+        var colorShift = Panel("Color Shift", 0.5f);
+        var trailsSpin = Panel("Trails Spin", 0.5f);
+
         // --- four random voltages --------------------------------------------
 
         // Four Wanders, each with a seed of its own: the engine's noise walked
@@ -171,7 +197,7 @@ internal sealed class SlowWeatherPreset : PresetBench
         // coprime length: eight notes for the pad, seven for the bell, five for
         // the root.
         var padSteps = Quantized(wander, [57f, 60f, 62f, 65f, 67f, 69f, 72f, 74f]);
-        var bellSteps = Quantized(flutter, [60f, 62f, 65f, 67f, 69f, 72f, 74f]);
+        var bellSteps = Quantized(flutter, [60f, 62f, 65f, 67f, 69f, 72f, 74f], gateLength: 0.6188406f);
         var rootSteps = Quantized(tide, [38f, 43f, 45f, 41f, 36f]);
 
         Box("Three Quantisers");
@@ -311,12 +337,14 @@ internal sealed class SlowWeatherPreset : PresetBench
         var boxSteps = Quantized(Dice(2.4f, 10f, 0.5f, 0.5f), [74f, 77f, 79f, 81f, 84f, 86f, 89f], Held);
         var boxPluck = Formula("step(0.5, a) * step(0.15, b)", boxStroke, new Read(boxOdds, Held));
         var boxHz = b.Add(NodeCatalog.HoldTypeId);
-        var box = b.Add(NodeCatalog.StringTypeId, (3, 0.35f), (4, 0.3f));
+        var box = b.Add(NodeCatalog.StringTypeId, (4, 0.3f));
 
         b.Wire(Through("audio.note", boxSteps), Hz, boxHz, 0)
          .Wire(boxPluck, 0, boxHz, 1)
          .Wire(boxPluck, 0, box, 1)
          .Wire(boxHz, 0, box, 2);
+
+        Follows(box, 3, chimeDecay, -0.8239087f, 0.69897f); // log10 seconds: 150 ms .. 5 s.
 
         Box("Visitor: Music Box");
 
@@ -386,10 +414,10 @@ internal sealed class SlowWeatherPreset : PresetBench
         // The voices that come and go, on a desk of their own, because what the
         // wind below listens to is the sum of exactly these: the ground is
         // nearly always on and would drown the reading.
-        var melody = b.Add(DeskType);
+        var melody = b.Add(DeskType, (DeskTrim, 0f));
 
-        Channel(melody, 1, 0.5f, thicken, thicken, 0, ChorusWide);
-        Channel(melody, 2, 0.6f, bellL, bellR);
+        Channel(melody, 1, 0f, thicken, thicken, 0, ChorusWide);
+        Channel(melody, 2, 0f, bellL, bellR);
         Channel(melody, 3, 0f, box);
         Channel(melody, 4, 0f, callL, callR);
 
@@ -448,9 +476,9 @@ internal sealed class SlowWeatherPreset : PresetBench
         // does not peak at this resonance and the Chorus never gains, so nothing
         // in the ring can grow. The time is a voltage, and a swept delay line
         // glides rather than steps, so what that does to the repeats is tape wow.
-        var send = Times(Wired("math.add", desk, desk, BusLeft, BusRight), 0.2f);
+        var send = Times(Wired("math.add", desk, desk, BusLeft, BusRight), echoLevel, 0f, 1.3f);
         var ring = b.Add("math.add");
-        var echoTime = Span(wander, 0f, 1f, 0.52f, 0.86f);
+        var echoTime = Span(wander, 0f, -2.3199975f, 0.52f, 0.86f);
         var repeats = b.Add(DelayType, (2, 0f), (3, 1f));
         var darkenTo = Span(tide, 0f, 1f, 800f, 3200f);
         var darken = b.Add(FilterType, (2, 0.1f));
@@ -480,13 +508,16 @@ internal sealed class SlowWeatherPreset : PresetBench
         // like from a seat in it rather than from a point in the middle.
         var roomSize = Span(tide, 0f, 1f, 0.72f, 0.98f);
         var roomWide = Span(wander, 0f, 1f, 0.66f, 0.92f);
-        var hallL = b.Add(ReverbType, (2, 0.86f), (3, 0.42f));
-        var hallR = b.Add(ReverbType, (2, 0.86f), (3, 0.42f));
+        var hallL = b.Add(ReverbType, (2, 0.86f));
+        var hallR = b.Add(ReverbType, (2, 0.86f));
 
         b.Wire(withEchoL, 0, hallL, 0)
          .Wire(roomSize, 0, hallL, 1)
          .Wire(withEchoR, 0, hallR, 0)
          .Wire(roomWide, 0, hallR, 1);
+
+        Follows(hallL, 3, reverbSpace, 0f, 0.85f);
+        Follows(hallR, 3, reverbSpace, 0f, 0.85f);
 
         // No drive in front of the master, unlike every other patch with a
         // limiter in it. Ambient has no transients to catch and nothing to gain
@@ -546,12 +577,13 @@ internal sealed class SlowWeatherPreset : PresetBench
         var swirl = Times(memory, 1f);
         var bend = b.Add("space.warp");
         var veil = b.Add("pattern.rings");
+        var warpAmount = Times(Span(flutter, 0f, 1f, 0.25f, 0.85f), visualWarp, 0f, 2.5f);
 
         b.Wire(Span(weather, 0f, 1f, 0.04f, 0.22f), 0, swirl, 1)
          .Wire(fold, 0, bend, 0)
          .Wire(fold, 1, bend, 1)
          .Wire(Sum(cloud, swirl), 0, bend, 2)
-         .Wire(Span(flutter, 0f, 1f, 0.25f, 0.85f), 0, bend, 3)
+         .Wire(warpAmount, 0, bend, 3)
          .Wire(bend, 0, veil, 0)
          .Wire(bend, 1, veil, 1)
          .Wire(Sum(Span(padSteps, 0f, 1f, 1.4f, 3.6f, Index), Times(boxHere, 2.5f, FadeGate)), 0, veil, 2)
@@ -582,7 +614,9 @@ internal sealed class SlowWeatherPreset : PresetBench
         // Hue off the cloud and the slowest voltage together, so the palette
         // moves across the frame and drifts as a whole at the same time, and the
         // creep under both means it never settles even where the two do.
-        var hue = Fraction(Sum(Sum(Sum(Times(cloud, 0.55f), Times(tide, 0.4f)), creep), Times(callHere, 0.22f, FadeGate)));
+        var hue = Fraction(Sum(
+            Sum(Sum(Sum(Times(cloud, 0.55f), Times(tide, 0.4f)), creep), Times(callHere, 0.22f, FadeGate)),
+            Knob(colorShift, 0f, 1f)));
         var fresh = b.Add("color.hsv");
 
         b.Wire(hue, 0, fresh, 0)
@@ -594,12 +628,14 @@ internal sealed class SlowWeatherPreset : PresetBench
         // little zoomed and a little turned, blended under the fresh picture: a
         // delay line has no per-pixel past, and a loop has no elsewhere, and this
         // is the module for the one thing neither of them can do.
-        var drift = b.Add(TrailsType, (TrailsZoom, 1.008f), (TrailsAngle, 0.0035f), (TrailsPersist, 0.985f));
+        var drift = b.Add(TrailsType, (TrailsZoom, 1.008f), (TrailsPersist, 0.92f));
         var combine = b.Add("color.mix");
 
         b.Wire(drift, Tail, combine, 0)
          .Wire(fresh, 0, combine, 1)
          .Wire(Span(wander, 0f, 1f, 0.12f, 0.35f), 0, combine, 2);
+
+        Follows(drift, TrailsAngle, trailsSpin, -0.015f, 0.015f);
 
         Box("Picture: Color");
 

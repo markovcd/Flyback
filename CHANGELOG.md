@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Slow weather: six panel knobs — echo level, chime decay, reverb space, visual warp, color shift and trails spin — and a thirty-minute length.
 - Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.
 - A plugin's preset can carry the sound files and pictures it plays.
 - The computer keyboard's Scale layout plays a tonic and one of Auto Chord's scales.
