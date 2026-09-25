@@ -3,6 +3,7 @@ using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
@@ -45,6 +46,9 @@ public sealed record EditorSetup : IIlCompilerSetup
 
     /// <summary>Where the Files section is read from and saved to.</summary>
     public string? FileTypeSettingsPath { get; init; }
+
+    /// <summary>Where the assistant's settings are read from and saved to, with its priority list beside them.</summary>
+    public string? AssistantSettingsPath { get; init; }
 
     /// <summary>Where the window's size, place and panels are kept (ADR-0121).</summary>
     public string? LayoutPath { get; init; }
@@ -107,6 +111,7 @@ public sealed record EditorSetup : IIlCompilerSetup
         UsageSettingsPath = UsageSettings.File,
         CanvasSettingsPath = CanvasSettings.File,
         FileTypeSettingsPath = FileTypeSettings.File,
+        AssistantSettingsPath = AssistantSettings.File,
         LayoutPath = WindowLayout.File,
         RecoveryFolder = Recovery.Folder,
         PluginFolder = PluginHost.DefaultDirectory,

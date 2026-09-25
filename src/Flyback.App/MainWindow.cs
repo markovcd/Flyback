@@ -226,6 +226,9 @@ internal sealed class MainWindow : Window
         this.assistant = assistant;
         this.keeper = keeper;
 
+        // Closed until the toolbar opens it.
+        assistant.IsVisible = false;
+
         Recording = recording;
 
         outputSettingsPath = setup.OutputSettingsPath;

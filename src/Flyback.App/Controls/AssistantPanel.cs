@@ -8,6 +8,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Assist;
+using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -35,33 +36,18 @@ public sealed class AssistantPanel : UserControl
     private static readonly IBrush Live = new SolidColorBrush(Colors.Feedback);
 
     private readonly PluginCatalog plugins;
-    private readonly Func<IReadOnlyList<PatchPreset>>? presets;
-    private readonly Func<Patch> current;
 
     /// <summary>
-    /// Where a Sample module's file is looked up, so what the assistant hears is
-    /// what the editor plays. Null in a test, which makes every player silent.
+    /// The patch the assistant edits and where it reports. What the assistant hears
+    /// is what the editor plays, since its sounds are looked up where the editor's are.
     /// </summary>
-    private readonly ISampleLibrary? samples;
-    private readonly IImageLibrary? pictures;
-    /// <summary>
-    /// Hands a patch to the canvas, where it lands as an edit rather than as a
-    /// new document. Nothing can refuse it and nothing needs to: an assistant's
-    /// patch goes into the history like any other edit, so the way back out is
-    /// the one every other edit already has.
-    /// </summary>
-    private readonly Action<Patch> apply;
-
-    private readonly Action<string, string?> report;
+    private readonly IAssistantEditor editor;
 
     private readonly AssistantSettings settings;
 
     /// <summary>
-    /// Where <see cref="settings"/> is written back to. Kept alongside <c>saved</c>
-    /// rather than folded into it, because a test that hands in an in-memory
-    /// <see cref="AssistantSettings"/> still runs through the real
-    /// <see cref="AssistantPanel.SaveSettings"/> — the object avoids the file, but
-    /// the write does not unless this does too.
+    /// Where <see cref="settings"/> is read from and written back to, and the priority
+    /// list beside it. Null keeps them in memory only.
     /// </summary>
     private readonly string? settingsPath;
 
@@ -319,10 +305,9 @@ public sealed class AssistantPanel : UserControl
 
     /// <summary>
     /// Told which provider a message went to, for the run's own count of itself
-    /// (ADR-0094). A callback rather than the counter itself, so that nothing here
-    /// has to know there is one; it is never told what was asked.
+    /// (ADR-0094), and never what was asked. Null is nobody counting.
     /// </summary>
-    private readonly Action<string>? asked;
+    private readonly Usage? usage;
 
     /// <summary>
     /// Where <see cref="run"/>'s turns go when <see cref="AssistantSettings.LogConversations"/>
@@ -403,55 +388,20 @@ public sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
-    /// <param name="report"></param>
-    /// <param name="saved">
-    /// The choices to open on, defaulting to the ones on this machine. Named only
-    /// so a test can put a set in front of the panel without writing the file
-    /// somebody is using.
-    /// </param>
-    /// <param name="settingsPath">
-    /// Where Save writes those choices back to, defaulting to the real file. The
-    /// other half of what <paramref name="saved"/> is for: a test that presses
-    /// the actual Save button still calls the actual <see cref="AssistantSettings.Save"/>,
-    /// and without this it would call it with no path and land on whichever
-    /// machine is running the test suite.
-    /// </param>
-    /// <param name="plugins"></param>
-    /// <param name="current"></param>
-    /// <param name="apply"></param>
-    /// <param name="samples"></param>
-    /// <param name="pictures"></param>
-    /// <param name="asked">
-    /// Told which provider a message went to, and nothing else. Null is nobody
-    /// listening, which is every test.
-    /// </param>
-    /// <param name="presets">
-    /// The presets a conversation may read for ideas, asked for as each one starts so
-    /// that one saved since the last is in it. Null is the ones the plugins offer,
-    /// with none of somebody's own.
-    /// </param>
+    /// <param name="setup">Its <see cref="EditorSetup.AssistantSettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
+    /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
         PluginCatalog plugins,
-        Func<Patch> current,
-        Action<Patch> apply,
-        Action<string, string?> report,
-        AssistantSettings? saved = null,
-        string? settingsPath = null,
-        ISampleLibrary? samples = null,
-        IImageLibrary? pictures = null,
-        Action<string>? asked = null,
-        Func<IReadOnlyList<PatchPreset>>? presets = null)
+        IAssistantEditor editor,
+        EditorSetup? setup = null,
+        Usage? usage = null,
+        AssistantSettings? saved = null)
     {
-        this.presets = presets;
-        this.asked = asked;
-        this.settingsPath = settingsPath;
-        settings = saved ?? AssistantSettings.Load(settingsPath);
-        this.samples = samples;
-        this.pictures = pictures;
         this.plugins = plugins;
-        this.current = current;
-        this.apply = apply;
-        this.report = report;
+        this.editor = editor;
+        this.usage = usage;
+        settingsPath = setup?.AssistantSettingsPath;
+        settings = saved ?? (settingsPath is null ? new AssistantSettings() : AssistantSettings.Load(settingsPath));
 
         credentials = new Credentials(plugins.PreferredSecretStore);
         assistant = Choose();
@@ -514,7 +464,7 @@ public sealed class AssistantPanel : UserControl
         SetAside();
 
         waiting = SavedConversation.Read(saved);
-        waitingOn = waiting is null ? null : Anchor(current());
+        waitingOn = waiting is null ? null : Anchor(editor.Current);
         settled = waiting;
 
         if (waiting is not null)
@@ -598,7 +548,7 @@ public sealed class AssistantPanel : UserControl
     {
         if (settled is null) return false;
 
-        var now = current();
+        var now = editor.Current;
 
         return run is not null ? !run.EditedUnderneath(now) : !Moved(waitingOn, now);
     }
@@ -813,14 +763,12 @@ public sealed class AssistantPanel : UserControl
     /// file every time, so an edit to it counts from the next conversation, and
     /// from the next save as far as the canvas is concerned.
     /// </summary>
-    private ProsePolicy Policy() => new(settings.ProseBudget, PriorityModules.Load(PriorityFile));
+    private ProsePolicy Policy() => new(
+        settings.ProseBudget, PriorityFile is { } file ? PriorityModules.Load(file) : PriorityModules.Parse(PriorityModules.Shipped));
 
-    /// <summary>
-    /// Where the priority list is read from: beside the settings, which for a panel
-    /// under test is a folder of its own rather than this machine's.
-    /// </summary>
-    private string PriorityFile => settingsPath is null
-        ? PriorityModules.File
+    /// <summary>Where the priority list is read from: beside the settings, or nowhere where they are kept in memory.</summary>
+    private string? PriorityFile => settingsPath is null
+        ? null
         : System.IO.Path.Combine(System.IO.Path.GetDirectoryName(settingsPath) ?? string.Empty, System.IO.Path.GetFileName(PriorityModules.File));
 
     /// <summary>Works <see cref="Undescribed"/> out again, and says so if it moved.</summary>
@@ -995,11 +943,11 @@ public sealed class AssistantPanel : UserControl
 
         try
         {
-            settings.Save(settingsPath);
+            if (settingsPath is not null) settings.Save(settingsPath);
         }
         catch (Exception ex)
         {
-            report($"Could not save the assistant settings: {ex.Message}", AssistantSettings.File);
+            editor.Report($"Could not save the assistant settings: {ex.Message}", settingsPath);
         }
 
         Refresh();
@@ -1226,7 +1174,7 @@ public sealed class AssistantPanel : UserControl
 
         var source = credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable);
 
-        report(
+        editor.Report(
             source switch
             {
                 CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
@@ -1274,7 +1222,7 @@ public sealed class AssistantPanel : UserControl
         if (!ReferenceEquals(runAssistant, assistant) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
 
-        return run.EditedUnderneath(current())
+        return run.EditedUnderneath(editor.Current)
             ? "The patch changed underneath, so this is a new conversation about the one on screen."
             : null;
     }
@@ -1297,7 +1245,7 @@ public sealed class AssistantPanel : UserControl
             || saved.Settings != SavedConversation.SettingsOf(config.Values))
             return "That conversation was had with other settings, so this is a new one.";
 
-        return Moved(waitingOn, current())
+        return Moved(waitingOn, editor.Current)
             ? "The patch changed since it was opened, so this is a new conversation about the one on screen."
             : null;
     }
@@ -1329,8 +1277,8 @@ public sealed class AssistantPanel : UserControl
 
         run?.Dispose();
         run = new AssistantRun(
-            with, config, plugins.Modules, current(), settings.TurnLimit,
-            samples: samples, pictures: pictures, resuming: resuming, prose: Policy(), presets: presets?.Invoke() ?? plugins.Presets);
+            with, config, plugins.Modules, editor.Current, settings.TurnLimit,
+            samples: editor.Samples, pictures: editor.Pictures, resuming: resuming, prose: Policy(), presets: editor.Presets() ?? plugins.Presets);
         runConfig = config;
         runAssistant = with;
 
@@ -1383,7 +1331,7 @@ public sealed class AssistantPanel : UserControl
 
         var conversation = Conversation(assistant, config);
 
-        asked?.Invoke(assistant.Id);
+        usage?.Assistant(assistant.Id);
 
         transcript.Put(Voice.You, wanted);
         log.Write("you", wanted);
@@ -1420,7 +1368,7 @@ public sealed class AssistantPanel : UserControl
             // anything arriving here is the shell's own fault rather than a
             // plugin's — but the window still survives it.
             transcript.Put(Voice.Failed, $"Something went wrong: {ex.Message}");
-            report($"The assistant stopped: {ex.Message}", null);
+            editor.Report($"The assistant stopped: {ex.Message}", null);
         }
         finally
         {
@@ -1526,20 +1474,20 @@ public sealed class AssistantPanel : UserControl
         // the transcript, and asking again is a keystroke.
         if (stopping) return;
 
-        var overwrote = run.EditedUnderneath(current());
+        var overwrote = run.EditedUnderneath(editor.Current);
 
-        apply(proposed);
+        editor.Apply(proposed);
 
         // What this run just put on the canvas is not somebody editing behind
         // it, so the next message carries on the same conversation rather than
         // starting one about a patch it does not remember building. Whatever the
         // canvas made of the proposal, since a text document builds its own copy.
-        run.Rebase(current());
+        run.Rebase(editor.Current);
 
         transcript.Put(Voice.Aside, overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
             : "Applied. Ctrl+Z puts the patch back as it was.");
 
-        report(string.Empty, null);
+        editor.Report(string.Empty, null);
     }
 }

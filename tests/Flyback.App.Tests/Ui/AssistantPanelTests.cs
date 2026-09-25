@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Assist;
@@ -39,6 +40,26 @@ public sealed class AssistantPanelTests : UiTest
         "flyback-panel-settings-" + Guid.NewGuid().ToString("N"),
         "assistant.json");
 
+    private EditorSetup Kept => new() { AssistantSettingsPath = settingsPath };
+
+    /// <summary>An editor holding one patch, which takes nothing the assistant hands it.</summary>
+    private sealed class Holding(Func<Patch> current, Action<string, string?>? report = null) : IAssistantEditor
+    {
+        public Patch Current => current();
+
+        public void Apply(Patch patch)
+        {
+        }
+
+        public void Report(string message, string? detail) => report?.Invoke(message, detail);
+
+        public ISampleLibrary? Samples => null;
+
+        public IImageLibrary? Pictures => null;
+
+        public IReadOnlyList<PatchPreset>? Presets() => null;
+    }
+
     public override void Dispose()
     {
         base.Dispose();
@@ -52,11 +73,9 @@ public sealed class AssistantPanelTests : UiTest
     {
         var panel = new AssistantPanel(
             plugins ?? PluginCatalog.Empty,
-            () => Presets.Plasma(NodeCatalog.BuiltIn),
-            _ => { },
-            report ?? ((_, _) => { }),
-            saved,
-            settingsPath);
+            new Holding(() => Presets.Plasma(NodeCatalog.BuiltIn), report),
+            Kept,
+            saved: saved);
 
         var window = Show(panel, 760);
         Settle(window);
@@ -80,7 +99,7 @@ public sealed class AssistantPanelTests : UiTest
     /// </summary>
     private (Window Window, AssistantPanel Panel) Over(Patch patch)
     {
-        var panel = new AssistantPanel(PluginCatalog.Empty, () => patch, _ => { }, (_, _) => { }, null, settingsPath);
+        var panel = new AssistantPanel(PluginCatalog.Empty, new Holding(() => patch), Kept);
         var window = Show(panel, 760);
 
         Settle(window);

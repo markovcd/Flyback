@@ -2026,9 +2026,9 @@ public class SourceViewTests : UiTest
     {
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
-        return (Action<Core.Graph.Patch>)typeof(AssistantPanel)
-            .GetField("apply", flags)!
-            .GetValue(All<AssistantPanel>(window).Single())!;
+        return ((IAssistantEditor)typeof(AssistantPanel)
+            .GetField("editor", flags)!
+            .GetValue(All<AssistantPanel>(window).Single())!).Apply;
     }
 
     /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>

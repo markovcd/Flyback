@@ -47,8 +47,9 @@ tests both call.
   question and saving (`UnsavedWork`), where the preset site is and what it is
   asked with (`SiteAccess`), offering a plugin a patch lacks (`PluginInstalls`),
   writing to the author (`StatusBar`), picking the startup patch (`PresetSlot`),
-  what the output settings were last saved as (`OutputSections`) and putting a
-  patch that has arrived on the canvas (`Playback.Show`).
+  what the output settings were last saved as (`OutputSections`), putting a
+  patch that has arrived on the canvas (`Playback.Show`) and what the assistant's
+  column reads and edits (`IAssistantEditor`).
 - **A test swaps a service by registering it again.** `UiTest.NewMainWindow` and
   `UiTest.NewCanvas` take a `replace` callback; the last registration wins.
 - **The viewer is composed the same way, one container per run.**
@@ -71,13 +72,12 @@ Exceptions, each kept on purpose:
   window, since the window is built from them, so the one thing they cannot be
   handed is the window. `Shell.Attach` is the first line of its constructor, and
   a region reads `Shell.Owner` only once it is asked to do something.
-- **Factories for what is not the editor's own.** Opening the sound device and
-  building the assistant's column are calls `AddEditor` makes in a factory. The
-  sound engine is given the device the run opened with, and `Playback` hands it
-  any later one. So does a value that may be absent (the saved presets,
-  the MIDI backend): the container holds a null, and a class that reads one takes
-  it as an optional parameter. A class that can do nothing on its own instead
-  takes the setup and does nothing: the recovery keeper with no folder.
+- **Factories for what is only looked up.** Opening the sound device is a call
+  `AddEditor` makes in a factory, and the sound engine is given the device the run
+  opened with; `Playback` hands it any later one. A value that may be absent (the
+  saved presets, the MIDI backend) is a factory returning null, and a class that
+  reads one takes it as an optional parameter. A class that can do nothing on its
+  own instead takes the setup and does nothing: the recovery keeper with no folder.
 - **The container is never disposed.** The window already tears down what it
   holds in `OnClosed`, in the order a take and a device need; disposing the
   container as well would dispose them twice.

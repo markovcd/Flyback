@@ -17,8 +17,7 @@ namespace Flyback.App;
 /// the editor's own is built from its constructor. Where two need each other, one
 /// takes a <see cref="Lazy{T}"/> of the other and asks for it only once it acts. The
 /// factories below are for what is not the editor's own, which the viewer and the
-/// tests build by hand as well: the sound, the assistant's column and a value that
-/// may be absent.
+/// tests build by hand as well: the sound and a value that may be absent.
 /// </remarks>
 internal static class EditorServices
 {
@@ -68,7 +67,8 @@ internal static class EditorServices
         services.AddSingleton(sp => sp.GetRequiredService<PluginCatalog>().PreferredMidiInput!);
         services.AddSingleton<MidiHub>();
 
-        services.AddSingleton(AssistantPanel);
+        services.AddSingleton<IAssistantEditor, AssistantEditor>();
+        services.AddSingleton<AssistantPanel>();
 
         services.AddSingleton<WorkKeeper>();
 
@@ -104,36 +104,6 @@ internal static class EditorServices
         services.AddSingleton<MainWindow>();
 
         return services;
-    }
-
-    /// <summary>The assistant's column, closed until the toolbar opens it.</summary>
-    private static AssistantPanel AssistantPanel(IServiceProvider services)
-    {
-        var editor = services.GetRequiredService<NodeEditor>();
-        var document = services.GetRequiredService<Document>();
-        var preview = services.GetRequiredService<PreviewHost>();
-        var report = services.GetRequiredService<ReportLine>();
-        var files = services.GetRequiredService<PatchFiles>();
-        var presets = services.GetRequiredService<Lazy<PresetSlot>>();
-
-        return new AssistantPanel(
-            services.GetRequiredService<PluginCatalog>(),
-            () => editor.History.Patch,
-            // An edit rather than a new document, so it undoes like every other edit
-            // and there is nothing to ask about first.
-            patch =>
-            {
-                document.TakeFromAssistant(patch);
-                preview.Rewind();
-            },
-            (message, detail) => report.Say(message, detail),
-            samples: files.Sounds,
-            pictures: files.Pictures,
-            asked: services.GetRequiredService<Usage>().Assistant,
-            presets: () => presets.Value.Ordered())
-        {
-            IsVisible = false,
-        };
     }
 
     /// <summary>A service the container builds the first time it is asked for, which is how two that need each other are both built.</summary>
