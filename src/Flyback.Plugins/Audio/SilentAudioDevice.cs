@@ -11,7 +11,7 @@ namespace Flyback.Plugins.Audio;
 /// no samples, so a caller driving the picture from the audio cursor would freeze —
 /// the shell disables sound outright when this is what it got.
 /// </remarks>
-public sealed class SilentAudioDevice(int sampleRate = GlobalConstants.SampleRate) : IAudioDevice
+internal sealed class SilentAudioDevice(int sampleRate = GlobalConstants.SampleRate) : IAudioDevice
 {
     public int SampleRate { get; } = sampleRate;
 

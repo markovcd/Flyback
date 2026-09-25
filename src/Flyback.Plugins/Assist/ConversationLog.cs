@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Assist;
 /// file, named for when it started and who it was with. Turned off, this writes
 /// nothing and opens nothing.
 /// </remarks>
-public sealed class ConversationLog : IDisposable
+internal sealed class ConversationLog : IDisposable
 {
     private readonly StreamWriter? writer;
 

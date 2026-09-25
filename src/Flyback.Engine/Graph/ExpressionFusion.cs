@@ -19,7 +19,7 @@ namespace Flyback.Core.Graph;
 /// too long to read, and a part the formula would then compute once where the
 /// modules computed it twice.
 /// </remarks>
-public static class ExpressionFusion
+internal static class ExpressionFusion
 {
     private const int Sockets = 4;
 

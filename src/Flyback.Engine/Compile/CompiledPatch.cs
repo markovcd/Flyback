@@ -28,18 +28,56 @@ public readonly struct FeedbackFrame(float[]? pixels, int width, int height)
 /// 192 kHz against a clock that keeps counting, a <see cref="float"/> cannot
 /// hold two consecutive sample times apart past about a minute. See ADR-0032.
 /// </remarks>
-public sealed class CompiledPatch(
-    Op[] ops,
-    int registerCount,
-    int outputBase,
-    int outputWidth = 3,
-    IReadOnlyList<LoadedSample>? tables = null,
-    IReadOnlyList<TapSpec>? taps = null,
-    IReadOnlyList<string>? liveInputs = null,
-    IReadOnlyList<LoadedImage>? pictures = null,
-    StateOwners? owners = null)
+public sealed class CompiledPatch
 {
-    public Op[] Ops { get; } = ops;
+    internal CompiledPatch(
+        Op[] ops,
+        int registerCount,
+        int outputBase,
+        int outputWidth = 3,
+        IReadOnlyList<LoadedSample>? tables = null,
+        IReadOnlyList<TapSpec>? taps = null,
+        IReadOnlyList<string>? liveInputs = null,
+        IReadOnlyList<LoadedImage>? pictures = null,
+        StateOwners? owners = null)
+    {
+        Ops = ops;
+        Owners = owners ?? StateOwners.None;
+        LiveInputs = liveInputs ?? [];
+        LiveCount = Math.Max(
+            liveInputs?.Count ?? 0,
+            ops.Where(o => o.Code is OpCode.LoadLive)
+                .Select(o => (int)o.K + 1)
+                .DefaultIfEmpty(0)
+                .Max());
+        Taps = taps ?? [];
+        RegisterCount = Vouch(ops, registerCount);
+        Plan = FramePlan.For(ops, registerCount);
+        OutputBase = outputBase;
+        OutputWidth = outputWidth;
+        DelayLengths =
+            [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
+        TraceCount = ops
+            .Where(o => o.Code is OpCode.Tap)
+            .Select(o => (int)o.K + 1)
+            .DefaultIfEmpty(0)
+            .Max();
+        PhaseCount = ops.Count(o => o.Code is OpCode.Phase);
+        UnitCount = ops
+            .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite or OpCode.ClockWrite)
+            .Select(o => (int)o.K + 1)
+            .DefaultIfEmpty(0)
+            .Max();
+        PlaneCount = ops
+            .Where(o => o.Code is OpCode.PlaneRead or OpCode.PlaneWrite)
+            .Select(o => (int)o.K + 1)
+            .DefaultIfEmpty(0)
+            .Max();
+        tableArray = tables as LoadedSample[] ?? [.. tables ?? []];
+        pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
+    }
+
+    internal Op[] Ops { get; }
 
     /// <summary>
     /// Which node owns each cell of memory this program keeps, so a swap can hand
@@ -47,7 +85,7 @@ public sealed class CompiledPatch(
     /// <see cref="StateOwners"/>. Empty for a program assembled by hand, which
     /// then starts from silence.
     /// </summary>
-    public StateOwners Owners { get; } = owners ?? StateOwners.None;
+    internal StateOwners Owners { get; }
 
     /// <summary>
     /// What this program is played with: the live inputs
@@ -55,7 +93,7 @@ public sealed class CompiledPatch(
     /// Names rather than values — whoever runs the program builds a
     /// <see cref="LiveValues"/> from this list and fills it in as the keys move.
     /// </summary>
-    public IReadOnlyList<string> LiveInputs { get; } = liveInputs ?? [];
+    public IReadOnlyList<string> LiveInputs { get; }
 
     /// <summary>
     /// How many live inputs the ops actually read, which is what a backend has to
@@ -63,12 +101,7 @@ public sealed class CompiledPatch(
     /// <see cref="LiveInputs"/>, so a program assembled by hand cannot produce a
     /// shader that reads past the end of the array it declared.
     /// </summary>
-    public int LiveCount { get; } = Math.Max(
-        liveInputs?.Count ?? 0,
-        ops.Where(o => o.Code is OpCode.LoadLive)
-            .Select(o => (int)o.K + 1)
-            .DefaultIfEmpty(0)
-            .Max());
+    public int LiveCount { get; }
 
     /// <summary>
     /// The Scopes this program has something to do with, in the order
@@ -81,7 +114,7 @@ public sealed class CompiledPatch(
     /// separately and throw away different dead code — see
     /// <see cref="Traces.Refresh"/>.
     /// </remarks>
-    public IReadOnlyList<TapSpec> Taps { get; } = taps ?? [];
+    public IReadOnlyList<TapSpec> Taps { get; }
 
     /// <summary>
     /// The clips <see cref="OpCode.Table"/> reads, indexed by its K. Carried by
@@ -109,9 +142,9 @@ public sealed class CompiledPatch(
     /// and both are read inside the per-pixel loop to reach an array that was
     /// already an array.
     /// </summary>
-    private readonly LoadedSample[] tableArray = tables as LoadedSample[] ?? [.. tables ?? []];
+    private readonly LoadedSample[] tableArray;
 
-    private readonly LoadedImage[] pictureArray = pictures as LoadedImage[] ?? [.. pictures ?? []];
+    private readonly LoadedImage[] pictureArray;
 
     /// <summary>The clips as the IL backend hands them to its methods, for the reason the interpreter indexes them.</summary>
     internal LoadedSample[] TableArray => tableArray;
@@ -175,7 +208,7 @@ public sealed class CompiledPatch(
         if (Cue is { } start && Interlocked.Exchange(ref holding, 0) == 1) start.Give();
     }
 
-    public int RegisterCount { get; } = Vouch(ops, registerCount);
+    public int RegisterCount { get; }
 
     /// <summary>
     /// The same ops sorted by how often a frame has to run them, or null for a
@@ -183,21 +216,20 @@ public sealed class CompiledPatch(
     /// here because it is a property of the program, which outlives a frame: the
     /// walk is paid once per edit against every frame drawn in between.
     /// </summary>
-    public FramePlan? Plan { get; } = FramePlan.For(ops, registerCount);
+    public FramePlan? Plan { get; }
 
     /// <summary>First of the <see cref="OutputWidth"/> registers holding the result.</summary>
-    public int OutputBase { get; } = outputBase;
+    public int OutputBase { get; }
 
     /// <summary>3 for a video sink's RGB, 2 for an audio sink's stereo pair.</summary>
-    public int OutputWidth { get; } = outputWidth;
+    public int OutputWidth { get; }
 
     /// <summary>
     /// The longest delay each stateful op will ask for, in the order those ops
     /// run. A renderer sizes one ring buffer per entry; a program with none — the
     /// usual case — needs no state at all.
     /// </summary>
-    public IReadOnlyList<float> DelayLengths { get; } =
-        [.. ops.Where(o => o.Code is OpCode.Delay or OpCode.Allpass).Select(o => o.K)];
+    public IReadOnlyList<float> DelayLengths { get; }
 
     /// <summary>
     /// How many traces this program keeps — one per Scope whose input it
@@ -205,11 +237,7 @@ public sealed class CompiledPatch(
     /// highest slot, because a scope wired to nothing emits none and would
     /// otherwise shift every scope after it.
     /// </summary>
-    public int TraceCount { get; } = ops
-        .Where(o => o.Code is OpCode.Tap)
-        .Select(o => (int)o.K + 1)
-        .DefaultIfEmpty(0)
-        .Max();
+    public int TraceCount { get; }
 
     /// <summary>
     /// How many phase accumulators the program runs. One cell each, so unlike a
@@ -217,18 +245,14 @@ public sealed class CompiledPatch(
     /// still needs state, and a renderer that gave it none would hand every
     /// oscillator back its multiply.
     /// </summary>
-    public int PhaseCount { get; } = ops.Count(o => o.Code is OpCode.Phase);
+    public int PhaseCount { get; }
 
     /// <summary>
     /// How many one-evaluation cells the program needs — one per cycle in the
     /// patch it came from. Taken from the highest slot any op names, since a read
     /// and its write share a cell and counting ops would count each cell twice.
     /// </summary>
-    public int UnitCount { get; } = ops
-        .Where(o => o.Code is OpCode.UnitRead or OpCode.UnitWrite or OpCode.ClockWrite)
-        .Select(o => (int)o.K + 1)
-        .DefaultIfEmpty(0)
-        .Max();
+    public int UnitCount { get; }
 
     /// <summary>
     /// How many planes the program needs — one per cycle in the patch it came
@@ -242,11 +266,7 @@ public sealed class CompiledPatch(
     /// patch with no loop in it, which is most of them, and that patch allocates
     /// nothing at all.
     /// </remarks>
-    public int PlaneCount { get; } = ops
-        .Where(o => o.Code is OpCode.PlaneRead or OpCode.PlaneWrite)
-        .Select(o => (int)o.K + 1)
-        .DefaultIfEmpty(0)
-        .Max();
+    public int PlaneCount { get; }
 
     /// <summary>
     /// A program whose output is all zeroes — what the compiler falls back to for
@@ -283,7 +303,7 @@ public sealed class CompiledPatch(
     /// This pixel's plane cells, or empty for none, where a loop reads zero. The
     /// speakers keep theirs in <paramref name="delays"/>.
     /// </param>
-    public void Evaluate(
+    internal void Evaluate(
         double x,
         double y,
         double t,
@@ -306,7 +326,7 @@ public sealed class CompiledPatch(
     /// program with no plan runs whole at <see cref="EvaluationStage.Pixel"/>, so
     /// a caller staging its loops gets the right picture either way.
     /// </remarks>
-    public void EvaluateStage(
+    internal void EvaluateStage(
         EvaluationStage stage,
         double x,
         double y,

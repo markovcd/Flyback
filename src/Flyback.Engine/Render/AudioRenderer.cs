@@ -164,7 +164,7 @@ public sealed class AudioRenderer
     /// and never half a note.
     /// </param>
     /// <param name="interleavedStereo">Where the samples go, left and right alternating. Its length decides how many frames this call renders.</param>
-    public void Render(
+    internal void Render(
         CompiledPatch program,
         Span<float> interleavedStereo,
         DelayState? memory = null,

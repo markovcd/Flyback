@@ -19,7 +19,7 @@ namespace Flyback.Core.Compile;
 /// <param name="Phases">Owner of each accumulator, in program order.</param>
 /// <param name="Units">Owner of each one-evaluation cell, by slot number.</param>
 /// <param name="Planes">Owner of each plane, by slot number.</param>
-public sealed record StateOwners(
+internal sealed record StateOwners(
     IReadOnlyList<Guid> Delays,
     IReadOnlyList<Guid> Phases,
     IReadOnlyList<Guid> Units,

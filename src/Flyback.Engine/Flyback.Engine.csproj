@@ -23,4 +23,27 @@
     <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Graph\Presets.WholeBand.cs">
+      <DependentUpon>Presets.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Whatever names Core's internals is shared with the assemblies Core shares them with. -->
+    <InternalsVisibleTo Include="Flyback.Plugins" />
+    <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="flyback-viewer" />
+    <InternalsVisibleTo Include="Flyback.Server" />
+    <InternalsVisibleTo Include="Flyback.Core.Tests" />
+    <InternalsVisibleTo Include="Flyback.Core.Benchmarks" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Server.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
 </Project>

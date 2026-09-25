@@ -40,7 +40,7 @@ public static class Meters
     /// where the sound is driven by its own level. Written by name, so the two are
     /// allowed to disagree about which meters exist while a recompile is in flight.
     /// </param>
-    public static void Refresh(CompiledPatch heard, DelayState? memory, params LiveValues[] blocks)
+    internal static void Refresh(CompiledPatch heard, DelayState? memory, params LiveValues[] blocks)
     {
         ArgumentNullException.ThrowIfNull(heard);
         ArgumentNullException.ThrowIfNull(blocks);
@@ -77,7 +77,7 @@ public static class Meters
     /// still loaded and the picture is still being drawn, so the readings have to
     /// be put out rather than merely left — see the note on <c>memory</c> above.
     /// </summary>
-    public static void Silence(CompiledPatch heard, params LiveValues[] blocks)
+    internal static void Silence(CompiledPatch heard, params LiveValues[] blocks)
     {
         ArgumentNullException.ThrowIfNull(heard);
 

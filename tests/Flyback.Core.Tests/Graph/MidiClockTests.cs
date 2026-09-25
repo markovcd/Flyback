@@ -21,7 +21,7 @@ public class MidiClockTests
     /// <summary>Evaluations a second, chosen so a tick at 125 bpm is a whole number of them.</summary>
     private const double Rate = 1_000d;
 
-    private const double Tick = 60d / 125d / MidiClock.TicksPerBeat;
+    private const double Tick = 60d / 125d / MidiSignal.TicksPerBeat;
 
     private const int TickSamples = (int)(Tick * Rate);
 
@@ -54,7 +54,7 @@ public class MidiClockTests
         clock.Tick(1d / 48d);
         clock.Beat.ShouldBe(1f / 24f, 1e-6f);
 
-        for (var tick = 2; tick <= MidiClock.TicksPerBeat; tick++) clock.Tick(tick / 48d);
+        for (var tick = 2; tick <= MidiSignal.TicksPerBeat; tick++) clock.Tick(tick / 48d);
 
         clock.Beat.ShouldBe(1f, 1e-6f);
     }
@@ -174,7 +174,7 @@ public class MidiClockTests
             (heard[i] - heard[i - 1]).ShouldBe(BeatsPerSecond / Rate, 1e-5, $"sample {i}");
 
         // The ninth tick has just landed, and the first was the beat itself.
-        heard[8 * TickSamples].ShouldBe(8d / MidiClock.TicksPerBeat, 0.002);
+        heard[8 * TickSamples].ShouldBe(8d / MidiSignal.TicksPerBeat, 0.002);
     }
 
     /// <summary>
@@ -289,7 +289,7 @@ public class MidiClockTests
             step.ShouldBeLessThan(2d * BeatsPerSecond / Rate, $"sample {i}");
         }
 
-        heard[^1].ShouldBe(59d / MidiClock.TicksPerBeat + BeatsPerSecond * (TickSamples - 1) / Rate, 0.003);
+        heard[^1].ShouldBe(59d / MidiSignal.TicksPerBeat + BeatsPerSecond * (TickSamples - 1) / Rate, 0.003);
     }
 
     [Fact]
@@ -327,8 +327,8 @@ public class MidiClockTests
             if (i % TickSamples == 0) clock.Tick(now);
         });
 
-        heard[2 * TickSamples + 1].ShouldBe(2d / MidiClock.TicksPerBeat, 1e-6);
-        heard[2 * TickSamples + 2].ShouldBe(2d / MidiClock.TicksPerBeat, 1e-6);
+        heard[2 * TickSamples + 1].ShouldBe(2d / MidiSignal.TicksPerBeat, 1e-6);
+        heard[2 * TickSamples + 2].ShouldBe(2d / MidiSignal.TicksPerBeat, 1e-6);
     }
 
     // ---- helpers --------------------------------------------------------------

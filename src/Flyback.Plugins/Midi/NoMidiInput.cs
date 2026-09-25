@@ -4,7 +4,7 @@ namespace Flyback.Plugins.Midi;
 /// The input used when nothing installed can listen. It has no ports, so nothing is
 /// ever opened and nothing downstream needs a null check.
 /// </summary>
-public sealed class NoMidiInput : IMidiInput
+internal sealed class NoMidiInput : IMidiInput
 {
     public static NoMidiInput Instance { get; } = new();
 

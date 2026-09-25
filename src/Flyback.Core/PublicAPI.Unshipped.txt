@@ -38,6 +38,7 @@ Flyback.Core.Graph.ScaleMode.Name.init -> void
 Flyback.Core.Graph.ScaleMode.ScaleMode(string! Id, string! Name, int[]! Classes) -> void
 const Flyback.Core.Graph.Chords.Major = 4 -> int
 const Flyback.Core.Graph.Chords.Notes = 4 -> int
+const Flyback.Core.Graph.MidiSignal.TicksPerBeat = 24 -> int
 const Flyback.Core.Graph.NodeCatalog.AutoChordScaleField = "scale" -> string!
 const Flyback.Core.Graph.NodeCatalog.AutoChordStateKey = "autochord" -> string!
 const Flyback.Core.Graph.NodeCatalog.AutoChordTypeId = "audio.autochord" -> string!

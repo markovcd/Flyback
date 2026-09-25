@@ -47,7 +47,7 @@ public static class MidiSources
     /// Points the module at whatever is actually plugged in. Called once during
     /// startup; what it hands back may differ on every call after.
     /// </summary>
-    public static void Install(Func<IReadOnlyList<MidiSource>> sources) => ask = sources;
+    internal static void Install(Func<IReadOnlyList<MidiSource>> sources) => ask = sources;
 
     /// <summary>
     /// Everything that could play a patch right now. Total, whatever the shell does:
@@ -88,6 +88,9 @@ public static class MidiSources
 /// </remarks>
 public static class MidiSignal
 {
+    /// <summary>How many clock ticks MIDI sends a beat, as it settled on in 1983.</summary>
+    public const int TicksPerBeat = 24;
+
     /// <summary>The note being held, as a MIDI number — see <see cref="Pitch"/>.</summary>
     public const string Pitch = "pitch";
 
@@ -147,7 +150,7 @@ public static class MidiSignal
         return at < 0 ? source : source[..at];
     }
 
-    /// <summary>Beats since the instrument pressed Start, as of its latest tick — see <see cref="MidiClock.Beat"/>.</summary>
+    /// <summary>Beats since the instrument pressed Start, as of its latest tick — see <c>MidiClock.Beat</c>.</summary>
     public const string Beat = "beat";
 
     /// <summary>Beats a second while it runs, nought while it is stopped.</summary>

@@ -4,7 +4,7 @@ namespace Flyback.Core.Graph;
 /// The range an Auto remap's pair of knobs are fractions of, swept the way the
 /// socket at the far end of the wire sweeps its own knob.
 /// </summary>
-public readonly record struct RemapSpan(float Min, float Max, float Knee = 0f, PortDisplay Display = PortDisplay.Number)
+internal readonly record struct RemapSpan(float Min, float Max, float Knee = 0f, PortDisplay Display = PortDisplay.Number)
 {
     /// <summary>What an unwired side is: fractions of 0..1, which are the numbers themselves.</summary>
     public static RemapSpan Unit => new(0f, 1f);
@@ -43,7 +43,7 @@ public readonly record struct RemapSpan(float Min, float Max, float Knee = 0f, P
 /// What an Auto remap's two pairs of knobs mean: fractions of a range, or,
 /// where a side is null, numbers typed by hand, with the reason it has no range.
 /// </summary>
-public sealed record RemapSpans(RemapSpan? In, RemapSpan? Out, string? InWhy = null, string? OutWhy = null)
+internal sealed record RemapSpans(RemapSpan? In, RemapSpan? Out, string? InWhy = null, string? OutWhy = null)
 {
     public static RemapSpans Unwired { get; } = new(RemapSpan.Unit, RemapSpan.Unit);
 
@@ -67,7 +67,7 @@ public static class AutoRemap
     public const int OutHigh = 4;
 
     /// <summary>Every Auto remap in <paramref name="patch"/>, by node id.</summary>
-    public static IReadOnlyDictionary<Guid, RemapSpans> Resolve(Patch patch, ModuleCatalog? catalog = null)
+    internal static IReadOnlyDictionary<Guid, RemapSpans> Resolve(Patch patch, ModuleCatalog? catalog = null)
     {
         ArgumentNullException.ThrowIfNull(patch);
 
@@ -80,7 +80,7 @@ public static class AutoRemap
     }
 
     /// <summary>The ranges of the one Auto remap <paramref name="node"/>.</summary>
-    public static RemapSpans Of(Patch patch, NodeInstance node, ModuleCatalog? catalog = null)
+    internal static RemapSpans Of(Patch patch, NodeInstance node, ModuleCatalog? catalog = null)
     {
         ArgumentNullException.ThrowIfNull(patch);
         ArgumentNullException.ThrowIfNull(node);
@@ -109,7 +109,7 @@ public static class AutoRemap
     /// Whether <paramref name="wire"/> joins two sockets whose ranges are both known
     /// and differ, which is where an Auto remap in the middle of it has work to do.
     /// </summary>
-    public static bool Offered(Patch patch, Connection wire, ModuleCatalog? catalog = null)
+    internal static bool Offered(Patch patch, Connection wire, ModuleCatalog? catalog = null)
     {
         ArgumentNullException.ThrowIfNull(patch);
         ArgumentNullException.ThrowIfNull(wire);
@@ -131,7 +131,7 @@ public static class AutoRemap
     /// reaches past either end of the range its socket takes, and null where it
     /// stays inside or either end has no range.
     /// </summary>
-    public static string? Overflow(Patch patch, Connection wire, ModuleCatalog? catalog = null)
+    internal static string? Overflow(Patch patch, Connection wire, ModuleCatalog? catalog = null)
     {
         ArgumentNullException.ThrowIfNull(patch);
         ArgumentNullException.ThrowIfNull(wire);

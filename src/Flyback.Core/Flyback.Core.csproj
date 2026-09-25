@@ -11,10 +11,24 @@
 
   <ItemGroup>
     <!--
-      The engine walks the same op list the emitter builds, so the two share what
-      an op is shaped like without that becoming something a plugin can name.
+      Public is what a plugin is compiled against. What only the host needs, the
+      program an emitter hands back or the values played into it, is internal and
+      shared with the host's own assemblies here, never with a plugin.
     -->
     <InternalsVisibleTo Include="Flyback.Engine" />
+    <InternalsVisibleTo Include="Flyback.Plugins" />
+    <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="flyback-viewer" />
+    <InternalsVisibleTo Include="Flyback.Server" />
+    <InternalsVisibleTo Include="Flyback.Core.Tests" />
+    <InternalsVisibleTo Include="Flyback.Core.Benchmarks" />
+    <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Server.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,9 +70,6 @@
     </Compile>
     <Compile Update="Graph\NodeCatalog.Strings.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Graph\Presets.WholeBand.cs">
-      <DependentUpon>Presets.cs</DependentUpon>
     </Compile>
     <Compile Update="Graph\NodeCatalog.Buses.cs">
       <DependentUpon>NodeCatalog.cs</DependentUpon>

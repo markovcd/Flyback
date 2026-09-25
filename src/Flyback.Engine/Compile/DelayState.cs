@@ -145,7 +145,7 @@ public sealed class DelayState
     /// Whose cells these are, as the program that asked for them said — see
     /// <see cref="Adopt"/>.
     /// </summary>
-    public StateOwners Owners { get; } = StateOwners.None;
+    internal StateOwners Owners { get; } = StateOwners.None;
 
     private readonly IReadOnlyList<Guid> traceOwners = [];
 

@@ -12,7 +12,7 @@ namespace Flyback.Plugins.Assist;
 /// <param name="WarmUpStep">The frame interval stepped through before a render, so feedback has a real history.</param>
 /// <param name="ListenRate">The sample rate a <c>listen</c> renders at, kept low for the request size.</param>
 /// <param name="LongestListen">The most sound one call may render, in seconds.</param>
-public sealed record WorkbenchLimits(
+internal sealed record WorkbenchLimits(
     int MaxToolCalls = 200,
     int FrameWidth = 320,
     int FrameHeight = 180,

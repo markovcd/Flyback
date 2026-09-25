@@ -41,10 +41,11 @@ needs — and here the policy can be written, because the host is this repositor
 
 **What runs a patch is an assembly no plugin references.** `Flyback.Engine` takes
 the compiler and both backends, the text language, the renderers, every file
-format, and the patch's file I/O, history, clipboard and bundle. `Flyback.Core`
-keeps what a patch and a module are made of: the graph, the sockets, `NodeDef`
-and its extras, the `Emitter` a module lowers itself through, the layout, the
-built-in catalogue and the presets.
+format, the patch's file I/O, history, clipboard and bundle, the built-in
+presets and the values played into a running program. `Flyback.Core` keeps what
+a patch and a module are made of: the graph, the sockets, `NodeDef` and its
+extras, the `Emitter` a module lowers itself through, the layout and the
+built-in catalogue.
 
 The line was found rather than drawn: that half already needed nothing from the
 other but the names a Meter listens on, the axis an Analyzer is drawn along and
@@ -56,6 +57,18 @@ plugin's preset names them by id and indexes their ports by the constants beside
 them, so what ships in the catalogue is something a plugin depends on whichever
 assembly it sits in — and sitting there, it is written against the same emitter
 a plugin is given, with nothing else in reach.
+
+**Public is what a plugin could need; the host sees the rest as internal.** Both
+contract assemblies give `InternalsVisibleTo` to the host's own assemblies and
+their tests, and never to a plugin. So what only the host touches — the program
+an emitter hands back, the owners of its state, the preset list, the layout, the
+plugin catalog and loader, the stored assistant settings and credentials, a
+workbench's construction and saving — is internal, and the host needs nothing
+made public to reach it. The test for public is whether a module or plugin could
+use it in principle, not whether one does today: a built-in module is written
+against the same surface, so what one uses (a picture or a clip read from a file,
+a MIDI signal, a meter's level, a spectrum's axis) is public for a plugin's
+module too.
 
 **Core keeps its name and its namespaces.** A plugin built before the split names
 `Flyback.Core.Graph.NodeDef` in `Flyback.Core`, and that is still where it is. A
@@ -128,17 +141,24 @@ nothing outside the BCL, which is what that decision was protecting.
 
 ## Consequences
 
-Core's public surface is 67 types where it was some 150, and the rest can change
-between releases without the question arising.
+Core's public surface is some 70 types where it was some 150, and the rest can
+change between releases without the question arising. A new type in Core or
+`Flyback.Plugins` starts internal, and the analyzer asks for a line only when a
+plugin is meant to see it.
 
 A release folder holds `Flyback.Engine.dll` beside the other two, and
 `HostOwned` has three names in it. Only two of them are the boundary.
 
 `Flyback.Plugins` is still two things in one assembly: the contract, and the host
-and workbench behind it. The workbench is what an assistant calls, so it cannot
-simply move; what can be said is that its surface names no engine type, and the
-private reference is what would notice if that stopped being true — the
-assistants in the box would stop compiling.
+and workbench behind it. The host's half is internal, and the workbench's public
+members are the ones an assistant calls. It cannot move to the engine, which may
+not reference the contract; what can be said is that its surface names no engine
+type, and the private reference is what would notice if that stopped being true
+— the assistants in the box would stop compiling.
+
+A plugin assembly named after one of the host's could claim those internals,
+since nothing here is strong-named. That plugin has stepped outside the contract
+and gets no promise from it.
 
 **Shape is checked; behavior is not.** A module that lowers to something
 different, a default that means something new, a preset's built-in that gained a

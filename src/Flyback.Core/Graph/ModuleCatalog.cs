@@ -12,7 +12,7 @@ public sealed record ModuleProvider(string Id, string Name);
 /// refused. Refusals are values rather than exceptions: one bad module in a
 /// plugin should cost that module, not the plugin and not the program.
 /// </summary>
-public sealed record ModuleAddition(ModuleCatalog Catalog, IReadOnlyList<string> Rejected);
+internal sealed record ModuleAddition(ModuleCatalog Catalog, IReadOnlyList<string> Rejected);
 
 /// <summary>
 /// The set of modules that exist. Immutable: adding a provider produces a new
@@ -107,7 +107,7 @@ public sealed class ModuleCatalog
     /// of its modules was accepted, so a patch can never come to require a
     /// plugin that contributed nothing.
     /// </summary>
-    public ModuleAddition With(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
+    internal ModuleAddition With(ModuleProvider provider, IReadOnlyList<NodeDef> modules)
     {
         if (Refuse(provider) is { } refusal) return new ModuleAddition(this, [refusal]);
 

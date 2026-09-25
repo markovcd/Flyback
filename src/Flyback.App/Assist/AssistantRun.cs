@@ -59,7 +59,7 @@ public sealed class AssistantRun : IDisposable
     /// <param name="resuming">A conversation saved with that patch, to carry on rather than start afresh.</param>
     /// <param name="prose">How much of the catalog's prose the briefing carries.</param>
     /// <param name="presets">The presets the model may read for ideas, and the shipped ones where nobody said.</param>
-    public AssistantRun(
+    internal AssistantRun(
         IPatchAssistant assistant,
         AssistantConfig config,
         ModuleCatalog modules,
@@ -206,7 +206,7 @@ public sealed class AssistantRun : IDisposable
     /// turns, because the provider's account is read out of a session that must
     /// not be running.
     /// </summary>
-    public SavedConversation Save(IReadOnlyList<TranscriptLine> transcript)
+    internal SavedConversation Save(IReadOnlyList<TranscriptLine> transcript)
     {
         string? history;
 

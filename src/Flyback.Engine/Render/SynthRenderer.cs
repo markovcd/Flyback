@@ -80,7 +80,7 @@ public sealed class SynthRenderer
     /// <param name="width"></param>
     /// <param name="height"></param>
     /// <param name="destination"></param>
-    public void Render(
+    internal void Render(
         CompiledPatch patch,
         double time,
         int width,

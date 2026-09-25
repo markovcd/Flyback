@@ -17,7 +17,7 @@ namespace Flyback.Plugins.Assist;
 /// </param>
 /// <param name="Edits"></param>
 /// <param name="ToolCalls"></param>
-public sealed record WorkbenchState(
+internal sealed record WorkbenchState(
     string Start,
     string Working,
     IReadOnlyDictionary<string, Guid> Handles,

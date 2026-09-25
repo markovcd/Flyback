@@ -7,14 +7,14 @@ using Flyback.Plugins.Secrets;
 namespace Flyback.Plugins.Hosting;
 
 /// <summary>A plugin that loaded, and where it came from.</summary>
-public sealed record LoadedPlugin(PluginInfo Info, string AssemblyPath);
+internal sealed record LoadedPlugin(PluginInfo Info, string AssemblyPath);
 
 /// <summary>
 /// Something that went wrong with one plugin. Collected rather than thrown: a
 /// broken plugin must not stop the program starting, and the person who has to
 /// fix it needs to be told which file it was.
 /// </summary>
-public sealed record PluginProblem(string Source, string Message)
+internal sealed record PluginProblem(string Source, string Message)
 {
     /// <summary>The plugin folder it came from, or null where it came from no folder.</summary>
     internal string? Folder { get; init; }
@@ -23,7 +23,7 @@ public sealed record PluginProblem(string Source, string Message)
 }
 
 /// <summary>Everything one scan of the plugin directory found.</summary>
-public sealed class PluginCatalog
+internal sealed class PluginCatalog
 {
     public static PluginCatalog Empty { get; } =
         new([], [], NodeCatalog.BuiltIn, Flyback.Core.Graph.Presets.All, []);

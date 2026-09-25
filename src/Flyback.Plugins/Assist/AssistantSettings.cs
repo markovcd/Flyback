@@ -21,7 +21,7 @@ namespace Flyback.Plugins.Assist;
 /// other. Nothing here is load-bearing: an unreadable file means the defaults.
 /// </para>
 /// </remarks>
-public sealed class AssistantSettings
+internal sealed class AssistantSettings
 {
     /// <remarks>
     /// Escaped for a person rather than for a web page. The default encoder is

@@ -30,7 +30,7 @@ namespace Flyback.App.Assist;
 /// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The run ends with its conversation, in SetAside.")]
-public sealed class AssistantPanel : UserControl
+internal sealed class AssistantPanel : UserControl
 {
     private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);
 

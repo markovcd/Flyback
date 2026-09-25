@@ -191,7 +191,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     }
 
     /// <summary>What is being played into the patch as it is drawn.</summary>
-    public LiveValues Live
+    internal LiveValues Live
     {
         get { lock (gate) return live; }
         set
@@ -203,6 +203,8 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             }
         }
     }
+
+    LiveValues IPreviewSurface.Live { get => Live; set => Live = value; }
 
     /// <summary>A key moved, so the next tick has something to draw after all.</summary>
     public void Refresh()

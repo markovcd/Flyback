@@ -18,7 +18,7 @@ namespace Flyback.Plugins.Hosting;
 /// contract this host does not offer (<see cref="ContractVersion"/>), or simply
 /// hostile is a line in <see cref="PluginCatalog.Problems"/>.
 /// </remarks>
-public static class PluginHost
+internal static class PluginHost
 {
     public const string DirectoryName = "plugins";
 

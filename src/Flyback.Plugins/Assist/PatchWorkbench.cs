@@ -61,7 +61,7 @@ public sealed partial class PatchWorkbench
     /// The presets offered through <c>describe_preset</c>, defaulting to the shipped
     /// ones; an empty list removes the tool.
     /// </param>
-    public PatchWorkbench(
+    internal PatchWorkbench(
         ModuleCatalog modules,
         Patch startingPoint,
         bool vision = true,
@@ -145,7 +145,7 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>What <see cref="Restore"/> needs to put this workbench back as it stands.</summary>
-    public WorkbenchState Save() => new(
+    internal WorkbenchState Save() => new(
         startingPoint,
         PatchIO.ToJson(working, modules),
         byHandle.ToDictionary(pair => pair.Key, pair => pair.Value.Id, StringComparer.OrdinalIgnoreCase),
@@ -163,7 +163,7 @@ public sealed partial class PatchWorkbench
     /// there is dropped and a module with no handle is given one, so every module
     /// can still be named whatever the state says.
     /// </remarks>
-    public void Restore(WorkbenchState state)
+    internal void Restore(WorkbenchState state)
     {
         Adopt(PatchIO.Read(state.Working, modules).Patch, state.Handles);
 

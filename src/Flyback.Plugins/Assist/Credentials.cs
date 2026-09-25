@@ -3,7 +3,7 @@ using Flyback.Plugins.Secrets;
 namespace Flyback.Plugins.Assist;
 
 /// <summary>Where a key came from. Shown to the person, because the three differ in what they promise.</summary>
-public enum CredentialSource
+internal enum CredentialSource
 {
     /// <summary>There is no key for this provider.</summary>
     None,
@@ -33,7 +33,7 @@ public enum CredentialSource
 /// itself (ADR-0034).
 /// </para>
 /// </remarks>
-public sealed class Credentials(ISecretStore? store)
+internal sealed class Credentials(ISecretStore? store)
 {
     private readonly Dictionary<string, string> session = new(StringComparer.Ordinal);
 

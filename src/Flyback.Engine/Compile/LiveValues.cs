@@ -23,7 +23,7 @@ namespace Flyback.Core.Compile;
 /// 192 kHz is five microseconds against a lock on the audio thread.
 /// </para>
 /// </remarks>
-public sealed class LiveValues
+internal sealed class LiveValues
 {
     private readonly string[] keys;
     private readonly float[] values;

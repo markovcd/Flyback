@@ -55,8 +55,8 @@ layer between the layers: a shell calls the engine's concrete types
 
 | Project | Holds | Rule it lives under |
 |---|---|---|
-| `Flyback.Core` | `Patch`, `NodeDef`, `PortSpec`, `NodeCatalog`, presets, `OpCode`, `Emitter` | The plugin-facing surface. Its public API is versioned separately ([0102](adr/0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)). |
-| `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL and GLSL backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
+| `Flyback.Core` | `Patch`, `NodeDef`, `PortSpec`, `NodeCatalog`, `OpCode`, `Emitter` | The plugin-facing surface. Its public API is versioned separately ([0102](adr/0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)). |
+| `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL and GLSL backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO`, the built-in `Presets` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
 | `Flyback.App` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, updates, usage counts | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). |
@@ -566,9 +566,9 @@ new code should be indistinguishable from the file it lands in.
 - Private fields are `camelCase` with no underscore, and `private` is written out.
   Constants are `PascalCase`. Native constants keep their native names
   (`FLASHW_TRAY`).
-- `internal` is the default visibility outside Core's and Plugins' deliberate
-  public surface. Tests reach internals through `InternalsVisibleTo`, not by
-  making things public.
+- `internal` is the default visibility, in Core and Plugins too: public there is
+  what a plugin could need. The host's assemblies and the tests reach internals
+  through `InternalsVisibleTo`, not by making things public.
 - No `#region`, no `#pragma warning disable`, no `TODO`. A warning is an error, so
   it is fixed rather than silenced.
 - `unsafe`, `Span<T>` and `Unsafe.Add` appear where a hot loop has earned them,

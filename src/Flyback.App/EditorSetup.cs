@@ -70,7 +70,7 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     public Usage Usage { get; init; } = Usage.Off;
 
     /// <summary>The plugins loaded before any window existed, already installed in the module catalog.</summary>
-    public PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
+    internal PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
 
     /// <summary>
     /// Starts Flyback again once this window has closed, which is what loads a plugin

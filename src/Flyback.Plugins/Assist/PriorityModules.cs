@@ -14,7 +14,7 @@ namespace Flyback.Plugins.Assist;
 /// one back would throw the edits away. Deleting the file brings the shipped list
 /// back.
 /// </remarks>
-public static class PriorityModules
+internal static class PriorityModules
 {
     private const string Resource = "priority-modules.txt";
 

@@ -81,7 +81,7 @@ public readonly record struct EmitContext(Slot[] Inputs)
     public LoadedSample? Trace { get; init; }
 
     /// <summary>An Auto remap's ranges, read off its wires by the compiler, and null for every other module.</summary>
-    public RemapSpans? Spans { get; init; }
+    internal RemapSpans? Spans { get; init; }
 
     // --- what the instance carries, each put here by a Fold ----------------------
 

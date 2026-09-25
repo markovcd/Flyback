@@ -45,7 +45,7 @@ public sealed class FramePlan
     }
 
     /// <summary>The program's ops, in stage order.</summary>
-    public Op[] Ops { get; }
+    internal Op[] Ops { get; }
 
     /// <summary>Where the row's ops start, which is also where the frame's end.</summary>
     public int RowAt { get; }
@@ -71,7 +71,7 @@ public sealed class FramePlan
     /// written once. A program that writes one twice gets no plan and is walked
     /// whole.
     /// </remarks>
-    public static FramePlan? For(Op[] ops, int registerCount)
+    internal static FramePlan? For(Op[] ops, int registerCount)
     {
         ArgumentNullException.ThrowIfNull(ops);
 

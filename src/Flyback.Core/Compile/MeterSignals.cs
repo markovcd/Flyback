@@ -14,7 +14,7 @@ public static class MeterSignals
     /// <summary>
     /// What a Meter listens on, before the signal it wants. The prefix is a word
     /// no instrument can take, so a meter and a keyboard can never collide in one
-    /// block — see <see cref="LiveValues"/>, which is keyed by name for this
+    /// block — see <c>LiveValues</c>, which is keyed by name for this
     /// reason.
     /// </summary>
     private const string Prefix = "meter";

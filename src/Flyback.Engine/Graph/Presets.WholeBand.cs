@@ -2,7 +2,7 @@ using System.Text.Json.Nodes;
 
 namespace Flyback.Core.Graph;
 
-public static partial class Presets
+internal static partial class Presets
 {
     /// <summary>
     /// A whole song out of nothing but the engine's own modules: a kick, a snare

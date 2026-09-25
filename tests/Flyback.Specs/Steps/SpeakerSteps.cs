@@ -30,10 +30,10 @@ public sealed class SpeakerSteps(PatchContext context)
         context.Clock.Start();
         context.Push();
 
-        var tick = 60d / bpm / MidiClock.TicksPerBeat;
+        var tick = 60d / bpm / MidiSignal.TicksPerBeat;
         var from = context.Now;
 
-        for (var k = 0; k <= beats * MidiClock.TicksPerBeat; k++)
+        for (var k = 0; k <= beats * MidiSignal.TicksPerBeat; k++)
         {
             var at = from + k * tick;
 

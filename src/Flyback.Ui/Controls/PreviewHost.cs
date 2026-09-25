@@ -95,11 +95,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
         }
     }
 
-    public LiveValues Live
+    internal LiveValues Live
     {
         get => active.Live;
         set => active.Live = value;
     }
+
+    LiveValues IPreviewSurface.Live { get => Live; set => Live = value; }
 
     public void Refresh() => active.Refresh();
 

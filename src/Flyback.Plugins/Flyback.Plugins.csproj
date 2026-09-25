@@ -24,17 +24,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- PluginCatalog is built by the host, so its constructor is not public.
-         The shell's tests need it too: a panel that shows what a provider can do
-         cannot be tested in front of no provider, and everything it got wrong
-         was in that half. -->
+    <!-- The host's half, loading plugins and running an assistant, is internal and
+         shared with the host's own assemblies and their tests, never with a plugin. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Server.Tests" />
-
-    <!-- A plugin package is read, and written, by the editor and the command line,
-         and every program prints what it loaded. -->
+    <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />
+    <InternalsVisibleTo Include="Flyback.Plugins.OpenAi.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+    <InternalsVisibleTo Include="Flyback.Ui" />
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="flyback-cli" />
     <InternalsVisibleTo Include="flyback-viewer" />

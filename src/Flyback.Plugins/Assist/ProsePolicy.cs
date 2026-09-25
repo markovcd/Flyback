@@ -16,7 +16,7 @@ namespace Flyback.Plugins.Assist;
 /// </remarks>
 /// <param name="Budget">The most characters the whole briefing may run to.</param>
 /// <param name="Priority">Type ids whose descriptions are never left out.</param>
-public sealed record ProsePolicy(int Budget, IReadOnlySet<string> Priority)
+internal sealed record ProsePolicy(int Budget, IReadOnlySet<string> Priority)
 {
     /// <summary>The shipped budget and the shipped list, for anything that has no settings.</summary>
     public static ProsePolicy Default { get; } =

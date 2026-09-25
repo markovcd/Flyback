@@ -58,7 +58,7 @@ public sealed record TranscriptLine(Voice Voice, string Text);
 /// <param name="Bench"></param>
 /// <param name="History">The provider's own account of it, or null where it kept none.</param>
 /// <param name="Transcript"></param>
-public sealed record SavedConversation(
+internal sealed record SavedConversation(
     string Provider,
     string Settings,
     int Turns,

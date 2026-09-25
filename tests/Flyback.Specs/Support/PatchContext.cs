@@ -51,7 +51,7 @@ public sealed class PatchContext
     public const string Keyboard = "midi:stage-piano";
 
     /// <summary>The drum machine's clock, as the shell would keep it.</summary>
-    public MidiClock Clock { get; } = new();
+    internal MidiClock Clock { get; } = new();
 
     /// <summary>How many voices the scenario's patch has, named "voice 1" onward and read as "sounding 1" onward.</summary>
     public int Voices { get; set; }

@@ -22,7 +22,7 @@ namespace Flyback.Core.Graph;
 /// supplies is <see cref="Metrics"/>.
 /// </para>
 /// </remarks>
-public static class PatchLayout
+internal static class PatchLayout
 {
     /// <summary>
     /// How big a node is and how much room to leave around it. Every distance

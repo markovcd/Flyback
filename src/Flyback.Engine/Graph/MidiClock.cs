@@ -19,11 +19,8 @@ namespace Flyback.Core.Graph;
 /// through <see cref="LiveValues"/>, which is what that block is for.
 /// </para>
 /// </remarks>
-public sealed class MidiClock
+internal sealed class MidiClock
 {
-    /// <summary>What MIDI settled on in 1983.</summary>
-    public const int TicksPerBeat = 24;
-
     /// <summary>A song position is sent in sixteenth notes.</summary>
     private const double SixteenthsPerBeat = 4d;
 
@@ -32,7 +29,7 @@ public sealed class MidiClock
     /// beat's worth of ticks settle a change, and the jitter of any one is
     /// divided by as many.
     /// </summary>
-    private const double Smoothing = 1d / TicksPerBeat;
+    private const double Smoothing = 1d / MidiSignal.TicksPerBeat;
 
     /// <summary>
     /// A gap longer than this is the clock having stopped, not a slow tempo:
@@ -52,7 +49,7 @@ public sealed class MidiClock
     /// Beats since the sequencer pressed Start, as of the latest tick. Holds while
     /// it is stopped, and jumps where it says it has moved.
     /// </summary>
-    public float Beat => (float)(anchor + Math.Max(ticks - 1, 0) / (double)TicksPerBeat);
+    public float Beat => (float)(anchor + Math.Max(ticks - 1, 0) / (double)MidiSignal.TicksPerBeat);
 
     /// <summary>Beats a second while running, and nought while stopped, so a line through the beat holds still.</summary>
     public float Rate => Running ? (float)measured : 0f;
@@ -82,7 +79,7 @@ public sealed class MidiClock
 
             if (gap > 0d && gap < LongestGap)
             {
-                var heard = 1d / (TicksPerBeat * gap);
+                var heard = 1d / (MidiSignal.TicksPerBeat * gap);
 
                 measured = measured == 0d ? heard : measured + (heard - measured) * Smoothing;
             }

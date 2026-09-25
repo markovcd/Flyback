@@ -440,16 +440,6 @@ public sealed class Patch
         return true;
     }
 
-    /// <summary>Writes where every knob rests into a fresh live block, so it does not start at zero.</summary>
-    public void Seed(Compile.LiveValues block)
-    {
-        ArgumentNullException.ThrowIfNull(block);
-
-        if (Controls is null) return;
-
-        foreach (var control in Controls) block.Set(control.Key, control.Value);
-    }
-
     /// <summary>"Knob 1", "Knob 2"… — the first number no knob on the panel is using.</summary>
     private string NextControlName()
     {

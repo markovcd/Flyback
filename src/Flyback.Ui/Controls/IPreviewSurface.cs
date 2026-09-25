@@ -50,7 +50,7 @@ public interface IPreviewSurface
     /// program's own live inputs, so it is set alongside <see cref="Program"/>
     /// and never on its own.
     /// </summary>
-    LiveValues Live { get; set; }
+    internal LiveValues Live { get; set; }
 
     /// <summary>
     /// Something outside the timeline changed and the picture is now out of date.

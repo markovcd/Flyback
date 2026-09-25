@@ -124,7 +124,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     }
 
     /// <summary>What is being played into the patch as it is drawn.</summary>
-    public LiveValues Live
+    internal LiveValues Live
     {
         get => live;
         set
@@ -133,6 +133,8 @@ public sealed class PreviewSurface : Control, IPreviewSurface
             dirty = true;
         }
     }
+
+    LiveValues IPreviewSurface.Live { get => Live; set => Live = value; }
 
     /// <summary>A key moved, so the next tick has something to draw after all.</summary>
     public void Refresh() => dirty = true;

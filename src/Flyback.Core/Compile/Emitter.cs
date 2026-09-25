@@ -62,20 +62,20 @@ public sealed class Emitter
     public Guid Owner { get; set; }
 
     /// <summary>Who owns what, as this program has it so far.</summary>
-    public StateOwners Owners => new(
+    internal StateOwners Owners => new(
         [.. delayOwners],
         [.. phaseOwners],
         [.. unitOwners],
         [.. planeOwners]);
 
-    public int RegisterCount { get; private set; }
+    internal int RegisterCount { get; private set; }
 
     /// <summary>
     /// How many one-evaluation cells have been handed out. Unlike a register
     /// these are not SSA — a cell is read and then written — so they are counted
     /// separately and by hand.
     /// </summary>
-    public int UnitSlotCount { get; private set; }
+    internal int UnitSlotCount { get; private set; }
 
     /// <summary>Claims a cell for one cycle in the patch to carry a value round.</summary>
     public int AllocateUnitSlot() => AllocateUnitSlot(Owner);
@@ -95,7 +95,7 @@ public sealed class Emitter
     /// How many planes the program needs — a cell per pixel each, so this is the
     /// one count a renderer pays for in megabytes rather than in words.
     /// </summary>
-    public int PlaneSlotCount { get; private set; }
+    internal int PlaneSlotCount { get; private set; }
 
     /// <summary>
     /// Claims a plane: a cell the screen can keep as well as the speakers, which
@@ -115,7 +115,7 @@ public sealed class Emitter
         return PlaneSlotCount++;
     }
 
-    public Op[] ToProgram() => [.. ops];
+    internal Op[] ToProgram() => [.. ops];
 
     /// <summary>
     /// The program without the ops nothing reads: what <paramref name="result"/>
@@ -133,7 +133,7 @@ public sealed class Emitter
     /// every slot a caller is holding meaning what it meant.
     /// </para>
     /// </remarks>
-    public Op[] ToProgram(Slot result)
+    internal Op[] ToProgram(Slot result)
     {
         var read = new bool[RegisterCount];
 
@@ -450,7 +450,7 @@ public sealed class Emitter
     }
 
     /// <summary>The clips this program reads, in the order their ops name them.</summary>
-    public IReadOnlyList<LoadedSample> Tables => tables;
+    internal IReadOnlyList<LoadedSample> Tables => tables;
 
     /// <summary>
     /// Reads a loaded picture at a place. Two modules given the same picture
@@ -474,7 +474,7 @@ public sealed class Emitter
     }
 
     /// <summary>The pictures this program reads, in the order their ops name them.</summary>
-    public IReadOnlyList<LoadedImage> Pictures => pictures;
+    internal IReadOnlyList<LoadedImage> Pictures => pictures;
 
     /// <summary>
     /// Reads whatever is being played into <paramref name="key"/> right now — a
@@ -506,7 +506,7 @@ public sealed class Emitter
     }
 
     /// <summary>What this program is played with, in the order its ops name them.</summary>
-    public IReadOnlyList<string> LiveInputs => liveInputs;
+    internal IReadOnlyList<string> LiveInputs => liveInputs;
 
     /// <summary>
     /// Keeps <paramref name="value"/> where something outside the program can
@@ -517,7 +517,7 @@ public sealed class Emitter
     /// writing and the one drawing agree about which is which.
     /// </param>
     /// <param name="value"></param>
-    public void Tap(int scope, Slot value) =>
+    internal void Tap(int scope, Slot value) =>
         Add(new Op(OpCode.Tap, -1, value.Component(0), k: scope));
 
     public Slot DelayLine(OpCode code, Slot input, Slot gain, Slot time, float maximum)
@@ -665,7 +665,7 @@ public sealed class Emitter
     /// Missing channels are silence; a single color channel passes straight
     /// through, which is the video case.
     /// </summary>
-    public Slot PackChannels(Slot[] channels, int width)
+    internal Slot PackChannels(Slot[] channels, int width)
     {
         if (width == 3 && channels.Length == 1) return ToColor(channels[0]);
 

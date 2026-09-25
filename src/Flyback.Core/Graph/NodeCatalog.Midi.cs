@@ -108,7 +108,7 @@ public partial class NodeCatalog
         var wasSlip = em.UnitRead(slipCell);
 
         // Half a tick, because the beat moves by whole ones.
-        var ticked = em.Binary(OpCode.Step, em.Constant(0.5f / MidiClock.TicksPerBeat), em.Unary(OpCode.Abs, em.Sub(beat, wasBeat)));
+        var ticked = em.Binary(OpCode.Step, em.Constant(0.5f / MidiSignal.TicksPerBeat), em.Unary(OpCode.Abs, em.Sub(beat, wasBeat)));
 
         // A Continue: the rate comes back before the next tick does, and the
         // line has to run from now rather than from the tick before the Stop.

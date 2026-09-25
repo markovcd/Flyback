@@ -69,7 +69,7 @@ public sealed class IlProgram
     internal static IlProgram Bind(IlMethods methods, CompiledPatch patch) => new(methods, patch);
 
     /// <inheritdoc cref="CompiledPatch.Evaluate"/>
-    public void Evaluate(
+    internal void Evaluate(
         double x,
         double y,
         double t,
@@ -96,7 +96,7 @@ public sealed class IlProgram
     }
 
     /// <inheritdoc cref="CompiledPatch.EvaluateStage"/>
-    public void EvaluateStage(
+    internal void EvaluateStage(
         EvaluationStage stage,
         double x,
         double y,
