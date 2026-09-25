@@ -69,6 +69,9 @@ public sealed class Binder
     private Guid coordinates;
     private Guid clock;
 
+    /// <summary>The line each top-level name is bound on, for saying so where one is read above it.</summary>
+    private readonly Dictionary<string, int> boundOn = [];
+
     /// <summary>
     /// Where in the source the modules being placed are coming from, as a path of
     /// names — <c>let bass</c>, then <c>reverb~0</c> for the def it calls.
@@ -125,6 +128,19 @@ public sealed class Binder
         // Before anything names a module, so a plugin that is missing is said
         // once rather than once for every module it would have given.
         foreach (var requires in statements.OfType<RequiresStatement>()) Require(requires);
+
+        foreach (var statement in statements.SelectMany(s => s is GroupStatement group ? group.Body : [s]))
+        {
+            IEnumerable<string> names = statement switch
+            {
+                LetStatement let => [let.Name],
+                LetTupleStatement tuple => tuple.Names,
+                PanelStatement panel => [panel.Name],
+                _ => [],
+            };
+
+            foreach (var name in names) boundOn.TryAdd(name, statement.Line);
+        }
 
         foreach (var statement in statements) Run(statement, scope);
 
@@ -1183,8 +1199,37 @@ public sealed class Binder
         return Output(value, expr.Port, expr.Line, expr.Column);
     }
 
-    private void Unknown(NameExpr expr) =>
+    private void Unknown(NameExpr expr)
+    {
+        if (boundOn.TryGetValue(expr.Name, out var line) && line > expr.Line)
+        {
+            Complain(IssueCode.UsedBeforeBound, expr.Line, expr.Column,
+                $"'{expr.Name}' is bound on line {line}, below where it is read. Bind it before reading it.");
+            return;
+        }
+
+        if (expr.Port is null && StatementWord(expr.Name) is { } example)
+        {
+            Complain(IssueCode.UnknownName, expr.Line, expr.Column,
+                $"'{expr.Name}' starts a statement only with what it says after it: {example}.");
+            return;
+        }
+
         Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
+    }
+
+    /// <summary>How a statement a word begins is written, for that word on its own.</summary>
+    private static string? StatementWord(string name) => name switch
+    {
+        "requires" => "requires flyback.picture",
+        "keyboard" => "keyboard piano",
+        "off" => "off drone",
+        "description" => "description \"A slow drone\"",
+        "author" => "author \"Ada\"",
+        "tags" => "tags \"drone\" \"slow\"",
+        "panel" => "panel level = 0.5",
+        _ => null,
+    };
 
     /// <summary>
     /// One output of what an expression placed, which is a binding's selector
@@ -1229,6 +1274,7 @@ public sealed class Binder
         "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
         "out" => "the Output",
         "_" => "what a pipe brings in",
+        "let" or "def" or "group" => "a word of the language",
         _ => null,
     };
 
@@ -1351,6 +1397,9 @@ public sealed class Binder
 
         var taken = new HashSet<int>();
         var wiring = new List<(int Port, Value Value)>();
+
+        // Where each argument's value is written, so a complaint about one points at it.
+        var sites = new Dictionary<int, Site>();
         var paths = new List<(string Path, int Line, int Column)>();
         var fields = new List<(NodeExtra Owner, ExtraField Field, JsonNode Value, Site Where)>();
         int? landing = null;
@@ -1409,7 +1458,11 @@ public sealed class Binder
                 continue;
             }
 
-            if (!Piped(argument) && Bind(argument.Value, scope) is { } value) wiring.Add((port, value));
+            if (!Piped(argument) && Bind(argument.Value, scope) is { } value)
+            {
+                wiring.Add((port, value));
+                sites[port] = new Site(Leftmost(argument.Value).Line, Leftmost(argument.Value).Column);
+            }
         }
 
         var piping = new List<(int Port, Value Value)>();
@@ -1449,11 +1502,15 @@ public sealed class Binder
                 var port = free.Dequeue();
                 taken.Add(port);
 
-                if (!refused && Bind(part, scope) is { } value) wiring.Add((port, value));
+                if (!refused && Bind(part, scope) is { } value)
+                {
+                    wiring.Add((port, value));
+                    sites[port] = new Site(Leftmost(part).Line, Leftmost(part).Column);
+                }
             }
         }
 
-        var node = Place(def, [.. piping, .. wiring], expr.Line, expr.Column);
+        var node = Place(def, [.. piping, .. wiring], expr.Line, expr.Column, sites);
 
         if (node is Placed made)
         {
@@ -1478,7 +1535,7 @@ public sealed class Binder
         }
 
         foreach (var (path, line, column) in paths) File(node, def, path, line, column);
-        if (expr.Block is { } block) Carry(node, def, block, expr.Line, expr.Column);
+        if (expr.Block is { } block) Carry(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
 
         return node;
     }
@@ -1627,16 +1684,20 @@ public sealed class Binder
 
     // --- placing and wiring --------------------------------------------------
 
-    private Value Place(NodeDef def, IReadOnlyList<(int Port, Value Value)> inputs, int line, int column)
+    /// <param name="sites">Where the text gives each socket its value, where it gives it one; the call's own place otherwise.</param>
+    private Value Place(NodeDef def, IReadOnlyList<(int Port, Value Value)> inputs, int line, int column, IReadOnlyDictionary<int, Site>? sites = null)
     {
         var node = NodeInstance.Create(def, 0d, 0d, Next());
         patch.Nodes.Add(node);
 
         foreach (var (port, value) in inputs)
         {
-            if (value is Figure figure) Knob(node, def, port, figure, line, column);
-            else if (value is Dial dial) Link(node, def, port, dial, line, column);
-            else Feed(value, 0, node.Id, port, line, column);
+            var (atLine, atColumn) = sites is not null && sites.TryGetValue(port, out var site) ? (site.Line, site.Column) : (line, column);
+
+            if (value is Figure figure) Knob(node, def, port, figure, atLine, atColumn);
+            else if (value is Dial dial) Link(node, def, port, dial, atLine, atColumn);
+            else if (value is Named) Complain(IssueCode.NotASignal, atLine, atColumn, $"'{def.Inputs[port].Name}' takes a number or a signal, not text.");
+            else Feed(value, 0, node.Id, port, atLine, atColumn);
         }
 
         return new Placed(node.Id, def);
@@ -1856,13 +1917,14 @@ public sealed class Binder
     /// The notes or the scale a block spells, and the one adjustment alternation
     /// asks for.
     /// </summary>
-    private void Carry(Value placed, NodeDef def, string block, int line, int column)
+    /// <param name="opened">Where the block's '[' is, which what is wrong inside it is counted from.</param>
+    private void Carry(Value placed, NodeDef def, string block, int line, int column, (int Line, int Column) opened)
     {
         if (placed is not Placed value || patch.Find(value.Id) is not { } node) return;
 
         if (def.Extra<StepsExtra>() is { } steps)
         {
-            var read = StepNotation.Read(block, steps.Spec.Display == PortDisplay.Note, line, issues);
+            var read = StepNotation.Read(block, steps.Spec.Display == PortDisplay.Note, opened.Line, opened.Column, issues);
 
             StepsExtra.Set(node, read.Steps);
 
@@ -1875,7 +1937,7 @@ public sealed class Binder
 
         if (def.Extra<ScaleExtra>() is not null)
         {
-            ScaleExtra.Set(node, StepNotation.Classes(block, line, issues));
+            ScaleExtra.Set(node, StepNotation.Classes(block, opened.Line, opened.Column, issues));
             return;
         }
 
@@ -1919,7 +1981,7 @@ public sealed class Binder
         }
 
         laid = true;
-        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.Line, issues)) : null;
+        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.BlockLine, statement.BlockColumn, issues)) : null;
     }
 
     /// <summary>Says what the patch is for, once.</summary>

@@ -808,7 +808,7 @@ public class LanguageTests
     {
         var load = Try("let slow = sine(freq: 0.2) 0.5");
 
-        load.Report.ShouldContain("nothing reads what is left of the line");
+        load.Report.ShouldContain("the statement ended before '0.5', and nothing reads the rest of the line");
         load.Issues.ShouldContain(i => i.Line == 1 && i.Column == 28);
     }
 

@@ -54,12 +54,16 @@ public sealed record Argument(string? Name, Expr Value, int Line, int Column);
 /// What the module carries that is not a knob, still as the text it was written
 /// as — see <see cref="StepNotation"/>.
 /// </param>
+/// <param name="BlockLine">Where the block's '[' is, for a complaint about what is inside it.</param>
+/// <param name="BlockColumn">Where the block's '[' is, for a complaint about what is inside it.</param>
 public sealed record CallExpr(
     string Target,
     IReadOnlyList<Argument> Arguments,
     string? Block,
     int Line,
-    int Column) : Expr(Line, Column);
+    int Column,
+    int BlockLine = 0,
+    int BlockColumn = 0) : Expr(Line, Column);
 
 /// <summary>
 /// One output taken off what an expression places:
@@ -153,7 +157,9 @@ public sealed record PanelStatement(string Name, Expr Value, IReadOnlyList<Argum
 /// module in it.
 /// </summary>
 /// <param name="Scale">The block as it was written, and null for a piano.</param>
-public sealed record KeyboardStatement(string? Scale, int Line, int Column) : Statement(Line, Column);
+/// <param name="BlockLine">Where the block's '[' is, for a complaint about what is inside it.</param>
+/// <param name="BlockColumn">Where the block's '[' is, for a complaint about what is inside it.</param>
+public sealed record KeyboardStatement(string? Scale, int Line, int Column, int BlockLine = 0, int BlockColumn = 0) : Statement(Line, Column);
 
 /// <summary>
 /// <c>description "..."</c>: what the patch is for, in a line of prose, which may

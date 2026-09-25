@@ -64,9 +64,17 @@ A comment starts with `#`; `//` is refused as `slash-comment`, and a part of a
 patch that wants a heading wants a `group`.
 
 Statements are newline-separated. A pipeline may be broken across lines freely;
-a line ending in `|>` or `,`, or a line beginning with `|>` or a string,
-continues the one before it. Whatever a statement leaves unread on its line is a complaint, never
+a line ending in `|>` or `,`, or a line beginning with `|>`, a string, a `{`
+or a `.`, continues the one before it, so a group's brace may stand on a line of
+its own. Whatever a statement leaves unread on its line is a complaint, never
 something skipped.
+
+A mistake is said as what it is: `1e3` and `220Hz` are not numbers, a curly
+quote or a long minus pasted from a document is named as one and read as the
+plain character, `->` or `|` is not a pipe, a `)` with nothing open closes
+nothing, and an unclosed bracket says where it was opened. Text nested more than
+128 deep, or a step block longer than a sequence holds, is refused rather than
+read.
 
 A text with any mistake in it is refused whole, and a statement refused is one
 complaint however often what it would have bound is read after it.

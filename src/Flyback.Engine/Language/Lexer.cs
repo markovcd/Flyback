@@ -126,7 +126,8 @@ public static class Lexer
                 continue;
             }
 
-            if (c is ' ' or '\t') { i++; continue; }
+            // A space pasted from a document, a non-breaking one or a thin one, is still a space.
+            if (c is ' ' or '\t' || (c > '\u007f' && char.IsWhiteSpace(c))) { i++; continue; }
 
             // To the end of the line, and the newline itself is left to be read
             // as the statement break it is.
@@ -147,7 +148,7 @@ public static class Lexer
                 continue;
             }
 
-            if (c == '"')
+            if (c == '"' || CurlyQuote(c))
             {
                 var text = new StringBuilder();
                 var at = i + 1;
@@ -156,13 +157,22 @@ public static class Lexer
                 // has, and on Windows one is full of backslashes that mean
                 // themselves — treating them as escapes would break every path
                 // to buy a quote nobody puts in a filename.
-                while (at < source.Length && source[at] != '"' && source[at] != '\n') text.Append(source[at++]);
+                while (at < source.Length && source[at] != '"' && !CurlyQuote(source[at]) && source[at] != '\n') text.Append(source[at++]);
 
-                if (at >= source.Length || source[at] != '"')
+                if (at >= source.Length || !(source[at] == '"' || CurlyQuote(source[at])))
                 {
                     issues.Add(new LanguageIssue(line, column, IssueCode.UnclosedText, "this text is never closed."));
                     i = at;
                     continue;
+                }
+
+                // Read as the text it was meant to be, so the one complaint is about the quotes.
+                if (CurlyQuote(c) || CurlyQuote(source[at]))
+                {
+                    var curly = CurlyQuote(c) ? c : source[at];
+
+                    issues.Add(new LanguageIssue(line, CurlyQuote(c) ? column : at - lineStart + 1, IssueCode.LookalikeCharacter,
+                        $"'{curly}' is a curly quote. Text is written between straight quotes: \"like this\"."));
                 }
 
                 tokens.Add(new Token(TokenKind.Text, text.ToString(), line, column));
@@ -190,13 +200,27 @@ public static class Lexer
 
             if (char.IsAsciiDigit(c))
             {
-                i = Number(source, i, line, column, tokens);
+                i = Number(source, i, line, column, tokens, issues);
+                continue;
+            }
+
+            // A number with its nought left off. A range's two points are read as the range.
+            if (c == '.' && i + 1 < source.Length && char.IsAsciiDigit(source[i + 1]))
+            {
+                i = Malformed(source, i, line, column, tokens, issues);
+                continue;
+            }
+
+            if (Misspelled(source, i, line, column, issues) is var (stand, length))
+            {
+                if (stand is { } token) tokens.Add(token);
+                i += length;
                 continue;
             }
 
             if (char.IsAsciiLetter(c) || c == '_')
             {
-                i = Word(source, i, line, column, tokens);
+                i = Word(source, i, line, column, tokens, issues);
                 continue;
             }
 
@@ -207,7 +231,7 @@ public static class Lexer
                 continue;
             }
 
-            issues.Add(new LanguageIssue(line, column, IssueCode.StrayCharacter, $"'{c}' means nothing here."));
+            issues.Add(Stray(c, line, column));
             i++;
         }
 
@@ -262,12 +286,13 @@ public static class Lexer
     /// <summary>
     /// Whether a line starting on this token is carrying on the one above. A
     /// string among them because no statement opens on one, and a description
-    /// too long for one line goes on as a string on the next.
+    /// too long for one line goes on as a string on the next; a brace, so a
+    /// group's may stand on a line of its own, and a dot, so an output may.
     /// </summary>
     private static bool Continues(TokenKind kind) => kind
         is TokenKind.Pipe or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
         or TokenKind.Slash or TokenKind.Percent or TokenKind.CloseParen or TokenKind.Block
-        or TokenKind.Text;
+        or TokenKind.Text or TokenKind.OpenBrace or TokenKind.Dot;
 
     /// <summary>
     /// The text inside a bracketed block, counting nesting so that a subdivided
@@ -301,7 +326,7 @@ public static class Lexer
     /// keeps <c>-2..2</c> a range of two whole numbers rather than a number with
     /// a second point in it.
     /// </remarks>
-    private static int Number(string source, int start, int line, int column, List<Token> tokens)
+    private static int Number(string source, int start, int line, int column, List<Token> tokens, List<LanguageIssue> issues)
     {
         var i = start;
         while (i < source.Length && char.IsAsciiDigit(source[i])) i++;
@@ -333,8 +358,114 @@ public static class Lexer
             return end;
         }
 
+        // Digits that run on into a letter or a second point are one mistake, said
+        // whole, rather than a number and then whatever the rest reads as.
+        if (i < source.Length && (char.IsAsciiLetterOrDigit(source[i]) || source[i] == '_' || (source[i] == '.' && !source.AsSpan(i).StartsWith(".."))))
+            return Malformed(source, start, line, column, tokens, issues);
+
         tokens.Add(new Token(TokenKind.Number, text, line, column, value));
         return i;
+    }
+
+    /// <summary>
+    /// Something that starts like a number and is not one, said as the whole of what
+    /// was written and read as nought, so the rest of the line still reads.
+    /// </summary>
+    private static int Malformed(string source, int start, int line, int column, List<Token> tokens, List<LanguageIssue> issues)
+    {
+        var i = start;
+
+        while (i < source.Length
+               && (char.IsAsciiLetterOrDigit(source[i]) || source[i] == '_' || (source[i] == '.' && !source.AsSpan(i).StartsWith(".."))))
+            i++;
+
+        var text = source[start..i];
+
+        issues.Add(new LanguageIssue(line, column, IssueCode.MalformedNumber, text[0] == '.'
+            ? $"'{text}' is not a number. Write 0{text}."
+            : $"'{text}' is not a number. A number is written 220 or 0.5, a note C4 and a length of time 20ms."));
+
+        tokens.Add(new Token(TokenKind.Number, text, line, column));
+        return i;
+    }
+
+    private static bool CurlyQuote(char c) => c is '\u201c' or '\u201d' or '\u201e' or '\u201f';
+
+    /// <summary>
+    /// A character somebody wrote meaning one the language has: a pipe drawn as an
+    /// arrow or a bar, a minus from a word processor, a semicolon. Said, and read as
+    /// what it stood for where there is one, so that is the only complaint.
+    /// </summary>
+    /// <returns>The token it stands for, if any, and how many characters it took; null where it is none of these.</returns>
+    private static (Token? Stand, int Length)? Misspelled(string source, int i, int line, int column, List<LanguageIssue> issues)
+    {
+        var rest = source.AsSpan(i);
+
+        (Token?, int) Pipe(string written)
+        {
+            issues.Add(new LanguageIssue(line, column, IssueCode.NotAPipe, $"'{written}' is not a pipe. A pipe is written '|>'."));
+            return (new Token(TokenKind.Pipe, written, line, column), written.Length);
+        }
+
+        (Token?, int) Lookalike(TokenKind kind, char plain)
+        {
+            issues.Add(new LanguageIssue(line, column, IssueCode.LookalikeCharacter,
+                $"'{source[i]}' looks like '{plain}' but is not one. Write '{plain}'."));
+
+            return (new Token(kind, plain.ToString(), line, column), 1);
+        }
+
+        if (rest.StartsWith("->", StringComparison.Ordinal)) return Pipe("->");
+        if (rest.StartsWith("=>", StringComparison.Ordinal)) return Pipe("=>");
+        if (rest[0] == '|' && !rest.StartsWith("|>", StringComparison.Ordinal)) return Pipe("|");
+
+        switch (rest[0])
+        {
+            case '\u2192' or '\u21d2' or '\u25b6' or '\u00bb' or '\u27a4':
+                return Pipe(rest[0].ToString());
+
+            case '\u2212' or '\u2013' or '\u2014' or '\u2010' or '\u2011':
+                return Lookalike(TokenKind.Minus, '-');
+
+            case '\u00d7':
+                return Lookalike(TokenKind.Star, '*');
+
+            case '\u00f7':
+                return Lookalike(TokenKind.Slash, '/');
+
+            case ';':
+                issues.Add(new LanguageIssue(line, column, IssueCode.Semicolon,
+                    "';' is not needed: a statement ends with its line."));
+                return (null, 1);
+
+            case ']':
+                issues.Add(new LanguageIssue(line, column, IssueCode.UnmatchedCloser,
+                    "']' closes nothing: no '[' is open before it."));
+                return (null, 1);
+
+            default:
+                return null;
+        }
+    }
+
+    /// <summary>A character the language has no use for, named so it can be found even where it cannot be seen.</summary>
+    private static LanguageIssue Stray(char c, int line, int column)
+    {
+        if (c is '\u2018' or '\u2019')
+        {
+            return new LanguageIssue(line, column, IssueCode.LookalikeCharacter,
+                $"'{c}' is a curly quote. Text is written between straight double quotes: \"like this\".");
+        }
+
+        if (char.IsControl(c) || CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.Format)
+        {
+            return new LanguageIssue(line, column, IssueCode.StrayCharacter,
+                string.Create(CultureInfo.InvariantCulture, $"an invisible character, U+{(int)c:X4}, means nothing here. Delete it."));
+        }
+
+        return new LanguageIssue(line, column, IssueCode.StrayCharacter, c == '>'
+            ? "'>' means nothing here: nothing is compared, and a pipe is written '|>'."
+            : $"'{c}' means nothing here.");
     }
 
     /// <summary>A name, or a note written as one.</summary>
@@ -345,11 +476,21 @@ public static class Lexer
     /// the language puts a <c>#</c> inside a word, so trying the narrow shape
     /// before the wide one costs nothing and settles it.
     /// </remarks>
-    private static int Word(string source, int start, int line, int column, List<Token> tokens)
+    private static int Word(string source, int start, int line, int column, List<Token> tokens, List<LanguageIssue> issues)
     {
         if (Spelled(source, start) is var (note, after))
         {
-            tokens.Add(new Token(TokenKind.Number, source[start..after], line, column, note, NumberStyle.Note));
+            // Spelled like a note, and further from middle C than any note is named.
+            if (note is null)
+            {
+                issues.Add(new LanguageIssue(line, column, IssueCode.MalformedNumber,
+                    $"'{source[start..after]}' is too far from middle C to be a note. Write it as the number it is."));
+
+                tokens.Add(new Token(TokenKind.Number, source[start..after], line, column));
+                return after;
+            }
+
+            tokens.Add(new Token(TokenKind.Number, source[start..after], line, column, note.Value, NumberStyle.Note));
             return after;
         }
 
@@ -362,9 +503,10 @@ public static class Lexer
 
     /// <summary>
     /// The note beginning at <paramref name="start"/> and where it ends, or null
-    /// where a name begins there instead.
+    /// where a name begins there instead. The note itself is null where the word
+    /// has a note's shape and an octave no note is named in.
     /// </summary>
-    private static (double Note, int After)? Spelled(string source, int start)
+    private static (double? Note, int After)? Spelled(string source, int start)
     {
         var i = start;
 
@@ -383,7 +525,7 @@ public static class Lexer
         // characters of it as a note would leave a stray "x" behind.
         if (i < source.Length && (char.IsAsciiLetterOrDigit(source[i]) || source[i] == '_')) return null;
 
-        return Note(source[start..i]) is { } note ? (note, i) : null;
+        return (Note(source[start..i]), i);
     }
 
     /// <summary>
@@ -398,6 +540,8 @@ public static class Lexer
     /// </remarks>
     public static double? Note(string word)
     {
+        const int MaxOctave = 1_000 / (int)Graph.Pitch.Semitones;
+
         if (word.Length < 2) return null;
         if (word[0] is < 'A' or > 'G') return null;
 
@@ -423,6 +567,10 @@ public static class Lexer
         {
             if (!char.IsAsciiDigit(word[at])) return null;
             octave = octave * 10 + (word[at] - '0');
+
+            // Past this Pitch.Name writes the number rather than a name, and the
+            // digits would soon overflow.
+            if (octave > MaxOctave) return null;
         }
 
         if (negative) octave = -octave;

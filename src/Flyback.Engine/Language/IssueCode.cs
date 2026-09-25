@@ -15,6 +15,24 @@ public static class IssueCode
     /// <summary>A comment written with <c>//</c>, which the language writes with <c>#</c>.</summary>
     public const string SlashComment = "slash-comment";
 
+    /// <summary>Digits run on into letters or a second point: <c>1e3</c>, <c>0x10</c>, <c>220Hz</c>, <c>1.5.5</c>.</summary>
+    public const string MalformedNumber = "malformed-number";
+
+    /// <summary>A typographic character standing in for the plain one the language reads: a curly quote, a long minus.</summary>
+    public const string LookalikeCharacter = "lookalike-character";
+
+    /// <summary>An arrow or a bar written where a pipe, <c>|&gt;</c>, was meant.</summary>
+    public const string NotAPipe = "not-a-pipe";
+
+    /// <summary>A <c>;</c>, which the language has no use for: a statement ends with its line.</summary>
+    public const string Semicolon = "semicolon";
+
+    /// <summary>A <c>)</c>, <c>]</c> or <c>}</c> with nothing open for it to close.</summary>
+    public const string UnmatchedCloser = "unmatched-closer";
+
+    /// <summary>Brackets, minus signs or arithmetic nested deeper than the text is read to.</summary>
+    public const string TooDeep = "too-deep";
+
     // --- reading the statements ------------------------------------------------
 
     /// <summary>Something the grammar needed and did not find, which the message names.</summary>
@@ -31,9 +49,15 @@ public static class IssueCode
     public const string UnknownNote = "unknown-note";
     public const string EuclidNeedsLength = "euclid-needs-length";
 
+    /// <summary>A block that spells more steps than a sequence holds.</summary>
+    public const string TooManySteps = "too-many-steps";
+
     // --- names -----------------------------------------------------------------
 
     public const string UnknownName = "unknown-name";
+
+    /// <summary>A name read above the line that binds it.</summary>
+    public const string UsedBeforeBound = "used-before-bound";
     public const string UnknownModule = "unknown-module";
 
     public const string AmbiguousModule = "ambiguous-module";

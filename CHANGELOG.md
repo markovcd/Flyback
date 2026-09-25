@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A group's `{` may stand on a line of its own in a text patch, and an output may be taken off on the next line.
 - F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops in the corner.
 - A seek bar on the toolbar moves the patch's clock anywhere along a length typed beside it, and loops that length.
 - Settings → Canvas → Compact modules puts each input beside an output on one row, with an input's value in its tooltip.
@@ -81,6 +82,12 @@
 - A picture drawn on the graphics card no longer stutters after hours or days of playing.
 - Fracture lights the same squares on the graphics card as on the processor.
 - Renaming a module or a group in the panel puts the caret beside the name rather than at the panel's left edge.
+
+### Fixes
+
+- A text patch nested thousands of brackets deep, or a step block repeated past what memory holds, is refused instead of closing the editor.
+- A mistake in a text patch is said as what it is and where: a malformed number, a curly quote or long minus, an arrow for a pipe, a bracket that closes nothing or never closes, a name read above its `let`, and a step block's own mistakes at their column.
+- A step block longer than a sequence holds, a Euclidean pattern or alternation left open and a bare `@`, `%` or `!` are refused rather than read as something else.
 
 ## 0.4.0 — 2026-09-21
 

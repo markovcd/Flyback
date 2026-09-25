@@ -14,6 +14,22 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 {
     private int at;
 
+    /// <summary>
+    /// How deep brackets, minus signs and arithmetic may nest. The parser and the
+    /// binder both walk an expression by recursion, and past a depth like this a
+    /// pasted text would run the thread out of stack, which ends the program.
+    /// </summary>
+    public const int MaxDepth = 128;
+
+    /// <summary>Where a ')' or '}' stands that no bracket before it is open for, counted over the whole text.</summary>
+    private readonly HashSet<int> unmatched = Unmatched(tokens);
+
+    /// <summary>How many pipelines the parser is inside now.</summary>
+    private int depth;
+
+    /// <summary>How tall each expression built so far stands, by the expression itself rather than what it equals.</summary>
+    private readonly Dictionary<Expr, int> heights = new(ReferenceEqualityComparer.Instance);
+
     private Token Current => tokens[Math.Min(at, tokens.Count - 1)];
 
     private Token Ahead(int by = 1) => tokens[Math.Min(at + by, tokens.Count - 1)];
@@ -67,9 +83,72 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         if (Current.Kind is TokenKind.NewLine or TokenKind.End) return;
         if (inBraces && Current.Kind == TokenKind.CloseBrace) return;
+        if (Closer()) return;
 
-        Complain(IssueCode.UnreadTail, "the statement ended before this, and nothing reads what is left of the line.");
+        // A character the lexer already refused is what cut the statement short,
+        // and that complaint is the one worth reading.
+        if (issues.Any(issue => issue.Line == Current.Line)) return;
+
+        Complain(IssueCode.UnreadTail, $"the statement ended before {Found()}, and nothing reads the rest of the line.");
     }
+
+    /// <summary>What is at the current token, as a complaint says it.</summary>
+    private string Found() => Current.Kind switch
+    {
+        TokenKind.End => "the end of the text",
+        TokenKind.NewLine => "the end of the line",
+        TokenKind.Text => $"\"{Current.Text}\"",
+        TokenKind.Block => "'['",
+        _ => $"'{Current.Text}'",
+    };
+
+    private static HashSet<int> Unmatched(IReadOnlyList<Token> tokens)
+    {
+        var found = new HashSet<int>();
+        var parens = 0;
+        var braces = 0;
+
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            switch (tokens[i].Kind)
+            {
+                case TokenKind.OpenParen: parens++; break;
+                case TokenKind.OpenBrace: braces++; break;
+                case TokenKind.CloseParen when parens == 0: found.Add(i); break;
+                case TokenKind.CloseParen: parens--; break;
+                case TokenKind.CloseBrace when braces == 0: found.Add(i); break;
+                case TokenKind.CloseBrace: braces--; break;
+            }
+        }
+
+        return found;
+    }
+
+    /// <summary>Says so where the current token closes a bracket nobody opened.</summary>
+    private bool Closer()
+    {
+        if (!unmatched.Contains(at)) return false;
+
+        var (opener, closer) = Current.Kind switch
+        {
+            TokenKind.CloseParen => ("(", ")"),
+            TokenKind.CloseBrace => ("{", "}"),
+            _ => (null, null),
+        };
+
+        if (opener is null) return false;
+
+        Complain(IssueCode.UnmatchedCloser, $"'{closer}' closes nothing: no '{opener}' is open before it.");
+        return true;
+    }
+
+    /// <summary>What an unclosed bracket is waiting for, with where it was opened.</summary>
+    private static string Closing(string closer, string opener, Token open) =>
+        $"'{closer}' to close the '{opener}' on line {open.Line}, column {open.Column}";
+
+    /// <summary>Whether the current token could begin a value, which is what says a comma was left out before it.</summary>
+    private bool AtValue() => Current.Kind
+        is TokenKind.Number or TokenKind.Text or TokenKind.Identifier or TokenKind.OpenParen or TokenKind.Minus;
 
     private bool Take(TokenKind kind)
     {
@@ -82,7 +161,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     {
         if (Take(kind)) return true;
 
-        Complain(IssueCode.Syntax, $"expected {what}.");
+        Complain(IssueCode.Syntax, $"expected {what}, but found {Found()}.");
         return false;
     }
 
@@ -114,7 +193,15 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         if (AtWord("author") && Ahead().Kind == TokenKind.Text)
             return new AuthorStatement(string.Join(' ', Strings()), line, column);
 
-        if (AtWord("tags") && Ahead().Kind == TokenKind.Text) return new TagsStatement(Strings(), line, column);
+        if (AtWord("tags") && Ahead().Kind == TokenKind.Text)
+        {
+            var tags = Strings();
+
+            if (Current.Kind != TokenKind.Comma) return new TagsStatement(tags, line, column);
+
+            Complain(IssueCode.Syntax, "tags are written one after another without commas: tags \"drone\" \"slow\".");
+            return null;
+        }
 
         // The same rule again: what follows a module being switched off is the
         // name of one, and anything else here is a pipeline that begins with a
@@ -398,10 +485,10 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             return null;
         }
 
-        var block = Current.Text;
+        var block = Current;
         at++;
 
-        return new KeyboardStatement(block, line, column);
+        return new KeyboardStatement(block.Text, line, column, block.Line, block.Column);
     }
 
     /// <summary>
@@ -447,6 +534,18 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             {
                 name += "." + Ahead().Text;
                 at += 2;
+            }
+
+            if (Current.Kind == TokenKind.Range)
+            {
+                Complain(IssueCode.Syntax, "a plugin's name has one '.' between its parts, not '..'.");
+                return null;
+            }
+
+            if (Take(TokenKind.Dot))
+            {
+                Complain(IssueCode.Syntax, $"expected the rest of the plugin's name after '{name}.', but found {Found()}.");
+                return null;
             }
 
             plugins.Add(name);
@@ -495,6 +594,27 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     /// </summary>
     private Expr? Pipeline()
     {
+        if (depth >= MaxDepth)
+        {
+            Complain(IssueCode.TooDeep, Deep);
+            return null;
+        }
+
+        depth++;
+
+        try
+        {
+            return Chain();
+        }
+        finally
+        {
+            depth--;
+        }
+    }
+
+    /// <summary>Stages joined by pipes, the body of <see cref="Pipeline"/>.</summary>
+    private Expr? Chain()
+    {
         if (Sum() is not { } left) return null;
 
         var piped = false;
@@ -508,7 +628,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             if (Stage() is not { } stage) return null;
 
-            left = new PipeExpr(left, stage, line, column);
+            if (Built(new PipeExpr(left, stage, line, column), left, stage) is not { } joined) return null;
+
+            left = joined;
             piped = true;
         }
 
@@ -556,7 +678,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             if (Product() is not { } right) return null;
 
-            left = new BinaryExpr(op, left, right, line, column);
+            if (Built(new BinaryExpr(op, left, right, line, column), left, right) is not { } joined) return null;
+
+            left = joined;
         }
 
         return left;
@@ -576,7 +700,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             if (Ranged() is not { } right) return null;
 
-            left = new BinaryExpr(op, left, right, line, column);
+            if (Built(new BinaryExpr(op, left, right, line, column), left, right) is not { } joined) return null;
+
+            left = joined;
         }
 
         return left;
@@ -603,19 +729,30 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
         if (Unary() is not { } high) return null;
 
-        return new RangeExpr(low, high, line, column);
+        return Built(new RangeExpr(low, high, line, column), low, high);
     }
 
+    /// <summary>A value with the minus signs before it, counted rather than recursed into.</summary>
     private Expr? Unary()
     {
-        if (Current.Kind != TokenKind.Minus) return Primary();
+        var signs = new List<Token>();
 
-        var line = Current.Line;
-        var column = Current.Column;
+        while (Current.Kind == TokenKind.Minus)
+        {
+            signs.Add(Current);
+            at++;
+        }
 
-        at++;
+        if (Primary() is not { } value) return null;
 
-        return Unary() is { } value ? new NegateExpr(value, line, column) : null;
+        for (var i = signs.Count - 1; i >= 0; i--)
+        {
+            if (Built(new NegateExpr(value, signs[i].Line, signs[i].Column), value) is not { } negated) return null;
+
+            value = negated;
+        }
+
+        return value;
     }
 
     private Expr? Primary()
@@ -641,18 +778,27 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             case TokenKind.OpenParen:
             {
+                var open = Current;
                 at++;
 
                 if (Pipeline() is not { } inner) return null;
 
-                return Expect(TokenKind.CloseParen, "')'") ? Selected(inner) : null;
+                return Expect(TokenKind.CloseParen, Closing(")", "(", open)) ? Selected(inner) : null;
             }
 
             case TokenKind.Identifier:
                 return NameOrCall(line, column);
 
+            case TokenKind.Pipe:
+                Complain(IssueCode.Syntax, "'|>' has nothing before it to pipe. Write what it carries first: sine() |> out.left.");
+                return null;
+
+            case TokenKind.OpenBrace:
+                Complain(IssueCode.Syntax, "'{' opens nothing here: it follows 'group \"name\"' or a def's '='.");
+                return null;
+
             default:
-                Complain(IssueCode.Syntax, "expected a value here.");
+                if (!Closer()) Complain(IssueCode.Syntax, $"expected a value here, but found {Found()}.");
                 return null;
         }
     }
@@ -673,6 +819,13 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             at += 2;
         }
 
+        // Not while a call is still to come: 'x(...).out' is the selector's to read.
+        if (Current.Kind == TokenKind.Dot && Ahead().Kind != TokenKind.OpenParen)
+        {
+            at++;
+            return Refuse(IssueCode.Syntax, $"expected the name of a socket or an output after '{string.Join('.', parts)}.', but found {Found()}.");
+        }
+
         if (Current.Kind != TokenKind.OpenParen)
         {
             return parts.Count switch
@@ -686,6 +839,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             };
         }
 
+        var open = Current;
         at++;
 
         var arguments = new List<Argument>();
@@ -699,18 +853,32 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             }
             while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 
-            if (!Expect(TokenKind.CloseParen, "')' after the arguments")) return null;
+            if (!Take(TokenKind.CloseParen))
+            {
+                // Two values side by side: a bare socket name wanted its colon, anything else a comma.
+                if (AtValue() && arguments[^1] is { Name: null, Value: NameExpr { Port: null } bare })
+                    Complain(IssueCode.Syntax, $"expected ':' after '{bare.Name}' to give it a value.");
+                else if (AtValue())
+                    Complain(IssueCode.Syntax, "expected ',' between the arguments.");
+                else
+                    Complain(IssueCode.Syntax, $"expected {Closing(")", "(", open)}, but found {Found()}.");
+
+                return null;
+            }
         }
 
-        string? block = null;
+        Token? block = null;
 
         if (Current.Kind == TokenKind.Block)
         {
-            block = Current.Text;
+            block = Current;
             at++;
         }
 
-        return Selected(new CallExpr(string.Join('.', parts), arguments, block, line, column));
+        var call = new CallExpr(
+            string.Join('.', parts), arguments, block?.Text, line, column, block?.Line ?? 0, block?.Column ?? 0);
+
+        return Built(call, [.. arguments.Select(argument => argument.Value)]) is { } built ? Selected(built) : null;
     }
 
     /// <summary>
@@ -729,12 +897,33 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             if (Current.Kind != TokenKind.Identifier)
                 return Refuse(IssueCode.Syntax, "expected the name of an output after '.'.");
 
-            source = new SelectExpr(source, Current.Text, Current.Line, Current.Column);
+            if (Built(new SelectExpr(source, Current.Text, Current.Line, Current.Column), source) is not { } selected) return null;
+
+            source = selected;
             at++;
         }
 
         return source;
     }
+
+    private int Height(Expr expr) => heights.TryGetValue(expr, out var height) ? height : 1;
+
+    /// <summary><paramref name="node"/>, standing on <paramref name="parts"/>, or null where that makes it too tall.</summary>
+    private Expr? Built(Expr node, params Expr[] parts)
+    {
+        var height = 1 + parts.Select(Height).DefaultIfEmpty(0).Max();
+
+        if (height > MaxDepth)
+        {
+            issues.Add(new LanguageIssue(node.Line, node.Column, IssueCode.TooDeep, Deep));
+            return null;
+        }
+
+        heights[node] = height;
+        return node;
+    }
+
+    private static string Deep => $"this is nested more than {MaxDepth} deep. Break it up with 'let'.";
 
     private Expr? Refuse(string code, string message)
     {
