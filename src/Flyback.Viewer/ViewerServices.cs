@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
@@ -38,8 +37,9 @@ internal static class ViewerServices
         services.AddSingleton(launch);
         services.AddSingleton<IIlCompilerSetup>(launch.Options);
 
-        // Played time is counted on the wall clock; a test hands over one it moves itself.
-        services.TryAddSingleton<Func<TimeSpan>>(_ => Watch());
+        // A test hands over a time it moves itself.
+        services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<WallClock>();
 
         services.AddSingleton(_ => launch.Instruments!);
 
@@ -66,12 +66,5 @@ internal static class ViewerServices
         replace?.Invoke(services);
 
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
-    }
-
-    private static Func<TimeSpan> Watch()
-    {
-        var watch = Stopwatch.StartNew();
-
-        return () => watch.Elapsed;
     }
 }

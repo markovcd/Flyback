@@ -68,12 +68,20 @@ public class ViewerWindowTests : UiTest
         public void Dispose() { }
     }
 
+    /// <summary>Time that stands at <paramref name="seconds"/>, wherever the test has moved it.</summary>
+    private sealed class Moved(Func<double> seconds) : TimeProvider
+    {
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp() => (long)(seconds() * TimeSpan.TicksPerSecond);
+    }
+
     /// <summary>A player with no window on a clock the test moves, begun.</summary>
     private static ViewerPlayer Clocked(ViewerOptions options, Func<double> seconds, IAudioDevice? device = null, Opened? opened = null)
     {
         var player = ViewerServices.Player(
             new ViewerLaunch(opened ?? Plasma(), device, options),
-            services => services.AddSingleton<Func<TimeSpan>>(() => TimeSpan.FromSeconds(seconds())));
+            services => services.AddSingleton<TimeProvider>(new Moved(seconds)));
 
         player.Begin();
         player.Compiled().Wait();

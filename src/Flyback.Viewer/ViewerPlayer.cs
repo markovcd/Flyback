@@ -38,6 +38,7 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly IlCompiler compiler;
     private readonly MidiHub midi;
     private readonly ControlHub controls;
+    private readonly WallClock clock;
     private readonly bool keyed;
     private readonly Patch patch;
     private bool audible;
@@ -51,7 +52,6 @@ internal sealed class ViewerPlayer : IDisposable
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
     /// <param name="audio">The sound engine, on the run's device or a silent one where it has none, compiling with <paramref name="compiler"/>.</param>
-    /// <param name="now">The wall clock <c>--for</c> and <c>--loop</c> count played time against.</param>
     public ViewerPlayer(
         ViewerLaunch launch,
         PreviewHost? preview,
@@ -59,7 +59,7 @@ internal sealed class ViewerPlayer : IDisposable
         IlCompiler compiler,
         MidiHub midi,
         ControlHub controls,
-        Func<TimeSpan> now)
+        WallClock clock)
     {
         var (opened, device, options, _, takeover) = launch;
 
@@ -70,7 +70,7 @@ internal sealed class ViewerPlayer : IDisposable
         this.midi = midi;
         this.controls = controls;
 
-        Now = now;
+        this.clock = clock;
 
         var (patch, samples, pictures) = opened;
 
@@ -186,13 +186,11 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Raised when <c>--for</c> has run out.</summary>
     public event Action? Finished;
 
-    /// <summary>The wall clock <c>--for</c> and <c>--loop</c> count played time against.</summary>
-    private Func<TimeSpan> Now { get; }
 
     /// <summary>Starts playing, or holds the first frame where the run was asked to open paused.</summary>
     public void Begin()
     {
-        last = Now();
+        last = clock.Elapsed;
 
         if (options.For is not null || options.Loop is not null)
         {
@@ -210,7 +208,7 @@ internal sealed class ViewerPlayer : IDisposable
     /// </summary>
     internal void Tick()
     {
-        var now = Now();
+        var now = clock.Elapsed;
         var delta = (now - last).TotalSeconds;
 
         last = now;
@@ -247,7 +245,7 @@ internal sealed class ViewerPlayer : IDisposable
     {
         if (!Paused) return;
 
-        last = Now();
+        last = clock.Elapsed;
         Paused = false;
         Apply();
     }

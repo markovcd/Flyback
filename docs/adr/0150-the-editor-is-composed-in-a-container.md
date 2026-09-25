@@ -56,7 +56,7 @@ tests both call.
   `ViewerServices.AddViewer(launch)` registers the player, its window and what
   they play through; `ViewerServices.Window` and `ViewerServices.Player` build a
   run with a window or without one. The clock `--for` counts against is a
-  `Func<TimeSpan>` a test registers again.
+  `WallClock` over a `TimeProvider`, which a test registers again.
 
 ## Consequences
 
