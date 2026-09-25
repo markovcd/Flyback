@@ -423,7 +423,8 @@ drift. The site's CSS mirrors `Colors.cs`.
 **Hubs and the regions around them**
 ([0148](adr/0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
 `Document` owns who owns the patch, the write-back into the text and where an
-undo lands; `Playback` owns compiling, the sound device, pause and mute;
+undo lands; `Playback` owns compiling and the sound device, and drives pause,
+mute and rewind through the `Transport` the viewer shares;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes what it reads (the canvas, the document, the plugins, the
 report line, a dialog, a file picker), owns its own fields and raises events: `Inspector`,
@@ -492,8 +493,8 @@ never to a file.
 ### The viewer and the CLI
 
 Both parse with `System.CommandLine` and both load plugins and install the
-catalog before building their command tree. The viewer is `ViewerPlayer` (the
-transport, with no window type in it) and `ViewerWindow`, composed in a container
+catalog before building their command tree. The viewer is `ViewerPlayer` (its
+run, over the editor's `Transport`, with no window type in it) and `ViewerWindow`, composed in a container
 by `ViewerServices` as the editor is by `EditorServices`; `--hidden` runs the
 player with no preview at all. The CLI declares each command's options in
 `Program.cs` and runs each in its own file (`RenderCommand`, `CheckCommand`…).

@@ -984,22 +984,8 @@ internal sealed class MainWindow : Window
     private static bool Bare(KeyModifiers modifiers) =>
         (modifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Alt)) == 0;
 
-    /// <summary>
-    /// Whether the computer's keyboard is an instrument right now — whether either
-    /// of the running programs is reading it.
-    /// </summary>
-    /// <remarks>
-    /// Asked of the compiled programs rather than of the patch, which is what makes
-    /// it exact: a MIDI In wired to nothing is read by neither and should not take
-    /// keystrokes from the editor, and one wired only to the speakers should. Dead
-    /// -code elimination has already answered both (ADR-0022).
-    /// </remarks>
-    private bool Playing =>
-        !Typing
-        && (Reads(preview.Program.LiveInputs) || Reads(audio.Live.Keys));
-
-    private static bool Reads(IReadOnlyList<string> inputs) =>
-        inputs.Any(key => key.StartsWith(MidiSources.Keyboard + "/", StringComparison.Ordinal));
+    /// <summary>Whether the computer's keyboard is an instrument right now, and nothing is being typed.</summary>
+    private bool Playing => !Typing && playback.Keyed;
 
     /// <summary>
     /// Whether the keystroke belongs to something being typed into rather than to
@@ -1363,10 +1349,6 @@ internal sealed class MainWindow : Window
 
         preview.BackendChanged += message =>
         {
-            // The picture's program is only worth compiling while the processor is
-            // the one drawing it; the shader has code of its own.
-            if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(preview.Program, IlLane.Picture);
-
             // The choice rather than what is running: a patch the shader cannot
             // draw puts the picture on the processor without anybody having
             // asked, and a box that put itself back to CPU would then be read as

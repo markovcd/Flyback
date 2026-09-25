@@ -21,18 +21,16 @@ namespace Flyback.App;
 /// invalidation to get wrong. The device comes from a plugin, so nothing here knows
 /// what a backend is called.
 /// <para>
-/// Paused is the same as in the viewer: the device stops and the picture is timed by a
-/// clock that holds still, so an edit still redraws and a resume adds one frame rather
-/// than the whole pause. Rewinding while paused stays paused, on the first frame.
+/// Play, pause and rewind are the <see cref="Transport"/> the viewer uses too; what is
+/// decided here is when the device runs.
 /// </para>
 /// </remarks>
 internal sealed class Playback
 {
     private readonly NodeEditor editor;
-    private readonly PreviewHost preview;
     private readonly AudioEngine audio;
-    private readonly IlCompiler compiler;
     private readonly MidiHub midi;
+    private readonly Transport transport;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
     private readonly Func<ISampleLibrary> sounds;
@@ -67,10 +65,9 @@ internal sealed class Playback
         Lazy<TakeRecording> recording)
     {
         this.editor = editor;
-        this.preview = preview;
         this.audio = audio;
-        this.compiler = compiler;
         this.midi = midi;
+        transport = new Transport(audio, preview, compiler, midi);
         this.report = report;
         this.plugins = plugins;
         sounds = () => files.Value.Sounds;
@@ -97,12 +94,12 @@ internal sealed class Playback
     /// <summary>Whether the speakers would be heard: there is a device, and the Output's Volume is up.</summary>
     public bool Audible => CanSound && Audio.Sound.VolumeIsUp(editor.History.Patch);
 
-    public bool Paused { get; private set; }
+    public bool Paused => transport.Paused;
 
-    public bool Muted { get; private set; }
+    public bool Muted => transport.Muted;
 
-    /// <summary>Where the picture is held while <see cref="Paused"/>.</summary>
-    private double frozenAt;
+    /// <summary>Whether either running program reads the computer's keys, so a letter is a note.</summary>
+    public bool Keyed => transport.Keyed;
 
     /// <summary>
     /// Puts the Sound settings just saved in force: a device made from them takes
@@ -213,19 +210,7 @@ internal sealed class Playback
         // Not a picture that is never drawn: a hidden preview would hold the cue until it gave up.
         if (start is not null && HasPicture) result.Program.WaitFor(start);
 
-        preview.Program = result.Program;
-        if (preview.Backend == PreviewBackend.Cpu) compiler.Submit(result.Program, IlLane.Picture);
-
-        audio.Update(editor.History.Patch, samples, start);
-        start?.Give();
-
-        // Both programs are new, so both of their blocks are, and whatever is
-        // being held has to be written into them before the next frame or the
-        // next buffer. Turning a knob while playing a note recompiles the patch,
-        // and the note must not be cut off by the edit.
-        preview.Live = new LiveValues(result.Program.LiveInputs);
-        var relaid = midi.Lay(editor.History.Patch.KeyboardScale);
-        midi.Follow(preview.Live, audio.Live);
+        var relaid = transport.Load(editor.History.Patch, result.Program, samples, start);
 
         Compiled?.Invoke(this, EventArgs.Empty);
 
@@ -272,10 +257,7 @@ internal sealed class Playback
     {
         if (Paused) return;
 
-        frozenAt = preview.Time;
-        Paused = true;
-
-        SetAudioEnabled(false);
+        transport.Pause();
         TransportChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -283,20 +265,14 @@ internal sealed class Playback
     {
         if (!Paused) return;
 
-        Paused = false;
-
-        // The device puts the audio clock back when it starts; with none, the picture runs on its own.
-        preview.Clock = null;
-
+        transport.Resume();
         SyncAudioToVolume();
     }
 
     /// <summary>Silences the speakers without stopping the device, so the clock does not drift.</summary>
     public void ToggleMute()
     {
-        Muted = !Muted;
-        audio.Gain = Muted ? 0f : 1f;
-
+        transport.Mute(!Muted);
         TransportChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -310,33 +286,10 @@ internal sealed class Playback
     }
 
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
-    public void Rewind()
-    {
-        audio.Rewind();
-        preview.Rewind();
+    public void Rewind() => transport.Rewind();
 
-        // A paused clock reads the time it froze at, so the next tick would undo the rewind.
-        if (!Paused) return;
-
-        frozenAt = 0;
-        preview.Time = 0;
-    }
-
-    /// <summary>
-    /// Takes the picture and the sound to <paramref name="seconds"/>, playing on from
-    /// there, or held there while paused. What the patch remembers starts empty, as
-    /// after <see cref="Rewind"/>.
-    /// </summary>
-    public void SeekTo(double seconds)
-    {
-        seconds = double.IsFinite(seconds) ? Math.Max(0, seconds) : 0;
-
-        audio.SeekTo(seconds);
-        preview.Rewind();
-        preview.Time = seconds;
-
-        if (Paused) frozenAt = seconds;
-    }
+    /// <inheritdoc cref="Transport.SeekTo"/>
+    public void SeekTo(double seconds) => transport.SeekTo(seconds);
 
     /// <summary>
     /// Brings the audio device into line with what Volume now says, turning it on
@@ -373,52 +326,28 @@ internal sealed class Playback
 
     private void SetAudioEnabled(bool enabled)
     {
-        if (enabled)
+        if (!enabled)
         {
-            // Not audio.Update — Recompile, the only caller that reaches here,
-            // has already handed the engine a program built from the patch's
-            // sounds, and a second one built without them would undo that.
-            try
-            {
-                audio.Start();
-            }
-            catch (Exception ex)
-            {
-                // A device is only really opened here, so this is where a card
-                // that is busy, unplugged or missing its library says so. Blocked
-                // rather than retried: whatever it is will not have fixed itself
-                // by the next edit, and ADR-0025 promises that nothing a plugin
-                // does takes the shell down.
-                report.Say($"Sound could not start — {ex.Message}", FailureDetail());
-                blocked = true;
-                return;
-            }
-
-            Started?.Invoke(this, EventArgs.Empty);
-
-            // Sound cannot stretch, so it leads and the picture follows — and
-            // the same tick is where the picture is told what the speakers have
-            // just played: a Scope's chart refilled, and a Meter's reading put
-            // where the frame will read it. Here rather than in the renderer
-            // because this is the one moment in the loop when the two paths are
-            // both stopped. It is also the exact scope of the promise both
-            // modules make — no clock, no sound, and nothing new to hear.
-            preview.Clock = () =>
-            {
-                audio.Listen(preview.Program, preview.Live);
-                return audio.Time;
-            };
+            transport.Stop();
+            return;
         }
-        else
+
+        // Not audio.Update: Recompile, the only caller that reaches here, has already
+        // handed the engine a program built from the patch's sounds.
+        try
         {
-            preview.Clock = Paused ? () => frozenAt : null;
-            audio.Stop();
-
-            // The picture goes on being drawn with nothing playing, so every
-            // Meter has to be told that rather than left holding its last
-            // reading. A Scope is left, which is the difference between a chart
-            // of the past and a measurement of now.
-            audio.Deafen(preview.Live);
+            transport.Start();
         }
+        catch (Exception ex)
+        {
+            // A device is only really opened here, so this is where a card that is
+            // busy, unplugged or missing its library says so. Blocked rather than
+            // retried, and never taking the shell down (ADR-0025).
+            report.Say($"Sound could not start — {ex.Message}", FailureDetail());
+            blocked = true;
+            return;
+        }
+
+        Started?.Invoke(this, EventArgs.Empty);
     }
 }

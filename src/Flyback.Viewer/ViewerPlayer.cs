@@ -17,10 +17,9 @@ namespace Flyback.Viewer;
 /// object without the preview.
 /// </summary>
 /// <remarks>
-/// Sound leads and the picture follows, as in the editor: while the device runs, the
-/// preview is timed by the sound's own clock. Stopped, the preview is held on a clock
-/// of its own that does not move. The patch is compiled once and never again, so
-/// nothing here reacts to an edit — there is nowhere to make one.
+/// Play, pause and rewind are the editor's <see cref="Transport"/>. The patch is
+/// compiled once and never again, so nothing here reacts to an edit — there is
+/// nowhere to make one.
 /// <para>
 /// A patch that is played is played here too: the computer's keys and whatever MIDI
 /// device its MIDI In names reach it through the editor's own <see cref="MidiHub"/>,
@@ -37,7 +36,7 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly MidiHub midi;
     private readonly ControlHub controls;
     private readonly WallClock clock;
-    private readonly bool keyed;
+    private readonly Transport transport;
     private readonly Patch patch;
     private bool audible;
 
@@ -46,7 +45,6 @@ internal sealed class ViewerPlayer : IDisposable
     private double played;
     private double sinceLoop;
     private bool finished;
-    private double frozenAt;
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
     /// <param name="audio">The sound engine, on the run's device or a silent one where it has none, compiling with <paramref name="compiler"/>.</param>
@@ -76,15 +74,9 @@ internal sealed class ViewerPlayer : IDisposable
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
 
-        // Sound and picture start together, once both are built.
-        var start = new Cue();
-        audio.Update(patch, samples, start);
+        transport = new Transport(audio, this.preview, compiler, midi) { Volume = options.Volume };
 
-        // The panel's knobs are worth nothing until somebody writes them into the
-        // block the programs read, which the editor does as it lays the panel out.
-        // A played preset opens with its filter shut without this, and a patch whose
-        // Volume follows a knob is heard as silence.
-        patch.Seed(audio.Live);
+        CompiledPatch? picture = null;
 
         if (this.preview is { } surface)
         {
@@ -92,49 +84,36 @@ internal sealed class ViewerPlayer : IDisposable
             surface.Use(options.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
             surface.FrameRate = options.FrameRate;
 
-            var program = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
-            program.WaitFor(start);
-
-            surface.Program = program;
-            surface.Live = new LiveValues(program.LiveInputs);
-            patch.Seed(surface.Live);
-
-            // The renderer is the processor's for good if the graphics card refuses.
-            Submit();
-            surface.BackendChanged += _ => Submit();
+            picture = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
         }
 
-        start.Give();
+        // Sound and picture start together, once both are built.
+        var start = new Cue();
+        picture?.WaitFor(start);
+
+        transport.Load(patch, picture, samples, start);
+
+        // The panel's knobs are worth nothing until somebody writes them into the
+        // block the programs read, which the editor does as it lays the panel out.
+        // A played preset opens with its filter shut without this, and a patch whose
+        // Volume follows a knob is heard as silence.
+        foreach (var block in transport.Blocks) patch.Seed(block);
 
         controls.Takeover = takeover;
         controls.Turned += (id, value) => Turned?.Invoke(id, value);
+        controls.Follow(patch, transport.Blocks);
 
         midi.Trouble += message => Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: {message}");
 
         // A key going down while the clock is stopped is a change with no time behind it.
         if (this.preview is { } redrawn) midi.Played += redrawn.Refresh;
 
-        LiveValues[] blocks = this.preview is { } shown ? [shown.Live, audio.Live] : [audio.Live];
-
-        midi.Lay(patch.KeyboardScale);
-        midi.Follow(blocks);
-        controls.Follow(patch, blocks);
-
-        keyed = blocks.Any(block => block.Keys.Any(key => key.StartsWith(MidiSources.Keyboard + "/", StringComparison.Ordinal)));
-
         audible = device is not null && !options.NoAudio && Sound.VolumeIsUp(patch);
-        Muted = options.Mute;
-        Paused = options.Paused;
+        transport.Mute(options.Mute);
 
-        audio.Gain = Muted ? 0f : options.Volume;
+        if (options.From > 0) transport.SeekTo(options.From);
 
-        if (options.From > 0)
-        {
-            audio.SeekTo(options.From);
-            if (this.preview is not null) this.preview.Time = options.From;
-        }
-
-        frozenAt = options.From;
+        if (options.Paused) transport.Pause();
     }
 
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>
@@ -146,15 +125,15 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Whether a sound device is running, or will be once play resumes.</summary>
     public bool Sounding => audible;
 
-    public bool Paused { get; private set; }
+    public bool Paused => transport.Paused;
 
-    public bool Muted { get; private set; }
+    public bool Muted => transport.Muted;
 
-    /// <summary>Whether either running program reads the computer's keys, so a letter is a note.</summary>
-    public bool Keyed => keyed;
+    /// <inheritdoc cref="Transport.Keyed"/>
+    public bool Keyed => transport.Keyed;
 
     /// <summary>A key as a note, or as one of the pair that moves the rows. False where it is neither.</summary>
-    public bool KeyDown(Key key) => keyed && (midi.Shift(key) is not null || midi.KeyDown(key));
+    public bool KeyDown(Key key) => Keyed && (midi.Shift(key) is not null || midi.KeyDown(key));
 
     /// <summary>Lets a note go. Unguarded, since a missed release is a note that never ends.</summary>
     public void KeyUp(Key key) => midi.KeyUp(key);
@@ -163,7 +142,7 @@ internal sealed class ViewerPlayer : IDisposable
     public void AllOff() => midi.AllOff();
 
     /// <summary>Where the picture is, in seconds.</summary>
-    public double Time => preview?.Time ?? audio.Time;
+    public double Time => transport.Time;
 
     /// <summary>The patch playing, whose knobs are there to be turned.</summary>
     public Patch Patch => patch;
@@ -197,7 +176,7 @@ internal sealed class ViewerPlayer : IDisposable
             ticker.Start();
         }
 
-        Apply();
+        Play();
     }
 
     /// <summary>
@@ -233,10 +212,7 @@ internal sealed class ViewerPlayer : IDisposable
         if (Paused) return;
 
         Tick();
-
-        frozenAt = preview?.Time ?? audio.Time;
-        Paused = true;
-        Apply();
+        transport.Pause();
     }
 
     public void Resume()
@@ -244,8 +220,8 @@ internal sealed class ViewerPlayer : IDisposable
         if (!Paused) return;
 
         last = clock.Elapsed;
-        Paused = false;
-        Apply();
+        transport.Resume();
+        Play();
     }
 
     public void Toggle()
@@ -254,66 +230,23 @@ internal sealed class ViewerPlayer : IDisposable
         else Pause();
     }
 
-    public void Mute(bool muted)
-    {
-        Muted = muted;
-        audio.Gain = muted ? 0f : options.Volume;
-    }
+    public void Mute(bool muted) => transport.Mute(muted);
 
     /// <summary>Back to nought. A run that is paused stays paused, on the first frame.</summary>
     public void Rewind()
     {
-        audio.Rewind();
-        preview?.Rewind();
-
-        // Or the next tick reads the old frozen time and the rewind is undone.
-        frozenAt = 0;
+        transport.Rewind();
         sinceLoop = 0;
-
-        if (preview is not null) preview.Time = 0;
     }
 
-    /// <summary>Puts the sound and the picture's clock into whichever state <see cref="Paused"/> says.</summary>
-    private void Apply()
+    /// <summary>Starts the device where there is one to be heard, unless the run is paused.</summary>
+    private void Play()
     {
-        if (Paused)
-        {
-            // Both surfaces skip a frame whose clock has not moved, and take the
-            // time of the last tick before they look, so resuming adds one frame
-            // rather than the whole pause. Held even where nothing is playing.
-            if (preview is not null) preview.Clock = () => frozenAt;
+        if (Paused || !audible) return;
 
-            audio.Stop();
-
-            if (preview is not null) audio.Deafen(preview.Live);
-
-            return;
-        }
-
-        if (audible && Start())
-        {
-            if (preview is { } surface)
-            {
-                surface.Clock = () =>
-                {
-                    audio.Listen(surface.Program, surface.Live);
-                    return audio.Time;
-                };
-            }
-
-            return;
-        }
-
-        if (preview is not null) preview.Clock = null;
-    }
-
-    private bool Start()
-    {
         try
         {
-            audio.Start();
-
-            return true;
+            transport.Start();
         }
         catch (Exception ex)
         {
@@ -322,14 +255,7 @@ internal sealed class ViewerPlayer : IDisposable
 
             // Not tried again on every resume, only to say the same thing again.
             audible = false;
-
-            return false;
         }
-    }
-
-    private void Submit()
-    {
-        if (preview is { Backend: PreviewBackend.Cpu } surface) compiler.Submit(surface.Program, IlLane.Picture);
     }
 
     /// <summary>Stops playing. The container disposes the engine, the compiler and MIDI after it.</summary>
