@@ -101,6 +101,9 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
     [Then("the patch says it was made by {string}")]
     public void ThenCredited(string author) => context.Patch.Author.ShouldBe(author);
 
+    [Then("the patch plays for {float} seconds")]
+    public void ThenLasts(double seconds) => (context.Patch.Length ?? Patch.DefaultLength).ShouldBe(seconds, 0.001);
+
     [Then("the patch is tagged {string}")]
     public void ThenTagged(string tags) => context.Patch.Tags.ShouldBe(tags.Split(", "));
 

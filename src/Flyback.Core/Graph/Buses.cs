@@ -72,6 +72,7 @@ internal static class Buses
             Groups = patch.Groups,
             Controls = patch.Controls,
             Keyboard = patch.Keyboard,
+            Length = patch.Length,
             Description = patch.Description,
             Author = patch.Author,
             Tags = patch.Tags,

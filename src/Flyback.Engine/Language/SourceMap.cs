@@ -346,6 +346,14 @@ public sealed class SourceMap
     public Change? Tags(string? line) => PatchLine("tags", TokenKind.Text, line, "author", "description");
 
     /// <summary>
+    /// The edit that makes the text give the patch the length <paramref name="line"/>
+    /// says, or null where the text already does. A new one goes under the tags,
+    /// the author or the description, whichever comes last.
+    /// </summary>
+    /// <param name="line">What <see cref="PatchPrinter.Length"/> writes, and null for none.</param>
+    public Change? Length(string? line) => PatchLine("length", TokenKind.Number, line, "tags", "author", "description");
+
+    /// <summary>
     /// The edit that puts <paramref name="line"/> where the text says the thing
     /// <paramref name="word"/> opens, or takes that out for a null line. Where the
     /// text says nothing, the line goes under the first of <paramref name="under"/>
@@ -403,6 +411,10 @@ public sealed class SourceMap
                 var to = Offset(after) + after.Text.Length + (next == TokenKind.Text ? 2 : 0);
 
                 if (i + 2 < tokens.Count && tokens[i + 2].Kind == TokenKind.Block) to = Closed(Offset(tokens[i + 2]));
+
+                // A length in minutes runs on over its colon and its seconds.
+                if (next == TokenKind.Number && i + 3 < tokens.Count && tokens[i + 2].Kind == TokenKind.Colon && tokens[i + 3].Kind == TokenKind.Number)
+                    to = Offset(tokens[i + 3]) + tokens[i + 3].Text.Length;
 
                 // A description runs on over the strings on the lines below it, and
                 // tags are a string each.

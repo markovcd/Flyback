@@ -384,9 +384,8 @@ internal sealed class Document
     public void Restated(Guid node, string? key = null) => restated.Add((node, key));
 
     /// <summary>
-    /// Notes that the computer keyboard has been laid out again in the panel, for
-    /// the next write-back — the one thing the panel changes that is about no
-    /// module.
+    /// Notes that something about the whole patch rather than a module has changed,
+    /// the keyboard's layout or the length, for the next write-back.
     /// </summary>
     public void Relaid() => relaid = true;
 
@@ -614,13 +613,14 @@ internal sealed class Document
 
     /// <summary>
     /// Puts what belongs to the whole patch into the text: its description, author,
-    /// tags and the keyboard's layout, each as the one line that says it.
+    /// tags, length and the keyboard's layout, each as the one line that says it.
     /// </summary>
     private void Lay()
     {
         Put(Map.Description(PatchPrinter.Description(editor.History.Patch.Description)));
         Put(Map.Author(PatchPrinter.Author(editor.History.Patch.Author)));
         Put(Map.Tags(PatchPrinter.Tags(editor.History.Patch.Tags)));
+        Put(Map.Length(PatchPrinter.Length(editor.History.Patch.Length)));
         Put(Map.Keyboard(PatchPrinter.Keyboard(editor.History.Patch.Keyboard)));
 
         void Put(Change? change)

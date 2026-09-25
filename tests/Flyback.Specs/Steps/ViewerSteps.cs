@@ -21,6 +21,9 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [Then("the viewer's picture says how many frames a second it draws")]
     public void ThenItSays() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
+    [Then("a seek bar waits at the top of the viewer's picture")]
+    public void ThenASeekBarAtTheTop() => viewer.SeekBarAtTheTop.ShouldBeTrue();
+
     [Then("the viewer's picture says nothing about how it is drawn")]
     public void ThenItSaysNothing() => viewer.Stats.ShouldBeNull();
 }

@@ -275,6 +275,24 @@ public sealed class Patch
     /// </remarks>
     public KeyboardScale? Keyboard { get; set; }
 
+    /// <summary>How long a patch that does not say plays for, in seconds.</summary>
+    public const double DefaultLength = 180;
+
+    private double? length;
+
+    /// <summary>
+    /// How long the patch plays for, in seconds to the hundredth, and null for
+    /// <see cref="DefaultLength"/>. Held between a tenth of a second and a day.
+    /// </summary>
+    public double? Length
+    {
+        get => length;
+        set => length = PatchLength.Kept(value);
+    }
+
+    /// <summary>How long the patch plays for, said or not.</summary>
+    internal double Lasts => length ?? DefaultLength;
+
     /// <summary>The longest a description may be, in characters.</summary>
     public const int DescriptionLimit = 400;
 

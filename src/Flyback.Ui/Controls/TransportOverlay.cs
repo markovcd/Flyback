@@ -1,9 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Styling;
 
 namespace Flyback.App.Controls;
 
@@ -17,12 +15,11 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class TransportOverlay : TuckedAway
 {
-    private const double Size = 40;
     private const double Gap = 2;
     private const double Inset = 12;
 
     /// <summary>How far in from the right edge the open transport reaches.</summary>
-    public const double Span = Inset + 3 * Size + 2 * Gap;
+    public const double Span = Inset + 3 * ToolSize + 2 * Gap;
 
     private readonly Button muteButton;
     private readonly Button pauseButton;
@@ -52,20 +49,6 @@ public sealed class TransportOverlay : TuckedAway
         buttons.Children.Add(muteButton);
         buttons.Children.Add(rewind);
         buttons.Children.Add(pauseButton);
-
-        // The theme paints a hovered or pressed button a fill; over a picture that
-        // is a gray box, so the glyph brightens instead.
-        foreach (var state in new[] { ":pointerover", ":pressed" })
-        {
-            var lit = new Style(x => x
-                .OfType<Button>().Class(state).Not(y => y.Class(":disabled"))
-                .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
-
-            lit.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent));
-            lit.Setters.Add(new Setter(ContentPresenter.BorderBrushProperty, Brushes.Transparent));
-            lit.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, Brushes.White));
-            Styles.Add(lit);
-        }
 
         Margin = new Thickness(Inset);
     }
@@ -110,39 +93,5 @@ public sealed class TransportOverlay : TuckedAway
     {
         get => muteButton.IsEnabled;
         set => muteButton.IsEnabled = value;
-    }
-
-    /// <summary>A glyph at the knobs' scale, so its strokes weigh what theirs do.</summary>
-    private static Viewbox Face(Control glyph) => new() { Width = 22, Height = 22, Child = glyph };
-
-    /// <summary>
-    /// A bare glyph that stops the click there: the preview underneath answers a
-    /// double-click, and a second press on a button is not one.
-    /// </summary>
-    private static Button Tool(Control glyph, string tip, Action act)
-    {
-        var button = new Button
-        {
-            Content = Face(glyph),
-            Width = Size,
-            Height = Size,
-            Padding = new Thickness(0),
-            Background = Brushes.Transparent,
-            BorderBrush = Brushes.Transparent,
-            Foreground = new SolidColorBrush(Avalonia.Media.Colors.White, 0.8),
-            Effect = Halo(),
-        };
-
-        ToolTip.SetTip(button, tip);
-
-        button.Click += (_, e) =>
-        {
-            act();
-            e.Handled = true;
-        };
-
-        button.DoubleTapped += (_, e) => e.Handled = true;
-
-        return button;
     }
 }

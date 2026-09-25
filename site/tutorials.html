@@ -140,14 +140,15 @@
           <tr><td>Knobs</td><td>Shows the knob panel under the canvas. <kbd>Ctrl</kbd>+<kbd>K</kbd>.</td></tr>
           <tr><td>Swap</td><td>Trades the preview and the canvas, for a bigger picture while you patch.</td></tr>
           <tr><td>Pause, Rewind, Record</td><td>Holds the picture and the sound where they are, or plays on (<kbd>Ctrl</kbd>+<kbd>P</kbd>); sets the clock back to zero; and starts or stops a live recording — counted in, as the Recording settings say (<kbd>Ctrl</kbd>+<kbd>R</kbd>).</td></tr>
-          <tr><td>Seek bar</td><td>Where the patch's clock is. Click or drag along it to move the picture and the sound there, paused or playing; the box beside it sets how long it is, in seconds or minutes:seconds, and ⟲ plays that length round and round.</td></tr>
+          <tr><td>Seek bar</td><td>Where the patch's clock is. Click or drag along it to move the picture and the sound there, paused or playing. The box beside it is how long the patch plays, in seconds or minutes:seconds to a hundredth, and is saved with it; a patch that does not say plays three minutes. The patch stops at the end, and ⟲ plays that length round and round instead.</td></tr>
           <tr><td>Assistant, Settings, Plugins, About</td><td>A model that builds patches, the settings window, what is installed and what failed to load, and the version and license.</td></tr>
         </tbody>
       </table>
     </div>
 
     <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
-    back. Hover the bottom right corner of the full-screen picture for the sound, rewind and pause buttons, and press
+    back. Hover the bottom right corner of the full-screen picture for the sound, rewind and pause buttons, the top
+    middle for the seek bar, and press
     <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws and what each costs. A patch
     with knobs keeps them behind the dots at the bottom middle, to be played.
     <strong>Settings → Graphics → Full screen</strong> can send the picture to another monitor instead, or to one
@@ -336,7 +337,8 @@ out.volume = 0.6</code></pre>
     does where nothing is patched in. A line of <code>description "..."</code> says what the patch is for; it is
     what the panel shows with nothing selected, where a double-click edits it, and what the preset gallery
     shows under a saved preset's name. Under it, <code>author "..."</code> says who made the patch and
-    <code>tags "drone" "slow"</code> gives it words to find it by; the panel edits both the same way.</p>
+    <code>tags "drone" "slow"</code> gives it words to find it by; the panel edits both the same way.
+    <code>length 2:30.50</code> says how long the patch plays, and is what the seek bar's box writes.</p>
 
     <ol class="steps">
       <li>Change <code>rings(freq: 3</code> to <code>rings(freq: 8</code>.</li>
@@ -558,8 +560,10 @@ flyback-cli render my-patch.fbks -o my-patch.png</code></pre>
 <pre><code>flyback-viewer drone.fbk
 flyback-viewer --preset "Dub" --size 1080p --mute
 flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
-    <p>Hover the bottom right corner of the window for the sound, rewind and pause buttons, and double-click the
-    picture or press <kbd>F11</kbd> for full screen. A patch with no picture opens as just those buttons and its knobs.
+    <p>Hover the bottom right corner of the window for the sound, rewind and pause buttons, and the top middle for
+    the seek bar, and double-click the picture or press <kbd>F11</kbd> for full screen. A patch with no picture opens as
+    just those buttons, the seek bar and its knobs. The patch stops at the end of its length unless the seek bar's
+    loop is on or <code>--loop</code> was given, and a run with no window, or with <code>--for</code>, closes there.
     <kbd>Space</kbd> pauses, and <kbd>F3</kbd>, or <code>--stats</code> from the start, says in the corner how the
     picture is drawn: frames a second, a frame's cost, the ops. <code>--hidden</code> opens no window at all, which is how
     to hear a patch without anything landing on the screen.</p>

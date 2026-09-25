@@ -96,6 +96,9 @@ internal sealed class Playback
 
     public bool Paused => transport.Paused;
 
+    /// <summary>How long the open patch plays for, in seconds.</summary>
+    public double Length => editor.History.Patch.Lasts;
+
     public bool Muted => transport.Muted;
 
     /// <summary>Whether either running program reads the computer's keys, so a letter is a note.</summary>
@@ -261,9 +264,12 @@ internal sealed class Playback
         TransportChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Plays on from where it stopped, or from nought where it stopped at the end of its length.</summary>
     public void Resume()
     {
         if (!Paused) return;
+
+        if (transport.Time >= Length) transport.Rewind();
 
         transport.Resume();
         SyncAudioToVolume();

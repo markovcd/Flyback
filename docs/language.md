@@ -40,7 +40,7 @@ a decision. `_` is where the pipe lands when the module has no `in` for it.
 
 ## 2. Statements
 
-Fourteen forms, and no others.
+Fifteen forms, and no others.
 
 ```
 # a comment, to end of line
@@ -58,6 +58,7 @@ group "Name" { statements }      # draw these together on the canvas
 description "What it is for"     # say what the patch is for, once
 author "Who made it"             # say who made the patch, once
 tags "drone" "slow"              # words to find the patch by, once
+length 2:30.50                   # how long the patch plays for, once
 ```
 
 A comment starts with `#`; `//` is refused as `slash-comment`, and a part of a
@@ -463,6 +464,18 @@ An author is held to one line the way a description is. A tag is lower case,
 with a hyphen for a space and no quote, and a patch keeps its first eight
 different ones.
 
+How long the patch plays for goes under those, in minutes and seconds to the
+hundredth, the way the status bar tells the time. The seek bar spans it, and the
+patch stops at its end unless the seek bar loops:
+
+```
+length 2:30.50
+```
+
+Plain seconds (`length 95.5`) and a duration (`length 90s`) read too, from a tenth
+of a second to a day; anything else is `bad-length`. A patch that says nothing
+plays for three minutes, and a printing says nothing for it.
+
 A block goes **after** the brackets and there is at most one, so it needs no
 name. A file goes **inside** them and has no name either — a call carries at
 most one string without one, and that string is the file. Both are positional
@@ -737,6 +750,7 @@ each paying only for what it reaches
 | the panel's knobs, what each follows, and every socket following one | — |
 | which plugins the patch needs, as its `requires` line | — |
 | groups, their names and what is in each | — |
+| the patch's length, in minutes and seconds | — |
 
 A knob or a field still holding what a fresh module holds is written nowhere. A
 printing is for reading, and every module restating its whole shape would bury
@@ -808,7 +822,8 @@ statement  = comment
            | "group" [ string ] "{" { statement } "}"
            | "description" string { string }
            | "author" string
-           | "tags" string { string } ;
+           | "tags" string { string }
+           | "length" ( number [ ":" number ] | duration ) ;
 
 body       = pipeline | "{" { statement } result "}" ;
 result     = pipeline | "(" pipeline { "," pipeline } ")" ;

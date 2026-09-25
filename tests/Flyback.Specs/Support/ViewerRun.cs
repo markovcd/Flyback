@@ -67,6 +67,11 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
             ? stats.Said
             : null);
 
+    /// <summary>Whether a seek bar waits behind its dots at the top of the picture.</summary>
+    public bool SeekBarAtTheTop => Run(() =>
+        window!.GetVisualDescendants().OfType<SeekOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } seek
+        && seek.VerticalAlignment == Avalonia.Layout.VerticalAlignment.Top);
+
     public void Dispose()
     {
         try

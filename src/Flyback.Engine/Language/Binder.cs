@@ -317,6 +317,7 @@ public sealed class Binder
         PanelStatement panel => "panel " + panel.Name,
         RequiresStatement => "requires",
         KeyboardStatement => "keyboard",
+        LengthStatement => "length",
         DescriptionStatement => "description",
         AuthorStatement => "author",
         TagsStatement => "tags",
@@ -398,6 +399,10 @@ public sealed class Binder
 
             case KeyboardStatement keyboard:
                 Lay(keyboard);
+                break;
+
+            case LengthStatement length:
+                Last(length);
                 break;
 
             case DescriptionStatement description:
@@ -2013,6 +2018,19 @@ public sealed class Binder
             $"{string.Join(" ", notes.Select(Pitch.ClassName))} is not a scale from {Pitch.ClassName(tonic)}. "
             + "The keyboard plays the seven-note scales an Auto Chord builds in, from the first note.");
         return null;
+    }
+
+    /// <summary>Says how long the patch plays for, once.</summary>
+    private void Last(LengthStatement statement)
+    {
+        if (patch.Length is not null)
+        {
+            Complain(IssueCode.SaidTwice, statement.Line, statement.Column,
+                "the patch's length is already said further up. It has one length, so it says so once.");
+            return;
+        }
+
+        patch.Length = statement.Seconds;
     }
 
     /// <summary>Says what the patch is for, once.</summary>

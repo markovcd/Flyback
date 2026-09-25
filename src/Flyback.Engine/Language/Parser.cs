@@ -1,3 +1,5 @@
+using Flyback.Core.Graph;
+
 namespace Flyback.Core.Language;
 
 /// <summary>
@@ -185,6 +187,9 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // Only with the layout after it, so a binding somebody called 'keyboard'
         // still starts a pipeline the way any other name does.
         if (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier) return Keyboard(line, column);
+
+        // And a 'length' only with the time after it.
+        if (AtWord("length") && Ahead().Kind == TokenKind.Number) return Length(line, column);
 
         // One string, or several running on, each line's a space apart from the last's.
         if (AtWord("description") && Ahead().Kind == TokenKind.Text)
@@ -462,6 +467,47 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         for (at++; Current.Kind == TokenKind.Text; at++) parts.Add(Current.Text);
 
         return parts;
+    }
+
+    /// <summary>
+    /// <c>length 2:30.50</c>, minutes and seconds as the status bar tells the time, or
+    /// <c>length 90s</c>, a duration.
+    /// </summary>
+    private Statement? Length(int line, int column)
+    {
+        at++;
+
+        var first = Current;
+        at++;
+
+        double? seconds;
+        string said;
+
+        if (first.Scaled == NumberStyle.Duration)
+        {
+            said = first.Text;
+            seconds = Math.Round(Math.Pow(10, first.Value), 2);
+            if (seconds is < PatchLength.Shortest or > PatchLength.Longest) seconds = null;
+        }
+        else if (Current.Kind == TokenKind.Colon && Ahead().Kind == TokenKind.Number && Ahead().Scaled == NumberStyle.Plain)
+        {
+            said = first.Text + ":" + Ahead().Text;
+            seconds = PatchLength.Read(said);
+            at += 2;
+        }
+        else
+        {
+            said = first.Text;
+            seconds = PatchLength.Read(said);
+        }
+
+        if (seconds is { } kept) return new LengthStatement(kept, line, column);
+
+        issues.Add(new LanguageIssue(first.Line, first.Column, IssueCode.BadLength,
+            $"'{said}' is not a length. Write minutes and seconds, as in 'length 2:30.50', or a duration, as in 'length 90s', "
+            + "from a tenth of a second to a day."));
+
+        return null;
     }
 
     private Statement? Keyboard(int line, int column)

@@ -4,8 +4,10 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -119,5 +121,24 @@ public class FullScreenElsewhereTests : UiTest
         Settle(window);
 
         transport.Paused.ShouldBe(!paused, "pausing in the editor shows on the picture's transport");
+    }
+
+    [AvaloniaFact]
+    public void The_picture_on_another_monitor_has_a_seek_bar_that_follows_the_clock()
+    {
+        SeekBar? bar = null;
+        var window = Open(replace: services => services.AddSingleton(sp => bar = ActivatorUtilities.CreateInstance<SeekBar>(sp)));
+
+        SendAway(window);
+
+        var picture = window.OwnedWindows.ShouldHaveSingleItem();
+        var seek = All<SeekOverlay>(picture).ShouldHaveSingleItem();
+
+        seek.IsEffectivelyVisible.ShouldBeTrue();
+
+        All<PreviewHost>(picture).Single().Time = 42;
+        bar.ShouldNotBeNull().Update();
+
+        seek.Track.Value.ShouldBe(42, 1);
     }
 }

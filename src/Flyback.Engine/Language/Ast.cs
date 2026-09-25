@@ -161,6 +161,9 @@ public sealed record PanelStatement(string Name, Expr Value, IReadOnlyList<Argum
 /// <param name="BlockColumn">Where the block's '[' is, for a complaint about what is inside it.</param>
 public sealed record KeyboardStatement(string? Scale, int Line, int Column, int BlockLine = 0, int BlockColumn = 0) : Statement(Line, Column);
 
+/// <summary><c>length 2:30.50</c>: how long the patch plays for, in seconds.</summary>
+public sealed record LengthStatement(double Seconds, int Line, int Column) : Statement(Line, Column);
+
 /// <summary>
 /// <c>description "..."</c>: what the patch is for, in a line of prose, which may
 /// run on as further strings on the lines below.

@@ -24,6 +24,8 @@ Flyback.Core.Graph.KeyboardScale.Tonic.init -> void
 Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
 Flyback.Core.Graph.Patch.Keyboard.get -> Flyback.Core.Graph.KeyboardScale?
 Flyback.Core.Graph.Patch.Keyboard.set -> void
+Flyback.Core.Graph.Patch.Length.get -> double?
+Flyback.Core.Graph.Patch.Length.set -> void
 Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.ScaleMode
 Flyback.Core.Graph.ScaleMode.<Clone>$() -> Flyback.Core.Graph.ScaleMode!
@@ -71,3 +73,4 @@ Flyback.Core.Graph.PatchPreset.Files.get -> System.Func<System.Collections.Gener
 Flyback.Core.Graph.PatchPreset.Files.init -> void
 Flyback.Core.Graph.PresetFiles
 static Flyback.Core.Graph.PresetFiles.Embedded(System.Reflection.Assembly! assembly, string! folder) -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>!
+const Flyback.Core.Graph.Patch.DefaultLength = 180 -> double

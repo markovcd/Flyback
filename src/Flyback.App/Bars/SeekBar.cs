@@ -1,4 +1,3 @@
-using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -6,19 +5,19 @@ using Avalonia.Layout;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.Core.Graph;
 
 namespace Flyback.App.Bars;
 
 /// <summary>
 /// The patch's clock as a strip on the toolbar: where it is, and a thumb to drag it
-/// anywhere from zero to a length typed in the box beside it, with a switch that
-/// brings the patch round to zero each time it reaches the end.
+/// anywhere from zero to the patch's length, typed in the box beside it. At the end
+/// the patch stops, or comes round to zero where the loop switch is on.
 /// </summary>
 /// <remarks>
-/// Unlooped, a patch that runs longer than the strip holds the thumb at the far end.
-/// The length and the switch are the editor's rather than the patch's, so they are
-/// kept with the canvas settings and not in the file. Looping comes round on the
-/// thumb's own tick, so it lands within a tenth of a second of the end.
+/// The length is the patch's, an edit like any other; the switch is the editor's, kept
+/// with the canvas settings. The end is caught on the thumb's own tick, so it lands
+/// within a tenth of a second. A seek bar over a full-screen picture follows this one.
 /// </remarks>
 internal sealed class SeekBar
 {
@@ -27,52 +26,47 @@ internal sealed class SeekBar
 
     private readonly Playback playback;
     private readonly PreviewHost preview;
-    private readonly CanvasSection settings;
+    private readonly NodeEditor editor;
+    private readonly Document document;
 
-    /// <summary>Set while the thumb is being moved to follow the clock, so that move is not taken for a seek.</summary>
-    private bool following;
+    private readonly List<SeekOverlay> overlays = [];
 
-    /// <summary>Set while the thumb is being dragged, when it is the hand's and not the clock's.</summary>
-    private bool held;
-
-    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings)
+    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, Document document)
     {
         this.playback = playback;
         this.preview = preview;
-        this.settings = settings;
+        this.editor = editor;
+        this.document = document;
 
-        Track = new Slider
+        Track = new SeekTrack
         {
             Name = "seek",
             Width = 180,
-            Minimum = 0,
-            Maximum = settings.SeekLength,
+            Maximum = playback.Length,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        Track.AddHandler(Thumb.DragStartedEvent, (_, _) => held = true);
-        Track.AddHandler(Thumb.DragCompletedEvent, (_, _) => held = false);
+        Track.Sought += Seek;
 
         ToolTip.SetTip(Track, "Drag to move the patch's clock, in the picture and in the sound.");
 
         Length = new TextBox
         {
             Name = "seekLength",
-            Text = Say(settings.SeekLength),
-            Width = 64,
+            Text = PatchLength.Say(playback.Length),
+            Width = 76,
             FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        ToolTip.SetTip(Length, "How long the bar is: seconds, or minutes:seconds.");
+        ToolTip.SetTip(Length, "How long the patch plays for: seconds, or minutes:seconds, to a hundredth.");
 
-        Loop = ToolbarButtons.Toggle("seekLoop", "⟲", "Play the bar's length round and round, from zero again at its end.");
+        Loop = ToolbarButtons.Toggle("seekLoop", "⟲", "Play the patch's length round and round, from zero again at its end.");
         Loop.IsChecked = settings.SeekLoop;
-        Loop.IsCheckedChanged += (_, _) => settings.SaveSeekLoop(Loop.IsChecked == true);
-
-        Track.PropertyChanged += (_, e) =>
+        Loop.IsCheckedChanged += (_, _) =>
         {
-            if (e.Property == RangeBase.ValueProperty && !following) playback.SeekTo(Track.Value);
+            settings.SaveSeekLoop(Loop.IsChecked == true);
+            Update();
         };
 
         Length.LostFocus += (_, _) => TakeLength();
@@ -82,7 +76,13 @@ internal sealed class SeekBar
 
             TakeLength();
             e.Handled = true;
+
+            // Back to the canvas, so the next Ctrl+Z takes the length back rather than the typing.
+            editor.Focus();
         };
+
+        // An open, an undo or the text built again can each bring another length.
+        playback.Compiled += (_, _) => Measure();
 
         View = new StackPanel
         {
@@ -101,12 +101,12 @@ internal sealed class SeekBar
     public StackPanel View { get; }
 
     /// <summary>The strip the thumb runs along.</summary>
-    public Slider Track { get; }
+    public SeekTrack Track { get; }
 
-    /// <summary>The box the strip's length is typed in.</summary>
+    /// <summary>The box the patch's length is typed in.</summary>
     public TextBox Length { get; }
 
-    /// <summary>The switch that brings the patch round to zero at the end of the strip.</summary>
+    /// <summary>The switch that brings the patch round to zero at the end of its length.</summary>
     public ToggleButton Loop { get; }
 
     /// <summary>Whether the bar can be used: not during a take, which is paced by its own samples.</summary>
@@ -116,65 +116,77 @@ internal sealed class SeekBar
         set => View.IsEnabled = value;
     }
 
+    /// <summary>Has a seek bar over a picture follow this one, and move the clock and switch the loop through it.</summary>
+    public void Drive(SeekOverlay overlay)
+    {
+        if (overlays.Contains(overlay)) return;
+
+        overlays.Add(overlay);
+        overlay.Sought += Seek;
+        overlay.LoopClicked += FlipLoop;
+        Update();
+    }
+
+    /// <summary>Lets go of a seek bar over a picture that is going away.</summary>
+    public void Drop(SeekOverlay overlay)
+    {
+        if (!overlays.Remove(overlay)) return;
+
+        overlay.Sought -= Seek;
+        overlay.LoopClicked -= FlipLoop;
+    }
+
     /// <summary>
-    /// Brings a looped patch that has reached the end round to zero, then moves the
-    /// thumb to where the clock is, unless it is in somebody's hand.
+    /// Stops a patch that has reached the end of its length, or brings it round to
+    /// zero where it loops, then moves every thumb to where the clock is, unless it is
+    /// in somebody's hand.
     /// </summary>
     public void Update()
     {
-        if (held) return;
+        if (Held) return;
 
-        if (Loop.IsChecked == true && View.IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
-            playback.Rewind();
-
-        following = true;
-        Track.Value = Math.Min(preview.Time, Track.Maximum);
-        following = false;
-    }
-
-    /// <summary>
-    /// A length as typed, in whole seconds: seconds, or minutes and seconds with a colon
-    /// between. Null for anything else, or for one outside what the bar can span.
-    /// </summary>
-    public static double? Parse(string? typed)
-    {
-        if (string.IsNullOrWhiteSpace(typed)) return null;
-
-        var parts = typed.Trim().Split(':');
-        if (parts.Length > 2) return null;
-
-        var seconds = 0d;
-
-        foreach (var part in parts)
+        if (View.IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
         {
-            if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) || number < 0) return null;
-
-            seconds = seconds * 60 + number;
+            if (Loop.IsChecked == true) playback.Rewind();
+            else playback.Pause();
         }
 
-        seconds = Math.Round(seconds);
+        Track.Value = Math.Min(preview.Time, Track.Maximum);
 
-        return seconds is >= CanvasSettings.MinSeekLength and <= CanvasSettings.MaxSeekLength ? seconds : null;
+        foreach (var overlay in overlays) overlay.Follow(preview.Time, Track.Maximum, Loop.IsChecked == true);
     }
 
-    /// <summary>A length as the box shows it: minutes and seconds.</summary>
-    public static string Say(double seconds)
+    /// <summary>Whether a hand has any of the thumbs.</summary>
+    private bool Held => Track.Held || overlays.Any(overlay => overlay.Track.Held);
+
+    private void Seek(double seconds)
     {
-        var whole = (long)Math.Round(seconds);
-
-        return string.Create(CultureInfo.InvariantCulture, $"{whole / 60}:{whole % 60:00}");
+        if (View.IsEnabled) playback.SeekTo(seconds);
     }
 
-    /// <summary>Takes what was typed as the length, or puts the one it had back.</summary>
+    private void FlipLoop() => Loop.IsChecked = Loop.IsChecked != true;
+
+    /// <summary>Puts the patch's length on the strip, and in the box unless somebody is typing there.</summary>
+    private void Measure()
+    {
+        Track.Maximum = playback.Length;
+        if (!Length.IsFocused) Length.Text = PatchLength.Say(playback.Length);
+    }
+
+    /// <summary>Gives the patch what was typed as its length, as an edit, or puts the one it had back.</summary>
     private void TakeLength()
     {
-        if (Parse(Length.Text) is { } seconds)
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        if (PatchLength.Read(Length.Text) is { } seconds && seconds != playback.Length)
         {
-            Track.Maximum = seconds;
-            settings.SaveSeekLength(seconds);
-            Update();
+            editor.History.Patch.Length = seconds;
+            document.Relaid();
+            editor.History.Record();
+            document.HandCameOff();
         }
 
-        Length.Text = Say(Track.Maximum);
+        Length.Text = PatchLength.Say(playback.Length);
+        Track.Maximum = playback.Length;
+        Update();
     }
 }

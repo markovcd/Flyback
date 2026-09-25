@@ -114,6 +114,8 @@ internal sealed class ViewerPlayer : IDisposable
         if (options.From > 0) transport.SeekTo(options.From);
 
         if (options.Paused) transport.Pause();
+
+        Looped = options.Loop is not null;
     }
 
     /// <summary>The sound engine, for the tests that read its clock and its blocks.</summary>
@@ -144,6 +146,15 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Where the picture is, in seconds.</summary>
     public double Time => transport.Time;
 
+    /// <summary>How long the patch plays for, in seconds.</summary>
+    public double Length => patch.Lasts;
+
+    /// <summary>Whether the patch comes round to nought at the end of its length rather than stopping there.</summary>
+    public bool Looped { get; set; }
+
+    /// <inheritdoc cref="Transport.SeekTo"/>
+    public void SeekTo(double seconds) => transport.SeekTo(seconds);
+
     /// <summary>The patch playing, whose knobs are there to be turned.</summary>
     public Patch Patch => patch;
 
@@ -160,7 +171,7 @@ internal sealed class ViewerPlayer : IDisposable
         preview?.Refresh();
     }
 
-    /// <summary>Raised when <c>--for</c> has run out.</summary>
+    /// <summary>Raised when <c>--for</c> has run out, or the patch has played to its end with no window to hold it in.</summary>
     public event Action? Finished;
 
 
@@ -169,12 +180,9 @@ internal sealed class ViewerPlayer : IDisposable
     {
         last = clock.Elapsed;
 
-        if (options.For is not null || options.Loop is not null)
-        {
-            ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-            ticker.Tick += (_, _) => Tick();
-            ticker.Start();
-        }
+        ticker = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+        ticker.Tick += (_, _) => Tick();
+        ticker.Start();
 
         Play();
     }
@@ -183,6 +191,10 @@ internal sealed class ViewerPlayer : IDisposable
     /// Adds the time played since the last tick, then finishes a <c>--for</c> that
     /// has run out or rewinds a <c>--loop</c> that has come round. Time paused is not counted.
     /// </summary>
+    /// <remarks>
+    /// At the end of its length a looped patch comes round to nought. Otherwise it
+    /// stops there, which ends a run with no window or with a <c>--for</c> still to run.
+    /// </remarks>
     internal void Tick()
     {
         var now = clock.Elapsed;
@@ -197,14 +209,33 @@ internal sealed class ViewerPlayer : IDisposable
 
         if (options.For is { } seconds && played >= seconds)
         {
-            finished = true;
-            ticker?.Stop();
-            Finished?.Invoke();
-
+            Finish();
             return;
         }
 
         if (options.Loop is { } every && sinceLoop >= every) Rewind();
+
+        if (Time < Length) return;
+
+        if (Looped)
+        {
+            Rewind();
+        }
+        else if (options.Hidden || options.For is not null)
+        {
+            Finish();
+        }
+        else
+        {
+            transport.Pause();
+        }
+    }
+
+    private void Finish()
+    {
+        finished = true;
+        ticker?.Stop();
+        Finished?.Invoke();
     }
 
     public void Pause()
@@ -220,6 +251,10 @@ internal sealed class ViewerPlayer : IDisposable
         if (!Paused) return;
 
         last = clock.Elapsed;
+
+        // Stopped at its end, so play starts it again.
+        if (Time >= Length) Rewind();
+
         transport.Resume();
         Play();
     }

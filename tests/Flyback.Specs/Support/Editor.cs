@@ -207,12 +207,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         DoWindow((open, _) =>
         {
             var bar = SeekBar(open);
-            var track = bar.GetVisualDescendants().OfType<Track>().Single();
-            var thumb = track.Thumb!.Bounds.Width;
-
-            // The thumb's middle runs from half its width in to half its width short of the end.
-            var along = thumb / 2 + (track.Bounds.Width - thumb) * seconds / bar.Maximum;
-            var at = track.TranslatePoint(new Point(along, track.Bounds.Height / 2), open)!.Value;
+            var at = bar.TranslatePoint(bar.At(seconds), open)!.Value;
 
             open.MouseDown(at, MouseButton.Left);
             open.MouseUp(at, MouseButton.Left);
@@ -254,6 +249,30 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
         return true;
     }
+
+    /// <summary>Waits for the patch to stop by itself, for at most <paramref name="cap"/>, and says whether it did.</summary>
+    public bool WaitForStop(TimeSpan cap)
+    {
+        var until = DateTime.UtcNow + cap;
+
+        while (!Paused)
+        {
+            if (DateTime.UtcNow > until) return false;
+
+            Run(async () =>
+            {
+                await Task.Delay(20);
+                return true;
+            });
+        }
+
+        return true;
+    }
+
+    /// <summary>Whether a seek bar waits behind its dots at the top of the full-screen picture.</summary>
+    public bool SeekBarAtTheTop => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<SeekOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } seek
+        && seek.VerticalAlignment == Avalonia.Layout.VerticalAlignment.Top);
 
     /// <summary>Types a length into the box beside the seek bar, and presses Enter.</summary>
     public void SetSeekLength(string typed) =>
@@ -415,8 +434,8 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     private static Button? RowButton(Control row, string name) =>
         row.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name);
 
-    private static Slider SeekBar(MainWindow window) =>
-        window.GetVisualDescendants().OfType<Slider>().Single(slider => slider.Name == "seek");
+    private static SeekTrack SeekBar(MainWindow window) =>
+        window.GetVisualDescendants().OfType<SeekTrack>().Single(track => track.Name == "seek");
 
     private static ComboBox Presets(MainWindow window) =>
         window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");

@@ -29,7 +29,10 @@ internal sealed partial class ViewerWindow : Window
     private static readonly PixelSize LargestStart = new(1280, 720);
 
     /// <summary>How wide a window of buttons alone is, so its title bar has room for the title.</summary>
-    private const double ToolbarWidth = 360;
+    private const double ToolbarWidth = 400;
+
+    /// <summary>How often the seek bar follows the clock.</summary>
+    private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(100);
 
     private readonly PreviewHost? preview;
     private readonly Border previewBox;
@@ -94,15 +97,24 @@ internal sealed partial class ViewerWindow : Window
         {
             var knobs = BuildKnobs();
             var overlay = BuildOverlay();
+            var seek = BuildSeek();
 
             knobs.Pin();
             overlay.Pin();
+            seek.Pin();
 
             Content = new StackPanel
             {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Children = { knobs, overlay },
+                Children =
+                {
+                    seek,
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        Children = { knobs, overlay },
+                    },
+                },
             };
         }
         else
@@ -120,6 +132,7 @@ internal sealed partial class ViewerWindow : Window
             if (!options.NoOverlay)
             {
                 layout.Children.Add(BuildKnobs());
+                layout.Children.Add(BuildSeek());
                 layout.Children.Add(BuildOverlay());
             }
 
@@ -159,6 +172,16 @@ internal sealed partial class ViewerWindow : Window
         };
 
         player.Finished += Close;
+
+        // The player stops itself at the end of the patch's length, so the buttons follow it.
+        if (Seek is not null || Overlay is not null)
+        {
+            var follow = new DispatcherTimer(DispatcherPriority.Background) { Interval = Follow };
+
+            follow.Tick += (_, _) => Followed();
+            Opened += (_, _) => follow.Start();
+            Closed += (_, _) => follow.Stop();
+        }
     }
 
     /// <summary>The player behind the window, for whoever drives it.</summary>
@@ -169,6 +192,9 @@ internal sealed partial class ViewerWindow : Window
 
     /// <summary>The transport over the picture, or null for a run that asked for none.</summary>
     internal TransportOverlay? Overlay { get; private set; }
+
+    /// <summary>The seek bar over the picture, or null for a run that asked for no overlay.</summary>
+    internal SeekOverlay? Seek { get; private set; }
 
     /// <summary>The line saying how the picture is drawn, or null for a run with no picture.</summary>
     internal StatsOverlay? Stats { get; }
@@ -209,6 +235,29 @@ internal sealed partial class ViewerWindow : Window
         overlay.RewindClicked += player.Rewind;
 
         return overlay;
+    }
+
+    private SeekOverlay BuildSeek()
+    {
+        var seek = Seek = new SeekOverlay();
+
+        seek.Sought += player.SeekTo;
+        seek.LoopClicked += () =>
+        {
+            player.Looped = !player.Looped;
+            Followed();
+        };
+
+        seek.Follow(player.Time, player.Length, player.Looped);
+
+        return seek;
+    }
+
+    /// <summary>Puts the seek bar and the pause button where the player is.</summary>
+    internal void Followed()
+    {
+        Seek?.Follow(player.Time, player.Length, player.Looped);
+        if (Overlay is { } overlay) overlay.Paused = player.Paused;
     }
 
     private void TogglePause()

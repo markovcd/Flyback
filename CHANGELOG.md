@@ -8,7 +8,7 @@
 - Added Chord, which plays one of 23 two-, three- and four-note chords on a root as four frequencies, and Auto Chord, the seventh chord on a played note or a step of one of 26 seven-note scales.
 - A group's `{` may stand on a line of its own in a text patch, and an output may be taken off on the next line.
 - F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops in the corner.
-- A seek bar on the toolbar moves the patch's clock anywhere along a length typed beside it, and loops that length.
+- A seek bar on the toolbar, over a full-screen picture and in the viewer moves the patch's clock anywhere along the patch's own length, `length 2:30.50` in text, and stops or loops at its end.
 - Settings → Canvas → Compact modules puts each input beside an output on one row, with an input's value in its tooltip.
 - A patched socket in the panel names the socket at the other end of its wire, `◀ patched from Time.t`, and an output names every socket it feeds; a group's socket in the panel is its module's row, help and slider included.
 - Every socket and every setting on a node says what it is for: hovering its row in the panel shows it, the panel lists a module's outputs with theirs, and the assistant and `flyback-cli modules <module>` read the same words.

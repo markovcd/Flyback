@@ -44,6 +44,8 @@ public static class IssueCode
 
     /// <summary>A keyboard laid out in notes that are not one of the scales an Auto Chord builds in.</summary>
     public const string UnknownScale = "unknown-scale";
+    /// <summary>A <c>length</c> that is not minutes:seconds or a duration, or is shorter than a tenth of a second or longer than a day.</summary>
+    public const string BadLength = "bad-length";
     public const string ArithmeticAfterPipeline = "arithmetic-after-pipeline";
 
     // --- step blocks -----------------------------------------------------------
@@ -135,6 +137,6 @@ public static class IssueCode
     public const string PanelNotASignal = "panel-not-a-signal";
     public const string UnknownSetting = "unknown-setting";
 
-    /// <summary>A line a patch has once — keyboard, description, author, tags — said again.</summary>
+    /// <summary>A line a patch has once — keyboard, length, description, author, tags — said again.</summary>
     public const string SaidTwice = "said-twice";
 }

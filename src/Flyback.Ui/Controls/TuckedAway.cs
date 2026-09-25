@@ -4,7 +4,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Controls.Presenters;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 
 namespace Flyback.App.Controls;
@@ -42,9 +44,13 @@ public abstract class TuckedAway : Border
     private bool held;
     private bool pinned;
 
+    /// <summary>How big a bare glyph button over the picture is, either way.</summary>
+    protected const double ToolSize = 40;
+
     /// <param name="contents">What the dots open to, in their place.</param>
-    /// <param name="side">Where along the bottom both sit.</param>
-    protected TuckedAway(Control contents, HorizontalAlignment side)
+    /// <param name="side">Where along the edge both sit.</param>
+    /// <param name="edge">Which edge, the bottom or the top.</param>
+    protected TuckedAway(Control contents, HorizontalAlignment side, VerticalAlignment edge = VerticalAlignment.Bottom)
     {
         this.contents = contents;
 
@@ -57,12 +63,12 @@ public abstract class TuckedAway : Border
             Opacity = Floor,
             Effect = Halo(),
             HorizontalAlignment = side,
-            VerticalAlignment = VerticalAlignment.Bottom,
+            VerticalAlignment = edge,
             Content = new Viewbox { Width = 24, Height = 24, Child = Glyphs.Dots() },
         };
 
         contents.HorizontalAlignment = side;
-        contents.VerticalAlignment = VerticalAlignment.Bottom;
+        contents.VerticalAlignment = edge;
         contents.Opacity = 0;
         contents.IsHitTestVisible = false;
         contents.Transitions = new Transitions { new DoubleTransition { Property = OpacityProperty, Duration = TimeSpan.FromMilliseconds(160) } };
@@ -74,7 +80,7 @@ public abstract class TuckedAway : Border
 
         Child = layout;
         HorizontalAlignment = side;
-        VerticalAlignment = VerticalAlignment.Bottom;
+        VerticalAlignment = edge;
 
         dots.PointerEntered += (_, _) => Shown();
         PointerEntered += (_, _) => tuck.Stop();
@@ -89,6 +95,20 @@ public abstract class TuckedAway : Border
             tuck.Stop();
             Hidden();
         };
+
+        // The theme paints a hovered or pressed button a fill; over a picture that
+        // is a gray box, so the glyph brightens instead.
+        foreach (var state in new[] { ":pointerover", ":pressed" })
+        {
+            var lit = new Style(x => x
+                .OfType<Button>().Class(state).Not(y => y.Class(":disabled"))
+                .Template().OfType<ContentPresenter>().Name("PART_ContentPresenter"));
+
+            lit.Setters.Add(new Setter(ContentPresenter.BackgroundProperty, Brushes.Transparent));
+            lit.Setters.Add(new Setter(ContentPresenter.BorderBrushProperty, Brushes.Transparent));
+            lit.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, Brushes.White));
+            Styles.Add(lit);
+        }
 
         // Put away with the control, so it comes back the way it started.
         PropertyChanged += (_, e) =>
@@ -133,6 +153,40 @@ public abstract class TuckedAway : Border
         var t = Math.Clamp((Far - distance) / (Far - Near), 0, 1);
 
         return Floor + (1 - Floor) * t * t;
+    }
+
+    /// <summary>A glyph at the knobs' scale, so its strokes weigh what theirs do.</summary>
+    protected static Viewbox Face(Control glyph) => new() { Width = 22, Height = 22, Child = glyph };
+
+    /// <summary>
+    /// A bare glyph that stops the click there: the preview underneath answers a
+    /// double-click, and a second press on a button is not one.
+    /// </summary>
+    protected static Button Tool(Control glyph, string tip, Action act)
+    {
+        var button = new Button
+        {
+            Content = Face(glyph),
+            Width = ToolSize,
+            Height = ToolSize,
+            Padding = new Thickness(0),
+            Background = Brushes.Transparent,
+            BorderBrush = Brushes.Transparent,
+            Foreground = new SolidColorBrush(Avalonia.Media.Colors.White, 0.8),
+            Effect = Halo(),
+        };
+
+        ToolTip.SetTip(button, tip);
+
+        button.Click += (_, e) =>
+        {
+            act();
+            e.Handled = true;
+        };
+
+        button.DoubleTapped += (_, e) => e.Handled = true;
+
+        return button;
     }
 
     /// <summary>Opens the contents and holds them open while the pointer is over them.</summary>

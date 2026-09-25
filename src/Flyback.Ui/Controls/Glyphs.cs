@@ -97,6 +97,9 @@ internal static class Glyphs
     /// <summary>A triangle pointing right, filled — what starts it again.</summary>
     public static Control Play() => Filled(Geometry.Parse("M4.5,3 L13,8 L4.5,13 Z"));
 
+    /// <summary>A ring nearly closed, its arrow back at where it began: the clock coming round.</summary>
+    public static Control Loop() => Stroked("M13,8 A5,5 0 1 1 11.5,4.5 M11.5,1.5 L11.5,4.5 L8.5,4.5");
+
     /// <summary>Three dots in a row: the place a hidden toolbar is, waiting to be reached for.</summary>
     public static Control Dots() => Filled(Geometry.Parse(
         "M2,6.5 A1.5,1.5 0 1 1 2,9.5 A1.5,1.5 0 1 1 2,6.5 Z "

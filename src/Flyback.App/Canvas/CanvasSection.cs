@@ -133,16 +133,6 @@ internal sealed class CanvasSection
         Write();
     }
 
-    /// <summary>How many seconds the seek bar spans, kept beside the switches but set on the bar.</summary>
-    internal double SeekLength => saved.SeekLength;
-
-    /// <summary>Saves the seek bar's length on its own, leaving the switches as last saved.</summary>
-    internal void SaveSeekLength(double seconds)
-    {
-        saved.SeekLength = seconds;
-        Write();
-    }
-
     /// <summary>Whether the seek bar loops, kept beside the switches but set on the bar.</summary>
     internal bool SeekLoop => saved.SeekLoop;
 
@@ -161,7 +151,6 @@ internal sealed class CanvasSection
             PluginSkins = pluginSkins.IsChecked == true,
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,
-            SeekLength = saved.SeekLength,
             SeekLoop = saved.SeekLoop,
         };
 

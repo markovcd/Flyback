@@ -159,7 +159,7 @@ public class ViewerWindowTests : UiTest
 
         window.Overlay!.IsOpen.ShouldBeTrue();
         window.Overlay!.Dots.IsVisible.ShouldBeFalse();
-        window.Height.ShouldBeLessThan(100);
+        window.Height.ShouldBeLessThan(160);
 
         window.KeyPress(Key.F11, RawInputModifiers.None, PhysicalKey.F11, null);
         Settle(window);
@@ -340,6 +340,93 @@ public class ViewerWindowTests : UiTest
         player.Tick();
         device.Pump(1024);
         player.Audio.Time.ShouldBeLessThan(0.1);
+    }
+
+    /// <summary>A sine a second long, on a device the test drives, played for <paramref name="seconds"/> of it.</summary>
+    private static PlayerRun Played(ViewerOptions options, double seconds, Func<double> now, Loopback device)
+    {
+        var patch = Tone();
+        patch.Length = 1;
+
+        var run = Clocked(options, now, device, Files(patch));
+
+        device.Pump((int)(GlobalConstants.SampleRate * seconds));
+
+        return run;
+    }
+
+    [AvaloniaFact]
+    public void A_patch_stops_at_the_end_of_its_length_and_plays_again_from_nought()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var run = Played(Options(), 1.2, () => now, device);
+        var player = run.Player;
+
+        now = 1.2;
+        player.Tick();
+
+        player.Paused.ShouldBeTrue();
+
+        player.Resume();
+
+        player.Paused.ShouldBeFalse();
+        player.Time.ShouldBeLessThan(0.1);
+    }
+
+    [AvaloniaFact]
+    public void A_looped_patch_comes_round_at_the_end_of_its_length()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var run = Played(Options(), 1.2, () => now, device);
+        var player = run.Player;
+
+        player.Looped = true;
+        now = 1.2;
+        player.Tick();
+        device.Pump(256);
+
+        player.Paused.ShouldBeFalse();
+        player.Time.ShouldBeLessThan(0.1);
+    }
+
+    [AvaloniaFact]
+    public void A_run_with_no_window_ends_with_its_patch()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var run = Played(Options() with { Hidden = true }, 1.2, () => now, device);
+        var finished = 0;
+        run.Player.Finished += () => finished++;
+
+        now = 1.2;
+        run.Player.Tick();
+
+        finished.ShouldBe(1);
+    }
+
+    [AvaloniaFact]
+    public void The_seek_bar_waits_behind_dots_at_the_top_and_moves_the_clock()
+    {
+        var window = Open(Plasma(), Options() with { Size = new PixelSize(640, 360) });
+        var seek = window.Seek.ShouldNotBeNull();
+
+        seek.VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
+        seek.IsOpen.ShouldBeFalse();
+
+        var dots = seek.Dots;
+        window.MouseMove(dots.TranslatePoint(new Point(dots.Bounds.Width / 2, dots.Bounds.Height / 2), window)!.Value);
+        Settle(window);
+
+        seek.IsOpen.ShouldBeTrue();
+
+        var at = seek.Track.TranslatePoint(seek.Track.At(90), window)!.Value;
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+
+        window.Player.Time.ShouldBe(90, 1);
     }
 
     [AvaloniaFact]

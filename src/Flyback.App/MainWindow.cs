@@ -1510,9 +1510,13 @@ internal sealed class MainWindow : Window
 
         statsOverlay = new StatsOverlay(preview);
 
+        seekOverlay = new SeekOverlay { IsVisible = false };
+        toolbar.Seek.Drive(seekOverlay);
+
         grid.Children.Add(previewBox);
         grid.Children.Add(statsOverlay);
         grid.Children.Add(knobs.Stage);
+        grid.Children.Add(seekOverlay);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);
         grid.Children.Add(inspectorBorder);
@@ -1694,6 +1698,8 @@ internal sealed class MainWindow : Window
         window.Transport.MuteClicked += playback.ToggleMute;
         window.Transport.RewindClicked += RewindToZero;
 
+        toolbar.Seek.Drive(window.Seek);
+
         window.PauseRequested += (_, _) => TogglePause();
         window.StatsRequested += (_, _) => ToggleStats();
         window.Closed += (_, _) => BringPictureBack(window);
@@ -1710,6 +1716,7 @@ internal sealed class MainWindow : Window
 
         pictureWindow = null;
         knobs.Away = null;
+        toolbar.Seek.Drop(window.Seek);
 
         preview.Renew();
         previewBox.Child = preview;
@@ -1752,6 +1759,12 @@ internal sealed class MainWindow : Window
             }
 
             overlay.IsVisible = full;
+        }
+
+        if (seekOverlay is not null)
+        {
+            Over(seekOverlay);
+            seekOverlay.IsVisible = full;
         }
 
         Over(knobs.Stage);
@@ -1994,6 +2007,9 @@ internal sealed class MainWindow : Window
     /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
     private TransportOverlay? transportOverlay;
 
+    /// <summary>The seek bar over the preview's cell while it has the window.</summary>
+    private SeekOverlay? seekOverlay;
+
     private bool pauseShowsPlay;
 
     internal bool Paused => playback.Paused;
@@ -2023,6 +2039,9 @@ internal sealed class MainWindow : Window
 
         toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
         toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
+
+        foreach (var seek in new[] { seekOverlay, pictureWindow?.Seek }.OfType<SeekOverlay>())
+            seek.IsEnabled = toolbar.Seek.IsEnabled;
 
         ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
 

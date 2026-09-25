@@ -29,6 +29,19 @@ public sealed class TransportSteps(Editor editor)
         editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2)).ShouldBeTrue("the clock never came round");
     }
 
+    [When("the patch plays to the end of the seek bar")]
+    public void WhenToTheEnd()
+    {
+        editor.Seek(editor.SeekLength);
+        editor.WaitForStop(TimeSpan.FromSeconds(2)).ShouldBeTrue("the patch never stopped");
+    }
+
+    [Then("the patch has stopped")]
+    public void ThenStopped() => editor.Paused.ShouldBeTrue();
+
+    [Then("a seek bar waits at the top of the picture")]
+    public void ThenASeekBarAtTheTop() => editor.SeekBarAtTheTop.ShouldBeTrue();
+
     [When("the seek bar's length is set to {string}")]
     public void WhenTheLengthIsSet(string typed) => editor.SetSeekLength(typed);
 
@@ -47,6 +60,6 @@ public sealed class TransportSteps(Editor editor)
     [Then("the editor's picture says how many frames a second it draws")]
     public void ThenTheEditorSays() => editor.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
-    [Then("the seek bar reaches {int} seconds")]
-    public void ThenTheBarReaches(int seconds) => editor.SeekLength.ShouldBe(seconds);
+    [Then("the seek bar reaches {float} seconds")]
+    public void ThenTheBarReaches(double seconds) => editor.SeekLength.ShouldBe(seconds, 0.001);
 }

@@ -139,6 +139,10 @@ public static class PatchPrinter
     public static string? Keyboard(KeyboardScale? scale) =>
         scale is null ? null : $"keyboard scale [ {string.Join(' ', scale.Row.Select(Pitch.ClassName))} ]";
 
+    /// <summary>How long the patch plays for, as the line that says it, or null where it does not say.</summary>
+    public static string? Length(double? seconds) =>
+        PatchLength.Kept(seconds) is { } kept ? "length " + PatchLength.Say(kept) : null;
+
     /// <summary>
     /// What the patch is for, as the statement that says it, or null where it says
     /// nothing. Run on over as many strings as keep it to the page's width.
@@ -831,7 +835,7 @@ public static class PatchPrinter
 
             // First, because it is about the whole patch and not about any line
             // below it.
-            string?[] about = [Description(patch.Description), Author(patch.Author), Tags(patch.Tags)];
+            string?[] about = [Description(patch.Description), Author(patch.Author), Tags(patch.Tags), Length(patch.Length)];
 
             if (about.Any(line => line is not null))
             {
