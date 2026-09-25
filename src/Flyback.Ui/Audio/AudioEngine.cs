@@ -181,8 +181,6 @@ public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null
         state.Memory?.Clear();
     }
 
-    public IlCompiler? Compiler { get; } = compiler;
-
     /// <summary>
     /// Swaps in a freshly compiled patch. Sizing the register scratch and the
     /// program's memory happens here, on the UI thread, so the callback never has
@@ -200,7 +198,7 @@ public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null
 
         // Interpreted from the first buffer unless waiting; the compiler attaches IL to
         // this same program when it has some, and the callback picks it up on the next buffer.
-        Compiler?.Submit(program, IlLane.Sound);
+        compiler?.Submit(program, IlLane.Sound);
 
         renderer.Prepare(program);
 
@@ -311,7 +309,7 @@ public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null
         if (!patch.Reaches().Sound) return null;
 
         var program = patch.CompileForAudio(samples: samples, played: true).Program;
-        Compiler?.Submit(program, IlLane.AuditionSound);
+        compiler?.Submit(program, IlLane.AuditionSound);
 
         var own = new AudioRenderer(renderer.SampleRate) { Aspect = renderer.Aspect };
 
