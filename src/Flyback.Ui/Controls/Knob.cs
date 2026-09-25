@@ -53,7 +53,7 @@ internal class Knob : Control
     }
 
     /// <summary>Holds the pointer where a turn begins. Null leaves the pointer free.</summary>
-    internal Func<Visual, IPointerAnchor?> Anchor { get; set; } = PointerAnchor.Take;
+    internal IPointerAnchors Anchors { get; set; } = PlatformAnchors.Instance;
 
     public double Value
     {
@@ -110,7 +110,7 @@ internal class Knob : Control
         e.Pointer.Capture(this);
         e.Handled = true;
 
-        anchor = Anchor(this);
+        anchor = Anchors.Take(this);
         if (anchor is not null) Cursor = Hidden;
     }
 

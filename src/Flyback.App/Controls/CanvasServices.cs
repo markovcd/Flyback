@@ -1,4 +1,3 @@
-using Avalonia;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -13,8 +12,8 @@ internal static class CanvasServices
     /// </summary>
     public static IServiceCollection AddCanvas(this IServiceCollection services)
     {
-        // The pointer held where a socket's turn began; a test hands over one that holds nothing.
-        services.TryAddSingleton<Func<Visual, IPointerAnchor?>>(PointerAnchor.Take);
+        // The pointer held where a socket's turn began; a test hands over anchors that hold nothing.
+        services.TryAddSingleton<IPointerAnchors>(PlatformAnchors.Instance);
 
         services.AddSingleton<NodeGeometry>();
         services.AddSingleton<Repaint>();

@@ -15,12 +15,12 @@ namespace Flyback.App.Controls;
 /// An edit like the inspector's slider, filed under the same name, so a turn here and
 /// a drag there are one undo step each.
 /// </remarks>
-/// <param name="anchor">Holds the pointer where a turn begins. Returning null leaves the pointer free.</param>
+/// <param name="anchors">Holds the pointer where a turn begins, or leaves it free.</param>
 internal sealed class SocketDial(
     CanvasHistory history,
     CanvasSelection selection,
     Repaint repaint,
-    Func<Visual, IPointerAnchor?> anchor)
+    IPointerAnchors anchors)
 {
     /// <summary>How far a drag has to travel to turn the socket end to end, as on <see cref="Knob"/>.</summary>
     private const double DialTravel = 160;
@@ -62,7 +62,7 @@ internal sealed class SocketDial(
         dialAt = spec.Travel(value, min, max);
         dialLast = dialHome = screen;
 
-        dialAnchor = anchor(canvas);
+        dialAnchor = anchors.Take(canvas);
         canvas.Cursor = dialAnchor is null ? DialCursor : HiddenCursor;
 
         repaint.Request();

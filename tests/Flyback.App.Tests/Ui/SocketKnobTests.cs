@@ -31,7 +31,12 @@ public class SocketKnobTests : UiTest
 
     /// <summary>A canvas whose turns leave the pointer free, since there is no real pointer to hold.</summary>
     private (NodeEditor Editor, Window Window) Editing(Patch patch) =>
-        Editing(patch, services => services.AddSingleton<Func<Visual, IPointerAnchor?>>(_ => (IPointerAnchor?)null));
+        Editing(patch, services => services.AddSingleton<IPointerAnchors>(new Free()));
+
+    private sealed class Free : IPointerAnchors
+    {
+        public IPointerAnchor? Take(Visual visual) => null;
+    }
 
     /// <summary>The first input on <paramref name="node"/> that has a knob of its own.</summary>
     private static int Turnable(Patch patch, NodeInstance node)

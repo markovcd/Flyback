@@ -31,9 +31,15 @@ public class KnobHoldTests : UiTest
         public void Dispose() => Disposed = true;
     }
 
+    /// <summary>Hands every turn <paramref name="anchor"/>.</summary>
+    private sealed class Given(IPointerAnchor? anchor) : IPointerAnchors
+    {
+        public IPointerAnchor? Take(Visual visual) => anchor;
+    }
+
     private (Window Window, Knob Knob, Point Middle) Open(IPointerAnchor? anchor)
     {
-        var knob = new Knob { Value = 0, Anchor = _ => anchor };
+        var knob = new Knob { Value = 0, Anchors = new Given(anchor) };
         var window = Show(knob);
 
         return (window, knob, knob.TranslatePoint(new Point(22, 22), window)!.Value);
