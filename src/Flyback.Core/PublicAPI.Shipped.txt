@@ -561,8 +561,6 @@ Flyback.Core.Graph.Patch.GroupOf(System.Guid nodeId) -> Flyback.Core.Graph.NodeG
 Flyback.Core.Graph.Patch.Groups.get -> System.Collections.Generic.List<Flyback.Core.Graph.NodeGroup!>?
 Flyback.Core.Graph.Patch.Groups.set -> void
 Flyback.Core.Graph.Patch.IncomingTo(System.Guid node, int port) -> Flyback.Core.Graph.Connection?
-Flyback.Core.Graph.Patch.KeyboardScale.get -> System.Collections.Generic.List<int>?
-Flyback.Core.Graph.Patch.KeyboardScale.set -> void
 Flyback.Core.Graph.Patch.MoveControl(System.Guid id, int index) -> bool
 Flyback.Core.Graph.Patch.Nodes.get -> System.Collections.Generic.List<Flyback.Core.Graph.NodeInstance!>!
 Flyback.Core.Graph.Patch.Nodes.set -> void

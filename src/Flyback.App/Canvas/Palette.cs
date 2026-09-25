@@ -46,11 +46,11 @@ internal sealed class Palette
     {
         if (typeId != NodeCatalog.MidiTypeId
             || keyboard() != KeyboardLayout.Scale
-            || editor.History.Patch.KeyboardScale is not null
+            || editor.History.Patch.Keyboard is not null
             || editor.History.Patch.FirstOf(NodeCatalog.MidiTypeId) is not null)
             return;
 
-        editor.History.Patch.KeyboardScale = [.. Inspector.Major];
+        editor.History.Patch.Keyboard = KeyboardScale.Major;
         document.Relaid();
     }
 

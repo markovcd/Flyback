@@ -859,19 +859,24 @@ public class PatchWorkbenchTests
     {
         var bench = Bench();
 
-        var set = await Call(bench, "set_keyboard", """{"layout":"scale","notes":[9,0,4]}""");
+        var set = await Call(bench, "set_keyboard", """{"layout":"scale","tonic":9,"scale":"aeolian"}""");
 
         set.Ok.ShouldBeTrue(set.Text);
-        bench.Snapshot().KeyboardScale.ShouldBe([0, 4, 9]);
+        set.Text.ShouldContain("keyboard scale [ A aeolian ]");
+        bench.Snapshot().Keyboard.ShouldBe(new KeyboardScale(9, "aeolian"));
 
         (await Call(bench, "set_keyboard", """{"layout":"piano"}""")).Ok.ShouldBeTrue();
-        bench.Snapshot().KeyboardScale.ShouldBeNull();
+        bench.Snapshot().Keyboard.ShouldBeNull();
     }
 
-    [Fact]
-    public async Task A_scale_layout_with_no_notes_is_refused()
+    [Theory]
+    [InlineData("""{"layout":"scale"}""")]
+    [InlineData("""{"layout":"scale","tonic":2}""")]
+    [InlineData("""{"layout":"scale","tonic":12,"scale":"dorian"}""")]
+    [InlineData("""{"layout":"scale","tonic":2,"scale":"blues"}""")]
+    public async Task A_scale_layout_short_of_a_tonic_and_a_scale_is_refused(string arguments)
     {
-        (await Call(Bench(), "set_keyboard", """{"layout":"scale"}""")).Ok.ShouldBeFalse();
+        (await Call(Bench(), "set_keyboard", arguments)).Ok.ShouldBeFalse();
     }
 
     // --- a quantiser's scale --------------------------------------------------

@@ -66,14 +66,14 @@ public class CreditLineTests
     [Fact]
     public void A_printing_says_them_under_the_description_and_builds_back_to_them()
     {
-        var patch = Built("keyboard scale [ C D ]\nmidi.in().pitch |> out.left").Patch;
+        var patch = Built("keyboard scale [ C ionian ]\nmidi.in().pitch |> out.left").Patch;
         patch.Describe("Two notes.");
         patch.Credit("Ada");
         patch.Tag(["drone", "slow"]);
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
-        source.ShouldStartWith("description \"Two notes.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\nkeyboard scale [ C D ]");
+        source.ShouldStartWith("description \"Two notes.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\nkeyboard scale [ C ionian ]");
 
         var back = Built(source).Patch;
         back.Author.ShouldBe("Ada");

@@ -136,12 +136,8 @@ public static class PatchPrinter
     /// How the computer keyboard is laid out, as the line that says it — or null
     /// for the piano, which is what a patch that says nothing is.
     /// </summary>
-    public static string? Keyboard(IReadOnlyList<int>? scale) =>
-        scale is null
-            ? null
-            : scale.Count == 0
-                ? "keyboard scale [ ]"
-                : "keyboard scale [ " + string.Join(' ', scale.Select(Pitch.ClassName)) + " ]";
+    public static string? Keyboard(KeyboardScale? scale) =>
+        scale is null ? null : $"keyboard scale [ {Pitch.ClassName(scale.TonicClass)} {scale.Mode.Id} ]";
 
     /// <summary>
     /// What the patch is for, as the statement that says it, or null where it says
@@ -856,7 +852,7 @@ public static class PatchPrinter
                 text.AppendLine();
             }
 
-            if (Keyboard(patch.KeyboardScale) is { } keyboard)
+            if (Keyboard(patch.Keyboard) is { } keyboard)
             {
                 text.AppendLine(keyboard);
                 text.AppendLine();

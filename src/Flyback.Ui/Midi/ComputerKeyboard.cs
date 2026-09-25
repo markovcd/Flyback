@@ -11,10 +11,8 @@ namespace Flyback.App.Midi;
 /// The piano is the tracker layout: white notes on the bottom row, black notes
 /// above the gaps, and the upper two rows the same an octave up.
 /// <para>
-/// The scale puts one octave per row, home row in the middle, with the picked
-/// notes from the left and the rest of the row silent, so each key is always the
-/// same degree. The bottom row has ten keys, so it drops the top of an eleven- or
-/// twelve-note scale.
+/// The scale puts one octave per row, home row in the middle, from the tonic on
+/// the left and the rest of the row silent, so each key is always the same degree.
 /// </para>
 /// <para>
 /// Keyed by physical <see cref="Key"/>, so the layout holds on any keyboard language.
@@ -103,15 +101,15 @@ internal sealed class ComputerKeyboard
     }
 
     /// <summary>
-    /// The notes of the octave laid along each row, or null where the keys are a
-    /// piano. Setting it holds the octave to what the new layout reaches.
+    /// The scale laid along each row, or null where the keys are a piano. Setting
+    /// it holds the octave to what the new layout reaches.
     /// </summary>
-    public IReadOnlyList<int>? Scale
+    public KeyboardScale? Scale
     {
         get;
         set
         {
-            field = value is null ? null : Pitch.Scale(value);
+            field = value;
 #pragma warning disable CA2245 // Re-clamped by its setter to the new layout's reach.
             Octave = Octave;
 #pragma warning restore CA2245
@@ -123,10 +121,10 @@ internal sealed class ComputerKeyboard
 
     /// <summary>
     /// How far above <see cref="Bottom"/> the highest key reaches: the piano's run
-    /// carries on to the E above the upper C, and a scale's top row ends within
-    /// its octave.
+    /// carries on to the E above the upper C, and a scale's top row ends where its
+    /// octave above the tonic does.
     /// </summary>
-    private int Above => Scale is null ? 28 : 23;
+    private int Above => Scale is { } scale ? 12 + scale.Row[^1] : 28;
 
     private int Lowest => -((Bottom - Below) / 12);
 
@@ -146,12 +144,14 @@ internal sealed class ComputerKeyboard
         if (Scale is not { } scale)
             return Layout.TryGetValue(key, out var semitones) ? Bottom + Octave * 12 + semitones : null;
 
+        var notes = scale.Row;
+
         for (var row = 0; row < Rows.Length; row++)
         {
             var place = Array.IndexOf(Rows[row], key);
 
             if (place >= 0)
-                return place < scale.Count ? Bottom + (Octave + row - HomeRow) * 12 + scale[place] : null;
+                return place < notes.Count ? Bottom + (Octave + row - HomeRow) * 12 + notes[place] : null;
         }
 
         return null;
@@ -166,12 +166,10 @@ internal sealed class ComputerKeyboard
         get
         {
             if (Scale is not { } scale) return $"Keyboard: piano, {Range}.";
-            if (scale.Count == 0) return "Keyboard: scale, with no notes picked, so it plays nothing.";
 
-            var keys = string.Concat("ASDFGHJKL;'\\".Take(scale.Count));
-            var notes = string.Join(" ", scale.Select(Pitch.ClassName));
+            var keys = string.Concat("ASDFGHJKL;'\\".Take(scale.Row.Count));
 
-            return $"Keyboard: {notes} on {keys[0]} to {keys[^1]}, Q row an octave up, Z row an octave down — {Range}.";
+            return $"Keyboard: {scale.Name} on {keys[0]} to {keys[^1]}, Q row an octave up, Z row an octave down — {Range}.";
         }
     }
 
@@ -189,11 +187,9 @@ internal sealed class ComputerKeyboard
             if (Scale is not { } scale)
                 return $"{Pitch.Name(bottom)} to {Pitch.Name(bottom + Above)}";
 
-            if (scale.Count == 0) return "nothing, since the scale has no notes picked";
+            var notes = scale.Row;
 
-            var top = scale[Math.Min(scale.Count, Rows[^1].Length) - 1];
-
-            return $"{Pitch.Name(bottom - 12 + scale[0])} to {Pitch.Name(bottom + 12 + top)}";
+            return $"{Pitch.Name(bottom - 12 + notes[0])} to {Pitch.Name(bottom + 12 + notes[^1])}";
         }
     }
 }

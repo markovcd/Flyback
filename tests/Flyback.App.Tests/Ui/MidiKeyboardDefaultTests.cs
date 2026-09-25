@@ -17,7 +17,6 @@ namespace Flyback.App.Tests.Ui;
 /// </summary>
 public sealed class MidiKeyboardDefaultTests : UiTest
 {
-    private static readonly int[] CMajor = [0, 2, 4, 5, 7, 9, 11];
 
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
@@ -86,7 +85,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).History.Patch.KeyboardScale.ShouldBe(CMajor);
+        Editor(window).History.Patch.Keyboard.ShouldBe(KeyboardScale.Major);
     }
 
     [AvaloniaFact]
@@ -96,7 +95,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.Keyboard.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -110,7 +109,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.Keyboard.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -121,7 +120,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
-        Editor(window).History.Patch.KeyboardScale.ShouldBeNull();
+        Editor(window).History.Patch.Keyboard.ShouldBeNull();
     }
 
     [AvaloniaFact]
@@ -129,13 +128,13 @@ public sealed class MidiKeyboardDefaultTests : UiTest
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         b.Add(NodeCatalog.OutputTypeId, 700, 40);
-        b.Patch.KeyboardScale = [0, 3, 7];
+        b.Patch.Keyboard = new KeyboardScale(7, "lydian");
 
         var window = Open(KeyboardLayout.Scale, b.Patch);
 
         AddFromPalette(window, "MIDI In", NodeCatalog.MidiTypeId);
 
-        Editor(window).History.Patch.KeyboardScale.ShouldBe([0, 3, 7]);
+        Editor(window).History.Patch.Keyboard.ShouldBe(new KeyboardScale(7, "lydian"));
     }
 
     [AvaloniaFact]

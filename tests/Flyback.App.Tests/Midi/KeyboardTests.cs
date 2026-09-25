@@ -87,34 +87,15 @@ public class KeyboardTests
     }
 
     /// <summary>
-    /// All twelve picked: the home row is the octave the piano's lower row was,
-    /// one note a key, with the row above an octave up and the one below an
-    /// octave down.
+    /// The home row is the octave the piano's lower row was, one note of the scale
+    /// a key from the tonic, with the row above an octave up and the one below an
+    /// octave down. The keys past the seventh play nothing, so each key is always
+    /// the same degree.
     /// </summary>
     [Fact]
-    public void A_scale_of_twelve_fills_the_home_row()
+    public void A_scale_takes_seven_keys_a_row_from_the_tonic()
     {
-        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 12)] };
-
-        keys.Note(Key.A).ShouldBe(48);
-        keys.Note(Key.S).ShouldBe(49);
-        keys.Note(Key.OemPipe).ShouldBe(59);
-
-        keys.Note(Key.Q).ShouldBe(60);
-        keys.Note(Key.OemCloseBrackets).ShouldBe(71);
-
-        keys.Note(Key.Z).ShouldBe(36);
-        keys.Note(Key.OemQuestion).ShouldBe(45);
-    }
-
-    /// <summary>
-    /// A row holds as many notes as are picked, so seven fill A to J and the
-    /// keys past them play nothing rather than running on into the next octave.
-    /// </summary>
-    [Fact]
-    public void A_scale_of_seven_takes_seven_keys_a_row()
-    {
-        var keys = new ComputerKeyboard { Scale = [0, 2, 4, 5, 7, 9, 11] };
+        var keys = new ComputerKeyboard { Scale = KeyboardScale.Major };
 
         keys.Note(Key.A).ShouldBe(48);
         keys.Note(Key.D).ShouldBe(52);
@@ -129,42 +110,24 @@ public class KeyboardTests
     }
 
     [Fact]
-    public void A_scale_of_five_takes_five_keys_a_row()
+    public void A_row_starts_on_its_tonic_and_runs_on_past_the_octave()
     {
-        var keys = new ComputerKeyboard { Scale = [0, 2, 4, 7, 9] };
+        var keys = new ComputerKeyboard { Scale = new KeyboardScale(9, "aeolian") };
 
-        keys.Note(Key.G).ShouldBe(57);
-        keys.Note(Key.H).ShouldBeNull();
-        keys.Note(Key.T).ShouldBe(69);
-        keys.Note(Key.Y).ShouldBeNull();
-        keys.Note(Key.B).ShouldBe(45);
-    }
+        keys.Note(Key.A).ShouldBe(57);
+        keys.Note(Key.S).ShouldBe(59);
+        keys.Note(Key.D).ShouldBe(60);
+        keys.Note(Key.J).ShouldBe(67);
 
-    /// <summary>The bottom row has ten keys, so the eleventh and twelfth notes are not on it.</summary>
-    [Fact]
-    public void The_bottom_row_stops_at_ten()
-    {
-        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 11)] };
-
-        keys.Note(Key.OemQuestion).ShouldBe(45);
-        keys.Note(Key.OemQuotes).ShouldBe(58);
-        keys.Note(Key.OemPipe).ShouldBeNull();
-    }
-
-    [Fact]
-    public void An_empty_scale_plays_nothing()
-    {
-        var keys = new ComputerKeyboard { Scale = [] };
-
-        keys.Note(Key.A).ShouldBeNull();
-        keys.Note(Key.Z).ShouldBeNull();
+        keys.Note(Key.Q).ShouldBe(69);
+        keys.Note(Key.Z).ShouldBe(45);
     }
 
     [Fact]
     public void A_scale_keeps_every_key_a_note_that_exists_at_either_end()
     {
-        var keys = new ComputerKeyboard { Scale = [.. Enumerable.Range(0, 12)], Octave = 99 };
-        keys.Note(Key.OemCloseBrackets)!.Value.ShouldBeInRange(0, 127);
+        var keys = new ComputerKeyboard { Scale = new KeyboardScale(11, "locrian"), Octave = 99 };
+        keys.Note(Key.U)!.Value.ShouldBeInRange(0, 127);
 
         keys.Octave = -99;
         keys.Note(Key.Z)!.Value.ShouldBeInRange(0, 127);
@@ -186,13 +149,16 @@ public class KeyboardTests
         hub.Lay(null);
         Read(block, Gate).ShouldBe(1d);
 
-        hub.Lay([0, 2, 4, 5, 7, 9, 11]);
+        hub.Lay(KeyboardScale.Major);
         Read(block, Gate).ShouldBe(0d);
 
         hub.KeyDown(Key.A);
-        hub.Lay([11, 9, 7, 5, 4, 2, 0]);
+        hub.Lay(new KeyboardScale(0, "ionian"));
         Read(block, Gate).ShouldBe(1d);
         Read(block, Pitch).ShouldBe(48d);
+
+        hub.Lay(new KeyboardScale(2, "ionian"));
+        Read(block, Gate).ShouldBe(0d);
     }
 
     /// <summary>
@@ -205,9 +171,10 @@ public class KeyboardTests
         var hub = new MidiHub(NoMidiInput.Instance);
 
         hub.Lay(null).ShouldBeFalse();
-        hub.Lay([0, 2, 4]).ShouldBeTrue();
-        hub.Lay([4, 2, 0]).ShouldBeFalse();
-        hub.Keyboard.Described.ShouldContain("C D E on A to D");
+        hub.Lay(new KeyboardScale(2, "dorian")).ShouldBeTrue();
+        hub.Lay(new KeyboardScale(2, "dorian")).ShouldBeFalse();
+        hub.Keyboard.Described.ShouldContain("D Dorian on A to J");
+        hub.Keyboard.Described.ShouldContain("D2 to C5");
         hub.Lay(null).ShouldBeTrue();
         hub.Keyboard.Described.ShouldStartWith("Keyboard: piano");
     }

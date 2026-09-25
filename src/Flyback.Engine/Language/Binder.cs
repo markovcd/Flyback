@@ -1981,7 +1981,36 @@ public sealed class Binder
         }
 
         laid = true;
-        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.BlockLine, statement.BlockColumn, issues)) : null;
+        patch.Keyboard = statement.Scale is { } block ? Scale(block, statement.BlockLine, statement.BlockColumn) : null;
+    }
+
+    /// <summary>A tonic and a scale: <c>[ D dorian ]</c>.</summary>
+    private KeyboardScale? Scale(string block, int line, int column)
+    {
+        var words = block.Split([' ', '\t', '\r', '\n', ','], StringSplitOptions.RemoveEmptyEntries);
+
+        if (words.Length != 2)
+        {
+            Complain(IssueCode.Syntax, line, column,
+                "a keyboard scale is a tonic and a scale, as in 'keyboard scale [ D dorian ]'.");
+            return null;
+        }
+
+        // Read as a block of its own that opens just before the word, so a complaint points at it.
+        var (tonicLine, tonicColumn) = StepNotation.Where(block, block.IndexOf(words[0], StringComparison.Ordinal), line, column);
+        var tonic = StepNotation.Classes(words[0], tonicLine, tonicColumn - 1, issues);
+
+        if (Chords.Scales.FirstOrDefault(scale => scale.Id == words[1]) is not { } mode)
+        {
+            var (at, where) = StepNotation.Where(block, block.IndexOf(words[1], StringComparison.Ordinal), line, column);
+
+            Complain(IssueCode.UnknownScale, at, where,
+                $"'{words[1]}' is not a scale. The scales are {string.Join(", ", Chords.Scales.Select(scale => scale.Id))}.");
+
+            return null;
+        }
+
+        return tonic.Count == 1 ? new KeyboardScale(tonic[0], mode.Id) : null;
     }
 
     /// <summary>Says what the patch is for, once.</summary>
