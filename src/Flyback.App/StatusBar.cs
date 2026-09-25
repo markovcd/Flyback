@@ -20,10 +20,11 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class StatusBar
 {
+    private readonly IDialogs dialogs;
     private readonly NodeEditor editor;
     private readonly PreviewHost preview;
     private readonly Usage usage;
-    private readonly Func<bool> active;
+    private readonly IWindowFocus focus;
 
     private readonly TextBlock status = new()
     {
@@ -48,14 +49,15 @@ internal sealed class StatusBar
     public Control View { get; }
 
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
-    public StatusBar(Shell shell, PreviewHost preview, SiteAccess site, Playback playback)
+    public StatusBar(Shell shell, PreviewHost preview, SiteAccess site, Playback playback, IDialogs dialogs, IWindowFocus focus)
     {
+        this.dialogs = dialogs;
+        this.focus = focus;
         var report = shell.Report;
 
         editor = shell.Editor;
         this.preview = preview;
         usage = shell.Usage;
-        active = () => shell.Owner.IsActive;
 
         var bar = new Grid
         {
@@ -123,7 +125,7 @@ internal sealed class StatusBar
 
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
-        if (active()) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
+        if (focus.IsActive) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
@@ -156,7 +158,7 @@ internal sealed class StatusBar
     }
 
     /// <summary>Writing to the author, which the bar's last glyph opens (ADR-0136).</summary>
-    private static async Task WriteToTheAuthorAsync(Shell shell, SiteAccess site, Playback playback)
+    private async Task WriteToTheAuthorAsync(Shell shell, SiteAccess site, Playback playback)
     {
         if (site.Root is not { } root)
         {
@@ -167,10 +169,9 @@ internal sealed class StatusBar
         // Built once and both shown and sent, so what was read is what goes.
         var about = SiteLetters.About(shell.Plugins, playback.Sound);
 
-        var said = await LetterView.AskAsync(
-            shell.Owner,
-            about,
-            (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel));
+        var said = await dialogs.Show<string?>(
+            LetterView.Title,
+            LetterView.View(about, (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel)));
 
         if (said is not null) shell.Report.Say(said);
     }

@@ -195,9 +195,6 @@ internal sealed class MainWindow : Window
         AssistantPanel assistant,
         WorkKeeper keeper)
     {
-        // First, so every region can reach the window it is in.
-        shell.Attach(this);
-
         this.editor = editor;
         this.source = source;
         this.document = document;
@@ -672,6 +669,7 @@ internal sealed class MainWindow : Window
         // Asked as the window opens rather than kept from the last time, and not
         // awaited: the window opens while the search runs and the note fills itself in.
         _ = outputSections.ShowFfmpegAsync();
+        outputSections.ShowMonitors();
 
         bool saved;
 

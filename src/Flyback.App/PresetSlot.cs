@@ -20,6 +20,7 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class PresetSlot
 {
+    private readonly IDialogs dialogs;
     private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
@@ -77,8 +78,10 @@ internal sealed class PresetSlot
         SiteAccess site,
         UnsavedWork unsaved,
         Playback playback,
-        PluginInstalls installs)
+        PluginInstalls installs,
+        IDialogs dialogs)
     {
+        this.dialogs = dialogs;
         this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
@@ -149,7 +152,7 @@ internal sealed class PresetSlot
             audition.PointedAt,
             Yours()?.ToPickFrom());
 
-        var chosen = await shell.Owner.ShowDialog<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+        var chosen = await dialogs.Show<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
 
         audition.PointedAt(null);
 
@@ -247,7 +250,7 @@ internal sealed class PresetSlot
     {
         var current = picker.SelectedItem as PatchPreset;
         var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], current, thumbnails, audition.PointedAt, Yours(), site.Presets());
-        var chosen = await shell.Owner.ShowDialog<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
+        var chosen = await dialogs.Show<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
 
         audition.PointedAt(null);
 

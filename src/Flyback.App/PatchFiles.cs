@@ -25,6 +25,7 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class PatchFiles
 {
+    private readonly IFilePickers pickers;
     private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
@@ -56,8 +57,9 @@ internal sealed class PatchFiles
 
     /// <param name="playback">Puts a patch that has just been read on the canvas, from its beginning.</param>
     /// <param name="installs">Offers the plugins a patch that could not be opened is short of.</param>
-    public PatchFiles(Shell shell, Playback playback, PluginInstalls installs)
+    public PatchFiles(Shell shell, Playback playback, PluginInstalls installs, IFilePickers pickers)
     {
+        this.pickers = pickers;
         this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
@@ -207,7 +209,7 @@ internal sealed class PatchFiles
             Patterns = [.. PatchFileKinds.OpenKinds().SelectMany(o => o.Patterns ?? [])]
         };
 
-        var files = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var files = await pickers.Open(new FilePickerOpenOptions
         {
             Title = "Open patch",
             AllowMultiple = false,
@@ -565,7 +567,7 @@ internal sealed class PatchFiles
 
     /// <summary>Asks where to save, or null where the picker was canceled.</summary>
     public async Task<IStorageFile?> PickSaveAsync() =>
-        await shell.Owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        await pickers.Save(new FilePickerSaveOptions
         {
             Title = "Save patch",
             // What it is called now, or "patch" for one nobody has named — the

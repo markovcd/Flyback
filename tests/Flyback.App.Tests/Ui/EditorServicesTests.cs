@@ -37,7 +37,7 @@ public class EditorServicesTests : UiTest
         window.Show();
         Settle(window);
 
-        provider.GetRequiredService<Shell>().Owner.ShouldBeSameAs(window);
+        provider.GetRequiredService<Lazy<MainWindow>>().Value.ShouldBeSameAs(window);
         All<NodeEditor>(window).Single().ShouldBeSameAs(provider.GetRequiredService<NodeEditor>());
     }
 

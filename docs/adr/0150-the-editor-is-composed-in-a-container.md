@@ -68,10 +68,13 @@ for every registration.
 
 Exceptions, each kept on purpose:
 
-- **The window attaches itself to the `Shell`.** The regions are built before the
-  window, since the window is built from them, so the one thing they cannot be
-  handed is the window. `Shell.Attach` is the first line of its constructor, and
-  a region reads `Shell.Owner` only once it is asked to do something.
+- **What a region asks of the window is a service over a `Lazy<MainWindow>`.**
+  The regions are built before the window, since the window is built from them.
+  Dialogs, the file pickers, the monitors, whether the window is in front and
+  closing it are each an interface (`IDialogs`, `IFilePickers`, `IMonitors`,
+  `IWindowFocus`, `IWindowClose`) whose implementation asks for the window only
+  once it is used. Nothing may use one while the window is being built: the
+  container would build a second window to answer it.
 - **Factories for what is only looked up.** Opening the sound device is a call
   `AddEditor` makes in a factory, and the sound engine is given the device the run
   opened with; `Playback` hands it any later one. A value that may be absent (the

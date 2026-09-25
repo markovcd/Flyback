@@ -23,6 +23,7 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class Inspector
 {
+    private readonly IFilePickers pickers;
     /// <summary>
     /// How far the panel's rows keep off its edges. Named because the plate at the
     /// head of it takes the inset back off again to reach them.
@@ -66,8 +67,9 @@ internal sealed class Inspector
     /// <param name="knobs">The instruments a MIDI In can be played from.</param>
     /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
     /// <param name="palette">The kept groups, and keeping one under its name.</param>
-    public Inspector(Shell shell, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette)
+    public Inspector(Shell shell, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers)
     {
+        this.pickers = pickers;
         this.shell = shell;
         editor = shell.Editor;
         document = shell.Document;
@@ -1347,7 +1349,7 @@ internal sealed class Inspector
 
         choose.Click += async (_, _) =>
         {
-            var files = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            var files = await pickers.Open(new FilePickerOpenOptions
             {
                 Title = title,
                 AllowMultiple = false,

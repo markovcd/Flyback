@@ -24,6 +24,8 @@ namespace Flyback.App;
 /// </remarks>
 internal sealed class OutputSections
 {
+    private readonly IFilePickers pickers;
+    private readonly IMonitors monitors;
     /// <summary>The frame rates a take can be recorded at: film, PAL, the usual, and the two doubles.</summary>
     private static readonly double[] FrameRates = [24, 25, 30, 50, 60];
 
@@ -243,8 +245,10 @@ internal sealed class OutputSections
 
     /// <param name="setup">Where the settings are kept.</param>
     /// <param name="presets">The presets the startup patch is named and picked from.</param>
-    public OutputSections(Shell shell, EditorSetup setup, Lazy<PresetSlot> presets)
+    public OutputSections(Shell shell, EditorSetup setup, Lazy<PresetSlot> presets, IFilePickers pickers, IMonitors monitors)
     {
+        this.pickers = pickers;
+        this.monitors = monitors;
         this.shell = shell;
         plugins = shell.Plugins;
         this.presets = presets;
@@ -281,7 +285,6 @@ internal sealed class OutputSections
         if (Gpu.IsEnabled) Gpu.SelectedIndex = settings.Gpu ? 0 : 1;
 
         ShowStartupPatch(settings.DefaultPreset);
-        ShowFullScreen(settings);
 
         frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
@@ -593,7 +596,7 @@ internal sealed class OutputSections
     /// <summary>Asks where ffmpeg is, and looks at what was picked.</summary>
     private async Task PickFfmpegAsync()
     {
-        var file = await shell.Owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        var file = await pickers.Open(new FilePickerOpenOptions
         {
             Title = "Find ffmpeg",
             AllowMultiple = false,
@@ -631,11 +634,14 @@ internal sealed class OutputSections
 
     /// <summary>
     /// Lists the monitors plugged in now, and the chosen one if it is not, and
-    /// selects what <paramref name="settings"/> says.
+    /// selects what the saved settings say. Asked as the settings open, since the
+    /// monitors are the window's to name.
     /// </summary>
-    private void ShowFullScreen(OutputSettings settings)
+    public void ShowMonitors()
     {
-        var screens = shell.Owner.Screens?.All ?? [];
+        var settings = Saved;
+
+        var screens = monitors.All;
 
         fullScreenMonitors = [.. screens.Select(s => MonitorPlacement.Describe(s)!)];
 

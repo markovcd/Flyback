@@ -79,6 +79,11 @@ internal static class EditorServices
 
         services.AddSingleton<Document>();
         services.AddSingleton<Shell>();
+        services.AddSingleton<IDialogs, WindowDialogs>();
+        services.AddSingleton<IFilePickers, WindowFilePickers>();
+        services.AddSingleton<IMonitors, WindowMonitors>();
+        services.AddSingleton<IWindowFocus, WindowFocus>();
+        services.AddSingleton<IWindowClose, WindowClose>();
         services.AddSingleton<SiteAccess>();
         services.AddSingleton<Playback>();
         services.AddSingleton<PatchFiles>();

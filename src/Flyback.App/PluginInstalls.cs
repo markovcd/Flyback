@@ -14,6 +14,7 @@ namespace Flyback.App;
 /// </summary>
 internal sealed class PluginInstalls
 {
+    private readonly IDialogs dialogs;
     private readonly Shell shell;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
@@ -41,8 +42,10 @@ internal sealed class PluginInstalls
         EditorSetup setup,
         SiteAccess site,
         Playback playback,
-        Lazy<UnsavedWork> unsaved)
+        Lazy<UnsavedWork> unsaved,
+        IDialogs dialogs)
     {
+        this.dialogs = dialogs;
         this.shell = shell;
         plugins = shell.Plugins;
         report = shell.Report;
@@ -76,7 +79,7 @@ internal sealed class PluginInstalls
 
         if (found.Count == 0) return;
 
-        if (!await shell.Owner.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
+        if (!await dialogs.Show<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
 
         // Live only while that window is up: coming back from it is nothing having been
         // installed, or something having been that a restart was not asked for.
@@ -150,7 +153,7 @@ internal sealed class PluginInstalls
             offerRestart: unsaved is not null && awaiting == 0,
             removable,
             awaiting);
-        var answer = await shell.Owner.ShowDialog<PluginAnswer>(PluginInstallView.Title(change), view);
+        var answer = await dialogs.Show<PluginAnswer>(PluginInstallView.Title(change), view);
 
         if (answer == PluginAnswer.Cancel) return null;
 
@@ -187,7 +190,7 @@ internal sealed class PluginInstalls
         await hub.RereadAsync();
         _ = hub.AskSiteAsync();
 
-        await shell.Owner.ShowDialog<object?>("Plugins", hub.View, hub.Header, fill: true);
+        await dialogs.Show<object?>("Plugins", hub.View, hub.Header, fill: true);
     }
 
     /// <summary>
@@ -286,7 +289,7 @@ internal sealed class PluginInstalls
             Named(newer), removal,
             string.Join(", ", ids), string.Join(", ", providers));
 
-        return await shell.Owner.ShowDialog<PluginAnswer>(plugin.Plugin.Name, view) switch
+        return await dialogs.Show<PluginAnswer>(plugin.Plugin.Name, view) switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.
             PluginAnswer.Download => await InstallFromSiteAsync(site!, (await newer)!, () => { }),

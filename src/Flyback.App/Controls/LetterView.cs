@@ -12,18 +12,7 @@ namespace Flyback.App.Controls;
 /// </remarks>
 internal static class LetterView
 {
-    /// <summary>
-    /// Asks over <paramref name="from"/>'s window what there is to say and hands it
-    /// to <paramref name="send"/>.
-    /// </summary>
-    /// <returns>What became of it, or null where nothing was sent.</returns>
-    public static async Task<string?> AskAsync(
-        Control from, LetterAbout about, Func<string, string, string?, CancellationToken, Task> send)
-    {
-        if (TopLevel.GetTopLevel(from) is not Window window) return null;
-
-        return await window.ShowDialog<string?>("Write to the author", View(about, send));
-    }
+    public const string Title = "Write to the author";
 
     /// <summary>The letter, which answers its dialog with what became of it.</summary>
     internal static Control View(LetterAbout about, Func<string, string, string?, CancellationToken, Task> send)

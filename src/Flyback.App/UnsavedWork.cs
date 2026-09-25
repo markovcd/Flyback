@@ -23,7 +23,9 @@ internal sealed class UnsavedWork(
     Shell shell,
     PatchFiles files,
     Lazy<TakeRecording> recording,
-    EditorSetup setup)
+    EditorSetup setup,
+    IDialogs dialogs,
+    IWindowClose window)
 {
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
     private enum Unsaved
@@ -131,7 +133,7 @@ internal sealed class UnsavedWork(
         relaunch(reopen);
 
         Leaving = true;
-        shell.Owner.Close();
+        window.Close();
 
         return true;
     }
@@ -234,7 +236,7 @@ internal sealed class UnsavedWork(
             },
         };
 
-        return await shell.Owner.ShowDialog<Unsaved>(about, asking);
+        return await dialogs.Show<Unsaved>(about, asking);
 
         static Button Answering(string text, Unsaved with, bool wide = false)
         {
