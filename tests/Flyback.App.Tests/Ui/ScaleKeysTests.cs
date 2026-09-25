@@ -7,7 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.App.Controls;
+using Flyback.App.Inspect;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -160,7 +160,7 @@ public class ScaleKeysTests : UiTest
 
         // The naturals run left to right in pitch order and none of them
         // overlaps the next.
-        var lefts = naturals.Select(Canvas.GetLeft).ToArray();
+        var lefts = naturals.Select(Avalonia.Controls.Canvas.GetLeft).ToArray();
 
         for (var i = 1; i < lefts.Length; i++)
             lefts[i].ShouldBeGreaterThan(lefts[i - 1]);
@@ -169,9 +169,9 @@ public class ScaleKeysTests : UiTest
         // which is the arrangement rather than a row of twelve.
         foreach (var pitchClass in Enumerable.Range(0, Pitch.Classes).Where(p => !Major.Contains(p)))
         {
-            var below = Canvas.GetLeft(Key(window, pitchClass - 1));
-            var above = Canvas.GetLeft(Key(window, pitchClass + 1));
-            var sharp = Canvas.GetLeft(Key(window, pitchClass));
+            var below = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass - 1));
+            var above = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass + 1));
+            var sharp = Avalonia.Controls.Canvas.GetLeft(Key(window, pitchClass));
 
             sharp.ShouldBeGreaterThan(below);
             sharp.ShouldBeLessThan(above);

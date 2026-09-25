@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
 using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Effects;

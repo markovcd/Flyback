@@ -4,7 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using Flyback.App.Controls;
+using Flyback.App.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Shouldly;

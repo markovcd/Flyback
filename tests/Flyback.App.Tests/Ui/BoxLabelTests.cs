@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;

@@ -9,10 +9,10 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using AvaloniaEdit;
-using Flyback.App.Controls;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.App.Canvas;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Tests.Ui;

@@ -7,6 +7,7 @@ using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
+using Flyback.App.Inspect;
 
 namespace Flyback.App.Tests.Ui;
 

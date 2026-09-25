@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.App.Bars;
 using Flyback.App.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

@@ -1,3 +1,4 @@
+using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;

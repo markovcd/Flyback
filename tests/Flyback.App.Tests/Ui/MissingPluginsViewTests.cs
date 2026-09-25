@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
+using Flyback.App.Site;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;

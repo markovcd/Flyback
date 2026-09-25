@@ -1,0 +1,668 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Avalonia.Styling;
+using Flyback.App.Controls;
+using Flyback.App.Knobs;
+using Flyback.Core.Graph;
+using Colors = Flyback.App.Controls.Colors;
+
+namespace Flyback.App.Canvas;
+
+/// <summary>
+/// The list of modules that can be added, with a filter and a tick per plugin.
+/// </summary>
+/// <remarks>
+/// A loop over the catalog rather than markup, so a module added by the engine
+/// or a plugin appears here without shell changes. A control of its own because
+/// it is shown where it is asked for: right-clicking the canvas opens it at the
+/// pointer, and what is picked lands there.
+/// </remarks>
+public sealed class ModulePalette : UserControl
+{
+    /// <summary>How tall the list is allowed to get before it scrolls.</summary>
+    private const double TallestList = 420;
+
+    private const double PopupWidth = 180;
+
+    /// <summary>How big a module's mark is drawn at, left of its name.</summary>
+    private const double GlyphSize = 13;
+
+    /// <summary>How strongly the mark shows: quiet, since the name is what is being read.</summary>
+    private const double GlyphOpacity = 0.8;
+
+    /// <summary>How solid the list is over the patch it is being added to.</summary>
+    public const double Translucency = 0.8;
+
+    /// <summary>
+    /// The class the flyout presenter holding this is given, so that
+    /// <see cref="Trim"/> can find it. The presenter's own padding and border
+    /// are sized for a menu of a few words and are far too much around a list
+    /// that brings its own.
+    /// </summary>
+    public const string PresenterClass = "palette";
+
+    private readonly ModuleCatalog catalog;
+    private readonly Action<string> chosen;
+    private readonly GroupLibrary groups;
+    private readonly Action<SavedGroup> adding;
+
+    /// <summary>
+    /// The instruments plugged in that Flyback knows by name, asked on the way
+    /// open because they come and go, and what to do with one that is picked.
+    /// Null where the shell offers none.
+    /// </summary>
+    private readonly Func<IReadOnlyList<PanelInstrument>>? instruments;
+    private readonly Action<PanelInstrument>? addingInstrument;
+
+    /// <summary>
+    /// Which kept group has been asked about, and so is showing a confirm in place
+    /// of its row.
+    /// </summary>
+    /// <remarks>
+    /// A row that turns into its own question rather than a dialog over the window,
+    /// which would be two layers deep for a yes. Held here rather than on the row,
+    /// because the list is rebuilt on every keystroke.
+    /// </remarks>
+    private SavedGroup? removing;
+
+    private readonly StackPanel modules = new() { Margin = new Thickness(6, 0, 6, 6), Spacing = 2 };
+
+    private readonly TextBox filter = new()
+    {
+        PlaceholderText = "Filter modules",
+        Margin = new Thickness(0, 0, 0, 2),
+        FontSize = Text.Body,
+    };
+
+    /// <summary>
+    /// Opens the list of plugins to show modules from. The engine's own are one
+    /// of them, so a patch can be built out of nothing but plugins as readily as
+    /// out of nothing but the engine.
+    /// </summary>
+    private readonly Button sources = new()
+    {
+        FontSize = Text.Body,
+        Padding = new Thickness(6, 2),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        HorizontalContentAlignment = HorizontalAlignment.Left,
+    };
+
+    /// <summary>
+    /// Providers whose modules are hidden. Stored as what is <em>off</em> rather
+    /// than what is on, so a plugin installed later shows up ticked instead of
+    /// having to be found and turned on.
+    /// </summary>
+    private readonly HashSet<string> hidden = [];
+
+    /// <summary>
+    /// The module buttons currently listed, in the order they are shown. The
+    /// arrow keys walk this rather than the visual tree, which also holds the
+    /// category headings and would step through them as though they were
+    /// choices.
+    /// </summary>
+    private readonly List<Button> listed = [];
+
+    /// <summary>
+    /// Which of <see cref="listed"/> the arrows have reached, and what Enter
+    /// would add. Kept on the palette rather than as the focused control,
+    /// because the focus belongs to the filter box — typing has to keep
+    /// narrowing the list while the arrows move through it.
+    /// </summary>
+    private int highlighted = -1;
+
+    /// <param name="catalog">Every module that may be added, and which plugin each came from.</param>
+    /// <param name="chosen">Called with the type id of whatever is picked.</param>
+    /// <param name="groups">The groups somebody kept, which are listed above the catalog.</param>
+    /// <param name="adding">Called with the kept group that was picked.</param>
+    /// <param name="instruments">The instruments plugged in and known by name, listed above the groups.</param>
+    /// <param name="addingInstrument">Called with the instrument that was picked.</param>
+    internal ModulePalette(
+        ModuleCatalog catalog,
+        Action<string> chosen,
+        GroupLibrary groups,
+        Action<SavedGroup> adding,
+        Func<IReadOnlyList<PanelInstrument>>? instruments = null,
+        Action<PanelInstrument>? addingInstrument = null)
+    {
+        this.catalog = catalog;
+        this.chosen = chosen;
+        this.groups = groups;
+        this.adding = adding;
+        this.instruments = instruments;
+        this.addingInstrument = addingInstrument;
+
+        Width = PopupWidth;
+        Name = "palette";
+
+        // Slightly see-through, so the patch under it is still readable while
+        // you are choosing what to add to it. On the whole control rather than
+        // on its background, because a solid list of text over a translucent
+        // panel reads as a mistake rather than as a decision.
+        Opacity = Translucency;
+
+        filter.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TextBox.TextProperty) Fill();
+        };
+
+        // Everything the keyboard does here is handled on the filter box,
+        // because the filter box is what has the focus the whole time it is
+        // open — the list is walked by the arrows without ever taking it, so
+        // that typing keeps narrowing while the arrows move.
+        //
+        // Space is deliberately not one of these: it is a character, and the
+        // box it would be typed into is right there.
+        filter.KeyDown += (_, e) =>
+        {
+            switch (e.Key)
+            {
+                case Key.Down:
+                    Highlight(highlighted + 1);
+                    break;
+
+                case Key.Up:
+                    Highlight(highlighted - 1);
+                    break;
+
+                case Key.Enter:
+                    if (highlighted >= 0 && highlighted < listed.Count)
+                        listed[highlighted].RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    break;
+
+                // Empties the box, which is the quickest way back to the whole
+                // list once you have found the module you were after. An empty
+                // box lets it through instead, so a second press closes the
+                // popup — one key, and it always takes a step back.
+                case Key.Escape when filter.Text is { Length: > 0 }:
+                    filter.Text = string.Empty;
+                    break;
+
+                default:
+                    return;
+            }
+
+            e.Handled = true;
+        };
+
+        // Escape from anywhere in the list, not only from the filter box: the ✕
+        // that asks whether to remove a kept group takes the focus when it is
+        // clicked, so the key that means "never mind" arrives at a button.
+        //
+        // Every row that turned into a question goes back to being a row, since a
+        // question nobody answered must not still be there next time.
+        //
+        // Not handled here and not a step of its own: Escape goes on meaning what
+        // it always meant — empty the box, or let the popup close. handledEventsToo,
+        // because the filter box marks Escape handled when it empties itself.
+        AddHandler(
+            KeyDownEvent,
+            (_, e) =>
+            {
+                if (e.Key != Key.Escape || removing is null) return;
+
+                Asking(null);
+            },
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
+        var ticks = new StackPanel { Spacing = 2, Margin = new Thickness(4) };
+
+        foreach (var provider in catalog.Providers)
+        {
+            var id = provider.Id;
+            var tick = new CheckBox { Content = provider.Name, IsChecked = true, FontSize = Text.Body };
+
+            tick.IsCheckedChanged += (_, _) =>
+            {
+                if (tick.IsChecked == true) hidden.Remove(id); else hidden.Add(id);
+
+                DescribeSources();
+                Fill();
+            };
+
+            ticks.Children.Add(tick);
+        }
+
+        sources.Flyout = new Flyout { Content = ticks, Placement = PlacementMode.BottomEdgeAlignedLeft };
+
+        DescribeSources();
+        Fill();
+
+        var header = new StackPanel { Spacing = 4, Margin = new Thickness(6, 6, 6, 0) };
+        header.Children.Add(filter);
+
+        // With nothing installed there is only the engine's own entry, and a
+        // dropdown that can only say "all" or "the only one" is noise.
+        if (catalog.Providers.Count > 1) header.Children.Add(sources);
+
+        // The header stays put while the list beneath it scrolls; a filter that
+        // scrolled away with the results would be the wrong way round.
+        var panel = new DockPanel();
+        DockPanel.SetDock(header, Dock.Top);
+
+        panel.Children.Add(header);
+        panel.Children.Add(new ScrollViewer
+        {
+            Content = modules,
+            MaxHeight = TallestList,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        });
+
+        // The list brings its own edge, because the presenter's is given away by
+        // Trim below — one border rather than two boxes a few pixels apart.
+        Content = new Border
+        {
+            Background = new SolidColorBrush(Colors.Panel),
+            BorderBrush = new SolidColorBrush(Colors.Edge),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Child = panel,
+        };
+    }
+
+    /// <summary>
+    /// Takes the padding and the border off the flyout presenter that holds one of
+    /// these, and stops it painting a background of its own.
+    /// </summary>
+    /// <remarks>
+    /// A presenter is dressed for a menu of a few words, which round a list that is
+    /// already a panel with its own margins reads as a wide empty frame — and its
+    /// opaque background would sit behind the translucency rather than under it. A
+    /// style rather than properties on the flyout, because the presenter does not
+    /// exist until the flyout opens.
+    /// </remarks>
+    public static Style Trim()
+    {
+        var style = new Style(x => x.OfType<FlyoutPresenter>().Class(PresenterClass));
+
+        style.Setters.Add(new Setter(PaddingProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(BorderThicknessProperty, new Thickness(0)));
+        style.Setters.Add(new Setter(BackgroundProperty, Brushes.Transparent));
+        style.Setters.Add(new Setter(CornerRadiusProperty, new CornerRadius(4)));
+
+        return style;
+    }
+
+    /// <summary>
+    /// Puts the list back to the whole of it and takes the keyboard, so that
+    /// opening it and typing narrows it — which is the fast way to reach a
+    /// module and the only reason the filter is the first thing in it.
+    /// </summary>
+    public void Reset()
+    {
+        // Read off the disk again on the way open, which is the only moment
+        // anybody could notice it happening. So a group kept a minute ago is on
+        // the list — the panel that keeps one is behind this popup and cannot
+        // reach in to say so — and so is a patch file dropped into the folder by
+        // hand while the program was running.
+        groups.Reload();
+        removing = null;
+
+        filter.Text = string.Empty;
+
+        // Explicitly, because emptying a box that was already empty raises
+        // nothing, and the list would then be the one the last visit left —
+        // filtered, or with a row still asking whether to remove itself.
+        Fill();
+
+        filter.Focus();
+        filter.SelectAll();
+
+        Highlight(0);
+    }
+
+    /// <summary>
+    /// Puts the list into — or out of — asking whether to remove a kept group, and
+    /// hands the keyboard back to the filter box.
+    /// </summary>
+    /// <remarks>
+    /// The focus is the part that is easy to miss: everything the keyboard does
+    /// here is handled on the filter box, a row's ✕ takes the focus by being
+    /// clicked, and the rebuild then deletes the button holding it. A list with the
+    /// focus nowhere answers no keys, Escape included.
+    /// </remarks>
+    private void Asking(SavedGroup? entry)
+    {
+        removing = entry;
+
+        Fill();
+        filter.Focus();
+    }
+
+    /// <summary>
+    /// Rebuilds the module list for whatever is in the filter box. Rebuilding
+    /// rather than hiding buttons keeps the category headings honest: a heading
+    /// with nothing under it is worse than no heading.
+    /// </summary>
+    private void Fill()
+    {
+        var text = filter.Text?.Trim() ?? string.Empty;
+        var matches = catalog.All.Where(d => Matches(d, text)).ToList();
+        var kept = groups.All.Where(entry => Matches(entry, text)).ToList();
+        var plugged = (instruments?.Invoke() ?? [])
+            .Where(instrument => text.Length == 0 || instrument.Profile.Name.Contains(text, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        modules.Children.Clear();
+        listed.Clear();
+        highlighted = -1;
+
+        if (matches.Count == 0 && kept.Count == 0 && plugged.Count == 0)
+        {
+            modules.Children.Add(Hint(
+                hidden.Count == catalog.Providers.Count ? "No plugins are ticked."
+                : text.Length == 0 ? "Nothing to show."
+                : $"Nothing matches “{text}”."));
+            return;
+        }
+
+        // Above the catalog rather than below it. There are a handful of these
+        // and hundreds of modules, they are the only things in the list somebody
+        // made themselves, and a section of one's own things under a screenful
+        // of everything else is a section nobody scrolls to. The heading takes
+        // no accent color because a group has no category — the same reason a
+        // box's header is the one color on the canvas that means nothing.
+        // Above even the groups: an instrument is here only while it is plugged
+        // in, and the one moment somebody wants it whole is the moment they sat
+        // down to play it.
+        if (plugged.Count > 0)
+        {
+            modules.Children.Add(Heading("INSTRUMENTS", Colors.Muted));
+
+            foreach (var instrument in plugged) modules.Children.Add(Plugged(instrument));
+        }
+
+        if (kept.Count > 0)
+        {
+            modules.Children.Add(Heading("GROUPS", Colors.Muted));
+
+            foreach (var entry in kept) modules.Children.Add(Kept(entry));
+        }
+
+        // The catalog's order rather than the order the matches happen to be in,
+        // so the sections sit where they always sit however the filter narrows
+        // them — see ModuleCatalog.Categories.
+        var sections = catalog.Categories.Where(c => matches.Any(d => d.Category == c));
+
+        foreach (var category in sections)
+        {
+            modules.Children.Add(Heading(category.ToUpperInvariant(), Colors.Accent(category)));
+
+            foreach (var def in matches.Where(d => d.Category == category))
+            {
+                // A Maths module an Expression stands for is found by its name and
+                // added as the Expression, so it says which (ADR-0109).
+                var retired = ExpressionFusion.Retired(def);
+
+                var button = new Button
+                {
+                    Content = retired ? $"{def.Name}: {ExpressionFusion.Template(def)}" : def.Name,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Left,
+                    Padding = new Thickness(8, 4),
+                    FontSize = Text.Body,
+                };
+
+                // Naming the plugin only where it is not the engine keeps the
+                // built-in modules reading as they always did, and tells you
+                // which patches will need something installed to open.
+                var from = catalog.ProviderOf(def.TypeId);
+                var origin = from is null || from.Id == NodeCatalog.BuiltInProvider.Id
+                    ? string.Empty
+                    : $"{Environment.NewLine}{Environment.NewLine}From {from.Name} ({from.Id})";
+
+                var tip = (retired ? $"Adds an Expression, {ExpressionFusion.Template(def)}.{Environment.NewLine}{Environment.NewLine}" : string.Empty)
+                    + def.Description + origin;
+                if (tip.Length > 0) ToolTip.SetTip(button, tip);
+
+                var typeId = def.TypeId;
+                button.Click += (_, _) => chosen(typeId);
+
+                modules.Children.Add(Row(def, button));
+                listed.Add(button);
+            }
+        }
+
+        // The first match, so that typing a few letters and pressing Enter adds
+        // what you were after without a single arrow key. That is the fast path,
+        // and there is no sense in which the list has no answer yet.
+        Highlight(0);
+    }
+
+    /// <summary>
+    /// Moves the arrow-key highlight, clamped to the ends of the list rather
+    /// than wrapping — a list that jumps from bottom to top loses the reader's
+    /// place, and holding Down to reach the end is a thing people do.
+    /// </summary>
+    private void Highlight(int index)
+    {
+        if (listed.Count == 0)
+        {
+            highlighted = -1;
+            return;
+        }
+
+        var wanted = Math.Clamp(index, 0, listed.Count - 1);
+
+        if (highlighted >= 0 && highlighted < listed.Count)
+            listed[highlighted].ClearValue(BackgroundProperty);
+
+        highlighted = wanted;
+        listed[highlighted].Background = new SolidColorBrush(Colors.Attention, 0.28);
+        listed[highlighted].BringIntoView();
+    }
+
+    /// <summary>Says what the ticks add up to, so the state is readable without opening them.</summary>
+    private void DescribeSources()
+    {
+        var providers = catalog.Providers;
+        var showing = providers.Count - hidden.Count;
+
+        sources.Content = showing switch
+        {
+            _ when hidden.Count == 0 => "All modules  ▾",
+            0 => "No plugins  ▾",
+            1 => $"{providers.First(p => !hidden.Contains(p.Id)).Name}  ▾",
+            _ => $"{showing} of {providers.Count} plugins  ▾",
+        };
+    }
+
+    /// <summary>
+    /// One kept group: the button that adds it, and the ✕ that asks whether to
+    /// forget it.
+    /// </summary>
+    /// <remarks>
+    /// The same ✕ the group inspector puts on a socket that can come off the edge,
+    /// because it is the same offer. Asked rather than done, since a kept group is
+    /// a file and there is no undo out here. An entry this build cannot make is
+    /// still listed and dimmed: picking it says which plugin it wants.
+    /// </remarks>
+    /// <summary>An instrument's row: its name, and what picking it adds.</summary>
+    private Control Plugged(PanelInstrument instrument)
+    {
+        var add = new Button
+        {
+            Content = instrument.Profile.Name,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(8, 4),
+            FontSize = Text.Body,
+            Margin = new Thickness(0, 0, 0, 1),
+        };
+
+        ToolTip.SetTip(add, InstrumentScaffold.Describe(instrument.Profile));
+
+        add.Click += (_, _) => addingInstrument?.Invoke(instrument);
+
+        listed.Add(add);
+
+        return add;
+    }
+
+    private Control Kept(SavedGroup entry)
+    {
+        if (removing is { } asked && asked.Path == entry.Path)
+            return Question.Row(
+                $"Remove “{entry.Name}”?",
+                new Thickness(8, 0, 0, 1),
+                $"Remove “{entry.Name}”.",
+                "Keep it.",
+                remove =>
+                {
+                    // A file that will not go stays on the list, which is the truth
+                    // about it and better than a row that vanishes and comes back the
+                    // next time the folder is read.
+                    try
+                    {
+                        if (remove) groups.Remove(entry);
+                    }
+                    catch (Exception)
+                    {
+                        // Nothing to say it with out here — see the remarks above. The
+                        // row still being there is what says it.
+                    }
+
+                    Asking(null);
+                });
+
+        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
+
+        var forget = new Button
+        {
+            Content = "✕",
+            FontSize = Text.Caption,
+            Padding = new Thickness(5, 0, 5, 0),
+            Background = Brushes.Transparent,
+            Opacity = 0.55,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(forget, $"Take “{entry.Name}” off this list.");
+
+        forget.Click += (_, _) => Asking(entry);
+
+        DockPanel.SetDock(forget, Dock.Right);
+        row.Children.Add(forget);
+
+        var add = new Button
+        {
+            Content = entry.Name,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(8, 4),
+            FontSize = Text.Body,
+            Opacity = entry.IsComplete ? 1 : 0.55,
+        };
+
+        ToolTip.SetTip(add, entry.IsComplete
+            ? entry.Modules == 1 ? "1 module." : $"{entry.Modules} modules, drawn as one box."
+            : entry.Load.Summary);
+
+        add.Click += (_, _) => adding(entry);
+
+        row.Children.Add(add);
+        listed.Add(add);
+
+        return row;
+    }
+
+    /// <summary>
+    /// The row a kept group's ✕ turns into: the question and its two answers, on
+    /// the one line the row was taking anyway.
+    /// </summary>
+    /// <remarks>
+    /// In the list rather than over the window, which would be two layers deep for
+    /// a yes and would take the popup down on the way, since a flyout closes when
+    /// something else takes the focus. One line and not two, so the list does not
+    /// jump under the hand: the answers are where the ✕ that asked is, and it now
+    /// means what it always meant on this row — no, put it back.
+    /// </remarks>
+
+    /// <summary>
+    /// A module's button, with its mark set quietly to the left where one is
+    /// known — the same drawing the canvas gives it, in its own accent, honoring
+    /// a plugin's skin. The button is untouched, so what is picked and how it
+    /// reads to a keyboard or a test does not change.
+    /// </summary>
+    private static Control Row(NodeDef def, Button button)
+    {
+        if (ModuleGlyphs.For(def) is not { } mark) return button;
+
+        var icon = new Avalonia.Controls.Shapes.Path
+        {
+            Data = mark,
+            Stretch = Stretch.Uniform,
+            Width = GlyphSize,
+            Height = GlyphSize,
+            StrokeThickness = ModuleGlyphs.Thickness,
+            Stroke = new SolidColorBrush(Colors.Palette(def).Accent, GlyphOpacity),
+            Margin = new Thickness(6, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+        };
+
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        Grid.SetColumn(button, 1);
+
+        row.Children.Add(icon);
+        row.Children.Add(button);
+
+        return row;
+    }
+
+    private static TextBlock Heading(string text, Color color) => new()
+    {
+        Text = text,
+        FontSize = Text.Caption,
+        FontWeight = FontWeight.SemiBold,
+        Foreground = new SolidColorBrush(color),
+        Margin = new Thickness(2, 12, 2, 4),
+    };
+
+    /// <summary>
+    /// A kept group matches on its name, which is all it has: the modules inside
+    /// are its business rather than the list's, and matching them would put
+    /// "Voice" under a search for "sine" without saying why.
+    /// </summary>
+    private static bool Matches(SavedGroup entry, string text) =>
+        text.Length == 0 || entry.Name.Contains(text, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Text matches name, category and type id, but deliberately not the
+    /// description: every module has a sentence of prose, and matching it turns a
+    /// search for a common word into most of the catalog. The ticks narrow
+    /// separately, so the two combine rather than compete.
+    /// </summary>
+    private bool Matches(NodeDef def, string text)
+    {
+        // The Output is never listed. Every patch has one already and cannot
+        // have a second, so a button for it could only ever select the one that
+        // is there — and a palette entry that never adds anything is a puzzle.
+        if (NodeCatalog.IsSink(def.TypeId)) return false;
+
+        if (catalog.ProviderOf(def.TypeId) is { } from && hidden.Contains(from.Id)) return false;
+
+        // Offered as the Expression it is, and only to somebody asking for it by
+        // name: listed whole, the Maths section would be two dozen ways to add one.
+        if (ExpressionFusion.Retired(def) && text.Length == 0) return false;
+
+        return text.Length == 0
+            || def.Name.Contains(text, StringComparison.OrdinalIgnoreCase)
+            || def.Category.Contains(text, StringComparison.OrdinalIgnoreCase)
+            || def.TypeId.Contains(text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static TextBlock Hint(string text) => new()
+    {
+        Text = text,
+        TextWrapping = TextWrapping.Wrap,
+        FontSize = Text.Small,
+        Foreground = Text.Muted,
+        Margin = new Thickness(2, 8, 2, 0),
+    };
+}

@@ -1,3 +1,4 @@
+using Flyback.App.Canvas;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;

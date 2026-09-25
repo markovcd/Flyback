@@ -9,10 +9,11 @@ using Avalonia.VisualTree;
 using Avalonia.Themes.Fluent;
 using Xunit.Sdk;
 using Xunit.v3;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using Flyback.App.Canvas;
+using Flyback.App.Site;
 using Flyback.App.Tests.Ui;
 
 // Every [AvaloniaFact] and [AvaloniaTheory] in this assembly runs against this

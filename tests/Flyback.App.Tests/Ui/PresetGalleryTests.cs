@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Flyback.App.Controls;
+using Flyback.App.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Shouldly;

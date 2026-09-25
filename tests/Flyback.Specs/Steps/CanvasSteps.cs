@@ -1,8 +1,8 @@
 using Reqnroll;
 using Shouldly;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
+using Flyback.App.Canvas;
 
 namespace Flyback.Specs.Steps;
 

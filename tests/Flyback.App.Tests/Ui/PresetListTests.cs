@@ -10,6 +10,8 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.App.Canvas;
+using Flyback.App.Gallery;
 
 namespace Flyback.App.Tests.Ui;
 

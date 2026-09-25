@@ -1,6 +1,8 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
+using Flyback.App.Files;
+using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;

@@ -2,10 +2,10 @@
 using Avalonia.Media.Imaging;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
-using Flyback.App.Controls;
 using Flyback.App.Midi;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.App.Canvas;
 
 namespace Flyback.App.Tests.Ui;
 

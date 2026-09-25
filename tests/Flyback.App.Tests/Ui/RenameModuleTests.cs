@@ -7,9 +7,9 @@ using Avalonia.Input;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Shouldly;
+using Flyback.App.Canvas;
 
 namespace Flyback.App.Tests.Ui;
 

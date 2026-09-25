@@ -435,6 +435,17 @@ cycle is a `Lazy<T>`. `MainWindow` is handed them, lays them out, and keeps its
 layout, its keys, full screen and its close in one file, a `#region` per part. There are no
 view models, and that has been decided twice.
 
+**A folder per feature.** The project's root holds the composition, the window,
+the hubs and `ReportLine`. Everything else sits in the folder of what it is for,
+with its region, its controls and its settings section together: `Canvas`
+(the node editor and the palette), `Inspect`, `Knobs`, `Bars`, `Gallery`,
+`Site`, `Assist`, `Capture`, `Files`, `PluginPackages`, `Updates`,
+`Statistics` and `Settings`. `Controls` keeps only the widgets that belong to no
+feature. The namespace follows the folder, and a folder is never named for a
+type, since inside `Flyback.App` that name would then mean the namespace. For
+the same reason `Canvas` shadows Avalonia's control, so it is written
+`Avalonia.Controls.Canvas`.
+
 **The node editor is one control**
 ([0017](adr/0017-draw-the-node-editor-in-one-control.md)). `NodeEditor` overrides
 `Render` and the pointer handlers, and nothing inside it is a control. It is

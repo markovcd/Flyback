@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;

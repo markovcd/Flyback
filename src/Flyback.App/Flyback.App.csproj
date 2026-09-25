@@ -173,57 +173,6 @@
     <None Update="FileIcons\*.ico;FileIcons\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Controls\NodeEditor.Buses.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Controls.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Hold.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Selection.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Tips.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Compact.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Dial.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Remap.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Update="Controls\NodeEditor.Clipboard.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Editing.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Groups.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.HitTesting.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Interaction.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Painting.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-    <Compile Update="Controls\NodeEditor.Undescribed.cs">
-      <DependentUpon>NodeEditor.cs</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
   <!-- Turns the macOS publish output into something the Finder will launch. -->
   <Import Project="MacBundle.targets" />
 

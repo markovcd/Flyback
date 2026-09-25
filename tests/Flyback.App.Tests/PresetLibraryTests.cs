@@ -1,4 +1,4 @@
-using Flyback.App.Controls;
+using Flyback.App.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;

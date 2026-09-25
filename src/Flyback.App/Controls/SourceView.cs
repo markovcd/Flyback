@@ -10,6 +10,7 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 using AvaloniaEdit.Rendering;
+using Flyback.App.Canvas;
 using Flyback.Core.Language;
 
 namespace Flyback.App.Controls;

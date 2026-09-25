@@ -1,5 +1,6 @@
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
 using Flyback.App.Files;
+using Flyback.App.Gallery;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
@@ -121,6 +122,6 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
         FileTypes = FileTypes.ForThisCopy(),
         Usage = usage,
         Relaunch = Restart.Launch,
-        PresetSite = global::Flyback.App.PresetSite.Local,
+        PresetSite = global::Flyback.App.Site.PresetSite.Local,
     };
 }

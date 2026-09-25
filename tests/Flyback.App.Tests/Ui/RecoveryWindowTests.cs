@@ -1,6 +1,8 @@
 ﻿using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;

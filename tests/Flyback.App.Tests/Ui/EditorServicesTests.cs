@@ -1,6 +1,6 @@
 using Avalonia.Headless.XUnit;
 using Flyback.App.Audio;
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
 using Flyback.Core;
 using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;

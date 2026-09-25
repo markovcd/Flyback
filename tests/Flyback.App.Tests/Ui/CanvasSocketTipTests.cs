@@ -3,7 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Flyback.App.Controls;
+using Flyback.App.Canvas;
 using Flyback.Core.Graph;
 using Shouldly;
 

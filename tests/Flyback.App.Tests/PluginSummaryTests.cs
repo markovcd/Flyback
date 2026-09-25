@@ -1,4 +1,5 @@
 using Flyback.App.Audio;
+using Flyback.App.PluginPackages;
 using Flyback.Core.Graph;
 using Flyback.Plugins;
 using Flyback.Plugins.Audio;
