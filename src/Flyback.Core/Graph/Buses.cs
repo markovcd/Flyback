@@ -71,7 +71,7 @@ internal static class Buses
             Connections = wires,
             Groups = patch.Groups,
             Controls = patch.Controls,
-            KeyboardScale = patch.KeyboardScale,
+            Keyboard = patch.Keyboard,
             Description = patch.Description,
             Author = patch.Author,
             Tags = patch.Tags,

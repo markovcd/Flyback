@@ -54,13 +54,13 @@ public class DescriptionLineTests
     [Fact]
     public void A_printing_says_it_first_and_builds_back_to_it()
     {
-        var patch = Built("keyboard scale [ C D ]\nmidi.in().pitch |> out.left").Patch;
+        var patch = Built("keyboard scale [ C D E F G A B ]\nmidi.in().pitch |> out.left").Patch;
         patch.Describe("Two notes, over and over, for a very long time indeed, until somebody stops them, which nobody will.");
 
         var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
 
         source.ShouldStartWith("description \"Two notes,");
-        source.ShouldContain("\n\nkeyboard scale [ C D ]");
+        source.ShouldContain("\n\nkeyboard scale [ C D E F G A B ]");
         Built(source).Patch.Description.ShouldBe(patch.Description);
     }
 

@@ -430,11 +430,12 @@ module, so it is a line of its own, once, and a printing puts it first
 ([0099](adr/0099-the-computer-keyboard-can-be-laid-out-by-scale.md)):
 
 ```
-keyboard scale [ C D E G A ]
+keyboard scale [ D E F G A B C ]
 ```
 
-The picked notes sit side by side along the `A` row, with the `Q` row an octave
-up and the `Z` row an octave down. `keyboard piano` is the tracker layout, and
+The brackets hold the notes of one of an Auto Chord's scales, the first of them
+its tonic. The scale runs up from the tonic along the `A` row, with the `Q` row
+an octave up and the `Z` row an octave down. `keyboard piano` is the tracker layout, and
 what a patch that says nothing gets.
 
 What the patch is for belongs to it the same way. It is one line of prose, the

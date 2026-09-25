@@ -9,6 +9,21 @@ Flyback.Core.Graph.ChordShape.Intervals.init -> void
 Flyback.Core.Graph.ChordShape.Name.get -> string!
 Flyback.Core.Graph.ChordShape.Name.init -> void
 Flyback.Core.Graph.Chords
+Flyback.Core.Graph.KeyboardScale
+Flyback.Core.Graph.KeyboardScale.<Clone>$() -> Flyback.Core.Graph.KeyboardScale!
+Flyback.Core.Graph.KeyboardScale.Deconstruct(out int Tonic, out string! Scale) -> void
+Flyback.Core.Graph.KeyboardScale.Equals(Flyback.Core.Graph.KeyboardScale? other) -> bool
+Flyback.Core.Graph.KeyboardScale.KeyboardScale(int Tonic, string! Scale) -> void
+Flyback.Core.Graph.KeyboardScale.Mode.get -> Flyback.Core.Graph.ScaleMode!
+Flyback.Core.Graph.KeyboardScale.Name.get -> string!
+Flyback.Core.Graph.KeyboardScale.Row.get -> System.Collections.Generic.IReadOnlyList<int>!
+Flyback.Core.Graph.KeyboardScale.Scale.get -> string!
+Flyback.Core.Graph.KeyboardScale.Scale.init -> void
+Flyback.Core.Graph.KeyboardScale.Tonic.get -> int
+Flyback.Core.Graph.KeyboardScale.Tonic.init -> void
+Flyback.Core.Graph.KeyboardScale.TonicClass.get -> int
+Flyback.Core.Graph.Patch.Keyboard.get -> Flyback.Core.Graph.KeyboardScale?
+Flyback.Core.Graph.Patch.Keyboard.set -> void
 Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.ScaleMode
 Flyback.Core.Graph.ScaleMode.<Clone>$() -> Flyback.Core.Graph.ScaleMode!
@@ -30,6 +45,9 @@ const Flyback.Core.Graph.NodeCatalog.ChordTypeId = "audio.chord" -> string!
 override Flyback.Core.Graph.ChordShape.Equals(object? obj) -> bool
 override Flyback.Core.Graph.ChordShape.GetHashCode() -> int
 override Flyback.Core.Graph.ChordShape.ToString() -> string!
+override Flyback.Core.Graph.KeyboardScale.Equals(object? obj) -> bool
+override Flyback.Core.Graph.KeyboardScale.GetHashCode() -> int
+override Flyback.Core.Graph.KeyboardScale.ToString() -> string!
 override Flyback.Core.Graph.ScaleMode.Equals(object? obj) -> bool
 override Flyback.Core.Graph.ScaleMode.GetHashCode() -> int
 override Flyback.Core.Graph.ScaleMode.ToString() -> string!
@@ -41,7 +59,10 @@ static Flyback.Core.Graph.Chords.Index(float value) -> int
 static Flyback.Core.Graph.Chords.Label(float value) -> string!
 static Flyback.Core.Graph.Chords.Scale(string! id) -> Flyback.Core.Graph.ScaleMode!
 static Flyback.Core.Graph.Chords.Scales.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.ScaleMode!>!
+static Flyback.Core.Graph.Chords.Steps(Flyback.Core.Graph.ScaleMode! scale, int semitones) -> int
 static Flyback.Core.Graph.Chords.Voiced(int index) -> int[]!
+static Flyback.Core.Graph.KeyboardScale.Major.get -> Flyback.Core.Graph.KeyboardScale!
+static Flyback.Core.Graph.KeyboardScale.operator !=(Flyback.Core.Graph.KeyboardScale? left, Flyback.Core.Graph.KeyboardScale? right) -> bool
+static Flyback.Core.Graph.KeyboardScale.operator ==(Flyback.Core.Graph.KeyboardScale? left, Flyback.Core.Graph.KeyboardScale? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
-static Flyback.Core.Graph.Chords.Steps(Flyback.Core.Graph.ScaleMode! scale, int semitones) -> int

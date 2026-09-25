@@ -75,7 +75,7 @@ internal sealed class Transport
         // frame or buffer, so it is not cut off.
         if (preview is not null && picture is not null) preview.Live = new LiveValues(picture.LiveInputs);
 
-        var relaid = midi.Lay(patch.KeyboardScale);
+        var relaid = midi.Lay(patch.Keyboard);
         midi.Follow(Blocks);
 
         return relaid;

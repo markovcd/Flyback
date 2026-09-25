@@ -55,11 +55,6 @@ internal sealed class ScaleKeys
     /// <summary>Puts a new scale where it is kept and says it changed.</summary>
     private readonly Action<List<int>> write;
 
-    /// <summary>
-    /// Whether these are the notes the computer keyboard plays rather than the
-    /// ones a quantiser snaps to, which changes only what the words say.
-    /// </summary>
-    private readonly bool played;
     private readonly Dictionary<int, Button> keys = [];
 
     /// <summary>
@@ -80,31 +75,17 @@ internal sealed class ScaleKeys
 
     /// <summary>The scale a module carries.</summary>
     public ScaleKeys(NodeInstance node, NodeDef def, Action<string?> changed)
-        : this(
-            Colors.Palette(def).Accent,
-            () => ScaleExtra.Of(node),
-            scale =>
-            {
-                ScaleExtra.Set(node, scale);
-                changed(null);
-            },
-            played: false)
     {
-    }
+        read = () => ScaleExtra.Of(node);
+        write = scale =>
+        {
+            ScaleExtra.Set(node, scale);
+            changed(null);
+        };
 
-    /// <summary>
-    /// A scale kept anywhere, under <paramref name="accent"/> — which is how the
-    /// patch's keyboard is edited from the module that plays it.
-    /// </summary>
-    public ScaleKeys(Color accent, Func<List<int>> read, Action<List<int>> write, bool played)
-    {
-        this.read = read;
-        this.write = write;
-        this.played = played;
+        on = new SolidColorBrush(Colors.Palette(def).Accent);
 
-        on = new SolidColorBrush(accent);
-
-        var panel = new StackPanel { Margin = new Thickness(0, played ? 6 : 14, 0, 0) };
+        var panel = new StackPanel { Margin = new Thickness(0, 14, 0, 0) };
 
         panel.Children.Add(new TextBlock
         {
@@ -238,14 +219,8 @@ internal sealed class ScaleKeys
             Spacing = 6,
         };
 
-        row.Children.Add(Shortcut(
-            "All",
-            played ? "Every note, one to a key." : "Every note, which is the nearest semitone.",
-            [.. Enumerable.Range(0, Pitch.Classes)]));
-        row.Children.Add(Shortcut(
-            "None",
-            played ? "No note, so the keys play nothing." : "No note, which passes the signal through unchanged.",
-            []));
+        row.Children.Add(Shortcut("All", "Every note, which is the nearest semitone.", [.. Enumerable.Range(0, Pitch.Classes)]));
+        row.Children.Add(Shortcut("None", "No note, which passes the signal through unchanged.", []));
 
         return row;
 
@@ -301,7 +276,7 @@ internal sealed class ScaleKeys
             key.Classes.Set(OffClass, !lit);
         }
 
-        summary.Text = played ? Played(scale) : scale.Count switch
+        summary.Text = scale.Count switch
         {
             0 => "Nothing is switched on, so there is nothing to snap to and the signal "
                  + "passes straight through.",
@@ -310,18 +285,5 @@ internal sealed class ScaleKeys
             _ => $"{scale.Count} notes: {string.Join(" ", scale.Select(Pitch.ClassName))}. "
                  + "Every octave of each, so a sweep runs up the scale.",
         };
-    }
-
-    /// <summary>Where on the computer keyboard the picked notes land.</summary>
-    private static string Played(List<int> scale)
-    {
-        if (scale.Count == 0) return "Nothing is picked, so the keys play nothing.";
-
-        var named = string.Join(" ", scale.Select(Pitch.ClassName));
-        var home = string.Concat("ASDFGHJKL;'\\".Take(scale.Count));
-        var shortfall = scale.Count > 10 ? " The Z row has ten keys, so it stops short of the top." : "";
-
-        return $"{named}, one to a key along {home}; the Q row is an octave up and the Z row an "
-               + $"octave down.{shortfall}";
     }
 }

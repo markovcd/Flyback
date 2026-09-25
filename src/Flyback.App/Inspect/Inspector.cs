@@ -1110,16 +1110,16 @@ internal sealed class Inspector
 
         panel.Children.Add(Rows.ChoiceRow(
             layout,
-            editor.History.Patch.KeyboardScale is null ? Piano : ByScale,
+            editor.History.Patch.Keyboard is null ? Piano : ByScale,
             picked =>
             {
                 // A scale left behind is picked up again, so trying the piano
-                // for a moment does not cost the notes that had been chosen.
-                if (picked == ByScale) editor.History.Patch.KeyboardScale = [.. (IEnumerable<int>?)keptKeyboardScale ?? Major];
+                // for a moment does not cost the scale that had been chosen.
+                if (picked == ByScale) editor.History.Patch.Keyboard = keptKeyboard ?? KeyboardScale.Major;
                 else
                 {
-                    keptKeyboardScale = editor.History.Patch.KeyboardScale;
-                    editor.History.Patch.KeyboardScale = null;
+                    keptKeyboard = editor.History.Patch.Keyboard;
+                    editor.History.Patch.Keyboard = null;
                 }
 
                 document.Relaid();
@@ -1129,29 +1129,39 @@ internal sealed class Inspector
                 Dispatcher.UIThread.Post(Build);
             }));
 
-        if (editor.History.Patch.KeyboardScale is not null)
-            panel.Children.Add(new ScaleKeys(
-                Colors.Palette(def).Accent,
-                () => [.. editor.History.Patch.KeyboardScale ?? []],
-                scale =>
-                {
-                    editor.History.Patch.KeyboardScale = scale;
-                    document.Relaid();
-                    editor.History.Record();
-                },
-                played: true).View);
+        if (editor.History.Patch.Keyboard is not { } scale) return panel;
+
+        panel.Children.Add(Helped(
+            Rows.ChoiceRow(
+                new ExtraField.Choice("tonic", "tonic", [.. Tonics.Select(name => new ChoiceOption(name, name))], Tonics[0]),
+                Tonics[scale.TonicClass],
+                picked => Lay(editor.History.Patch.Keyboard! with { Tonic = Array.IndexOf(Tonics, picked) })),
+            "The note each row starts on, at the left."));
+
+        // The scales an Auto Chord builds in, so the two read alike.
+        panel.Children.Add(Helped(
+            Rows.ChoiceRow(
+                new ExtraField.Choice("scale", "scale", [.. Chords.Scales.Select(s => new ChoiceOption(s.Id, s.Name))], Chords.Scales[0].Id),
+                scale.Mode.Id,
+                picked => Lay(editor.History.Patch.Keyboard! with { Scale = picked })),
+            "The scale along each row, one note a key."));
 
         return panel;
+
+        void Lay(KeyboardScale next)
+        {
+            editor.History.Patch.Keyboard = next;
+            document.Relaid();
+        }
     }
 
     private const string Piano = "piano";
     private const string ByScale = "scale";
 
-    /// <summary>What a fresh scale layout starts on: C major, what a fresh Quantiser starts on.</summary>
-    internal static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
+    private static readonly string[] Tonics = [.. Enumerable.Range(0, Pitch.Classes).Select(Pitch.ClassName)];
 
     /// <summary>The scale last switched away from, for switching back to.</summary>
-    private List<int>? keptKeyboardScale;
+    private KeyboardScale? keptKeyboard;
 
     private InspectorRows? rows;
 

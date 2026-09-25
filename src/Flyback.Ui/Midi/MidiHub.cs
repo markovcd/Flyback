@@ -215,11 +215,9 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// alone: letting go there would cut a held note off at every knob turned.
     /// </remarks>
     /// <returns>Whether the layout changed, which is when it is worth saying.</returns>
-    public bool Lay(IReadOnlyList<int>? scale)
+    public bool Lay(KeyboardScale? scale)
     {
-        var current = Keyboard.Scale;
-
-        if (current is null ? scale is null : scale is not null && current.SequenceEqual(Pitch.Scale(scale))) return false;
+        if (Equals(Keyboard.Scale, scale)) return false;
 
         lock (gate)
         {

@@ -41,6 +41,9 @@ public static class IssueCode
     public const string UnreadTail = "unread-tail";
     public const string EmptyBody = "empty-body";
     public const string UnknownLayout = "unknown-layout";
+
+    /// <summary>A keyboard laid out in notes that are not one of the scales an Auto Chord builds in.</summary>
+    public const string UnknownScale = "unknown-scale";
     public const string ArithmeticAfterPipeline = "arithmetic-after-pipeline";
 
     // --- step blocks -----------------------------------------------------------

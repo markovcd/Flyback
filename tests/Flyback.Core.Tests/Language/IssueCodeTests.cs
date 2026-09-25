@@ -35,6 +35,7 @@ public class IssueCodeTests
     [InlineData("// the clock\nsine() |> out.left", IssueCode.SlashComment)]
     [InlineData("let = 3", IssueCode.Syntax)]
     [InlineData("notes() [ H3 ] |> out.left", IssueCode.UnknownNote)]
+    [InlineData("keyboard scale [ C D E G A ]", IssueCode.UnknownScale)]
     [InlineData("group \"K\" {\n  panel level = 0.5\n}", IssueCode.PanelInGroup)]
     [InlineData("group \"K\" {\n  requires flyback.picture\n}", IssueCode.RequiresInGroup)]
     [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}", IssueCode.GroupInGroup)]

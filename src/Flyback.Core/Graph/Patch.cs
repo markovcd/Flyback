@@ -265,18 +265,15 @@ public sealed class Patch
     public List<PatchControl>? Controls { get; set; }
 
     /// <summary>
-    /// The notes the computer keyboard plays along each row, and null where it is
+    /// The scale the computer keyboard plays along each row, and null where it is
     /// laid out as a piano.
     /// </summary>
     /// <remarks>
     /// The patch's rather than a MIDI In's, because there is one keyboard and it
-    /// can only be laid out one way: kept on a module, two modules could ask for
-    /// two layouts and a panel would show one that is not being played (ADR-0099).
-    /// Empty is not null: a scale with nothing picked is a keyboard that plays
-    /// nothing, which is what the panel shows. Null rather than a piano written
+    /// can only be laid out one way (ADR-0099). Null rather than a piano written
     /// out, so a patch that never asked for a scale saves as it always did.
     /// </remarks>
-    public List<int>? KeyboardScale { get; set; }
+    public KeyboardScale? Keyboard { get; set; }
 
     /// <summary>The longest a description may be, in characters.</summary>
     public const int DescriptionLimit = 400;

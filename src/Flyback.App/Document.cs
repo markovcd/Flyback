@@ -621,7 +621,7 @@ internal sealed class Document
         Put(Map.Description(PatchPrinter.Description(editor.History.Patch.Description)));
         Put(Map.Author(PatchPrinter.Author(editor.History.Patch.Author)));
         Put(Map.Tags(PatchPrinter.Tags(editor.History.Patch.Tags)));
-        Put(Map.Keyboard(PatchPrinter.Keyboard(editor.History.Patch.KeyboardScale)));
+        Put(Map.Keyboard(PatchPrinter.Keyboard(editor.History.Patch.Keyboard)));
 
         void Put(Change? change)
         {

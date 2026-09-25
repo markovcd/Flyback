@@ -105,8 +105,9 @@ internal static class Handbook
           `device:` for a MIDI controller. A socket follows it by naming it
           where a number goes, `freq: cutoff`, or over a range of its own,
           `cutoff(200..4000)`; the Output by a statement, `out.volume = level`.
-        - **`keyboard scale [ C D E G A ]`**, on its own line, lays the
-          computer keyboard out in that scale for a MIDI In. Leave it out for
+        - **`keyboard scale [ D E F G A B C ]`**, on its own line, lays the
+          computer keyboard out for a MIDI In in that scale, from its first
+          note. The notes are one of an Auto Chord's scales. Leave it out for
           a piano.
         - **`#` starts a comment**, to the end of the line. `//` is refused.
         - **`group "Bass" { … }`** draws the modules its statements place as one

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The computer keyboard's Scale layout plays a tonic and one of Auto Chord's scales.
 - Added Chord, which plays one of 23 two-, three- and four-note chords on a root as four frequencies, and Auto Chord, the seventh chord on a played note or a step of one of 26 seven-note scales.
 - A group's `{` may stand on a line of its own in a text patch, and an output may be taken off on the next line.
 - F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops in the corner.

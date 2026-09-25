@@ -1981,7 +1981,38 @@ public sealed class Binder
         }
 
         laid = true;
-        patch.KeyboardScale = statement.Scale is { } block ? Pitch.Scale(StepNotation.Classes(block, statement.BlockLine, statement.BlockColumn, issues)) : null;
+        patch.Keyboard = statement.Scale is { } block ? Scale(block, statement.BlockLine, statement.BlockColumn) : null;
+    }
+
+    /// <summary>
+    /// The notes of a scale from its tonic, <c>[ D E F G A B C ]</c>, which have to
+    /// be one of the scales an Auto Chord builds in.
+    /// </summary>
+    private KeyboardScale? Scale(string block, int line, int column)
+    {
+        var said = issues.Count;
+        var notes = StepNotation.Classes(block, line, column, issues);
+
+        // A word that is not a note has been said already, and the scale it spoils is not worth saying too.
+        if (issues.Count > said) return null;
+
+        if (notes.Count == 0)
+        {
+            Complain(IssueCode.UnknownScale, line, column,
+                "the keyboard's scale has no notes. Spell one from its tonic, as in 'keyboard scale [ D E F G A B C ]'.");
+            return null;
+        }
+
+        var tonic = notes[0];
+        var classes = Pitch.Scale(notes.Select(note => (note - tonic + Pitch.Classes) % Pitch.Classes));
+
+        if (Chords.Scales.FirstOrDefault(scale => scale.Classes.SequenceEqual(classes)) is { } mode)
+            return new KeyboardScale(tonic, mode.Id);
+
+        Complain(IssueCode.UnknownScale, line, column,
+            $"{string.Join(" ", notes.Select(Pitch.ClassName))} is not a scale from {Pitch.ClassName(tonic)}. "
+            + "The keyboard plays the seven-note scales an Auto Chord builds in, from the first note.");
+        return null;
     }
 
     /// <summary>Says what the patch is for, once.</summary>

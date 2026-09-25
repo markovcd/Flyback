@@ -333,7 +333,7 @@ public sealed partial class PatchWorkbench
 
         if (layout == "piano")
         {
-            working.KeyboardScale = null;
+            working.Keyboard = null;
             Edits++;
 
             return Fine($"the computer keyboard is a piano. {Issues()}");
@@ -342,28 +342,22 @@ public sealed partial class PatchWorkbench
         if (layout != "scale")
             return ToolOutcome.Refused("'layout' is required, and is 'piano' or 'scale'.");
 
-        if (!arguments.TryGetProperty("notes", out var notes) || notes.ValueKind != JsonValueKind.Array)
+        if (!arguments.TryGetProperty("tonic", out var number) || number.ValueKind != JsonValueKind.Number
+            || !number.TryGetInt32(out var tonic) || tonic is < 0 or >= Pitch.Classes)
+            return ToolOutcome.Refused("a scale needs 'tonic': a pitch class, 0 to 11, where 0 is C and 9 is A.");
+
+        var scale = arguments.TryGetProperty("scale", out var named) && named.ValueKind == JsonValueKind.String
+            ? Chords.Scales.FirstOrDefault(mode => mode.Id == named.GetString())
+            : null;
+
+        if (scale is null)
             return ToolOutcome.Refused(
-                "a scale needs 'notes': pitch classes, 0 to 11, where 0 is C and 9 is A.");
+                $"a scale needs 'scale', one of {string.Join(", ", Chords.Scales.Select(mode => mode.Id))}.");
 
-        var classes = new List<int>();
-
-        foreach (var note in notes.EnumerateArray())
-        {
-            if (note.ValueKind != JsonValueKind.Number
-                || !note.TryGetInt32(out var pitchClass)
-                || pitchClass is < 0 or >= Pitch.Classes)
-            {
-                return ToolOutcome.Refused("every note has to be a whole number from 0 to 11.");
-            }
-
-            classes.Add(pitchClass);
-        }
-
-        working.KeyboardScale = Pitch.Scale(classes);
+        working.Keyboard = new KeyboardScale(tonic, scale.Id);
         Edits++;
 
-        return Fine($"laid the computer keyboard out as {PatchPrinter.Keyboard(working.KeyboardScale)}. {Issues()}");
+        return Fine($"laid the computer keyboard out as {PatchPrinter.Keyboard(working.Keyboard)}. {Issues()}");
     }
 
     /// <summary>
@@ -1086,18 +1080,17 @@ public sealed partial class PatchWorkbench
 
             Does(Vocabulary.SetKeyboard, SetKeyboard,
                 "Lays the computer keyboard out for whoever plays a MIDI In listening to it. "
-                + "'piano' is the tracker layout, and the default. 'scale' puts the notes given, "
-                + "pitch classes 0 to 11, side by side along the A row, with the Q row an octave up "
-                + "and the Z row an octave down — so a player can only hit notes in the key. One "
-                + "layout for the whole patch, since there is one keyboard.",
-                """
+                + "'piano' is the tracker layout, and the default. 'scale' puts the seven notes of "
+                + "'scale' on 'tonic', a pitch class 0 to 11, side by side along the A row from the "
+                + "tonic, with the Q row an octave up and the Z row an octave down — so a player can "
+                + "only hit notes in the key. The scales are an Auto Chord's. One layout for the "
+                + "whole patch, since there is one keyboard.",
+                $$"""
                 {
                   "properties": {
                     "layout": { "type": "string", "enum": ["piano", "scale"] },
-                    "notes": {
-                      "type": "array",
-                      "items": { "type": "integer", "minimum": 0, "maximum": 11 }
-                    }
+                    "tonic": { "type": "integer", "minimum": 0, "maximum": 11 },
+                    "scale": { "type": "string", "enum": [{{string.Join(", ", Chords.Scales.Select(scale => $"\"{scale.Id}\""))}}] }
                   },
                   "required": ["layout"]
                 }

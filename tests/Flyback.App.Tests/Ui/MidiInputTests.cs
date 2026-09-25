@@ -486,13 +486,12 @@ public class MidiInputTests : UiTest
 
         var layout = Layout(window);
         layout.ShouldNotBeNull();
-        All<Button>(window).ShouldNotContain(b => b.Classes.Contains(ScaleKeys.KeyTag));
+        Offering(window, "dorian").ShouldBeNull();
 
         layout.SelectedIndex = 1;
         Settle(window);
 
-        All<NodeEditor>(window).Single().History.Patch.KeyboardScale.ShouldBe([0, 2, 4, 5, 7, 9, 11]);
-        All<Button>(window).ShouldContain(b => b.Classes.Contains(ScaleKeys.KeyTag));
+        All<NodeEditor>(window).Single().History.Patch.Keyboard.ShouldBe(KeyboardScale.Major);
 
         window.KeyPressQwerty(PhysicalKey.S, RawInputModifiers.None);
         Settle(window);
@@ -500,12 +499,49 @@ public class MidiInputTests : UiTest
         Held(preview, MidiSignal.Pitch).ShouldBe(50d);
     }
 
+    /// <summary>
+    /// The scale is picked from an Auto Chord's list and started on a tonic, and
+    /// the home row then runs up it from the tonic.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_tonic_and_a_scale_are_picked_from_lists()
+    {
+        var (patch, midi) = Board();
+        patch.Keyboard = KeyboardScale.Major;
+
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        Select(window, midi);
+
+        Pick(Offering(window, "D#")!, "D");
+        Pick(Offering(window, "dorian")!, "dorian");
+
+        All<NodeEditor>(window).Single().History.Patch.Keyboard.ShouldBe(new KeyboardScale(2, "dorian"));
+
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(53d);
+
+        void Pick(ComboBox box, string id)
+        {
+            box.SelectedItem = box.ItemsSource!.Cast<ChoiceOption>().Single(option => option.Id == id);
+            Settle(window);
+        }
+    }
+
+    /// <summary>The picker in the panel that offers <paramref name="id"/>.</summary>
+    private static ComboBox? Offering(MainWindow window, string id) =>
+        All<ComboBox>(window).FirstOrDefault(box =>
+            box.ItemsSource?.Cast<object>().OfType<ChoiceOption>().Any(option => option.Id == id) == true);
+
     /// <summary>A patch saved on a scale opens on one, before anything is selected.</summary>
     [AvaloniaFact]
     public void A_patch_that_carries_a_scale_plays_it()
     {
         var (patch, _) = Board();
-        patch.KeyboardScale = [0, 3, 7];
+        patch.Keyboard = new KeyboardScale(9, "aeolian");
 
         var window = Open(patch);
         var preview = All<PreviewHost>(window).Single();
@@ -513,7 +549,7 @@ public class MidiInputTests : UiTest
         window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.None);
         Settle(window);
 
-        Held(preview, MidiSignal.Pitch).ShouldBe(55d);
+        Held(preview, MidiSignal.Pitch).ShouldBe(60d);
     }
 
     /// <summary>A module listening to a device has nothing to do with the keys.</summary>
