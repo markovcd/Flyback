@@ -50,7 +50,10 @@ internal sealed class Playback
 
     /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
     public Playback(
-        Shell shell,
+        NodeEditor editor,
+        PluginCatalog plugins,
+        ReportLine report,
+        Lazy<AssistantPanel> assistant,
         PreviewHost preview,
         AudioEngine audio,
         IlCompiler compiler,
@@ -59,17 +62,17 @@ internal sealed class Playback
         Lazy<PatchFiles> files,
         Lazy<TakeRecording> recording)
     {
-        editor = shell.Editor;
+        this.editor = editor;
         this.preview = preview;
         this.audio = audio;
         this.compiler = compiler;
         this.midi = midi;
-        report = shell.Report;
-        plugins = shell.Plugins;
+        this.report = report;
+        this.plugins = plugins;
         sounds = () => files.Value.Sounds;
         pictures = () => files.Value.Pictures;
         this.recording = () => recording.Value.Running;
-        assistantSummary = () => shell.Assistant?.Summary;
+        assistantSummary = () => assistant.Value.Summary;
 
         Sound = sound;
     }

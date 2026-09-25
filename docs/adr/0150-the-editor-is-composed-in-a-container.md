@@ -29,7 +29,7 @@ what they read; `CanvasServices.AddCanvas()` registers the canvas and its servic
 tests both call.
 
 - **Everything of the editor's own is built from its constructor.** A region takes
-  the services it uses; one that needs a value of the setup takes the
+  the services it uses, and no object bundles the ones every region shares; one that needs a value of the setup takes the
   `EditorSetup`. A test that builds one by hand hands it the same: a
   `PluginCatalog.Empty` rather than a module catalog, an `EditorSetup` rather
   than a folder. Everything is a singleton, since the container is one window's.

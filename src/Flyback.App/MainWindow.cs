@@ -165,7 +165,6 @@ internal sealed class MainWindow : Window
     /// <param name="setup">Where this machine keeps things and what this launch asked for.</param>
     public MainWindow(
         EditorSetup setup,
-        Shell shell,
         NodeEditor editor,
         SourceView source,
         Document document,

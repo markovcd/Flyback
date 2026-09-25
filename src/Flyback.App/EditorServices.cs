@@ -78,7 +78,6 @@ internal static class EditorServices
         services.AddSingleton<PreviewHost>();
 
         services.AddSingleton<Document>();
-        services.AddSingleton<Shell>();
         services.AddSingleton<IDialogs, WindowDialogs>();
         services.AddSingleton<IFilePickers, WindowFilePickers>();
         services.AddSingleton<IMonitors, WindowMonitors>();

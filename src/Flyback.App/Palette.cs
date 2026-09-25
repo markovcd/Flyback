@@ -57,17 +57,17 @@ internal sealed class Palette
     /// <param name="knobs">The instruments the list offers.</param>
     /// <param name="sections">How the MIDI section lays out a first keyboard.</param>
     /// <param name="setup">Where kept groups are read from and written to, or the usual place.</param>
-    public Palette(Shell shell, PanelKnobs knobs, OutputSections sections, EditorSetup setup)
+    public Palette(NodeEditor editor, Document document, PluginCatalog plugins, ReportLine report, Usage usage, PanelKnobs knobs, OutputSections sections, EditorSetup setup)
     {
         var instruments = knobs.View.Instruments;
         var groupFolder = setup.GroupFolder;
 
-        editor = shell.Editor;
-        document = shell.Document;
+        this.editor = editor;
+        this.document = document;
         keyboard = () => sections.Saved.Keyboard;
-        plugins = shell.Plugins;
-        usage = shell.Usage;
-        report = shell.Report;
+        this.plugins = plugins;
+        this.usage = usage;
+        this.report = report;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);
         list = new ModulePalette(plugins.Modules, Add, Groups, AddGroup, instruments, AddInstrument);

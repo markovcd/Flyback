@@ -51,7 +51,6 @@ internal sealed class OutputSections
         "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
         "compare the two, or if a long session starts to look stepped.";
 
-    private readonly Shell shell;
     private readonly PluginCatalog plugins;
     private readonly Lazy<PresetSlot> presets;
 
@@ -245,12 +244,11 @@ internal sealed class OutputSections
 
     /// <param name="setup">Where the settings are kept.</param>
     /// <param name="presets">The presets the startup patch is named and picked from.</param>
-    public OutputSections(Shell shell, EditorSetup setup, Lazy<PresetSlot> presets, IFilePickers pickers, IMonitors monitors)
+    public OutputSections(PluginCatalog plugins, EditorSetup setup, Lazy<PresetSlot> presets, IFilePickers pickers, IMonitors monitors)
     {
         this.pickers = pickers;
         this.monitors = monitors;
-        this.shell = shell;
-        plugins = shell.Plugins;
+        this.plugins = plugins;
         this.presets = presets;
 
         if (setup.OutputSettingsPath is { } path) Saved = OutputSettings.Load(path);

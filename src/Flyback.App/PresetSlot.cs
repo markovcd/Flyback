@@ -21,7 +21,6 @@ namespace Flyback.App;
 internal sealed class PresetSlot
 {
     private readonly IDialogs dialogs;
-    private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PatchFiles files;
@@ -32,7 +31,7 @@ internal sealed class PresetSlot
     private readonly PresetAudition audition;
     private readonly PresetLibrary? saved;
     private readonly SiteAccess site;
-    private readonly Func<AssistantPanel?> assistant;
+    private readonly Lazy<AssistantPanel> assistant;
     private readonly UnsavedWork unsaved;
     private readonly Playback playback;
     private readonly PluginInstalls installs;
@@ -70,7 +69,12 @@ internal sealed class PresetSlot
     /// <param name="playback">Puts a patch that has just arrived on the canvas, from its beginning.</param>
     /// <param name="installs">Offers the plugins a shared preset that could not be opened is short of.</param>
     public PresetSlot(
-        Shell shell,
+        NodeEditor editor,
+        Document document,
+        PluginCatalog plugins,
+        ReportLine report,
+        Usage usage,
+        Lazy<AssistantPanel> assistant,
         PatchFiles files,
         PresetThumbnails thumbnails,
         PresetAudition audition,
@@ -82,18 +86,17 @@ internal sealed class PresetSlot
         IDialogs dialogs)
     {
         this.dialogs = dialogs;
-        this.shell = shell;
-        editor = shell.Editor;
-        document = shell.Document;
+        this.editor = editor;
+        this.document = document;
         this.files = files;
-        plugins = shell.Plugins;
-        report = shell.Report;
-        usage = shell.Usage;
+        this.plugins = plugins;
+        this.report = report;
+        this.usage = usage;
         this.thumbnails = thumbnails;
         this.audition = audition;
         this.saved = saved;
         this.site = site;
-        assistant = () => shell.Assistant;
+        this.assistant = assistant;
         this.unsaved = unsaved;
         this.playback = playback;
         this.installs = installs;
@@ -293,7 +296,7 @@ internal sealed class PresetSlot
 
             // A preset has no file to have saved a conversation with, so it
             // arrives with none — ADR-0072.
-            assistant()?.Open(null);
+            assistant.Value.Open(null);
 
             // A preset arrives as a graph and no text describes it, so the
             // canvas owns it — ADR-0068.
@@ -495,7 +498,7 @@ internal sealed class PresetSlot
 
             playback.Show(patch);
             document.DropSource();
-            assistant()?.Open(conversation);
+            assistant.Value.Open(conversation);
 
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();

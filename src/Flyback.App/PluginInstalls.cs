@@ -15,9 +15,9 @@ namespace Flyback.App;
 internal sealed class PluginInstalls
 {
     private readonly IDialogs dialogs;
-    private readonly Shell shell;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
+    private readonly Lazy<AssistantPanel> assistant;
     private readonly string? pluginFolder;
     private readonly SiteAccess site;
     private readonly Playback playback;
@@ -38,7 +38,9 @@ internal sealed class PluginInstalls
     /// <param name="playback">The sound device the plugins window says what opened.</param>
     /// <param name="unsaved">What a restart asks about first, and closes the window through.</param>
     public PluginInstalls(
-        Shell shell,
+        PluginCatalog plugins,
+        ReportLine report,
+        Lazy<AssistantPanel> assistant,
         EditorSetup setup,
         SiteAccess site,
         Playback playback,
@@ -46,9 +48,9 @@ internal sealed class PluginInstalls
         IDialogs dialogs)
     {
         this.dialogs = dialogs;
-        this.shell = shell;
-        plugins = shell.Plugins;
-        report = shell.Report;
+        this.plugins = plugins;
+        this.report = report;
+        this.assistant = assistant;
         pluginFolder = setup.PluginFolder;
         this.site = site;
         this.playback = playback;
@@ -100,10 +102,10 @@ internal sealed class PluginInstalls
     /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and what to say of it, or null where none is chosen.</summary>
     private (string Assembly, string Said)? Assisting()
     {
-        if (shell.Assistant is not { Chosen: { } chosen } assistant || plugins.Provider(chosen) is not { } info) return null;
+        if (assistant.Value is not { Chosen: { } chosen } panel || plugins.Provider(chosen) is not { } info) return null;
         if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
 
-        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, assistant.Summary)));
+        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, panel.Summary)));
     }
 
     /// <summary>

@@ -30,7 +30,6 @@ internal sealed class Inspector
     /// </summary>
     internal const double PanelInset = 12;
 
-    private readonly Shell shell;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly MidiHub midi;
@@ -67,12 +66,11 @@ internal sealed class Inspector
     /// <param name="knobs">The instruments a MIDI In can be played from.</param>
     /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
     /// <param name="palette">The kept groups, and keeping one under its name.</param>
-    public Inspector(Shell shell, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers)
+    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers)
     {
         this.pickers = pickers;
-        this.shell = shell;
-        editor = shell.Editor;
-        document = shell.Document;
+        this.editor = editor;
+        this.document = document;
         this.midi = midi;
         instruments = knobs.Instruments;
         soundFolder = files.SoundFolder;

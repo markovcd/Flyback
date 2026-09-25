@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
+using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -25,6 +26,8 @@ internal sealed class StatusBar
     private readonly PreviewHost preview;
     private readonly Usage usage;
     private readonly IWindowFocus focus;
+    private readonly PluginCatalog plugins;
+    private readonly ReportLine report;
 
     private readonly TextBlock status = new()
     {
@@ -49,15 +52,15 @@ internal sealed class StatusBar
     public Control View { get; }
 
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
-    public StatusBar(Shell shell, PreviewHost preview, SiteAccess site, Playback playback, IDialogs dialogs, IWindowFocus focus)
+    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialogs dialogs, IWindowFocus focus)
     {
         this.dialogs = dialogs;
         this.focus = focus;
-        var report = shell.Report;
-
-        editor = shell.Editor;
+        this.plugins = plugins;
+        this.report = report;
+        this.editor = editor;
         this.preview = preview;
-        usage = shell.Usage;
+        this.usage = usage;
 
         var bar = new Grid
         {
@@ -67,7 +70,7 @@ internal sealed class StatusBar
 
         var letter = Glyph("letter", Glyphs.Letter(), "Write to Flyback's author. Anything you like, good or bad.");
 
-        letter.Click += async (_, _) => await WriteToTheAuthorAsync(shell, site, playback);
+        letter.Click += async (_, _) => await WriteToTheAuthorAsync(site, playback);
 
         // The same bar the count divides itself with, at the same size and color:
         // a drawn rule here would be a second kind of separator on one line.
@@ -158,21 +161,21 @@ internal sealed class StatusBar
     }
 
     /// <summary>Writing to the author, which the bar's last glyph opens (ADR-0136).</summary>
-    private async Task WriteToTheAuthorAsync(Shell shell, SiteAccess site, Playback playback)
+    private async Task WriteToTheAuthorAsync(SiteAccess site, Playback playback)
     {
         if (site.Root is not { } root)
         {
-            shell.Report.Say("There is nowhere to send a letter: this copy has no site.");
+            report.Say("There is nowhere to send a letter: this copy has no site.");
             return;
         }
 
         // Built once and both shown and sent, so what was read is what goes.
-        var about = SiteLetters.About(shell.Plugins, playback.Sound);
+        var about = SiteLetters.About(plugins, playback.Sound);
 
         var said = await dialogs.Show<string?>(
             LetterView.Title,
             LetterView.View(about, (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel)));
 
-        if (said is not null) shell.Report.Say(said);
+        if (said is not null) report.Say(said);
     }
 }

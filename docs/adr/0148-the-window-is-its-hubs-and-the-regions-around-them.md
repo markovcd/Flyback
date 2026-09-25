@@ -42,17 +42,12 @@ The hubs become classes that own no controls of the window's:
 
 A region that has something to say takes the `ReportLine` itself.
 
-Each region then becomes a class that takes the hubs and whichever of the six
-shared things it needs, owns its own fields, and raises events rather than
+Each region then becomes a class that takes the hubs and whatever else it reads, owns its own fields, and raises events rather than
 calling back into the window. `MainWindow` is what builds the hubs and the
 regions, lays them out, and asks the closing question.
 
 A hub says what changed through events, and whoever cares subscribes. It never
 names a region.
-
-What nearly every region reads (the window, the canvas, the document, the
-plugins, the report line, the usage counts and the assistant) is one `Shell`,
-built once and handed to each; a region takes anything else on its own.
 
 The hubs, the regions and the window are composed in a container
 ([0150](0150-the-editor-is-composed-in-a-container.md)). Two pairs need each other

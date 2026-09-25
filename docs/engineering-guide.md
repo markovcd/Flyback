@@ -426,9 +426,8 @@ drift. The site's CSS mirrors `Colors.cs`.
 `Document` owns who owns the patch, the write-back into the text and where an
 undo lands; `Playback` owns compiling, the sound device, pause and mute;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
-is a class that takes a `Shell` (the window, the canvas, the document, the
-plugins, the report line, the usage counts and the assistant) and whatever else
-it reads, owns its own fields and raises events: `Inspector`,
+is a class that takes what it reads (the canvas, the document, the plugins, the
+report line, a dialog, a file picker), owns its own fields and raises events: `Inspector`,
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):

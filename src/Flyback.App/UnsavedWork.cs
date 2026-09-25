@@ -20,7 +20,9 @@ namespace Flyback.App;
 /// the answers.
 /// </remarks>
 internal sealed class UnsavedWork(
-    Shell shell,
+    NodeEditor editor,
+    Document document,
+    Lazy<AssistantPanel> assistant,
     PatchFiles files,
     Lazy<TakeRecording> recording,
     EditorSetup setup,
@@ -38,9 +40,9 @@ internal sealed class UnsavedWork(
         Discard,
     }
 
-    private CanvasHistory History => shell.Editor.History;
+    private CanvasHistory History => editor.History;
 
-    private Document Document => shell.Document;
+    private Document Document => document;
 
     /// <summary>
     /// Set while the question is on the screen. The dialog is a panel over the window,
@@ -61,7 +63,7 @@ internal sealed class UnsavedWork(
     /// yet applied, or a conversation nobody has saved (ADR-0072).
     /// </summary>
     public bool SomethingToLose =>
-        History.IsModified || Document.IsUnapplied || shell.Assistant?.ConversationUnsaved == true;
+        History.IsModified || Document.IsUnapplied || assistant.Value.ConversationUnsaved;
 
     /// <summary>Lets the next close through without asking.</summary>
     public void Leave() => Leaving = true;
@@ -144,7 +146,7 @@ internal sealed class UnsavedWork(
         files.SoundFolder.Beside,
         PatchIO.ToJson(History.Patch),
         Document.Owned ? Document.Text : null,
-        shell.Assistant?.ConversationToSave(),
+        assistant.Value.ConversationToSave(),
         files.Carried?.Bytes);
 
     /// <summary>
