@@ -233,7 +233,10 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// Waits for the patch's clock to come to <paramref name="arrived"/>, for at most
     /// <paramref name="cap"/>, and says whether it did.
     /// </summary>
-    /// <remarks>The clock moves on the UI thread's own timers, which run between the looks.</remarks>
+    /// <remarks>
+    /// The clock moves on the UI thread's timers, and headless fires those only while a
+    /// dispatch is waiting on the thread, so each look waits there rather than beside it.
+    /// </remarks>
     public bool WaitForClock(Func<double, bool> arrived, TimeSpan cap)
     {
         var until = DateTime.UtcNow + cap;
@@ -242,7 +245,11 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         {
             if (DateTime.UtcNow > until) return false;
 
-            Thread.Sleep(20);
+            Run(async () =>
+            {
+                await Task.Delay(20);
+                return true;
+            });
         }
 
         return true;
