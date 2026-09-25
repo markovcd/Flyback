@@ -1,6 +1,7 @@
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
@@ -40,8 +41,8 @@ public sealed class PresetThumbnailsTests : IDisposable
         var preset = Pictured();
 
         using var compiler = new IlCompiler();
-        var compiled = await new PresetThumbnails(NodeCatalog.BuiltIn, compiler).Of(preset, TestContext.Current.CancellationToken);
-        var interpreted = await new PresetThumbnails(NodeCatalog.BuiltIn).Of(preset, TestContext.Current.CancellationToken);
+        var compiled = await new PresetThumbnails(PluginCatalog.Empty, compiler).Of(preset, TestContext.Current.CancellationToken);
+        var interpreted = await new PresetThumbnails(PluginCatalog.Empty).Of(preset, TestContext.Current.CancellationToken);
 
         compiled.Pixels.ShouldNotBeNull().ShouldBe(interpreted.Pixels);
     }
@@ -51,8 +52,8 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var drawn = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Of(preset, TestContext.Current.CancellationToken);
-        var found = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Of(preset, TestContext.Current.CancellationToken);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var found = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(1);
         found.Pixels.ShouldNotBeNull().ShouldBe(drawn.Pixels);
@@ -65,8 +66,8 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var drawn = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Of(preset, TestContext.Current.CancellationToken);
-        var said = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Said(preset);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var said = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Said(preset);
 
         builds.ShouldBe(1);
         said.Description.ShouldBe(drawn.Description);
@@ -77,7 +78,7 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Pictured();
 
-        var said = await new PresetThumbnails(NodeCatalog.BuiltIn).Said(preset);
+        var said = await new PresetThumbnails(PluginCatalog.Empty).Said(preset);
 
         said.Description.ShouldBe(preset.Build(NodeCatalog.BuiltIn).Description);
         said.Pixels.ShouldBeNull();
@@ -87,7 +88,7 @@ public sealed class PresetThumbnailsTests : IDisposable
     [Fact]
     public async Task A_thumbnail_given_up_is_drawn_when_asked_for_again()
     {
-        var thumbnails = new PresetThumbnails(NodeCatalog.BuiltIn);
+        var thumbnails = new PresetThumbnails(PluginCatalog.Empty);
         var preset = Counted();
 
         await Should.ThrowAsync<OperationCanceledException>(() => thumbnails.Of(preset, new CancellationToken(canceled: true)));
@@ -116,7 +117,7 @@ public sealed class PresetThumbnailsTests : IDisposable
             return patch;
         }, "");
 
-        var drawn = await new PresetThumbnails(NodeCatalog.BuiltIn, folder: folder).Of(preset, TestContext.Current.CancellationToken);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
 
         drawn.Words.ShouldBe(Thumbnail.Unavailable.Words);
         (Directory.Exists(folder) ? Directory.GetFiles(folder, "*.thumb") : []).ShouldBeEmpty();

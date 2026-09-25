@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -21,7 +22,7 @@ public class PresetGalleryTests : UiTest
         var parts = PresetGallery.Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(NodeCatalog.BuiltIn),
+            new PresetThumbnails(PluginCatalog.Empty),
             pointedAt: reported.Add);
 
         return (Show(parts.Tiles, width: 900), parts.Tiles, reported);
@@ -82,7 +83,7 @@ public class PresetGalleryTests : UiTest
     [AvaloniaFact]
     public void Only_the_tiles_in_sight_are_drawn()
     {
-        var thumbnails = new PresetThumbnails(NodeCatalog.BuiltIn);
+        var thumbnails = new PresetThumbnails(PluginCatalog.Empty);
         var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
         var parts = PresetGallery.Build(ordered, showing: null, thumbnails);
         var window = Show(new ScrollViewer { Height = 400, Content = parts.Tiles }, width: 900);

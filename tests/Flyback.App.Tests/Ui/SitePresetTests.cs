@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
@@ -21,7 +22,7 @@ public sealed class SitePresetTests : UiTest
         var parts = PresetGallery.Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(NodeCatalog.BuiltIn),
+            new PresetThumbnails(PluginCatalog.Empty),
             site: site.Site());
 
         var content = new DockPanel();
@@ -128,7 +129,7 @@ public sealed class SitePresetTests : UiTest
         var parts = PresetGallery.Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(NodeCatalog.BuiltIn),
+            new PresetThumbnails(PluginCatalog.Empty),
             site: new PresetSite(new HttpClient(new Unreachable()), FakePresetSite.Root));
 
         var window = Show(parts.Tiles, width: 900);

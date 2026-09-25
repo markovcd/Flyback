@@ -17,8 +17,8 @@ namespace Flyback.App;
 /// the editor's own is built from its constructor. Where two need each other, one
 /// takes a <see cref="Lazy{T}"/> of the other and asks for it only once it acts. The
 /// factories below are for what is not the editor's own, which the viewer and the
-/// tests build by hand as well: the compiler, the sound, MIDI, the thumbnails, the
-/// assistant's column and a value that may be absent.
+/// tests build by hand as well: the compiler, the sound, MIDI, the assistant's
+/// column and a value that may be absent.
 /// </remarks>
 internal static class EditorServices
 {
@@ -53,13 +53,7 @@ internal static class EditorServices
         // which must not see the presets on the machine running it.
         services.AddSingleton(_ => setup.PresetFolder is { } folder ? new PresetLibrary(folder) : null!);
 
-        services.AddSingleton(sp => new PresetThumbnails(
-            sp.GetRequiredService<PluginCatalog>().Modules,
-            sp.GetRequiredService<IlCompiler>(),
-            setup.ThumbnailFolder)
-        {
-            Saved = sp.GetService<PresetLibrary>(),
-        });
+        services.AddSingleton<PresetThumbnails>();
 
         services.AddSingleton(sp => Sound.Open(
             sp.GetRequiredService<PluginCatalog>(),

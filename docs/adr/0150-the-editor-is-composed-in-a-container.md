@@ -30,7 +30,9 @@ tests both call.
 
 - **Everything of the editor's own is built from its constructor.** A region takes
   the services it uses; one that needs a value of the setup takes the
-  `EditorSetup`. Everything is a singleton, since the container is one window's.
+  `EditorSetup`. A test that builds one by hand hands it the same: a
+  `PluginCatalog.Empty` rather than a module catalog, an `EditorSetup` rather
+  than a folder. Everything is a singleton, since the container is one window's.
 - **A cycle is a `Lazy<T>`.** The take and the playback, the files and the
   playback, the plugins window and the unsaved question, the settings and the
   preset slot: one side takes the other lazily and asks for it only once it acts.
@@ -67,10 +69,11 @@ Exceptions, each kept on purpose:
   handed is the window. `Shell.Attach` is the first line of its constructor, and
   a region reads `Shell.Owner` only once it is asked to do something.
 - **Factories for what is not the editor's own.** The compiler, the sound
-  device, the sound engine, MIDI, the thumbnails and the assistant's column are
-  shared with tests that build them by hand, so their constructors stay as they
-  are and `AddEditor` and `AddViewer` build them in a factory. So does a value that may be
-  absent (the saved presets, the recovery keeper): the container holds a null.
+  device, the sound engine, MIDI and the assistant's column are shared with tests
+  that build them by hand, so their constructors stay as they are and `AddEditor`
+  and `AddViewer` build them in a factory. So does a value that may be absent
+  (the saved presets, the recovery keeper): the container holds a null, and a
+  class that reads one takes it as an optional parameter.
 - **The container is never disposed.** The window already tears down what it
   holds in `OnClosed`, in the order a take and a device need; disposing the
   container as well would dispose them twice.

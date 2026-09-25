@@ -4,6 +4,7 @@ using System.Text;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.Controls;
 
@@ -65,22 +66,22 @@ internal sealed class PresetThumbnails
 
     private readonly ModuleCatalog modules;
     private readonly IlCompiler? compiler;
+    private readonly PresetLibrary? saved;
     private readonly ThumbnailStore? store;
 
-    /// <param name="folder">Where thumbnails are kept between runs, or null to keep them for this run only.</param>
-    public PresetThumbnails(ModuleCatalog modules, IlCompiler? compiler = null, string? folder = null)
+    /// <param name="setup">Its <see cref="EditorSetup.ThumbnailFolder"/> keeps thumbnails between runs. Null keeps them for this run only.</param>
+    /// <param name="saved">Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</param>
+    public PresetThumbnails(PluginCatalog plugins, IlCompiler? compiler = null, EditorSetup? setup = null, PresetLibrary? saved = null)
     {
-        this.modules = modules;
+        modules = plugins.Modules;
         this.compiler = compiler;
+        this.saved = saved;
 
-        if (folder is null) return;
+        if (setup?.ThumbnailFolder is not { } folder) return;
 
         store = new ThumbnailStore(folder);
         _ = Task.Run(store.Prune);
     }
-
-    /// <summary>Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</summary>
-    public PresetLibrary? Saved { get; set; }
 
     /// <summary>What a patch that reads its previous frame is given to settle in.</summary>
     private const double Settle = 1.5d;
@@ -120,7 +121,7 @@ internal sealed class PresetThumbnails
     {
         if (drawn.TryGetValue(preset, out var known) && !known.IsCanceled) return known;
 
-        var path = Saved?.Holding(preset)?.Path;
+        var path = saved?.Holding(preset)?.Path;
 
         return drawn[preset] = Task.Run(async () =>
         {
@@ -160,7 +161,7 @@ internal sealed class PresetThumbnails
 
         if (said.TryGetValue(preset, out var heard)) return heard;
 
-        var path = Saved?.Holding(preset)?.Path;
+        var path = saved?.Holding(preset)?.Path;
 
         return said[preset] = Task.Run(async () =>
         {
@@ -170,7 +171,7 @@ internal sealed class PresetThumbnails
 
             try
             {
-                var (patch, _, _) = PresetLibrary.Open(preset, Saved, modules);
+                var (patch, _, _) = PresetLibrary.Open(preset, saved, modules);
 
                 return new Thumbnail(null, "", patch.Description, patch.Author, patch.Tags);
             }
@@ -215,7 +216,7 @@ internal sealed class PresetThumbnails
         {
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
-            var (patch, samples, pictures) = PresetLibrary.Open(preset, Saved, modules);
+            var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, modules);
             var (picture, sound) = patch.Reaches();
             var described = patch.Description;
             var author = patch.Author;
