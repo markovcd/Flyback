@@ -25,11 +25,11 @@ namespace Flyback.Specs.Support;
 /// by then, and closed with the scenario. Every step that touches it runs on the
 /// one UI thread the session keeps, and hands the patch the editor now holds back
 /// to <see cref="PatchContext"/>, so the screen and the speakers are checked
-/// against what is on the canvas. Scenarios that open it queue for that thread, so
-/// in a parallel run their durations are mostly waiting: one takes a tenth of a
-/// second or so on its own, after the first window's two.
+/// against what is on the canvas. Scenarios that open it take their
+/// <see cref="HeadlessTurn"/>, so in a parallel run their durations are mostly
+/// waiting: one takes a tenth of a second or so on its own, after the first window's two.
 /// </remarks>
-public sealed class Editor(PatchContext context) : IDisposable
+public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposable
 {
     /// <summary>How many turns the UI thread is given after a step, enough for a clipboard's round trip.</summary>
     private const int Turns = 4;
@@ -343,15 +343,22 @@ public sealed class Editor(PatchContext context) : IDisposable
 
     public void Dispose()
     {
-        if (window is not { } open) return;
-
-        window = null;
-
-        Run(() =>
+        try
         {
-            open.CloseWithoutAsking();
-            Dispatcher.UIThread.RunJobs();
-        });
+            if (window is not { } open) return;
+
+            window = null;
+
+            Run(() =>
+            {
+                open.CloseWithoutAsking();
+                Dispatcher.UIThread.RunJobs();
+            });
+        }
+        finally
+        {
+            turn.Leave(this);
+        }
     }
 
     /// <summary>The window, opened the first time, on the scenario's patch where it is to be.</summary>
@@ -416,9 +423,21 @@ public sealed class Editor(PatchContext context) : IDisposable
         Dispatcher.UIThread.RunJobs();
     }
 
-    private static void Run(Action act) => Headless.Run(act);
+    private void Run(Action act)
+    {
+        turn.Take(this);
+        Headless.Run(act);
+    }
 
-    private static T Run<T>(Func<T> act) => Headless.Run(act);
+    private T Run<T>(Func<T> act)
+    {
+        turn.Take(this);
+        return Headless.Run(act);
+    }
 
-    private static T Run<T>(Func<Task<T>> act) => Headless.Run(act);
+    private T Run<T>(Func<Task<T>> act)
+    {
+        turn.Take(this);
+        return Headless.Run(act);
+    }
 }
