@@ -16,8 +16,8 @@ namespace Flyback.Viewer;
 /// <remarks>
 /// A run is one container, so everything is a singleton of it. The sound device and
 /// the MIDI backend were opened before Avalonia started and are handed in on the
-/// launch; the container holds a null where the run has none. The sound engine is
-/// the editor's too, and is built in a factory as the editor builds it.
+/// launch. The container holds a null for a run with no MIDI backend, and a silent
+/// device for one with no sound.
 /// </remarks>
 internal static class ViewerServices
 {
@@ -45,10 +45,8 @@ internal static class ViewerServices
 
         services.AddSingleton<IlCompiler>();
 
-        services.AddSingleton(sp => new AudioEngine(launch.Device ?? new SilentAudioDevice())
-        {
-            Compiler = sp.GetRequiredService<IlCompiler>(),
-        });
+        services.AddSingleton(_ => launch.Device ?? new SilentAudioDevice());
+        services.AddSingleton<AudioEngine>();
 
         services.AddSingleton<MidiHub>();
         services.AddSingleton<ControlHub>();

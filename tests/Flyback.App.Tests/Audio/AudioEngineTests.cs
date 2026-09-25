@@ -491,7 +491,7 @@ public class AudioEngineTests
     {
         using var device = new LoopbackDevice();
         using var compiler = new IlCompiler();
-        using var engine = new AudioEngine(device) { Compiler = compiler };
+        using var engine = new AudioEngine(device, compiler);
 
         var audition = engine.PrepareAudition(Tone(220f)).ShouldNotBeNull();
         await compiler.Settled();

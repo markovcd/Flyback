@@ -16,7 +16,9 @@ namespace Flyback.App.Audio;
 /// immutable <see cref="State"/> reference swapped with <see cref="Volatile"/>, so
 /// a recompile mid-buffer is a clean switch rather than a torn read.
 /// </remarks>
-public sealed class AudioEngine(IAudioDevice device) : IDisposable
+/// <param name="device">What it plays through until <see cref="Use"/> hands it another.</param>
+/// <param name="compiler">What turns each program swapped in here into IL, or null for programs that are only ever interpreted.</param>
+public sealed class AudioEngine(IAudioDevice device, IlCompiler? compiler = null) : IDisposable
 {
     /// <summary>
     /// A program and everything that goes with it. The memory belongs here rather
@@ -179,8 +181,7 @@ public sealed class AudioEngine(IAudioDevice device) : IDisposable
         state.Memory?.Clear();
     }
 
-    /// <summary>What turns each program swapped in here into IL, or null for a program that is only ever interpreted.</summary>
-    public IlCompiler? Compiler { get; init; }
+    public IlCompiler? Compiler { get; } = compiler;
 
     /// <summary>
     /// Swaps in a freshly compiled patch. Sizing the register scratch and the

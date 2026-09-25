@@ -59,10 +59,9 @@ internal static class EditorServices
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSections>().Saved));
 
-        services.AddSingleton(sp => new AudioEngine(sp.GetRequiredService<AudioSetup>().Device)
-        {
-            Compiler = sp.GetRequiredService<IlCompiler>(),
-        });
+        // The device the run opened with; Playback hands the engine any later one.
+        services.AddSingleton(sp => sp.GetRequiredService<AudioSetup>().Device);
+        services.AddSingleton<AudioEngine>();
 
         // Nothing is opened by this: the backend is asked for a device only once a
         // compiled program is reading one. Null where no plugin offers one.
