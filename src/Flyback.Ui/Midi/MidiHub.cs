@@ -30,7 +30,7 @@ namespace Flyback.App.Midi;
 /// driver's thread, which may be waiting for this lock.
 /// </para>
 /// </remarks>
-internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
+internal sealed class MidiHub(IMidiInput hardware) : IDisposable
 {
     /// <summary>
     /// Guards everything below. Held briefly and never across a call into a
@@ -291,8 +291,6 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </remarks>
     private IReadOnlyList<MidiPortInfo> Ports()
     {
-        if (hardware is null) return [];
-
         try
         {
             return hardware.Ports;
@@ -315,8 +313,6 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     /// </remarks>
     private void Listen(LiveValues[] blocks)
     {
-        if (hardware is null) return;
-
         List<IMidiPort> shutting;
         List<string> opening;
 
@@ -364,7 +360,7 @@ internal sealed class MidiHub(IMidiInput? hardware = null) : IDisposable
     {
         try
         {
-            var port = hardware!.Open(id, message => Receive(id, message));
+            var port = hardware.Open(id, message => Receive(id, message));
 
             lock (gate) listening[id] = port;
         }

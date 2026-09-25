@@ -41,7 +41,7 @@ internal static class ViewerServices
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<WallClock>();
 
-        services.AddSingleton(_ => launch.Instruments!);
+        services.AddSingleton(launch.Instruments);
 
         services.AddSingleton<IlCompiler>();
 

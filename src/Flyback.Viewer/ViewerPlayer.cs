@@ -61,7 +61,7 @@ internal sealed class ViewerPlayer : IDisposable
         ControlHub controls,
         WallClock clock)
     {
-        var (opened, device, options, _, takeover) = launch;
+        var (opened, device, options, takeover) = launch;
 
         this.options = options;
         this.preview = options.Video ? preview : null;

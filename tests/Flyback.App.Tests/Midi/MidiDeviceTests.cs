@@ -230,7 +230,7 @@ public class MidiDeviceTests
     [Fact]
     public void With_no_backend_there_is_still_the_computer_keyboard()
     {
-        using var hub = new MidiHub();
+        using var hub = new MidiHub(NoMidiInput.Instance);
 
         hub.Sources.Select(s => s.Id).ShouldBe([MidiSources.Keyboard]);
     }
@@ -353,7 +353,7 @@ public class MidiDeviceTests
         var secondNode = Guid.NewGuid();
         var first = Automatic(MidiSources.Keyboard, firstNode);
         var second = Automatic(MidiSources.Keyboard, secondNode);
-        using var hub = new MidiHub();
+        using var hub = new MidiHub(NoMidiInput.Instance);
 
         hub.Follow(first, second);
 

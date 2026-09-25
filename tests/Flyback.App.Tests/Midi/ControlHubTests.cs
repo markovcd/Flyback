@@ -131,7 +131,7 @@ public class ControlHubTests
     [Fact]
     public void Turning_a_knob_on_screen_writes_every_block()
     {
-        using var midi = new MidiHub();
+        using var midi = new MidiHub(NoMidiInput.Instance);
         var hub = new ControlHub(midi);
         var (patch, knob) = Patched();
         var picture = new LiveValues([knob.Key]);

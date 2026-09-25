@@ -3,6 +3,7 @@ using System.Text;
 using Avalonia;
 using Flyback.App;
 using Flyback.App.Audio;
+using Flyback.App.Midi;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -90,8 +91,10 @@ internal static class Program
             opened,
             device,
             options with { Title = options.Title ?? $"Flyback Viewer — {name}" },
-            plugins.PreferredMidiInput,
-            settings.Takeover);
+            settings.Takeover)
+        {
+            Instruments = plugins.MidiInput,
+        };
 
         return AppBuilder.Configure<ViewerApp>()
             .UsePlatformDetect()

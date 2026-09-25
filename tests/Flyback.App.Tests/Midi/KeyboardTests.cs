@@ -177,7 +177,7 @@ public class KeyboardTests
     [Fact]
     public void Changing_the_layout_lets_go_and_keeping_it_does_not()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -201,7 +201,7 @@ public class KeyboardTests
     [Fact]
     public void Laying_out_says_whether_anything_changed()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
 
         hub.Lay(null).ShouldBeFalse();
         hub.Lay([0, 2, 4]).ShouldBeTrue();
@@ -214,7 +214,7 @@ public class KeyboardTests
     [Fact]
     public void A_key_down_plays_its_note()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -229,7 +229,7 @@ public class KeyboardTests
     [Fact]
     public void A_key_that_is_not_a_note_is_left_for_whatever_else_wanted_it()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
 
         hub.KeyDown(Key.Space).ShouldBeFalse();
         hub.KeyUp(Key.Space).ShouldBeFalse();
@@ -238,7 +238,7 @@ public class KeyboardTests
     [Fact]
     public void Letting_the_last_key_go_shuts_the_gate()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -256,7 +256,7 @@ public class KeyboardTests
     [Fact]
     public void A_second_key_takes_the_voice_over()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -274,7 +274,7 @@ public class KeyboardTests
     [Fact]
     public void Letting_the_newer_key_go_falls_back_to_the_one_still_held()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -295,7 +295,7 @@ public class KeyboardTests
     [Fact]
     public void A_third_key_reuses_the_first_configured_voice()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -318,7 +318,7 @@ public class KeyboardTests
     [Fact]
     public void Holding_a_key_down_does_not_make_it_two_notes()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -341,7 +341,7 @@ public class KeyboardTests
     [Fact]
     public void Everything_is_let_go_when_the_window_stops_listening()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -359,7 +359,7 @@ public class KeyboardTests
     [Fact]
     public void Moving_the_octave_lets_go_of_what_is_held()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var block = Block();
         hub.Follow(block);
 
@@ -376,7 +376,7 @@ public class KeyboardTests
     [Fact]
     public void A_key_that_does_not_move_the_octave_says_so()
     {
-        new MidiHub().Shift(Key.Z).ShouldBeNull();
+        new MidiHub(NoMidiInput.Instance).Shift(Key.Z).ShouldBeNull();
     }
 
     /// <summary>
@@ -387,7 +387,7 @@ public class KeyboardTests
     [Fact]
     public void A_note_held_across_a_recompile_is_still_held()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         hub.Follow(Block());
 
         hub.KeyDown(Key.Z);
@@ -406,7 +406,7 @@ public class KeyboardTests
     [Fact]
     public void Playing_into_a_patch_that_is_not_listening_does_nothing()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         hub.Follow(LiveValues.None);
 
         Should.NotThrow(() => hub.KeyDown(Key.Z));
@@ -416,7 +416,7 @@ public class KeyboardTests
     [Fact]
     public void Something_played_is_announced()
     {
-        var hub = new MidiHub();
+        var hub = new MidiHub(NoMidiInput.Instance);
         var told = 0;
 
         hub.Played += () => told++;

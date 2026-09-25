@@ -77,11 +77,10 @@ Exceptions, each kept on purpose:
   container would build a second window to answer it.
 - **Factories for what is only looked up.** Opening the sound device is a call
   `AddEditor` makes in a factory, and the sound engine is given the `AudioSetup` it
-  returns; `Playback` hands it any later device. A value that may be absent (the
-  MIDI backend) is a factory returning null, and a class that reads one takes it
-  as an optional parameter. A class that can do nothing on its own instead takes
-  the setup and does nothing: the recovery keeper with no folder, and the saved
-  presets with none, which `PresetLibrary.Keeps` says.
+  returns; `Playback` hands it any later device. Nothing is registered as
+  null. A service that may have nothing to work with does nothing instead: the
+  recovery keeper and the saved presets with no folder (`PresetLibrary.Keeps`
+  says which), and `NoMidiInput`, with no ports, where no plugin can hear MIDI.
 - **The window's container is disposed when the window closes.** `OnClosed`
   finishes the take and stops the recovery keeper first; the container then
   disposes the sound engine, the compiler and MIDI. The engine owns its device and

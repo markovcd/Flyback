@@ -63,8 +63,8 @@ internal static class EditorServices
         services.AddSingleton<AudioEngine>();
 
         // Nothing is opened by this: the backend is asked for a device only once a
-        // compiled program is reading one. Null where no plugin offers one.
-        services.AddSingleton(sp => sp.GetRequiredService<PluginCatalog>().PreferredMidiInput!);
+        // compiled program is reading one.
+        services.AddSingleton(setup.Plugins.MidiInput);
         services.AddSingleton<MidiHub>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
