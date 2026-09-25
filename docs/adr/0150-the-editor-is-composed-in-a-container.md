@@ -70,13 +70,14 @@ for every registration.
 
 Exceptions, each kept on purpose:
 
-- **What a region asks of the window is a service over a `Lazy<MainWindow>`.**
+- **What a region asks of the window is a service over `EditorWindow`.**
   The regions are built before the window, since the window is built from them.
   Dialogs, the file pickers, the monitors, whether the window is in front and
   closing it are each an interface (`IDialogs`, `IFilePickers`, `IMonitors`,
-  `IWindowFocus`, `IWindowClose`) whose implementation asks for the window only
-  once it is used. Nothing may use one while the window is being built: the
-  container would build a second window to answer it.
+  `IWindowFocus`, `IWindowClose`) whose implementation asks `EditorWindow` for the
+  window only once it is used. `MainWindow` is registered through
+  `EditorWindow.Build`, and asking for the window while it is being built throws,
+  where the container would otherwise build a second window to answer.
 - **Factories for what is only looked up.** Opening the sound device is a call
   `AddEditor` makes in a factory, and the sound engine is given the `AudioSetup` it
   returns; `Playback` hands it any later device. Nothing is registered as

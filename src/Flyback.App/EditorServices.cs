@@ -104,7 +104,9 @@ internal static class EditorServices
         services.AddSingleton<StatusBar>();
         services.AddSingleton<TakeRecording>();
 
-        services.AddSingleton<MainWindow>();
+        // Through its guard, so a service that asks for the window while it is built is refused.
+        services.AddSingleton<EditorWindow>();
+        services.AddSingleton(sp => sp.GetRequiredService<EditorWindow>().Build());
 
         return services;
     }

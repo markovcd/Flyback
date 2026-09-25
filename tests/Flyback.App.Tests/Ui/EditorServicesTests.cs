@@ -60,6 +60,23 @@ public class EditorServicesTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_service_that_asks_for_the_window_while_it_is_built_is_refused()
+    {
+        var thrown = Should.Throw<Exception>(() => NewMainWindow(replace: services =>
+            services.AddSingleton<IWindowFocus>(sp => new Impatient(sp.GetRequiredService<EditorWindow>()))));
+
+        thrown.ToString().ShouldContain("asked for while it was being built");
+    }
+
+    /// <summary>Reads the window in its constructor, which is the mistake the guard is there for.</summary>
+    private sealed class Impatient : IWindowFocus
+    {
+        public Impatient(EditorWindow window) => IsActive = window.Value.IsActive;
+
+        public bool IsActive { get; }
+    }
+
+    [AvaloniaFact]
     public void The_regions_are_in_the_window_the_container_built()
     {
         using var provider = new ServiceCollection().AddEditor(new EditorSetup()).BuildServiceProvider();
@@ -68,7 +85,7 @@ public class EditorServicesTests : UiTest
         window.Show();
         Settle(window);
 
-        provider.GetRequiredService<Lazy<MainWindow>>().Value.ShouldBeSameAs(window);
+        provider.GetRequiredService<EditorWindow>().Value.ShouldBeSameAs(window);
         All<NodeEditor>(window).Single().ShouldBeSameAs(provider.GetRequiredService<NodeEditor>());
     }
 
