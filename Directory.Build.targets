@@ -48,6 +48,13 @@
     Publish="false" lays a plugin out beside a build and leaves it out of the publish.
   -->
 
+  <!-- The solution already lists each plugin under plugins; an IDE need not list it again under every project that ships it. -->
+  <ItemDefinitionGroup>
+    <PluginProject>
+      <Visible>false</Visible>
+    </PluginProject>
+  </ItemDefinitionGroup>
+
   <Target Name="SelectPlugins" Condition="'@(PluginProject)' != ''">
 
     <PropertyGroup>
