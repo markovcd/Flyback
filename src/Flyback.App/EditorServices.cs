@@ -64,7 +64,7 @@ internal static class EditorServices
 
         // Nothing is opened by this: the backend is asked for a device only once a
         // compiled program is reading one.
-        services.AddSingleton(setup.Plugins.MidiInput);
+        services.AddSingleton(setup.Plugins.PreferredMidiInput);
         services.AddSingleton<MidiHub>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();

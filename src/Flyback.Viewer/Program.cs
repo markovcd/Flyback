@@ -3,7 +3,6 @@ using System.Text;
 using Avalonia;
 using Flyback.App;
 using Flyback.App.Audio;
-using Flyback.App.Midi;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -93,7 +92,7 @@ internal static class Program
             options with { Title = options.Title ?? $"Flyback Viewer — {name}" },
             settings.Takeover)
         {
-            Instruments = plugins.MidiInput,
+            Instruments = plugins.PreferredMidiInput,
         };
 
         return AppBuilder.Configure<ViewerApp>()

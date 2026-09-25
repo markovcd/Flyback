@@ -260,7 +260,7 @@ internal sealed class PanelKnobs
             FontSize = Text.Small,
             Foreground = Text.Muted,
             TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            Text = plugins.PreferredMidiInput is { } input
+            Text = plugins.PreferredMidiInput is { IsSupported: true } input
                 ? OutputSections.Attributed($"Heard through {input.Name}", plugins.Provider(input))
                 : "No MIDI plugin is installed, so the only instrument is the computer's own keyboard.",
         };

@@ -173,19 +173,19 @@ public sealed class PluginCatalog
 
     /// <summary>
     /// How to hear what is plugged in here: supported, highest priority, ties broken on
-    /// id. Null where nothing installed can listen, in which case the only instrument
-    /// is the computer's own keyboard.
+    /// id. <see cref="NoMidiInput"/> where nothing installed can listen, in which case
+    /// the only instrument is the computer's own keyboard.
     /// </summary>
     /// <remarks>
     /// One rather than all, the way a sound backend is chosen: two backends on one
     /// machine would be two ways to the same socket, and a picker offering every
     /// keyboard twice is worse than one offering it once.
     /// </remarks>
-    public IMidiInput? PreferredMidiInput => MidiInputs
+    public IMidiInput PreferredMidiInput => MidiInputs
         .Where(Supported)
         .OrderByDescending(i => i.Priority)
         .ThenBy(i => i.Id, StringComparer.Ordinal)
-        .FirstOrDefault();
+        .FirstOrDefault() ?? NoMidiInput.Instance;
 
     /// <summary>A backend that throws while answering whether it works here has answered no.</summary>
     private static bool Supported(IMidiInput input)

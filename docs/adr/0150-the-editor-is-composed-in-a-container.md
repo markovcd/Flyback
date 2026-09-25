@@ -82,7 +82,8 @@ Exceptions, each kept on purpose:
   returns; `Playback` hands it any later device. Nothing is registered as
   null. A service that may have nothing to work with does nothing instead: the
   recovery keeper and the saved presets with no folder (`PresetLibrary.Keeps`
-  says which), and `NoMidiInput`, with no ports, where no plugin can hear MIDI.
+  says which), and `NoMidiInput`, with no ports, which `PluginCatalog.PreferredMidiInput`
+  hands over where no plugin can hear MIDI.
 - **The window's container is disposed when the window closes.** `OnClosed`
   finishes the take and stops the recovery keeper first; the container then
   disposes the sound engine, the compiler and MIDI. The engine owns its device and

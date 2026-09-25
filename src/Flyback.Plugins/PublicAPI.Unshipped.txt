@@ -28,3 +28,13 @@ override sealed Flyback.Plugins.Assist.PatchEvent.Read.Equals(Flyback.Plugins.As
 static Flyback.Plugins.Assist.PatchEvent.Read.operator !=(Flyback.Plugins.Assist.PatchEvent.Read? left, Flyback.Plugins.Assist.PatchEvent.Read? right) -> bool
 static Flyback.Plugins.Assist.PatchEvent.Read.operator ==(Flyback.Plugins.Assist.PatchEvent.Read? left, Flyback.Plugins.Assist.PatchEvent.Read? right) -> bool
 static Flyback.Plugins.Assist.ToolOutcome.Read(string! text) -> Flyback.Plugins.Assist.ToolOutcome!
+*REMOVED*Flyback.Plugins.Hosting.PluginCatalog.PreferredMidiInput.get -> Flyback.Plugins.Midi.IMidiInput?
+Flyback.Plugins.Hosting.PluginCatalog.PreferredMidiInput.get -> Flyback.Plugins.Midi.IMidiInput!
+Flyback.Plugins.Midi.NoMidiInput
+Flyback.Plugins.Midi.NoMidiInput.Id.get -> string!
+Flyback.Plugins.Midi.NoMidiInput.IsSupported.get -> bool
+Flyback.Plugins.Midi.NoMidiInput.Name.get -> string!
+Flyback.Plugins.Midi.NoMidiInput.Open(string! port, Flyback.Plugins.Midi.MidiCallback! deliver) -> Flyback.Plugins.Midi.IMidiPort!
+Flyback.Plugins.Midi.NoMidiInput.Ports.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Midi.MidiPortInfo>!
+Flyback.Plugins.Midi.NoMidiInput.Priority.get -> int
+static Flyback.Plugins.Midi.NoMidiInput.Instance.get -> Flyback.Plugins.Midi.NoMidiInput!
