@@ -3,7 +3,9 @@ using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
+using Flyback.App;
 
 namespace Flyback.Specs.Steps;
 
@@ -11,18 +13,56 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class PresetSteps(Session session)
 {
+    private static readonly Lazy<PluginCatalog> Installed = new(() => PluginHost.Load());
+
+    private ModuleCatalog modules = NodeCatalog.BuiltIn;
+
     [Given("every shipped preset")]
     public void GivenEveryPreset() => session.Presets = Presets.All;
 
-    [Then("each one opens with nothing wrong")]
-    public void ThenNothingWrong() => Each(patch =>
+    [Given("the shipped preset {string}")]
+    public void GivenAPreset(string name)
     {
-        var wrong = new[] { patch.CompileForVideo(), patch.CompileForAudio() }
-            .SelectMany(result => result.Issues.Where(i => i.Severity == IssueSeverity.Error))
-            .Select(i => i.Message);
+        var catalog = Installed.Value;
 
-        return string.Join(" | ", wrong);
-    });
+        session.Presets = [catalog.Presets.Single(preset => preset.Name == name)];
+        modules = catalog.Modules;
+    }
+
+    /// <summary>Opened as the gallery opens one, with whatever files it carries.</summary>
+    [Then("each one opens with nothing wrong")]
+    [Then("it opens with nothing wrong")]
+    public void ThenNothingWrong()
+    {
+        session.Presets.ShouldNotBeEmpty();
+
+        var faults = session.Presets
+            .Select(preset => (preset.Name, Opened: PresetLibrary.Open(preset, null, modules)))
+            .Select(p => (p.Name, Fault: string.Join(" | ", new[]
+                {
+                    p.Opened.Patch.CompileForVideo(modules, samples: p.Opened.Samples, pictures: p.Opened.Pictures),
+                    p.Opened.Patch.CompileForAudio(modules, samples: p.Opened.Samples, pictures: p.Opened.Pictures),
+                }
+                .SelectMany(result => result.Issues.Where(i => i.Severity == IssueSeverity.Error))
+                .Select(i => i.Message))))
+            .Where(p => p.Fault.Length > 0)
+            .Select(p => $"{p.Name}: {p.Fault}")
+            .ToList();
+
+        faults.ShouldBeEmpty(string.Join(Environment.NewLine, faults));
+    }
+
+    /// <summary>What a relative path would be read from, were the files loose: the working folder and the program's own.</summary>
+    [Given("none of the recordings it plays is on this machine")]
+    public void ThenNothingOnDisk()
+    {
+        foreach (var preset in session.Presets)
+        foreach (var path in PatchBundle.Files(preset.Build(modules), modules))
+        {
+            File.Exists(path).ShouldBeFalse($"{path} is in the working folder");
+            File.Exists(Path.Combine(AppContext.BaseDirectory, path)).ShouldBeFalse($"{path} is beside the program");
+        }
+    }
 
     [Then("each one saved and opened again is the same instrument")]
     public void ThenFilesKeepIt() => Each(patch => Differences(patch, PatchIO.Read(PatchIO.ToJson(patch)).Patch));

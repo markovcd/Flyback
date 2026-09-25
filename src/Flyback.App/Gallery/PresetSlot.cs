@@ -342,7 +342,8 @@ internal sealed class PresetSlot
     /// Built before it is named, so a preset that will not build leaves the title
     /// alone. Named at all because a preset is one of the ways a patch arrives and
     /// the only one with no file to be named after; it has no folder either. A saved
-    /// one carries what it plays, as the bundle it is.
+    /// one carries what it plays, as the bundle it is, and a built one what its
+    /// assembly holds.
     /// </remarks>
     private Patch Arrive(PatchPreset preset)
     {
@@ -360,7 +361,10 @@ internal sealed class PresetSlot
 
         var built = preset.Build(plugins.Modules);
 
-        files.Became(preset.Name, beside: null);
+        files.Became(
+            preset.Name,
+            beside: null,
+            preset.Files is { } carried ? new BundleFiles(carried(), files.SoundFolder, files.PictureFolder) : null);
 
         return built;
     }

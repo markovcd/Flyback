@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Plugins.Hosting;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -62,6 +63,34 @@ public class DocumentIdentityTests : UiTest
         Dispatcher.UIThread.RunJobs();
 
         window.IsBundle.ShouldBeFalse("a preset came out of no file at all");
+    }
+
+    /// <summary>
+    /// A built preset that carries files is a bundle of them: they are what it plays,
+    /// and a save keeps them with it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_preset_that_carries_files_is_a_bundle_of_them()
+    {
+        var speaking = new PatchPreset("Speaking", _ => new Patch())
+        {
+            Files = () => new Dictionary<string, byte[]> { ["line.wav"] = [] },
+        };
+
+        var window = Open(setup: new EditorSetup
+        {
+            Plugins = new PluginCatalog([], [], NodeCatalog.BuiltIn, [.. Presets.All, speaking], []),
+        });
+
+        Pick(PresetList(window), "Speaking");
+        Dispatcher.UIThread.RunJobs();
+
+        window.IsBundle.ShouldBeTrue();
+
+        Pick(PresetList(window), "Kaleidoscope");
+        Dispatcher.UIThread.RunJobs();
+
+        window.IsBundle.ShouldBeFalse("a preset that carries nothing is not a bundle");
     }
 
     /// <summary>

@@ -48,7 +48,7 @@ context, decision, consequences.
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
 | [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
-| [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed)* |
+| [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed; a built preset carries its own by [0151](0151-a-built-preset-carries-its-files-in-its-assembly.md))* |
 | [0059](0059-a-picture-comes-in-as-a-texture.md) | A picture comes in as a texture *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |
@@ -155,6 +155,7 @@ context, decision, consequences.
 | [0131](0131-shared-presets-live-on-a-site-that-only-reads-its-media.md) | Shared presets live on a site that only reads its media *(user-directed)* |
 | [0136](0136-a-letter-goes-to-the-author-through-the-preset-site.md) | A letter goes to the author through the preset site *(user-directed)* |
 | [0138](0138-the-preset-site-starts-with-presets-kept-as-files.md) | The preset site starts with presets kept as files *(user-directed)* |
+| [0151](0151-a-built-preset-carries-its-files-in-its-assembly.md) | A built preset carries its files in its assembly *(user-directed)* |
 | [0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md) | The preset site starts with a plugin its build packs and the release key signs *(user-directed)* |
 | [0025](0025-platform-io-behind-loadable-plugins.md) | Platform I/O behind plugins loaded at run time |
 | [0026](0026-modules-from-plugins-with-provenance-in-the-file.md) | Modules may come from plugins, and the file records which *(user-directed)* |

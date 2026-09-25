@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.
+- A plugin's preset can carry the sound files and pictures it plays.
 - The computer keyboard's Scale layout plays a tonic and one of Auto Chord's scales.
 - Added Chord, which plays one of 23 two-, three- and four-note chords on a root as four frequencies, and Auto Chord, the seventh chord on a played note or a step of one of 26 seven-note scales.
 - A group's `{` may stand on a line of its own in a text patch, and an output may be taken off on the next line.

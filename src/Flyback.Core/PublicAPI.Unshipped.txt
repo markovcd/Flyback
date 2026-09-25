@@ -66,3 +66,7 @@ static Flyback.Core.Graph.KeyboardScale.operator !=(Flyback.Core.Graph.KeyboardS
 static Flyback.Core.Graph.KeyboardScale.operator ==(Flyback.Core.Graph.KeyboardScale? left, Flyback.Core.Graph.KeyboardScale? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
+Flyback.Core.Graph.PatchPreset.Files.get -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>?
+Flyback.Core.Graph.PatchPreset.Files.init -> void
+Flyback.Core.Graph.PresetFiles
+static Flyback.Core.Graph.PresetFiles.Embedded(System.Reflection.Assembly! assembly, string! folder) -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>!

@@ -182,13 +182,24 @@ public sealed class PresetLibrary
 
     /// <summary>
     /// A preset as the patch it is and the files it plays: a saved one's own bundle,
-    /// and none for one that is built.
+    /// and what a built one carries.
     /// </summary>
     /// <param name="saved">Where saved presets are kept, or null where none are.</param>
     public static Opened Open(PatchPreset preset, PresetLibrary? saved, ModuleCatalog modules)
     {
         if (saved?.Holding(preset) is not { } held)
-            return new Opened(preset.Build(modules), new SampleLibrary(), new ImageLibrary());
+        {
+            var patch = preset.Build(modules);
+
+            if (preset.Files is { } carried)
+            {
+                var within = new BundleFiles(carried());
+
+                return new Opened(patch, within, within);
+            }
+
+            return new Opened(patch, new SampleLibrary(), new ImageLibrary());
+        }
 
         var bundle = held.Open(modules);
         var files = BundleFiles.Of(bundle);

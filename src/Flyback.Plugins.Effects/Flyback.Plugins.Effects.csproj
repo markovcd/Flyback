@@ -14,6 +14,8 @@
     <AssemblyMetadata Include="Tags" Value="sound; effects; delay; modulation" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
+    <!-- Mycelium's words: LibriVox's public-domain reading of Alice, chapter five. -->
+    <EmbeddedResource Include="Mycelium\*.wav" LogicalName="Mycelium/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

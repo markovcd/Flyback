@@ -51,6 +51,13 @@ public sealed record PatchPreset(
     string Description = "",
     PresetKind Kind = PresetKind.Idea)
 {
+    /// <summary>
+    /// The sound files and pictures the patch names, keyed by the path it names them
+    /// by, or null for a preset that names none. Read when the preset is opened, as a
+    /// bundle's are — see <see cref="PresetFiles.Embedded"/>.
+    /// </summary>
+    public Func<IReadOnlyDictionary<string, byte[]>>? Files { get; init; }
+
     private readonly Func<ModuleCatalog, Patch> build = Build;
 
     /// <summary>Builds the patch, carrying <see cref="Description"/> unless it has one of its own.</summary>

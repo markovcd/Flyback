@@ -721,6 +721,22 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
     <span class="k">return</span> b.Build();
 }</code></pre>
 
+    <p>A preset that plays a sound file or shows a picture carries it inside your plugin. Embed each file under a
+    folder of its own, name it in the patch by its name in that folder, and hand the preset the folder with
+    <code>PresetFiles.Embedded</code>. The files open with the preset as a bundle's do, so it plays on a machine
+    that has never had them, and saving it keeps them beside it.</p>
+
+    <pre><code><span class="c">&lt;!-- in the .csproj --&gt;</span>
+&lt;EmbeddedResource Include="Speaking\*.wav" LogicalName="Speaking/%(Filename)%(Extension)" /&gt;
+
+<span class="k">new</span> PatchPreset(<span class="s">"Speaking"</span>, Build)
+{
+    Files = PresetFiles.Embedded(<span class="k">typeof</span>(YourPlugin).Assembly, <span class="s">"Speaking"</span>),
+};
+
+<span class="c">// and in Build, a Sample named by the file's name in the folder</span>
+SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</span>);</code></pre>
+
     <p>Nothing in that says where a module sits, and nothing should: a preset states what the patch is and
     what is wired to what, and <code>b.Build()</code> puts the coordinates on with the same layout the Tidy
     button and the text language use, so the patch reaches the canvas already reading left to right. Taking

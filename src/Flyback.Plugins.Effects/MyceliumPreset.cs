@@ -1,12 +1,14 @@
 using Flyback.Core.Graph;
+using System.Text;
 using System.Text.Json.Nodes;
 
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// A whole psybient track: ninety-six bars in six sections that come round again,
-/// arranged by one sequencer, with a picture grown out of the same signals and
-/// one voice that is the picture being heard.
+/// arranged by one sequencer, with a picture grown out of the same signals,
+/// one voice that is the picture being heard, and lines from Alice's meeting with
+/// the Caterpillar.
 /// </summary>
 /// <remarks>
 /// The largest patch in the box, and sized against the two things that bound one.
@@ -93,6 +95,53 @@ internal static class MyceliumPreset
     /// music.
     /// </summary>
     private static readonly int[] Scale = [2, 3, 6, 7, 9, 10, 0];
+
+    /// <summary>
+    /// Each line the patch speaks and the phrases of the song it starts on, from
+    /// LibriVox's public-domain reading of Alice's fifth chapter. The files are this
+    /// assembly's resources (see <see cref="PresetFiles.Embedded"/>).
+    /// </summary>
+    /// <remarks>
+    /// Sparse on purpose: the intro and the breakdown, where almost nothing else
+    /// plays, the climb into the peak, and the outro. The Caterpillar's question
+    /// opens the breakdown, and Alice answers it.
+    /// </remarks>
+    private static readonly (string File, float[] At)[] Lines =
+    [
+        ("sleepy-voice.wav", [0.5f]),
+        ("who-are-you.wav", [1.5f, 1.75f, 6f]),
+        ("who-i-was.wav", [6.125f]),
+        ("so-many-sizes.wav", [6.625f]),
+        ("one-side.wav", [7.5f]),
+        ("butterfly.wav", [11.5f]),
+    ];
+
+    /// <summary>
+    /// A formula for how far into its clip a line is, in seconds, from where the
+    /// song is in phrases ('a') and how many phrases go by a second ('b'): restarted
+    /// at each of <paramref name="at"/>, and negative before the first.
+    /// </summary>
+    private static string Due(float[] at)
+    {
+        var formula = new StringBuilder(FormattableString.Invariant($"(a - {at[0]}"));
+
+        for (var i = 1; i < at.Length; i++)
+            formula.Append(FormattableString.Invariant($" - step({at[i]}, a) * {at[i] - at[i - 1]}"));
+
+        return formula.Append(") / b").ToString();
+    }
+
+    /// <summary>An Expression over what is wired into it, in the order of a, b, c and d.</summary>
+    private static NodeInstance Expression(PatchBuilder b, string formula, params NodeInstance[] sockets)
+    {
+        var node = b.Add(NodeCatalog.ExpressionTypeId);
+        node.SetState("expression", new JsonObject { ["formula"] = formula });
+
+        for (var socket = 0; socket < sockets.Length; socket++)
+            b.Wire(sockets[socket], 0, node, socket);
+
+        return node;
+    }
 
     /// <summary>
     /// How many octaves a Fractal builds. A choice on the node rather than a
@@ -1055,9 +1104,37 @@ internal static class MyceliumPreset
 
         b.Group("Riser", sweepCut, riserOut);
 
+        // --- the words -------------------------------------------------------
+
+        // Where the song is, in phrases. Each line is read from the moment it is due,
+        // so it lands on its bar at any tempo, and a Sample is silent before its clip
+        // starts and after it ends, so nothing needs a trigger.
+        var songAt = Expression(b, "fract(a * (1 / 12)) * 12", phrasePos);
+
+        var wordsGroup = new List<NodeInstance> { songAt };
+        var spoken = new List<NodeInstance>();
+
+        foreach (var (file, at) in Lines)
+        {
+            var due = Expression(b, Due(at), songAt, phrases);
+            var line = b.Add(NodeCatalog.SampleTypeId, (1, 1.25f));
+            SampleExtra.Set(line, file);
+
+            b.Wire(due, 0, line, 0);
+
+            spoken.Add(line);
+            wordsGroup.AddRange([due, line]);
+        }
+
+        var someWords = Expression(b, "a + b + c + d", spoken[0], spoken[1], spoken[2], spoken[3]);
+        var words = Expression(b, "a + b + c", someWords, spoken[4], spoken[5]);
+
+        b.Group("Words", [.. wordsGroup, someWords, words]);
+
         // --- the dub echo ----------------------------------------------------
 
-        // What goes in: the arp, the drips, the lead, and a little of the snare.
+        // What goes in: the arp, the drips, the lead, a little of the snare, and the
+        // words.
         var send = b.Add("math.mixer", (1, 0.8f), (3, 0.7f), (5, 0.6f), (7, 0.2f));
 
         // A feedback loop drawn rather than dialed. The Echo has its own feedback at
@@ -1065,6 +1142,7 @@ internal static class MyceliumPreset
         // group instead — which is what lets something be done to them on the way.
         // Three sixteenths then two, counted off the tempo, so the left tap is a
         // dotted eighth and the right lands on the beat after it.
+        var sent = Expression(b, "a + b * 0.3", send, words);
         var echoIn = b.Add("math.add");
         var taps = b.Add(EchoModule.TypeId, (2, 3f), (3, 2f), (4, 0f), (5, 1f));
 
@@ -1079,7 +1157,7 @@ internal static class MyceliumPreset
          .Wire(dripOut, 0, send, 2)
          .Wire(leadOut, 0, send, 4)
          .Wire(snareOut, 0, send, 6)
-         .Wire(send, 0, echoIn, 0)
+         .Wire(sent, 0, echoIn, 0)
          .Wire(returned, 0, echoIn, 1)
          .Wire(echoIn, 0, taps, 0)
          .Wire(beat, 0, taps, 1)
@@ -1088,15 +1166,16 @@ internal static class MyceliumPreset
          .Wire(dark, 0, worn, 0)
          .Wire(worn, 0, returned, 0);
 
-        b.Group("Dub Echo", send, echoIn, taps, dark, worn, returned);
+        b.Group("Dub Echo", send, sent, echoIn, taps, dark, worn, returned);
 
         // --- the room --------------------------------------------------------
 
-        // One Reverb on a send, fully wet, fed by what should sound far away. 'out'
-        // and 'wide' are the two sides.
+        // One Reverb on a send, fully wet, fed by what should sound far away, and a
+        // little of the words. 'out' and 'wide' are the two sides.
         var roomSend = b.Add("math.mixer", (1, 0.5f), (3, 0.5f), (5, 0.8f), (7, 0.8f));
         var snareSend = b.Add("math.mul", (1, 0.3f));
         var roomIn = b.Add("math.add");
+        var roomAll = Expression(b, "a + b * 0.35", roomIn, words);
         var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
 
         b.Wire(wide, 0, roomSend, 0)
@@ -1106,14 +1185,14 @@ internal static class MyceliumPreset
          .Wire(snareOut, 0, snareSend, 0)
          .Wire(roomSend, 0, roomIn, 0)
          .Wire(snareSend, 0, roomIn, 1)
-         .Wire(roomIn, 0, room, 0);
+         .Wire(roomAll, 0, room, 0);
 
-        b.Group("Room", roomSend, snareSend, roomIn, room);
+        b.Group("Room", roomSend, snareSend, roomIn, roomAll, room);
 
         // --- the desk --------------------------------------------------------
 
         // Three Desks of four, chained by their buses: the rhythm, the music, and what
-        // comes back from the effects. Left and right differ in which echo tap and
+        // comes back from the effects, with the words dry beside it. Left and right differ in which echo tap and
         // which side of the Chorus and the Reverb they carry, and in how the arp and
         // the drips lean — which is two levels for one signal, and a Desk has one, so
         // those two are leaned in a pair of Mixers and arrive as one stereo channel.
@@ -1152,6 +1231,7 @@ internal static class MyceliumPreset
          .Wire(room, 0, returns, 3)
          .Wire(room, 1, returns, 4)
          .Wire(scanOut, 0, returns, 6)
+         .Wire(words, 0, returns, 9)
 
          .Wire(rhythm, 2, music, 12)
          .Wire(rhythm, 3, music, 13)

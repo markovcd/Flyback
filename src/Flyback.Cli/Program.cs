@@ -475,6 +475,8 @@ internal static class Program
                     return Exit.Failed;
                 }
 
+                var carried = wanted.Files is { } files ? new BundleFiles(files()) : null;
+
                 return PrintCommand.Run(
                     built,
                     null,
@@ -482,6 +484,8 @@ internal static class Program
                     checking,
                     result.InvocationConfiguration.Output,
                     error,
+                    carried,
+                    carried,
                     name: wanted.Name);
             }
 

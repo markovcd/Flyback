@@ -63,8 +63,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 MyceliumPreset.Name,
                 MyceliumPreset.Build,
                 "A whole psybient track: ninety-six bars in six sections off one sequencer, a "
-                + "picture grown from the same signals, and one voice that is the picture heard.",
-                PresetKind.Showcase),
+                + "picture grown from the same signals, one voice that is the picture heard, and "
+                + "the Caterpillar asking who you are.",
+                PresetKind.Showcase)
+            {
+                Files = PresetFiles.Embedded(typeof(MyceliumPreset).Assembly, MyceliumPreset.Name),
+            },
             new PatchPreset(
                 BronzePreset.Name,
                 BronzePreset.Build,

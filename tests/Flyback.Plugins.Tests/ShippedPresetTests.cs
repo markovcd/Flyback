@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
@@ -21,7 +22,7 @@ public class ShippedPresetTests
     public static TheoryData<string> Every =>
         [.. ShippedPlugins.Loaded.Presets.Select(p => p.Name)];
 
-    /// <summary>Every preset in the picker builds and compiles for both sinks.</summary>
+    /// <summary>Every preset in the picker builds and compiles for both sinks, against what it carries.</summary>
     [Theory]
     [MemberData(nameof(Every))]
     public void Every_preset_builds_and_compiles(string name)
@@ -30,18 +31,36 @@ public class ShippedPresetTests
         var preset = loaded.Presets.Single(p => p.Name == name);
 
         var patch = Should.NotThrow(() => preset.Build(loaded.Modules));
+        var carried = preset.Files is { } files ? new BundleFiles(files()) : null;
 
         patch.Nodes.ShouldContain(n => NodeCatalog.IsSink(n.TypeId), "every patch has an Output");
 
         foreach (var result in new[]
                  {
-                     patch.CompileForVideo(loaded.Modules),
-                     patch.CompileForAudio(loaded.Modules),
+                     patch.CompileForVideo(loaded.Modules, samples: carried, pictures: carried),
+                     patch.CompileForAudio(loaded.Modules, samples: carried, pictures: carried),
                  })
         {
             result.HasErrors.ShouldBeFalse(
                 string.Join("; ", result.Issues.Select(i => i.Message)));
         }
+    }
+
+    /// <summary>
+    /// And a preset carries exactly the files it names: each one it plays is there on
+    /// a machine that has never had it, and nothing is shipped that it never plays.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Every_preset_carries_the_files_it_names_and_no_others(string name)
+    {
+        var loaded = ShippedPlugins.Loaded;
+        var preset = loaded.Presets.Single(p => p.Name == name);
+
+        var named = PatchBundle.Files(preset.Build(loaded.Modules), loaded.Modules);
+        var carried = preset.Files?.Invoke().Keys ?? [];
+
+        carried.Order(StringComparer.OrdinalIgnoreCase).ShouldBe(named.Order(StringComparer.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -139,9 +158,8 @@ public class ShippedPresetTests
     }
 
     /// <summary>
-    /// And Mycelium is the preset that needs it: two hundred and seventy-one modules
-    /// in twenty-three boxes is some twenty-four thousand units wide with every box
-    /// open, against a canvas of fifteen.
+    /// And Mycelium is the preset that needs it: two hundred and twenty modules in
+    /// twenty-four boxes is far wider than the canvas with every box open.
     /// </summary>
     [Fact]
     public void Mycelium_with_every_box_open_is_too_wide_for_the_canvas_and_has_boxes_shut()

@@ -53,6 +53,21 @@ public class PresetLibraryTests : IDisposable
         return file.ToArray();
     }
 
+    /// <summary>A built preset opens with the files it carries, and a saved folder has no say in them.</summary>
+    [Fact]
+    public void A_built_preset_opens_with_the_files_it_carries()
+    {
+        using var clip = new MemoryStream();
+        WavWriter.Write(clip, [0.5f, -0.5f, 0.25f], 8_000, 1);
+
+        var files = new Dictionary<string, byte[]> { ["line.wav"] = clip.ToArray() };
+        var preset = new PatchPreset("Speaking", _ => Tone()) { Files = () => files };
+
+        var opened = PresetLibrary.Open(preset, Library(), NodeCatalog.BuiltIn);
+
+        opened.Samples.Find("line.wav").ShouldNotBeNull().Samples.Length.ShouldBe(3);
+    }
+
     [Fact]
     public void A_library_with_no_folder_keeps_nothing_and_saves_nothing()
     {
