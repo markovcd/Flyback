@@ -376,7 +376,7 @@ internal sealed class GeminiSession : IPatchSession
     private static TimeSpan Backoff(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
 
     /// <summary>The turns so far, without the pictures and clips — see <see cref="Wire.Kept"/>.</summary>
-    public string? Save() => Wire.Kept(contents).ToJsonString();
+    public string Save() => Wire.Kept(contents).ToJsonString();
 
     /// <summary>
     /// Takes up the turns <see cref="Save"/> wrote, before anything has been asked

@@ -222,7 +222,7 @@ public sealed class PackPluginCommandTests : IDisposable
     public void An_assembly_that_does_not_reference_the_contract_is_named()
     {
         var build = Directory.CreateDirectory(Path.Combine(folder, "net10.0")).FullName;
-        File.Copy(typeof(System.Net.Http.HttpClient).Assembly.Location, Path.Combine(build, "Ripple.dll"));
+        File.Copy(typeof(HttpClient).Assembly.Location, Path.Combine(build, "Ripple.dll"));
 
         var (code, _, error) = Run(new DirectoryInfo(build));
 

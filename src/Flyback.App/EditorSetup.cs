@@ -122,6 +122,6 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
         FileTypes = FileTypes.ForThisCopy(),
         Usage = usage,
         Relaunch = Restart.Launch,
-        PresetSite = global::Flyback.App.Site.PresetSite.Local,
+        PresetSite = Site.PresetSite.Local,
     };
 }

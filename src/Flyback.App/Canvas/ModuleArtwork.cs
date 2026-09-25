@@ -154,9 +154,7 @@ internal sealed class ModuleArtwork
     private static ModuleArtwork? Vector(ReadOnlyMemory<byte> bytes)
     {
         var source = SvgSource.LoadFromStream(new MemoryStream(bytes.ToArray()));
-
-        if (source is null) return null;
-
+        
         var image = new SvgImage { Source = source };
 
         if (image.Size.Width <= 0 || image.Size.Height <= 0) return null;

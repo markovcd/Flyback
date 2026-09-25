@@ -21,8 +21,8 @@ internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint
     /// <summary>How much of the header a tag takes from the title, gap included.</summary>
     public const double TagRoom = TagWidth + TagInset;
 
-    private static readonly IPen TagPen = new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.75));
-    private static readonly IBrush TagDots = new SolidColorBrush(Avalonia.Media.Colors.White, 0.75);
+    private static readonly IPen TagPen = new Pen(new SolidColorBrush(Colors.White, 0.75));
+    private static readonly IBrush TagDots = new SolidColorBrush(Colors.White, 0.75);
 
     /// <summary>
     /// Type ids whose descriptions the assistant's briefing leaves out (see

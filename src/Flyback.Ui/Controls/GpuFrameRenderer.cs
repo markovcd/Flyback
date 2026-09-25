@@ -750,7 +750,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
                         0);
                 }
 
-                Enable(gl);
+                Enable();
 
                 complete &= gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
             }
@@ -771,7 +771,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// until it is told otherwise, so without this the planes would be written
     /// nowhere and read back as the nothing they started as.
     /// </summary>
-    private void Enable(GlInterface gl)
+    private void Enable()
     {
         if (drawBuffers is not { } enable) return;
 

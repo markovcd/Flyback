@@ -264,7 +264,7 @@ internal sealed class SourceView : UserControl
 
     private void Applied(object? sender, KeyEventArgs e)
     {
-        if (e.Key is not (Key.Enter or Key.Return)) return;
+        if (e.Key is not Key.Enter) return;
         if ((e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
 
         e.Handled = true;

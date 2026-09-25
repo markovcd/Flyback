@@ -126,5 +126,7 @@ internal sealed class WorkKeeper
     /// they came out of, which does not change while it is open.
     /// </summary>
     private static bool Same(RecoveredWork? a, RecoveredWork? b) =>
-        a is null || b is null ? a == b : a with { Files = null } == b with { Files = null } && a.Files == b.Files;
+        a is null || b is null
+            ? a == b
+            : a with { Files = null } == b with { Files = null } && ReferenceEquals(a.Files, b.Files);
 }

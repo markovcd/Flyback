@@ -194,8 +194,8 @@ public static class PatchPrinter
     /// one has no spelling here.
     /// </remarks>
     public static string? Held(NodeInstance node, NodeDef def) =>
-        def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node) ?? string.Empty
-            : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node) ?? string.Empty
+        def.Extra<SampleExtra>() is not null ? SampleExtra.Of(node)
+            : def.Extra<PictureExtra>() is not null ? PictureExtra.Of(node)
             : null;
 
     /// <summary>

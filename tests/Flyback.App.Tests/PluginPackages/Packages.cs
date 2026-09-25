@@ -27,10 +27,10 @@ internal static class Packages
     public const string Name = "Picture";
 
     /// <summary>The sample plugin, whose project sets its tags and embeds a preview.</summary>
-    public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
+    public static byte[] Sample { get; } = File.ReadAllBytes(typeof(Plugins.Sample.SampleModulesPlugin).Assembly.Location);
 
     /// <summary>The fake assistant, which sets no tags and embeds no preview.</summary>
-    public static byte[] Bare { get; } = File.ReadAllBytes(typeof(Flyback.Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
+    public static byte[] Bare { get; } = File.ReadAllBytes(typeof(Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
 
     /// <summary>The key test packages are signed with.</summary>
     public static ECDsa Key { get; } = ECDsa.Create(ECCurve.NamedCurves.nistP256);
@@ -50,7 +50,7 @@ internal static class Packages
     public static byte[] Sign(byte[] package, ECDsa? key = null) => PackageSigner.Sign(package, key ?? Key);
 
     /// <summary>An assembly a plugin might carry beside it, whose code reaches the network.</summary>
-    public static byte[] Networking { get; } = File.ReadAllBytes(typeof(System.Net.Http.HttpClient).Assembly.Location);
+    public static byte[] Networking { get; } = File.ReadAllBytes(typeof(HttpClient).Assembly.Location);
 
     /// <summary>A package with the picture plugin built for each of <paramref name="platforms"/>, signed with <see cref="Key"/>.</summary>
     public static byte[] For(params string[] platforms) =>
@@ -154,7 +154,7 @@ internal static class Packages
     }
 
     /// <summary>The contract version this Flyback offers.</summary>
-    public static Version Contract { get; } = typeof(Flyback.Plugins.IFlybackPlugin).Assembly.GetName().Version!;
+    public static Version Contract { get; } = typeof(Plugins.IFlybackPlugin).Assembly.GetName().Version!;
 
     /// <summary>A package with the picture plugin for Windows and one more entry named <paramref name="name"/>.</summary>
     public static byte[] With(string name, byte[]? bytes = null) =>

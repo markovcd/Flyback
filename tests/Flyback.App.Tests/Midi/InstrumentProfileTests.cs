@@ -168,7 +168,7 @@ public class InstrumentProfileTests
                 new MidiSource("midi:syntakt", "Syntakt") { Conducts = true },
             ]);
 
-            var field = new MidiClockExtra().Fields.OfType<Flyback.Core.Graph.ExtraField.Choice>().Single();
+            var field = new MidiClockExtra().Fields.OfType<ExtraField.Choice>().Single();
 
             field.Fallback.ShouldBe("midi:syntakt");
         }

@@ -37,7 +37,7 @@ public sealed class PluginPackageTests : IDisposable
         plugin.Description.ShouldStartWith("Example modules");
         plugin.Tags.ShouldBe(["example", "ripple", "test-fixture"], "split at commas and semicolons, and tidied as a patch's tags are");
 
-        using var embedded = typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.GetManifestResourceStream("preview.png")!;
+        using var embedded = typeof(Plugins.Sample.SampleModulesPlugin).Assembly.GetManifestResourceStream("preview.png")!;
         using var expected = new MemoryStream();
         embedded.CopyTo(expected);
 
@@ -75,12 +75,12 @@ public sealed class PluginPackageTests : IDisposable
     }
 
     [Theory]
-    [InlineData(typeof(Flyback.Plugins.Picture.PicturePlugin))]
-    [InlineData(typeof(Flyback.Plugins.Voice.VoicePlugin))]
-    [InlineData(typeof(Flyback.Plugins.Effects.EffectsPlugin))]
-    [InlineData(typeof(Flyback.Plugins.Mastering.MasteringPlugin))]
-    [InlineData(typeof(Flyback.Plugins.Figures.FiguresPlugin))]
-    [InlineData(typeof(Flyback.Plugins.Fractals.FractalsPlugin))]
+    [InlineData(typeof(Plugins.Picture.PicturePlugin))]
+    [InlineData(typeof(Plugins.Voice.VoicePlugin))]
+    [InlineData(typeof(Plugins.Effects.EffectsPlugin))]
+    [InlineData(typeof(Plugins.Mastering.MasteringPlugin))]
+    [InlineData(typeof(Plugins.Figures.FiguresPlugin))]
+    [InlineData(typeof(Plugins.Fractals.FractalsPlugin))]
     public void A_shipped_module_plugin_embeds_a_preview_of_its_modules(Type plugin)
     {
         var assembly = plugin.Assembly;
@@ -197,7 +197,7 @@ public sealed class PluginPackageTests : IDisposable
         [
             ("linux/readme.txt", [1]),
             ("linux/deeper/Flyback.Plugins.Picture.dll", Packages.Assembly),
-            ("osx/Flyback.Core.dll", File.ReadAllBytes(typeof(Flyback.Core.Graph.NodeDef).Assembly.Location)),
+            ("osx/Flyback.Core.dll", File.ReadAllBytes(typeof(Core.Graph.NodeDef).Assembly.Location)),
             ("any/Helper.dll", Packages.Networking),
         ]));
 

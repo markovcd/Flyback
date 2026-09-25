@@ -328,7 +328,7 @@ internal static class NodeSkin
 
             using (var sink = geometry.Open())
             {
-                sink.BeginFigure(center, true);
+                sink.BeginFigure(center);
                 sink.LineTo(new Point(center.X, center.Y - radius));
                 sink.ArcTo(
                     new Point(center.X + radius * Math.Sin(angle), center.Y - radius * Math.Cos(angle)),

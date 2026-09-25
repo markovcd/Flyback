@@ -158,9 +158,9 @@ internal static class CompareCommand
             if (double.IsNaN(most)) most = double.PositiveInfinity;
 
             var sample = offset + i;
-
+            var frame = sample / NodeCatalog.AudioChannels;
             parting = parting is null
-                ? new Parting((double)(sample / NodeCatalog.AudioChannels) / rate, most, 1, Channel: Channel(sample))
+                ? new Parting((double)frame / rate, most, 1, Channel: Channel(sample))
                 : parting with { Most = Math.Max(parting.Most, most), Count = parting.Count + 1 };
         }
 

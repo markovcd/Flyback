@@ -9,7 +9,7 @@ namespace Flyback.Plugins.Tests;
 /// <summary>A struck plate rings and shows its sand figure from one strike.</summary>
 public class PlateTests
 {
-    private const int Trigger = 0, Freq = 2, Aspect = 3, Decay = 4, StrikeX = 6, StrikeY = 7;
+    private const int Trigger = 0, Freq = 2, Aspect = 3, Decay = 4, StrikeX = 6;
     private const int Out = 0, Figure = 1, Motion = 2;
 
     [Fact]

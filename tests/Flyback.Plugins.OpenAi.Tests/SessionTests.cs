@@ -514,7 +514,7 @@ public class SessionTests
         using (var session = Session(first))
         {
             await Drain(session, "make a bass line");
-            saved = session.Save()!;
+            saved = session.Save();
         }
 
         JsonNode.Parse(saved)!.AsArray().Select(Wire.Role).ShouldNotContain("system");

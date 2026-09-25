@@ -16,7 +16,7 @@ namespace Flyback.Server.Tests;
 /// </summary>
 public sealed class PluginDefaultsTests : IDisposable
 {
-    private static readonly byte[] Figures = File.ReadAllBytes(typeof(Flyback.Plugins.Figures.FiguresPlugin).Assembly.Location);
+    private static readonly byte[] Figures = File.ReadAllBytes(typeof(Plugins.Figures.FiguresPlugin).Assembly.Location);
 
     private static readonly ECDsa Key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 

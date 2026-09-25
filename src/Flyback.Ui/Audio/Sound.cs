@@ -18,13 +18,13 @@ internal static class Sound
     public static AudioSetup Open(PluginCatalog plugins, OutputSettings settings)
     {
         if (plugins.PreferredAudioOutput is not { } output)
-            return new AudioSetup(new SilentAudioDevice(), null, null);
+            return new AudioSetup(new SilentAudioDevice());
 
         try
         {
             var format = AudioFormat.Default with { LatencyMilliseconds = settings.LatencyMilliseconds };
 
-            return new AudioSetup(output.Create(format, settings.SoundOf(output.Id)), output, null);
+            return new AudioSetup(output.Create(format, settings.SoundOf(output.Id)), output);
         }
         catch (Exception ex)
         {

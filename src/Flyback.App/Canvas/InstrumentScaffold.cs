@@ -55,8 +55,8 @@ internal static class InstrumentScaffold
         (double X, double Y) Next(string typeId)
         {
             if (placed > 0 && placed % Rows == 0) y = 0d;
-
-            var at = ((placed / Rows) * (NodeGeometry.Width + Gap), y);
+            var column = placed / Rows;
+            var at = (column * (NodeGeometry.Width + Gap), y);
 
             y += geometry.Height(NodeCatalog.Require(typeId)) + Gap;
             placed++;

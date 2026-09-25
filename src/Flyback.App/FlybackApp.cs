@@ -89,10 +89,9 @@ public sealed class FlybackApp : Application
             // the application hands it out as a feature.
             if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
             {
-                activatable.Activated += (_, e) =>
+                activatable.Activated += async (_, e) =>
                 {
-                    if (e is not FileActivatedEventArgs { Files: [var first, ..] }
-                        || first is not IStorageFile file) return;
+                    if (e is not FileActivatedEventArgs { Files: [IStorageFile file, ..] }) return;
 
                     if (OperatingSystem.IsMacOS()
                         && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
@@ -103,7 +102,7 @@ public sealed class FlybackApp : Application
                         return;
                     }
 
-                    _ = window.OpenActivatedFileAsync(file);
+                    await window.OpenActivatedFileAsync(file);
                 };
             }
         }

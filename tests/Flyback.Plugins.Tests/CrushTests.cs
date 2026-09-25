@@ -62,6 +62,8 @@ public class CrushTests
         var ramp = Ramp(0f, 0.99f, 480);
         var output = Through(ramp, (Bits, 16f), (RatePort, Rate / 8f));
 
+        // A held sample is the same float copied, so exact inequality is what marks a new one.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
         var changes = Enumerable.Range(1, output.Length - 1).Count(i => output[i] != output[i - 1]);
         changes.ShouldBeInRange(output.Length / 8 - 1, output.Length / 8 + 1);
 

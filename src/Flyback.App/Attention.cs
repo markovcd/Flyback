@@ -76,6 +76,7 @@ internal static partial class Attention
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
+    // ReSharper disable once UnusedMethodReturnValue.Local
     private static partial bool FlashWindowEx(ref FlashInfo pwfi);
 
     #endregion
@@ -104,6 +105,7 @@ internal static partial class Attention
     private static partial IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
 
     [LibraryImport("/usr/lib/libobjc.dylib", EntryPoint = "objc_msgSend")]
+    // ReSharper disable once UnusedMethodReturnValue.Local
     private static partial IntPtr objc_msgSend(IntPtr receiver, IntPtr selector, nint arg1);
 
     #endregion

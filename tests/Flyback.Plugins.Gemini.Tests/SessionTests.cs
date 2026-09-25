@@ -385,7 +385,7 @@ public class SessionTests
         using (var session = Session(first))
         {
             await Drain(session, "make a bass line");
-            saved = session.Save()!;
+            saved = session.Save();
         }
 
         var second = new Canned(new Answer(Prose("D minor it is.")));
@@ -419,7 +419,7 @@ public class SessionTests
 
         await Drain(session, "a tone");
 
-        var saved = session.Save()!;
+        var saved = session.Save();
 
         saved.ShouldNotContain("inlineData");
         saved.ShouldContain("listen again");

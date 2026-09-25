@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -465,8 +466,8 @@ internal sealed class OutputSections
         defaultPreset.Padding = new Thickness(12, 5, 10, 7);
         defaultPreset.MinHeight = 32;
         defaultPreset.BorderThickness = new Thickness(1);
-        defaultPreset.Bind(Button.BackgroundProperty, defaultPreset.GetResourceObservable("ComboBoxBackground"));
-        defaultPreset.Bind(Button.BorderBrushProperty, defaultPreset.GetResourceObservable("ComboBoxBorderBrush"));
+        defaultPreset.Bind(TemplatedControl.BackgroundProperty, defaultPreset.GetResourceObservable("ComboBoxBackground"));
+        defaultPreset.Bind(TemplatedControl.BorderBrushProperty, defaultPreset.GetResourceObservable("ComboBoxBorderBrush"));
 
         defaultPreset.Click += async (_, _) =>
         {

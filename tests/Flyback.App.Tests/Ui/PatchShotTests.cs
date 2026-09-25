@@ -65,7 +65,7 @@ public class PatchShotTests : UiTest
         var box = new PatchBuilder(NodeCatalog.BuiltIn);
         PatchClipboard.Paste(box.Patch, InstrumentScaffold.Build(
             "midi:elektron-syntakt",
-            InstrumentLibrary.Shipped().Profiles.Single(profile => profile.Name == "Syntakt")), 0, 0);
+            InstrumentLibrary.Shipped().Profiles.Single(profile => profile.Name == "Syntakt")));
         box.Add(NodeCatalog.OutputTypeId, 2 * (NodeGeometry.Width + 14), 0, (NodeCatalog.OutputVolumePort, 0.5f));
 
         Shoot(folder, "syntakt-box", box.Patch);

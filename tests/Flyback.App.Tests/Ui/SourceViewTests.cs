@@ -60,11 +60,11 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>Presses Enter at the text box, with whatever is being held.</summary>
-    private static void Press(TextEditor text, Avalonia.Input.KeyModifiers held) =>
-        text.RaiseEvent(new Avalonia.Input.KeyEventArgs
+    private static void Press(TextEditor text, KeyModifiers held) =>
+        text.RaiseEvent(new KeyEventArgs
         {
-            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
-            Key = Avalonia.Input.Key.Enter,
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.Enter,
             KeyModifiers = held,
         });
 
@@ -212,7 +212,7 @@ public class SourceViewTests : UiTest
         // needs an activated top level to decide where a keystroke lands, and
         // what is being checked here is the box's own handler — that Control
         // tells this Enter from the one that adds a line.
-        Press(text, Avalonia.Input.KeyModifiers.Control);
+        Press(text, KeyModifiers.Control);
         Settle(window);
 
         Editor(window).History.Patch.Nodes.Count.ShouldBe(3);
@@ -221,7 +221,7 @@ public class SourceViewTests : UiTest
         // several lines does not apply it four times on the way.
         var before = Editor(window).History.Patch;
 
-        Press(text, Avalonia.Input.KeyModifiers.None);
+        Press(text, KeyModifiers.None);
         Settle(window);
 
         Editor(window).History.Patch.ShouldBeSameAs(before);
@@ -533,7 +533,7 @@ public class SourceViewTests : UiTest
 
         text.Text.ShouldContain("\n  |> ");
         text.Text.ReplaceLineEndings("\n").Split('\n')
-            .ShouldAllBe(line => line.Length <= Core.Language.SourceLayout.Width);
+            .ShouldAllBe(line => line.Length <= SourceLayout.Width);
     }
 
     /// <summary>
@@ -549,11 +549,11 @@ public class SourceViewTests : UiTest
         text.Text = "x |> sine(freq: 1.5) |> add(a: _, b: 0.25) |> remap(in_low: -2, in_high: 2) "
             + "|> color.hsv(hue: _, saturation: 0.85) |> gain(gain: 0.5) |> out.color";
 
-        window.RaiseEvent(new Avalonia.Input.KeyEventArgs
+        window.RaiseEvent(new KeyEventArgs
         {
-            RoutedEvent = Avalonia.Input.InputElement.KeyDownEvent,
-            Key = Avalonia.Input.Key.L,
-            KeyModifiers = Avalonia.Input.KeyModifiers.Control,
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = Key.L,
+            KeyModifiers = KeyModifiers.Control,
         });
 
         Settle(window);
@@ -899,12 +899,12 @@ public class SourceViewTests : UiTest
         var window = Open();
         var editor = Editor(window);
 
-        var reading = Core.Language.PatchPrinter.Print(editor.History.Patch);
+        var reading = PatchPrinter.Print(editor.History.Patch);
 
         // An edit on the canvas, before the text view has ever been opened, so
         // nothing writes it into a printing on the way.
         editor.History.Patch.Remove(editor.History.Patch.Nodes
-            .First(node => node.TypeId != Core.Graph.NodeCatalog.OutputTypeId).Id);
+            .First(node => node.TypeId != NodeCatalog.OutputTypeId).Id);
 
         editor.History.Record();
         Settle(window);
@@ -1029,7 +1029,7 @@ public class SourceViewTests : UiTest
         ShowCode(window);
 
         text.Text.ShouldBe(
-            Core.Language.PatchPrinter.Print(Editor(window).History.Patch),
+            PatchPrinter.Print(Editor(window).History.Patch),
             "nothing was typed, so the text is a printing of what is on the canvas");
     }
 
@@ -1267,9 +1267,9 @@ public class SourceViewTests : UiTest
         var before = editor.History.Patch.Nodes.Count;
 
         window.KeyPress(
-            Avalonia.Input.Key.Delete,
-            Avalonia.Input.RawInputModifiers.None,
-            Avalonia.Input.PhysicalKey.Delete,
+            Key.Delete,
+            RawInputModifiers.None,
+            PhysicalKey.Delete,
             null);
         Settle(window);
 
@@ -1466,17 +1466,17 @@ public class SourceViewTests : UiTest
 
     /// <summary>Lets go of the pointer over a control, which is what ends a gesture.</summary>
     private static void Release(Control over) =>
-        over.RaiseEvent(new Avalonia.Input.PointerReleasedEventArgs(
+        over.RaiseEvent(new PointerReleasedEventArgs(
             over,
-            new Avalonia.Input.Pointer(0, Avalonia.Input.PointerType.Mouse, true),
+            new Pointer(0, PointerType.Mouse, true),
             over,
             default,
             0,
             default,
-            Avalonia.Input.KeyModifiers.None,
-            Avalonia.Input.MouseButton.Left)
+            KeyModifiers.None,
+            MouseButton.Left)
         {
-            RoutedEvent = Avalonia.Input.InputElement.PointerReleasedEvent,
+            RoutedEvent = InputElement.PointerReleasedEvent,
         });
 
     /// <summary>
@@ -1759,11 +1759,11 @@ public class SourceViewTests : UiTest
     {
         foreach (var c in what)
         {
-            var key = Enum.Parse<Avalonia.Input.PhysicalKey>($"Digit{c}");
+            var key = Enum.Parse<PhysicalKey>($"Digit{c}");
 
-            window.KeyPressQwerty(key, Avalonia.Input.RawInputModifiers.None);
+            window.KeyPressQwerty(key, RawInputModifiers.None);
             window.KeyTextInput(c.ToString());
-            window.KeyReleaseQwerty(key, Avalonia.Input.RawInputModifiers.None);
+            window.KeyReleaseQwerty(key, RawInputModifiers.None);
 
             Settle(window);
         }
@@ -1915,8 +1915,8 @@ public class SourceViewTests : UiTest
 
         var editor = Editor(window);
         var turned = editor.History.Patch.Nodes.First(n =>
-            n.TypeId != Core.Graph.NodeCatalog.OutputTypeId
-            && Core.Graph.NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
+            n.TypeId != NodeCatalog.OutputTypeId
+            && NodeCatalog.BuiltIn.Require(n.TypeId).Inputs.Count > 0);
 
         editor.Selection.Select(turned.Id);
         Settle(window);
@@ -2002,8 +2002,8 @@ public class SourceViewTests : UiTest
 
         for (var click = 0; click < 2; click++)
         {
-            window.MouseDown(at, Avalonia.Input.MouseButton.Left);
-            window.MouseUp(at, Avalonia.Input.MouseButton.Left);
+            window.MouseDown(at, MouseButton.Left);
+            window.MouseUp(at, MouseButton.Left);
         }
 
         Settle(window);
@@ -2024,7 +2024,7 @@ public class SourceViewTests : UiTest
     /// By reflection: the window takes its plugins from a static no test can put a
     /// provider into, so no turn can be run against a real window.
     /// </remarks>
-    private static Action<Core.Graph.Patch> AssistantApplies(MainWindow window)
+    private static Action<Patch> AssistantApplies(MainWindow window)
     {
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
 
@@ -2034,23 +2034,23 @@ public class SourceViewTests : UiTest
     }
 
     /// <summary>Two oscillators mixed into the left speaker: a patch no text here describes.</summary>
-    private static Core.Graph.Patch Drone()
+    private static Patch Drone()
     {
-        var b = new Core.Graph.PatchBuilder(Core.Graph.NodeCatalog.BuiltIn);
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
 
-        var output = b.Add(Core.Graph.NodeCatalog.OutputTypeId, 900, 40);
+        var output = b.Add(NodeCatalog.OutputTypeId, 900, 40);
         var one = b.Add("osc.sine", 40, 40);
         var two = b.Add("osc.sine", 40, 240);
         var mix = b.Add("math.add", 400, 40);
 
         b.Wire(one, 0, mix, 0)
             .Wire(two, 0, mix, 1)
-            .Wire(mix, 0, output, Core.Graph.NodeCatalog.OutputLeftPort);
+            .Wire(mix, 0, output, NodeCatalog.OutputLeftPort);
 
         return b.Patch;
     }
 
-    private static int Oscillators(Core.Graph.Patch patch) =>
+    private static int Oscillators(Patch patch) =>
         patch.Nodes.Count(n => n.TypeId == "osc.sine");
 
     /// <summary>
@@ -2070,7 +2070,7 @@ public class SourceViewTests : UiTest
         Editor(window).History.Locked.ShouldBeFalse("a printing is a reading; the canvas still owns the patch");
         Notice(window).ShouldNotBeNull();
 
-        Oscillators(Core.Language.PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
+        Oscillators(PatchLanguage.Build(text.Text).Patch).ShouldBe(2);
     }
 
     /// <summary>
@@ -2092,7 +2092,7 @@ public class SourceViewTests : UiTest
 
         editor.History.Locked.ShouldBeTrue("the text is still the document");
         Oscillators(editor.History.Patch).ShouldBe(2, "the assistant's patch is on the canvas");
-        Oscillators(Core.Language.PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
+        Oscillators(PatchLanguage.Build(Text(window).Text).Patch).ShouldBe(2);
     }
 
     /// <summary>

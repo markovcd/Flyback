@@ -114,9 +114,6 @@ internal sealed class MainWindow : Window
     /// <summary>The bar along the top.</summary>
     private readonly Toolbar toolbar;
 
-    /// <summary>The palette, opened at the pointer (ADR-0046).</summary>
-    private readonly Palette palette;
-
     /// <summary>Installing and removing plugins, and the plugins window.</summary>
     private readonly PluginInstalls pluginInstalls;
 
@@ -194,7 +191,6 @@ internal sealed class MainWindow : Window
         UsageSection usageSection,
         FilesSection filesSection,
         PanelKnobs knobs,
-        Palette palette,
         Inspector inspector,
         PluginInstalls pluginInstalls,
         PresetSlot presets,
@@ -223,7 +219,6 @@ internal sealed class MainWindow : Window
         this.usageSection = usageSection;
         this.filesSection = filesSection;
         this.knobs = knobs;
-        this.palette = palette;
         this.inspector = inspector;
         this.pluginInstalls = pluginInstalls;
         this.presets = presets;
@@ -518,7 +513,7 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private void ShowAssistant(bool shown)
     {
-        if (assistant is null || assistantColumn is null || assistantSplitter is null) return;
+        if (assistantColumn is null || assistantSplitter is null) return;
 
         if (!shown && assistant.IsVisible) assistantShare = assistantColumn.Width;
 

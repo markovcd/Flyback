@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -232,6 +233,7 @@ internal sealed class Aptabase : IUsageSink, IDisposable
     /// Written as it stands, which is what keeps this ignorant of what a run says:
     /// a value is a string, a number or a flag, and the far end sorts them.
     /// </param>
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local")]
     private sealed record Body(
         DateTime Timestamp,
         string SessionId,

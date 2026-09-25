@@ -26,8 +26,6 @@ internal sealed class Palette
     private readonly Document document;
     private readonly Func<KeyboardLayout> keyboard;
     private readonly ModulePalette list;
-    private readonly PluginCatalog plugins;
-    private readonly Usage usage;
     private readonly ReportLine report;
 
     /// <summary>Where the palette is shown, at the pointer.</summary>
@@ -67,8 +65,6 @@ internal sealed class Palette
         this.editor = editor;
         this.document = document;
         keyboard = () => sections.Saved.Keyboard;
-        this.plugins = plugins;
-        this.usage = usage;
         this.report = report;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);

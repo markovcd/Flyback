@@ -16,9 +16,9 @@ public sealed class PluginTests : IDisposable
 {
     private static readonly byte[] Assembly = File.ReadAllBytes(typeof(PicturePlugin).Assembly.Location);
 
-    private static readonly byte[] Sample = File.ReadAllBytes(typeof(Flyback.Plugins.Sample.SampleModulesPlugin).Assembly.Location);
+    private static readonly byte[] Sample = File.ReadAllBytes(typeof(Plugins.Sample.SampleModulesPlugin).Assembly.Location);
 
-    private static readonly byte[] Bare = File.ReadAllBytes(typeof(Flyback.Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
+    private static readonly byte[] Bare = File.ReadAllBytes(typeof(Plugins.FakeAssistant.RehearsedAssistantPlugin).Assembly.Location);
 
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-plugins-").FullName;
     private readonly WebApplicationFactory<Program> host;

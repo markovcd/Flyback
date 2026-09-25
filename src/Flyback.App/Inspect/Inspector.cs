@@ -486,7 +486,7 @@ internal sealed class Inspector
     /// </remarks>
     private void BuildGroupInspector(NodeGroup group)
     {
-        const double SocketGutter = 140;
+        const double socketGutter = 140;
 
         // The box's own face, in the grays the canvas draws one in — a box belongs to
         // no category, so there is no accent to carry over.
@@ -645,8 +645,8 @@ internal sealed class Inspector
             // A module's gutter fits a socket's name, and this caption is a module's as well.
             if (body is Grid grid && grid.Children.OfType<TextBlock>().FirstOrDefault() is { } caption)
             {
-                grid.ColumnDefinitions[0].Width = new GridLength(SocketGutter);
-                if (!double.IsNaN(caption.Width)) caption.Width = SocketGutter;
+                grid.ColumnDefinitions[0].Width = new GridLength(socketGutter);
+                if (!double.IsNaN(caption.Width)) caption.Width = socketGutter;
 
                 caption.Foreground = new SolidColorBrush(Colors.PortColor(spec.Kind));
                 ToolTip.SetTip(caption, spec.Help.Length == 0 ? name : $"{name}: {spec.Help}");
@@ -1567,7 +1567,7 @@ internal sealed class Inspector
         {
             Name = "unlink",
             Content = "✕",
-            Padding = new Avalonia.Thickness(0),
+            Padding = new Thickness(0),
             Width = 22,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,

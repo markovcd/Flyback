@@ -314,7 +314,7 @@ public class FfmpegClipWriterTests : IDisposable
     {
         Assert.SkipWhen(Encoder is null, "no ffmpeg on this machine");
 
-        Ffmpeg.Version(Encoder!).ShouldStartWith("ffmpeg version");
+        Ffmpeg.Version(Encoder).ShouldStartWith("ffmpeg version");
     }
 
     /// <summary>A path that is not a program at all, asked what it is.</summary>

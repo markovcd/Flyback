@@ -95,7 +95,7 @@ internal sealed class OpenAiSession : IPatchSession
     }
 
     /// <summary>The messages so far, without the briefing or the pictures — see <see cref="Wire.Kept"/>.</summary>
-    public string? Save() => Wire.Kept(messages).ToJsonString();
+    public string Save() => Wire.Kept(messages).ToJsonString();
 
     /// <summary>
     /// Takes up the messages <see cref="Save"/> wrote, after this run's own
