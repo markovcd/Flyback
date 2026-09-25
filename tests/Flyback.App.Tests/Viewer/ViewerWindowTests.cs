@@ -421,7 +421,7 @@ public class ViewerWindowTests : UiTest
 
         seek.IsOpen.ShouldBeTrue();
 
-        var at = seek.Track.TranslatePoint(seek.Track.At(90), window)!.Value;
+        var at = seek.Track.TranslatePoint(seek.Track.At(60), window)!.Value;
         window.MouseMove(at);
         window.MouseDown(at, MouseButton.Left);
         window.MouseUp(at, MouseButton.Left);
@@ -430,7 +430,7 @@ public class ViewerWindowTests : UiTest
         // A pixel of the strip is this many seconds, and a click lands on a whole one.
         var pixel = seek.Track.Maximum / seek.Track.Bounds.Width;
 
-        window.Player.Time.ShouldBe(90, 2 * pixel);
+        window.Player.Time.ShouldBe(60, 2 * pixel);
     }
 
     [AvaloniaFact]

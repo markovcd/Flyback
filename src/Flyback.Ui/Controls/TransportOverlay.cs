@@ -4,15 +4,14 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
 
 /// <summary>
 /// The transport over a full-window picture, tucked behind three dots at the top or the
-/// bottom center, whichever the knobs do not have: pause,
-/// rewind, the seek strip, the time against the patch's length, the loop switch and the
-/// sound, in the order the toolbar has them. Bare glyphs on no bar, drawn the way the knobs are.
+/// bottom center, whichever the knobs do not have: pause, rewind, the seek strip, the loop
+/// switch and the sound, in the order the toolbar has them. Bare glyphs on no bar, drawn
+/// the way the knobs are, and no numbers.
 /// </summary>
 /// <remarks>
 /// Holds no state of its own: the owner sets <see cref="Paused"/>, <see cref="Muted"/>
@@ -26,10 +25,8 @@ public sealed class TransportOverlay : TuckedAway
     /// <summary>How wide the strip is over a picture with room for it.</summary>
     private const double Wide = 360;
 
-    /// <summary>What the buttons and the time beside the strip take.</summary>
-    private const double Beside = 4 * ToolSize + 120 + 6 * Gap + 16;
-
-    private static readonly IBrush Lit = new SolidColorBrush(Avalonia.Media.Colors.White, 0.8);
+    /// <summary>What the buttons beside the strip take.</summary>
+    private const double Beside = 4 * ToolSize + 4 * Gap + 12;
 
     /// <summary>A switch that is on, in the color the knobs' travel and the toolbar's strip are.</summary>
     private static readonly IBrush On = new SolidColorBrush(Colors.Attention);
@@ -41,7 +38,6 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button muteButton;
     private readonly Button loopButton;
     private readonly SeekTrack track = new(stage: true) { Width = Wide };
-    private readonly TextBlock time;
 
     private bool paused;
     private bool muted;
@@ -72,19 +68,8 @@ public sealed class TransportOverlay : TuckedAway
         engaged.Setters.Add(new Setter(ContentPresenter.ForegroundProperty, On));
         Styles.Add(engaged);
 
-        time = new TextBlock
-        {
-            Name = "seekTime",
-            FontSize = Text.Body,
-            Foreground = Lit,
-            Effect = Halo(),
-            Margin = new Thickness(6, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Text = Said(0, Patch.DefaultLength),
-        };
-
         track.Name = "seekOver";
-        track.Margin = new Thickness(6, 0, 0, 0);
+        track.Margin = new Thickness(6, 0);
         track.Sought += seconds => Sought?.Invoke(seconds);
         track.DoubleTapped += (_, e) => e.Handled = true;
 
@@ -93,7 +78,6 @@ public sealed class TransportOverlay : TuckedAway
         row.Children.Add(pauseButton);
         row.Children.Add(rewind);
         row.Children.Add(track);
-        row.Children.Add(time);
         row.Children.Add(loopButton);
         row.Children.Add(muteButton);
 
@@ -188,13 +172,9 @@ public sealed class TransportOverlay : TuckedAway
         track.Maximum = length;
         if (!track.Held) track.Value = Math.Min(seconds, length);
 
-        time.Text = Said(track.Value, length);
-
         if (looped == loops) return;
 
         looped = loops;
         loopButton.Classes.Set(Engaged, loops);
     }
-
-    private static string Said(double seconds, double length) => $"{StatusClock.Text(seconds)} / {PatchLength.Say(length)}";
 }

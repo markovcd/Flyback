@@ -333,6 +333,18 @@ public sealed class FullScreenTransportTests : UiTest
         ]);
     }
 
+    /// <summary>The strip is the whole of what it says about time: the picture carries no numbers.</summary>
+    [AvaloniaFact]
+    public void The_transport_over_the_picture_says_no_time()
+    {
+        var window = Open();
+
+        FullScreen(window);
+        Reach(window, Overlay(window));
+
+        All<TextBlock>(Overlay(window)).Where(t => !string.IsNullOrEmpty(t.Text)).ShouldBeEmpty();
+    }
+
     [AvaloniaFact]
     public void Reaching_the_dots_opens_a_bar_that_moves_the_clock()
     {
