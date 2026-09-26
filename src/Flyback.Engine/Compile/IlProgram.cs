@@ -205,46 +205,6 @@ public sealed class IlProgram
     }
 }
 
-/// <summary>A stretch of a program as one method, taking what the interpreter's walk takes.</summary>
-internal delegate void IlStage(
-    ref double bank,
-    double x,
-    double y,
-    double t,
-    double aspect,
-    ref FeedbackFrame feedback,
-    DelayState? delays,
-    LiveValues? live,
-    Span<float> planes);
-
-/// <summary>What an emitted method reads that is neither an argument nor a register: one patch's own values.</summary>
-internal sealed class IlContext
-{
-    public double[] Constants = [];
-    public LoadedSample[] Tables = [];
-    public LoadedImage[] Pictures = [];
-
-    /// <summary>
-    /// Constants are indexed by the register their op writes, so the same code
-    /// finds them in any patch of the same shape without a table of where each went.
-    /// </summary>
-    public static IlContext For(CompiledPatch patch)
-    {
-        var constants = new double[patch.RegisterCount];
-
-        foreach (var op in patch.Ops)
-            if (op.Code is OpCode.Const)
-                constants[op.Out] = op.K;
-
-        return new IlContext
-        {
-            Constants = constants,
-            Tables = patch.TableArray,
-            Pictures = patch.PictureArray,
-        };
-    }
-}
-
 /// <summary>
 /// A program with its constants left out: two patches of one shape run the same
 /// machine code, which is what makes turning a knob free for the IL backend.

@@ -1,27 +1,7 @@
-using Flyback.Core.Compile;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
 
 namespace Flyback.Core.Graph;
-
-/// <summary>A patch and the files it names, wherever they were kept.</summary>
-public readonly record struct Opened(
-    Patch Patch,
-    ISampleLibrary Samples,
-    IImageLibrary Pictures);
-
-/// <summary>
-/// What opening a path came to: the patch to play, or null when there is none,
-/// and every complaint made on the way, one line each.
-/// </summary>
-/// <remarks>
-/// Complaints and a patch can come together: one short of a plugin still has
-/// something to show.
-/// </remarks>
-public readonly record struct PatchOpen(Opened? Patch, IReadOnlyList<string> Problems);
-
-/// <summary>What reading a document came to; <see cref="PatchOpen"/> without the files.</summary>
-public readonly record struct PatchRead(Patch? Patch, IReadOnlyList<string> Problems);
 
 /// <summary>
 /// A patch off disk and the files it names, however they were named: a folder beside

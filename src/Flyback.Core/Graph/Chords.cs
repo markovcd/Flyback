@@ -1,11 +1,5 @@
 namespace Flyback.Core.Graph;
 
-/// <summary>A chord as semitones above its root, and what it is called.</summary>
-public sealed record ChordShape(string Name, int[] Intervals);
-
-/// <summary>A seven-note scale as semitones above its tonic.</summary>
-public sealed record ScaleMode(string Id, string Name, int[] Classes);
-
 /// <summary>
 /// The chords a Chord picks from and the scales an Auto Chord builds in, with the
 /// arithmetic both compile to.

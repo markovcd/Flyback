@@ -3,9 +3,6 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Plugins.Hosting;
 
-/// <summary>A module a plugin declares with <see cref="FlybackModuleAttribute"/>.</summary>
-internal sealed record DeclaredModule(string TypeId, string Name);
-
 /// <summary>Holds a plugin to the modules it declares (<see cref="FlybackModuleAttribute"/>).</summary>
 internal static class ModuleDeclarations
 {

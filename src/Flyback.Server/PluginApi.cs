@@ -141,5 +141,3 @@ internal static class PluginApi
         Rating = new { rating.Average, rating.Count },
     };
 }
-
-internal sealed record PluginChange(bool? Published);

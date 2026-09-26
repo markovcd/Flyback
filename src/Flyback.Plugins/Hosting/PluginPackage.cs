@@ -4,20 +4,6 @@ using System.Security.Cryptography;
 
 namespace Flyback.Plugins.Hosting;
 
-/// <summary>One file a package would put into the plugin's folder.</summary>
-/// <param name="Path">Where it goes, relative to the plugin's folder, with forward slashes.</param>
-/// <param name="Index">Its place among the zip's entries.</param>
-/// <param name="Length">How long the zip says it is.</param>
-internal sealed record PackedFile(string Path, int Index, long Length);
-
-/// <summary>How much a package may ask of the disk and the memory reading it.</summary>
-/// <param name="Packed">The package itself, which is held in memory whole.</param>
-/// <param name="Unpacked">Every file in it together, counted as it is written rather than as the zip says.</param>
-internal sealed record PackageLimits(long Packed, long Unpacked, int Entries)
-{
-    public static PackageLimits Default { get; } = new(128L << 20, 512L << 20, 4096);
-}
-
 /// <summary>
 /// A <c>.fbkp</c>: a zip with a folder per system the plugin was built for, each
 /// holding that system's build (ADR-0132).

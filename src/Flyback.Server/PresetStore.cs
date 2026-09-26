@@ -4,22 +4,6 @@ using Microsoft.Data.Sqlite;
 
 namespace Flyback.Server;
 
-/// <summary>A stored preset, without its file.</summary>
-internal sealed record StoredPreset(
-    string Id,
-    string Name,
-    string? Author,
-    string? Description,
-    IReadOnlyList<string> Tags,
-    string FileName,
-    long Size,
-    DateTimeOffset Submitted,
-    long Downloads,
-    bool Published);
-
-/// <summary>A page of presets and how many match in all.</summary>
-internal sealed record PresetPage(IReadOnlyList<StoredPreset> Items, int Total);
-
 /// <summary>The presets people have submitted, in one SQLite file.</summary>
 internal sealed class PresetStore
 {

@@ -27,9 +27,6 @@ internal sealed record StoredPlugin(
     string? PreviewType,
     IReadOnlyList<DeclaredModule> Modules);
 
-/// <summary>A page of plugins and how many match in all.</summary>
-internal sealed record PluginPage(IReadOnlyList<StoredPlugin> Items, int Total);
-
 /// <summary>
 /// The plugin packages people have submitted, beside the presets in the same SQLite file.
 /// </summary>

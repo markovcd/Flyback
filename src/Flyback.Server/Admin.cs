@@ -7,8 +7,6 @@ namespace Flyback.Server;
 /// <remarks>Admin mode is off unless both a user and a password are set.</remarks>
 internal sealed class Admin(string? user, string? password)
 {
-    private readonly string? password = password;
-
     public bool Enabled { get; } = !string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(password);
 
     public string? User { get; } = user;

@@ -9,18 +9,6 @@ using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.PluginPackages;
 
-/// <summary>What the install dialog was answered with. Closing it without an answer is <see cref="Cancel"/>.</summary>
-internal enum PluginAnswer
-{
-    Cancel,
-    Install,
-    InstallAndRestart,
-    Remove,
-
-    /// <summary>Fetch the newer build the plugin site has, and ask about installing it.</summary>
-    Download,
-}
-
 /// <summary>
 /// The dialog a <c>.fbkp</c> opens: what the plugin is, what it can do, what it
 /// replaces, and Install, or Update where it is a newer build of a plugin installed
