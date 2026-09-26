@@ -7,31 +7,6 @@ using Flyback.Plugins.Assist;
 namespace Flyback.Plugins.OpenAi;
 
 /// <summary>
-/// The half of this adapter that finds out what it has been pointed at.
-/// </summary>
-/// <remarks>
-/// Worth more here than anywhere else, because this adapter does not know what
-/// it is talking to: the endpoint is a field, and the list of models beside it
-/// is a guess about a service nobody named. A survey turns that guess into what
-/// the endpoint said.
-/// </remarks>
-public sealed partial class OpenAiAssistant : IModelSurvey
-{
-    public async Task<IReadOnlyList<ModelReport>> Survey(
-        AssistantConfig config,
-        SurveyOptions options,
-        IProgress<string>? said = null,
-        CancellationToken cancel = default)
-    {
-        var chosen = Schema.Read(config.Values);
-
-        using var probe = new OpenAiProbe(config.ApiKey, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
-
-        return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
-    }
-}
-
-/// <summary>
 /// One survey of one chat-completions endpoint, whoever is running it.
 /// </summary>
 /// <remarks>

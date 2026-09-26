@@ -23,7 +23,7 @@ namespace Flyback.Viewer;
 /// </para>
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "The player is disposed when the window closes.")]
-internal sealed partial class ViewerWindow : Window
+internal sealed class ViewerWindow : Window
 {
     /// <summary>The largest a window opens at when it was not told a size.</summary>
     private static readonly PixelSize LargestStart = new(1280, 720);

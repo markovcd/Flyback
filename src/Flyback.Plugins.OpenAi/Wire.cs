@@ -6,18 +6,6 @@ using Flyback.Plugins.Assist;
 
 namespace Flyback.Plugins.OpenAi;
 
-/// <summary>One tool call the model asked for.</summary>
-internal sealed record Call(string Id, string Name, string Arguments);
-
-/// <summary>What came back from one request.</summary>
-internal sealed record Reply(
-    string? Text,
-    IReadOnlyList<Call> Calls,
-    JsonNode? RawMessage,
-    int Input,
-    int Cached,
-    int Output);
-
 /// <summary>
 /// The chat-completions wire format, and nothing else.
 /// </summary>
