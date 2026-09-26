@@ -16,6 +16,7 @@ internal sealed class PluginInstalls
 {
     private readonly IDialog dialog;
     private readonly PluginHubFactory pluginHubs;
+    private readonly PluginInstallerFactory installers;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly string? pluginFolder;
@@ -45,10 +46,12 @@ internal sealed class PluginInstalls
         Playback playback,
         IDialog dialog,
         ChosenAssistant chosenAssistant,
-        PluginHubFactory pluginHubs)
+        PluginHubFactory pluginHubs,
+        PluginInstallerFactory installers)
     {
         this.dialog = dialog;
         this.pluginHubs = pluginHubs;
+        this.installers = installers;
         this.plugins = plugins;
         this.report = report;
         pluginFolder = setup.PluginFolder;
@@ -141,7 +144,7 @@ internal sealed class PluginInstalls
     private async Task<string?> InstallPackageAsync(PluginPackage package)
     {
         var platform = PluginPackage.ThisPlatform;
-        var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
+        var installer = installers.Create();
         var refusal = installer is null ? "This window has no plugins folder." : installer.Refusal(package, platform);
         var described = package.DescriptionFor(platform);
         var replacing = described is null ? null : installer?.Replacing(described.Assembly);
@@ -264,7 +267,7 @@ internal sealed class PluginInstalls
         var assembly = plugin.Plugin.Assembly;
         var loaded = plugins.Plugins.FirstOrDefault(p =>
             string.Equals(Path.GetFileNameWithoutExtension(p.AssemblyPath), assembly, StringComparison.OrdinalIgnoreCase));
-        var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
+        var installer = installers.Create();
 
         var reading = Task.Run(() =>
         {
@@ -384,7 +387,7 @@ internal sealed class PluginInstalls
         troubles ??= new Dictionary<string, string>();
 
         var unexplained = troubles.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var installer = pluginFolder is null ? null : new PluginInstaller(pluginFolder, plugins.Plugins);
+        var installer = installers.Create();
         var waiting = installer is null ? [] : installer.Waiting().ToDictionary(p => p.Description.Assembly, StringComparer.OrdinalIgnoreCase);
         var removing = installer?.Removing() ?? new HashSet<string>();
 
