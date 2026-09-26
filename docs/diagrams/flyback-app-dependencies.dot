@@ -149,8 +149,6 @@ digraph FlybackAppOverview {
   Playback -> AssistantPanel [style=dashed, color=blue];
   Playback -> PreviewHost; Playback -> AudioEngine; Playback -> IlCompiler;
   Playback -> MidiHub; Playback -> AudioSetup;
-  Playback -> PatchFiles [style=dashed, color=blue];
-  Playback -> TakeRecording [style=dashed, color=blue];
 
   PluginInstalls -> PluginCatalog;
   PluginInstalls -> AssistantPanel [style=dashed, color=blue];
@@ -160,7 +158,6 @@ digraph FlybackAppOverview {
 
   PresetAudition -> AudioEngine; PresetAudition -> IlCompiler; PresetAudition -> PluginCatalog;
   PresetAudition -> PresetLibrary; PresetAudition -> Playback;
-  PresetAudition -> TakeRecording [style=dashed, color=blue];
 
   PresetLibrary -> EditorSetup [label="IPresetFolder", fontcolor=gray40, color=gray40];
 

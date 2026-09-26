@@ -242,8 +242,6 @@ Playback -> AudioEngine
 Playback -> IlCompiler
 Playback -> MidiHub
 Playback -> AudioSetup
-Playback ~> PatchFiles
-Playback ~> TakeRecording
 
 PluginInstalls -> PluginCatalog
 PluginInstalls ~> AssistantPanel
@@ -258,7 +256,6 @@ PresetAudition -> IlCompiler
 PresetAudition -> PluginCatalog
 PresetAudition -> PresetLibrary
 PresetAudition -> Playback
-PresetAudition ~> TakeRecording
 
 PresetLibrary -> IPresetFolder
 
