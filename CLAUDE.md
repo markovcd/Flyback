@@ -5,6 +5,7 @@ Flyback is a patchable synthesiser for .NET 10: one module graph generates both 
 Standing rules for working in this repo are in `.claude/rules/`, and Claude Code loads them every session because they apply to nearly every task, not one kind of it:
 
 - `git-workflow.md`: commit straight to `main`, and isolate from other sessions' uncommitted work.
+- `one-type-per-file.md`: one top-level type per file, named for it; split a file that holds several whenever a change touches it.
 - `prose-style.md`: American spelling; succinct comments that never narrate history.
 - `terminology.md`: when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
 
