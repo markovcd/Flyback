@@ -15,6 +15,7 @@ namespace Flyback.App.PluginPackages;
 internal sealed class PluginInstalls
 {
     private readonly IDialog dialog;
+    private readonly PluginHubFactory pluginHubs;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly string? pluginFolder;
@@ -43,9 +44,11 @@ internal sealed class PluginInstalls
         SiteAccess site,
         Playback playback,
         IDialog dialog,
-        ChosenAssistant chosenAssistant)
+        ChosenAssistant chosenAssistant,
+        PluginHubFactory pluginHubs)
     {
         this.dialog = dialog;
+        this.pluginHubs = pluginHubs;
         this.plugins = plugins;
         this.report = report;
         pluginFolder = setup.PluginFolder;
@@ -195,7 +198,7 @@ internal sealed class PluginInstalls
     {
         var site = this.site.Plugins();
         var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
-        using var hub = new PluginHub(
+        using var hub = pluginHubs.Create(
             site,
             () =>
             {
@@ -203,7 +206,6 @@ internal sealed class PluginInstalls
                 return Task.Run(() => InstalledPlugins(assisting, troubles));
             }, 
             (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), 
-            dialog,
             plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.

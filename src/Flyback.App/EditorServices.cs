@@ -68,6 +68,7 @@ internal static class EditorServices
 
         services.AddSingleton<PresetThumbnails>();
 
+        services.AddSingleton<PluginHubFactory>();
         services.AddSingleton(sp => Sound.Open(
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSettingRepository>().Current));
