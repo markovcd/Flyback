@@ -2,6 +2,13 @@
 # One container per editor window (EditorServices.cs, CanvasServices.cs, WindowServices.cs).
 # Everything not flagged [ext] lives in Flyback.App; [ext] = Flyback.Ui/Engine/Plugins.
 #
+# This is the plain-text edge list (diffable, grep-able). The same data renders as two
+# pictures: flyback-app-dependencies.svg (everything except the canvas subsystem, which
+# is collapsed to one NodeEditor node) and flyback-app-canvas-internals.svg (just the 17
+# classes CanvasServices.cs registers, which nothing outside it depends on but NodeEditor
+# itself). Split in two because the canvas subsystem is a near-clique on its own scale;
+# drawn in the same picture as the composition root it turned into an unreadable tangle.
+#
 # Legend
 #   [R]      registered in the editor's DI container
 #   A -> B   A takes B (or an interface B implements) as a constructor parameter (DI)

@@ -1,0 +1,135 @@
+// Flyback.App canvas subsystem — the 17 services CanvasServices.cs registers
+// (collapsed to a single "NodeEditor" node in flyback-app-overview.dot).
+// Nothing outside this subsystem depends on anything but NodeEditor itself.
+digraph CanvasInternals {
+  rankdir=TB;
+  splines=spline;
+  concentrate=true;
+  nodesep=0.35;
+  ranksep=0.6;
+  node [shape=box, style=filled, fillcolor=lightblue, fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9, arrowsize=0.7];
+
+  node [shape=ellipse, style="filled,dashed", fillcolor=lightyellow, color=gray40];
+  IPointerAnchors;
+  IPointerAnchors -> PlatformAnchors [style=dotted, color=gray40, label="impl"];
+  PlatformAnchors [shape=box, style="filled,dashed", fillcolor=lightblue, color=gray40, label="PlatformAnchors\n[ext: Flyback.Ui]"];
+
+  node [shape=box, style=filled, fillcolor=lightblue, color=black];
+
+  // rank 0: primitives with no canvas-internal deps
+  { rank=same; NodeGeometry; Repaint; CanvasReport; }
+
+  // rank 1
+  CanvasHistory -> NodeGeometry;
+  { rank=same; CanvasHistory; }
+
+  // rank 2
+  CanvasSelection -> CanvasHistory;
+  CanvasSelection -> Repaint;
+  CanvasSelection -> CanvasReport;
+  CanvasSelection -> NodeGeometry;
+  { rank=same; CanvasSelection; }
+
+  // rank 3
+  Viewport -> CanvasHistory;
+  Viewport -> CanvasSelection;
+  Viewport -> Repaint;
+
+  KnobLinking -> CanvasSelection;
+  KnobLinking -> Repaint;
+  KnobLinking -> NodeGeometry;
+
+  UndescribedTags -> CanvasSelection;
+  UndescribedTags -> Repaint;
+  UndescribedTags -> NodeGeometry;
+
+  RemapMarks -> CanvasHistory;
+  RemapMarks -> CanvasSelection;
+  RemapMarks -> Repaint;
+  RemapMarks -> NodeGeometry;
+
+  HeldModules -> CanvasHistory;
+  HeldModules -> Repaint;
+
+  SocketDial -> CanvasHistory;
+  SocketDial -> CanvasSelection;
+  SocketDial -> Repaint;
+  SocketDial -> IPointerAnchors;
+
+  { rank=same; Viewport; KnobLinking; UndescribedTags; RemapMarks; HeldModules; SocketDial; }
+
+  // rank 4
+  CanvasEdits -> CanvasHistory;
+  CanvasEdits -> CanvasSelection;
+  CanvasEdits -> Viewport;
+  CanvasEdits -> Repaint;
+  CanvasEdits -> CanvasReport;
+  CanvasEdits -> NodeGeometry;
+
+  CanvasTips -> CanvasHistory;
+  CanvasTips -> CanvasSelection;
+  CanvasTips -> RemapMarks;
+  CanvasTips -> UndescribedTags;
+  CanvasTips -> NodeGeometry;
+
+  { rank=same; CanvasEdits; CanvasTips; }
+
+  // rank 5
+  CanvasClipboard -> CanvasHistory;
+  CanvasClipboard -> CanvasSelection;
+  CanvasClipboard -> CanvasEdits;
+
+  CanvasGestures -> CanvasHistory;
+  CanvasGestures -> CanvasSelection;
+  CanvasGestures -> Viewport;
+  CanvasGestures -> CanvasEdits;
+  CanvasGestures -> SocketDial;
+  CanvasGestures -> HeldModules;
+  CanvasGestures -> KnobLinking;
+  CanvasGestures -> RemapMarks;
+  CanvasGestures -> CanvasTips;
+  CanvasGestures -> Repaint;
+  CanvasGestures -> NodeGeometry;
+
+  { rank=same; CanvasClipboard; CanvasGestures; }
+
+  // rank 6
+  CanvasPainter -> CanvasHistory;
+  CanvasPainter -> CanvasSelection;
+  CanvasPainter -> Viewport;
+  CanvasPainter -> CanvasGestures;
+  CanvasPainter -> SocketDial;
+  CanvasPainter -> RemapMarks;
+  CanvasPainter -> KnobLinking;
+  CanvasPainter -> UndescribedTags;
+  CanvasPainter -> Repaint;
+  CanvasPainter -> NodeGeometry;
+
+  // rank 7: the leaf everything else in the app sees
+  NodeEditor [style="filled,bold", fillcolor="#b8d8ff", penwidth=2];
+  NodeEditor -> CanvasHistory;
+  NodeEditor -> CanvasSelection;
+  NodeEditor -> Viewport;
+  NodeEditor -> CanvasEdits;
+  NodeEditor -> CanvasClipboard;
+  NodeEditor -> CanvasGestures;
+  NodeEditor -> CanvasTips;
+  NodeEditor -> SocketDial;
+  NodeEditor -> KnobLinking;
+  NodeEditor -> UndescribedTags;
+  NodeEditor -> CanvasPainter;
+  NodeEditor -> Repaint;
+  NodeEditor -> CanvasReport;
+  NodeEditor -> NodeGeometry;
+
+  // the one direct-new inside this subsystem
+  edge [style=dotted, color=firebrick, fontcolor=firebrick, label="new"];
+  node [shape=box, style="filled,dashed", fillcolor=mistyrose, color=firebrick];
+  PatchHistory [label="PatchHistory\n[ext: Flyback.Core]"];
+  CanvasHistory -> PatchHistory;
+
+  labelloc="t";
+  label="Flyback.App canvas subsystem (CanvasServices.cs) — everything outside this box sees only NodeEditor";
+  fontsize=13;
+}
