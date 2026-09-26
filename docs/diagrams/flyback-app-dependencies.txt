@@ -9,9 +9,9 @@
 # itself). Split in two because the canvas subsystem is a near-clique on its own scale;
 # drawn in the same picture as the composition root it turned into an unreadable tangle.
 #
-# Usage (a telemetry sink most classes hold, like a logger) is left out of this list
-# entirely: nearly every class takes it, and it is a hub with no structural meaning to
-# trace, not a real collaborator.
+# Usage and ReportLine (a telemetry sink and a status-line sink, both held like a logger)
+# are left out of this list entirely: nearly every class takes them, and each is a hub
+# with no structural meaning to trace, not a real collaborator.
 #
 # Legend
 #   [R]      registered in the editor's DI container
@@ -44,7 +44,6 @@ IPresetFolder => EditorSetup
 [R] AssistantEditor
 [R] AssistantPanel
 [R] WorkKeeper
-[R] ReportLine
 [R] SourceView
 [R] PreviewHost                [ext: Flyback.Ui]
 [R] Document
@@ -80,7 +79,6 @@ IPresetFolder => EditorSetup
 AssistantEditor -> NodeEditor
 AssistantEditor -> Document
 AssistantEditor -> PreviewHost
-AssistantEditor -> ReportLine
 AssistantEditor -> PatchFiles
 AssistantEditor ~> PresetSlot
 
@@ -129,7 +127,6 @@ CanvasPainter -> NodeGeometry
 
 CanvasSection -> EditorSetup
 CanvasSection -> NodeEditor
-CanvasSection -> ReportLine
 
 CanvasSelection -> CanvasHistory
 CanvasSelection -> Repaint
@@ -144,12 +141,10 @@ CanvasTips -> NodeGeometry
 
 Document -> NodeEditor
 Document -> SourceView
-Document -> ReportLine
 
 EditorWindow -> IServiceProvider   [ext: the container itself]
 
 FilesSection -> EditorSetup
-FilesSection -> ReportLine
 
 HeldModules -> CanvasHistory
 HeldModules -> Repaint
@@ -175,7 +170,6 @@ MainWindow -> Document
 MainWindow -> PatchFiles
 MainWindow -> UnsavedWork
 MainWindow -> PreviewHost
-MainWindow -> ReportLine
 MainWindow -> PluginCatalog
 MainWindow -> IlCompiler
 MainWindow -> AudioEngine
@@ -222,14 +216,12 @@ OutputSections -> IMonitors
 Palette -> NodeEditor
 Palette -> Document
 Palette -> PluginCatalog
-Palette -> ReportLine
 Palette -> PanelKnobs
 Palette -> OutputSections
 Palette -> EditorSetup
 
 PanelKnobs -> NodeEditor
 PanelKnobs -> Document
-PanelKnobs -> ReportLine
 PanelKnobs -> PreviewHost
 PanelKnobs -> AudioEngine
 PanelKnobs -> MidiHub
@@ -237,7 +229,6 @@ PanelKnobs -> MidiHub
 PatchFiles -> NodeEditor
 PatchFiles -> Document
 PatchFiles -> PluginCatalog
-PatchFiles -> ReportLine
 PatchFiles ~> AssistantPanel
 PatchFiles -> Playback
 PatchFiles -> PluginInstalls
@@ -245,7 +236,6 @@ PatchFiles -> IFilePickers
 
 Playback -> NodeEditor
 Playback -> PluginCatalog
-Playback -> ReportLine
 Playback ~> AssistantPanel
 Playback -> PreviewHost
 Playback -> AudioEngine
@@ -256,7 +246,6 @@ Playback ~> PatchFiles
 Playback ~> TakeRecording
 
 PluginInstalls -> PluginCatalog
-PluginInstalls -> ReportLine
 PluginInstalls ~> AssistantPanel
 PluginInstalls -> EditorSetup
 PluginInstalls -> SiteAccess
@@ -276,7 +265,6 @@ PresetLibrary -> IPresetFolder
 PresetSlot -> NodeEditor
 PresetSlot -> Document
 PresetSlot -> PluginCatalog
-PresetSlot -> ReportLine
 PresetSlot ~> AssistantPanel
 PresetSlot -> PatchFiles
 PresetSlot -> PresetThumbnails
@@ -314,7 +302,6 @@ SocketDial -> IPointerAnchors
 
 StatusBar -> NodeEditor
 StatusBar -> PluginCatalog
-StatusBar -> ReportLine
 StatusBar -> PreviewHost
 StatusBar -> SiteAccess
 StatusBar -> Playback
@@ -326,7 +313,6 @@ TakeRecording -> OutputSections
 TakeRecording -> PreviewHost
 TakeRecording -> AudioEngine
 TakeRecording -> NodeEditor
-TakeRecording -> ReportLine
 TakeRecording -> Playback
 
 Toolbar -> PresetSlot
@@ -347,10 +333,8 @@ UnsavedWork -> IDialogs
 UnsavedWork -> IWindowClose
 
 UpdatesSection -> EditorSetup
-UpdatesSection -> ReportLine
 
 UsageSection -> EditorSetup
-UsageSection -> ReportLine
 
 Viewport -> CanvasHistory
 Viewport -> CanvasSelection
