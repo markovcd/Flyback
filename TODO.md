@@ -12,3 +12,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - **`flyback-viewer --report`.** At the end of a run, print the frames a second it held, the slowest frame and what the sound cost, so a script or an agent can measure a patch without watching it.
 - Allow to change a patch while agent is working. Also changing a patch shouldnt invalidate agent session
 - Forbid opening files/presets during recording
+- figure how to accept legacy currencies
