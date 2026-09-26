@@ -1,0 +1,388 @@
+# Flyback.App dependency graph — construction-time only (ADR-0150)
+# One container per editor window (EditorServices.cs, CanvasServices.cs, WindowServices.cs).
+# Everything not flagged [ext] lives in Flyback.App; [ext] = Flyback.Ui/Engine/Plugins.
+#
+# Legend
+#   [R]      registered in the editor's DI container
+#   A -> B   A takes B (or an interface B implements) as a constructor parameter (DI)
+#   A ~> B   A takes Lazy<B> — deferred DI, breaks a cycle (ADR-0150)
+#   A => B   A does `new B(...)` in its own constructor or a field initializer — NOT DI
+#
+# Interface -> implementation registrations (container never sees the interface name below the dash)
+IAssistantEditor => AssistantEditor
+IDialogs => WindowDialogs
+IFilePickers => WindowFilePickers
+IMonitors => WindowMonitors
+IWindowFocus => WindowFocus
+IWindowClose => WindowClose
+IPointerAnchors => PlatformAnchors        [ext, pre-built instance, not container-constructed]
+IIlCompilerSetup => EditorSetup           [ext interface, declared in Flyback.Engine]
+IPresetFolder => EditorSetup
+
+# --- Registered nodes [R] ---
+[R] EditorSetup                (also satisfies IIlCompilerSetup, IPresetFolder)
+[R] Usage
+[R] PluginCatalog
+[R] HttpClient "SiteAccess.Client" (via IHttpClientFactory)
+[R] IlCompiler                 [ext: Flyback.Engine]
+[R] PresetLibrary              [ext: Flyback.Ui]
+[R] PresetThumbnails
+[R] AudioSetup                 (from the Sound.Open factory)
+[R] AudioEngine                [ext: Flyback.Ui]
+[R] IMidiInput (PreferredMidiInput)
+[R] MidiHub                    [ext: Flyback.Ui]
+[R] AssistantEditor
+[R] AssistantPanel
+[R] WorkKeeper
+[R] ReportLine
+[R] SourceView
+[R] PreviewHost                [ext: Flyback.Ui]
+[R] Document
+[R] WindowDialogs / WindowFilePickers / WindowMonitors / WindowFocus / WindowClose
+[R] SiteAccess
+[R] Playback
+[R] PatchFiles
+[R] UnsavedWork
+[R] OutputSections
+[R] CanvasSection
+[R] UpdatesSection
+[R] UsageSection
+[R] FilesSection
+[R] PanelKnobs
+[R] Palette
+[R] Inspector
+[R] PluginInstalls
+[R] PresetAudition
+[R] PresetSlot
+[R] SeekBar
+[R] Toolbar
+[R] StatusBar
+[R] TakeRecording
+[R] EditorWindow
+[R] MainWindow
+[R] PlatformAnchors             [ext: Flyback.Ui]
+[R] NodeGeometry, Repaint, CanvasReport, CanvasHistory, CanvasSelection, Viewport,
+    CanvasEdits, CanvasClipboard, KnobLinking, UndescribedTags, RemapMarks, HeldModules,
+    SocketDial, CanvasTips, CanvasGestures, CanvasPainter, NodeEditor
+[R] Lazy<T> (open generic) -> Deferred<T>
+
+# --- Constructor DI edges (-> and ~>) ---
+AssistantEditor -> NodeEditor
+AssistantEditor -> Document
+AssistantEditor -> PreviewHost
+AssistantEditor -> ReportLine
+AssistantEditor -> PatchFiles
+AssistantEditor ~> PresetSlot
+
+AssistantPanel -> PluginCatalog
+AssistantPanel -> IAssistantEditor
+AssistantPanel -> EditorSetup
+AssistantPanel -> Usage
+
+AudioEngine -> AudioSetup
+AudioEngine -> IlCompiler
+
+CanvasClipboard -> CanvasHistory
+CanvasClipboard -> CanvasSelection
+CanvasClipboard -> CanvasEdits
+
+CanvasEdits -> CanvasHistory
+CanvasEdits -> CanvasSelection
+CanvasEdits -> Viewport
+CanvasEdits -> Repaint
+CanvasEdits -> CanvasReport
+CanvasEdits -> NodeGeometry
+
+CanvasGestures -> CanvasHistory
+CanvasGestures -> CanvasSelection
+CanvasGestures -> Viewport
+CanvasGestures -> CanvasEdits
+CanvasGestures -> SocketDial
+CanvasGestures -> HeldModules
+CanvasGestures -> KnobLinking
+CanvasGestures -> RemapMarks
+CanvasGestures -> CanvasTips
+CanvasGestures -> Repaint
+CanvasGestures -> NodeGeometry
+
+CanvasHistory -> NodeGeometry
+
+CanvasPainter -> CanvasHistory
+CanvasPainter -> CanvasSelection
+CanvasPainter -> Viewport
+CanvasPainter -> CanvasGestures
+CanvasPainter -> SocketDial
+CanvasPainter -> RemapMarks
+CanvasPainter -> KnobLinking
+CanvasPainter -> UndescribedTags
+CanvasPainter -> Repaint
+CanvasPainter -> NodeGeometry
+
+CanvasSection -> EditorSetup
+CanvasSection -> NodeEditor
+CanvasSection -> ReportLine
+
+CanvasSelection -> CanvasHistory
+CanvasSelection -> Repaint
+CanvasSelection -> CanvasReport
+CanvasSelection -> NodeGeometry
+
+CanvasTips -> CanvasHistory
+CanvasTips -> CanvasSelection
+CanvasTips -> RemapMarks
+CanvasTips -> UndescribedTags
+CanvasTips -> NodeGeometry
+
+Document -> NodeEditor
+Document -> SourceView
+Document -> ReportLine
+Document -> Usage
+
+EditorWindow -> IServiceProvider   [ext: the container itself]
+
+FilesSection -> EditorSetup
+FilesSection -> ReportLine
+
+HeldModules -> CanvasHistory
+HeldModules -> Repaint
+
+Inspector -> NodeEditor
+Inspector -> Document
+Inspector -> MidiHub
+Inspector -> PanelKnobs
+Inspector -> PatchFiles
+Inspector -> Palette
+Inspector -> IFilePickers
+
+IlCompiler -> IIlCompilerSetup
+
+KnobLinking -> CanvasSelection
+KnobLinking -> Repaint
+KnobLinking -> NodeGeometry
+
+MainWindow -> EditorSetup
+MainWindow -> NodeEditor
+MainWindow -> SourceView
+MainWindow -> Document
+MainWindow -> PatchFiles
+MainWindow -> UnsavedWork
+MainWindow -> PreviewHost
+MainWindow -> ReportLine
+MainWindow -> PluginCatalog
+MainWindow -> Usage
+MainWindow -> IlCompiler
+MainWindow -> AudioEngine
+MainWindow -> MidiHub
+MainWindow -> Playback
+MainWindow -> OutputSections
+MainWindow -> CanvasSection
+MainWindow -> UpdatesSection
+MainWindow -> UsageSection
+MainWindow -> FilesSection
+MainWindow -> PanelKnobs
+MainWindow -> Inspector
+MainWindow -> PluginInstalls
+MainWindow -> PresetSlot
+MainWindow -> Toolbar
+MainWindow -> StatusBar
+MainWindow -> TakeRecording
+MainWindow -> AssistantPanel      # note: direct, not Lazy — MainWindow is the leaf, built last
+MainWindow -> WorkKeeper
+
+MidiHub -> IMidiInput
+
+NodeEditor -> CanvasHistory
+NodeEditor -> CanvasSelection
+NodeEditor -> Viewport
+NodeEditor -> CanvasEdits
+NodeEditor -> CanvasClipboard
+NodeEditor -> CanvasGestures
+NodeEditor -> CanvasTips
+NodeEditor -> SocketDial
+NodeEditor -> KnobLinking
+NodeEditor -> UndescribedTags
+NodeEditor -> CanvasPainter
+NodeEditor -> Repaint
+NodeEditor -> CanvasReport
+NodeEditor -> NodeGeometry
+
+OutputSections -> PluginCatalog
+OutputSections -> EditorSetup
+OutputSections ~> PresetSlot
+OutputSections -> IFilePickers
+OutputSections -> IMonitors
+
+Palette -> NodeEditor
+Palette -> Document
+Palette -> PluginCatalog
+Palette -> ReportLine
+Palette -> Usage
+Palette -> PanelKnobs
+Palette -> OutputSections
+Palette -> EditorSetup
+
+PanelKnobs -> NodeEditor
+PanelKnobs -> Document
+PanelKnobs -> ReportLine
+PanelKnobs -> PreviewHost
+PanelKnobs -> AudioEngine
+PanelKnobs -> MidiHub
+
+PatchFiles -> NodeEditor
+PatchFiles -> Document
+PatchFiles -> PluginCatalog
+PatchFiles -> ReportLine
+PatchFiles -> Usage
+PatchFiles ~> AssistantPanel
+PatchFiles -> Playback
+PatchFiles -> PluginInstalls
+PatchFiles -> IFilePickers
+
+Playback -> NodeEditor
+Playback -> PluginCatalog
+Playback -> ReportLine
+Playback ~> AssistantPanel
+Playback -> PreviewHost
+Playback -> AudioEngine
+Playback -> IlCompiler
+Playback -> MidiHub
+Playback -> AudioSetup
+Playback ~> PatchFiles
+Playback ~> TakeRecording
+
+PluginInstalls -> PluginCatalog
+PluginInstalls -> ReportLine
+PluginInstalls ~> AssistantPanel
+PluginInstalls -> EditorSetup
+PluginInstalls -> SiteAccess
+PluginInstalls -> Playback
+PluginInstalls ~> UnsavedWork
+PluginInstalls -> IDialogs
+
+PresetAudition -> AudioEngine
+PresetAudition -> IlCompiler
+PresetAudition -> PluginCatalog
+PresetAudition -> PresetLibrary
+PresetAudition -> Playback
+PresetAudition ~> TakeRecording
+
+PresetLibrary -> IPresetFolder
+
+PresetSlot -> NodeEditor
+PresetSlot -> Document
+PresetSlot -> PluginCatalog
+PresetSlot -> ReportLine
+PresetSlot -> Usage
+PresetSlot ~> AssistantPanel
+PresetSlot -> PatchFiles
+PresetSlot -> PresetThumbnails
+PresetSlot -> PresetAudition
+PresetSlot -> PresetLibrary
+PresetSlot -> SiteAccess
+PresetSlot -> UnsavedWork
+PresetSlot -> Playback
+PresetSlot -> PluginInstalls
+PresetSlot -> IDialogs
+
+PresetThumbnails -> PluginCatalog
+PresetThumbnails -> IlCompiler
+PresetThumbnails -> EditorSetup
+PresetThumbnails -> PresetLibrary
+
+RemapMarks -> CanvasHistory
+RemapMarks -> CanvasSelection
+RemapMarks -> Repaint
+RemapMarks -> NodeGeometry
+
+SeekBar -> Playback
+SeekBar -> PreviewHost
+SeekBar -> CanvasSection
+SeekBar -> NodeEditor
+SeekBar -> Document
+
+SiteAccess -> EditorSetup
+SiteAccess -> IHttpClientFactory
+
+SocketDial -> CanvasHistory
+SocketDial -> CanvasSelection
+SocketDial -> Repaint
+SocketDial -> IPointerAnchors
+
+StatusBar -> NodeEditor
+StatusBar -> PluginCatalog
+StatusBar -> ReportLine
+StatusBar -> Usage
+StatusBar -> PreviewHost
+StatusBar -> SiteAccess
+StatusBar -> Playback
+StatusBar -> IDialogs
+StatusBar -> IWindowFocus
+
+TakeRecording -> Toolbar
+TakeRecording -> OutputSections
+TakeRecording -> PreviewHost
+TakeRecording -> AudioEngine
+TakeRecording -> Usage
+TakeRecording -> NodeEditor
+TakeRecording -> ReportLine
+TakeRecording -> Playback
+
+Toolbar -> PresetSlot
+Toolbar -> PluginCatalog
+Toolbar -> SeekBar
+
+UndescribedTags -> CanvasSelection
+UndescribedTags -> Repaint
+UndescribedTags -> NodeGeometry
+
+UnsavedWork -> NodeEditor
+UnsavedWork -> Document
+UnsavedWork ~> AssistantPanel
+UnsavedWork -> PatchFiles
+UnsavedWork ~> TakeRecording
+UnsavedWork -> EditorSetup
+UnsavedWork -> IDialogs
+UnsavedWork -> IWindowClose
+
+UpdatesSection -> EditorSetup
+UpdatesSection -> ReportLine
+
+UsageSection -> EditorSetup
+UsageSection -> Usage
+UsageSection -> ReportLine
+
+Viewport -> CanvasHistory
+Viewport -> CanvasSelection
+Viewport -> Repaint
+
+WindowDialogs -> EditorWindow
+WindowFilePickers -> EditorWindow
+WindowMonitors -> EditorWindow
+WindowFocus -> EditorWindow
+WindowClose -> EditorWindow
+
+WorkKeeper -> EditorSetup
+WorkKeeper -> UnsavedWork
+
+# --- Direct construction in a constructor or field initializer (NOT DI, container never sees these) ---
+AssistantPanel => Credentials
+AssistantPanel => ProbeSection
+AssistantPanel => SettingsForm
+AudioEngine => AudioRenderer               [ext]
+CanvasHistory => PatchHistory              [ext: Flyback.Core]
+Inspector => ModuleWash
+MidiHub => ComputerKeyboard                [ext]
+Palette => GroupLibrary
+Palette => ModulePalette
+PanelKnobs => ControlHub
+PanelKnobs => ControlsPanel
+PanelKnobs => StageKnobs
+PatchFiles => ConversationStore
+Playback => Transport
+PresetThumbnails => ThumbnailStore         (conditional: only if a thumbnail folder is set)
+PresetSlot => Picker
+PreviewHost => GpuPreviewSurface           [ext]
+PreviewHost => PreviewSurface              [ext]
+SeekBar => SeekTrack
+StatusBar => Shimmer
+OutputSections => Picker                    (×10, one per setting row — collapsed)

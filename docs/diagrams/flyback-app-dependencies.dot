@@ -1,0 +1,392 @@
+// Flyback.App dependency graph — construction-time only (ADR-0150).
+// Render: dot -Tsvg flyback-app-deps.dot -o flyback-app-deps.svg
+// Same data as flyback-app-deps.txt; kept as one statement per line so a diff
+// still shows one added/removed edge as one line, same as the text version.
+//
+// Node fill = registered as a DI singleton in EditorServices.cs / CanvasServices.cs.
+// Dashed node border = lives outside Flyback.App (Flyback.Ui / Flyback.Engine / Flyback.Core).
+// Solid black edge = constructor parameter (DI).
+// Dashed blue edge, label "lazy" = Lazy<T> constructor parameter (cycle-break, ADR-0150).
+// Dotted red edge, label "new" = built with `new` inside a ctor/field initializer, not DI.
+
+digraph FlybackApp {
+  rankdir=LR;
+  splines=true;
+  node [shape=box, style=filled, fillcolor=lightblue, fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=9];
+
+  // --- interfaces (registered, but the container hands out the implementation) ---
+  node [shape=ellipse, style="filled,dashed", fillcolor=lightyellow];
+  IAssistantEditor; IDialogs; IFilePickers; IMonitors; IWindowFocus; IWindowClose;
+  IPointerAnchors [style="filled,dashed", color=gray40];
+  IIlCompilerSetup [style="filled,dashed", color=gray40];
+  IPresetFolder;
+  IServiceProvider [style="dashed", fillcolor=white, color=gray40];
+  IMidiInput [style="filled,dashed", color=gray40];
+  IHttpClientFactory [style="dashed", fillcolor=white, color=gray40];
+
+  IAssistantEditor -> AssistantEditor [style=dotted, color=gray40, label="impl"];
+  IDialogs -> WindowDialogs [style=dotted, color=gray40, label="impl"];
+  IFilePickers -> WindowFilePickers [style=dotted, color=gray40, label="impl"];
+  IMonitors -> WindowMonitors [style=dotted, color=gray40, label="impl"];
+  IWindowFocus -> WindowFocus [style=dotted, color=gray40, label="impl"];
+  IWindowClose -> WindowClose [style=dotted, color=gray40, label="impl"];
+  IPointerAnchors -> PlatformAnchors [style=dotted, color=gray40, label="impl"];
+  IIlCompilerSetup -> EditorSetup [style=dotted, color=gray40, label="impl"];
+  IPresetFolder -> EditorSetup [style=dotted, color=gray40, label="impl"];
+
+  // --- registered nodes, in Flyback.App unless noted ---
+  node [shape=box, style=filled, fillcolor=lightblue];
+  EditorSetup; Usage; PluginCatalog; AudioSetup; PresetThumbnails;
+  AssistantEditor; AssistantPanel; WorkKeeper; ReportLine; SourceView; Document;
+  WindowDialogs; WindowFilePickers; WindowMonitors; WindowFocus; WindowClose;
+  SiteAccess; Playback; PatchFiles; UnsavedWork; OutputSections; CanvasSection;
+  UpdatesSection; UsageSection; FilesSection; PanelKnobs; Palette; Inspector;
+  PluginInstalls; PresetAudition; PresetSlot; SeekBar; Toolbar; StatusBar;
+  TakeRecording; EditorWindow; MainWindow;
+  NodeGeometry; Repaint; CanvasReport; CanvasHistory; CanvasSelection; Viewport;
+  CanvasEdits; CanvasClipboard; KnobLinking; UndescribedTags; RemapMarks; HeldModules;
+  SocketDial; CanvasTips; CanvasGestures; CanvasPainter; NodeEditor;
+
+  node [shape=box, style="filled,dashed", fillcolor=lightblue, color=gray40];
+  IlCompiler [label="IlCompiler\n[ext: Flyback.Engine]"];
+  PresetLibrary [label="PresetLibrary\n[ext: Flyback.Ui]"];
+  AudioEngine [label="AudioEngine\n[ext: Flyback.Ui]"];
+  MidiHub [label="MidiHub\n[ext: Flyback.Ui]"];
+  PreviewHost [label="PreviewHost\n[ext: Flyback.Ui]"];
+  PlatformAnchors [label="PlatformAnchors\n[ext: Flyback.Ui]"];
+  HttpClientSiteAccess [label="HttpClient\n\"SiteAccess.Client\""];
+
+  // --- classes only ever built with `new`, never registered ---
+  node [shape=box, style="filled,dashed", fillcolor=mistyrose, color=firebrick];
+  Credentials; ProbeSection; SettingsForm; ModuleWash; GroupLibrary; ModulePalette;
+  ControlHub; ControlsPanel; StageKnobs; ConversationStore; Transport; ThumbnailStore;
+  Picker; SeekTrack; Shimmer;
+  AudioRenderer [label="AudioRenderer\n[ext]"];
+  PatchHistory [label="PatchHistory\n[ext: Flyback.Core]"];
+  ComputerKeyboard [label="ComputerKeyboard\n[ext]"];
+  GpuPreviewSurface [label="GpuPreviewSurface\n[ext]"];
+  PreviewSurface [label="PreviewSurface\n[ext]"];
+
+  // --- constructor DI edges ---
+  AssistantEditor -> NodeEditor;
+  AssistantEditor -> Document;
+  AssistantEditor -> PreviewHost;
+  AssistantEditor -> ReportLine;
+  AssistantEditor -> PatchFiles;
+  AssistantEditor -> PresetSlot [style=dashed, color=blue, label="lazy"];
+
+  AssistantPanel -> PluginCatalog;
+  AssistantPanel -> IAssistantEditor;
+  AssistantPanel -> EditorSetup;
+  AssistantPanel -> Usage;
+
+  AudioEngine -> AudioSetup;
+  AudioEngine -> IlCompiler;
+
+  CanvasClipboard -> CanvasHistory;
+  CanvasClipboard -> CanvasSelection;
+  CanvasClipboard -> CanvasEdits;
+
+  CanvasEdits -> CanvasHistory;
+  CanvasEdits -> CanvasSelection;
+  CanvasEdits -> Viewport;
+  CanvasEdits -> Repaint;
+  CanvasEdits -> CanvasReport;
+  CanvasEdits -> NodeGeometry;
+
+  CanvasGestures -> CanvasHistory;
+  CanvasGestures -> CanvasSelection;
+  CanvasGestures -> Viewport;
+  CanvasGestures -> CanvasEdits;
+  CanvasGestures -> SocketDial;
+  CanvasGestures -> HeldModules;
+  CanvasGestures -> KnobLinking;
+  CanvasGestures -> RemapMarks;
+  CanvasGestures -> CanvasTips;
+  CanvasGestures -> Repaint;
+  CanvasGestures -> NodeGeometry;
+
+  CanvasHistory -> NodeGeometry;
+
+  CanvasPainter -> CanvasHistory;
+  CanvasPainter -> CanvasSelection;
+  CanvasPainter -> Viewport;
+  CanvasPainter -> CanvasGestures;
+  CanvasPainter -> SocketDial;
+  CanvasPainter -> RemapMarks;
+  CanvasPainter -> KnobLinking;
+  CanvasPainter -> UndescribedTags;
+  CanvasPainter -> Repaint;
+  CanvasPainter -> NodeGeometry;
+
+  CanvasSection -> EditorSetup;
+  CanvasSection -> NodeEditor;
+  CanvasSection -> ReportLine;
+
+  CanvasSelection -> CanvasHistory;
+  CanvasSelection -> Repaint;
+  CanvasSelection -> CanvasReport;
+  CanvasSelection -> NodeGeometry;
+
+  CanvasTips -> CanvasHistory;
+  CanvasTips -> CanvasSelection;
+  CanvasTips -> RemapMarks;
+  CanvasTips -> UndescribedTags;
+  CanvasTips -> NodeGeometry;
+
+  Document -> NodeEditor;
+  Document -> SourceView;
+  Document -> ReportLine;
+  Document -> Usage;
+
+  EditorWindow -> IServiceProvider;
+
+  FilesSection -> EditorSetup;
+  FilesSection -> ReportLine;
+
+  HeldModules -> CanvasHistory;
+  HeldModules -> Repaint;
+
+  Inspector -> NodeEditor;
+  Inspector -> Document;
+  Inspector -> MidiHub;
+  Inspector -> PanelKnobs;
+  Inspector -> PatchFiles;
+  Inspector -> Palette;
+  Inspector -> IFilePickers;
+
+  IlCompiler -> IIlCompilerSetup;
+
+  KnobLinking -> CanvasSelection;
+  KnobLinking -> Repaint;
+  KnobLinking -> NodeGeometry;
+
+  MainWindow -> EditorSetup;
+  MainWindow -> NodeEditor;
+  MainWindow -> SourceView;
+  MainWindow -> Document;
+  MainWindow -> PatchFiles;
+  MainWindow -> UnsavedWork;
+  MainWindow -> PreviewHost;
+  MainWindow -> ReportLine;
+  MainWindow -> PluginCatalog;
+  MainWindow -> Usage;
+  MainWindow -> IlCompiler;
+  MainWindow -> AudioEngine;
+  MainWindow -> MidiHub;
+  MainWindow -> Playback;
+  MainWindow -> OutputSections;
+  MainWindow -> CanvasSection;
+  MainWindow -> UpdatesSection;
+  MainWindow -> UsageSection;
+  MainWindow -> FilesSection;
+  MainWindow -> PanelKnobs;
+  MainWindow -> Inspector;
+  MainWindow -> PluginInstalls;
+  MainWindow -> PresetSlot;
+  MainWindow -> Toolbar;
+  MainWindow -> StatusBar;
+  MainWindow -> TakeRecording;
+  MainWindow -> AssistantPanel [label="direct, not lazy"];
+  MainWindow -> WorkKeeper;
+
+  MidiHub -> IMidiInput;
+
+  NodeEditor -> CanvasHistory;
+  NodeEditor -> CanvasSelection;
+  NodeEditor -> Viewport;
+  NodeEditor -> CanvasEdits;
+  NodeEditor -> CanvasClipboard;
+  NodeEditor -> CanvasGestures;
+  NodeEditor -> CanvasTips;
+  NodeEditor -> SocketDial;
+  NodeEditor -> KnobLinking;
+  NodeEditor -> UndescribedTags;
+  NodeEditor -> CanvasPainter;
+  NodeEditor -> Repaint;
+  NodeEditor -> CanvasReport;
+  NodeEditor -> NodeGeometry;
+
+  OutputSections -> PluginCatalog;
+  OutputSections -> EditorSetup;
+  OutputSections -> PresetSlot [style=dashed, color=blue, label="lazy"];
+  OutputSections -> IFilePickers;
+  OutputSections -> IMonitors;
+
+  Palette -> NodeEditor;
+  Palette -> Document;
+  Palette -> PluginCatalog;
+  Palette -> ReportLine;
+  Palette -> Usage;
+  Palette -> PanelKnobs;
+  Palette -> OutputSections;
+  Palette -> EditorSetup;
+
+  PanelKnobs -> NodeEditor;
+  PanelKnobs -> Document;
+  PanelKnobs -> ReportLine;
+  PanelKnobs -> PreviewHost;
+  PanelKnobs -> AudioEngine;
+  PanelKnobs -> MidiHub;
+
+  PatchFiles -> NodeEditor;
+  PatchFiles -> Document;
+  PatchFiles -> PluginCatalog;
+  PatchFiles -> ReportLine;
+  PatchFiles -> Usage;
+  PatchFiles -> AssistantPanel [style=dashed, color=blue, label="lazy"];
+  PatchFiles -> Playback;
+  PatchFiles -> PluginInstalls;
+  PatchFiles -> IFilePickers;
+
+  Playback -> NodeEditor;
+  Playback -> PluginCatalog;
+  Playback -> ReportLine;
+  Playback -> AssistantPanel [style=dashed, color=blue, label="lazy"];
+  Playback -> PreviewHost;
+  Playback -> AudioEngine;
+  Playback -> IlCompiler;
+  Playback -> MidiHub;
+  Playback -> AudioSetup;
+  Playback -> PatchFiles [style=dashed, color=blue, label="lazy"];
+  Playback -> TakeRecording [style=dashed, color=blue, label="lazy"];
+
+  PluginInstalls -> PluginCatalog;
+  PluginInstalls -> ReportLine;
+  PluginInstalls -> AssistantPanel [style=dashed, color=blue, label="lazy"];
+  PluginInstalls -> EditorSetup;
+  PluginInstalls -> SiteAccess;
+  PluginInstalls -> Playback;
+  PluginInstalls -> UnsavedWork [style=dashed, color=blue, label="lazy"];
+  PluginInstalls -> IDialogs;
+
+  PresetAudition -> AudioEngine;
+  PresetAudition -> IlCompiler;
+  PresetAudition -> PluginCatalog;
+  PresetAudition -> PresetLibrary;
+  PresetAudition -> Playback;
+  PresetAudition -> TakeRecording [style=dashed, color=blue, label="lazy"];
+
+  PresetLibrary -> IPresetFolder;
+
+  PresetSlot -> NodeEditor;
+  PresetSlot -> Document;
+  PresetSlot -> PluginCatalog;
+  PresetSlot -> ReportLine;
+  PresetSlot -> Usage;
+  PresetSlot -> AssistantPanel [style=dashed, color=blue, label="lazy"];
+  PresetSlot -> PatchFiles;
+  PresetSlot -> PresetThumbnails;
+  PresetSlot -> PresetAudition;
+  PresetSlot -> PresetLibrary;
+  PresetSlot -> SiteAccess;
+  PresetSlot -> UnsavedWork;
+  PresetSlot -> Playback;
+  PresetSlot -> PluginInstalls;
+  PresetSlot -> IDialogs;
+
+  PresetThumbnails -> PluginCatalog;
+  PresetThumbnails -> IlCompiler;
+  PresetThumbnails -> EditorSetup;
+  PresetThumbnails -> PresetLibrary;
+
+  RemapMarks -> CanvasHistory;
+  RemapMarks -> CanvasSelection;
+  RemapMarks -> Repaint;
+  RemapMarks -> NodeGeometry;
+
+  SeekBar -> Playback;
+  SeekBar -> PreviewHost;
+  SeekBar -> CanvasSection;
+  SeekBar -> NodeEditor;
+  SeekBar -> Document;
+
+  SiteAccess -> EditorSetup;
+  SiteAccess -> IHttpClientFactory;
+
+  SocketDial -> CanvasHistory;
+  SocketDial -> CanvasSelection;
+  SocketDial -> Repaint;
+  SocketDial -> IPointerAnchors;
+
+  StatusBar -> NodeEditor;
+  StatusBar -> PluginCatalog;
+  StatusBar -> ReportLine;
+  StatusBar -> Usage;
+  StatusBar -> PreviewHost;
+  StatusBar -> SiteAccess;
+  StatusBar -> Playback;
+  StatusBar -> IDialogs;
+  StatusBar -> IWindowFocus;
+
+  TakeRecording -> Toolbar;
+  TakeRecording -> OutputSections;
+  TakeRecording -> PreviewHost;
+  TakeRecording -> AudioEngine;
+  TakeRecording -> Usage;
+  TakeRecording -> NodeEditor;
+  TakeRecording -> ReportLine;
+  TakeRecording -> Playback;
+
+  Toolbar -> PresetSlot;
+  Toolbar -> PluginCatalog;
+  Toolbar -> SeekBar;
+
+  UndescribedTags -> CanvasSelection;
+  UndescribedTags -> Repaint;
+  UndescribedTags -> NodeGeometry;
+
+  UnsavedWork -> NodeEditor;
+  UnsavedWork -> Document;
+  UnsavedWork -> AssistantPanel [style=dashed, color=blue, label="lazy"];
+  UnsavedWork -> PatchFiles;
+  UnsavedWork -> TakeRecording [style=dashed, color=blue, label="lazy"];
+  UnsavedWork -> EditorSetup;
+  UnsavedWork -> IDialogs;
+  UnsavedWork -> IWindowClose;
+
+  UpdatesSection -> EditorSetup;
+  UpdatesSection -> ReportLine;
+
+  UsageSection -> EditorSetup;
+  UsageSection -> Usage;
+  UsageSection -> ReportLine;
+
+  Viewport -> CanvasHistory;
+  Viewport -> CanvasSelection;
+  Viewport -> Repaint;
+
+  WindowDialogs -> EditorWindow;
+  WindowFilePickers -> EditorWindow;
+  WindowMonitors -> EditorWindow;
+  WindowFocus -> EditorWindow;
+  WindowClose -> EditorWindow;
+
+  WorkKeeper -> EditorSetup;
+  WorkKeeper -> UnsavedWork;
+
+  // --- direct construction inside a ctor/field initializer (NOT DI) ---
+  edge [style=dotted, color=firebrick, fontcolor=firebrick, label="new"];
+  AssistantPanel -> Credentials;
+  AssistantPanel -> ProbeSection;
+  AssistantPanel -> SettingsForm;
+  AudioEngine -> AudioRenderer;
+  CanvasHistory -> PatchHistory;
+  Inspector -> ModuleWash;
+  MidiHub -> ComputerKeyboard;
+  Palette -> GroupLibrary;
+  Palette -> ModulePalette;
+  PanelKnobs -> ControlHub;
+  PanelKnobs -> ControlsPanel;
+  PanelKnobs -> StageKnobs;
+  PatchFiles -> ConversationStore;
+  Playback -> Transport;
+  PresetThumbnails -> ThumbnailStore [label="new (conditional)"];
+  PresetSlot -> Picker;
+  PreviewHost -> GpuPreviewSurface;
+  PreviewHost -> PreviewSurface;
+  SeekBar -> SeekTrack;
+  StatusBar -> Shimmer;
+  OutputSections -> Picker [label="new (×10)"];
+}
