@@ -1,3 +1,8 @@
+---
+name: nuget-packages
+description: Use before starting a feature, refactor or anything else that will touch a lot of files - checking whether the solution's packages and the .NET SDK itself are current, what an upgrade costs, and when to take it on the spot versus hand it off.
+---
+
 # Packages and the SDK
 
 ## Check them before starting anything big

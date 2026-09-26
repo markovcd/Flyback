@@ -1,3 +1,8 @@
+---
+name: changelog
+description: Use when adding to or editing CHANGELOG.md - what counts as user-facing, and why a feature gets exactly one terse bullet.
+---
+
 # CHANGELOG.md
 
 ## User-facing only

@@ -1,3 +1,8 @@
+---
+name: website
+description: Use when a code change touches anything the website in site/ describes - shortcuts, toolbar buttons, module or port names, presets, text-language syntax, CLI commands and flags, settings tabs, recording formats, the plugin contract or supported platforms - so the site edit lands in the same commit.
+---
+
 # Keep the website in step
 
 The website in `site/` (index.html, tutorials.html, plugins.html; published to https://markovcd.github.io/Flyback/ by `.github/workflows/pages.yml` on push to main) must stay accurate. Any change to functionality it describes gets the matching site edit in the same commit: shortcuts, toolbar buttons, module/port names, presets, text-language syntax, CLI commands and flags, settings tabs, recording formats, the plugin contract (plugins.html), supported platforms.

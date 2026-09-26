@@ -1,3 +1,8 @@
+---
+name: windows-shell
+description: Use before a PowerShell bulk find/replace over repo files, or when writing a Bash heredoc or a script that contains backslash escapes on this machine - the mojibake and control-character pitfalls that corrupt non-ASCII prose and C# string literals, and how to avoid them.
+---
+
 # Windows shell pitfalls
 
 ## PowerShell `Get-Content` mojibakes non-ASCII text

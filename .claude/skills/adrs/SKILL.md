@@ -1,3 +1,8 @@
+---
+name: adrs
+description: Use before proposing a refactor, or when writing or editing an ADR under docs/adr/ - which refactors the ~70 existing ADRs already declined, how to tell real drift from a pattern that was never extended, when to rewrite a day-old ADR in place versus add a dated amendment, and how to number a new one at commit time.
+---
+
 # ADRs
 
 ## Check them before proposing a refactor

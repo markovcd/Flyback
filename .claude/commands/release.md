@@ -65,7 +65,7 @@ Each of these ends the run, says which one and why, and changes no file.
 
 ## The changelog
 
-`.claude/rules/changelog.md` is the rule; this is the release's reading of it.
+The `changelog` skill has the rule; this is the release's reading of it.
 
 Groom `## Unreleased` before renaming it:
 

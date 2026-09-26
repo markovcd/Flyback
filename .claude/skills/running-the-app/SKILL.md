@@ -1,8 +1,13 @@
+---
+name: running-the-app
+description: Use when launching the real Flyback editor window (not the viewer) to check something or take a screenshot - waiting for another instance to close, marking your window so it is plainly not to be touched, and driving only the process you started.
+---
+
 # Running the app yourself
 
 This covers launching the real Flyback window (full Avalonia, not a headless `UiTest`) to check something or to take a screenshot.
 
-If all that needs looking at is a patch's picture or sound, use `flyback-viewer` instead (`looking-at-a-patch.md`): it is quicker and there is no editor window to guard.
+If all that needs looking at is a patch's picture or sound, use `flyback-viewer` instead (the `looking-at-a-patch` skill): it is quicker and there is no editor window to guard.
 
 ## Another Flyback may be open, and it is not yours
 

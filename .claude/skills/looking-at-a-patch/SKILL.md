@@ -1,3 +1,8 @@
+---
+name: looking-at-a-patch
+description: Use when you need to see a patch's picture or hear its sound, not the editor itself - flyback-viewer's flags for a sound-only, picture-only or still-frame look, instead of launching the editor or rendering a clip.
+---
+
 # Looking at a patch
 
 ## If the picture or the sound is all you need, use the viewer
@@ -19,7 +24,7 @@ flyback-viewer --preset "Whole band" --hidden --for 10
 - **Sound only:** `--hidden --for <seconds>` opens no window, so nothing lands on the user's screen. `--mute` keeps the clock and drops the speakers, which is the flag for a look that should not be heard.
 - **Picture:** `--background` opens the window without taking focus, `--mute` silences it, and `--for <seconds>` closes it. Size the picture with `--size 720p` (or `WxH`) and start later with `--from <seconds>`.
 - **A still frame:** use `flyback-cli render -o shot.png --at <seconds>`, which is quick. The viewer writes no frames.
-- **Anything about the editor itself** (the canvas, the inspector, the panel, a shortcut) still needs the real window, by `running-the-app.md`. The viewer shows what a patch does, not how it is edited.
+- **Anything about the editor itself** (the canvas, the inspector, the panel, a shortcut) still needs the real window, by the `running-the-app` skill. The viewer shows what a patch does, not how it is edited.
 - A patch that plays sound plays through the user's speakers the moment the viewer opens. Pass `--mute` unless the sound is what is being checked.
 - Run from the publish folder, not the viewer's own build output: the sound backends are plugins the shell lays out, and without them the viewer says it has no sound.
-- The viewer never writes to `%APPDATA%\Flyback`. Everything it changes is its own window, and `running-the-app.md`'s rule about another Flyback being open does not apply to a `--hidden` run, which has no window.
+- The viewer never writes to `%APPDATA%\Flyback`. Everything it changes is its own window, and the "another Flyback may be open" rule does not apply to a `--hidden` run, which has no window.

@@ -45,8 +45,8 @@ of the program, a track, a tier of plugin state — is not a module.
 ## Consequences
 
 **A capture is retaken, not edited.** Set `SHOT_DIR`, run the test, convert the
-PNGs to webp at quality 88, drop them in `site/assets/shots`. The `.claude/rules/website.md`
-rule already covers stale screenshots and now covers these.
+PNGs to webp at quality 88, drop them in `site/assets/shots`. The `website` skill
+already covers stale screenshots and now covers these.
 
 **The pictures are wide, and the page gives them the room.** Nine real modules
 laid out left to right are 5.7:1, where the drawing could be packed into any

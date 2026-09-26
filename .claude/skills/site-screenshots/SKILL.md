@@ -35,7 +35,7 @@ A preset with sound plays through the user's speakers while it is captured, for 
 
 ## Recipe (Nebula, PowerShell)
 
-1. Follow `.claude/rules/running-the-app.md`: wait for any other Flyback to close, then `Start-Process -PassThru` the Debug `Flyback.exe` with the `.fbk`, drive only that process's `Id` from here on, and mark the window red while you are driving it.
+1. Follow the `running-the-app` skill: wait for any other Flyback to close, then `Start-Process -PassThru` the Debug `Flyback.exe` with the `.fbk`, drive only that process's `Id` from here on, and mark the window red while you are driving it.
 2. `ShowWindow` maximize.
 3. `PostMessage` a left click on bare canvas (focus).
 4. `SendKeys ^f` (frame).

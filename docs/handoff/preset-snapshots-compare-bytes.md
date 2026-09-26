@@ -83,7 +83,7 @@ Compare decoded pixels exactly, with the engine's own reader:
 3. Drop `VerifyImageMagick.Initialize()` if nothing else needs it. Nothing in
    `Flyback.Core.Tests` uses it besides this line. Removing the `Verify.ImageMagick`
    package afterwards is a package change, so it goes in a commit of its own
-   (`.claude/rules/packages.md`).
+   (the `nuget-packages` skill).
 4. Rewrite the `ModuleInit` comment so it states what now happens. The sentence about
    `MathF` differing across architectures does not hold under an exact comparison.
    The gate runs the tests on x64 only, so it is not a live problem. If arm64 ever

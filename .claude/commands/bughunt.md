@@ -29,7 +29,7 @@ $ARGUMENTS narrows the hunt to a subsystem when it is given. With nothing, sweep
    `A_chunk_that_lies_about_its_length_costs_nothing` outlives the hunt; one
    called `BugHunt.Probe3` does not.
 6. **Changelog.** Under `## Unreleased` → `### Fixes`, one terse bullet per fix,
-   and only for what a user would notice — `.claude/rules/changelog.md`. A fix to
+   and only for what a user would notice — the `changelog` skill. A fix to
    something no release ever shipped gets no bullet.
 
 ## Run the tests directly
@@ -91,7 +91,7 @@ Ran these, found nothing. Do not spend the hunt here again unless the code moved
 ## The real window
 
 Allowed, and worth it for what headless cannot reach — the GPU path, a preset
-that plays, a dialog. `.claude/rules/running-the-app.md` first: wait for another
+that plays, a dialog. The `running-the-app` skill first: wait for another
 Flyback to close, mark yours with the red caption, drive only the process you
 started, close it when done.
 

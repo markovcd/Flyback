@@ -1,3 +1,8 @@
+---
+name: tests
+description: Use when running Flyback.App.Tests, diagnosing a slow or newly-slow test, or shipping a feature - ranking a run by duration and treating an unexplained outlier as a defect, running narrow test classes while iterating versus the full suite once per commit, and writing the Gherkin scenario a feature ships with.
+---
+
 # Tests
 
 ## Read the durations, not just the result

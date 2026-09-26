@@ -1,3 +1,8 @@
+---
+name: release-key
+description: Use when a build or a release needs RELEASE_SIGNING_KEY - what it signs, making a new local test key when one is missing, and never asking for the real one.
+---
+
 # The release key on this machine
 
 ## One variable, and a missing one is made
