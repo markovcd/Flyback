@@ -70,11 +70,14 @@ public sealed class AssistantPanelTests : UiTest
 
     private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null, Action<string, string?>? report = null)
     {
+        var catalog = plugins ?? PluginCatalog.Empty;
+        var repository = new AssistantSettingRepository(Kept, saved ?? new AssistantSettings());
         var panel = new AssistantPanel(
-            plugins ?? PluginCatalog.Empty,
+            new ChosenAssistant(repository, catalog),
+            catalog,
             new Holding(() => Presets.Plasma(NodeCatalog.BuiltIn), report),
-            Kept,
-            saved: saved);
+            repository,
+            Kept);
 
         var window = Show(panel, 760);
         Settle(window);
@@ -98,7 +101,15 @@ public sealed class AssistantPanelTests : UiTest
     /// </summary>
     private (Window Window, AssistantPanel Panel) Over(Patch patch)
     {
-        var panel = new AssistantPanel(PluginCatalog.Empty, new Holding(() => patch), Kept);
+        var settings = new AssistantSettings();
+        var catalog = PluginCatalog.Empty;
+        var repository = new AssistantSettingRepository(Kept, settings);
+        var panel = new AssistantPanel(
+            new ChosenAssistant(repository, catalog),
+            catalog,
+            new Holding(() => patch),
+            repository,
+            Kept);
         var window = Show(panel, 760);
 
         Settle(window);

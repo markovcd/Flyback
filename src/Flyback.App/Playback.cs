@@ -33,7 +33,7 @@ internal sealed class Playback
     private readonly Transport transport;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
-    private readonly Func<string?> assistantSummary;
+    private readonly ChosenAssistant chosenAssistant;
 
     /// <summary>The patch has just been compiled, and the picture and the sound are playing it.</summary>
     public event EventHandler? Compiled;
@@ -52,12 +52,12 @@ internal sealed class Playback
         NodeEditor editor,
         PluginCatalog plugins,
         ReportLine report,
-        Lazy<AssistantPanel> assistant,
         PreviewHost preview,
         AudioEngine audio,
         IlCompiler compiler,
         MidiHub midi,
-        AudioSetup sound)
+        AudioSetup sound,
+        ChosenAssistant chosenAssistant)
     {
         this.editor = editor;
         this.audio = audio;
@@ -65,7 +65,7 @@ internal sealed class Playback
         transport = new Transport(audio, preview, compiler, midi);
         this.report = report;
         this.plugins = plugins;
-        assistantSummary = () => assistant.Value.Summary;
+        this.chosenAssistant = chosenAssistant;
 
         Sound = sound;
     }
@@ -134,7 +134,7 @@ internal sealed class Playback
         SyncAudioToVolume(isRecording);
     }
 
-    private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, assistantSummary());
+    private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, chosenAssistant.Summary);
 
     /// <summary>
     /// The chart the picture is rooted at: the selected module, when that is a Probe,

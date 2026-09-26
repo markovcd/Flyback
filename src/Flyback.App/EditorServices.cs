@@ -15,6 +15,7 @@ using Flyback.App.Site;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -79,8 +80,12 @@ internal static class EditorServices
         services.AddSingleton(setup.Plugins.PreferredMidiInput);
         services.AddSingleton<MidiHub>();
 
+        services.AddSingleton<IAssistantSetup>(setup);
+        services.AddSingleton<AssistantSettingRepository>();
+
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddSingleton<AssistantPanel>();
+        services.AddSingleton<ChosenAssistant>();
 
         services.AddSingleton<WorkKeeper>();
 

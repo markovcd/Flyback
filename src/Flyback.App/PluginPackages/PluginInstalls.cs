@@ -16,11 +16,11 @@ internal sealed class PluginInstalls
     private readonly IDialogs dialogs;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
-    private readonly Lazy<AssistantPanel> assistant;
     private readonly string? pluginFolder;
     private readonly SiteAccess site;
     private readonly Playback playback;
     private readonly Lazy<UnsavedWork>? unsaved;
+    private readonly ChosenAssistant chosenAssistant;
 
     /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
     private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
@@ -39,21 +39,21 @@ internal sealed class PluginInstalls
     public PluginInstalls(
         PluginCatalog plugins,
         ReportLine report,
-        Lazy<AssistantPanel> assistant,
         EditorSetup setup,
         SiteAccess site,
         Playback playback,
         Lazy<UnsavedWork> unsaved,
-        IDialogs dialogs)
+        IDialogs dialogs,
+        ChosenAssistant chosenAssistant)
     {
         this.dialogs = dialogs;
         this.plugins = plugins;
         this.report = report;
-        this.assistant = assistant;
         pluginFolder = setup.PluginFolder;
         this.site = site;
         this.playback = playback;
         this.unsaved = setup.Relaunch is null ? null : unsaved;
+        this.chosenAssistant = chosenAssistant;
     }
 
     /// <summary>
@@ -101,10 +101,11 @@ internal sealed class PluginInstalls
     /// <summary>The folder of the plugin whose assistant Ask sends a patch to, and what to say of it, or null where none is chosen.</summary>
     private (string Assembly, string Said)? Assisting()
     {
-        if (assistant.Value is not { Chosen: { } chosen } panel || plugins.Provider(chosen) is not { } info) return null;
+        if (chosenAssistant.Value is null) return null;
+        if (plugins.Provider(chosenAssistant.Value) is not { } info) return null;
         if (plugins.Plugins.FirstOrDefault(p => p.Info.Id == info.Id) is not { } loaded) return null;
 
-        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, panel.Summary)));
+        return (Path.GetFileNameWithoutExtension(loaded.AssemblyPath), string.Join(Environment.NewLine, PluginSummary.Assistant(plugins, chosenAssistant.Summary)));
     }
 
     /// <summary>

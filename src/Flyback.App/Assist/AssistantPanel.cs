@@ -38,6 +38,7 @@ internal sealed class AssistantPanel : UserControl
     private static readonly IBrush Live = new SolidColorBrush(Colors.Feedback);
 
     private readonly PluginCatalog plugins;
+    private readonly ChosenAssistant chosenAssistant;
 
     /// <summary>
     /// The patch the assistant edits and where it reports. What the assistant hears
@@ -45,7 +46,7 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly IAssistantEditor editor;
 
-    private readonly AssistantSettings settings;
+    private readonly AssistantSettingRepository settingsRepository;
 
     /// <summary>
     /// Where <see cref="settings"/> is read from and written back to, and the priority
@@ -359,13 +360,7 @@ internal sealed class AssistantPanel : UserControl
 
     /// <summary>Built the first time the settings window asks for it, and kept.</summary>
     private Control? section;
-
-    /// <summary>
-    /// Which provider was in force the moment the settings were opened, so a
-    /// window closed without Save can be put back to it — see
-    /// <see cref="DiscardSettings"/>.
-    /// </summary>
-    private string? openedProvider;
+    
 
     /// <summary>
     /// Whether a turn is in flight, as this panel knows it.
@@ -392,21 +387,22 @@ internal sealed class AssistantPanel : UserControl
     /// <param name="setup">Its <see cref="EditorSetup.AssistantSettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
     /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
+        ChosenAssistant chosenAssistant,
         PluginCatalog plugins,
         IAssistantEditor editor,
+        AssistantSettingRepository settingsRepository,
         EditorSetup? setup = null,
-        Usage? usage = null,
-        AssistantSettings? saved = null)
+        Usage? usage = null)
     {
+        this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.editor = editor;
         this.usage = usage;
         settingsPath = setup?.AssistantSettingsPath;
-        settings = saved ?? (settingsPath is null ? new AssistantSettings() : AssistantSettings.Load(settingsPath));
-
+        this.settingsRepository = settingsRepository;
         credentials = new Credentials(plugins.PreferredSecretStore);
-        Chosen = Choose();
-        probeSection = new ProbeSection(() => Chosen, KeyOnTheForm, form, Refresh);
+        chosenAssistant.Load();
+        probeSection = new ProbeSection(() => chosenAssistant.Value, KeyOnTheForm, form, Refresh);
 
         Content = Build();
 
@@ -414,14 +410,14 @@ internal sealed class AssistantPanel : UserControl
         // That window is built the first time somebody opens one, and what is
         // set on the form is what says whether a message can be sent at all —
         // which the footer has to answer from the moment the panel exists.
-        rememberBox.IsChecked = settings.RememberKey;
-        logBox.IsChecked = settings.LogConversations;
-        briefingBox.IsChecked = settings.ShowBriefing;
-        lookupsBox.IsChecked = settings.ShowLookups;
-        transcript.Shows(Voice.Briefing, settings.ShowBriefing);
-        transcript.Shows(Voice.Handbook, settings.ShowLookups);
-        turnBox.Value = settings.TurnLimit;
-        proseBox.Value = settings.ProseBudget;
+        rememberBox.IsChecked = settingsRepository.Current.RememberKey;
+        logBox.IsChecked = settingsRepository.Current.LogConversations;
+        briefingBox.IsChecked = settingsRepository.Current.ShowBriefing;
+        lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
+        transcript.Shows(Voice.Briefing, settingsRepository.Current.ShowBriefing);
+        transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
+        turnBox.Value = settingsRepository.Current.TurnLimit;
+        proseBox.Value = settingsRepository.Current.ProseBudget;
 
         Recount();
 
@@ -436,15 +432,7 @@ internal sealed class AssistantPanel : UserControl
 
         Refresh();
     }
-
-    /// <summary>The assistant Ask sends to, or null where none is chosen.</summary>
-    public IPatchAssistant? Chosen { get; private set; }
-
-    /// <summary>Where Ask sends the patch. Never names a key.</summary>
-    public string Summary => Chosen is null
-        ? "No assistant is chosen, so nothing is sent anywhere."
-        : $"Ask sends the patch and pictures of it to {Chosen.Name}.";
-
+    
     // --- the conversation and the patch it is about ---------------------------
 
     /// <summary>
@@ -551,7 +539,7 @@ internal sealed class AssistantPanel : UserControl
 
         var now = editor.Current;
 
-        return run is not null ? !run.EditedUnderneath(now) : !Moved(waitingOn, now);
+        return !run?.EditedUnderneath(now) ?? !Moved(waitingOn, now);
     }
 
     private static (Patch Patch, int Nodes, int Wires) Anchor(Patch patch) =>
@@ -652,7 +640,7 @@ internal sealed class AssistantPanel : UserControl
     {
         Refresh();
 
-        openedProvider = Chosen?.Id;
+        chosenAssistant.Load();
         section ??= BuildSettings();
 
         // Taken back from whoever last borrowed it, rather than left to them to
@@ -683,9 +671,8 @@ internal sealed class AssistantPanel : UserControl
             var row = providerBox.SelectedIndex;
             if (row < 0 || row > plugins.Assistants.Count) return;
 
-            Chosen = row == 0 ? null : plugins.Assistants[row - 1];
-            settings.Provider = Chosen?.Id ?? string.Empty;
-
+            chosenAssistant.Choose(row);
+            
             // What the last provider was set to is kept rather than carried
             // over. A setting means whatever the provider that declared it says
             // it means, and the two need not agree about anything but the name.
@@ -732,7 +719,7 @@ internal sealed class AssistantPanel : UserControl
         fields.Children.Add(new SelectableTextBlock
         {
             Name = "priorityFile",
-            Text = PriorityFile,
+            Text = settingsRepository.PriorityFile,
             FontSize = Text.Small,
             TextWrapping = TextWrapping.Wrap,
         });
@@ -741,9 +728,9 @@ internal sealed class AssistantPanel : UserControl
         // who has just taken one out is as likely as not about to put another in.
         forget.Click += (_, _) =>
         {
-            if (Chosen is null) return;
+            if (chosenAssistant.Value is null) return;
 
-            credentials.Forget(Chosen.Id);
+            credentials.Forget(chosenAssistant.Value.Id);
             keyBox.Text = string.Empty;
             Refresh();
         };
@@ -758,26 +745,13 @@ internal sealed class AssistantPanel : UserControl
             TextWrapping = TextWrapping.Wrap,
         };
     }
-
-    /// <summary>
-    /// The budget and the priority list as they stand. The list is read from its
-    /// file every time, so an edit to it counts from the next conversation, and
-    /// from the next save as far as the canvas is concerned.
-    /// </summary>
-    private ProsePolicy Policy() => new(
-        settings.ProseBudget, PriorityFile is { } file ? PriorityModules.Load(file) : PriorityModules.Parse(PriorityModules.Shipped));
-
-    /// <summary>Where the priority list is read from: beside the settings, or nowhere where they are kept in memory.</summary>
-    private string? PriorityFile => settingsPath is null
-        ? null
-        : System.IO.Path.Combine(System.IO.Path.GetDirectoryName(settingsPath) ?? string.Empty, System.IO.Path.GetFileName(PriorityModules.File));
-
+    
     /// <summary>Works <see cref="Undescribed"/> out again, and says so if it moved.</summary>
     private void Recount()
     {
-        var now = Chosen is null
+        var now = chosenAssistant.Value is null
             ? new HashSet<string>()
-            : Policy().Undescribed(plugins.Modules);
+            : settingsRepository.GetProsePolicy().Undescribed(plugins.Modules);
 
         if (now.SetEquals(Undescribed)) return;
 
@@ -801,16 +775,15 @@ internal sealed class AssistantPanel : UserControl
     {
         probeSection.Stop();
 
-        settings.Provider = openedProvider ?? string.Empty;
-        Chosen = Choose();
+        chosenAssistant.Load();
 
         keyBox.Text = string.Empty;
-        rememberBox.IsChecked = settings.RememberKey;
-        logBox.IsChecked = settings.LogConversations;
-        briefingBox.IsChecked = settings.ShowBriefing;
-        lookupsBox.IsChecked = settings.ShowLookups;
-        turnBox.Value = settings.TurnLimit;
-        proseBox.Value = settings.ProseBudget;
+        rememberBox.IsChecked = settingsRepository.Current.RememberKey;
+        logBox.IsChecked = settingsRepository.Current.LogConversations;
+        briefingBox.IsChecked = settingsRepository.Current.ShowBriefing;
+        lookupsBox.IsChecked = settingsRepository.Current.ShowLookups;
+        turnBox.Value = settingsRepository.Current.TurnLimit;
+        proseBox.Value = settingsRepository.Current.ProseBudget;
 
         ShowProviderForm();
         Refresh();
@@ -849,15 +822,6 @@ internal sealed class AssistantPanel : UserControl
     // --- settings -----------------------------------------------------------
 
     /// <summary>
-    /// The provider a saved id names, or none — never a different one picked on
-    /// its behalf. A provider that no longer loads is not the same as a provider
-    /// nobody has chosen yet, but silently switching to whatever else happens to
-    /// be installed would answer both the same way, which is worse than falling
-    /// back to the one choice that always means what it says.
-    /// </summary>
-    private IPatchAssistant? Choose() => settings.Provider.Length > 0 ? plugins.Assistant(settings.Provider) : null;
-
-    /// <summary>
     /// Puts the chosen provider's form up, holding what that provider was last set
     /// to. The provider box is set from here too, so the two cannot disagree about
     /// who is being configured; nothing else is, since the fields are asked for
@@ -865,16 +829,18 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private void ShowProviderForm()
     {
-        providerBox.SelectedIndex = Chosen is null
+        providerBox.SelectedIndex = chosenAssistant.Value is null
             ? 0
             : plugins.Assistants
                 .Select((a, i) => (a, i))
-                .Where(pair => pair.a.Id == Chosen.Id)
+                .Where(pair => pair.a.Id == chosenAssistant.Value.Id)
                 .Select(pair => pair.i + 1)
                 .DefaultIfEmpty(0)
                 .First();
 
-        form.Show(Chosen is null ? null : Chosen.Form, settings.Of(Chosen?.Id ?? string.Empty));
+        form.Show(
+            chosenAssistant.Value is null ? null : chosenAssistant.Value.Form, 
+            settingsRepository.Current.Of(chosenAssistant.Value?.Id ?? string.Empty));
     }
 
     /// <summary>
@@ -889,38 +855,41 @@ internal sealed class AssistantPanel : UserControl
         // window it was started from.
         probeSection.Stop();
 
-        settings.RememberKey = rememberBox.IsChecked == true;
-        settings.LogConversations = logBox.IsChecked == true;
-        settings.ShowBriefing = briefingBox.IsChecked == true;
-        settings.ShowLookups = lookupsBox.IsChecked == true;
-        transcript.Shows(Voice.Briefing, settings.ShowBriefing);
-        transcript.Shows(Voice.Handbook, settings.ShowLookups);
+        settingsRepository.Current.RememberKey = rememberBox.IsChecked == true;
+        settingsRepository.Current.LogConversations = logBox.IsChecked == true;
+        settingsRepository.Current.ShowBriefing = briefingBox.IsChecked == true;
+        settingsRepository.Current.ShowLookups = lookupsBox.IsChecked == true;
+        transcript.Shows(Voice.Briefing, settingsRepository.Current.ShowBriefing);
+        transcript.Shows(Voice.Handbook, settingsRepository.Current.ShowLookups);
 
         // An emptied box keeps what was saved rather than becoming nought.
         if (turnBox.Value is { } turns)
-            settings.TurnLimit = Math.Clamp((int)Math.Round(turns), AssistantSettings.FewestTurns, AssistantSettings.MostTurns);
+            settingsRepository.Current.TurnLimit = Math.Clamp((int)Math.Round(turns), AssistantSettings.FewestTurns, AssistantSettings.MostTurns);
 
-        turnBox.Value = settings.TurnLimit;
+        turnBox.Value = settingsRepository.Current.TurnLimit;
 
         if (proseBox.Value is { } prose)
-            settings.ProseBudget = Math.Clamp((int)Math.Round(prose), AssistantSettings.LeastProse, AssistantSettings.MostProse);
+            settingsRepository.Current.ProseBudget = Math.Clamp((int)Math.Round(prose), AssistantSettings.LeastProse, AssistantSettings.MostProse);
 
-        proseBox.Value = settings.ProseBudget;
+        proseBox.Value = settingsRepository.Current.ProseBudget;
 
         // Into the conversation already going, as well as the next one: a limit
         // raised because a conversation ran out is raised for that conversation.
-        if (run is not null) run.MaxTurns = settings.TurnLimit;
+        if (run is not null) run.MaxTurns = settingsRepository.Current.TurnLimit;
 
-        if (Chosen is not null)
+        settingsRepository.Current.Provider = chosenAssistant.Value?.Id ?? string.Empty;
+
+        
+        if (chosenAssistant.Value is not null)
         {
-            settings.Provider = Chosen.Id;
-            settings.Remember(Chosen.Id, form.Values);
+            settingsRepository.Current.Provider = chosenAssistant.Value.Id;
+            settingsRepository.Current.Remember(chosenAssistant.Value.Id, form.Values);
 
-            var keep = settings.RememberKey && credentials.CanKeep;
+            var keep = settingsRepository.Current.RememberKey && credentials.CanKeep;
 
             if (!string.IsNullOrWhiteSpace(keyBox.Text))
             {
-                credentials.Accept(Chosen.Id, keyBox.Text, keep);
+                credentials.Accept(chosenAssistant.Value.Id, keyBox.Text, keep);
 
                 // Emptied once it has been taken. Left there it would hold the
                 // secret in a control for the life of the window, and the line
@@ -928,7 +897,7 @@ internal sealed class AssistantPanel : UserControl
                 keyBox.Text = string.Empty;
                 SayWhereTheKeyWent();
             }
-            else if (keep && credentials.SourceOf(Chosen.Id, Chosen.Credential.EnvironmentVariable) == CredentialSource.Session)
+            else if (keep && credentials.SourceOf(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable) == CredentialSource.Session)
             {
                 // Ticking the box after the fact, with nothing typed. The key is
                 // already in hand and the field is empty because this emptied
@@ -937,14 +906,14 @@ internal sealed class AssistantPanel : UserControl
                 // HasEntered: a key already Kept from an earlier save has
                 // nothing left to do here, and saying so again on every later
                 // Save would announce a change that did not happen.
-                credentials.KeepWhatIsHeld(Chosen.Id);
+                credentials.KeepWhatIsHeld(chosenAssistant.Value.Id);
                 SayWhereTheKeyWent();
             }
         }
 
         try
         {
-            if (settingsPath is not null) settings.Save(settingsPath);
+            settingsRepository.Save();
         }
         catch (Exception ex)
         {
@@ -962,9 +931,9 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private AssistantConfig? Configured()
     {
-        if (Chosen is null) return null;
+        if (chosenAssistant.Value is null) return null;
 
-        var key = credentials.Of(Chosen.Id, Chosen.Credential.EnvironmentVariable) ?? string.Empty;
+        var key = credentials.Of(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable) ?? string.Empty;
 
         return new AssistantConfig(key, form.Values);
     }
@@ -977,8 +946,8 @@ internal sealed class AssistantPanel : UserControl
     private void Refresh()
     {
         var config = Configured();
-        var excuse = Chosen is not null
-            ? (config is null ? null : Excuse(Chosen, config))
+        var excuse = chosenAssistant.Value is not null
+            ? (config is null ? null : Excuse(chosenAssistant.Value, config))
             : plugins.Assistants.Count == 0
                 ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
                 : "No assistant is selected. Pick one in Settings.";
@@ -1098,17 +1067,17 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private void ShowKeyState()
     {
-        keySection.IsVisible = Chosen is not null;
+        keySection.IsVisible = chosenAssistant.Value is not null;
 
-        if (Chosen is null)
+        if (chosenAssistant.Value is null)
         {
             keyNote.Text = string.Empty;
             forget.IsEnabled = false;
             return;
         }
 
-        var variable = Chosen.Credential.EnvironmentVariable;
-        var source = credentials.SourceOf(Chosen.Id, variable);
+        var variable = chosenAssistant.Value.Credential.EnvironmentVariable;
+        var source = credentials.SourceOf(chosenAssistant.Value.Id, variable);
 
         keyBox.PlaceholderText = source switch
         {
@@ -1118,7 +1087,7 @@ internal sealed class AssistantPanel : UserControl
             _ => "Paste a key",
         };
 
-        var overruled = credentials.HasEntered(Chosen.Id)
+        var overruled = credentials.HasEntered(chosenAssistant.Value.Id)
             && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable));
 
         // What a key entered here is standing on top of, since it is the reason
@@ -1139,12 +1108,12 @@ internal sealed class AssistantPanel : UserControl
                 $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
                 + "takes precedence over it, and forgetting that one comes back to this.",
 
-            _ => Chosen.Credential.Help,
+            _ => chosenAssistant.Value.Credential.Help,
         };
 
         // Nothing to forget, or nothing this could reach if it tried: an
         // environment variable is not this application's to remove.
-        forget.IsEnabled = credentials.HasEntered(Chosen.Id);
+        forget.IsEnabled = credentials.HasEntered(chosenAssistant.Value.Id);
     }
 
     // --- probing the endpoint -----------------------------------------------
@@ -1156,10 +1125,10 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private string? KeyOnTheForm()
     {
-        if (Chosen is null) return null;
+        if (chosenAssistant.Value is null) return null;
 
         return string.IsNullOrWhiteSpace(keyBox.Text)
-            ? credentials.Of(Chosen.Id, Chosen.Credential.EnvironmentVariable)
+            ? credentials.Of(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable)
             : keyBox.Text;
     }
 
@@ -1171,9 +1140,9 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private void SayWhereTheKeyWent()
     {
-        if (Chosen is null) return;
+        if (chosenAssistant.Value is null) return;
 
-        var source = credentials.SourceOf(Chosen.Id, Chosen.Credential.EnvironmentVariable);
+        var source = credentials.SourceOf(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable);
 
         editor.Report(
             source switch
@@ -1181,7 +1150,7 @@ internal sealed class AssistantPanel : UserControl
                 CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
                 _ when !credentials.CanKeep =>
                     "Key saved, for this window only — nothing installed can keep one.",
-                _ when settings.RememberKey =>
+                _ when settingsRepository.Current.RememberKey =>
                     "Key saved, but it could not be kept — it will last this window only.",
                 _ => "Key saved, for this window only.",
             },
@@ -1220,7 +1189,7 @@ internal sealed class AssistantPanel : UserControl
     {
         if (run is null) return waiting is null ? string.Empty : Unresumable(waiting, config);
         if (run.Exhausted) return "That conversation had its turns. Starting another.";
-        if (!ReferenceEquals(runAssistant, Chosen) || runConfig != config)
+        if (!ReferenceEquals(runAssistant, chosenAssistant.Value) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
 
         return run.EditedUnderneath(editor.Current)
@@ -1239,10 +1208,10 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Unresumable(SavedConversation saved, AssistantConfig config)
     {
-        if (saved.Turns >= settings.TurnLimit) return "That conversation had its turns. Starting another.";
+        if (saved.Turns >= settingsRepository.Current.TurnLimit) return "That conversation had its turns. Starting another.";
 
-        if (Chosen is null
-            || !string.Equals(saved.Provider, Chosen.Id, StringComparison.Ordinal)
+        if (chosenAssistant.Value is null
+            || !string.Equals(saved.Provider, chosenAssistant.Value.Id, StringComparison.Ordinal)
             || saved.Settings != SavedConversation.SettingsOf(config.Values))
             return "That conversation was had with other settings, so this is a new one.";
 
@@ -1278,13 +1247,13 @@ internal sealed class AssistantPanel : UserControl
 
         run?.Dispose();
         run = new AssistantRun(
-            with, config, plugins.Modules, editor.Current, settings.TurnLimit,
-            samples: editor.Samples, pictures: editor.Pictures, resuming: resuming, prose: Policy(), presets: editor.Presets() ?? plugins.Presets);
+            with, config, plugins.Modules, editor.Current, settingsRepository.Current.TurnLimit,
+            samples: editor.Samples, pictures: editor.Pictures, resuming: resuming, prose: settingsRepository.GetProsePolicy(), presets: editor.Presets() ?? plugins.Presets);
         runConfig = config;
         runAssistant = with;
 
         log.Dispose();
-        log = ConversationLog.Start(settings.LogConversations, with.Id);
+        log = ConversationLog.Start(settingsRepository.Current.LogConversations, with.Id);
 
         if (resuming is not null)
         {
@@ -1317,22 +1286,22 @@ internal sealed class AssistantPanel : UserControl
         var briefing = $"The briefing it was handed:{Environment.NewLine}{run.Workbench.Briefing}";
 
         transcript.Put(Voice.Briefing, briefing, keep: false);
-        if (settings.ShowBriefing) log.Write("briefing", briefing);
+        if (settingsRepository.Current.ShowBriefing) log.Write("briefing", briefing);
 
         return run;
     }
 
     private async Task AskAsync()
     {
-        if (asking || Chosen is null) return;
-        if (Configured() is not { } config || Excuse(Chosen, config) is not null) return;
+        if (asking || chosenAssistant.Value is null) return;
+        if (Configured() is not { } config || Excuse(chosenAssistant.Value, config) is not null) return;
 
         var wanted = instruction.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        var conversation = Conversation(Chosen, config);
+        var conversation = Conversation(chosenAssistant.Value, config);
 
-        usage?.Assistant(Chosen.Id);
+        usage?.Assistant(chosenAssistant.Value.Id);
 
         transcript.Put(Voice.You, wanted);
         log.Write("you", wanted);

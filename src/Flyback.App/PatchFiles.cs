@@ -57,7 +57,16 @@ internal sealed class PatchFiles
 
     /// <param name="playback">Puts a patch that has just been read on the canvas, from its beginning.</param>
     /// <param name="installs">Offers the plugins a patch that could not be opened is short of.</param>
-    public PatchFiles(NodeEditor editor, Document document, PluginCatalog plugins, ReportLine report, Usage usage, Lazy<AssistantPanel> assistant, Playback playback, PluginInstalls installs, IFilePickers pickers)
+    public PatchFiles(
+        NodeEditor editor, 
+        Document document, 
+        PluginCatalog plugins, 
+        ReportLine report,
+        Usage usage,
+        Lazy<AssistantPanel> assistant,
+        Playback playback, 
+        PluginInstalls installs, 
+        IFilePickers pickers)
     {
         this.pickers = pickers;
         this.editor = editor;
