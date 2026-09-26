@@ -155,6 +155,7 @@ internal sealed class Toolbar
         patchwork.Children.Add(Redo);
         patchwork.Children.Add(Tidy);
         patchwork.Children.Add(ToolbarButtons.Separator());
+        patchwork.Children.Add(Assistant);
         patchwork.Children.Add(Code);
         patchwork.Children.Add(Knobs);
         patchwork.Children.Add(Swap);
@@ -173,7 +174,6 @@ internal sealed class Toolbar
         // does not belong in the path of the things reached for constantly.
         var program = ToolbarButtons.Group();
 
-        program.Children.Add(Assistant);
         program.Children.Add(Settings);
         program.Children.Add(Plugins);
         program.Children.Add(About);
