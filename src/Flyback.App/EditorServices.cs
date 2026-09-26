@@ -67,6 +67,7 @@ internal static class EditorServices
         services.AddSingleton<OutputSettingRepository>();
 
         services.AddSingleton<PresetThumbnails>();
+        services.AddSingleton<PresetGallery>();
 
         services.AddSingleton<PluginHubFactory>();
         services.AddSingleton<PluginInstallerFactory>();

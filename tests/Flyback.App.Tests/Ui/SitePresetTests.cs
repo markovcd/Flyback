@@ -22,11 +22,11 @@ public sealed class SitePresetTests : UiTest
 
     private (Window Window, GalleryParts Parts, Control Tiles) Gallery(FakePresetSite site)
     {
-        var parts = PresetGallery.Build(
+        var parts = new PresetGallery(
+            new PresetThumbnails(PluginCatalog.Empty),
+            new WindowDialog()).Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog(),
             site: site.Site());
         var tiles = parts.Tiles(_ => { }, _ => { });
 
@@ -131,11 +131,11 @@ public sealed class SitePresetTests : UiTest
     [AvaloniaFact]
     public void A_site_that_does_not_answer_says_so_and_leaves_the_presets_here()
     {
-        var parts = PresetGallery.Build(
+        var parts = new PresetGallery(
+            new PresetThumbnails(PluginCatalog.Empty),
+            new WindowDialog()).Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog(),
             site: new PresetSite(new HttpClient(new Unreachable()), FakePresetSite.Root));
         var tiles = parts.Tiles(_ => { }, _ => { });
 

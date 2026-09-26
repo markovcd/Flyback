@@ -24,7 +24,7 @@ namespace Flyback.App.Gallery;
 /// past. A tile is a button, so the keyboard walks them and Enter picks one; what it
 /// answers with is the preset, and the caller decides what picking it means.
 /// </remarks>
-internal static partial class PresetGallery
+internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog)
 {
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
     private const string Asking = "asking";
@@ -67,11 +67,9 @@ internal static partial class PresetGallery
     /// Where shared presets are listed from, headed last, or null for a gallery without
     /// them. A tile of theirs answers with its <see cref="SitePreset"/>.
     /// </param>
-    public static GalleryParts Build(
+    public GalleryParts Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
-        PresetThumbnails thumbnails,
-        IDialog dialog,
         Action<PointedTile?>? pointedAt = null,
         YourPresets? yours = null,
         PresetSite? site = null)

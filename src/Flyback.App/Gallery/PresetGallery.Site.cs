@@ -10,7 +10,7 @@ using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Gallery;
 
-internal static partial class PresetGallery
+internal sealed partial class PresetGallery
 {
     /// <summary>What heads the presets the preset site offers, after everything on this machine.</summary>
     public const string SiteHeading = "ON THE PRESET SITE";

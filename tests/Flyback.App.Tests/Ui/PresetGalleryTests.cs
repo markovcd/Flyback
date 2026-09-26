@@ -20,11 +20,11 @@ public class PresetGalleryTests : UiTest
     {
         var reported = new List<PointedTile?>();
 
-        var parts = PresetGallery.Build(
+        var parts = new PresetGallery(
+            new PresetThumbnails(PluginCatalog.Empty),
+            new WindowDialog()).Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
-            new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog(),
             pointedAt: reported.Add);
         var tiles = parts.Tiles(_ => { }, _ => { });
 
@@ -86,11 +86,11 @@ public class PresetGalleryTests : UiTest
     public void A_picked_preset_is_sent_to_the_answer_action()
     {
         PatchPreset? picked = null;
-        var parts = PresetGallery.Build(
-            [.. Presets.All.OrderBy(preset => preset.Kind)],
-            showing: null,
+        var parts = new PresetGallery(
             new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog());
+            new WindowDialog()).Build(
+            [.. Presets.All.OrderBy(preset => preset.Kind)],
+            showing: null);
         var tiles = parts.Tiles(preset => picked = preset, _ => { });
         var window = Show(tiles, width: 900);
         Settle(window);
@@ -106,7 +106,7 @@ public class PresetGalleryTests : UiTest
     {
         var thumbnails = new PresetThumbnails(PluginCatalog.Empty);
         var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
-        var parts = PresetGallery.Build(ordered, showing: null, thumbnails, new WindowDialog());
+        var parts = new PresetGallery(thumbnails, new WindowDialog()).Build(ordered, showing: null);
         var tiles = parts.Tiles(_ => { }, _ => { });
         var window = Show(new ScrollViewer { Height = 400, Content = tiles }, width: 900);
 

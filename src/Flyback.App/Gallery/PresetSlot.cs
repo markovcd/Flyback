@@ -33,7 +33,7 @@ internal sealed class PresetSlot
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly Usage usage;
-    private readonly PresetThumbnails thumbnails;
+    private readonly PresetGallery gallery;
     private readonly PresetAudition audition;
     private readonly PresetLibrary saved;
     private readonly SiteAccess site;
@@ -82,7 +82,7 @@ internal sealed class PresetSlot
         Usage usage,
         AssistantConversation conversation,
         PatchFiles files,
-        PresetThumbnails thumbnails,
+        PresetGallery gallery,
         PresetAudition audition,
         PresetLibrary saved,
         SiteAccess site,
@@ -98,7 +98,7 @@ internal sealed class PresetSlot
         this.plugins = plugins;
         this.report = report;
         this.usage = usage;
-        this.thumbnails = thumbnails;
+        this.gallery = gallery;
         this.audition = audition;
         this.saved = saved;
         this.site = site;
@@ -154,11 +154,9 @@ internal sealed class PresetSlot
     {
         var named = Ordered().FirstOrDefault(preset => preset.Name == current);
 
-        var gallery = PresetGallery.Build(
+        var gallery = this.gallery.Build(
             [.. plugins.Presets.OrderBy(p => p.Kind)],
             named,
-            thumbnails,
-            dialog,
             pointedAt: audition.PointedAt,
             yours: Yours()?.ToPickFrom());
 
@@ -263,11 +261,9 @@ internal sealed class PresetSlot
     private async Task ShowGalleryAsync()
     {
         var current = picker.SelectedItem as PatchPreset;
-        var gallery = PresetGallery.Build(
+        var gallery = this.gallery.Build(
             [.. plugins.Presets.OrderBy(p => p.Kind)],
             current,
-            thumbnails,
-            dialog,
             pointedAt: audition.PointedAt,
             yours: Yours(),
             site: site.Presets());
