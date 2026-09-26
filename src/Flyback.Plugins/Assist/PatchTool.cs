@@ -12,38 +12,3 @@ namespace Flyback.Plugins.Assist;
 /// from, so a tree here would be a thing each adapter had to undo.
 /// </param>
 public sealed record PatchTool(string Name, string Description, string Schema);
-
-/// <summary>
-/// What a tool call produced.
-/// </summary>
-/// <remarks>
-/// A refusal is a value, not an exception, and that is load-bearing: providers
-/// reject the whole next request when a tool call has no matching result, so a tool
-/// that threw would end the conversation instead of the call. The model is meant to
-/// read <see cref="Text"/>, learn what it did wrong and try again.
-/// </remarks>
-/// <param name="Png">A picture the model should be shown, or null.</param>
-/// <param name="Wav">
-/// A sound the model should be played, as a RIFF/WAVE file, or null. Kept beside
-/// <paramref name="Png"/> rather than folded into one "media" field because the two
-/// are not interchangeable anywhere they are used — a provider that takes a picture
-/// may well not take a sound.
-/// </param>
-public sealed record ToolOutcome(bool Ok, string Text, byte[]? Png = null, byte[]? Wav = null)
-{
-    /// <summary>Handbook text looked up from the catalog or a preset, rather than anything done to the patch.</summary>
-    public bool Reference { get; init; }
-
-    public static ToolOutcome Fine(string text) => new(true, text);
-
-    /// <summary>Handbook text it asked for — see <c>describe_module</c>.</summary>
-    public static ToolOutcome Read(string text) => new(true, text) { Reference = true };
-
-    public static ToolOutcome Refused(string text) => new(false, text);
-
-    /// <summary>A picture and the words that go with it — see <c>render</c>.</summary>
-    public static ToolOutcome Looked(byte[] png, string caption) => new(true, caption, png);
-
-    /// <summary>A sound and the words that go with it — see <c>listen</c>.</summary>
-    public static ToolOutcome Played(byte[] wav, string caption) => new(true, caption, null, wav);
-}

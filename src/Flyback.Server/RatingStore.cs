@@ -6,12 +6,6 @@ using Microsoft.Data.Sqlite;
 
 namespace Flyback.Server;
 
-/// <summary>How a preset or plugin is rated: the mean of its stars, and how many gave them.</summary>
-internal sealed record Rating(double Average, int Count)
-{
-    public static readonly Rating None = new(0, 0);
-}
-
 /// <summary>The stars people gave shared presets and plugins, one rating per address, beside them in the one SQLite file.</summary>
 /// <remarks>An address is kept only as an HMAC under a key the store makes once, so the table says nothing about who rated.</remarks>
 internal sealed class RatingStore

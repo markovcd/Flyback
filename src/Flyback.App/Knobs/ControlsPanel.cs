@@ -5,7 +5,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Controls;
-using Flyback.App.Midi;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -591,6 +590,3 @@ internal sealed class ControlsPanel : Border
         }
     }
 }
-
-/// <summary>One instrument plugged in and known by name: its device id, which a binding stores, and its profile.</summary>
-internal sealed record PanelInstrument(string Id, InstrumentProfile Profile);

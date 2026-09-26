@@ -4,17 +4,6 @@ using Flyback.Core;
 
 namespace Flyback.App.Files;
 
-/// <summary>Which program opens Flyback's files when one is opened from outside it.</summary>
-public enum FileOpener
-{
-    /// <summary>Flyback claims none of them.</summary>
-    None,
-
-    Editor,
-
-    Viewer,
-}
-
 /// <summary>The Files section of the settings window (ADR-0127).</summary>
 /// <remarks>
 /// Kept even where the operating system holds the association as well, because

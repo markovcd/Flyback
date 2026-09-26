@@ -2,9 +2,6 @@ using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.PluginPackages;
 
-/// <summary>A plugin a package installed, and who signed that package.</summary>
-internal sealed record InstalledPlugin(PluginDescription Description, PackageSigner? Signer);
-
 /// <summary>
 /// Puts a package's build for this system into the plugins folder, as
 /// <c>plugins/&lt;plugin assembly&gt;</c> with <see cref="PluginPackage.MarkerName"/> beside it.

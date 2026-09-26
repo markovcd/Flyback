@@ -1,28 +1,5 @@
 namespace Flyback.Core.Compile;
 
-/// <summary>Which program playing somewhere a submission stands for.</summary>
-public enum IlLane
-{
-    /// <summary>The patch's picture in the preview.</summary>
-    Picture,
-
-    /// <summary>The patch's sound.</summary>
-    Sound,
-
-    /// <summary>A preset's picture playing on its gallery tile.</summary>
-    AuditionPicture,
-
-    /// <summary>A preset's sound played while its tile is pointed at.</summary>
-    AuditionSound,
-}
-
-/// <summary>What a run asks of its <see cref="IlCompiler"/>.</summary>
-public interface IIlCompilerSetup
-{
-    /// <summary>Keep every program on the interpreter.</summary>
-    bool Interpreted { get; }
-}
-
 /// <summary>
 /// Puts IL under programs that are already playing: a program is interpreted the
 /// moment it is compiled, and runs as machine code from whenever that is ready.

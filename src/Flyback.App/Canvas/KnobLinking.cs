@@ -3,9 +3,6 @@ using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
 
-/// <summary>A socket clicked while linking sockets to a knob.</summary>
-public readonly record struct SocketPick(Guid Node, int Port);
-
 /// <summary>
 /// The mode in which clicking a socket on the canvas links it to the panel knob being
 /// linked, rather than starting a wire or a drag.

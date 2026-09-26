@@ -1,20 +1,6 @@
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// Who a set of modules came from. Written into saved patches, so a file names
-/// what it needs by both id and title — the title matters because a missing
-/// plugin cannot be looked up to find out what it was called.
-/// </summary>
-public sealed record ModuleProvider(string Id, string Name);
-
-/// <summary>
-/// A catalog with a provider folded in, and anything that provider was
-/// refused. Refusals are values rather than exceptions: one bad module in a
-/// plugin should cost that module, not the plugin and not the program.
-/// </summary>
-internal sealed record ModuleAddition(ModuleCatalog Catalog, IReadOnlyList<string> Rejected);
-
-/// <summary>
 /// The set of modules that exist. Immutable: adding a provider produces a new
 /// catalog rather than mutating this one, so what a patch was compiled against
 /// cannot change underneath it.

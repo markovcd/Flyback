@@ -3,47 +3,6 @@ using System.IO.Compression;
 namespace Flyback.Core.Graph;
 
 /// <summary>
-/// What came of packing a patch: the bundle was written whatever happened, and
-/// this says what went into it and what did not.
-/// </summary>
-/// <param name="Carried">
-/// The files that went in, as the patch named them before it was rewritten.
-/// </param>
-/// <param name="Missing">
-/// The files that could not be read, again as the patch named them. Not an error:
-/// a patch naming a file that has gone still opens and still draws, so a bundle
-/// of it does too.
-/// </param>
-public readonly record struct BundleReport(
-    IReadOnlyList<string> Carried,
-    IReadOnlyList<string> Missing)
-{
-    /// <summary>Whether everything the patch names went in, which is what "self-contained" means.</summary>
-    public bool Whole => Missing.Count == 0;
-}
-
-/// <summary>A bundle read back: the patch, the files it names, and the conversation saved with it.</summary>
-/// <param name="Files">
-/// Keyed by the path the patch stores, which is the path this wrote into it when
-/// it was packed — so a library serving these needs no rules about folders.
-/// </param>
-/// <param name="Conversation">
-/// The text of <see cref="PatchBundle.ConversationEntry"/>, or null for a bundle
-/// saved with none.
-/// </param>
-/// <param name="Load">
-/// How the patch inside read, which is what says whether it is all there: a
-/// bundle from a later version, or one naming a module this build does not have,
-/// reads without throwing and is not the patch that was packed. Null only for a
-/// value made by hand.
-/// </param>
-public readonly record struct LoadedBundle(
-    Patch Patch,
-    IReadOnlyDictionary<string, byte[]> Files,
-    string? Conversation = null,
-    PatchLoad? Load = null);
-
-/// <summary>
 /// A patch and everything it names, in one file.
 /// </summary>
 /// <remarks>
