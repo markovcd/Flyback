@@ -24,7 +24,7 @@ public sealed class MissingPluginsViewTests : UiTest
     [AvaloniaFact]
     public void Every_plugin_found_for_it_is_named()
     {
-        var view = MissingPluginsView.View([Listed("a1", "Ripples", "Ann"), Listed("b1", "Grain")]);
+        var view = MissingPluginsView.View([Listed("a1", "Ripples", "Ann"), Listed("b1", "Grain")], _ => { });
         var window = Show(view, width: 520);
 
         Settle(window);
@@ -37,7 +37,7 @@ public sealed class MissingPluginsViewTests : UiTest
     [AvaloniaFact]
     public void One_found_does_not_claim_to_be_all_the_patch_needs()
     {
-        var view = MissingPluginsView.View([Listed("a1", "Ripples")]);
+        var view = MissingPluginsView.View([Listed("a1", "Ripples")], _ => { });
         var window = Show(view, width: 520);
 
         Settle(window);
@@ -52,17 +52,14 @@ public sealed class MissingPluginsViewTests : UiTest
     {
         foreach (var (name, expected) in new[] { ("findPlugins", true), ("notNow", false) })
         {
-            // Something with a size of its own: a dialog goes over the window, and an
-            // empty one has no room to put it in.
-            var window = Show(new Border { Width = 600, Height = 400 }, width: 600);
-            var asked = window.ShowDialog<bool>(MissingPluginsView.Title, MissingPluginsView.View([Listed("a1", "Ripples")]));
+            bool? answered = null;
+            var view = MissingPluginsView.View([Listed("a1", "Ripples")], value => answered = value);
+            var window = Show(view, width: 600);
 
-            Settle(window);
             Press(All<Button>(window).Single(b => b.Name == name));
             Settle(window);
 
-            asked.IsCompletedSuccessfully.ShouldBeTrue();
-            asked.Result.ShouldBe(expected);
+            answered.ShouldBe(expected);
         }
     }
 }

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Flyback.App.Controls;
 using Flyback.App.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -23,9 +24,11 @@ public class PresetGalleryTests : UiTest
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             new PresetThumbnails(PluginCatalog.Empty),
+            new WindowDialog(),
             pointedAt: reported.Add);
+        var tiles = parts.Tiles(_ => { }, _ => { });
 
-        return (Show(parts.Tiles, width: 900), parts.Tiles, reported);
+        return (Show(tiles, width: 900), tiles, reported);
     }
 
     private static Button Tile(Control tiles, string name) =>
@@ -79,19 +82,38 @@ public class PresetGalleryTests : UiTest
         reported.ShouldHaveSingleItem()!.Picture.ShouldBe(All<Image>(tile).Single());
     }
 
+    [AvaloniaFact]
+    public void A_picked_preset_is_sent_to_the_answer_action()
+    {
+        PatchPreset? picked = null;
+        var parts = PresetGallery.Build(
+            [.. Presets.All.OrderBy(preset => preset.Kind)],
+            showing: null,
+            new PresetThumbnails(PluginCatalog.Empty),
+            new WindowDialog());
+        var tiles = parts.Tiles(preset => picked = preset, _ => { });
+        var window = Show(tiles, width: 900);
+        Settle(window);
+
+        Press(Tile(tiles, "Plasma"));
+
+        picked?.Name.ShouldBe("Plasma");
+    }
+
     /// <summary>A gallery of hundreds draws the tiles on screen, and one further down once it is scrolled to.</summary>
     [AvaloniaFact]
     public void Only_the_tiles_in_sight_are_drawn()
     {
         var thumbnails = new PresetThumbnails(PluginCatalog.Empty);
         var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
-        var parts = PresetGallery.Build(ordered, showing: null, thumbnails);
-        var window = Show(new ScrollViewer { Height = 400, Content = parts.Tiles }, width: 900);
+        var parts = PresetGallery.Build(ordered, showing: null, thumbnails, new WindowDialog());
+        var tiles = parts.Tiles(_ => { }, _ => { });
+        var window = Show(new ScrollViewer { Height = 400, Content = tiles }, width: 900);
 
         thumbnails.IsAsked(ordered[0]).ShouldBeTrue();
         thumbnails.IsAsked(ordered[^1]).ShouldBeFalse();
 
-        Tile(parts.Tiles, ordered[^1].Name).BringIntoView();
+        Tile(tiles, ordered[^1].Name).BringIntoView();
         Settle(window);
 
         thumbnails.IsAsked(ordered[^1]).ShouldBeTrue();

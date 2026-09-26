@@ -15,15 +15,6 @@ using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Gallery;
 
-/// <summary>A tile of the gallery: the preset it picks, and the picture it shows it by.</summary>
-internal sealed record PointedTile(PatchPreset Preset, Image Picture);
-
-/// <summary>
-/// The gallery as a dialog shows it: the box that narrows it, which stays put, and
-/// the tiles, which scroll beneath it.
-/// </summary>
-internal sealed record GalleryParts(TextBox Filter, Control Tiles);
-
 /// <summary>
 /// Every preset as a tile — a picture, its name and what it is for — under a heading
 /// for each kind, to be shown in a dialog and picked from with a click.
@@ -80,53 +71,60 @@ internal static partial class PresetGallery
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         PresetThumbnails thumbnails,
+        IDialog dialog,
         Action<PointedTile?>? pointedAt = null,
         YourPresets? yours = null,
         PresetSite? site = null)
     {
-        var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
         var search = new Search { Elsewhere = site is not null };
 
-        // Thumbnails still waiting to be drawn when the gallery closes are not drawn.
-        var closing = new CancellationTokenSource();
+        return new GalleryParts(search.Box, BuildTiles);
 
-        foreach (var run in ordered.GroupBy(preset => preset.Kind))
+        Control BuildTiles(Action<PatchPreset?> open, Action<SitePreset> openSitePreset)
         {
-            gallery.Children.Add(new TextBlock
+            var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
+
+            // Thumbnails still waiting to be drawn when the gallery closes are not drawn.
+            var closing = new CancellationTokenSource();
+
+            foreach (var run in ordered.GroupBy(preset => preset.Kind))
             {
-                Text = Heading(run.Key),
-                FontSize = Text.Caption,
-                FontWeight = FontWeight.SemiBold,
-                Foreground = new SolidColorBrush(Colors.PresetAccent(run.Key)),
-                Margin = new Thickness(0, 10, 0, 2),
-            });
+                gallery.Children.Add(new TextBlock
+                {
+                    Text = Heading(run.Key),
+                    FontSize = Text.Caption,
+                    FontWeight = FontWeight.SemiBold,
+                    Foreground = new SolidColorBrush(Colors.PresetAccent(run.Key)),
+                    Margin = new Thickness(0, 10, 0, 2),
+                });
 
-            var tiles = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
+                var tiles = new WrapPanel { ItemSpacing = 8, LineSpacing = 8 };
 
-            foreach (var preset in run)
-                tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt, search, closing.Token));
+                foreach (var preset in run)
+                    tiles.Children.Add(Tile(preset, preset == showing, Colors.PresetAccent(preset.Kind), thumbnails, pointedAt, search, open, closing.Token));
 
-            gallery.Children.Add(tiles);
-            search.Add((TextBlock)gallery.Children[^2], tiles);
+                gallery.Children.Add(tiles);
+                search.Add((TextBlock)gallery.Children[^2], tiles);
+            }
+
+            if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search, open, closing.Token);
+
+            search.Apply();
+
+            if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box, dialog, openSitePreset).View);
+
+            // The hint beside the runs rather than among them, so the gallery stays
+            // what it has always been: a heading, then its tiles, and again.
+            var tilesAndHint = new StackPanel
+            {
+                Margin = new Thickness(16, 0, 16, 16),
+                Children = { search.Hint, gallery },
+            };
+
+            tilesAndHint.DetachedFromVisualTree += (_, _) => closing.Cancel();
+
+            return tilesAndHint;
         }
-
-        if (yours is not null) Yours(gallery, yours, showing, thumbnails, pointedAt, search, closing.Token);
-
-        search.Apply();
-
-        if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box).View);
-
-        // The hint beside the runs rather than among them, so the gallery stays
-        // what it has always been: a heading, then its tiles, and again.
-        var tilesAndHint = new StackPanel
-        {
-            Margin = new Thickness(16, 0, 16, 16),
-            Children = { search.Hint, gallery },
-        };
-
-        tilesAndHint.DetachedFromVisualTree += (_, _) => closing.Cancel();
-
-        return new GalleryParts(search.Box, tilesAndHint);
     }
 
     /// <summary>
@@ -142,6 +140,7 @@ internal static partial class PresetGallery
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
         Search search,
+        Action<PatchPreset?> open,
         CancellationToken closing)
     {
         if (yours.PickOnly && yours.All().Count == 0) return;
@@ -175,7 +174,7 @@ internal static partial class PresetGallery
 
             foreach (var preset in yours.All())
             {
-                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt, search, closing);
+                var tile = Tile(preset, preset == showing, accent, thumbnails, pointedAt, search, open, closing);
 
                 if (!yours.PickOnly) Removable(tile, preset, () =>
                 {
@@ -385,6 +384,7 @@ internal static partial class PresetGallery
         PresetThumbnails thumbnails,
         Action<PointedTile?>? pointedAt,
         Search search,
+        Action<PatchPreset?> open,
         CancellationToken closing)
     {
         var image = new Image { Stretch = Stretch.UniformToFill };
@@ -484,7 +484,7 @@ internal static partial class PresetGallery
         // while the question is up is a miss for the answers.
         tile.Click += (_, _) =>
         {
-            if (!tile.Classes.Contains(Asking)) Dialog.Close<PatchPreset?>(tile, preset);
+            if (!tile.Classes.Contains(Asking)) open(preset);
         };
         tile.PointerEntered += (_, _) => pointedAt?.Invoke(new PointedTile(preset, image));
         tile.PointerExited += (_, _) => pointedAt?.Invoke(null);

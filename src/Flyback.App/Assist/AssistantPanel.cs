@@ -368,6 +368,7 @@ internal sealed class AssistantPanel : UserControl
         PluginCatalog plugins,
         IAssistantEditor editor,
         AssistantConversation conversation,
+        Credentials credentials,
         AssistantSettingRepository settingsRepository,
         EditorSetup? setup = null,
         Usage? usage = null)
@@ -376,12 +377,12 @@ internal sealed class AssistantPanel : UserControl
         this.plugins = plugins;
         this.editor = editor;
         this.conversation = conversation;
+        this.credentials = credentials;
         this.usage = usage;
         settingsPath = setup?.AssistantSettingsPath;
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => ConversationChanged?.Invoke(this, EventArgs.Empty);
-        credentials = new Credentials(plugins.PreferredSecretStore);
         chosenAssistant.Load();
         probeSection = new ProbeSection(() => chosenAssistant.Value, KeyOnTheForm, form, Refresh);
 

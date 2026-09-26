@@ -17,7 +17,7 @@ internal static class LetterView
     public const string Title = "Write to the author";
 
     /// <summary>The letter, which answers its dialog with what became of it.</summary>
-    internal static Control View(LetterAbout about, Func<string, string, string?, CancellationToken, Task> send)
+    internal static Control View(Action<string?> answer, LetterAbout about, Func<string, string, string?, CancellationToken, Task> send)
     {
         var page = new StackPanel { Name = "letter", Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
 
@@ -118,10 +118,10 @@ internal static class LetterView
                 return;
             }
 
-            Dialog.Close<string?>(sendButton, "Your letter is on its way. Thank you.");
+            answer("Your letter is on its way. Thank you.");
         };
 
-        cancel.Click += (_, _) => Dialog.Close<string?>(cancel, null);
+        cancel.Click += (_, _) => answer(null);
 
         page.Children.Add(new StackPanel
         {

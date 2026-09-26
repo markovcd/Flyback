@@ -46,9 +46,10 @@ public sealed class PluginHubTests : UiTest
             site.Site(),
             () => Task.FromResult(installed ?? [Echoes, Grain]),
             install ?? ((_, _) => Task.FromResult<string?>(null)),
+            new WindowDialog(),
             show: null,
-            needed,
-            run);
+            needed: needed,
+            run: run);
 
         var content = new DockPanel();
 
@@ -181,7 +182,7 @@ public sealed class PluginHubTests : UiTest
     public void An_installed_plugin_names_its_id_and_the_provider_a_patch_records()
     {
         var listed = new ListedPlugin("Flyback.Plugins.Echoes", "Echoes", "1.0.0", "Ann", "Delays that repeat.", [], []);
-        var shown = Show(PluginInstallView.Installed(listed, null, null, null, "Loaded", id: "echoes", provider: "Echoes (echoes)"), width: 520);
+        var shown = Show(PluginInstallView.Installed(listed, null, null, null, "Loaded", _ => { }, id: "echoes", provider: "Echoes (echoes)"), width: 520);
 
         All<TextBlock>(shown).Single(t => t.Name == "pluginId").Text.ShouldBe("echoes");
         All<TextBlock>(shown).Single(t => t.Name == "pluginProvider").Text.ShouldBe("Echoes (echoes)");
@@ -324,7 +325,8 @@ public sealed class PluginHubTests : UiTest
         var hub = new PluginHub(
             new PluginSite(new HttpClient(new Unreachable()), FakePluginSite.Root),
             () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes]),
-            (_, _) => Task.FromResult<string?>(null));
+            (_, _) => Task.FromResult<string?>(null),
+            new WindowDialog());
 
         var window = Show(hub.View, width: 700);
 

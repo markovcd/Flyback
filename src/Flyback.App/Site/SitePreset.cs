@@ -1,3 +1,5 @@
+using Flyback.Core.Graph;
+
 namespace Flyback.App.Site;
 
 /// <summary>A preset the site lists.</summary>
@@ -13,4 +15,4 @@ internal sealed record SitePreset(
     string FileName,
     Uri File,
     Uri? Still,
-    SiteRating Rating);
+    SiteRating Rating) : IPreset;

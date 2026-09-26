@@ -23,7 +23,7 @@ namespace Flyback.App.Bars;
 /// </remarks>
 internal sealed class StatusBar
 {
-    private readonly IDialogs dialogs;
+    private readonly IDialog dialog;
     private readonly NodeEditor editor;
     private readonly PreviewHost preview;
     private readonly Usage usage;
@@ -54,9 +54,9 @@ internal sealed class StatusBar
     public Control View { get; }
 
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
-    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialogs dialogs, IWindowFocus focus)
+    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IWindowFocus focus)
     {
-        this.dialogs = dialogs;
+        this.dialog = dialog;
         this.focus = focus;
         this.plugins = plugins;
         this.report = report;
@@ -174,9 +174,12 @@ internal sealed class StatusBar
         // Built once and both shown and sent, so what was read is what goes.
         var about = SiteLetters.About(plugins, playback.Sound);
 
-        var said = await dialogs.Show<string?>(
+        var said = await dialog.Show<string?>(
             LetterView.Title,
-            LetterView.View(about, (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel)));
+            a => LetterView.View(
+                a,
+                about, 
+                (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel)));
 
         if (said is not null) report.Say(said);
     }

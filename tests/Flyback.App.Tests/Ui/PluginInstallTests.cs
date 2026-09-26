@@ -158,13 +158,13 @@ public sealed class PluginInstallTests : UiTest
 
         // What the window itself does when the shell says there is no restart to offer yet.
         var awaiting = Show(PluginInstallView.View(
-            package, "win", refusal: null, replacing: null, PluginChange.Install, offerRestart: false, awaiting: 2));
+            package, "win", refusal: null, replacing: null, change: PluginChange.Install, answer: _ => { }, offerRestart: false, awaiting: 2));
 
         All<CheckBox>(awaiting).ShouldNotContain(c => c.Name == "restart", "no restart to tick while others are still to install");
         All<TextBlock>(awaiting).ShouldContain(t => t.Name == "pluginAwaiting" && t.Text!.Contains("2 more plugins"));
 
         var last = Show(PluginInstallView.View(
-            package, "win", refusal: null, replacing: null, PluginChange.Install, offerRestart: true));
+            package, "win", refusal: null, replacing: null, change: PluginChange.Install, answer: _ => { }, offerRestart: true));
 
         All<CheckBox>(last).Single(c => c.Name == "restart").IsChecked.ShouldBe(true);
         All<TextBlock>(last).ShouldNotContain(t => t.Name == "pluginAwaiting");

@@ -29,6 +29,7 @@ internal static partial class PresetGallery
 
         private readonly PresetSite site;
         private readonly TextBox box;
+        private readonly IDialog dialog;
         private readonly WrapPanel tiles = new() { Name = "site-presets", ItemSpacing = 8, LineSpacing = 8 };
         private readonly TextBlock status = new() { Name = "site-status", FontSize = Text.Body, Foreground = Text.Muted, TextWrapping = TextWrapping.Wrap };
         private readonly Button more = new() { Name = "more-presets", Content = "More", FontSize = Text.Body, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
@@ -36,10 +37,11 @@ internal static partial class PresetGallery
         private int page;
         private CancellationTokenSource? asking;
 
-        public SiteRun(PresetSite site, TextBox box)
+        public SiteRun(PresetSite site, TextBox box, IDialog dialog, Action<SitePreset> open)
         {
             this.site = site;
             this.box = box;
+            this.dialog = dialog;
 
             View = new StackPanel
             {
@@ -68,11 +70,11 @@ internal static partial class PresetGallery
                 },
             };
 
-            box.TextChanged += (_, _) => _ = AskAsync(fresh: true, after: Typing);
-            more.Click += (_, _) => _ = AskAsync(fresh: false);
+            box.TextChanged += (_, _) => _ = AskAsync(fresh: true, open, after: Typing);
+            more.Click += (_, _) => _ = AskAsync(fresh: false, open);
 
             // Asked while the gallery is up and not a moment after.
-            View.AttachedToVisualTree += (_, _) => _ = AskAsync(fresh: true);
+            View.AttachedToVisualTree += (_, _) => _ = AskAsync(fresh: true, open);
             View.DetachedFromVisualTree += (_, _) => Dispose();
         }
 
@@ -88,7 +90,7 @@ internal static partial class PresetGallery
             asking = null;
         }
 
-        private async Task AskAsync(bool fresh, TimeSpan after = default)
+        private async Task AskAsync(bool fresh, Action<SitePreset> open, TimeSpan after = default)
         {
             Stop();
 
@@ -128,7 +130,7 @@ internal static partial class PresetGallery
 
             if (fresh) tiles.Children.Clear();
 
-            foreach (var preset in found.Items) tiles.Children.Add(SiteTile(preset, cancel));
+            foreach (var preset in found.Items) tiles.Children.Add(SiteTile(preset, open, cancel));
 
             status.Text = box.Text is { Length: > 0 } typed ? $"Nothing on the preset site matches “{typed.Trim()}”." : "Nothing is shared on the preset site yet.";
             status.IsVisible = tiles.Children.Count == 0;
@@ -136,7 +138,7 @@ internal static partial class PresetGallery
             more.IsEnabled = true;
         }
 
-        private Button SiteTile(SitePreset preset, CancellationToken cancel)
+        private Button SiteTile(SitePreset preset, Action<SitePreset> open, CancellationToken cancel)
         {
             var picture = new Border
             {
@@ -197,13 +199,13 @@ internal static partial class PresetGallery
 
             ToolTip.SetTip(tile, $"Download “{preset.Name}” from the preset site and open it. Right-click to report it.");
 
-            tile.Click += (_, _) => Dialog.Close<object?>(tile, preset);
+            tile.Click += (_, _) => open(preset);
 
             var report = new MenuItem { Name = "report-preset", Header = "Report…" };
 
             report.Click += async (_, _) =>
             {
-                if (await ReportView.AskAsync(tile, preset.Name, (reason, details, cancel) => site.ReportAsync(preset, reason, details, cancel)) is not { } said) return;
+                if (await ReportView.AskAsync(dialog, preset.Name, (reason, details, cancel) => site.ReportAsync(preset, reason, details, cancel)) is not { } said) return;
 
                 status.Text = said;
                 status.IsVisible = true;

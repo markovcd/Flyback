@@ -1,12 +1,13 @@
 using Avalonia.Platform.Storage;
+using Flyback.App.Controls;
 
 namespace Flyback.App;
 
-internal sealed class WindowFilePickers(EditorWindow window) : IFilePickers
+internal sealed class WindowFilePickers : IFilePickers
 {
     public Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options) =>
-        window.Value.StorageProvider.OpenFilePickerAsync(options);
+        MainWindowLocator.Owner.StorageProvider.OpenFilePickerAsync(options);
 
     public Task<IStorageFile?> Save(FilePickerSaveOptions options) =>
-        window.Value.StorageProvider.SaveFilePickerAsync(options);
+        MainWindowLocator.Owner.StorageProvider.SaveFilePickerAsync(options);
 }

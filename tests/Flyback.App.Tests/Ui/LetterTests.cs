@@ -22,7 +22,7 @@ public sealed class LetterTests : UiTest
     {
         var sends = new List<Sent>();
 
-        var page = LetterView.View(About, (mood, message, contact, _) =>
+        var page = LetterView.View(_ => { }, About, (mood, message, contact, _) =>
         {
             sends.Add(new Sent(mood, message, contact));
 

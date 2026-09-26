@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -7,99 +7,6 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 
 namespace Flyback.App.Controls;
-
-/// <summary>
-/// A panel over the window, to be dealt with before anything else happens.
-/// </summary>
-/// <remarks>
-/// Built here rather than asked of the platform, because Avalonia has no message
-/// box and one made by hand is the same palette, theme and font as the rest of the
-/// program — which a native one is not, on any of the three platforms.
-/// <para>
-/// A panel and not a window: a second window is a second thing in the task
-/// switcher and three different frames around the same three buttons, for a
-/// question that belongs on this one. What makes it modal is what a modal window
-/// is actually for — the shell behind is dimmed, cannot be clicked, and does not
-/// hear the keyboard. See <see cref="ModalOverlay"/>.
-/// </para>
-/// </remarks>
-internal static class Dialog
-{
-    extension(Window owner)
-    {
-        /// <summary>
-        /// Whether a dialog is over the window now. For whatever reaches the
-        /// window without going through the pointer or the keyboard the sheet
-        /// already stops — a file dropped from outside is the one there is.
-        /// </summary>
-        public bool HasDialogUp =>
-            OverlayLayer.GetOverlayLayer(owner)?.Children.OfType<ModalOverlay>().Any() == true;
-
-        public Task ShowDialog(string title, Control content) =>
-            owner.ShowDialog<object?>(title, content);
-
-        /// <summary>
-        /// Puts <paramref name="content"/> over the window and waits for it to be
-        /// answered — by <see cref="Close{TResult}"/>, or by the two ways out the
-        /// frame provides: the cross on it, and Escape.
-        /// </summary>
-        /// <remarks>
-        /// Dismissing it comes back as <c>default</c>: the answer nobody gave should
-        /// be the one that loses nothing, and an enum whose first member is Cancel
-        /// gets that from the language.
-        /// </remarks>
-        /// <param name="header">
-        /// Shown between the title and the content, and kept there while the
-        /// content scrolls — a filter that scrolled away with what it filters
-        /// would be the wrong way round.
-        /// </param>
-        /// <param name="fill">
-        /// Takes all the room it may rather than only what the content needs, for
-        /// content whose size changes while it is up — a gallery being filtered
-        /// would otherwise shrink and grow the frame around whatever is typed.
-        /// </param>
-        public async Task<TResult> ShowDialog<TResult>(
-            string title, Control content, Control? header = null, bool fill = false)
-        {
-            // Avalonia's own layer for things drawn over a window — what a flyout
-            // or a tooltip is put in. Using it rather than a panel of our own
-            // means the shell's layout is not rearranged to make room for a
-            // dialog it has nothing to do with. There is none before the window
-            // has been shown, and nothing to show a dialog on either.
-            if (OverlayLayer.GetOverlayLayer(owner) is not { } layer) return default!;
-
-            // Where the keyboard was, so it can be put back. The overlay takes
-            // the focus, and giving it to the canvas afterwards instead of to
-            // whatever had it is its own small rudeness.
-            var before = owner.FocusManager.GetFocusedElement();
-
-            var overlay = new ModalOverlay(title, content, header, fill);
-
-            layer.Children.Add(overlay);
-            overlay.Focus();
-
-            try
-            {
-                return await overlay.Answered is TResult answer ? answer : default!;
-            }
-            finally
-            {
-                layer.Children.Remove(overlay);
-                before?.Focus();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Answers the dialog <paramref name="from"/> is in, and takes it down.
-    /// </summary>
-    /// <remarks>
-    /// The control finds its own dialog rather than being handed one, because
-    /// the content is built before there is a dialog to hand it.
-    /// </remarks>
-    public static void Close<TResult>(Control from, TResult result) =>
-        from.FindAncestorOfType<ModalOverlay>()?.Answer(result);
-}
 
 /// <summary>
 /// The dimmed sheet a dialog sits on, and everything that makes it modal.
@@ -127,7 +34,7 @@ internal sealed class ModalOverlay : Border
     /// </summary>
     private Visual? layer;
 
-    public ModalOverlay(string title, Control content, Control? header = null, bool fill = false)
+    public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false)
     {
         Name = "modal";
         Background = new SolidColorBrush(Colors.Scrim);
@@ -141,7 +48,7 @@ internal sealed class ModalOverlay : Border
         // when the sheet was clicked would be one a missed button press could
         // dismiss, and the two dialogs that are read rather than answered are
         // exactly the ones somebody clicks around in while reading.
-        Child = Frame(title, content, header, fill);
+        Child = Frame(title, content(Answer), header, fill);
     }
 
     /// <summary>Completes when the dialog has been answered or dismissed.</summary>

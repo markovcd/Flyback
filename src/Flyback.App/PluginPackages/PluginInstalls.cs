@@ -1,5 +1,6 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
+using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Site;
 using Flyback.Core.Graph;
@@ -13,7 +14,7 @@ namespace Flyback.App.PluginPackages;
 /// </summary>
 internal sealed class PluginInstalls
 {
-    private readonly IDialogs dialogs;
+    private readonly IDialog dialog;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly string? pluginFolder;
@@ -41,10 +42,10 @@ internal sealed class PluginInstalls
         EditorSetup setup,
         SiteAccess site,
         Playback playback,
-        IDialogs dialogs,
+        IDialog dialog,
         ChosenAssistant chosenAssistant)
     {
-        this.dialogs = dialogs;
+        this.dialog = dialog;
         this.plugins = plugins;
         this.report = report;
         pluginFolder = setup.PluginFolder;
@@ -80,7 +81,7 @@ internal sealed class PluginInstalls
 
         if (found.Count == 0) return;
 
-        if (!await dialogs.Show<bool>(MissingPluginsView.Title, MissingPluginsView.View(found))) return;
+        if (!await dialog.Show<bool>(MissingPluginsView.Title, a => MissingPluginsView.View(found, a))) return;
 
         // Live only while that window is up: coming back from it is nothing having been
         // installed, or something having been that a restart was not asked for.
@@ -147,15 +148,10 @@ internal sealed class PluginInstalls
 
         var awaiting = Awaiting(installer, described?.Assembly);
 
-        var view = PluginInstallView.View(
-            package, platform, refusal, replacing, change,
-            // Not offered while the patch is short of others: one start loads everything
-            // installed by then, and a restart before the last of them lands back on the
-            // same refusal with the window it was being installed from thrown away.
-            offerRestart: canRestart && awaiting == 0,
-            removable,
-            awaiting);
-        var answer = await dialogs.Show<PluginAnswer>(PluginInstallView.Title(change), view);
+        
+        var answer = await dialog.Show<PluginAnswer>(
+            PluginInstallView.Title(change), 
+            a => PluginInstallView.View(package, platform, refusal, replacing, change, a, offerRestart: canRestart && awaiting == 0, removable, awaiting));
 
         if (answer == PluginAnswer.Cancel) return null;
 
@@ -207,13 +203,14 @@ internal sealed class PluginInstalls
                 return Task.Run(() => InstalledPlugins(assisting, troubles));
             }, 
             (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), 
+            dialog,
             plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();
         _ = hub.AskSiteAsync();
 
-        await dialogs.Show<object?>("Plugins", hub.View, hub.Header, fill: true);
+        await dialog.Show("Plugins", hub.View, hub.Header, fill: true);
     }
 
     /// <summary>
@@ -306,13 +303,22 @@ internal sealed class PluginInstalls
             .OfType<ModuleProvider>()
             .Distinct()
             .Select(p => $"{p.Name} ({p.Id})");
-
-        var view = PluginInstallView.Installed(
-            plugin.Plugin, described, fromPackage, folder, plugin.State,
-            Named(newer), removal,
-            string.Join(", ", ids), string.Join(", ", providers));
-
-        return await dialogs.Show<PluginAnswer>(plugin.Plugin.Name, view) switch
+        
+        var result = await dialog.Show<PluginAnswer>(
+            plugin.Plugin.Name, 
+            a => PluginInstallView.Installed(
+                plugin.Plugin, 
+                described, 
+                fromPackage, 
+                folder, 
+                plugin.State, 
+                a, 
+                Named(newer),
+                removal, 
+                string.Join(", ", ids),
+                string.Join(", ", providers)));
+        
+        return result switch
         {
             // No site row here to stop saying Downloading…, so nothing to tell.
             PluginAnswer.Download => await InstallFromSiteAsync(site!, (await newer)!, () => { }),

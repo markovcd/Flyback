@@ -26,6 +26,7 @@ internal static class PluginInstallView
 
     private static readonly FontFamily Code = new("Consolas, Menlo, DejaVu Sans Mono, monospace");
 
+    /// <param name="package"></param>
     /// <param name="platform">The system this is, whose build would be installed.</param>
     /// <param name="refusal">Why Install is off, or null where it is on.</param>
     /// <param name="replacing">The plugin installed in the same folder now, where there is one.</param>
@@ -33,15 +34,16 @@ internal static class PluginInstallView
     /// <param name="offerRestart">Whether to offer starting Flyback again, which is what loads the plugin.</param>
     /// <param name="removable">Whether the plugin is installed and may be removed.</param>
     /// <param name="awaiting">
-    /// How many more plugins the patch that asked for this one is still short of, which
-    /// is said here because it is why no restart is offered yet.
+    ///     How many more plugins the patch that asked for this one is still short of, which
+    ///     is said here because it is why no restart is offered yet.
     /// </param>
-    public static Control View(
-        PluginPackage package,
+    /// <param name="action"></param>
+    public static Control View(PluginPackage package,
         string platform,
         string? refusal,
         InstalledPlugin? replacing,
         PluginChange change,
+        Action<PluginAnswer> answer,
         bool offerRestart = false,
         bool removable = false,
         int awaiting = 0)
@@ -137,9 +139,8 @@ internal static class PluginInstallView
         var install = new Button { Name = "install", Content = change.Verb(), MinWidth = 96, IsEnabled = refusal is null };
         var cancel = new Button { Name = "cancel", Content = "Cancel", MinWidth = 96 };
 
-        install.Click += (_, _) => Dialog.Close(install,
-            offerRestart && restart.IsChecked == true ? PluginAnswer.InstallAndRestart : PluginAnswer.Install);
-        cancel.Click += (_, _) => Dialog.Close(cancel, PluginAnswer.Cancel);
+        install.Click += (_, _) => answer(offerRestart && restart.IsChecked == true ? PluginAnswer.InstallAndRestart : PluginAnswer.Install);
+        cancel.Click += (_, _) => answer(PluginAnswer.Cancel);
 
         var buttons = new StackPanel
         {
@@ -149,7 +150,7 @@ internal static class PluginInstallView
             Children = { install },
         };
 
-        if (removable) buttons.Children.Add(RemoveButton(null));
+        if (removable) buttons.Children.Add(RemoveButton(null, answer));
 
         buttons.Children.Add(cancel);
 
@@ -185,6 +186,7 @@ internal static class PluginInstallView
         InstalledPlugin? fromPackage,
         string? folder,
         string state,
+        Action<PluginAnswer> answer,
         Task<string?>? newer = null,
         string? removal = null,
         string id = "",
@@ -218,22 +220,22 @@ internal static class PluginInstallView
             Margin = new Thickness(0, 6, 0, 0),
         };
 
-        buttons.Children.Add(RemoveButton(removal));
+        buttons.Children.Add(RemoveButton(removal, answer));
 
         var close = new Button { Name = "close", Content = "Close", MinWidth = 96 };
 
-        close.Click += (_, _) => Dialog.Close(close, PluginAnswer.Cancel);
+        close.Click += (_, _) => answer(PluginAnswer.Cancel);
         buttons.Children.Add(close);
 
         page.Children.Add(buttons);
 
-        if (newer is not null) _ = OfferAsync(page, buttons, newer);
+        if (newer is not null) _ = OfferAsync(page, buttons, newer, answer);
 
         return page;
     }
 
     /// <summary>Says what newer build the plugin site has, and offers Update, once the site has answered.</summary>
-    private static async Task OfferAsync(StackPanel page, StackPanel buttons, Task<string?> newer)
+    private static async Task OfferAsync(StackPanel page, StackPanel buttons, Task<string?> newer, Action<PluginAnswer> answer)
     {
         if (await newer is not { } found) return;
 
@@ -245,18 +247,18 @@ internal static class PluginInstallView
         var update = new Button { Name = "update", Content = "Update", MinWidth = 96 };
 
         ToolTip.SetTip(update, $"Download {found} and see what it is before installing it.");
-        update.Click += (_, _) => Dialog.Close(update, PluginAnswer.Download);
+        update.Click += (_, _) => answer(PluginAnswer.Download);
         buttons.Children.Insert(0, update);
     }
 
     /// <summary>Remove, off with <paramref name="refusal"/> as its tip where that is given.</summary>
-    private static Button RemoveButton(string? refusal)
+    private static Button RemoveButton(string? refusal, Action<PluginAnswer> answer)
     {
         var remove = new Button { Name = "remove", Content = "Remove", MinWidth = 96, IsEnabled = refusal is null };
 
         ToolTip.SetTip(remove, refusal ?? "Uninstall it. A plugin this run has loaded goes at the next start.");
         ToolTip.SetShowOnDisabled(remove, true);
-        remove.Click += (_, _) => Dialog.Close(remove, PluginAnswer.Remove);
+        remove.Click += (_, _) => answer(PluginAnswer.Remove);
 
         return remove;
     }

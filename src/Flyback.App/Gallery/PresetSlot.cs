@@ -26,7 +26,7 @@ namespace Flyback.App.Gallery;
 /// </remarks>
 internal sealed class PresetSlot
 {
-    private readonly IDialogs dialogs;
+    private readonly IDialog dialog;
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PatchFiles files;
@@ -89,9 +89,9 @@ internal sealed class PresetSlot
         UnsavedWork unsaved,
         Playback playback,
         PluginInstalls installs,
-        IDialogs dialogs)
+        IDialog dialog)
     {
-        this.dialogs = dialogs;
+        this.dialog = dialog;
         this.editor = editor;
         this.document = document;
         this.files = files;
@@ -158,10 +158,15 @@ internal sealed class PresetSlot
             [.. plugins.Presets.OrderBy(p => p.Kind)],
             named,
             thumbnails,
-            audition.PointedAt,
-            Yours()?.ToPickFrom());
+            dialog,
+            pointedAt: audition.PointedAt,
+            yours: Yours()?.ToPickFrom());
 
-        var chosen = await dialogs.Show<PatchPreset?>("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
+        var chosen = await dialog.Show<PatchPreset?>(
+            "Startup patch",
+            answer => gallery.Tiles(answer, _ => { }),
+            gallery.Filter,
+            fill: true);
 
         audition.PointedAt(null);
 
@@ -258,8 +263,19 @@ internal sealed class PresetSlot
     private async Task ShowGalleryAsync()
     {
         var current = picker.SelectedItem as PatchPreset;
-        var gallery = PresetGallery.Build([.. plugins.Presets.OrderBy(p => p.Kind)], current, thumbnails, audition.PointedAt, Yours(), site.Presets());
-        var chosen = await dialogs.Show<object?>("Start from a preset", gallery.Tiles, gallery.Filter, fill: true);
+        var gallery = PresetGallery.Build(
+            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            current,
+            thumbnails,
+            dialog,
+            pointedAt: audition.PointedAt,
+            yours: Yours(),
+            site: site.Presets());
+        var chosen = await dialog.Show<IPreset?>(
+            "Start from a preset",
+            answer => gallery.Tiles(preset => answer(preset), preset => answer(preset)),
+            gallery.Filter,
+            fill: true);
 
         audition.PointedAt(null);
 

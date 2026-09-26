@@ -59,6 +59,8 @@ internal sealed class MainWindow : Window
 
     private readonly SourceView source;
 
+    private readonly IDialog dialog;
+
     /// <summary>Which of the canvas and the text owns the patch.</summary>
     private readonly Document document;
 
@@ -199,7 +201,8 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         AssistantPanel assistant,
         WorkKeeper keeper,
-        OutputSettingRepository outputSettingRepository)
+        OutputSettingRepository outputSettingRepository,
+        IDialog dialog)
     {
         this.editor = editor;
         this.source = source;
@@ -228,7 +231,7 @@ internal sealed class MainWindow : Window
         this.assistant = assistant;
         this.keeper = keeper;
         this.outputSettingRepository = outputSettingRepository;
-
+        this.dialog = dialog;
 
         // Closed until the toolbar opens it.
         assistant.IsVisible = false;
@@ -388,7 +391,7 @@ internal sealed class MainWindow : Window
         // unsaved work like any other and so about work just restored.
         Opened += async (_, _) =>
         {
-            if (setup.WhatsNew is not null) await this.ShowDialog(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
+            if (setup.WhatsNew is not null) await dialog.Show(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
 
             keeper.Restore(Recover);
 
@@ -698,7 +701,7 @@ internal sealed class MainWindow : Window
 
         try
         {
-            saved = await SettingsDialog.ShowAsync(this,
+            saved = await SettingsDialog.ShowAsync(dialog,
             [
                 ("Graphics", outputSections.Graphics),
                 ("Canvas", canvasSection.View),
@@ -743,8 +746,7 @@ internal sealed class MainWindow : Window
     /// like the settings section: nothing in it is a control anybody has typed
     /// into, so there is nothing to carry from one opening to the next.
     /// </summary>
-    private async Task ShowAboutAsync() =>
-        await this.ShowDialog("About", About.View());
+    private Task ShowAboutAsync() => dialog.Show("About", About.View());
 
     #region Keys, undo and the unsaved question
 
@@ -851,7 +853,7 @@ internal sealed class MainWindow : Window
 
         // A dialog lets the keys typed into its own boxes through unhandled, so
         // whatever it is over must not act on them.
-        if (e.Handled || this.HasDialogUp) return;
+        if (e.Handled || dialog.IsShowing) return;
 
         // Before the modifier check, because Escape carries none. Only while the
         // picture is full screen: everywhere else Escape belongs to the module
@@ -1138,7 +1140,7 @@ internal sealed class MainWindow : Window
         // Refused under a dialog, and shown as refused, for the reason
         // OpenActivatedFileAsync gives.
         AddHandler(DragDrop.DragOverEvent, (_, e) =>
-            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) && !this.HasDialogUp
+            e.DragEffects = e.DataTransfer.Contains(DataFormat.File) && !dialog.IsShowing
                 ? DragDropEffects.Copy
                 : DragDropEffects.None);
 
@@ -1169,7 +1171,7 @@ internal sealed class MainWindow : Window
     /// </remarks>
     internal async Task OpenActivatedFileAsync(IStorageFile file)
     {
-        if (this.HasDialogUp)
+        if (dialog.IsShowing)
         {
             Report($"{file.Name} was not opened: there is a dialog to answer first.");
             return;

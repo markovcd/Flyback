@@ -40,74 +40,74 @@ public sealed class FlybackApp : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Before the window, because the window says what it started as as
-            // soon as it has asked for a sound device (ADR-0094).
-            var usage = Usage.Start(
-                UsageSettings.Load(UsageSettings.File),
-                new Launch(First: Startup.FirstRun, Updated: Startup.Updated, File: Startup.OpenPath is not null));
-
-            // A crash is said with the little that may be said about it, and the
-            // process kept for as long as that takes and no longer (ADR-0103).
-            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
-            {
-                if (e.ExceptionObject is not Exception ex) return;
-
-                usage.Crashed(ex);
-                usage.Drain(Usage.LongestWait);
-            };
-
-            // The end of the run is where what it did is added up, and the only
-            // moment anything waits for a statistic to arrive.
-            desktop.Exit += (_, _) =>
-            {
-                usage.Ended();
-                usage.Drain(Usage.LongestWait);
-            };
-
-            var window = EditorServices.Window(EditorSetup.ThisMachine(usage) with
-            {
-                OpenPath = Startup.OpenPath,
-                OpenShared = Startup.OpenShared,
-                Interpreted = Startup.Interpreted,
-                Plugins = Startup.Plugins,
-                OpeningNote = Startup.OpeningNote,
-                WhatsNew = Startup.WhatsNew,
-            });
-            desktop.MainWindow = window;
-
-            // Once there is a window, so a slow network is never a slow start.
-            Updater.CheckInBackground(Startup.Updates);
-
-            // Windows and Linux hand a file to open in through argv, which
-            // Startup.OpenPath already carries — see Program.Main. macOS never
-            // does: Finder delivers "open this file" as an activation instead,
-            // whether it is what launches the program or a file dropped on its
-            // Dock icon while it is already running, and there is no other way
-            // to hear about either. The desktop lifetime does not implement it;
-            // the application hands it out as a feature.
-            if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
-            {
-                activatable.Activated += async (_, e) =>
-                {
-                    if (e is not FileActivatedEventArgs { Files: [IStorageFile file, ..] }) return;
-
-                    if (OperatingSystem.IsMacOS()
-                        && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
-                        && !PluginPackage.Named(file.Name)
-                        && file.TryGetLocalPath() is { } path)
-                    {
-                        PassToViewer(path, desktop, window);
-                        return;
-                    }
-
-                    await window.OpenActivatedFileAsync(file);
-                };
-            }
+            throw new NotSupportedException("Flyback app is not initialized.");
         }
+        
+        // Before the window, because the window says what it started as as
+        // soon as it has asked for a sound device (ADR-0094).
+        var usage = Usage.Start(
+            UsageSettings.Load(UsageSettings.File),
+            new Launch(First: Startup.FirstRun, Updated: Startup.Updated, File: Startup.OpenPath is not null));
 
-        base.OnFrameworkInitializationCompleted();
+        // A crash is said with the little that may be said about it, and the
+        // process kept for as long as that takes and no longer (ADR-0103).
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            if (e.ExceptionObject is not Exception ex) return;
+
+            usage.Crashed(ex);
+            usage.Drain(Usage.LongestWait);
+        };
+
+        // The end of the run is where what it did is added up, and the only
+        // moment anything waits for a statistic to arrive.
+        desktop.Exit += (_, _) =>
+        {
+            usage.Ended();
+            usage.Drain(Usage.LongestWait);
+        };
+
+        var window = EditorServices.Window(EditorSetup.ThisMachine(usage) with
+        {
+            OpenPath = Startup.OpenPath,
+            OpenShared = Startup.OpenShared,
+            Interpreted = Startup.Interpreted,
+            Plugins = Startup.Plugins,
+            OpeningNote = Startup.OpeningNote,
+            WhatsNew = Startup.WhatsNew,
+        });
+        desktop.MainWindow = window;
+
+        // Once there is a window, so a slow network is never a slow start.
+        Updater.CheckInBackground(Startup.Updates);
+
+        // Windows and Linux hand a file to open in through argv, which
+        // Startup.OpenPath already carries — see Program.Main. macOS never
+        // does: Finder delivers "open this file" as an activation instead,
+        // whether it is what launches the program or a file dropped on its
+        // Dock icon while it is already running, and there is no other way
+        // to hear about either. The desktop lifetime does not implement it;
+        // the application hands it out as a feature.
+        if (TryGetFeature(typeof(IActivatableLifetime)) is IActivatableLifetime activatable)
+        {
+            activatable.Activated += async (_, e) =>
+            {
+                if (e is not FileActivatedEventArgs { Files: [IStorageFile file, ..] }) return;
+
+                if (OperatingSystem.IsMacOS()
+                    && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
+                    && !PluginPackage.Named(file.Name)
+                    && file.TryGetLocalPath() is { } path)
+                {
+                    PassToViewer(path, desktop, window);
+                    return;
+                }
+
+                await window.OpenActivatedFileAsync(file);
+            };
+        }
     }
 
     /// <summary>

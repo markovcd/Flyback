@@ -26,7 +26,7 @@ internal sealed class UnsavedWork(
     AssistantConversation conversation,
     PatchFiles files,
     EditorSetup setup,
-    IDialogs dialogs,
+    IDialog dialog,
     IWindowClose window)
 {
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
@@ -204,11 +204,17 @@ internal sealed class UnsavedWork(
 
     /// <param name="discard">What the answer that goes ahead is called.</param>
     /// <param name="offerSave">Whether saving is one of the answers, which it is not where saving is what asked.</param>
-    private async Task<Unsaved> AskAsync(
+    private Task<Unsaved> AskAsync(
         string about,
         string question,
         string discard = "Discard changes",
-        bool offerSave = true)
+        bool offerSave = true) => dialog.Show<Unsaved>(about, a => DialogContent(question, a, discard, offerSave));
+
+    private static Control DialogContent(
+        string question, 
+        Action<Unsaved> answer,
+        string discard,
+        bool offerSave)
     {
         var buttons = new StackPanel
         {
@@ -237,13 +243,13 @@ internal sealed class UnsavedWork(
                 buttons,
             },
         };
-
-        return await dialogs.Show<Unsaved>(about, asking);
-
-        static Button Answering(string text, Unsaved with, bool wide = false)
+        
+        return asking;
+        
+        Button Answering(string text, Unsaved with, bool wide = false)
         {
             var button = new Button { Content = text, MinWidth = wide ? 120 : 96 };
-            button.Click += (_, _) => Dialog.Close(button, with);
+            button.Click += (_, _) => answer(with);
 
             return button;
         }

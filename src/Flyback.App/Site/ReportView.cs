@@ -15,15 +15,11 @@ internal static class ReportView
     /// and hands the answer to <paramref name="send"/>.
     /// </summary>
     /// <returns>What became of it, or null where nothing was sent.</returns>
-    public static async Task<string?> AskAsync(Control from, string name, Func<string, string?, CancellationToken, Task> send)
-    {
-        if (TopLevel.GetTopLevel(from) is not Window window) return null;
-
-        return await window.ShowDialog<string?>($"Report “{name}”", View(name, send));
-    }
+    public static Task<string?> AskAsync(IDialog dialog, string name, Func<string, string?, CancellationToken, Task> send)
+        => dialog.Show<string?>($"Report “{name}”", a => View(name, send, a));
 
     /// <summary>The question, which answers its dialog with what became of the report.</summary>
-    internal static Control View(string name, Func<string, string?, CancellationToken, Task> send)
+    private static Control View(string name, Func<string, string?, CancellationToken, Task> send, Action<string?> answer)
     {
         var page = new StackPanel { Name = "report", Spacing = 10, Width = 440, Margin = new Thickness(20, 12, 20, 20) };
 
@@ -98,10 +94,10 @@ internal static class ReportView
                 return;
             }
 
-            Dialog.Close<string?>(sendButton, $"Reported “{name}” to the preset site's admin.");
+            answer($"Reported “{name}” to the preset site's admin.");
         };
 
-        cancel.Click += (_, _) => Dialog.Close<string?>(cancel, null);
+        cancel.Click += (_, _) => answer(null);
 
         page.Children.Add(new StackPanel
         {

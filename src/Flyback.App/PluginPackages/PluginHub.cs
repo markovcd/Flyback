@@ -32,6 +32,7 @@ internal sealed class PluginHub : IDisposable
     private readonly PluginSite? site;
     private readonly Func<Task<IReadOnlyList<HubInstalled>>> readInstalled;
     private readonly Func<SitePlugin, Action, Task<string?>> install;
+    private readonly IDialog dialog;
     private readonly Func<HubInstalled, Task<string?>>? show;
 
     /// <summary>What a patch was short of, listed in a section of its own above everything.</summary>
@@ -95,6 +96,7 @@ internal sealed class PluginHub : IDisposable
         PluginSite? site,
         Func<Task<IReadOnlyList<HubInstalled>>> installed,
         Func<SitePlugin, Action, Task<string?>> install,
+        IDialog dialog,
         Func<HubInstalled, Task<string?>>? show = null,
         IReadOnlyList<SitePlugin>? needed = null,
         PluginRun? run = null)
@@ -102,6 +104,7 @@ internal sealed class PluginHub : IDisposable
         this.site = site;
         readInstalled = installed;
         this.install = install;
+        this.dialog = dialog;
         this.show = show;
         this.needed = needed ?? [];
 
@@ -390,7 +393,7 @@ internal sealed class PluginHub : IDisposable
         {
             if (site is null) return;
 
-            var said = await ReportView.AskAsync(button, plugin.Plugin.Name, (reason, details, cancel) => site.ReportAsync(plugin, reason, details, cancel));
+            var said = await ReportView.AskAsync(dialog, plugin.Plugin.Name, (reason, details, cancel) => site.ReportAsync(plugin, reason, details, cancel));
 
             if (said is null) return;
 

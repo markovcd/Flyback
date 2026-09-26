@@ -78,6 +78,7 @@ public sealed class AssistantPanelTests : UiTest
             catalog,
             new Holding(() => patch, report),
             new AssistantConversation(() => patch),
+            new Credentials(catalog.PreferredSecretStore),
             repository,
             Kept);
 
@@ -111,6 +112,7 @@ public sealed class AssistantPanelTests : UiTest
             catalog,
             new Holding(() => patch),
             new AssistantConversation(() => patch),
+            new Credentials(catalog.PreferredSecretStore),
             repository,
             Kept);
         var window = Show(panel, 760);

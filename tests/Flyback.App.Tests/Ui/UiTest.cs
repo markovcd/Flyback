@@ -13,6 +13,7 @@ using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.App.Canvas;
+using Flyback.App.Controls;
 using Flyback.App.Site;
 using Flyback.App.Tests.Ui;
 
@@ -56,6 +57,7 @@ public class UiTest : IDisposable
     /// timers and its engine on that thread for every test that follows.
     /// </summary>
     private readonly List<Window> opened = [];
+    private readonly List<IDisposable> headlessWindows = [];
 
     public static AppBuilder BuildAvaloniaApp() => AppBuilder
         .Configure<TestApp>()
@@ -216,6 +218,7 @@ public class UiTest : IDisposable
     protected T Owned<T>(T window) where T : Window
     {
         opened.Add(window);
+        headlessWindows.Add(MainWindowLocator.RegisterForHeadlessTests(window));
 
         return window;
     }
@@ -234,6 +237,10 @@ public class UiTest : IDisposable
         }
 
         opened.Clear();
+
+        for (var index = headlessWindows.Count - 1; index >= 0; index--) headlessWindows[index].Dispose();
+
+        headlessWindows.Clear();
 
         Dispatcher.UIThread.RunJobs();
 

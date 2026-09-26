@@ -32,7 +32,10 @@ internal static class SettingsDialog
     /// Cancel, the cross and Escape all answer false — see Dialog.ShowDialog —
     /// which is every way out that is not Save.
     /// </remarks>
-    public static async Task<bool> ShowAsync(Window owner, IReadOnlyList<(string Name, Control Section)> sections)
+    public static Task<bool> ShowAsync(IDialog dialog, IReadOnlyList<(string Name, Control Section)> sections) 
+        => dialog.Show<bool>("Settings", a => Content(a, sections));
+
+    private static Control Content(Action<bool> answer, IReadOnlyList<(string Name, Control Section)> sections)
     {
         // The window around the sections is built fresh, so each has to be taken
         // back from the last one first.
@@ -63,8 +66,8 @@ internal static class SettingsDialog
         // take the one way out rather than each undoing things itself.
         var cancel = new Button { Content = "Cancel", Width = 84 };
 
-        save.Click += (_, _) => Dialog.Close(save, true);
-        cancel.Click += (_, _) => Dialog.Close(cancel, false);
+        save.Click += (_, _) => answer(true);
+        cancel.Click += (_, _) => answer(false);
 
         var buttons = new StackPanel
         {
@@ -79,14 +82,12 @@ internal static class SettingsDialog
         // another.
         var divider = new Border { Height = 1, Background = new SolidColorBrush(Colors.Separator) };
 
-        var content = new StackPanel
+        return new StackPanel
         {
             Spacing = 12,
             Margin = new Thickness(18, 4, 18, 18),
             Children = { tabs, divider, buttons },
         };
-
-        return await owner.ShowDialog<bool>("Settings", content);
     }
 
     /// <summary>

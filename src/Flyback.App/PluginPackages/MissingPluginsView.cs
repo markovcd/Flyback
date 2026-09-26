@@ -21,7 +21,8 @@ internal static class MissingPluginsView
     public const string Title = "Plugins this patch needs";
 
     /// <param name="found">The site's plugin for each one missing, in the order the patch names them.</param>
-    public static Control View(IReadOnlyList<SitePlugin> found)
+    /// <param name="action"></param>
+    public static Control View(IReadOnlyList<SitePlugin> found, Action<bool> answer)
     {
         var page = new StackPanel { Name = "missingPlugins", Width = 460, Spacing = 8 };
 
@@ -62,8 +63,8 @@ internal static class MissingPluginsView
         var look = new Button { Name = "findPlugins", Content = found.Count == 1 ? "Find it" : "Find them", MinWidth = 96 };
         var later = new Button { Name = "notNow", Content = "Not now", MinWidth = 96 };
 
-        look.Click += (_, _) => Dialog.Close(look, true);
-        later.Click += (_, _) => Dialog.Close(later, false);
+        look.Click += (_, _) => answer(true);
+        later.Click += (_, _) => answer(false);
 
         page.Children.Add(new StackPanel
         {

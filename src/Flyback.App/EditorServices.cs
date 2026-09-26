@@ -15,6 +15,7 @@ using Flyback.App.Site;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -79,6 +80,7 @@ internal static class EditorServices
         services.AddSingleton<MidiHub>();
 
         services.AddSingleton<AssistantSettingRepository>();
+        services.AddSingleton(sp => new Credentials(sp.GetRequiredService<PluginCatalog>().PreferredSecretStore));
         services.AddSingleton<AssistantConversation>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
@@ -93,7 +95,7 @@ internal static class EditorServices
         services.AddSingleton<PreviewHost>();
 
         services.AddSingleton<Document>();
-        services.AddSingleton<IDialogs, WindowDialogs>();
+        services.AddSingleton<IDialog, WindowDialog>();
         services.AddSingleton<IFilePickers, WindowFilePickers>();
         services.AddSingleton<IMonitors, WindowMonitors>();
         services.AddSingleton<IWindowFocus, WindowFocus>();
@@ -120,9 +122,7 @@ internal static class EditorServices
         services.AddSingleton<StatusBar>();
         services.AddSingleton<TakeRecording>();
 
-        // Through its guard, so a service that asks for the window while it is built is refused.
-        services.AddSingleton<EditorWindow>();
-        services.AddSingleton(sp => sp.GetRequiredService<EditorWindow>().Build());
+        services.AddSingleton<MainWindow>();
 
         return services;
     }
