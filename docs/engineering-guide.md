@@ -431,8 +431,7 @@ report line, a dialog, a file picker), owns its own fields and raises events: `I
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
-`EditorServices` registers them, a constructor says what each depends on, and a
-cycle is a `Lazy<T>`. `MainWindow` is handed them, lays them out, and keeps its
+`EditorServices` registers them, a constructor says what each depends on. `MainWindow` is handed them, lays them out, and keeps its
 layout, its keys, full screen and its close in one file, a `#region` per part. There are no
 view models, and that has been decided twice.
 

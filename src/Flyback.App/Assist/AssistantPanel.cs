@@ -45,6 +45,7 @@ internal sealed class AssistantPanel : UserControl
     /// is what the editor plays, since its sounds are looked up where the editor's are.
     /// </summary>
     private readonly IAssistantEditor editor;
+    private readonly AssistantConversation conversation;
 
     private readonly AssistantSettingRepository settingsRepository;
 
@@ -329,30 +330,6 @@ internal sealed class AssistantPanel : UserControl
     private IPatchAssistant? runAssistant;
 
     /// <summary>
-    /// A conversation that arrived with the patch and has not been asked anything
-    /// yet. Carried on by the first message that may carry it on — see
-    /// <see cref="Restarting"/> — and dropped by one that may not.
-    /// </summary>
-    private SavedConversation? waiting;
-
-    /// <summary>
-    /// The patch <see cref="waiting"/> arrived with, as it arrived, so an edit made
-    /// before the first message is noticed the way one made under a run is.
-    /// </summary>
-    private (Patch Patch, int Nodes, int Wires)? waitingOn;
-
-    /// <summary>
-    /// The conversation as it stood when its last turn ended, which is what saving
-    /// the patch writes. Taken then rather than when the patch is saved, because a
-    /// save can land in the middle of a turn and a session is not something to read
-    /// while it runs.
-    /// </summary>
-    private SavedConversation? settled;
-
-    /// <summary>Whether a turn has ended since the patch was last opened or saved.</summary>
-    private bool unsaved;
-
-    /// <summary>
     /// The conversation changed in a way the title should say: a turn ended, or it
     /// was saved, or a document arrived with one or without one.
     /// </summary>
@@ -390,6 +367,7 @@ internal sealed class AssistantPanel : UserControl
         ChosenAssistant chosenAssistant,
         PluginCatalog plugins,
         IAssistantEditor editor,
+        AssistantConversation conversation,
         AssistantSettingRepository settingsRepository,
         EditorSetup? setup = null,
         Usage? usage = null)
@@ -397,9 +375,12 @@ internal sealed class AssistantPanel : UserControl
         this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.editor = editor;
+        this.conversation = conversation;
         this.usage = usage;
         settingsPath = setup?.AssistantSettingsPath;
         this.settingsRepository = settingsRepository;
+        conversation.Opened += Opened;
+        conversation.Saved += (_, _) => ConversationChanged?.Invoke(this, EventArgs.Empty);
         credentials = new Credentials(plugins.PreferredSecretStore);
         chosenAssistant.Load();
         probeSection = new ProbeSection(() => chosenAssistant.Value, KeyOnTheForm, form, Refresh);
@@ -450,13 +431,14 @@ internal sealed class AssistantPanel : UserControl
     /// <param name="saved">What was saved with the document, as <see cref="SavedConversation.ToJson"/> wrote it.</param>
     public void Open(string? saved)
     {
-        SetAside();
+        conversation.Open(saved);
+    }
 
-        waiting = SavedConversation.Read(saved);
-        waitingOn = waiting is null ? null : Anchor(editor.Current);
-        settled = waiting;
+    private void Opened(object? sender, EventArgs e)
+    {
+        SetAside(clearConversation: false);
 
-        if (waiting is not null)
+        if (conversation.Waiting is { } waiting)
         {
             foreach (var line in waiting.Transcript) transcript.Put(line.Voice, line.Text);
 
@@ -487,7 +469,7 @@ internal sealed class AssistantPanel : UserControl
     }
 
     /// <summary>Ends whatever conversation there is, of either kind, and empties the panel of it.</summary>
-    private void SetAside()
+    private void SetAside(bool clearConversation = true)
     {
         // A turn still running goes with the conversation it was part of.
         // Disposing the run stops it, and AskAsync drops whatever it still had
@@ -502,10 +484,7 @@ internal sealed class AssistantPanel : UserControl
 
         transcript.Clear();
 
-        waiting = null;
-        waitingOn = null;
-        settled = null;
-        unsaved = false;
+        if (clearConversation) conversation.Clear();
     }
 
     /// <summary>
@@ -518,42 +497,19 @@ internal sealed class AssistantPanel : UserControl
     /// saving the old one with it would only bring back, next time, a conversation
     /// that could not honestly go on.
     /// </remarks>
-    public string? ConversationToSave() => Belongs() ? settled!.ToJson() : null;
+    public string? ConversationToSave() => conversation.ConversationToSave();
 
     /// <summary>The conversation has just gone to disk with the patch.</summary>
     public void ConversationSaved()
     {
-        unsaved = false;
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        conversation.ConversationSaved();
     }
 
     /// <summary>
     /// Whether there is a turn in the conversation that saving the patch would keep
     /// and closing it would lose.
     /// </summary>
-    public bool ConversationUnsaved => unsaved && Belongs();
-
-    private bool Belongs()
-    {
-        if (settled is null) return false;
-
-        var now = editor.Current;
-
-        return !run?.EditedUnderneath(now) ?? !Moved(waitingOn, now);
-    }
-
-    private static (Patch Patch, int Nodes, int Wires) Anchor(Patch patch) =>
-        (patch, patch.Nodes.Count, patch.Connections.Count);
-
-    /// <summary>
-    /// The test <see cref="AssistantRun.EditedUnderneath"/> makes, for a
-    /// conversation that has not been carried on yet and so has no run to ask.
-    /// </summary>
-    private static bool Moved((Patch Patch, int Nodes, int Wires)? on, Patch now) =>
-        on is not { } was
-        || !ReferenceEquals(was.Patch, now)
-        || was.Nodes != now.Nodes.Count
-        || was.Wires != now.Connections.Count;
+    public bool ConversationUnsaved => conversation.ConversationUnsaved;
 
     // --- building -----------------------------------------------------------
 
@@ -987,7 +943,7 @@ internal sealed class AssistantPanel : UserControl
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
 
-        fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || run is not null || waiting is not null);
+        fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || run is not null || conversation.Waiting is not null);
 
         ToolTip.SetTip(fresh, "Start a new conversation about this patch. The one set aside stays saved "
             + "with the patch until the patch is saved again.");
@@ -1187,7 +1143,7 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Restarting(AssistantConfig config)
     {
-        if (run is null) return waiting is null ? string.Empty : Unresumable(waiting, config);
+        if (run is null) return conversation.Waiting is not { } waiting ? string.Empty : Unresumable(waiting, config);
         if (run.Exhausted) return "That conversation had its turns. Starting another.";
         if (!ReferenceEquals(runAssistant, chosenAssistant.Value) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
@@ -1215,7 +1171,7 @@ internal sealed class AssistantPanel : UserControl
             || saved.Settings != SavedConversation.SettingsOf(config.Values))
             return "That conversation was had with other settings, so this is a new one.";
 
-        return Moved(waitingOn, editor.Current)
+        return conversation.WaitingMoved(editor.Current)
             ? "The patch changed since it was opened, so this is a new conversation about the one on screen."
             : null;
     }
@@ -1240,10 +1196,8 @@ internal sealed class AssistantPanel : UserControl
 
         // No run and no reason not to is a conversation saved with the patch,
         // which this message carries on.
-        var resuming = because is null ? waiting : null;
-
-        waiting = null;
-        waitingOn = null;
+        var resuming = because is null ? conversation.Waiting : null;
+        conversation.Begin(resuming, editor.Current);
 
         run?.Dispose();
         run = new AssistantRun(
@@ -1269,8 +1223,6 @@ internal sealed class AssistantPanel : UserControl
 
         // A conversation of its own, so what was saved with the patch is no
         // longer what saving it again should write.
-        settled = null;
-
         // Said rather than silently done, and only where there was something to
         // lose: the transcript emptying is otherwise the only sign that the
         // thing being talked to has just been replaced.
@@ -1413,8 +1365,7 @@ internal sealed class AssistantPanel : UserControl
     {
         if (run is null) return;
 
-        settled = run.Save(transcript.Lines);
-        unsaved = true;
+        conversation.Settle(run.Save(transcript.Lines));
 
         ConversationChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -1453,6 +1404,7 @@ internal sealed class AssistantPanel : UserControl
         // starting one about a patch it does not remember building. Whatever the
         // canvas made of the proposal, since a text document builds its own copy.
         run.Rebase(editor.Current);
+        conversation.Rebase(editor.Current);
 
         transcript.Put(Voice.Aside, overwrote
             ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."

@@ -51,8 +51,6 @@ internal static class EditorServices
 
     public static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)
     {
-        services.AddTransient(typeof(Lazy<>), typeof(Deferred<>));
-
         services.AddSingleton(setup);
         services.AddSingleton<IIlCompilerSetup>(setup);
         services.AddSingleton(setup.Usage);
@@ -81,6 +79,7 @@ internal static class EditorServices
         services.AddSingleton<MidiHub>();
 
         services.AddSingleton<AssistantSettingRepository>();
+        services.AddSingleton<AssistantConversation>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
         services.AddSingleton<AssistantPanel>();
@@ -127,8 +126,4 @@ internal static class EditorServices
 
         return services;
     }
-
-    /// <summary>A service the container builds the first time it is asked for, which is how two that need each other are both built.</summary>
-    private sealed class Deferred<T>(IServiceProvider services) : Lazy<T>(services.GetRequiredService<T>)
-        where T : notnull;
 }

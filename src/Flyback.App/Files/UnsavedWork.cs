@@ -5,7 +5,6 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
-using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.Core;
 using Flyback.Core.Graph;
@@ -24,9 +23,8 @@ namespace Flyback.App.Files;
 internal sealed class UnsavedWork(
     NodeEditor editor,
     Document document,
-    Lazy<AssistantPanel> assistant,
+    AssistantConversation conversation,
     PatchFiles files,
-    Lazy<TakeRecording> recording,
     EditorSetup setup,
     IDialogs dialogs,
     IWindowClose window)
@@ -65,7 +63,7 @@ internal sealed class UnsavedWork(
     /// yet applied, or a conversation nobody has saved (ADR-0072).
     /// </summary>
     public bool SomethingToLose =>
-        History.IsModified || Document.IsUnapplied || assistant.Value.ConversationUnsaved;
+        History.IsModified || Document.IsUnapplied || conversation.ConversationUnsaved;
 
     /// <summary>Lets the next close through without asking.</summary>
     public void Leave() => Leaving = true;
@@ -128,11 +126,11 @@ internal sealed class UnsavedWork(
     /// window stays: the question was canceled, or a take is running, which only its
     /// own button should end.
     /// </summary>
-    public async Task<bool> RelaunchAsync(Reopen? reopen)
+    public async Task<bool> RelaunchAsync(Reopen? reopen, bool recordingInHand)
     {
         if (setup.Relaunch is not { } relaunch) return false;
 
-        if (recording.Value.InHand || !await MayReplaceThePatchAsync()) return false;
+        if (recordingInHand || !await MayReplaceThePatchAsync()) return false;
 
         relaunch(reopen);
 
@@ -148,7 +146,7 @@ internal sealed class UnsavedWork(
         files.SoundFolder.Beside,
         PatchIO.ToJson(History.Patch),
         Document.Owned ? Document.Text : null,
-        assistant.Value.ConversationToSave(),
+        conversation.ConversationToSave(),
         files.Carried?.Bytes);
 
     /// <summary>

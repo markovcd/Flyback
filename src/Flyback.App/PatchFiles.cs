@@ -32,7 +32,7 @@ internal sealed class PatchFiles
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly Usage usage;
-    private readonly Lazy<AssistantPanel> assistant;
+    private readonly AssistantConversation conversation;
     private readonly Playback playback;
     private readonly PluginInstalls installs;
 
@@ -63,7 +63,7 @@ internal sealed class PatchFiles
         PluginCatalog plugins, 
         ReportLine report,
         Usage usage,
-        Lazy<AssistantPanel> assistant,
+        AssistantConversation conversation,
         Playback playback, 
         PluginInstalls installs, 
         IFilePickers pickers)
@@ -74,7 +74,7 @@ internal sealed class PatchFiles
         this.plugins = plugins;
         this.report = report;
         this.usage = usage;
-        this.assistant = assistant;
+        this.conversation = conversation;
         this.playback = playback;
         this.installs = installs;
     }
@@ -199,12 +199,12 @@ internal sealed class PatchFiles
     /// </remarks>
     private void KeepConversation(IStorageFile file, string written)
     {
-        var conversation = assistant.Value.ConversationToSave();
+        var savedConversation = conversation.ConversationToSave();
         var path = file.TryGetLocalPath();
 
-        var kept = path is null ? conversation is null : conversations.Keep(path, written, conversation);
+        var kept = path is null ? savedConversation is null : conversations.Keep(path, written, savedConversation);
 
-        assistant.Value.ConversationSaved();
+        conversation.ConversationSaved();
 
         if (!kept) report.Say($"Saved {file.Name}, but the conversation about it could not be kept with it.");
     }
@@ -275,7 +275,7 @@ internal sealed class PatchFiles
 
             // Whatever was said about this patch was kept beside it, if anything
             // was and the file is still what it was saved as — ADR-0072.
-            assistant.Value.Open(ConversationFor(file, text));
+            conversation.Open(ConversationFor(file, text));
 
             // A patch file is the document, so the graph owns it — ADR-0068.
             document.DropSource();
@@ -309,14 +309,14 @@ internal sealed class PatchFiles
             // The conversation goes inside, since a bundle is the whole of the
             // document wherever it is taken — ADR-0072.
             packing = PatchBundle.Write(
-                packed, editor.History.Patch, Bytes, plugins.Modules, assistant.Value.ConversationToSave());
+                packed, editor.History.Patch, Bytes, plugins.Modules, conversation.ConversationToSave());
 
             packed.Position = 0;
 
             await using (var stream = await file.OpenWriteAsync()) await packed.CopyToAsync(stream);
 
             SavedAs(Path.GetFileNameWithoutExtension(file.Name), asBundle: true);
-            assistant.Value.ConversationSaved();
+            conversation.ConversationSaved();
 
             // Saved as a bundle, so a bundle is the document now and the graph
             // owns it — ADR-0068.
@@ -494,7 +494,7 @@ internal sealed class PatchFiles
             document.TakeSource(text);
 
             // Kept beside the file, as for a patch file — ADR-0072.
-            assistant.Value.Open(ConversationFor(file, text));
+            conversation.Open(ConversationFor(file, text));
 
             report.Say($"Opened {file.Name}. The text is the document; the canvas shows what it builds.");
         }
@@ -561,7 +561,7 @@ internal sealed class PatchFiles
             document.DropSource();
 
             // A bundle carries its conversation inside it — ADR-0072.
-            assistant.Value.Open(bundle.Conversation);
+            conversation.Open(bundle.Conversation);
 
             report.Say(bundle.Files.Count == 0
                 ? $"Opened {file.Name}."

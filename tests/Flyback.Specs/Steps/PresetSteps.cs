@@ -13,7 +13,7 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class PresetSteps(Session session)
 {
-    private static readonly Lazy<PluginCatalog> Installed = new(() => PluginHost.Load());
+    private static readonly Lazy<PluginCatalog> Installed = new(PluginHost.Load);
 
     private ModuleCatalog modules = NodeCatalog.BuiltIn;
 

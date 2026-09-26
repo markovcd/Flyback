@@ -235,6 +235,18 @@ internal sealed class MainWindow : Window
 
         Recording = recording;
 
+        pluginInstalls.RestartRequested += async (_, request) =>
+        {
+            try
+            {
+                request.Complete(await unsaved.RelaunchAsync(request.Reopen, recording.InHand));
+            }
+            catch (Exception ex)
+            {
+                request.Fail(ex);
+            }
+        };
+
         outputSettingsPath = setup.OutputSettingsPath;
 
         layoutPath = setup.LayoutPath;

@@ -37,7 +37,7 @@ internal sealed class PresetSlot
     private readonly PresetAudition audition;
     private readonly PresetLibrary saved;
     private readonly SiteAccess site;
-    private readonly Lazy<AssistantPanel> assistant;
+    private readonly AssistantConversation conversation;
     private readonly UnsavedWork unsaved;
     private readonly Playback playback;
     private readonly PluginInstalls installs;
@@ -80,7 +80,7 @@ internal sealed class PresetSlot
         PluginCatalog plugins,
         ReportLine report,
         Usage usage,
-        Lazy<AssistantPanel> assistant,
+        AssistantConversation conversation,
         PatchFiles files,
         PresetThumbnails thumbnails,
         PresetAudition audition,
@@ -102,7 +102,7 @@ internal sealed class PresetSlot
         this.audition = audition;
         this.saved = saved;
         this.site = site;
-        this.assistant = assistant;
+        this.conversation = conversation;
         this.unsaved = unsaved;
         this.playback = playback;
         this.installs = installs;
@@ -302,7 +302,7 @@ internal sealed class PresetSlot
 
             // A preset has no file to have saved a conversation with, so it
             // arrives with none — ADR-0072.
-            assistant.Value.Open(null);
+            conversation.Open(null);
 
             // A preset arrives as a graph and no text describes it, so the
             // canvas owns it — ADR-0068.
@@ -508,7 +508,7 @@ internal sealed class PresetSlot
 
             playback.Show(patch);
             document.DropSource();
-            assistant.Value.Open(conversation);
+            this.conversation.Open(conversation);
 
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();

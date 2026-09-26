@@ -17,9 +17,9 @@ internal sealed class PluginInstalls
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
     private readonly string? pluginFolder;
+    private readonly bool canRestart;
     private readonly SiteAccess site;
     private readonly Playback playback;
-    private readonly Lazy<UnsavedWork>? unsaved;
     private readonly ChosenAssistant chosenAssistant;
 
     /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
@@ -35,14 +35,12 @@ internal sealed class PluginInstalls
     /// <param name="setup">Where a package's plugin is installed, and whether a restart is offered.</param>
     /// <param name="site">Where the plugins window lists shared plugins from.</param>
     /// <param name="playback">The sound device the plugins window says what opened.</param>
-    /// <param name="unsaved">What a restart asks about first, and closes the window through.</param>
     public PluginInstalls(
         PluginCatalog plugins,
         ReportLine report,
         EditorSetup setup,
         SiteAccess site,
         Playback playback,
-        Lazy<UnsavedWork> unsaved,
         IDialogs dialogs,
         ChosenAssistant chosenAssistant)
     {
@@ -50,11 +48,13 @@ internal sealed class PluginInstalls
         this.plugins = plugins;
         this.report = report;
         pluginFolder = setup.PluginFolder;
+        canRestart = setup.Relaunch is not null;
         this.site = site;
         this.playback = playback;
-        this.unsaved = setup.Relaunch is null ? null : unsaved;
         this.chosenAssistant = chosenAssistant;
     }
+
+    public event EventHandler<RestartRequestedEventArgs>? RestartRequested;
 
     /// <summary>
     /// What the patch the plugins window was opened for was short of, so an install
@@ -152,7 +152,7 @@ internal sealed class PluginInstalls
             // Not offered while the patch is short of others: one start loads everything
             // installed by then, and a restart before the last of them lands back on the
             // same refusal with the window it was being installed from thrown away.
-            offerRestart: unsaved is not null && awaiting == 0,
+            offerRestart: canRestart && awaiting == 0,
             removable,
             awaiting);
         var answer = await dialogs.Show<PluginAnswer>(PluginInstallView.Title(change), view);
@@ -172,9 +172,22 @@ internal sealed class PluginInstalls
             return $"{name} was not installed: {ex.Message}";
         }
 
-        if (answer == PluginAnswer.InstallAndRestart && unsaved is not null && await unsaved.Value.RelaunchAsync(refused)) return null;
+        if (answer == PluginAnswer.InstallAndRestart
+            && canRestart
+            && await RestartAsync(refused)) return null;
 
         return $"{name} is {(change == PluginChange.Update ? "updated" : "installed")}, and loads the next time Flyback starts.";
+    }
+
+    private async Task<bool> RestartAsync(Reopen? open)
+    {
+        var handler = RestartRequested
+            ?? throw new InvalidOperationException("No handler is registered for restarting after a plugin install.");
+        var request = new RestartRequestedEventArgs(open);
+
+        handler(this, request);
+
+        return await request.Result;
     }
 
     /// <summary>

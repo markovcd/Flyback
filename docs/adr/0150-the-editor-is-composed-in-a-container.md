@@ -104,5 +104,18 @@ Exceptions, each kept on purpose:
   `Program` opens them to say on the terminal what failed before any window
   exists, and hands them over on the `ViewerLaunch`.
 
+## Amendment, 2026-09-26: construction cycles are removed
+
+The earlier cycle bullet describes the first container composition. Its remaining
+`Lazy<T>` dependencies are gone, and `EditorServices` no longer registers a
+deferred `Lazy<>`. `AssistantConversationState` is shared by the assistant panel,
+file operations, presets and the unsaved-work question, so those services need
+the conversation state rather than the panel. `PluginInstalls` raises a restart
+request that `MainWindow` handles with the unsaved-work question and take state;
+the plugin service no longer depends on `UnsavedWork`. The settings and preset
+gallery cycle is likewise removed through `OutputSettingRepository`, as amended
+above. The composition graph now records only constructor and factory
+dependencies, with no cycle-break edges.
+
 No view models arrive with the container, and [0016](0016-build-the-ui-in-c-sharp-without-xaml.md)
 stands as written.
