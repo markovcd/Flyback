@@ -37,7 +37,6 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     private PixelSize resolution = new(640, 360);
     private CompiledPatch activeProgram = CompiledPatch.Black;
     private LiveValues live = LiveValues.None;
-    private double frameRate;
     private TimeSpan lastTick;
     private TimeSpan restUntil;
     private bool rendering;
@@ -93,10 +92,10 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the dispatcher allows.</summary>
     public double FrameRate
     {
-        get => frameRate;
+        get;
         set
         {
-            frameRate = value;
+            field = value;
             timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
         }
     }

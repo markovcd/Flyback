@@ -38,7 +38,6 @@ internal sealed class ViewerPlayer : IDisposable
     private readonly WallClock clock;
     private readonly Transport transport;
     private readonly Patch patch;
-    private bool audible;
 
     private DispatcherTimer? ticker;
     private TimeSpan last;
@@ -108,7 +107,7 @@ internal sealed class ViewerPlayer : IDisposable
         // A key going down while the clock is stopped is a change with no time behind it.
         if (this.preview is { } redrawn) midi.Played += redrawn.Refresh;
 
-        audible = device is not null && !options.NoAudio && Sound.VolumeIsUp(patch);
+        Sounding = device is not null && !options.NoAudio && Sound.VolumeIsUp(patch);
         transport.Mute(options.Mute);
 
         if (options.From > 0) transport.SeekTo(options.From);
@@ -125,7 +124,7 @@ internal sealed class ViewerPlayer : IDisposable
     internal Task Compiled() => compiler.Settled();
 
     /// <summary>Whether a sound device is running, or will be once play resumes.</summary>
-    public bool Sounding => audible;
+    public bool Sounding { get; private set; }
 
     public bool Paused => transport.Paused;
 
@@ -277,7 +276,7 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Starts the device where there is one to be heard, unless the run is paused.</summary>
     private void Play()
     {
-        if (Paused || !audible) return;
+        if (Paused || !Sounding) return;
 
         try
         {
@@ -289,7 +288,7 @@ internal sealed class ViewerPlayer : IDisposable
             Console.Error.WriteLine($"{GlobalConstants.ApplicationName}: no sound — {ex.Message}");
 
             // Not tried again on every resume, only to say the same thing again.
-            audible = false;
+            Sounding = false;
         }
     }
 

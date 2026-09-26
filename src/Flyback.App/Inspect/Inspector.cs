@@ -1163,10 +1163,8 @@ internal sealed class Inspector
     /// <summary>The scale last switched away from, for switching back to.</summary>
     private KeyboardScale? keptKeyboard;
 
-    private InspectorRows? rows;
-
     /// <summary>The panel's editable rows, which report an edit to the canvas and the hand coming off to the text.</summary>
-    private InspectorRows Rows => rows ??= new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
+    private InspectorRows Rows => field ??= new InspectorRows(because => editor.History.Record(because), document.HandCameOff);
 
     /// <summary>
     /// A plugin's extra, drawn from its <see cref="NodeExtra.Fields"/>.

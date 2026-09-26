@@ -12,10 +12,8 @@ namespace Flyback.Cli;
 /// </remarks>
 internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report)
 {
-    private PluginCatalog? loaded;
-
     /// <summary>The catalog, scanning the folder if this is the first ask.</summary>
-    public PluginCatalog Catalog => loaded ??= Scan();
+    public PluginCatalog Catalog => field ??= Scan();
 
     /// <summary>Asks for the catalog for its modules alone.</summary>
     public void Ready() => _ = Catalog;

@@ -302,7 +302,6 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private const string NoProvider = "None";
 
-    private IPatchAssistant? assistant;
     private AssistantRun? run;
 
     /// <summary>
@@ -406,8 +405,8 @@ internal sealed class AssistantPanel : UserControl
         settings = saved ?? (settingsPath is null ? new AssistantSettings() : AssistantSettings.Load(settingsPath));
 
         credentials = new Credentials(plugins.PreferredSecretStore);
-        assistant = Choose();
-        probeSection = new ProbeSection(() => assistant, KeyOnTheForm, form, Refresh);
+        Chosen = Choose();
+        probeSection = new ProbeSection(() => Chosen, KeyOnTheForm, form, Refresh);
 
         Content = Build();
 
@@ -439,12 +438,12 @@ internal sealed class AssistantPanel : UserControl
     }
 
     /// <summary>The assistant Ask sends to, or null where none is chosen.</summary>
-    public IPatchAssistant? Chosen => assistant;
+    public IPatchAssistant? Chosen { get; private set; }
 
     /// <summary>Where Ask sends the patch. Never names a key.</summary>
-    public string Summary => assistant is null
+    public string Summary => Chosen is null
         ? "No assistant is chosen, so nothing is sent anywhere."
-        : $"Ask sends the patch and pictures of it to {assistant.Name}.";
+        : $"Ask sends the patch and pictures of it to {Chosen.Name}.";
 
     // --- the conversation and the patch it is about ---------------------------
 
@@ -653,7 +652,7 @@ internal sealed class AssistantPanel : UserControl
     {
         Refresh();
 
-        openedProvider = assistant?.Id;
+        openedProvider = Chosen?.Id;
         section ??= BuildSettings();
 
         // Taken back from whoever last borrowed it, rather than left to them to
@@ -684,8 +683,8 @@ internal sealed class AssistantPanel : UserControl
             var row = providerBox.SelectedIndex;
             if (row < 0 || row > plugins.Assistants.Count) return;
 
-            assistant = row == 0 ? null : plugins.Assistants[row - 1];
-            settings.Provider = assistant?.Id ?? string.Empty;
+            Chosen = row == 0 ? null : plugins.Assistants[row - 1];
+            settings.Provider = Chosen?.Id ?? string.Empty;
 
             // What the last provider was set to is kept rather than carried
             // over. A setting means whatever the provider that declared it says
@@ -742,9 +741,9 @@ internal sealed class AssistantPanel : UserControl
         // who has just taken one out is as likely as not about to put another in.
         forget.Click += (_, _) =>
         {
-            if (assistant is null) return;
+            if (Chosen is null) return;
 
-            credentials.Forget(assistant.Id);
+            credentials.Forget(Chosen.Id);
             keyBox.Text = string.Empty;
             Refresh();
         };
@@ -776,7 +775,7 @@ internal sealed class AssistantPanel : UserControl
     /// <summary>Works <see cref="Undescribed"/> out again, and says so if it moved.</summary>
     private void Recount()
     {
-        var now = assistant is null
+        var now = Chosen is null
             ? new HashSet<string>()
             : Policy().Undescribed(plugins.Modules);
 
@@ -803,7 +802,7 @@ internal sealed class AssistantPanel : UserControl
         probeSection.Stop();
 
         settings.Provider = openedProvider ?? string.Empty;
-        assistant = Choose();
+        Chosen = Choose();
 
         keyBox.Text = string.Empty;
         rememberBox.IsChecked = settings.RememberKey;
@@ -866,16 +865,16 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private void ShowProviderForm()
     {
-        providerBox.SelectedIndex = assistant is null
+        providerBox.SelectedIndex = Chosen is null
             ? 0
             : plugins.Assistants
                 .Select((a, i) => (a, i))
-                .Where(pair => pair.a.Id == assistant.Id)
+                .Where(pair => pair.a.Id == Chosen.Id)
                 .Select(pair => pair.i + 1)
                 .DefaultIfEmpty(0)
                 .First();
 
-        form.Show(assistant is null ? null : assistant.Form, settings.Of(assistant?.Id ?? string.Empty));
+        form.Show(Chosen is null ? null : Chosen.Form, settings.Of(Chosen?.Id ?? string.Empty));
     }
 
     /// <summary>
@@ -912,16 +911,16 @@ internal sealed class AssistantPanel : UserControl
         // raised because a conversation ran out is raised for that conversation.
         if (run is not null) run.MaxTurns = settings.TurnLimit;
 
-        if (assistant is not null)
+        if (Chosen is not null)
         {
-            settings.Provider = assistant.Id;
-            settings.Remember(assistant.Id, form.Values);
+            settings.Provider = Chosen.Id;
+            settings.Remember(Chosen.Id, form.Values);
 
             var keep = settings.RememberKey && credentials.CanKeep;
 
             if (!string.IsNullOrWhiteSpace(keyBox.Text))
             {
-                credentials.Accept(assistant.Id, keyBox.Text, keep);
+                credentials.Accept(Chosen.Id, keyBox.Text, keep);
 
                 // Emptied once it has been taken. Left there it would hold the
                 // secret in a control for the life of the window, and the line
@@ -929,7 +928,7 @@ internal sealed class AssistantPanel : UserControl
                 keyBox.Text = string.Empty;
                 SayWhereTheKeyWent();
             }
-            else if (keep && credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable) == CredentialSource.Session)
+            else if (keep && credentials.SourceOf(Chosen.Id, Chosen.Credential.EnvironmentVariable) == CredentialSource.Session)
             {
                 // Ticking the box after the fact, with nothing typed. The key is
                 // already in hand and the field is empty because this emptied
@@ -938,7 +937,7 @@ internal sealed class AssistantPanel : UserControl
                 // HasEntered: a key already Kept from an earlier save has
                 // nothing left to do here, and saying so again on every later
                 // Save would announce a change that did not happen.
-                credentials.KeepWhatIsHeld(assistant.Id);
+                credentials.KeepWhatIsHeld(Chosen.Id);
                 SayWhereTheKeyWent();
             }
         }
@@ -963,9 +962,9 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private AssistantConfig? Configured()
     {
-        if (assistant is null) return null;
+        if (Chosen is null) return null;
 
-        var key = credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable) ?? string.Empty;
+        var key = credentials.Of(Chosen.Id, Chosen.Credential.EnvironmentVariable) ?? string.Empty;
 
         return new AssistantConfig(key, form.Values);
     }
@@ -978,8 +977,8 @@ internal sealed class AssistantPanel : UserControl
     private void Refresh()
     {
         var config = Configured();
-        var excuse = assistant is not null
-            ? (config is null ? null : Excuse(assistant, config))
+        var excuse = Chosen is not null
+            ? (config is null ? null : Excuse(Chosen, config))
             : plugins.Assistants.Count == 0
                 ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
                 : "No assistant is selected. Pick one in Settings.";
@@ -1099,17 +1098,17 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private void ShowKeyState()
     {
-        keySection.IsVisible = assistant is not null;
+        keySection.IsVisible = Chosen is not null;
 
-        if (assistant is null)
+        if (Chosen is null)
         {
             keyNote.Text = string.Empty;
             forget.IsEnabled = false;
             return;
         }
 
-        var variable = assistant.Credential.EnvironmentVariable;
-        var source = credentials.SourceOf(assistant.Id, variable);
+        var variable = Chosen.Credential.EnvironmentVariable;
+        var source = credentials.SourceOf(Chosen.Id, variable);
 
         keyBox.PlaceholderText = source switch
         {
@@ -1119,7 +1118,7 @@ internal sealed class AssistantPanel : UserControl
             _ => "Paste a key",
         };
 
-        var overruled = credentials.HasEntered(assistant.Id)
+        var overruled = credentials.HasEntered(Chosen.Id)
             && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(variable));
 
         // What a key entered here is standing on top of, since it is the reason
@@ -1140,12 +1139,12 @@ internal sealed class AssistantPanel : UserControl
                 $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
                 + "takes precedence over it, and forgetting that one comes back to this.",
 
-            _ => assistant.Credential.Help,
+            _ => Chosen.Credential.Help,
         };
 
         // Nothing to forget, or nothing this could reach if it tried: an
         // environment variable is not this application's to remove.
-        forget.IsEnabled = credentials.HasEntered(assistant.Id);
+        forget.IsEnabled = credentials.HasEntered(Chosen.Id);
     }
 
     // --- probing the endpoint -----------------------------------------------
@@ -1157,10 +1156,10 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private string? KeyOnTheForm()
     {
-        if (assistant is null) return null;
+        if (Chosen is null) return null;
 
         return string.IsNullOrWhiteSpace(keyBox.Text)
-            ? credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable)
+            ? credentials.Of(Chosen.Id, Chosen.Credential.EnvironmentVariable)
             : keyBox.Text;
     }
 
@@ -1172,9 +1171,9 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private void SayWhereTheKeyWent()
     {
-        if (assistant is null) return;
+        if (Chosen is null) return;
 
-        var source = credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable);
+        var source = credentials.SourceOf(Chosen.Id, Chosen.Credential.EnvironmentVariable);
 
         editor.Report(
             source switch
@@ -1221,7 +1220,7 @@ internal sealed class AssistantPanel : UserControl
     {
         if (run is null) return waiting is null ? string.Empty : Unresumable(waiting, config);
         if (run.Exhausted) return "That conversation had its turns. Starting another.";
-        if (!ReferenceEquals(runAssistant, assistant) || runConfig != config)
+        if (!ReferenceEquals(runAssistant, Chosen) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
 
         return run.EditedUnderneath(editor.Current)
@@ -1242,8 +1241,8 @@ internal sealed class AssistantPanel : UserControl
     {
         if (saved.Turns >= settings.TurnLimit) return "That conversation had its turns. Starting another.";
 
-        if (assistant is null
-            || !string.Equals(saved.Provider, assistant.Id, StringComparison.Ordinal)
+        if (Chosen is null
+            || !string.Equals(saved.Provider, Chosen.Id, StringComparison.Ordinal)
             || saved.Settings != SavedConversation.SettingsOf(config.Values))
             return "That conversation was had with other settings, so this is a new one.";
 
@@ -1325,15 +1324,15 @@ internal sealed class AssistantPanel : UserControl
 
     private async Task AskAsync()
     {
-        if (asking || assistant is null) return;
-        if (Configured() is not { } config || Excuse(assistant, config) is not null) return;
+        if (asking || Chosen is null) return;
+        if (Configured() is not { } config || Excuse(Chosen, config) is not null) return;
 
         var wanted = instruction.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(wanted)) return;
 
-        var conversation = Conversation(assistant, config);
+        var conversation = Conversation(Chosen, config);
 
-        usage?.Assistant(assistant.Id);
+        usage?.Assistant(Chosen.Id);
 
         transcript.Put(Voice.You, wanted);
         log.Write("you", wanted);

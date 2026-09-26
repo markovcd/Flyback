@@ -22,9 +22,7 @@ public class PluginsTests
 
         public StringWriter Report { get; } = new();
 
-        public Plugins Plugins => plugins ??= new Plugins(Scan, "nowhere", Report);
-
-        private Plugins? plugins;
+        public Plugins Plugins => field ??= new Plugins(Scan, "nowhere", Report);
 
         private PluginCatalog Scan()
         {

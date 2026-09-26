@@ -12,3 +12,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - **Count which features and modules are used.** The usage events (`src/Flyback.App/Statistics/Usage.cs`) say how many modules a played patch has, not which ones, and nothing about which editor features are reached for. Add both to what is sent to Aptabase, inside what ADR-0094 allows: shipped modules and features by name, a plugin's own under one name, nothing that could tie a report to a person or a patch.
 - **`flyback-viewer --report`.** At the end of a run, print the frames a second it held, the slowest frame and what the sound cost, so a script or an agent can measure a patch without watching it.
 - Allow to change a patch while agent is working. Also changing a patch shouldnt invalidate agent session
+- Forbid opening files/presets during recording

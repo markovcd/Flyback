@@ -55,8 +55,7 @@ internal sealed class PresetAudition
         IlCompiler compiler,
         PluginCatalog plugins,
         PresetLibrary saved,
-        Playback playback,
-        Lazy<TakeRecording> recording)
+        Playback playback)
     {
         this.audio = audio;
         this.compiler = compiler;
@@ -64,8 +63,10 @@ internal sealed class PresetAudition
         this.saved = saved;
 
         // A take records what the speakers play, and a preset tried on the way past is not part of it.
-        audible = () => playback.CanSound && !recording.Value.Running;
-        syncAudio = playback.SyncAudioToVolume;
+        audible = () => playback.CanSound;
+        
+        // We assume that during preset audition no recording should be running.
+        syncAudio = () => playback.SyncAudioToVolume(() => false);
     }
 
     /// <summary>

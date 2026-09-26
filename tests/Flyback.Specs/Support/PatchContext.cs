@@ -41,7 +41,6 @@ public sealed class PatchContext
     private string? compiledFor;
     private DelayState? memory;
     private CompiledPatch? memoryFor;
-    private LiveValues? live;
     private CompiledPatch? liveFor;
 
     /// <summary>What the scenarios call the drum machine whose clock a patch follows.</summary>
@@ -243,14 +242,14 @@ public sealed class PatchContext
         {
             var program = Sound.Program;
 
-            if (live is null || !ReferenceEquals(liveFor, program))
+            if (field is null || !ReferenceEquals(liveFor, program))
             {
-                live = new LiveValues(program.LiveInputs);
+                field = new LiveValues(program.LiveInputs);
                 liveFor = program;
-                Clock.WriteTo(live, Machine);
+                Clock.WriteTo(field, Machine);
             }
 
-            return live;
+            return field;
         }
     }
 

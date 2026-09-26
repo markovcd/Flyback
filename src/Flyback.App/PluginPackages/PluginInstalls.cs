@@ -185,7 +185,15 @@ internal sealed class PluginInstalls
     {
         var site = this.site.Plugins();
         var (run, troubles) = PluginSummary.Run(plugins, pluginFolder ?? PluginHost.DefaultDirectory, playback.Sound);
-        using var hub = new PluginHub(site, () => { var assisting = Assisting(); return Task.Run(() => InstalledPlugins(assisting, troubles)); }, (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), plugin => ShowInstalledAsync(site, plugin), wanted, run);
+        using var hub = new PluginHub(
+            site,
+            () =>
+            {
+                var assisting = Assisting(); 
+                return Task.Run(() => InstalledPlugins(assisting, troubles));
+            }, 
+            (plugin, downloaded) => InstallFromSiteAsync(site!, plugin, downloaded), 
+            plugin => ShowInstalledAsync(site, plugin), wanted, run);
 
         // Read before the window goes up, so the rows do not arrive above whatever is showing.
         await hub.RereadAsync();

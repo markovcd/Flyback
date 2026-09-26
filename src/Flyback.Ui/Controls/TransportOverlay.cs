@@ -39,10 +39,6 @@ public sealed class TransportOverlay : TuckedAway
     private readonly Button loopButton;
     private readonly SeekTrack track = new(stage: true) { Width = Wide };
 
-    private bool paused;
-    private bool muted;
-    private bool looped;
-
     public TransportOverlay()
         : this(new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap })
     {
@@ -126,26 +122,26 @@ public sealed class TransportOverlay : TuckedAway
     /// <summary>Whether play is held. The pause button shows what a press does next.</summary>
     public bool Paused
     {
-        get => paused;
+        get;
         set
         {
-            if (paused == value) return;
+            if (field == value) return;
 
-            paused = value;
-            pauseButton.Content = Face(paused ? Glyphs.Play() : Glyphs.Pause());
+            field = value;
+            pauseButton.Content = Face(field ? Glyphs.Play() : Glyphs.Pause());
         }
     }
 
     /// <summary>Whether the sound is turned off.</summary>
     public bool Muted
     {
-        get => muted;
+        get;
         set
         {
-            if (muted == value) return;
+            if (field == value) return;
 
-            muted = value;
-            muteButton.Content = Face(muted ? Glyphs.Muted() : Glyphs.Speaker());
+            field = value;
+            muteButton.Content = Face(field ? Glyphs.Muted() : Glyphs.Speaker());
         }
     }
 
@@ -157,7 +153,7 @@ public sealed class TransportOverlay : TuckedAway
     }
 
     /// <summary>Whether the patch comes round to nought at its end.</summary>
-    public bool Looped => looped;
+    public bool Looped { get; private set; }
 
     /// <summary>Whether the strip can be used: not during a take, which is paced by its own samples.</summary>
     public bool CanSeek
@@ -172,9 +168,9 @@ public sealed class TransportOverlay : TuckedAway
         track.Maximum = length;
         if (!track.Held) track.Value = Math.Min(seconds, length);
 
-        if (looped == loops) return;
+        if (Looped == loops) return;
 
-        looped = loops;
+        Looped = loops;
         loopButton.Classes.Set(Engaged, loops);
     }
 }

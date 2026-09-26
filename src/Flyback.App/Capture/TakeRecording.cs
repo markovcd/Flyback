@@ -73,6 +73,7 @@ internal sealed class TakeRecording
     private readonly Usage usage;
     private readonly Func<Patch> patch;
     private readonly Func<OutputSettings> settings;
+    private readonly Playback playback;
 
     /// <summary>Says a line, and whether it is the last one again with a new number in it.</summary>
     private readonly Action<string, bool> report;
@@ -82,12 +83,6 @@ internal sealed class TakeRecording
     /// take running takes Pause away, and finishing gives it back.
     /// </summary>
     public event EventHandler? Marked;
-
-    /// <summary>Takes the patch back to zero seconds, which is where a counted-in take begins.</summary>
-    private readonly Action rewind;
-
-    /// <summary>Asks again whether the device should be running, once there is no take holding it open.</summary>
-    private readonly Action syncAudio;
 
     /// <summary>Live while a take is running, and the only thing that says one is.</summary>
     private LiveRecorder? recorder;
@@ -135,8 +130,7 @@ internal sealed class TakeRecording
         patch = () => editor.History.Patch;
         settings = () => sections.Saved;
         this.report = (message, progress) => report.Say(message, progress: progress);
-        rewind = playback.Rewind;
-        syncAudio = playback.SyncAudioToVolume;
+        this.playback = playback;
     }
 
     /// <summary>Whether a take is running.</summary>
@@ -265,7 +259,7 @@ internal sealed class TakeRecording
         // Rewind button puts them.
         if (settings().RewindBeforeTake)
         {
-            rewind();
+            playback.Rewind();
         }
 
         Start(path, patch());
@@ -315,7 +309,7 @@ internal sealed class TakeRecording
 
         // The device was kept running for the take whatever Volume said, so it
         // is asked again now there is none — see Playback.SyncAudioToVolume.
-        syncAudio();
+        playback.SyncAudioToVolume(() => Running);
 
         Mark();
     }

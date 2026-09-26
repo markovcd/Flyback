@@ -295,7 +295,7 @@ internal sealed class MainWindow : Window
 
         editor.History.PatchChanged += (_, _) =>
         {
-            playback.Recompile(opened: editor.History.Opening);
+            playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running, opened: editor.History.Opening);
             if (editor.History.Opening) statusBar.Compiling.Watch(() => playback.Starting);
 
             // Patching an input takes its knob away and unpatching gives it
@@ -307,7 +307,7 @@ internal sealed class MainWindow : Window
         editor.Selection.Changed += (_, _) =>
         {
             inspector.Build();
-            playback.ProbeSelectionChanged();
+            playback.ProbeSelectionChanged(files.Sounds, files.Pictures, () => Recording.Running);
         };
         editor.History.HistoryChanged += (_, _) => RefreshEditState();
 
@@ -1281,7 +1281,7 @@ internal sealed class MainWindow : Window
         playback.TransportChanged += (_, _) => SyncTransport();
 
         // A patch saved somewhere new reads what it names from there.
-        files.Moved += (_, _) => playback.Recompile();
+        files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running);
 
         // The patch is playing, which is the moment what is in it is worth
         // counting (ADR-0094). Not at a compile: a patch is recompiled on every
@@ -1415,7 +1415,7 @@ internal sealed class MainWindow : Window
         UseOutputSettings(saved);
 
         if (saved.LatencyMilliseconds != before.LatencyMilliseconds || outputSections.SoundChanged(before, saved))
-            playback.ReopenAudio(saved);
+            playback.ReopenAudio(saved, () => Recording.Running);
 
         if (outputSettingsPath is null) return;
 
@@ -2021,7 +2021,7 @@ internal sealed class MainWindow : Window
         // A take is paced by the samples it is handed, so pausing under one would stop the file.
         if (Recording.InHand || Recording.Counting) return;
 
-        if (playback.Paused) playback.Resume();
+        if (playback.Paused) playback.Resume(() => Recording.Running);
         else playback.Pause();
     }
 
@@ -2037,7 +2037,7 @@ internal sealed class MainWindow : Window
             toolbar.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
         }
 
-        toolbar.Pause.IsEnabled = !Recording.InHand && !Recording.Counting;
+        toolbar.Pause.IsEnabled = Recording is { InHand: false, Counting: false };
         toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
 
         ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
@@ -2129,7 +2129,7 @@ internal sealed class MainWindow : Window
         if (file?.TryGetLocalPath() is not { } path) return;
 
         // A take is of a patch that is playing, and a paused one has no sound to record.
-        playback.Resume();
+        playback.Resume(() => Recording.Running);
 
         // Before the count rather than only as the file is opened: a count-in is
         // three seconds of standing ready, and spending them to be told there is

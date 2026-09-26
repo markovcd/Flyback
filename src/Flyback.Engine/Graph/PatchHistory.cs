@@ -34,7 +34,6 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     private string current = string.Empty;
     private string saved = string.Empty;
     private string? gesture;
-    private object? mark;
 
     /// <summary>
     /// Whether the patch differs from the one last opened or written out. A
@@ -51,7 +50,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// What was noted beside the state the history now stands at — see the
     /// <c>mark</c> argument to <see cref="Record"/>.
     /// </summary>
-    public object? Mark => mark;
+    public object? Mark { get; private set; }
 
     /// <summary>
     /// Begin from this document, with nothing behind it. A patch that was opened,
@@ -64,7 +63,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         past.Clear();
         future.Clear();
         gesture = null;
-        this.mark = mark;
+        Mark = mark;
         current = Snapshot(patch);
         saved = current;
     }
@@ -111,7 +110,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         if (current.Length == 0)
         {
             current = now;
-            this.mark = mark;
+            Mark = mark;
             return false;
         }
 
@@ -120,7 +119,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         // patch moving has said so, and there is nothing to step back through.
         if (now == current)
         {
-            this.mark = mark;
+            Mark = mark;
             return false;
         }
 
@@ -136,7 +135,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         {
             past.RemoveAt(past.Count - 1);
             current = now;
-            this.mark = mark;
+            Mark = mark;
             gesture = null;
 
             return false;
@@ -144,12 +143,12 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
 
         if (stepped)
         {
-            past.Add((current, this.mark));
+            past.Add((current, Mark));
             if (past.Count > Depth) past.RemoveAt(0);
         }
 
         current = now;
-        this.mark = mark;
+        Mark = mark;
         gesture = coalesce;
         future.Clear();
 
@@ -170,7 +169,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         for (var i = 0; i < past.Count; i++) past[i] = (past[i].Snapshot, mark);
         for (var i = 0; i < future.Count; i++) future[i] = (future[i].Snapshot, mark);
 
-        this.mark = mark;
+        Mark = mark;
     }
 
     /// <summary>
@@ -191,7 +190,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
         for (var i = 0; i < past.Count; i++) past[i] = (past[i].Snapshot, restated(past[i].Mark));
         for (var i = 0; i < future.Count; i++) future[i] = (future[i].Snapshot, restated(future[i].Mark));
 
-        mark = restated(mark);
+        Mark = restated(Mark);
     }
 
     /// <summary>
@@ -203,7 +202,7 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     /// it hands back should be what was so here — not what was so when the last
     /// edit happened to be made.
     /// </remarks>
-    public void Note(object? mark) => this.mark = mark;
+    public void Note(object? mark) => Mark = mark;
 
     /// <summary>
     /// The gesture named in the last <see cref="Record"/> is over, so the next
@@ -229,8 +228,8 @@ public sealed class PatchHistory(ModuleCatalog? modules = null)
     {
         if (from.Count == 0) return null;
 
-        to.Add((current, mark));
-        (current, mark) = from[^1];
+        to.Add((current, Mark));
+        (current, Mark) = from[^1];
         from.RemoveAt(from.Count - 1);
 
         // Whatever gesture was in progress is over. The next edit starts a step

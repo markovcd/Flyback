@@ -53,7 +53,6 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private PixelSize resolution = new(640, 360);
     private PixelSize controlPixels;
     private double time;
-    private double frameRate;
     private bool rewindPending;
     private IFrameSink? capture;
     private bool dirty = true;
@@ -112,10 +111,10 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     /// </summary>
     public double FrameRate
     {
-        get => frameRate;
+        get;
         set
         {
-            frameRate = value;
+            field = value;
             timer.Interval = value > 0 ? TimeSpan.FromSeconds(1d / value) : UncappedInterval;
         }
     }

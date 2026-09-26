@@ -33,9 +33,6 @@ internal sealed class Playback
     private readonly Transport transport;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
-    private readonly Func<ISampleLibrary> sounds;
-    private readonly Func<IImageLibrary> pictures;
-    private readonly Func<bool> recording;
     private readonly Func<string?> assistantSummary;
 
     /// <summary>The patch has just been compiled, and the picture and the sound are playing it.</summary>
@@ -60,9 +57,7 @@ internal sealed class Playback
         AudioEngine audio,
         IlCompiler compiler,
         MidiHub midi,
-        AudioSetup sound,
-        Lazy<PatchFiles> files,
-        Lazy<TakeRecording> recording)
+        AudioSetup sound)
     {
         this.editor = editor;
         this.audio = audio;
@@ -70,9 +65,6 @@ internal sealed class Playback
         transport = new Transport(audio, preview, compiler, midi);
         this.report = report;
         this.plugins = plugins;
-        sounds = () => files.Value.Sounds;
-        pictures = () => files.Value.Pictures;
-        this.recording = () => recording.Value.Running;
         assistantSummary = () => assistant.Value.Summary;
 
         Sound = sound;
@@ -115,7 +107,7 @@ internal sealed class Playback
     /// so a device that is busy or gone says so when it is started — through
     /// <see cref="SetAudioEnabled"/>, the same as at launch.
     /// </remarks>
-    public void ReopenAudio(OutputSettings settings)
+    public void ReopenAudio(OutputSettings settings, Func<bool> isRecording)
     {
         var next = Audio.Sound.Open(plugins, settings);
 
@@ -132,14 +124,14 @@ internal sealed class Playback
         {
             next.Device.Dispose();
             report.Say("That device plays at another rate, so it is used from the next time Flyback starts.");
-            SyncAudioToVolume();
+            SyncAudioToVolume(isRecording);
             return;
         }
 
         Sound = next;
         blocked = false;
 
-        SyncAudioToVolume();
+        SyncAudioToVolume(isRecording);
     }
 
     private string FailureDetail() => PluginSummary.Text(plugins, Sound.Failure, assistantSummary());
@@ -177,9 +169,9 @@ internal sealed class Playback
     /// anything else is what takes it off again. No other selection changes the
     /// picture, so this recompiles only when that one does.
     /// </summary>
-    public void ProbeSelectionChanged()
+    public void ProbeSelectionChanged(ISampleLibrary samples, IImageLibrary images, Func<bool> isRecording)
     {
-        if (Probed?.Id != showingProbe) Recompile();
+        if (Probed?.Id != showingProbe) Recompile(samples, images, isRecording);
     }
 
     /// <summary>
@@ -191,7 +183,7 @@ internal sealed class Playback
     /// A patch just opened, whose sound and picture start together once both are
     /// built: the sound's IL, and the picture's shader or IL.
     /// </param>
-    public void Recompile(bool opened = false)
+    public void Recompile(ISampleLibrary samples, IImageLibrary images, Func<bool> isRecording, bool opened = false)
     {
         var probe = Probed;
         showingProbe = probe?.Id;
@@ -202,10 +194,7 @@ internal sealed class Playback
         else opening = null;
 
         var start = opening;
-
-        var samples = sounds();
-        var images = pictures();
-
+        
         var result = probe is null
             ? editor.History.Patch.CompileForVideo(samples: samples, pictures: images, played: true)
             : editor.History.Patch.CompileForProbe(probe.Id, samples: samples, pictures: images, played: true);
@@ -253,7 +242,7 @@ internal sealed class Playback
         // behind the line gives each its own row.
         report.Say(said.ToList());
 
-        SyncAudioToVolume();
+        SyncAudioToVolume(isRecording);
     }
 
     public void Pause()
@@ -265,14 +254,14 @@ internal sealed class Playback
     }
 
     /// <summary>Plays on from where it stopped, or from nought where it stopped at the end of its length.</summary>
-    public void Resume()
+    public void Resume(Func<bool> isRecording)
     {
         if (!Paused) return;
 
         if (transport.Time >= Length) transport.Rewind();
 
         transport.Resume();
-        SyncAudioToVolume();
+        SyncAudioToVolume(isRecording);
     }
 
     /// <summary>Silences the speakers without stopping the device, so the clock does not drift.</summary>
@@ -310,7 +299,7 @@ internal sealed class Playback
     /// device, and a recompile happens on every knob frame while a slider is
     /// dragged (ADR-0021).
     /// </remarks>
-    public void SyncAudioToVolume()
+    public void SyncAudioToVolume(Func<bool> isRecording)
     {
         TransportChanged?.Invoke(this, EventArgs.Empty);
 
@@ -321,7 +310,7 @@ internal sealed class Playback
         // picture and all — at that instant, and fading Volume to nought is how
         // a take is ended. It records the silence instead, and the device is
         // asked about again when the take is over.
-        if (!wanted && recording()) return;
+        if (!wanted && isRecording()) return;
 
         // Nor while a preset from the gallery is being heard through it, which
         // is what started it if the patch had not.

@@ -24,9 +24,7 @@ public sealed class SavedPreset(string name, string path)
     /// The same preset as everything that offers presets takes one. Made once, so
     /// it can be looked up again by what it is — see <see cref="PresetLibrary.Holding"/>.
     /// </summary>
-    public PatchPreset Preset => preset ??= new PatchPreset(Name, catalog => Open(catalog).Patch);
-
-    private PatchPreset? preset;
+    public PatchPreset Preset => field ??= new PatchPreset(Name, catalog => Open(catalog).Patch);
 
     /// <summary>
     /// The patch, with whatever sounds and pictures it carries.

@@ -58,18 +58,16 @@ public sealed record PatchPreset(
     /// </summary>
     public Func<IReadOnlyDictionary<string, byte[]>>? Files { get; init; }
 
-    private readonly Func<ModuleCatalog, Patch> build = Build;
-
     /// <summary>Builds the patch, carrying <see cref="Description"/> unless it has one of its own.</summary>
     public Func<ModuleCatalog, Patch> Build
     {
         get => modules =>
         {
-            var patch = build(modules);
+            var patch = field(modules);
 
             if (patch.Description is null) patch.Describe(Description);
             return patch;
         };
-        init => build = value;
-    }
+        init;
+    } = Build;
 }
