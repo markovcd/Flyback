@@ -9,6 +9,10 @@
 # itself). Split in two because the canvas subsystem is a near-clique on its own scale;
 # drawn in the same picture as the composition root it turned into an unreadable tangle.
 #
+# Usage (a telemetry sink most classes hold, like a logger) is left out of this list
+# entirely: nearly every class takes it, and it is a hub with no structural meaning to
+# trace, not a real collaborator.
+#
 # Legend
 #   [R]      registered in the editor's DI container
 #   A -> B   A takes B (or an interface B implements) as a constructor parameter (DI)
@@ -28,7 +32,6 @@ IPresetFolder => EditorSetup
 
 # --- Registered nodes [R] ---
 [R] EditorSetup                (also satisfies IIlCompilerSetup, IPresetFolder)
-[R] Usage
 [R] PluginCatalog
 [R] HttpClient "SiteAccess.Client" (via IHttpClientFactory)
 [R] IlCompiler                 [ext: Flyback.Engine]
@@ -84,7 +87,6 @@ AssistantEditor ~> PresetSlot
 AssistantPanel -> PluginCatalog
 AssistantPanel -> IAssistantEditor
 AssistantPanel -> EditorSetup
-AssistantPanel -> Usage
 
 AudioEngine -> AudioSetup
 AudioEngine -> IlCompiler
@@ -143,7 +145,6 @@ CanvasTips -> NodeGeometry
 Document -> NodeEditor
 Document -> SourceView
 Document -> ReportLine
-Document -> Usage
 
 EditorWindow -> IServiceProvider   [ext: the container itself]
 
@@ -176,7 +177,6 @@ MainWindow -> UnsavedWork
 MainWindow -> PreviewHost
 MainWindow -> ReportLine
 MainWindow -> PluginCatalog
-MainWindow -> Usage
 MainWindow -> IlCompiler
 MainWindow -> AudioEngine
 MainWindow -> MidiHub
@@ -223,7 +223,6 @@ Palette -> NodeEditor
 Palette -> Document
 Palette -> PluginCatalog
 Palette -> ReportLine
-Palette -> Usage
 Palette -> PanelKnobs
 Palette -> OutputSections
 Palette -> EditorSetup
@@ -239,7 +238,6 @@ PatchFiles -> NodeEditor
 PatchFiles -> Document
 PatchFiles -> PluginCatalog
 PatchFiles -> ReportLine
-PatchFiles -> Usage
 PatchFiles ~> AssistantPanel
 PatchFiles -> Playback
 PatchFiles -> PluginInstalls
@@ -279,7 +277,6 @@ PresetSlot -> NodeEditor
 PresetSlot -> Document
 PresetSlot -> PluginCatalog
 PresetSlot -> ReportLine
-PresetSlot -> Usage
 PresetSlot ~> AssistantPanel
 PresetSlot -> PatchFiles
 PresetSlot -> PresetThumbnails
@@ -318,7 +315,6 @@ SocketDial -> IPointerAnchors
 StatusBar -> NodeEditor
 StatusBar -> PluginCatalog
 StatusBar -> ReportLine
-StatusBar -> Usage
 StatusBar -> PreviewHost
 StatusBar -> SiteAccess
 StatusBar -> Playback
@@ -329,7 +325,6 @@ TakeRecording -> Toolbar
 TakeRecording -> OutputSections
 TakeRecording -> PreviewHost
 TakeRecording -> AudioEngine
-TakeRecording -> Usage
 TakeRecording -> NodeEditor
 TakeRecording -> ReportLine
 TakeRecording -> Playback
@@ -355,7 +350,6 @@ UpdatesSection -> EditorSetup
 UpdatesSection -> ReportLine
 
 UsageSection -> EditorSetup
-UsageSection -> Usage
 UsageSection -> ReportLine
 
 Viewport -> CanvasHistory

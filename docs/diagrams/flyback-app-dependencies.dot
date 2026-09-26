@@ -10,6 +10,10 @@
 //
 // Solid black edge = constructor parameter (DI). Dashed blue "lazy" = Lazy<T> (ADR-0150
 // cycle-break). Dotted red "new" = built with `new` inside a ctor/field initializer, not DI.
+//
+// The Usage node (a telemetry sink most classes hold, like a logger) is omitted from all
+// three files: nearly everything takes it, and drawing it added a hub with no structural
+// meaning to trace.
 digraph FlybackAppOverview {
   rankdir=TB;
   splines=spline;
@@ -33,7 +37,7 @@ digraph FlybackAppOverview {
   NodeEditor [style="filled,bold", fillcolor="#b8d8ff", label="NodeEditor\n(canvas subsystem,\nsee canvas-internals.dot)"];
 
   // subsystem colors (cosmetic only — not a layout constraint)
-  EditorSetup [fillcolor="#cfe2f3"]; Usage [fillcolor="#cfe2f3"]; PluginCatalog [fillcolor="#cfe2f3"];
+  EditorSetup [fillcolor="#cfe2f3"]; PluginCatalog [fillcolor="#cfe2f3"];
   Document [fillcolor="#cfe2f3"]; SourceView [fillcolor="#cfe2f3"]; ReportLine [fillcolor="#cfe2f3"];
   Playback [fillcolor="#cfe2f3"]; AudioSetup [fillcolor="#cfe2f3"];
 
@@ -96,7 +100,7 @@ digraph FlybackAppOverview {
   MainWindow -> EditorSetup; MainWindow -> NodeEditor; MainWindow -> SourceView;
   MainWindow -> Document; MainWindow -> PatchFiles; MainWindow -> UnsavedWork;
   MainWindow -> PreviewHost; MainWindow -> ReportLine; MainWindow -> PluginCatalog;
-  MainWindow -> Usage; MainWindow -> IlCompiler; MainWindow -> AudioEngine;
+  MainWindow -> IlCompiler; MainWindow -> AudioEngine;
   MainWindow -> MidiHub; MainWindow -> Playback; MainWindow -> OutputSections;
   MainWindow -> CanvasSection; MainWindow -> UpdatesSection; MainWindow -> UsageSection;
   MainWindow -> FilesSection; MainWindow -> PanelKnobs; MainWindow -> Inspector;
@@ -110,11 +114,11 @@ digraph FlybackAppOverview {
   AssistantEditor -> PresetSlot [style=dashed, color=blue];
 
   AssistantPanel -> PluginCatalog; AssistantPanel -> IAssistantEditor;
-  AssistantPanel -> EditorSetup; AssistantPanel -> Usage;
+  AssistantPanel -> EditorSetup;
 
   AudioEngine -> AudioSetup; AudioEngine -> IlCompiler;
 
-  Document -> NodeEditor; Document -> SourceView; Document -> ReportLine; Document -> Usage;
+  Document -> NodeEditor; Document -> SourceView; Document -> ReportLine;
 
   EditorWindow -> IServiceProvider;
 
@@ -131,14 +135,14 @@ digraph FlybackAppOverview {
   OutputSections -> IFilePickers; OutputSections -> IMonitors;
 
   Palette -> NodeEditor; Palette -> Document; Palette -> PluginCatalog;
-  Palette -> ReportLine; Palette -> Usage; Palette -> PanelKnobs;
+  Palette -> ReportLine; Palette -> PanelKnobs;
   Palette -> OutputSections; Palette -> EditorSetup;
 
   PanelKnobs -> NodeEditor; PanelKnobs -> Document; PanelKnobs -> ReportLine;
   PanelKnobs -> PreviewHost; PanelKnobs -> AudioEngine; PanelKnobs -> MidiHub;
 
   PatchFiles -> NodeEditor; PatchFiles -> Document; PatchFiles -> PluginCatalog;
-  PatchFiles -> ReportLine; PatchFiles -> Usage;
+  PatchFiles -> ReportLine;
   PatchFiles -> AssistantPanel [style=dashed, color=blue];
   PatchFiles -> Playback; PatchFiles -> PluginInstalls; PatchFiles -> IFilePickers;
 
@@ -162,7 +166,7 @@ digraph FlybackAppOverview {
   PresetLibrary -> EditorSetup [label="IPresetFolder", fontcolor=gray40, color=gray40];
 
   PresetSlot -> NodeEditor; PresetSlot -> Document; PresetSlot -> PluginCatalog;
-  PresetSlot -> ReportLine; PresetSlot -> Usage;
+  PresetSlot -> ReportLine;
   PresetSlot -> AssistantPanel [style=dashed, color=blue];
   PresetSlot -> PatchFiles; PresetSlot -> PresetThumbnails; PresetSlot -> PresetAudition;
   PresetSlot -> PresetLibrary; PresetSlot -> SiteAccess; PresetSlot -> UnsavedWork;
@@ -177,11 +181,11 @@ digraph FlybackAppOverview {
   SiteAccess -> EditorSetup; SiteAccess -> IHttpClientFactory;
 
   StatusBar -> NodeEditor; StatusBar -> PluginCatalog; StatusBar -> ReportLine;
-  StatusBar -> Usage; StatusBar -> PreviewHost; StatusBar -> SiteAccess;
+  StatusBar -> PreviewHost; StatusBar -> SiteAccess;
   StatusBar -> Playback; StatusBar -> IDialogs; StatusBar -> IWindowFocus;
 
   TakeRecording -> Toolbar; TakeRecording -> OutputSections; TakeRecording -> PreviewHost;
-  TakeRecording -> AudioEngine; TakeRecording -> Usage; TakeRecording -> NodeEditor;
+  TakeRecording -> AudioEngine; TakeRecording -> NodeEditor;
   TakeRecording -> ReportLine; TakeRecording -> Playback;
 
   Toolbar -> PresetSlot; Toolbar -> PluginCatalog; Toolbar -> SeekBar;
@@ -194,7 +198,7 @@ digraph FlybackAppOverview {
 
   UpdatesSection -> EditorSetup; UpdatesSection -> ReportLine;
 
-  UsageSection -> EditorSetup; UsageSection -> Usage; UsageSection -> ReportLine;
+  UsageSection -> EditorSetup; UsageSection -> ReportLine;
 
   WindowDialogs -> EditorWindow; WindowFilePickers -> EditorWindow;
   WindowMonitors -> EditorWindow; WindowFocus -> EditorWindow; WindowClose -> EditorWindow;
