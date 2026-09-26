@@ -46,6 +46,7 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly IAssistantEditor editor;
     private readonly AssistantConversation conversation;
+    private readonly AssistantRunFactory runs;
 
     private readonly AssistantSettingRepository settingsRepository;
 
@@ -368,6 +369,7 @@ internal sealed class AssistantPanel : UserControl
         PluginCatalog plugins,
         IAssistantEditor editor,
         AssistantConversation conversation,
+        AssistantRunFactory runs,
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
         EditorSetup? setup = null,
@@ -377,6 +379,7 @@ internal sealed class AssistantPanel : UserControl
         this.plugins = plugins;
         this.editor = editor;
         this.conversation = conversation;
+        this.runs = runs;
         this.credentials = credentials;
         this.usage = usage;
         settingsPath = setup?.AssistantSettingsPath;
@@ -1201,9 +1204,7 @@ internal sealed class AssistantPanel : UserControl
         conversation.Begin(resuming, editor.Current);
 
         run?.Dispose();
-        run = new AssistantRun(
-            with, config, plugins.Modules, editor.Current, settingsRepository.Current.TurnLimit,
-            samples: editor.Samples, pictures: editor.Pictures, resuming: resuming, prose: settingsRepository.GetProsePolicy(), presets: editor.Presets() ?? plugins.Presets);
+        run = runs.Create(with, config, resuming);
         runConfig = config;
         runAssistant = with;
 

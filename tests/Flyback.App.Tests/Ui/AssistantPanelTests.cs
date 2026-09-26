@@ -73,11 +73,13 @@ public sealed class AssistantPanelTests : UiTest
         var catalog = plugins ?? PluginCatalog.Empty;
         var repository = new AssistantSettingRepository(Kept, saved ?? new AssistantSettings());
         var patch = Presets.Plasma(NodeCatalog.BuiltIn);
+        var editor = new Holding(() => patch, report);
         var panel = new AssistantPanel(
             new ChosenAssistant(repository, catalog),
             catalog,
-            new Holding(() => patch, report),
+            editor,
             new AssistantConversation(() => patch),
+            new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
             Kept);
@@ -107,11 +109,13 @@ public sealed class AssistantPanelTests : UiTest
         var settings = new AssistantSettings();
         var catalog = PluginCatalog.Empty;
         var repository = new AssistantSettingRepository(Kept, settings);
+        var editor = new Holding(() => patch);
         var panel = new AssistantPanel(
             new ChosenAssistant(repository, catalog),
             catalog,
-            new Holding(() => patch),
+            editor,
             new AssistantConversation(() => patch),
+            new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
             Kept);

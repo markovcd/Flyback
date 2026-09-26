@@ -81,6 +81,7 @@ internal static class EditorServices
         services.AddSingleton<MidiHub>();
 
         services.AddSingleton<AssistantSettingRepository>();
+        services.AddSingleton<AssistantRunFactory>();
         services.AddSingleton(sp => new Credentials(sp.GetRequiredService<PluginCatalog>().PreferredSecretStore));
         services.AddSingleton<AssistantConversation>();
 
