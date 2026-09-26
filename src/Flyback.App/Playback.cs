@@ -1,7 +1,6 @@
 using Flyback.App.Assist;
 using Flyback.App.Audio;
 using Flyback.App.Canvas;
-using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Midi;
 using Flyback.App.PluginPackages;

@@ -1,5 +1,5 @@
 // Flyback.App canvas subsystem — the 17 services CanvasServices.cs registers
-// (collapsed to a single "NodeEditor" node in flyback-app-overview.dot).
+// (collapsed to a single "NodeEditor" node in flyback-app-dependencies.dot).
 // Nothing outside this subsystem depends on anything but NodeEditor itself.
 digraph CanvasInternals {
   rankdir=TB;

@@ -1,7 +1,7 @@
 // Flyback.App composition root — construction-time dependencies.
 // The canvas subsystem (17 classes) is collapsed to one NodeEditor node here;
 // see canvas-internals.dot for what is inside it. Same edge data as
-// flyback-app-dependencies.dot/.txt; layout is left to Graphviz's own ranking
+// flyback-app-dependencies.dot; layout is left to Graphviz's own ranking
 // (by edge direction) rather than boxed subsystem groups, since a class's
 // dependency depth and its "which subsystem" grouping don't line up — boxing
 // them together forced unrelated-depth nodes onto the same row and produced
@@ -9,7 +9,8 @@
 // Node fill color still marks the subsystem; see the legend node.
 //
 // Solid black edge = constructor parameter (DI). Dashed blue "lazy" = Lazy<T> (ADR-0150
-// cycle-break). Dotted red "new" = built with `new` inside a ctor/field initializer, not DI.
+// cycle-break). Dotted purple "factory" = looked up by a DI factory. Dotted red "new"
+// = built with `new` inside a ctor/field initializer, not DI.
 //
 // Usage and ReportLine (a telemetry sink and a status-line sink, both held like a logger)
 // are omitted from all three files: nearly everything takes them, and drawing them added
@@ -28,6 +29,7 @@ digraph FlybackAppOverview {
       <tr><td bgcolor="white">edge style</td><td>meaning</td></tr>
       <tr><td><font color="black">&#8594;</font></td><td align="left">constructor parameter (DI)</td></tr>
       <tr><td><font color="blue">- - &#8594;</font></td><td align="left">Lazy&lt;T&gt; parameter (deferred DI, breaks a cycle)</td></tr>
+      <tr><td><font color="purple">&#183;&#183;&#183;&#8594;</font></td><td align="left">looked up by a DI factory</td></tr>
       <tr><td><font color="firebrick">&#183;&#183;&#183;&#8594;</font></td><td align="left">built with `new` in a ctor/field init — not DI</td></tr>
       <tr><td><font color="gray40">&#183;&#183;&#183;&#8594;</font></td><td align="left">interface registered against this implementation</td></tr>
     </table>
@@ -37,7 +39,7 @@ digraph FlybackAppOverview {
   NodeEditor [style="filled,bold", fillcolor="#b8d8ff", label="NodeEditor\n(canvas subsystem,\nsee canvas-internals.dot)"];
 
   // subsystem colors (cosmetic only — not a layout constraint)
-  EditorSetup [fillcolor="#cfe2f3"]; PluginCatalog [fillcolor="#cfe2f3"];
+  PluginCatalog [fillcolor="#cfe2f3"];
   Document [fillcolor="#cfe2f3"]; SourceView [fillcolor="#cfe2f3"];
   Playback [fillcolor="#cfe2f3"]; AudioSetup [fillcolor="#cfe2f3"];
 
@@ -49,6 +51,7 @@ digraph FlybackAppOverview {
   FilesSection [fillcolor="#d0e8d0"]; PluginInstalls [fillcolor="#d0e8d0"]; SiteAccess [fillcolor="#d0e8d0"];
 
   OutputSections [fillcolor="#fce5cd"]; CanvasSection [fillcolor="#fce5cd"];
+  OutputSettingRepository [fillcolor="#fce5cd"];
   UpdatesSection [fillcolor="#fce5cd"]; UsageSection [fillcolor="#fce5cd"];
 
   PresetThumbnails [fillcolor="#fff2cc"]; PresetAudition [fillcolor="#fff2cc"]; PresetSlot [fillcolor="#fff2cc"];
@@ -58,6 +61,7 @@ digraph FlybackAppOverview {
   SeekBar [fillcolor="#ead1dc"]; Toolbar [fillcolor="#ead1dc"]; StatusBar [fillcolor="#ead1dc"]; TakeRecording [fillcolor="#ead1dc"];
 
   AssistantEditor [fillcolor="#f4cccc"]; AssistantPanel [fillcolor="#f4cccc"];
+  ChosenAssistant [fillcolor="#f4cccc"]; AssistantSettingRepository [fillcolor="#f4cccc"];
 
   // external (Flyback.Ui/Engine) leaves
   node [style="filled,dashed", color=gray40];
@@ -77,7 +81,7 @@ digraph FlybackAppOverview {
 
   // classes only ever built with `new`, never registered
   node [shape=box, style="filled,dashed", fillcolor=mistyrose, color=firebrick];
-  Credentials; ProbeSection; SettingsForm; ControlHub; ControlsPanel; StageKnobs;
+  Credentials; ProbeSection; SettingsForm; AssistantSettings; ControlHub; ControlsPanel; StageKnobs;
   GroupLibrary; ModulePalette; ModuleWash; ConversationStore; Transport; ThumbnailStore;
   Picker; SeekTrack; Shimmer;
   AudioRenderer [label="AudioRenderer\n[ext]"];
@@ -97,11 +101,12 @@ digraph FlybackAppOverview {
   // --- constructor DI edges ---
   edge [style=solid, color=black, label="", fontcolor=black];
 
-  MainWindow -> EditorSetup; MainWindow -> NodeEditor; MainWindow -> SourceView;
+  MainWindow -> NodeEditor; MainWindow -> SourceView;
   MainWindow -> Document; MainWindow -> PatchFiles; MainWindow -> UnsavedWork;
   MainWindow -> PreviewHost; MainWindow -> PluginCatalog;
   MainWindow -> IlCompiler; MainWindow -> AudioEngine;
   MainWindow -> MidiHub; MainWindow -> Playback; MainWindow -> OutputSections;
+  MainWindow -> OutputSettingRepository;
   MainWindow -> CanvasSection; MainWindow -> UpdatesSection; MainWindow -> UsageSection;
   MainWindow -> FilesSection; MainWindow -> PanelKnobs; MainWindow -> Inspector;
   MainWindow -> PluginInstalls; MainWindow -> PresetSlot; MainWindow -> Toolbar;
@@ -111,18 +116,21 @@ digraph FlybackAppOverview {
 
   AssistantEditor -> NodeEditor; AssistantEditor -> Document; AssistantEditor -> PreviewHost;
   AssistantEditor -> PatchFiles;
-  AssistantEditor -> PresetSlot [style=dashed, color=blue];
+  AssistantEditor -> PluginCatalog; AssistantEditor -> PresetLibrary;
 
   AssistantPanel -> PluginCatalog; AssistantPanel -> IAssistantEditor;
-  AssistantPanel -> EditorSetup;
+  AssistantPanel -> ChosenAssistant;
+  AssistantPanel -> AssistantSettingRepository;
+
+  ChosenAssistant -> AssistantSettingRepository; ChosenAssistant -> PluginCatalog;
 
   AudioEngine -> AudioSetup; AudioEngine -> IlCompiler;
+  AudioSetup -> PluginCatalog [style=dotted, color=purple, label="factory", fontcolor=purple];
+  AudioSetup -> OutputSettingRepository [style=dotted, color=purple, label="factory", fontcolor=purple];
 
   Document -> NodeEditor; Document -> SourceView;
 
   EditorWindow -> IServiceProvider;
-
-  FilesSection -> EditorSetup;
 
   Inspector -> NodeEditor; Inspector -> Document; Inspector -> MidiHub;
   Inspector -> PanelKnobs; Inspector -> PatchFiles; Inspector -> Palette;
@@ -130,13 +138,13 @@ digraph FlybackAppOverview {
 
   MidiHub -> IMidiInput;
 
-  OutputSections -> PluginCatalog; OutputSections -> EditorSetup;
-  OutputSections -> PresetSlot [style=dashed, color=blue];
+  OutputSections -> PluginCatalog; OutputSections -> OutputSettingRepository;
+  OutputSections -> PresetSlot;
   OutputSections -> IFilePickers; OutputSections -> IMonitors;
 
   Palette -> NodeEditor; Palette -> Document; Palette -> PluginCatalog;
   Palette -> PanelKnobs;
-  Palette -> OutputSections; Palette -> EditorSetup;
+  Palette -> OutputSettingRepository;
 
   PanelKnobs -> NodeEditor; PanelKnobs -> Document;
   PanelKnobs -> PreviewHost; PanelKnobs -> AudioEngine; PanelKnobs -> MidiHub;
@@ -146,20 +154,19 @@ digraph FlybackAppOverview {
   PatchFiles -> Playback; PatchFiles -> PluginInstalls; PatchFiles -> IFilePickers;
 
   Playback -> NodeEditor; Playback -> PluginCatalog;
-  Playback -> AssistantPanel [style=dashed, color=blue];
+  Playback -> ChosenAssistant;
   Playback -> PreviewHost; Playback -> AudioEngine; Playback -> IlCompiler;
   Playback -> MidiHub; Playback -> AudioSetup;
 
   PluginInstalls -> PluginCatalog;
-  PluginInstalls -> AssistantPanel [style=dashed, color=blue];
-  PluginInstalls -> EditorSetup; PluginInstalls -> SiteAccess; PluginInstalls -> Playback;
+  PluginInstalls -> ChosenAssistant;
+  PluginInstalls -> SiteAccess; PluginInstalls -> Playback;
   PluginInstalls -> UnsavedWork [style=dashed, color=blue];
   PluginInstalls -> IDialogs;
 
   PresetAudition -> AudioEngine; PresetAudition -> IlCompiler; PresetAudition -> PluginCatalog;
   PresetAudition -> PresetLibrary; PresetAudition -> Playback;
 
-  PresetLibrary -> EditorSetup [label="IPresetFolder", fontcolor=gray40, color=gray40];
 
   PresetSlot -> NodeEditor; PresetSlot -> Document; PresetSlot -> PluginCatalog;
   PresetSlot -> AssistantPanel [style=dashed, color=blue];
@@ -168,18 +175,19 @@ digraph FlybackAppOverview {
   PresetSlot -> Playback; PresetSlot -> PluginInstalls; PresetSlot -> IDialogs;
 
   PresetThumbnails -> PluginCatalog; PresetThumbnails -> IlCompiler;
-  PresetThumbnails -> EditorSetup; PresetThumbnails -> PresetLibrary;
+  PresetThumbnails -> PresetLibrary;
 
   SeekBar -> Playback; SeekBar -> PreviewHost; SeekBar -> CanvasSection;
   SeekBar -> NodeEditor; SeekBar -> Document;
 
-  SiteAccess -> EditorSetup; SiteAccess -> IHttpClientFactory;
+  SiteAccess -> IHttpClientFactory;
 
   StatusBar -> NodeEditor; StatusBar -> PluginCatalog;
   StatusBar -> PreviewHost; StatusBar -> SiteAccess;
   StatusBar -> Playback; StatusBar -> IDialogs; StatusBar -> IWindowFocus;
 
-  TakeRecording -> Toolbar; TakeRecording -> OutputSections; TakeRecording -> PreviewHost;
+  TakeRecording -> Toolbar; TakeRecording -> OutputSections; TakeRecording -> OutputSettingRepository;
+  TakeRecording -> PreviewHost;
   TakeRecording -> AudioEngine; TakeRecording -> NodeEditor;
   TakeRecording -> Playback;
 
@@ -189,20 +197,19 @@ digraph FlybackAppOverview {
   UnsavedWork -> AssistantPanel [style=dashed, color=blue];
   UnsavedWork -> PatchFiles;
   UnsavedWork -> TakeRecording [style=dashed, color=blue];
-  UnsavedWork -> EditorSetup; UnsavedWork -> IDialogs; UnsavedWork -> IWindowClose;
+  UnsavedWork -> IDialogs; UnsavedWork -> IWindowClose;
 
-  UpdatesSection -> EditorSetup;
 
-  UsageSection -> EditorSetup;
 
   WindowDialogs -> EditorWindow; WindowFilePickers -> EditorWindow;
   WindowMonitors -> EditorWindow; WindowFocus -> EditorWindow; WindowClose -> EditorWindow;
 
-  WorkKeeper -> EditorSetup; WorkKeeper -> UnsavedWork;
+  WorkKeeper -> UnsavedWork;
 
   // --- direct construction, not DI ---
   edge [style=dotted, color=firebrick];
   AssistantPanel -> Credentials; AssistantPanel -> ProbeSection; AssistantPanel -> SettingsForm;
+  AssistantSettingRepository -> AssistantSettings;
   AudioEngine -> AudioRenderer;
   Inspector -> ModuleWash;
   MidiHub -> ComputerKeyboard;

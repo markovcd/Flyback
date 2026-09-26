@@ -15,7 +15,6 @@ using Flyback.App.Site;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -66,12 +65,13 @@ internal static class EditorServices
 
         services.AddSingleton<IPresetFolder>(setup);
         services.AddSingleton<PresetLibrary>();
+        services.AddSingleton<OutputSettingRepository>();
 
         services.AddSingleton<PresetThumbnails>();
 
         services.AddSingleton(sp => Sound.Open(
             sp.GetRequiredService<PluginCatalog>(),
-            sp.GetRequiredService<OutputSections>().Saved));
+            sp.GetRequiredService<OutputSettingRepository>().Current));
 
         services.AddSingleton<AudioEngine>();
 
@@ -80,7 +80,6 @@ internal static class EditorServices
         services.AddSingleton(setup.Plugins.PreferredMidiInput);
         services.AddSingleton<MidiHub>();
 
-        services.AddSingleton<IAssistantSetup>(setup);
         services.AddSingleton<AssistantSettingRepository>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();

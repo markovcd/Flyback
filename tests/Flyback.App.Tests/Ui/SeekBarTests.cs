@@ -10,7 +10,6 @@ using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Ui;
 

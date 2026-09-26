@@ -120,7 +120,8 @@ internal sealed class TakeRecording
         Usage usage,
         NodeEditor editor,
         ReportLine report,
-        Playback playback)
+        Playback playback,
+        OutputSettingRepository repository)
     {
         button = toolbar.Record;
         size = sections.Resolution;
@@ -128,7 +129,7 @@ internal sealed class TakeRecording
         this.audio = audio;
         this.usage = usage;
         patch = () => editor.History.Patch;
-        settings = () => sections.Saved;
+        settings = () => repository.Current;
         this.report = (message, progress) => report.Say(message, progress: progress);
         this.playback = playback;
     }

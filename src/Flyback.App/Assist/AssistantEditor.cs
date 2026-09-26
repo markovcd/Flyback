@@ -1,8 +1,8 @@
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
-using Flyback.App.Gallery;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Hosting;
 
 namespace Flyback.App.Assist;
 
@@ -13,7 +13,8 @@ internal sealed class AssistantEditor(
     PreviewHost preview,
     ReportLine report,
     PatchFiles files,
-    Lazy<PresetSlot> presets) : IAssistantEditor
+    PluginCatalog plugins,
+    PresetLibrary presets) : IAssistantEditor
 {
     public Patch Current => editor.History.Patch;
 
@@ -29,5 +30,5 @@ internal sealed class AssistantEditor(
 
     public IImageLibrary Pictures => files.Pictures;
 
-    public IReadOnlyList<PatchPreset> Presets() => presets.Value.Ordered();
+    public IReadOnlyList<PatchPreset> Presets() => PresetLibrary.Ordered(plugins.Presets, presets);
 }

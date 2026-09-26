@@ -4,31 +4,31 @@ namespace Flyback.App.Assist;
 
 internal sealed class AssistantSettingRepository
 {
-    private readonly IAssistantSetup assistantSetup;
+    private readonly EditorSetup editorSetup;
 
-    public AssistantSettingRepository(IAssistantSetup assistantSetup, AssistantSettings? saved = null)
+    public AssistantSettingRepository(EditorSetup editorSetup, AssistantSettings? saved = null)
     {
-        this.assistantSetup = assistantSetup;
+        this.editorSetup = editorSetup;
         Current = saved ?? Load();
     }
     
     public AssistantSettings Current { get; }
 
     private AssistantSettings Load() =>
-        assistantSetup.AssistantSettingsPath is null
+        editorSetup.AssistantSettingsPath is null
             ? new AssistantSettings()
-            : AssistantSettings.Load(assistantSetup.AssistantSettingsPath);
+            : AssistantSettings.Load(editorSetup.AssistantSettingsPath);
 
     public void Save()
     {
-        if (assistantSetup.AssistantSettingsPath is not null) Current.Save(assistantSetup.AssistantSettingsPath);
+        if (editorSetup.AssistantSettingsPath is not null) Current.Save(editorSetup.AssistantSettingsPath);
     }
     
     /// <summary>Where the priority list is read from: beside the settings, or nowhere where they are kept in memory.</summary>
-    public string? PriorityFile => assistantSetup.AssistantSettingsPath is null
+    public string? PriorityFile => editorSetup.AssistantSettingsPath is null
         ? null
         : Path.Combine(
-            Path.GetDirectoryName(assistantSetup.AssistantSettingsPath) ?? string.Empty, 
+            Path.GetDirectoryName(editorSetup.AssistantSettingsPath) ?? string.Empty,
             Path.GetFileName(Flyback.Plugins.Assist.PriorityModules.File));
 
     private IReadOnlySet<string> PriorityModules => PriorityFile is { } file

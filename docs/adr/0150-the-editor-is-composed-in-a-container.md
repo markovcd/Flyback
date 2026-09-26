@@ -37,9 +37,9 @@ tests both call.
   `IlCompiler` takes an `IIlCompilerSetup`, which `EditorSetup` and the viewer's
   `ViewerOptions` both implement, and a test that builds one by hand passes none.
 - **A cycle is a `Lazy<T>`.** The take and the playback, the files and the
-  playback, the plugins window and the unsaved question, the settings and the
-  preset slot: one side takes the other lazily and asks for it only once it acts.
-  `Lazy<>` is registered once, as an open generic.
+  playback, and the plugins window and the unsaved question: one side takes the
+  other lazily and asks for it only once it acts. `Lazy<>` is registered once,
+  as an open generic.
 - **The site's `HttpClient` is a named client of `AddHttpClient`.** `SiteAccess`
   asks the factory for `SiteAccess.Client`, and a test gives that client a handler
   of its own without the window knowing there is a test.
@@ -70,6 +70,13 @@ for every registration.
 
 Exceptions, each kept on purpose:
 
+- **Amended 2026-09-26: the output settings and preset slot no longer need a
+  lazy cycle-break.** `OutputSettingRepository` loads the settings once and is
+  shared by `OutputSections`, the `AudioSetup` factory, and the other consumers
+  that need the saved settings. The factory no longer needs to construct
+  `OutputSections` just to read its settings, so that section can take
+  `PresetSlot` directly for the startup-patch gallery. The settings shown in
+  the UI and those used to open audio are still the same instance.
 - **What a region asks of the window is a service over `EditorWindow`.**
   The regions are built before the window, since the window is built from them.
   Dialogs, the file pickers, the monitors, whether the window is in front and

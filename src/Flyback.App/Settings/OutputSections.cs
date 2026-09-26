@@ -55,7 +55,8 @@ internal sealed class OutputSections
         "compare the two, or if a long session starts to look stepped.";
 
     private readonly PluginCatalog plugins;
-    private readonly Lazy<PresetSlot> presets;
+    private readonly OutputSettingRepository settings;
+    private readonly PresetSlot presets;
 
     /// <summary>Size, preview rate, renderer, full screen and the startup patch.</summary>
     public StackPanel Graphics { get; } = new() { Spacing = 8, Width = 280 };
@@ -247,23 +248,21 @@ internal sealed class OutputSections
         Foreground = Text.Muted,
         TextWrapping = TextWrapping.Wrap,
     };
-
-    /// <summary>
-    /// What the sections were last saved as: what is in force, and what closing the
-    /// settings window without Save puts them back to.
-    /// </summary>
-    public OutputSettings Saved { get; set; } = new();
-
-    /// <param name="setup">Where the settings are kept.</param>
+    
+    /// <param name="settings">The saved output settings shared with startup audio setup.</param>
     /// <param name="presets">The presets the startup patch is named and picked from.</param>
-    public OutputSections(PluginCatalog plugins, EditorSetup setup, Lazy<PresetSlot> presets, IFilePickers pickers, IMonitors monitors)
+    public OutputSections(
+        PluginCatalog plugins,
+        OutputSettingRepository settings,
+        PresetSlot presets,
+        IFilePickers pickers,
+        IMonitors monitors)
     {
         this.pickers = pickers;
         this.monitors = monitors;
         this.plugins = plugins;
+        this.settings = settings;
         this.presets = presets;
-
-        if (setup.OutputSettingsPath is { } path) Saved = OutputSettings.Load(path);
 
         BuildGraphics();
         BuildRecording();
@@ -286,34 +285,35 @@ internal sealed class OutputSections
     public static PixelSize SizeOf(OutputSettings settings) => Resolutions.All[SizeRow(settings)].Size;
 
     /// <summary>Puts every control to <paramref name="settings"/>, and nothing else.</summary>
-    public void Show(OutputSettings settings)
+    public void Show()
     {
-        Resolution.SelectedIndex = SizeRow(settings);
+        var current = settings.Current;
+        Resolution.SelectedIndex = SizeRow(current);
 
         // A box grayed out by a GPU that failed shows what is running, which
         // the window's BackendChanged handler already set.
-        if (Gpu.IsEnabled) Gpu.SelectedIndex = settings.Gpu ? 0 : 1;
+        if (Gpu.IsEnabled) Gpu.SelectedIndex = current.Gpu ? 0 : 1;
 
-        ShowStartupPatch(settings.DefaultPreset);
+        ShowStartupPatch(current.DefaultPreset);
 
-        transportEdge.SelectedIndex = settings.Transport == TransportEdge.Bottom ? 1 : 0;
+        transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
 
-        frameRate.SelectedIndex = Nearest(FrameRates, settings.FrameRate);
-        previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, settings.PreviewFrameRate);
-        jpegQuality.Value = settings.JpegQuality;
+        frameRate.SelectedIndex = Nearest(FrameRates, current.FrameRate);
+        previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, current.PreviewFrameRate);
+        jpegQuality.Value = current.JpegQuality;
 
-        countIn.SelectedIndex = Nearest(CountIns.Select(s => (double)s).ToArray(), settings.CountInSeconds);
-        rewindBeforeTake.IsChecked = settings.RewindBeforeTake;
+        countIn.SelectedIndex = Nearest(CountIns.Select(s => (double)s).ToArray(), current.CountInSeconds);
+        rewindBeforeTake.IsChecked = current.RewindBeforeTake;
 
-        videoFormat.SelectedIndex = Row(ClipFormats.Pictures, settings.VideoFormat, picture: true);
-        soundFormat.SelectedIndex = Row(ClipFormats.Sounds, settings.SoundFormat, picture: false);
-        ffmpegBox.Text = settings.FfmpegPath;
-        latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), settings.LatencyMilliseconds);
-        Takeover.SelectedIndex = settings.Takeover == Midi.Takeover.PickUp ? 1 : 0;
-        KeyboardLayout.SelectedIndex = settings.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
+        videoFormat.SelectedIndex = Row(ClipFormats.Pictures, current.VideoFormat, picture: true);
+        soundFormat.SelectedIndex = Row(ClipFormats.Sounds, current.SoundFormat, picture: false);
+        ffmpegBox.Text = current.FfmpegPath;
+        latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
+        Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
+        KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
 
         if (plugins.PreferredAudioOutput is { } output)
-            soundForm.Show(output.Form, settings.SoundOf(output.Id));
+            soundForm.Show(output.Form, current.SoundOf(output.Id));
     }
 
     /// <summary>What the controls hold, as settings to put in force.</summary>
@@ -483,7 +483,7 @@ internal sealed class OutputSections
 
         defaultPreset.Click += async (_, _) =>
         {
-            if (await presets.Value.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
+            if (await presets.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
         };
 
         ToolTip.SetTip(fullScreenOn,
@@ -644,7 +644,7 @@ internal sealed class OutputSections
     /// </remarks>
     private void ShowStartupPatch(string chosen)
     {
-        var offered = presets.Value.Ordered();
+        var offered = presets.Ordered();
 
         startupPatch = chosen.Length > 0 ? chosen : offered[PresetLibrary.Opening(offered, chosen)].Name;
         defaultPresetName.Text = startupPatch;
@@ -657,7 +657,7 @@ internal sealed class OutputSections
     /// </summary>
     public void ShowMonitors()
     {
-        var settings = Saved;
+        var current = settings.Current;
 
         var screens = monitors.All;
 
@@ -670,10 +670,10 @@ internal sealed class OutputSections
             .. screens.Select(s => $"{s.DisplayName ?? "Monitor"} · {s.Bounds.Width}×{s.Bounds.Height}{(s.IsPrimary ? " · main" : "")}"),
         ];
 
-        var chosen = settings.FullScreenMonitor is { } wanted ? MonitorPlacement.Find(wanted, fullScreenMonitors) : null;
+        var chosen = current.FullScreenMonitor is { } wanted ? MonitorPlacement.Find(wanted, fullScreenMonitors) : null;
 
         // Kept on the list while unplugged, so saving anything else does not forget it.
-        if (settings.FullScreenMonitor is { } away && chosen is null)
+        if (current.FullScreenMonitor is { } away && chosen is null)
         {
             fullScreenMonitors.Add(away);
             rows.Add($"{away.Name ?? "Monitor"} · {away.Width}×{away.Height} · not plugged in");
@@ -681,7 +681,7 @@ internal sealed class OutputSections
         }
 
         fullScreenOn.ItemsSource = rows;
-        fullScreenOn.SelectedIndex = settings.FullScreen switch
+        fullScreenOn.SelectedIndex = current.FullScreen switch
         {
             FullScreenOn.OtherMonitor => 1,
             FullScreenOn.ChosenMonitor when chosen is { } row => 2 + row,

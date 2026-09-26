@@ -1,4 +1,3 @@
-using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Files;
 using Flyback.App.Gallery;
@@ -20,7 +19,7 @@ namespace Flyback.App;
 /// or the settings of the machine running it. The program itself starts from
 /// <see cref="ThisMachine"/>.
 /// </remarks>
-public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder, IAssistantSetup
+public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
 {
     /// <summary>
     /// Where the kept groups live. Null is the usual place; a path is for the

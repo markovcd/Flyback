@@ -198,7 +198,8 @@ internal sealed class MainWindow : Window
         StatusBar statusBar,
         TakeRecording recording,
         AssistantPanel assistant,
-        WorkKeeper keeper)
+        WorkKeeper keeper,
+        OutputSettingRepository outputSettingRepository)
     {
         this.editor = editor;
         this.source = source;
@@ -226,6 +227,8 @@ internal sealed class MainWindow : Window
         this.statusBar = statusBar;
         this.assistant = assistant;
         this.keeper = keeper;
+        this.outputSettingRepository = outputSettingRepository;
+
 
         // Closed until the toolbar opens it.
         assistant.IsVisible = false;
@@ -344,7 +347,7 @@ internal sealed class MainWindow : Window
         // patch" is set to, or the first of the list for a name it no longer
         // offers — said here so the title and the toolbar's own selection agree
         // with the canvas from the first frame (ADR-0093).
-        presets.StartOn(outputSections.Saved.DefaultPreset);
+        presets.StartOn(outputSettingRepository.Current.DefaultPreset);
 
         // No manual switch any more — Volume is the one now, and the Recompile
         // that patch assignment just ran already brought sound up to match its
@@ -716,7 +719,7 @@ internal sealed class MainWindow : Window
         // Whatever was typed or picked since it opened belongs to that window, and
         // only Save is allowed to keep it.
         panel.DiscardSettings();
-        outputSections.Show(outputSections.Saved);
+        outputSections.Show();
         updatesSection.Show();
         usageSection.Show();
         canvasSection.Show();
@@ -1369,8 +1372,8 @@ internal sealed class MainWindow : Window
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
-        outputSections.Show(outputSections.Saved);
-        UseOutputSettings(outputSections.Saved);
+        outputSections.Show();
+        UseOutputSettings(outputSettingRepository.Current);
     }
 
     /// <summary>
@@ -1409,8 +1412,8 @@ internal sealed class MainWindow : Window
     /// </summary>
     private void SaveOutputSettings()
     {
-        var before = outputSections.Saved;
-        var saved = outputSections.Saved = outputSections.Read(before);
+        var before = outputSettingRepository.Current;
+        var saved = outputSettingRepository.Current = outputSections.Read(before);
 
         UseOutputSettings(saved);
 
@@ -1520,7 +1523,7 @@ internal sealed class MainWindow : Window
         statsOverlay = new StatsOverlay(preview);
 
         toolbar.Seek.Drive(overlay);
-        TransportOverlay.Lay(outputSections.Saved.Transport, overlay, knobs.Stage);
+        TransportOverlay.Lay(outputSettingRepository.Current.Transport, overlay, knobs.Stage);
 
         grid.Children.Add(previewBox);
         grid.Children.Add(statsOverlay);
@@ -1658,7 +1661,7 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        if (MonitorPlacement.FullScreenTarget(this, outputSections.Saved.FullScreen, outputSections.Saved.FullScreenMonitor) is { } screen)
+        if (MonitorPlacement.FullScreenTarget(this, outputSettingRepository.Current.FullScreen, outputSettingRepository.Current.FullScreenMonitor) is { } screen)
             ShowPictureOn(screen);
         else
             ShowFullScreenPreview(true);
@@ -1707,7 +1710,7 @@ internal sealed class MainWindow : Window
         window.Transport.RewindClicked += RewindToZero;
 
         toolbar.Seek.Drive(window.Transport);
-        TransportOverlay.Lay(outputSections.Saved.Transport, window.Transport, window.Knobs);
+        TransportOverlay.Lay(outputSettingRepository.Current.Transport, window.Transport, window.Knobs);
 
         window.PauseRequested += (_, _) => TogglePause();
         window.StatsRequested += (_, _) => ToggleStats();
@@ -2155,6 +2158,8 @@ internal sealed class MainWindow : Window
 
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper keeper;
+
+    private readonly OutputSettingRepository outputSettingRepository;
 
     /// <summary>
     /// Puts work a crash left behind back on the canvas, as the document it was and

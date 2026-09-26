@@ -1,6 +1,5 @@
 using Avalonia.Threading;
 using Flyback.App.Audio;
-using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
