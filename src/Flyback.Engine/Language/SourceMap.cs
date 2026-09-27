@@ -25,15 +25,7 @@ public sealed class SourceMap
         new Dictionary<Guid, string>(),
         new HashSet<Guid>());
 
-    private readonly string source;
-
-    /// <summary>Where each line begins, so that a line and a column make an offset.</summary>
-    private readonly int[] starts;
-
-    private readonly IReadOnlyList<Token> tokens;
-
-    /// <summary>Which token begins at an offset, for the walks below.</summary>
-    private readonly Dictionary<int, int> beginning = [];
+    private readonly SourceMapText text;
 
     /// <summary>The call that placed each module, where the text has one.</summary>
     private readonly Dictionary<Guid, Site> calls;
@@ -81,7 +73,7 @@ public sealed class SourceMap
         IReadOnlySet<Guid> bound,
         IReadOnlyList<(Site Where, Guid Group)>? boxes = null)
     {
-        this.source = source;
+        text = new SourceMapText(source);
         this.calls = new Dictionary<Guid, Site>(calls);
         this.named = new Dictionary<Guid, string>(named);
 
@@ -92,16 +84,11 @@ public sealed class SourceMap
 
         foreach (var (key, site) in written) this.written[Folded(key.Node, key.Name)] = site;
 
-        starts = Starts(source);
-        tokens = source.Length == 0 ? [] : Lexer.Scan(source, []);
-
-        for (var i = 0; i < tokens.Count; i++) beginning.TryAdd(Offset(tokens[i]), i);
-
         var counted = new Dictionary<Site, Guid>();
 
         foreach (var (where, node) in mentions)
         {
-            if (Extent(where) is not { } extent) continue;
+            if (text.Extent(where) is not { } extent) continue;
 
             spans.Add((extent.From, extent.To, node));
 
@@ -145,29 +132,29 @@ public sealed class SourceMap
     {
         foreach (var (where, group) in boxes)
         {
-            var from = Offset(where);
+            var from = text.Offset(where);
 
-            if (!beginning.TryGetValue(from, out var i)) continue;
+            if (!text.TryBeginning(from, out var i)) continue;
 
             var open = i;
 
-            while (open < tokens.Count && tokens[open].Kind != TokenKind.OpenBrace) open++;
+            while (open < text.Tokens.Count && text.Tokens[open].Kind != TokenKind.OpenBrace) open++;
 
-            if (open >= tokens.Count) continue;
+            if (open >= text.Tokens.Count) continue;
 
             var depth = 0;
             var close = open;
 
-            for (; close < tokens.Count; close++)
+            for (; close < text.Tokens.Count; close++)
             {
-                if (tokens[close].Kind == TokenKind.OpenBrace) depth++;
-                else if (tokens[close].Kind == TokenKind.CloseBrace && --depth == 0) break;
+                if (text.Tokens[close].Kind == TokenKind.OpenBrace) depth++;
+                else if (text.Tokens[close].Kind == TokenKind.CloseBrace && --depth == 0) break;
             }
 
-            var opened = Offset(tokens[open]) + 1;
-            var closed = close < tokens.Count ? Offset(tokens[close]) : source.Length;
+            var opened = text.Offset(text.Tokens[open]) + 1;
+            var closed = close < text.Tokens.Count ? text.Offset(text.Tokens[close]) : text.Source.Length;
 
-            blocks.Add((from, opened, closed, Math.Min(closed + 1, source.Length), group));
+            blocks.Add((from, opened, closed, Math.Min(closed + 1, text.Source.Length), group));
         }
     }
 
@@ -239,12 +226,12 @@ public sealed class SourceMap
             // Null is for a value this cannot write, and only for that — one the
             // text already says comes back as the edit that would say it, so
             // that a caller can tell "nothing to do" from "nowhere to put it".
-            return said is { } site && Value(site) is { } span
+            return said is { } site && text.Value(site) is { } span
                 ? new Change(span.From, span.Length, value)
                 : null;
         }
 
-        if (calls.TryGetValue(node, out var call) && Parentheses(call) is { } brackets)
+        if (calls.TryGetValue(node, out var call) && text.Parentheses(call) is { } brackets)
             return Argument(brackets, name + ": " + value, first: false);
 
         // The Output is the module no call ever places — every patch already has
@@ -253,9 +240,9 @@ public sealed class SourceMap
         // because that is the one place a module is certain to exist already.
         if (!named.TryGetValue(node, out var word)) return null;
 
-        var end = source.TrimEnd('\n', '\r').Length;
+        var end = text.Source.TrimEnd('\n', '\r').Length;
 
-        return new Change(end, source.Length - end, $"\n{word}.{name} = {value}\n");
+        return new Change(end, text.Source.Length - end, $"\n{word}.{name} = {value}\n");
     }
 
     /// <summary>
@@ -271,9 +258,9 @@ public sealed class SourceMap
     public Change? Carried(Guid node, string block)
     {
         if (shared.Contains(node)) return null;
-        if (!calls.TryGetValue(node, out var call) || Parentheses(call) is not { } brackets) return null;
+        if (!calls.TryGetValue(node, out var call) || text.Parentheses(call) is not { } brackets) return null;
 
-        return Block(brackets.Close) is { } span
+        return text.Block(brackets.Close) is { } span
             ? new Change(span.From, span.To - span.From, block)
             : new Change(brackets.Close + 1, 0, " " + block);
     }
@@ -290,11 +277,11 @@ public sealed class SourceMap
     public Change? File(Guid node, string path)
     {
         if (shared.Contains(node) || path.Contains('"')) return null;
-        if (!calls.TryGetValue(node, out var call) || Parentheses(call) is not { } brackets) return null;
+        if (!calls.TryGetValue(node, out var call) || text.Parentheses(call) is not { } brackets) return null;
 
         var quoted = $"\"{path}\"";
 
-        return Text(brackets) is { } span
+        return text.Text(brackets) is { } span
             ? new Change(span.From, span.Length, quoted)
             : Argument(brackets, quoted, first: true);
     }
@@ -352,16 +339,16 @@ public sealed class SourceMap
     /// <param name="next">What follows the word in a statement of this kind.</param>
     private Change? PatchLine(string word, TokenKind next, string? line, params string[] under)
     {
-        if (Opened(word, next) is { } span)
+        if (text.Opened(word, next) is { } span)
         {
             if (line is not null)
-                return source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
+                return text.Source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
 
             // The line and the break after it, so taking it out leaves no gap.
             var end = span.To;
-            while (end < source.Length && source[end] is ' ' or '\t') end++;
-            if (end < source.Length && source[end] == '\r') end++;
-            if (end < source.Length && source[end] == '\n') end++;
+            while (end < text.Source.Length && text.Source[end] is ' ' or '\t') end++;
+            if (end < text.Source.Length && text.Source[end] == '\r') end++;
+            if (end < text.Source.Length && text.Source[end] == '\n') end++;
 
             return new Change(span.From, end - span.From, string.Empty);
         }
@@ -370,59 +357,10 @@ public sealed class SourceMap
 
         foreach (var above in under)
         {
-            if (Opened(above, TokenKind.Text) is { } before) return new Change(before.To, 0, "\n" + line);
+            if (text.Opened(above, TokenKind.Text) is { } before) return new Change(before.To, 0, "\n" + line);
         }
 
         return new Change(0, 0, line + "\n\n");
-    }
-
-    /// <summary>
-    /// Where the first statement <paramref name="word"/> opens stands, and null
-    /// where the text has none.
-    /// </summary>
-    private (int From, int To)? Opened(string word, TokenKind next)
-    {
-        (int From, int To)? found = null;
-        var start = true;
-
-        for (var i = 0; i < tokens.Count && found is null; i++)
-        {
-            var token = tokens[i];
-
-            if (start
-                && token.Kind == TokenKind.Identifier
-                && token.Text == word
-                && i + 1 < tokens.Count
-                && tokens[i + 1].Kind == next)
-            {
-                var after = tokens[i + 1];
-
-                // A string's token holds what is between its quotes.
-                var to = Offset(after) + after.Text.Length + (next == TokenKind.Text ? 2 : 0);
-
-                if (i + 2 < tokens.Count && tokens[i + 2].Kind == TokenKind.Block) to = Closed(Offset(tokens[i + 2]));
-
-                // A length in minutes runs on over its colon and its seconds.
-                if (next == TokenKind.Number && i + 3 < tokens.Count && tokens[i + 2].Kind == TokenKind.Colon && tokens[i + 3].Kind == TokenKind.Number)
-                    to = Offset(tokens[i + 3]) + tokens[i + 3].Text.Length;
-
-                // A description runs on over the strings on the lines below it, and
-                // tags are a string each.
-                for (var j = i + 2; next == TokenKind.Text && j < tokens.Count; j++)
-                {
-                    if (tokens[j].Kind == TokenKind.NewLine) continue;
-                    if (tokens[j].Kind != TokenKind.Text) break;
-
-                    to = Offset(tokens[j]) + tokens[j].Text.Length + 2;
-                }
-
-                found = (Offset(token), to);
-            }
-
-            start = token.Kind is TokenKind.NewLine or TokenKind.OpenBrace;
-        }
-
-        return found;
     }
 
     /// <summary>Each panel knob the text declares, by the id the binder gives it, and the word it is called by.</summary>
@@ -450,35 +388,35 @@ public sealed class SourceMap
 
             var joined = string.Join('\n', lines);
 
-            return Statements().FirstOrDefault(statement => statement.Word == "requires") is { Word: not null } requires
+            return text.Statements().FirstOrDefault(statement => statement.Word == "requires") is { Word: not null } requires
                 ? new Change(requires.To, 0, "\n\n" + joined)
                 : new Change(0, 0, joined + "\n\n");
         }
 
-        var text = new System.Text.StringBuilder();
+        var output = new System.Text.StringBuilder();
 
         for (var i = 0; i < found.Count; i++)
         {
-            var gap = i == 0 ? string.Empty : source[found[i - 1].To..found[i].From];
+            var gap = i == 0 ? string.Empty : text.Source[found[i - 1].To..found[i].From];
 
-            if (i < lines.Count) text.Append(gap).Append(lines[i]);
+            if (i < lines.Count) output.Append(gap).Append(lines[i]);
 
             // Gone, with the break that led to it — or, with nothing kept before
             // it, the break that followed the one before.
-            else if (lines.Count > 0) text.Append(gap.TrimEnd(' ', '\t').TrimEnd('\n').TrimEnd('\r'));
-            else text.Append(Unbroken(gap));
+            else if (lines.Count > 0) output.Append(gap.TrimEnd(' ', '\t').TrimEnd('\n').TrimEnd('\r'));
+            else output.Append(Unbroken(gap));
         }
 
-        for (var i = found.Count; i < lines.Count; i++) text.Append('\n').Append(lines[i]);
+        for (var i = found.Count; i < lines.Count; i++) output.Append('\n').Append(lines[i]);
 
         var from = found[0].From;
         var to = found[^1].To;
 
-        if (lines.Count == 0) to = source.Length - Unbroken(source[to..]).Length;
+        if (lines.Count == 0) to = text.Source.Length - Unbroken(text.Source[to..]).Length;
 
-        var said = text.ToString();
+        var said = output.ToString();
 
-        return source[from..to] == said ? null : new Change(from, to - from, said);
+        return text.Source[from..to] == said ? null : new Change(from, to - from, said);
     }
 
     /// <summary>Text without the line break it opens with.</summary>
@@ -496,198 +434,10 @@ public sealed class SourceMap
     /// <summary>Every <c>panel</c> statement, with the word it declares and where it stands.</summary>
     private List<(string Word, int From, int To)> Panels() =>
     [
-        .. Statements()
+        .. text.Statements()
             .Where(statement => statement.Word == "panel" && statement.Declares is not null)
             .Select(statement => (statement.Declares!, statement.From, statement.To)),
     ];
-
-    /// <summary>
-    /// Every statement: the word it opens with, the name an <c>=</c> after that
-    /// declares where there is one, and where it stands.
-    /// </summary>
-    private List<(string? Word, string? Declares, int From, int To)> Statements()
-    {
-        var found = new List<(string? Word, string? Declares, int From, int To)>();
-        var statements = Lexer.Statements(tokens);
-
-        for (var i = 0; i < statements.Count; i++)
-        {
-            if (statements[i].Kind is TokenKind.NewLine or TokenKind.OpenBrace or TokenKind.CloseBrace) continue;
-
-            var first = i;
-
-            while (i + 1 < statements.Count && statements[i + 1].Kind is not (TokenKind.NewLine or TokenKind.OpenBrace or TokenKind.CloseBrace)) i++;
-
-            var end = statements[i];
-            var word = statements[first].Kind == TokenKind.Identifier ? statements[first].Text : null;
-
-            var declares = first + 2 <= i
-                && statements[first + 1].Kind == TokenKind.Identifier
-                && statements[first + 2].Kind == TokenKind.Assign
-                    ? statements[first + 1].Text
-                    : null;
-
-            found.Add((word, declares, Offset(statements[first]), Offset(end) + end.Text.Length + (end.Kind == TokenKind.Text ? 2 : 0)));
-        }
-
-        return found;
-    }
-
-    /// <summary>The offset a line and a column name, clamped to the text.</summary>
-    private int Offset(Site site)
-    {
-        var line = Math.Clamp(site.Line, 1, starts.Length);
-
-        return Math.Clamp(starts[line - 1] + site.Column - 1, 0, source.Length);
-    }
-
-    private int Offset(Token token) => Offset(new Site(token.Line, token.Column));
-
-    /// <summary>
-    /// How much of the text a module's name covers: the name itself, its
-    /// brackets and whatever is between them, and the block after them where
-    /// there is one.
-    /// </summary>
-    private (int From, int To)? Extent(Site site)
-    {
-        var from = Offset(site);
-
-        if (!beginning.TryGetValue(from, out var i)) return null;
-
-        // A sum is placed at the operator that joins it, and the operator is what
-        // stands for it: what is either side is its operands, each somewhere to
-        // click of its own.
-        if (tokens[i].Kind is TokenKind.Plus or TokenKind.Minus or TokenKind.Star or TokenKind.Slash or TokenKind.Percent)
-            return (from, from + tokens[i].Text.Length);
-
-        if (tokens[i].Kind != TokenKind.Identifier) return null;
-
-        var to = from + tokens[i].Text.Length;
-        i++;
-
-        // 'space.rotate' and 'out.left' are each a name in two words, and the
-        // second word is as much the thing clicked as the first.
-        while (i + 1 < tokens.Count
-            && tokens[i].Kind == TokenKind.Dot
-            && tokens[i + 1].Kind == TokenKind.Identifier)
-        {
-            to = Offset(tokens[i + 1]) + tokens[i + 1].Text.Length;
-            i += 2;
-        }
-
-        if (i >= tokens.Count || tokens[i].Kind != TokenKind.OpenParen) return (from, to);
-
-        var depth = 0;
-
-        for (; i < tokens.Count; i++)
-        {
-            if (tokens[i].Kind == TokenKind.OpenParen)
-            {
-                depth++;
-            }
-            else if (tokens[i].Kind == TokenKind.CloseParen && --depth == 0)
-            {
-                to = Offset(tokens[i]) + 1;
-                i++;
-                break;
-            }
-        }
-
-        if (i < tokens.Count && tokens[i].Kind == TokenKind.Block) to = Closed(Offset(tokens[i]));
-
-        return (from, to);
-    }
-
-    /// <summary>The brackets of the call standing at <paramref name="site"/>.</summary>
-    private (int Open, int Close)? Parentheses(Site site)
-    {
-        if (!beginning.TryGetValue(Offset(site), out var i)) return null;
-
-        var open = -1;
-        var depth = 0;
-
-        for (; i < tokens.Count; i++)
-        {
-            if (tokens[i].Kind == TokenKind.OpenParen)
-            {
-                if (depth++ == 0) open = Offset(tokens[i]);
-            }
-            else if (tokens[i].Kind == TokenKind.CloseParen && --depth == 0)
-            {
-                return (open, Offset(tokens[i]));
-            }
-            else if (depth == 0 && tokens[i].Kind is not (TokenKind.Identifier or TokenKind.Dot))
-            {
-                // A name with nothing after it is a module written without
-                // brackets, which has nowhere to put an argument.
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>The value written at <paramref name="site"/>, with its sign or its quotes.</summary>
-    /// <remarks>
-    /// The minus is part of a number. Putting 0.5 where the digits of
-    /// <c>-0.5</c> are would leave the file still saying <c>-0.5</c>, which is
-    /// the one wrong answer this could give. The quotes are part of a string for
-    /// the same reason, and because what replaces one carries its own.
-    /// </remarks>
-    private (int From, int Length)? Value(Site site)
-    {
-        var from = Offset(site);
-
-        if (!beginning.TryGetValue(from, out var i)) return null;
-
-        if (tokens[i].Kind == TokenKind.Text) return (from, tokens[i].Text.Length + 2);
-
-        while (i < tokens.Count && tokens[i].Kind == TokenKind.Minus) i++;
-
-        if (i >= tokens.Count || tokens[i].Kind != TokenKind.Number) return null;
-
-        return (from, Offset(tokens[i]) + tokens[i].Text.Length - from);
-    }
-
-    /// <summary>The block standing after a call's brackets, where there is one.</summary>
-    private (int From, int To)? Block(int close)
-    {
-        if (!beginning.TryGetValue(close, out var i) || i + 1 >= tokens.Count) return null;
-        if (tokens[i + 1].Kind != TokenKind.Block) return null;
-
-        var from = Offset(tokens[i + 1]);
-
-        return (from, Closed(from));
-    }
-
-    /// <summary>
-    /// The one string a call carries without a name, which is the file it names.
-    /// </summary>
-    /// <remarks>
-    /// Without a name, because a plugin's choice of device is a string too and
-    /// is an argument like any other. What has no name in front of it is the
-    /// file, and there is at most one.
-    /// </remarks>
-    private (int From, int Length)? Text((int Open, int Close) brackets)
-    {
-        if (!beginning.TryGetValue(brackets.Open, out var i)) return null;
-
-        var depth = 0;
-
-        for (; i < tokens.Count; i++)
-        {
-            if (tokens[i].Kind == TokenKind.OpenParen) depth++;
-            else if (tokens[i].Kind == TokenKind.CloseParen && --depth == 0) return null;
-            else if (depth == 1
-                && tokens[i].Kind == TokenKind.Text
-                && !(i >= 2 && tokens[i - 1].Kind == TokenKind.Colon))
-            {
-                return (Offset(tokens[i]), tokens[i].Text.Length + 2);
-            }
-        }
-
-        return null;
-    }
 
     /// <summary>
     /// Puts one more argument into a call, at whichever end it belongs.
@@ -700,7 +450,7 @@ public sealed class SourceMap
     /// </remarks>
     private Change Argument((int Open, int Close) brackets, string written, bool first)
     {
-        var inside = source.AsSpan(brackets.Open + 1, brackets.Close - brackets.Open - 1).Trim().Length > 0;
+        var inside = text.Source.AsSpan(brackets.Open + 1, brackets.Close - brackets.Open - 1).Trim().Length > 0;
 
         if (!inside) return new Change(brackets.Close, 0, written);
 
@@ -712,20 +462,6 @@ public sealed class SourceMap
     /// <summary>One key for a module and a word, however the word was spelled.</summary>
     private static (Guid, string) Folded(Guid node, string name) => (node, name.ToLowerInvariant());
 
-    /// <summary>Where the block opening at <paramref name="open"/> ends.</summary>
-    private int Closed(int open)
-    {
-        var depth = 0;
-
-        for (var i = open; i < source.Length; i++)
-        {
-            if (source[i] == '[') depth++;
-            else if (source[i] == ']' && --depth == 0) return i + 1;
-        }
-
-        return source.Length;
-    }
-
     /// <summary>
     /// The statement each binding owns, worked out from the text rather than
     /// recorded with it, so that where a statement ends is one rule and the
@@ -733,28 +469,28 @@ public sealed class SourceMap
     /// </summary>
     private void Bindings(IReadOnlySet<Guid> bound)
     {
-        if (bound.Count == 0 || tokens.Count == 0) return;
+        if (bound.Count == 0 || text.Tokens.Count == 0) return;
 
         var statements = new List<(int From, int To)>();
         var from = -1;
 
-        foreach (var token in Lexer.Statements(tokens))
+        foreach (var token in Lexer.Statements(text.Tokens))
         {
             if (token.Kind is TokenKind.NewLine or TokenKind.End)
             {
-                if (from >= 0) statements.Add((from, Offset(token)));
+                if (from >= 0) statements.Add((from, text.Offset(token)));
                 from = -1;
                 continue;
             }
 
-            if (from < 0) from = Offset(token);
+            if (from < 0) from = text.Offset(token);
         }
 
         foreach (var node in bound)
         {
             if (!calls.TryGetValue(node, out var site)) continue;
 
-            var at = Offset(site);
+            var at = text.Offset(site);
 
             foreach (var (start, end) in statements)
             {
@@ -766,13 +502,4 @@ public sealed class SourceMap
         }
     }
 
-    private static int[] Starts(string source)
-    {
-        var found = new List<int> { 0 };
-
-        for (var i = 0; i < source.Length; i++)
-            if (source[i] == '\n') found.Add(i + 1);
-
-        return [.. found];
-    }
 }
