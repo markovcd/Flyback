@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Flyback.App.Bars;
 using Flyback.App.Files;
 using Flyback.App.Inspect;
+using Flyback.App.Windows;
 using Flyback.Core;
 
 namespace Flyback.App;
@@ -20,7 +21,7 @@ internal sealed class EditState(
     PatchFiles files,
     Toolbar toolbar,
     Inspector inspector,
-    IWindowTitle title)
+    ITitle title)
 {
     private const string BaseTitle = GlobalConstants.ApplicationName;
 

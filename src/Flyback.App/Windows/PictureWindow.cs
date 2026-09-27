@@ -4,7 +4,7 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.App.Controls;
 
-namespace Flyback.App;
+namespace Flyback.App.Windows;
 
 /// <summary>
 /// The preview full screen on a monitor of its own, with the knobs and the
@@ -15,7 +15,7 @@ namespace Flyback.App;
 /// picture or pressing Escape closes it, and closing hands the preview back: the
 /// renderer is built again once each way.
 /// </remarks>
-internal sealed class PictureWindow : Window
+internal sealed class PictureWindow : Avalonia.Controls.Window
 {
     private readonly Panel picture = new();
 

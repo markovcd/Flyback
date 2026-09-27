@@ -9,6 +9,7 @@ using AvaloniaEdit;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Shouldly;

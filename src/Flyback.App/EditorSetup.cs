@@ -4,6 +4,7 @@ using Flyback.App.Gallery;
 using Flyback.App.Midi;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
+using Flyback.App.Windows;
 using Flyback.Core.Compile;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;

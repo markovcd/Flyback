@@ -9,6 +9,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
 using Flyback.App.Canvas;
+using Flyback.App.Windows;
 
 namespace Flyback.App.Tests.Ui;
 

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -17,7 +16,7 @@ using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
-namespace Flyback.App;
+namespace Flyback.App.Windows;
 
 /// <summary>
 /// The editor's window: it is handed the hubs and the regions around them by its
@@ -148,12 +147,12 @@ internal sealed class MainWindow : Window
         if (started) return;
         started = true;
 
+        editState.Refresh();
         editorStart.Start(this);
     }
     
     private Control BuildLayout()
     {
-        editState.Refresh();
         // The popups behind the report and a module's name hang off the window
         // rather than off the control, so what they look like is said here.
         Styles.Add(ReportLine.Trim());

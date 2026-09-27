@@ -10,6 +10,7 @@ using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Settings;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins;

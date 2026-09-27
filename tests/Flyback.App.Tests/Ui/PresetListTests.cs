@@ -12,6 +12,7 @@ using Flyback.Core.Graph;
 using Shouldly;
 using Flyback.App.Canvas;
 using Flyback.App.Gallery;
+using Flyback.App.Windows;
 
 namespace Flyback.App.Tests.Ui;
 

@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;

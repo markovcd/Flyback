@@ -27,7 +27,7 @@ internal sealed class UnsavedWork(
     PatchFiles files,
     EditorSetup setup,
     IDialog dialog,
-    IWindowClose window)
+    IClose close)
 {
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
     private enum Unsaved
@@ -135,7 +135,7 @@ internal sealed class UnsavedWork(
         relaunch(reopen);
 
         Leaving = true;
-        window.Close();
+        close.Close();
 
         return true;
     }

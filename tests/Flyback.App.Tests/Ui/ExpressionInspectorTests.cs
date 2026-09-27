@@ -13,6 +13,7 @@ using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Shouldly;
 using Flyback.App.Canvas;
+using Flyback.App.Windows;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Tests.Ui;

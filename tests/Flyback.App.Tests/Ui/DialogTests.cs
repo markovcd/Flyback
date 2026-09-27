@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Shouldly;
 using Xunit;
 

@@ -9,6 +9,7 @@ using Flyback.App.Controls;
 using Flyback.App.Knobs;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
+using Flyback.App.Windows;
 
 namespace Flyback.App;
 

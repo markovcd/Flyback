@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;

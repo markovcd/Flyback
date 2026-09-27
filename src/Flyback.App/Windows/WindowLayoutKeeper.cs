@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 
-namespace Flyback.App;
+namespace Flyback.App.Windows;
 
 /// <summary>
 /// Leaving the window as it was left: its size, state and monitor read from a file
@@ -24,7 +24,7 @@ internal sealed class WindowLayoutKeeper(EditorSetup setup)
     }
 
     /// <summary>Follows the size <paramref name="window"/> is dragged to.</summary>
-    public void Track(Window window) =>
+    public void Track(Avalonia.Controls.Window window) =>
         // Only a drag of the frame: maximizing resizes the window too, and that is
         // not a size to come back to.
         window.Resized += (_, e) =>
@@ -33,7 +33,7 @@ internal sealed class WindowLayoutKeeper(EditorSetup setup)
         };
 
     /// <summary>Puts <paramref name="window"/>'s size, state and monitor back. Before it is shown.</summary>
-    public void Apply(Window window)
+    public void Apply(Avalonia.Controls.Window window)
     {
         if (Saved is not { } saved) return;
 

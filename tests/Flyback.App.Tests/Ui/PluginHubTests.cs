@@ -8,6 +8,7 @@ using Avalonia.VisualTree;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
 using Flyback.App.Tests.PluginPackages;
+using Flyback.App.Windows;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

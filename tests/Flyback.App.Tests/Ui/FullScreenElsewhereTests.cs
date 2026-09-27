@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

@@ -11,6 +11,7 @@ using Flyback.App.Inspect;
 using Flyback.App.Knobs;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
+using Flyback.App.Windows;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;

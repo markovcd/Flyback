@@ -3,6 +3,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Viewer;

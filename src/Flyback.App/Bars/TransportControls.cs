@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 
 namespace Flyback.App.Bars;
 

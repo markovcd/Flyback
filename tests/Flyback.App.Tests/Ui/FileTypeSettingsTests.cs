@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Files;
+using Flyback.App.Windows;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;

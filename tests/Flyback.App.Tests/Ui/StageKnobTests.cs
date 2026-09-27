@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Viewer;

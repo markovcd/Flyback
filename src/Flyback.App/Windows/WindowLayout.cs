@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Flyback.Core;
 
-namespace Flyback.App;
+namespace Flyback.App.Windows;
 
 /// <summary>
 /// How the window was left: its size, the monitor it was on, the panels and which

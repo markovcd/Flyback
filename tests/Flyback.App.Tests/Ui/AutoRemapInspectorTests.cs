@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Canvas;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Shouldly;
 using Colors = Flyback.App.Controls.Colors;

@@ -8,6 +8,7 @@ using Avalonia.Themes.Fluent;
 using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
+using Flyback.App.Windows;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 

@@ -15,6 +15,7 @@ using Shouldly;
 using Flyback.App.Canvas;
 using Flyback.App.Site;
 using Flyback.App.Tests.Ui;
+using Flyback.App.Windows;
 
 // Every [AvaloniaFact] and [AvaloniaTheory] in this assembly runs against this
 // application, on a UI thread the session owns. Declared once, at the assembly.

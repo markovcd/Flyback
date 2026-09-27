@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Shouldly;
 

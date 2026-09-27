@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Flyback.App.Files;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;

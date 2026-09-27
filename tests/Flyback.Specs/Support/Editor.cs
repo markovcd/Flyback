@@ -11,6 +11,7 @@ using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 
 namespace Flyback.Specs.Support;

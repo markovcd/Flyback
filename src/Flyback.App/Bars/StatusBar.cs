@@ -27,7 +27,7 @@ internal sealed class StatusBar
     private readonly NodeEditor editor;
     private readonly PreviewHost preview;
     private readonly Usage usage;
-    private readonly IWindowFocus focus;
+    private readonly IFocus focus;
     private readonly PluginCatalog plugins;
     private readonly ReportLine report;
 
@@ -54,7 +54,7 @@ internal sealed class StatusBar
     public Control View { get; }
 
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
-    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IWindowFocus focus)
+    public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus)
     {
         this.dialog = dialog;
         this.focus = focus;

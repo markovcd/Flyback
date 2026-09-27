@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Flyback.App.Files;
+using Flyback.App.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;

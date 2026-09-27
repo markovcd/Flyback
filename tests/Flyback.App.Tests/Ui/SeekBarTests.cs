@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Bars;
 using Flyback.App.Controls;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;

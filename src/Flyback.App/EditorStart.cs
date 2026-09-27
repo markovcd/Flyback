@@ -5,6 +5,7 @@ using Flyback.App.Knobs;
 using Flyback.App.Midi;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
+using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 

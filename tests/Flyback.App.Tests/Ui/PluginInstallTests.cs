@@ -8,6 +8,7 @@ using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
 using Flyback.Plugins.Hosting;
 using Flyback.App.Tests.PluginPackages;
+using Flyback.App.Windows;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;

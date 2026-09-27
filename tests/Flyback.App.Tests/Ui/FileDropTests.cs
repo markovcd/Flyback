@@ -7,7 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
-using Flyback.App.Files;
+using Flyback.App.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
