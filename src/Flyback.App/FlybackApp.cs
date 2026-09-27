@@ -9,6 +9,7 @@ using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Plugins.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.App;
 
@@ -69,7 +70,7 @@ public sealed class FlybackApp : Application
             usage.Drain(Usage.LongestWait);
         };
 
-        var window = EditorServices.Window(EditorSetup.ThisMachine(usage) with
+        var setup = EditorSetup.ThisMachine(usage) with
         {
             OpenPath = Startup.OpenPath,
             OpenShared = Startup.OpenShared,
@@ -77,7 +78,9 @@ public sealed class FlybackApp : Application
             Plugins = Startup.Plugins,
             OpeningNote = Startup.OpeningNote,
             WhatsNew = Startup.WhatsNew,
-        });
+        };
+        var provider = EditorServices.Provider(setup);
+        var window = provider.Window();
         window.Start();
         desktop.MainWindow = window;
 
@@ -105,8 +108,8 @@ public sealed class FlybackApp : Application
                     PassToViewer(path, desktop, window);
                     return;
                 }
-
-                await window.OpenActivatedFileAsync(file);
+                
+                await provider.GetRequiredService<PatchOpening>().OpenActivatedFileAsync(file);
             };
         }
     }

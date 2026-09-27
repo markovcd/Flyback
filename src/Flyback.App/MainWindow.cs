@@ -14,7 +14,6 @@ using Flyback.App.Knobs;
 using Flyback.App.Midi;
 using Flyback.App.Settings;
 using Flyback.Core;
-using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 

@@ -35,10 +35,8 @@ namespace Flyback.App;
 internal static class EditorServices
 {
     /// <summary>Builds the window <paramref name="setup"/> describes, with any registration <paramref name="replace"/> swaps.</summary>
-    /// <param name="replace">Registers a service a second time, which wins: a test's own site, say.</param>
-    public static MainWindow Window(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
+    public static MainWindow Window(this ServiceProvider provider)
     {
-        var provider = Provider(setup, replace, validate: true);
         var window = provider.GetMainWindow();
 
         // After OnClosed has finished the take: the engine, the compiler and MIDI go with the container.
@@ -65,7 +63,7 @@ internal static class EditorServices
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = validate });
     }
 
-    public static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)
+    private static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)
     {
         services.AddSingleton(setup);
         services.AddSingleton<IIlCompilerSetup>(setup);

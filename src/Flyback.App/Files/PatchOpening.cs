@@ -47,7 +47,19 @@ internal sealed class PatchOpening(
         await OpenFileAsync(file);
     }
 
-    /// <summary>Handles a file handed to the running program or dropped on its window.</summary>
+    /// <summary>
+    /// Opens a file handed to the program from outside a picker or a drop —
+    /// which on macOS is how "open this file" arrives at all: Finder delivers
+    /// it as an activation rather than as a command-line argument, whether
+    /// that launches the program or lands on its Dock icon while it is
+    /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
+    /// </summary>
+    /// <remarks>
+    /// Not while a dialog is up. A dialog stops the pointer and the keyboard and
+    /// neither of these arrives by them, so with nothing unsaved to ask about the
+    /// document would be replaced behind the sheet — and a text one takes the
+    /// focus with it, out of a dialog that then no longer hears Escape.
+    /// </remarks>
     public async Task OpenActivatedFileAsync(IStorageFile file)
     {
         if (dialog.IsShowing)

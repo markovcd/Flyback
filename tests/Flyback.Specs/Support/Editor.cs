@@ -398,7 +398,8 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     {
         if (window is not null) return window;
 
-        window = EditorServices.Window(Setup);
+        var provider = EditorServices.Provider(Setup);
+        window = provider.Window();
         window.Start();
 
         window.Show();
