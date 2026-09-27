@@ -23,7 +23,7 @@ public class PresetGalleryTests : UiTest
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             pointedAt: reported.Add);
-        var tiles = parts.Tiles(_ => { }, _ => { });
+        var tiles = parts.Tiles(_ => { });
         var window = Show(tiles, width: 900);
         Attach(container, window);
         return (window, tiles, reported);
@@ -83,13 +83,13 @@ public class PresetGalleryTests : UiTest
     [AvaloniaFact]
     public void A_picked_preset_is_sent_to_the_answer_action()
     {
-        PatchPreset? picked = null;
+        IPreset? picked = null;
         var container = Container();
 
         var parts = container.GetRequiredService<PresetGallery>().Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null);
-        var tiles = parts.Tiles(preset => picked = preset, _ => { });
+        var tiles = parts.Tiles(preset => picked = preset);
         var window = Show(tiles, width: 900);
         Attach(container, window);
         Settle(window);
@@ -107,7 +107,7 @@ public class PresetGalleryTests : UiTest
         var thumbnails = container.GetRequiredService<PresetThumbnails>();
         var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
         var parts = container.GetRequiredService<PresetGallery>().Build(ordered, showing: null);
-        var tiles = parts.Tiles(_ => { }, _ => { });
+        var tiles = parts.Tiles(_ => { });
         var window = Show(new ScrollViewer { Height = 400, Content = tiles }, width: 900);
         Attach(container, window);
         thumbnails.IsAsked(ordered[0]).ShouldBeTrue();

@@ -27,7 +27,7 @@ public sealed class SitePresetTests : UiTest
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             site: site.Site());
-        var tiles = parts.Tiles(_ => { }, _ => { });
+        var tiles = parts.Tiles(_ => { });
 
         var content = new DockPanel();
 
@@ -136,7 +136,7 @@ public sealed class SitePresetTests : UiTest
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             site: new PresetSite(new HttpClient(new Unreachable()), FakePresetSite.Root));
-        var tiles = parts.Tiles(_ => { }, _ => { });
+        var tiles = parts.Tiles(_ => { });
 
         var window = Show(tiles, width: 900);
         Attach(container, window);
