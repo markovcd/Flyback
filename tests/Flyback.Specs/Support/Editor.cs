@@ -370,7 +370,6 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     internal T Read<T>(Func<NodeEditor, T> read) => Run(() => read(Canvas()));
 
-    private IDisposable? registration;
 
     private T ReadWindow<T>(Func<MainWindow, T> read) => Run(() => read(Window()));
 
@@ -378,9 +377,6 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     {
         try
         {
-            registration?.Dispose();
-            registration = null;
-
             if (window is not { } open) return;
 
             window = null;
@@ -403,7 +399,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         if (window is not null) return window;
 
         window = EditorServices.Window(Setup);
-        registration = MainWindowLocator.RegisterForHeadlessTests(window);
+        
         window.Show();
         Settle();
 

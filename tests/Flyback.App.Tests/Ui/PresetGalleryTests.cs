@@ -19,16 +19,17 @@ public class PresetGalleryTests : UiTest
     private (Window Window, Control Tiles, List<PointedTile?> Reported) Gallery()
     {
         var reported = new List<PointedTile?>();
-
+        var locator = new MainWindowLocator();
         var parts = new PresetGallery(
             new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog()).Build(
+            new WindowDialog(locator)).Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             pointedAt: reported.Add);
         var tiles = parts.Tiles(_ => { }, _ => { });
-
-        return (Show(tiles, width: 900), tiles, reported);
+        var window = Show(tiles, width: 900);
+        locator.Attach(window);
+        return (window, tiles, reported);
     }
 
     private static Button Tile(Control tiles, string name) =>
@@ -86,13 +87,16 @@ public class PresetGalleryTests : UiTest
     public void A_picked_preset_is_sent_to_the_answer_action()
     {
         PatchPreset? picked = null;
+        var locator = new MainWindowLocator();
+
         var parts = new PresetGallery(
             new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog()).Build(
+            new WindowDialog(locator)).Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null);
         var tiles = parts.Tiles(preset => picked = preset, _ => { });
         var window = Show(tiles, width: 900);
+        locator.Attach(window);
         Settle(window);
 
         Press(Tile(tiles, "Plasma"));
@@ -104,12 +108,13 @@ public class PresetGalleryTests : UiTest
     [AvaloniaFact]
     public void Only_the_tiles_in_sight_are_drawn()
     {
+        var locator = new MainWindowLocator();
         var thumbnails = new PresetThumbnails(PluginCatalog.Empty);
         var ordered = Presets.All.OrderBy(preset => preset.Kind).ToList();
-        var parts = new PresetGallery(thumbnails, new WindowDialog()).Build(ordered, showing: null);
+        var parts = new PresetGallery(thumbnails, new WindowDialog(locator)).Build(ordered, showing: null);
         var tiles = parts.Tiles(_ => { }, _ => { });
         var window = Show(new ScrollViewer { Height = 400, Content = tiles }, width: 900);
-
+        locator.Attach(window);
         thumbnails.IsAsked(ordered[0]).ShouldBeTrue();
         thumbnails.IsAsked(ordered[^1]).ShouldBeFalse();
 

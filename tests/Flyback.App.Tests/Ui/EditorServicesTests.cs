@@ -22,7 +22,7 @@ public class EditorServicesTests : UiTest
 
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
 
-        var window = Owned(provider.GetRequiredService<MainWindow>());
+        var window = Owned(provider.GetMainWindow());
 
         foreach (var registered in services.Where(d => !d.IsKeyedService && !d.ServiceType.IsGenericTypeDefinition))
             Should.NotThrow(() => provider.GetService(registered.ServiceType), registered.ServiceType.Name);
@@ -66,7 +66,7 @@ public class EditorServicesTests : UiTest
     {
         using var provider = new ServiceCollection().AddEditor(new EditorSetup()).BuildServiceProvider();
 
-        var window = Owned(provider.GetRequiredService<MainWindow>());
+        var window = Owned(provider.GetMainWindow());
         window.Show();
         Settle(window);
 

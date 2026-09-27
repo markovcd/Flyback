@@ -2,7 +2,7 @@ using Flyback.App.Controls;
 
 namespace Flyback.App;
 
-internal sealed class WindowFocus : IWindowFocus
+internal sealed class WindowFocus(MainWindowLocator locator) : IWindowFocus
 {
-    public bool IsActive => MainWindowLocator.Owner.IsActive;
+    public bool IsActive => locator.Owner.IsActive;
 }

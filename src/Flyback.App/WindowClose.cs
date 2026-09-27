@@ -2,7 +2,7 @@ using Flyback.App.Controls;
 
 namespace Flyback.App;
 
-internal sealed class WindowClose : IWindowClose
+internal sealed class WindowClose(MainWindowLocator locator) : IWindowClose
 {
-    public void Close() => MainWindowLocator.Owner.Close();
+    public void Close() => locator.Owner.Close();
 }

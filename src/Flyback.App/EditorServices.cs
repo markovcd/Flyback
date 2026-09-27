@@ -42,7 +42,7 @@ internal static class EditorServices
         replace?.Invoke(services);
 
         var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
-        var window = provider.GetRequiredService<MainWindow>();
+        var window = provider.GetMainWindow();
 
         // After OnClosed has finished the take: the engine, the compiler and MIDI go with the container.
         window.Closed += (_, _) => provider.Dispose();
@@ -127,6 +127,7 @@ internal static class EditorServices
         services.AddSingleton<TakeRecording>();
 
         services.AddSingleton<MainWindow>();
+        services.AddSingleton<MainWindowLocator>();
 
         return services;
     }

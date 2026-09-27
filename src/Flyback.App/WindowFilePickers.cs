@@ -3,11 +3,11 @@ using Flyback.App.Controls;
 
 namespace Flyback.App;
 
-internal sealed class WindowFilePickers : IFilePickers
+internal sealed class WindowFilePickers(MainWindowLocator locator) : IFilePickers
 {
     public Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options) =>
-        MainWindowLocator.Owner.StorageProvider.OpenFilePickerAsync(options);
+        locator.Owner.StorageProvider.OpenFilePickerAsync(options);
 
     public Task<IStorageFile?> Save(FilePickerSaveOptions options) =>
-        MainWindowLocator.Owner.StorageProvider.SaveFilePickerAsync(options);
+        locator.Owner.StorageProvider.SaveFilePickerAsync(options);
 }

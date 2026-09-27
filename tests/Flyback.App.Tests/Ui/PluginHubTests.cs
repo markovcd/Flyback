@@ -42,11 +42,12 @@ public sealed class PluginHubTests : UiTest
         PluginRun? run = null,
         IReadOnlyList<HubInstalled>? installed = null)
     {
+        var locator = new MainWindowLocator();
         var hub = new PluginHub(
             site.Site(),
             () => Task.FromResult(installed ?? [Echoes, Grain]),
             install ?? ((_, _) => Task.FromResult<string?>(null)),
-            new WindowDialog(),
+            new WindowDialog(locator),
             show: null,
             needed: needed,
             run: run);
@@ -58,7 +59,7 @@ public sealed class PluginHubTests : UiTest
         content.Children.Add(hub.View);
 
         var window = Show(content, width: 700);
-
+        locator.Attach(window);
         _ = hub.LoadAsync();
         Pump(() => Names(hub.View, "sitePlugins").Any() || Status(hub, "siteStatus") is not ("" or "Looking…"));
         Settle(window);
@@ -322,14 +323,15 @@ public sealed class PluginHubTests : UiTest
     [AvaloniaFact]
     public void An_unreachable_site_says_so_and_still_lists_what_is_installed()
     {
+        var locator = new MainWindowLocator();
         var hub = new PluginHub(
             new PluginSite(new HttpClient(new Unreachable()), FakePluginSite.Root),
             () => Task.FromResult<IReadOnlyList<HubInstalled>>([Echoes]),
             (_, _) => Task.FromResult<string?>(null),
-            new WindowDialog());
+            new WindowDialog(locator));
 
         var window = Show(hub.View, width: 700);
-
+        locator.Attach(window);
         _ = hub.LoadAsync();
         Pump(() => Status(hub, "siteStatus")!.Contains("did not answer"));
         Settle(window);
