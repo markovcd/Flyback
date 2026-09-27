@@ -67,46 +67,8 @@ internal sealed class MainWindow : Window
 
     private readonly PreviewHost preview;
 
-    /// <summary>
-    /// The pieces of the shell the fullscreen preview puts away and has to bring
-    /// back. Nullable only because the layout is built after the fields are, and
-    /// never null once <see cref="BuildLayout"/> has run.
-    /// </summary>
-    private Grid? columns;
-    private Border? previewBox;
-
     /// <summary>The preset slot on the toolbar, and the gallery it opens.</summary>
     private readonly PresetSlot presets;
-
-    /// <summary>
-    /// The preview's own row and the splitter below it, put away when the patch
-    /// has nothing wired into the Output's 'color' — see <see cref="ShowPreview"/>.
-    /// </summary>
-    private RowDefinition? previewRow;
-    private GridSplitter? previewSplitter;
-
-    /// <summary>The preview row's height while it was last shown, kept across a hide.</summary>
-    private GridLength previewShare = new(1, GridUnitType.Star);
-
-    /// <summary>
-    /// The canvas and the text, over the knobs or the inspector: what trades
-    /// places with the preview — see <see cref="SwapPreview"/>. Null only before
-    /// <see cref="BuildLayout"/> has run.
-    /// </summary>
-    private Grid? patchPane;
-
-    /// <summary>The inspector's panel, which goes under the canvas while swapped.</summary>
-    private Border? inspectorBox;
-
-    /// <summary>The columns of <see cref="columns"/> the patch and the preview trade.</summary>
-    private const int WideColumn = 2;
-    private const int SideColumn = 4;
-
-    /// <summary>
-    /// Set while the patch has lost its picture during a gesture on the swapped
-    /// canvas, and the layout is waiting for the gesture to end to go back.
-    /// </summary>
-    private bool previewHideWaiting;
 
     /// <summary>The bar along the bottom.</summary>
     private readonly StatusBar statusBar;
@@ -130,15 +92,7 @@ internal sealed class MainWindow : Window
     private readonly ReportLine report;
 
     private readonly AssistantPanel assistant;
-    private ColumnDefinition? assistantColumn;
-    private GridSplitter? assistantSplitter;
-
-    /// <summary>
-    /// How wide the assistant was when it was last open. A pixel width, not a
-    /// share of the window — resizing the window resizes the patch beside it,
-    /// not the conversation.
-    /// </summary>
-    private GridLength assistantShare = new(320, GridUnitType.Pixel);
+    private readonly ShellLayout shell;
 
     /// <summary>
     /// Read before this window existed, and already installed. Nothing here
@@ -202,6 +156,7 @@ internal sealed class MainWindow : Window
         WindowLayoutKeeper layoutKeeper,
         FullScreenPreview fullScreen,
         TransportControls transport,
+        ShellLayout shell,
         OutputSettingRepository outputSettingRepository,
         IDialog dialog)
     {
@@ -233,8 +188,8 @@ internal sealed class MainWindow : Window
         this.keeper = keeper;
         this.layoutKeeper = layoutKeeper;
         this.fullScreen = fullScreen;
-        fullScreen.ShowPreview = ShowPreview;
         this.transport = transport;
+        this.shell = shell;
         this.outputSettingRepository = outputSettingRepository;
         this.dialog = dialog;
 
@@ -325,7 +280,7 @@ internal sealed class MainWindow : Window
         // back onto 'color', and then there is nothing to put back.
         editor.Gestures.GestureFinished += (_, _) =>
         {
-            if (previewHideWaiting) ShowPreview(playback.HasPicture);
+            if (shell.PreviewHideWaiting) shell.ShowPreview(playback.HasPicture);
         };
 
         // What the canvas has to say goes on the one line everything is said on.
@@ -418,7 +373,7 @@ internal sealed class MainWindow : Window
         // Last, so it is what the bar is showing when the window first appears.
         if (setupOfLaunch.WhatsNew is null && setupOfLaunch.OpeningNote is not null) Report(setupOfLaunch.OpeningNote);
 
-        ApplyPanelLayout();
+        shell.ApplyPanelLayout();
     }
 
     private readonly EditorSetup setupOfLaunch;
@@ -427,231 +382,13 @@ internal sealed class MainWindow : Window
 
     private Control BuildLayout()
     {
-        var root = new DockPanel();
-
-
-        // A conversation is saved with the patch, so one with a turn nobody has
-        // saved is something the title and the close have to know about.
-        assistant.ConversationChanged += (_, _) => RefreshEditState();
-
-        // Which modules the assistant is not told about is a question about the
-        // catalog and the settings, so it moves only when settings are saved.
-        editor.Tags.Types = assistant.Undescribed;
-        assistant.UndescribedChanged += (_, _) =>
-        {
-            editor.Tags.Types = assistant.Undescribed;
-            inspector.Build();
-        };
-
         WireToolbar();
         // The popups behind the report and a module's name hang off the window
         // rather than off the control, so what they look like is said here.
         Styles.Add(ReportLine.Trim());
         Styles.Add(ModulePlate.Naming());
-        DockPanel.SetDock(toolbar.View, Dock.Top);
-        DockPanel.SetDock(statusBar.View, Dock.Bottom);
-
-        // The two flexible columns are star-sized: GridSplitter redistributes
-        // star weights, and a fixed-pixel column next to one just gets squeezed.
-        // The assistant's is a pixel width, so a resize of the window goes to the
-        // patch and leaves the conversation the width it was left at. Leftmost and
-        // at full height, since what it talks about is the patch (ADR-0087).
-        //
-        // The rows belong to whichever column the preview is in — preview,
-        // splitter, then the inspector or, swapped, the knobs — and the patch
-        // spans all three in the other. One grid, so the preview and the canvas
-        // trade places by changing cells: the preview is never taken off its
-        // parent, which would tear its GPU context down (see FullScreenPreview.Show).
-        columns = new Grid
-        {
-            // Named because the fullscreen preview's test has to find exactly
-            // this grid, and counting its columns stopped telling it apart from
-            // the toolbar's the moment the palette left the layout.
-            Name = "columns",
-            ColumnDefinitions =
-            [
-                new ColumnDefinition(assistantShare),
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(new GridLength(3, GridUnitType.Star)) { MinWidth = 280 },
-                new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = 300 },
-            ],
-            RowDefinitions =
-            [
-                new RowDefinition(new GridLength(1, GridUnitType.Star)) { MinHeight = 140 },
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(new GridLength(1.1, GridUnitType.Star)) { MinHeight = 120 },
-            ],
-        };
-
-        fullScreen.Columns = columns;
-
-        assistantColumn = columns.ColumnDefinitions[0];
-        assistantSplitter = new GridSplitter { Background = Brushes.Transparent, Width = 5 };
-
-        // The canvas over whatever the preview's column is not holding: the
-        // knobs, or swapped, the inspector.
-        var patch = patchPane = new Grid
-        {
-            RowDefinitions =
-            [
-                new RowDefinition(new GridLength(2.2, GridUnitType.Star)) { MinHeight = 160 },
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(new GridLength(0)),
-            ],
-        };
-
-        // The text sits in the canvas's own row rather than under it: they are
-        // two views of one patch and only ever one of them shows, so putting
-        // them side by side would halve the room for each and invite the
-        // question ADR-0068 exists to answer — which one is being edited.
-        Grid.SetRow(editor, 0);
-        Grid.SetRow(source, 0);
-        Grid.SetRow(controlsSplitter, 1);
-        Grid.SetRow(knobs.View, 2);
-
-        patch.Children.Add(editor);
-        patch.Children.Add(source);
-        patch.Children.Add(controlsSplitter);
-        patch.Children.Add(knobs.View);
-
         Styles.Add(ModulePalette.Trim());
-
-        foreach (var (child, column) in new (Control, int)[]
-                 {
-                     (assistant, 0),
-                     (assistantSplitter, 1),
-                     (patch, WideColumn),
-                     (new GridSplitter { Width = 5, Background = Brushes.Transparent }, 3),
-                 })
-        {
-            Grid.SetColumn(child, column);
-            Grid.SetRowSpan(child, 3);
-            columns.Children.Add(child);
-        }
-
-        BuildRightPanel(columns, SideColumn);
-
-        // Hidden costs nothing, which is why this needs no dialog — and this
-        // application has none.
-        ShowAssistant(false);
-
-        root.Children.Add(toolbar.View);
-        root.Children.Add(statusBar.View);
-        root.Children.Add(columns);
-
-        return root;
-    }
-
-    /// <summary>
-    /// Opens or closes the assistant, and gives its pixel width back when it
-    /// closes.
-    /// </summary>
-    /// <remarks>
-    /// A pixel column keeps its width whether or not anything in it is visible, so
-    /// hiding the panel alone would leave that many pixels empty. The width is
-    /// kept rather than recomputed, and the column's minimum has to go with it,
-    /// since a minimum outranks a width of zero.
-    /// </remarks>
-    private void ShowAssistant(bool shown)
-    {
-        if (assistantColumn is null || assistantSplitter is null) return;
-
-        if (!shown && assistant.IsVisible) assistantShare = assistantColumn.Width;
-
-        assistant.IsVisible = shown;
-        assistantSplitter.IsVisible = shown;
-
-        assistantColumn.MinWidth = shown ? 280d : 0d;
-        assistantColumn.Width = shown ? assistantShare : new GridLength(0);
-    }
-
-    /// <summary>
-    /// Puts the preview away when the patch has nothing wired into the Output's
-    /// 'color', so the inspector takes the row rather than sitting under a box that
-    /// could only show black.
-    /// </summary>
-    /// <remarks>
-    /// The same shape as <see cref="ShowAssistant"/> and for the same reason. Left
-    /// alone while the preview has the window, since
-    /// <see cref="FullScreenPreview.Show"/> is already driving these rows and the
-    /// two would fight over what a height of zero means.
-    /// </remarks>
-    private void ShowPreview(bool shown)
-    {
-        // Pulling the wire off 'color' swapped back would move the canvas out from
-        // under the hand still holding that wire, so nothing moves until the
-        // button comes up — see the editor's GestureFinished, which asks again.
-        previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
-        if (previewHideWaiting) return;
-
-        // Ahead of the full screen guard, so the button is right by the time the
-        // toolbar comes back.
-        toolbar.Swap.IsEnabled = shown;
-        ToolTip.SetTip(toolbar.Swap, shown ? Toolbar.SwapTip : Toolbar.NoPictureToSwapTip);
-
-        if (fullScreen.IsFullScreen) return;
-        if (previewBox is null || previewRow is null || previewSplitter is null) return;
-
-        // A picture that has gone gives the canvas its column back before the row
-        // it would stand in is put away. Unticking is what moves it — see the
-        // button's handler in WireToolbar.
-        if (!shown) toolbar.Swap.IsChecked = false;
-
-        if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
-
-        previewBox.IsVisible = shown;
-        previewSplitter.IsVisible = shown;
-
-        previewRow.MinHeight = shown ? 140d : 0d;
-        previewRow.Height = shown ? previewShare : new GridLength(0);
-    }
-
-    /// <summary>
-    /// Puts the preview in the wide column over the knobs, and the canvas in the
-    /// narrow one over the inspector — or puts both back.
-    /// </summary>
-    /// <remarks>
-    /// The columns keep their widths, and the assistant keeps its place beside
-    /// the wide one. The knobs and the inspector trade grids, and the sizes of the
-    /// rows they stand in trade with them.
-    /// </remarks>
-    private void SwapPreview(bool swapped)
-    {
-        if (columns is null || previewBox is null || patchPane is null
-            || inspectorBox is null || previewSplitter is null) return;
-
-        if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
-
-        var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);
-
-        Grid.SetColumn(previewBox, pictureColumn);
-        Grid.SetColumn(patchPane, patchColumn);
-
-        Hang(swapped ? controlsSplitter : previewSplitter, columns, pictureColumn, 1);
-        Hang(swapped ? knobs.View : inspectorBox, columns, pictureColumn, 2);
-        Hang(swapped ? previewSplitter : controlsSplitter, patchPane, 0, 1);
-        Hang(swapped ? inspectorBox : knobs.View, patchPane, 0, 2);
-
-        var outer = columns.RowDefinitions[2];
-        var inner = patchPane.RowDefinitions[2];
-
-        (outer.MinHeight, inner.MinHeight) = (inner.MinHeight, outer.MinHeight);
-        (outer.Height, inner.Height) = (inner.Height, outer.Height);
-
-        if (swapped) usage.Count(Used.Swapped);
-
-        static void Hang(Control child, Grid grid, int column, int row)
-        {
-            if (child.Parent != grid)
-            {
-                (child.Parent as Panel)?.Children.Remove(child);
-                grid.Children.Add(child);
-            }
-
-            Grid.SetColumn(child, column);
-            Grid.SetRow(child, row);
-        }
+        return shell.Build(RefreshEditState);
     }
 
     /// <summary>What each button on the toolbar does. Called once, as the window is built.</summary>
@@ -665,13 +402,13 @@ internal sealed class MainWindow : Window
         toolbar.Redo.Click += (_, _) => document.Redo();
         toolbar.Tidied += (_, onlySelected) => document.Tidy(onlySelected);
 
-        toolbar.Swap.IsCheckedChanged += (_, _) => SwapPreview(toolbar.Swap.IsChecked == true);
+        toolbar.Swap.IsCheckedChanged += (_, _) => shell.SwapPreview(toolbar.Swap.IsChecked == true);
 
         toolbar.Pause.Click += (_, _) => transport.TogglePause();
         toolbar.Rewind.Click += (_, _) => RewindToZero();
         toolbar.Record.Click += async (_, _) => await ToggleRecordAsync();
 
-        toolbar.Assistant.IsCheckedChanged += (_, _) => ShowAssistant(toolbar.Assistant.IsChecked == true);
+        toolbar.Assistant.IsCheckedChanged += (_, _) => shell.ShowAssistant(toolbar.Assistant.IsChecked == true);
         toolbar.Settings.Click += async (_, _) => await ShowSettingsAsync();
         toolbar.Plugins.Click += async (_, _) => await pluginInstalls.ShowAsync();
         toolbar.About.Click += async (_, _) => await ShowAboutAsync();
@@ -968,7 +705,7 @@ internal sealed class MainWindow : Window
 
             // The panel has no room while the picture has the window.
             case Key.K:
-                if (!fullScreen.IsFullScreen) ShowControls(!knobs.View.IsVisible);
+                if (!fullScreen.IsFullScreen) shell.ShowControls(!knobs.View.IsVisible);
 
                 e.Handled = true;
                 break;
@@ -1314,7 +1051,7 @@ internal sealed class MainWindow : Window
     {
         playback.Compiled += (_, _) =>
         {
-            ShowPreview(playback.HasPicture);
+            shell.ShowPreview(playback.HasPicture);
             knobs.Refresh();
             Recording.Mark();
         };
@@ -1472,135 +1209,13 @@ internal sealed class MainWindow : Window
 
     #endregion
 
-    #region The right-hand column
-
-    // The column on the right: the preview over the Inspector.
-
-    /// <summary>
-    /// The preview, the splitter under it and the inspector, down one column of
-    /// <paramref name="grid"/>, whose three rows are theirs.
-    /// </summary>
-    private void BuildRightPanel(Grid grid, int column)
-    {
-        // Focusable, so the keys have somewhere to go while the picture has the window.
-        previewBox = fullScreen.PreviewBox = new Border
-        {
-            Background = Brushes.Black,
-            Child = preview,
-            Focusable = true,
-        };
-
-        KeyboardNavigation.SetIsTabStop(previewBox, false);
-
-        // Double-click the picture and it takes the window; double-click it or
-        // press Escape to put everything back. The gesture every video player
-        // already has, on the one control here that is a video.
-        previewBox.DoubleTapped += (_, e) =>
-        {
-            fullScreen.Toggle();
-            e.Handled = true;
-        };
-
-        Grid.SetColumn(previewBox, column);
-        Grid.SetRow(previewBox, 0);
-
-        previewRow = grid.RowDefinitions[0];
-
-        var splitter = previewSplitter = new GridSplitter { Background = Brushes.Transparent, Height = 5 };
-        Grid.SetColumn(splitter, column);
-        Grid.SetRow(splitter, 1);
-
-        // The plate is docked rather than scrolled: what a block is and the buttons
-        // that act on it are wanted wherever the reading has been scrolled to.
-        var reading = new DockPanel();
-
-        var plateHost = inspector.PlateHost;
-        var wash = inspector.Wash;
-
-        DockPanel.SetDock(plateHost, Dock.Top);
-
-        reading.Children.Add(plateHost);
-        reading.Children.Add(new ScrollViewer
-        {
-            Content = inspector.Panel,
-
-            // Explicitly transparent: a theme that gave the scroll viewer a
-            // background would paint straight over the wash and the mark.
-            Background = Brushes.Transparent,
-        });
-
-        // The block's face sits behind the inspector rather than beside it, and
-        // never takes a click.
-        var inspectorBorder = inspectorBox = new Border
-        {
-            Background = new SolidColorBrush(Colors.Panel),
-            Child = new Panel { Children = { wash, reading } },
-        };
-
-        // The mark starts under the plate, whatever height the name and the buttons
-        // have left it at.
-        // The band and the mark are drawn on the wash, so it is told how deep the
-        // name's row is and how far down the plate reaches.
-        plateHost.PropertyChanged += (_, e) =>
-        {
-            if (e.Property != BoundsProperty) return;
-
-            wash.Below = plateHost.Bounds.Height;
-            wash.BandHeight = (plateHost.Content as ModulePlate)?.Band ?? 0;
-        };
-        Grid.SetColumn(inspectorBorder, column);
-        Grid.SetRow(inspectorBorder, 2);
-
-        // Over the preview's own cell while it has the window, and nowhere otherwise.
-        var overlay = transport.Overlay = new TransportOverlay() { IsVisible = false };
-
-        overlay.PauseClicked += transport.TogglePause;
-        overlay.MuteClicked += playback.ToggleMute;
-        overlay.RewindClicked += RewindToZero;
-
-        transport.Stats = new StatsOverlay(preview);
-
-        toolbar.Seek.Drive(overlay);
-        TransportOverlay.Lay(outputSettingRepository.Current.Transport, overlay, knobs.Stage);
-
-        grid.Children.Add(previewBox);
-        grid.Children.Add(transport.Stats);
-        grid.Children.Add(knobs.Stage);
-        grid.Children.Add(overlay);
-        grid.Children.Add(splitter);
-        grid.Children.Add(inspectorBorder);
-    }
-
-    #endregion
-
-    #region The knob panel's row
-
-    // Where the PanelKnobs stand: the row under the canvas, the edge
-    // above it, and the toolbar button that shows it.
-
-    /// <summary>The edge above the panel, dragged to give it more rows or fewer.</summary>
-    private readonly GridSplitter controlsSplitter = new()
-    {
-        Name = "controls-splitter",
-        Background = Brushes.Transparent,
-        Height = 5,
-        IsVisible = false,
-    };
-
-    /// <summary>The row the panel stands in, under the canvas or, swapped, under the preview.</summary>
-    private RowDefinition? ControlsRow => knobs.View.Parent is Grid grid ? grid.RowDefinitions[2] : null;
-
-    /// <summary>
-    /// The panel's height, kept while it is hidden. One row of knobs to start with;
-    /// more rows wrap in beneath once it is dragged taller.
-    /// </summary>
-    private GridLength controlsShare = new(118);
+    #region Wiring the knobs
 
     private void WireControls()
     {
-        toolbar.Knobs.IsCheckedChanged += (_, _) => ShowControls(toolbar.Knobs.IsChecked == true);
+        toolbar.Knobs.IsCheckedChanged += (_, _) => shell.ShowControls(toolbar.Knobs.IsChecked == true);
 
-        knobs.Wanted += (_, _) => ShowControls(true);
+        knobs.Wanted += (_, _) => shell.ShowControls(true);
 
         // A socket's own knob on the canvas: heard as it turns, written into the
         // text and the panel when the hand comes off it.
@@ -1612,136 +1227,17 @@ internal sealed class MainWindow : Window
         };
     }
 
-    /// <summary>Shows or hides the panel, keeping the toolbar button in step.</summary>
-    private void ShowControls(bool shown)
-    {
-        // The full screen preview owns every row, the knobs' too while swapped.
-        if (fullScreen.IsFullScreen) return;
-
-        var panel = knobs.View;
-
-        // Only on a change: showing a panel already shown would put back the height
-        // it had when last hidden, over whatever it has been dragged to since.
-        if (ControlsRow is { } controlsRow && shown != panel.IsVisible)
-        {
-            // A pixel row rather than an auto one, so the splitter has a height to
-            // change; zeroed while hidden, with its minimum, the way the assistant's is.
-            if (!shown && panel.IsVisible) controlsShare = controlsRow.Height;
-
-            controlsRow.MinHeight = shown ? 60d : 0d;
-            controlsRow.Height = shown ? controlsShare : new GridLength(0);
-        }
-
-        panel.IsVisible = shown;
-        controlsSplitter.IsVisible = shown;
-
-        if (toolbar.Knobs.IsChecked != shown) toolbar.Knobs.IsChecked = shown;
-
-        if (!shown) knobs.Link(null);
-    }
-
     #endregion
 
-    #region The layout, kept between runs
-
-    // The panels and views half of leaving the window as it was left (ADR-0121);
-    // size, state and monitor are WindowLayoutKeeper's.
-
-    /// <summary>The panels and the views. After the first patch is on the canvas.</summary>
-    private void ApplyPanelLayout()
-    {
-        if (layoutKeeper.Saved is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
-
-        columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
-        columns.ColumnDefinitions[SideColumn].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
-
-        previewShare = new GridLength(saved.PreviewWeight, GridUnitType.Star);
-        if (previewBox is { IsVisible: true }) previewRow.Height = previewShare;
-        columns.RowDefinitions[2].Height = new GridLength(saved.InspectorWeight, GridUnitType.Star);
-
-        // A shown panel takes its width from the column and a hidden one from the
-        // share, so both are set and the panel then put where it was.
-        assistantShare = new GridLength(saved.AssistantWidth, GridUnitType.Pixel);
-        if (assistant is { IsVisible: true }) assistantColumn.Width = assistantShare;
-        toolbar.Assistant.IsChecked = saved.AssistantOpen && toolbar.Assistant.IsEnabled;
-
-        controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
-        if (ControlsRow is { } controlsRow && knobs.View.IsVisible) controlsRow.Height = controlsShare;
-        ShowControls(saved.ControlsOpen);
-
-        // Only while there is a picture to swap in, which is the button's own rule.
-        toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
-
-        if (saved.Code) document.ShowCode(true);
-    }
+    #region Layout
 
     internal void ShowPictureOn(Screen screen) => fullScreen.ShowPictureOn(screen);
 
     private void RememberLayout()
     {
-        if (columns is null) return;
+        if (!shell.IsBuilt) return;
 
-        layoutKeeper.Remember(CaptureLayout);
-    }
-
-    private WindowLayout CaptureLayout()
-    {
-        // Full screen collapses every track, so the ones it put away are the layout.
-        var away = fullScreen.IsFullScreen;
-
-        double Column(int index) => Weight(away && fullScreen.ColumnsBefore is not null
-            ? fullScreen.ColumnsBefore[index].Size
-            : columns!.ColumnDefinitions[index].Width);
-
-        double Row(int index) => Weight(away && fullScreen.RowsBefore is not null
-            ? fullScreen.RowsBefore[index].Size
-            : columns!.RowDefinitions[index].Height);
-
-        // The row a panel stands in, whichever grid it is in while swapped. Full
-        // screen zeroes the outer grid's rows only.
-        double Under(Control? panel, Func<GridLength, double> measure) =>
-            panel?.Parent == columns && away && fullScreen.RowsBefore is not null
-                ? measure(fullScreen.RowsBefore[2].Size)
-                : measure((panel?.Parent as Grid)?.RowDefinitions[2].Height ?? new GridLength(1, GridUnitType.Star));
-
-        var state = away ? fullScreen.StateBefore : WindowState;
-        var size = WindowState == WindowState.Normal ? ClientSize : layoutKeeper.NormalSize;
-
-        // A splitter leaves star weights in pixels, far past what the file accepts.
-        var (canvas, side) = Share(Column(WideColumn), Column(SideColumn),
-            WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
-
-        var (preview, inspector) = Share(
-            previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
-            Under(inspectorBox, Weight),
-            WindowLayout.DefaultPreviewWeight + WindowLayout.DefaultInspectorWeight);
-
-        return new WindowLayout
-        {
-            Maximized = state == WindowState.Maximized,
-            Width = size?.Width ?? layoutKeeper.Saved?.Width ?? 0,
-            Height = size?.Height ?? layoutKeeper.Saved?.Height ?? 0,
-            Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layoutKeeper.Saved?.Monitor,
-
-            CanvasWeight = canvas,
-            SideWeight = side,
-            PreviewWeight = preview,
-            InspectorWeight = inspector,
-
-            AssistantWidth = assistant is { IsVisible: true } ? assistantColumn!.Width.Value : assistantShare.Value,
-            AssistantOpen = assistant?.IsVisible == true,
-
-            ControlsHeight = knobs.View.IsVisible ? Under(knobs.View, length => length.Value) : controlsShare.Value,
-            ControlsOpen = knobs.View.IsVisible,
-
-            Code = document.ShowingCode,
-            Swapped = toolbar.Swap.IsChecked == true,
-        };
-
-        static double Weight(GridLength length) => length.IsStar ? length.Value : 1;
-
-        static (double, double) Share(double a, double b, double total) =>
-            a + b > 0 ? (a / (a + b) * total, b / (a + b) * total) : (total / 2, total / 2);
+        layoutKeeper.Remember(() => shell.Capture(this));
     }
 
     #endregion

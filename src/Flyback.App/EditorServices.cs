@@ -143,6 +143,7 @@ internal static class EditorServices
         services.AddSingleton<TakeRecording>();
         services.AddSingleton<TransportControls>();
         services.AddSingleton<FullScreenPreview>();
+        services.AddSingleton<ShellLayout>();
 
         services.AddSingleton<MainWindow>();
         services.AddSingleton<WindowHolder>();

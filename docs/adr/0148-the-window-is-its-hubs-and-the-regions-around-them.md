@@ -66,3 +66,12 @@ are classes, what is left is small enough to read top to bottom.
 
 There is still no binding layer and no view model: state lives in the `Patch`,
 wiring is event handlers, and 0016 stands as written.
+
+## Amendment, 2026-09-27: the shell grid has its own class
+
+`ShellLayout` owns construction and presentation state for the editor grid: the
+assistant, preview and inspector columns, the knob row, preview swapping, and
+applying and capturing panel layout. `MainWindow` still coordinates the hubs and
+toolbar actions, and delegates those layout operations. This is the one cohesive
+part of the window layout that is large enough to own separately; it does not
+introduce partial window files, bindings or view models.
