@@ -6,16 +6,6 @@ using Flyback.Core.Compile;
 
 namespace Flyback.App.Controls;
 
-/// <summary>Which renderer is drawing the preview.</summary>
-public enum PreviewBackend
-{
-    /// <summary>The interpreter, over rows, on the processor.</summary>
-    Cpu,
-
-    /// <summary>The patch compiled to a fragment shader.</summary>
-    Gpu,
-}
-
 /// <summary>
 /// Holds whichever preview renderer is currently running and forwards the shell's
 /// dealings with it. The window asks for a preview; this decides what one is.

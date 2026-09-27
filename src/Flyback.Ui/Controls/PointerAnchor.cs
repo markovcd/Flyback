@@ -5,31 +5,6 @@ using Avalonia.Controls;
 namespace Flyback.App.Controls;
 
 /// <summary>
-/// Keeps the mouse pointer where a drag began, so the drag reads motion rather than position
-/// and never runs into the edge of the screen.
-/// </summary>
-internal interface IPointerAnchor : IDisposable
-{
-    /// <summary>Puts the pointer back where it was taken. False when it did not go.</summary>
-    bool Return();
-}
-
-/// <summary>Where a drag takes its <see cref="IPointerAnchor"/> from.</summary>
-internal interface IPointerAnchors
-{
-    /// <summary>Anchors the pointer where it is now, or null to leave it free.</summary>
-    IPointerAnchor? Take(Visual visual);
-}
-
-/// <summary>The platform's anchors.</summary>
-internal sealed class PlatformAnchors : IPointerAnchors
-{
-    public static PlatformAnchors Instance { get; } = new();
-
-    public IPointerAnchor? Take(Visual visual) => PointerAnchor.Take(visual);
-}
-
-/// <summary>
 /// The platform's own anchor. Positions stay in the platform's screen coordinates end to end, so
 /// no scaling or monitor layout has to be translated.
 /// </summary>
