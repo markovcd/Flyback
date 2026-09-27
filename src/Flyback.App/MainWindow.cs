@@ -24,7 +24,6 @@ namespace Flyback.App;
 /// container (ADR-0150), lays them out, and keeps its own keys and full screen, and
 /// the close that asks the unsaved question (ADR-0148).
 /// </summary>
-[SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
 internal sealed class MainWindow : Window
 {
     private readonly OutputSections outputSections;
@@ -32,12 +31,9 @@ internal sealed class MainWindow : Window
     private readonly SettingsSession settingsSession;
     private readonly IDialog dialog;
     private readonly Document document;
-    private readonly PatchFiles files;
     private readonly PatchOpening patchOpening;
     private readonly PresetSlot presets;
-    private readonly Toolbar toolbar;
     private readonly PanelKnobs knobs;
-    private readonly Inspector inspector;
     private readonly ReportLine report;
     private readonly ShellLayout shell;
     private readonly PluginCatalog plugins;
@@ -49,10 +45,12 @@ internal sealed class MainWindow : Window
     private readonly WindowLayoutKeeper layoutKeeper;
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
+    private readonly EditState editState;
+
+    private bool started;
     
     public MainWindow(
         Document document,
-        PatchFiles files,
         PatchOpening patchOpening,
         UnsavedWork unsaved,
         ReportLine report,
@@ -61,9 +59,7 @@ internal sealed class MainWindow : Window
         Playback playback,
         OutputSections outputSections,
         PanelKnobs knobs,
-        Inspector inspector,
         PresetSlot presets,
-        Toolbar toolbar,
         TakeRecording recording,
         WorkKeeper keeper,
         EditorWiring editorWiring,
@@ -73,12 +69,12 @@ internal sealed class MainWindow : Window
         FullScreenPreview fullScreen,
         TransportControls transport,
         ShellLayout shell,
+        EditState editState,
         OutputSettingsUse outputSettingsUse,
         SettingsSession settingsSession,
         IDialog dialog)
     {
         this.document = document;
-        this.files = files;
         this.patchOpening = patchOpening;
         this.unsaved = unsaved;
         this.report = report;
@@ -90,21 +86,20 @@ internal sealed class MainWindow : Window
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
         this.knobs = knobs;
-        this.inspector = inspector;
         this.presets = presets;
-        this.toolbar = toolbar;
         this.keeper = keeper;
         this.layoutKeeper = layoutKeeper;
         this.fullScreen = fullScreen;
         this.transport = transport;
         this.shell = shell;
+        this.editState = editState;
         this.dialog = dialog;
 
         Recording = recording;
 
         // Cross-service event edges are kept together so they remain visible
         // without becoming constructor dependencies between the services.
-        editorWiring.Wire(RefreshEditState, ShowOwnership);
+        editorWiring.Wire();
 
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears
@@ -117,7 +112,7 @@ internal sealed class MainWindow : Window
         // in front.
         Activated += (_, _) => Attention.Clear(this);
 
-        Title = BaseTitle;
+        Title = GlobalConstants.ApplicationName;
         Width = 1280;
         Height = 800;
         MinWidth = 860;
@@ -140,6 +135,9 @@ internal sealed class MainWindow : Window
         // Dialogs and the storage provider are ready only once the window is open.
         Opened += async (_, _) => await editorOpened.RunAsync();
     }
+    
+    /// <summary>The take this window is recording, counting in, or about to.</summary>
+    internal TakeRecording Recording { get; }
 
     /// <summary>
     /// Brings the editor up: the saved layout, the first patch and everything that
@@ -152,18 +150,16 @@ internal sealed class MainWindow : Window
 
         editorStart.Start(this);
     }
-
-    private bool started;
-
+    
     private Control BuildLayout()
     {
-        RefreshEditState();
+        editState.Refresh();
         // The popups behind the report and a module's name hang off the window
         // rather than off the control, so what they look like is said here.
         Styles.Add(ReportLine.Trim());
         Styles.Add(ModulePlate.Naming());
         Styles.Add(ModulePalette.Trim());
-        return shell.Build(RefreshEditState);
+        return shell.Build(editState);
     }
 
     /// <summary>
@@ -176,16 +172,11 @@ internal sealed class MainWindow : Window
     /// before it asks what "wanted" means.
     /// </remarks>
     internal void ClearPresetSelection() => presets.Clear();
-
-    #region Keys, undo and the unsaved question
-
+    
     // The editing session as opposed to the patch: undo and redo from wherever the
     // focus is, what the title bar says about unsaved work, and the window's own close.
     // The question every route out of a patch asks is UnsavedWork's; what is here is
     // the close that asks it.
-
-    /// <summary>The window title, before anything is said about the patch in it.</summary>
-    private const string BaseTitle = GlobalConstants.ApplicationName;
 
     /// <summary>Set while a close is waiting for a take to be finished, so a second close does not wait twice.</summary>
     private bool waitingOnTake;
@@ -265,7 +256,6 @@ internal sealed class MainWindow : Window
     }
 
     /// <summary>
-
     /// Undo and redo, from wherever the focus happens to be. Handled on the window
     /// rather than on the canvas because an edit is as likely to have been made in
     /// the inspector, and anything that already dealt with the key keeps it — a
@@ -464,38 +454,7 @@ internal sealed class MainWindow : Window
 
         return midi.KeyDown(key);
     }
-
-    /// <summary>
-    /// Grays the two out when there is nothing behind or ahead — the same
-    /// question a button would answer by doing nothing, asked where it can be
-    /// seen instead — and says in the title what the patch is and whether there
-    /// is unsaved work in it.
-    /// </summary>
-    private void RefreshEditState()
-    {
-        // Literally the answer the gesture gives, rather than a second statement of
-        // the same rule — see UndoLandsOn.
-        toolbar.Undo.IsEnabled = document.CanUndo;
-        toolbar.Redo.IsEnabled = document.CanRedo;
-
-        // The name first and the program second, which is the way round every
-        // other window on the machine says it: what is on screen is the patch,
-        // and which program is drawing it is the thing already known.
-        var named = files.Name is null ? BaseTitle : $"{files.Name} — {BaseTitle}";
-
-        // A dot rather than the word, because the title bar is read at a glance
-        // and the question it answers is only whether there is anything to lose.
-        Title = unsaved.SomethingToLose ? named + " •" : named;
-    }
-
-    #endregion
-
-    #region Opening and saving
-
-    // The routes into and out of PatchFiles: the Open and Save gestures,
-    // a drop, an activation and a path named on the command line, each asking first
-    // whatever has to be asked.
-
+    
     /// <summary>
     /// Lets a patch, a bundle or a text file be opened by dropping it in from
     /// the file explorer — the same three kinds the picker offers, arriving
@@ -524,51 +483,6 @@ internal sealed class MainWindow : Window
         });
     }
 
-    
-    #endregion
-
-    #region The document's buttons and write-back gestures
-
-    // What the window shows of the Document: the code button, the tidy
-    // button, and the panel's gestures that end in a write-back.
-
-    /// <summary>
-    /// Puts the tidy button, the panel and the edit state in step with who owns the
-    /// patch and which view is showing.
-    /// </summary>
-    private void ShowOwnership()
-    {
-        // Laying out is off only where it would not last: a locked canvas is
-        // re-laid on the next evaluation, so tidying one is work thrown away.
-        // Showing the text, the same button folds the lines instead.
-        toolbar.Tidy.IsEnabled = document.ShowingCode || !document.Owned;
-
-        ToolTip.SetTip(toolbar.Tidy, document.ShowingCode
-            ? "Fold the long lines so the patch reads down the page  (Ctrl+L)"
-            : document.Owned
-                ? "The text is the document, so the canvas is laid out from it on every "
-                  + "apply. Fold the text instead."
-                : Toolbar.TidyTip);
-
-        // What the empty panel says is a list of gestures, and half of them
-        // have just been switched off or back on.
-        inspector.Build();
-        RefreshEditState();
-
-        ToolTip.SetTip(
-            inspector.Panel,
-            document.Owned
-                ? "The text is the document. A knob turned here is written back into it "
-                  + "where it already says it."
-                : null);
-    }
-
-    #endregion
-
-    #region Playback, reporting and closing down
-
-    // What the window shows of Playback, and the one place anything is
-    // said to the user.
 
     /// <summary>
     /// The one place anything is said to the user. <paramref name="detail"/> is for
@@ -597,14 +511,7 @@ internal sealed class MainWindow : Window
 
         base.OnClosed(e);
     }
-
-    #endregion
-
-    #region Output settings
-
-    // The window wires output controls and reacts to changes; OutputSettingsUse
-    // applies and saves what the sections show.
-
+    
     /// <summary>
     /// Called once, from the constructor, rather than when the settings window
     /// opens: what was last saved has to be in force before anybody has looked.
@@ -618,28 +525,11 @@ internal sealed class MainWindow : Window
         outputSections.Show();
         outputSettingsUse.ApplyCurrent();
     }
-
-    #endregion
-
-    #region Layout
-
+    
     private void RememberLayout()
     {
         if (!shell.IsBuilt) return;
 
         layoutKeeper.Remember(() => shell.Capture(this));
     }
-
-    #endregion
-
-    #region Recording
-
-    // The window and keyboard send the Record gesture to the take service.
-
-    /// <summary>The take this window is recording, counting in, or about to.</summary>
-    internal TakeRecording Recording { get; }
-
-    #endregion
-
-
 }

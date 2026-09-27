@@ -58,9 +58,9 @@ internal sealed class ShellLayout(
     public bool PreviewHideWaiting => previewHideWaiting;
     public bool IsBuilt => columns is not null;
 
-    public Control Build(Action refreshEditState)
+    public Control Build(EditState editState)
     {
-        assistant.ConversationChanged += (_, _) => refreshEditState();
+        assistant.ConversationChanged += (_, _) => editState.Refresh();
         editor.Tags.Types = assistant.Undescribed;
         assistant.UndescribedChanged += (_, _) =>
         {

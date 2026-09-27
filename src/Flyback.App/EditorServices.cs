@@ -119,6 +119,8 @@ internal static class EditorServices
         services.AddSingleton<IMonitors, WindowMonitors>();
         services.AddSingleton<IWindowFocus, WindowFocus>();
         services.AddSingleton<IWindowClose, WindowClose>();
+        services.AddSingleton<IWindowTitle, WindowTitle>();
+        services.AddSingleton<EditState>();
         services.AddSingleton<SiteAccess>();
         services.AddSingleton<Playback>();
         services.AddSingleton<PatchFiles>();

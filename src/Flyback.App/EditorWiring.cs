@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -44,11 +43,12 @@ internal sealed class EditorWiring(
     Inspector inspector,
     Document document,
     SourceView source,
-    CanvasSection canvasSection)
+    CanvasSection canvasSection,
+    EditState editState)
 {
     private bool wired;
 
-    public void Wire(Action refreshEditState, Action showOwnership)
+    public void Wire()
     {
         if (wired) return;
         wired = true;
@@ -110,7 +110,7 @@ internal sealed class EditorWiring(
             inspector.Build();
             playback.ProbeSelectionChanged(files.Sounds, files.Pictures, () => recording.Running);
         };
-        editor.History.HistoryChanged += (_, _) => refreshEditState();
+        editor.History.HistoryChanged += (_, _) => editState.Refresh();
         editor.Gestures.GestureFinished += (_, _) =>
         {
             if (shell.PreviewHideWaiting) shell.ShowPreview(playback.HasPicture);
@@ -122,9 +122,9 @@ internal sealed class EditorWiring(
             if (editor.Selection.Focused?.Id == pick.Node || editor.Selection.Group?.Members.Contains(pick.Node) == true) inspector.Build();
         };
 
-        document.EditStateChanged += (_, _) => refreshEditState();
+        document.EditStateChanged += (_, _) => editState.Refresh();
         document.PanelStale += (_, _) => inspector.Build();
-        document.OwnershipChanged += (_, _) => showOwnership();
+        document.OwnershipChanged += (_, _) => editState.RefreshOwnership();
         document.ViewChanged += (_, _) =>
         {
             if (toolbar.Code.IsChecked != document.ShowingCode) toolbar.Code.IsChecked = document.ShowingCode;
@@ -171,6 +171,5 @@ internal sealed class EditorWiring(
         };
 
         editor.Report.Said += (_, message) => report.Say(message);
-        report.Said += (_, message) => Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
     }
 }
