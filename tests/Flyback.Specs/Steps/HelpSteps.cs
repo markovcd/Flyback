@@ -1,7 +1,6 @@
 using System.CommandLine;
 using Reqnroll;
 using Shouldly;
-using Flyback.Cli;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;

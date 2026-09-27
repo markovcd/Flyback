@@ -3,9 +3,9 @@ using Avalonia.Controls.Primitives;
 
 namespace Flyback.App.Controls;
 
-internal sealed class WindowDialog(MainWindowLocator locator) : IDialog
+internal sealed class WindowDialog(WindowHolder holder) : IDialog
 {
-    public bool IsShowing => OverlayLayer.GetOverlayLayer(locator.Owner)?
+    public bool IsShowing => OverlayLayer.GetOverlayLayer(holder.Instance)?
         .Children.OfType<ModalOverlay>().Any() == true;
     
     public async Task<TResult> Show<TResult>(
@@ -19,12 +19,12 @@ internal sealed class WindowDialog(MainWindowLocator locator) : IDialog
         // means the shell's layout is not rearranged to make room for a
         // dialog it has nothing to do with. There is none before the window
         // has been shown, and nothing to show a dialog on either.
-        if (OverlayLayer.GetOverlayLayer(locator.Owner) is not { } layer) return default!;
+        if (OverlayLayer.GetOverlayLayer(holder.Instance) is not { } layer) return default!;
 
         // Where the keyboard was, so it can be put back. The overlay takes
         // the focus, and giving it to the canvas afterwards instead of to
         // whatever had it is its own small rudeness.
-        var before = locator.Owner.FocusManager.GetFocusedElement();
+        var before = holder.Instance.FocusManager.GetFocusedElement();
 
         var overlay = new ModalOverlay(title, a => content(r => a(r)), header, fill);
 

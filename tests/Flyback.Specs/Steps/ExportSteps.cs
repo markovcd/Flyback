@@ -2,7 +2,6 @@ using System.CommandLine;
 using Reqnroll;
 using Shouldly;
 using Flyback.App.Audio;
-using Flyback.Cli;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;

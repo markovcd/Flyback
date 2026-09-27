@@ -145,7 +145,7 @@ internal static class EditorServices
         services.AddSingleton<FullScreenPreview>();
 
         services.AddSingleton<MainWindow>();
-        services.AddSingleton<MainWindowLocator>();
+        services.AddSingleton<WindowHolder>();
 
         return services;
     }

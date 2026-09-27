@@ -1,8 +1,6 @@
-using Flyback.App.Controls;
-
 namespace Flyback.App;
 
-internal sealed class WindowClose(MainWindowLocator locator) : IWindowClose
+internal sealed class WindowClose(WindowHolder holder) : IWindowClose
 {
-    public void Close() => locator.Owner.Close();
+    public void Close() => holder.Instance.Close();
 }

@@ -24,7 +24,7 @@ namespace Flyback.App;
 /// each way (ADR-0129).
 /// </remarks>
 internal sealed class FullScreenPreview(
-    MainWindowLocator locator,
+    WindowHolder holder,
     PreviewHost preview,
     PanelKnobs knobs,
     Toolbar toolbar,
@@ -92,7 +92,7 @@ internal sealed class FullScreenPreview(
             return;
         }
 
-        if (MonitorPlacement.FullScreenTarget(locator.Owner, settings.Current.FullScreen, settings.Current.FullScreenMonitor) is { } screen)
+        if (MonitorPlacement.FullScreenTarget(holder.Instance, settings.Current.FullScreen, settings.Current.FullScreenMonitor) is { } screen)
             ShowPictureOn(screen);
         else
             Show(true);
@@ -112,7 +112,7 @@ internal sealed class FullScreenPreview(
     {
         if (PreviewBox is not { } previewBox || transport.PictureWindow is not null || IsFullScreen) return;
 
-        var owner = locator.Owner;
+        var owner = holder.Instance;
 
         usage.Count(Used.FullScreen);
 
@@ -176,7 +176,7 @@ internal sealed class FullScreenPreview(
         // question rather than four. Before that there is nothing to show.
         if (Columns is not { } columns || PreviewBox is not { } previewBox) return;
 
-        var owner = locator.Owner;
+        var owner = holder.Instance;
 
         IsFullScreen = full;
         knobs.OverPicture = full;

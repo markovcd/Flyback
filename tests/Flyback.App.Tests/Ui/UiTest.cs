@@ -13,7 +13,6 @@ using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.App.Canvas;
-using Flyback.App.Controls;
 using Flyback.App.Site;
 using Flyback.App.Tests.Ui;
 
@@ -138,11 +137,9 @@ public class UiTest : IDisposable
     }
 
     /// <summary><paramref name="window"/> is the one <paramref name="container"/>'s window-bound services act on.</summary>
-    internal static Window Attach(IServiceProvider container, Window window)
+    internal static void Attach(IServiceProvider container, Window window)
     {
-        container.GetRequiredService<MainWindowLocator>().Attach(window);
-
-        return window;
+        container.GetRequiredService<WindowHolder>().Attach(window);
     }
 
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>

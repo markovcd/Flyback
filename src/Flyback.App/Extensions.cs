@@ -1,5 +1,4 @@
-﻿using Flyback.App.Controls;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.App;
 
@@ -10,7 +9,7 @@ internal static class Extensions
         public MainWindow GetMainWindow()
         {
             var mainWindow = services.GetRequiredService<MainWindow>();
-            services.GetRequiredService<MainWindowLocator>().Attach(mainWindow);
+            services.GetRequiredService<WindowHolder>().Attach(mainWindow);
             return mainWindow;
         }
     }
