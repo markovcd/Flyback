@@ -128,6 +128,7 @@ internal static class EditorServices
         services.AddSingleton<UnsavedWork>();
         services.AddSingleton<PatchOpening>();
         services.AddSingleton<WorkRecovery>();
+        services.AddSingleton<PlaybackControls>();
 
         services.AddSingleton<OutputSections>();
         services.AddSingleton<CanvasSection>();

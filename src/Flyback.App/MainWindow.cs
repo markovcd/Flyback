@@ -107,6 +107,8 @@ internal sealed class MainWindow : Window
     /// <summary>The patch compiled and played, paused or muted.</summary>
     private readonly Playback playback;
 
+    private readonly PlaybackControls playbackControls;
+
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
     /// the sound always, and the picture while the processor is drawing it. See
@@ -155,6 +157,7 @@ internal sealed class MainWindow : Window
         AssistantPanel assistant,
         WorkKeeper keeper,
         WorkRecovery workRecovery,
+        PlaybackControls playbackControls,
         WindowLayoutKeeper layoutKeeper,
         FullScreenPreview fullScreen,
         TransportControls transport,
@@ -177,6 +180,7 @@ internal sealed class MainWindow : Window
         this.compiler = compiler;
         this.midi = midi;
         this.playback = playback;
+        this.playbackControls = playbackControls;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
@@ -225,7 +229,7 @@ internal sealed class MainWindow : Window
         // A take running takes Pause away, and finishing gives it back.
         recording.Marked += (_, _) => transport.Sync();
 
-        WirePlayback();
+        playbackControls.Wire();
 
         // A key going down while the clock is stopped changes the picture and
         // moves nothing else, so the preview has to be told there is a new frame
@@ -915,31 +919,6 @@ internal sealed class MainWindow : Window
 
     // What the window shows of Playback, and the one place anything is
     // said to the user.
-
-    /// <summary>Called once, before anything compiles.</summary>
-    private void WirePlayback()
-    {
-        playback.Compiled += (_, _) =>
-        {
-            shell.ShowPreview(playback.HasPicture);
-            knobs.Refresh();
-            Recording.Mark();
-        };
-
-        playback.TransportChanged += (_, _) => transport.Sync();
-
-        // A patch saved somewhere new reads what it names from there.
-        files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running);
-
-        // The patch is playing, which is the moment what is in it is worth
-        // counting (ADR-0094). Not at a compile: a patch is recompiled on every
-        // knob frame, and what it is made of is only interesting where somebody
-        // is listening to it.
-        playback.Started += (_, _) => usage.Played(
-            editor.History.Patch.Nodes.Select(node => node.TypeId),
-            editor.History.Patch.Connections.Count,
-            presets.Showing?.Name);
-    }
 
     /// <summary>
     /// The one place anything is said to the user. <paramref name="detail"/> is for
