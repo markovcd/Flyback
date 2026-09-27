@@ -202,6 +202,7 @@ internal sealed class MainWindow : Window
         AssistantPanel assistant,
         WorkKeeper keeper,
         WindowLayoutKeeper layoutKeeper,
+        TransportControls transport,
         OutputSettingRepository outputSettingRepository,
         IDialog dialog)
     {
@@ -232,6 +233,7 @@ internal sealed class MainWindow : Window
         this.assistant = assistant;
         this.keeper = keeper;
         this.layoutKeeper = layoutKeeper;
+        this.transport = transport;
         this.outputSettingRepository = outputSettingRepository;
         this.dialog = dialog;
 
@@ -261,7 +263,7 @@ internal sealed class MainWindow : Window
         files.Saved += (_, _) => ClearPresetSelection();
 
         // A take running takes Pause away, and finishing gives it back.
-        recording.Marked += (_, _) => SyncTransport();
+        recording.Marked += (_, _) => transport.Sync();
 
         WirePlayback();
 
@@ -662,7 +664,7 @@ internal sealed class MainWindow : Window
 
         toolbar.Swap.IsCheckedChanged += (_, _) => SwapPreview(toolbar.Swap.IsChecked == true);
 
-        toolbar.Pause.Click += (_, _) => TogglePause();
+        toolbar.Pause.Click += (_, _) => transport.TogglePause();
         toolbar.Rewind.Click += (_, _) => RewindToZero();
         toolbar.Record.Click += async (_, _) => await ToggleRecordAsync();
 
@@ -877,16 +879,16 @@ internal sealed class MainWindow : Window
         // Before the modifier check, because Escape carries none. Only while the
         // picture is full screen: everywhere else Escape belongs to the module
         // filter, which handles its own before this is ever reached.
-        if (e.Key == Key.Escape && (previewIsFullScreen || pictureWindow is not null))
+        if (e.Key == Key.Escape && (previewIsFullScreen || transport.PictureWindow is not null))
         {
             LeaveFullScreen();
             e.Handled = true;
             return;
         }
 
-        if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None && (previewIsFullScreen || pictureWindow is not null))
+        if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None && (previewIsFullScreen || transport.PictureWindow is not null))
         {
-            ToggleStats();
+            transport.ToggleStats(previewIsFullScreen);
             e.Handled = true;
             return;
         }
@@ -970,7 +972,7 @@ internal sealed class MainWindow : Window
 
             // With Ctrl because the bare letter is a note, and Space adds a module.
             case Key.P:
-                TogglePause();
+                transport.TogglePause();
                 e.Handled = true;
                 break;
 
@@ -1314,7 +1316,7 @@ internal sealed class MainWindow : Window
             Recording.Mark();
         };
 
-        playback.TransportChanged += (_, _) => SyncTransport();
+        playback.TransportChanged += (_, _) => transport.Sync();
 
         // A patch saved somewhere new reads what it names from there.
         files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running);
@@ -1434,8 +1436,8 @@ internal sealed class MainWindow : Window
     /// <summary>Stands every transport over a picture at <paramref name="edge"/>, and its knobs at the other.</summary>
     private void LayOverlays(TransportEdge edge)
     {
-        if (transportOverlay is not null) TransportOverlay.Lay(edge, transportOverlay, knobs.Stage);
-        if (pictureWindow is not null) TransportOverlay.Lay(edge, pictureWindow.Transport, pictureWindow.Knobs);
+        if (transport.Overlay is not null) TransportOverlay.Lay(edge, transport.Overlay, knobs.Stage);
+        if (transport.PictureWindow is not null) TransportOverlay.Lay(edge, transport.PictureWindow.Transport, transport.PictureWindow.Knobs);
     }
 
     /// <summary>
@@ -1547,19 +1549,19 @@ internal sealed class MainWindow : Window
         Grid.SetRow(inspectorBorder, 2);
 
         // Over the preview's own cell while it has the window, and nowhere otherwise.
-        var overlay = transportOverlay = new TransportOverlay() { IsVisible = false };
+        var overlay = transport.Overlay = new TransportOverlay() { IsVisible = false };
 
-        overlay.PauseClicked += TogglePause;
+        overlay.PauseClicked += transport.TogglePause;
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += RewindToZero;
 
-        statsOverlay = new StatsOverlay(preview);
+        transport.Stats = new StatsOverlay(preview);
 
         toolbar.Seek.Drive(overlay);
         TransportOverlay.Lay(outputSettingRepository.Current.Transport, overlay, knobs.Stage);
 
         grid.Children.Add(previewBox);
-        grid.Children.Add(statsOverlay);
+        grid.Children.Add(transport.Stats);
         grid.Children.Add(knobs.Stage);
         grid.Children.Add(overlay);
         grid.Children.Add(splitter);
@@ -1682,13 +1684,10 @@ internal sealed class MainWindow : Window
 
     private static GridLength Everything => new(1, GridUnitType.Star);
 
-    /// <summary>The window holding the preview on another monitor, while it is there.</summary>
-    private PictureWindow? pictureWindow;
-
     /// <summary>Goes full screen on the monitor the Graphics section names, or comes back.</summary>
     private void ToggleFullScreenPreview()
     {
-        if (previewIsFullScreen || pictureWindow is not null)
+        if (previewIsFullScreen || transport.PictureWindow is not null)
         {
             LeaveFullScreen();
             return;
@@ -1702,7 +1701,7 @@ internal sealed class MainWindow : Window
 
     private void LeaveFullScreen()
     {
-        pictureWindow?.Close();
+        transport.PictureWindow?.Close();
         ShowFullScreenPreview(false);
     }
 
@@ -1712,7 +1711,7 @@ internal sealed class MainWindow : Window
     /// </summary>
     internal void ShowPictureOn(Screen screen)
     {
-        if (previewBox is null || pictureWindow is not null || previewIsFullScreen) return;
+        if (previewBox is null || transport.PictureWindow is not null || previewIsFullScreen) return;
 
         usage.Count(Used.FullScreen);
 
@@ -1731,35 +1730,35 @@ internal sealed class MainWindow : Window
 
         preview.Renew();
 
-        var window = pictureWindow = new PictureWindow(screen, preview);
+        var window = transport.PictureWindow = new PictureWindow(screen, preview);
 
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);
         window.Knobs.Turning += knobs.Turn;
         window.Knobs.TurnEnded += document.LetGoOfKnob;
 
-        window.Transport.PauseClicked += TogglePause;
+        window.Transport.PauseClicked += transport.TogglePause;
         window.Transport.MuteClicked += playback.ToggleMute;
         window.Transport.RewindClicked += RewindToZero;
 
         toolbar.Seek.Drive(window.Transport);
         TransportOverlay.Lay(outputSettingRepository.Current.Transport, window.Transport, window.Knobs);
 
-        window.PauseRequested += (_, _) => TogglePause();
-        window.StatsRequested += (_, _) => ToggleStats();
+        window.PauseRequested += (_, _) => transport.TogglePause();
+        window.StatsRequested += (_, _) => transport.ToggleStats(previewIsFullScreen);
         window.Closed += (_, _) => BringPictureBack(window);
 
         window.Show(this);
-        SyncTransport();
-        SyncStats();
+        transport.Sync();
+        transport.SyncStats(previewIsFullScreen);
         knobs.SyncStages();
     }
 
     private void BringPictureBack(PictureWindow window)
     {
-        if (pictureWindow != window || previewBox is null) return;
+        if (transport.PictureWindow != window || previewBox is null) return;
 
-        pictureWindow = null;
+        transport.PictureWindow = null;
         knobs.Away = null;
         toolbar.Seek.Drop(window.Transport);
 
@@ -1795,12 +1794,12 @@ internal sealed class MainWindow : Window
             child.IsVisible = full ? child == previewBox : visibleBefore?.GetValueOrDefault(child, true) ?? true;
 
         // The controls stand over whichever cell the preview is in.
-        if (transportOverlay is { } overlay)
+        if (transport.Overlay is { } overlay)
         {
             if (full)
             {
                 Over(overlay);
-                SyncTransport();
+                transport.Sync();
             }
 
             overlay.IsVisible = full;
@@ -1809,8 +1808,8 @@ internal sealed class MainWindow : Window
         Over(knobs.Stage);
         knobs.SyncStages();
 
-        if (statsOverlay is not null) Over(statsOverlay);
-        SyncStats();
+        if (transport.Stats is not null) Over(transport.Stats);
+        transport.SyncStats(previewIsFullScreen);
 
         // The keyboard goes with what is showing: the canvas it was on is put away.
         if (full) previewBox.Focus();
@@ -1998,71 +1997,9 @@ internal sealed class MainWindow : Window
     // Play and pause, and the mute that goes with them, on the toolbar and on the
     // full-screen preview.
 
-    /// <summary>The dots and toolbar over a full-screen preview, or null before the layout is built.</summary>
-    private TransportOverlay? transportOverlay;
-
-    private bool pauseShowsPlay;
-
     internal bool Paused => playback.Paused;
 
     internal bool Muted => playback.Muted;
-
-    private void TogglePause()
-    {
-        // A take is paced by the samples it is handed, so pausing under one would stop the file.
-        if (Recording.InHand || Recording.Counting) return;
-
-        if (playback.Paused) playback.Resume(() => Recording.Running);
-        else playback.Pause();
-    }
-
-    /// <summary>Puts the toolbar button and the full-screen overlay in step with the transport.</summary>
-    private void SyncTransport()
-    {
-        // Recompiles call this on every knob frame, so the glyph is only swapped when it changes.
-        var paused = playback.Paused;
-
-        if (pauseShowsPlay != paused)
-        {
-            pauseShowsPlay = paused;
-            toolbar.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
-        }
-
-        toolbar.Pause.IsEnabled = Recording is { InHand: false, Counting: false };
-        toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
-
-        ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
-
-        foreach (var overlay in Transports)
-        {
-            overlay.Paused = paused;
-            overlay.Muted = playback.Muted;
-            overlay.Sounding = playback.Audible;
-        }
-    }
-
-    /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
-    private IEnumerable<TransportOverlay> Transports =>
-        new[] { transportOverlay, pictureWindow?.Transport }.OfType<TransportOverlay>();
-
-    /// <summary>The line saying how the picture is drawn, over the preview's cell while it has the window.</summary>
-    private StatsOverlay? statsOverlay;
-
-    /// <summary>Whether the full-screen picture carries that line, wherever it is shown. F3 says.</summary>
-    private bool statsShown;
-
-    /// <summary>Shows the line over a full-screen picture, or puts it away.</summary>
-    private void ToggleStats()
-    {
-        statsShown = !statsShown;
-        SyncStats();
-    }
-
-    private void SyncStats()
-    {
-        if (statsOverlay is not null) statsOverlay.IsVisible = statsShown && previewIsFullScreen;
-        if (pictureWindow is not null) pictureWindow.Stats.IsVisible = statsShown;
-    }
 
     #endregion
 
@@ -2147,6 +2084,7 @@ internal sealed class MainWindow : Window
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper keeper;
     private readonly WindowLayoutKeeper layoutKeeper;
+    private readonly TransportControls transport;
 
     private readonly OutputSettingRepository outputSettingRepository;
 

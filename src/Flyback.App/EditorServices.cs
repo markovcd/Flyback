@@ -141,6 +141,7 @@ internal static class EditorServices
         services.AddSingleton<Toolbar>();
         services.AddSingleton<StatusBar>();
         services.AddSingleton<TakeRecording>();
+        services.AddSingleton<TransportControls>();
 
         services.AddSingleton<MainWindow>();
         services.AddSingleton<MainWindowLocator>();
