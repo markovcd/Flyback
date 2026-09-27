@@ -37,7 +37,7 @@ internal sealed class PresetThumbnails
     private readonly ModuleCatalog modules;
     private readonly IlCompiler? compiler;
     private readonly PresetLibrary? saved;
-    private readonly ThumbnailStore? store;
+    private readonly Lazy<ThumbnailStore>? store;
 
     /// <param name="setup">Its <see cref="EditorSetup.ThumbnailFolder"/> keeps thumbnails between runs. Null keeps them for this run only.</param>
     /// <param name="saved">Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</param>
@@ -49,8 +49,14 @@ internal sealed class PresetThumbnails
 
         if (setup?.ThumbnailFolder is not { } folder) return;
 
-        store = new ThumbnailStore(folder);
-        _ = Task.Run(store.Prune);
+        // Opened, and pruned in the background, by the first thumbnail asked for.
+        store = new Lazy<ThumbnailStore>(() =>
+        {
+            var opened = new ThumbnailStore(folder);
+            _ = Task.Run(opened.Prune);
+
+            return opened;
+        });
     }
 
     /// <summary>What a patch that reads its previous frame is given to settle in.</summary>
@@ -97,7 +103,7 @@ internal sealed class PresetThumbnails
         {
             var key = Key(preset, path);
 
-            if (key is not null && store?.Find(key) is { } kept) return kept;
+            if (key is not null && store?.Value.Find(key) is { } kept) return kept;
 
             await oneAtATime.WaitAsync(cancel);
 
@@ -106,7 +112,7 @@ internal sealed class PresetThumbnails
                 var thumbnail = Draw(preset);
 
                 // One that would not draw may next time, with the plugin back or the file readable.
-                if (key is not null && thumbnail.Words != Thumbnail.Unavailable.Words) store?.Keep(key, thumbnail);
+                if (key is not null && thumbnail.Words != Thumbnail.Unavailable.Words) store?.Value.Keep(key, thumbnail);
 
                 return thumbnail;
             }
@@ -135,7 +141,7 @@ internal sealed class PresetThumbnails
 
         return said[preset] = Task.Run(async () =>
         {
-            if (Key(preset, path) is { } key && store?.Find(key, pixels: false) is { } kept) return kept;
+            if (Key(preset, path) is { } key && store?.Value.Find(key, pixels: false) is { } kept) return kept;
 
             await oneReadAtATime.WaitAsync();
 

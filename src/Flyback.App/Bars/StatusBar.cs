@@ -114,7 +114,8 @@ internal sealed class StatusBar
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         ticker.Tick += (_, _) => Update();
-        ticker.Start();
+        View.AttachedToVisualTree += (_, _) => ticker.Start();
+        View.DetachedFromVisualTree += (_, _) => ticker.Stop();
     }
 
     /// <summary>Says what the patch costs and where its clock is.</summary>

@@ -34,14 +34,20 @@ internal sealed class WorkKeeper
     /// </summary>
     private RecoveredWork? kept;
 
-    private readonly DispatcherTimer? ticker;
+    private DispatcherTimer? ticker;
 
     public WorkKeeper(EditorSetup setup, UnsavedWork unsaved)
     {
         folder = setup.RecoveryFolder;
         work = unsaved.Work;
+    }
 
-        recovery = folder is null ? null : Recovery.Open(folder);
+    /// <summary>Starts keeping unsaved work. Once, when the window opens; until then nothing is written.</summary>
+    internal void Start()
+    {
+        if (folder is null || recovery is not null) return;
+
+        recovery = Recovery.Open(folder);
 
         if (recovery is null) return;
 

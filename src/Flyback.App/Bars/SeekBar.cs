@@ -94,7 +94,8 @@ internal sealed class SeekBar
 
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = Follow };
         ticker.Tick += (_, _) => Update();
-        ticker.Start();
+        View.AttachedToVisualTree += (_, _) => ticker.Start();
+        View.DetachedFromVisualTree += (_, _) => ticker.Stop();
     }
 
     /// <summary>The bar and its length.</summary>

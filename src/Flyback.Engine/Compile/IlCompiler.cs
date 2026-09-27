@@ -43,7 +43,7 @@ public sealed class IlCompiler : IDisposable
     private readonly bool[] pending = new bool[Lanes];
 
     private readonly AutoResetEvent wake = new(false);
-    private readonly Thread worker;
+    private Thread? worker;
 
     private TaskCompletionSource settled = Completed();
     private bool enabled = true;
@@ -52,18 +52,6 @@ public sealed class IlCompiler : IDisposable
     public IlCompiler(IIlCompilerSetup? setup = null)
     {
         enabled = setup is not { Interpreted: true };
-
-        // Below the audio callback and the render loop, which are what this is
-        // trying to make cheaper: a build that took the processor from either of
-        // them would cost the thing it exists to save.
-        worker = new Thread(Work)
-        {
-            IsBackground = true,
-            Name = "Flyback IL compiler",
-            Priority = ThreadPriority.BelowNormal,
-        };
-
-        worker.Start();
     }
 
     /// <summary>
@@ -238,6 +226,20 @@ public sealed class IlCompiler : IDisposable
 
         pending[lane] = true;
         if (settled.Task.IsCompleted) settled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // Started with the first build, so a compiler nothing is submitted to has no thread.
+        // Below the audio callback and the render loop, which are what this is
+        // trying to make cheaper: a build that took the processor from either of
+        // them would cost the thing it exists to save.
+        worker ??= new Thread(Work)
+        {
+            IsBackground = true,
+            Name = "Flyback IL compiler",
+            Priority = ThreadPriority.BelowNormal,
+        };
+
+        if (worker.ThreadState.HasFlag(ThreadState.Unstarted)) worker.Start();
+
         wake.Set();
     }
 

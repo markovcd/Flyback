@@ -376,6 +376,8 @@ internal sealed class MainWindow : Window
         if (started) return;
         started = true;
 
+        keeper.Start();
+
         if (setupOfLaunch.LayoutPath is not null) layout = WindowLayout.Load(setupOfLaunch.LayoutPath);
         ApplyWindowLayout();
 

@@ -67,7 +67,6 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     {
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
-        timer.Start();
     }
 
     /// <summary>Patch time in seconds. This is what the Time module reads.</summary>
@@ -144,6 +143,12 @@ public sealed class PreviewSurface : Control, IPreviewSurface
         Time = 0;
         renderer.Reset();
         dirty = true;
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        timer.Start();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)

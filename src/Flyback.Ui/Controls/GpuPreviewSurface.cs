@@ -73,7 +73,6 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     {
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
-        timer.Start();
     }
 
     /// <summary>
@@ -220,6 +219,12 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
             rewindPending = true;
             dirty = true;
         }
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        timer.Start();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
