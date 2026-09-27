@@ -50,12 +50,6 @@ internal sealed class MainWindow : Window
 
     private readonly CanvasSection canvasSection;
 
-    private readonly UpdatesSection updatesSection;
-
-    private readonly UsageSection usageSection;
-
-    private readonly FilesSection filesSection;
-
     private readonly NodeEditor editor;
 
     private readonly SourceView source;
@@ -93,7 +87,6 @@ internal sealed class MainWindow : Window
     /// </summary>
     private readonly ReportLine report;
 
-    private readonly AssistantPanel assistant;
     private readonly ShellLayout shell;
 
     /// <summary>
@@ -104,13 +97,9 @@ internal sealed class MainWindow : Window
 
     /// <summary>The patch compiled and played, paused or muted.</summary>
     private readonly Playback playback;
-
-    private readonly PlaybackControls playbackControls;
-
+    
     private readonly EditorStart editorStart;
-
-    private readonly EditorOpened editorOpened;
-
+    
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
     /// the sound always, and the picture while the processor is drawing it. See
@@ -145,9 +134,6 @@ internal sealed class MainWindow : Window
         Playback playback,
         OutputSections outputSections,
         CanvasSection canvasSection,
-        UpdatesSection updatesSection,
-        UsageSection usageSection,
-        FilesSection filesSection,
         PanelKnobs knobs,
         Inspector inspector,
         PluginInstalls pluginInstalls,
@@ -177,26 +163,19 @@ internal sealed class MainWindow : Window
         this.preview = preview;
         this.report = report;
         this.plugins = plugins;
-        this.usage = usage;
         this.compiler = compiler;
         this.midi = midi;
         this.playback = playback;
-        this.playbackControls = playbackControls;
-        this.editorOpened = editorOpened;
         this.editorStart = editorStart;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
         this.canvasSection = canvasSection;
-        this.updatesSection = updatesSection;
-        this.usageSection = usageSection;
-        this.filesSection = filesSection;
         this.knobs = knobs;
         this.inspector = inspector;
         this.pluginInstalls = pluginInstalls;
         this.presets = presets;
         this.toolbar = toolbar;
-        this.assistant = assistant;
         this.keeper = keeper;
         this.workRecovery = workRecovery;
         this.layoutKeeper = layoutKeeper;
@@ -234,7 +213,7 @@ internal sealed class MainWindow : Window
         // A key going down while the clock is stopped changes the picture and
         // moves nothing else, so the preview has to be told there is a new frame
         // to draw. Everything else it redraws for, it can see for itself.
-        midi.Played += () => preview.Refresh();
+        midi.Played += preview.Refresh;
 
         // A device that would not open. The patch goes on naming it and goes on
         // being silent, and this line is the only thing that would say why.
@@ -1015,13 +994,4 @@ internal sealed class MainWindow : Window
 
     #endregion
 
-    #region Usage
-
-    /// <summary>
-    /// What this run says about itself, which for every test and for a build with
-    /// nowhere to send anything is nothing at all.
-    /// </summary>
-    private readonly Usage usage;
-
-    #endregion
 }

@@ -19,7 +19,6 @@ namespace Flyback.App.Canvas;
 internal sealed class NodeEditor : Control
 {
     private readonly CanvasPainter painter;
-    private readonly CanvasReport report;
 
     public NodeEditor(
         CanvasHistory history,
@@ -50,7 +49,7 @@ internal sealed class NodeEditor : Control
         Tags = tags;
 
         this.painter = painter;
-        this.report = report;
+        Report = report;
 
         Focusable = true;
         ClipToBounds = true;
@@ -83,7 +82,7 @@ internal sealed class NodeEditor : Control
     internal NodeGeometry Geometry { get; }
 
     /// <summary>What the canvas has to say, which the window puts on its report line.</summary>
-    internal CanvasReport Report => report;
+    internal CanvasReport Report { get; }
 
     /// <summary>The graph-to-control matrix, for a test asking where a socket ended up on the control.</summary>
     internal Matrix GraphToScreen => View.GraphToScreen;
@@ -219,11 +218,11 @@ internal sealed class NodeEditor : Control
     {
         try
         {
-            if (await gesture(TopLevel.GetTopLevel(this)?.Clipboard) is { } trouble) report.Say(trouble);
+            if (await gesture(TopLevel.GetTopLevel(this)?.Clipboard) is { } trouble) Report.Say(trouble);
         }
         catch (Exception ex)
         {
-            report.Say($"Clipboard unavailable: {ex.Message}");
+            Report.Say($"Clipboard unavailable: {ex.Message}");
         }
     }
 }
