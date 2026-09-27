@@ -57,6 +57,7 @@ public class UiTest : IDisposable
     /// timers and its engine on that thread for every test that follows.
     /// </summary>
     private readonly List<Window> opened = [];
+    private readonly List<ServiceProvider> providers = [];
 
     public static AppBuilder BuildAvaloniaApp() => AppBuilder
         .Configure<TestApp>()
@@ -120,6 +121,22 @@ public class UiTest : IDisposable
         window.Start();
 
         return window;
+    }
+
+    /// <summary>
+    /// A service from the editor's own container, with its graph built as the editor
+    /// builds it and nothing started: no window exists until one is resolved and
+    /// started. <paramref name="replace"/> swaps any of its services for a test's own.
+    /// </summary>
+    internal T Resolve<T>(EditorSetup? setup = null, Action<IServiceCollection>? replace = null) where T : notnull
+    {
+        var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
+        replace?.Invoke(services);
+
+        var provider = services.BuildServiceProvider();
+        providers.Add(provider);
+
+        return provider.GetRequiredService<T>();
     }
 
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>
@@ -240,6 +257,11 @@ public class UiTest : IDisposable
         }
 
         opened.Clear();
+
+        // After the windows, which close over the containers that built them.
+        foreach (var provider in providers) provider.Dispose();
+
+        providers.Clear();
 
         Dispatcher.UIThread.RunJobs();
 

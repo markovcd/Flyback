@@ -1,4 +1,5 @@
 using Avalonia.Headless.XUnit;
+using Avalonia.Platform.Storage;
 using Flyback.App.Audio;
 using Flyback.App.Canvas;
 using Flyback.Core;
@@ -71,6 +72,21 @@ public class EditorServicesTests : UiTest
         Settle(window);
 
         All<NodeEditor>(window).Single().ShouldBeSameAs(provider.GetRequiredService<NodeEditor>());
+    }
+
+    [AvaloniaFact]
+    public void A_service_resolves_from_the_editors_container_without_a_window()
+    {
+        var files = Resolve<PatchFiles>(replace: services => services.AddSingleton<IFilePickers>(new NoPickers()));
+
+        files.ShouldNotBeNull();
+    }
+
+    private sealed class NoPickers : IFilePickers
+    {
+        public Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options) => Task.FromResult<IReadOnlyList<IStorageFile>>([]);
+
+        public Task<IStorageFile?> Save(FilePickerSaveOptions options) => Task.FromResult<IStorageFile?>(null);
     }
 
     [AvaloniaFact]
