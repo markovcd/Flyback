@@ -92,6 +92,11 @@ internal sealed class StatusBar
             if (e.Property == Visual.IsVisibleProperty) report.IsVisible = !Compiling.IsVisible;
         };
 
+        editor.History.PatchChanged += (_, _) =>
+        {
+            if (editor.History.Opening) Compiling.Watch(() => playback.Starting);
+        };
+
         Grid.SetColumn(report, 0);
         Grid.SetColumn(Compiling, 0);
         Grid.SetColumn(status, 1);

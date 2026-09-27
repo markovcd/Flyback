@@ -8,7 +8,6 @@ using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Assist;
-using Flyback.App.Audio;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Capture;
@@ -44,6 +43,10 @@ internal sealed class MainWindow : Window
 
     /// <summary>The Graphics, Recording and Sound sections, and what they were last saved as.</summary>
     private readonly OutputSections outputSections;
+
+    private readonly OutputSettingsUse outputSettingsUse;
+
+    private readonly OutputSettingRepository outputSettingRepository;
 
     private readonly CanvasSection canvasSection;
 
@@ -99,8 +102,6 @@ internal sealed class MainWindow : Window
     /// </summary>
     private readonly PluginCatalog plugins;
 
-    private readonly AudioEngine audio;
-
     /// <summary>The patch compiled and played, paused or muted.</summary>
     private readonly Playback playback;
 
@@ -136,7 +137,6 @@ internal sealed class MainWindow : Window
         PluginCatalog plugins,
         Usage usage,
         IlCompiler compiler,
-        AudioEngine audio,
         MidiHub midi,
         Playback playback,
         OutputSections outputSections,
@@ -157,6 +157,7 @@ internal sealed class MainWindow : Window
         TransportControls transport,
         ShellLayout shell,
         OutputSettingRepository outputSettingRepository,
+        OutputSettingsUse outputSettingsUse,
         IDialog dialog)
     {
         this.editor = editor;
@@ -170,10 +171,10 @@ internal sealed class MainWindow : Window
         this.plugins = plugins;
         this.usage = usage;
         this.compiler = compiler;
-        this.audio = audio;
         this.midi = midi;
         this.playback = playback;
         this.outputSections = outputSections;
+        this.outputSettingsUse = outputSettingsUse;
         this.canvasSection = canvasSection;
         this.updatesSection = updatesSection;
         this.usageSection = usageSection;
@@ -208,8 +209,6 @@ internal sealed class MainWindow : Window
                 request.Fail(ex);
             }
         };
-
-        outputSettingsPath = setup.OutputSettingsPath;
 
         setupOfLaunch = setup;
 
@@ -260,8 +259,6 @@ internal sealed class MainWindow : Window
         editor.History.PatchChanged += (_, _) =>
         {
             playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running, opened: editor.History.Opening);
-            if (editor.History.Opening) statusBar.Compiling.Watch(() => playback.Starting);
-
             // Patching an input takes its knob away and unpatching gives it
             // back, and neither is a selection change — so the panel is asked
             // here as well, and answers only when a wire actually moved.
@@ -481,7 +478,7 @@ internal sealed class MainWindow : Window
         if (saved)
         {
             panel.SaveSettings();
-            SaveOutputSettings();
+            outputSettingsUse.Save();
             updatesSection.Save();
             usageSection.Save();
             canvasSection.Save();
@@ -1048,11 +1045,8 @@ internal sealed class MainWindow : Window
 
     #region Output settings
 
-    // What the window does with the settings OutputSections shows: puts
-    // them in force, and writes them out.
-
-    /// <summary>Where the output settings are kept, or null to keep them nowhere.</summary>
-    private readonly string? outputSettingsPath;
+    // The window wires output controls and reacts to changes; OutputSettingsUse
+    // applies and saves what the sections show.
 
     /// <summary>
     /// Called once, from the constructor, rather than when the settings window
@@ -1087,63 +1081,7 @@ internal sealed class MainWindow : Window
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
         outputSections.Show();
-        UseOutputSettings(outputSettingRepository.Current);
-    }
-
-    /// <summary>
-    /// Hands <paramref name="settings"/> to the preview and the sound. The only way
-    /// anything in the Graphics section reaches either.
-    /// </summary>
-    private void UseOutputSettings(OutputSettings settings)
-    {
-        var size = OutputSections.SizeOf(settings);
-
-        preview.Resolution = size;
-        preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
-        preview.FrameRate = settings.PreviewFrameRate;
-
-        // What a live Scan reaches with Coordinates' aspect (ADR-0077) — kept in
-        // step with the preview rather than fixed, now that the size list is not
-        // all one shape.
-        audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
-
-        knobs.Hub.Takeover = settings.Takeover;
-
-        LayOverlays(settings.Transport);
-    }
-
-    /// <summary>Stands every transport over a picture at <paramref name="edge"/>, and its knobs at the other.</summary>
-    private void LayOverlays(TransportEdge edge)
-    {
-        if (transport.Overlay is not null) TransportOverlay.Lay(edge, transport.Overlay, knobs.Stage);
-        if (transport.PictureWindow is not null) TransportOverlay.Lay(edge, transport.PictureWindow.Transport, transport.PictureWindow.Knobs);
-    }
-
-    /// <summary>
-    /// Takes what the sections hold as the settings, puts them in force, and writes
-    /// them out when there is somewhere to. A failure to write is said, not thrown:
-    /// they are in force for this run regardless.
-    /// </summary>
-    private void SaveOutputSettings()
-    {
-        var before = outputSettingRepository.Current;
-        var saved = outputSettingRepository.Current = outputSections.Read(before);
-
-        UseOutputSettings(saved);
-
-        if (saved.LatencyMilliseconds != before.LatencyMilliseconds || outputSections.SoundChanged(before, saved))
-            playback.ReopenAudio(saved, () => Recording.Running);
-
-        if (outputSettingsPath is null) return;
-
-        try
-        {
-            saved.Save(outputSettingsPath);
-        }
-        catch (Exception ex)
-        {
-            Report($"Could not save the output settings: {ex.Message}", outputSettingsPath);
-        }
+        outputSettingsUse.ApplyCurrent();
     }
 
     #endregion
@@ -1275,8 +1213,6 @@ internal sealed class MainWindow : Window
     private readonly WindowLayoutKeeper layoutKeeper;
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
-
-    private readonly OutputSettingRepository outputSettingRepository;
 
     /// <summary>
     /// Puts work a crash left behind back on the canvas, as the document it was and

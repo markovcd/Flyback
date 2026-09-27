@@ -80,6 +80,7 @@ internal static class EditorServices
         services.AddSingleton<IPresetFolder>(setup);
         services.AddSingleton<PresetLibrary>();
         services.AddSingleton<OutputSettingRepository>();
+        services.AddSingleton<OutputSettingsUse>();
 
         services.AddSingleton<PresetThumbnails>();
         services.AddSingleton<PresetGallery>();
