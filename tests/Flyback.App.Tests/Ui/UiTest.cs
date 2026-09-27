@@ -134,10 +134,7 @@ public class UiTest : IDisposable
     /// <summary>The editor's container itself, for a test that takes several services from one window's graph.</summary>
     internal IServiceProvider Container(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
     {
-        var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
-        replace?.Invoke(services);
-
-        var provider = services.BuildServiceProvider();
+        var provider = EditorServices.Provider(setup, replace);
         providers.Add(provider);
 
         return provider;

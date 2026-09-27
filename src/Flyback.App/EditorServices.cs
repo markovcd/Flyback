@@ -38,16 +38,23 @@ internal static class EditorServices
     /// <param name="replace">Registers a service a second time, which wins: a test's own site, say.</param>
     public static MainWindow Window(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
     {
-        var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
-        replace?.Invoke(services);
-
-        var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+        var provider = Provider(setup, replace, validate: true);
         var window = provider.GetMainWindow();
 
         // After OnClosed has finished the take: the engine, the compiler and MIDI go with the container.
         window.Closed += (_, _) => provider.Dispose();
 
         return window;
+    }
+
+    /// <summary>The container a window is composed in, with any registration <paramref name="replace"/> swaps. Nothing is resolved from it.</summary>
+    /// <param name="validate">Whether every registration is checked to be buildable, which costs a walk of the whole graph.</param>
+    public static ServiceProvider Provider(EditorSetup? setup = null, Action<IServiceCollection>? replace = null, bool validate = false)
+    {
+        var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
+        replace?.Invoke(services);
+
+        return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = validate });
     }
 
     public static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)

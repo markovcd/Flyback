@@ -65,7 +65,7 @@ public class EditorServicesTests : UiTest
     [AvaloniaFact]
     public void The_regions_are_in_the_window_the_container_built()
     {
-        using var provider = new ServiceCollection().AddEditor(new EditorSetup()).BuildServiceProvider();
+        var provider = Container();
 
         var window = Owned(provider.GetMainWindow());
         window.Show();
