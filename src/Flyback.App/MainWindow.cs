@@ -1,11 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using Flyback.App.Assist;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Capture;
@@ -15,13 +12,8 @@ using Flyback.App.Gallery;
 using Flyback.App.Inspect;
 using Flyback.App.Knobs;
 using Flyback.App.Midi;
-using Flyback.App.PluginPackages;
 using Flyback.App.Settings;
-using Flyback.App.Statistics;
-using Flyback.App.Updates;
 using Flyback.Core;
-using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
@@ -36,73 +28,34 @@ namespace Flyback.App;
 [SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
 internal sealed class MainWindow : Window
 {
-    /// <summary>The Graphics, Recording and Sound sections, and what they were last saved as.</summary>
     private readonly OutputSections outputSections;
-
     private readonly OutputSettingsUse outputSettingsUse;
-
     private readonly SettingsSession settingsSession;
-
     private readonly IDialog dialog;
-
-    /// <summary>Which of the canvas and the text owns the patch.</summary>
     private readonly Document document;
-
-    /// <summary>Which file the patch is, and opening and saving it.</summary>
     private readonly PatchFiles files;
-
     private readonly PatchOpening patchOpening;
-
-    private readonly PreviewHost preview;
-
-    /// <summary>The preset slot on the toolbar, and the gallery it opens.</summary>
     private readonly PresetSlot presets;
-
-    /// <summary>The bar along the top.</summary>
     private readonly Toolbar toolbar;
-
-    /// <summary>The panel knobs, their learning and the knobs over the picture.</summary>
     private readonly PanelKnobs knobs;
-
-    /// <summary>The panel on the right, under the preview.</summary>
     private readonly Inspector inspector;
-
-    /// <summary>
-    /// The one line anything is said on, and the log of what has been said. See
-    /// <see cref="Report"/>, which is the only thing that writes to it.
-    /// </summary>
     private readonly ReportLine report;
-
     private readonly ShellLayout shell;
-
-    /// <summary>
-    /// Read before this window existed, and already installed. Nothing here
-    /// knows which backends or modules there are, or what they are called.
-    /// </summary>
     private readonly PluginCatalog plugins;
-
-    /// <summary>The patch compiled and played, paused or muted.</summary>
     private readonly Playback playback;
-
     private readonly EditorStart editorStart;
-
-    /// <summary>
-    /// Everything that plays the patch from outside it. The mirror of
-    /// <see cref="audio"/>, which takes what the patch makes to a device. Assigned
-    /// in the constructor because it is handed the MIDI backend the plugins
-    /// offered, which is declared below it.
-    /// </summary>
     private readonly MidiHub midi;
-
-    /// <summary>What unsaved work there is, and the question closing it asks.</summary>
     private readonly UnsavedWork unsaved;
-
+    private readonly WorkKeeper keeper;
+    private readonly WindowLayoutKeeper layoutKeeper;
+    private readonly FullScreenPreview fullScreen;
+    private readonly TransportControls transport;
+    
     public MainWindow(
         Document document,
         PatchFiles files,
         PatchOpening patchOpening,
         UnsavedWork unsaved,
-        PreviewHost preview,
         ReportLine report,
         PluginCatalog plugins,
         MidiHub midi,
@@ -113,7 +66,6 @@ internal sealed class MainWindow : Window
         PresetSlot presets,
         Toolbar toolbar,
         TakeRecording recording,
-        AssistantPanel assistant,
         WorkKeeper keeper,
         EditorWiring editorWiring,
         EditorOpened editorOpened,
@@ -130,7 +82,6 @@ internal sealed class MainWindow : Window
         this.files = files;
         this.patchOpening = patchOpening;
         this.unsaved = unsaved;
-        this.preview = preview;
         this.report = report;
         this.plugins = plugins;
         this.midi = midi;
@@ -344,7 +295,7 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.F3 && e.KeyModifiers == KeyModifiers.None && fullScreen.IsAway)
+        if (e is { Key: Key.F3, KeyModifiers: KeyModifiers.None } && fullScreen.IsAway)
         {
             transport.ToggleStats(fullScreen.IsFullScreen);
             e.Handled = true;
@@ -497,7 +448,7 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private bool Typing =>
         FocusManager.GetFocusedElement() is TextBox
-        || (document.ShowingCode && document.Owned);
+        || document is { ShowingCode: true, Owned: true };
 
     /// <summary>
     /// One key, as either a note or the pair that moves the two rows. Null-ish by
@@ -546,17 +497,6 @@ internal sealed class MainWindow : Window
     // a drop, an activation and a path named on the command line, each asking first
     // whatever has to be asked.
 
-    /// <inheritdoc cref="PatchFiles.Became"/>
-    internal void Became(string? name, string? beside, BundleFiles? files = null) => this.files.Became(name, beside, files);
-
-    /// <summary>
-    /// Whether the document is a bundle, which is what the next save offers first.
-    /// Readable from the tests, as <see cref="Became"/> is callable from them:
-    /// every route that opens a document is behind a file picker the headless
-    /// platform does not put up.
-    /// </summary>
-    internal bool IsBundle => files.IsBundle;
-
     /// <summary>
     /// Lets a patch, a bundle or a text file be opened by dropping it in from
     /// the file explorer — the same three kinds the picker offers, arriving
@@ -585,21 +525,7 @@ internal sealed class MainWindow : Window
         });
     }
 
-    /// <summary>
-    /// Opens a file handed to the program from outside a picker or a drop —
-    /// which on macOS is how "open this file" arrives at all: Finder delivers
-    /// it as an activation rather than as a command-line argument, whether
-    /// that launches the program or lands on its Dock icon while it is
-    /// already running. See <see cref="FlybackApp.OnFrameworkInitializationCompleted"/>.
-    /// </summary>
-    /// <remarks>
-    /// Not while a dialog is up. A dialog stops the pointer and the keyboard and
-    /// neither of these arrives by them, so with nothing unsaved to ask about the
-    /// document would be replaced behind the sheet — and a text one takes the
-    /// focus with it, out of a dialog that then no longer hears Escape.
-    /// </remarks>
-    internal Task OpenActivatedFileAsync(IStorageFile file) => patchOpening.OpenActivatedFileAsync(file);
-
+    
     #endregion
 
     #region The document's buttons and write-back gestures
@@ -657,12 +583,6 @@ internal sealed class MainWindow : Window
     /// <param name="message"></param>
     internal void Report(string message, string? detail = null, bool progress = false) =>
         report.Say(message, detail, progress);
-
-    /// <summary>
-    /// The same, for everything a compile found at once. Each is a line of its
-    /// own in the log; the bar joins them, having only the one line.
-    /// </summary>
-    private void Report(IReadOnlyList<string> messages) => report.Say(messages);
 
     protected override void OnClosed(EventArgs e)
     {
@@ -722,20 +642,5 @@ internal sealed class MainWindow : Window
 
     #endregion
 
-    #region Recovery
-
-    // What a crash would lose, and putting it back at the next start — ADR-0103.
-    // What is handed to WorkKeeper is the document as the unsaved question
-    // sees it — the patch, the text where the text is the document, what a bundle carried
-    // and the conversation — so that what comes back is what that question would have
-    // offered to save.
-
-    /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
-    private readonly WorkKeeper keeper;
-    private readonly WindowLayoutKeeper layoutKeeper;
-    private readonly FullScreenPreview fullScreen;
-    private readonly TransportControls transport;
-
-    #endregion
 
 }

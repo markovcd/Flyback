@@ -526,12 +526,12 @@ public sealed class UnsavedDialogTests : UiTest
         window.Show();
         Settle(window);
 
-        window.Became("nebula", beside: null, new BundleFiles(
+        Service<PatchFiles>(window).Became("nebula", beside: null, new BundleFiles(
             new Dictionary<string, byte[]> { [carriedPath] = [1, 2, 3, 4] }));
         All<NodeEditor>(window).Single().History.Open(b.Patch);
         Settle(window);
 
-        window.IsBundle.ShouldBeTrue();
+        Service<PatchFiles>(window).IsBundle.ShouldBeTrue();
 
         // The text takes the patch, so text is what Save offers first.
         All<ToggleButton>(window).Single(t => t.Name == "code").IsChecked = true;

@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -275,7 +276,7 @@ public sealed class FileDropTests : UiTest
         Drop(window, Carrying(RealStorageFile(path)));
         WaitForReport(window, "Not opened.");
 
-        window.IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
+        Service<PatchFiles>(window).IsBundle.ShouldBeFalse("a bundle this build cannot read has not become the document");
         Editor(window).History.Patch.Nodes.Count.ShouldBe(modules, "and what was open is still open");
         window.Title.ShouldBe(title);
     }

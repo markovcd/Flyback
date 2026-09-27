@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.App.Files;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
@@ -25,21 +26,21 @@ public class DocumentIdentityTests : UiTest
         .First(box => box.ItemsSource?.OfType<PatchPreset>().Any(p => p.Name == "Plasma") == true);
 
     /// <summary>As though a bundle had been opened, which no picker will do here.</summary>
-    private static void OpenABundle(MainWindow window) =>
-        window.Became("nebula", beside: null, new BundleFiles(new Dictionary<string, byte[]>()));
+    private void OpenABundle(MainWindow window) =>
+        Service<PatchFiles>(window).Became("nebula", beside: null, new BundleFiles(new Dictionary<string, byte[]>()));
 
     [AvaloniaFact]
     public void A_bundle_is_the_document_until_something_else_is()
     {
         var window = Open();
 
-        window.IsBundle.ShouldBeFalse("the window opens on a preset");
+        Service<PatchFiles>(window).IsBundle.ShouldBeFalse("the window opens on a preset");
 
         OpenABundle(window);
 
         // The title is not checked here: naming a document does not redraw it, which
         // is why Became has to be called before the patch it is about.
-        window.IsBundle.ShouldBeTrue();
+        Service<PatchFiles>(window).IsBundle.ShouldBeTrue();
     }
 
     /// <summary>
@@ -62,7 +63,7 @@ public class DocumentIdentityTests : UiTest
         Pick(PresetList(window), "Kaleidoscope");
         Dispatcher.UIThread.RunJobs();
 
-        window.IsBundle.ShouldBeFalse("a preset came out of no file at all");
+        Service<PatchFiles>(window).IsBundle.ShouldBeFalse("a preset came out of no file at all");
     }
 
     /// <summary>
@@ -85,12 +86,12 @@ public class DocumentIdentityTests : UiTest
         Pick(PresetList(window), "Speaking");
         Dispatcher.UIThread.RunJobs();
 
-        window.IsBundle.ShouldBeTrue();
+        Service<PatchFiles>(window).IsBundle.ShouldBeTrue();
 
         Pick(PresetList(window), "Kaleidoscope");
         Dispatcher.UIThread.RunJobs();
 
-        window.IsBundle.ShouldBeFalse("a preset that carries nothing is not a bundle");
+        Service<PatchFiles>(window).IsBundle.ShouldBeFalse("a preset that carries nothing is not a bundle");
     }
 
     /// <summary>

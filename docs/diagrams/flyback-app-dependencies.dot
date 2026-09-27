@@ -1,7 +1,7 @@
 // Flyback.App composition root — construction-time dependencies.
 // The canvas subsystem (17 classes) is collapsed to one NodeEditor node here;
-// see canvas-internals.dot for what is inside it. Same edge data as
-// flyback-app-dependencies.dot; layout is left to Graphviz's own ranking
+// see canvas-internals.dot for what is inside it. This is the source for the
+// paired SVG; layout is left to Graphviz's own ranking
 // (by edge direction) rather than boxed subsystem groups, since a class's
 // dependency depth and its "which subsystem" grouping don't line up — boxing
 // them together forced unrelated-depth nodes onto the same row and produced
@@ -12,7 +12,7 @@
 // by a DI factory. Dotted red "new" = built with `new` per use, not registered in DI.
 //
 // Usage and ReportLine (a telemetry sink and a status-line sink, both held like a logger)
-// are omitted from all three files: nearly everything takes them, and drawing them added
+// are omitted from these diagrams: nearly everything takes them, and drawing them added
 // hubs with no structural meaning to trace.
 digraph FlybackAppOverview {
   rankdir=TB;
@@ -34,6 +34,7 @@ digraph FlybackAppOverview {
   >];
 
   MainWindow [style="filled,bold", fillcolor="#7fb2e5", penwidth=2, fontsize=13];
+  EditorWiring [fillcolor="#7fb2e5", label="EditorWiring\n(event connections)"];
   NodeEditor [style="filled,bold", fillcolor="#b8d8ff", label="NodeEditor\n(canvas subsystem,\nsee canvas-internals.dot)"];
 
   // subsystem colors (cosmetic only — not a layout constraint)
@@ -41,7 +42,6 @@ digraph FlybackAppOverview {
   Document [fillcolor="#cfe2f3"]; SourceView [fillcolor="#cfe2f3"];
   Playback [fillcolor="#cfe2f3"]; AudioSetup [fillcolor="#cfe2f3"];
 
-  EditorWindow [fillcolor="#d9d2e9"];
   WindowDialogs [fillcolor="#d9d2e9"]; WindowFilePickers [fillcolor="#d9d2e9"];
   WindowMonitors [fillcolor="#d9d2e9"]; WindowFocus [fillcolor="#d9d2e9"]; WindowClose [fillcolor="#d9d2e9"];
 
@@ -52,6 +52,7 @@ digraph FlybackAppOverview {
   OutputSections [fillcolor="#fce5cd"]; CanvasSection [fillcolor="#fce5cd"];
   OutputSettingRepository [fillcolor="#fce5cd"];
   UpdatesSection [fillcolor="#fce5cd"]; UsageSection [fillcolor="#fce5cd"];
+  OutputSettingsUse [fillcolor="#fce5cd"];
 
   PresetThumbnails [fillcolor="#fff2cc"]; PresetGallery [fillcolor="#fff2cc"];
   PresetAudition [fillcolor="#fff2cc"]; PresetSlot [fillcolor="#fff2cc"];
@@ -59,11 +60,19 @@ digraph FlybackAppOverview {
   PanelKnobs [fillcolor="#d9ead3"]; Palette [fillcolor="#d9ead3"]; Inspector [fillcolor="#d9ead3"];
 
   SeekBar [fillcolor="#ead1dc"]; Toolbar [fillcolor="#ead1dc"]; StatusBar [fillcolor="#ead1dc"]; TakeRecording [fillcolor="#ead1dc"];
+  TransportControls [fillcolor="#ead1dc"]; ShellLayout [fillcolor="#ead1dc"];
+  FullScreenPreview [fillcolor="#ead1dc"];
 
   AssistantEditor [fillcolor="#f4cccc"]; AssistantPanel [fillcolor="#f4cccc"];
   AssistantRunFactory [fillcolor="#f4cccc"]; Credentials [fillcolor="#f4cccc"];
   AssistantConversationState [fillcolor="#f4cccc"];
   ChosenAssistant [fillcolor="#f4cccc"]; AssistantSettingRepository [fillcolor="#f4cccc"];
+
+  EditorStart [fillcolor="#d9d2e9"]; EditorOpened [fillcolor="#d9d2e9"];
+  WindowLayoutKeeper [fillcolor="#d9d2e9"]; WindowHolder [fillcolor="#d9d2e9"];
+  PatchOpening [fillcolor="#d0e8d0"]; WorkRecovery [fillcolor="#d0e8d0"];
+  SettingsSession [fillcolor="#fce5cd"];
+  EditorSetup [fillcolor="#eeeeee"];
 
   // external (Flyback.Ui/Engine) leaves
   node [style="filled,dashed", color=gray40];
@@ -104,18 +113,58 @@ digraph FlybackAppOverview {
   // --- constructor DI edges ---
   edge [style=solid, color=black, label="", fontcolor=black];
 
-  MainWindow -> NodeEditor; MainWindow -> SourceView;
-  MainWindow -> Document; MainWindow -> PatchFiles; MainWindow -> UnsavedWork;
-  MainWindow -> PreviewHost; MainWindow -> PluginCatalog;
-  MainWindow -> IlCompiler; MainWindow -> AudioEngine;
-  MainWindow -> MidiHub; MainWindow -> Playback; MainWindow -> OutputSections;
-  MainWindow -> OutputSettingRepository;
-  MainWindow -> CanvasSection; MainWindow -> UpdatesSection; MainWindow -> UsageSection;
-  MainWindow -> FilesSection; MainWindow -> PanelKnobs; MainWindow -> Inspector;
-  MainWindow -> PluginInstalls; MainWindow -> PresetSlot; MainWindow -> Toolbar;
-  MainWindow -> StatusBar; MainWindow -> TakeRecording;
-  MainWindow -> AssistantPanel;
-  MainWindow -> WorkKeeper;
+  MainWindow -> Document; MainWindow -> PatchFiles; MainWindow -> PatchOpening;
+  MainWindow -> UnsavedWork; MainWindow -> PluginCatalog; MainWindow -> MidiHub;
+  MainWindow -> Playback; MainWindow -> OutputSections; MainWindow -> PanelKnobs;
+  MainWindow -> Inspector; MainWindow -> PresetSlot; MainWindow -> Toolbar;
+  MainWindow -> TakeRecording; MainWindow -> WorkKeeper; MainWindow -> EditorWiring;
+  MainWindow -> EditorOpened; MainWindow -> EditorStart; MainWindow -> WindowLayoutKeeper;
+  MainWindow -> FullScreenPreview; MainWindow -> TransportControls; MainWindow -> ShellLayout;
+  MainWindow -> OutputSettingsUse; MainWindow -> SettingsSession; MainWindow -> IDialogs;
+
+  EditorWiring -> PluginInstalls; EditorWiring -> PatchOpening; EditorWiring -> UnsavedWork;
+  EditorWiring -> TakeRecording; EditorWiring -> PatchFiles; EditorWiring -> PanelKnobs;
+  EditorWiring -> PresetSlot; EditorWiring -> Toolbar; EditorWiring -> TransportControls;
+  EditorWiring -> Playback; EditorWiring -> SettingsSession; EditorWiring -> IDialogs;
+  EditorWiring -> IlCompiler; EditorWiring -> OutputSections; EditorWiring -> ShellLayout;
+  EditorWiring -> MidiHub; EditorWiring -> PreviewHost; EditorWiring -> NodeEditor;
+  EditorWiring -> Inspector; EditorWiring -> Document; EditorWiring -> SourceView;
+  EditorWiring -> CanvasSection;
+
+  EditorStart -> EditorSetup; EditorStart -> WorkKeeper; EditorStart -> WindowLayoutKeeper;
+  EditorStart -> MidiHub; EditorStart -> PanelKnobs; EditorStart -> PluginCatalog;
+  EditorStart -> Playback; EditorStart -> PresetSlot; EditorStart -> OutputSettingRepository;
+  EditorStart -> ShellLayout;
+
+  EditorOpened -> EditorSetup; EditorOpened -> IDialogs; EditorOpened -> WorkKeeper;
+  EditorOpened -> WorkRecovery; EditorOpened -> PatchOpening; EditorOpened -> PresetSlot;
+
+  ShellLayout -> Toolbar; ShellLayout -> StatusBar; ShellLayout -> NodeEditor;
+  ShellLayout -> SourceView; ShellLayout -> PanelKnobs; ShellLayout -> AssistantPanel;
+  ShellLayout -> Inspector; ShellLayout -> PreviewHost; ShellLayout -> Playback;
+  ShellLayout -> TransportControls; ShellLayout -> FullScreenPreview;
+  ShellLayout -> OutputSettingRepository; ShellLayout -> Document; ShellLayout -> WindowLayoutKeeper;
+
+  FullScreenPreview -> WindowHolder; FullScreenPreview -> PreviewHost;
+  FullScreenPreview -> PanelKnobs; FullScreenPreview -> Toolbar; FullScreenPreview -> StatusBar;
+  FullScreenPreview -> NodeEditor; FullScreenPreview -> Playback; FullScreenPreview -> Document;
+  FullScreenPreview -> OutputSettingRepository; FullScreenPreview -> TransportControls;
+
+  TransportControls -> Playback; TransportControls -> Toolbar; TransportControls -> TakeRecording;
+
+  OutputSettingsUse -> OutputSections; OutputSettingsUse -> OutputSettingRepository;
+  OutputSettingsUse -> EditorSetup; OutputSettingsUse -> PreviewHost; OutputSettingsUse -> AudioEngine;
+  OutputSettingsUse -> PanelKnobs; OutputSettingsUse -> TransportControls;
+  OutputSettingsUse -> TakeRecording; OutputSettingsUse -> Playback;
+
+  PatchOpening -> PatchFiles; PatchOpening -> UnsavedWork; PatchOpening -> PluginInstalls;
+  PatchOpening -> IFilePickers; PatchOpening -> IDialogs;
+  WorkRecovery -> PatchFiles; WorkRecovery -> Playback; WorkRecovery -> Document;
+  WorkRecovery -> AssistantPanel; WorkRecovery -> NodeEditor; WorkRecovery -> WorkKeeper;
+  SettingsSession -> AssistantPanel; SettingsSession -> OutputSections;
+  SettingsSession -> CanvasSection; SettingsSession -> UpdatesSection;
+  SettingsSession -> UsageSection; SettingsSession -> FilesSection; SettingsSession -> PanelKnobs;
+  SettingsSession -> IDialogs; SettingsSession -> OutputSettingsUse;
 
   AssistantEditor -> NodeEditor; AssistantEditor -> Document; AssistantEditor -> PreviewHost;
   AssistantEditor -> PatchFiles;
@@ -138,7 +187,8 @@ digraph FlybackAppOverview {
 
   Document -> NodeEditor; Document -> SourceView;
 
-  EditorWindow -> IServiceProvider;
+  WindowDialogs -> WindowHolder; WindowFilePickers -> WindowHolder;
+  WindowMonitors -> WindowHolder; WindowFocus -> WindowHolder; WindowClose -> WindowHolder;
 
   Inspector -> NodeEditor; Inspector -> Document; Inspector -> MidiHub;
   Inspector -> PanelKnobs; Inspector -> PatchFiles; Inspector -> Palette;
@@ -212,9 +262,6 @@ digraph FlybackAppOverview {
   UnsavedWork -> IDialogs; UnsavedWork -> IWindowClose;
 
 
-
-  WindowDialogs -> EditorWindow; WindowFilePickers -> EditorWindow;
-  WindowMonitors -> EditorWindow; WindowFocus -> EditorWindow; WindowClose -> EditorWindow;
 
   WorkKeeper -> UnsavedWork;
 
