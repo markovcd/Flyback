@@ -30,19 +30,7 @@ public sealed class SourceMap
     /// <summary>The call that placed each module, where the text has one.</summary>
     private readonly Dictionary<Guid, Site> calls;
 
-    /// <summary>
-    /// Where the value of each named thing stands — a socket's knob, or one of a
-    /// plugin's declared fields, which the language spells the same way.
-    /// </summary>
-    /// <remarks>
-    /// Null for one the text does say and this cannot rewrite: <c>1/12</c> is a
-    /// knob worked out from two numbers, and there is no single figure in the
-    /// file to put another in place of.
-    /// </remarks>
-    private readonly Dictionary<(Guid Node, string Name), Site?> written;
-
-    /// <summary>What the text calls each module it has a word for.</summary>
-    private readonly Dictionary<Guid, string> named;
+    private readonly SourceMapEdits edits;
 
     /// <summary>Every place a module is named, and how much of the text that covers.</summary>
     private readonly List<(int From, int To, Guid Node)> spans = [];
@@ -75,14 +63,7 @@ public sealed class SourceMap
     {
         text = new SourceMapText(source);
         this.calls = new Dictionary<Guid, Site>(calls);
-        this.named = new Dictionary<Guid, string>(named);
-
-        // Keyed on the word rather than on a socket's position, because a
-        // plugin's field has no position — and folded, because the language
-        // reads a socket's name without minding its case.
-        this.written = [];
-
-        foreach (var (key, site) in written) this.written[Folded(key.Node, key.Name)] = site;
+        edits = new SourceMapEdits(text, this.calls, written, named, shared);
 
         var counted = new Dictionary<Site, Guid>();
 
@@ -218,32 +199,7 @@ public sealed class SourceMap
     /// </param>
     /// <param name="value">Already written the way the language writes one.</param>
     public Change? Knob(Guid node, string name, string value)
-    {
-        if (shared.Contains(node)) return null;
-
-        if (written.TryGetValue(Folded(node, name), out var said))
-        {
-            // Null is for a value this cannot write, and only for that — one the
-            // text already says comes back as the edit that would say it, so
-            // that a caller can tell "nothing to do" from "nowhere to put it".
-            return said is { } site && text.Value(site) is { } span
-                ? new Change(span.From, span.Length, value)
-                : null;
-        }
-
-        if (calls.TryGetValue(node, out var call) && text.Parentheses(call) is { } brackets)
-            return Argument(brackets, name + ": " + value, first: false);
-
-        // The Output is the module no call ever places — every patch already has
-        // one, so the language names it rather than writing it. Its knobs are
-        // said by the statement the language has for saying one, at the end
-        // because that is the one place a module is certain to exist already.
-        if (!named.TryGetValue(node, out var word)) return null;
-
-        var end = text.Source.TrimEnd('\n', '\r').Length;
-
-        return new Change(end, text.Source.Length - end, $"\n{word}.{name} = {value}\n");
-    }
+        => edits.Knob(node, name, value);
 
     /// <summary>
     /// The edit that makes the text carry <paramref name="block"/> — a tune or a
@@ -256,14 +212,7 @@ public sealed class SourceMap
     /// </remarks>
     /// <param name="block">Including its own brackets, and <c>[ ]</c> for nothing.</param>
     public Change? Carried(Guid node, string block)
-    {
-        if (shared.Contains(node)) return null;
-        if (!calls.TryGetValue(node, out var call) || text.Parentheses(call) is not { } brackets) return null;
-
-        return text.Block(brackets.Close) is { } span
-            ? new Change(span.From, span.To - span.From, block)
-            : new Change(brackets.Close + 1, 0, " " + block);
-    }
+        => edits.Carried(node, block);
 
     /// <summary>
     /// The edit that makes the text name <paramref name="path"/> as a module's
@@ -275,16 +224,7 @@ public sealed class SourceMap
     /// takes the one string a call has as the file it names (ADR-0052).
     /// </remarks>
     public Change? File(Guid node, string path)
-    {
-        if (shared.Contains(node) || path.Contains('"')) return null;
-        if (!calls.TryGetValue(node, out var call) || text.Parentheses(call) is not { } brackets) return null;
-
-        var quoted = $"\"{path}\"";
-
-        return text.Text(brackets) is { } span
-            ? new Change(span.From, span.Length, quoted)
-            : Argument(brackets, quoted, first: true);
-    }
+        => edits.File(node, path);
 
     /// <summary>
     /// The edit that makes the text lay the computer keyboard out as
@@ -298,21 +238,21 @@ public sealed class SourceMap
     /// with none to replace a new one goes at the top, where a printing puts it.
     /// </remarks>
     /// <param name="line">What <see cref="PatchPrinter.Keyboard"/> writes, and null for a piano.</param>
-    public Change? Keyboard(string? line) => PatchLine("keyboard", TokenKind.Identifier, line);
+    public Change? Keyboard(string? line) => edits.Keyboard(line);
 
     /// <summary>
     /// The edit that makes the text describe the patch as <paramref name="line"/>
     /// says, or null where the text already does.
     /// </summary>
     /// <param name="line">What <see cref="PatchPrinter.Description"/> writes, and null for none.</param>
-    public Change? Description(string? line) => PatchLine("description", TokenKind.Text, line);
+    public Change? Description(string? line) => edits.Description(line);
 
     /// <summary>
     /// The edit that makes the text credit the patch as <paramref name="line"/>
     /// says, or null where the text already does. A new one goes under the description.
     /// </summary>
     /// <param name="line">What <see cref="PatchPrinter.Author"/> writes, and null for none.</param>
-    public Change? Author(string? line) => PatchLine("author", TokenKind.Text, line, "description");
+    public Change? Author(string? line) => edits.Author(line);
 
     /// <summary>
     /// The edit that makes the text tag the patch as <paramref name="line"/>
@@ -320,7 +260,7 @@ public sealed class SourceMap
     /// author, or under the description where nobody is credited.
     /// </summary>
     /// <param name="line">What <see cref="PatchPrinter.Tags"/> writes, and null for none.</param>
-    public Change? Tags(string? line) => PatchLine("tags", TokenKind.Text, line, "author", "description");
+    public Change? Tags(string? line) => edits.Tags(line);
 
     /// <summary>
     /// The edit that makes the text give the patch the length <paramref name="line"/>
@@ -328,44 +268,10 @@ public sealed class SourceMap
     /// the author or the description, whichever comes last.
     /// </summary>
     /// <param name="line">What <see cref="PatchPrinter.Length"/> writes, and null for none.</param>
-    public Change? Length(string? line) => PatchLine("length", TokenKind.Number, line, "tags", "author", "description");
-
-    /// <summary>
-    /// The edit that puts <paramref name="line"/> where the text says the thing
-    /// <paramref name="word"/> opens, or takes that out for a null line. Where the
-    /// text says nothing, the line goes under the first of <paramref name="under"/>
-    /// it does say, and at the top where it says none of them.
-    /// </summary>
-    /// <param name="next">What follows the word in a statement of this kind.</param>
-    private Change? PatchLine(string word, TokenKind next, string? line, params string[] under)
-    {
-        if (text.Opened(word, next) is { } span)
-        {
-            if (line is not null)
-                return text.Source[span.From..span.To] == line ? null : new Change(span.From, span.To - span.From, line);
-
-            // The line and the break after it, so taking it out leaves no gap.
-            var end = span.To;
-            while (end < text.Source.Length && text.Source[end] is ' ' or '\t') end++;
-            if (end < text.Source.Length && text.Source[end] == '\r') end++;
-            if (end < text.Source.Length && text.Source[end] == '\n') end++;
-
-            return new Change(span.From, end - span.From, string.Empty);
-        }
-
-        if (line is null) return null;
-
-        foreach (var above in under)
-        {
-            if (text.Opened(above, TokenKind.Text) is { } before) return new Change(before.To, 0, "\n" + line);
-        }
-
-        return new Change(0, 0, line + "\n\n");
-    }
+    public Change? Length(string? line) => edits.Length(line);
 
     /// <summary>Each panel knob the text declares, by the id the binder gives it, and the word it is called by.</summary>
-    public IReadOnlyDictionary<Guid, string> PanelWords =>
-        Panels().ToDictionary(panel => NodeIdentity.PanelId(panel.Word), panel => panel.Word);
+    public IReadOnlyDictionary<Guid, string> PanelWords => edits.PanelWords;
 
     /// <summary>
     /// The edit that makes the text's panel knobs the ones <paramref name="lines"/>
@@ -378,89 +284,7 @@ public sealed class SourceMap
     /// last, or at the top where there is none.
     /// </remarks>
     /// <param name="lines">What <see cref="PatchPrinter.PanelLine"/> writes, one per knob.</param>
-    public Change? Panel(IReadOnlyList<string> lines)
-    {
-        var found = Panels();
-
-        if (found.Count == 0)
-        {
-            if (lines.Count == 0) return null;
-
-            var joined = string.Join('\n', lines);
-
-            return text.Statements().FirstOrDefault(statement => statement.Word == "requires") is { Word: not null } requires
-                ? new Change(requires.To, 0, "\n\n" + joined)
-                : new Change(0, 0, joined + "\n\n");
-        }
-
-        var output = new System.Text.StringBuilder();
-
-        for (var i = 0; i < found.Count; i++)
-        {
-            var gap = i == 0 ? string.Empty : text.Source[found[i - 1].To..found[i].From];
-
-            if (i < lines.Count) output.Append(gap).Append(lines[i]);
-
-            // Gone, with the break that led to it — or, with nothing kept before
-            // it, the break that followed the one before.
-            else if (lines.Count > 0) output.Append(gap.TrimEnd(' ', '\t').TrimEnd('\n').TrimEnd('\r'));
-            else output.Append(Unbroken(gap));
-        }
-
-        for (var i = found.Count; i < lines.Count; i++) output.Append('\n').Append(lines[i]);
-
-        var from = found[0].From;
-        var to = found[^1].To;
-
-        if (lines.Count == 0) to = text.Source.Length - Unbroken(text.Source[to..]).Length;
-
-        var said = output.ToString();
-
-        return text.Source[from..to] == said ? null : new Change(from, to - from, said);
-    }
-
-    /// <summary>Text without the line break it opens with.</summary>
-    private static string Unbroken(string text)
-    {
-        var at = 0;
-
-        while (at < text.Length && text[at] is ' ' or '\t') at++;
-        if (at < text.Length && text[at] == '\r') at++;
-        if (at < text.Length && text[at] == '\n') at++;
-
-        return text[at..];
-    }
-
-    /// <summary>Every <c>panel</c> statement, with the word it declares and where it stands.</summary>
-    private List<(string Word, int From, int To)> Panels() =>
-    [
-        .. text.Statements()
-            .Where(statement => statement.Word == "panel" && statement.Declares is not null)
-            .Select(statement => (statement.Declares!, statement.From, statement.To)),
-    ];
-
-    /// <summary>
-    /// Puts one more argument into a call, at whichever end it belongs.
-    /// </summary>
-    /// <remarks>
-    /// Adding a named argument for a socket the call does not fill leaves every
-    /// positional one where it was: what a bare argument lands on is the next
-    /// socket still free, and naming one that was already free does not change
-    /// the order of the rest.
-    /// </remarks>
-    private Change Argument((int Open, int Close) brackets, string written, bool first)
-    {
-        var inside = text.Source.AsSpan(brackets.Open + 1, brackets.Close - brackets.Open - 1).Trim().Length > 0;
-
-        if (!inside) return new Change(brackets.Close, 0, written);
-
-        return first
-            ? new Change(brackets.Open + 1, 0, written + ", ")
-            : new Change(brackets.Close, 0, ", " + written);
-    }
-
-    /// <summary>One key for a module and a word, however the word was spelled.</summary>
-    private static (Guid, string) Folded(Guid node, string name) => (node, name.ToLowerInvariant());
+    public Change? Panel(IReadOnlyList<string> lines) => edits.Panel(lines);
 
     /// <summary>
     /// The statement each binding owns, worked out from the text rather than
