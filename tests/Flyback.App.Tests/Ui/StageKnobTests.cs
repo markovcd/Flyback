@@ -221,7 +221,7 @@ public class StageKnobTests : UiTest
         All<NodeEditor>(window).Single().History.Open(patch);
         Settle(window);
 
-        window.ShowPictureOn(window.Screens.ScreenFromWindow(window)!);
+        Service<FullScreenPreview>(window).ShowPictureOn(window.Screens.ScreenFromWindow(window)!);
         Settle(window);
 
         return window;

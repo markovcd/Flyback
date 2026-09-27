@@ -98,7 +98,7 @@ public sealed class SeekBarTests : UiTest
 
         Click(window, Track(window), 45);
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
         Preview(window).Time.ShouldBe(45, 1);
         Preview(window).Clock.ShouldNotBeNull().Invoke().ShouldBe(Preview(window).Time);
     }
@@ -185,7 +185,7 @@ public sealed class SeekBarTests : UiTest
         bar.Update();
         Settle(window);
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
         Track(window).Value.ShouldBe(20);
     }
 
@@ -201,7 +201,7 @@ public sealed class SeekBarTests : UiTest
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 
-        window.Paused.ShouldBeFalse();
+        Service<Playback>(window).Paused.ShouldBeFalse();
         Preview(window).Time.ShouldBeLessThan(1);
     }
 
@@ -214,7 +214,7 @@ public sealed class SeekBarTests : UiTest
         Preview(window).Time = Patch.DefaultLength + 1;
         bar.Update();
 
-        window.Paused.ShouldBeFalse();
+        Service<Playback>(window).Paused.ShouldBeFalse();
         Preview(window).Time.ShouldBeLessThan(1);
         Track(window).Value.ShouldBeLessThan(1);
     }

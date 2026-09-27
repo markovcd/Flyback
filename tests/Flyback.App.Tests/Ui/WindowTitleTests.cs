@@ -3,6 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Flyback.App.Files;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -172,7 +173,7 @@ public sealed class WindowTitleTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        (await window.SaveToAsync(RealStorageFile(Path.Combine(folder, "saved.fbks")))).ShouldBeTrue();
+        (await Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(Path.Combine(folder, "saved.fbks")))).ShouldBeTrue();
         Settle(window);
 
         window.Title.ShouldNotBeNull().ShouldNotEndWith("•");

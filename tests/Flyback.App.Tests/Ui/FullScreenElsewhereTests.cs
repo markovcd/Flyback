@@ -27,9 +27,9 @@ public class FullScreenElsewhereTests : UiTest
         window.OwnedWindows.SelectMany(All<PreviewHost>).SingleOrDefault()
         ?? All<PreviewHost>(window).Single();
 
-    private static void SendAway(MainWindow window)
+    private void SendAway(MainWindow window)
     {
-        window.ShowPictureOn(window.Screens.ScreenFromWindow(window).ShouldNotBeNull());
+        Service<FullScreenPreview>(window).ShowPictureOn(window.Screens.ScreenFromWindow(window).ShouldNotBeNull());
         Settle(window);
     }
 

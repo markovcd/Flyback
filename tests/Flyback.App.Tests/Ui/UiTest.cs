@@ -57,6 +57,7 @@ public class UiTest : IDisposable
     /// </summary>
     private readonly List<Window> opened = [];
     private readonly List<ServiceProvider> providers = [];
+    private readonly Dictionary<MainWindow, IServiceProvider> editorContainers = [];
 
     public static AppBuilder BuildAvaloniaApp() => AppBuilder
         .Configure<TestApp>()
@@ -113,11 +114,16 @@ public class UiTest : IDisposable
     /// </summary>
     internal MainWindow NewMainWindow(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
     {
-        var window = Owned(EditorServices.Window(setup, replace));
+        var provider = Container(setup, replace, validate: true);
+        var window = Owned(provider.GetMainWindow());
+        editorContainers.Add(window, provider);
         window.Start();
 
         return window;
     }
+
+    internal T Service<T>(MainWindow window) where T : notnull =>
+        editorContainers[window].GetRequiredService<T>();
 
     /// <summary>
     /// A service from the editor's own container, with its graph built as the editor

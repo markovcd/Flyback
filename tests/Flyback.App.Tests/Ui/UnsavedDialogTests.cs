@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
@@ -421,7 +422,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        var saving = window.SaveToAsync(RealStorageFile(path));
+        var saving = Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path));
         var dialog = Asking(window);
 
         Words(dialog).ShouldContain("Unsaved text");
@@ -445,7 +446,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        var saving = window.SaveToAsync(RealStorageFile(path));
+        var saving = Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path));
 
         Press(Asking(window), "Save without the text");
 
@@ -464,7 +465,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        Finished(window.SaveToAsync(RealStorageFile(path))).ShouldBeTrue();
+        Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(path))).ShouldBeTrue();
 
         All<ModalOverlay>(window).ShouldBeEmpty();
         File.ReadAllText(path).ShouldContain("a note about it");
@@ -491,7 +492,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         Directory.CreateDirectory(folder);
 
-        var went = Finished(window.SaveToAsync(RealStorageFile(Path.Combine(folder, "copy.fbks"))));
+        var went = Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(Path.Combine(folder, "copy.fbks"))));
         Settle(window);
 
         editor.History.IsModified.ShouldBeTrue("a printing is a copy, and the patch is as unsaved as it was");
@@ -545,7 +546,7 @@ public sealed class UnsavedDialogTests : UiTest
 
         var saved = Path.Combine(folder, "nebula.fbks");
 
-        Finished(window.SaveToAsync(RealStorageFile(saved))).ShouldBeTrue();
+        Finished(Service<UnsavedWork>(window).SaveToAsync(RealStorageFile(saved))).ShouldBeTrue();
         Settle(window);
 
         File.ReadAllText(saved).ShouldContain("kick.wav", customMessage: "the text names the file");

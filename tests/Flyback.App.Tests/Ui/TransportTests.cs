@@ -50,7 +50,7 @@ public class TransportTests : UiTest
         Click(Pause(window));
         Settle(window);
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
         preview.Clock.ShouldNotBeNull();
 
         var held = preview.Clock!();
@@ -68,12 +68,12 @@ public class TransportTests : UiTest
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
 
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 
-        window.Paused.ShouldBeFalse();
+        Service<Playback>(window).Paused.ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -92,7 +92,7 @@ public class TransportTests : UiTest
 
         Click(pause);
 
-        window.Paused.ShouldBeFalse();
+        Service<Playback>(window).Paused.ShouldBeFalse();
         ToolTip.GetTip(pause).ShouldBe(whenPlaying);
     }
 
@@ -108,7 +108,7 @@ public class TransportTests : UiTest
         Click(All<Button>(window).Single(b => b.Name == "rewind"));
         Settle(window);
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
         preview.Time.ShouldBe(0);
         preview.Clock!().ShouldBe(0);
     }
@@ -139,16 +139,16 @@ public class TransportTests : UiTest
 
         Click(Tool(window, "Pause or play"));
 
-        window.Paused.ShouldBeTrue();
+        Service<Playback>(window).Paused.ShouldBeTrue();
         Preview(window).Clock.ShouldNotBeNull();
 
         FullScreen(window);
 
-        window.Paused.ShouldBeTrue("pausing outlives the full screen");
+        Service<Playback>(window).Paused.ShouldBeTrue("pausing outlives the full screen");
 
         Click(Pause(window));
 
-        window.Paused.ShouldBeFalse();
+        Service<Playback>(window).Paused.ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -160,10 +160,10 @@ public class TransportTests : UiTest
 
         Click(Tool(window, "Sound on or off"));
 
-        window.Muted.ShouldBeTrue();
+        Service<Playback>(window).Muted.ShouldBeTrue();
 
         Click(Tool(window, "Sound on or off"));
 
-        window.Muted.ShouldBeFalse();
+        Service<Playback>(window).Muted.ShouldBeFalse();
     }
 }

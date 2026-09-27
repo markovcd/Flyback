@@ -600,9 +600,6 @@ internal sealed class MainWindow : Window
     /// </remarks>
     internal Task OpenActivatedFileAsync(IStorageFile file) => patchOpening.OpenActivatedFileAsync(file);
 
-    /// <inheritdoc cref="UnsavedWork.SaveToAsync"/>
-    internal Task<bool> SaveToAsync(IStorageFile file) => unsaved.SaveToAsync(file);
-
     #endregion
 
     #region The document's buttons and write-back gestures
@@ -707,25 +704,12 @@ internal sealed class MainWindow : Window
 
     #region Layout
 
-    internal void ShowPictureOn(Screen screen) => fullScreen.ShowPictureOn(screen);
-
     private void RememberLayout()
     {
         if (!shell.IsBuilt) return;
 
         layoutKeeper.Remember(() => shell.Capture(this));
     }
-
-    #endregion
-
-    #region Transport
-
-    // Play and pause, and the mute that goes with them, on the toolbar and on the
-    // full-screen preview.
-
-    internal bool Paused => playback.Paused;
-
-    internal bool Muted => playback.Muted;
 
     #endregion
 
