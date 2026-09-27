@@ -128,7 +128,11 @@ public class UiTest : IDisposable
     /// builds it and nothing started: no window exists until one is resolved and
     /// started. <paramref name="replace"/> swaps any of its services for a test's own.
     /// </summary>
-    internal T Resolve<T>(EditorSetup? setup = null, Action<IServiceCollection>? replace = null) where T : notnull
+    internal T Resolve<T>(EditorSetup? setup = null, Action<IServiceCollection>? replace = null) where T : notnull =>
+        Container(setup, replace).GetRequiredService<T>();
+
+    /// <summary>The editor's container itself, for a test that takes several services from one window's graph.</summary>
+    internal IServiceProvider Container(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
     {
         var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
         replace?.Invoke(services);
@@ -136,7 +140,15 @@ public class UiTest : IDisposable
         var provider = services.BuildServiceProvider();
         providers.Add(provider);
 
-        return provider.GetRequiredService<T>();
+        return provider;
+    }
+
+    /// <summary><paramref name="window"/> is the one <paramref name="container"/>'s window-bound services act on.</summary>
+    internal static Window Attach(IServiceProvider container, Window window)
+    {
+        container.GetRequiredService<MainWindowLocator>().Attach(window);
+
+        return window;
     }
 
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>

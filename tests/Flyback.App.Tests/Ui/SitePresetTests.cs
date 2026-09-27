@@ -10,6 +10,7 @@ using Flyback.App.Site;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
 
@@ -22,10 +23,8 @@ public sealed class SitePresetTests : UiTest
 
     private (Window Window, GalleryParts Parts, Control Tiles) Gallery(FakePresetSite site)
     {
-        var locator = new MainWindowLocator();
-        var parts = new PresetGallery(
-            new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog(locator)).Build(
+        var container = Container();
+        var parts = container.GetRequiredService<PresetGallery>().Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             site: site.Site());
@@ -38,7 +37,7 @@ public sealed class SitePresetTests : UiTest
         content.Children.Add(tiles);
 
         var window = Show(content, width: 900);
-        locator.Attach(window);
+        Attach(container, window);
         Pump(() => Status(tiles) != "Looking…");
         Settle(window);
 
@@ -132,18 +131,16 @@ public sealed class SitePresetTests : UiTest
     [AvaloniaFact]
     public void A_site_that_does_not_answer_says_so_and_leaves_the_presets_here()
     {
-        var locator = new MainWindowLocator();
+        var container = Container();
 
-        var parts = new PresetGallery(
-            new PresetThumbnails(PluginCatalog.Empty),
-            new WindowDialog(locator)).Build(
+        var parts = container.GetRequiredService<PresetGallery>().Build(
             [.. Presets.All.OrderBy(preset => preset.Kind)],
             showing: null,
             site: new PresetSite(new HttpClient(new Unreachable()), FakePresetSite.Root));
         var tiles = parts.Tiles(_ => { }, _ => { });
 
         var window = Show(tiles, width: 900);
-        locator.Attach(window);
+        Attach(container, window);
         Pump(() => Status(tiles)!.Contains("did not answer"));
         Settle(window);
 
