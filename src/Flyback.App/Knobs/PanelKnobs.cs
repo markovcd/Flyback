@@ -55,7 +55,7 @@ internal sealed class PanelKnobs
     public ControlHub Hub { get; }
 
     /// <summary>The instruments Flyback knows by name, shipped and the user's own.</summary>
-    public InstrumentLibrary Instruments { get; } = InstrumentLibrary.Load();
+    public InstrumentLibrary Instruments { get; }
 
     /// <summary>The settings window's MIDI section.</summary>
     public StackPanel MidiSection { get; } = new() { Spacing = 8, Width = 280 };
@@ -66,8 +66,9 @@ internal sealed class PanelKnobs
     /// <summary>The knob panel should be shown: a knob was added, is being linked or learned.</summary>
     public event EventHandler? Wanted;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi)
+    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup)
     {
+        Instruments = setup.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
         this.editor = editor;
         this.document = document;
         this.preview = preview;

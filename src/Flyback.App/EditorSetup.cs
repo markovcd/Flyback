@@ -1,6 +1,7 @@
 using Flyback.App.Canvas;
 using Flyback.App.Files;
 using Flyback.App.Gallery;
+using Flyback.App.Midi;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.Core.Compile;
@@ -21,11 +22,11 @@ namespace Flyback.App;
 /// </remarks>
 public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
 {
-    /// <summary>
-    /// Where the kept groups live. Null is the usual place; a path is for the
-    /// tests, which must not write into the folder a person's own groups are in.
-    /// </summary>
+    /// <summary>Where the kept groups live. Null keeps them nowhere that outlasts the test.</summary>
     public string? GroupFolder { get; init; }
+
+    /// <summary>Where the instrument profiles of the user's own are read from. Null knows only the shipped ones.</summary>
+    public string? InstrumentFolder { get; init; }
 
     /// <summary>Where the presets somebody saved live. Null keeps none and offers no way to save one.</summary>
     public string? PresetFolder { get; init; }
@@ -108,6 +109,8 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>Where this machine keeps everything, and what it reaches: the program's own start.</summary>
     public static EditorSetup ThisMachine(Usage usage) => new()
     {
+        GroupFolder = GroupLibrary.DefaultFolder,
+        InstrumentFolder = InstrumentLibrary.UserFolder,
         PresetFolder = PresetLibrary.DefaultFolder,
         ThumbnailFolder = ThumbnailStore.DefaultFolder,
         OutputSettingsPath = OutputSettings.File,

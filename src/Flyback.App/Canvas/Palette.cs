@@ -24,7 +24,7 @@ internal sealed class Palette
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly Func<KeyboardLayout> keyboard;
-    private readonly ModulePalette list;
+    private readonly Lazy<ModulePalette> list;
     private readonly ReportLine report;
 
     /// <summary>Where the palette is shown, at the pointer.</summary>
@@ -66,8 +66,7 @@ internal sealed class Palette
         OutputSettingRepository repository,
         EditorSetup setup)
     {
-        var instruments = knobs.View.Instruments;
-        var groupFolder = setup.GroupFolder;
+        var groupFolder = setup.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
         this.editor = editor;
         this.document = document;
@@ -75,9 +74,11 @@ internal sealed class Palette
         this.report = report;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);
-        list = new ModulePalette(plugins.Modules, Add, Groups, AddGroup, instruments, AddInstrument);
 
-        Flyout.Content = list;
+        // Built when first shown: it lays out a button for every module and asks
+        // the hardware which instruments are plugged in.
+        list = new Lazy<ModulePalette>(() => new ModulePalette(plugins.Modules, Add, Groups, AddGroup, knobs.View.Instruments, AddInstrument));
+
         Flyout.FlyoutPresenterClasses.Add(ModulePalette.PresenterClass);
 
         editor.Gestures.MenuRequested += (_, at) =>
@@ -208,6 +209,7 @@ internal sealed class Palette
     public void Show(Point at)
     {
         addingAt = at;
+        Flyout.Content ??= list.Value;
 
         // Opened at the pointer, which is the point that was clicked — so the
         // list appears under the hand and what comes out of it lands where the
@@ -216,6 +218,6 @@ internal sealed class Palette
 
         // After showing, because a control that is not yet in a visual tree
         // cannot take the keyboard.
-        list.Reset();
+        list.Value.Reset();
     }
 }

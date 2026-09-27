@@ -56,7 +56,7 @@ public sealed class GroupLibrary
     public static string DefaultFolder => Path.Combine(GlobalConstants.DataFolder, "groups");
 
     private readonly ModuleCatalog catalog;
-    private List<SavedGroup> kept = [];
+    private List<SavedGroup>? kept;
 
     /// <param name="catalog">What the fragments are read against, so a missing plugin is named.</param>
     /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
@@ -64,8 +64,6 @@ public sealed class GroupLibrary
     {
         this.catalog = catalog;
         Folder = folder ?? DefaultFolder;
-
-        Reload();
     }
 
     public string Folder { get; }
@@ -78,7 +76,18 @@ public sealed class GroupLibrary
     /// every keystroke in the filter box and parsing a folder of patches per
     /// letter typed would be a folder of patches parsed per letter typed.
     /// </remarks>
-    public IReadOnlyList<SavedGroup> All => kept;
+    public IReadOnlyList<SavedGroup> All => Kept;
+
+    /// <summary>Read on first use, so a library nobody lists never touches the disk.</summary>
+    private List<SavedGroup> Kept
+    {
+        get
+        {
+            if (kept is null) Reload();
+
+            return kept!;
+        }
+    }
 
     /// <summary>Reads the folder again. Never throws; an unreadable file is skipped.</summary>
     public void Reload()
@@ -111,7 +120,7 @@ public sealed class GroupLibrary
     /// case are one entry here, because they would be one file on the disk.
     /// </remarks>
     public SavedGroup? Named(string? name) =>
-        string.IsNullOrWhiteSpace(name) ? null : kept.FirstOrDefault(entry => Same(entry.Name, name));
+        string.IsNullOrWhiteSpace(name) ? null : Kept.FirstOrDefault(entry => Same(entry.Name, name));
 
     /// <summary>
     /// Keeps <paramref name="group"/> and everything in it, replacing whatever was
@@ -148,7 +157,7 @@ public sealed class GroupLibrary
         File.WriteAllText(path, PatchIO.ToJson(fragment, catalog));
         Reload();
 
-        return kept.FirstOrDefault(entry => entry.Path == path)
+        return Kept.FirstOrDefault(entry => entry.Path == path)
             ?? new SavedGroup(group.Name, path, PatchIO.Read(File.ReadAllText(path), catalog));
     }
 
