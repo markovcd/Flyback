@@ -37,6 +37,9 @@ internal sealed class Playback
     /// <summary>The patch has just been compiled, and the picture and the sound are playing it.</summary>
     public event EventHandler? Compiled;
 
+    /// <summary>A patch opened; its programs are about to be built and started.</summary>
+    public event EventHandler? Opening;
+
     /// <summary>The device has just started playing the patch.</summary>
     public event EventHandler? Started;
 
@@ -188,7 +191,11 @@ internal sealed class Playback
         showingProbe = probe?.Id;
 
         // Held by this call until both programs have taken their parts.
-        if (opened) opening = new Cue();
+        if (opened)
+        {
+            opening = new Cue();
+            Opening?.Invoke(this, EventArgs.Empty);
+        }
         else if (opening is { Waiting: true }) opening.Take();
         else opening = null;
 
