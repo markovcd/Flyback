@@ -24,13 +24,12 @@ namespace Flyback.App.Capture;
 /// knob turned while it runs changes the next one. A take reads the frames the GPU
 /// has already drawn and the samples the speakers have already had, which puts the
 /// performance in the file — and means it can only record what is on screen, with the
-/// GPU renderer running. Sound is recorded wherever it is playing.
+/// GPU renderer running. Sound is recorded wherever it is playing. It owns the whole
+/// Record gesture, from choosing a file through stopping the take.
 /// <para>
-/// A take owns five pieces of state that nothing else has any use for, and the window
-/// asks it four questions: whether one is running, whether one is being counted in,
-/// whether one is in hand at all, and what the toolbar should therefore say. Everything
-/// it needs of the window it is handed here, and the three it hands back are the
-/// transport's, which a take moves and then has to let go of again.
+/// A take owns its recording state and button behavior. The window asks whether one
+/// is running, counting in, or in hand, and listens for state changes to update the
+/// transport. The services a take acts on are handed in here.
 /// </para>
 /// </remarks>
 internal sealed class TakeRecording
@@ -49,7 +48,7 @@ internal sealed class TakeRecording
         + "and the patch going back to zero — is set in Settings → Recording. It has no fixed "
         + "length, unlike a file `flyback-cli render` writes — it runs until you stop it.";
 
-    internal const string NothingToRecord =
+    private const string NothingToRecord =
         "Nothing is wired into the Output, so there is nothing to record. "
         + "Patch something into its 'color' or its 'left'.";
 
@@ -74,6 +73,8 @@ internal sealed class TakeRecording
     private readonly Func<Patch> patch;
     private readonly Func<OutputSettings> settings;
     private readonly Playback playback;
+    private readonly PatchFiles files;
+    private readonly IFilePickers pickers;
 
     /// <summary>Says a line, and whether it is the last one again with a new number in it.</summary>
     private readonly Action<string, bool> report;
@@ -121,7 +122,9 @@ internal sealed class TakeRecording
         NodeEditor editor,
         ReportLine report,
         Playback playback,
-        OutputSettingRepository repository)
+        OutputSettingRepository repository,
+        PatchFiles files,
+        IFilePickers pickers)
     {
         button = toolbar.Record;
         size = sections.Resolution;
@@ -132,6 +135,8 @@ internal sealed class TakeRecording
         settings = () => repository.Current;
         this.report = (message, progress) => report.Say(message, progress: progress);
         this.playback = playback;
+        this.files = files;
+        this.pickers = pickers;
     }
 
     /// <summary>Whether a take is running.</summary>
@@ -196,6 +201,55 @@ internal sealed class TakeRecording
         var (format, ffmpeg) = Encoder(path);
 
         return Refusal(format, ffmpeg, patch());
+    }
+
+    /// <summary>Starts, calls off or stops a take, according to the Record button's state.</summary>
+    internal async Task ToggleAsync()
+    {
+        if (!button.IsEnabled) return;
+
+        if (Counting)
+        {
+            CallOffCount();
+            return;
+        }
+
+        if (Running)
+        {
+            Stop();
+            return;
+        }
+
+        var kinds = Kinds();
+
+        if (kinds.Count == 0)
+        {
+            Say(NothingToRecord);
+            return;
+        }
+
+        var file = await pickers.Save(new FilePickerSaveOptions
+        {
+            Title = "Record",
+            FileTypeChoices = kinds,
+            SuggestedFileName = Takes.FileNameFor(files.Name),
+            DefaultExtension = kinds[0].Patterns?[0].TrimStart('*', '.'),
+        });
+
+        if (file?.TryGetLocalPath() is not { } path) return;
+
+        // A take is of a patch that is playing, and a paused one has no sound to record.
+        playback.Resume(() => Running);
+
+        // Check before the count-in, then again as the file opens: the count
+        // gives time for the sound to be turned down.
+        if (Refusal(path) is { } refused)
+        {
+            Say(refused);
+            return;
+        }
+
+        await CountInAsync(path, CountInStep);
     }
 
     /// <summary>
