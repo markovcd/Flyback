@@ -46,9 +46,6 @@ public sealed class Binder
     /// <summary>What the text calls each module it has a word for.</summary>
     private readonly Dictionary<Guid, string> named = [];
 
-    /// <summary>Every id <see cref="Next"/> has handed out.</summary>
-    private readonly HashSet<Guid> issued = [];
-
     /// <summary>The line that wired each socket the text wires.</summary>
     private readonly Dictionary<(Guid Node, int Port), int> wired = [];
 
@@ -76,29 +73,7 @@ public sealed class Binder
     /// <summary>The line each top-level name is bound on, for saying so where one is read above it.</summary>
     private readonly Dictionary<string, int> boundOn = [];
 
-    /// <summary>
-    /// Where in the source the modules being placed are coming from, as a path of
-    /// names — <c>let bass</c>, then <c>reverb~0</c> for the def it calls.
-    /// </summary>
-    /// <remarks>
-    /// A module's id is this path and its position under it, so building the same
-    /// text twice gives the same patch down to the guids and editing one line
-    /// changes that line's modules only — which is what lets a rebuild keep the
-    /// accumulator that was playing, the canvas position and the selection. Names
-    /// rather than numbers wherever a statement has one: numbering would give
-    /// every module below an inserted line a new identity.
-    /// </remarks>
-    private string where = string.Empty;
-
-    /// <summary>How many modules have been placed directly under <see cref="where"/>.</summary>
-    private int placedHere;
-
-    /// <summary>
-    /// How many things under <see cref="where"/> have had no name of their own —
-    /// a pipeline that does not end at a socket, a def stamped out twice in one
-    /// statement. Counted because there is nothing to name them by.
-    /// </summary>
-    private int unnamedHere;
+    private readonly NodeIdentity identity = new();
 
     public Binder(ModuleCatalog modules, List<LanguageIssue> issues)
     {
@@ -121,7 +96,7 @@ public sealed class Binder
         // Named rather than left to chance like the rest of it, because the
         // Output is the one module every patch has and the one every rebuild
         // must recognise as the same one.
-        patch.EnsureOutput(modules, Identity("out"));
+        patch.EnsureOutput(modules, NodeIdentity.FromName("out"));
 
         // The one module nothing places, so the one whose knobs can only ever be
         // written as a statement of their own.
@@ -167,7 +142,7 @@ public sealed class Binder
                 continue;
             }
 
-            var group = made.Clone(Identity(name is null ? $"group #{i}" : "group " + name));
+            var group = made.Clone(NodeIdentity.FromName(name is null ? $"group #{i}" : "group " + name));
 
             group.Rename(name);
             patch.Groups![patch.Groups.IndexOf(made)] = group;
@@ -296,11 +271,11 @@ public sealed class Binder
         // Named before entering, because the name is drawn from the segment this
         // statement sits in — a statement with nothing to be called by takes the
         // next number from its parent, not from itself.
-        var outer = Enter(Naming(statement));
+        var outer = identity.Enter(Naming(statement));
 
         Ran(statement, scope);
 
-        Leave(outer);
+        identity.Leave(outer);
     }
 
     /// <summary>
@@ -325,8 +300,8 @@ public sealed class Binder
         DescriptionStatement => "description",
         AuthorStatement => "author",
         TagsStatement => "tags",
-        PipelineStatement pipeline => Ending(pipeline.Value) ?? Anonymous(),
-        _ => Anonymous(),
+        PipelineStatement pipeline => Ending(pipeline.Value) ?? identity.Anonymous(),
+        _ => identity.Anonymous(),
     };
 
     private static string Aimed(NameExpr target) =>
@@ -339,8 +314,6 @@ public sealed class Binder
     /// </summary>
     private static string? Ending(Expr expr) =>
         expr is PipeExpr { Stage: NameExpr socket } ? Aimed(socket) : null;
-
-    private string Anonymous() => "#" + unnamedHere++;
 
     private void Ran(Statement statement, Scope scope)
     {
@@ -439,58 +412,7 @@ public sealed class Binder
             if (scope.Entry(name) is null) scope.Set(name, new Failed(), line);
     }
 
-    // --- naming what gets placed ---------------------------------------------
-
-    /// <summary>
-    /// Steps into <paramref name="segment"/>, handing back what to put back
-    /// afterwards. Saved and restored rather than set, because these nest: a def
-    /// is stamped out inside the statement that called it.
-    /// </summary>
-    private (string Where, int Placed, int Unnamed) Enter(string segment)
-    {
-        var outer = (where, placedHere, unnamedHere);
-
-        where = where.Length == 0 ? segment : where + "/" + segment;
-        placedHere = 0;
-        unnamedHere = 0;
-
-        return outer;
-    }
-
-    private void Leave((string Where, int Placed, int Unnamed) outer) =>
-        (where, placedHere, unnamedHere) = outer;
-
-    /// <summary>The name for the next module placed where the binder is standing.</summary>
-    /// <remarks>
-    /// Only text that is already wrong names one place twice, such as two
-    /// pipelines into <c>out.color</c>. It gets a second id, so the mistake is
-    /// reported instead of two modules sharing one.
-    /// </remarks>
-    private Guid Next()
-    {
-        var name = $"{where}#{placedHere++}";
-        var id = Identity(name);
-
-        for (var again = 1; !issued.Add(id); again++) id = Identity($"{name}'{again}");
-
-        return id;
-    }
-
-    /// <summary>
-    /// A guid from a name, the same one every time.
-    /// </summary>
-    /// <remarks>
-    /// A hash rather than a counter, because what has to be stable is the mapping
-    /// from a piece of source to an id — across runs, across machines, and with
-    /// statements added around it. SHA-256 cut to sixteen bytes: this is a name
-    /// and not a secret.
-    /// </remarks>
-    internal static Guid Identity(string name) =>
-        new(System.Security.Cryptography.SHA256.HashData(
-            System.Text.Encoding.UTF8.GetBytes(name)).AsSpan(0, 16));
-
-    /// <summary>The id a panel knob the text calls <paramref name="word"/> is given.</summary>
-    internal static Guid PanelId(string word) => Identity("panel " + word);
+    // --- names and source ownership ------------------------------------------
 
     /// <summary>
     /// Gives a node the name it was bound to, which the editor shows on it. Only
@@ -733,7 +655,7 @@ public sealed class Binder
 
         var control = new PatchControl
         {
-            Id = PanelId(statement.Name),
+            Id = NodeIdentity.PanelId(statement.Name),
             Name = label ?? statement.Name,
             Word = label is null || label == statement.Name ? null : statement.Name,
             Value = (float)resting.Amount,
@@ -1313,7 +1235,7 @@ public sealed class Binder
         // there is one clock and one pair of coordinates in a patch however many
         // lines reach for them, and moving the first mention should not make it
         // a different module.
-        var node = NodeInstance.Create(modules.Require(typeId), 0d, 0d, Identity("~" + typeId));
+        var node = NodeInstance.Create(modules.Require(typeId), 0d, 0d, NodeIdentity.FromName("~" + typeId));
 
         patch.Nodes.Add(node);
         held = node.Id;
@@ -1696,7 +1618,7 @@ public sealed class Binder
     /// <param name="sites">Where the text gives each socket its value, where it gives it one; the call's own place otherwise.</param>
     private Value Place(NodeDef def, IReadOnlyList<(int Port, Value Value)> inputs, int line, int column, IReadOnlyDictionary<int, Site>? sites = null)
     {
-        var node = NodeInstance.Create(def, 0d, 0d, Next());
+        var node = NodeInstance.Create(def, 0d, 0d, identity.Next());
         patch.Nodes.Add(node);
 
         foreach (var (port, value) in inputs)
@@ -1967,7 +1889,7 @@ public sealed class Binder
 
         if (Module("math.mul", line, column) is not { } mul) return;
 
-        var scale = NodeInstance.Create(mul, 0d, 0d, Next());
+        var scale = NodeInstance.Create(mul, 0d, 0d, identity.Next());
         patch.Nodes.Add(scale);
 
         scale.InputValues[1] = 1f / by;
@@ -2135,8 +2057,8 @@ public sealed class Binder
         }
 
         // Set once the arguments are bound, because those belong to the caller's
-        // statement rather than to the def — see Stamping.
-        (string Where, int Placed, int Unnamed)? outer = null;
+        // statement rather than to the def — see NodeIdentity.Stamping.
+        NodeIdentity.Position? outer = null;
 
         try
         {
@@ -2170,7 +2092,7 @@ public sealed class Binder
             // the names have to tell them apart. Numbered, because a call site
             // has nothing else to be known by — which is why moving one call
             // above another in the same statement renames both.
-            outer = Enter(Stamping(macro.Name));
+            outer = identity.Enter(identity.Stamping(macro.Name));
 
             // A fresh scope off the top, not off the caller's: a def sees its
             // parameters and the defs, and nothing of wherever it was called
@@ -2198,12 +2120,9 @@ public sealed class Binder
         {
             expanding.Remove(macro.Name);
 
-            if (outer is { } saved) Leave(saved);
+            if (outer is { } saved) identity.Leave(saved);
         }
     }
-
-    /// <summary>What to call one stamping of a def, told apart from the next by number.</summary>
-    private string Stamping(string name) => name + "~" + unnamedHere++;
 
     // --- looking things up ----------------------------------------------------
 

@@ -427,7 +427,7 @@ public sealed class SourceMap
 
     /// <summary>Each panel knob the text declares, by the id the binder gives it, and the word it is called by.</summary>
     public IReadOnlyDictionary<Guid, string> PanelWords =>
-        Panels().ToDictionary(panel => Binder.PanelId(panel.Word), panel => panel.Word);
+        Panels().ToDictionary(panel => NodeIdentity.PanelId(panel.Word), panel => panel.Word);
 
     /// <summary>
     /// The edit that makes the text's panel knobs the ones <paramref name="lines"/>
