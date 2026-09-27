@@ -51,7 +51,15 @@ internal static class EditorServices
     /// <param name="validate">Whether every registration is checked to be buildable, which costs a walk of the whole graph.</param>
     public static ServiceProvider Provider(EditorSetup? setup = null, Action<IServiceCollection>? replace = null, bool validate = false)
     {
-        var services = new ServiceCollection().AddEditor(setup ?? new EditorSetup());
+        return Build(new ServiceCollection().AddEditor(setup ?? new EditorSetup()), replace, validate);
+    }
+
+    /// <summary>The canvas's services alone, without the rest of the editor.</summary>
+    public static ServiceProvider CanvasProvider(Action<IServiceCollection>? replace = null, bool validate = false) =>
+        Build(new ServiceCollection().AddCanvas(), replace, validate);
+
+    private static ServiceProvider Build(IServiceCollection services, Action<IServiceCollection>? replace, bool validate)
+    {
         replace?.Invoke(services);
 
         return services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = validate });

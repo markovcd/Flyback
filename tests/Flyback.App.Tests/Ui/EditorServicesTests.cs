@@ -19,9 +19,9 @@ public class EditorServicesTests : UiTest
     [AvaloniaFact]
     public void Every_service_the_editor_registers_can_be_built()
     {
-        var services = new ServiceCollection().AddEditor(new EditorSetup());
+        IServiceCollection services = null!;
 
-        using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+        var provider = Container(replace: registered => services = registered, validate: true);
 
         var window = Owned(provider.GetMainWindow());
 
@@ -92,7 +92,7 @@ public class EditorServicesTests : UiTest
     [AvaloniaFact]
     public void A_canvas_is_built_from_its_services_alone()
     {
-        var provider = new ServiceCollection().AddCanvas().BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = true });
+        var provider = EditorServices.CanvasProvider(validate: true);
 
         var editor = provider.GetRequiredService<NodeEditor>();
 
