@@ -15,8 +15,13 @@ namespace Flyback.Core.Language;
 /// grammar depending on it. Recovery is by statement, so a file with three mistakes
 /// says three things.
 /// </remarks>
-public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issues)
+public sealed class Parser
 {
+    private readonly IReadOnlyList<Token> tokens;
+    private readonly List<LanguageIssue> issues;
+    /// <summary>Tokens for closing brackets that have no matching opener.</summary>
+    private readonly HashSet<int> unmatched;
+    private readonly ExpressionParser expressions;
     private int at;
 
     /// <summary>
@@ -26,18 +31,17 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     /// </summary>
     public const int MaxDepth = 128;
 
-    /// <summary>Where a ')' or '}' stands that no bracket before it is open for, counted over the whole text.</summary>
-    private readonly HashSet<int> unmatched = Unmatched(tokens);
+    internal Token Current => tokens[Math.Min(at, tokens.Count - 1)];
 
-    /// <summary>How many pipelines the parser is inside now.</summary>
-    private int depth;
+    internal Token Ahead(int by = 1) => tokens[Math.Min(at + by, tokens.Count - 1)];
 
-    /// <summary>How tall each expression built so far stands, by the expression itself rather than what it equals.</summary>
-    private readonly Dictionary<Expr, int> heights = new(ReferenceEqualityComparer.Instance);
-
-    private Token Current => tokens[Math.Min(at, tokens.Count - 1)];
-
-    private Token Ahead(int by = 1) => tokens[Math.Min(at + by, tokens.Count - 1)];
+    public Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issues)
+    {
+        this.tokens = tokens;
+        this.issues = issues;
+        unmatched = Unmatched(tokens);
+        expressions = new ExpressionParser(this, issues);
+    }
 
     /// <summary>Every statement in the file.</summary>
     public IReadOnlyList<Statement> Parse()
@@ -98,7 +102,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     }
 
     /// <summary>What is at the current token, as a complaint says it.</summary>
-    private string Found() => Current.Kind switch
+    internal string Found() => Current.Kind switch
     {
         TokenKind.End => "the end of the text",
         TokenKind.NewLine => "the end of the line",
@@ -130,7 +134,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     }
 
     /// <summary>Says so where the current token closes a bracket nobody opened.</summary>
-    private bool Closer()
+    internal bool Closer()
     {
         if (!unmatched.Contains(at)) return false;
 
@@ -147,22 +151,16 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         return true;
     }
 
-    /// <summary>What an unclosed bracket is waiting for, with where it was opened.</summary>
-    private static string Closing(string closer, string opener, Token open) =>
-        $"'{closer}' to close the '{opener}' on line {open.Line}, column {open.Column}";
+    internal void Advance(int by = 1) => at += by;
 
-    /// <summary>Whether the current token could begin a value, which is what says a comma was left out before it.</summary>
-    private bool AtValue() => Current.Kind
-        is TokenKind.Number or TokenKind.Text or TokenKind.Identifier or TokenKind.OpenParen or TokenKind.Minus;
-
-    private bool Take(TokenKind kind)
+    internal bool Take(TokenKind kind)
     {
         if (Current.Kind != kind) return false;
         at++;
         return true;
     }
 
-    private bool Expect(TokenKind kind, string what)
+    internal bool Expect(TokenKind kind, string what)
     {
         if (Take(kind)) return true;
 
@@ -170,7 +168,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         return false;
     }
 
-    private void Complain(string code, string message) =>
+    internal void Complain(string code, string message) =>
         issues.Add(new LanguageIssue(Current.Line, Current.Column, code, message));
 
     private bool AtWord(string word) =>
@@ -235,14 +233,14 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             at += 4;
 
-            if (Pipeline() is not { } value) return null;
+            if (expressions.Pipeline() is not { } value) return null;
 
             return backWire
                 ? new BackWireStatement(target, value, line, column)
                 : new KnobStatement(target, value, line, column);
         }
 
-        return Pipeline() is { } pipeline ? new PipelineStatement(pipeline, line, column) : null;
+        return expressions.Pipeline() is { } pipeline ? new PipelineStatement(pipeline, line, column) : null;
     }
 
     private Statement? Let(int line, int column)
@@ -268,7 +266,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             if (!Expect(TokenKind.CloseParen, "')' after the names")) return null;
             if (!Expect(TokenKind.Assign, "'=' after the names")) return null;
-            if (Pipeline() is not { } tuple) return null;
+            if (expressions.Pipeline() is not { } tuple) return null;
 
             return new LetTupleStatement(names, tuple, line, column);
         }
@@ -283,7 +281,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         at++;
 
         if (!Expect(TokenKind.Assign, "'=' after the name")) return null;
-        if (Pipeline() is not { } value) return null;
+        if (expressions.Pipeline() is not { } value) return null;
 
         return new LetStatement(name, value, line, column);
     }
@@ -328,7 +326,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         // A body is either one pipeline or a block ending in what it hands back.
         if (!Take(TokenKind.OpenBrace))
         {
-            return Pipeline() is { } single
+            return expressions.Pipeline() is { } single
                 ? new DefStatement(name, parameters, [], single, null, line, column)
                 : null;
         }
@@ -393,13 +391,13 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
 
             var items = new List<Expr>();
 
-            if (Pipeline() is { } first)
+            if (expressions.Pipeline() is { } first)
             {
                 items.Add(first);
 
                 while (Take(TokenKind.Comma))
                 {
-                    if (Pipeline() is not { } next) { at = mark; return false; }
+                    if (expressions.Pipeline() is not { } next) { at = mark; return false; }
                     items.Add(next);
                 }
 
@@ -413,7 +411,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
             at = mark;
         }
 
-        one = Pipeline();
+        one = expressions.Pipeline();
         return one is not null;
     }
 
@@ -610,7 +608,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
         var name = Ahead().Text;
         at += 3;
 
-        if (Pipeline() is not { } value) return null;
+        if (expressions.Pipeline() is not { } value) return null;
 
         var settings = new List<Argument>();
 
@@ -622,7 +620,7 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
                 return null;
             }
 
-            if (Argument() is not { } setting) return null;
+            if (expressions.Argument() is not { } setting) return null;
 
             settings.Add(setting);
         }
@@ -633,366 +631,5 @@ public sealed class Parser(IReadOnlyList<Token> tokens, List<LanguageIssue> issu
     private void SkipToBreakOrBrace()
     {
         while (Current.Kind is not (TokenKind.NewLine or TokenKind.CloseBrace or TokenKind.End)) at++;
-    }
-
-    // --- expressions --------------------------------------------------------
-
-    /// <summary>
-    /// The loosest thing there is. Everything else binds tighter, which is what
-    /// makes <c>t * 0.2 |&gt; sine()</c> read the way it looks.
-    /// </summary>
-    private Expr? Pipeline()
-    {
-        if (depth >= MaxDepth)
-        {
-            Complain(IssueCode.TooDeep, Deep);
-            return null;
-        }
-
-        depth++;
-
-        try
-        {
-            return Chain();
-        }
-        finally
-        {
-            depth--;
-        }
-    }
-
-    /// <summary>Stages joined by pipes, the body of <see cref="Pipeline"/>.</summary>
-    private Expr? Chain()
-    {
-        if (Sum() is not { } left) return null;
-
-        var piped = false;
-
-        while (Current.Kind == TokenKind.Pipe)
-        {
-            var line = Current.Line;
-            var column = Current.Column;
-
-            at++;
-
-            if (Stage() is not { } stage) return null;
-
-            if (Built(new PipeExpr(left, stage, line, column), left, stage) is not { } joined) return null;
-
-            left = joined;
-            piped = true;
-        }
-
-        // Arithmetic on what a pipe just produced, which is a thing people write
-        // and this cannot read. The pipe is the loosest operator there is —
-        // `t * 0.2 |> sine()` needs it to be — so `s |> fract * 2` would have to
-        // mean piping into `fract * 2`, which is nothing. Said as the fix rather
-        // than as the rule, because the rule is not what anybody wanted to know.
-        if (piped && Current.Kind is TokenKind.Star or TokenKind.Slash or TokenKind.Percent
-            or TokenKind.Plus or TokenKind.Minus)
-        {
-            Complain(IssueCode.ArithmeticAfterPipeline,
-                $"'{Current.Text}' cannot follow a pipeline. Put the pipeline in brackets to do "
-                + $"arithmetic on what it made: (a |> b) {Current.Text} 2.");
-
-            return null;
-        }
-
-        return left;
-    }
-
-    /// <summary>What may sit after a pipe: a module to place, or a socket to land in.</summary>
-    private Expr? Stage()
-    {
-        if (Current.Kind != TokenKind.Identifier)
-        {
-            Complain(IssueCode.Syntax, "expected a module or a socket after '|>'.");
-            return null;
-        }
-
-        return Primary();
-    }
-
-    private Expr? Sum()
-    {
-        if (Product() is not { } left) return null;
-
-        while (Current.Kind is TokenKind.Plus or TokenKind.Minus)
-        {
-            var op = Current.Kind;
-            var line = Current.Line;
-            var column = Current.Column;
-
-            at++;
-
-            if (Product() is not { } right) return null;
-
-            if (Built(new BinaryExpr(op, left, right, line, column), left, right) is not { } joined) return null;
-
-            left = joined;
-        }
-
-        return left;
-    }
-
-    private Expr? Product()
-    {
-        if (Ranged() is not { } left) return null;
-
-        while (Current.Kind is TokenKind.Star or TokenKind.Slash or TokenKind.Percent)
-        {
-            var op = Current.Kind;
-            var line = Current.Line;
-            var column = Current.Column;
-
-            at++;
-
-            if (Ranged() is not { } right) return null;
-
-            if (Built(new BinaryExpr(op, left, right, line, column), left, right) is not { } joined) return null;
-
-            left = joined;
-        }
-
-        return left;
-    }
-
-    /// <summary>
-    /// A value, or two of them written as a span.
-    /// </summary>
-    /// <remarks>
-    /// Looser than the leading minus, and that is the whole point of its sitting
-    /// here: <c>-2..2</c> is a range from minus two, not the negation of a range
-    /// from two. The other way round parses, compiles and means something else,
-    /// which two of the presets would have shown the hard way.
-    /// </remarks>
-    private Expr? Ranged()
-    {
-        if (Unary() is not { } low) return null;
-        if (Current.Kind != TokenKind.Range) return low;
-
-        var line = Current.Line;
-        var column = Current.Column;
-
-        at++;
-
-        if (Unary() is not { } high) return null;
-
-        return Built(new RangeExpr(low, high, line, column), low, high);
-    }
-
-    /// <summary>A value with the minus signs before it, counted rather than recursed into.</summary>
-    private Expr? Unary()
-    {
-        var signs = new List<Token>();
-
-        while (Current.Kind == TokenKind.Minus)
-        {
-            signs.Add(Current);
-            at++;
-        }
-
-        if (Primary() is not { } value) return null;
-
-        for (var i = signs.Count - 1; i >= 0; i--)
-        {
-            if (Built(new NegateExpr(value, signs[i].Line, signs[i].Column), value) is not { } negated) return null;
-
-            value = negated;
-        }
-
-        return value;
-    }
-
-    private Expr? Primary()
-    {
-        var line = Current.Line;
-        var column = Current.Column;
-
-        switch (Current.Kind)
-        {
-            case TokenKind.Number:
-            {
-                var token = Current;
-                at++;
-                return new NumberExpr(token.Value, token.Scaled, line, column);
-            }
-
-            case TokenKind.Text:
-            {
-                var text = Current.Text;
-                at++;
-                return new TextExpr(text, line, column);
-            }
-
-            case TokenKind.OpenParen:
-            {
-                var open = Current;
-                at++;
-
-                if (Pipeline() is not { } inner) return null;
-
-                return Expect(TokenKind.CloseParen, Closing(")", "(", open)) ? Selected(inner) : null;
-            }
-
-            case TokenKind.Identifier:
-                return NameOrCall(line, column);
-
-            case TokenKind.Pipe:
-                Complain(IssueCode.Syntax, "'|>' has nothing before it to pipe. Write what it carries first: sine() |> out.left.");
-                return null;
-
-            case TokenKind.OpenBrace:
-                Complain(IssueCode.Syntax, "'{' opens nothing here: it follows 'group \"name\"' or a def's '='.");
-                return null;
-
-            default:
-                if (!Closer()) Complain(IssueCode.Syntax, $"expected a value here, but found {Found()}.");
-                return null;
-        }
-    }
-
-    /// <summary>
-    /// A dotted name, which is either a module to place or a binding to read —
-    /// and the parser does not decide which. <c>space.rotate(...)</c> and
-    /// <c>riff.gate</c> are the same shape until the catalog is consulted.
-    /// </summary>
-    private Expr? NameOrCall(int line, int column)
-    {
-        var parts = new List<string> { Current.Text };
-        at++;
-
-        while (Current.Kind == TokenKind.Dot && Ahead().Kind == TokenKind.Identifier)
-        {
-            parts.Add(Ahead().Text);
-            at += 2;
-        }
-
-        // Not while a call is still to come: 'x(...).out' is the selector's to read.
-        if (Current.Kind == TokenKind.Dot && Ahead().Kind != TokenKind.OpenParen)
-        {
-            at++;
-            return Refuse(IssueCode.Syntax, $"expected the name of a socket or an output after '{string.Join('.', parts)}.', but found {Found()}.");
-        }
-
-        if (Current.Kind != TokenKind.OpenParen)
-        {
-            return parts.Count switch
-            {
-                1 => new NameExpr(parts[0], null, line, column),
-                2 => new NameExpr(parts[0], parts[1], line, column),
-
-                // Only a call can carry a full type id, since nothing reads an
-                // output off one.
-                _ => Refuse(IssueCode.Syntax, $"'{string.Join('.', parts)}' is not a name this can read."),
-            };
-        }
-
-        var open = Current;
-        at++;
-
-        var arguments = new List<Argument>();
-
-        if (!Take(TokenKind.CloseParen))
-        {
-            do
-            {
-                if (Argument() is not { } argument) return null;
-                arguments.Add(argument);
-            }
-            while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
-
-            if (!Take(TokenKind.CloseParen))
-            {
-                // Two values side by side: a bare socket name wanted its colon, anything else a comma.
-                if (AtValue() && arguments[^1] is { Name: null, Value: NameExpr { Port: null } bare })
-                    Complain(IssueCode.Syntax, $"expected ':' after '{bare.Name}' to give it a value.");
-                else if (AtValue())
-                    Complain(IssueCode.Syntax, "expected ',' between the arguments.");
-                else
-                    Complain(IssueCode.Syntax, $"expected {Closing(")", "(", open)}, but found {Found()}.");
-
-                return null;
-            }
-        }
-
-        Token? block = null;
-
-        if (Current.Kind == TokenKind.Block)
-        {
-            block = Current;
-            at++;
-        }
-
-        var call = new CallExpr(
-            string.Join('.', parts), arguments, block?.Text, line, column, block?.Line ?? 0, block?.Column ?? 0);
-
-        return Built(call, [.. arguments.Select(argument => argument.Value)]) is { } built ? Selected(built) : null;
-    }
-
-    /// <summary>
-    /// The outputs taken off what was just read, if any are:
-    /// <c>tempo(bpm: 104).beats</c>.
-    /// </summary>
-    /// <remarks>
-    /// Only a call and a bracketed pipeline come here. A binding's selector is
-    /// read as part of its name, because <c>riff.gate</c> and <c>midi.in</c> are
-    /// the same shape until the brackets after one of them say which it was.
-    /// </remarks>
-    private Expr? Selected(Expr source)
-    {
-        while (Take(TokenKind.Dot))
-        {
-            if (Current.Kind != TokenKind.Identifier)
-                return Refuse(IssueCode.Syntax, "expected the name of an output after '.'.");
-
-            if (Built(new SelectExpr(source, Current.Text, Current.Line, Current.Column), source) is not { } selected) return null;
-
-            source = selected;
-            at++;
-        }
-
-        return source;
-    }
-
-    private int Height(Expr expr) => heights.TryGetValue(expr, out var height) ? height : 1;
-
-    /// <summary><paramref name="node"/>, standing on <paramref name="parts"/>, or null where that makes it too tall.</summary>
-    private Expr? Built(Expr node, params Expr[] parts)
-    {
-        var height = 1 + parts.Select(Height).DefaultIfEmpty(0).Max();
-
-        if (height > MaxDepth)
-        {
-            issues.Add(new LanguageIssue(node.Line, node.Column, IssueCode.TooDeep, Deep));
-            return null;
-        }
-
-        heights[node] = height;
-        return node;
-    }
-
-    private static string Deep => $"this is nested more than {MaxDepth} deep. Break it up with 'let'.";
-
-    private Expr? Refuse(string code, string message)
-    {
-        Complain(code, message);
-        return null;
-    }
-
-    private Argument? Argument()
-    {
-        var line = Current.Line;
-        var column = Current.Column;
-
-        string? name = null;
-
-        if (Current.Kind == TokenKind.Identifier && Ahead().Kind == TokenKind.Colon)
-        {
-            name = Current.Text;
-            at += 2;
-        }
-
-        return Pipeline() is { } value ? new Argument(name, value, line, column) : null;
     }
 }
