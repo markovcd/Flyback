@@ -97,9 +97,9 @@ internal sealed class MainWindow : Window
 
     /// <summary>The patch compiled and played, paused or muted.</summary>
     private readonly Playback playback;
-    
+
     private readonly EditorStart editorStart;
-    
+
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
     /// the sound always, and the picture while the processor is drawing it. See
@@ -128,7 +128,6 @@ internal sealed class MainWindow : Window
         PreviewHost preview,
         ReportLine report,
         PluginCatalog plugins,
-        Usage usage,
         IlCompiler compiler,
         MidiHub midi,
         Playback playback,
@@ -143,7 +142,7 @@ internal sealed class MainWindow : Window
         AssistantPanel assistant,
         WorkKeeper keeper,
         WorkRecovery workRecovery,
-        PlaybackControls playbackControls,
+        EditorWiring editorWiring,
         EditorOpened editorOpened,
         EditorStart editorStart,
         WindowLayoutKeeper layoutKeeper,
@@ -189,39 +188,9 @@ internal sealed class MainWindow : Window
 
         Recording = recording;
 
-        pluginInstalls.RestartRequested += async (_, request) =>
-        {
-            try
-            {
-                request.Complete(await unsaved.RelaunchAsync(request.Reopen, recording.InHand));
-            }
-            catch (Exception ex)
-            {
-                request.Fail(ex);
-            }
-        };
-
-        // Where the last document's knobs were left says nothing about this one's.
-        files.Arrived += (_, _) => knobs.Hub.Forget();
-        files.Saved += (_, _) => ClearPresetSelection();
-
-        // A take running takes Pause away, and finishing gives it back.
-        recording.Marked += (_, _) => transport.Sync();
-
-        playbackControls.Wire();
-
-        // A key going down while the clock is stopped changes the picture and
-        // moves nothing else, so the preview has to be told there is a new frame
-        // to draw. Everything else it redraws for, it can see for itself.
-        midi.Played += preview.Refresh;
-
-        // A device that would not open. The patch goes on naming it and goes on
-        // being silent, and this line is the only thing that would say why.
-        midi.Trouble += message => Report(message);
-
-        // That an instrument was played at all, counted for the end of the run
-        // and nothing about what was played on it (ADR-0103).
-        midi.Heard += () => usage.Count(Used.Instrument);
+        // Cross-service event edges are kept together so they remain visible
+        // without becoming constructor dependencies between the services.
+        editorWiring.Wire();
 
         WireControls();
 
@@ -245,20 +214,6 @@ internal sealed class MainWindow : Window
         Background = new SolidColorBrush(Colors.Window);
         layoutKeeper.Track(this);
 
-        editor.History.PatchChanged += (_, _) =>
-        {
-            playback.Recompile(files.Sounds, files.Pictures, () => Recording.Running, opened: editor.History.Opening);
-            // Patching an input takes its knob away and unpatching gives it
-            // back, and neither is a selection change — so the panel is asked
-            // here as well, and answers only when a wire actually moved.
-            inspector.Sync();
-        };
-
-        editor.Selection.Changed += (_, _) =>
-        {
-            inspector.Build();
-            playback.ProbeSelectionChanged(files.Sounds, files.Pictures, () => Recording.Running);
-        };
         editor.History.HistoryChanged += (_, _) => RefreshEditState();
 
         // Asked again rather than simply put away: the wire may have been dropped
@@ -907,11 +862,6 @@ internal sealed class MainWindow : Window
             Report(message);
         };
 
-        // The picture a take was reading has gone. Finishing the file is the only
-        // useful thing left to do with it — what is already written is a
-        // recording, and what would follow is the same frame for ever.
-        preview.CaptureLost += Recording.Stop;
-
         knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.KeyboardLayout);
 
         // Quietly, because nobody asked for anything yet: a saved answer is
@@ -929,15 +879,6 @@ internal sealed class MainWindow : Window
         toolbar.Knobs.IsCheckedChanged += (_, _) => shell.ShowControls(toolbar.Knobs.IsChecked == true);
 
         knobs.Wanted += (_, _) => shell.ShowControls(true);
-
-        // A socket's own knob on the canvas: heard as it turns, written into the
-        // text and the panel when the hand comes off it.
-        editor.Dial.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
-        editor.Dial.InputLetGo += (_, pick) =>
-        {
-            document.HandCameOff();
-            if (editor.Selection.Focused?.Id == pick.Node || editor.Selection.Group?.Members.Contains(pick.Node) == true) inspector.Build();
-        };
     }
 
     #endregion
