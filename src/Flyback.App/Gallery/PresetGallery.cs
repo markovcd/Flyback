@@ -78,7 +78,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
         return new GalleryParts(search.Box, BuildTiles);
 
-        Control BuildTiles(Action<PatchPreset?> open, Action<SitePreset> openSitePreset)
+        Control BuildTiles(Action<IPreset?> open)
         {
             var gallery = new StackPanel { Name = "gallery", Spacing = 6 };
 
@@ -109,7 +109,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             search.Apply();
 
-            if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box, dialog, openSitePreset).View);
+            if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box, dialog, open).View);
 
             // The hint beside the runs rather than among them, so the gallery stays
             // what it has always been: a heading, then its tiles, and again.

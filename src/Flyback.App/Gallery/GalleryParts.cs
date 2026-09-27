@@ -1,5 +1,4 @@
 ﻿using Avalonia.Controls;
-using Flyback.App.Site;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Gallery;
@@ -10,4 +9,4 @@ namespace Flyback.App.Gallery;
 /// </summary>
 internal sealed record GalleryParts(
     TextBox Filter,
-    Func<Action<PatchPreset?>, Action<SitePreset>, Control> Tiles);
+    Func<Action<IPreset?>, Control> Tiles);

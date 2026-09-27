@@ -160,11 +160,7 @@ internal sealed class PresetSlot
             pointedAt: audition.PointedAt,
             yours: Yours()?.ToPickFrom());
 
-        var chosen = await dialog.Show<PatchPreset?>(
-            "Startup patch",
-            answer => gallery.Tiles(answer, _ => { }),
-            gallery.Filter,
-            fill: true);
+        var chosen = await dialog.Show("Startup patch", gallery.Tiles, gallery.Filter, fill: true);
 
         audition.PointedAt(null);
 
@@ -261,17 +257,13 @@ internal sealed class PresetSlot
     private async Task ShowGalleryAsync()
     {
         var current = picker.SelectedItem as PatchPreset;
-        var gallery = this.gallery.Build(
+        var parts = gallery.Build(
             [.. plugins.Presets.OrderBy(p => p.Kind)],
             current,
             pointedAt: audition.PointedAt,
             yours: Yours(),
             site: site.Presets());
-        var chosen = await dialog.Show<IPreset?>(
-            "Start from a preset",
-            answer => gallery.Tiles(preset => answer(preset), preset => answer(preset)),
-            gallery.Filter,
-            fill: true);
+        var chosen = await dialog.Show("Start from a preset", parts.Tiles, parts.Filter, fill: true);
 
         audition.PointedAt(null);
 
