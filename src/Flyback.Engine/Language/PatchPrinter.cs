@@ -96,7 +96,7 @@ public static class PatchPrinter
     /// time it means, since writing the raw figure would leave a diff on every
     /// value anybody touched.
     /// </summary>
-    public static string Knob(float value, PortDisplay display) => Writer.Value(value, display);
+    public static string Knob(float value, PortDisplay display) => PatchValueWriter.Value(value, display);
 
     /// <summary>
     /// The tune or the scale a module carries, written as the block that says it
@@ -107,7 +107,7 @@ public static class PatchPrinter
     /// putting one back into a file somebody has open wants <c>[ ]</c> instead,
     /// since there it has to say what changed.
     /// </remarks>
-    public static string? Carried(NodeInstance node, NodeDef def) => Writer.Carried(node, def);
+    public static string? Carried(NodeInstance node, NodeDef def) => PatchValueWriter.Carried(node, def);
 
     /// <summary>
     /// How the computer keyboard is laid out, as the line that says it — or null
@@ -192,7 +192,7 @@ public static class PatchPrinter
 
         return field switch
         {
-            ExtraField.Number number => Writer.Value(number.Value(stored), number.Spec.Display),
+            ExtraField.Number number => PatchValueWriter.Value(number.Value(stored), number.Spec.Display),
             ExtraField.Toggle toggle => toggle.Value(stored) ? "1" : "0",
             ExtraField.Choice choice => Quotable(choice.Value(stored)),
             ExtraField.Text { Multiline: true } text => Lines(text.Value(stored)),
@@ -1042,7 +1042,7 @@ public static class PatchPrinter
                 formula,
                 extra.Functions,
                 Function,
-                value => Value(value, PortDisplay.Number),
+                value => PatchValueWriter.Value(value, PortDisplay.Number),
                 port => parts[port].Text,
                 reads);
 
@@ -1096,7 +1096,7 @@ public static class PatchPrinter
             // Exactly, because a fresh module holds exactly its default and a value a
             // hair from it is still a different knob.
             // ReSharper disable once CompareOfFloatsByEqualityOperator
-            return value == spec.Default ? null : Value(value, spec.Display);
+            return value == spec.Default ? null : PatchValueWriter.Value(value, spec.Display);
         }
 
         /// <summary>
@@ -1122,7 +1122,7 @@ public static class PatchPrinter
 
         internal static string PanelLine(PatchControl control, string word)
         {
-            var line = new StringBuilder($"panel {word} = {Number(control.Value)}");
+            var line = new StringBuilder($"panel {word} = {PatchValueWriter.Number(control.Value)}");
 
             if (control.Name != word && Quotable(control.Name) is { } label) line.Append($", label: {label}");
 
@@ -1161,11 +1161,11 @@ public static class PatchPrinter
             // ReSharper disable CompareOfFloatsByEqualityOperator
             if (link.Min == own.Min && link.Max == own.Max && link.Knee == own.Knee) return word;
 
-            var range = $"{Value(link.Min, spec.Display)}..{Value(link.Max, spec.Display)}";
+            var range = $"{PatchValueWriter.Value(link.Min, spec.Display)}..{PatchValueWriter.Value(link.Max, spec.Display)}";
 
             return link.Knee == spec.Knee
                 ? $"{word}({range})"
-                : $"{word}({range}, knee: {Number(link.Knee)})";
+                : $"{word}({range}, knee: {PatchValueWriter.Number(link.Knee)})";
             // ReSharper restore CompareOfFloatsByEqualityOperator
         }
 
@@ -1180,142 +1180,6 @@ public static class PatchPrinter
             // path carrying one is left off rather than written unreadably. It
             // is not a filename anybody has.
             return string.IsNullOrEmpty(path) || path.Contains('"') ? null : path;
-        }
-
-        internal static string? Carried(NodeInstance node, NodeDef def)
-        {
-            if (def.Extra<StepsExtra>() is { } steps)
-            {
-                var written = StepsExtra.Of(node);
-
-                if (written.Count == 0) return null;
-
-                var note = steps.Spec.Display == PortDisplay.Note;
-
-                return "[ " + string.Join(' ', written.Select(s => Step(s, note))) + " ]";
-            }
-
-            if (def.Extra<ScaleExtra>() is not null)
-            {
-                var scale = ScaleExtra.Of(node);
-
-                return scale.Count == 0 ? null : "[ " + string.Join(' ', scale.Select(Pitch.ClassName)) + " ]";
-            }
-
-            return null;
-        }
-
-        private static string Step(Step step, bool note)
-        {
-            // A rest has no pitch to write. A note at no volume keeps its own,
-            // and the two are different steps however alike they sound.
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            var head = step.Volume <= 0f && step.Value == 0f
-                ? "~"
-                : note ? Pitch.Name(step.Value) : Number(step.Value);
-
-            if (step.Volume < 1f && head != "~") head += "%" + Number(step.Volume);
-            if (Math.Abs(step.Length - 1f) > 1e-6f) head += "@" + Number(step.Length);
-
-            return head;
-        }
-
-        internal static string Value(float value, PortDisplay display) => display switch
-        {
-            PortDisplay.Note => Whole(value) ? Pitch.Name(value) : Number(value),
-            PortDisplay.Duration => Seconds(value),
-            PortDisplay.Integer or PortDisplay.Chord => value.ToString("0", CultureInfo.InvariantCulture),
-            _ => Number(value),
-        };
-
-        private static bool Whole(float value) => Math.Abs(value - MathF.Round(value)) < 1e-6f;
-
-        /// <summary>
-        /// A Duration knob written as the time it means, where saying it that way
-        /// reads back as the same number.
-        /// </summary>
-        /// <remarks>
-        /// The socket holds a power of ten, and the whole point of the literal is
-        /// that nobody should have to. But not every decade is a round time, so
-        /// the time is written and then checked: if reading it back does not land
-        /// on the same knob, the decade is written instead and is exactly right.
-        /// </remarks>
-        private static string Seconds(float decades)
-        {
-            if (!float.IsFinite(decades)) return Number(decades);
-
-            var seconds = Math.Pow(10d, decades);
-
-            var (unit, name) = seconds switch
-            {
-                < 1e-3d => (1e-6d, "us"),
-                < 1d => (1e-3d, "ms"),
-                _ => (1d, "s"),
-            };
-
-            // Always with a unit on it, because a bare number on one of these
-            // sockets is no longer a number the language will read — it was the
-            // hundredfold mistake the literal exists to prevent. So the spelling
-            // has to be found rather than fallen back from.
-            for (var digits = 0; digits <= 17; digits++)
-            {
-                // Never "G": a hundred milliseconds comes back from that as
-                // "1E+02", which is not a number this language has and would put
-                // an unreadable line in the middle of an otherwise fine patch.
-                var written = (seconds / unit).ToString(
-                    digits == 0 ? "0" : "0." + new string('#', digits), CultureInfo.InvariantCulture);
-
-                if (!double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var back)) continue;
-
-                // The same arithmetic the lexer will do on the way back, and the
-                // same float it will land on. Near enough is not enough: this has
-                // to be the knob, not a knob a thousandth away from it, or a patch
-                // would drift a little every time it went through here.
-                // ReSharper disable once CompareOfFloatsByEqualityOperator
-                if ((float)Math.Log10(back * unit) == decades) return written + name;
-            }
-
-            return (seconds / unit).ToString("0.#################", CultureInfo.InvariantCulture) + name;
-        }
-
-        /// <summary>
-        /// A number written so that reading it back lands on the same float.
-        /// </summary>
-        /// <remarks>
-        /// Found rather than assumed. A fixed six decimal places turns the
-        /// twelfth In key sets a knob to into 0.083333, which is a different
-        /// number from a twelfth and compiles to a different constant — so the
-        /// shortest spelling that survives the trip is the one written, and there
-        /// always is one short of the fallback.
-        /// </remarks>
-        private static string Number(float value)
-        {
-            if (!float.IsFinite(value)) return "0";
-
-            // Widened before it is written. A float formats to about seven
-            // significant digits and no format string will get more out of it,
-            // so a twelfth spells itself "0.08333334" however many places are
-            // asked for — and that is a different float from a twelfth. The
-            // double behind it has the digits.
-            var exact = (double)value;
-
-            for (var digits = 0; digits <= 12; digits++)
-            {
-                var written = exact.ToString(
-                    digits == 0 ? "0" : "0." + new string('#', digits), CultureInfo.InvariantCulture);
-
-                // Through a double and then narrowed, because that is the road
-                // the number takes on the way back: the lexer reads a double and
-                // the binder casts it to the knob.
-                if (double.TryParse(written, NumberStyles.Float, CultureInfo.InvariantCulture, out var back)
-                    // ReSharper disable once CompareOfFloatsByEqualityOperator
-                    && (float)back == value)
-                {
-                    return written;
-                }
-            }
-
-            return exact.ToString("0.############", CultureInfo.InvariantCulture);
         }
 
         private static string Short(NodeDef def)
