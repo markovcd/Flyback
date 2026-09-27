@@ -81,6 +81,7 @@ internal static class EditorServices
         services.AddSingleton<PresetLibrary>();
         services.AddSingleton<OutputSettingRepository>();
         services.AddSingleton<OutputSettingsUse>();
+        services.AddSingleton<SettingsSession>();
 
         services.AddSingleton<PresetThumbnails>();
         services.AddSingleton<PresetGallery>();

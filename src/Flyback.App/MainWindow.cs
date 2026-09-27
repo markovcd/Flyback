@@ -46,6 +46,8 @@ internal sealed class MainWindow : Window
 
     private readonly OutputSettingsUse outputSettingsUse;
 
+    private readonly SettingsSession settingsSession;
+
     private readonly OutputSettingRepository outputSettingRepository;
 
     private readonly CanvasSection canvasSection;
@@ -158,6 +160,7 @@ internal sealed class MainWindow : Window
         ShellLayout shell,
         OutputSettingRepository outputSettingRepository,
         OutputSettingsUse outputSettingsUse,
+        SettingsSession settingsSession,
         IDialog dialog)
     {
         this.editor = editor;
@@ -175,6 +178,7 @@ internal sealed class MainWindow : Window
         this.playback = playback;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
+        this.settingsSession = settingsSession;
         this.canvasSection = canvasSection;
         this.updatesSection = updatesSection;
         this.usageSection = usageSection;
@@ -423,79 +427,7 @@ internal sealed class MainWindow : Window
     /// </remarks>
     internal void ClearPresetSelection() => presets.Clear();
 
-    /// <summary>
-    /// Set while the settings window is up, so the app is not closed under it.
-    /// </summary>
-    /// <remarks>
-    /// The window is a panel over this one, so the frame's cross stays live
-    /// underneath it. Closing through it would leave the settings neither saved
-    /// nor discarded — the one answer the window exists to get — so the close is
-    /// refused until Save or Cancel has given it.
-    /// </remarks>
-    private bool settingsAreUp;
-
-    /// <summary>
-    /// The settings window. One button on the toolbar rather than one per thing
-    /// that has settings, so what it holds can grow without the bar doing the
-    /// same. A tab a section: the agent, the picture, recording and sound
-    /// (ADR-0082).
-    /// </summary>
-    private async Task ShowSettingsAsync()
-    {
-        if (assistant is not { } panel) return;
-
-        // Asked as the window opens rather than kept from the last time, and not
-        // awaited: the window opens while the search runs and the note fills itself in.
-        _ = outputSections.ShowFfmpegAsync();
-        outputSections.ShowMonitors();
-
-        bool saved;
-
-        settingsAreUp = true;
-
-        usage.Count(Used.Settings);
-
-        try
-        {
-            saved = await SettingsDialog.ShowAsync(dialog,
-            [
-                ("Graphics", outputSections.Graphics),
-                ("Canvas", canvasSection.View),
-                ("Recording", outputSections.Recording),
-                ("Sound", outputSections.Sound),
-                ("MIDI", knobs.MidiSection),
-                ("Assistant", panel.SettingsSection()),
-                ("Files", filesSection.View),
-                ("Updates", updatesSection.View),
-                ("Usage", usageSection.View),
-            ]);
-        }
-        finally
-        {
-            settingsAreUp = false;
-        }
-
-        if (saved)
-        {
-            panel.SaveSettings();
-            outputSettingsUse.Save();
-            updatesSection.Save();
-            usageSection.Save();
-            canvasSection.Save();
-            filesSection.Save();
-
-            return;
-        }
-
-        // Whatever was typed or picked since it opened belongs to that window, and
-        // only Save is allowed to keep it.
-        panel.DiscardSettings();
-        outputSections.Show();
-        updatesSection.Show();
-        usageSection.Show();
-        canvasSection.Show();
-        filesSection.Show();
-    }
+    private Task ShowSettingsAsync() => settingsSession.ShowAsync();
 
     /// <summary>
     /// The About window. Its contents are built fresh each time rather than kept
@@ -553,7 +485,7 @@ internal sealed class MainWindow : Window
         // window look broken, and there is nothing else to do with a close that
         // arrived while the same close is still being answered. The settings
         // window is refused the same way, for the answer it is still waiting on.
-        if (unsaved.Asking || settingsAreUp)
+        if (unsaved.Asking || settingsSession.IsShowing)
         {
             e.Cancel = true;
             return;
