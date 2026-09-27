@@ -27,19 +27,6 @@ public static class PatchPrinter
     /// </summary>
     public const string PanelKnob = "panel";
 
-    /// <summary>What a node is worth to the reader, and how it is written.</summary>
-    /// <param name="Taken">Every name given out, for one given while writing.</param>
-    /// <param name="Panel">What the text calls each panel knob.</param>
-    /// <param name="Boxes">What each group is called in the text, null for one with no name.</param>
-    private sealed record Plan(
-        Dictionary<Guid, string> Names,
-        HashSet<Guid> Bound,
-        HashSet<string> Taken,
-        Guid Coord,
-        Guid Clock,
-        Dictionary<Guid, string> Panel,
-        Dictionary<Guid, string?> Boxes);
-
     /// <summary>One piece of written text, and the modules whose calls it contains.</summary>
     /// <remarks>
     /// In the order they are written, so they can be lined up afterwards with the
@@ -75,7 +62,7 @@ public static class PatchPrinter
         IReadOnlyDictionary<Guid, string>? called = null)
     {
         var modules = against ?? NodeCatalog.Current;
-        var plan = Prepare(patch, modules, called);
+        var plan = PatchPrintPlan.Create(patch, modules, called);
         var state = new Writer(patch, modules, plan);
         var (source, order) = state.Run();
 
@@ -100,7 +87,7 @@ public static class PatchPrinter
     {
         var modules = against ?? NodeCatalog.Current;
 
-        return Located(source, patch, modules, Prepare(patch, modules, null), order);
+        return Located(source, patch, modules, PatchPrintPlan.Create(patch, modules, null), order);
     }
 
     /// <summary>
@@ -236,7 +223,7 @@ public static class PatchPrinter
     /// A quote would end the string and there is no escape for one, so a value
     /// carrying one is refused rather than written unreadably.
     /// </remarks>
-    private static string? Quotable(string value) => value.Contains('"') ? null : $"\"{value}\"";
+    internal static string? Quotable(string value) => value.Contains('"') ? null : $"\"{value}\"";
 
     /// <summary>
     /// What a line break inside a text field is written as, since a string in
@@ -266,7 +253,7 @@ public static class PatchPrinter
         string source,
         Patch patch,
         ModuleCatalog modules,
-        Plan plan,
+        PatchPrintPlan plan,
         IReadOnlyList<Guid> order)
     {
         var issues = new List<LanguageIssue>();
@@ -506,198 +493,6 @@ public static class PatchPrinter
         return null;
     }
 
-    /// <summary>
-    /// Decides which modules get a name of their own before anything is written:
-    /// where more than one wire leaves, where none does, where what leaves is an
-    /// output other than the first — a Sequencer's gate reads better off a name
-    /// than off the end of the call that wrote its tune — or where somebody
-    /// named it on the canvas.
-    /// </summary>
-    private static Plan Prepare(
-        Patch patch,
-        ModuleCatalog modules,
-        IReadOnlyDictionary<Guid, string>? called)
-    {
-        var bound = new HashSet<Guid>();
-        var taken = new HashSet<string>(StringComparer.Ordinal);
-
-        // The panel's knobs first, so a module is the one renamed on a clash:
-        // a knob's word is what every socket following it says.
-        var panel = new Dictionary<Guid, string>();
-        var moduleNames = new ModuleNames(modules);
-
-        foreach (var control in patch.Controls ?? [])
-        {
-            var word = Usable(control.Word) ? control.Word! : Usable(control.Name) ? control.Name : Spelled(control.Name);
-
-            // Called like a module when it has a range, so never named like one.
-            panel[control.Id] = Unique(moduleNames.Knows(word) ? word + "_knob" : word, taken);
-        }
-        var names = new Dictionary<Guid, string>();
-
-        // One Coordinates and one Time become the bare words the language has
-        // for them. A second of either is an ordinary module, since only one can
-        // be what 'x' means — and so is one that is switched off, which has to
-        // keep a name of its own to be said as off, and one in a box, which the
-        // bare word would leave wherever it is first read rather than in there.
-        var coord = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.CoordTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
-        var clock = patch.Nodes.FirstOrDefault(n => n.TypeId == NodeCatalog.TimeTypeId && !n.Off && patch.GroupOf(n.Id) is null)?.Id ?? Guid.Empty;
-
-        // Where a wire runs backwards into a module, that module is written as a
-        // name and the wire as a back-wire onto it — the one statement in the
-        // language that runs right to left, and the only way a loop can be said
-        // at all. Which means the module needs a name to be said with.
-        var looped = Cycles.Backwards(patch).Select(wire => wire.TargetNode).ToHashSet();
-
-        foreach (var node in patch.Nodes)
-        {
-            if (node.Id == coord || node.Id == clock) continue;
-            if (NodeCatalog.IsSink(node.TypeId)) continue;
-
-            var leaving = patch.Connections.Where(c => c.SourceNode == node.Id).ToList();
-            var home = patch.GroupOf(node.Id)?.Id;
-
-            // A chain stops at a box's edge, so a module whose wire leaves its
-            // group is said by name, and every statement in a group's block
-            // places only that group's modules. The Output is in no group and
-            // takes a group's last line inside the block.
-            var crossing = leaving.Any(c =>
-                patch.GroupOf(c.TargetNode)?.Id != home
-                && patch.Find(c.TargetNode) is { } target
-                && !NodeCatalog.IsSink(target.TypeId));
-
-            var must = called is not null
-                || crossing
-                || looped.Contains(node.Id)
-                || leaving.Count != 1
-                || leaving.Any(c => c.SourcePort != 0)
-                || node.Off
-                || Usable(node.Name);
-
-            if (must) bound.Add(node.Id);
-        }
-
-        // Plain arithmetic last, since it is named after what it feeds.
-        foreach (var node in patch.Nodes.Where(n => bound.Contains(n.Id)).OrderBy(n => Plain(n) ? 1 : 0))
-        {
-            var wanted = called is not null && called.TryGetValue(node.Id, out var given) && Usable(given)
-                ? given
-                : Role(patch, node, modules, names) ?? Wanted(node, modules);
-
-            names[node.Id] = Unique(wanted, taken);
-        }
-
-        // Two boxes with one name would read back as one, so the second is told apart.
-        var boxes = new Dictionary<Guid, string?>();
-        var labels = new HashSet<string>(StringComparer.Ordinal);
-
-        foreach (var group in patch.Groups ?? [])
-        {
-            if (group.Name is not { } label || Quotable(label) is null)
-            {
-                boxes[group.Id] = null;
-                continue;
-            }
-
-            var unique = label;
-
-            for (var n = 2; !labels.Add(unique); n++) unique = $"{label} {n}";
-
-            boxes[group.Id] = unique;
-        }
-
-        return new Plan(names, bound, taken, coord, clock, panel, boxes);
-    }
-
-    /// <summary>
-    /// What to call a module: the name somebody gave it, else the short name it
-    /// is written by, else what the palette calls it.
-    /// </summary>
-    /// <remarks>
-    /// The third is for the handful whose short name is a word the language wants
-    /// back — <c>midi.in</c> shortens to <c>in</c>, and a binding called that
-    /// reads as a socket. Its label makes a perfectly good <c>midi_in</c>.
-    /// </remarks>
-    private static string Wanted(NodeInstance node, ModuleCatalog modules)
-    {
-        if (Usable(node.Name)) return node.Name!;
-
-        var dot = node.TypeId.LastIndexOf('.');
-        var stem = dot < 0 ? node.TypeId : node.TypeId[(dot + 1)..];
-
-        if (Usable(stem)) return stem;
-
-        if (modules.Get(node.TypeId) is { } def)
-        {
-            var label = new string([.. def.Name.ToLowerInvariant()
-                .Select(c => char.IsAsciiLetterOrDigit(c) ? c : '_')]);
-
-            if (Usable(label)) return label;
-        }
-
-        return "node";
-    }
-
-    /// <summary>
-    /// Whether a module is arithmetic whose type says nothing of what it is for:
-    /// an Expression, a Remap, a Clamp. A Mixer and a Desk are named for their job.
-    /// </summary>
-    private static bool Plain(NodeInstance node) =>
-        node.TypeId.StartsWith("math.", StringComparison.Ordinal)
-        && node.TypeId is not (NodeCatalog.MixerTypeId or NodeCatalog.DeskTypeId);
-
-    /// <summary>
-    /// What a plain module is for, said by the socket it lands in: the Remap
-    /// feeding a circle's radius is <c>circle_radius</c>. Null where it lands in
-    /// more than one kind of socket, or in another plain module, where it is
-    /// only a part of what the socket is given.
-    /// </summary>
-    private static string? Role(
-        Patch patch,
-        NodeInstance node,
-        ModuleCatalog modules,
-        IReadOnlyDictionary<Guid, string> names)
-    {
-        if (!Plain(node) || Usable(node.Name)) return null;
-
-        var places = new HashSet<(string Target, string Socket)>();
-
-        foreach (var wire in patch.Connections.Where(c => c.SourceNode == node.Id))
-        {
-            if (patch.Find(wire.TargetNode) is not { } target || Plain(target)) return null;
-            if (modules.Get(target.TypeId) is not { } def || wire.TargetPort >= def.Inputs.Count) return null;
-
-            var where = NodeCatalog.IsSink(target.TypeId)
-                ? "out"
-                : names.TryGetValue(target.Id, out var named) ? named : Wanted(target, modules);
-
-            places.Add((where, def.Inputs[wire.TargetPort].Name.Replace(' ', '_').ToLowerInvariant()));
-        }
-
-        if (places.Select(p => p.Socket).Distinct().Count() != 1) return null;
-
-        var socket = places.First().Socket;
-        var targets = places.Select(p => p.Target).Distinct().ToList();
-        var word = targets.Count == 1 && targets[0] != socket ? $"{targets[0]}_{socket}" : socket;
-
-        return Usable(word) ? word : null;
-    }
-
-    private static string Unique(string wanted, HashSet<string> taken)
-    {
-        if (taken.Add(wanted)) return wanted;
-
-        // left_1's second is left_1_2, never left_12.
-        var apart = char.IsAsciiDigit(wanted[^1]) ? wanted + "_" : wanted;
-
-        for (var n = 2; ; n++)
-        {
-            var tried = apart + n.ToString(CultureInfo.InvariantCulture);
-
-            if (taken.Add(tried)) return tried;
-        }
-    }
-
     /// <summary>A panel knob's statement, under the word the text calls it by.</summary>
     public static string PanelLine(PatchControl control, string word) => Writer.PanelLine(control, word);
 
@@ -716,7 +511,7 @@ public static class PatchPrinter
     /// A label made into a word the text can say: <c>Filter cutoff</c> as
     /// <c>filter_cutoff</c>, <c>Émile's speed</c> as <c>emile_s_speed</c>.
     /// </summary>
-    private static string Spelled(string label)
+    internal static string Spelled(string label)
     {
         var bare = new string([.. label.ToLowerInvariant().Replace("ß", "ss").Replace("æ", "ae").Replace("œ", "oe")
             .Select(c => Marked.IndexOf(c) is >= 0 and var at ? Unmarked[at] : c)]);
@@ -741,7 +536,7 @@ public static class PatchPrinter
     /// module called <c>A3</c> would be read back as a pitch, so it is not a
     /// name this can use however good it looks on the canvas.
     /// </summary>
-    private static bool Usable(string? name)
+    internal static bool Usable(string? name)
     {
         if (string.IsNullOrEmpty(name)) return false;
         if (!char.IsAsciiLetter(name[0]) && name[0] != '_') return false;
@@ -756,7 +551,7 @@ public static class PatchPrinter
     /// is written out at the point something first needs it, which is what puts
     /// the statements in an order that reads.
     /// </summary>
-    private sealed class Writer(Patch patch, ModuleCatalog modules, Plan plan)
+    private sealed class Writer(Patch patch, ModuleCatalog modules, PatchPrintPlan plan)
     {
         private readonly List<Part> statements = [];
         private readonly HashSet<Guid> done = [];
@@ -1069,7 +864,7 @@ public static class PatchPrinter
 
         /// <summary>
         /// The modules that are switched off, each said after the binding that
-        /// gives it a name — see <see cref="Prepare"/>, which is where one is
+        /// gives it a name — see <see cref="PatchPrintPlan.Create"/>, which is where one is
         /// made sure of having one.
         /// </summary>
         private void Switched()
@@ -1352,9 +1147,8 @@ public static class PatchPrinter
         /// </summary>
         private void Name(NodeInstance node)
         {
-            if (!plan.Bound.Add(node.Id)) return;
+            if (!plan.Name(patch, node, modules)) return;
 
-            plan.Names[node.Id] = Unique(Role(patch, node, modules, plan.Names) ?? Wanted(node, modules), plan.Taken);
             chains.Clear();
         }
 
