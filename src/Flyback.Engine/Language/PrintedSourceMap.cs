@@ -20,7 +20,7 @@ internal static class PrintedSourceMap
         IReadOnlyList<Guid> order)
     {
         var issues = new List<LanguageIssue>();
-        var read = new Parser(Lexer.Statements(Lexer.Scan(source, issues)), issues).Parse();
+        var read = new Parser(StatementTokens.ForParsing(Lexer.Scan(source, issues)), issues).Parse();
 
         if (issues.Count > 0) return SourceMap.Empty;
 

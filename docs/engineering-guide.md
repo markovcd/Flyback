@@ -309,8 +309,8 @@ A file records which plugin each foreign module came from
 `PatchLoad` can say what is missing instead of failing. A file from a newer
 format version is refused whole. Adding a module is not a version bump.
 
-The language pipeline is `Lexer.Scan → Lexer.Statements → Parser.Parse →
-Binder.Build`. The parser knows nothing about modules; the binder reads short
+The language pipeline is `Lexer.Scan → StatementTokens.ForParsing →
+Parser.Parse → Binder.Build`. The parser knows nothing about modules; the binder reads short
 names, socket names and arities off the running `ModuleCatalog`, so a plugin's
 modules are usable in text the moment it loads. It never throws: faults are
 `LanguageIssue(Line, Column, Message)`. Building is exact. Printing

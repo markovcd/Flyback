@@ -213,7 +213,7 @@ internal sealed class SourceMapText
     internal List<(string? Word, string? Declares, int From, int To)> Statements()
     {
         var found = new List<(string? Word, string? Declares, int From, int To)>();
-        var statements = Lexer.Statements(Tokens);
+        var statements = StatementTokens.ForParsing(Tokens);
 
         for (var i = 0; i < statements.Count; i++)
         {

@@ -298,7 +298,7 @@ public sealed class SourceMap
         var statements = new List<(int From, int To)>();
         var from = -1;
 
-        foreach (var token in Lexer.Statements(text.Tokens))
+        foreach (var token in StatementTokens.ForParsing(text.Tokens))
         {
             if (token.Kind is TokenKind.NewLine or TokenKind.End)
             {

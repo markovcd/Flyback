@@ -7,7 +7,7 @@ namespace Flyback.Core.Language;
 /// text rather than as one line per pipeline.
 /// </summary>
 /// <remarks>
-/// Every break it makes is one <see cref="Lexer.Statements"/> joins back up — a
+/// Every break it makes is one <see cref="StatementTokens"/> joins back up — a
 /// line ending in a comma or an open bracket cannot be a whole statement, and one
 /// beginning with a pipe or a close bracket carries on the line above — so a
 /// printing put through this builds to the same program.

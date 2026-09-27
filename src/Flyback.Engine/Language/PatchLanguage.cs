@@ -26,7 +26,7 @@ public static class PatchLanguage
         var modules = against ?? NodeCatalog.Current;
         var issues = new List<LanguageIssue>();
 
-        var tokens = Lexer.Statements(Lexer.Scan(source, issues));
+        var tokens = StatementTokens.ForParsing(Lexer.Scan(source, issues));
         var statements = new Parser(tokens, issues).Parse();
         var binder = new Binder(modules, issues);
         var patch = binder.Build(statements);

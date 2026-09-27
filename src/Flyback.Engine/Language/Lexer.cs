@@ -13,7 +13,7 @@ namespace Flyback.Core.Language;
 /// and <c>&lt;&gt;</c> all mean something there they do not mean outside — so
 /// keeping it whole means neither half knows about the other.
 /// <para>
-/// Newlines survive lexing and are thinned in <see cref="Statements"/>: a
+/// Newlines survive lexing and are thinned for parsing by <see cref="StatementTokens"/>: a
 /// statement ends at a line break but a pipeline may be written across several,
 /// and that is a question about the tokens either side.
 /// </para>
@@ -163,61 +163,6 @@ public static class Lexer
         tokens.Add(new Token(TokenKind.End, string.Empty, line, source.Length - lineStart + 1));
         return tokens;
     }
-
-    /// <summary>
-    /// The tokens with the newlines that are not statement breaks taken out.
-    /// </summary>
-    /// <remarks>
-    /// A line break ends a statement unless the line is obviously unfinished or
-    /// the next one is obviously a continuation. Both halves are needed: the
-    /// first covers a pipeline broken after its <c>|&gt;</c>, and the second the
-    /// far commoner shape where the operator leads the next line instead.
-    /// </remarks>
-    public static IReadOnlyList<Token> Statements(IReadOnlyList<Token> tokens)
-    {
-        var kept = new List<Token>(tokens.Count);
-
-        for (var i = 0; i < tokens.Count; i++)
-        {
-            if (tokens[i].Kind != TokenKind.NewLine)
-            {
-                kept.Add(tokens[i]);
-                continue;
-            }
-
-            // Runs of blank lines are one break, and a break before the first
-            // token or after the last is no break at all.
-            if (kept.Count == 0 || kept[^1].Kind == TokenKind.NewLine) continue;
-            if (Unfinished(kept[^1].Kind)) continue;
-
-            var next = i + 1;
-            while (next < tokens.Count && tokens[next].Kind == TokenKind.NewLine) next++;
-
-            if (next < tokens.Count && Continues(tokens[next].Kind)) continue;
-
-            kept.Add(tokens[i]);
-        }
-
-        return kept;
-    }
-
-    /// <summary>Whether a line ending on this token cannot be a whole statement.</summary>
-    private static bool Unfinished(TokenKind kind) => kind
-        is TokenKind.Pipe or TokenKind.BackWire or TokenKind.Assign or TokenKind.Comma
-        or TokenKind.Colon or TokenKind.Dot or TokenKind.Range or TokenKind.OpenParen
-        or TokenKind.OpenBrace or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
-        or TokenKind.Slash or TokenKind.Percent;
-
-    /// <summary>
-    /// Whether a line starting on this token is carrying on the one above. A
-    /// string among them because no statement opens on one, and a description
-    /// too long for one line goes on as a string on the next; a brace, so a
-    /// group's may stand on a line of its own, and a dot, so an output may.
-    /// </summary>
-    private static bool Continues(TokenKind kind) => kind
-        is TokenKind.Pipe or TokenKind.Plus or TokenKind.Minus or TokenKind.Star
-        or TokenKind.Slash or TokenKind.Percent or TokenKind.CloseParen or TokenKind.Block
-        or TokenKind.Text or TokenKind.OpenBrace or TokenKind.Dot;
 
     /// <summary>
     /// The text inside a bracketed block, counting nesting so that a subdivided
