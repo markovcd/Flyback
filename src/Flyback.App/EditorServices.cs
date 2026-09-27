@@ -37,11 +37,9 @@ internal static class EditorServices
     /// <summary>Builds the window <paramref name="setup"/> describes, with any registration <paramref name="replace"/> swaps.</summary>
     public static MainWindow Window(this ServiceProvider provider)
     {
-        var window = provider.GetMainWindow();
-
-        // After OnClosed has finished the take: the engine, the compiler and MIDI go with the container.
+        var window = provider.GetRequiredService<MainWindow>();
+        provider.GetRequiredService<WindowHolder>().Attach(window);
         window.Closed += (_, _) => provider.Dispose();
-
         return window;
     }
 

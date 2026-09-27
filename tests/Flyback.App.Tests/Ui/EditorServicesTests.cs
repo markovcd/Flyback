@@ -23,7 +23,7 @@ public class EditorServicesTests : UiTest
 
         var provider = Container(replace: registered => services = registered, validate: true);
 
-        var window = Owned(provider.GetMainWindow());
+        var window = Owned(provider.Window());
 
         foreach (var registered in services.Where(d => !d.IsKeyedService && !d.ServiceType.IsGenericTypeDefinition))
             Should.NotThrow(() => provider.GetService(registered.ServiceType), registered.ServiceType.Name);
@@ -67,7 +67,7 @@ public class EditorServicesTests : UiTest
     {
         var provider = Container();
 
-        var window = Owned(provider.GetMainWindow());
+        var window = Owned(provider.Window());
         window.Show();
         Settle(window);
 

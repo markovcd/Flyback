@@ -115,7 +115,7 @@ public class UiTest : IDisposable
     internal MainWindow NewMainWindow(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
     {
         var provider = Container(setup, replace, validate: true);
-        var window = Owned(provider.GetMainWindow());
+        var window = Owned(provider.Window());
         editorContainers.Add(window, provider);
         window.Start();
 
@@ -134,7 +134,7 @@ public class UiTest : IDisposable
         Container(setup, replace).GetRequiredService<T>();
 
     /// <summary>The editor's container itself, for a test that takes several services from one window's graph.</summary>
-    internal IServiceProvider Container(EditorSetup? setup = null, Action<IServiceCollection>? replace = null, bool validate = false)
+    internal ServiceProvider Container(EditorSetup? setup = null, Action<IServiceCollection>? replace = null, bool validate = false)
     {
         var provider = EditorServices.Provider(setup, replace, validate);
         providers.Add(provider);
