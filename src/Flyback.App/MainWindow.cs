@@ -36,9 +36,6 @@ namespace Flyback.App;
 [SuppressMessage("Design", "CA1001", Justification = "Torn down in OnClosed; a window is closed, not disposed.")]
 internal sealed class MainWindow : Window
 {
-    /// <summary>Takes the picture and the sound back to zero seconds.</summary>
-    private void RewindToZero() => playback.Rewind();
-
     /// <summary>The Graphics, Recording and Sound sections, and what they were last saved as.</summary>
     private readonly OutputSections outputSections;
 
@@ -63,9 +60,6 @@ internal sealed class MainWindow : Window
 
     /// <summary>The bar along the top.</summary>
     private readonly Toolbar toolbar;
-
-    /// <summary>Installing and removing plugins, and the plugins window.</summary>
-    private readonly PluginInstalls pluginInstalls;
 
     /// <summary>The panel knobs, their learning and the knobs over the picture.</summary>
     private readonly PanelKnobs knobs;
@@ -116,7 +110,6 @@ internal sealed class MainWindow : Window
         OutputSections outputSections,
         PanelKnobs knobs,
         Inspector inspector,
-        PluginInstalls pluginInstalls,
         PresetSlot presets,
         Toolbar toolbar,
         TakeRecording recording,
@@ -148,7 +141,6 @@ internal sealed class MainWindow : Window
         this.settingsSession = settingsSession;
         this.knobs = knobs;
         this.inspector = inspector;
-        this.pluginInstalls = pluginInstalls;
         this.presets = presets;
         this.toolbar = toolbar;
         this.keeper = keeper;
@@ -157,9 +149,6 @@ internal sealed class MainWindow : Window
         this.transport = transport;
         this.shell = shell;
         this.dialog = dialog;
-
-        // Closed until the toolbar opens it.
-        assistant.IsVisible = false;
 
         Recording = recording;
 
@@ -218,38 +207,13 @@ internal sealed class MainWindow : Window
 
     private Control BuildLayout()
     {
-        WireToolbar();
+        RefreshEditState();
         // The popups behind the report and a module's name hang off the window
         // rather than off the control, so what they look like is said here.
         Styles.Add(ReportLine.Trim());
         Styles.Add(ModulePlate.Naming());
         Styles.Add(ModulePalette.Trim());
         return shell.Build(RefreshEditState);
-    }
-
-    /// <summary>What each button on the toolbar does. Called once, as the window is built.</summary>
-    private void WireToolbar()
-    {
-        toolbar.Open.Click += async (_, _) => await patchOpening.PickAndOpenAsync();
-        toolbar.Save.Click += async (_, _) => await unsaved.SavePatchAsync();
-
-        // All three go to whichever view is showing — see Document.
-        toolbar.Undo.Click += (_, _) => document.Undo();
-        toolbar.Redo.Click += (_, _) => document.Redo();
-        toolbar.Tidied += (_, onlySelected) => document.Tidy(onlySelected);
-
-        toolbar.Swap.IsCheckedChanged += (_, _) => shell.SwapPreview(toolbar.Swap.IsChecked == true);
-
-        toolbar.Pause.Click += (_, _) => transport.TogglePause();
-        toolbar.Rewind.Click += (_, _) => RewindToZero();
-        toolbar.Record.Click += async (_, _) => await Recording.ToggleAsync();
-
-        toolbar.Assistant.IsCheckedChanged += (_, _) => shell.ShowAssistant(toolbar.Assistant.IsChecked == true);
-        toolbar.Settings.Click += async (_, _) => await ShowSettingsAsync();
-        toolbar.Plugins.Click += async (_, _) => await pluginInstalls.ShowAsync();
-        toolbar.About.Click += async (_, _) => await ShowAboutAsync();
-
-        RefreshEditState();
     }
 
     /// <summary>
@@ -262,15 +226,6 @@ internal sealed class MainWindow : Window
     /// before it asks what "wanted" means.
     /// </remarks>
     internal void ClearPresetSelection() => presets.Clear();
-
-    private Task ShowSettingsAsync() => settingsSession.ShowAsync();
-
-    /// <summary>
-    /// The About window. Its contents are built fresh each time rather than kept
-    /// like the settings section: nothing in it is a control anybody has typed
-    /// into, so there is nothing to carry from one opening to the next.
-    /// </summary>
-    private Task ShowAboutAsync() => dialog.Show("About", About.View());
 
     #region Keys, undo and the unsaved question
 

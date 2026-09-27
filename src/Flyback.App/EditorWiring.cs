@@ -22,6 +22,7 @@ namespace Flyback.App;
 /// <summary>Connects events between editor services without making them depend on each other.</summary>
 internal sealed class EditorWiring(
     PluginInstalls pluginInstalls,
+    PatchOpening patchOpening,
     UnsavedWork unsaved,
     TakeRecording recording,
     PatchFiles files,
@@ -30,6 +31,8 @@ internal sealed class EditorWiring(
     Toolbar toolbar,
     TransportControls transport,
     Playback playback,
+    SettingsSession settingsSession,
+    IDialog dialog,
     IlCompiler compiler,
     OutputSections outputSections,
     ShellLayout shell,
@@ -49,6 +52,20 @@ internal sealed class EditorWiring(
     {
         if (wired) return;
         wired = true;
+
+        toolbar.Open.Click += async (_, _) => await patchOpening.PickAndOpenAsync();
+        toolbar.Save.Click += async (_, _) => await unsaved.SavePatchAsync();
+        toolbar.Undo.Click += (_, _) => document.Undo();
+        toolbar.Redo.Click += (_, _) => document.Redo();
+        toolbar.Tidied += (_, onlySelected) => document.Tidy(onlySelected);
+        toolbar.Swap.IsCheckedChanged += (_, _) => shell.SwapPreview(toolbar.Swap.IsChecked == true);
+        toolbar.Pause.Click += (_, _) => transport.TogglePause();
+        toolbar.Rewind.Click += (_, _) => playback.Rewind();
+        toolbar.Record.Click += async (_, _) => await recording.ToggleAsync();
+        toolbar.Assistant.IsCheckedChanged += (_, _) => shell.ShowAssistant(toolbar.Assistant.IsChecked == true);
+        toolbar.Settings.Click += async (_, _) => await settingsSession.ShowAsync();
+        toolbar.Plugins.Click += async (_, _) => await pluginInstalls.ShowAsync();
+        toolbar.About.Click += async (_, _) => await dialog.Show("About", About.View());
 
         pluginInstalls.RestartRequested += async (_, request) =>
         {

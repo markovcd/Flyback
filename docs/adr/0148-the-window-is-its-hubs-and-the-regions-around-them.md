@@ -62,9 +62,9 @@ A field is private to the region that owns it, and the compiler enforces the
 split that 0039 could only keep by convention.
 
 The regions move one at a time, each in a commit that builds and passes on its
-own. `MainWindow` owns the window's layout, toolbar actions, keys, closing
-question and full screen. `EditorWiring` owns event subscriptions between
-services and the callbacks that connect editor events to those window reactions.
+own. `MainWindow` owns the window's layout, keys, closing question and full
+screen. `EditorWiring` owns toolbar action subscriptions, event subscriptions
+between services and callbacks that connect editor events to window reactions.
 The window stays one class in one file, a `#region` per part, rather than partial
 files.
 
@@ -75,7 +75,7 @@ wiring is event handlers, and 0016 stands as written.
 
 `ShellLayout` owns construction and presentation state for the editor grid: the
 assistant, preview and inspector columns, the knob row, preview swapping, and
-applying and capturing panel layout. `EditorWiring` owns cross-service event
-subscriptions and accepts callbacks for reactions the window owns. `MainWindow`
-keeps window events and toolbar actions. Neither class introduces partial window
-files, bindings or view models.
+applying and capturing panel layout. `EditorWiring` owns toolbar action
+subscriptions, cross-service event subscriptions and accepts callbacks for
+reactions the window owns. `MainWindow` keeps window events and window-level
+commands. Neither class introduces partial window files, bindings or view models.
