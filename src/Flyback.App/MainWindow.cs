@@ -109,6 +109,8 @@ internal sealed class MainWindow : Window
 
     private readonly PlaybackControls playbackControls;
 
+    private readonly EditorOpened editorOpened;
+
     /// <summary>
     /// What runs the processor's programs as machine code once they are built —
     /// the sound always, and the picture while the processor is drawing it. See
@@ -158,6 +160,7 @@ internal sealed class MainWindow : Window
         WorkKeeper keeper,
         WorkRecovery workRecovery,
         PlaybackControls playbackControls,
+        EditorOpened editorOpened,
         WindowLayoutKeeper layoutKeeper,
         FullScreenPreview fullScreen,
         TransportControls transport,
@@ -181,6 +184,7 @@ internal sealed class MainWindow : Window
         this.midi = midi;
         this.playback = playback;
         this.playbackControls = playbackControls;
+        this.editorOpened = editorOpened;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
@@ -311,24 +315,8 @@ internal sealed class MainWindow : Window
 
         Content = BuildLayout();
 
-        // Opened rather than called straight away: there is nothing to put a
-        // dialog over before, and the platform window behind this one — and the
-        // storage provider that comes with it — is not guaranteed to exist until
-        // then, which OpenPathAsync cannot wait for a click to find out. One
-        // handler, so the three come one after another: what changed, then what
-        // a crash left, then the file this launch was for, which asks about
-        // unsaved work like any other and so about work just restored.
-        Opened += async (_, _) =>
-        {
-            if (setup.WhatsNew is not null) await dialog.Show(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
-
-            keeper.Restore(workRecovery.Restore);
-
-            // A plugin package replaces nothing, so it asks about nothing unsaved.
-            if (setup.OpenPath is { } path) await patchOpening.OpenPathAsync(path);
-
-            if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
-        };
+        // Dialogs and the storage provider are ready only once the window is open.
+        Opened += async (_, _) => await editorOpened.RunAsync();
     }
 
     /// <summary>
