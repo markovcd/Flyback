@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using System.Text;
 using System.Text.Json.Nodes;
+using Flyback.Core.Graph.Extras;
 
 namespace Flyback.Plugins.Effects;
 

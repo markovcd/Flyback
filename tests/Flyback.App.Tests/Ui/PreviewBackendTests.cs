@@ -2,6 +2,7 @@ using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Shouldly;
 

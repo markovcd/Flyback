@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Shouldly;
 

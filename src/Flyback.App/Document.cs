@@ -2,6 +2,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
 
 namespace Flyback.App;

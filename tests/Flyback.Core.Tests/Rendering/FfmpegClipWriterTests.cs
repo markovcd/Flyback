@@ -1,4 +1,5 @@
 using Flyback.Core.Render;
+using Flyback.Core.Render.ClipWriters;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;

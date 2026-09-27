@@ -1,0 +1,6 @@
+﻿using Flyback.Core.Language.Ast;
+
+namespace Flyback.Core.Language.Ast.Statements;
+
+/// <summary><c>author "..."</c>: who made the patch.</summary>
+public sealed record AuthorStatement(string Text, int Line, int Column) : Statement(Line, Column);

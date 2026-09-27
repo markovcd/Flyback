@@ -4,6 +4,7 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Specs.Support;

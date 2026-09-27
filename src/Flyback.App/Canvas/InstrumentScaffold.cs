@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.App.Midi;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 
 namespace Flyback.App.Canvas;
 

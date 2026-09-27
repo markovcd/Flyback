@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Shouldly;
 using Xunit;

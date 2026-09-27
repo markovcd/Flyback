@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
 

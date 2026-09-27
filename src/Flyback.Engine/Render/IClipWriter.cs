@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Render;
+﻿using Flyback.Core.Render.ClipWriters;
+
+namespace Flyback.Core.Render;
 
 /// <summary>
 /// Where a clip's frames and samples go. One of these per file, whichever format

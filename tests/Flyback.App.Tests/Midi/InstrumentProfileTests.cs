@@ -1,5 +1,6 @@
 using Flyback.App.Midi;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
 

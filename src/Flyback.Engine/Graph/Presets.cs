@@ -1,3 +1,5 @@
+using Flyback.Core.Graph.Extras;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>Patches that ship with the synth, so it never opens on a blank canvas.</summary>

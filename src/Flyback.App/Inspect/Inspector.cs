@@ -12,6 +12,7 @@ using Flyback.App.Controls;
 using Flyback.App.Knobs;
 using Flyback.App.Midi;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Colors = Flyback.App.Controls.Colors;
 

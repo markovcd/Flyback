@@ -1,5 +1,6 @@
 using Flyback.App.Gallery;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;

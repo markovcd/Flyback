@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
 using Flyback.Specs.Support;
 

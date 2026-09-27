@@ -1,3 +1,5 @@
+using Flyback.Core.Render.ClipWriters;
+
 namespace Flyback.Core.Render;
 
 /// <summary>Opens the writer a <see cref="ClipTarget"/> asks for.</summary>

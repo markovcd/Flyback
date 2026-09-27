@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
 

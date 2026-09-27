@@ -2,6 +2,7 @@ using System.CommandLine;
 using Flyback.Core.Render;
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;

@@ -1,6 +1,7 @@
 using Flyback.App.Gallery;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;

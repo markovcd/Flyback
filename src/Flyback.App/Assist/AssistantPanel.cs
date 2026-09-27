@@ -12,7 +12,6 @@ using Flyback.App.Controls;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
 using Flyback.Core;
-using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;

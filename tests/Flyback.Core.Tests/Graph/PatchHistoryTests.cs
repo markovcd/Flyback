@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Graph;

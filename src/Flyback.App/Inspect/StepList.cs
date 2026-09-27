@@ -8,6 +8,7 @@ using Avalonia.Styling;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Inspect;

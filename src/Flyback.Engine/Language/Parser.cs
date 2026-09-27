@@ -1,4 +1,7 @@
 using Flyback.Core.Graph;
+using Flyback.Core.Language.Ast;
+using Flyback.Core.Language.Ast.Expressions;
+using Flyback.Core.Language.Ast.Statements;
 
 namespace Flyback.Core.Language;
 

@@ -3,14 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
-using Flyback.App.Audio;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
-using Flyback.Core.Render;
 
 namespace Flyback.App;
 

@@ -1,3 +1,5 @@
+using Flyback.Core.Graph.Extras;
+
 namespace Flyback.Core.Graph;
 
 public partial class NodeCatalog

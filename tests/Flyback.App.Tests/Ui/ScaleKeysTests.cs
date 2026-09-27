@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App.Inspect;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
