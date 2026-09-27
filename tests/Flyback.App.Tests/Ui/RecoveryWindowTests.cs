@@ -6,6 +6,7 @@ using Flyback.App.Files;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -31,15 +32,18 @@ public class RecoveryWindowTests : UiTest
         GC.SuppressFinalize(this);
     }
 
-    private MainWindow Open(string? recoveryFolder = null)
+    private (MainWindow Window, WorkRecovery Recovery) Open(string? recoveryFolder = null)
     {
-        var window = NewMainWindow(new EditorSetup { RecoveryFolder = recoveryFolder });
+        var provider = Container(new EditorSetup { RecoveryFolder = recoveryFolder });
+        var window = Owned(provider.GetRequiredService<MainWindow>());
+        Attach(provider, window);
+        window.Start();
 
         window.Show();
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
 
-        return window;
+        return (window, provider.GetRequiredService<WorkRecovery>());
     }
 
     private static RecoveredWork Work(Patch patch, string? source = null) =>
@@ -50,10 +54,10 @@ public class RecoveryWindowTests : UiTest
     [AvaloniaFact]
     public void Restored_work_is_the_document_and_is_unsaved()
     {
-        var window = Open();
+        var (window, recovery) = Open();
         var patch = APatch();
 
-        window.Recover(Work(patch)).ShouldBeTrue();
+        recovery.Restore(Work(patch)).ShouldBeTrue();
 
         All<NodeEditor>(window).Single().History.Patch.Nodes.Count.ShouldBe(patch.Nodes.Count);
         window.Title.ShouldBe($"drift — {GlobalConstants.ApplicationName} •");
@@ -62,10 +66,10 @@ public class RecoveryWindowTests : UiTest
     [AvaloniaFact]
     public void Restored_text_is_the_document_and_is_unsaved()
     {
-        var window = Open();
+        var (window, recovery) = Open();
         var text = PatchPrinter.Print(APatch());
 
-        window.Recover(Work(APatch(), source: text)).ShouldBeTrue();
+        recovery.Restore(Work(APatch(), source: text)).ShouldBeTrue();
 
         All<SourceView>(window).Single().Source.ShouldBe(text);
         window.Title.ShouldEndWith("•");
@@ -79,7 +83,7 @@ public class RecoveryWindowTests : UiTest
         crashed.Keep(Work(APatch()));
         crashed.Abandon();
 
-        var window = Open(folder);
+        var (window, _) = Open(folder);
 
         Dispatcher.UIThread.RunJobs();
 
@@ -95,9 +99,9 @@ public class RecoveryWindowTests : UiTest
     [AvaloniaFact]
     public void Restored_work_is_kept_at_once_and_let_go_on_closing()
     {
-        var window = Open(folder);
+        var (window, recovery) = Open(folder);
 
-        window.Recover(Work(APatch()));
+        recovery.Restore(Work(APatch()));
 
         Directory.EnumerateFiles(folder, "*.json").ShouldHaveSingleItem();
         Recovery.Orphans(folder).ShouldBeEmpty("the window that restored it is still running");

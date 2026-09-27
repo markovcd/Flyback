@@ -47,11 +47,14 @@ calling back into the window. `MainWindow` is what builds the hubs and the
 regions, lays them out, and asks the closing question.
 
 A hub says what changed through events, and whoever cares subscribes. It never
-names a region.
+names a region. `EditorWiring` connects events between services after the
+container builds them, so adding a reaction does not add a constructor dependency
+between its publisher and subscriber. It also connects the editor and document
+events that update the window, through callbacks for the window-owned reactions.
 
-The hubs, the regions and the window are composed in a container
-([0150](0150-the-editor-is-composed-in-a-container.md)). Two pairs need each other
-(the take and the playback, the files and the playback), and a `Lazy` settles each.
+The hubs, the regions, the event wiring and the window are composed in a
+container ([0150](0150-the-editor-is-composed-in-a-container.md)). The services
+do not depend on one another to connect their events, and there is no global bus.
 
 ## Consequences
 
@@ -59,19 +62,20 @@ A field is private to the region that owns it, and the compiler enforces the
 split that 0039 could only keep by convention.
 
 The regions move one at a time, each in a commit that builds and passes on its
-own. What stays is what the window is — its layout, what each toolbar button
-does, its keys, the closing question and full screen — and it stays as one class
-in one file, a `#region` per part, rather than as partial files: once the regions
-are classes, what is left is small enough to read top to bottom.
+own. `MainWindow` owns the window's layout, toolbar actions, keys, closing
+question and full screen. `EditorWiring` owns event subscriptions between
+services and the callbacks that connect editor events to those window reactions.
+The window stays one class in one file, a `#region` per part, rather than partial
+files.
 
 There is still no binding layer and no view model: state lives in the `Patch`,
 wiring is event handlers, and 0016 stands as written.
 
-## Amendment, 2026-09-27: the shell grid has its own class
+## Amendment, 2026-09-27: shell layout and event wiring have explicit owners
 
 `ShellLayout` owns construction and presentation state for the editor grid: the
 assistant, preview and inspector columns, the knob row, preview swapping, and
-applying and capturing panel layout. `MainWindow` still coordinates the hubs and
-toolbar actions, and delegates those layout operations. This is the one cohesive
-part of the window layout that is large enough to own separately; it does not
-introduce partial window files, bindings or view models.
+applying and capturing panel layout. `EditorWiring` owns cross-service event
+subscriptions and accepts callbacks for reactions the window owns. `MainWindow`
+keeps window events and toolbar actions. Neither class introduces partial window
+files, bindings or view models.

@@ -1,3 +1,8 @@
+using System.Diagnostics;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Flyback.App.Bars;
 using Flyback.App.Capture;
 using Flyback.App.Canvas;
@@ -9,6 +14,8 @@ using Flyback.App.Knobs;
 using Flyback.App.Midi;
 using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
+using Flyback.App.Settings;
+using Flyback.Core.Compile;
 
 namespace Flyback.App;
 
@@ -23,6 +30,8 @@ internal sealed class EditorWiring(
     Toolbar toolbar,
     TransportControls transport,
     Playback playback,
+    IlCompiler compiler,
+    OutputSections outputSections,
     ShellLayout shell,
     MidiHub midi,
     PreviewHost preview,
@@ -30,11 +39,13 @@ internal sealed class EditorWiring(
     Usage usage,
     NodeEditor editor,
     Inspector inspector,
-    Document document)
+    Document document,
+    SourceView source,
+    CanvasSection canvasSection)
 {
     private bool wired;
 
-    public void Wire()
+    public void Wire(Action refreshEditState, Action showOwnership)
     {
         if (wired) return;
         wired = true;
@@ -82,6 +93,11 @@ internal sealed class EditorWiring(
             inspector.Build();
             playback.ProbeSelectionChanged(files.Sounds, files.Pictures, () => recording.Running);
         };
+        editor.History.HistoryChanged += (_, _) => refreshEditState();
+        editor.Gestures.GestureFinished += (_, _) =>
+        {
+            if (shell.PreviewHideWaiting) shell.ShowPreview(playback.HasPicture);
+        };
         editor.Dial.InputTurned += (_, pick) => document.Turned(pick.Node, pick.Port);
         editor.Dial.InputLetGo += (_, pick) =>
         {
@@ -89,8 +105,55 @@ internal sealed class EditorWiring(
             if (editor.Selection.Focused?.Id == pick.Node || editor.Selection.Group?.Members.Contains(pick.Node) == true) inspector.Build();
         };
 
+        document.EditStateChanged += (_, _) => refreshEditState();
+        document.PanelStale += (_, _) => inspector.Build();
+        document.OwnershipChanged += (_, _) => showOwnership();
+        document.ViewChanged += (_, _) =>
+        {
+            if (toolbar.Code.IsChecked != document.ShowingCode) toolbar.Code.IsChecked = document.ShowingCode;
+        };
+        toolbar.Code.IsCheckedChanged += (_, _) => document.ShowCode(toolbar.Code.IsChecked == true);
+
+        source.EditorFontSize = canvasSection.EditorFontSize;
+        source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
+        source.HandBackRequested += async (_, _) =>
+        {
+            if (document.Owned && await unsaved.MayLoseTheTextAsync()) document.HandBack();
+        };
+
+        inspector.Panel.AddHandler(
+            InputElement.PointerReleasedEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+        inspector.Panel.AddHandler(InputElement.LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
+        inspector.Panel.AddHandler(
+            InputElement.KeyUpEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+        inspector.Panel.AddHandler(
+            InputElement.PointerWheelChangedEvent,
+            (_, _) => document.HandCameOff(),
+            RoutingStrategies.Bubble,
+            handledEventsToo: true);
+
         midi.Played += preview.Refresh;
         midi.Trouble += message => report.Say(message);
         midi.Heard += () => usage.Count(Used.Instrument);
+
+        compiler.Failed += message => Dispatcher.UIThread.Post(() => report.Say(message));
+        var gpu = outputSections.Gpu;
+        preview.BackendChanged += message =>
+        {
+            // Keep the selected request visible when the renderer falls back.
+            gpu.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
+            gpu.IsEnabled = preview.GpuAvailable;
+            ToolTip.SetTip(gpu, preview.GpuAvailable ? OutputSections.GpuTip : message);
+            report.Say(message);
+        };
+
+        editor.Report.Said += (_, message) => report.Say(message);
+        report.Said += (_, message) => Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
     }
 }

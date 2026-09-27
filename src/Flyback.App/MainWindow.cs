@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -6,7 +5,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
@@ -47,12 +45,6 @@ internal sealed class MainWindow : Window
     private readonly OutputSettingsUse outputSettingsUse;
 
     private readonly SettingsSession settingsSession;
-
-    private readonly CanvasSection canvasSection;
-
-    private readonly NodeEditor editor;
-
-    private readonly SourceView source;
 
     private readonly IDialog dialog;
 
@@ -101,13 +93,6 @@ internal sealed class MainWindow : Window
     private readonly EditorStart editorStart;
 
     /// <summary>
-    /// What runs the processor's programs as machine code once they are built —
-    /// the sound always, and the picture while the processor is drawing it. See
-    /// ADR-0076.
-    /// </summary>
-    private readonly IlCompiler compiler;
-
-    /// <summary>
     /// Everything that plays the patch from outside it. The mirror of
     /// <see cref="audio"/>, which takes what the patch makes to a device. Assigned
     /// in the constructor because it is handed the MIDI backend the plugins
@@ -119,8 +104,6 @@ internal sealed class MainWindow : Window
     private readonly UnsavedWork unsaved;
 
     public MainWindow(
-        NodeEditor editor,
-        SourceView source,
         Document document,
         PatchFiles files,
         PatchOpening patchOpening,
@@ -128,11 +111,9 @@ internal sealed class MainWindow : Window
         PreviewHost preview,
         ReportLine report,
         PluginCatalog plugins,
-        IlCompiler compiler,
         MidiHub midi,
         Playback playback,
         OutputSections outputSections,
-        CanvasSection canvasSection,
         PanelKnobs knobs,
         Inspector inspector,
         PluginInstalls pluginInstalls,
@@ -141,7 +122,6 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         AssistantPanel assistant,
         WorkKeeper keeper,
-        WorkRecovery workRecovery,
         EditorWiring editorWiring,
         EditorOpened editorOpened,
         EditorStart editorStart,
@@ -153,8 +133,6 @@ internal sealed class MainWindow : Window
         SettingsSession settingsSession,
         IDialog dialog)
     {
-        this.editor = editor;
-        this.source = source;
         this.document = document;
         this.files = files;
         this.patchOpening = patchOpening;
@@ -162,21 +140,18 @@ internal sealed class MainWindow : Window
         this.preview = preview;
         this.report = report;
         this.plugins = plugins;
-        this.compiler = compiler;
         this.midi = midi;
         this.playback = playback;
         this.editorStart = editorStart;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
-        this.canvasSection = canvasSection;
         this.knobs = knobs;
         this.inspector = inspector;
         this.pluginInstalls = pluginInstalls;
         this.presets = presets;
         this.toolbar = toolbar;
         this.keeper = keeper;
-        this.workRecovery = workRecovery;
         this.layoutKeeper = layoutKeeper;
         this.fullScreen = fullScreen;
         this.transport = transport;
@@ -190,7 +165,7 @@ internal sealed class MainWindow : Window
 
         // Cross-service event edges are kept together so they remain visible
         // without becoming constructor dependencies between the services.
-        editorWiring.Wire();
+        editorWiring.Wire(RefreshEditState, ShowOwnership);
 
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears
@@ -212,30 +187,10 @@ internal sealed class MainWindow : Window
         Background = new SolidColorBrush(Colors.Window);
         layoutKeeper.Track(this);
 
-        editor.History.HistoryChanged += (_, _) => RefreshEditState();
-
-        // Asked again rather than simply put away: the wire may have been dropped
-        // back onto 'color', and then there is nothing to put back.
-        editor.Gestures.GestureFinished += (_, _) =>
-        {
-            if (shell.PreviewHideWaiting) shell.ShowPreview(playback.HasPicture);
-        };
-
-        // What the canvas has to say goes on the one line everything is said on.
-        editor.Report.Said += (_, message) => Report(message);
-
-        // The other copy of everything said: a status bar is written over by the
-        // next compile and the log behind it is five deep, so a run watched from a
-        // terminal would keep no account of itself. Trace rather than the console
-        // directly — Program.Main decides whether there is a terminal worth writing
-        // to, and a second destination is a second listener.
-        report.Said += (_, message) =>
-            Trace.WriteLine($"{DateTime.Now:HH:mm:ss}  {message}");
-
         // Before the layout, because these are live from the moment the window
         // is: the preview needs its resolution and its backend whether or not
         // anybody has selected the Output to look at them.
-        WireOutputControls();
+        InitializeOutputControls();
 
         // Live from construction rather than from Loaded: a drop arriving
         // before the window has finished laying out is still a drop.
@@ -294,7 +249,6 @@ internal sealed class MainWindow : Window
         toolbar.Plugins.Click += async (_, _) => await pluginInstalls.ShowAsync();
         toolbar.About.Click += async (_, _) => await ShowAboutAsync();
 
-        WireDocument();
         RefreshEditState();
     }
 
@@ -701,63 +655,6 @@ internal sealed class MainWindow : Window
     // What the window shows of the Document: the code button, the tidy
     // button, and the panel's gestures that end in a write-back.
 
-    /// <summary>Called once, as the window is built.</summary>
-    private void WireDocument()
-    {
-        document.EditStateChanged += (_, _) => RefreshEditState();
-        document.PanelStale += (_, _) => inspector.Build();
-        document.OwnershipChanged += (_, _) => ShowOwnership();
-        document.ViewChanged += (_, _) =>
-        {
-            if (toolbar.Code.IsChecked != document.ShowingCode) toolbar.Code.IsChecked = document.ShowingCode;
-        };
-
-        toolbar.Code.IsCheckedChanged += (_, _) => document.ShowCode(toolbar.Code.IsChecked == true);
-
-        source.EditorFontSize = canvasSection.EditorFontSize;
-        source.EditorFontSizeChanged += (_, size) => canvasSection.SaveEditorFontSize(size);
-
-        // The buffer is emptied by the handover and written nowhere on the way, so
-        // typing not on disk yet is asked about as it is when a document is closed over.
-        source.HandBackRequested += async (_, _) =>
-        {
-            if (document.Owned && await unsaved.MayLoseTheTextAsync()) document.HandBack();
-        };
-
-        // Caught on the way up and after whoever handled it, because a slider
-        // captures the pointer: letting go halfway across the window is still
-        // letting go of the slider, and the value written should be the one the
-        // control finished on.
-        inspector.Panel.AddHandler(
-            PointerReleasedEvent,
-            (_, _) => document.HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        // A number typed rather than dragged has no gesture to wait for, and the
-        // focus going is the surest end of one.
-        inspector.Panel.AddHandler(LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
-
-        // And a key let go of, because a number box takes what is typed as it is
-        // typed. On the way up rather than down, because the character is taken
-        // between the two; any key, since an arrow steps the value and a backspace
-        // clears it without giving up the focus.
-        inspector.Panel.AddHandler(
-            KeyUpEvent,
-            (_, _) => document.HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-
-        // And a notch of the wheel, the one way a number box moves that touches
-        // neither the pointer's button nor the focus. Each notch is finished the
-        // moment it lands.
-        inspector.Panel.AddHandler(
-            PointerWheelChangedEvent,
-            (_, _) => document.HandCameOff(),
-            RoutingStrategies.Bubble,
-            handledEventsToo: true);
-    }
-
     /// <summary>
     /// Puts the tidy button, the panel and the edit state in step with who owns the
     /// patch and which view is showing.
@@ -841,25 +738,8 @@ internal sealed class MainWindow : Window
     /// Called once, from the constructor, rather than when the settings window
     /// opens: what was last saved has to be in force before anybody has looked.
     /// </summary>
-    private void WireOutputControls()
+    private void InitializeOutputControls()
     {
-        var gpu = outputSections.Gpu;
-
-        compiler.Failed += message => Dispatcher.UIThread.Post(() => Report(message));
-
-        preview.BackendChanged += message =>
-        {
-            // The choice rather than what is running: a patch the shader cannot
-            // draw puts the picture on the processor without anybody having
-            // asked, and a box that put itself back to CPU would then be read as
-            // the setting having changed — and would be saved as changed the next
-            // time anybody pressed Save.
-            gpu.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
-            gpu.IsEnabled = preview.GpuAvailable;
-            ToolTip.SetTip(gpu, preview.GpuAvailable ? OutputSections.GpuTip : message);
-            Report(message);
-        };
-
         knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.KeyboardLayout);
 
         // Quietly, because nobody asked for anything yet: a saved answer is
@@ -913,12 +793,9 @@ internal sealed class MainWindow : Window
 
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper keeper;
-    private readonly WorkRecovery workRecovery;
     private readonly WindowLayoutKeeper layoutKeeper;
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
-
-    internal bool Recover(RecoveredWork work) => workRecovery.Restore(work);
 
     #endregion
 
