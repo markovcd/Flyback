@@ -25,6 +25,7 @@ public sealed class Binder
     private readonly Patch patch = new();
 
     private readonly ModuleNames moduleNames;
+    private readonly ExpressionBinder expressions;
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
@@ -81,6 +82,22 @@ public sealed class Binder
         this.issues = issues;
 
         moduleNames = new ModuleNames(modules);
+        expressions = new ExpressionBinder(new ExpressionBinder.Context
+        {
+            Source = Source,
+            Unknown = Unknown,
+            Mention = Mention,
+            Find = Find,
+            List = List,
+            Refuse = Refuse,
+            Call = Call,
+            Pipe = Pipe,
+            Placeholder = Placeholder,
+            ExpressionModule = (line, column) => Module(NodeCatalog.ExpressionTypeId, line, column),
+            Place = (def, inputs, line, column) => Place(def, inputs, line, column),
+            ConfigureExpression = ConfigureExpression,
+            Complain = Complain,
+        });
     }
 
     /// <summary>
@@ -188,7 +205,7 @@ public sealed class Binder
     // --- what a name is worth ------------------------------------------------
 
     /// <summary>Anything a name or an expression can stand for while binding.</summary>
-    private abstract record Value;
+    internal abstract record Value;
 
     /// <summary>A number, which becomes a knob rather than a module.</summary>
     /// <param name="Where">
@@ -196,37 +213,37 @@ public sealed class Binder
     /// already says it. Null for a number no single figure stands for —
     /// <c>1/12</c> is one knob and two numbers.
     /// </param>
-    private sealed record Figure(double Amount, NumberStyle Style, Site? Where = null) : Value;
+    internal sealed record Figure(double Amount, NumberStyle Style, Site? Where = null) : Value;
 
     /// <summary>A placed module, standing for every one of its outputs at once.</summary>
-    private sealed record Placed(Guid Id, NodeDef Def) : Value;
+    internal sealed record Placed(Guid Id, NodeDef Def) : Value;
 
     /// <summary>One output of a placed module.</summary>
-    private sealed record Socket(Guid Id, int Port) : Value;
+    internal sealed record Socket(Guid Id, int Port) : Value;
 
     /// <summary>What a def with several results hands back.</summary>
-    private sealed record Several(IReadOnlyList<Value> Items) : Value;
+    internal sealed record Several(IReadOnlyList<Value> Items) : Value;
 
     /// <summary>
     /// A name whose statement was refused. Bound all the same, so every line that
     /// reads it fails without a word: the text is refused whole already, and a
     /// complaint per reader would bury the one mistake there is.
     /// </summary>
-    private sealed record Failed : Value;
+    internal sealed record Failed : Value;
 
     /// <summary>A file a module names rather than carries (ADR-0052).</summary>
-    private sealed record Named(string Path) : Value;
+    internal sealed record Named(string Path) : Value;
 
     /// <summary>
     /// A panel knob, and the range a socket reads it over where the text gives
     /// one: <c>cutoff</c>, or <c>cutoff(200..4000, knee: 20)</c>.
     /// </summary>
     /// <param name="Word">What the text calls it.</param>
-    private sealed record Dial(PatchControl Control, string Word, Figure? Low = null, Figure? High = null, Figure? Knee = null)
+    internal sealed record Dial(PatchControl Control, string Word, Figure? Low = null, Figure? High = null, Figure? Knee = null)
         : Value;
 
     /// <summary>Names in sight, and the names the enclosing scope had.</summary>
-    private sealed class Scope(Scope? parent)
+    internal sealed class Scope(Scope? parent)
     {
         private readonly Dictionary<string, (Value Value, int Line)> names = new(StringComparer.Ordinal);
 
@@ -241,6 +258,35 @@ public sealed class Binder
 
     private void Complain(string code, int line, int column, string message) =>
         issues.Add(new LanguageIssue(line, column, code, message));
+
+    private void Unknown(NameExpr expr)
+    {
+        if (boundOn.TryGetValue(expr.Name, out var line) && line > expr.Line)
+        {
+            Complain(IssueCode.UsedBeforeBound, expr.Line, expr.Column,
+                $"'{expr.Name}' is bound on line {line}, below where it is read. Bind it before reading it.");
+            return;
+        }
+
+        if (expr.Port is null && ExpressionBinder.StatementWord(expr.Name) is { } example)
+        {
+            Complain(IssueCode.UnknownName, expr.Line, expr.Column,
+                $"'{expr.Name}' starts a statement only with what it says after it: {example}.");
+            return;
+        }
+
+        Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
+    }
+
+    private static string? Builtin(string name) => name switch
+    {
+        "t" => "the clock",
+        "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
+        "out" => "the Output",
+        "_" => "what a pipe brings in",
+        "let" or "def" or "group" => "a word of the language",
+        _ => null,
+    };
 
     /// <summary>
     /// Whether <paramref name="name"/> may be bound here, said where it may not.
@@ -790,424 +836,21 @@ public sealed class Binder
 
     // --- expressions ---------------------------------------------------------
 
-    private Value? Bind(Expr expr, Scope scope) => expr switch
+    private Value? Bind(Expr expr, Scope scope) => expressions.Bind(expr, scope);
+
+    private void ConfigureExpression(Value value, string formula, int line, int column)
     {
-        NumberExpr number => new Figure(number.Value, number.Style, new Site(number.Line, number.Column)),
-        TextExpr text => new Named(text.Value),
-        NegateExpr or BinaryExpr => Arithmetic(expr, scope),
-        NameExpr name => Read(name, scope),
-        CallExpr call => Call(call, scope, piped: null),
-        SelectExpr select => Select(select, scope, piped: null),
-        PipeExpr pipe => Pipe(pipe, scope),
-        RangeExpr range => Refuse(IssueCode.RangeOutsideArgument, range.Line, range.Column, "a range only means something as an argument."),
-        _ => null,
-    };
+        if (value is not Placed { Id: var id } || patch.Find(id) is not { } node) return;
+
+        node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
+        mentions.Add((new Site(line, column), id));
+    }
 
     private Value? Refuse(string code, int line, int column, string message)
     {
         Complain(code, line, column, message);
         return null;
     }
-
-    // --- arithmetic ---------------------------------------------------------
-
-    /// <summary>
-    /// Arithmetic as it is being read: numbers still to be folded, the signals
-    /// between them, and the operators that join them.
-    /// </summary>
-    private abstract record Reckoned;
-
-    private sealed record Operand(Figure Figure) : Reckoned;
-
-    /// <param name="From">The output it is, which is what makes a signal read twice one socket.</param>
-    private sealed record Signal(Value Value, (Guid Node, int Port) From) : Reckoned;
-
-    /// <param name="Right">Null for a minus in front.</param>
-    private sealed record Operation(char Sign, Reckoned Left, Reckoned? Right, int Line, int Column) : Reckoned;
-
-    /// <summary>
-    /// Infix arithmetic, which is one Expression however much of it there is —
-    /// except between two numbers, where it is neither a module nor a wire but a
-    /// knob that has already been worked out.
-    /// </summary>
-    /// <remarks>
-    /// The whole tree is one formula over the signals in it, so <c>(fract(t * 60)
-    /// * 2 - 1) * aspect</c> is two Expressions and a Fraction rather than four
-    /// Maths modules and a Fraction. A tree reading more signals than an
-    /// Expression has sockets hands its busier side to an Expression of its own.
-    /// </remarks>
-    private Value? Arithmetic(Expr expr, Scope scope) => Reckon(expr, scope) switch
-    {
-        Operand operand => operand.Figure,
-        Signal signal => signal.Value,
-        Operation operation => Expression(operation),
-        _ => null,
-    };
-
-    private Reckoned? Reckon(Expr expr, Scope scope)
-    {
-        switch (expr)
-        {
-            case NegateExpr negate:
-            {
-                if (Reckon(negate.Value, scope) is not { } value) return null;
-
-                // From the minus rather than from the digits, because the sign is
-                // part of the number as far as anything rewriting it is concerned.
-                if (value is Operand operand)
-                {
-                    return new Operand(operand.Figure with
-                    {
-                        Amount = -operand.Figure.Amount,
-                        Where = new Site(negate.Line, negate.Column),
-                    });
-                }
-
-                return Fit(new Operation('-', value, null, negate.Line, negate.Column));
-            }
-
-            case BinaryExpr binary:
-            {
-                if (Reckon(binary.Left, scope) is not { } left) return null;
-                if (Reckon(binary.Right, scope) is not { } right) return null;
-
-                if (left is Operand a && right is Operand b) return Folded(binary, a.Figure, b.Figure);
-
-                var sign = binary.Operator switch
-                {
-                    TokenKind.Plus => '+',
-                    TokenKind.Minus => '-',
-                    TokenKind.Star => '*',
-                    TokenKind.Slash => '/',
-                    _ => '%',
-                };
-
-                return Fit(new Operation(sign, left, right, binary.Line, binary.Column));
-            }
-
-            default:
-            {
-                if (Bind(expr, scope) is not { } value) return null;
-
-                if (value is Figure figure) return new Operand(figure);
-
-                // A panel knob is a socket of the Expression that follows it, one
-                // per mention since each may read it over a range of its own.
-                if (value is Dial) return new Signal(value, (Guid.NewGuid(), 0));
-
-                if (Output(value) is { } from) return new Signal(value, from);
-
-                Complain(IssueCode.NotASignal, expr.Line, expr.Column, "this is not a signal, so nothing can be wired from it.");
-                return null;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Two numbers made one, here rather than emitted, so a knob written as 1/12
-    /// is a knob and not a Divide. A note or a duration is on a scale of its own,
-    /// so arithmetic on one is refused rather than quietly done in semitones or
-    /// decades.
-    /// </summary>
-    private Operand? Folded(BinaryExpr expr, Figure a, Figure b)
-    {
-        if (a.Style != NumberStyle.Plain || b.Style != NumberStyle.Plain)
-        {
-            Complain(IssueCode.ScaledArithmetic, expr.Line, expr.Column, Scaled);
-            return null;
-        }
-
-        var folded = expr.Operator switch
-        {
-            TokenKind.Plus => a.Amount + b.Amount,
-            TokenKind.Minus => a.Amount - b.Amount,
-            TokenKind.Star => a.Amount * b.Amount,
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            TokenKind.Slash => b.Amount == 0d ? 0d : a.Amount / b.Amount,
-            // The remainder Modulo takes, which wraps a negative number upwards.
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            _ => b.Amount == 0d ? 0d : a.Amount - b.Amount * Math.Floor(a.Amount / b.Amount),
-        };
-
-        return new Operand(new Figure(folded, NumberStyle.Plain));
-    }
-
-    private const string Scaled = "arithmetic on a note or a duration would be done on a scale nobody meant.";
-
-    /// <summary>Which output a signal is, and null for what is not one.</summary>
-    private static (Guid Node, int Port)? Output(Value value) => value switch
-    {
-        Placed placed => (placed.Id, 0),
-        Socket socket => (socket.Id, socket.Port),
-        Several { Items.Count: > 0 } several => Output(several.Items[0]),
-        _ => null,
-    };
-
-    /// <summary>
-    /// The operation as it is, if it reads no more signals than an Expression has
-    /// sockets; otherwise with its busier side made an Expression of its own, and
-    /// then the other, until it does.
-    /// </summary>
-    private Reckoned? Fit(Operation operation)
-    {
-        while (Inputs(operation).Count > Formula.Sockets.Length)
-        {
-            var left = Inputs(operation.Left).Count;
-            var right = operation.Right is null ? 0 : Inputs(operation.Right).Count;
-
-            if (left >= right)
-            {
-                if (Settled(operation.Left) is not { } settled) return null;
-                operation = operation with { Left = settled };
-            }
-            else
-            {
-                if (Settled(operation.Right!) is not { } settled) return null;
-                operation = operation with { Right = settled };
-            }
-        }
-
-        return operation;
-    }
-
-    /// <summary>An operation placed as the Expression it is, and read from then on as its output.</summary>
-    private Reckoned? Settled(Reckoned reckoned) =>
-        reckoned is not Operation operation ? reckoned
-        : Expression(operation) is { } placed && Output(placed) is { } from ? new Signal(placed, from)
-        : null;
-
-    /// <summary>The signals a tree reads, each once, in the order the formula names them.</summary>
-    private static List<Signal> Inputs(Reckoned reckoned)
-    {
-        var found = new List<Signal>();
-
-        Gather(reckoned);
-        return found;
-
-        void Gather(Reckoned part)
-        {
-            switch (part)
-            {
-                case Signal signal when found.All(seen => seen.From != signal.From):
-                    found.Add(signal);
-                    break;
-
-                case Operation operation:
-                    Gather(operation.Left);
-                    if (operation.Right is not null) Gather(operation.Right);
-                    break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Places the Expression an operation is: its signals on a, b, c and d in the
-    /// order they are first read, and the rest written into its formula.
-    /// </summary>
-    private Value? Expression(Operation operation)
-    {
-        var inputs = Inputs(operation);
-
-        if (Written(operation, inputs) is not { } formula) return null;
-        if (Module(NodeCatalog.ExpressionTypeId, operation.Line, operation.Column) is not { } def) return null;
-
-        var placed = Place(def, [.. inputs.Select((input, socket) => (socket, input.Value))], operation.Line, operation.Column);
-
-        if (placed is Placed { Id: var id } && patch.Find(id) is { } node)
-        {
-            node.SetState(FormulaExtra.StateKey, new JsonObject { [FormulaExtra.FormulaField] = formula });
-
-            // Where the sum's operator stands, so the text points at the module it
-            // placed. Not a call: there are no brackets to write a knob into.
-            mentions.Add((new Site(operation.Line, operation.Column), id));
-        }
-
-        return placed;
-    }
-
-    /// <summary>
-    /// An operation as a formula, bracketed wherever reading it back would group
-    /// it differently — which, for the right of an operator of the same strength,
-    /// is always: <c>a - (b - c)</c> and <c>a + (b + c)</c> are what was written,
-    /// and floats do not reassociate.
-    /// </summary>
-    private string? Written(Reckoned reckoned, IReadOnlyList<Signal> inputs)
-    {
-        switch (reckoned)
-        {
-            case Operand { Figure: var figure }:
-            {
-                var where = figure.Where ?? new Site(0, 0);
-
-                if (figure.Style != NumberStyle.Plain)
-                {
-                    Complain(IssueCode.ScaledArithmetic, where.Line, where.Column, Scaled);
-                    return null;
-                }
-
-                var value = (float)figure.Amount;
-
-                if (!float.IsFinite(value))
-                {
-                    Complain(IssueCode.NumberTooLarge, where.Line, where.Column, "that number is too large to hold.");
-                    return null;
-                }
-
-                return value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            case Signal signal:
-                return Formula.Sockets[inputs.ToList().FindIndex(input => input.From == signal.From)].ToString();
-
-            case Operation { Right: null } negate:
-            {
-                if (Written(negate.Left, inputs) is not { } operand) return null;
-
-                return Strength(negate.Left) < Strength(negate) ? $"-({operand})" : $"-{operand}";
-            }
-
-            case Operation operation:
-            {
-                if (Written(operation.Left, inputs) is not { } left) return null;
-                if (Written(operation.Right!, inputs) is not { } right) return null;
-
-                var strength = Strength(operation);
-
-                if (Strength(operation.Left) < strength) left = $"({left})";
-                if (Strength(operation.Right!) <= strength) right = $"({right})";
-
-                return $"{left} {operation.Sign} {right}";
-            }
-
-            default:
-                return null;
-        }
-    }
-
-    /// <summary>How tightly a part of a formula holds together: a sum least, a number or a socket most.</summary>
-    private static int Strength(Reckoned reckoned) => reckoned switch
-    {
-        Operation { Right: null } => 3,
-        Operation { Sign: '+' or '-' } => 1,
-        Operation => 2,
-        Operand { Figure.Amount: < 0 } => 3,
-        _ => 4,
-    };
-
-    private Value? Read(NameExpr expr, Scope scope)
-    {
-        // The coordinates and the clock are one shared node each, however
-        // often they are written — a patch that reads the clock in eight places
-        // has one Time in it, which is what every preset does by hand.
-        if (expr.Port is null && Source(expr.Name) is { } source) return source;
-
-        if (expr.Name == "out")
-        {
-            return Refuse(IssueCode.OutputIsNotASource, expr.Line, expr.Column,
-                "the Output has nothing to read. Pipe something into 'out.color' or 'out.left'.");
-        }
-
-        if (Placeholder(expr))
-            return Refuse(IssueCode.PlaceholderMisplaced, expr.Line, expr.Column, "'_' stands for what is piped in, as a call's argument: 'socket: _'.");
-
-        if (scope.Find(expr.Name) is not { } value)
-        {
-            Unknown(expr);
-            return null;
-        }
-
-        if (value is Failed) return null;
-
-        // Reading a name is naming the module, so the word is somewhere to click
-        // even though nothing is placed here.
-        Mention(expr, value);
-
-        if (expr.Port is null) return value;
-
-        if (value is not Placed)
-            return Refuse(IssueCode.NotAModule, expr.Line, expr.Column, $"'{expr.Name}' is not a module, so it has no sockets.");
-
-        return Output(value, expr.Port, expr.Line, expr.Column);
-    }
-
-    private void Unknown(NameExpr expr)
-    {
-        if (boundOn.TryGetValue(expr.Name, out var line) && line > expr.Line)
-        {
-            Complain(IssueCode.UsedBeforeBound, expr.Line, expr.Column,
-                $"'{expr.Name}' is bound on line {line}, below where it is read. Bind it before reading it.");
-            return;
-        }
-
-        if (expr.Port is null && StatementWord(expr.Name) is { } example)
-        {
-            Complain(IssueCode.UnknownName, expr.Line, expr.Column,
-                $"'{expr.Name}' starts a statement only with what it says after it: {example}.");
-            return;
-        }
-
-        Complain(IssueCode.UnknownName, expr.Line, expr.Column, $"nothing here is called '{expr.Name}'.");
-    }
-
-    /// <summary>How a statement a word begins is written, for that word on its own.</summary>
-    private static string? StatementWord(string name) => name switch
-    {
-        "requires" => "requires flyback.picture",
-        "keyboard" => "keyboard piano",
-        "off" => "off drone",
-        "description" => "description \"A slow drone\"",
-        "author" => "author \"Ada\"",
-        "tags" => "tags \"drone\" \"slow\"",
-        "panel" => "panel level = 0.5",
-        _ => null,
-    };
-
-    /// <summary>
-    /// One output of what an expression placed, which is a binding's selector
-    /// without the binding: <c>tempo(bpm: 104).beats</c>.
-    /// </summary>
-    /// <param name="piped">What is arriving, where the expression is a stage of a pipeline.</param>
-    private Value? Select(SelectExpr expr, Scope scope, Value? piped)
-    {
-        var source = expr.Source switch
-        {
-            CallExpr call => Call(call, scope, piped),
-            SelectExpr inner => Select(inner, scope, piped),
-            _ => Bind(expr.Source, scope),
-        };
-
-        return source is null ? null : Output(source, expr.Port, expr.Line, expr.Column);
-    }
-
-    /// <summary>The output of <paramref name="value"/> called <paramref name="name"/>.</summary>
-    private Value? Output(Value value, string name, int line, int column)
-    {
-        // A def may hand back one output, several things or a number, and none
-        // of those has outputs of its own to choose between.
-        if (value is not Placed placed)
-            return Refuse(IssueCode.NotAModule, line, column, $"this is not a module, so it has no output called '{name}'.");
-
-        var port = Find(placed.Def.Outputs, name);
-
-        if (port < 0)
-        {
-            return Refuse(IssueCode.UnknownOutput, line, column,
-                $"'{placed.Def.Name}' has no output called '{name}'. It has {List(placed.Def.Outputs)}.");
-        }
-
-        return new Socket(placed.Id, port);
-    }
-
-    /// <summary>What a word every patch already has stands for, if it is one.</summary>
-    private static string? Builtin(string name) => name switch
-    {
-        "t" => "the clock",
-        "x" or "y" or "radius" or "angle" or "aspect" => "one of the picture's coordinates",
-        "out" => "the Output",
-        "_" => "what a pipe brings in",
-        "let" or "def" or "group" => "a word of the language",
-        _ => null,
-    };
 
     /// <summary>The shared Coordinates or Time a bare word stands for, if it is one.</summary>
     private Value? Source(string name)
@@ -1291,7 +934,7 @@ public sealed class Binder
         // 'beats |> notes() [ A3 C4 ].gate' is the sequencer with the beats
         // arriving, and then its gate: the selector binds tighter than the pipe,
         // so it is the stage's output that is chosen and not the source's.
-        if (expr.Stage is SelectExpr select) return Select(select, scope, value);
+        if (expr.Stage is SelectExpr select) return expressions.Select(select, scope, value);
 
         return Refuse(IssueCode.BadStage, expr.Line, expr.Column, "only a module or a socket may follow '|>'.");
     }
