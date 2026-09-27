@@ -4,24 +4,11 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Cli.Models;
+using Flyback.Cli.Common;
+using CompareOptions = Flyback.Cli.Models.CompareOptions;
 
-namespace Flyback.Cli;
-
-/// <summary>How long and how large two patches are played to be compared.</summary>
-internal sealed record CompareOptions(
-    double Seconds = 10d,
-    int Width = 320,
-    int Height = 180,
-    double Fps = MovieRenderer.DefaultFrameRate,
-    bool Json = false);
-
-/// <summary>Where one sink of two patches first parted, or null where it never did.</summary>
-/// <param name="Seconds">When they parted.</param>
-/// <param name="Most">The largest difference: a sample's value, or a byte of a pixel.</param>
-/// <param name="Count">How many samples or frames differ.</param>
-/// <param name="Channel">Which channel the sound parted in.</param>
-/// <param name="Frame">Which frame the picture parted in.</param>
-internal sealed record Parting(double Seconds, double Most, long Count, string? Channel = null, int? Frame = null);
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Plays two patches side by side and says whether they are the same instrument:

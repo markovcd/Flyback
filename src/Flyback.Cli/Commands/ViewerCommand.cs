@@ -1,8 +1,9 @@
 using System.CommandLine;
 using System.Diagnostics;
+using Flyback.Cli.Common;
 using Flyback.Core;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// <c>flyback-cli viewer</c>: the viewer, reached from where a person or an agent looks

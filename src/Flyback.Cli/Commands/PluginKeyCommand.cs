@@ -1,8 +1,9 @@
 using System.Security.Cryptography;
+using Flyback.Cli.Common;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Commands;
 
 /// <summary>Makes the key a plugin's packages are signed with (ADR-0132).</summary>
 internal static class PluginKeyCommand

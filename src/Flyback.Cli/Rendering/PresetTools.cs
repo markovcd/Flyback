@@ -1,22 +1,10 @@
 using System.Diagnostics;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 
-namespace Flyback.Cli;
-
-/// <summary>What ffmpeg said and how it ended.</summary>
-internal sealed record Ran(int Exit, byte[] Output, string Error, bool TimedOut = false)
-{
-    public bool Ok => Exit == 0 && !TimedOut;
-}
-
-/// <summary>What a preset's media is made with: the renderer here, and ffmpeg.</summary>
-internal interface IPresetTools
-{
-    /// <summary>What <see cref="RenderCommand.Run"/> answers for the patch.</summary>
-    int Render(Opened patch, RenderOptions options, TextWriter error, CancellationToken cancellation);
-
-    Task<Ran> Ffmpeg(IReadOnlyList<string> arguments, CancellationToken cancellation);
-}
+namespace Flyback.Cli.Rendering;
 
 internal sealed class PresetTools(string ffmpeg, TimeSpan timeout) : IPresetTools
 {

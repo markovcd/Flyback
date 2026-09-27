@@ -2,13 +2,14 @@ using System.CommandLine;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Flyback.Cli.Models;
+using Flyback.Cli.Common;
+using Flyback.Cli.Rendering;
 using Flyback.Core;
 using Flyback.Core.Render;
+using PluginRegistry = Flyback.Cli.Plugins;
 
-namespace Flyback.Cli;
-
-/// <summary>A preset the site is waiting on media for.</summary>
-internal sealed record Waiting(string Id, string Name, string FileName);
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Renders the preset site's shared presets into its media folder, for the
@@ -23,7 +24,7 @@ internal static class RenderPresetsCommand
 {
     private static readonly JsonSerializerOptions Web = new(JsonSerializerDefaults.Web);
 
-    public static Command Build(Plugins plugins)
+    public static Command Build(PluginRegistry plugins)
     {
         var server = new Option<string>("--server")
         {

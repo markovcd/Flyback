@@ -1,37 +1,12 @@
 using System.Globalization;
+using Flyback.Cli.Models;
+using Flyback.Cli.Common;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
-namespace Flyback.Cli;
-
-/// <summary>Everything about a render that is not the patch.</summary>
-/// <param name="At">Which moment a still is of. Ignored by the two that have a length instead.</param>
-/// <param name="Format">
-/// Which of <see cref="ClipFormats"/> to write, by id, or null to take it from the
-/// extension of <paramref name="Out"/>.
-/// </param>
-/// <param name="Ffmpeg">
-/// Where ffmpeg is, for a format that needs it. Null looks on <c>PATH</c>.
-/// </param>
-/// <param name="Loudness">
-/// Whether to measure the sound as it is written and say how loud it came out.
-/// Ignored for a still, which has none.
-/// </param>
-/// <param name="Interpreted">Keep the programs on the interpreter rather than compiling them.</param>
-internal sealed record RenderOptions(
-    FileInfo Out,
-    int Width = 1920,
-    int Height = 1080,
-    double At = 0d,
-    double Seconds = 10d,
-    double Fps = MovieRenderer.DefaultFrameRate,
-    int Quality = JpegWriter.DefaultQuality,
-    string? Format = null,
-    string? Ffmpeg = null,
-    bool Loudness = false,
-    bool Interpreted = false);
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Writes a patch to a file: a PNG of one moment, a sound file, or a clip of both.

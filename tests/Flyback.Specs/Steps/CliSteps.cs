@@ -6,6 +6,9 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 
+using Flyback.Cli.Common;
+using PluginRegistry = Flyback.Cli.Plugins;
+
 namespace Flyback.Specs.Steps;
 
 /// <summary>
@@ -58,7 +61,7 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
         code = Cli.Program.Run(
             arguments,
-            new Cli.Plugins(() => PluginCatalog.Empty, folder.FullName, null),
+            new PluginRegistry(() => PluginCatalog.Empty, folder.FullName, null),
             new InvocationConfiguration { Output = output, Error = error });
 
         said = output + Environment.NewLine + error;

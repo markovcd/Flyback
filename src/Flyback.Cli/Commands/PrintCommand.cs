@@ -2,8 +2,9 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.Cli.Common;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Writes a patch out as text in the language, and can say whether the text it

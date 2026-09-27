@@ -6,6 +6,9 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
+using Flyback.Cli.Common;
+using PluginRegistry = Flyback.Cli.Plugins;
+
 namespace Flyback.Specs.Steps;
 
 /// <summary>What a module and its sockets say they are for, as the assistant and the command line read it.</summary>
@@ -51,7 +54,7 @@ public sealed class HelpSteps
 
         var code = Cli.Program.Run(
             ["modules", NodeCatalog.FilterTypeId],
-            new Cli.Plugins(() => PluginCatalog.Empty, Path.GetTempPath(), null),
+            new PluginRegistry(() => PluginCatalog.Empty, Path.GetTempPath(), null),
             new InvocationConfiguration { Output = output, Error = error });
 
         code.ShouldBe(Exit.Ok, error.ToString());

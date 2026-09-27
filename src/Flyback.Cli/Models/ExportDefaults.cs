@@ -2,7 +2,7 @@ using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Render;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Models;
 
 /// <summary>
 /// What <c>render</c> writes when a flag is left out: the editor's preview size and

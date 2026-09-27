@@ -2,7 +2,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Common;
 
 /// <summary>The few things every command writes the same way.</summary>
 internal static class Writing

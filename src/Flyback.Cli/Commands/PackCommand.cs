@@ -1,9 +1,10 @@
 using System.Text.Json;
+using Flyback.Cli.Common;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
-namespace Flyback.Cli;
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Packs a patch and everything it names into one file.

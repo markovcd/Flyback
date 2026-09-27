@@ -9,6 +9,9 @@ using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Specs.Support;
 
+using Flyback.Cli.Common;
+using PluginRegistry = Flyback.Cli.Plugins;
+
 namespace Flyback.Specs.Steps;
 
 /// <summary>Saving, opening, writing out as text, undoing and pasting.</summary>
@@ -116,10 +119,10 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
 
         var code = Cli.Program.Run(
             ["print", "--preset", name],
-            new Cli.Plugins(() => Plugins.Hosting.PluginCatalog.Empty, "nowhere", null),
+            new PluginRegistry(() => Plugins.Hosting.PluginCatalog.Empty, "nowhere", null),
             new System.CommandLine.InvocationConfiguration { Output = output, Error = error });
 
-        code.ShouldBe(Cli.Exit.Ok, error.ToString());
+        code.ShouldBe(Exit.Ok, error.ToString());
         Read(output.ToString());
     }
 

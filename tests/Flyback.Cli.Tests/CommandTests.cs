@@ -3,7 +3,11 @@ using Flyback.Core.Render;
 using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
 using Flyback.Plugins.Hosting;
+using PluginRegistry = Flyback.Cli.Plugins;
 using Shouldly;
 using Xunit;
 
@@ -138,7 +142,7 @@ public class CommandTests
         var output = new StringWriter();
         var code = Program.Run(
             ["check", file.FullName, "--json"],
-            new Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
             new InvocationConfiguration { Output = output, Error = TextWriter.Null });
 
         code.ShouldBe(Exit.Problems);
@@ -488,7 +492,7 @@ public class CommandTests
 
         var code = Program.Run(
             args,
-            new Plugins(() => PluginCatalog.Empty, "nowhere", null),
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
             new InvocationConfiguration { Output = output, Error = error });
 
         code.ShouldBe(exit, error.ToString());
@@ -505,7 +509,7 @@ public class CommandTests
 
         var code = Program.Run(
             ["print", "--preset", "Broken"],
-            new Plugins(() => catalog, "nowhere", null),
+            new PluginRegistry(() => catalog, "nowhere", null),
             new InvocationConfiguration { Output = TextWriter.Null, Error = error });
 
         code.ShouldBe(Exit.Failed);

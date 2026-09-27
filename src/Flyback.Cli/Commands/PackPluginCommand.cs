@@ -2,13 +2,12 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Flyback.Cli.Models;
+using Flyback.Cli.Common;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Cli;
-
-/// <summary>What one run of the SDK came to: its exit code and everything it printed.</summary>
-internal sealed record Published(int Code, string Output);
+namespace Flyback.Cli.Commands;
 
 /// <summary>
 /// Makes a <c>.fbkp</c> out of a plugin project or the folder it was built into, signs

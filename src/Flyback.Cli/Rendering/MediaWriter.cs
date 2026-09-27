@@ -1,4 +1,4 @@
-namespace Flyback.Cli;
+namespace Flyback.Cli.Rendering;
 
 /// <summary>
 /// Puts a preset's files into the share the site serves, each whole or not at all.

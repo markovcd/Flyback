@@ -1,4 +1,4 @@
-namespace Flyback.Cli;
+namespace Flyback.Cli.Rendering;
 
 /// <summary>The bars the site's player draws for a track.</summary>
 internal static class Peaks

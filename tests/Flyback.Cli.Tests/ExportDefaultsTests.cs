@@ -2,6 +2,8 @@ using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 
+using Flyback.Cli.Models;
+
 namespace Flyback.Cli.Tests;
 
 /// <summary>What <c>render</c> takes from the editor's settings when a flag is left out.</summary>

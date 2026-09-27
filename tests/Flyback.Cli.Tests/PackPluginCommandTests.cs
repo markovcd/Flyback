@@ -4,6 +4,10 @@ using Flyback.Plugins.Sample;
 using Shouldly;
 using Xunit;
 
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
+
 namespace Flyback.Cli.Tests;
 
 /// <summary><c>pack-plugin</c>, with a stand-in for the SDK wherever a project is built.</summary>

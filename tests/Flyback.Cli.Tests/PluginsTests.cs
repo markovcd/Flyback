@@ -3,6 +3,8 @@ using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
 
+using PluginRegistry = Flyback.Cli.Plugins;
+
 namespace Flyback.Cli.Tests;
 
 /// <summary>
@@ -22,7 +24,7 @@ public class PluginsTests
 
         public StringWriter Report { get; } = new();
 
-        public Plugins Plugins => field ??= new Plugins(Scan, "nowhere", Report);
+        public PluginRegistry Plugins => field ??= new PluginRegistry(Scan, "nowhere", Report);
 
         private PluginCatalog Scan()
         {
@@ -97,7 +99,7 @@ public class PluginsTests
     {
         var scans = 0;
 
-        var plugins = new Plugins(
+        var plugins = new PluginRegistry(
             () =>
             {
                 scans++;

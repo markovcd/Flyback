@@ -2,11 +2,16 @@ using System.CommandLine;
 using System.CommandLine.Completions;
 using System.CommandLine.Parsing;
 using System.Text;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
+using Flyback.Cli.Rendering;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
+using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli;
 
@@ -39,7 +44,7 @@ internal static class Program
         // before there is anything to load or parse: its --help is its own.
         if (ViewerCommand.Claims(args)) return ViewerCommand.Run(args[1..], Console.Error);
 
-        var plugins = new Plugins(
+        var plugins = new PluginRegistry(
             PluginHost.Load,
             PluginHost.DefaultDirectory,
 
@@ -52,7 +57,7 @@ internal static class Program
     }
 
     /// <summary>The commands, and what the shell is told the chosen one did.</summary>
-    internal static int Run(string[] args, Plugins plugins, InvocationConfiguration configuration)
+    internal static int Run(string[] args, PluginRegistry plugins, InvocationConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
@@ -100,7 +105,7 @@ internal static class Program
     }
 
     /// <summary>Plays two patches side by side and says whether they are the same instrument.</summary>
-    private static Command Compare(Plugins plugins, Option<bool> json)
+    private static Command Compare(PluginRegistry plugins, Option<bool> json)
     {
         var was = new Argument<FileInfo>("was") { Description = "The patch as it was." };
         var now = new Argument<FileInfo>("now") { Description = "The patch as it is now." };
@@ -153,7 +158,7 @@ internal static class Program
     }
 
     /// <summary>Lists the installed catalog, which is what a plugin adds to, or describes one module in it.</summary>
-    private static Command Modules(Plugins plugins, Option<bool> json)
+    private static Command Modules(PluginRegistry plugins, Option<bool> json)
     {
         var module = new Argument<string?>("module")
         {
@@ -186,7 +191,7 @@ internal static class Program
     /// needs the plugin catalog rather than the engine: what it asks and what
     /// it writes both belong to a plugin.
     /// </summary>
-    private static Command Probe(Plugins plugins, Option<bool> json)
+    private static Command Probe(PluginRegistry plugins, Option<bool> json)
     {
         var provider = new Option<string>("--provider")
         {
@@ -252,7 +257,7 @@ internal static class Program
         return command;
     }
 
-    private static Command Render(Plugins plugins, Argument<FileInfo> patch, ExportDefaults defaults)
+    private static Command Render(PluginRegistry plugins, Argument<FileInfo> patch, ExportDefaults defaults)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -382,7 +387,7 @@ internal static class Program
     /// than a report about one, so there is nothing for a <c>--json</c> to be an
     /// alternative to.
     /// </summary>
-    private static Command Print(Plugins plugins)
+    private static Command Print(PluginRegistry plugins)
     {
         var patch = new Argument<FileInfo?>("patch")
         {
@@ -514,7 +519,7 @@ internal static class Program
     /// answering for one, so it takes an output path as well as the <c>--json</c> the
     /// reports below take.
     /// </summary>
-    private static Command Pack(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Pack(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var output = new Option<FileInfo>("--out", "-o")
         {
@@ -606,7 +611,7 @@ internal static class Program
         return command;
     }
 
-    private static Command Check(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Check(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var strict = new Option<bool>("--strict")
         {
@@ -654,7 +659,7 @@ internal static class Program
         return command;
     }
 
-    private static Command Info(Plugins plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Info(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
     {
         var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
         {

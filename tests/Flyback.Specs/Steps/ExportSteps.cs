@@ -10,6 +10,9 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 
+using Flyback.Cli.Common;
+using PluginRegistry = Flyback.Cli.Plugins;
+
 namespace Flyback.Specs.Steps;
 
 /// <summary>
@@ -104,7 +107,7 @@ public sealed class ExportSteps(PatchContext context) : IDisposable
 
         var code = Cli.Program.Run(
             args,
-            new Cli.Plugins(() => PluginCatalog.Empty, folder.FullName, null),
+            new PluginRegistry(() => PluginCatalog.Empty, folder.FullName, null),
             new InvocationConfiguration { Output = TextWriter.Null, Error = error });
 
         code.ShouldBe(Exit.Ok, error.ToString());
