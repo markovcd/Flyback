@@ -48,8 +48,6 @@ internal sealed class MainWindow : Window
 
     private readonly SettingsSession settingsSession;
 
-    private readonly OutputSettingRepository outputSettingRepository;
-
     private readonly CanvasSection canvasSection;
 
     private readonly UpdatesSection updatesSection;
@@ -109,6 +107,8 @@ internal sealed class MainWindow : Window
 
     private readonly PlaybackControls playbackControls;
 
+    private readonly EditorStart editorStart;
+
     private readonly EditorOpened editorOpened;
 
     /// <summary>
@@ -129,9 +129,7 @@ internal sealed class MainWindow : Window
     /// <summary>What unsaved work there is, and the question closing it asks.</summary>
     private readonly UnsavedWork unsaved;
 
-    /// <param name="setup">Where this machine keeps things and what this launch asked for.</param>
     public MainWindow(
-        EditorSetup setup,
         NodeEditor editor,
         SourceView source,
         Document document,
@@ -161,11 +159,11 @@ internal sealed class MainWindow : Window
         WorkRecovery workRecovery,
         PlaybackControls playbackControls,
         EditorOpened editorOpened,
+        EditorStart editorStart,
         WindowLayoutKeeper layoutKeeper,
         FullScreenPreview fullScreen,
         TransportControls transport,
         ShellLayout shell,
-        OutputSettingRepository outputSettingRepository,
         OutputSettingsUse outputSettingsUse,
         SettingsSession settingsSession,
         IDialog dialog)
@@ -185,6 +183,7 @@ internal sealed class MainWindow : Window
         this.playback = playback;
         this.playbackControls = playbackControls;
         this.editorOpened = editorOpened;
+        this.editorStart = editorStart;
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.settingsSession = settingsSession;
@@ -204,7 +203,6 @@ internal sealed class MainWindow : Window
         this.fullScreen = fullScreen;
         this.transport = transport;
         this.shell = shell;
-        this.outputSettingRepository = outputSettingRepository;
         this.dialog = dialog;
 
         // Closed until the toolbar opens it.
@@ -223,8 +221,6 @@ internal sealed class MainWindow : Window
                 request.Fail(ex);
             }
         };
-
-        setupOfLaunch = setup;
 
         // Where the last document's knobs were left says nothing about this one's.
         files.Arrived += (_, _) => knobs.Hub.Forget();
@@ -328,48 +324,8 @@ internal sealed class MainWindow : Window
         if (started) return;
         started = true;
 
-        keeper.Start();
-
-        layoutKeeper.Load();
-        layoutKeeper.Apply(this);
-
-        // Before anything is compiled and before a panel is drawn, because a
-        // MIDI In asks this what there is to listen to as soon as either
-        // happens. The list is the window's: the computer's keyboard is only an
-        // instrument while there is a window for it to be typed into.
-        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
-
-        // Here rather than at the launch, because what a run started as includes
-        // which backend actually opened, and that is only known once one has been
-        // asked for.
-        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights());
-
-        // The preset the box opens on: whichever the Graphics section's "Startup
-        // patch" is set to, or the first of the list for a name it no longer
-        // offers — said here so the title and the toolbar's own selection agree
-        // with the canvas from the first frame (ADR-0093).
-        presets.StartOn(outputSettingRepository.Current.DefaultPreset);
-
-        // No manual switch any more — Volume is the one now, and the Recompile
-        // that patch assignment just ran already brought sound up to match its
-        // default (ADR-0079). What is left to say only where turning it up would
-        // not help: nothing was there to open it with.
-        if (playback.Sound.Output is null)
-            Report("No sound backend is installed, so Volume will do nothing. "
-                + "See About for where plugins are looked for.");
-
-        // Said once, because nothing else on screen shows it, and a run that is
-        // slower for a reason should say which.
-        if (setupOfLaunch.Interpreted)
-            Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
-
-        // Last, so it is what the bar is showing when the window first appears.
-        if (setupOfLaunch.WhatsNew is null && setupOfLaunch.OpeningNote is not null) Report(setupOfLaunch.OpeningNote);
-
-        shell.ApplyPanelLayout();
+        editorStart.Start(this);
     }
-
-    private readonly EditorSetup setupOfLaunch;
 
     private bool started;
 
@@ -1066,22 +1022,6 @@ internal sealed class MainWindow : Window
     /// nowhere to send anything is nothing at all.
     /// </summary>
     private readonly Usage usage;
-
-    /// <summary>
-    /// How tall each screen is in pixels, for what a run started as to put in a band;
-    /// empty where the platform will not say.
-    /// </summary>
-    private IReadOnlyList<int> ScreenHeights()
-    {
-        try
-        {
-            return Screens.All.Select(screen => screen.Bounds.Height).ToList();
-        }
-        catch (Exception)
-        {
-            return [];
-        }
-    }
 
     #endregion
 }
