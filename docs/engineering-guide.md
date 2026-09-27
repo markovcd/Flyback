@@ -404,6 +404,13 @@ at a frame, hearing a clip). The two session loops in `OpenAiSession` and
 `GeminiSession` are similar on purpose and stay separate; the reason is in
 `GeminiSession.cs`'s header.
 
+Local decision models have a separate contract: `ILayaQuestioner` accepts JSON
+state and typed choice, score or proposition questions, and returns typed
+answers with their probabilities. `ILayaModelManager` describes how callers
+list, install and remove manifest-pinned model packages under the user's local
+application data. These are plumbing only; no ONNX runtime, model catalog or
+assistant tool is shipped yet.
+
 `tests/Flyback.Plugins.Sample` is the worked example of a module plugin, and
 [`site/plugins.html`](../site/plugins.html) is the published guide.
 

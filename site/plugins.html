@@ -290,6 +290,13 @@
     <p>A single plugin may call several. The Voice plugin adds eleven modules and four presets; a platform
     plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id,
     and a second registration under an id already taken is ignored, whichever plugin it comes from.</p>
+
+    <p>Local decision models do not register through this table. The separate <code>ILayaQuestioner</code>
+    contract takes structured state and typed <code>choice</code>, <code>score</code> or <code>noul</code>
+    questions, and returns typed answers with probabilities. <code>ILayaModelManager</code> describes listing,
+    installing and removing checksum-pinned packages under the user's local application data. A package
+    manifest names the ONNX graph and any supporting files, such as tokenizer and configuration data. These
+    are contracts only so far; Flyback does not yet ship an ONNX runtime, model catalog or assistant tool.</p>
   </section>
 
   <section id="module">

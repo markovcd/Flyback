@@ -1,1 +1,65 @@
 #nullable enable
+Flyback.Plugins.Assist.ILayaModelManager
+Flyback.Plugins.Assist.ILayaModelManager.AvailableModels.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.LayaModelDefinition!>!
+Flyback.Plugins.Assist.ILayaModelManager.InstallAsync(string! modelId, System.IProgress<Flyback.Plugins.Assist.LayaModelDownloadProgress!>? progress = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.InstalledLayaModel!>!
+Flyback.Plugins.Assist.ILayaModelManager.InstalledModels.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.InstalledLayaModel!>!
+Flyback.Plugins.Assist.ILayaModelManager.RemoveAsync(string! modelId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Flyback.Plugins.Assist.ILayaQuestioner
+Flyback.Plugins.Assist.ILayaQuestioner.AskAsync(string! modelId, Flyback.Plugins.Assist.LayaRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.LayaResponse!>!
+Flyback.Plugins.Assist.InstalledLayaModel
+Flyback.Plugins.Assist.InstalledLayaModel.Definition.get -> Flyback.Plugins.Assist.LayaModelDefinition!
+Flyback.Plugins.Assist.InstalledLayaModel.Directory.get -> string!
+Flyback.Plugins.Assist.InstalledLayaModel.InstalledLayaModel(Flyback.Plugins.Assist.LayaModelDefinition! definition, string! directory) -> void
+Flyback.Plugins.Assist.InstalledLayaModel.OnnxPath.get -> string!
+Flyback.Plugins.Assist.LayaAnswer
+Flyback.Plugins.Assist.LayaAnswer.Choice
+Flyback.Plugins.Assist.LayaAnswer.Choice.Choice(string! value, System.Collections.Generic.IReadOnlyDictionary<string!, double>! probabilities) -> void
+Flyback.Plugins.Assist.LayaAnswer.Choice.Probabilities.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>!
+Flyback.Plugins.Assist.LayaAnswer.Choice.Value.get -> string!
+Flyback.Plugins.Assist.LayaAnswer.LayaAnswer() -> void
+Flyback.Plugins.Assist.LayaAnswer.Noul
+Flyback.Plugins.Assist.LayaAnswer.Noul.Noul(double probability) -> void
+Flyback.Plugins.Assist.LayaAnswer.Noul.Probability.get -> double
+Flyback.Plugins.Assist.LayaAnswer.Score
+Flyback.Plugins.Assist.LayaAnswer.Score.Probabilities.get -> System.Collections.Generic.IReadOnlyList<double>!
+Flyback.Plugins.Assist.LayaAnswer.Score.Score(double value, System.Collections.Generic.IReadOnlyList<double>! probabilities) -> void
+Flyback.Plugins.Assist.LayaAnswer.Score.Value.get -> double
+Flyback.Plugins.Assist.LayaModelArtifact
+Flyback.Plugins.Assist.LayaModelArtifact.LayaModelArtifact(string! path, System.Uri! source, string! sha256) -> void
+Flyback.Plugins.Assist.LayaModelArtifact.Path.get -> string!
+Flyback.Plugins.Assist.LayaModelArtifact.Sha256.get -> string!
+Flyback.Plugins.Assist.LayaModelArtifact.Source.get -> System.Uri!
+Flyback.Plugins.Assist.LayaModelDefinition
+Flyback.Plugins.Assist.LayaModelDefinition.Artifacts.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.LayaModelArtifact!>!
+Flyback.Plugins.Assist.LayaModelDefinition.Id.get -> string!
+Flyback.Plugins.Assist.LayaModelDefinition.LayaModelDefinition(string! id, string! name, string! version, string! onnxPath, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.LayaModelArtifact!>! artifacts) -> void
+Flyback.Plugins.Assist.LayaModelDefinition.Name.get -> string!
+Flyback.Plugins.Assist.LayaModelDefinition.OnnxPath.get -> string!
+Flyback.Plugins.Assist.LayaModelDefinition.Version.get -> string!
+Flyback.Plugins.Assist.LayaModelDownloadProgress
+Flyback.Plugins.Assist.LayaModelDownloadProgress.ArtifactPath.get -> string!
+Flyback.Plugins.Assist.LayaModelDownloadProgress.BytesReceived.get -> long
+Flyback.Plugins.Assist.LayaModelDownloadProgress.LayaModelDownloadProgress(string! modelId, string! artifactPath, long bytesReceived, long? totalBytes) -> void
+Flyback.Plugins.Assist.LayaModelDownloadProgress.ModelId.get -> string!
+Flyback.Plugins.Assist.LayaModelDownloadProgress.TotalBytes.get -> long?
+Flyback.Plugins.Assist.LayaQuestion
+Flyback.Plugins.Assist.LayaQuestion.Choice
+Flyback.Plugins.Assist.LayaQuestion.Choice.Choice(string! id, string! instructions, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! criteria) -> void
+Flyback.Plugins.Assist.LayaQuestion.Choice.Criteria.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Flyback.Plugins.Assist.LayaQuestion.Id.get -> string!
+Flyback.Plugins.Assist.LayaQuestion.Instructions.get -> string!
+Flyback.Plugins.Assist.LayaQuestion.LayaQuestion(string! id, string! instructions) -> void
+Flyback.Plugins.Assist.LayaQuestion.Noul
+Flyback.Plugins.Assist.LayaQuestion.Noul.Noul(string! id, string! instructions) -> void
+Flyback.Plugins.Assist.LayaQuestion.Score
+Flyback.Plugins.Assist.LayaQuestion.Score.Criteria.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Flyback.Plugins.Assist.LayaQuestion.Score.Score(string! id, string! instructions, System.Collections.Generic.IReadOnlyList<string!>! criteria) -> void
+Flyback.Plugins.Assist.LayaRequest
+Flyback.Plugins.Assist.LayaRequest.LayaRequest(System.Text.Json.JsonElement state, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.LayaQuestion!>! questions) -> void
+Flyback.Plugins.Assist.LayaRequest.Questions.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.LayaQuestion!>!
+Flyback.Plugins.Assist.LayaRequest.State.get -> System.Text.Json.JsonElement
+Flyback.Plugins.Assist.LayaResponse
+Flyback.Plugins.Assist.LayaResponse.Answers.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Assist.LayaAnswer!>!
+Flyback.Plugins.Assist.LayaResponse.Checkpoint.get -> string!
+Flyback.Plugins.Assist.LayaResponse.LayaResponse(System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Plugins.Assist.LayaAnswer!>! answers, string! checkpoint, string? revision) -> void
+Flyback.Plugins.Assist.LayaResponse.Revision.get -> string?
