@@ -20,6 +20,7 @@ internal sealed class EditorWiring(
     PatchFiles files,
     PanelKnobs knobs,
     PresetSlot presets,
+    Toolbar toolbar,
     TransportControls transport,
     Playback playback,
     ShellLayout shell,
@@ -56,6 +57,8 @@ internal sealed class EditorWiring(
         recording.Marked += (_, _) => transport.Sync();
         // A capture cannot continue after its picture disappears.
         preview.CaptureLost += recording.Stop;
+        toolbar.Knobs.IsCheckedChanged += (_, _) => shell.ShowControls(toolbar.Knobs.IsChecked == true);
+        knobs.Wanted += (_, _) => shell.ShowControls(true);
 
         playback.Compiled += (_, _) =>
         {

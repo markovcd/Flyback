@@ -192,8 +192,6 @@ internal sealed class MainWindow : Window
         // without becoming constructor dependencies between the services.
         editorWiring.Wire();
 
-        WireControls();
-
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears
         // about, and the note would hang until something else happened to move
@@ -868,17 +866,6 @@ internal sealed class MainWindow : Window
         // what the program starts in, not a change to report.
         outputSections.Show();
         outputSettingsUse.ApplyCurrent();
-    }
-
-    #endregion
-
-    #region Wiring the knobs
-
-    private void WireControls()
-    {
-        toolbar.Knobs.IsCheckedChanged += (_, _) => shell.ShowControls(toolbar.Knobs.IsChecked == true);
-
-        knobs.Wanted += (_, _) => shell.ShowControls(true);
     }
 
     #endregion
