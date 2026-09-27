@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Core.Language.Ast.Expressions;
 
 /// <summary>
 /// One output taken off what an expression places:

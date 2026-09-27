@@ -1,5 +1,4 @@
 ﻿using Flyback.Core.Language.Ast.Expressions;
-using Flyback.Core.Language.Ast;
 
 namespace Flyback.Core.Language.Ast.Statements;
 

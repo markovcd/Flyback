@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Statements;
+﻿namespace Flyback.Core.Language.Ast.Statements;
 
 /// <summary>
 /// <c>description "..."</c>: what the patch is for, in a line of prose, which may

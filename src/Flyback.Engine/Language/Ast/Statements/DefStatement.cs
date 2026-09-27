@@ -1,7 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-using Flyback.Core.Language.Ast.Expressions;
-
-namespace Flyback.Core.Language.Ast.Statements;
+﻿namespace Flyback.Core.Language.Ast.Statements;
 
 /// <summary>
 /// <c>def name(a, b) = body</c>. Expanded at every call site and never compiled

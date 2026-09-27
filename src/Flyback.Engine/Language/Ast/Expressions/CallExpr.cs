@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Core.Language.Ast.Expressions;
 
 /// <summary>
 /// Placing a module, or calling a <c>def</c>.

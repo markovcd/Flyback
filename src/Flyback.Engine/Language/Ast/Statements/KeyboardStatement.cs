@@ -1,6 +1,4 @@
-using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Statements;
+﻿namespace Flyback.Core.Language.Ast.Statements;
 
 /// <summary>
 /// <c>keyboard scale [ C D E G A ]</c> or <c>keyboard piano</c>: how the

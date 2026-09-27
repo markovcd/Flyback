@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Core.Language.Ast.Expressions;
 
 /// <summary>The one string the language has, which names a file.</summary>
 public sealed record TextExpr(string Value, int Line, int Column) : Expr(Line, Column);

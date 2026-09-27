@@ -1,6 +1,4 @@
-﻿using Flyback.Core.Language.Ast;
-
-namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Core.Language.Ast.Expressions;
 
 /// <summary>
 /// A low and a high written as one thing, which fills two sockets rather than
