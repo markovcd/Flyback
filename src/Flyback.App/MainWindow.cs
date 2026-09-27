@@ -154,6 +154,7 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         AssistantPanel assistant,
         WorkKeeper keeper,
+        WorkRecovery workRecovery,
         WindowLayoutKeeper layoutKeeper,
         FullScreenPreview fullScreen,
         TransportControls transport,
@@ -190,6 +191,7 @@ internal sealed class MainWindow : Window
         this.toolbar = toolbar;
         this.assistant = assistant;
         this.keeper = keeper;
+        this.workRecovery = workRecovery;
         this.layoutKeeper = layoutKeeper;
         this.fullScreen = fullScreen;
         this.transport = transport;
@@ -316,7 +318,7 @@ internal sealed class MainWindow : Window
         {
             if (setup.WhatsNew is not null) await dialog.Show(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
 
-            keeper.Restore(Recover);
+            keeper.Restore(workRecovery.Restore);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
             if (setup.OpenPath is { } path) await patchOpening.OpenPathAsync(path);
@@ -1081,55 +1083,12 @@ internal sealed class MainWindow : Window
 
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper keeper;
+    private readonly WorkRecovery workRecovery;
     private readonly WindowLayoutKeeper layoutKeeper;
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
 
-    /// <summary>
-    /// Puts work a crash left behind back on the canvas, as the document it was and
-    /// unsaved — it is on no disk anybody chose.
-    /// </summary>
-    /// <returns>
-    /// Whether it came back. A patch naming a module no plugin now offers is refused
-    /// as a file would be, and kept for a start that has the plugin again.
-    /// </returns>
-    internal bool Recover(RecoveredWork work)
-    {
-        var loaded = PatchIO.Read(work.Patch);
-
-        if (!loaded.IsComplete)
-        {
-            Report($"Not restored. {loaded.Summary}", loaded.Detail);
-            return false;
-        }
-
-        files.Became(
-            work.Name,
-            work.Beside,
-            work.Files is { } held ? new BundleFiles(held, files.SoundFolder, files.PictureFolder) : null);
-
-        playback.Show(loaded.Patch);
-
-        if (work.Source is { } text)
-        {
-            // Written nowhere, so all of it is unsaved text.
-            document.TakeSource(text, saved: false);
-        }
-        else
-        {
-            document.DropSource();
-        }
-
-        assistant?.Open(work.Conversation);
-        editor.History.MarkUnsaved();
-
-        // Kept at once, since the orphan it came from is about to go.
-        keeper.Keep(later: false);
-
-        Report($"Restored {work.Name ?? "the patch"} after a crash. It has not been saved.");
-
-        return true;
-    }
+    internal bool Recover(RecoveredWork work) => workRecovery.Restore(work);
 
     #endregion
 
