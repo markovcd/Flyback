@@ -26,6 +26,7 @@ public sealed class Binder
 
     private readonly ModuleNames moduleNames;
     private readonly ExpressionBinder expressions;
+    private readonly PipeLanding pipeLanding;
     private readonly Dictionary<string, DefStatement> defs = new(StringComparer.Ordinal);
     private readonly HashSet<string> expanding = new(StringComparer.Ordinal);
 
@@ -82,6 +83,7 @@ public sealed class Binder
         this.issues = issues;
 
         moduleNames = new ModuleNames(modules);
+        pipeLanding = new PipeLanding(Find, List, KindOf);
         expressions = new ExpressionBinder(new ExpressionBinder.Context
         {
             Source = Source,
@@ -1043,8 +1045,19 @@ public sealed class Binder
 
         if (landing is { } at)
             piping.Add((at, Part(piped!, 0)));
-        else if (piped is not null && !Land(def, piped, taken, expr, piping))
-            return null;
+        else if (piped is not null)
+        {
+            var result = pipeLanding.Resolve(def, piped, taken, expr);
+
+            if (result.Issue is { } issue)
+            {
+                Complain(issue.Code, expr.Line, expr.Column, issue.Message);
+                return null;
+            }
+
+            piping.AddRange(result.Inputs);
+            foreach (var (port, _) in result.Inputs) taken.Add(port);
+        }
 
         // Whatever the pipe and the named arguments left, in order.
         var free = new Queue<int>(Enumerable.Range(0, def.Inputs.Count).Where(i => !taken.Contains(i)));
@@ -1112,94 +1125,6 @@ public sealed class Binder
         if (expr.Block is { } block) Carry(node, def, block, expr.Line, expr.Column, (expr.BlockLine, expr.BlockColumn));
 
         return node;
-    }
-
-    /// <summary>
-    /// Where a pipe lands when no argument says <c>_</c>: a socket called
-    /// <c>in</c>, else a module's only socket, else a leading <c>x</c> and
-    /// <c>y</c>, else the one color socket where a color is arriving, else
-    /// nowhere.
-    /// </summary>
-    /// <remarks>
-    /// Nowhere is an error rather than a guess at the first socket left. That
-    /// guess wired a signal into <c>math.smoothstep</c>'s <c>edge0</c> and read
-    /// perfectly, and which socket was "left" hung on the arguments beside it.
-    /// </remarks>
-    private bool Land(NodeDef def, Value piped, HashSet<int> taken, CallExpr expr, List<(int, Value)> into)
-    {
-        var signal = Find(def.Inputs, "in");
-
-        // 'in' is one signal by definition, so a module that has one is a scalar
-        // position and takes the source's first output — the same thing a bare
-        // name means anywhere else a single value is wanted. A MIDI In has four
-        // outputs and 'keys |> clamp(36, 84)' means its pitch, which falls out
-        // of this rather than being a case anyone had to add.
-        // A module with one socket has nowhere else for it to go.
-        var sole = signal >= 0 ? signal : def.Inputs.Count == 1 ? 0 : -1;
-
-        if (sole >= 0 && !taken.Contains(sole))
-        {
-            taken.Add(sole);
-            into.Add((sole, Part(piped, 0)));
-
-            return true;
-        }
-
-        var free = Enumerable.Range(0, def.Inputs.Count).Where(i => !taken.Contains(i)).ToList();
-
-        if (free.Count == 0)
-        {
-            Complain(IssueCode.NoSocketFree, expr.Line, expr.Column, $"'{def.Name}' has no socket free for what is arriving.");
-            return false;
-        }
-
-        // A position takes two, and it is the only thing that does: a module
-        // whose own first sockets are 'x' and 'y' takes what the engine calls a
-        // position — the pair ADR-0050 normals to Coordinates together — so a
-        // Space chains off another without either end saying so. The module's
-        // first two, not the first two the call left, so what the arguments
-        // name never moves the landing.
-        //
-        // Forwarding every output a source has was the alternative, and
-        // 'steps |> note(note: _)' rules it out: the sequencer's gate would land in
-        // Note's octave and its index in the cents, which reads perfectly and is
-        // not a tune.
-        var position = def.Inputs.Count >= 2
-            && Same(def.Inputs[0].Name, "x")
-            && Same(def.Inputs[1].Name, "y")
-            && !taken.Contains(0)
-            && !taken.Contains(1)
-            && Width(piped) >= 2;
-
-        // A color into a module that takes exactly one color can only mean that
-        // one, whatever else the module has.
-        var colors = Enumerable.Range(0, def.Inputs.Count).Where(i => def.Inputs[i].Kind == PortKind.Color).ToList();
-
-        if (!position && colors is [var tint] && !taken.Contains(tint) && KindOf(piped) == PortKind.Color)
-        {
-            taken.Add(tint);
-            into.Add((tint, Part(piped, 0)));
-
-            return true;
-        }
-
-        if (!position)
-        {
-            var example = def.Inputs[free[0]].Name.Replace(' ', '_');
-            var why = signal >= 0 ? "its 'in' is already given" : "it has no socket called 'in'";
-
-            Complain(IssueCode.PipeLandsNowhere, expr.Line, expr.Column,
-                $"'{def.Name}': {why}, so say where the pipe lands: "
-                + $"'{expr.Target}({example}: _)'. It has {List(def.Inputs)}.");
-            return false;
-        }
-
-        taken.Add(0);
-        taken.Add(1);
-        into.Add((0, Part(piped, 0)));
-        into.Add((1, Part(piped, 1)));
-
-        return true;
     }
 
     /// <summary>
@@ -1798,7 +1723,7 @@ public sealed class Binder
         return -1;
     }
 
-    private static bool Same(string port, string written) =>
+    internal static bool Same(string port, string written) =>
         string.Equals(port.Replace(' ', '_'), written, StringComparison.OrdinalIgnoreCase);
 
     private static string List(IReadOnlyList<PortSpec> ports) =>
