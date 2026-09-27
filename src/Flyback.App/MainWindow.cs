@@ -201,6 +201,7 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         AssistantPanel assistant,
         WorkKeeper keeper,
+        WindowLayoutKeeper layoutKeeper,
         OutputSettingRepository outputSettingRepository,
         IDialog dialog)
     {
@@ -230,6 +231,7 @@ internal sealed class MainWindow : Window
         this.statusBar = statusBar;
         this.assistant = assistant;
         this.keeper = keeper;
+        this.layoutKeeper = layoutKeeper;
         this.outputSettingRepository = outputSettingRepository;
         this.dialog = dialog;
 
@@ -253,7 +255,6 @@ internal sealed class MainWindow : Window
         outputSettingsPath = setup.OutputSettingsPath;
 
         setupOfLaunch = setup;
-        layoutPath = setup.LayoutPath;
 
         // Where the last document's knobs were left says nothing about this one's.
         files.Arrived += (_, _) => knobs.Hub.Forget();
@@ -297,7 +298,7 @@ internal sealed class MainWindow : Window
         MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.Manual;
         Background = new SolidColorBrush(Colors.Window);
-        TrackNormalSize();
+        layoutKeeper.Track(this);
 
         editor.History.PatchChanged += (_, _) =>
         {
@@ -378,8 +379,8 @@ internal sealed class MainWindow : Window
 
         keeper.Start();
 
-        if (setupOfLaunch.LayoutPath is not null) layout = WindowLayout.Load(setupOfLaunch.LayoutPath);
-        ApplyWindowLayout();
+        layoutKeeper.Load();
+        layoutKeeper.Apply(this);
 
         // Before anything is compiled and before a panel is drawn, because a
         // MIDI In asks this what there is to listen to as soon as either
@@ -1892,50 +1893,13 @@ internal sealed class MainWindow : Window
 
     #region The layout, kept between runs
 
-    // Leaving the window as it was left: size, monitor, panels and views, kept in
-    // WindowLayout (ADR-0121).
-
-    /// <summary>Where the layout is kept, or null to keep it nowhere.</summary>
-    private readonly string? layoutPath;
-
-    /// <summary>The layout read at startup, then the one last written.</summary>
-    private WindowLayout? layout;
-
-    /// <summary>The last client size the window had while it was neither maximized nor full screen.</summary>
-    private Size? normalSize;
-
-    private void TrackNormalSize() =>
-        // Only a drag of the frame: maximizing resizes the window too, and that is
-        // not a size to come back to.
-        Resized += (_, e) =>
-        {
-            if (e.Reason == WindowResizeReason.User && WindowState == WindowState.Normal) normalSize = e.ClientSize;
-        };
-
-    /// <summary>Size, state and monitor. Before the window is shown.</summary>
-    private void ApplyWindowLayout()
-    {
-        if (layout is not { } saved) return;
-
-        if (saved.Width > 0 && saved.Height > 0)
-        {
-            Width = Math.Max(saved.Width, MinWidth);
-            Height = Math.Max(saved.Height, MinHeight);
-        }
-
-        normalSize = new Size(Width, Height);
-
-        if (saved.Maximized) WindowState = WindowState.Maximized;
-
-        // The platform places the window, so which monitor it chose is only known
-        // once it is up.
-        Opened += (_, _) => MonitorPlacement.Return(this, saved.Monitor);
-    }
+    // The panels and views half of leaving the window as it was left (ADR-0121);
+    // size, state and monitor are WindowLayoutKeeper's.
 
     /// <summary>The panels and the views. After the first patch is on the canvas.</summary>
     private void ApplyPanelLayout()
     {
-        if (layout is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
+        if (layoutKeeper.Saved is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
 
         columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
         columns.ColumnDefinitions[SideColumn].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
@@ -1960,20 +1924,11 @@ internal sealed class MainWindow : Window
         if (saved.Code) document.ShowCode(true);
     }
 
-    /// <summary>Writes the layout down. A settings file is not worth a failure to close.</summary>
     private void RememberLayout()
     {
-        if (layoutPath is null || columns is null) return;
+        if (columns is null) return;
 
-        try
-        {
-            layout = CaptureLayout();
-            layout.Save(layoutPath);
-        }
-        catch (Exception ex)
-        {
-            Trace.WriteLine($"Could not save the window layout: {ex.Message}");
-        }
+        layoutKeeper.Remember(CaptureLayout);
     }
 
     private WindowLayout CaptureLayout()
@@ -1997,7 +1952,7 @@ internal sealed class MainWindow : Window
                 : measure((panel?.Parent as Grid)?.RowDefinitions[2].Height ?? new GridLength(1, GridUnitType.Star));
 
         var state = away ? stateBefore : WindowState;
-        var size = WindowState == WindowState.Normal ? ClientSize : normalSize;
+        var size = WindowState == WindowState.Normal ? ClientSize : layoutKeeper.NormalSize;
 
         // A splitter leaves star weights in pixels, far past what the file accepts.
         var (canvas, side) = Share(Column(WideColumn), Column(SideColumn),
@@ -2011,9 +1966,9 @@ internal sealed class MainWindow : Window
         return new WindowLayout
         {
             Maximized = state == WindowState.Maximized,
-            Width = size?.Width ?? layout?.Width ?? 0,
-            Height = size?.Height ?? layout?.Height ?? 0,
-            Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layout?.Monitor,
+            Width = size?.Width ?? layoutKeeper.Saved?.Width ?? 0,
+            Height = size?.Height ?? layoutKeeper.Saved?.Height ?? 0,
+            Monitor = MonitorPlacement.Describe(Screens.ScreenFromWindow(this)) ?? layoutKeeper.Saved?.Monitor,
 
             CanvasWeight = canvas,
             SideWeight = side,
@@ -2191,6 +2146,7 @@ internal sealed class MainWindow : Window
 
     /// <summary>Unsaved work kept against a crash, or null where none is kept — which is every test.</summary>
     private readonly WorkKeeper keeper;
+    private readonly WindowLayoutKeeper layoutKeeper;
 
     private readonly OutputSettingRepository outputSettingRepository;
 

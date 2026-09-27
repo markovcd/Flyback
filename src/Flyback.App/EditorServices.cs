@@ -107,6 +107,7 @@ internal static class EditorServices
         services.AddSingleton<ChosenAssistant>();
 
         services.AddSingleton<WorkKeeper>();
+        services.AddSingleton<WindowLayoutKeeper>();
 
         services.AddSingleton<ReportLine>();
         services.AddCanvas();
