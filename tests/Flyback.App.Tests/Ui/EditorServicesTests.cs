@@ -84,6 +84,8 @@ public class EditorServicesTests : UiTest
 
     private sealed class NoPickers : IFilePickers
     {
+        public Task<IStorageFile?> FromPath(string path) => Task.FromResult<IStorageFile?>(null);
+
         public Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options) => Task.FromResult<IReadOnlyList<IStorageFile>>([]);
 
         public Task<IStorageFile?> Save(FilePickerSaveOptions options) => Task.FromResult<IStorageFile?>(null);

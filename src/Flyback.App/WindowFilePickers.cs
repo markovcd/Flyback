@@ -4,6 +4,9 @@ namespace Flyback.App;
 
 internal sealed class WindowFilePickers(WindowHolder holder) : IFilePickers
 {
+    public Task<IStorageFile?> FromPath(string path) =>
+        holder.Instance.StorageProvider.TryGetFileFromPathAsync(path);
+
     public Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options) =>
         holder.Instance.StorageProvider.OpenFilePickerAsync(options);
 

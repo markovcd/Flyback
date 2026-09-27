@@ -65,13 +65,12 @@ internal sealed class MainWindow : Window
     /// <summary>Which file the patch is, and opening and saving it.</summary>
     private readonly PatchFiles files;
 
+    private readonly PatchOpening patchOpening;
+
     private readonly PreviewHost preview;
 
     /// <summary>The preset slot on the toolbar, and the gallery it opens.</summary>
     private readonly PresetSlot presets;
-
-    /// <summary>The bar along the bottom.</summary>
-    private readonly StatusBar statusBar;
 
     /// <summary>The bar along the top.</summary>
     private readonly Toolbar toolbar;
@@ -130,6 +129,7 @@ internal sealed class MainWindow : Window
         SourceView source,
         Document document,
         PatchFiles files,
+        PatchOpening patchOpening,
         UnsavedWork unsaved,
         PreviewHost preview,
         ReportLine report,
@@ -149,7 +149,6 @@ internal sealed class MainWindow : Window
         PluginInstalls pluginInstalls,
         PresetSlot presets,
         Toolbar toolbar,
-        StatusBar statusBar,
         TakeRecording recording,
         AssistantPanel assistant,
         WorkKeeper keeper,
@@ -164,6 +163,7 @@ internal sealed class MainWindow : Window
         this.source = source;
         this.document = document;
         this.files = files;
+        this.patchOpening = patchOpening;
         this.unsaved = unsaved;
         this.preview = preview;
         this.report = report;
@@ -183,7 +183,6 @@ internal sealed class MainWindow : Window
         this.pluginInstalls = pluginInstalls;
         this.presets = presets;
         this.toolbar = toolbar;
-        this.statusBar = statusBar;
         this.assistant = assistant;
         this.keeper = keeper;
         this.layoutKeeper = layoutKeeper;
@@ -319,8 +318,7 @@ internal sealed class MainWindow : Window
             keeper.Restore(Recover);
 
             // A plugin package replaces nothing, so it asks about nothing unsaved.
-            if (setup.OpenPath is { } path && (PluginPackage.Named(path) || await unsaved.MayReplaceThePatchAsync()))
-                await OpenPathAsync(path);
+            if (setup.OpenPath is { } path) await patchOpening.OpenPathAsync(path);
 
             if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
         };
@@ -394,7 +392,7 @@ internal sealed class MainWindow : Window
     /// <summary>What each button on the toolbar does. Called once, as the window is built.</summary>
     private void WireToolbar()
     {
-        toolbar.Open.Click += async (_, _) => await OpenAnotherPatchAsync();
+        toolbar.Open.Click += async (_, _) => await patchOpening.PickAndOpenAsync();
         toolbar.Save.Click += async (_, _) => await unsaved.SavePatchAsync();
 
         // All three go to whichever view is showing — see Document.
@@ -722,7 +720,7 @@ internal sealed class MainWindow : Window
             // Saving is one gesture here — the picker is where a name is
             // chosen — so there is no second key for saving under another one.
             case Key.O:
-                _ = OpenAnotherPatchAsync();
+                _ = patchOpening.PickAndOpenAsync();
                 e.Handled = true;
                 break;
 
@@ -840,56 +838,6 @@ internal sealed class MainWindow : Window
     internal bool IsBundle => files.IsBundle;
 
     /// <summary>
-    /// The Open gesture whole: what is unsaved is asked about, and then the
-    /// picker. The toolbar's button and Ctrl+O both come through here, so the
-    /// question cannot be stepped round by reaching for the keyboard.
-    /// </summary>
-    private async Task OpenAnotherPatchAsync()
-    {
-        if (await unsaved.MayReplaceThePatchAsync() && await files.PickOpenAsync() is { } file) await OpenFileAsync(file);
-    }
-
-    /// <summary>
-    /// Opens a file handed back by any of the routes that produce one — a
-    /// picker, a drop from the file explorer, a path named on the command
-    /// line, or a file macOS hands the program through an activation — so the
-    /// extension decides which kind it is exactly as it does for the picker.
-    /// </summary>
-    private async Task OpenFileAsync(IStorageFile file)
-    {
-        if (PluginPackage.Named(file.Name)) await pluginInstalls.InstallAsync(file);
-        else await files.OpenFileAsync(file);
-    }
-
-    /// <summary>
-    /// Opens a file already sitting on disk rather than one a picker handed
-    /// back — named on the command line when the program started, or resolved
-    /// from a plain path some other way.
-    /// </summary>
-    private async Task OpenPathAsync(string path)
-    {
-        IStorageFile? file;
-
-        try
-        {
-            file = await StorageProvider.TryGetFileFromPathAsync(path);
-        }
-        catch (Exception ex)
-        {
-            Report($"Could not open {Path.GetFileName(path)}: {ex.Message}");
-            return;
-        }
-
-        if (file is null)
-        {
-            Report($"Could not open {Path.GetFileName(path)}.");
-            return;
-        }
-
-        await OpenFileAsync(file);
-    }
-
-    /// <summary>
     /// Lets a patch, a bundle or a text file be opened by dropping it in from
     /// the file explorer — the same three kinds the picker offers, arriving
     /// without one.
@@ -913,7 +861,7 @@ internal sealed class MainWindow : Window
 
             e.Handled = true;
 
-            await OpenActivatedFileAsync(file);
+            await patchOpening.OpenActivatedFileAsync(file);
         });
     }
 
@@ -930,16 +878,7 @@ internal sealed class MainWindow : Window
     /// document would be replaced behind the sheet — and a text one takes the
     /// focus with it, out of a dialog that then no longer hears Escape.
     /// </remarks>
-    internal async Task OpenActivatedFileAsync(IStorageFile file)
-    {
-        if (dialog.IsShowing)
-        {
-            Report($"{file.Name} was not opened: there is a dialog to answer first.");
-            return;
-        }
-
-        if (PluginPackage.Named(file.Name) || await unsaved.MayReplaceThePatchAsync()) await OpenFileAsync(file);
-    }
+    internal Task OpenActivatedFileAsync(IStorageFile file) => patchOpening.OpenActivatedFileAsync(file);
 
     /// <inheritdoc cref="UnsavedWork.SaveToAsync"/>
     internal Task<bool> SaveToAsync(IStorageFile file) => unsaved.SaveToAsync(file);
