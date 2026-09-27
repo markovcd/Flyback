@@ -114,8 +114,13 @@ public class UiTest : IDisposable
     /// A window this test owns, and which is closed with it, built by the editor's
     /// container. <paramref name="replace"/> swaps any of its services for a test's own.
     /// </summary>
-    internal MainWindow NewMainWindow(EditorSetup? setup = null, Action<IServiceCollection>? replace = null) =>
-        Owned(EditorServices.Window(setup, replace));
+    internal MainWindow NewMainWindow(EditorSetup? setup = null, Action<IServiceCollection>? replace = null)
+    {
+        var window = Owned(EditorServices.Window(setup, replace));
+        window.Start();
+
+        return window;
+    }
 
     /// <summary>Asks the preset site through <paramref name="site"/> rather than over the network.</summary>
     internal static Action<IServiceCollection> Site(HttpMessageHandler site) =>

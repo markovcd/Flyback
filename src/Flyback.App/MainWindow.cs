@@ -252,13 +252,8 @@ internal sealed class MainWindow : Window
 
         outputSettingsPath = setup.OutputSettingsPath;
 
+        setupOfLaunch = setup;
         layoutPath = setup.LayoutPath;
-        if (setup.LayoutPath is not null) layout = WindowLayout.Load(setup.LayoutPath);
-
-        // Here rather than at the launch, because what a run started as includes
-        // which backend actually opened, and that is only known once one has been
-        // asked for.
-        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights());
 
         // Where the last document's knobs were left says nothing about this one's.
         files.Arrived += (_, _) => knobs.Hub.Forget();
@@ -268,13 +263,6 @@ internal sealed class MainWindow : Window
         recording.Marked += (_, _) => SyncTransport();
 
         WirePlayback();
-
-        // Before anything is compiled and before a panel is drawn, because a
-        // MIDI In asks this what there is to listen to as soon as either
-        // happens. Installed here rather than in Startup because the list is the
-        // window's — the computer's keyboard is only an instrument while there
-        // is a window for it to be typed into.
-        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
 
         // A key going down while the clock is stopped changes the picture and
         // moves nothing else, so the preview has to be told there is a new frame
@@ -309,7 +297,7 @@ internal sealed class MainWindow : Window
         MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.Manual;
         Background = new SolidColorBrush(Colors.Window);
-        ApplyWindowLayout();
+        TrackNormalSize();
 
         editor.History.PatchChanged += (_, _) =>
         {
@@ -358,30 +346,6 @@ internal sealed class MainWindow : Window
 
         Content = BuildLayout();
 
-        // The preset the box opens on: whichever the Graphics section's "Startup
-        // patch" is set to, or the first of the list for a name it no longer
-        // offers — said here so the title and the toolbar's own selection agree
-        // with the canvas from the first frame (ADR-0093).
-        presets.StartOn(outputSettingRepository.Current.DefaultPreset);
-
-        // No manual switch any more — Volume is the one now, and the Recompile
-        // that patch assignment just ran already brought sound up to match its
-        // default (ADR-0079). What is left to say only where turning it up would
-        // not help: nothing was there to open it with.
-        if (playback.Sound.Output is null)
-            Report("No sound backend is installed, so Volume will do nothing. "
-                + "See About for where plugins are looked for.");
-
-        // Said once, because nothing else on screen shows it, and a run that is
-        // slower for a reason should say which.
-        if (setup.Interpreted)
-            Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
-
-        // Last, so it is what the bar is showing when the window first appears.
-        if (setup.WhatsNew is null && setup.OpeningNote is not null) Report(setup.OpeningNote);
-
-        ApplyPanelLayout();
-
         // Opened rather than called straight away: there is nothing to put a
         // dialog over before, and the platform window behind this one — and the
         // storage provider that comes with it — is not guaranteed to exist until
@@ -402,6 +366,58 @@ internal sealed class MainWindow : Window
             if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
         };
     }
+
+    /// <summary>
+    /// Brings the editor up: the saved layout, the first patch and everything that
+    /// compiling it starts. Once, before the window is shown; the constructor only wires.
+    /// </summary>
+    public void Start()
+    {
+        if (started) return;
+        started = true;
+
+        if (setupOfLaunch.LayoutPath is not null) layout = WindowLayout.Load(setupOfLaunch.LayoutPath);
+        ApplyWindowLayout();
+
+        // Before anything is compiled and before a panel is drawn, because a
+        // MIDI In asks this what there is to listen to as soon as either
+        // happens. The list is the window's: the computer's keyboard is only an
+        // instrument while there is a window for it to be typed into.
+        MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
+
+        // Here rather than at the launch, because what a run started as includes
+        // which backend actually opened, and that is only known once one has been
+        // asked for.
+        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights());
+
+        // The preset the box opens on: whichever the Graphics section's "Startup
+        // patch" is set to, or the first of the list for a name it no longer
+        // offers — said here so the title and the toolbar's own selection agree
+        // with the canvas from the first frame (ADR-0093).
+        presets.StartOn(outputSettingRepository.Current.DefaultPreset);
+
+        // No manual switch any more — Volume is the one now, and the Recompile
+        // that patch assignment just ran already brought sound up to match its
+        // default (ADR-0079). What is left to say only where turning it up would
+        // not help: nothing was there to open it with.
+        if (playback.Sound.Output is null)
+            Report("No sound backend is installed, so Volume will do nothing. "
+                + "See About for where plugins are looked for.");
+
+        // Said once, because nothing else on screen shows it, and a run that is
+        // slower for a reason should say which.
+        if (setupOfLaunch.Interpreted)
+            Report($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
+
+        // Last, so it is what the bar is showing when the window first appears.
+        if (setupOfLaunch.WhatsNew is null && setupOfLaunch.OpeningNote is not null) Report(setupOfLaunch.OpeningNote);
+
+        ApplyPanelLayout();
+    }
+
+    private readonly EditorSetup setupOfLaunch;
+
+    private bool started;
 
     private Control BuildLayout()
     {
@@ -1886,9 +1902,7 @@ internal sealed class MainWindow : Window
     /// <summary>The last client size the window had while it was neither maximized nor full screen.</summary>
     private Size? normalSize;
 
-    /// <summary>Size, state and monitor. Before the window is shown.</summary>
-    private void ApplyWindowLayout()
-    {
+    private void TrackNormalSize() =>
         // Only a drag of the frame: maximizing resizes the window too, and that is
         // not a size to come back to.
         Resized += (_, e) =>
@@ -1896,6 +1910,9 @@ internal sealed class MainWindow : Window
             if (e.Reason == WindowResizeReason.User && WindowState == WindowState.Normal) normalSize = e.ClientSize;
         };
 
+    /// <summary>Size, state and monitor. Before the window is shown.</summary>
+    private void ApplyWindowLayout()
+    {
         if (layout is not { } saved) return;
 
         if (saved.Width > 0 && saved.Height > 0)

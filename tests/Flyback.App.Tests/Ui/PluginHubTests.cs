@@ -418,9 +418,9 @@ public sealed class PluginHubTests : UiTest
 
     private MainWindow OpenPlugins(FakePluginSite? site = null)
     {
-        var window = Owned(site is null
-            ? EditorServices.Window(new EditorSetup { PluginFolder = Plugins })
-            : EditorServices.Window(new EditorSetup { PluginFolder = Plugins, PresetSite = FakePluginSite.Root }, Site(site)));
+        var window = site is null
+            ? NewMainWindow(new EditorSetup { PluginFolder = Plugins })
+            : NewMainWindow(new EditorSetup { PluginFolder = Plugins, PresetSite = FakePluginSite.Root }, Site(site));
 
         window.Show();
         Settle(window);

@@ -78,6 +78,7 @@ public sealed class FlybackApp : Application
             OpeningNote = Startup.OpeningNote,
             WhatsNew = Startup.WhatsNew,
         });
+        window.Start();
         desktop.MainWindow = window;
 
         // Once there is a window, so a slow network is never a slow start.
