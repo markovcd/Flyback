@@ -136,6 +136,9 @@ internal sealed class Playback
 
     public bool Paused => transport.Paused;
 
+    /// <summary>How many ops the sound's program runs for each sample.</summary>
+    public int SoundOps => transport.SoundOps;
+
     /// <summary>How long the open patch plays for, in seconds.</summary>
     public double Length => editor.History.Patch.Lasts;
 

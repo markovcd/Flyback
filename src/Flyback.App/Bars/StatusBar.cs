@@ -41,6 +41,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
     private readonly TextBlock status = new()
     {
+        Name = "statusCount",
         VerticalAlignment = VerticalAlignment.Center,
         FontSize = Text.Body,
 
@@ -130,11 +131,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
     }
 
     /// <summary>Says what the patch costs and where its clock is.</summary>
-    private void Update()
+    internal void Update()
     {
         var nodes = editor.History.Patch.Nodes.Count;
         var wires = editor.History.Patch.Connections.Count;
-        var ops = preview.Program.Ops.Length;
+        var pictureOps = preview.Program.Ops.Length;
+        var soundOps = playback.SoundOps;
 
         // Which renderer produced the rate is part of what it means, so it is
         // said alongside — what is actually drawing, not what was asked for.
@@ -146,7 +148,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {ops} ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
+            $"{nodes} modules · {wires} wires · {pictureOps} picture ops · {soundOps} sound ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

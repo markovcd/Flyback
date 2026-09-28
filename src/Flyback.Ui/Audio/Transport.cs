@@ -44,6 +44,9 @@ internal sealed class Transport
     /// <summary>How loud the sound is while not muted.</summary>
     public float Volume { get; init; } = 1f;
 
+    /// <summary>How many ops the sound's program runs for each sample.</summary>
+    public int SoundOps => audio.Ops;
+
     /// <summary>Where the picture is, in seconds, or the sound where there is no picture.</summary>
     public double Time => preview?.Time ?? audio.Time;
 

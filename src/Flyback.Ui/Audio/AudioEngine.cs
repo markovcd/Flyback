@@ -74,6 +74,9 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public bool IsRunning => current.IsRunning;
 
+    /// <summary>How many ops the sound's program runs for each sample.</summary>
+    public int Ops => Volatile.Read(ref activeState).Program.Ops.Length;
+
     /// <summary>The rate the device actually opened at, which a recording has to match.</summary>
     public int SampleRate => current.SampleRate;
 
