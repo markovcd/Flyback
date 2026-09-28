@@ -35,7 +35,8 @@ internal sealed record SavedConversation(
     int Turns,
     WorkbenchState Bench,
     string? History,
-    IReadOnlyList<TranscriptLine> Transcript)
+    IReadOnlyList<TranscriptLine> Transcript,
+    string? Canvas = null)
 {
     /// <summary>
     /// The shape this writes. A file in any other is not read at all: a
@@ -93,6 +94,7 @@ internal sealed record SavedConversation(
             ["handles"] = handles,
             ["history"] = History is null ? null : Embedded(History),
             ["transcript"] = transcript,
+            ["canvas"] = Canvas is null ? null : Embedded(Canvas),
         }.ToJsonString(Options);
     }
 
@@ -142,7 +144,8 @@ internal sealed record SavedConversation(
                 Number(body["turns"]),
                 new WorkbenchState(start, working, handles, Number(body["edits"]), Number(body["toolCalls"])),
                 Raw(body["history"]),
-                transcript);
+                transcript,
+                Raw(body["canvas"]));
         }
         catch (JsonException)
         {

@@ -231,7 +231,15 @@ internal static class Wire
     {
         var kept = (JsonArray)contents.DeepClone();
 
-        foreach (var turn in kept)
+        Forget(kept);
+
+        return kept;
+    }
+
+    /// <summary>Replaces every picture and clip in <paramref name="contents"/> with a line saying one was there.</summary>
+    public static void Forget(JsonArray contents)
+    {
+        foreach (var turn in contents)
         {
             if (turn?["parts"] is not JsonArray parts) continue;
 
@@ -245,15 +253,13 @@ internal static class Wire
                 parts[i] = new JsonObject { ["text"] = sound ? ClipNotKept : PictureNotKept };
             }
         }
-
-        return kept;
     }
 
     private const string ClipNotKept =
-        "(A clip was played here. It was not kept when the conversation was saved — listen again to hear the patch.)";
+        "(A clip was played here. It is no longer sent — listen again to hear the patch.)";
 
     private const string PictureNotKept =
-        "(A picture was shown here. It was not kept when the conversation was saved — render again to see the patch.)";
+        "(A picture was shown here. It is no longer sent — render again to see the patch.)";
 
     private static JsonObject Inline(string type, byte[] bytes) => new()
     {

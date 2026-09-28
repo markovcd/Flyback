@@ -43,6 +43,12 @@ internal sealed class GeminiSession : IPatchSession
         "This turn changed the patch but did not offer it, so the canvas still shows what was "
         + "there before. Ask for it to be applied if you want to see it.";
 
+    /// <summary>The answer to a call the person stopped the turn before it ran.</summary>
+    private const string Stopped = "not run: the person stopped this turn.";
+
+    /// <summary>The answer to a call that came after a proposal in the same batch.</summary>
+    private const string AfterProposal = "not run: you had already proposed the patch, and proposing ends the turn.";
+
     /// <summary>How many times one request may be sent before the turn is given up on.</summary>
     private const int MaxAttempts = 5;
 
@@ -104,6 +110,10 @@ internal sealed class GeminiSession : IPatchSession
         // itself stays: a conversation carries on from what it built.
         workbench.Reopen();
 
+        // Pictures and clips from earlier turns go as a line each: every request of
+        // this turn would otherwise carry them again, and the model can look again.
+        Wire.Forget(contents);
+
         contents.Add(Wire.User(instruction));
 
         for (var turn = 0; turn < MaxModelTurns; turn++)
@@ -152,19 +162,37 @@ internal sealed class GeminiSession : IPatchSession
 
                 foreach (var call in reply.Calls)
                 {
-                    var outcome = await Answer(call, cancel).ConfigureAwait(false);
-                    var said = outcome.Text;
-
-                    // Only where the clip cannot reach this model. Where it can,
-                    // the sound goes into the turn below and a description
-                    // written by somebody else would be a second opinion nobody
-                    // asked for, paid for by a second request.
-                    if (outcome.Wav is { } borrowed && !ownEars)
-                        said += "\n\n" + await Described(borrowed, cancel).ConfigureAwait(false);
-
                     // Every call gets exactly one answer, refusals included, in
                     // the order the calls arrived — which is the only thing
-                    // tying an answer to its call in this format.
+                    // tying an answer to its call in this format. The calls a
+                    // stop or a proposal cut off are answered too.
+                    if (workbench.HasProposal || cancel.IsCancellationRequested)
+                    {
+                        answers.Add(Wire.FunctionResponse(call.Name, workbench.HasProposal ? AfterProposal : Stopped));
+                        continue;
+                    }
+
+                    ToolOutcome outcome;
+                    string said;
+
+                    try
+                    {
+                        outcome = await Answer(call, cancel).ConfigureAwait(false);
+                        said = outcome.Text;
+
+                        // Only where the clip cannot reach this model. Where it can,
+                        // the sound goes into the turn below and a description
+                        // written by somebody else would be a second opinion nobody
+                        // asked for, paid for by a second request.
+                        if (outcome.Wav is { } borrowed && !ownEars)
+                            said += "\n\n" + await Described(borrowed, cancel).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        answers.Add(Wire.FunctionResponse(call.Name, Stopped));
+                        continue;
+                    }
+
                     answers.Add(Wire.FunctionResponse(call.Name, said));
 
                     if (outcome.Png is { } png)
@@ -189,6 +217,8 @@ internal sealed class GeminiSession : IPatchSession
                 }
 
                 contents.Add(Wire.Answers(answers, Caption(seen.Count, played.Count), seen, played));
+
+                if (cancel.IsCancellationRequested && !workbench.HasProposal) yield break;
             }
 
             // Asked for last, so a proposal is noticed whether it arrived among

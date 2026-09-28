@@ -59,3 +59,9 @@ costs, and a limit on those is the one to tighten.
 
 **A limit on size has to be argued for again.** It was chosen without a
 measurement, and the first patch it met was the largest preset.
+
+## Amendment, 2026-09-29: the tool-call limit is a turn's
+
+`MaxToolCalls` counts from each turn's start rather than for the whole
+conversation, and never refuses `propose`;
+[0159](0159-a-turn-pays-only-for-what-is-new.md).

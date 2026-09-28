@@ -1241,7 +1241,8 @@ public class PatchWorkbenchTests
 
     /// <summary>
     /// A module both sinks reach is compiled twice, and being told about it
-    /// twice in one breath reads as two separate problems.
+    /// twice reads as two separate problems. Once said, a complaint is counted on
+    /// later edits rather than said again: the model has it already.
     /// </summary>
     [Fact]
     public async Task A_module_both_sinks_reach_is_only_complained_about_once()
@@ -1249,15 +1250,20 @@ public class PatchWorkbenchTests
         var bench = Bench();
 
         await Call(bench, "add_module", $$"""{"type_id":"{{NodeCatalog.SampleTypeId}}","handle":"clip1"}""");
-        await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}""");
-        await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}""");
-        var wired = await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}""");
 
-        var said = wired.Text;
-        var first = said.IndexOf("gone.wav", StringComparison.Ordinal);
+        var replies = new[]
+        {
+            await Call(bench, "set_sample", """{"handle":"clip1","path":"gone.wav"}"""),
+            await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"color"}"""),
+            await Call(bench, "connect", """{"from":"clip1","from_port":"out","to":"output1","to_port":"left"}"""),
+        };
+
+        var said = string.Join("\n", replies.Select(reply => reply.Text));
+        var first = said.IndexOf("cannot read gone.wav", StringComparison.Ordinal);
 
         first.ShouldBeGreaterThan(-1);
-        said.IndexOf("gone.wav", first + 1, StringComparison.Ordinal).ShouldBe(-1);
+        said.IndexOf("cannot read gone.wav", first + 1, StringComparison.Ordinal).ShouldBe(-1, said);
+        replies[^1].Text.ShouldContain("as said before");
     }
 
     [Fact]
@@ -1546,6 +1552,30 @@ public class PatchWorkbenchTests
         told.Text.ShouldContain("let knob1 = value(");
         told.Text.ShouldContain("0.25");
         told.Text.ShouldContain("knob1 |> out.color");
+    }
+
+    /// <summary>
+    /// A warning is something to know, not a reason to refuse: the frames come back
+    /// with the warning in the caption.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_with_only_warnings_is_still_rendered()
+    {
+        var bench = Bench();
+
+        // A wave swinging below zero into a socket that takes nothing below it is a warning.
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"wobble1"}""");
+        await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
+        var wired = await Call(bench, "connect", """{"from":"wobble1","to":"tone1","to_port":"freq"}""");
+
+        wired.Text.ShouldContain("Worth knowing");
+
+        var looked = await Call(bench, "render");
+
+        looked.Ok.ShouldBeTrue(looked.Text);
+        looked.Png.ShouldNotBeNull();
+        looked.Text.ShouldContain("warned");
     }
 
     [Fact]
@@ -1934,6 +1964,98 @@ public class PatchWorkbenchTests
     }
 
     // --- caps ---------------------------------------------------------------
+
+    /// <summary>
+    /// The budget is a turn's, so a long conversation never runs dry for good, and
+    /// propose is what running out asks for, so it is never refused for the count.
+    /// </summary>
+    [Fact]
+    public async Task The_tool_call_budget_is_a_turns_and_never_stops_a_proposal()
+    {
+        var bench = await Lit(0.25f);
+        var limited = new PatchWorkbench(NodeCatalog.BuiltIn, bench.Snapshot(), limits: new WorkbenchLimits(MaxToolCalls: 1));
+
+        await Call(limited, "describe_patch");
+        (await Call(limited, "describe_patch")).Ok.ShouldBeFalse();
+        (await Call(limited, "propose", """{"summary":"a lit screen"}""")).Ok.ShouldBeTrue();
+
+        limited.Reopen();
+
+        (await Call(limited, "describe_patch")).Ok.ShouldBeTrue("a new turn has its own budget");
+    }
+
+    [Fact]
+    public async Task A_turn_counts_only_its_own_edits()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
+        bench.Edits.ShouldBe(1);
+
+        bench.Reopen();
+
+        bench.Edits.ShouldBe(0, "a turn that only talks has changed nothing");
+    }
+
+    /// <summary>A module whose knobs are refused is not placed, so the retry does not find its name taken.</summary>
+    [Fact]
+    public async Task A_module_refused_for_its_knobs_is_not_placed()
+    {
+        var bench = Bench();
+
+        var refused = await Call(bench, "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"nonesuch","value":1}]}""");
+
+        refused.Ok.ShouldBeFalse();
+        bench.Snapshot().Nodes.ShouldNotContain(node => node.TypeId == "value");
+
+        (await Call(bench, "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":1}]}""")).Ok.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_knob_list_with_one_bad_entry_changes_nothing()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"value","handle":"knob1"}""");
+        var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":0.9},{"port":"nonesuch","value":1}]}""");
+
+        set.Ok.ShouldBeFalse();
+        bench.Snapshot().Nodes.Single(node => node.TypeId == "value").InputValues[0].ShouldBe(0.5f);
+    }
+
+    /// <summary>
+    /// A written patch answers to the names it was written with, so the reply need
+    /// not print it back for the model to find out what everything is called.
+    /// </summary>
+    [Fact]
+    public async Task A_written_patch_answers_to_its_let_names_and_is_not_printed_back()
+    {
+        var bench = Bench();
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = "let tone = sine(freq: 220)\ntone |> out.left",
+        }));
+
+        written.Ok.ShouldBeTrue(written.Text);
+        written.Text.ShouldNotContain("freq");
+
+        (await Call(bench, "set_knobs", """{"handle":"tone","knobs":[{"port":"freq","value":330}]}""")).Ok.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_mistyped_handle_in_a_large_patch_names_the_nearest_rather_than_all()
+    {
+        var bench = Bench();
+
+        for (var i = 1; i <= 12; i++) await Call(bench, "add_module", $$"""{"type_id":"value","handle":"value{{i}}"}""");
+
+        var missed = await Call(bench, "set_knobs", """{"handle":"valu3","knobs":[{"port":"value","value":1}]}""");
+
+        missed.Ok.ShouldBeFalse();
+        missed.Text.ShouldContain("value3");
+        missed.Text.ShouldNotContain("value12");
+    }
 
     [Fact]
     public async Task Running_out_of_tool_calls_is_said_rather_than_thrown()

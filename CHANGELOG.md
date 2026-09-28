@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The assistant's tool budget is a turn's rather than a conversation's, stopping it mid-turn no longer breaks the conversation, a turn that fails before anything comes back is not counted, and it spends fewer tokens: a written patch keeps its `let` names and is not printed back, a warning is said once, and pictures from earlier turns are not sent again.
 - A plugin folder loads only once somebody allowed it, by installing its package or with `flyback-cli plugin allow`, and an assistant plugin is never handed the key it sends with.
 - Ctrl+drag takes a wire off an output with any number of wires on it; a wire put back passes the next Ctrl+drag on to the wire after it.
 - Beat you can see and Two echoes, the presets the two new tutorials on the website build.

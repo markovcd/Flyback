@@ -51,6 +51,9 @@ public sealed class SourceMap
     /// </summary>
     private readonly List<(int From, int Opened, int Closed, int To, Guid Group)> blocks = [];
 
+    /// <summary>The name each module is bound to with <c>let</c>, where it has one.</summary>
+    internal IReadOnlyDictionary<Guid, string> Named { get; }
+
     /// <param name="boxes">Where each <c>group</c> block begins, and the group it is.</param>
     internal SourceMap(
         string source,
@@ -63,6 +66,7 @@ public sealed class SourceMap
     {
         text = new SourceMapText(source);
         this.calls = new Dictionary<Guid, Site>(calls);
+        Named = new Dictionary<Guid, string>(named);
         edits = new SourceMapEdits(text, this.calls, written, named, shared);
 
         var counted = new Dictionary<Site, Guid>();

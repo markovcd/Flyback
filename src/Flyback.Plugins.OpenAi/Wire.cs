@@ -113,25 +113,31 @@ internal static class Wire
         {
             if (Role(message) is "system") continue;
 
-            var copy = message!.DeepClone();
-
-            if (copy["content"] is JsonArray parts)
-            {
-                for (var i = 0; i < parts.Count; i++)
-                {
-                    var type = parts[i]?["type"]?.GetValueKind() == JsonValueKind.String
-                        ? parts[i]!["type"]!.GetValue<string>()
-                        : null;
-
-                    if (type is "image_url") parts[i] = Said(PictureNotKept);
-                    else if (type is "input_audio") parts[i] = Said(ClipNotKept);
-                }
-            }
-
-            kept.Add(copy);
+            kept.Add(message!.DeepClone());
         }
 
+        Forget(kept);
+
         return kept;
+    }
+
+    /// <summary>Replaces every picture and clip in <paramref name="messages"/> with a line saying one was there.</summary>
+    public static void Forget(JsonArray messages)
+    {
+        foreach (var message in messages)
+        {
+            if (message?["content"] is not JsonArray parts) continue;
+
+            for (var i = 0; i < parts.Count; i++)
+            {
+                var type = parts[i]?["type"]?.GetValueKind() == JsonValueKind.String
+                    ? parts[i]!["type"]!.GetValue<string>()
+                    : null;
+
+                if (type is "image_url") parts[i] = Said(PictureNotKept);
+                else if (type is "input_audio") parts[i] = Said(ClipNotKept);
+            }
+        }
 
         static JsonObject Said(string text) => new() { ["type"] = "text", ["text"] = text };
     }
@@ -141,10 +147,10 @@ internal static class Wire
         message?["role"]?.GetValueKind() == JsonValueKind.String ? message["role"]!.GetValue<string>() : null;
 
     private const string ClipNotKept =
-        "(A clip was played here. It was not kept when the conversation was saved — listen again to hear the patch.)";
+        "(A clip was played here. It is no longer sent — listen again to hear the patch.)";
 
     private const string PictureNotKept =
-        "(A picture was shown here. It was not kept when the conversation was saved — render again to see the patch.)";
+        "(A picture was shown here. It is no longer sent — render again to see the patch.)";
 
     /// <summary>
     /// A picture, as a user turn.

@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Assist;
 /// Each limit is reported to the model when reached, so it can finish tidily
 /// rather than retry.
 /// </remarks>
-/// <param name="MaxToolCalls">The cost fuse against a run that never ends.</param>
+/// <param name="MaxToolCalls">The cost fuse against a turn that never ends.</param>
 /// <param name="LatestTime">The furthest into a patch a render may look, in seconds.</param>
 /// <param name="WarmUpStep">The frame interval stepped through before a render, so feedback has a real history.</param>
 /// <param name="ListenRate">The sample rate a <c>listen</c> renders at, kept low for the request size.</param>

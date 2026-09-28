@@ -51,6 +51,9 @@ public sealed partial class PatchWorkbench
     private Patch working = new();
     private string? proposal;
 
+    /// <summary>What <see cref="Issues"/> last said, so the next report says only what is new.</summary>
+    private readonly HashSet<string> told = new(StringComparer.Ordinal);
+
     /// <param name="vision">Whether the model may be shown a frame, which offers <c>render</c>.</param>
     /// <param name="hearing">
     /// Whether and by whom the sound may be heard, which offers <c>listen</c>
@@ -117,7 +120,8 @@ public sealed partial class PatchWorkbench
     public bool HasProposal => proposal is not null;
 
     /// <summary>
-    /// Takes the proposal back down, leaving everything built so far in place.
+    /// Takes the proposal back down and starts the turn's counts again, leaving
+    /// everything built so far in place.
     /// </summary>
     /// <remarks>
     /// A conversation carries on from a proposal — "now make it slower" is the
@@ -125,12 +129,19 @@ public sealed partial class PatchWorkbench
     /// this as a turn begins; one that did not would hand the same patch over again
     /// as this turn's answer.
     /// </remarks>
-    public void Reopen() => proposal = null;
+    public void Reopen()
+    {
+        proposal = null;
+        Edits = 0;
+        ToolCalls = 0;
+    }
 
     public string ProposalSummary => proposal ?? string.Empty;
 
+    /// <summary>How many edits this turn has made.</summary>
     public int Edits { get; private set; }
 
+    /// <summary>How many tools this turn has called, against <see cref="WorkbenchLimits.MaxToolCalls"/>.</summary>
     public int ToolCalls { get; private set; }
 
     /// <summary>
@@ -181,9 +192,10 @@ public sealed partial class PatchWorkbench
     /// </summary>
     public async Task<ToolOutcome> InvokeAsync(string tool, JsonElement arguments, CancellationToken cancel)
     {
-        if (ToolCalls >= limits.MaxToolCalls)
+        // Propose is never refused for the count, since it is what the refusal asks for.
+        if (ToolCalls >= limits.MaxToolCalls && tool != "propose")
             return ToolOutcome.Refused(
-                $"you have used all {limits.MaxToolCalls} tool calls for this run. "
+                $"you have used all {limits.MaxToolCalls} tool calls for this turn. "
                 + "Finish with 'propose' if the patch is usable, or say what is left undone.");
 
         ToolCalls++;
@@ -246,17 +258,23 @@ public sealed partial class PatchWorkbench
 
         if (standing is not null) def = modules.Require(NodeCatalog.ExpressionTypeId);
 
+        // Every knob is checked before the module is placed, so a refusal leaves
+        // nothing behind for a retry to trip over.
+        List<(int Port, float Value)> settings = [];
+
+        if (arguments.TryGetProperty("knobs", out var knobs) && Knobs(handle, def, knobs, settings) is { } refused)
+            return ToolOutcome.Refused(refused);
+
         working.Nodes.Add(node);
         byHandle[handle] = node;
         handleOf[node.Id] = handle;
         Edits++;
 
+        Set(node, def, settings);
+
         var report = new StringBuilder(standing is null
             ? $"added {handle} ({typeId})."
             : $"added {handle}, an Expression for {typeId}: {NodeCatalog.FormulaOf(node)}.");
-
-        if (arguments.TryGetProperty("knobs", out var knobs) && Turn(node, def, knobs) is { } refused)
-            return ToolOutcome.Refused(refused);
 
         report.Append(' ').Append(CatalogReference.Sockets(def)).Append(' ').Append(Issues());
         return Fine(report.ToString());
@@ -270,9 +288,13 @@ public sealed partial class PatchWorkbench
         if (!arguments.TryGetProperty("knobs", out var knobs))
             return ToolOutcome.Refused("'knobs' is required: a list of {port, value}.");
 
-        if (Turn(node, def, knobs) is { } bad) return ToolOutcome.Refused(bad);
+        List<(int Port, float Value)> settings = [];
 
-        return Fine($"set. {CatalogReference.Sockets(def)} {Issues()}");
+        if (Knobs(Handle(node), def, knobs, settings) is { } bad) return ToolOutcome.Refused(bad);
+
+        Set(node, def, settings);
+
+        return Fine($"set. {Issues()}");
     }
 
     /// <summary>
@@ -795,13 +817,27 @@ public sealed partial class PatchWorkbench
         if (!load.Ok)
             return ToolOutcome.Refused($"this patch does not read:{Environment.NewLine}{Complaints(load)}");
 
-        Adopt(load.Patch);
+        // Each module answers to the name the model bound it to, so the source it
+        // just wrote is already the description and nothing is echoed back.
+        var named = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (id, name) in load.Map.Named) named.TryAdd(name, id);
+
+        Adopt(load.Patch, named);
         proposal = null;
         Edits++;
 
-        return load.Issues.Count == 0
-            ? Fine($"written. {DescribePatch()}")
-            : Fine($"written, with warnings; the patch is built as it stands:{Environment.NewLine}{Complaints(load)}{Environment.NewLine}{DescribePatch()}");
+        var text = new StringBuilder($"written: {working.Nodes.Count} modules and {working.Connections.Count} wires, "
+            + "each module answering to its let name.");
+
+        var unnamed = working.Nodes.Select(Handle).Where(handle => !named.ContainsKey(handle)).ToArray();
+
+        if (unnamed.Length > 0) text.Append(" Those with none answer to: ").Append(string.Join(", ", unnamed)).Append('.');
+
+        if (load.Issues.Count > 0)
+            text.AppendLine().AppendLine("It has warnings, and is built as it stands:").AppendLine(Complaints(load));
+
+        return Fine(text.Append(' ').Append(Issues()).ToString());
     }
 
     /// <summary>
@@ -814,7 +850,10 @@ public sealed partial class PatchWorkbench
         var lines = load.Source.ReplaceLineEndings("\n").Split('\n');
         var text = new StringBuilder();
 
-        foreach (var issue in load.Issues)
+        // One stray comma can cascade into dozens, and the first few are the ones to fix.
+        const int Shown = 8;
+
+        foreach (var issue in load.Issues.Take(Shown))
         {
             text.Append(CultureInfo.InvariantCulture, $"{issue.Line}:{issue.Column} [{issue.Code}] {(issue.IsError ? "" : "warning: ")}{issue.Message}").AppendLine();
 
@@ -826,6 +865,8 @@ public sealed partial class PatchWorkbench
                 text.Append("    ").Append(' ', Math.Clamp(issue.Column - 1, 0, line.Length)).AppendLine("^");
             }
         }
+
+        if (load.Issues.Count > Shown) text.Append("and ").Append(load.Issues.Count - Shown).AppendLine(" more after these.");
 
         return text.ToString().TrimEnd();
     }
@@ -997,7 +1038,7 @@ public sealed partial class PatchWorkbench
             Does("describe_patch", _ => Fine(DescribePatch()),
                 "Every module in the working patch with its handle, what each input is set to or "
                 + "wired from, where each output goes, and what the compiler currently says. Call "
-                + "this first.",
+                + "this at the start of a conversation.",
                 "{}"),
 
             Does("write_patch", WritePatch,
@@ -1455,7 +1496,7 @@ public sealed partial class PatchWorkbench
         {
             refusal = byHandle.Count == 0
                 ? $"there is no module called '{handle}'; the patch is empty."
-                : $"there is no module called '{handle}'. The patch has: {string.Join(", ", byHandle.Keys)}.";
+                : $"there is no module called '{handle}'. {Likely(handle)}";
             return false;
         }
 
@@ -1471,8 +1512,48 @@ public sealed partial class PatchWorkbench
         return true;
     }
 
-    /// <summary>Applies a knob list, or says why it could not. Null means it worked.</summary>
-    private string? Turn(NodeInstance node, NodeDef def, JsonElement knobs)
+    /// <summary>
+    /// The handles a mistyped one most likely meant: every handle in a small patch,
+    /// and in a large one the few that look most like it.
+    /// </summary>
+    private string Likely(string handle)
+    {
+        const int Listed = 8;
+
+        if (byHandle.Count <= Listed) return $"The patch has: {string.Join(", ", byHandle.Keys)}.";
+
+        var close = byHandle.Keys
+            .OrderBy(key => key.Contains(handle, StringComparison.OrdinalIgnoreCase)
+                || handle.Contains(key, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(key => Distance(key.ToLowerInvariant(), handle.ToLowerInvariant()))
+            .ThenBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .Take(Listed);
+
+        return $"Nearest of its {byHandle.Count}: {string.Join(", ", close)}. describe_patch lists them all.";
+
+        static int Distance(string a, string b)
+        {
+            var row = Enumerable.Range(0, b.Length + 1).ToArray();
+
+            for (var i = 1; i <= a.Length; i++)
+            {
+                var diagonal = row[0];
+                row[0] = i;
+
+                for (var j = 1; j <= b.Length; j++)
+                {
+                    var above = row[j];
+                    row[j] = Math.Min(Math.Min(row[j] + 1, row[j - 1] + 1), diagonal + (a[i - 1] == b[j - 1] ? 0 : 1));
+                    diagonal = above;
+                }
+            }
+
+            return row[b.Length];
+        }
+    }
+
+    /// <summary>Reads a knob list into <paramref name="settings"/>, or says why it could not. Null means every entry reads.</summary>
+    private string? Knobs(string handle, NodeDef def, JsonElement knobs, List<(int Port, float Value)> settings)
     {
         if (knobs.ValueKind != JsonValueKind.Array) return "'knobs' must be a list of {port, value}.";
 
@@ -1487,7 +1568,7 @@ public sealed partial class PatchWorkbench
                 return $"'{portName}' needs a numeric 'value'.";
 
             if (!Port(def.Inputs, portName, out var port))
-                return $"{Handle(node)} has no input called '{portName}'. Its inputs are: {CatalogReference.List(def.Inputs)}.";
+                return $"{handle} has no input called '{portName}'. Its inputs are: {CatalogReference.List(def.Inputs)}.";
 
             // A normalled socket has no knob to turn: it compiles to the module
             // it is normalled to, and the value stored against it is never read.
@@ -1496,18 +1577,27 @@ public sealed partial class PatchWorkbench
             // of thing an assistant can spend a whole run failing to notice.
             if (modules.Normalled(def.Inputs[port]) is { } source)
             {
-                return $"{Handle(node)}'s '{portName}' is normalled to {source} and has no knob: "
+                return $"{handle}'s '{portName}' is normalled to {source} and has no knob: "
                     + "it is already reading that, with no wire, and a value set here would not be "
                     + $"read. Patch something into '{portName}' to drive it with that instead — a "
                     + "Value module if what you want there really is a constant.";
             }
 
-            Grow(node, def);
-            node.InputValues[port] = (float)value.GetDouble();
-            Edits++;
+            settings.Add((port, (float)value.GetDouble()));
         }
 
         return null;
+    }
+
+    private void Set(NodeInstance node, NodeDef def, List<(int Port, float Value)> settings)
+    {
+        if (settings.Count == 0) return;
+
+        Grow(node, def);
+
+        foreach (var (port, value) in settings) node.InputValues[port] = value;
+
+        Edits += settings.Count;
     }
 
     /// <summary>
@@ -1530,6 +1620,10 @@ public sealed partial class PatchWorkbench
     private static float Knob(NodeInstance node, int port, NodeDef def) =>
         port < node.InputValues.Length ? node.InputValues[port] : def.Inputs[port].Default;
 
+    /// <summary>
+    /// What the compiler says of the patch after an edit: in full where it is new,
+    /// and counted where an earlier edit already said it.
+    /// </summary>
     private string Issues()
     {
         // Both programs, for the reason 'propose' asks after both: the video
@@ -1542,8 +1636,6 @@ public sealed partial class PatchWorkbench
             .Concat(working.CompileForAudio(modules, samples).Issues)
             .ToArray();
 
-        if (issues.Length == 0) return "No issues.";
-
         // Distinct, because a module both sinks reach is compiled twice and
         // would otherwise be complained about twice.
         var faults = issues.Where(i => i.Severity == IssueSeverity.Error)
@@ -1552,22 +1644,48 @@ public sealed partial class PatchWorkbench
         var notes = issues.Where(i => i.Severity != IssueSeverity.Error)
             .Select(i => i.Message).Distinct().ToArray();
 
+        var said = told.ToHashSet(StringComparer.Ordinal);
+
+        told.Clear();
+        told.UnionWith(faults);
+        told.UnionWith(notes);
+
+        if (issues.Length == 0) return "No issues.";
+
+        var newFaults = faults.Where(fault => !said.Contains(fault)).ToArray();
+        var newNotes = notes.Where(note => !said.Contains(note)).ToArray();
+
         var text = new StringBuilder();
 
-        if (faults.Length > 0) text.Append("Issues: ").Append(string.Join(" | ", faults)).Append('.');
+        if (newFaults.Length > 0) text.Append("Issues: ").Append(string.Join(" | ", newFaults)).Append('.');
 
         // Kept apart from the faults rather than listed with them. A warning is
         // something to know, not something to clear — an assistant that cannot
         // tell the two apart will spend the run clearing them instead of
         // finishing, which is what a run that never proposed anything looks
         // like from out here.
-        if (notes.Length > 0)
+        if (newNotes.Length > 0)
         {
             if (text.Length > 0) text.Append(' ');
-            text.Append("Worth knowing: ").Append(string.Join(" | ", notes)).Append('.');
+            text.Append("Worth knowing: ").Append(string.Join(" | ", newNotes)).Append('.');
+        }
+
+        var oldFaults = faults.Length - newFaults.Length;
+        var oldNotes = notes.Length - newNotes.Length;
+
+        if (oldFaults + oldNotes > 0)
+        {
+            if (text.Length > 0) text.Append(' ');
+
+            text.Append(text.Length == 0 ? "Nothing new; still standing as said before: " : "Still standing as said before: ")
+                .Append(Count(oldFaults, "issue")).Append(oldFaults > 0 && oldNotes > 0 ? " and " : "")
+                .Append(Count(oldNotes, "warning")).Append('.');
         }
 
         return text.ToString();
+
+        static string Count(int count, string noun) =>
+            count == 0 ? string.Empty : count == 1 ? $"1 {noun}" : $"{count} {noun}s";
     }
 
     private string Name(Connection wire, bool sourceOf)

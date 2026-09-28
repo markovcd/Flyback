@@ -43,6 +43,12 @@ internal sealed class OpenAiSession : IPatchSession
         "This turn changed the patch but did not offer it, so the canvas still shows what was "
         + "there before. Ask for it to be applied if you want to see it.";
 
+    /// <summary>The answer to a call the person stopped the turn before it ran.</summary>
+    private const string Stopped = "not run: the person stopped this turn.";
+
+    /// <summary>The answer to a call that came after a proposal in the same batch.</summary>
+    private const string AfterProposal = "not run: you had already proposed the patch, and proposing ends the turn.";
+
     /// <summary>
     /// How many times one request may be sent before the turn is given up on.
     /// </summary>
@@ -129,6 +135,10 @@ internal sealed class OpenAiSession : IPatchSession
         // itself stays: a conversation carries on from what it built.
         workbench.Reopen();
 
+        // Pictures and clips from earlier turns go as a line each: every request of
+        // this turn would otherwise carry them again, and the model can look again.
+        Wire.Forget(messages);
+
         messages.Add(Wire.User(instruction));
 
 
@@ -176,18 +186,36 @@ internal sealed class OpenAiSession : IPatchSession
 
                 foreach (var call in reply.Calls)
                 {
-                    var outcome = await Answer(call, cancel).ConfigureAwait(false);
-                    var said = outcome.Text;
-
-                    // A sound is described before it is answered for, because
-                    // what goes back to this model is the description: the ear
-                    // is a different model and this one may well not have one.
-                    if (outcome.Wav is { } wav)
-                        said += "\n\n" + await Described(wav, cancel).ConfigureAwait(false);
-
                     // Every call gets exactly one reply, refusals included. One
                     // left unanswered makes the whole next request a 400, which
-                    // would end the conversation rather than the call.
+                    // would end the conversation rather than the call — so the
+                    // calls a stop or a proposal cut off are answered too.
+                    if (workbench.HasProposal || cancel.IsCancellationRequested)
+                    {
+                        messages.Add(Wire.ToolResult(call.Id, workbench.HasProposal ? AfterProposal : Stopped));
+                        continue;
+                    }
+
+                    ToolOutcome outcome;
+                    string said;
+
+                    try
+                    {
+                        outcome = await Answer(call, cancel).ConfigureAwait(false);
+                        said = outcome.Text;
+
+                        // A sound is described before it is answered for, because
+                        // what goes back to this model is the description: the ear
+                        // is a different model and this one may well not have one.
+                        if (outcome.Wav is { } wav)
+                            said += "\n\n" + await Described(wav, cancel).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        messages.Add(Wire.ToolResult(call.Id, Stopped));
+                        continue;
+                    }
+
                     messages.Add(Wire.ToolResult(call.Id, said));
 
                     if (outcome.Png is { } png)
@@ -211,6 +239,8 @@ internal sealed class OpenAiSession : IPatchSession
 
                 if (seen.Count > 0)
                     messages.Add(Wire.UserWithPictures("Here is what that looked like.", seen));
+
+                if (cancel.IsCancellationRequested && !workbench.HasProposal) yield break;
             }
 
             // Asked for last, so a proposal is noticed whether it arrived among

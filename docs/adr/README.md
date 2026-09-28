@@ -188,3 +188,4 @@ context, decision, consequences.
 | [0113](0113-the-workbench-does-not-limit-how-large-a-patch-is.md) | The workbench does not limit how large a patch is *(user-directed)* |
 | [0115](0115-the-assistant-may-read-the-presets.md) | The assistant may read the presets *(user-directed)* |
 | [0156](0156-a-conversation-follows-its-patch-while-the-modules-and-wires-hold.md) | A conversation follows its patch while the modules and wires hold *(user-directed)* |
+| [0159](0159-a-turn-pays-only-for-what-is-new.md) | A turn pays only for what is new *(user-directed)* |

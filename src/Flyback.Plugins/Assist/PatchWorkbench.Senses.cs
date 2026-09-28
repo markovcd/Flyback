@@ -54,15 +54,14 @@ public sealed partial class PatchWorkbench
 
         var patch = working.CompileForVideo(modules, samples, pictures);
 
-        if (patch.HasIssues)
+        if (patch.HasErrors)
         {
-            var why = patch.HasErrors
-                ? "this patch does not compile, so there is nothing to look at: "
-                : "there may be nothing to look at: ";
-
             return Task.FromResult(ToolOutcome.Refused(
-                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
+                "this patch does not compile, so there is nothing to look at: "
+                + string.Join(" | ", patch.Issues.Select(i => i.Message))));
         }
+
+        var warned = Warned(patch);
 
         return Task.Run(
             () =>
@@ -108,9 +107,8 @@ public sealed partial class PatchWorkbench
 
                 return ToolOutcome.Looked(
                     png.ToArray(),
-                    $"{requested.Length} frames left to right at {when}, {width} by {height} each. "
-                    + "The renderer was warmed from zero at thirty frames a second, so anything "
-                    + "reading the previous frame shows the history it would really have.");
+                    $"{requested.Length} frames left to right at {when}, {width} by {height} each, "
+                    + $"warmed from zero at thirty frames a second.{warned}");
             },
             cancel);
     }
@@ -169,15 +167,14 @@ public sealed partial class PatchWorkbench
 
         var patch = working.CompileForAudio(modules, samples);
 
-        if (patch.HasIssues)
+        if (patch.HasErrors)
         {
-            var why = patch.HasErrors
-                ? "this patch does not compile, so there is nothing to hear: "
-                : "there may be nothing to hear: ";
-
             return Task.FromResult(ToolOutcome.Refused(
-                why + string.Join(" | ", patch.Issues.Select(i => i.Message))));
+                "this patch does not compile, so there is nothing to hear: "
+                + string.Join(" | ", patch.Issues.Select(i => i.Message))));
         }
+
+        var warned = Warned(patch);
 
         var (from, seconds) = Window(arguments);
 
@@ -224,8 +221,7 @@ public sealed partial class PatchWorkbench
 
                 var caption = new StringBuilder(
                     $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
-                    + $"{limits.ListenRate / 1000} kHz. It was rendered from zero, so anything with "
-                    + "a delay in it has the tail it would really have.");
+                    + $"{limits.ListenRate / 1000} kHz, rendered from zero.{warned}");
 
                 caption.Append("\n\n").Append(ClipLevels.Measured(samples, peak, rms));
 
@@ -233,6 +229,10 @@ public sealed partial class PatchWorkbench
             },
             cancel);
     }
+
+    /// <summary>The compiler's warnings as a sentence to end a caption with, or nothing.</summary>
+    private static string Warned(CompileResult patch) =>
+        patch.HasIssues ? " The compiler warned: " + string.Join(" | ", patch.Issues.Select(i => i.Message)) : string.Empty;
 
     private int Samples(double seconds) =>
         (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;

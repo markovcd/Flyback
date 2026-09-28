@@ -502,6 +502,33 @@ public class SessionTests
         return await Drain(session, "make something");
     }
 
+    /// <summary>
+    /// A stop between two calls of one batch still answers every call: a model turn
+    /// left without its function responses is refused on the next request.
+    /// </summary>
+    [Fact]
+    public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
+    {
+        var canned = new Canned(
+            new Answer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new Answer(Prose("ok")));
+
+        using var session = Session(canned);
+        using var stop = new CancellationTokenSource();
+
+        await foreach (var happened in session.Ask("look", stop.Token))
+        {
+            if (happened is PatchEvent.Did) await stop.CancelAsync();
+        }
+
+        await Drain(session, "carry on");
+
+        var sent = canned.Sent[^1].ToJsonString();
+
+        sent.Split("functionResponse").Length.ShouldBe(4, "three calls, three answers");
+        sent.ShouldContain("stopped");
+    }
+
     private static GeminiSession Session(
         Canned canned,
         Listener hearing = Listener.None,

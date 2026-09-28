@@ -190,6 +190,22 @@ public class WireTests
         parts[4]!["inlineData"]!["mimeType"]!.GetValue<string>().ShouldBe("audio/wav");
     }
 
+    /// <summary>A picture or clip from an earlier turn goes as a line, so later requests do not carry it again.</summary>
+    [Fact]
+    public void Forgotten_media_is_a_line_in_its_place()
+    {
+        JsonArray contents =
+        [
+            Wire.Answers([Wire.FunctionResponse("render", "a gray field")], "Here it is.", [[1, 2]], [[3, 4]]),
+        ];
+
+        Wire.Forget(contents);
+
+        contents.ToJsonString().ShouldNotContain("inlineData");
+        contents.ToJsonString().ShouldContain("render again");
+        contents.ToJsonString().ShouldContain("listen again");
+    }
+
     /// <summary>A tool result is an object, always. A bare string is refused.</summary>
     [Fact]
     public void A_tool_result_is_wrapped_in_an_object()

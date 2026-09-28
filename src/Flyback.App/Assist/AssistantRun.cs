@@ -109,7 +109,9 @@ public sealed class AssistantRun : IDisposable
 
         // The patch may have been saved again after this conversation's last turn,
         // with knobs the workbench never saw.
-        Remember(Workbench.Follow(startingPoint));
+        Remember(Canvas(resuming.Canvas) is { } was
+            ? Workbench.Follow(was, startingPoint)
+            : Workbench.Follow(startingPoint));
 
         session = PickUp(assistant, config, resuming.History) ?? assistant.Start(Workbench, config);
     }
@@ -264,7 +266,23 @@ public sealed class AssistantRun : IDisposable
             Turns,
             Workbench.Save(),
             history,
-            [.. transcript]);
+            [.. transcript],
+            PatchIO.ToJson(seen));
+    }
+
+    /// <summary>The canvas a saved conversation last saw, or null where it did not say or will not read.</summary>
+    private static Patch? Canvas(string? saved)
+    {
+        if (saved is null) return null;
+
+        try
+        {
+            return PatchIO.Read(saved).Patch;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private IPatchSession? PickUp(IPatchAssistant assistant, AssistantConfig config, string? history)
@@ -317,6 +335,8 @@ public sealed class AssistantRun : IDisposable
 
         Turns++;
 
+        List<Retuned> telling = [.. unsaid];
+
         // One line ahead of the message rather than a new conversation: the
         // history and the provider's cache of it stay good.
         if (Unsaid is { } told)
@@ -338,10 +358,14 @@ public sealed class AssistantRun : IDisposable
         using var mine = CancellationTokenSource.CreateLinkedTokenSource(cancel);
         working = mine;
 
+        var answered = false;
+
         try
         {
             await foreach (var happened in Guarded(instruction, mine.Token).ConfigureAwait(false))
             {
+                if (happened is not PatchEvent.Failed) answered = true;
+
                 if (happened is PatchEvent.Proposed proposed)
                 {
                     Proposal = proposed.Patch;
@@ -354,6 +378,16 @@ public sealed class AssistantRun : IDisposable
         finally
         {
             working = null;
+
+            // A turn that failed before anything came back, a rate limit or a
+            // refused key, is not one of the conversation's turns, and what it
+            // was to say about the canvas is said with the next one.
+            if (!answered)
+            {
+                Turns--;
+
+                foreach (var change in telling.Where(change => !unsaid.Any(change.SameSetting))) unsaid.Add(change);
+            }
         }
     }
 

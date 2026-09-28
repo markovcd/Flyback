@@ -556,6 +556,59 @@ public class SessionTests
         session.Take(saved).ShouldBeFalse();
     }
 
+    /// <summary>
+    /// A stop between two calls of one batch still answers every call, since one
+    /// left unanswered makes every later request a 400 and ends the conversation.
+    /// </summary>
+    [Fact]
+    public async Task A_stop_in_the_middle_of_a_batch_still_answers_every_call()
+    {
+        var canned = new Canned(
+            new Answer(Asking(("describe_patch", "{}"), ("describe_patch", "{}"), ("describe_patch", "{}"))),
+            new Answer(Prose("ok")));
+
+        using var session = Session(canned);
+        using var stop = new CancellationTokenSource();
+
+        await foreach (var happened in session.Ask("look", stop.Token))
+        {
+            if (happened is PatchEvent.Did) await stop.CancelAsync();
+        }
+
+        await Drain(session, "carry on");
+
+        var results = canned.Sent[^1]["messages"]!.AsArray()
+            .Where(message => message?["role"]?.GetValue<string>() == "tool")
+            .Select(message => message!["content"]!.GetValue<string>())
+            .ToList();
+
+        results.Count.ShouldBe(3);
+        results.Skip(1).ShouldAllBe(result => result.Contains("stopped"));
+    }
+
+    /// <summary>
+    /// Proposing ends the turn, so what came after it in the same batch is answered
+    /// and not run: run, it would change the patch after the proposal was checked.
+    /// </summary>
+    [Fact]
+    public async Task Calls_after_a_proposal_in_one_batch_are_answered_and_not_run()
+    {
+        var canned = new Canned(
+            new Answer(Asking(Building)),
+            new Answer(Asking(
+                ("propose", """{"summary":"a flat gray field"}"""),
+                ("add_module", """{"type_id":"value","handle":"knob2"}"""))),
+            new Answer(Prose("ok")));
+
+        using var session = Session(canned);
+
+        var first = await Drain(session, "make a gray field");
+        await Drain(session, "thanks");
+
+        first.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem().Patch.Nodes.Count.ShouldBe(2);
+        canned.Sent[^1].ToJsonString().ShouldContain("already proposed");
+    }
+
     private static OpenAiSession Session(Canned canned) => new(
         new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
         new AssistantChoices("some-model"),

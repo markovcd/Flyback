@@ -440,6 +440,53 @@ public class AssistantRunTests
         carried.Unsaid.ShouldBe("value1.value=0.75");
     }
 
+    /// <summary>
+    /// A turn that failed before anything came back is not one of the
+    /// conversation's turns, and what it was to tell about the canvas waits for
+    /// the next.
+    /// </summary>
+    [Fact]
+    public async Task A_turn_that_failed_before_anything_came_back_is_not_counted()
+    {
+        var (open, from, _) = TwoValues();
+
+        using var run = RunOf(ScriptedAssistant.RefusingToStart(), open);
+
+        from.InputValues[0] = 0.25f;
+        run.CatchUp(open);
+
+        var events = await Drain(run);
+
+        events.ShouldHaveSingleItem().ShouldBeOfType<PatchEvent.Failed>();
+        run.Turns.ShouldBe(0);
+        run.Unsaid.ShouldBe("value1.value=0.25");
+    }
+
+    /// <summary>
+    /// A knob the assistant set and never proposed is its own, not something
+    /// changed on the canvas, so carrying the conversation on over the same
+    /// canvas neither undoes it nor tells the model otherwise.
+    /// </summary>
+    [Fact]
+    public async Task A_conversation_carried_on_keeps_a_knob_it_set_and_never_offered()
+    {
+        var (open, _, second) = TwoValues();
+        var assistant = ScriptedAssistant.Proposing("""{"handle":"value2","knobs":[{"port":"value","value":0.9}]}""");
+        SavedConversation saved;
+
+        using (var first = RunOf(assistant, open))
+        {
+            await Drain(first);
+            saved = first.Save([]);
+        }
+
+        using var carried = new AssistantRun(
+            assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, open, resuming: saved);
+
+        carried.Workbench.Snapshot().Find(second.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.9f);
+        carried.Unsaid.ShouldBeNull();
+    }
+
     private static (Patch Patch, NodeInstance First, NodeInstance Second) TwoValues()
     {
         var patch = new Patch();

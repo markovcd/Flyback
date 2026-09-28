@@ -96,6 +96,20 @@ public class WireTests
     /// rendered frame has to arrive as a user turn afterwards. Getting this
     /// wrong is a rejected request, not a missing picture.
     /// </summary>
+    /// <summary>A picture from an earlier turn goes as a line, so later requests do not carry it again.</summary>
+    [Fact]
+    public void A_forgotten_picture_is_a_line_in_its_place()
+    {
+        byte[] png = [0x89, 0x50, 0x4E, 0x47];
+
+        var messages = new JsonArray { Wire.User("look"), Wire.UserWithPictures("here", [png]) };
+
+        Wire.Forget(messages);
+
+        messages.ToJsonString().ShouldNotContain("image_url");
+        messages.ToJsonString().ShouldContain("render again");
+    }
+
     [Fact]
     public void A_picture_travels_as_a_user_turn_not_a_tool_result()
     {

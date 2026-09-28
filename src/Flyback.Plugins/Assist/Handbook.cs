@@ -44,8 +44,8 @@ internal static class Handbook
         ## The language
 
         A patch is written as text. `write_patch` takes the whole of one, and
-        `describe_patch` gives it back under the handles the editing tools
-        answer to.
+        each module then answers to its `let` name in the editing tools;
+        `describe_patch` gives the patch back under those handles.
 
         ```
         let slowly = t * 0.2
@@ -153,8 +153,9 @@ internal static class Handbook
         ## Normalled sockets
 
         Some sockets already carry a signal with nothing patched in.
-        `describe_patch` writes them as `in <- Time (normalled, no wire)`; one
-        hidden Time and one hidden Coordinates serve the whole patch.
+        `describe_patch` lists them as `carrying a signal with no wire:
+        sine1.in <- Time`; one hidden Time and one hidden Coordinates serve the
+        whole patch.
 
         - **`in` on every oscillator and sequencer is normalled to Time**, so
           one placed and never wired is already oscillating or playing.
@@ -292,7 +293,9 @@ internal static class Handbook
     private const string Working = """
         ## How to work
 
-        Call `describe_patch` first to see what is already there.
+        Call `describe_patch` at the start of a conversation to see what is
+        already there. A later message opens with whatever the person changed
+        on the canvas meanwhile, so there is no need to look again.
 
         **Then write the patch with `write_patch`, in one call.** Placing a
         module or a wire is a call each, so building that way runs out of turn
