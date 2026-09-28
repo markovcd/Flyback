@@ -419,10 +419,8 @@ internal sealed class CanvasGestures
                 panOrigin = screen;
                 return;
 
-            // Pressed to select, which a locked canvas does, and then held, which it does not.
-            case Drag.Node when history.Locked:
-                return;
-
+            // A locked canvas still carries a module under the pointer, since nothing
+            // here is written back into the text; it just cannot regroup, which is.
             case Drag.Node when dragOrigins.Count > 0:
                 var delta = selection.Scene.Held(graph - dragOrigin, dragOrigins);
 
@@ -434,7 +432,7 @@ internal sealed class CanvasGestures
                     moving.Y = from.Y + delta.Y;
                 }
 
-                Aim(graph, e.KeyModifiers);
+                if (!history.Locked) Aim(graph, e.KeyModifiers);
                 repaint.Request();
                 return;
 
@@ -886,8 +884,12 @@ internal sealed class CanvasGestures
         WireDropped?.Invoke(this, new WireDrop(graph, wireNode, wirePort, wireFromOutput, sockets[wirePort].Kind));
     }
 
-    /// <summary>Puts a drag that moved something into the history, and says whether it did.</summary>
-    private bool RecordMove() => Displaced && history.RecordMove();
+    /// <summary>
+    /// Puts a drag that moved something into the history, and says whether it did. On a
+    /// locked canvas the move stands but is not a step: a position the text does not
+    /// carry is gone the moment it evaluates again.
+    /// </summary>
+    private bool RecordMove() => Displaced && (history.Locked || history.RecordMove());
 
     /// <summary>Whether the carry has taken anything away from where it started.</summary>
     private bool Displaced => selection.Nodes.Any(node =>
