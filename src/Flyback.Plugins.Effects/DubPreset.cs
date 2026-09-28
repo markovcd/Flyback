@@ -5,8 +5,8 @@ using Flyback.Core.Graph.Extras;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// Dub techno to be played rather than listened to: eight sections of drums, a dub
-/// bass line and chord stabs thrown into the echo, four keys of chord over them whose
+/// Roots dub to be played rather than listened to: eight sections of a one drop, a
+/// bass line and a skank thrown into the echo, four keys of chord over them whose
 /// sound changes with the section, and eight knobs on the panel that are the performance.
 /// </summary>
 /// <remarks>
@@ -42,8 +42,6 @@ internal sealed class DubPreset : PresetBench
 
     private const string DriveType = NodeCatalog.DriveTypeId;
 
-    private const string EuclidType = "flyback.voice.euclid";
-
     private const string NoiseType = NodeCatalog.NoiseTypeId;
 
     private const string CircleType = "flyback.picture.circle";
@@ -63,6 +61,15 @@ internal sealed class DubPreset : PresetBench
     /// <summary>The A the bass line is written over, an octave and a half under the keyboard's bottom row.</summary>
     private const int BassRoot = 33;
 
+    /// <summary>
+    /// The two sentences of Jamaican Patois, by Nesnad on Wikimedia Commons, under
+    /// CC BY-SA 3.0: that nothing he says makes sense, and a father angry to see his
+    /// daughter with a dread. This assembly's resources (see <see cref="PresetFiles.Embedded"/>).
+    /// </summary>
+    private const string NoSense = "no-sense.wav";
+
+    private const string Dread = "dread.wav";
+
     /// <summary>The Tune's note number, after its frequency.</summary>
     private const int TunedNote = 1;
 
@@ -72,8 +79,11 @@ internal sealed class DubPreset : PresetBench
     /// <summary>The chord the stabs play until a key is struck: A minor seventh.</summary>
     private static readonly int[] Resting = [57, 60, 64, 67];
 
-    /// <summary>The first Arrangement's parts: what plays in each section, and where the keys are sent.</summary>
-    private const int Kick = 0, Hats = 1, Rim = 2, Conga = 3, Bass = 4, Stabs = 5, Throw = 6, Wash = 7;
+    /// <summary>The drums' Arrangement: which of them play in each section.</summary>
+    private const int Drop = 0, Steppers = 1, Rim = 2, Hats = 3, Shaker = 4, Hand = 5, Rolls = 6;
+
+    /// <summary>The playing's: the bass, the stabs, and where the keys are sent.</summary>
+    private const int Bass = 0, Stabs = 1, Throw = 2, Wash = 3;
 
     /// <summary>The second's: the sound the keys play in each section.</summary>
     private const int Attack = 0, Decay = 1, Sustain = 2, Release = 3, Saws = 4, Organ = 5, Tines = 6, Bright = 7;
@@ -136,9 +146,9 @@ internal sealed class DubPreset : PresetBench
 
         // --- the clock -------------------------------------------------------
 
-        // A hundred and twenty-two a minute. Every part reads the count of beats, so
-        // the drums are envelopes off the grid rather than things triggered on it.
-        var beat = b.Add(NodeCatalog.TempoTypeId, (0, 122f));
+        // Seventy-four a minute, where roots dub sits. Every part reads the count of
+        // beats, so the drums are envelopes off the grid rather than things triggered on it.
+        var beat = b.Add(NodeCatalog.TempoTypeId, (0, 74f));
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
@@ -146,13 +156,20 @@ internal sealed class DubPreset : PresetBench
 
         // --- the arrangement -------------------------------------------------
 
-        // What plays in each section. Cut on the downbeat, since a kick faded in loses
-        // its first hit.
-        var parts = Arranged(beats, 1f / 32f,
-            Levels(0, 1, 1, 0, 1, 0, 1, 1),
-            Levels(0.4f, 0.7f, 1, 0.5f, 1, 0.3f, 1, 0.6f),
-            Levels(0.7f, 1, 1, 1, 1, 0.8f, 1, 1),
+        // The drums in each section: the one drop, steppers at the height of the piece,
+        // the rim, the hats, a shaker, a hand drum and a roll down the toms. Cut on the
+        // downbeat, since a kick faded in loses its first hit.
+        var drumming = Arranged(beats, 1f / 32f,
+            Levels(0, 1, 1, 0, 0, 0, 0, 1),
+            Levels(0, 0, 0, 0, 1, 0, 1, 0),
+            Levels(0.8f, 1, 1, 1, 1, 0.7f, 1, 1),
+            Levels(0.5f, 0.8f, 1, 0.3f, 1, 0.3f, 1, 0.7f),
+            Levels(0.6f, 0.5f, 1, 0, 1, 0.8f, 1, 0.5f),
             Levels(0, 0, 1, 1, 1, 0, 1, 0.5f),
+            Levels(1, 1, 1, 0, 1, 1, 1, 1));
+
+        // The bass, the stabs, and how much of the keys goes to the echo and the room.
+        var playing = Arranged(beats, 1f / 32f,
             Levels(0, 1, 1, 1, 1, 0, 1, 1),
             Levels(1, 0.5f, 1, 0, 0.6f, 1, 1, 0.8f),
             Levels([.. Sections.Select(s => s.Throw)]),
@@ -194,10 +211,12 @@ internal sealed class DubPreset : PresetBench
 
         // --- the kick --------------------------------------------------------
 
-        // Four on the floor, low and soft. What is left of the beat to the fifth
-        // power is the envelope, and the pitch falls with it.
-        var kickLevel = Product(Stroke(beats, 1f, 5f), parts, Kick);
-        var kick = Drum(kickLevel, 47f, 110f, 4f, 1.8f);
+        // The one drop: nothing on the one, and the kick on three with the rim.
+        // Steppers put it on every beat. Low and round, the pitch falling with what is
+        // left of the stroke.
+        var kickLevel = Formula("pow(1 - fract(a * 0.25 + 0.5), 20) * b + pow(1 - fract(a), 5) * c",
+            beats, new Read(drumming, Drop), new Read(drumming, Steppers));
+        var kick = Drum(kickLevel, 52f, 120f, 5f, 1.5f);
 
         // The sidechain: the chords and the bass lean away from the kick, by as much
         // as the kick is up.
@@ -206,35 +225,50 @@ internal sealed class DubPreset : PresetBench
 
         Box("Kick");
 
-        // --- the hats --------------------------------------------------------
-
-        // Open on the off-beat, and sixteenths under it that come and go on a Wander.
-        var hatStroke = Sum(
-            Times(Stroke(beats, 1f, 3.5f, 0.5f), 0.7f),
-            Product(Times(Stroke(beats, 4f, 8f), 0.3f), Wander(0.07f, 2f, 0.3f)));
-        var hats = Hiss(Product(hatStroke, parts, Hats), 9000f, 0.15f, "high");
-
-        Box("Hats");
-
         // --- the rim ---------------------------------------------------------
 
-        // Two and four, all of it a band of noise, and most of what is heard of it
-        // is the echo.
-        var rimStroke = Stroke(beats, 0.5f, 12f, 0.5f);
-        var rim = Hiss(Product(rimStroke, parts, Rim), 1700f, 0.5f, "band", 2.5f, seed: 1f);
+        // A cross-stick on three: a click of noise and a knock under it. Most of what
+        // is heard of it is the echo, which the last bar of every four throws it into
+        // harder.
+        var rimStroke = Formula("pow(1 - fract(a * 0.25 + 0.5), 45) * b", beats, new Read(drumming, Rim));
+        var rim = Sum(
+            Hiss(rimStroke, 2200f, 0.5f, "band", 2.5f, seed: 1f),
+            Times(Drum(rimStroke, 380f, 60f, 6f, 0.5f), 0.5f));
+        var rimThrow = Formula("0.5 + step(12, a % 16) * 0.4", beats);
 
         Box("Rim");
 
-        // --- the conga -------------------------------------------------------
+        // --- the hats and the shaker ------------------------------------------
 
-        // Five in sixteen, turned so that it never lands with the kick.
-        var congaHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 3f), (EuclidCurve, 6f));
-        var conga = b.Add("flyback.voice.drum", (DrumPitch, 185f), (3, 45f), (4, 2f), (5, 0f));
+        // Eighths swung to the triplet, the one after the beat the louder, played a
+        // little harder or softer on a Wander. Under them a shaker's sixteenths,
+        // leaning on the "and".
+        var hatLevel = Formula("(pow(1 - fract(a), 14) * 0.5 + pow(1 - fract(a + 1 / 3), 14)) * b * c",
+            beats, Wander(0.1f, 2f, 0.6f), new Read(drumming, Hats));
+        var shake = Formula("pow(1 - fract(a * 4), 6) * (0.35 + pow(1 - fract(a + 0.5), 3) * 0.65) * b",
+            beats, new Read(drumming, Shaker));
+        var hats = Sum(Hiss(hatLevel, 9000f, 0.15f, "high"), Hiss(shake, 6000f, 0.3f, "band", 0.6f, seed: 4f));
 
-        b.Wire(beats, 0, congaHits, 0)
-         .Wire(Formula("a * b", new Read(congaHits, EuclidStroke), new Read(parts, Conga)), 0, conga, 1);
+        Box("Hats");
 
-        Box("Conga");
+        // --- the hand drum and the rolls -------------------------------------
+
+        // The funde's heartbeat: a light stroke just before one and three, and the
+        // heavy one on them.
+        var heartbeat = Formula("(pow(1 - fract(a * 0.5), 9) + pow(1 - fract(a * 0.5 + 0.125), 9) * 0.5) * b",
+            beats, new Read(drumming, Hand));
+        var hand = Drum(heartbeat, 140f, 45f, 2f, 0f);
+
+        // Down the toms in sixteenths through the last beat of every fourth bar.
+        var roll = Formula("pow(1 - fract(a * 4), 5) * step(15, a % 16) * b", beats, new Read(drumming, Rolls));
+        var toms = b.Add("flyback.voice.drum", (3, 60f), (4, 3f), (5, 0.3f));
+
+        b.Wire(roll, 0, toms, 1)
+         .Wire(Formula("220 - floor(fract(a) * 4) * 35", beats), 0, toms, DrumPitch);
+
+        var percussion = Sum(hand, toms);
+
+        Box("Percussion");
 
         // --- the voices ------------------------------------------------------
 
@@ -329,10 +363,10 @@ internal sealed class DubPreset : PresetBench
             stabSaws = stabSaws is null ? stabSaw : Sum(stabSaws, stabSaw);
         }
 
-        // A tenth of a second of chord through a filter that drifts open and shut
-        // over half a minute, which is the sound of this music.
-        var stabStroke = Stroke(beats, 0.5f, 8f, 0.75f);
-        var stabLevel = Product(stabStroke, parts, Stabs);
+        // A tenth of a second of chord through a filter that drifts open and shut over
+        // half a minute: one skank a bar, on four, and the echo plays the rest.
+        var stabStroke = Stroke(beats, 0.25f, 28f, 0.25f);
+        var stabLevel = Product(stabStroke, playing, Stabs);
         var stabTone = b.Add(FilterType, (FilterResonance, 0.45f));
         var stabs = Formula("a * b * 0.6", stabTone, stabLevel);
 
@@ -366,7 +400,7 @@ internal sealed class DubPreset : PresetBench
         var fat = b.Add(DriveType, (1, 5f));
         var bassEnvelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -0.6f), (3, 0.7f), (4, -1.3f));
         var bassTone = b.Add(FilterType, (FilterResonance, 0.2f));
-        var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), new Read(parts, Bass));
+        var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), new Read(playing, Bass));
 
         b.Wire(beats, 0, bassLine, 0)
          .Wire(Through("audio.note", Plus(bassLine, BassRoot)), 0, bassHz, 0)
@@ -391,13 +425,46 @@ internal sealed class DubPreset : PresetBench
 
         Box("Dust");
 
+        // --- the voice -------------------------------------------------------
+
+        // Two sentences of Patois, each read from the moment it is due so it lands on
+        // its bar, and silent before and after its clip. Each is dry at its start so the
+        // words are heard, and more and more of it goes into an echo of its own as it
+        // goes, the words giving way to the repeats.
+        NodeInstance Spoken(string file, string due, out NodeInstance thrown)
+        {
+            var at = Formula(due, beats, beat);
+            var line = b.Add(NodeCatalog.SampleTypeId, (1, 2f));
+            SampleExtra.Set(line, file);
+
+            b.Wire(at, 0, line, 0);
+            thrown = Formula("smoothstep(0.3, 1, a / b)", at, new Read(line, 1));
+            return line;
+        }
+
+        // The first in the fifth bar of the intro and of the breakdown, the second in
+        // the second bar of the dub and the fifth of the way out.
+        var first = Spoken(NoSense, "(a % 256 - 16 - step(176, a % 256) * 160) / b", out var firstThrown);
+        var second = Spoken(Dread, "(a % 256 - 100 - step(240, a % 256) * 140) / b", out var secondThrown);
+
+        var said = Formula("a * (1 - b * 0.6) + c * (1 - d * 0.6)", first, firstThrown, second, secondThrown);
+        var voiceTaps = Echo(
+            Formula("a * b + c * d", first, firstThrown, second, secondThrown), beat, 3f, 2f, 0.82f, 1f);
+        var voiceLeft = b.Add(FilterType, (1, 1800f), (2, 0.2f));
+        var voiceRight = b.Add(FilterType, (1, 1800f), (2, 0.2f));
+
+        b.Wire(voiceTaps, 0, voiceLeft, 0)
+         .Wire(voiceTaps, EchoRight, voiceRight, 0);
+
+        Box("Voice");
+
         // --- the space -------------------------------------------------------
 
         // The echo every record of this kind is made of: three sixteenths and then
         // two more, fed back by the knob, and each side darkened on the way out so
         // that the repeats sit behind what is played. The stabs go in hardest; the
         // keys as hard as their section's sound wants.
-        var send = b.Add("math.mixer", (3, 0.5f), (5, 0.4f), (7, 0.9f));
+        var send = b.Add("math.mixer", (5, 0.4f), (7, 0.9f));
         var taps = Echo(send, beat, 3f, 2f, 0.6f, 1f);
         Follows(taps, EchoFeedback, echo, 0.2f, 0.9f);
 
@@ -412,14 +479,15 @@ internal sealed class DubPreset : PresetBench
         Follows(room, 2, space, 0.5f, 0.93f);
 
         b.Wire(warm, 0, send, 0)
-         .Wire(parts, Throw, send, 1)
+         .Wire(playing, Throw, send, 1)
          .Wire(rim, 0, send, 2)
-         .Wire(conga, 0, send, 4)
+         .Wire(rimThrow, 0, send, 3)
+         .Wire(percussion, 0, send, 4)
          .Wire(stabs, 0, send, 6)
          .Wire(taps, 0, tapsLeft, 0)
          .Wire(taps, EchoRight, tapsRight, 0)
          .Wire(warm, 0, roomSend, 0)
-         .Wire(parts, Wash, roomSend, 1)
+         .Wire(playing, Wash, roomSend, 1)
          .Wire(tapsLeft, 0, roomSend, 2)
          .Wire(rim, 0, roomSend, 4)
          .Wire(hats, 0, roomSend, 6)
@@ -438,10 +506,10 @@ internal sealed class DubPreset : PresetBench
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.9f));
 
-        Channel(drumDesk, 1, 0.8f, kick);
-        Channel(drumDesk, 2, 0.45f, hats);
-        Channel(drumDesk, 3, 0.35f, rim);
-        Channel(drumDesk, 4, 0.35f, conga);
+        Channel(drumDesk, 1, 0.8f, Times(kick, 2f));
+        Channel(drumDesk, 2, 0.8f, hats);
+        Channel(drumDesk, 3, 0.7f, rim);
+        Channel(drumDesk, 4, 0.7f, percussion);
 
         for (var channel = 1; channel <= 4; channel++) Ridden(drumDesk, channel, drums);
 
@@ -454,6 +522,8 @@ internal sealed class DubPreset : PresetBench
         Channel(spaceDesk, 1, 0.6f, tapsLeft, tapsRight);
         Channel(spaceDesk, 2, 0.45f, room, room, rightFrom: 1);
         Follows(spaceDesk, 5, space, 0.1f, 0.8f);
+        Channel(spaceDesk, 3, 1f, said);
+        Channel(spaceDesk, 4, 1f, voiceLeft, voiceRight);
 
         b.Wire(Chained(drumDesk, musicDesk, spaceDesk), 0, output, NodeCatalog.OutputLeftPort)
          .Wire(spaceDesk, 1, output, NodeCatalog.OutputRightPort);
@@ -474,7 +544,7 @@ internal sealed class DubPreset : PresetBench
 
         // The bass is a glow along the bottom of the frame, as high as the Bass knob.
         var low = From(1f, Rises(coord, -1f, -0.3f, 1));
-        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), parts, Bass), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
+        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), playing, Bass), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
 
         b.Wire(Times(clock, 0.05f), 0, fog, 2)
          .Wire(cold, 0, mist, 0)

@@ -2,6 +2,7 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
@@ -18,12 +19,15 @@ public class DubPresetTests
     private const int Rate = GlobalConstants.SampleRate;
     private const int Voices = 4;
 
-    /// <summary>A section's length: eight bars at a hundred and twenty-two.</summary>
-    private const double Section = 32 * 60 / 122.0;
+    /// <summary>A section's length: eight bars at seventy-four.</summary>
+    private const double Section = 32 * 60 / 74.0;
 
     private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
     private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "Dub").Build(Loaded.Modules);
+
+    /// <summary>The voice's clips, which the preset carries rather than names.</summary>
+    private static readonly BundleFiles Carried = new(Loaded.Presets.Single(p => p.Name == "Dub").Files!());
 
     private static string Key(int voice, string signal) => MidiSignal.Key(MidiSources.Keyboard, voice, signal);
 
@@ -107,8 +111,8 @@ public class DubPresetTests
 
         foreach (var compiled in new[]
                  {
-                     patch.CompileForAudio(Loaded.Modules, played: true),
-                     patch.CompileForVideo(Loaded.Modules, played: true),
+                     patch.CompileForAudio(Loaded.Modules, Carried, played: true),
+                     patch.CompileForVideo(Loaded.Modules, Carried, played: true),
                  })
         {
             compiled.Issues.ShouldBeEmpty(string.Join("; ", compiled.Issues.Select(i => i.Message)));
@@ -140,8 +144,8 @@ public class DubPresetTests
     [Fact]
     public void The_drums_and_the_bass_come_down_to_the_dust()
     {
-        var up = Play(Rate / 2, from: Section * 3);
-        var down = Play(Rate / 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: Section * 3);
+        var up = Play(Rate * 2, from: Section * 3);
+        var down = Play(Rate * 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: Section * 3);
 
         Loudness(down).ShouldBeLessThan(Loudness(up) * 0.2f);
     }
@@ -187,11 +191,30 @@ public class DubPresetTests
             var with = Play(Rate, [57f, 60f, 64f, 67f], dry, from);
             var without = Play(Rate, null, dry, from);
 
-            // From six tenths of a second after the strike, with the key still down.
-            return Loudness([.. with.Zip(without, (a, b) => a - b).Skip(Rate * 7 / 10)]);
+            // Four to six tenths of a second after the strike, with the key still down
+            // and before the echo's first repeat.
+            return Loudness([.. with.Zip(without, (a, b) => a - b).Skip(Rate / 2).Take(Rate / 5)]);
         }
 
         Ringing(0).ShouldBeGreaterThan(Ringing(Section) * 4f);
+    }
+
+    [Fact]
+    public void It_carries_both_sentences_of_its_voice()
+    {
+        Loaded.Presets.Single(p => p.Name == "Dub").Files.ShouldNotBeNull()().Keys.Order()
+            .ShouldBe(["dread.wav", "no-sense.wav"]);
+    }
+
+    /// <summary>The fifth bar of the intro against the fourth, neither with a skank in its first second.</summary>
+    [Fact]
+    public void The_voice_speaks_in_the_fifth_bar_of_the_intro()
+    {
+        (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
+        const double bar = 4 * 60 / 74.0;
+
+        Loudness(Play(Rate, knobs: quiet, from: 4 * bar))
+            .ShouldBeGreaterThan(Loudness(Play(Rate, knobs: quiet, from: 3 * bar)) * 2f);
     }
 
     [Fact]
@@ -226,7 +249,7 @@ public class DubPresetTests
         int length, float[]? chord = null, (string Name, float Value)[]? knobs = null, double from = 0)
     {
         var patch = Patch();
-        var program = patch.CompileForAudio(Loaded.Modules, played: true).Program;
+        var program = patch.CompileForAudio(Loaded.Modules, Carried, played: true).Program;
         var registers = program.AllocateRegisters();
         var state = new DelayState(program.DelayLengths, Rate, program.PhaseCount, program.UnitCount);
         var live = new LiveValues(program.LiveInputs);

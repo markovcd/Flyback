@@ -111,10 +111,14 @@ public sealed class EffectsPlugin : IFlybackPlugin
             new PatchPreset(
                 DubPreset.Name,
                 DubPreset.Build,
-                "Dub techno to perform: a kick, hats and a sub that run on their own, four keys of "
-                + "chord to hold over them, and eight panel knobs — filter, echo, room, drums, bass — "
-                + "that move the rings on the screen as they move the sound.",
-                PresetKind.Showcase),
+                "Roots dub in A minor to perform: a one drop, a bass line and a skank thrown into the "
+                + "echo that run on their own, four keys of chord to play over them, and eight panel "
+                + "knobs — filter, echo, room, drums, bass — that move the rings on the screen as they "
+                + "move the sound. The voice is Nesnad's, from Wikimedia Commons, under CC BY-SA 3.0.",
+                PresetKind.Showcase)
+            {
+                Files = PresetFiles.Embedded(typeof(DubPreset).Assembly, DubPreset.Name),
+            },
             new PatchPreset(
                 OverworldPreset.Name,
                 OverworldPreset.Build,
