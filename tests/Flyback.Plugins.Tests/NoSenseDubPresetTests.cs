@@ -17,7 +17,6 @@ namespace Flyback.Plugins.Tests;
 public class NoSenseDubPresetTests
 {
     private const int Rate = GlobalConstants.SampleRate;
-    private const int Voices = 4;
 
     /// <summary>A beat at seventy-four a minute, in seconds.</summary>
     private const double Beat = 60 / 74.0;
@@ -41,13 +40,13 @@ public class NoSenseDubPresetTests
     }
 
     [Fact]
-    public void Four_keys_are_four_voices()
+    public void The_organ_is_one_voice()
     {
         Patch().Nodes
             .Where(n => n.TypeId == NodeCatalog.MidiTypeId)
             .Select(n => (int)n.StateOf(MidiExtra.StateKey)![MidiExtra.IndexField]!.GetValue<float>())
             .Order()
-            .ShouldBe([1, 2, 3, 4]);
+            .ShouldBe([1]);
     }
 
     [Fact]
@@ -120,8 +119,7 @@ public class NoSenseDubPresetTests
         {
             compiled.Issues.ShouldBeEmpty(string.Join("; ", compiled.Issues.Select(i => i.Message)));
 
-            for (var voice = 1; voice <= Voices; voice++)
-                compiled.Program.LiveInputs.ShouldContain(Key(voice, MidiSignal.Pitch));
+            compiled.Program.LiveInputs.ShouldContain(Key(1, MidiSignal.Pitch));
 
             compiled.Program.LiveInputs.ShouldContain(patch.Controls!.Single(c => c.Name == "Echo").Key);
         }
@@ -131,32 +129,32 @@ public class NoSenseDubPresetTests
     [Fact]
     public void Each_voice_has_a_meter_for_the_picture()
     {
-        Patch().Nodes.Count(n => n.TypeId == NodeCatalog.MeterTypeId).ShouldBe(Voices);
+        Patch().Nodes.Count(n => n.TypeId == NodeCatalog.MeterTypeId).ShouldBe(1);
     }
 
     [Fact]
-    public void A_chord_is_louder_than_the_backing_alone()
+    public void A_note_is_louder_than_the_backing_alone()
     {
         var backing = Play(Rate);
-        var played = Play(Rate, [57f, 60f, 64f, 67f]);
+        var played = Play(Rate, [57f]);
 
         Loudness(played).ShouldBeGreaterThan(Loudness(backing) * 1.1f);
     }
 
     /// <summary>In the first bar, where only the dust plays for the first half second.</summary>
     [Fact]
-    public void Opening_the_filter_brightens_a_chord()
+    public void Opening_the_filter_brightens_a_note()
     {
-        // The chord alone: the same half second with and without it, one taken from the other.
-        float[] Chord(float cutoff)
+        // The note alone: the same half second with and without it, one taken from the other.
+        float[] Note(float cutoff)
         {
             (string, float)[] knobs = [("Cutoff", cutoff), ("Pluck", 0f)];
-            var with = Play(Rate / 2, [57f, 60f, 64f, 67f], knobs);
+            var with = Play(Rate / 2, [69f], knobs);
             var without = Play(Rate / 2, null, knobs);
             return [.. with.Zip(without, (a, b) => a - b)];
         }
 
-        Brightness(Chord(1f)).ShouldBeGreaterThan(Brightness(Chord(0f)) * 2f);
+        Brightness(Note(1f)).ShouldBeGreaterThan(Brightness(Note(0f)) * 2f);
     }
 
     /// <summary>The arrangement reaches the drums, the bass and the skank, and never the organ.</summary>
@@ -252,7 +250,7 @@ public class NoSenseDubPresetTests
     [Fact]
     public void Nothing_reaches_the_rails_with_every_knob_at_rest()
     {
-        Play(Rate * 2, [57f, 60f, 64f, 67f]).Max(MathF.Abs).ShouldBeLessThan(0.85f);
+        Play(Rate * 2, [57f]).Max(MathF.Abs).ShouldBeLessThan(0.85f);
     }
 
     // --- harness -----------------------------------------------------------------

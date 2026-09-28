@@ -113,7 +113,7 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 NoSenseDubPreset.Build,
                 "Roots dub in A minor to perform: a one drop, a bass line and a skank that drop in and "
                 + "out and are thrown into the echo, a drop to silence and steppers at twice the tempo, "
-                + "four keys of drawbar organ to play over them, and six panel "
+                + "a drawbar organ to play over them a note at a time, and six panel "
                 + "knobs — filter, pluck, decay, echo, room — that move the rings on the screen as they "
                 + "move the sound. The voice is Nesnad's, from Wikimedia Commons, under CC BY-SA 3.0.",
                 PresetKind.Showcase)

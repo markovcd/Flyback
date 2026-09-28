@@ -8,17 +8,17 @@ namespace Flyback.Plugins.Effects;
 /// Roots dub to be played rather than listened to: a one drop at seventy-four, a bass
 /// line and a skank that drop in and out every few bars and are thrown into the echo,
 /// a drop to one line of Patois and silence, and steppers at twice the tempo after it;
-/// four keys of drawbar organ over them, and six knobs on the panel that are the
-/// performance. Named for the line of Patois it opens and closes on.
+/// a drawbar organ over them played a note at a time, and six knobs on the panel that
+/// are the performance. Named for the line of Patois it opens and closes on.
 /// </summary>
 /// <remarks>
-/// The chord is four MIDI Ins on voices 1 to 4 (ADR-0062) and everything worth
-/// riding is a panel knob (ADR-0086), left unbound so the player picks a controller.
+/// The organ is one MIDI In (ADR-0062) and everything worth riding is a panel knob
+/// (ADR-0086), left unbound so the player picks a controller.
 /// <para>
 /// Each knob moves the picture too: feedback is trail length, room is drift,
-/// resonance is wobble, cutoff is fog brightness. Each voice is a ring sized by
-/// pitch, colored by note name and lit by a Meter, since an envelope has no memory
-/// on the screen.
+/// resonance is wobble, cutoff is fog brightness. The organ is a ring sized by pitch,
+/// colored by note name and lit by a Meter, since an envelope has no memory on the
+/// screen.
 /// </para>
 /// <para>
 /// The whole piece is in A minor, the riddim going between A minor and D minor two bars
@@ -32,7 +32,6 @@ internal sealed class NoSenseDubPreset : PresetBench
     /// <summary>The folder of this assembly's resources the voice's clips are in.</summary>
     public const string Clips = "NoSenseDub";
 
-    public const int Voices = 4;
 
     /// <summary>The two plugins this reaches into, named so a failure says which.</summary>
     private const string Voice = "flyback.voice";
@@ -293,66 +292,56 @@ internal sealed class NoSenseDubPreset : PresetBench
 
         Box("Percussion");
 
-        // --- the voices ------------------------------------------------------
+        // --- the organ -------------------------------------------------------
 
-        var keys = new NodeInstance[Voices];
-        var tuned = new NodeInstance[Voices];
-        var heard = new NodeInstance[Voices];
-        var chord = b.Add("math.mixer", (1, 0.8f), (3, 0.8f), (5, 0.8f), (7, 0.8f));
+        var keys = b.Add(NodeCatalog.MidiTypeId);
+        keys.SetState(MidiExtra.StateKey, new JsonObject { [MidiExtra.IndexField] = 1f });
 
-        for (var voice = 0; voice < Voices; voice++)
-        {
-            keys[voice] = b.Add(NodeCatalog.MidiTypeId);
-            keys[voice].SetState(
-                MidiExtra.StateKey, new JsonObject { [MidiExtra.IndexField] = (float)(voice + 1) });
+        // A key off the scale plays the nearest note on it.
+        var hz = InKey(keys, [.. Key.Row.Select(note => note % 12)]);
 
-            // A key off the scale plays the nearest note on it.
-            var hz = tuned[voice] = InKey(keys[voice], [.. Key.Row.Select(note => note % 12)]);
+        // A drawbar organ, on as the key goes down and off as it comes up, and its
+        // percussion: the twelfth struck with the key and dying away as fast as the
+        // Decay knob says, with a click high over it.
+        var envelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -1f), (3, 1f), (4, -1.5f));
+        var struck = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (3, 0f), (4, -2f));
+        Follows(struck, 2, decay, -1.4f, -0.3f);
 
-            // A drawbar organ, on as the key goes down and off as it comes up, and its
-            // percussion: the twelfth struck with the key and dying away as fast as the
-            // Decay knob says, with a click high over it.
-            var envelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -1f), (3, 1f), (4, -1.5f));
-            var struck = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (3, 0f), (4, -2f));
-            Follows(struck, 2, decay, -1.4f, -0.3f);
+        // The sixteen, the eight and the five and a third out, the way a reggae organ's
+        // bubble is set, and a little of the four.
+        var drawbars = Formula("(a * 0.8 + b + c * 0.8 + d * 0.3) * 0.7",
+            Oscillator("osc.sine", Times(hz, 0.5f)), Oscillator("osc.sine", hz),
+            Oscillator("osc.sine", Times(hz, 1.5f)), Oscillator("osc.sine", Times(hz, 2f)));
+        var click = Oscillator("osc.sine", Times(hz, 8f));
+        var percussed = Formula("a + b * c * 0.6 + d",
+            drawbars, Oscillator("osc.sine", Times(hz, 3f)), struck, click);
 
-            // The sixteen, the eight and the five and a third out, the way a reggae organ's
-            // bubble is set, and a little of the four.
-            var drawbars = Formula("(a * 0.8 + b + c * 0.8 + d * 0.3) * 0.7",
-                Oscillator("osc.sine", Times(hz, 0.5f)), Oscillator("osc.sine", hz),
-                Oscillator("osc.sine", Times(hz, 1.5f)), Oscillator("osc.sine", Times(hz, 2f)));
-            var click = Oscillator("osc.sine", Times(hz, 8f));
-            var percussed = Formula("a + b * c * 0.6 + d",
-                drawbars, Oscillator("osc.sine", Times(hz, 3f)), struck, click);
+        b.Wire(Formula("pow(a, 6) * 0.2", struck), 0, click, 3);
 
-            b.Wire(Formula("pow(a, 6) * 0.2", struck), 0, click, 3);
+        var tone = b.Add(FilterType);
+        Follows(tone, FilterResonance, resonance, 0.05f, 0.85f);
 
-            var tone = b.Add(FilterType);
-            Follows(tone, FilterResonance, resonance, 0.05f, 0.85f);
+        // The knob's cutoff, opened by the strike, and held under the top of the
+        // Filter's range.
+        var opened = Formula("min(a * (b * c + 1) * 2, 11000)", cutoffHz, struck, pluckDepth);
 
-            // The knob's cutoff, opened by the strike, and held under the top of the
-            // Filter's range.
-            var opened = Formula("min(a * (b * c + 1) * 2, 11000)", cutoffHz, struck, pluckDepth);
+        b.Wire(keys, 1, envelope, 0)
+         .Wire(keys, 1, struck, 0)
+         .Wire(percussed, 0, tone, 0)
+         .Wire(opened, 0, tone, 1);
 
-            b.Wire(keys[voice], 1, envelope, 0)
-             .Wire(keys[voice], 1, struck, 0)
-             .Wire(percussed, 0, tone, 0)
-             .Wire(opened, 0, tone, 1);
+        // As loud as the key was struck, which a typist's never varies and a
+        // keyboard's does.
+        var organ = Formula("a * b * c * 0.8", tone, envelope, new Read(keys, 2));
 
-            // As loud as the key was struck, which a typist's never varies and a
-            // keyboard's does.
-            var voiced = Formula("a * b * c", tone, envelope, new Read(keys[voice], 2));
+        // The organ as the picture knows it: a twelfth of a second of loudness.
+        var heard = b.Add(NodeCatalog.MeterTypeId, (1, -1.1f), (2, 0.15f));
 
-            // The voice as the picture knows it: a twelfth of a second of loudness.
-            heard[voice] = b.Add(NodeCatalog.MeterTypeId, (1, -1.1f), (2, 0.15f));
+        b.Wire(organ, 0, heard, 0);
 
-            b.Wire(voiced, 0, heard[voice], 0)
-             .Wire(voiced, 0, chord, voice * 2);
+        Box("Organ");
 
-            Box($"Voice {voice + 1}");
-        }
-
-        // --- the chord -------------------------------------------------------
+        // --- the amplifier ---------------------------------------------------
 
         // A little Drive for the valves of the amplifier, and a Chorus turning slowly for
         // the horn of a Leslie.
@@ -361,17 +350,17 @@ internal sealed class NoSenseDubPreset : PresetBench
         var chordLeft = Product(wide, duck, DuckGain);
         var chordRight = Wired("math.mul", wide, duck, 1, DuckGain);
 
-        b.Wire(chord, 0, warm, 0)
+        b.Wire(organ, 0, warm, 0)
          .Wire(warm, 0, wide, 0);
 
-        Box("Chord");
+        Box("Amplifier");
 
         // --- the skank -------------------------------------------------------
 
         // A minor seventh, and D minor seventh with two notes moved down a tone.
         NodeInstance? skankSaws = null;
 
-        for (var voice = 0; voice < Voices; voice++)
+        for (var voice = 0; voice < Skank.Length; voice++)
         {
             var note = Formula($"{Skank[voice]} - a * {Falls[voice]}", onD);
             var skankSaw = Oscillator("osc.saw", Through("audio.note", note));
@@ -617,52 +606,43 @@ internal sealed class NoSenseDubPreset : PresetBench
 
         // --- the picture: rings ----------------------------------------------
 
-        // The resonance is how far the fog pushes the rings out of round: the same
-        // field added to every ring's distance, so they bend together.
+        // The resonance is how far the fog pushes the ring out of round.
         var wobble = Times(Plus(fog, -0.5f), resonance, 0f, 0.35f);
 
-        NodeInstance? rings = null;
+        // Three octaves of keyboard from the middle of the frame to its edge, and a
+        // note under them held off the middle, where the kick is.
+        var ring = b.Add(CircleType);
+        var drawn = b.Add(FillType, (1, 0.012f));
 
-        for (var voice = 0; voice < Voices; voice++)
-        {
-            // Three octaves of keyboard from the middle of the frame to its edge, and
-            // a note under them held off the middle, where the kick is.
-            var ring = b.Add(CircleType);
-            var drawn = b.Add(FillType, (1, 0.012f));
+        // As bright as the organ is loud, and never quite dark while its key is down.
+        // The line thickens with the level too, so a note is seen to land.
+        var level = Wired("math.max", Knobbed("math.min", heard, 1.5f), Times(keys, 0.25f, 1));
 
-            // As bright as the voice is loud, and never quite dark while its key is
-            // down. The line thickens with the level too, so a struck chord is seen to land.
-            var level = Wired(
-                "math.max", Knobbed("math.min", heard[voice], 1.5f), Times(keys[voice], 0.25f, 1));
+        // Which of the twelve notes it is, as a hue between teal and magenta, so a note
+        // is always the color it was and an octave is the same color further out. The
+        // warm end of the wheel is left to the kick and the bass.
+        var tint = b.Add("color.hsv", (1, 0.45f), (2, 1f));
+        var rings = b.Add("color.gain");
 
-            // Which of the twelve notes it is, as a hue between teal and magenta, so a
-            // note is always the color it was and an octave is the same color further
-            // out. The warm end of the wheel is left to the kick and the bass.
-            var tint = b.Add("color.hsv", (1, 0.45f), (2, 1f));
-            var lit = b.Add("color.gain");
-
-            b.Wire(coord, 0, ring, 0)
-             .Wire(coord, 1, ring, 1)
-             .Wire(Knobbed("math.max", Span(tuned[voice], 48f, 84f, 0.14f, 1f, TunedNote), 0.1f), 0, ring, 2)
-             .Wire(Sum(ring, wobble), 0, drawn, 0)
-             .Wire(Plus(Times(level, 0.025f), 0.004f), 0, drawn, 2)
-             .Wire(Span(Fraction(Times(tuned[voice], 1f / 12f, TunedNote)), 0f, 1f, 0.47f, 0.87f), 0, tint, 0)
-             .Wire(tint, 0, lit, 0)
-             .Wire(Product(level, drawn, 1), 0, lit, 1);
-
-            rings = rings is null ? lit : Sum(rings, lit);
-        }
+        b.Wire(coord, 0, ring, 0)
+         .Wire(coord, 1, ring, 1)
+         .Wire(Knobbed("math.max", Span(hz, 48f, 84f, 0.14f, 1f, TunedNote), 0.1f), 0, ring, 2)
+         .Wire(Sum(ring, wobble), 0, drawn, 0)
+         .Wire(Plus(Times(level, 0.025f), 0.004f), 0, drawn, 2)
+         .Wire(Span(Fraction(Times(hz, 1f / 12f, TunedNote)), 0f, 1f, 0.47f, 0.87f), 0, tint, 0)
+         .Wire(tint, 0, rings, 0)
+         .Wire(Product(level, drawn, 1), 0, rings, 1);
 
         Box("Picture: Rings");
 
         // --- the picture: scene ----------------------------------------------
 
-        // The kick is a disc in the middle that every ring is drawn round, swelling
+        // The kick is a disc in the middle that the ring is drawn round, swelling
         // on the beat and gone while the kick is out.
         var kickSeen = Times(kickLevel, 0.8f);
         var disc = b.Add(CircleType);
         var pulse = b.Add(FillType, (1, 0.06f));
-        var scene = Ink(Sum(glow, rings!), Product(pulse, kickSeen), 0.75f, 0.95f, 1f);
+        var scene = Ink(Sum(glow, rings), Product(pulse, kickSeen), 0.75f, 0.95f, 1f);
 
         b.Wire(coord, 0, disc, 0)
          .Wire(coord, 1, disc, 1)
