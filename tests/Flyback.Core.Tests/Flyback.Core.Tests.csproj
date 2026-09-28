@@ -21,7 +21,6 @@
   <ItemGroup>
     <PackageReference Include="CsCheck" />
     <PackageReference Include="Shouldly" />
-    <PackageReference Include="Verify.ImageMagick" />
     <PackageReference Include="Verify.XunitV3" />
     <PackageReference Include="xunit.v3" />
   </ItemGroup>
