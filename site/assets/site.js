@@ -171,6 +171,296 @@
   }
 })();
 
+// A picture opens over the page, fitted to the screen, rather than in a tab of
+// its own. Pinch, wheel, double-tap or click to look closer, drag to move about,
+// swipe or the arrow keys for the next one; Esc, the back button or a tap
+// beside it closes it. Without this script the links still open the file.
+(function () {
+  var links = [].slice.call(document.querySelectorAll("a.zoom"));
+  if (!links.length) return;
+
+  function make(tag, cls, parent) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  var box = make("div", "lightbox", document.body);
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.setAttribute("aria-label", "Picture");
+  box.hidden = true;
+
+  var stage = make("div", "lb-stage", box);
+  var img = make("img", "lb-img", stage);
+  img.alt = "";
+  img.draggable = false;
+
+  var bar = make("div", "lb-bar", box);
+  var caption = make("p", "lb-caption", bar);
+  var count = make("span", "lb-count", bar);
+  var hint = make("p", "lb-hint", box);
+  hint.textContent = "Pinch or double-tap to zoom";
+
+  function button(cls, label, path) {
+    var b = make("button", "lb-button " + cls, box);
+    b.type = "button";
+    b.setAttribute("aria-label", label);
+    b.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + path + '"/></svg>';
+    return b;
+  }
+
+  var close = button("lb-close", "Close", "M5 5l10 10M15 5 5 15");
+  var prev = button("lb-prev", "Previous picture", "M12.5 4.5 7 10l5.5 5.5");
+  var next = button("lb-next", "Next picture", "M7.5 4.5 13 10l-5.5 5.5");
+
+  var index = -1, opener = null, pushed = false;
+  var fit = { w: 0, h: 0, base: 1 };
+  var view = { s: 1, x: 0, y: 0 };
+
+  function stageSize() { return { w: stage.clientWidth, h: stage.clientHeight }; }
+
+  function maxScale() { return Math.max(4, 2 / fit.base); }
+
+  /** The scale a double-tap goes to: enough to fill the screen, never past the file's own pixels. */
+  function closer() {
+    var room = stageSize();
+    var cover = Math.max(room.w / fit.w, room.h / fit.h);
+    return Math.min(maxScale(), Math.max(2, Math.min(1 / fit.base, cover)));
+  }
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  function place(s, x, y, animate) {
+    var room = stageSize();
+    s = clamp(s, 1, maxScale());
+    var w = fit.w * s, h = fit.h * s;
+    x = w <= room.w ? (room.w - w) / 2 : clamp(x, room.w - w, 0);
+    y = h <= room.h ? (room.h - h) / 2 : clamp(y, room.h - h, 0);
+    view = { s: s, x: x, y: y };
+    img.classList.toggle("lb-animate", !!animate);
+    img.style.transform = "translate(" + x + "px," + y + "px) scale(" + s + ")";
+    box.classList.toggle("lb-zoomed", s > 1.01);
+  }
+
+  function zoomAt(s, px, py, animate) {
+    var k = clamp(s, 1, maxScale()) / view.s;
+    place(view.s * k, px - (px - view.x) * k, py - (py - view.y) * k, animate);
+  }
+
+  function layout() {
+    var room = stageSize();
+    var nw = img.naturalWidth || 16, nh = img.naturalHeight || 9;
+    // A small figure is shown at its own size on a big screen; a big one is fitted.
+    fit.base = Math.min(1, room.w / nw, room.h / nh);
+    fit.w = nw * fit.base;
+    fit.h = nh * fit.base;
+    img.style.width = fit.w + "px";
+    img.style.height = fit.h + "px";
+    place(1, 0, 0, false);
+  }
+
+  function describe(link) {
+    var figure = link.closest("figure");
+    var cap = figure && figure.querySelector("figcaption");
+    var inner = link.querySelector("img");
+    return cap ? cap.textContent.trim() : inner ? inner.alt : "";
+  }
+
+  function show(i) {
+    index = (i + links.length) % links.length;
+    var link = links[index];
+    var inner = link.querySelector("img");
+    caption.textContent = describe(link);
+    count.textContent = links.length > 1 ? index + 1 + " / " + links.length : "";
+    img.alt = inner ? inner.alt : "";
+    img.onload = layout;
+    img.src = link.href;
+    if (img.complete && img.naturalWidth) layout();
+  }
+
+  function open(i, from) {
+    opener = from;
+    box.hidden = false;
+    document.documentElement.classList.add("lb-open");
+    show(i);
+    if (!pushed) { history.pushState({ lightbox: true }, ""); pushed = true; }
+    close.focus({ preventScroll: true });
+  }
+
+  function hide() {
+    box.hidden = true;
+    document.documentElement.classList.remove("lb-open");
+    img.removeAttribute("src");
+    if (opener) opener.focus({ preventScroll: true });
+  }
+
+  function shut() {
+    if (box.hidden) return;
+    if (pushed) { pushed = false; history.back(); }
+    hide();
+  }
+
+  window.addEventListener("popstate", function () {
+    if (!pushed) return;
+    pushed = false;
+    hide();
+  });
+
+  links.forEach(function (link, i) {
+    link.removeAttribute("target");
+    link.addEventListener("click", function (e) {
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      open(i, link);
+    });
+  });
+
+  close.addEventListener("click", shut);
+  prev.addEventListener("click", function () { show(index - 1); });
+  next.addEventListener("click", function () { show(index + 1); });
+  if (links.length < 2) { prev.hidden = true; next.hidden = true; }
+
+  window.addEventListener("resize", function () { if (!box.hidden) layout(); });
+
+  document.addEventListener("keydown", function (e) {
+    if (box.hidden) return;
+    if (e.key === "Escape") { shut(); e.preventDefault(); }
+    else if (e.key === "ArrowLeft" && view.s <= 1.01) { show(index - 1); e.preventDefault(); }
+    else if (e.key === "ArrowRight" && view.s <= 1.01) { show(index + 1); e.preventDefault(); }
+    else if (e.key === "+" || e.key === "=") { var r = stageSize(); zoomAt(view.s * 1.5, r.w / 2, r.h / 2, true); }
+    else if (e.key === "-") { var q = stageSize(); zoomAt(view.s / 1.5, q.w / 2, q.h / 2, true); }
+    else if (e.key === "Tab") {
+      var stops = [close, prev, next].filter(function (b) { return !b.hidden; });
+      var at = stops.indexOf(document.activeElement);
+      stops[(at + (e.shiftKey ? stops.length - 1 : 1)) % stops.length].focus();
+      e.preventDefault();
+    }
+  });
+
+  stage.addEventListener("wheel", function (e) {
+    e.preventDefault();
+    var r = stage.getBoundingClientRect();
+    zoomAt(view.s * Math.exp(-e.deltaY * 0.0022), e.clientX - r.left, e.clientY - r.top, false);
+  }, { passive: false });
+
+  // Pointers: one drags (or swipes, at the fitted size), two pinch.
+  var pointers = new Map();
+  var gesture = null, lastTap = 0;
+
+  function local(e) {
+    var r = stage.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  function pair() {
+    var p = Array.from(pointers.values());
+    return {
+      mid: { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 },
+      dist: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1,
+    };
+  }
+
+  stage.addEventListener("pointerdown", function (e) {
+    try { stage.setPointerCapture(e.pointerId); } catch (_) { /* a pointer already gone */ }
+    pointers.set(e.pointerId, local(e));
+    if (pointers.size === 1) {
+      var at = local(e);
+      gesture = { kind: "drag", start: at, from: { x: view.x, y: view.y }, moved: false, onImage: e.target === img, touch: e.pointerType !== "mouse" };
+    } else if (pointers.size === 2) {
+      var two = pair();
+      gesture = { kind: "pinch", dist: two.dist, mid: two.mid, s: view.s, x: view.x, y: view.y, moved: true };
+    }
+  });
+
+  stage.addEventListener("pointermove", function (e) {
+    if (!pointers.has(e.pointerId) || !gesture) return;
+    pointers.set(e.pointerId, local(e));
+
+    if (gesture.kind === "pinch" && pointers.size === 2) {
+      var two = pair();
+      var k = clamp(gesture.s * two.dist / gesture.dist, 1, maxScale()) / gesture.s;
+      place(gesture.s * k,
+        two.mid.x - (gesture.mid.x - gesture.x) * k,
+        two.mid.y - (gesture.mid.y - gesture.y) * k, false);
+    } else if (gesture.kind === "drag") {
+      var at = local(e);
+      var dx = at.x - gesture.start.x, dy = at.y - gesture.start.y;
+      if (Math.hypot(dx, dy) > 6) gesture.moved = true;
+      if (view.s > 1.01) place(view.s, gesture.from.x + dx, gesture.from.y + dy, false);
+      else if (gesture.moved) img.style.transform = "translate(" + (view.x + dx) + "px," + (view.y + Math.max(0, dy)) + "px)";
+    }
+  });
+
+  function lift(e) {
+    if (!pointers.has(e.pointerId)) return;
+    var at = local(e);
+    pointers.delete(e.pointerId);
+    var g = gesture;
+
+    if (g && g.kind === "pinch") {
+      // The finger left down carries on as a drag from where it is.
+      if (pointers.size === 1) {
+        var rest = pointers.values().next().value;
+        gesture = { kind: "drag", start: rest, from: { x: view.x, y: view.y }, moved: true, onImage: true };
+      } else gesture = null;
+      return;
+    }
+
+    gesture = null;
+    if (!g) return;
+
+    var dx = at.x - g.start.x, dy = at.y - g.start.y;
+
+    if (g.moved) {
+      if (view.s <= 1.01) {
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) show(index + (dx < 0 ? 1 : -1));
+        else if (dy > 90 && dy > Math.abs(dx)) shut();
+        else place(1, 0, 0, true);
+      }
+      return;
+    }
+
+    // A tap or a click.
+    if (!g.onImage) { shut(); return; }
+
+    if (g.touch) {
+      var now = Date.now();
+      if (now - lastTap < 320) {
+        lastTap = 0;
+        if (view.s > 1.01) place(1, 0, 0, true); else zoomAt(closer(), at.x, at.y, true);
+      } else lastTap = now;
+    } else if (view.s > 1.01) place(1, 0, 0, true);
+    else zoomAt(closer(), at.x, at.y, true);
+  }
+
+  stage.addEventListener("pointerup", lift);
+  stage.addEventListener("pointercancel", function (e) { pointers.delete(e.pointerId); gesture = null; place(view.s, view.x, view.y, true); });
+})();
+
+// The ad starts muted, as a clip that plays by itself must; its button turns the sound on.
+(function () {
+  document.querySelectorAll(".ad").forEach(function (ad) {
+    var video = ad.querySelector("video");
+    var button = ad.querySelector(".sound");
+    if (!video || !button) return;
+    var label = button.querySelector("span");
+
+    button.addEventListener("click", function () {
+      video.muted = !video.muted;
+      if (!video.muted) {
+        // The first time only, from the top, so the sound is heard from where it starts.
+        if (!ad.hasAttribute("data-heard")) { ad.setAttribute("data-heard", ""); video.currentTime = 0; }
+        var played = video.play();
+        if (played && played.catch) played.catch(function () {});
+      }
+      button.setAttribute("aria-pressed", String(!video.muted));
+      label.textContent = video.muted ? "Sound on" : "Sound off";
+    });
+  });
+})();
+
 // Clicking the donation code copies the address, or selects it where the
 // clipboard is refused. Either way nobody retypes it.
 (function () {

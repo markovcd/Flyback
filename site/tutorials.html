@@ -34,6 +34,7 @@
 
   .keys td:first-child { white-space: nowrap; }
   .wide-shot { margin-top: 24px; }
+  img.natural { width: auto; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -116,9 +117,9 @@
 
     <figure>
       <div class="window">
-        <a class="zoom" href="assets/shots/plasma.webp" target="_blank" rel="noopener">
-          <img loading="lazy" src="assets/shots/plasma.webp" width="1600" height="863"
-               alt="The Flyback window with the Plasma preset: toolbar at the top, nine modules on the canvas, a rainbow diamond pattern in the preview, hints in the inspector, and a status bar at the bottom.">
+        <a class="zoom" href="assets/shots/plasma.webp">
+          <img loading="lazy" src="assets/shots/plasma.webp" width="1442" height="939"
+               alt="The Flyback window with the Plasma preset: the toolbar at the top, fourteen modules on the canvas, blue, cream and amber blobs in the preview, the patch's description and hints in the inspector, and the status bar at the bottom.">
         </a>
       </div>
       <figcaption>The Plasma preset. The status bar counts modules, wires and the compiled instructions the picture and the sound each run, and shows
@@ -137,12 +138,14 @@
           <tr><td>Tidy</td><td>Lays the modules out left to right, shutting boxes if the drawing will not
           otherwise fit. <kbd>Ctrl</kbd>+<kbd>L</kbd>, and undoable. <kbd>Ctrl</kbd>+click, or
           <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>, lays out only what is selected.</td></tr>
+          <tr><td>Assistant</td><td>Opens the assistant's column beside the canvas: a model that builds and edits the patch.</td></tr>
           <tr><td>Code</td><td>Shows the patch as text. <kbd>F2</kbd>.</td></tr>
           <tr><td>Knobs</td><td>Shows the knob panel under the canvas. <kbd>Ctrl</kbd>+<kbd>K</kbd>.</td></tr>
           <tr><td>Swap</td><td>Trades the preview and the canvas, for a bigger picture while you patch.</td></tr>
-          <tr><td>Pause, Rewind, Record</td><td>Holds the picture and the sound where they are, or plays on (<kbd>Ctrl</kbd>+<kbd>P</kbd>); sets the clock back to zero; and starts or stops a live recording — counted in, as the Recording settings say (<kbd>Ctrl</kbd>+<kbd>R</kbd>).</td></tr>
+          <tr><td>Pause, Rewind</td><td>Holds the picture and the sound where they are, or plays on (<kbd>Ctrl</kbd>+<kbd>P</kbd>); sets the clock back to zero.</td></tr>
           <tr><td>Seek bar</td><td>Where the patch's clock is. Click or drag along it to move the picture and the sound there, paused or playing. The box beside it is how long the patch plays, in seconds or minutes:seconds to a hundredth, and is saved with it; a patch that does not say plays three minutes. The patch stops at the end, and ⟲ plays that length round and round instead.</td></tr>
-          <tr><td>Assistant, Settings, Plugins, About</td><td>A model that builds patches, the settings window, what is installed and what failed to load, and the version and license.</td></tr>
+          <tr><td>Record</td><td>Starts or stops a live recording, counted in as the Recording settings say (<kbd>Ctrl</kbd>+<kbd>R</kbd>).</td></tr>
+          <tr><td>Settings, Plugins, About</td><td>The settings window, what is installed and what failed to load, and the version and license.</td></tr>
         </tbody>
       </table>
     </div>
@@ -172,21 +175,22 @@
       <li>Point at an empty part of the canvas and press <kbd>Space</kbd> (or right-click). The module list opens
       where you are pointing.</li>
       <li>Type <code>rings</code>. The list narrows as you type and the first match is highlighted, so press
-      <kbd>Enter</kbd> to add it.</li>
+      <kbd>Enter</kbd> to add it. The button under the filter says whose modules are listed, Flyback's own and
+      each plugin's, and can leave a plugin's out.</li>
       <li>Drag from the round socket beside Rings' <code>out</code> to the Output's <code>color</code> socket.</li>
     </ol>
 
     <figure>
-      <a class="zoom" href="assets/shots/palette.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/palette.webp" width="900" height="560"
-             alt="The module list open on the canvas beside the Output, with 'no' typed into its filter. It shows Noise under Oscillators, highlighted, Note under Pitch and Note Sequencer under Timing, each with its mark.">
+      <a class="zoom" href="assets/shots/palette.webp">
+        <img class="shot natural" loading="lazy" src="assets/shots/palette.webp" width="650" height="350"
+             alt="The module list open on the canvas beside the Output, with 'no' typed into its filter and All modules on the button under it. It shows Noise under Oscillators, highlighted, Note under Pitch and Note Sequencer under Timing, each with its mark.">
       </a>
       <figcaption>The module list, filtered. The headings are the module families, and each module carries the
       mark and color it has on the canvas.</figcaption>
     </figure>
 
     <figure class="patch-fig">
-      <a class="zoom" href="assets/shots/patch-rings.webp" target="_blank" rel="noopener">
+      <a class="zoom" href="assets/shots/patch-rings.webp">
         <img class="shot" loading="lazy" src="assets/shots/patch-rings.webp" width="748" height="235"
              alt="Rings' out wired into the Output's color. Rings' x and y read Coordinates x and Coordinates y, shown in gray because they are normalled rather than wired.">
       </a>
@@ -198,7 +202,7 @@
       <strong>normalled</strong>: like the unplugged jack on a hardware synth, they already carry the signal
       you would normally plug in. Wire something into one and that takes over; unplug it and the default comes
       back.</p>
-      <figure><img loading="lazy" src="assets/shots/preview-tut-t1.webp" width="640" height="360" alt="Gray concentric rings on black."></figure>
+      <figure><a class="zoom" href="assets/shots/preview-tut-t1.webp"><img loading="lazy" src="assets/shots/preview-tut-t1.webp" width="640" height="360" alt="Gray concentric rings on black."></a></figure>
     </div>
 
     <div class="note">
@@ -232,7 +236,7 @@
     </ol>
 
     <figure class="patch-fig">
-      <a class="zoom" href="assets/shots/patch-rings-moving.webp" target="_blank" rel="noopener">
+      <a class="zoom" href="assets/shots/patch-rings-moving.webp">
         <img class="shot" loading="lazy" src="assets/shots/patch-rings-moving.webp" width="2024" height="507"
              alt="Time feeds Rings' offset and an Expression, a times 0.1; the Expression sets HSV's hue, Rings goes through an Auto remap into HSV's value, and HSV's color goes to the Output.">
       </a>
@@ -242,7 +246,7 @@
       <p style="margin: 0">The rings now travel and slowly change color, each one fading to black and back.
       There is no special "animation" feature: everything that moves in Flyback is a signal wired into a
       socket.</p>
-      <figure><img loading="lazy" src="assets/shots/preview-tut-t3.webp" width="640" height="360" alt="Purple rings, each fading to black and back."></figure>
+      <figure><a class="zoom" href="assets/shots/preview-tut-t3.webp"><img loading="lazy" src="assets/shots/preview-tut-t3.webp" width="640" height="360" alt="Purple rings, each fading to black and back."></a></figure>
     </div>
   </section>
 
@@ -262,7 +266,7 @@
     </ol>
 
     <figure class="patch-fig">
-      <a class="zoom" href="assets/shots/patch-tone.webp" target="_blank" rel="noopener">
+      <a class="zoom" href="assets/shots/patch-tone.webp">
         <img class="shot" loading="lazy" src="assets/shots/patch-tone.webp" width="748" height="291"
              alt="A Sine at 110 hertz wired into the Output's left. The Sine's in reads Time.">
       </a>
@@ -299,12 +303,10 @@
     </ol>
 
     <figure class="wide-shot">
-      <div class="window">
-        <a class="zoom" href="assets/shots/tutorial-canvas.webp" target="_blank" rel="noopener">
-          <img loading="lazy" src="assets/shots/tutorial-canvas.webp" width="1600" height="863"
-               alt="The finished patch on the canvas: a Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset through an Auto remap into HSV's value, and HSV and the Expression into the Output. The preview shows red rings.">
-        </a>
-      </div>
+      <a class="zoom" href="assets/shots/tutorial-canvas.webp">
+        <img class="shot" loading="lazy" src="assets/shots/tutorial-canvas.webp" width="844" height="300"
+             alt="The finished patch on the canvas: a Sine and a Sine named slow into an Expression multiplying them, slow into HSV's hue, Rings with Time on its offset through an Auto remap into HSV's value, and HSV and the Expression into the Output.">
+      </a>
       <figcaption>The finished patch. As the tone swells, the rings move through the color wheel with it, because
       both are reading the same module.</figcaption>
     </figure>
@@ -358,9 +360,9 @@ out.volume = 0.6</code></pre>
 
     <figure class="wide-shot">
       <div class="window">
-        <a class="zoom" href="assets/shots/tutorial-text.webp" target="_blank" rel="noopener">
-          <img loading="lazy" src="assets/shots/tutorial-text.webp" width="1600" height="863"
-               alt="The text view with the patch above as colored text, the preview of red rings, and the inspector showing the module named slow with its in reading Time without a wire.">
+        <a class="zoom" href="assets/shots/tutorial-text.webp">
+          <img loading="lazy" src="assets/shots/tutorial-text.webp" width="1441" height="805"
+               alt="The text view with the patch above as colored text and the cursor on the line that makes slow, beside the preview of orange rings and the inspector showing slow: its in reading Time without a wire, and sliders for freq, phase, amp and bias.">
         </a>
       </div>
       <figcaption>The text view. Put the cursor in a module's call and the inspector edits that module, or on a
@@ -410,6 +412,7 @@ let bands = key.pitch |> remap(48..84, 2..12)
 sine(freq: pitch) * pluck |> out.left
 
 rings(freq: bands, offset: t)
+  |> autoremap()
   |> color.hsv(saturation: _, hue: key.pitch / 12, value: key.gate)
   |> out.color
 
@@ -456,6 +459,15 @@ out.volume = 0.5</code></pre>
     </ol>
 
     <p>Knobs are renamed, reordered and removed from the same menu, and are saved with the patch.</p>
+
+    <figure>
+      <a class="zoom" href="assets/shots/knob-panel.webp">
+        <img class="shot natural" loading="lazy" src="assets/shots/knob-panel.webp" width="700" height="148"
+             alt="The knob panel of the Slow weather preset: six knobs named Echo Level, Chime Decay, Reverb Space, Visual Warp, Color Shift and Trails Spin, each with its value under it, and a plus button to add another.">
+      </a>
+      <figcaption>Slow weather's panel. The value under each knob is in the units of the first socket it moves:
+      Chime Decay is a length of time.</figcaption>
+    </figure>
   </section>
 
   <section id="tidy">
@@ -496,12 +508,10 @@ out.volume = 0.5</code></pre>
     </ul>
 
     <figure class="wide-shot">
-      <div class="window">
-        <a class="zoom" href="assets/shots/euclid-kit.webp" target="_blank" rel="noopener">
-          <img loading="lazy" src="assets/shots/euclid-kit.webp" width="1600" height="863"
-               alt="The Euclid kit preset with its modules grouped into boxes named Rhythm, Hats and snare, Bass, Kick, Picture: hand and Picture: hits, wired into a Mixer and the Output.">
-        </a>
-      </div>
+      <a class="zoom" href="assets/shots/euclid-kit.webp">
+        <img class="shot" loading="lazy" src="assets/shots/euclid-kit.webp" width="817" height="419"
+             alt="The Euclid kit preset with its modules grouped into boxes named Rhythm, Hats and snare, Bass, Kick, Picture: hand and Picture: hits, wired into a Mixer and the Output.">
+      </a>
       <figcaption>The Euclid kit preset: forty-four modules in six boxes, plus a Mixer and the Output.</figcaption>
     </figure>
   </section>
@@ -530,10 +540,11 @@ out.volume = 0.5</code></pre>
     than the choice.</p>
 
     <figure>
-      <a class="zoom" href="assets/shots/settings.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/settings.webp" width="1600" height="863"
-             alt="The Settings window over the dimmed main window, on the Graphics tab: Size 2560 by 1440, Preview rate 30 fps, Render GPU, Full screen Same monitor, Startup patch Empty. Tabs for Canvas, Recording, Sound, MIDI, Assistant, Files, Updates and Usage are on the left.">
+      <a class="zoom" href="assets/shots/settings.webp">
+        <img class="shot natural" loading="lazy" src="assets/shots/settings.webp" width="645" height="714"
+             alt="The Settings window on the Recording tab: Count-in 3 s, Rewind to zero first ticked, Frame rate 30 fps, Quality 85, Video MP4, H.264, Sound MP3, about 190 kbps, and ffmpeg found on PATH with its version and where it is. The other tabs, Graphics, Canvas, Sound, MIDI, Assistant, Files, Updates and Usage, are on the left.">
       </a>
+      <figcaption>Settings → Recording: the count-in, the rewind, and both formats, with the ffmpeg that was found.</figcaption>
     </figure>
 
     <h3>Render exactly with the command line</h3>
@@ -617,6 +628,15 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
       it built; edit the patch yourself in between, and the next answer starts a new conversation about the one
       on screen. The same button stops a turn, at the next thing the assistant does.</li>
     </ol>
+
+    <figure>
+      <a class="zoom" href="assets/shots/assistant.webp">
+        <img class="shot" loading="lazy" src="assets/shots/assistant.webp" width="1035" height="805"
+             alt="The assistant's column beside the canvas: a request for a slow kick drum that makes the rings flash, answered with a patch, three frames it looked at and a proposal that was applied; then a request to make it slower and warmer, answered with two knob changes, three amber frames and a second proposal.">
+      </a>
+      <figcaption>Each turn says what it did, shows the frames it looked at, and ends with the edit it put on the
+      canvas.</figcaption>
+    </figure>
 
     <p>Conversations are saved beside the patch they are about. <strong>Probe this model</strong>, in
     <strong>Settings &rarr; Assistant</strong>, asks the endpoint whether the model you have chosen is really there

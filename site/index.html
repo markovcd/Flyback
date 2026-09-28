@@ -41,6 +41,24 @@
 <style>
   /* ---- hero ---- */
   .hero { padding: 72px 0 0; border-bottom: 1px solid var(--edge); overflow: hidden; position: relative; }
+  /* The ad, first thing on the page: muted until asked, like any clip that starts on its own. */
+  .promo { padding: 32px 0 0; }
+  @media (min-width: 900px) { .promo { padding-top: 40px; } }
+  .ad { position: relative; margin: 0 auto; max-width: min(100%, calc(74vh * 16 / 9)); }
+  .ad video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; border: 1px solid var(--edge); box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.95); }
+  .ad .sound {
+    position: absolute; right: 12px; bottom: 12px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 600 13px/1 var(--sans); padding: 9px 12px; border-radius: 5px; cursor: pointer;
+    background: rgba(16, 17, 20, 0.86); color: var(--bright); border: 1px solid var(--separator);
+  }
+  .ad .sound:hover { background: var(--node-selected); }
+  .ad .sound svg { width: 16px; height: 16px; }
+  .ad .sound[aria-pressed="true"] .off { display: none; }
+  @media (max-width: 560px) {
+    .ad .sound { right: 8px; bottom: 8px; padding: 7px; }
+    .ad .sound span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
   .hero > .wrap { position: relative; }
   /* Pictures presets make, stacked behind the headline and fading out before they reach it. */
   .hero .wall {
@@ -124,6 +142,13 @@
     .stop > figure { grid-column: 1 / -1; }
 
   }
+  /* A tall picture sits beside its text rather than under it. */
+  @media (min-width: 960px) {
+    .stop.side { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); }
+    .stop.side > div { display: block; }
+    .stop.side > figure { grid-column: 2; grid-row: 1; margin-top: 0; }
+  }
+  .stop img.natural { width: auto; max-width: 100%; }
   .stop h3 { margin-top: 0; font-size: 22px; }
   .stop figure { margin: 20px 0 0; }
   .stop p { margin-top: 0; }
@@ -154,6 +179,22 @@
 
 <main>
 
+<section class="promo canvas" aria-label="Flyback in fifteen seconds">
+  <div class="wrap">
+    <figure class="ad">
+      <video data-autoplay muted loop playsinline preload="auto" poster="assets/shots/ad-poster.webp" width="1920" height="1080"
+             aria-label="Flyback in fifteen seconds: a beam drawing a sawtooth as it is heard, a patch of modules, a tunnel of patterns, and the logo with the words One patch. A picture and a sound.">
+        <source src="assets/clips/ad-720.mp4" type="video/mp4" media="(max-width: 800px)">
+        <source src="assets/clips/ad.mp4" type="video/mp4">
+      </video>
+      <button type="button" class="sound" aria-pressed="false">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h3l4-3.5v11L6 12H3z"/><path class="off" d="m13 8 4 4m0-4-4 4"/></svg>
+        <span>Sound on</span>
+      </button>
+    </figure>
+  </div>
+</section>
+
 <section class="hero canvas">
   <div class="wall" aria-hidden="true">
     <div><img src="assets/shots/preview-acid.webp" alt=""><img src="assets/shots/preview-in-key.webp" alt=""><img src="assets/shots/preview-waveform.webp" alt=""><img src="assets/shots/preview-nebula.webp" alt=""><img src="assets/shots/preview-whole-band.webp" alt=""></div>
@@ -182,9 +223,9 @@
 
     <figure>
       <div class="window">
-        <a class="zoom" href="assets/shots/nebula.webp" target="_blank" rel="noopener">
-          <img src="assets/shots/nebula.webp" width="1600" height="863"
-               alt="The Flyback window: a patch of fourteen modules wired left to right on a dark grid canvas, and beside it a live preview of an orange and magenta kaleidoscopic flower.">
+        <a class="zoom" href="assets/shots/slow-weather.webp">
+          <img src="assets/shots/slow-weather.webp" width="1442" height="939"
+               alt="The Flyback window with the Slow weather preset: a hundred and eighty-eight modules in named boxes wired across the canvas, the Picture: Color box selected with its patched sockets listed in the inspector, six knobs on the panel under the canvas, and a teal and blue star of warped rings in the preview.">
         </a>
       </div>
     </figure>
@@ -212,7 +253,7 @@
     </div>
 
     <figure class="diagram">
-      <a class="zoom" href="assets/shots/patch-plasma.webp" target="_blank" rel="noopener">
+      <a class="zoom" href="assets/shots/patch-plasma.webp">
         <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="692"
              alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through three Expressions into the two Sines' phases and a Rings' offset, an Expression reading a + b + c + d * 0.15 sums the three fields with the clock, and three Sines a tenth of a turn apart read the sum as red, green and blue into an RGB wired into the Output.">
       </a>
@@ -276,6 +317,14 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       and can read a preset in full for the idea in it.</p>
     </div>
 
+    <figure class="diagram">
+      <a class="zoom" href="assets/shots/assistant.webp">
+        <img class="shot" loading="lazy" src="assets/shots/assistant.webp" width="1035" height="805"
+             alt="The assistant's column beside the canvas. Asked for a slow kick drum that makes the rings flash, it wrote a ten-module patch, looked at three frames of blue rings lighting and fading, and proposed it; asked to make it slower and warmer, it set the tempo and the hue, looked at three amber frames, and proposed that. Each proposal says it was applied and that Ctrl+Z puts the patch back.">
+      </a>
+      <figcaption>Two turns: a patch built, looked at and handed over, then changed on request. Each lands on the canvas as one edit.</figcaption>
+    </figure>
+
     <div class="facts">
       <div class="fact">
         <h3>An edit, not a paste</h3>
@@ -307,7 +356,8 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       <p class="eyebrow" style="color: var(--tint)">Gallery</p>
       <h2>What the presets look like.</h2>
       <p>Flyback ships with more than forty presets, from single ideas to whole tracks. These clips were
-      rendered with <code>flyback-cli render</code>, and the stills were captured from the running app.</p>
+      rendered with <code>flyback-cli render</code>, and so are the stills: each is one frame of a preset. Click one
+      for the whole frame.</p>
     </div>
 
     <div class="clips">
@@ -328,14 +378,14 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
     </div>
 
     <div class="stills">
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A many-pointed star in pinks, blues and reds."><figcaption><strong>Whole band</strong>A whole song from the engine's own modules, and one picture every part moves.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A dense swirl of green, pink and orange fragments."><figcaption><strong>Acid</strong>A 303 line through a resonant filter into two delays.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Gray and lilac veins like polished stone."><figcaption><strong>Marble</strong>A fractal bent by a fractal, which is stone.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black, round an almost closed ring."><figcaption><strong>Four forms</strong>Four shapes on a turning ring round a filling arc.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-ring-scan.webp" width="888" height="500" alt="Green concentric rings with a pale looping trace in the middle."><figcaption><strong>Ring scan</strong>A loop swept round a field at audio rate, so the picture is the waveform.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."><figcaption><strong>In key</strong>A cloud field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."><figcaption><strong>Euclid kit</strong>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</figcaption></figure>
-      <figure class="still"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green waveform on a dark grid, halfway between a triangle and a square."><figcaption><strong>Waveform</strong>Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-whole-band.webp"><img loading="lazy" src="assets/shots/preview-whole-band.webp" width="888" height="500" alt="A star of green and yellow rings, with orange and violet lines round it."></a><figcaption><strong>Whole band</strong>A whole song from the engine's own modules, and one picture every part moves.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-acid.webp"><img loading="lazy" src="assets/shots/preview-acid.webp" width="888" height="500" alt="A ring of blue, green and orange fragments round a dark center."></a><figcaption><strong>Acid</strong>A 303 line through a resonant filter into two delays.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-marble.webp"><img loading="lazy" src="assets/shots/preview-marble.webp" width="888" height="500" alt="Gray and lilac veins like polished stone."></a><figcaption><strong>Marble</strong>A fractal bent by a fractal, which is stone.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-four-forms.webp"><img loading="lazy" src="assets/shots/preview-four-forms.webp" width="888" height="500" alt="A circle, a rounded square, a hexagon and a star in coral on black, round an almost closed ring."></a><figcaption><strong>Four forms</strong>Four shapes on a turning ring round a filling arc.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-ring-scan.webp"><img loading="lazy" src="assets/shots/preview-ring-scan.webp" width="888" height="500" alt="Green concentric rings with a pale looping trace in the middle."></a><figcaption><strong>Ring scan</strong>A loop swept round a field at audio rate, so the picture is the waveform.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-in-key.webp"><img loading="lazy" src="assets/shots/preview-in-key.webp" width="888" height="500" alt="Soft terraces of ochre, green and teal."></a><figcaption><strong>In key</strong>A cloud field snapped to a pentatonic scale: a melody, and the terraces it was cut into.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-euclid-kit.webp"><img loading="lazy" src="assets/shots/preview-euclid-kit.webp" width="888" height="500" alt="An orange ring on black with a green clock hand."></a><figcaption><strong>Euclid kit</strong>Four Euclidean rhythms, drawn as a clock hand and a ring the kick pushes.</figcaption></figure>
+      <figure class="still"><a class="zoom" href="assets/shots/preview-waveform.webp"><img loading="lazy" src="assets/shots/preview-waveform.webp" width="888" height="500" alt="A green waveform on a dark grid, halfway between a triangle and a square."></a><figcaption><strong>Waveform</strong>Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.</figcaption></figure>
     </div>
 
     <div class="listen">
@@ -512,7 +562,7 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
     </div>
 
     <div class="tour">
-      <div class="stop">
+      <div class="stop side">
         <div>
           <h3>Edit a module on the inspector</h3>
           <p>Select a module to see its description and a slider for every socket that is not wired.
@@ -523,9 +573,9 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         </div>
         <figure>
           <div class="window">
-            <a class="zoom" href="assets/shots/plasma-inspector.webp" target="_blank" rel="noopener">
-              <img loading="lazy" src="assets/shots/plasma-inspector.webp" width="1600" height="863"
-                   alt="The Plasma patch with a Sine module selected. The inspector below the preview shows sliders for freq, phase, amp and bias.">
+            <a class="zoom" href="assets/shots/plasma-inspector.webp">
+              <img loading="lazy" src="assets/shots/plasma-inspector.webp" width="574" height="805"
+                   alt="The preview and, under it, the inspector with a Sine selected: its in patched from Coordinates.x, sliders for freq, amp and bias, phase patched from Expression.out, and under Outputs, out patched to Expression.a.">
             </a>
           </div>
         </figure>
@@ -539,9 +589,9 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         </div>
         <figure>
           <div class="window">
-            <a class="zoom" href="assets/shots/plasma-code.webp" target="_blank" rel="noopener">
-              <img loading="lazy" src="assets/shots/plasma-code.webp" width="1600" height="863"
-                   alt="The text view: five lines of pipeline text with syntax colors, beside the live Plasma preview and the HSV module in the inspector.">
+            <a class="zoom" href="assets/shots/plasma-code.webp">
+              <img loading="lazy" src="assets/shots/plasma-code.webp" width="1441" height="322"
+                   alt="The text view: the Plasma patch as nine lines of text with syntax colors, from let across = x piped into a sine to color.rgb piped into out.color, beside its blue, cream and amber picture.">
             </a>
           </div>
         </figure>
@@ -550,21 +600,38 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       <div class="stop">
         <div>
           <h3>Keep big patches readable with groups</h3>
-          <p>The Whole band preset is a hundred and sixty-four modules in fifteen boxes: a clock, the song, seven
-          instruments, a room, a mixing desk and the picture. Double-click a box to look inside, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
+          <p>The Whole band preset is a hundred and sixty-two modules in fourteen boxes: a clock, the song, seven
+          instruments, a room, a mixing desk and three for the picture. Double-click a box to look inside, and press <kbd>Ctrl</kbd>+<kbd>G</kbd> to
           make your own.</p>
         </div>
         <figure>
           <div class="window">
-            <a class="zoom" href="assets/shots/whole-band.webp" target="_blank" rel="noopener">
-              <img loading="lazy" src="assets/shots/whole-band.webp" width="1600" height="863"
-                   alt="The Whole band patch collapsed into boxes named Clock, Song, Noise, Kick, Hats, Snare, Bass, Strings, Pad, Lead, Room, Desk, Picture: Geometry, Picture: Color and Picture: Feedback, wired into the Output.">
+            <a class="zoom" href="assets/shots/whole-band.webp">
+              <img loading="lazy" src="assets/shots/whole-band.webp" width="846" height="484"
+                   alt="The Whole band patch shut into boxes named Clock, Song, Kick, Hats, Snare, Bass, Strings, Pad, Lead, Room, Desk, Picture: Geometry, Picture: Color and Picture: Feedback, with a Noise module beside the clock, wired into the Output.">
             </a>
           </div>
         </figure>
       </div>
 
       <div class="stop flip">
+        <div>
+          <h3>Perform with knobs</h3>
+          <p>Press <kbd>Ctrl</kbd>+<kbd>K</kbd> for the knob panel under the canvas. A knob moves every socket
+          linked to it, each over its own range, without rebuilding the patch, so it can be turned mid-take and
+          the recording keeps the move. Learn a MIDI controller for one, or bind it by name to a knob on an
+          instrument Flyback knows. Full screen and the viewer keep the knobs behind the dots at the bottom of the
+          picture.</p>
+        </div>
+        <figure>
+          <a class="zoom" href="assets/shots/knob-panel.webp">
+            <img class="shot natural" loading="lazy" src="assets/shots/knob-panel.webp" width="700" height="148"
+                 alt="The knob panel of Slow weather: six orange knobs named Echo Level, Chime Decay, Reverb Space, Visual Warp, Color Shift and Trails Spin, each with its value under it, and a plus button to add another.">
+          </a>
+        </figure>
+      </div>
+
+      <div class="stop">
         <div>
           <h3>Start from a preset</h3>
           <p>The first toolbar button opens a gallery of every preset: a tile for each, with a frame of what
@@ -580,9 +647,9 @@ color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
         </div>
         <figure>
           <div class="window">
-            <a class="zoom" href="assets/shots/presets-list.webp" target="_blank" rel="noopener">
-              <img loading="lazy" src="assets/shots/presets-list.webp" width="1600" height="863"
-                   alt="The preset gallery open over the canvas, a Filter presets box at its top and three tiles to a row: BLANK over Empty, Picture in and Clip and ONE IDEA over Plasma, Kaleidoscope, Grid, Three channels, Feedback tunnel, Trails, Loop, Two channels and Staircase, each with a frame of what it draws — a speaker for Clip, Loop, Two channels and Staircase, which are only heard, and nothing for Empty — its name and its description, over the Kaleidoscope patch.">
+            <a class="zoom" href="assets/shots/presets-list.webp">
+              <img loading="lazy" src="assets/shots/presets-list.webp" width="899" height="799"
+                   alt="The preset gallery, Start from a preset, with a Filter presets box at its top and three tiles to a row: BLANK over Empty, Picture in and Clip, and ONE IDEA over Plasma, Kaleidoscope, Grid and more, each with a frame of what it draws — a speaker for Clip, which is only heard, and nothing for Empty — its name and its description.">
             </a>
           </div>
         </figure>
