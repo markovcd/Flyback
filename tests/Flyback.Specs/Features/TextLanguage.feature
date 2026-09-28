@@ -63,6 +63,16 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the text has the line "let freq = x * 200 + 300"
 
+  Scenario: A def is given its arguments by name and falls back on its defaults
+    Given the text:
+      """
+      def scaled(in, level = 0.5, offset = 0) = in * level + offset
+      value(1) |> scaled(offset: 0.25) |> out.left
+      out.volume = 1
+      """
+    Then it reads without complaint
+    And the speakers play 0.75
+
   Scenario: A mistake is pointed out on its own line
     Given the text:
       """

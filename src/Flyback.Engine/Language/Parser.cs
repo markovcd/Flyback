@@ -301,7 +301,7 @@ public sealed class Parser
 
         if (!Expect(TokenKind.OpenParen, "'(' after the name")) return null;
 
-        var parameters = new List<string>();
+        var parameters = new List<Parameter>();
 
         if (!Take(TokenKind.CloseParen))
         {
@@ -313,8 +313,13 @@ public sealed class Parser
                     return null;
                 }
 
-                parameters.Add(Current.Text);
+                var parameter = Current;
+                Expr? fallback = null;
                 at++;
+
+                if (Take(TokenKind.Assign) && (fallback = expressions.Pipeline()) is null) return null;
+
+                parameters.Add(new Parameter(parameter.Text, fallback, parameter.Line, parameter.Column));
             }
             while (Take(TokenKind.Comma) && Current.Kind != TokenKind.CloseParen);
 

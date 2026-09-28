@@ -40,6 +40,9 @@ public class IssueCodeTests
     [InlineData("group \"K\" {\n  panel level = 0.5\n}", IssueCode.PanelInGroup)]
     [InlineData("group \"K\" {\n  requires flyback.picture\n}", IssueCode.RequiresInGroup)]
     [InlineData("group \"A\" {\n  group \"B\" {\n    let s = sine()\n  }\n}", IssueCode.GroupInGroup)]
+    [InlineData("def f(a) = a\nf(b: 1) |> out.left", IssueCode.UnknownParameter)]
+    [InlineData("def f(a = 1, b) = a * b", IssueCode.DefaultBeforeRequired)]
+    [InlineData("def f(a = sine()) = a", IssueCode.DefaultNotAValue)]
     public void A_mistake_is_known_by_its_code(string source, string code)
     {
         var load = Build(source);

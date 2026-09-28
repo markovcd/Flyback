@@ -130,6 +130,15 @@ public static class IssueCode
     public const string TupleMismatch = "tuple-mismatch";
     public const string DefCallsItself = "def-calls-itself";
     public const string DefArity = "def-arity";
+
+    /// <summary>A call naming an argument its def has no parameter for.</summary>
+    public const string UnknownParameter = "unknown-parameter";
+
+    /// <summary>A def parameter every call must give, written after one with a default.</summary>
+    public const string DefaultBeforeRequired = "default-before-required";
+
+    /// <summary>A def parameter's default that is not a number, a note, a duration or a text.</summary>
+    public const string DefaultNotAValue = "default-not-a-value";
     public const string OutputCannotBeOff = "output-cannot-be-off";
 
     // --- the panel -------------------------------------------------------------

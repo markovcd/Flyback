@@ -47,7 +47,7 @@ Fifteen forms, and no others.
 
 let NAME = pipeline              # bind a signal, and name the node
 let (A, B) = call                # take a def's several results apart
-def NAME(a, b) = body            # a subgraph with holes in it
+def NAME(a, b = 1) = body        # a subgraph with holes in it
 pipeline |> out.color            # a terminated pipeline: the only side effect
 NAME.port = 0.6                  # set a knob
 NAME.port <- pipeline            # back-wire, which is how a cycle is closed
@@ -635,7 +635,9 @@ voice(E3, 2, 0.33, 0.09, 0.30)
 
 **Pure macro expansion, resolved before a single node exists.** Each call site
 stamps out its own copy; there is no runtime dispatch, no new opcode, and the
-compiled program is identical to the same patch written longhand. Recursion is
+compiled program is identical to the same patch written longhand. A def that
+calls itself is refused, since it is stamped out rather than run.
+
 **A `def` shares nothing between its call sites.** Each call stamps out its own
 copy of every module in the body, so two calls to a `def` containing a `sine`
 are two oscillators and not one. (The `t`, `x` and `y` of section 5 are the
@@ -646,6 +648,33 @@ makes between a module and a wire from one.
 The body is a block. Its result is the final expression, which may be a tuple,
 and `let (a, b) = f(...)` takes one apart. A single-expression body needs no
 braces.
+
+### Arguments
+
+A call gives a def its arguments the way it gives a module its sockets:
+
+```
+def voice(note, hue = 0, rate = 0.06) = ...
+
+voice(A2)
+voice(E3, rate: 0.09)
+voice(hue: 0.33, note: C4)
+```
+
+Named arguments claim their parameters first, then the pipe lands, then the
+arguments without a name fill what is left, in order. A parameter nothing gave
+takes its default, and one with no default is refused by name.
+
+**The pipe lands on `in`** where the def has a parameter called that, as on a
+module, and otherwise on the first parameter no argument names. `_` puts it
+anywhere else: `pitch |> tone(0.5, _)`. A pipe into a def whose `in` is already
+given is refused, not moved along.
+
+**A default is a value, not a signal**: a number, a note, a duration, a text, or
+arithmetic on those. A default that placed a module would place one unseen at
+every call that left it out, so a signal is passed in. A note or a duration is
+checked where the parameter is read, as if it were written there. Parameters
+with a default come after every one without.
 
 This is worth having because a `NodeGroup` deliberately is *not* a reusable
 definition — [0054](adr/0054-what-a-module-carries-is-a-part-not-a-subtype.md)
@@ -833,7 +862,7 @@ patch      = { statement } ;
 statement  = comment
            | "let" ident "=" pipeline
            | "let" "(" ident { "," ident } ")" "=" call
-           | "def" ident "(" [ ident { "," ident } ] ")" "=" body
+           | "def" ident "(" [ param { "," param } ] ")" "=" body
            | pipeline
            | selector "=" expr
            | selector "<-" pipeline
@@ -846,6 +875,7 @@ statement  = comment
            | "tags" string { string }
            | "length" ( number [ ":" number ] | duration ) ;
 
+param      = ident [ "=" expr ] ;
 body       = pipeline | "{" { statement } result "}" ;
 result     = pipeline | "(" pipeline { "," pipeline } ")" ;
 

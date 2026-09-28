@@ -377,12 +377,23 @@ public sealed class Binder
 
                 for (var i = 0; i < def.Parameters.Count; i++)
                 {
-                    var parameter = def.Parameters[i];
+                    var (parameter, fallback, _, _) = def.Parameters[i];
 
                     if (Builtin(parameter) is { } what)
                         Complain(IssueCode.ReservedName, def.Line, def.Column, $"'{parameter}' is already {what}. Call this something else.");
-                    else if (def.Parameters.Take(i).Contains(parameter, StringComparer.Ordinal))
+                    else if (def.Parameters.Take(i).Any(p => p.Name == parameter))
                         Complain(IssueCode.BoundTwice, def.Line, def.Column, $"'{def.Name}' takes two parameters called '{parameter}'.");
+
+                    if (fallback is not null && !Constant(fallback))
+                    {
+                        Complain(IssueCode.DefaultNotAValue, fallback.Line, fallback.Column,
+                            $"a default is a number, a note, a duration or a text. Pass '{parameter}' a signal as an argument instead.");
+                    }
+                    else if (fallback is null && def.Parameters.Take(i).FirstOrDefault(p => p.Default is not null) is { } earlier)
+                    {
+                        Complain(IssueCode.DefaultBeforeRequired, def.Parameters[i].Line, def.Parameters[i].Column,
+                            $"'{parameter}' has no default and comes after '{earlier.Name}', which has one. Put it first.");
+                    }
                 }
 
                 break;
@@ -1149,6 +1160,15 @@ public sealed class Binder
     /// <summary>Whether an argument is <c>_</c>, which stands for what is piped in.</summary>
     private static bool Placeholder(Expr value) => value is NameExpr { Name: "_", Port: null };
 
+    /// <summary>Whether an expression is written wholly in literals, and so places no module.</summary>
+    private static bool Constant(Expr expr) => expr switch
+    {
+        NumberExpr or TextExpr => true,
+        NegateExpr negate => Constant(negate.Value),
+        BinaryExpr binary => Constant(binary.Left) && Constant(binary.Right),
+        _ => false,
+    };
+
     /// <summary>
     /// Whether an argument holds a pipeline, said where it does. A pipeline is a
     /// statement's spine, so one inside an argument is written as a <c>let</c>
@@ -1640,30 +1660,7 @@ public sealed class Binder
 
         try
         {
-            var arguments = new List<Value>();
-
-            // What is piped in is the first parameter, or the one '_' stands in.
-            var placed = call.Arguments.Count(a => Placeholder(a.Value));
-
-            if (placed > 1)
-                return Refuse(IssueCode.PlaceholderTwice, call.Line, call.Column, "'_' is written twice, and a pipe brings one signal.");
-
-            if (placed == 1 && piped is null)
-                return Refuse(IssueCode.PlaceholderMisplaced, call.Line, call.Column, "'_' stands for what is piped in, and nothing is.");
-
-            if (piped is not null && placed == 0) arguments.Add(piped);
-
-            foreach (var argument in call.Arguments)
-            {
-                if (Placeholder(argument.Value)) arguments.Add(piped!);
-                else if (!Piped(argument) && Bind(argument.Value, scope) is { } value) arguments.Add(value);
-            }
-
-            if (arguments.Count != macro.Parameters.Count)
-            {
-                return Refuse(IssueCode.DefArity, call.Line, call.Column,
-                    $"'{macro.Name}' takes {macro.Parameters.Count} arguments and {arguments.Count} were given.");
-            }
+            if (Arguments(macro, call, scope, piped) is not { } arguments) return null;
 
             // Every call stamps out its own copy, so every call is its own
             // segment: two calls in one statement place two sets of modules and
@@ -1678,7 +1675,7 @@ public sealed class Binder
             // share no module — a value that should be shared is passed in.
             var inner = new Scope(null);
 
-            for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i], arguments[i], macro.Line);
+            for (var i = 0; i < macro.Parameters.Count; i++) inner.Set(macro.Parameters[i].Name, arguments[i], macro.Line);
 
             foreach (var statement in macro.Body) Run(statement, inner);
 
@@ -1700,6 +1697,146 @@ public sealed class Binder
 
             if (outer is { } saved) identity.Leave(saved);
         }
+    }
+
+    /// <summary>
+    /// What each of a def's parameters gets at one call: named arguments claim
+    /// theirs, the pipe lands on <c>in</c> or else the first parameter left,
+    /// the rest go in order, and a default fills what nothing gave.
+    /// </summary>
+    private Value[]? Arguments(DefStatement macro, CallExpr call, Scope scope, Value? piped)
+    {
+        var parameters = macro.Parameters;
+        var slots = Enumerable.Repeat(-1, call.Arguments.Count).ToArray();
+        var given = new bool[parameters.Count];
+        var landing = -1;
+        var sound = true;
+
+        var placed = call.Arguments.Count(a => Placeholder(a.Value));
+
+        if (placed > 1)
+            return Refused(IssueCode.PlaceholderTwice, call, "'_' is written twice, and a pipe brings one signal.");
+
+        if (placed == 1 && piped is null)
+            return Refused(IssueCode.PlaceholderMisplaced, call, "'_' stands for what is piped in, and nothing is.");
+
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            var argument = call.Arguments[i];
+
+            if (argument.Name is null) continue;
+
+            var index = IndexOf(parameters, argument.Name);
+
+            if (index < 0)
+            {
+                Complain(IssueCode.UnknownParameter, argument.Line, argument.Column,
+                    $"'{macro.Name}' has no parameter called '{argument.Name}'. It has {Listed(parameters)}.");
+                sound = false;
+            }
+            else if (given[index])
+            {
+                Complain(IssueCode.GivenTwice, argument.Line, argument.Column, $"'{argument.Name}' is given twice.");
+                sound = false;
+            }
+            else
+            {
+                given[index] = true;
+                slots[i] = index;
+            }
+        }
+
+        if (piped is not null && placed == 0)
+        {
+            var signal = IndexOf(parameters, "in");
+
+            if (signal >= 0 && given[signal])
+            {
+                return Refused(IssueCode.PipeLandsNowhere, call,
+                    $"'{macro.Name}': its 'in' is already given, so say where the pipe lands: '{macro.Name}(name: _)'.");
+            }
+
+            landing = signal >= 0 ? signal : Array.IndexOf(given, false);
+
+            if (landing < 0)
+                return Refused(IssueCode.NoSocketFree, call, $"'{macro.Name}' has no parameter free for what is arriving.");
+
+            given[landing] = true;
+        }
+
+        var free = new Queue<int>(Enumerable.Range(0, parameters.Count).Where(p => !given[p]));
+        var extra = 0;
+
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            if (call.Arguments[i].Name is not null) continue;
+
+            if (free.Count == 0)
+            {
+                extra++;
+                continue;
+            }
+
+            slots[i] = free.Dequeue();
+            given[slots[i]] = true;
+        }
+
+        if (extra > 0)
+        {
+            return Refused(IssueCode.DefArity, call,
+                $"'{macro.Name}' takes {parameters.Count} arguments and {parameters.Count + extra} were given.");
+        }
+
+        var missing = Enumerable.Range(0, parameters.Count).Where(p => !given[p] && parameters[p].Default is null).ToList();
+
+        if (sound && missing.Count > 0)
+        {
+            return Refused(IssueCode.DefArity, call,
+                $"'{macro.Name}' needs {string.Join(" and ", missing.Select(p => $"'{parameters[p].Name}'"))}.");
+        }
+
+        // Bound in the order written, since that is the order a call's modules are named in.
+        var values = new Value?[parameters.Count];
+
+        if (landing >= 0) values[landing] = piped;
+
+        for (var i = 0; i < call.Arguments.Count; i++)
+        {
+            var argument = call.Arguments[i];
+
+            if (slots[i] < 0) continue;
+
+            if (Placeholder(argument.Value)) values[slots[i]] = piped;
+            else if (!Piped(argument) && Bind(argument.Value, scope) is { } value) values[slots[i]] = value;
+            else sound = false;
+        }
+
+        for (var p = 0; p < parameters.Count; p++)
+        {
+            if (given[p] || parameters[p].Default is not { } fallback) continue;
+
+            if (Bind(fallback, new Scope(null)) is { } value) values[p] = value;
+            else sound = false;
+        }
+
+        return sound ? [.. values.Select(value => value!)] : null;
+    }
+
+    private static int IndexOf(IReadOnlyList<Parameter> parameters, string name)
+    {
+        for (var i = 0; i < parameters.Count; i++)
+            if (parameters[i].Name == name) return i;
+
+        return -1;
+    }
+
+    private static string Listed(IReadOnlyList<Parameter> parameters) =>
+        parameters.Count == 0 ? "none" : string.Join(", ", parameters.Select(p => $"'{p.Name}'"));
+
+    private Value[]? Refused(string code, CallExpr call, string message)
+    {
+        Complain(code, call.Line, call.Column, message);
+        return null;
     }
 
     // --- looking things up ----------------------------------------------------

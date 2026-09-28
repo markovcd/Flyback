@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added Arrangement, which gives up to eight parts a level in each of up to thirty-two sections of a piece, gliding where asked, and is written in text as a row of levels a part.
+- A def takes its arguments by name, gives a parameter a default, and takes a pipe on its `in`.
 - `flyback-cli render --preset` renders a shipped preset by name, and `--presets` lists them.
 - Shift+drag moves modules into the group under the pointer or out of their own, a module picked over an open group or a box being looked into joins it, Ctrl+G on groups and loose modules keeps the one group name among them, and looking into a box selects nothing.
 - A box's socket is named for the socket inside even while a wire is on it.
