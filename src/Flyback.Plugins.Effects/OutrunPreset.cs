@@ -81,6 +81,8 @@ internal sealed class OutrunPreset : PresetBench
 
     private const float CyanRed = 0.1f, CyanGreen = 0.9f, CyanBlue = 1f;
 
+    private const int Kick = 0, Snare = 1, Hats = 2, Bass = 3, Chop = 4, Lead = 5, Swell = 6, Grade = 7;
+
     public static Patch Build(ModuleCatalog modules)
     {
         if (!modules.HasProvider(Voice))
@@ -115,48 +117,44 @@ internal sealed class OutrunPreset : PresetBench
         // a Stroke off the same count.
         var pluck = Stroke(beats, 4f, 3f);
 
-        // Eight bars is one step of the arrangement.
-        var phraseGone = Fraction(Times(beats, 1f / 32f));
-
         Box("Clock");
 
         // --- the arrangement -------------------------------------------------
 
-        // One number for each eight bars saying how much track there is: intro,
-        // intro, build, build, drop, drop, breakdown, build, and three of the peak
-        // before the outro. No part has a lane of its own; each decides below how
-        // much of this number it needs before it comes in.
-        var song = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(song,
+        // Twelve sections of eight bars: intro, intro, build, build, drop, drop,
+        // breakdown, build, and three of the peak before the outro. A row a part.
+        var parts = Arranged(beats, 1f / 32f,
         [
-            new Step(0.15f), new Step(0.3f), new Step(0.45f), new Step(0.6f),
-            new Step(0.8f), new Step(0.85f), new Step(0.35f), new Step(0.5f),
-            new Step(0.95f), new Step(1f), new Step(1f), new Step(0.2f),
+            Levels(0, 0, 0.5f, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0.8017f, 1, 1, 0, 0, 1, 1, 1, 0),
+            Levels(0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+
+            // How hard the pads are chopped: whole in the intro and the breakdown, and
+            // cut to the sixteenths once the drums are in.
+            Levels(0, 0, 0.15625f, 1, 1, 1, 0, 0.5f, 1, 1, 1, 0),
+
+            // The lead, kept back for the peak.
+            Levels(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0),
+
+            // How far the filters open.
+            Levels(0.15f, 0.3f, 0.45f, 0.6f, 0.8f, 0.85f, 0.35f, 0.5f, 0.95f, 1, 1, 0.2f),
+
+            // How bright the picture is graded.
+            Levels(0.925f, 1, 1.075f, 1.15f, 1.25f, 1.275f, 1.025f, 1.1f, 1.325f, 1.35f, 1.35f, 0.95f),
         ]);
 
-        // The same number for what fades rather than enters: four seconds up and two
-        // down, in decades of a second. On the screen a Slew is a wire.
+        // The filters fade rather than enter: four seconds up and two down, in
+        // decades of a second. On the screen a Slew is a wire.
         var swell = b.Add(SlewType, (1, 0.60206f), (2, 0.30103f));
 
-        // The last of every four phrases ends in a riser and a fill, read off the
-        // sequencer's own index: three times it has a fraction of three quarters
-        // exactly there. The very last is the outro, which is masked out.
-        var turning = b.Add("math.step", (0, 0.7f));
-        var notTheEnd = b.Add("math.step", (1, 0.9f));
-        var turns = Product(turning, notTheEnd);
-        var ramp = Product(Rises(phraseGone, 0.5f, 1f), turns);
+        // Every fourth section but the outro ends in a riser.
+        var turns = Formula("step(3, (a - 1) % 4) * step(a, 11)", new Read(parts, SectionNumber));
+        var ramp = Product(Rises(parts, 0.5f, 1f, SectionProgress), turns);
 
-        // Four on the floor, from a little under halfway up. The kick's Fade is here
-        // rather than with the kick because the fill wants to know the same thing.
-        var kickStroke = Enters(Stroke(beats, 1f, 5f), song, 0.42f, 0.48f);
-
-        // How hard the pads are chopped. Whole in the intro and the breakdown, and
-        // cut to the sixteenths once the drums are in.
-        var chop = Rises(song, 0.4f, 0.6f);
-
-        // The last two beats of a phrase, wherever there are drums to fill them.
+        // The last two beats of a section, wherever there are drums to fill them.
         var lastTwo = b.Add("math.step", (0, 0.9375f));
-        var fill = Product(lastTwo, kickStroke, FadeGate);
+        var fill = Product(lastTwo, parts, Kick);
 
         // The harmony, a bar at a time: A, F, B and E, two bars each. From F the bass
         // drops a tritone to the B under it, and E is the way home. It is the only
@@ -168,16 +166,16 @@ internal sealed class OutrunPreset : PresetBench
             new Step(35f), new Step(35f), new Step(40f), new Step(40f),
         ]);
 
-        b.Wire(beats, 0, song, 0)
-         .Wire(song, 0, swell, 0)
-         .Wire(Fraction(Times(song, 3f, 2)), 0, turning, 1)
-         .Wire(song, 2, notTheEnd, 0)
-         .Wire(phraseGone, 0, lastTwo, 1)
+        b.Wire(parts, Swell, swell, 0)
+         .Wire(parts, SectionProgress, lastTwo, 1)
          .Wire(beats, 0, root, 0);
 
         Box("Arrangement");
 
         // --- the kick --------------------------------------------------------
+
+        // Four on the floor.
+        var kickStroke = Product(Stroke(beats, 1f, 5f), parts, Kick);
 
         // The pitch is the level to the fourth power, so there is one envelope and
         // the beater is over long before the shell is.
@@ -194,7 +192,7 @@ internal sealed class OutrunPreset : PresetBench
         // backbeat. A band of Hiss for the wires and a Drum that does not sweep for the
         // shell.
         var backbeat = Stroke(beats, 0.5f, 9f, 0.5f);
-        var snareStroke = Enters(backbeat, song, 0.55f, 0.62f);
+        var snareStroke = Product(backbeat, parts, Snare);
         var snareDry = Sum(
             Hiss(snareStroke, 1900f, 0.3f, "band", 2.5f),
             Drum(snareStroke, 190f, 0f, 1f, 0f));
@@ -215,9 +213,9 @@ internal sealed class OutrunPreset : PresetBench
 
         // Closed on every sixteenth and open on the off-beat, which is half a beat
         // late and rings three times as long.
-        var hatStroke = Enters(
+        var hatStroke = Product(
             Sum(Times(Stroke(beats, 4f, 7f), 0.5f), Times(Stroke(beats, 1f, 3f, 0.5f), 0.7f)),
-            song, 0.4f, 0.45f);
+            parts, Hats);
         var hats = Hiss(hatStroke, 8000f, 0.2f, "high");
 
         Box("Hats");
@@ -229,7 +227,7 @@ internal sealed class OutrunPreset : PresetBench
         var tomStroke = Product(Stroke(beats, 4f, 2.5f), fill);
         var toms = Drum(tomStroke, 0f, 60f, 3f, 0f);
 
-        b.Wire(Span(phraseGone, 0.9375f, 1f, 230f, 95f), 0, toms, DrumPitch);
+        b.Wire(Span(parts, 0.9375f, 1f, 230f, 95f, SectionProgress), 0, toms, DrumPitch);
 
         Box("Toms");
 
@@ -249,8 +247,8 @@ internal sealed class OutrunPreset : PresetBench
 
         // The sub, an octave under and added after the Drive so that it stays a sine.
         var sub = b.Add("osc.sine", (3, 0.5f));
-        var bass = Enters(
-            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), song, 0.25f, 0.3f);
+        var bass = Product(
+            Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), parts, Bass);
 
         // How far the pluck opens the Filter is the arrangement.
         b.Wire(beats, 0, bassLine, 0)
@@ -323,7 +321,7 @@ internal sealed class OutrunPreset : PresetBench
          .Wire(beats, 0, chopLine, 0)
          .Wire(chopLine, 0, chopped, 0)
          .Wire(chopped, 0, padGate, 1)
-         .Wire(chop, 0, padGate, 2)
+         .Wire(parts, Chop, padGate, 2)
          .Wire(Product(Product(padTone, padGate), Span(swell, 0f, 1f, 1f, 0.6f)), 0, pad, 0);
 
         Box("Pad");
@@ -358,7 +356,7 @@ internal sealed class OutrunPreset : PresetBench
         var leadPulse = b.Add("osc.pulse", (3, 0.4f), (4, 0.5f));
         var leadTone = b.Add(FilterType, (1, 3400f), (2, 0.35f));
         var tongue = b.Add(SlewType, (1, -2.5f), (2, -1.2f));
-        var lead = Enters(Product(leadTone, tongue), song, 0.9f, 0.94f);
+        var lead = Product(Product(leadTone, tongue), parts, Lead);
 
         b.Wire(beats, 0, leadLine, 0)
          .Wire(leadLine, 0, glide, 0)
@@ -572,7 +570,7 @@ internal sealed class OutrunPreset : PresetBench
 
         // Faded out before the horizon, where the lines are closer than a pixel, and
         // struck by the bass. The color is the chord: magenta under B, cyan under A.
-        var bassSeen = Enters(pluck, song, 0.25f, 0.3f);
+        var bassSeen = Product(pluck, parts, Bass);
         var cyan = b.Add("color.rgb", (0, CyanRed), (1, CyanGreen), (2, CyanBlue));
         var gridColor = b.Add("color.mix");
         var floor = b.Add("color.rgb", (0, 0.07f), (1, 0f), (2, 0.14f));
@@ -644,7 +642,7 @@ internal sealed class OutrunPreset : PresetBench
          .Wire(banded, 0, scanned, 0)
          .Wire(Span(Sine(Times(coord, 400f, 1)), -1f, 1f, 0.86f, 1f), 0, scanned, 1)
          .Wire(shaded, 0, graded, 0)
-         .Wire(Span(song, 0f, 1f, 0.85f, 1.35f), 0, graded, 1)
+         .Wire(parts, Grade, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture: Tape");
