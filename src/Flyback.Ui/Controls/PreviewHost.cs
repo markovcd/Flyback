@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Flyback.App.Capture;
+using Flyback.Gpu;
 using Flyback.Core.Compile;
 
 namespace Flyback.App.Controls;

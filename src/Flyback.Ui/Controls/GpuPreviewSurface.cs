@@ -6,6 +6,7 @@ using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
 using Flyback.App.Capture;
 using Flyback.Core.Compile;
+using Flyback.Gpu;
 
 namespace Flyback.App.Controls;
 
@@ -47,6 +48,9 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
     private readonly Lock gate = new();
 
     private GpuFrameRenderer? renderer;
+
+    /// <summary>The context's entry points, bound once it is up.</summary>
+    private Gl? entries;
 
     private CompiledPatch program = CompiledPatch.Black;
     private LiveValues live = LiveValues.None;
@@ -298,28 +302,33 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     protected override void OnOpenGlInit(GlInterface gl)
     {
-        if (!GpuFrameRenderer.CanRun(GlVersion))
+        var version = new ContextVersion(GlVersion.Type == GlProfileType.OpenGLES, GlVersion.Major, GlVersion.Minor);
+
+        if (!GpuFrameRenderer.CanRun(version))
         {
             Fail($"This machine's OpenGL ({GlVersion}) is older than the shader backend needs.");
             return;
         }
 
-        var built = new GpuFrameRenderer(GpuFrameRenderer.DialectFor(GlVersion));
+        var bound = new Gl(gl.GetProcAddress);
+        var built = new GpuFrameRenderer(GpuFrameRenderer.DialectFor(version));
 
-        if (built.Initialise(gl) is { } error)
+        if (built.Initialise(bound) is { } error)
         {
-            built.Dispose(gl);
+            built.Dispose(bound);
             Fail(error);
             return;
         }
 
+        entries = bound;
         renderer = built;
     }
 
     protected override void OnOpenGlDeinit(GlInterface gl)
     {
-        renderer?.Dispose(gl);
+        renderer?.Dispose(entries);
         renderer = null;
+        entries = null;
     }
 
     protected override void OnOpenGlLost()
@@ -329,6 +338,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
         // be freed is the one thing that must not happen here.
         renderer?.Dispose(null);
         renderer = null;
+        entries = null;
 
         // The history goes with them. A feedback patch restarts from black, which
         // is what SynthRenderer.Reset does and the only honest answer: the frames
@@ -341,7 +351,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
     protected override void OnOpenGlRender(GlInterface gl, int fb)
     {
-        if (renderer is not { } active || finished) return;
+        if (renderer is not { } active || entries is not { } bound || finished) return;
 
         CompiledPatch snapshot;
         LiveValues played;
@@ -369,7 +379,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
         if (rewind) active.Rewind();
 
-        if (active.SetPatch(gl, snapshot) is { } compileError)
+        if (active.SetPatch(bound, snapshot) is { } compileError)
         {
             Fail(compileError);
             return;
@@ -391,7 +401,13 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
 
         var started = frameClock.Elapsed;
 
-        if (active.Render(gl, fb, control, size, at, played) is { } renderError)
+        if (active.Render(
+                bound,
+                fb,
+                new SurfaceSize(control.Width, control.Height),
+                new SurfaceSize(size.Width, size.Height),
+                at,
+                played) is { } renderError)
         {
             Fail(renderError);
             return;

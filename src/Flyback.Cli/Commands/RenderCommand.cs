@@ -5,6 +5,7 @@ using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Gpu;
 
 namespace Flyback.Cli.Commands;
 
@@ -15,9 +16,10 @@ namespace Flyback.Cli.Commands;
 /// ADR-0089 for why some of them are ffmpeg's work and two are this program's own.
 /// </summary>
 /// <remarks>
-/// On the processor, never the shader backend: a GPU render needs a context and
-/// a window, and the two backends are allowed to differ in their last bits
-/// (ADR-0035). The programs run as IL, which gives the interpreter's bytes faster.
+/// The picture is drawn on the GPU through a headless context where there is one,
+/// and on the processor where there is not or where asked; the two may differ in
+/// their last bits (ADR-0035, ADR-0157). On the processor the programs run as IL,
+/// which gives the interpreter's bytes faster.
 /// </remarks>
 internal static class RenderCommand
 {
@@ -31,6 +33,12 @@ internal static class RenderCommand
         TextWriter? output = null,
         CancellationToken cancellation = default)
     {
+        if (options is { Interpreted: true, Backend: PictureBackend.Gpu })
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --interpreted draws on the processor, and --gpu asks for the GPU.");
+            return Exit.Failed;
+        }
+
         var still = options.Out.Extension.Equals(".png", StringComparison.OrdinalIgnoreCase);
 
         var asked = still ? null : options.Format;
@@ -108,12 +116,19 @@ internal static class RenderCommand
             return Exit.Problems;
         }
 
+        var refused = false;
+        using var gpu = video is null ? null : Gpu(video.Program, options, error, out refused);
+
+        if (refused) return Exit.Failed;
+
+        IFrameRenderer frames = gpu is null ? new SynthRenderer() : gpu;
+
         if (!options.Interpreted)
         {
             // The picture is drawn in stages and the sound whole, as in the app.
             var failures = new[]
             {
-                video is null ? null : IlCompiler.CompileOnce(video.Program, IlParts.Staged),
+                video is null || gpu is not null ? null : IlCompiler.CompileOnce(video.Program, IlParts.Staged),
                 audio is null ? null : IlCompiler.CompileOnce(audio.Program, IlParts.Whole),
             };
 
@@ -133,7 +148,7 @@ internal static class RenderCommand
         {
             if (still)
             {
-                Still(video!.Program, options);
+                Still(video!.Program, frames, options);
                 code = Exit.Ok;
             }
             else if (!format!.HasPicture)
@@ -143,7 +158,7 @@ internal static class RenderCommand
             }
             else
             {
-                code = Movie(video!.Program, audio?.Program, format, options, ffmpeg, error, progress, loudness, cancellation);
+                code = Movie(video!.Program, audio?.Program, frames, format, options, ffmpeg, error, progress, loudness, cancellation);
             }
         }
         catch (Exception ex)
@@ -178,12 +193,47 @@ internal static class RenderCommand
             double.IsFinite(value) ? value.ToString("0.0", CultureInfo.InvariantCulture) : "-inf";
     }
 
-    private static void Still(CompiledPatch program, RenderOptions options)
+    /// <summary>
+    /// The GPU's renderer with <paramref name="program"/>'s shader built, or null to
+    /// draw on the processor. <paramref name="refused"/> when --gpu was asked for
+    /// and there is none; said on <paramref name="error"/> either way.
+    /// </summary>
+    private static HeadlessRenderer? Gpu(CompiledPatch program, RenderOptions options, TextWriter error, out bool refused)
+    {
+        refused = false;
+
+        if (options.Interpreted || options.Backend == PictureBackend.Processor) return null;
+
+        var gpu = HeadlessRenderer.Open(out var why);
+
+        if (gpu?.Prepare(program) is { } failure)
+        {
+            gpu.Dispose();
+            gpu = null;
+            why = failure;
+        }
+
+        if (gpu is not null) return gpu;
+
+        if (options.Backend == PictureBackend.Gpu)
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: --gpu: {why}");
+            refused = true;
+        }
+        else
+        {
+            error.WriteLine($"{GlobalConstants.ApplicationName}: warning: {why} Drawing on the processor.");
+        }
+
+        return null;
+    }
+
+    private static void Still(CompiledPatch program, IFrameRenderer frames, RenderOptions options)
     {
         var stride = options.Width * 4;
         var pixels = new byte[stride * options.Height];
 
-        new SynthRenderer().Render(program, options.At, options.Width, options.Height, pixels, stride);
+        frames.Render(program, options.At, options.Width, options.Height, pixels, stride);
 
         PngWriter.WriteBgra(options.Out.FullName, pixels, options.Width, options.Height, stride);
     }
@@ -216,6 +266,7 @@ internal static class RenderCommand
     private static int Movie(
         CompiledPatch video,
         CompiledPatch? audio,
+        IFrameRenderer frames,
         ClipFormat format,
         RenderOptions options,
         string? ffmpeg,
@@ -235,6 +286,7 @@ internal static class RenderCommand
             video,
             audio,
             settings,
+            frames,
             progress,
             loudness,
             cancellation);

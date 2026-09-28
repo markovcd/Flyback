@@ -52,6 +52,13 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.gpu": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Engine": "[0.1.0-dev, )"
+        }
+      },
       "flyback.plugins": {
         "type": "Project",
         "dependencies": {

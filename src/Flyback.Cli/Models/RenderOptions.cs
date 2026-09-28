@@ -16,6 +16,7 @@ namespace Flyback.Cli.Models;
 /// Ignored for a still, which has none.
 /// </param>
 /// <param name="Interpreted">Keep the programs on the interpreter rather than compiling them.</param>
+/// <param name="Backend">What draws the picture.</param>
 internal sealed record RenderOptions(
     FileInfo Out,
     int Width = 1920,
@@ -27,4 +28,5 @@ internal sealed record RenderOptions(
     string? Format = null,
     string? Ffmpeg = null,
     bool Loudness = false,
-    bool Interpreted = false);
+    bool Interpreted = false,
+    PictureBackend Backend = PictureBackend.Any);

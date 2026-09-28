@@ -216,3 +216,9 @@ drawing thread: 7-8 s for Mycelium, once per new program. Nothing ANGLE offers m
 that compile off the thread that draws, which is why
 [0155](0155-windows-draws-through-native-opengl.md) draws Windows through native
 OpenGL instead.
+
+**2026-09-29 — export draws on the GPU.** [0157](0157-flyback-cli-render-draws-on-the-gpu.md)
+moved `flyback-cli render` onto this backend through a headless context, with the
+processor as the fallback and behind `--processor`, so *Export stays on the CPU* no
+longer holds. The GPU is tested in CI on llvmpipe, measured against the processor
+rather than by hand.

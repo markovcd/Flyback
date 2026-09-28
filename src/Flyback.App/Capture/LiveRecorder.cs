@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Flyback.Core;
 using Flyback.Core.Render;
+using Flyback.Gpu;
 
 namespace Flyback.App.Capture;
 

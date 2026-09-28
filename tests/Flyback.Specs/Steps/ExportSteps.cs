@@ -1,5 +1,6 @@
 using System.CommandLine;
 using Reqnroll;
+using Reqnroll.UnitTestProvider;
 using Shouldly;
 using Flyback.App.Audio;
 using Flyback.Core;
@@ -7,6 +8,7 @@ using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Gpu;
 using Flyback.Specs.Support;
 
 using Flyback.Cli.Common;
@@ -19,7 +21,7 @@ namespace Flyback.Specs.Steps;
 /// the sound the editor plays, heard through a device that hands it back.
 /// </summary>
 [Binding]
-public sealed class ExportSteps(PatchContext context) : IDisposable
+public sealed class ExportSteps(PatchContext context, IUnitTestRuntimeProvider runtime) : IDisposable
 {
     /// <summary>Small and short, so a clip is quick; the claims hold at any size.</summary>
     private const string Size = "64x36";
@@ -66,6 +68,36 @@ public sealed class ExportSteps(PatchContext context) : IDisposable
             device.Pull(sound.AsSpan(at * 2, Math.Min(buffer, frames - at) * 2));
 
         played = sound;
+    }
+
+    [When("it is exported as {string} on the graphics card and on the processor")]
+    public void WhenExportedOnBoth(string name)
+    {
+        using (var probe = HeadlessRenderer.Open(out var why))
+            if (probe is null) runtime.TestIgnore($"no GPU on this machine. {why}");
+
+        Export(name, "gpu", Seconds, "--gpu");
+        Export(name, "processor", Seconds, "--processor");
+    }
+
+    /// <summary>
+    /// A level or so of 255 on average and a few at the worst pixel, which is what
+    /// ADR-0035 allows the two; a picture flipped, swizzled or a frame late is far off both.
+    /// </summary>
+    [Then("the two pictures differ by no more than a shade")]
+    public void ThenWithinAShade()
+    {
+        exports.Count.ShouldBe(2);
+
+        var gpu = PngReader.Read(new MemoryStream(exports[0]), out _).ShouldNotBeNull();
+        var processor = PngReader.Read(new MemoryStream(exports[1]), out _).ShouldNotBeNull();
+
+        processor.Pixels.Length.ShouldBe(gpu.Pixels.Length);
+
+        var differences = gpu.Pixels.Select((v, i) => Math.Abs(v - processor.Pixels[i]) * 255f).ToArray();
+
+        differences.Max().ShouldBeLessThanOrEqualTo(8f);
+        differences.Average().ShouldBeLessThanOrEqualTo(0.5f);
     }
 
     [Then("the two files are the same to the byte")]

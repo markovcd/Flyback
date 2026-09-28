@@ -1,4 +1,4 @@
-namespace Flyback.App.Capture;
+namespace Flyback.Gpu;
 
 /// <summary>
 /// Somebody who wants the frames the GPU just drew. The renderer knows this and

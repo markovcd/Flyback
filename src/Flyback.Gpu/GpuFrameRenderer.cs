@@ -1,11 +1,8 @@
 using System.Runtime.InteropServices;
-using Avalonia;
-using Avalonia.OpenGL;
-using Flyback.App.Capture;
 using Flyback.Core.Compile;
-using static Avalonia.OpenGL.GlConsts;
+using static Flyback.Gpu.GlConstants;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Gpu;
 
 /// <summary>
 /// Everything this project asks of OpenGL, in one place: the two shader programs,
@@ -13,58 +10,18 @@ namespace Flyback.App.Controls;
 /// vertex array a triangle needs.
 /// </summary>
 /// <remarks>
-/// Every method here must be called with the context current, which means from
-/// inside <see cref="Avalonia.OpenGL.Controls.OpenGlControlBase"/>'s callbacks and
-/// nowhere else. They return an error string rather than throwing: a shader that
+/// Every method here must be called with the context current: from inside the
+/// preview's GL callbacks, or on the thread a <see cref="HeadlessContext"/> was
+/// opened on. They return an error string rather than throwing: a shader that
 /// will not compile is a machine this backend cannot run on, and the answer is to
 /// say so once and hand the frame back to the CPU.
 /// </remarks>
-internal sealed class GpuFrameRenderer(GlslDialect dialect)
+/// <param name="backgroundLinks">
+/// Whether to let the driver link on threads of its own where it can. The preview
+/// wants it; a render waits for every link anyway.
+/// </param>
+internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks = true)
 {
-    // Not in GlConsts, which carries the ES 2.0 era set.
-    private const int GlRgba16F = 0x881A;
-    private const int GlRgba32F = 0x8814;
-    private const int GlHalfFloat = 0x140B;
-    private const int GlBlend = 0x0BE2;
-    private const int GlTriangleStrip = 0x0005;
-
-    /// <remarks>
-    /// <see cref="GlInterface"/> binds what Avalonia draws with, and Avalonia
-    /// draws into one attachment — so the call that turns the others on comes
-    /// through <see cref="GlInterface.GetProcAddress"/>, the door
-    /// <see cref="GpuReadback"/> uses for the same reason.
-    /// </remarks>
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate void GlDrawBuffers(int count, IntPtr buffers);
-
-    /// <remarks>
-    /// Desktop GLSL 1.50 has no <c>layout(location = …)</c> on a fragment output,
-    /// so which attachment each one goes to is said from out here instead. ES has
-    /// the qualifier and not this call, which is why the shader carries both — see
-    /// <see cref="GlslEmitter"/>.
-    /// </remarks>
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate void GlBindFragDataLocation(int program, int color, string name);
-
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate void GlGetIntegerv(int name, out int value);
-
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate IntPtr GlGetStringi(int name, int index);
-
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate void GlMaxShaderCompilerThreads(uint count);
-
-    private GlDrawBuffers? drawBuffers;
-    private GlBindFragDataLocation? bindFragDataLocation;
-
-    // KHR_parallel_shader_compile, and what it takes to ask for it.
-    private const int GlCompletionStatus = 0x91B1;
-    private const int GlNumExtensions = 0x821D;
-    private const int GlExtensions = 0x1F03;
-    private const int GlCompileStatus = 0x8B81;
-    private const int GlLinkStatus = 0x8B82;
-
     /// <summary>
     /// Whether the driver builds a shader on threads of its own. A large patch's
     /// shader takes seconds to link, and a link waited for here stops the render
@@ -109,7 +66,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     private double drawnAt = double.NaN;
 
     /// <summary>The four corners of the unit square, in strip order.</summary>
-    private static readonly IntPtr Quad = new(4);
+    private const int Quad = 4;
 
     private int vertexArray;
 
@@ -183,7 +140,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
     private int[] patchPlanes = [];
     private readonly GpuReadback readback = new();
-    private PixelSize size;
+    private SurfaceSize size;
     private int read;
     private bool clearPending = true;
 
@@ -205,19 +162,22 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     public bool EightBitFeedback { get; private set; }
 
     /// <summary>The dialect a context of this version speaks, and whether it is new enough at all.</summary>
-    public static bool CanRun(GlVersion version) => version.Type == GlProfileType.OpenGLES
+    public static bool CanRun(ContextVersion version) => version.Es
         ? version.Major >= 3
         : version.Major > 3 || (version.Major == 3 && version.Minor >= 2);
 
-    public static GlslDialect DialectFor(GlVersion version) =>
-        version.Type == GlProfileType.OpenGLES ? GlslDialect.GlslEs300 : GlslDialect.Glsl150;
+    public static GlslDialect DialectFor(ContextVersion version) =>
+        version.Es ? GlslDialect.GlslEs300 : GlslDialect.Glsl150;
 
     /// <summary>Builds the parts that do not depend on the patch. Null on success.</summary>
-    public string? Initialise(GlInterface gl)
+    public string? Initialise(Gl gl)
     {
+        if (gl.Missing.Count > 0)
+            return $"This context has no {string.Join(", ", gl.Missing)}.";
+
         // A core-profile context refuses to draw without one, and this backend
         // has no vertex data to put in it — the triangle comes from gl_VertexID.
-        if (!gl.IsGenVertexArraysAvailable || !gl.IsBindVertexArrayAvailable)
+        if (!gl.IsVertexArrayAvailable)
             return "This context has no vertex arrays.";
 
         vertexArray = gl.GenVertexArray();
@@ -227,22 +187,15 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (program is not { } blit) return $"The blit shader would not build. {error}";
 
         blitProgram = blit;
-        blitTexture = gl.GetUniformLocationString(blit, "uTexture");
-        blitScaleX = gl.GetUniformLocationString(blit, "uScaleX");
-        blitScaleY = gl.GetUniformLocationString(blit, "uScaleY");
+        blitTexture = gl.GetUniformLocation(blit, "uTexture");
+        blitScaleX = gl.GetUniformLocation(blit, "uScaleX");
+        blitScaleY = gl.GetUniformLocation(blit, "uScaleY");
 
-        // Neither of these is fatal here either: a context without them draws
-        // every patch that has no loop in it, and a patch that has one is refused
-        // in SetPatch and drawn on the processor instead.
-        drawBuffers = Bind<GlDrawBuffers>(gl, "glDrawBuffers");
-        bindFragDataLocation = Bind<GlBindFragDataLocation>(gl, "glBindFragDataLocation");
-
-        parallel = Supports(gl, "GL_KHR_parallel_shader_compile") || Supports(gl, "GL_ARB_parallel_shader_compile");
+        parallel = backgroundLinks
+            && (gl.Supports("GL_KHR_parallel_shader_compile") || gl.Supports("GL_ARB_parallel_shader_compile"));
 
         // As many threads as it likes; left alone, a driver may choose none.
-        if (parallel)
-            (Bind<GlMaxShaderCompilerThreads>(gl, "glMaxShaderCompilerThreadsKHR")
-                ?? Bind<GlMaxShaderCompilerThreads>(gl, "glMaxShaderCompilerThreadsARB"))?.Invoke(uint.MaxValue);
+        if (parallel && gl.IsMaxShaderCompilerThreadsAvailable) gl.MaxShaderCompilerThreads(uint.MaxValue);
 
         // Not fatal when it fails: a machine that cannot read frames back can
         // still show them, and only a recording is refused.
@@ -251,34 +204,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         return null;
     }
 
-    private static T? Bind<T>(GlInterface gl, string name) where T : Delegate
-    {
-        var address = gl.GetProcAddress(name);
-
-        return address == IntPtr.Zero ? null : Marshal.GetDelegateForFunctionPointer<T>(address);
-    }
-
-    private static bool Supports(GlInterface gl, string extension)
-    {
-        if (Bind<GlGetIntegerv>(gl, "glGetIntegerv") is not { } getIntegerv
-            || Bind<GlGetStringi>(gl, "glGetStringi") is not { } getStringi)
-            return false;
-
-        getIntegerv(GlNumExtensions, out var count);
-
-        for (var i = 0; i < count; i++)
-            if (Marshal.PtrToStringAnsi(getStringi(GlExtensions, i)) == extension)
-                return true;
-
-        return false;
-    }
-
     /// <summary>
     /// Points the renderer at a program, compiling a shader for it if the text
     /// has actually changed. Null on success — including the very common case
     /// where there was nothing to do.
     /// </summary>
-    public string? SetPatch(GlInterface gl, CompiledPatch patch)
+    public string? SetPatch(Gl gl, CompiledPatch patch)
     {
         var shaders = GlslEmitter.Emit(patch, dialect);
 
@@ -286,13 +217,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         // planes, which needs the call that turns the extra attachments on. Where
         // there is none, saying so hands the frame to the processor, which draws
         // the same picture more slowly.
-        if (shaders.PlaneTargets > 0 && drawBuffers is null)
+        if (shaders.PlaneTargets > 0 && !gl.IsDrawBuffersAvailable)
             return "This context draws to one attachment, and a loop in the patch needs several.";
 
         // Where the text cannot say which attachment an output goes to, something
         // has to, and a linker left to choose would put the planes wherever it
         // liked — which draws a picture rather than an error.
-        if (shaders.PlaneTargets > 0 && dialect is GlslDialect.Glsl150 && bindFragDataLocation is null)
+        if (shaders.PlaneTargets > 0 && dialect is GlslDialect.Glsl150 && !gl.IsBindFragDataLocationAvailable)
             return "This context cannot be told where a shader's outputs go, and a loop in the patch needs to say.";
 
         Settle(gl);
@@ -328,7 +259,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         opening = patch.Waiting;
 
         // Asked without waiting; the program on the card draws until it is done.
-        if (parallel && ProgramParameter(gl, building.Program, GlCompletionStatus) == 0) return null;
+        if (parallel && gl.GetProgram(building.Program, GL_COMPLETION_STATUS) == 0) return null;
 
         var program = Finish(gl, building, out var error);
         building = null;
@@ -344,7 +275,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Puts a linked program on the card in place of the one there, which is kept for an undo.</summary>
-    private void Install(GlInterface gl, int compiled, ShaderSource shaders, CompiledPatch patch)
+    private void Install(Gl gl, int compiled, ShaderSource shaders, CompiledPatch patch)
     {
         if (patchProgram != 0) Keep(gl, liveSource, patchProgram);
 
@@ -363,19 +294,19 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
         Adopt(gl, patch);
 
-        patchTime = gl.GetUniformLocationString(compiled, "uTime");
-        patchTimeLow = gl.GetUniformLocationString(compiled, "uTimeLo");
-        patchOne = gl.GetUniformLocationString(compiled, "uOne");
-        patchAspect = gl.GetUniformLocationString(compiled, "uAspect");
-        patchPrevious = gl.GetUniformLocationString(compiled, "uPrevious");
-        patchFeedbackX = gl.GetUniformLocationString(compiled, "uFeedbackScaleX");
-        patchFeedbackY = gl.GetUniformLocationString(compiled, "uFeedbackScaleY");
+        patchTime = gl.GetUniformLocation(compiled, "uTime");
+        patchTimeLow = gl.GetUniformLocation(compiled, "uTimeLo");
+        patchOne = gl.GetUniformLocation(compiled, "uOne");
+        patchAspect = gl.GetUniformLocation(compiled, "uAspect");
+        patchPrevious = gl.GetUniformLocation(compiled, "uPrevious");
+        patchFeedbackX = gl.GetUniformLocation(compiled, "uFeedbackScaleX");
+        patchFeedbackY = gl.GetUniformLocation(compiled, "uFeedbackScaleY");
 
         // There is no glUniform1fv here, so each element of the array is found
         // and set on its own. There are a few dozen of them in a real patch.
         patchConstants = new int[shaders.ConstantCount];
         for (var i = 0; i < patchConstants.Length; i++)
-            patchConstants[i] = gl.GetUniformLocationString(compiled, $"uK[{i}]");
+            patchConstants[i] = gl.GetUniformLocation(compiled, $"uK[{i}]");
 
         // The same, for what the patch is being played with. Where the constants
         // are uploaded from a snapshot taken when the program was set, these are
@@ -385,7 +316,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         played = new float[shaders.LiveCount];
 
         for (var i = 0; i < patchLive.Length; i++)
-            patchLive[i] = gl.GetUniformLocationString(compiled, $"uLive[{i}]");
+            patchLive[i] = gl.GetUniformLocation(compiled, $"uLive[{i}]");
 
         // One sampler and one shape per picture the patch shows. Their locations
         // belong to the program and are found here; the pictures behind them do
@@ -396,8 +327,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
 
         for (var i = 0; i < patchPictures.Length; i++)
         {
-            patchPictures[i] = gl.GetUniformLocationString(compiled, $"uPicture{i}");
-            patchPictureAspects[i] = gl.GetUniformLocationString(compiled, $"uPictureAspect{i}");
+            patchPictures[i] = gl.GetUniformLocation(compiled, $"uPicture{i}");
+            patchPictureAspects[i] = gl.GetUniformLocation(compiled, $"uPictureAspect{i}");
         }
 
         // And one sampler per plane target, holding what the frame before left in
@@ -406,7 +337,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         patchPlanes = new int[shaders.PlaneTargets];
 
         for (var i = 0; i < patchPlanes.Length; i++)
-            patchPlanes[i] = gl.GetUniformLocationString(compiled, $"uPlane{i}");
+            patchPlanes[i] = gl.GetUniformLocation(compiled, $"uPlane{i}");
     }
 
     /// <summary>The program linked from <paramref name="source"/>, taken out of the ones kept, or null.</summary>
@@ -422,7 +353,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Keeps a program that has left the card, and lets the oldest kept one go.</summary>
-    private void Keep(GlInterface gl, string source, int program)
+    private void Keep(Gl gl, string source, int program)
     {
         linked.Add((source, program));
         if (linked.Count <= Remembered) return;
@@ -436,7 +367,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// values behind its constants, which move with every knob, its pictures,
     /// which change without the text changing, and the names of its live inputs.
     /// </summary>
-    private void Adopt(GlInterface gl, CompiledPatch patch)
+    private void Adopt(Gl gl, CompiledPatch patch)
     {
         constants = GlslEmitter.Constants(patch);
         liveInputs = patch.LiveInputs;
@@ -455,7 +386,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// so the comparison is by reference and a knob drag uploads nothing.
     /// Eight-bit textures with linear filtering, which is what the file held.
     /// </remarks>
-    private void Upload(GlInterface gl, IReadOnlyList<LoadedImage> wanted)
+    private void Upload(Gl gl, IReadOnlyList<LoadedImage> wanted)
     {
         if (pictures.Length == wanted.Count)
         {
@@ -526,16 +457,62 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// letterboxed, into <paramref name="framebuffer"/>. Null on success.
     /// </summary>
     public string? Render(
-        GlInterface gl,
+        Gl gl,
         int framebuffer,
-        PixelSize control,
-        PixelSize resolution,
+        SurfaceSize control,
+        SurfaceSize resolution,
         double time,
         LiveValues? live = null)
     {
         if (patchProgram == 0 && building is null) return null;
         if (resolution.Width <= 0 || resolution.Height <= 0) return null;
 
+        if (Draw(gl, resolution, time, live) is { } failure) return failure;
+
+        // Before the blit, while the frame is still the whole picture rather than
+        // a letterboxed corner of a control. A recording wants what the patch
+        // drew, not what the window happened to be shaped like.
+        if (Capture is { } sink) readback.Capture(gl, framebuffers[read], resolution, EightBitFeedback, sink);
+
+        DrawBlit(gl, framebuffer, control, resolution);
+
+        // The framebuffer especially: Avalonia hands us one and expects it back.
+        Restore(gl, framebuffer);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Renders one frame at <paramref name="resolution"/> and reads it back into
+    /// <paramref name="rgba"/>, tightly packed and bottom-up. Waits for every link,
+    /// so the frame is always the patch's. Null on success.
+    /// </summary>
+    public string? Frame(Gl gl, SurfaceSize resolution, double time, LiveValues? live, Span<byte> rgba)
+    {
+        if (resolution.Width <= 0 || resolution.Height <= 0) return "A frame needs both dimensions.";
+        if (building is not null) return "The patch's shader is still being built.";
+        if (patchProgram == 0) return "There is no patch to draw.";
+
+        var failure = Draw(gl, resolution, time, live)
+            ?? readback.Read(gl, framebuffers[read], resolution, EightBitFeedback, rgba);
+
+        Restore(gl, 0);
+
+        return failure;
+    }
+
+    /// <summary>Leaves the context as it was found, apart from the tests <see cref="Draw"/> turns off.</summary>
+    private static void Restore(Gl gl, int framebuffer)
+    {
+        gl.BindVertexArray(0);
+        gl.BindTexture(GL_TEXTURE_2D, 0);
+        gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        gl.UseProgram(0);
+    }
+
+    /// <summary>Draws the patch into the history, where the next frame reads it and nothing shows it. Null on success.</summary>
+    private string? Draw(Gl gl, SurfaceSize resolution, double time, LiveValues? live)
+    {
         if (Resize(gl, resolution) is { } failure) return failure;
 
         // Nothing here draws over anything, so every test that could discard a
@@ -543,7 +520,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         gl.Disable(GL_DEPTH_TEST);
         gl.Disable(GL_CULL_FACE);
         gl.Disable(GL_SCISSOR_TEST);
-        gl.Disable(GlBlend);
+        gl.Disable(GL_BLEND);
 
         gl.BindVertexArray(vertexArray);
 
@@ -576,24 +553,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             read = 1 - read;
         }
 
-        // Before the blit, while the frame is still the whole picture rather than
-        // a letterboxed corner of a control. A recording wants what the patch
-        // drew, not what the window happened to be shaped like.
-        if (Capture is { } sink) readback.Capture(gl, framebuffers[read], resolution, EightBitFeedback, sink);
-
-        DrawBlit(gl, framebuffer, control, resolution);
-
-        // Leaving the context as it was found, apart from the state above. The
-        // framebuffer especially: Avalonia hands us one and expects it back.
-        gl.BindVertexArray(0);
-        gl.BindTexture(GL_TEXTURE_2D, 0);
-        gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        gl.UseProgram(0);
-
         return null;
     }
 
-    private void DrawPatch(GlInterface gl, PixelSize resolution, double time, LiveValues? live)
+    private void DrawPatch(Gl gl, SurfaceSize resolution, double time, LiveValues? live)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffers[1 - read]);
         gl.Viewport(0, 0, resolution.Width, resolution.Height);
@@ -666,7 +629,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             if (patchPlanes[i] >= 0) gl.Uniform1i(patchPlanes[i], 1 + pictures.Length + i);
         }
 
-        gl.DrawArrays(GlTriangleStrip, 0, Quad);
+        gl.DrawArrays(GL_TRIANGLE_STRIP, 0, Quad);
     }
 
     /// <summary>
@@ -691,7 +654,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         }
     }
 
-    private void DrawBlit(GlInterface gl, int framebuffer, PixelSize control, PixelSize resolution)
+    private void DrawBlit(Gl gl, int framebuffer, SurfaceSize control, SurfaceSize resolution)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         gl.Viewport(0, 0, control.Width, control.Height);
@@ -711,7 +674,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (blitScaleX >= 0) gl.Uniform1f(blitScaleX, scaleX);
         if (blitScaleY >= 0) gl.Uniform1f(blitScaleY, scaleY);
 
-        gl.DrawArrays(GlTriangleStrip, 0, Quad);
+        gl.DrawArrays(GL_TRIANGLE_STRIP, 0, Quad);
     }
 
     /// <summary>
@@ -719,7 +682,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// a fraction of the control on each axis. Scaling about the origin in clip
     /// space centers it, so there is no offset to carry.
     /// </summary>
-    private static (float X, float Y) Letterbox(PixelSize control, PixelSize image)
+    private static (float X, float Y) Letterbox(SurfaceSize control, SurfaceSize image)
     {
         if (control.Width <= 0 || control.Height <= 0 || image.Width <= 0 || image.Height <= 0)
             return (1f, 1f);
@@ -735,7 +698,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// Allocates the history pair, half floats first. The history does not
     /// survive a resolution change, which is what the CPU renderer does too.
     /// </summary>
-    private string? Resize(GlInterface gl, PixelSize resolution)
+    private string? Resize(Gl gl, SurfaceSize resolution)
     {
         if (size == resolution && framebuffers[0] != 0) return null;
 
@@ -747,7 +710,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         // about. They are not renderable everywhere, and where they are not, a
         // posterised feedback is still a picture.
         foreach (var (internalFormat, type, eightBit) in
-                 (ReadOnlySpan<(int, int, bool)>)[(GlRgba16F, GlHalfFloat, false), (GL_RGBA8, GL_UNSIGNED_BYTE, true)])
+                 (ReadOnlySpan<(int, int, bool)>)[(GL_RGBA16F, GL_HALF_FLOAT, false), (GL_RGBA8, GL_UNSIGNED_BYTE, true)])
         {
             var complete = true;
 
@@ -798,15 +761,15 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// already settled — and nothing to do for a patch with no planes, whose one
     /// output goes to attachment zero wherever the linker puts it.
     /// </remarks>
-    private void BindOutputs(int program, int targets)
+    private void BindOutputs(Gl gl, int program, int targets)
     {
         if (targets == 0 || dialect is not GlslDialect.Glsl150) return;
-        if (bindFragDataLocation is not { } bind) return;
+        if (!gl.IsBindFragDataLocationAvailable) return;
 
-        bind(program, 0, "fragColor");
+        gl.BindFragDataLocation(program, 0, "fragColor");
 
         for (var target = 0; target < targets; target++)
-            bind(program, target + 1, $"outPlane{target}");
+            gl.BindFragDataLocation(program, target + 1, $"outPlane{target}");
     }
 
     /// <summary>
@@ -821,10 +784,10 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// where a color merely bands. Eight-bit is not offered at all: it cannot
     /// hold what a plane is allowed to carry, let alone hold it still.
     /// </remarks>
-    private string? Attach(GlInterface gl, PixelSize resolution)
+    private string? Attach(Gl gl, SurfaceSize resolution)
     {
         foreach (var (internalFormat, type) in
-                 (ReadOnlySpan<(int, int)>)[(GlRgba32F, GL_FLOAT), (GlRgba16F, GlHalfFloat)])
+                 (ReadOnlySpan<(int, int)>)[(GL_RGBA32F, GL_FLOAT), (GL_RGBA16F, GL_HALF_FLOAT)])
         {
             var complete = true;
 
@@ -859,7 +822,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
                         0);
                 }
 
-                Enable();
+                Enable(gl);
 
                 complete &= gl.CheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
             }
@@ -880,9 +843,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// until it is told otherwise, so without this the planes would be written
     /// nowhere and read back as the nothing they started as.
     /// </summary>
-    private void Enable()
+    private void Enable(Gl gl)
     {
-        if (drawBuffers is not { } enable) return;
+        if (!gl.IsDrawBuffersAvailable) return;
 
         Span<int> attachments = stackalloc int[planeTargets + 1];
 
@@ -892,12 +855,12 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         unsafe
         {
             fixed (int* first = attachments)
-                enable(attachments.Length, (IntPtr)first);
+                gl.DrawBuffers(attachments.Length, (IntPtr)first);
         }
     }
 
     private static int? Link(
-        GlInterface gl,
+        Gl gl,
         string vertex,
         string fragment,
         out string? error,
@@ -940,34 +903,34 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Hands the driver a patch's shader to compile and link, without asking how it went.</summary>
-    private Building Start(GlInterface gl, ShaderSource shaders)
+    private Building Start(Gl gl, ShaderSource shaders)
     {
         var vertex = gl.CreateShader(GL_VERTEX_SHADER);
-        gl.ShaderSourceString(vertex, shaders.PatchVertex);
+        gl.ShaderSource(vertex, shaders.PatchVertex);
         gl.CompileShader(vertex);
 
         var fragment = gl.CreateShader(GL_FRAGMENT_SHADER);
-        gl.ShaderSourceString(fragment, shaders.PatchFragment);
+        gl.ShaderSource(fragment, shaders.PatchFragment);
         gl.CompileShader(fragment);
 
         var program = gl.CreateProgram();
         gl.AttachShader(program, vertex);
         gl.AttachShader(program, fragment);
 
-        BindOutputs(program, shaders.PlaneTargets);
+        BindOutputs(gl, program, shaders.PlaneTargets);
         gl.LinkProgram(program);
 
         return new Building(program, vertex, fragment, shaders);
     }
 
     /// <summary>The linked program, or null with what the driver said. Waits for the driver unless it has finished.</summary>
-    private static int? Finish(GlInterface gl, Building built, out string? error)
+    private static int? Finish(Gl gl, Building built, out string? error)
     {
         error = null;
 
-        if (ShaderParameter(gl, built.Vertex, GlCompileStatus) == 0) error = ShaderLog(gl, built.Vertex);
-        else if (ShaderParameter(gl, built.Fragment, GlCompileStatus) == 0) error = ShaderLog(gl, built.Fragment);
-        else if (ProgramParameter(gl, built.Program, GlLinkStatus) == 0) error = ProgramLog(gl, built.Program);
+        if (gl.GetShader(built.Vertex, GL_COMPILE_STATUS) == 0) error = gl.ShaderLog(built.Vertex);
+        else if (gl.GetShader(built.Fragment, GL_COMPILE_STATUS) == 0) error = gl.ShaderLog(built.Fragment);
+        else if (gl.GetProgram(built.Program, GL_LINK_STATUS) == 0) error = gl.ProgramLog(built.Program);
 
         gl.DeleteShader(built.Vertex);
         gl.DeleteShader(built.Fragment);
@@ -979,7 +942,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Sets the shader being built aside to finish, its patch having moved on.</summary>
-    private void Park(GlInterface gl)
+    private void Park(Gl gl)
     {
         if (building is not { } set) return;
 
@@ -1006,13 +969,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Keeps every parked shader the driver has finished with.</summary>
-    private void Settle(GlInterface gl)
+    private void Settle(Gl gl)
     {
         for (var i = 0; i < parked.Count;)
         {
             var set = parked[i];
 
-            if (ProgramParameter(gl, set.Program, GlCompletionStatus) == 0)
+            if (gl.GetProgram(set.Program, GL_COMPLETION_STATUS) == 0)
             {
                 i++;
                 continue;
@@ -1025,50 +988,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     }
 
     /// <summary>Deletes a shader, waiting for the driver where it is still being built.</summary>
-    private static void Drop(GlInterface gl, Building dropped)
+    private static void Drop(Gl gl, Building dropped)
     {
         gl.DeleteShader(dropped.Vertex);
         gl.DeleteShader(dropped.Fragment);
         gl.DeleteProgram(dropped.Program);
     }
 
-    private static unsafe int ProgramParameter(GlInterface gl, int program, int name)
-    {
-        int value;
-        gl.GetProgramiv(program, name, &value);
-        return value;
-    }
-
-    private static unsafe int ShaderParameter(GlInterface gl, int shader, int name)
-    {
-        int value;
-        gl.GetShaderiv(shader, name, &value);
-        return value;
-    }
-
-    private static unsafe string ShaderLog(GlInterface gl, int shader)
-    {
-        var log = new byte[8192];
-
-        fixed (byte* at = log)
-        {
-            gl.GetShaderInfoLog(shader, log.Length, out var length, at);
-            return System.Text.Encoding.UTF8.GetString(log, 0, length);
-        }
-    }
-
-    private static unsafe string ProgramLog(GlInterface gl, int program)
-    {
-        var log = new byte[8192];
-
-        fixed (byte* at = log)
-        {
-            gl.GetProgramInfoLog(program, log.Length, out var length, at);
-            return System.Text.Encoding.UTF8.GetString(log, 0, length);
-        }
-    }
-
-    private void Release(GlInterface gl)
+    private void Release(Gl gl)
     {
         ReleasePlanes(gl);
 
@@ -1085,7 +1012,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// The planes alone, which one format's attempt hands back before the next is
     /// tried — the framebuffers they were hung off are still good.
     /// </summary>
-    private void ReleasePlanes(GlInterface gl)
+    private void ReleasePlanes(Gl gl)
     {
         for (var i = 0; i < 2; i++)
         {
@@ -1101,7 +1028,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     /// Hands everything back. Also the state to return to after the context is
     /// lost, where the objects are already gone and the names mean nothing.
     /// </summary>
-    public void Dispose(GlInterface? gl)
+    public void Dispose(Gl? gl)
     {
         // Unconditionally, because it owns unmanaged memory as well as GL names
         // and that has to go back whether or not there is still a context.

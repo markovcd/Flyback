@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Drawing a patch on the GPU, with no window framework: the renderer, its
+    readback, and a headless context for a program that has no window. OpenGL is
+    reached through function pointers the caller's context hands over, so the
+    preview passes Avalonia's and flyback-cli passes its own (ADR-0157).
+  -->
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.Gpu</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback.Ui" />
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="flyback-viewer" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
+</Project>

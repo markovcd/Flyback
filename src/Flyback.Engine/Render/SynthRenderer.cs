@@ -8,7 +8,7 @@ namespace Flyback.Core.Render;
 /// rows. Also owns the frame history that the Feedback module reads, kept in
 /// linear float RGB so a feedback loop doesn't grind itself down to 8-bit steps.
 /// </summary>
-public sealed class SynthRenderer
+public sealed class SynthRenderer : IFrameRenderer
 {
     /// <summary>
     /// One core is deliberately left alone. A frame at 960x540 costs more than a frame
@@ -101,6 +101,16 @@ public sealed class SynthRenderer
             }
         }
     }
+
+    void IFrameRenderer.Render(
+        CompiledPatch patch,
+        double time,
+        int width,
+        int height,
+        Span<byte> destination,
+        int stride,
+        LiveValues? live) =>
+        Render(patch, time, width, height, destination, stride, live);
 
     /// <summary>Renders one frame into a BGRA8888 buffer that the caller has already pinned or mapped.</summary>
     private unsafe void Render(

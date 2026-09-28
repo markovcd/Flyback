@@ -12,7 +12,7 @@ namespace Flyback.Core.Render;
 /// <remarks>
 /// Offline, so time is taken from the frame number rather than a stopwatch and a
 /// slow patch takes longer to write than to watch. One
-/// <see cref="SynthRenderer"/> for the whole run, which is what makes Feedback
+/// <see cref="IFrameRenderer"/> for the whole run, which is what makes Feedback
 /// mean anything here; the audio side keeps its own cursor for the same reason.
 /// </remarks>
 public static class MovieRenderer
@@ -37,6 +37,19 @@ public static class MovieRenderer
         MovieSettings settings,
         IProgress<double>? progress = null,
         LoudnessMeter? loudness = null,
+        CancellationToken cancellation = default) =>
+        Render(path, video, audio, settings, new SynthRenderer(), progress, loudness, cancellation);
+
+    /// <inheritdoc cref="Render(string, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, LoudnessMeter, CancellationToken)"/>
+    /// <param name="frames">What draws the picture, kept for the whole clip.</param>
+    internal static int Render(
+        string path,
+        CompiledPatch video,
+        CompiledPatch? audio,
+        MovieSettings settings,
+        IFrameRenderer frames,
+        IProgress<double>? progress = null,
+        LoudnessMeter? loudness = null,
         CancellationToken cancellation = default)
     {
         Check(settings);
@@ -52,7 +65,7 @@ public static class MovieRenderer
             audio is null ? 0 : NodeCatalog.AudioChannels,
             settings.Ffmpeg));
 
-        return Render(clip, video, audio, settings, progress, loudness, cancellation);
+        return Render(clip, video, audio, settings, frames, progress, loudness, cancellation);
     }
 
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
@@ -93,7 +106,7 @@ public static class MovieRenderer
             audio is null ? 0 : GlobalConstants.SampleRate,
             audio is null ? 0 : NodeCatalog.AudioChannels));
 
-        return Render(clip, video, audio, settings, progress, null, cancellation);
+        return Render(clip, video, audio, settings, new SynthRenderer(), progress, null, cancellation);
     }
 
     /// <summary>Everything that has to be true of a clip before a file is opened for it.</summary>
@@ -115,6 +128,7 @@ public static class MovieRenderer
         CompiledPatch video,
         CompiledPatch? audio,
         MovieSettings settings,
+        IFrameRenderer frames,
         IProgress<double>? progress,
         LoudnessMeter? loudness,
         CancellationToken cancellation)
@@ -126,7 +140,6 @@ public static class MovieRenderer
         var rate = settings.FramesPerSecond;
         var stride = width * 4;
 
-        var frames = new SynthRenderer();
         var pixels = new byte[(long)stride * height];
 
         // The sound of this frame, so a Scan crossing the width crosses the one

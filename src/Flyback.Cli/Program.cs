@@ -345,12 +345,24 @@ internal static class Program
             Description = "Keep the patch on the interpreter rather than compiling it. Same bytes, slower.",
         };
 
+        var gpu = new Option<bool>("--gpu")
+        {
+            Description = "Draw the picture on the GPU, and fail where there is none rather than use the processor.",
+        };
+
+        var processor = new Option<bool>("--processor")
+        {
+            Description = "Draw the picture on the processor: slower, and the interpreter's bytes exactly. "
+                + "Left out, the GPU draws it where there is one.",
+        };
+
         var command = new Command(
             "render",
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
-            patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, settings,
+            patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
+            processor, settings,
         };
 
         command.SetAction((result, cancellation) =>
@@ -372,6 +384,13 @@ internal static class Program
             if ((file is null) == (named is null))
             {
                 error.WriteLine($"{GlobalConstants.ApplicationName}: say what to render: a patch, or --preset and its name.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (result.GetValue(gpu) && result.GetValue(processor))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --gpu and --processor ask for two different things; say one.");
 
                 return Task.FromResult(Exit.Failed);
             }
@@ -418,7 +437,10 @@ internal static class Program
                 result.GetValue(format) ?? defaults.FormatFor(into.Name),
                 result.GetValue(ffmpeg) ?? defaults.Ffmpeg,
                 result.GetValue(loudness),
-                result.GetValue(interpreted));
+                result.GetValue(interpreted),
+                result.GetValue(gpu) ? PictureBackend.Gpu
+                : result.GetValue(processor) ? PictureBackend.Processor
+                : PictureBackend.Any);
 
             return Task.FromResult(
                 RenderCommand.Run(

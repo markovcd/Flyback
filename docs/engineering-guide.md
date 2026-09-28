@@ -38,13 +38,15 @@ Flyback.Core      the patch model, the module catalog, the opcodes, the Emitter
    ^              what a plugin is compiled against; references nothing
 Flyback.Engine    the compiler, the three backends, the renderers, the language, file I/O
    ^              free to change between releases; no third-party packages
+Flyback.Gpu       the GPU renderer, its OpenGL binding, a headless context
+   ^              no Avalonia and no packages
 Flyback.Plugins   the plugin contract and the host that loads plugins off disk
    ^
 Flyback.Ui        what two shells draw with: preview, sound device, colors, settings
    ^
 Flyback.App       the editor (Avalonia)          Flyback.exe
 Flyback.Viewer    plays a patch, writes nothing  flyback-viewer.exe
-Flyback.Cli       render, check, print, pack     flyback-cli.exe   (no Ui, no Avalonia)
+Flyback.Cli       render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
 
 Flyback.Plugins.* twelve plugins, built into plugins/<Name>/ and loaded at run time
 ```
@@ -57,11 +59,12 @@ layer between the layers: a shell calls the engine's concrete types
 |---|---|---|
 | `Flyback.Core` | `Patch`, `NodeDef`, `PortSpec`, `NodeCatalog`, `OpCode`, `Emitter` | The plugin-facing surface. Its public API is versioned separately ([0102](adr/0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)). |
 | `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL and GLSL backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO`, the built-in `Presets` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
+| `Flyback.Gpu` | `GpuFrameRenderer`, `GpuReadback`, `Gl`, `HeadlessContext` (WGL and EGL), `HeadlessRenderer` | OpenGL through function pointers the caller's context hands over, so the preview and `flyback-cli render` draw with one renderer ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
 | `Flyback.App` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, updates, usage counts | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
-| `Flyback.Cli` | One file per command over `System.CommandLine` | The only place deterministic export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)). |
+| `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 
 Two namespace quirks are deliberate. `Flyback.Engine` declares
 `RootNamespace=Flyback.Core`, and `Flyback.Ui` declares `RootNamespace=Flyback.App`:
@@ -212,9 +215,9 @@ interpreter's own helpers, so a guard exists once. A stretch longer than 256 ops
 is several methods called in order, because past a few thousand locals the JIT
 stops optimizing a method and every op becomes a call. Every build is run against the
 interpreter before it is trusted, bit for bit, and refused if it differs.
-`--interpreted` keeps a run, or a `flyback-cli render`, on the interpreter.
+`--interpreted` keeps a run, or a `flyback-cli render --processor`, on the interpreter.
 
-**The GLSL backend** emits text and touches no GL. Where a GLSL builtin disagrees
+**The GLSL backend** emits text and touches no GL; `Flyback.Gpu` makes every GL call. Where a GLSL builtin disagrees
 with the interpreter (`fract`, `mod`, `mix`, `pow`, `smoothstep`, `atan`) it emits
 a helper that transcribes the interpreter instead. This is why the three opcode
 switches are not unified: the transcription is the point.
@@ -482,7 +485,10 @@ paints it ([0116](adr/0116-a-module-is-drawn-as-its-category-and-a-standout-as-i
 **The preview.** `PreviewHost` holds whichever backend is live. It starts on the
 GPU and falls back to the CPU once per session with no way back.
 `GpuFrameRenderer` owns the shader programs and the feedback texture pair and
-returns error strings rather than throwing. A live recording takes the GPU frame
+returns error strings rather than throwing. It calls OpenGL through `Gl`, a table
+of entry points found by name through whichever context is current, so
+`flyback-cli render` draws with the same renderer through a `HeadlessContext`.
+A live recording takes the GPU frame
 through `GpuReadback` ([0049](adr/0049-record-the-gpu-frame-not-the-interpreter.md))
 and encodes with ffmpeg where it is found, Motion JPEG AVI where it is not
 ([0089](adr/0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md)).

@@ -58,8 +58,14 @@ ARG CONFIGURATION
 # tests that write an MP4 skip themselves when there is none, so without this
 # the format most people will record in would be the one thing the gate below
 # never exercises.
+#
+# Mesa is here for the same reason: EGL with no surface and llvmpipe behind it
+# are a GPU with no GPU and no display, which is what lets the tests draw the
+# picture the way flyback-cli render does on a real card (ADR-0157). Without
+# them those tests skip themselves.
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 \
  && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \

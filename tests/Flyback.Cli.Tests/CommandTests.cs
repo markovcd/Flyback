@@ -395,10 +395,7 @@ public class CommandTests
         error.ShouldNotBeEmpty();
     }
 
-    /// <summary>
-    /// The same patch at the same moment is the same bytes. The CLI renders on
-    /// the interpreter for exactly this reason — see RenderCommand.
-    /// </summary>
+    /// <summary>The same patch at the same moment is the same bytes on the processor.</summary>
     [Fact]
     public void The_same_still_twice_is_the_same_file()
     {
@@ -410,7 +407,7 @@ public class CommandTests
         {
             RenderCommand.Run(
                     Preset("Nebula"),
-                    new RenderOptions(file, 96, 54, At: 1.75d),
+                    new RenderOptions(file, 96, 54, At: 1.75d, Backend: PictureBackend.Processor),
                     TextWriter.Null,
                     cancellation: TestContext.Current.CancellationToken)
                 .ShouldBe(Exit.Ok);
@@ -419,7 +416,7 @@ public class CommandTests
         File.ReadAllBytes(first.FullName).ShouldBe(File.ReadAllBytes(second.FullName));
     }
 
-    /// <summary>A render runs compiled, and the interpreter is the reference it has to match.</summary>
+    /// <summary>A render on the processor runs compiled, and the interpreter is the reference it has to match.</summary>
     [Theory]
     [InlineData("Nebula", ".png")]
     [InlineData("Drone", ".wav")]
@@ -434,7 +431,8 @@ public class CommandTests
         {
             var (code, _, error) = Run((_, e) => RenderCommand.Run(
                 Preset(preset),
-                new RenderOptions(file, 96, 54, At: 1.75d, Seconds: 0.5d, Fps: 8d, Interpreted: off),
+                new RenderOptions(
+                    file, 96, 54, At: 1.75d, Seconds: 0.5d, Fps: 8d, Interpreted: off, Backend: PictureBackend.Processor),
                 e,
                 cancellation: TestContext.Current.CancellationToken));
 
@@ -443,6 +441,47 @@ public class CommandTests
         }
 
         File.ReadAllBytes(compiled.FullName).ShouldBe(File.ReadAllBytes(interpreted.FullName));
+    }
+
+    [Fact]
+    public void A_render_asked_for_on_the_GPU_is_drawn_there_or_refused()
+    {
+        using var directory = new Scratch();
+        var file = directory.File("out.png");
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Plasma"),
+            new RenderOptions(file, 64, 36, At: 1d, Backend: PictureBackend.Gpu),
+            e,
+            cancellation: TestContext.Current.CancellationToken));
+
+        // Never quietly on the processor: either the GPU drew it, or nothing was written.
+        if (code == Exit.Ok)
+        {
+            error.ShouldBeEmpty();
+            file.Exists.ShouldBeTrue();
+        }
+        else
+        {
+            code.ShouldBe(Exit.Failed);
+            error.ShouldContain("--gpu");
+            file.Exists.ShouldBeFalse();
+        }
+    }
+
+    [Fact]
+    public void The_GPU_and_the_interpreter_together_are_refused()
+    {
+        using var directory = new Scratch();
+
+        var (code, _, error) = Run((_, e) => RenderCommand.Run(
+            Preset("Plasma"),
+            new RenderOptions(directory.File("out.png"), 64, 36, Interpreted: true, Backend: PictureBackend.Gpu),
+            e,
+            cancellation: TestContext.Current.CancellationToken));
+
+        code.ShouldBe(Exit.Failed);
+        error.ShouldContain("--interpreted");
     }
 
     /// <summary>A shipped preset is rendered by its name, with no file to have saved first.</summary>
