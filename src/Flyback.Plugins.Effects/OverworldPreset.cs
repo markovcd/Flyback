@@ -12,6 +12,10 @@ namespace Flyback.Plugins.Effects;
 /// half width, a sixteen-step triangle bass, and noise held on a slower clock so it
 /// crunches rather than hisses. Chords are arpeggiated at thirty-seconds.
 /// <para>
+/// Two Arrangements of eight-bar sections say what plays when, one for the band and one
+/// for the lead, and a third turns the time of day over the last quarter of each.
+/// </para>
+/// <para>
 /// The three progressions share one list, picked by offsetting its input by 32 beats
 /// per progression; each melody is a list of its own. The key change is one number
 /// added to every pitch.
@@ -63,6 +67,13 @@ internal sealed class OverworldPreset : PresetBench
 
     /// <summary>A sequencer's second output: up while a step sounds.</summary>
     private const int Gate = 1;
+
+    /// <summary>Sections of an Arrangement a beat: one every eight bars of four.</summary>
+    private const float Phrases = 1f / 32f;
+
+    private const int Kick = 0, Hats = 1, Backbeat = 2, Bass = 3, Arp = 4, Choruses = 5, Builds = 6, Hop = 7;
+
+    private const int VerseTune = 0, ChorusTune = 1, NightTune = 2, Solo = 3, Twin = 4;
 
     /// <summary>E natural minor, which every melody is written in and the harmony is snapped to.</summary>
     private static readonly int[] Scale = [4, 6, 7, 9, 11, 0, 2];
@@ -152,19 +163,6 @@ internal sealed class OverworldPreset : PresetBench
         : base(modules)
     {
     }
-
-    /// <summary>One number for each eight bars, read off the count of beats.</summary>
-    private NodeInstance Lane(NodeInstance count, params float[] phrases)
-    {
-        var lane = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(lane, phrases.Select(p => new Step(p)));
-        b.Wire(count, 0, lane, 0);
-        return lane;
-    }
-
-    /// <summary>One where <paramref name="lane"/> is the whole number <paramref name="value"/>, nought elsewhere.</summary>
-    private NodeInstance Is(NodeInstance lane, float value) =>
-        Formula(FormattableString.Invariant($"step({value - 0.5f}, a) * step(a, {value + 0.5f})"), lane);
 
     /// <summary>
     /// A melody as a Note Sequencer that counts in eighths. Only its pitch is read: the
@@ -256,45 +254,59 @@ internal sealed class OverworldPreset : PresetBench
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
-        // Eight bars is one step of the arrangement, and how far into it is what
-        // the harmony and the builds are read from.
-        var phraseGone = Formula("fract(a * (1 / 32))", beats);
-
         Box("Clock");
 
         // --- the arrangement -------------------------------------------------
 
-        // How much track there is, a phrase at a time: the title screen and the level
-        // starting, two verses, a build, two choruses, the night, a build out of it, a
-        // solo, two choruses a tone up, and the credits. Builds are at six tenths.
-        var song = Lane(beats, 0.2f, 0.4f, 0.7f, 0.75f, 0.6f, 0.9f, 1f, 0.3f, 0.6f, 0.95f, 1f, 1f, 0.25f);
+        // The track in phrases of eight bars: the title screen and the level starting,
+        // two verses, a build, two choruses, the night, a build out of it, a solo, two
+        // choruses a tone up, and the credits. A row for each of the kick, the closed
+        // hats, the backbeat (which the crash and the blocks come in with), the bass,
+        // how far the arp opens, the choruses, the builds and the hero's hop.
+        var parts = Arranged(beats, Phrases,
+        [
+            Levels(0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0.5f, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0),
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0.2f, 0.4f, 0.7f, 0.75f, 0.6f, 0.9f, 1, 0.3f, 0.6f, 0.95f, 1, 1, 0.25f),
+            Levels(0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0),
+            Levels(0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+        ]);
 
-        // Which progression: the verse's, the chorus's or the bridge's.
-        var progression = Lane(beats, 0f, 0f, 0f, 0f, 0f, 1f, 1f, 2f, 2f, 1f, 1f, 1f, 0f);
+        // What the lead plays, one tune at a time: the verse, the chorus, the night or
+        // the solo. The last row is the second pulse playing a third under it, which is
+        // saved for the second time through anything.
+        var tunes = Arranged(beats, Phrases,
+        [
+            Levels(0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1),
+            Levels(0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0),
+            Levels(0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0),
+            Levels(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0),
+            Levels(0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0),
+        ]);
 
-        // What the lead plays: nothing, the verse, the chorus, the night or the solo.
-        // A quarter over the whole number is the second pulse playing a third under
-        // it, which is saved for the second time through anything.
-        var lead = Lane(beats, 0f, 0f, 1f, 1.25f, 0f, 2f, 2.25f, 3f, 3f, 4f, 2.25f, 2.25f, 1f);
-        var twinned = Formula("step(0.1, fract(a))", lead);
+        // How far into its phrase the track is, which the harmony and the builds are
+        // read from.
+        var phraseGone = new Read(parts, SectionProgress);
 
         // The key change, from the last two choruses to the end: a whole tone, added to
-        // every pitch there is. It is read off which phrase the song is on.
-        var key = Formula("step(9.5 / 13, a) * 2", new Read(song, 2));
+        // every pitch there is.
+        var key = Formula("step(10.5, a) * 2", new Read(parts, SectionNumber));
 
-        // The same arrangement as the ear hears it turned: four seconds up and one down.
+        // How far the arp opens as the ear hears it turned: four seconds up and one down.
         var swell = b.Add(SlewType, (1, 0.6f), (2, 0f));
 
         // A build's second half is a ramp for the roll and the riser to climb, and its
         // last two beats are nothing at all, so the drop lands out of silence.
-        var building = Formula("step(0.57, a) * step(a, 0.63)", song);
+        var building = new Read(parts, Builds);
         var ramp = Formula("smoothstep(0.5, 1, a) * b", phraseGone, building);
         var hush = Formula("1 - step(0.9375, a) * b", phraseGone, building);
 
-        // The chorus is anything from nine tenths up.
-        var chorus = Rises(song, 0.85f, 0.9f);
+        var chorus = new Read(parts, Choruses);
 
-        b.Wire(song, 0, swell, 0);
+        b.Wire(parts, Arp, swell, 0);
 
         Box("Arrangement");
 
@@ -303,8 +315,10 @@ internal sealed class OverworldPreset : PresetBench
         // Three progressions of eight bars on one list: the verse's Em C G D Em C D B,
         // the chorus's C D Em G C D B B, and the bridge's Am Em C B Am Em F B. The list
         // is read at the bar, and a progression over the first starts it thirty-two
-        // beats further along.
-        var bar = Formula("a * 32 + b * 32", phraseGone, progression);
+        // beats further along: the chorus's under the choruses and the bridge's under
+        // the night. Rounded, so a change between them is a jump rather than a run
+        // through the list.
+        var bar = Formula("a * 32 + floor(b + c * 2 + 0.5) * 32", phraseGone, chorus, new Read(tunes, NightTune));
         var roots = b.Add("seq.notes", (1, 0.25f));
         StepsExtra.Set(roots,
         [
@@ -347,9 +361,9 @@ internal sealed class OverworldPreset : PresetBench
         // its gate, so it is struck at the top of the step.
         var kickPattern = Pattern(beats, 2f, 1f, 0f, 0f, 1f, 1f, 0f, 0f, 0f);
         var kickMore = Pattern(beats, 2f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f);
-        var kickStroke = Enters(
+        var kickStroke = Product(
             Product(Formula("a * (b + c * d)", Stroke(beats, 2f, 4f), kickPattern, kickMore, chorus), hush),
-            song, 0.35f, 0.4f);
+            parts, Kick);
         var kick = Drum(kickStroke, 48f, 170f, 5f, 2.5f);
 
         Box("Kick");
@@ -362,7 +376,7 @@ internal sealed class OverworldPreset : PresetBench
 
         // Two and four once the verse is in, and in a build, sixteenths that grow
         // louder and thirty-seconds in the last bar.
-        var backbeat = Enters(Stroke(beats, 0.5f, 5f, 0.5f), song, 0.64f, 0.68f);
+        var backbeat = Product(Stroke(beats, 0.5f, 5f, 0.5f), parts, Backbeat);
         var fill = Formula("a * (step(0.875, b) * c) * d", Stroke(beats, 8f, 4f), phraseGone, building, hush);
         var snareStroke = Formula("a + (b * c * 0.8 + d)", backbeat, Stroke(beats, 4f, 4f), ramp, fill);
 
@@ -377,14 +391,14 @@ internal sealed class OverworldPreset : PresetBench
 
         // The same noise held for a sample of a much faster clock, which is the
         // chip's hat. Sixteenths with the off-beat leant on, an open one on the
-        // off-beat in the chorus, and a crash at the top of any phrase with a verse
-        // or more in it.
+        // off-beat in the chorus, and a crash at the top of any phrase with the
+        // backbeat in it.
         var fizz = b.Add(NoiseType, (1, 64f), (2, 7f));
         var accent = Pattern(beats, 4f, 0.45f, 0.25f, 1f, 0.25f);
-        var closed = Enters(Product(Stroke(beats, 4f, 9f), accent), song, 0.38f, 0.42f);
-        var open = Product(Stroke(beats, 1f, 3f, 0.5f), chorus);
-        var metal = Formula("a + b * 0.6 + c * smoothstep(0.68, 0.7, d) * 0.9",
-            closed, open, Stroke(beats, 1f / 32f, 9f), song);
+        var closed = Product(Product(Stroke(beats, 4f, 9f), accent), parts, Hats);
+        var open = Product(Stroke(beats, 1f, 3f, 0.5f), parts, Choruses);
+        var metal = Formula("a + b * 0.6 + c * d * 0.9",
+            closed, open, Stroke(beats, 1f / 32f, 9f), new Read(parts, Backbeat));
         var hats = Filtered(Product(metal, fizz, Held), 5500f, 0.1f);
 
         b.Wire(Times(clock, 300f), 0, fizz, 0);
@@ -403,10 +417,10 @@ internal sealed class OverworldPreset : PresetBench
         // steps are the buzz a real one has over a pure one. And a sine an octave under
         // it once the chorus is in, which no console had.
         var sub = b.Add("osc.sine");
-        var bass = Enters(
+        var bass = Product(
             Formula("((floor(a * 7.5) + 0.5) * (1 / 7.5) + b * c * 0.6) * d",
                 triangle, sub, chorus, Product(hush, bassLine, Gate)),
-            song, 0.27f, 0.3f);
+            parts, Bass);
 
         b.Wire(bassHz, 0, triangle, 1)
          .Wire(Times(bassHz, 0.5f), 0, sub, 1);
@@ -436,10 +450,10 @@ internal sealed class OverworldPreset : PresetBench
         var chorusLine = Melody(beats, Chorus);
         var night = Melody(beats, Night);
 
-        var isVerse = Is(lead, 1f);
-        var isChorus = Is(lead, 2f);
-        var isNight = Is(lead, 3f);
-        var isSolo = Formula("step(3.5, a)", lead);
+        var isVerse = new Read(tunes, VerseTune);
+        var isChorus = new Read(tunes, ChorusTune);
+        var isNight = new Read(tunes, NightTune);
+        var isSolo = new Read(tunes, Solo);
 
         // The solo is the arp itself an octave up, jumping a further octave every
         // other beat, which is how a chip showed off.
@@ -475,7 +489,7 @@ internal sealed class OverworldPreset : PresetBench
         // Quieter for the night, which is a song under the breath.
         var leadDry = Filtered(Formula("a * b * (c * -0.35 + 1)", leadOsc, leadGate, isNight), 5500f, 0.1f);
 
-        b.Wire(Formula("step(0.5, a)", lead), 0, held, 0)
+        b.Wire(Formula("a + b + c + d", isVerse, isChorus, isNight, isSolo), 0, held, 0)
          .Wire(leadNote, 0, late, 0)
          .Wire(Formula("step(0.2, abs(a - b))", leadNote, late), 0, strike, 0);
 
@@ -487,7 +501,7 @@ internal sealed class OverworldPreset : PresetBench
         // snapped to the key, then moved by the key change like everything else.
         var twinNote = Wired("math.add", InKey(written, Scale, -3.6f), key, 1);
         var twinOsc = Pulse(Through("audio.note", twinNote), 0.5f);
-        var twin = Filtered(Formula("a * (b * c)", twinOsc, leadGate, twinned), 4000f, 0.1f);
+        var twin = Filtered(Formula("a * (b * c)", twinOsc, leadGate, new Read(tunes, Twin)), 4000f, 0.1f);
 
         Box("Harmony pulse");
 
@@ -613,12 +627,13 @@ internal sealed class OverworldPreset : PresetBench
         // --- the picture: sky ------------------------------------------------
 
         // The time of day, a phrase at a time: morning, day, dusk for the choruses,
-        // night for the bridge, and back towards gold for the last of it. The same list
-        // read a phrase ahead is the next phrase's, and the last quarter of each phrase
-        // blends into it, which is a slew the picture can have.
-        float[] times = [0.15f, 0f, 0f, 0f, 0.3f, 0.5f, 0.5f, 1f, 0.85f, 0.65f, 0.4f, 0.45f, 0.2f];
-        var today = Formula("mix(a, b, smoothstep(0.75, 1, c))",
-            Lane(beats, times), Lane(Plus(beats, 32f), times), phraseGone);
+        // night for the bridge, and back towards gold for the last of it. Its
+        // Arrangement runs a quarter of a phrase ahead and takes that quarter to change,
+        // so the last quarter of each phrase blends into the next, which is a slew the
+        // picture can have.
+        var today = b.Add(NodeCatalog.ArrangementTypeId, (1, Phrases), (2, 0.25f));
+        ArrangementExtra.Set(today, [Levels(0.15f, 0, 0, 0, 0.3f, 0.5f, 0.5f, 1, 0.85f, 0.65f, 0.4f, 0.45f, 0.2f)]);
+        b.Wire(Plus(beats, 8f), 0, today, 0);
         var dusk = Rises(today, 0f, 0.5f);
         var dark = Rises(today, 0.5f, 1f);
 
@@ -760,7 +775,6 @@ internal sealed class OverworldPreset : PresetBench
         // The snare knocks them up, and they only hang there once the verse is in.
         var blockAt = Formula("(fract(a * (1 / (4 * (8 / 45)))) - 0.5) * (4 * (8 / 45))", along);
         var blockY = Formula("a - (b * 0.03 + 0.02)", py, snareStroke);
-        var shown = Rises(song, 0.65f, 0.7f);
         var rim = Rgb(0.45f, 0.22f, 0.05f);
         var face = b.Add("color.gain");
         var pixel = 1f / Rows;
@@ -770,9 +784,9 @@ internal sealed class OverworldPreset : PresetBench
 
         var withBlocks = Between(
             Between(
-                Between(withGround, rim, Product(Block(blockAt, blockY, 0f, 0f, Tile * 0.5f, Tile * 0.5f), shown)),
-                face, Product(Block(blockAt, blockY, 0f, 0f, Tile * 0.5f - pixel, Tile * 0.5f - pixel), shown)),
-            rim, Product(Block(blockAt, blockY, 0f, 0f, pixel, pixel), shown));
+                Between(withGround, rim, Product(Block(blockAt, blockY, 0f, 0f, Tile * 0.5f, Tile * 0.5f), parts, Backbeat)),
+                face, Product(Block(blockAt, blockY, 0f, 0f, Tile * 0.5f - pixel, Tile * 0.5f - pixel), parts, Backbeat)),
+            rim, Product(Block(blockAt, blockY, 0f, 0f, pixel, pixel), parts, Backbeat));
 
         Box("Picture: Blocks");
 
@@ -791,7 +805,7 @@ internal sealed class OverworldPreset : PresetBench
          .Wire(Formula("a - (sin(b * (pi * 0.5)) * 0.02 + 0.22)", py, beats), 0, coin, 1)
          .Wire(coin, 0, coinFill, 0);
 
-        var withCoins = Ink(withBlocks, Product(coinFill, chorus), 1f, 0.85f, 0.25f);
+        var withCoins = Ink(withBlocks, Product(coinFill, parts, Choruses), 1f, 0.85f, 0.25f);
 
         Box("Picture: Coins");
 
@@ -803,8 +817,8 @@ internal sealed class OverworldPreset : PresetBench
         // unstoppable looks like.
         var heroX = Plus(px, -HeroX);
         var heroY = Formula(
-            "a + 0.6 - fract(b * 0.5) * (1 - fract(b * 0.5)) * (4 * 0.28) * smoothstep(0.5, 0.6, c)",
-            py, beats, song);
+            "a + 0.6 - fract(b * 0.5) * (1 - fract(b * 0.5)) * (4 * 0.28) * c",
+            py, beats, new Read(parts, Hop));
         var eighth = Formula("fract(a * 2)", beats);
         var stride = Formula("smoothstep(0.5, 0.501, a) * 0.022", eighth);
 
@@ -838,8 +852,8 @@ internal sealed class OverworldPreset : PresetBench
         // A dark strip along the top with how far through the level it is: which
         // phrase, and how far into it, as a bar that fills from the left.
         var inBar = Formula(
-            "(1 - smoothstep(0.019, 0.021, abs(b - 0.925))) * step(a, (c + d * (1 / 13)) * 2.8 - 1.4) * smoothstep(-1.42, -1.4, a)",
-            px, py, new Read(song, 2), phraseGone);
+            "(1 - smoothstep(0.019, 0.021, abs(b - 0.925))) * step(a, (c - 1 + d) * (1 / 13) * 2.8 - 1.4) * smoothstep(-1.42, -1.4, a)",
+            px, py, new Read(parts, SectionNumber), phraseGone);
         var dimmed = b.Add("color.gain");
 
         b.Wire(withHero, 0, dimmed, 0)
