@@ -106,7 +106,8 @@ internal sealed class DubPreset : PresetBench
     /// <summary>
     /// The steppers after it, two bars a section at twice the tempo: everything in at once,
     /// the same way of taking parts out and putting them back, the rim and the bass alone
-    /// for the second line of Patois, and two bars of nothing but the echo to end.
+    /// for a line of Patois, everything thrown into the echo, and the last two bars left to
+    /// one more line and the longest echo of all.
     /// </summary>
     private static readonly float[][] Fast =
     [
@@ -122,14 +123,17 @@ internal sealed class DubPreset : PresetBench
     ];
 
     /// <summary>
-    /// Where the slow part ends and the song, in seconds: sixty-four bars at seventy-four
-    /// and sixty-four at a hundred and forty-eight. Spelled as formulas fold them.
+    /// Where the slow part ends, where the last line is said, and the song, in seconds:
+    /// sixty-four bars at seventy-four, sixty-four at a hundred and forty-eight, and the
+    /// last line's echo left to ring for twenty-four seconds. Spelled as formulas fold them.
     /// </summary>
     private const string SlowEnd = "256 * 60 / 74";
 
-    private const string Song = "256 * 60 / 74 + 256 * 60 / 148";
+    private const string LastLine = "256 * 60 / 74 + 248 * 60 / 148";
 
-    private static readonly double Length = 256 * 60.0 / 74 + 256 * 60.0 / 148;
+    private const string Song = "256 * 60 / 74 + 256 * 60 / 148 + 24";
+
+    private static readonly double Length = 256 * 60.0 / 74 + 256 * 60.0 / 148 + 24;
 
     /// <summary>
     /// A formula for how far into its clip a line is, in seconds, from how far into the
@@ -195,11 +199,12 @@ internal sealed class DubPreset : PresetBench
         // --- the arrangement -------------------------------------------------
 
         // Cut on the downbeat of each section, the way a desk's mutes are. Each part is
-        // the slow part's level until the steppers, and theirs after it.
+        // the slow part's level until the steppers, theirs after it, and nothing once the
+        // steppers are done.
         var slow = Arranged(beats, 1f / 8f, [.. Slow.Select(Levels)]);
         var faster = Arranged(beats, 1f / 8f, [.. Fast.Select(Levels)]);
         var part = Enumerable.Range(0, Slow.Length)
-            .Select(p => Formula("mix(a, b, c)", new Read(slow, p), new Read(faster, p), fast))
+            .Select(p => Formula("mix(a, b, c) * (1 - step(512, d))", new Read(slow, p), new Read(faster, p), fast, beats))
             .ToArray();
 
         // A minor and D minor, two bars each, and four each in the steppers.
@@ -433,7 +438,10 @@ internal sealed class DubPreset : PresetBench
         // Two sentences of Patois, each read from the moment it is due so it lands on
         // its bar, and silent before and after its clip. Each is dry at its start so the
         // words are heard, and more and more of it goes into an echo of its own as it
-        // goes, the words giving way to the repeats.
+        // goes, the words giving way to the repeats. The last line of the song goes in
+        // sooner and further, and its echo feeds back longest and darkens as it rings.
+        var last = Formula($"step({LastLine}, a)", songAt);
+
         NodeInstance Spoken(string file, string due, out NodeInstance thrown)
         {
             var at = Formula(due, songAt);
@@ -441,24 +449,30 @@ internal sealed class DubPreset : PresetBench
             SampleExtra.Set(line, file);
 
             b.Wire(at, 0, line, 0);
-            thrown = Formula("smoothstep(0.3, 1, a / b)", at, new Read(line, 1));
+            thrown = Formula("smoothstep(mix(0.3, 0.05, c), mix(1, 0.6, c), a / b) * mix(1, 1.3, c)",
+                at, new Read(line, 1), last);
             return line;
         }
 
-        // The first in the second bar, where only the rim and the bass play, and there
-        // again in the steppers; the second over the bass alone, where the kick next
-        // drops out, and alone in the drop.
-        var first = Spoken(NoSense, Due("4 * 60 / 74", "96 * 60 / 74", $"{SlowEnd} + 96 * 60 / 148"), out var firstThrown);
+        // The first in the second bar, where only the rim and the bass play, there again
+        // in the steppers, and to end the song; the second over the bass alone, where the
+        // kick next drops out, and alone in the drop.
+        var first = Spoken(NoSense,
+            Due("4 * 60 / 74", "96 * 60 / 74", $"{SlowEnd} + 96 * 60 / 148", LastLine), out var firstThrown);
         var second = Spoken(Dread, Due("160 * 60 / 74", "208 * 60 / 74", "240 * 60 / 74"), out var secondThrown);
 
-        var said = Formula("a * (1 - b * 0.6) + c * (1 - d * 0.6)", first, firstThrown, second, secondThrown);
+        var said = Formula("a * max(1 - b * 0.6, 0) + c * (1 - d * 0.6)", first, firstThrown, second, secondThrown);
         var voiceTaps = Echo(
             Formula("a * b + c * d", first, firstThrown, second, secondThrown), 74f / 60f, 3f, 2f, 0.82f, 1f);
-        var voiceLeft = b.Add(FilterType, (1, 1800f), (2, 0.2f));
-        var voiceRight = b.Add(FilterType, (1, 1800f), (2, 0.2f));
+        var voiceLeft = b.Add(FilterType, (2, 0.35f));
+        var voiceRight = b.Add(FilterType, (2, 0.35f));
+        var voiceDark = Formula($"1800 - smoothstep({LastLine}, {LastLine} + 16, a) * 1300", songAt);
 
-        b.Wire(voiceTaps, 0, voiceLeft, 0)
-         .Wire(voiceTaps, EchoRight, voiceRight, 0);
+        b.Wire(Formula("mix(0.82, 0.93, a)", last), 0, voiceTaps, EchoFeedback)
+         .Wire(voiceTaps, 0, voiceLeft, 0)
+         .Wire(voiceTaps, EchoRight, voiceRight, 0)
+         .Wire(voiceDark, 0, voiceLeft, 1)
+         .Wire(voiceDark, 0, voiceRight, 1);
 
         Box("Voice");
 
@@ -491,7 +505,7 @@ internal sealed class DubPreset : PresetBench
          .Wire(taps, 0, tapsLeft, 0)
          .Wire(taps, EchoRight, tapsRight, 0)
          .Wire(warm, 0, roomSend, 0)
-         .Wire(tapsLeft, 0, roomSend, 2)
+         .Wire(Sum(tapsLeft, voiceLeft), 0, roomSend, 2)
          .Wire(rim, 0, roomSend, 4)
          .Wire(hats, 0, roomSend, 6)
          .Wire(roomSend, 0, room, 0);

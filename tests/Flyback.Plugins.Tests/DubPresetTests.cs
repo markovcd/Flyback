@@ -166,11 +166,11 @@ public class DubPresetTests
         patch.Connections.ShouldNotContain(c => arrangements.Contains(c.SourceNode) && envelopes.Contains(c.TargetNode));
     }
 
-    /// <summary>Sixty-four bars at seventy-four and sixty-four at twice that.</summary>
+    /// <summary>Sixty-four bars at seventy-four, sixty-four at twice that, and the last line's echo.</summary>
     [Fact]
-    public void It_lasts_sixty_four_bars_slow_and_sixty_four_fast()
+    public void It_lasts_sixty_four_bars_slow_sixty_four_fast_and_an_echo()
     {
-        Patch().Length.ShouldBe(Math.Round(256 * Beat + 256 * FastBeat, 2));
+        Patch().Length.ShouldBe(Math.Round(256 * Beat + 256 * FastBeat + 24, 2));
     }
 
     /// <summary>The slow part's last bar, after the drop's line of Patois has faded out.</summary>
@@ -187,12 +187,16 @@ public class DubPresetTests
         Loudness(Play(Rate, from: 256 * Beat)).ShouldBeGreaterThan(0.01f);
     }
 
-    /// <summary>Played from the last two bars, which leave everything to the echo.</summary>
+    /// <summary>
+    /// Played from the last line: ten seconds after it is said, its echo is still
+    /// within twenty decibels of the line itself.
+    /// </summary>
     [Fact]
-    public void It_ends_on_the_echo_alone()
+    public void It_ends_on_a_line_of_Patois_and_its_long_echo()
     {
-        Loudness(Play(Rate, from: 256 * Beat + 248 * FastBeat))
-            .ShouldBeLessThan(Loudness(Play(Rate, from: 256 * Beat + 240 * FastBeat)) * 0.2f);
+        var ending = Play(Rate * 14, from: 256 * Beat + 248 * FastBeat);
+
+        Loudness([.. ending.Skip(Rate * 10)]).ShouldBeGreaterThan(Loudness([.. ending.Take(Rate * 3)]) * 0.1f);
     }
 
     [Fact]
