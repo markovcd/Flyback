@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.App.Canvas;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -135,7 +136,7 @@ public class HoldMuteTests : UiTest
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
         var changes = 0;
-        editor.History.PatchChanged += (_, _) => changes++;
+        editor.Reactions.Add<PatchChanged>(_ => changes++);
 
         Down(editor, window, Body(osc));
         Up(editor, window, Body(osc));

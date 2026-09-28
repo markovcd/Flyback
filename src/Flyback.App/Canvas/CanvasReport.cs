@@ -1,3 +1,5 @@
+using Flyback.App.Notices;
+
 namespace Flyback.App.Canvas;
 
 /// <summary>
@@ -5,12 +7,10 @@ namespace Flyback.App.Canvas;
 /// something that is not a patch, a group of one, a layout that had to shut a box.
 /// </summary>
 /// <remarks>
-/// The canvas has nowhere to say it, and needs no window to be asked: whoever shows
-/// the canvas listens, which in the editor is the window's report line.
+/// The canvas has nowhere to say it, and needs no window to be asked: it raises
+/// <see cref="CanvasSaid"/>, and in the editor the report line reacts.
 /// </remarks>
-internal sealed class CanvasReport
+internal sealed class CanvasReport(Reactions reactions)
 {
-    public event EventHandler<string>? Said;
-
-    public void Say(string message) => Said?.Invoke(this, message);
+    public void Say(string message) => reactions.Raise(new CanvasSaid(message));
 }

@@ -5,6 +5,7 @@ using Avalonia.Layout;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Bars;
@@ -19,7 +20,7 @@ namespace Flyback.App.Bars;
 /// with the canvas settings. The end is caught on the thumb's own tick, so it lands
 /// within a tenth of a second. The transport over a full-screen picture follows this bar.
 /// </remarks>
-internal sealed class SeekBar
+internal sealed class SeekBar : IReactTo<PatchCompiled>
 {
     /// <summary>How often the thumb follows the clock.</summary>
     private static readonly TimeSpan Follow = TimeSpan.FromMilliseconds(100);
@@ -80,9 +81,6 @@ internal sealed class SeekBar
             // Back to the canvas, so the next Ctrl+Z takes the length back rather than the typing.
             editor.Focus();
         };
-
-        // An open, an undo or the text built again can each bring another length.
-        playback.Compiled += (_, _) => Measure();
 
         View = new StackPanel
         {
@@ -173,6 +171,12 @@ internal sealed class SeekBar
     private void FlipLoop() => Loop.IsChecked = Loop.IsChecked != true;
 
     /// <summary>Puts the patch's length on the strip, and in the box unless somebody is typing there.</summary>
+    public Task On(PatchCompiled notice)
+    {
+        Measure();
+        return Task.CompletedTask;
+    }
+
     private void Measure()
     {
         Track.Maximum = playback.Length;

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Flyback.App.Bars;
 using Flyback.App.Files;
 using Flyback.App.Inspect;
+using Flyback.App.Notices;
 using Flyback.App.Windows;
 using Flyback.Core;
 
@@ -11,10 +12,6 @@ namespace Flyback.App;
 /// Keeps the toolbar buttons, the window title, and the inspector panel in step
 /// with the document's edit state and ownership (ADR-0150).
 /// </summary>
-/// <remarks>
-/// Extracted from <see cref="MainWindow"/> so that <see cref="EditorWiring"/> can
-/// subscribe to the relevant events without taking a dependency on the window itself.
-/// </remarks>
 internal sealed class EditState(
     Document document,
     UnsavedWork unsaved,
@@ -22,8 +19,36 @@ internal sealed class EditState(
     Toolbar toolbar,
     Inspector inspector,
     ITitle title)
+    : IReactTo<HistoryChanged>,
+        IReactTo<EditStateChanged>,
+        IReactTo<ConversationChanged>,
+        IReactTo<OwnershipChanged>
 {
     private const string BaseTitle = GlobalConstants.ApplicationName;
+
+    public Task On(HistoryChanged notice)
+    {
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    public Task On(EditStateChanged notice)
+    {
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    public Task On(ConversationChanged notice)
+    {
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    public Task On(OwnershipChanged notice)
+    {
+        RefreshOwnership();
+        return Task.CompletedTask;
+    }
 
     /// <summary>
     /// Grays Undo and Redo out when there is nothing behind or ahead, and puts the

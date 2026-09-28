@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -123,6 +124,8 @@ internal sealed class CanvasGestures
     /// </summary>
     private readonly HashSet<Guid> regrouping = [];
 
+    private readonly Reactions reactions;
+
     public CanvasGestures(
         CanvasHistory history,
         CanvasSelection selection,
@@ -134,10 +137,12 @@ internal sealed class CanvasGestures
         RemapMarks marks,
         CanvasTips tips,
         Repaint repaint,
-        NodeGeometry geometry)
+        NodeGeometry geometry,
+        Reactions reactions)
     {
         this.history = history;
         this.geometry = geometry;
+        this.reactions = reactions;
         this.selection = selection;
         this.view = view;
         this.edits = edits;
@@ -162,9 +167,6 @@ internal sealed class CanvasGestures
     /// narrowed to what could take the wire.
     /// </summary>
     public event EventHandler<WireDrop>? WireDropped;
-
-    /// <summary>A gesture has ended, and <see cref="Gesturing"/> is false again.</summary>
-    public event EventHandler? GestureFinished;
 
     /// <summary>
     /// Whether a module is being moved, a wire drawn, the view panned or a band drawn
@@ -607,7 +609,7 @@ internal sealed class CanvasGestures
         regrouping.Clear();
         RegroupInto = null;
 
-        if (ended) GestureFinished?.Invoke(this, EventArgs.Empty);
+        if (ended) reactions.Raise(new GestureFinished());
     }
 
     /// <summary>The rubber band, over the canvas rather than in it, so its hairline and dashes hold at any zoom.</summary>

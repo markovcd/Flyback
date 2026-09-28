@@ -6,6 +6,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.App.Midi;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -21,7 +22,7 @@ namespace Flyback.App.Knobs;
 /// in; this asks for it with <see cref="Wanted"/> when a knob needs to be seen.
 /// </remarks>
 [SuppressMessage("Design", "CA1001", Justification = "learning only borrows the source LearnAsync disposes.")]
-internal sealed class PanelKnobs
+internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArrived>
 {
     private readonly NodeEditor editor;
     private readonly Document document;
@@ -63,11 +64,11 @@ internal sealed class PanelKnobs
     /// <summary>Whether the picture has the window, where the knobs over it are shown.</summary>
     public bool OverPicture { get; set; }
 
-    /// <summary>The knob panel should be shown: a knob was added, is being linked or learned.</summary>
-    public event EventHandler? Wanted;
+    private readonly Reactions reactions;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup)
+    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions)
     {
+        this.reactions = reactions;
         Instruments = setup.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
         this.editor = editor;
         this.document = document;
@@ -287,6 +288,19 @@ internal sealed class PanelKnobs
         MidiSection.Children.Add(instrumentsNote);
     }
 
+    public Task On(PatchCompiled notice)
+    {
+        Refresh();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A knob follows a controller of the patch that was open, so a new one starts with none.</summary>
+    public Task On(DocumentArrived notice)
+    {
+        Hub.Forget();
+        return Task.CompletedTask;
+    }
+
     /// <summary>Redraws the panel from the patch. Called after every recompile.</summary>
     public void Refresh()
     {
@@ -297,7 +311,7 @@ internal sealed class PanelKnobs
         foreach (var stage in Stages) stage.Show(editor.History.Patch);
         SyncStages();
 
-        if (knobs.Count > 0 && knobsShown == 0) Wanted?.Invoke(this, EventArgs.Empty);
+        if (knobs.Count > 0 && knobsShown == 0) reactions.Raise(new KnobsWanted());
         knobsShown = knobs.Count;
 
         if (editor.Linking.Control is { } linking && editor.History.Patch.Control(linking) is null) Link(null);
@@ -311,7 +325,7 @@ internal sealed class PanelKnobs
 
         if (control is { } id && editor.History.Patch.Control(id) is { } knob)
         {
-            Wanted?.Invoke(this, EventArgs.Empty);
+            reactions.Raise(new KnobsWanted());
             report.Say($"Click sockets on the canvas to link them to '{knob.Name}', or a linked one to let it go. Esc when done.");
         }
     }
@@ -388,7 +402,7 @@ internal sealed class PanelKnobs
         using var cancel = learning = new CancellationTokenSource();
         var showing = id;
 
-        Wanted?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new KnobsWanted());
 
         try
         {

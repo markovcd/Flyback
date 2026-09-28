@@ -6,6 +6,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Files;
+using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
 using Flyback.App.Site;
 using Flyback.App.Statistics;
@@ -25,7 +26,7 @@ namespace Flyback.App.Gallery;
 /// so the rows those are on stay put however many are saved. Saving one keeps a copy
 /// and nothing else: the patch on the canvas is still whatever document it was.
 /// </remarks>
-internal sealed class PresetSlot
+internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>, IReactTo<PatchShowing>
 {
     private readonly IDialog dialog;
     private readonly NodeEditor editor;
@@ -112,9 +113,6 @@ internal sealed class PresetSlot
         this.installs = installs;
         this.recording = recording;
 
-        // Whatever preset the list still showed is not the patch that arrived.
-        playback.Showing += (_, _) => Clear();
-
         offered = Ordered();
 
         picker = new Picker
@@ -144,6 +142,27 @@ internal sealed class PresetSlot
 
     /// <summary>The slot on the toolbar.</summary>
     public Control View { get; }
+
+    /// <summary>Whatever preset the list still showed, the patch just took on a file of its own.</summary>
+    public Task On(DocumentSaved notice)
+    {
+        Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Whatever preset the list still showed is not the patch that arrived.</summary>
+    public Task On(PatchShowing notice)
+    {
+        Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A take is fed from the patch, so no other patch is offered under one.</summary>
+    public Task On(TakeMarked notice)
+    {
+        SetEnabled(!recording.Running);
+        return Task.CompletedTask;
+    }
 
     /// <summary>Enables or disables both ways to open the preset gallery.</summary>
     public void SetEnabled(bool enabled)

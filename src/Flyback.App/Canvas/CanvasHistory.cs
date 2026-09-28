@@ -1,3 +1,4 @@
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -11,7 +12,7 @@ namespace Flyback.App.Canvas;
 /// arrives passes one gate here, so a step can never be undone into a module standing
 /// half off the canvas and every patch shown has an Output.
 /// </remarks>
-internal sealed class CanvasHistory(NodeGeometry geometry)
+internal sealed class CanvasHistory(NodeGeometry geometry, Reactions reactions)
 {
     private readonly PatchHistory history = new();
 
@@ -45,15 +46,6 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
     /// <summary>The patch is a different object, before anybody is told it changed.</summary>
     public event EventHandler<Replacement>? Replaced;
 
-    /// <summary>The graph itself changed and needs recompiling.</summary>
-    public event EventHandler? PatchChanged;
-
-    /// <summary>
-    /// What can be undone or redone changed. Apart from <see cref="PatchChanged"/>
-    /// because moving a module is a step and nothing the program can hear.
-    /// </summary>
-    public event EventHandler? HistoryChanged;
-
     /// <summary>A step was added. Not raised for an undo or a redo, nor for an edit that made no step.</summary>
     public event EventHandler? Recorded;
 
@@ -68,14 +60,14 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
         Opening = true;
         try
         {
-            PatchChanged?.Invoke(this, EventArgs.Empty);
+            reactions.Raise(new PatchChanged(Opened: true));
         }
         finally
         {
             Opening = false;
         }
 
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new HistoryChanged());
     }
 
     /// <summary>
@@ -93,8 +85,7 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
 
         var stepped = history.Record(Patch, coalesce, Mark);
 
-        PatchChanged?.Invoke(this, EventArgs.Empty);
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        Announce();
 
         if (stepped) Recorded?.Invoke(this, EventArgs.Empty);
     }
@@ -107,14 +98,14 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
     {
         if (!history.Record(Patch, mark: Mark)) return false;
 
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new HistoryChanged());
         Recorded?.Invoke(this, EventArgs.Empty);
 
         return true;
     }
 
     /// <summary>The patch sounds different for a moment, and no step is made for it.</summary>
-    public void Sounded() => PatchChanged?.Invoke(this, EventArgs.Empty);
+    public void Sounded() => reactions.Raise(new PatchChanged(Opened: false));
 
     /// <summary>Puts the patch back as it was before the last edit, and says whether there was one.</summary>
     public bool Undo() => Restore(history.Undo());
@@ -142,7 +133,7 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
     public void MarkSaved()
     {
         history.Saved(Patch);
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new HistoryChanged());
     }
 
     /// <summary>
@@ -152,14 +143,14 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
     public void MarkOpened()
     {
         history.Opened(Patch, Mark);
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new HistoryChanged());
     }
 
     /// <summary>The patch arrived from somewhere that is not a file, so all of it is unsaved.</summary>
     public void MarkUnsaved()
     {
         history.Unsaved();
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new HistoryChanged());
     }
 
     /// <summary>
@@ -222,7 +213,7 @@ internal sealed class CanvasHistory(NodeGeometry geometry)
 
     private void Announce()
     {
-        PatchChanged?.Invoke(this, EventArgs.Empty);
-        HistoryChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new PatchChanged(Opened: false));
+        reactions.Raise(new HistoryChanged());
     }
 }

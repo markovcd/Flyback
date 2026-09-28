@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.Windows;
 
 namespace Flyback.App.Bars;
@@ -10,6 +11,7 @@ namespace Flyback.App.Bars;
 /// pictures that have a window of their own or all of this one.
 /// </summary>
 internal sealed class TransportControls(Playback playback, Toolbar toolbar, TakeRecording recording)
+    : IReactTo<TakeMarked>, IReactTo<TransportChanged>, IReactTo<PauseAsked>
 {
     private bool pauseShowsPlay;
 
@@ -28,6 +30,24 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
     /// <summary>Every transport over a picture: the window's own, and the other monitor's while it has one.</summary>
     public IEnumerable<TransportOverlay> Overlays =>
         new[] { Overlay, PictureWindow?.Transport }.OfType<TransportOverlay>();
+
+    public Task On(TakeMarked notice)
+    {
+        Sync();
+        return Task.CompletedTask;
+    }
+
+    public Task On(TransportChanged notice)
+    {
+        Sync();
+        return Task.CompletedTask;
+    }
+
+    public Task On(PauseAsked notice)
+    {
+        TogglePause();
+        return Task.CompletedTask;
+    }
 
     public void TogglePause()
     {

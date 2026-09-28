@@ -43,16 +43,23 @@ internal sealed class CanvasSection
 
     private readonly NodeEditor canvas;
 
+    private readonly SourceView source;
+
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
-    public CanvasSection(EditorSetup setup, NodeEditor canvas, ReportLine report)
+    /// <param name="source">The text view, whose font size is this section's setting.</param>
+    public CanvasSection(EditorSetup setup, NodeEditor canvas, ReportLine report, SourceView source)
     {
         path = setup.CanvasSettingsPath;
         this.canvas = canvas;
+        this.source = source;
         this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = CanvasSettings.Load(path);
+
+        source.EditorFontSize = saved.EditorFontSize;
+        source.EditorFontSizeChanged += (_, size) => SaveEditorFontSize(size);
 
         ToolTip.SetTip(compactModules,
             "Put each input beside an output on one row, and show a knob's value when "

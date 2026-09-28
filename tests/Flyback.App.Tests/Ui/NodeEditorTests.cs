@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Flyback.App.Canvas;
+using Flyback.App.Notices;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -534,7 +535,7 @@ public class NodeEditorTests : UiTest
         var (editor, window) = Editing(patch);
 
         var recompiles = 0;
-        editor.History.PatchChanged += (_, _) => recompiles++;
+        editor.Reactions.Add<PatchChanged>(_ => recompiles++);
 
         var from = Body(source);
         Drag(editor, window, from, from + new Vector(180, 120));
@@ -921,7 +922,7 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(builder.Patch);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         var before = builder.Patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
 
@@ -971,7 +972,7 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(builder.Patch);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         editor.Edits.Tidy();
 
@@ -989,7 +990,7 @@ public class NodeEditorTests : UiTest
         var (editor, _) = Editing(Presets.Drone(NodeCatalog.BuiltIn));
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         editor.Edits.Tidy();
 

@@ -9,6 +9,7 @@ using Flyback.App.Gallery;
 using Flyback.App.Inspect;
 using Flyback.App.Knobs;
 using Flyback.App.Midi;
+using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
 using Flyback.App.Settings;
 using Flyback.App.Site;
@@ -76,16 +77,16 @@ internal static class EditorServices
 
         services.AddSingleton<IPresetFolder>(setup);
         services.AddSingleton<PresetLibrary>();
-        services.AddSingleton<OutputSettingRepository>();
-        services.AddSingleton<OutputSettingsUse>();
-        services.AddSingleton<SettingsSession>();
-        services.AddSingleton<EditorStart>();
+        services.AddPart<OutputSettingRepository>();
+        services.AddPart<OutputSettingsUse>();
+        services.AddPart<SettingsSession>();
+        services.AddPart<EditorStart>();
 
-        services.AddSingleton<PresetThumbnails>();
-        services.AddSingleton<PresetGallery>();
+        services.AddPart<PresetThumbnails>();
+        services.AddPart<PresetGallery>();
 
-        services.AddSingleton<PluginHubFactory>();
-        services.AddSingleton<PluginInstallerFactory>();
+        services.AddPart<PluginHubFactory>();
+        services.AddPart<PluginInstallerFactory>();
         services.AddSingleton(sp => Sound.Open(
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSettingRepository>().Current));
@@ -97,63 +98,63 @@ internal static class EditorServices
         services.AddSingleton(setup.Plugins.PreferredMidiInput);
         services.AddSingleton<MidiHub>();
 
-        services.AddSingleton<AssistantSettingRepository>();
-        services.AddSingleton<AssistantRunFactory>();
+        services.AddPart<AssistantSettingRepository>();
+        services.AddPart<AssistantRunFactory>();
         services.AddSingleton(sp => new Credentials(sp.GetRequiredService<PluginCatalog>().PreferredSecretStore));
-        services.AddSingleton<AssistantConversation>();
+        services.AddPart<AssistantConversation>();
 
         services.AddSingleton<IAssistantEditor, AssistantEditor>();
-        services.AddSingleton<AssistantPanel>();
-        services.AddSingleton<ChosenAssistant>();
+        services.AddPart<AssistantPanel>();
+        services.AddPart<ChosenAssistant>();
 
-        services.AddSingleton<WorkKeeper>();
-        services.AddSingleton<WindowLayoutKeeper>();
+        services.AddPart<WorkKeeper>();
+        services.AddPart<WindowLayoutKeeper>();
 
-        services.AddSingleton<ReportLine>();
+        services.AddPart<ReportLine>();
         services.AddCanvas();
-        services.AddSingleton<SourceView>();
-        services.AddSingleton<PreviewHost>();
+        services.AddPart<SourceView>();
+        services.AddPart<PreviewHost>();
 
-        services.AddSingleton<Document>();
+        services.AddPart<Document>();
         services.AddSingleton<IDialog, WindowDialog>();
         services.AddSingleton<IFilePickers, WindowFilePickers>();
         services.AddSingleton<IMonitors, WindowMonitors>();
         services.AddSingleton<IFocus, WindowFocus>();
         services.AddSingleton<IClose, WindowClose>();
         services.AddSingleton<ITitle, WindowTitle>();
-        services.AddSingleton<EditState>();
-        services.AddSingleton<SiteAccess>();
-        services.AddSingleton<Playback>();
-        services.AddSingleton<RecordingState>();
-        services.AddSingleton<PatchFiles>();
-        services.AddSingleton<UnsavedWork>();
-        services.AddSingleton<PatchOpening>();
-        services.AddSingleton<WorkRecovery>();
-        services.AddSingleton<EditorWiring>();
-        services.AddSingleton<EditorOpened>();
+        services.AddPart<EditState>();
+        services.AddPart<SiteAccess>();
+        services.AddPart<Playback>();
+        services.AddPart<RecordingState>();
+        services.AddPart<PatchFiles>();
+        services.AddPart<UnsavedWork>();
+        services.AddPart<PatchOpening>();
+        services.AddPart<WorkRecovery>();
+        services.AddPart<EditorOpened>();
+        services.AddPart<UsageCounter>();
 
-        services.AddSingleton<OutputSections>();
-        services.AddSingleton<CanvasSection>();
-        services.AddSingleton<UpdatesSection>();
-        services.AddSingleton<UsageSection>();
-        services.AddSingleton<FilesSection>();
+        services.AddPart<OutputSections>();
+        services.AddPart<CanvasSection>();
+        services.AddPart<UpdatesSection>();
+        services.AddPart<UsageSection>();
+        services.AddPart<FilesSection>();
 
-        services.AddSingleton<PanelKnobs>();
-        services.AddSingleton<Palette>();
-        services.AddSingleton<Inspector>();
-        services.AddSingleton<PluginInstalls>();
-        services.AddSingleton<PresetAudition>();
-        services.AddSingleton<PresetSlot>();
-        services.AddSingleton<SeekBar>();
-        services.AddSingleton<Toolbar>();
-        services.AddSingleton<StatusBar>();
-        services.AddSingleton<TakeRecording>();
-        services.AddSingleton<TransportControls>();
-        services.AddSingleton<FullScreenPreview>();
-        services.AddSingleton<ShellLayout>();
+        services.AddPart<PanelKnobs>();
+        services.AddPart<Palette>();
+        services.AddPart<Inspector>();
+        services.AddPart<PluginInstalls>();
+        services.AddPart<PresetAudition>();
+        services.AddPart<PresetSlot>();
+        services.AddPart<SeekBar>();
+        services.AddPart<Toolbar>();
+        services.AddPart<StatusBar>();
+        services.AddPart<TakeRecording>();
+        services.AddPart<TransportControls>();
+        services.AddPart<FullScreenPreview>();
+        services.AddPart<ShellLayout>();
 
-        services.AddSingleton<MainWindow>();
-        services.AddSingleton<WindowHolder>();
+        services.AddPart<MainWindow>();
+        services.AddPart<WindowHolder>();
 
         return services;
     }

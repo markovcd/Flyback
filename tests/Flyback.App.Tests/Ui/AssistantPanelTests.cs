@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Flyback.App.Assist;
+using Flyback.App.Notices;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -68,6 +69,9 @@ public sealed class AssistantPanelTests : UiTest
         if (folder is not null && Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
     }
 
+    /// <summary>What the panel built by <see cref="Showing"/> raises, for a test to react to.</summary>
+    private readonly Reactions reactions = new();
+
     private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null, Action<string, string?>? report = null)
     {
         var catalog = plugins ?? PluginCatalog.Empty;
@@ -82,7 +86,8 @@ public sealed class AssistantPanelTests : UiTest
             new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
-            Kept);
+            Kept,
+            reactions: reactions);
 
         var window = Show(panel, 760);
         Settle(window);
@@ -1217,7 +1222,7 @@ public sealed class AssistantPanelTests : UiTest
         var panel = All<AssistantPanel>(window).Single();
         var changed = 0;
 
-        panel.UndescribedChanged += (_, _) => changed++;
+        reactions.Add<UndescribedChanged>(_ => changed++);
         panel.Undescribed.ShouldNotBeEmpty();
 
         var host = Settings(window);

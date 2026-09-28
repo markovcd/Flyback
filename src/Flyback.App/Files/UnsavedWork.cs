@@ -5,7 +5,9 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.Core;
 using Flyback.Core.Graph;
 
@@ -27,8 +29,20 @@ internal sealed class UnsavedWork(
     PatchFiles files,
     EditorSetup setup,
     IDialog dialog,
-    IClose close)
+    IClose close,
+    RecordingState recording)
+    : IReactTo<SaveAsked>, IReactTo<RestartAsked>, IReactTo<HandBackAsked>
 {
+    public Task On(SaveAsked notice) => SavePatchAsync();
+
+    public async Task On(RestartAsked notice) => notice.Restarted = await RelaunchAsync(notice.Reopen);
+
+    /// <summary>The canvas has the patch back once any typing not yet applied has been asked about.</summary>
+    public async Task On(HandBackAsked notice)
+    {
+        if (document.Owned && await MayLoseTheTextAsync()) document.HandBack();
+    }
+
     /// <summary>What to do about a patch that has been edited and not written out.</summary>
     private enum Unsaved
     {
@@ -126,11 +140,11 @@ internal sealed class UnsavedWork(
     /// window stays: the question was canceled, or a take is running, which only its
     /// own button should end.
     /// </summary>
-    public async Task<bool> RelaunchAsync(Reopen? reopen, bool recordingInHand)
+    public async Task<bool> RelaunchAsync(Reopen? reopen)
     {
         if (setup.Relaunch is not { } relaunch) return false;
 
-        if (recordingInHand || !await MayReplaceThePatchAsync()) return false;
+        if (recording.InHand || !await MayReplaceThePatchAsync()) return false;
 
         relaunch(reopen);
 

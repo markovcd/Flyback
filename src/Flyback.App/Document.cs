@@ -1,5 +1,6 @@
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -23,30 +24,26 @@ namespace Flyback.App;
 /// </para>
 /// </remarks>
 internal sealed class Document
+    : IReactTo<UndoAsked>,
+        IReactTo<RedoAsked>,
+        IReactTo<TidyAsked>,
+        IReactTo<CodeAsked>,
+        IReactTo<InputTurned>,
+        IReactTo<InputLetGo>
 {
     private readonly NodeEditor editor;
     private readonly SourceView source;
     private readonly ReportLine report;
     private readonly Usage usage;
+    private readonly Reactions reactions;
 
-    /// <summary>What an undo or a redo can do has changed, or the patch's unsaved state has.</summary>
-    public event EventHandler? EditStateChanged;
-
-    /// <summary>Who owns the patch has changed, or which view is showing has.</summary>
-    public event EventHandler? OwnershipChanged;
-
-    /// <summary>The text view was shown or hidden.</summary>
-    public event EventHandler? ViewChanged;
-
-    /// <summary>What the panel has to say has changed where the selection has not.</summary>
-    public event EventHandler? PanelStale;
-
-    public Document(NodeEditor editor, SourceView source, ReportLine report, Usage usage)
+    public Document(NodeEditor editor, SourceView source, ReportLine report, Usage usage, Reactions reactions)
     {
         this.editor = editor;
         this.source = source;
         this.report = report;
         this.usage = usage;
+        this.reactions = reactions;
 
         source.IsVisible = false;
 
@@ -72,9 +69,52 @@ internal sealed class Document
             // typing, and sets this for itself.
             if (!stepping) sinceHandover = null;
 
-            EditStateChanged?.Invoke(this, EventArgs.Empty);
+            reactions.Raise(new EditStateChanged());
         };
         source.Moved += (_, at) => PointAt(at);
+
+        // Asked rather than done: what it settles is which view is the document,
+        // and typing not yet applied is asked about first, by whoever owns that question.
+        source.HandBackRequested += (_, _) => reactions.Raise(new HandBackAsked());
+    }
+
+    public Task On(UndoAsked notice)
+    {
+        Undo();
+        return Task.CompletedTask;
+    }
+
+    public Task On(RedoAsked notice)
+    {
+        Redo();
+        return Task.CompletedTask;
+    }
+
+    public Task On(TidyAsked notice)
+    {
+        Tidy(notice.OnlySelected);
+        return Task.CompletedTask;
+    }
+
+    public Task On(CodeAsked notice)
+    {
+        ShowCode(notice.Shown);
+        return Task.CompletedTask;
+    }
+
+    public Task On(InputTurned notice)
+    {
+        Turned(notice.Pick.Node, notice.Pick.Port);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Before the panel is rebuilt, so it reads the value already written back.</summary>
+    int IReactTo<InputLetGo>.Priority => -10;
+
+    public Task On(InputLetGo notice)
+    {
+        HandCameOff();
+        return Task.CompletedTask;
     }
 
     /// <summary>Whether the text is the document.</summary>
@@ -326,7 +366,7 @@ internal sealed class Document
             if (group is null) editor.Selection.Select(null);
             else editor.Selection.SelectGroup(group);
 
-            if (shifted && group is null) PanelStale?.Invoke(this, EventArgs.Empty);
+            if (shifted && group is null) reactions.Raise(new PanelStale());
 
             return;
         }
@@ -347,7 +387,7 @@ internal sealed class Document
         // words the patch has both moved on from — the panel is asked again
         // anyway, since what it has to say has changed even though what is
         // selected has not.
-        if (moved && editor.Selection.Focused is null) PanelStale?.Invoke(this, EventArgs.Empty);
+        if (moved && editor.Selection.Focused is null) reactions.Raise(new PanelStale());
     }
 
     /// <summary>
@@ -750,7 +790,7 @@ internal sealed class Document
                 break;
         }
 
-        EditStateChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new EditStateChanged());
     }
 
     public void Redo()
@@ -771,7 +811,7 @@ internal sealed class Document
                 break;
         }
 
-        EditStateChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new EditStateChanged());
     }
 
     /// <summary>
@@ -873,7 +913,7 @@ internal sealed class Document
 
         sinceHandover = back && owned && !sourceOwned ? 0 : null;
 
-        EditStateChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new EditStateChanged());
     }
 
     /// <summary>
@@ -947,7 +987,7 @@ internal sealed class Document
         source.IsVisible = shown;
         editor.IsVisible = !shown;
 
-        ViewChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new ViewChanged(showingCode));
 
         if (shown)
         {
@@ -1170,7 +1210,7 @@ internal sealed class Document
         editor.History.MarkOpened();
         source.ForgetSteps();
         MarkSourceSaved();
-        EditStateChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new EditStateChanged());
 
         // And no word under the text about what the build made of it. What
         // Evaluate leaves there answers "how much of what was playing survived",
@@ -1326,7 +1366,7 @@ internal sealed class Document
         // button that does nothing.
         source.Owns = sourceOwned;
 
-        OwnershipChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new OwnershipChanged());
     }
 
     /// <summary>

@@ -251,12 +251,15 @@ internal sealed class OutputSections
     
     /// <param name="settings">The saved output settings shared with startup audio setup.</param>
     /// <param name="presets">The presets the startup patch is named and picked from.</param>
+    /// <param name="preview">The picture, whose renderer the Render box follows when it falls back.</param>
     public OutputSections(
         PluginCatalog plugins,
         OutputSettingRepository settings,
         PresetSlot presets,
         IFilePickers pickers,
-        IMonitors monitors)
+        IMonitors monitors,
+        PreviewHost preview,
+        ReportLine report)
     {
         this.pickers = pickers;
         this.monitors = monitors;
@@ -267,6 +270,15 @@ internal sealed class OutputSections
         BuildGraphics();
         BuildRecording();
         BuildSound();
+
+        preview.BackendChanged += message =>
+        {
+            // Keep the selected request visible when the renderer falls back.
+            Gpu.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
+            Gpu.IsEnabled = preview.GpuAvailable;
+            ToolTip.SetTip(Gpu, preview.GpuAvailable ? GpuTip : message);
+            report.Say(message);
+        };
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Files;
+using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
 using Flyback.App.Statistics;
 using Flyback.Core;
@@ -46,14 +47,7 @@ internal sealed class PatchFiles
     /// <summary>The conversations kept for patch files — a bundle keeps its own inside it (ADR-0072).</summary>
     private readonly ConversationStore conversations = new();
 
-    /// <summary>A different document has arrived.</summary>
-    public event EventHandler? Arrived;
-
-    /// <summary>What was open has just been written, and is a file of its own now.</summary>
-    public event EventHandler? Saved;
-
-    /// <summary>What the patch names is measured from somewhere else now, so it has to be read again.</summary>
-    public event EventHandler? Moved;
+    private readonly Reactions reactions;
 
     /// <param name="playback">Puts a patch that has just been read on the canvas, from its beginning.</param>
     /// <param name="installs">Offers the plugins a patch that could not be opened is short of.</param>
@@ -66,9 +60,11 @@ internal sealed class PatchFiles
         AssistantConversation conversation,
         Playback playback, 
         PluginInstalls installs, 
-        IFilePickers pickers)
+        IFilePickers pickers,
+        Reactions reactions)
     {
         this.pickers = pickers;
+        this.reactions = reactions;
         this.editor = editor;
         this.document = document;
         this.plugins = plugins;
@@ -149,7 +145,7 @@ internal sealed class PatchFiles
         SoundFolder.Beside = beside;
         PictureFolder.Beside = beside;
 
-        Arrived?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new DocumentArrived(Sounds, Pictures));
     }
 
     /// <summary>Whether the document is a bundle, which is what the next save offers first.</summary>
@@ -172,7 +168,7 @@ internal sealed class PatchFiles
 
         // Whatever preset the list still showed, the patch just took on a file
         // of its own — the preset is where it started, not what it is now.
-        Saved?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new DocumentSaved());
 
         editor.History.MarkSaved();
 
@@ -428,7 +424,7 @@ internal sealed class PatchFiles
 
                 SoundFolder.Beside = folder;
                 PictureFolder.Beside = folder;
-                Moved?.Invoke(this, EventArgs.Empty);
+                reactions.Raise(new FilesMoved(Sounds, Pictures));
 
                 report.Say(spilled > 0
                     ? $"Saved {file.Name}, and {spilled} file(s) beside it."
@@ -626,7 +622,7 @@ internal sealed class PatchFiles
 
             SoundFolder.Beside = folder;
             PictureFolder.Beside = folder;
-            Moved?.Invoke(this, EventArgs.Empty);
+            reactions.Raise(new FilesMoved(Sounds, Pictures));
 
             if (spilled > 0) report.Say($"Saved {file.Name}, and {spilled} file(s) beside it.");
 

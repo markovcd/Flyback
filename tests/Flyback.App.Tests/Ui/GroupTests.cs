@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.App.Canvas;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Shouldly;
 
@@ -125,7 +126,7 @@ public class GroupTests : UiTest
         var (editor, window) = Editing(patch);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         Click(editor, window, Body(first));
         window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
@@ -507,7 +508,7 @@ public class GroupTests : UiTest
         var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         Click(editor, window, BoxHeader(patch, top));
         Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
@@ -562,7 +563,7 @@ public class GroupTests : UiTest
         var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         editor.Edits.ToggleBox(low);
         Settle(window);

@@ -119,3 +119,11 @@ dependencies, with no cycle-break edges.
 
 No view models arrive with the container, and [0016](0016-build-the-ui-in-c-sharp-without-xaml.md)
 stands as written.
+
+## Amendment, 2026-09-28: reactions are registered with the part
+
+What the parts say to each other is a notice, and a part reacts by declaring
+`IReactTo<T>` ([0148](0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
+`AddPart<T>` registers the part once and forwards each `IReactTo<>` it implements
+to that same singleton, and `Reactions` asks the container for the reactors at
+raise time. The window's constructor no longer wires anything.

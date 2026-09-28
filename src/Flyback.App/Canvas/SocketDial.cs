@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -22,7 +23,8 @@ internal sealed class SocketDial(
     CanvasHistory history,
     CanvasSelection selection,
     Repaint repaint,
-    IPointerAnchors anchors)
+    IPointerAnchors anchors,
+    Reactions reactions)
 {
     /// <summary>How far a drag has to travel to turn the socket end to end, as on <see cref="Knob"/>.</summary>
     private const double DialTravel = 160;
@@ -41,12 +43,6 @@ internal sealed class SocketDial(
     private Point dialLast;
     private Point dialHome;
     private IPointerAnchor? dialAnchor;
-
-    /// <summary>An input's value was turned on the canvas.</summary>
-    public event EventHandler<SocketPick>? InputTurned;
-
-    /// <summary>The hand came off a socket it was turning.</summary>
-    public event EventHandler<SocketPick>? InputLetGo;
 
     public bool Turning => dialed is not null;
 
@@ -109,7 +105,7 @@ internal sealed class SocketDial(
         DropAnchor(canvas);
 
         repaint.Request();
-        InputLetGo?.Invoke(this, new SocketPick(d.Node, d.Port));
+        reactions.Raise(new InputLetGo(new SocketPick(d.Node, d.Port)));
         return true;
     }
 
@@ -154,7 +150,7 @@ internal sealed class SocketDial(
         node.InputValues[port] = value;
 
         history.Record($"{nodeId} input {port}");
-        InputTurned?.Invoke(this, new SocketPick(nodeId, port));
+        reactions.Raise(new InputTurned(new SocketPick(nodeId, port)));
     }
 
     private void DropAnchor(Control canvas)

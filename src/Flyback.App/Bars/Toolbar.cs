@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Gallery;
+using Flyback.App.Notices;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -15,10 +16,13 @@ namespace Flyback.App.Bars;
 
 /// <summary>
 /// The bar along the top: every button on it, what each says, and the order they
-/// stand in (ADR-0148). What a press does is the window's, which wires each one.
+/// stand in (ADR-0148). A press raises a notice, and the part that does the thing
+/// reacts to it, as it does to the same thing asked for with a key.
 /// </summary>
-internal sealed class Toolbar
+internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
 {
+    private readonly RecordingState recording;
+
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
     public const string TidyTip =
         "Lay the modules out so the patch reads left to right  (Ctrl+L). "
@@ -95,15 +99,28 @@ internal sealed class Toolbar
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
-    /// <summary>Tidy was pressed; true where Ctrl was held, which lays out only what is selected.</summary>
-    public event EventHandler<bool>? Tidied;
-
-
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek)
+    /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, Reactions reactions, IDialog dialog, RecordingState recording)
     {
         Seek = seek;
+        this.recording = recording;
+
+        Open.Click += (_, _) => reactions.Raise(new OpenAsked());
+        Save.Click += (_, _) => reactions.Raise(new SaveAsked());
+        Undo.Click += (_, _) => reactions.Raise(new UndoAsked());
+        Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
+        Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
+        Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
+        Swap.IsCheckedChanged += (_, _) => reactions.Raise(new SwapAsked(Swap.IsChecked == true));
+        Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
+        Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
+        Record.Click += (_, _) => reactions.Raise(new RecordAsked());
+        Assistant.IsCheckedChanged += (_, _) => reactions.Raise(new AssistantAsked(Assistant.IsChecked == true));
+        Settings.Click += (_, _) => reactions.Raise(new SettingsAsked());
+        Plugins.Click += (_, _) => reactions.Raise(new PluginsAsked());
+        About.Click += async (_, _) => await dialog.Show("About", Controls.About.View());
 
         var assistants = plugins.Assistants.Count > 0;
 
@@ -127,7 +144,7 @@ internal sealed class Toolbar
 
         Tidy.Click += (_, _) =>
         {
-            Tidied?.Invoke(this, (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0);
+            reactions.Raise(new TidyAsked(OnlySelected: (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0));
             modifiers = KeyModifiers.None;
         };
 
@@ -199,5 +216,19 @@ internal sealed class Toolbar
             BorderThickness = new Thickness(0, 0, 0, 1),
             Child = bar,
         };
+    }
+
+    /// <summary>The code button follows the view, however the view was switched.</summary>
+    public Task On(ViewChanged notice)
+    {
+        if (Code.IsChecked != notice.ShowingCode) Code.IsChecked = notice.ShowingCode;
+
+        return Task.CompletedTask;
+    }
+
+    public Task On(TakeMarked notice)
+    {
+        Open.IsEnabled = !recording.Running;
+        return Task.CompletedTask;
     }
 }

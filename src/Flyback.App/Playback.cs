@@ -3,10 +3,13 @@ using Flyback.App.Audio;
 using Flyback.App.Canvas;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Avalonia.Threading;
 using Flyback.App.Midi;
+using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 
@@ -26,6 +29,11 @@ namespace Flyback.App;
 /// </para>
 /// </remarks>
 internal sealed class Playback
+    : IReactTo<PatchChanged>,
+        IReactTo<SelectionChanged>,
+        IReactTo<DocumentArrived>,
+        IReactTo<FilesMoved>,
+        IReactTo<RewindAsked>
 {
     private readonly NodeEditor editor;
     private readonly AudioEngine audio;
@@ -35,21 +43,13 @@ internal sealed class Playback
     private readonly PluginCatalog plugins;
     private readonly ChosenAssistant chosenAssistant;
     private readonly RecordingState recording;
+    private readonly Reactions reactions;
 
-    /// <summary>The patch has just been compiled, and the picture and the sound are playing it.</summary>
-    public event EventHandler? Compiled;
+    /// <summary>Where the patch's sound files are read from, as the document last said.</summary>
+    private ISampleLibrary sounds = new SampleLibrary();
 
-    /// <summary>A patch opened; its programs are about to be built and started.</summary>
-    public event EventHandler? Opening;
-
-    /// <summary>The device has just started playing the patch.</summary>
-    public event EventHandler? Started;
-
-    /// <summary>Paused, muted or audible may have changed.</summary>
-    public event EventHandler? TransportChanged;
-
-    /// <summary>A patch that has just arrived is about to go on the canvas, so whatever it replaced is no longer showing.</summary>
-    public event EventHandler? Showing;
+    /// <summary>Where the patch's pictures are read from, as the document last said.</summary>
+    private IImageLibrary pictures = new ImageLibrary();
 
     /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
     public Playback(
@@ -62,7 +62,8 @@ internal sealed class Playback
         MidiHub midi,
         AudioSetup sound,
         ChosenAssistant chosenAssistant,
-        RecordingState recording)
+        RecordingState recording,
+        Reactions reactions)
     {
         this.editor = editor;
         this.audio = audio;
@@ -72,8 +73,49 @@ internal sealed class Playback
         this.plugins = plugins;
         this.chosenAssistant = chosenAssistant;
         this.recording = recording;
+        this.reactions = reactions;
 
         Sound = sound;
+
+        // The engine and the MIDI hub are the viewer's too, so they say what happens
+        // through events rather than notices, and the instrument listens here.
+        midi.Played += preview.Refresh;
+        midi.Trouble += message => report.Say(message);
+        compiler.Failed += message => Dispatcher.UIThread.Post(() => report.Say(message));
+    }
+
+    /// <summary>The programs are rebuilt before anything reads them.</summary>
+    public int Priority => -10;
+
+    public Task On(PatchChanged notice)
+    {
+        Recompile(opened: notice.Opened);
+        return Task.CompletedTask;
+    }
+
+    public Task On(SelectionChanged notice)
+    {
+        ProbeSelectionChanged();
+        return Task.CompletedTask;
+    }
+
+    public Task On(DocumentArrived notice)
+    {
+        (sounds, pictures) = (notice.Sounds, notice.Pictures);
+        return Task.CompletedTask;
+    }
+
+    public Task On(FilesMoved notice)
+    {
+        (sounds, pictures) = (notice.Sounds, notice.Pictures);
+        Recompile();
+        return Task.CompletedTask;
+    }
+
+    public Task On(RewindAsked notice)
+    {
+        Rewind();
+        return Task.CompletedTask;
     }
 
     /// <summary>The sound backend and the device it opened.</summary>
@@ -175,9 +217,9 @@ internal sealed class Playback
     /// anything else is what takes it off again. No other selection changes the
     /// picture, so this recompiles only when that one does.
     /// </summary>
-    public void ProbeSelectionChanged(ISampleLibrary samples, IImageLibrary images)
+    public void ProbeSelectionChanged()
     {
-        if (Probed?.Id != showingProbe) Recompile(samples, images);
+        if (Probed?.Id != showingProbe) Recompile();
     }
 
     /// <summary>
@@ -189,8 +231,9 @@ internal sealed class Playback
     /// A patch just opened, whose sound and picture start together once both are
     /// built: the sound's IL, and the picture's shader or IL.
     /// </param>
-    public void Recompile(ISampleLibrary samples, IImageLibrary images, bool opened = false)
+    public void Recompile(bool opened = false)
     {
+        var (samples, images) = (sounds, pictures);
         var probe = Probed;
         showingProbe = probe?.Id;
 
@@ -198,7 +241,7 @@ internal sealed class Playback
         if (opened)
         {
             opening = new Cue();
-            Opening?.Invoke(this, EventArgs.Empty);
+            reactions.Raise(new PatchStarting());
         }
         else if (opening is { Waiting: true }) opening.Take();
         else opening = null;
@@ -214,7 +257,7 @@ internal sealed class Playback
 
         var relaid = transport.Load(editor.History.Patch, result.Program, samples, start);
 
-        Compiled?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new PatchCompiled());
 
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —
@@ -260,7 +303,7 @@ internal sealed class Playback
         if (Paused) return;
 
         transport.Pause();
-        TransportChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new TransportChanged());
     }
 
     /// <summary>Plays on from where it stopped, or from nought where it stopped at the end of its length.</summary>
@@ -278,13 +321,13 @@ internal sealed class Playback
     public void ToggleMute()
     {
         transport.Mute(!Muted);
-        TransportChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new TransportChanged());
     }
 
     /// <summary>Puts a patch that has just been read on the canvas, from its beginning.</summary>
     public void Show(Patch patch)
     {
-        Showing?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new PatchShowing());
 
         editor.History.Open(patch);
         Rewind();
@@ -311,7 +354,7 @@ internal sealed class Playback
     /// </remarks>
     public void SyncAudioToVolume()
     {
-        TransportChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new TransportChanged());
 
         var wanted = !Paused && Audible;
 
@@ -353,6 +396,6 @@ internal sealed class Playback
             return;
         }
 
-        Started?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new PlaybackStarted());
     }
 }

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Flyback.App.Notices;
 
 namespace Flyback.App.Canvas;
 
@@ -16,7 +17,7 @@ namespace Flyback.App.Canvas;
 /// selection, the view, the edits, the gestures and the painting. What is left here is
 /// what only a control can be: its size, its keys, and where its pointer goes.
 /// </remarks>
-internal sealed class NodeEditor : Control
+internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
 {
     private readonly CanvasPainter painter;
 
@@ -34,9 +35,11 @@ internal sealed class NodeEditor : Control
         CanvasPainter painter,
         Repaint repaint,
         CanvasReport report,
-        NodeGeometry geometry)
+        NodeGeometry geometry,
+        Reactions reactions)
     {
         History = history;
+        Reactions = reactions;
         Geometry = geometry;
         Selection = selection;
         View = view;
@@ -55,7 +58,15 @@ internal sealed class NodeEditor : Control
         ClipToBounds = true;
 
         repaint.Requested += InvalidateVisual;
-        history.PatchChanged += (_, _) => InvalidateVisual();
+    }
+
+    /// <summary>The notices the canvas raises and reacts to, shared with the editor around it.</summary>
+    internal Reactions Reactions { get; }
+
+    public Task On(PatchChanged notice)
+    {
+        InvalidateVisual();
+        return Task.CompletedTask;
     }
 
     internal CanvasHistory History { get; }

@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.Site;
 using Flyback.App.Statistics;
 using Flyback.Plugins.Hosting;
@@ -21,8 +22,15 @@ namespace Flyback.App.Bars;
 /// A grid rather than a row of controls, because a row hands every child the width
 /// it asks for and the report would push the count off the edge of a narrow window.
 /// </remarks>
-internal sealed class StatusBar
+internal sealed class StatusBar : IReactTo<PatchStarting>
 {
+    /// <summary>In the report's place while the patch starts, what is said meanwhile is read once it has.</summary>
+    public Task On(PatchStarting notice)
+    {
+        Compiling.Watch(() => playback.Starting);
+        return Task.CompletedTask;
+    }
+
     private readonly IDialog dialog;
     private readonly NodeEditor editor;
     private readonly PreviewHost preview;
@@ -54,9 +62,12 @@ internal sealed class StatusBar
     public Control View { get; }
 
     /// <param name="site">Where the letter at the end of the bar is sent.</param>
+    private readonly Playback playback;
+
     public StatusBar(NodeEditor editor, PluginCatalog plugins, ReportLine report, Usage usage, PreviewHost preview, SiteAccess site, Playback playback, IDialog dialog, IFocus focus)
     {
         this.dialog = dialog;
+        this.playback = playback;
         this.focus = focus;
         this.plugins = plugins;
         this.report = report;
@@ -91,8 +102,6 @@ internal sealed class StatusBar
         {
             if (e.Property == Visual.IsVisibleProperty) report.IsVisible = !Compiling.IsVisible;
         };
-
-        playback.Opening += (_, _) => Compiling.Watch(() => playback.Starting);
 
         Grid.SetColumn(report, 0);
         Grid.SetColumn(Compiling, 0);

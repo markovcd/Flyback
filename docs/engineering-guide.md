@@ -427,13 +427,28 @@ undo lands; `Playback` owns compiling and the sound device, and drives pause,
 mute and rewind through the `Transport` the viewer shares;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes what it reads (the canvas, the document, the plugins, the
-report line, a dialog, a file picker), owns its own fields and raises events: `Inspector`,
+report line, a dialog, a file picker) and owns its own fields: `Inspector`,
 `Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
-`EditorServices` registers them, a constructor says what each depends on. `MainWindow` is handed them, lays them out, and keeps its
-layout, its keys, full screen and its close in one file, a `#region` per part. There are no
-view models, and that has been decided twice.
+`EditorServices` registers each with `AddPart<T>`, a constructor says what it
+depends on. `MainWindow` is handed them, lays them out, and keeps its layout,
+its keys, full screen and its close in one file. There are no view models, and
+that has been decided twice.
+
+**Notices** ([0148](adr/0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
+A hub says what happened by raising a notice, a record in `Flyback.App.Notices`
+carrying what a reactor needs (`PatchChanged`, `PatchCompiled`, `SaveAsked`), and
+a part that cares declares `IReactTo<PatchCompiled>` in its class header and
+reacts in `On`. `Reactions` resolves the reactors when the notice is raised,
+lowest `Priority` first, so a reaction is never a constructor dependency and
+never a cycle. To react to something, take nothing: declare the reaction. To
+find every reaction, search the notice's name. `Raise` is for a raiser that
+cannot wait, `RaiseAsync` for one that can, and a reaction is a `Task` either
+way. A control tells the region that owns it through a C# event; what the
+viewer shares (`MidiHub`, `PreviewHost`, `IlCompiler`) keeps its events too, and
+the part that takes it subscribes in its constructor. Never raise a notice from
+a constructor.
 
 **A folder per feature.** The project's root holds the composition, the window,
 the hubs and `ReportLine`. Everything else sits in the folder of what it is for,

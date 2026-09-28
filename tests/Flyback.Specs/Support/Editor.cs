@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.App;
+using Flyback.App.Notices;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Capture;
@@ -457,7 +458,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
         var canvas = CanvasIn(window);
 
-        canvas.Report.Said += (_, line) => said.Add(line);
+        canvas.Reactions.Add<CanvasSaid>(notice => said.Add(notice.Message));
         // As a file arrives: the canvas holds it, and no preset is said to be showing.
         if (OnThePatch)
         {

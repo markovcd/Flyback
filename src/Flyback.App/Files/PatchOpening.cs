@@ -1,6 +1,7 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
 using Flyback.Plugins.Hosting;
 
@@ -15,7 +16,10 @@ internal sealed class PatchOpening(
     IDialog dialog,
     ReportLine report,
     RecordingState recording)
+    : IReactTo<OpenAsked>
 {
+    public Task On(OpenAsked notice) => PickAndOpenAsync();
+
     /// <summary>Asks before replacing the document, then opens the picked file.</summary>
     public async Task PickAndOpenAsync()
     {

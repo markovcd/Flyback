@@ -9,6 +9,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.App.Knobs;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
 using Flyback.App.Windows;
@@ -33,6 +34,12 @@ internal sealed class ShellLayout(
     Document document,
     Usage usage,
     WindowLayoutKeeper layoutKeeper)
+    : IReactTo<PatchCompiled>,
+        IReactTo<GestureFinished>,
+        IReactTo<KnobsWanted>,
+        IReactTo<KnobsAsked>,
+        IReactTo<SwapAsked>,
+        IReactTo<AssistantAsked>
 {
     private Grid? columns;
     private Border? previewBox;
@@ -59,15 +66,47 @@ internal sealed class ShellLayout(
     public bool PreviewHideWaiting => previewHideWaiting;
     public bool IsBuilt => columns is not null;
 
-    public Control Build(EditState editState)
+    public Task On(PatchCompiled notice)
     {
-        assistant.ConversationChanged += (_, _) => editState.Refresh();
+        ShowPreview(playback.HasPicture);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>The preview's row was held while a gesture was under way, and can go now.</summary>
+    public Task On(GestureFinished notice)
+    {
+        if (previewHideWaiting) ShowPreview(playback.HasPicture);
+
+        return Task.CompletedTask;
+    }
+
+    public Task On(KnobsWanted notice)
+    {
+        ShowControls(true);
+        return Task.CompletedTask;
+    }
+
+    public Task On(KnobsAsked notice)
+    {
+        ShowControls(notice.Shown);
+        return Task.CompletedTask;
+    }
+
+    public Task On(SwapAsked notice)
+    {
+        SwapPreview(notice.Swapped);
+        return Task.CompletedTask;
+    }
+
+    public Task On(AssistantAsked notice)
+    {
+        ShowAssistant(notice.Shown);
+        return Task.CompletedTask;
+    }
+
+    public Control Build()
+    {
         editor.Tags.Types = assistant.Undescribed;
-        assistant.UndescribedChanged += (_, _) =>
-        {
-            editor.Tags.Types = assistant.Undescribed;
-            inspector.Build();
-        };
 
         var root = new DockPanel();
         DockPanel.SetDock(toolbar.View, Dock.Top);

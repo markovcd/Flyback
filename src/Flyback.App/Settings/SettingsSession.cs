@@ -3,6 +3,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.Knobs;
+using Flyback.App.Notices;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 
@@ -20,9 +21,12 @@ internal sealed class SettingsSession(
     IDialog dialog,
     Usage usage,
     OutputSettingsUse outputSettings)
+    : IReactTo<SettingsAsked>
 {
     /// <summary>Whether the settings sheet is waiting for an answer.</summary>
     public bool IsShowing { get; private set; }
+
+    public Task On(SettingsAsked notice) => ShowAsync();
 
     /// <summary>Shows all sections, then saves their drafts or restores the last saved values.</summary>
     public async Task ShowAsync()

@@ -1,3 +1,4 @@
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -16,18 +17,20 @@ internal sealed class CanvasSelection
     private readonly Repaint repaint;
     private readonly NodeGeometry geometry;
     private readonly CanvasReport report;
+    private readonly Reactions reactions;
 
     private readonly HashSet<Guid> ids = [];
 
     /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
     private Guid? peek;
 
-    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry)
+    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry, Reactions reactions)
     {
         this.history = history;
         this.geometry = geometry;
         this.repaint = repaint;
         this.report = report;
+        this.reactions = reactions;
 
         history.Replaced += (_, how) =>
         {
@@ -39,9 +42,6 @@ internal sealed class CanvasSelection
             Announce();
         };
     }
-
-    /// <summary>A different set of modules is selected, or the focus moved within it.</summary>
-    public event EventHandler? Changed;
 
     private Patch Patch => history.Patch;
 
@@ -275,7 +275,7 @@ internal sealed class CanvasSelection
     /// <summary>Tells whoever is listening that the selection moved.</summary>
     public void Announce()
     {
-        Changed?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new SelectionChanged());
         repaint.Request();
     }
 

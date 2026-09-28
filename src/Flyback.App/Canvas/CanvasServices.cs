@@ -1,4 +1,5 @@
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -16,6 +17,9 @@ internal static class CanvasServices
         // The pointer held where a socket's turn began; a test hands over anchors that hold nothing.
         services.TryAddSingleton<IPointerAnchors>(PlatformAnchors.Instance);
 
+        // One for the whole window, since the editor's container adds the canvas to its own.
+        services.TryAddSingleton<Reactions>();
+
         services.AddSingleton<NodeGeometry>();
         services.AddSingleton<Repaint>();
         services.AddSingleton<CanvasReport>();
@@ -25,14 +29,14 @@ internal static class CanvasServices
         services.AddSingleton<CanvasEdits>();
         services.AddSingleton<CanvasClipboard>();
         services.AddSingleton<KnobLinking>();
-        services.AddSingleton<UndescribedTags>();
+        services.AddPart<UndescribedTags>();
         services.AddSingleton<RemapMarks>();
         services.AddSingleton<HeldModules>();
         services.AddSingleton<SocketDial>();
         services.AddSingleton<CanvasTips>();
         services.AddSingleton<CanvasGestures>();
         services.AddSingleton<CanvasPainter>();
-        services.AddSingleton<NodeEditor>();
+        services.AddPart<NodeEditor>();
 
         return services;
     }

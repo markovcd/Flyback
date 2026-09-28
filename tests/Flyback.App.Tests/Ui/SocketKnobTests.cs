@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Flyback.App.Canvas;
+using Flyback.App.Notices;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
@@ -148,8 +149,8 @@ public class SocketKnobTests : UiTest
 
         var turned = 0;
         var letGo = new List<SocketPick>();
-        editor.Dial.InputTurned += (_, _) => turned++;
-        editor.Dial.InputLetGo += (_, pick) => letGo.Add(pick);
+        editor.Reactions.Add<InputTurned>(_ => turned++);
+        editor.Reactions.Add<InputLetGo>(notice => letGo.Add(notice.Pick));
 
         Turn(window, On(editor, window, Socket(osc, port)), 40);
 

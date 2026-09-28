@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
+using Flyback.App.Notices;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Shouldly;
@@ -160,7 +161,7 @@ public class TidySelectionTests : UiTest
         var (editor, _) = Editing(patch);
 
         var said = string.Empty;
-        editor.Report.Said += (_, message) => said = message;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
 
         var before = Where(patch);
 

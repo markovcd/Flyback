@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Flyback.Core.Graph;
+using Flyback.App.Notices;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -80,7 +81,7 @@ public class CopyPasteTests : UiTest
         var (editor, window) = Editing(patch);
 
         var said = new List<string>();
-        editor.Report.Said += (_, line) => said.Add(line);
+        editor.Reactions.Add<CanvasSaid>(notice => said.Add(notice.Message));
 
         Click(editor, window, sink);
         window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.Control);

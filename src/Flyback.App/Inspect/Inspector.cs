@@ -1,6 +1,8 @@
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -11,6 +13,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
 using Flyback.App.Midi;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
@@ -27,6 +30,11 @@ namespace Flyback.App.Inspect;
 /// is entirely the selected module's port list.
 /// </remarks>
 internal sealed class Inspector
+    : IReactTo<PatchChanged>,
+        IReactTo<SelectionChanged>,
+        IReactTo<InputLetGo>,
+        IReactTo<PanelStale>,
+        IReactTo<UndescribedChanged>
 {
     private readonly IFilePickers pickers;
     /// <summary>
@@ -82,6 +90,46 @@ internal sealed class Inspector
         pictureFolder = files.PictureFolder;
         groups = () => palette.Groups;
         saveGroup = palette.SaveGroup;
+
+        // A drag on a slider is one edit, written into the text once the hand is off it.
+        panel.AddHandler(InputElement.PointerReleasedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        panel.AddHandler(InputElement.LostFocusEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble);
+        panel.AddHandler(InputElement.KeyUpEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+        panel.AddHandler(InputElement.PointerWheelChangedEvent, (_, _) => document.HandCameOff(), RoutingStrategies.Bubble, handledEventsToo: true);
+    }
+
+    public Task On(PatchChanged notice)
+    {
+        Sync();
+        return Task.CompletedTask;
+    }
+
+    public Task On(SelectionChanged notice)
+    {
+        Build();
+        return Task.CompletedTask;
+    }
+
+    public Task On(PanelStale notice)
+    {
+        Build();
+        return Task.CompletedTask;
+    }
+
+    public Task On(UndescribedChanged notice)
+    {
+        Build();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>A socket turned on the canvas shows its new value, where the panel is about its module.</summary>
+    public Task On(InputLetGo notice)
+    {
+        var (node, _) = notice.Pick;
+
+        if (editor.Selection.Focused?.Id == node || editor.Selection.Group?.Members.Contains(node) == true) Build();
+
+        return Task.CompletedTask;
     }
 
     /// <summary>The rows, which scroll.</summary>

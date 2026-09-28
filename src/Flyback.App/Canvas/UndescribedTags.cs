@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Flyback.App.Assist;
+using Flyback.App.Notices;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -15,6 +16,7 @@ namespace Flyback.App.Canvas;
 /// not about the patch, so it is neither a color nor a badge on the body.
 /// </remarks>
 internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint, NodeGeometry geometry)
+    : IReactTo<UndescribedChanged>
 {
     private const double TagWidth = 16, TagHeight = 10, TagInset = 7;
 
@@ -37,6 +39,12 @@ internal sealed class UndescribedTags(CanvasSelection selection, Repaint repaint
             repaint.Request();
         }
     } = new HashSet<string>();
+
+    public Task On(UndescribedChanged notice)
+    {
+        Types = notice.Types;
+        return Task.CompletedTask;
+    }
 
     /// <summary>Whether <paramref name="def"/> is drawn with a tag.</summary>
     public bool Tagged(NodeDef def) => Types.Contains(def.TypeId);

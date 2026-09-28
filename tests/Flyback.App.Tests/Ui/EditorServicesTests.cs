@@ -1,6 +1,7 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Platform.Storage;
 using Flyback.App.Audio;
+using Flyback.App.Notices;
 using Flyback.App.Canvas;
 using Flyback.Core;
 using Flyback.Plugins.Audio;
@@ -106,7 +107,7 @@ public class EditorServicesTests : UiTest
     [AvaloniaFact]
     public void A_service_registered_again_takes_the_place_of_the_editors_own()
     {
-        var mine = new CanvasReport();
+        var mine = new CanvasReport(new Reactions());
 
         var canvas = NewCanvas(400, 300, services => services.AddSingleton(mine));
 

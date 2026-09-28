@@ -42,40 +42,54 @@ The hubs become classes that own no controls of the window's:
 
 A region that has something to say takes the `ReportLine` itself.
 
-Each region then becomes a class that takes the hubs and whatever else it reads, owns its own fields, and raises events rather than
-calling back into the window. `MainWindow` is what builds the hubs and the
-regions, lays them out, and asks the closing question.
+Each region then becomes a class that takes the hubs and whatever else it reads,
+owns its own fields, and says what happened rather than calling back into the
+window. `MainWindow` is what lays the regions out and asks the closing question.
 
-A hub says what changed through events, and whoever cares subscribes. It never
-names a region. `EditorWiring` connects events between services after the
-container builds them, so adding a reaction does not add a constructor dependency
-between its publisher and subscriber. It also connects the editor and document
-events that update the window, through callbacks for the window-owned reactions.
+**A hub says what happened as a notice, and whoever cares reacts to it.** A
+notice is a record in `Flyback.App.Notices`, one file each, carrying what a
+reactor needs: `PatchChanged(Opened)`, `PatchCompiled`, `DocumentArrived(Sounds,
+Pictures)`, `TakeMarked`. A part that reacts declares it in its class header,
+`Inspector : IReactTo<SelectionChanged>`, and `Reactions` hands each notice to
+every reactor the container holds, lowest `Priority` first, ties in registration
+order. Reactors are looked up when the notice is raised, never while the
+container is built, so a reaction is never a constructor dependency: the raiser
+does not take the reactor, the reactor does not take the raiser, and no reaction
+can close a cycle however the logic later moves. A new dependency that would
+close one becomes a notice instead.
 
-The hubs, the regions, the event wiring and the window are composed in a
-container ([0150](0150-the-editor-is-composed-in-a-container.md)). The services
-do not depend on one another to connect their events, and there is no global bus.
+A raiser that cannot wait calls `Raise`, which runs what finishes at once and
+throws a later fault on the UI thread, as an unhandled event handler would; one
+that can wait calls `RaiseAsync` and gets every reaction's task in turn. A
+reaction is a `Task`, so a reactor that asks a question (`UnsavedWork` to
+`RestartAsked`, `HandBackAsked`) awaits it, and a spec awaits the whole chain.
+
+The toolbar's buttons and the window's keys raise the same notices, `SaveAsked`
+from the Save button and from Ctrl+S, so what a command does lives in one
+reactor. `Toolbar` takes nothing it acts on.
+
+What stays a C# event: a control telling the region that owns it
+(`ControlsPanel` to `PanelKnobs`, `SourceView` to `Document`), and what the
+viewer shares with the editor and so cannot raise an editor's notice
+(`MidiHub`, `PreviewHost`, `IlCompiler`), which the part that already takes it
+subscribes to in its constructor. Nothing raises a notice from a constructor.
+
+The hubs, the regions, the notices and the window are composed in a container
+([0150](0150-the-editor-is-composed-in-a-container.md)); `AddPart<T>` registers
+a part and every reaction its class declares.
 
 ## Consequences
 
 A field is private to the region that owns it, and the compiler enforces the
 split that 0039 could only keep by convention.
 
-The regions move one at a time, each in a commit that builds and passes on its
-own. `MainWindow` owns the window's layout, keys, closing question and full
-screen. `EditorWiring` owns toolbar action subscriptions, event subscriptions
-between services and callbacks that connect editor events to window reactions.
-The window stays one class in one file, a `#region` per part, rather than partial
-files.
+A feature is one file and one registration line: a reactor declares what it
+reacts to, and nothing else is edited for it to be heard. A search for a
+notice's name finds its raiser and every reactor by class name. The order
+reactors run in is a number on the reactor, not the order lambdas happen to
+sit in.
 
-There is still no binding layer and no view model: state lives in the `Patch`,
-wiring is event handlers, and 0016 stands as written.
-
-## Amendment, 2026-09-27: shell layout and event wiring have explicit owners
-
-`ShellLayout` owns construction and presentation state for the editor grid: the
-assistant, preview and inspector columns, the knob row, preview swapping, and
-applying and capturing panel layout. `EditorWiring` owns toolbar action
-subscriptions, cross-service event subscriptions and accepts callbacks for
-reactions the window owns. `MainWindow` keeps window events and window-level
-commands. Neither class introduces partial window files, bindings or view models.
+`MainWindow` owns the window's layout, keys, closing question and full screen,
+and stays one class in one file. `ShellLayout` owns the editor grid and its
+panels. There is still no binding layer and no view model: state lives in the
+`Patch`, and 0016 stands as written.

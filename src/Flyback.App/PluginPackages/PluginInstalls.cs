@@ -1,6 +1,7 @@
 using Avalonia.Platform.Storage;
 using Flyback.App.Assist;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.Site;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
@@ -11,7 +12,7 @@ namespace Flyback.App.PluginPackages;
 /// Installing, updating and removing a plugin, from a <c>.fbkp</c> opened with
 /// Flyback or from the plugins window (ADR-0132, ADR-0148).
 /// </summary>
-internal sealed class PluginInstalls
+internal sealed class PluginInstalls : IReactTo<PluginsAsked>
 {
     private readonly IDialog dialog;
     private readonly PluginHubFactory pluginHubs;
@@ -23,6 +24,7 @@ internal sealed class PluginInstalls
     private readonly SiteAccess site;
     private readonly Playback playback;
     private readonly ChosenAssistant chosenAssistant;
+    private readonly Reactions reactions;
 
     /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
     private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
@@ -46,8 +48,10 @@ internal sealed class PluginInstalls
         IDialog dialog,
         ChosenAssistant chosenAssistant,
         PluginHubFactory pluginHubs,
-        PluginInstallerFactory installers)
+        PluginInstallerFactory installers,
+        Reactions reactions)
     {
+        this.reactions = reactions;
         this.dialog = dialog;
         this.pluginHubs = pluginHubs;
         this.installers = installers;
@@ -60,7 +64,7 @@ internal sealed class PluginInstalls
         this.chosenAssistant = chosenAssistant;
     }
 
-    public event EventHandler<RestartRequestedEventArgs>? RestartRequested;
+    public Task On(PluginsAsked notice) => ShowAsync();
 
     /// <summary>
     /// What the patch the plugins window was opened for was short of, so an install
@@ -182,13 +186,11 @@ internal sealed class PluginInstalls
 
     private async Task<bool> RestartAsync(Reopen? open)
     {
-        var handler = RestartRequested
-            ?? throw new InvalidOperationException("No handler is registered for restarting after a plugin install.");
-        var request = new RestartRequestedEventArgs(open);
+        var asked = new RestartAsked(open);
 
-        handler(this, request);
+        await reactions.RaiseAsync(asked);
 
-        return await request.Result;
+        return asked.Restarted;
     }
 
     /// <summary>

@@ -34,7 +34,7 @@ digraph FlybackAppOverview {
   >];
 
   MainWindow [style="filled,bold", fillcolor="#7fb2e5", penwidth=2, fontsize=13];
-  EditorWiring [fillcolor="#7fb2e5", label="EditorWiring\n(event connections)"];
+  Reactions [fillcolor="#7fb2e5", label="Reactions\n(notices: a raiser takes it;\na reactor declares IReactTo<T>)"];
   NodeEditor [style="filled,bold", fillcolor="#b8d8ff", label="NodeEditor\n(canvas subsystem,\nsee canvas-internals.dot)"];
 
   // subsystem colors (cosmetic only — not a layout constraint)
@@ -117,19 +117,16 @@ digraph FlybackAppOverview {
   MainWindow -> UnsavedWork; MainWindow -> PluginCatalog; MainWindow -> MidiHub;
   MainWindow -> Playback; MainWindow -> OutputSections; MainWindow -> PanelKnobs;
   MainWindow -> Inspector; MainWindow -> PresetSlot; MainWindow -> Toolbar;
-  MainWindow -> TakeRecording; MainWindow -> WorkKeeper; MainWindow -> EditorWiring;
+  MainWindow -> TakeRecording; MainWindow -> WorkKeeper; MainWindow -> Reactions;
   MainWindow -> EditorOpened; MainWindow -> EditorStart; MainWindow -> WindowLayoutKeeper;
   MainWindow -> FullScreenPreview; MainWindow -> TransportControls; MainWindow -> ShellLayout;
   MainWindow -> OutputSettingsUse; MainWindow -> SettingsSession; MainWindow -> IDialogs;
 
-  EditorWiring -> PluginInstalls; EditorWiring -> PatchOpening; EditorWiring -> UnsavedWork;
-  EditorWiring -> TakeRecording; EditorWiring -> PatchFiles; EditorWiring -> PanelKnobs;
-  EditorWiring -> PresetSlot; EditorWiring -> Toolbar; EditorWiring -> TransportControls;
-  EditorWiring -> Playback; EditorWiring -> SettingsSession; EditorWiring -> IDialogs;
-  EditorWiring -> IlCompiler; EditorWiring -> OutputSections; EditorWiring -> ShellLayout;
-  EditorWiring -> MidiHub; EditorWiring -> PreviewHost; EditorWiring -> NodeEditor;
-  EditorWiring -> Inspector; EditorWiring -> Document; EditorWiring -> SourceView;
-  EditorWiring -> CanvasSection;
+  // Raisers of notices. A reactor declares IReactTo<T> and takes nothing for it,
+  // so those edges do not exist; search the notice's name for its reactors.
+  NodeEditor -> Reactions; Document -> Reactions; Playback -> Reactions;
+  PatchFiles -> Reactions; TakeRecording -> Reactions; PanelKnobs -> Reactions;
+  AssistantPanel -> Reactions; PluginInstalls -> Reactions; Toolbar -> Reactions;
 
   EditorStart -> EditorSetup; EditorStart -> WorkKeeper; EditorStart -> WindowLayoutKeeper;
   EditorStart -> MidiHub; EditorStart -> PanelKnobs; EditorStart -> PluginCatalog;

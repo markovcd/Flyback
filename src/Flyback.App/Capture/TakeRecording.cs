@@ -6,6 +6,7 @@ using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Files;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
@@ -32,7 +33,7 @@ namespace Flyback.App.Capture;
 /// transport. The services a take acts on are handed in here.
 /// </para>
 /// </remarks>
-internal sealed class TakeRecording
+internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAsked>
 {
     /// <summary>How often the status line is refreshed while a take runs.</summary>
     private static readonly TimeSpan StatusTick = TimeSpan.FromMilliseconds(500);
@@ -76,15 +77,10 @@ internal sealed class TakeRecording
     private readonly RecordingState recordingState;
     private readonly PatchFiles files;
     private readonly IFilePickers pickers;
+    private readonly Reactions reactions;
 
     /// <summary>Says a line, and whether it is the last one again with a new number in it.</summary>
     private readonly Action<string, bool> report;
-
-    /// <summary>
-    /// What a take is may have changed, which the rest of the transport follows: a
-    /// take running takes Pause away, and finishing gives it back.
-    /// </summary>
-    public event EventHandler? Marked;
 
     /// <summary>Live while a take is running, and the only thing that says one is.</summary>
     private LiveRecorder? recorder;
@@ -126,9 +122,14 @@ internal sealed class TakeRecording
         RecordingState recordingState,
         OutputSettingRepository repository,
         PatchFiles files,
-        IFilePickers pickers)
+        IFilePickers pickers,
+        Reactions reactions)
     {
         button = toolbar.Record;
+        this.reactions = reactions;
+
+        // A capture cannot continue after its picture disappears.
+        preview.CaptureLost += Stop;
         size = sections.Resolution;
         this.preview = preview;
         this.audio = audio;
@@ -141,6 +142,14 @@ internal sealed class TakeRecording
         this.files = files;
         this.pickers = pickers;
     }
+
+    public Task On(PatchCompiled notice)
+    {
+        Mark();
+        return Task.CompletedTask;
+    }
+
+    public Task On(RecordAsked notice) => ToggleAsync();
 
     /// <summary>Whether a take is being counted in, which is not yet a take.</summary>
     internal bool Counting => counting is not null;
@@ -174,7 +183,7 @@ internal sealed class TakeRecording
             : kinds.Count > 0 ? RecordTip
             : NothingToRecord);
 
-        Marked?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new TakeMarked());
     }
 
     /// <summary>
@@ -361,6 +370,7 @@ internal sealed class TakeRecording
         var closing = FinishAsync(running, closingFile, name, said: because is not null);
 
         finishing = closing.IsCompleted ? null : closing;
+        recordingState.SetInHand(InHand);
 
         // The device was kept running for the take whatever Volume said, so it
         // is asked again now there is none — see Playback.SyncAudioToVolume.
@@ -519,6 +529,7 @@ internal sealed class TakeRecording
 
         recorder = started;
         recordingState.SetRunning(true);
+        recordingState.SetInHand(InHand);
 
         button.Content = Glyphs.Stop();
 
@@ -578,6 +589,7 @@ internal sealed class TakeRecording
 
         recorder = null;
         recordingState.SetRunning(false);
+        recordingState.SetInHand(InHand);
 
         button.Content = Glyphs.Record();
         size.IsEnabled = true;
@@ -618,6 +630,7 @@ internal sealed class TakeRecording
         finally
         {
             finishing = null;
+            recordingState.SetInHand(InHand);
             closingFile = null;
 
             if (!gone) Mark();

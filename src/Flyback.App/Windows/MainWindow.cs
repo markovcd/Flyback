@@ -11,6 +11,7 @@ using Flyback.App.Gallery;
 using Flyback.App.Inspect;
 using Flyback.App.Knobs;
 using Flyback.App.Midi;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.Core;
 using Flyback.Plugins.Hosting;
@@ -46,6 +47,7 @@ internal sealed class MainWindow : Window
     private readonly TransportControls transport;
     private readonly EditState editState;
     private readonly RecordingState recordingState;
+    private readonly Reactions reactions;
 
     private bool started;
     
@@ -63,7 +65,7 @@ internal sealed class MainWindow : Window
         TakeRecording recording,
         RecordingState recordingState,
         WorkKeeper keeper,
-        EditorWiring editorWiring,
+        Reactions reactions,
         EditorOpened editorOpened,
         EditorStart editorStart,
         WindowLayoutKeeper layoutKeeper,
@@ -96,12 +98,9 @@ internal sealed class MainWindow : Window
         this.editState = editState;
         this.dialog = dialog;
         this.recordingState = recordingState;
+        this.reactions = reactions;
 
         Recording = recording;
-
-        // Cross-service event edges are kept together so they remain visible
-        // without becoming constructor dependencies between the services.
-        editorWiring.Wire();
 
         // Everything let go when this stops being the window you are typing
         // into. A key released over another program is a key this never hears
@@ -161,7 +160,7 @@ internal sealed class MainWindow : Window
         Styles.Add(ReportLine.Trim());
         Styles.Add(ModulePlate.Naming());
         Styles.Add(ModulePalette.Trim());
-        return shell.Build(editState);
+        return shell.Build();
     }
 
     /// <summary>
@@ -312,7 +311,7 @@ internal sealed class MainWindow : Window
         // for the shell in a way no letter is any more.
         if (e.Key == Key.F2)
         {
-            document.ShowCode(!document.ShowingCode);
+            reactions.Raise(new CodeAsked(!document.ShowingCode));
             e.Handled = true;
             return;
         }
@@ -339,8 +338,8 @@ internal sealed class MainWindow : Window
             // view did not want the keystroke itself: the code editor handles
             // its own undo, and this is the end of the bubble.
             case Key.Z:
-                if (again) document.Redo();
-                else document.Undo();
+                if (again) reactions.Raise(new RedoAsked());
+                else reactions.Raise(new UndoAsked());
                 e.Handled = true;
                 break;
 
@@ -348,7 +347,7 @@ internal sealed class MainWindow : Window
             // where Ctrl+Shift+Z is, and somebody who reaches for one is not
             // going to enjoy discovering which this program wanted.
             case Key.Y:
-                document.Redo();
+                reactions.Raise(new RedoAsked());
                 e.Handled = true;
                 break;
 
@@ -357,7 +356,7 @@ internal sealed class MainWindow : Window
             // the canvas, or the lines down the page. With Shift, only the
             // selected modules move (ADR-0110).
             case Key.L:
-                document.Tidy(again);
+                reactions.Raise(new TidyAsked(OnlySelected: again));
                 e.Handled = true;
                 break;
 
@@ -366,20 +365,20 @@ internal sealed class MainWindow : Window
             // shortcuts, and guarded the same way a click on a disabled
             // button already is: see TakeRecording.ToggleAsync.
             case Key.R:
-                _ = Recording.ToggleAsync();
+                reactions.Raise(new RecordAsked());
                 e.Handled = true;
                 break;
 
             // The panel has no room while the picture has the window.
             case Key.K:
-                if (!fullScreen.IsFullScreen) shell.ShowControls(!knobs.View.IsVisible);
+                if (!fullScreen.IsFullScreen) reactions.Raise(new KnobsAsked(!knobs.View.IsVisible));
 
                 e.Handled = true;
                 break;
 
             // With Ctrl because the bare letter is a note, and Space adds a module.
             case Key.P:
-                transport.TogglePause();
+                reactions.Raise(new PauseAsked());
                 e.Handled = true;
                 break;
 
@@ -389,12 +388,12 @@ internal sealed class MainWindow : Window
             // Saving is one gesture here — the picker is where a name is
             // chosen — so there is no second key for saving under another one.
             case Key.O:
-                _ = patchOpening.PickAndOpenAsync();
+                reactions.Raise(new OpenAsked());
                 e.Handled = true;
                 break;
 
             case Key.S:
-                _ = unsaved.SavePatchAsync();
+                reactions.Raise(new SaveAsked());
                 e.Handled = true;
                 break;
         }

@@ -9,6 +9,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
 using Flyback.Core;
@@ -283,9 +284,6 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     public IReadOnlySet<string> Undescribed { get; private set; } = new HashSet<string>();
 
-    /// <summary><see cref="Undescribed"/> is a different set of modules.</summary>
-    public event EventHandler? UndescribedChanged;
-
     /// <summary>
     /// Everything the chosen provider says it has, drawn from its own declaration.
     /// This panel does not know what is on it: which model, which endpoint,
@@ -311,6 +309,7 @@ internal sealed class AssistantPanel : UserControl
     /// (ADR-0094), and never what was asked. Null is nobody counting.
     /// </summary>
     private readonly Usage? usage;
+    private readonly Reactions reactions;
 
     /// <summary>
     /// Where <see cref="run"/>'s turns go when <see cref="AssistantSettings.LogConversations"/>
@@ -328,12 +327,6 @@ internal sealed class AssistantPanel : UserControl
     private AssistantConfig? runConfig;
 
     private IPatchAssistant? runAssistant;
-
-    /// <summary>
-    /// The conversation changed in a way the title should say: a turn ended, or it
-    /// was saved, or a document arrived with one or without one.
-    /// </summary>
-    public event EventHandler? ConversationChanged;
 
     /// <summary>Built the first time the settings window asks for it, and kept.</summary>
     private Control? section;
@@ -372,8 +365,10 @@ internal sealed class AssistantPanel : UserControl
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
         EditorSetup? setup = null,
-        Usage? usage = null)
+        Usage? usage = null,
+        Reactions? reactions = null)
     {
+        this.reactions = reactions ?? new Reactions();
         this.chosenAssistant = chosenAssistant;
         this.plugins = plugins;
         this.editor = editor;
@@ -384,7 +379,7 @@ internal sealed class AssistantPanel : UserControl
         settingsPath = setup?.AssistantSettingsPath;
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
-        conversation.Saved += (_, _) => ConversationChanged?.Invoke(this, EventArgs.Empty);
+        conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());
         chosenAssistant.Load();
         probeSection = new ProbeSection(() => chosenAssistant.Value, KeyOnTheForm, form, Refresh);
 
@@ -448,7 +443,7 @@ internal sealed class AssistantPanel : UserControl
             transcript.Put(Voice.Note, "Saved with this patch. The next message carries this conversation on.", keep: false);
         }
 
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new ConversationChanged());
         ShowSendState();
     }
 
@@ -467,7 +462,7 @@ internal sealed class AssistantPanel : UserControl
 
         SetAside();
 
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new ConversationChanged());
         ShowSendState();
     }
 
@@ -709,7 +704,7 @@ internal sealed class AssistantPanel : UserControl
         if (now.SetEquals(Undescribed)) return;
 
         Undescribed = now;
-        UndescribedChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new UndescribedChanged(Undescribed));
     }
 
     /// <summary>
@@ -1362,7 +1357,7 @@ internal sealed class AssistantPanel : UserControl
 
         conversation.Settle(run.Save(transcript.Lines));
 
-        ConversationChanged?.Invoke(this, EventArgs.Empty);
+        reactions.Raise(new ConversationChanged());
     }
 
     // --- accepting ----------------------------------------------------------
