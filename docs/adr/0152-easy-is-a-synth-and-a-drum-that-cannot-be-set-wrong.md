@@ -18,7 +18,7 @@ and most of the ways to wire either are silent or deafening.
 
 **Two modules in a plugin called Easy.** Easy Synth is an oscillator, a sub
 and noise, an ADSR, a resonant filter, two LFOs, glide, drive and pan, with
-'left', 'right', 'env' and 'lfo' out. Easy Drum is one of eight drum sounds
+'left', 'right', 'env' and 'lfo' out. Easy Drum is one of nine drum sounds
 playing a rhythm, with 'left', 'right' and 'env' out.
 
 **It sounds good with nothing wired.** The gate is up by default, so it drones
@@ -45,8 +45,11 @@ are a sine falling in pitch, its phase integrated in closed form so every hit
 starts at nought; the snare is two sines and high-passed noise, the clap three
 bursts and a tail of band-passed noise, the hats and the cowbell squares at a
 drum machine's inharmonic pitches through a filter, and the rim a short sine
-and a crack. 'tune', 'decay' and 'tone' move every sound the same way, and the
-eight are leveled to within two decibels of one another at their peaks.
+and a crack. The psy kick falls faster and harder than the kick and is cut away
+by 90% of a sixteenth at 'bpm', so a bass on the three sixteenths after it is
+heard alone at any tempo; 'decay' fills its body out up to the cut and can only
+bring the cut earlier. 'tune', 'decay' and 'tone' move every sound the same way, and the
+sounds are leveled to within two decibels of one another at their peaks.
 
 **No knob, wire or setting takes either past full scale.** Every input is clamped
 before it is used; the note is held on the keyboard after the octave and the

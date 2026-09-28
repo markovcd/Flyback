@@ -15,6 +15,7 @@ namespace Flyback.Plugins.Easy;
 internal static class Kit
 {
     public const string Kick = "kick";
+    public const string PsyKick = "psy kick";
     public const string Snare = "snare";
     public const string Clap = "clap";
     public const string ClosedHat = "closed hat";
@@ -32,9 +33,10 @@ internal static class Kit
     /// <paramref name="sound"/>, <paramref name="age"/> seconds after the hit, and the
     /// envelope it is heard through. <paramref name="tune"/> multiplies every pitch and
     /// <paramref name="length"/> every fall; <paramref name="tone"/> is 0 dark to 1 bright.
+    /// <paramref name="sixteenth"/> is a sixteenth at the tempo, in seconds.
     /// </summary>
     public static (Slot Sound, Slot Envelope) Emit(
-        Emitter em, string sound, Slot domain, Slot age, Slot tune, Slot length, Slot tone)
+        Emitter em, string sound, Slot domain, Slot age, Slot tune, Slot length, Slot tone, Slot sixteenth)
     {
         var white = NodeCatalog.WhiteAndPink(em, domain, em.Constant(SeedOf(sound))).White;
 
@@ -71,6 +73,25 @@ internal static class Kit
                 var envelope = Fall(sound == OpenHat ? 0.4f : 0.05f);
 
                 return (em.Mul(em.Mul(High(hiss, Bright(6500f, 3500f), 0.3f), envelope), 2.6f), envelope);
+            }
+
+            case PsyKick:
+            {
+                // Gone before the next sixteenth at any tempo, so a bass rolling on the
+                // three after it never lands on its tail. 'decay' fills the body out
+                // up to that cut and can only bring the cut earlier.
+                var end = em.Mul(em.Mul(sixteenth, em.Binary(OpCode.Min, length, em.Constant(1f))), 0.9f);
+                var cut = em.Sub(
+                    em.Constant(1f),
+                    em.Ternary(OpCode.Smoothstep, em.Mul(end, 0.7f), end, age));
+                var envelope = em.Mul(Fall(0.14f), cut);
+
+                var body = Finish.Driven(em, em.Mul(Swept(52f, 330f, 0.014f), em.Mul(envelope, 0.95f)), em.Constant(0.3f));
+                var click = em.Mul(
+                    em.Mul(white, Decay(age, em.Constant(0.002f))),
+                    em.Add(em.Mul(tone, 0.3f), 0.1f));
+
+                return (em.Add(body, em.Mul(click, cut)), envelope);
             }
 
             case Tom:
@@ -158,6 +179,7 @@ internal static class Kit
         Tom => 5f,
         Rim => 6f,
         Cowbell => 7f,
+        PsyKick => 8f,
         _ => 0f,
     };
 }

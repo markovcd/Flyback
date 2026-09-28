@@ -5,7 +5,7 @@
 - `flyback-cli render --preset` renders a shipped preset by name, and `--presets` lists them.
 - Shift+drag moves modules into the group under the pointer or out of their own, a module picked over an open group or a box being looked into joins it, Ctrl+G on groups and loose modules keeps the one group name among them, and looking into a box selects nothing.
 - A box's socket is named for the socket inside even while a wire is on it.
-- The preset site starts with Easy, a plugin of two modules that sound good with nothing wired and can never clip: Easy Synth, a whole synth with a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan; and Easy Drum, eight drum sounds that each play the rhythm that suits them at a tempo, or on a trigger.
+- The preset site starts with Easy, a plugin of two modules that sound good with nothing wired and can never clip: Easy Synth, a whole synth with a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan; and Easy Drum, nine drum sounds, a psy kick among them, that each play the rhythm that suits them at a tempo, or on a trigger.
 - Warehouse, acid house on the Easy plugin: an accented bass line on Easy Synth over five Easy Drums, a supersaw stab, and an Acid knob on the filter.
 - Slow weather: six panel knobs — echo level, chime decay, reverb space, visual warp, color shift and trails spin — and a thirty-minute length.
 - Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.

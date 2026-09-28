@@ -20,7 +20,7 @@ public class EasyDrumTests
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly string[] Sounds = ["kick", "snare", "clap", "closed hat", "open hat", "tom", "rim", "cowbell"];
+    private static readonly string[] Sounds = ["kick", "psy kick", "snare", "clap", "closed hat", "open hat", "tom", "rim", "cowbell"];
 
     private static readonly string[] Rhythms =
         ["auto", "beats", "backbeat", "eighths", "sixteenths", "offbeats", "tresillo", "clave", "bar", "trigger"];
@@ -80,6 +80,27 @@ public class EasyDrumTests
         var env = Played(Module(("sound", sound)), 2.0, Env).Left;
 
         Near(Onsets(env), hits);
+    }
+
+    /// <summary>A psy kick is silent by the next sixteenth whatever the tempo, so a bass on it is heard alone.</summary>
+    [Theory]
+    [InlineData(120f)]
+    [InlineData(145f)]
+    [InlineData(175f)]
+    public void A_psy_kick_is_gone_before_the_next_sixteenth(float bpm)
+    {
+        foreach (var decay in (float[])[0f, 0.5f, 1f])
+        {
+            var node = Module(("sound", "psy kick"));
+            node.InputValues[Bpm] = bpm;
+            node.InputValues[Decay] = decay;
+
+            var sixteenth = 15.0 / bpm;
+            var (left, _) = Played(node, sixteenth * 2);
+
+            Peak(left[..(int)(sixteenth * Rate / 2)]).ShouldBeGreaterThan(0.5f, $"{bpm} bpm, decay {decay}");
+            Peak(left[(int)(sixteenth * Rate)..]).ShouldBeLessThan(1e-4f, $"{bpm} bpm, decay {decay}");
+        }
     }
 
     [Fact]

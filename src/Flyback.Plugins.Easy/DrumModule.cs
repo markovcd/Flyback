@@ -54,7 +54,7 @@ internal static class DrumModule
             new PortSpec("in", NormalledTo: NodeCatalog.Clock, Domain: true) { Standard = true },
             new PortSpec("bpm", PortKind.Scalar, 120f, 40f, 240f)
             {
-                Help = "The tempo, in beats a minute. Drums at the same tempo play together.",
+                Help = "The tempo, in beats a minute. Drums at the same tempo play together, and a psy kick ends before the next sixteenth.",
             },
             new PortSpec("swing", PortKind.Scalar, 0f, 0f, 1f)
             {
@@ -111,6 +111,7 @@ internal static class DrumModule
                         "sound",
                         [
                             new ChoiceOption(Kit.Kick, "Kick"),
+                            new ChoiceOption(Kit.PsyKick, "Psy kick"),
                             new ChoiceOption(Kit.Snare, "Snare"),
                             new ChoiceOption(Kit.Clap, "Clap"),
                             new ChoiceOption(Kit.ClosedHat, "Closed hat"),
@@ -168,14 +169,11 @@ internal static class DrumModule
         var rhythm = Chosen(RhythmKey, Rhythms.Auto);
         if (rhythm == Rhythms.Auto) rhythm = Rhythms.For(sound);
 
+        var bpm = em.Ternary(OpCode.Clamp, node[BpmPort], em.Constant(SlowestBpm), em.Constant(FastestBpm));
+
         var (age, started) = rhythm == Rhythms.Trigger
             ? Struck(em, node[TriggerPort])
-            : Rhythms.Age(
-                em,
-                node[InPort],
-                em.Ternary(OpCode.Clamp, node[BpmPort], em.Constant(SlowestBpm), em.Constant(FastestBpm)),
-                Unit(SwingPort),
-                rhythm);
+            : Rhythms.Age(em, node[InPort], bpm, Unit(SwingPort), rhythm);
 
         var tune = em.Binary(
             OpCode.Pow,
@@ -186,7 +184,9 @@ internal static class DrumModule
             em.Constant(2f),
             em.Mul(em.Add(Unit(DecayPort), -0.5f), 2f * DecayOctaves));
 
-        var (drum, envelope) = Kit.Emit(em, sound, node[InPort], age, tune, length, Unit(TonePort));
+        var sixteenth = em.Binary(OpCode.Div, em.Constant(15f), bpm);
+
+        var (drum, envelope) = Kit.Emit(em, sound, node[InPort], age, tune, length, Unit(TonePort), sixteenth);
 
         var hit = em.Mul(started, Unit(VelocityPort));
         var heard = Finish.Driven(em, em.Mul(drum, hit), Unit(DrivePort));
