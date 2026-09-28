@@ -54,8 +54,14 @@ internal sealed class PartGrid
 
     private readonly StackPanel body = new();
 
-    /// <summary>The cell being dragged, where the drag started and what the level was then.</summary>
-    private (Border Cell, int Part, int Section, double Y, float From, float Low, float High, bool Moved)? drag;
+    private static readonly Cursor Upright = new(StandardCursorType.SizeNorthSouth);
+    private static readonly Cursor Hidden = new(StandardCursorType.None);
+
+    /// <summary>The cell being dragged, and how far.</summary>
+    private Held? drag;
+
+    /// <summary>Holds the pointer still while a level is dragged, as a knob does, or leaves it free.</summary>
+    internal IPointerAnchors Anchors { get; set; } = PlatformAnchors.Instance;
 
     /// <summary>
     /// What a drag's level is filed under until it is let go. The cell follows every move,
@@ -184,15 +190,16 @@ internal sealed class PartGrid
                 Describe(cell, p, s);
 
                 var (at, section) = (p, s);
-                cell.Cursor = new Cursor(StandardCursorType.SizeNorthSouth);
+                cell.Cursor = Upright;
                 cell.PointerPressed += (_, e) => Grab(cell, at, section, e);
                 cell.PointerMoved += (_, e) => Turn(e);
                 cell.PointerReleased += (_, e) => LetGo(e);
                 cell.PointerCaptureLost += (_, _) =>
                 {
-                    if (drag is null) return;
+                    if (drag is not { } held) return;
 
                     drag = null;
+                    held.Release();
                     Heard();
                 };
 
@@ -226,7 +233,7 @@ internal sealed class PartGrid
         var levels = parts[part];
         var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
 
-        drag = (cell, part, section, e.GetPosition(cell).Y, levels[section].Value, -high, high, false);
+        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, Anchors.Take(cell));
         e.Pointer.Capture(cell);
         e.Handled = true;
     }
@@ -235,7 +242,15 @@ internal sealed class PartGrid
     {
         if (drag is not { } held) return;
 
-        var rise = held.Y - e.GetPosition(held.Cell).Y;
+        var at = e.GetPosition(held.Cell);
+
+        // The warp's own echo, which would otherwise count as a move.
+        if (held.Anchor is not null && at == held.Home) return;
+
+        held.Rise += held.Last.Y - at.Y;
+        held.Last = held.Anchor?.Return() == true ? held.Home : at;
+
+        var rise = held.Rise;
         if (!held.Moved && Math.Abs(rise) < Slop) return;
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
@@ -252,7 +267,7 @@ internal sealed class PartGrid
         var grain = held.High <= 2f ? 0.01f : 0.1f;
         turned = MathF.Round(turned / grain) * grain;
 
-        drag = held with { Moved = true };
+        held.Moved = true;
         parts[held.Part][held.Section] = parts[held.Part][held.Section] with { Value = turned };
 
         held.Cell.Background = new SolidColorBrush(Shade(turned));
@@ -276,6 +291,7 @@ internal sealed class PartGrid
         if (drag is not { } held) return;
 
         drag = null;
+        held.Release();
         e.Pointer.Capture(null);
         e.Handled = true;
 
@@ -400,5 +416,39 @@ internal sealed class PartGrid
         button.PointerExited += (_, _) => button.Opacity = 0.45;
 
         return button;
+    }
+
+    /// <summary>
+    /// A drag under way: where it began, how far it has risen, and the anchor that holds the
+    /// pointer, which hides it for as long as it holds.
+    /// </summary>
+    private sealed class Held
+    {
+        public Held(Border cell, int part, int section, Point home, float from, float low, float high, IPointerAnchor? anchor)
+        {
+            (Cell, Part, Section, Home, Last, From, Low, High, Anchor) = (cell, part, section, home, home, from, low, high, anchor);
+
+            if (anchor is not null) cell.Cursor = PartGrid.Hidden;
+        }
+
+        public Border Cell { get; }
+        public int Part { get; }
+        public int Section { get; }
+        public Point Home { get; }
+        public float From { get; }
+        public float Low { get; }
+        public float High { get; }
+        public IPointerAnchor? Anchor { get; }
+
+        public Point Last { get; set; }
+        public double Rise { get; set; }
+        public bool Moved { get; set; }
+
+        /// <summary>Lets the pointer go and shows it again.</summary>
+        public void Release()
+        {
+            Anchor?.Dispose();
+            Cell.Cursor = Upright;
+        }
     }
 }

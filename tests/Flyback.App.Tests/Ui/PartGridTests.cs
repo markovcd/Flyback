@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -183,6 +184,50 @@ public class PartGridTests : UiTest
 
         changes.Count.ShouldBe(1, "ten moves are one recompile, at the end");
         ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
+    }
+
+    /// <summary>Stands in for the platform, whose warp arrives back as a move to where the drag began.</summary>
+    private sealed class Anchor : IPointerAnchor, IPointerAnchors
+    {
+        public bool Disposed { get; private set; }
+
+        public IPointerAnchor Take(Visual visual) => this;
+
+        public bool Return() => true;
+
+        public void Dispose() => Disposed = true;
+    }
+
+    /// <summary>With the pointer held, a drag keeps turning on a short stretch, as a knob does, and hides the pointer until it ends.</summary>
+    [AvaloniaFact]
+    public void A_held_pointer_turns_a_level_all_the_way_on_a_short_stretch()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var anchor = new Anchor();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0f), new PartLevel(1f)]]);
+        var window = Show(new PartGrid(node, def, _ => { }) { Anchors = anchor }.View);
+
+        var cell = All<Border>(window).First(b => Equals(b.Tag, PartGrid.CellTag));
+        var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
+        var upright = cell.Cursor;
+
+        window.MouseDown(middle, MouseButton.Left, RawInputModifiers.None);
+
+        // Four strokes of 40 px up, the pointer put back after each: 160 px in all.
+        for (var stroke = 0; stroke < 4; stroke++)
+        {
+            window.MouseMove(middle - new Point(0, 40), RawInputModifiers.LeftMouseButton);
+            window.MouseMove(middle, RawInputModifiers.LeftMouseButton);
+        }
+
+        cell.Cursor.ShouldNotBeSameAs(upright);
+
+        window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
+
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
+        anchor.Disposed.ShouldBeTrue();
     }
 
     private static void Drag(Window window, int index, double by)
