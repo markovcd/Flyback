@@ -4,6 +4,8 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Find why an undo freezes the window on a large patch.** Ctrl+Z on Mycelium stops the whole window for about two seconds on Windows; an edit does not. What is ruled out, what is left and how to find it are in [docs/handoff/undo-freezes-the-window.md](docs/handoff/undo-freezes-the-window.md). Find and fix it on Windows.
 
+- **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
+
 - **Loop any stretch of the seek bar.** Two handles on the bar set where a loop starts and ends, so a passage in the middle of a piece repeats rather than always the start.
 - **Step a paused patch a frame at a time.** Left and right arrows over a paused full-screen picture, in the editor and the viewer, move the clock one frame back or on, for looking at what a picture does at one instant.
 - **Count which features and modules are used.** The usage events (`src/Flyback.App/Statistics/Usage.cs`) say how many modules a played patch has, not which ones, and nothing about which editor features are reached for. Add both to what is sent to Aptabase, inside what ADR-0094 allows: shipped modules and features by name, a plugin's own under one name, nothing that could tie a report to a person or a patch.
