@@ -1,4 +1,5 @@
 using Avalonia.Platform.Storage;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.PluginPackages;
 using Flyback.Plugins.Hosting;
@@ -12,11 +13,14 @@ internal sealed class PatchOpening(
     PluginInstalls installs,
     IFilePickers pickers,
     IDialog dialog,
-    ReportLine report)
+    ReportLine report,
+    RecordingState recording)
 {
     /// <summary>Asks before replacing the document, then opens the picked file.</summary>
     public async Task PickAndOpenAsync()
     {
+        if (RefuseWhileRecording()) return;
+
         if (await unsaved.MayReplaceThePatchAsync() && await files.PickOpenAsync() is { } file)
             await OpenFileAsync(file);
     }
@@ -24,6 +28,8 @@ internal sealed class PatchOpening(
     /// <summary>Resolves and opens a path supplied at launch.</summary>
     public async Task OpenPathAsync(string path)
     {
+        if (RefuseWhileRecording()) return;
+
         if (!PluginPackage.Named(path) && !await unsaved.MayReplaceThePatchAsync()) return;
 
         IStorageFile? file;
@@ -62,6 +68,8 @@ internal sealed class PatchOpening(
     /// </remarks>
     public async Task OpenActivatedFileAsync(IStorageFile file)
     {
+        if (RefuseWhileRecording()) return;
+
         if (dialog.IsShowing)
         {
             report.Say($"{file.Name} was not opened: there is a dialog to answer first.");
@@ -74,7 +82,17 @@ internal sealed class PatchOpening(
 
     private async Task OpenFileAsync(IStorageFile file)
     {
+        if (RefuseWhileRecording()) return;
+
         if (PluginPackage.Named(file.Name)) await installs.InstallAsync(file);
         else await files.OpenFileAsync(file);
+    }
+
+    private bool RefuseWhileRecording()
+    {
+        if (!recording.Running) return false;
+
+        report.Say("Stop the recording before opening a file.");
+        return true;
     }
 }

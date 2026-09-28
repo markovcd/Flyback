@@ -24,6 +24,7 @@ internal sealed class EditorWiring(
     PatchOpening patchOpening,
     UnsavedWork unsaved,
     TakeRecording recording,
+    RecordingState recordingState,
     PatchFiles files,
     PanelKnobs knobs,
     PresetSlot presets,
@@ -82,7 +83,13 @@ internal sealed class EditorWiring(
         files.Arrived += (_, _) => knobs.Hub.Forget();
         files.Saved += (_, _) => presets.Clear();
         files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures);
-        recording.Marked += (_, _) => transport.Sync();
+        recording.Marked += (_, _) =>
+        {
+            transport.Sync();
+
+            toolbar.Open.IsEnabled = !recordingState.Running;
+            presets.SetEnabled(!recordingState.Running);
+        };
         // A capture cannot continue after its picture disappears.
         preview.CaptureLost += recording.Stop;
         toolbar.Knobs.IsCheckedChanged += (_, _) => shell.ShowControls(toolbar.Knobs.IsChecked == true);

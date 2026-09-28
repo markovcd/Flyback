@@ -9,10 +9,12 @@ using Avalonia.VisualTree;
 using Flyback.App;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.Specs.Support;
 
@@ -36,6 +38,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     private const int Turns = 4;
 
     private MainWindow? window;
+    private ServiceProvider? provider;
 
     private readonly List<string> said = [];
 
@@ -74,6 +77,26 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     /// <summary>The preset the toolbar says is on the canvas, or null for a document that is none.</summary>
     public string? Showing => ReadWindow(open => (Presets(open).SelectedItem as PatchPreset)?.Name);
+
+    /// <summary>Whether the file and preset controls can replace the patch.</summary>
+    public bool CanOpenPatch => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "open").IsEnabled
+        && open.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "presets-glyph").IsEnabled
+        && !Presets(open).IsEnabled);
+
+    /// <summary>Starts the recording state the editor's toolbar and close guard respond to.</summary>
+    public void BeginRecording() => DoWindow((_, _) =>
+    {
+        Service<RecordingState>().SetRunning(true);
+        Service<TakeRecording>().Mark();
+    });
+
+    /// <summary>Tries the window close action and says whether the window remained open.</summary>
+    public bool TryClose() => ReadWindow(open =>
+    {
+        open.Close();
+        return open.IsVisible;
+    });
 
     /// <summary>Everything the window's report line has said.</summary>
     public IReadOnlyList<string> Reported => ReadWindow(open => open.GetVisualDescendants().OfType<ReportLine>().Single().History);
@@ -399,7 +422,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     {
         if (window is not null) return window;
 
-        var provider = EditorServices.Provider(Setup);
+        provider = EditorServices.Provider(Setup);
         window = provider.Window();
         window.Start();
 
@@ -423,6 +446,8 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     }
 
     private NodeEditor Canvas() => CanvasIn(Window());
+
+    private T Service<T>() where T : notnull => provider!.GetRequiredService<T>();
 
     /// <summary>
     /// The caption on the module panel reading <paramref name="caption"/>, and the whole

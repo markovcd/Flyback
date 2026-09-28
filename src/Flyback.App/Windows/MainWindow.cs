@@ -45,6 +45,7 @@ internal sealed class MainWindow : Window
     private readonly FullScreenPreview fullScreen;
     private readonly TransportControls transport;
     private readonly EditState editState;
+    private readonly RecordingState recordingState;
 
     private bool started;
     
@@ -60,6 +61,7 @@ internal sealed class MainWindow : Window
         PanelKnobs knobs,
         PresetSlot presets,
         TakeRecording recording,
+        RecordingState recordingState,
         WorkKeeper keeper,
         EditorWiring editorWiring,
         EditorOpened editorOpened,
@@ -93,6 +95,7 @@ internal sealed class MainWindow : Window
         this.shell = shell;
         this.editState = editState;
         this.dialog = dialog;
+        this.recordingState = recordingState;
 
         Recording = recording;
 
@@ -203,6 +206,13 @@ internal sealed class MainWindow : Window
         base.OnClosing(e);
 
         if (e.Cancel) return;
+
+        if (recordingState.Running)
+        {
+            e.Cancel = true;
+            Report("Stop the recording before closing the window.");
+            return;
+        }
 
         // Every attempt, not only the one that goes through: the window's monitor
         // is no longer asked for once it has closed, and a refused close leaves it

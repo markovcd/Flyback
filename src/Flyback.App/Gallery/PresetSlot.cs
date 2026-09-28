@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Flyback.App.Assist;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Files;
 using Flyback.App.PluginPackages;
@@ -41,6 +42,7 @@ internal sealed class PresetSlot
     private readonly UnsavedWork unsaved;
     private readonly Playback playback;
     private readonly PluginInstalls installs;
+    private readonly RecordingState recording;
 
     /// <summary>
     /// Not shown, and never opened: what this holds is which preset is on the
@@ -50,6 +52,7 @@ internal sealed class PresetSlot
     /// keeps an arrow at it from discarding the patch.
     /// </summary>
     private readonly Picker picker;
+    private readonly Button button;
 
     /// <summary>What <see cref="picker"/> lists, which is <see cref="Ordered"/> as of the last save.</summary>
     private List<PatchPreset> offered;
@@ -89,6 +92,7 @@ internal sealed class PresetSlot
         UnsavedWork unsaved,
         Playback playback,
         PluginInstalls installs,
+        RecordingState recording,
         IDialog dialog)
     {
         this.dialog = dialog;
@@ -106,6 +110,7 @@ internal sealed class PresetSlot
         this.unsaved = unsaved;
         this.playback = playback;
         this.installs = installs;
+        this.recording = recording;
 
         // Whatever preset the list still showed is not the patch that arrived.
         playback.Showing += (_, _) => Clear();
@@ -130,7 +135,7 @@ internal sealed class PresetSlot
         // gallery, and a tile picked there is a row of the picker chosen, so there
         // is one road to changing the preset and it is the one that asks about
         // unsaved work.
-        var button = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
+        button = ToolbarButtons.Drawn("presets-glyph", Glyphs.Presets(), "Start from a preset patch, or save this one as a preset…");
         button.Click += async (_, _) => await ShowGalleryAsync();
 
         // Stacked in one cell so the toolbar keeps the one slot it had.
@@ -139,6 +144,13 @@ internal sealed class PresetSlot
 
     /// <summary>The slot on the toolbar.</summary>
     public Control View { get; }
+
+    /// <summary>Enables or disables both ways to open the preset gallery.</summary>
+    public void SetEnabled(bool enabled)
+    {
+        button.IsEnabled = enabled;
+        picker.IsEnabled = enabled;
+    }
 
     /// <summary>The preset on the canvas, or null for a document that did not come from the list.</summary>
     public PatchPreset? Showing => offered.ElementAtOrDefault(showing);
@@ -256,6 +268,8 @@ internal sealed class PresetSlot
 
     private async Task ShowGalleryAsync()
     {
+        if (RefuseWhileRecording()) return;
+
         var current = picker.SelectedItem as PatchPreset;
         var parts = gallery.Build(
             [.. plugins.Presets.OrderBy(p => p.Kind)],
@@ -266,6 +280,8 @@ internal sealed class PresetSlot
         var chosen = await dialog.Show("Start from a preset", parts.Tiles, parts.Filter, fill: true);
 
         audition.PointedAt(null);
+
+        if (RefuseWhileRecording()) return;
 
         switch (chosen)
         {
@@ -289,9 +305,21 @@ internal sealed class PresetSlot
         if (picker.SelectedItem is not PatchPreset preset) return;
         if (picker.SelectedIndex == showing) return;
 
+        if (RefuseWhileRecording())
+        {
+            PutTheBoxBack();
+            return;
+        }
+
         var wanted = picker.SelectedIndex;
 
         if (!await unsaved.MayReplaceThePatchAsync())
+        {
+            PutTheBoxBack();
+            return;
+        }
+
+        if (RefuseWhileRecording())
         {
             PutTheBoxBack();
             return;
@@ -339,6 +367,14 @@ internal sealed class PresetSlot
         restoring = true;
         picker.SelectedIndex = showing;
         restoring = false;
+    }
+
+    private bool RefuseWhileRecording()
+    {
+        if (!recording.Running) return false;
+
+        report.Say("Stop the recording before opening a preset.");
+        return true;
     }
 
     /// <summary>The patch a preset is, said to be the document on its way to the canvas.</summary>
@@ -457,6 +493,8 @@ internal sealed class PresetSlot
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
+        if (RefuseWhileRecording()) return;
+
         if (site.Presets() is not { } at || !await unsaved.MayReplaceThePatchAsync()) return;
 
         report.Say($"Downloading “{shared.Name}” from the preset site…");
@@ -472,6 +510,8 @@ internal sealed class PresetSlot
             report.Say($"Could not download “{shared.Name}”: {ex.Message}", at.Root.ToString());
             return;
         }
+
+        if (RefuseWhileRecording()) return;
 
         try
         {

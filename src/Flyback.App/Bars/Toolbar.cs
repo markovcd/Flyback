@@ -98,6 +98,7 @@ internal sealed class Toolbar
     /// <summary>Tidy was pressed; true where Ctrl was held, which lays out only what is selected.</summary>
     public event EventHandler<bool>? Tidied;
 
+
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek)
