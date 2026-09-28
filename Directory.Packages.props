@@ -29,6 +29,7 @@
     <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Skia" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Win32" Version="12.1.3" />
 
     <!--
       Both are built for Avalonia 12 and versioned by their own authors rather

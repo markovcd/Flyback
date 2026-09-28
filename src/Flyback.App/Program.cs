@@ -62,7 +62,9 @@ internal static class Program
             updates: updates,
             shared: shared);
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        BuildAvaloniaApp()
+            .UseDriver(OutputSettings.Load(OutputSettings.File).Driver)
+            .StartWithClassicDesktopLifetime(args);
     }
 
     /// <remarks>

@@ -157,6 +157,15 @@ internal sealed class OutputSections
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>What draws on Windows, in the order of <see cref="GraphicsDriver"/>.</summary>
+    private readonly ComboBox driver = new Picker
+    {
+        Name = "driver",
+        ItemsSource = new[] { "OpenGL", "Direct3D" },
+        SelectedIndex = 0,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     /// <summary>The monitors <see cref="fullScreenOn"/> lists after its first two rows, in order.</summary>
     private List<MonitorSpot> fullScreenMonitors = [];
 
@@ -322,6 +331,7 @@ internal sealed class OutputSections
         ShowStartupPatch(current.DefaultPreset);
 
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
+        driver.SelectedIndex = (int)current.Driver;
 
         frameRate.SelectedIndex = Nearest(FrameRates, current.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, current.PreviewFrameRate);
@@ -368,6 +378,7 @@ internal sealed class OutputSections
             FullScreen = fullScreen.On,
             FullScreenMonitor = fullScreen.Monitor,
             Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top,
+            Driver = driver.SelectedIndex == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl,
 
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
@@ -520,6 +531,15 @@ internal sealed class OutputSections
         Graphics.Children.Add(InspectorRows.Field("Size", Resolution));
         Graphics.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
         Graphics.Children.Add(InspectorRows.Field("Render", Gpu));
+
+        ToolTip.SetTip(driver,
+            "What draws the window and the picture, from the next time Flyback starts. OpenGL "
+            + "builds a large patch's shader in a second where Direct3D can take several and hold "
+            + "the window while it does; Direct3D is for a machine whose OpenGL misbehaves, and "
+            + "is used anyway where OpenGL will not start.");
+
+        // Only Windows has a second driver to offer.
+        if (OperatingSystem.IsWindows()) Graphics.Children.Add(InspectorRows.Field("Driver", driver));
         ToolTip.SetTip(transportEdge,
             "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "
             + "the knobs take the other edge.");

@@ -302,6 +302,32 @@ public class OutputSettingsTests : UiTest
         OutputSettings.Load(settingsPath).Transport.ShouldBe(TransportEdge.Bottom);
     }
 
+    [AvaloniaFact]
+    public void Picking_Direct3D_is_kept_for_the_next_launch()
+    {
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "only Windows has a second driver");
+
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+        var driver = All<ComboBox>(dialog).Single(c => c.Name == "driver");
+
+        driver.SelectedIndex.ShouldBe(0);
+
+        driver.SelectedIndex = 1;
+        CloseSettings(window, dialog, save: true);
+
+        OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
+        All<ComboBox>(OpenSettings(Open(settingsPath))).Single(c => c.Name == "driver").SelectedIndex.ShouldBe(1);
+    }
+
+    [AvaloniaFact]
+    public void Only_Windows_offers_a_driver()
+    {
+        var dialog = OpenSettings(Open());
+
+        All<ComboBox>(dialog).Any(c => c.Name == "driver").ShouldBe(OperatingSystem.IsWindows());
+    }
+
     /// <summary>What is picked here is a launch's business, not this one's.</summary>
     [AvaloniaFact]
     public void Picking_a_startup_preset_does_not_change_the_canvas()

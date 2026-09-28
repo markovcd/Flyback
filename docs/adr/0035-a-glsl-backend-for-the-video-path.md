@@ -213,4 +213,6 @@ the UI thread, so a GL call that blocks stops the whole window, not only the can
 And ANGLE's D3D11 link builds the pixel shader for one output only; a patch with
 planes draws to two attachments, so its first draw compiles the shader again, on the
 drawing thread: 7-8 s for Mycelium, once per new program. Nothing ANGLE offers moves
-that compile off the thread that draws.
+that compile off the thread that draws, which is why
+[0155](0155-windows-draws-through-native-opengl.md) draws Windows through native
+OpenGL instead.

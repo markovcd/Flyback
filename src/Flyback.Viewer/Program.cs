@@ -97,6 +97,7 @@ internal static class Program
 
         return AppBuilder.Configure<ViewerApp>()
             .UsePlatformDetect()
+            .UseDriver(settings.Driver)
             .WithInterFont()
             .LogToTrace()
             .StartWithClassicDesktopLifetime([]);
