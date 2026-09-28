@@ -45,8 +45,9 @@ and `section`, counting from 1.
   "before" is the last section, which is where a looping arrangement comes from.
 - **Tidied on the way to the emit**: parts shorter than the longest hold at nought
   to the end, and anything past 8 by 32 is dropped.
-- **Its own block in the text**: a row of levels a part, `|` between parts, `~`
-  for nought and `>` before a level that glides. Only `|` ends a part, so a long
+- **Its own block in the text**: a row of levels a part, `|` between parts, and
+  `>` before a level that glides. A level is only ever a number: `~` is a rest in a
+  sequencer's block, and nought here would be a different thing by the same name. Only `|` ends a part, so a long
   one runs over lines, and a printing too long for one line breaks at each `|`.
 - **Its own control in the inspector**: a map of every level shaded in the
   module's accent, and a row of the text's levels to type into for each part.

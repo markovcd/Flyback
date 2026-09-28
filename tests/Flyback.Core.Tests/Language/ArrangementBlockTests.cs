@@ -23,7 +23,7 @@ public class ArrangementBlockTests
     [Fact]
     public void A_block_is_a_row_of_levels_for_each_part()
     {
-        var parts = Parts(Read("arrangement() [ 1 ~ >0.5 | 0 1 1 ] |> out.left"));
+        var parts = Parts(Read("arrangement() [ 1 0 >0.5 | 0 1 1 ] |> out.left"));
 
         parts.Count.ShouldBe(2);
         parts[0].ShouldBe([new PartLevel(1f), new PartLevel(0f), new PartLevel(0.5f, Glides: true)]);
@@ -67,6 +67,15 @@ public class ArrangementBlockTests
 
         load.Issues.ShouldHaveSingleItem().Code.ShouldBe(IssueCode.LevelSyntax);
         load.Issues[0].Column.ShouldBe(19);
+    }
+
+    /// <summary>A rest belongs to a sequencer's block; here a level is always a number.</summary>
+    [Fact]
+    public void A_rest_is_not_a_level()
+    {
+        var load = PatchLanguage.Build("arrangement() [ 1 ~ ] |> out.left", NodeCatalog.BuiltIn);
+
+        load.Issues.ShouldHaveSingleItem().Code.ShouldBe(IssueCode.LevelSyntax);
     }
 
     [Fact]

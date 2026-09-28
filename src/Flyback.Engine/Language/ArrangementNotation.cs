@@ -6,7 +6,7 @@ namespace Flyback.Core.Language;
 
 /// <summary>
 /// An Arrangement's block: a row of levels for each part, the parts separated by
-/// '|'. A level is a number, '~' for nought, and '>' in front of one that glides.
+/// '|'. A level is a number, with '>' in front of one that glides.
 /// </summary>
 /// <remarks>
 /// Only '|' ends a part, so a long part may run over as many lines as it likes, the
@@ -51,7 +51,7 @@ internal static class ArrangementNotation
 
             issues.Add(new LanguageIssue(
                 wordLine, wordColumn, IssueCode.LevelSyntax,
-                $"'{block[start..at]}' is not a level: write a number, '~' for nought, or '>' before a number that glides."));
+                $"'{block[start..at]}' is not a level: write a number, with '>' before one that glides."));
         }
 
         parts.RemoveAll(part => part.Count == 0);
@@ -86,8 +86,6 @@ internal static class ArrangementNotation
     {
         var glides = word.StartsWith('>');
         var number = glides ? word[1..] : word;
-
-        if (number == "~") return new PartLevel(0f, glides);
 
         return double.TryParse(number, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
                && double.IsFinite(value)

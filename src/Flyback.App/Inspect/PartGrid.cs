@@ -178,7 +178,7 @@ internal sealed class PartGrid
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        ToolTip.SetTip(box, "A level for each section: a number, '~' for nought, '>' before one that glides there.");
+        ToolTip.SetTip(box, "A level for each section: a number, with '>' before one that glides there.");
 
         box.KeyDown += (_, e) =>
         {

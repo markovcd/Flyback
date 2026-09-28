@@ -59,7 +59,7 @@ public static class IssueCode
 
     // --- arrangement blocks ----------------------------------------------------
 
-    /// <summary>A level in an Arrangement's block that is not a number, a '>' before one, or '~'.</summary>
+    /// <summary>A level in an Arrangement's block that is not a number, or a '>' before one.</summary>
     public const string LevelSyntax = "level-syntax";
 
     /// <summary>A block that writes more parts, or a part more sections, than an Arrangement holds.</summary>

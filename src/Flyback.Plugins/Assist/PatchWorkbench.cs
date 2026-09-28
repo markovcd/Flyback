@@ -1125,8 +1125,8 @@ public sealed partial class PatchWorkbench
                 "Replaces every part on an Arrangement. Its parts are a grid on the module rather "
                 + "than knobs, so this is the only way to write them — send every part, because "
                 + "this replaces what was there. Each part is one string with a level for each "
-                + "section, in order: a number, '~' for nought, or '>' before a number that "
-                + "glides there from the section before's level across the whole section. Parts "
+                + "section, in order: a number, with '>' before one that glides there from the "
+                + "section before's level across the whole section. Parts "
                 + "shorter than the longest hold at nought to the end. Up to 8 parts of up to 32 "
                 + "sections; part N comes out of the socket 'part N'.",
                 """

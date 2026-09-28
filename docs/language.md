@@ -569,8 +569,8 @@ and writing `~` there is a patch that plays the same and is not the same patch.
 ### Arrangement notation
 
 An Arrangement's block is a row of levels for each part, one a section, with `|`
-between the parts. A level is a number, `~` for nought, or `>` before a number
-that glides there from the section before's level across the whole section:
+between the parts. A level is a number, with `>` before one that glides there
+from the section before's level across the whole section:
 
 ```
 let song = arrangement(in: beats, rate: 1/32) [
@@ -862,7 +862,7 @@ outputs    = { "." ident } ;
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
 arg        = [ ident ":" ] ( expr | "_" ) ;
 block      = "[" { step } "]" | "[" levels { "|" levels } "]" ;
-levels     = { [ ">" ] ( number | "~" ) } ;
+levels     = { [ ">" ] number } ;
 
 selector   = ident [ "." ident ] ;
 name       = ident { "." ident } ;
