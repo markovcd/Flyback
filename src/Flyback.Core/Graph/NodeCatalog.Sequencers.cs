@@ -12,6 +12,28 @@ public partial class NodeCatalog
     /// the video path. See ADR-0038.
     /// </summary>
     public const int MaxSteps = 32;
+
+    /// <summary>As many parts as an Arrangement holds: one output each.</summary>
+    public const int MaxParts = 8;
+
+    /// <summary>As many sections as an Arrangement holds, on the same budget as a sequence's notes.</summary>
+    public const int MaxSections = MaxSteps;
+
+    public const string ArrangementTypeId = "seq.arrangement";
+
+    /// <summary>Three parts that come in one section after another, so an Arrangement shows what it is for the moment it is dropped.</summary>
+    private static readonly PartLevel[][] DefaultParts =
+    [
+        [new(1f), new(1f), new(1f), new(1f)],
+        [new(0f), new(1f), new(1f), new(1f)],
+        [new(0f), new(0f), new(1f), new(1f)],
+    ];
+
+    /// <summary>
+    /// The shortest a change between sections may take, as a fraction of a section:
+    /// a level that jumps in one sample clicks, for the reason a gate's edge does.
+    /// </summary>
+    private const float ShortestFade = 0.001f;
     
     /// <summary>A minor pentatonic, so a Note Sequencer plays a tune the moment it is dropped.</summary>
     private static readonly Step[] DefaultRiff =
@@ -133,6 +155,36 @@ public partial class NodeCatalog
             + "output or the other. On the picture it flips a new coin every frame.")
         {
             Sinks = ModuleSinks.Audio,
+        };
+
+        yield return new NodeDef(
+            ArrangementTypeId, "Arrangement", ModuleCategories.Timing,
+            [
+                Domain("in", "What it steps across: Time without a wire, or a Tempo's beats."),
+                Num("rate", 0.125f, 0f, 4f) with
+                {
+                    Knee = 0.05f,
+                    Help = "Sections for each unit of 'in': sections a second on Time, or 1/32 on beats for eight bars of four.",
+                },
+                Num("fade", 0f, 0f, 1f) with
+                {
+                    Help = "How long a change of level takes at the start of a section, as a fraction of the section.",
+                },
+            ],
+            [
+                .. Enumerable.Range(1, MaxParts).Select(part => Num($"part {part}") with
+                {
+                    Help = $"Part {part}'s level in the section playing.",
+                }),
+                Num("progress", 0f, 0f, 1f) with { Help = "How far through its section it is, 0 to 1." },
+                Num("section") with { Help = "Which section is playing, counting from 1." },
+            ],
+            EmitArrangement,
+            "Which parts play in each section of a piece, and how loud: a row of levels for each "
+            + "part, stepping a section at a time. Wire a part into a Desk's level or a drum's "
+            + "velocity to bring it in and out.")
+        {
+            Extras = [new ArrangementExtra(DefaultParts)],
         };
 
         yield return StepSequencer(
@@ -413,5 +465,75 @@ public partial class NodeCatalog
             em.Mul(em.Mul(open, opening), closing),
             which,
         ];
+    }
+
+    /// <summary>
+    /// Each part as a sum of windows over the section playing, like a sequence's notes,
+    /// with the windows shared by every part.
+    /// </summary>
+    /// <remarks>
+    /// A level that differs from the section before's is reached over 'fade', or over the
+    /// whole section where it glides. Section one's "before" is the last section, which
+    /// is where a looping arrangement comes from.
+    /// </remarks>
+    private static Slot[] EmitArrangement(Emitter em, EmitContext node)
+    {
+        var parts = node.Parts;
+        var zero = em.Constant(0f);
+
+        if (parts.Count == 0 || parts[0].Count == 0)
+            return [.. Enumerable.Repeat(zero, MaxParts), zero, zero];
+
+        var sections = parts[0].Count;
+
+        var traveled = em.Mul(node[0], node[1]);
+        var index = em.Unary(OpCode.Floor, em.Binary(OpCode.Mod, traveled, em.Constant(sections)));
+        var progress = em.Unary(OpCode.Fract, traveled);
+
+        var edges = new Slot[sections + 1];
+        edges[0] = em.Constant(1f);
+        edges[sections] = zero;
+
+        for (var s = 1; s < sections; s++)
+            edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
+
+        var windows = new Slot[sections];
+        for (var s = 0; s < sections; s++) windows[s] = em.Sub(edges[s], edges[s + 1]);
+
+        var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(ShortestFade), em.Constant(1f));
+        var eased = em.Ternary(OpCode.Smoothstep, zero, fade, progress);
+
+        var outputs = new Slot[MaxParts + 2];
+
+        for (var p = 0; p < MaxParts; p++)
+            outputs[p] = p < parts.Count ? Part(parts[p]) : zero;
+
+        outputs[MaxParts] = progress;
+        outputs[MaxParts + 1] = em.Add(index, 1f);
+
+        return outputs;
+
+        Slot Part(IReadOnlyList<PartLevel> levels)
+        {
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (levels.All(level => level.Value == levels[0].Value)) return em.Constant(levels[0].Value);
+
+            Slot? sum = null;
+
+            for (var s = 0; s < sections; s++)
+            {
+                var was = levels[(s + sections - 1) % sections].Value;
+                var level = levels[s];
+
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                var term = level.Value == was
+                    ? level.Value == 0f ? (Slot?)null : em.Mul(windows[s], level.Value)
+                    : em.Mul(windows[s], em.Add(em.Mul(level.Glides ? progress : eased, level.Value - was), was));
+
+                if (term is { } t) sum = sum is { } so ? em.Add(so, t) : t;
+            }
+
+            return sum ?? zero;
+        }
     }
 }

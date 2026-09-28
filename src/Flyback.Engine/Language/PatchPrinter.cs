@@ -96,8 +96,8 @@ public static class PatchPrinter
     public static string Knob(float value, PortDisplay display) => PatchValueWriter.Value(value, display);
 
     /// <summary>
-    /// The tune or the scale a module carries, written as the block that says it
-    /// — or null where the module carries neither.
+    /// The tune, the scale or the parts a module carries, written as the block that
+    /// says them — or null where the module carries none.
     /// </summary>
     /// <remarks>
     /// Null also for an empty block, because a printing is for reading. A caller

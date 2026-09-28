@@ -194,7 +194,9 @@ public static class SourceLayout
     /// a single token scanned to its closing bracket, and its steps are separated
     /// by whitespace of any kind. <see cref="Lexer"/> counts the newlines it
     /// swallows, which keeps a complaint after a long tune on the right line.
-    /// Filled rather than one step per line, because a tune is read as a run.
+    /// Filled rather than one step per line, because a tune is read as a run. An
+    /// Arrangement's parts, separated by '|', start a line each, since they are read
+    /// down as well as across.
     /// </remarks>
     private static IReadOnlyList<string>? Steps(string line, int width)
     {
@@ -220,6 +222,11 @@ public static class SourceLayout
             if (row.Length > indent.Length) row.Append(' ');
 
             row.Append(step);
+
+            if (step != "|") continue;
+
+            folded.Add(row.ToString());
+            row.Clear().Append(indent);
         }
 
         // Whatever followed the block goes with the last step, which is the

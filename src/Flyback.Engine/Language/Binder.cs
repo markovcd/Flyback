@@ -1417,8 +1417,8 @@ public sealed class Binder
     }
 
     /// <summary>
-    /// The notes or the scale a block spells, and the one adjustment alternation
-    /// asks for.
+    /// The notes, the scale or the parts a block spells, and the one adjustment
+    /// alternation asks for.
     /// </summary>
     /// <param name="opened">Where the block's '[' is, which what is wrong inside it is counted from.</param>
     private void Carry(Value placed, NodeDef def, string block, int line, int column, (int Line, int Column) opened)
@@ -1441,6 +1441,12 @@ public sealed class Binder
         if (def.Extra<ScaleExtra>() is not null)
         {
             ScaleExtra.Set(node, StepNotation.Classes(block, opened.Line, opened.Column, issues));
+            return;
+        }
+
+        if (def.Extra<ArrangementExtra>() is not null)
+        {
+            ArrangementExtra.Set(node, ArrangementNotation.Read(block, opened.Line, opened.Column, issues));
             return;
         }
 

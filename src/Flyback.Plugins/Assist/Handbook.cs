@@ -94,7 +94,10 @@ internal static class Handbook
           `~` is a rest, `[a b]` splits a step in two, `@3` makes a step three
           times as long, `!3` repeats it, `<a b>` alternates each pass,
           `a(3,8)` is three hits over eight steps, and `E5%0` is the note
-          silenced, which is not a rest.
+          silenced, which is not a rest. An Arrangement's parts are a block
+          too, a row of levels a section for each part and `|` between parts:
+          `arrangement(rate: 1/32) [ 1 1 0 1 | 0 >1 1 0 ]`, where `>` glides
+          there over the section.
         - **A file is a string**: `sample("kick.wav")`, `picture("photo.png")`.
         - **`off name`**, on its own line, switches a module off: what is
           patched into it comes straight out, and nothing where nothing is.

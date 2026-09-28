@@ -4,7 +4,7 @@ using Flyback.Core.Graph.Extras;
 
 namespace Flyback.Core.Language;
 
-/// <summary>Writes individual values and carried step/scale data in language syntax.</summary>
+/// <summary>Writes individual values and carried notes, scales and parts in language syntax.</summary>
 internal static class PatchValueWriter
 {
     internal static string? Carried(NodeInstance node, NodeDef def)
@@ -26,6 +26,8 @@ internal static class PatchValueWriter
 
             return scale.Count == 0 ? null : "[ " + string.Join(' ', scale.Select(Pitch.ClassName)) + " ]";
         }
+
+        if (def.Extra<ArrangementExtra>() is not null) return ArrangementNotation.Write(ArrangementExtra.Of(node));
 
         return null;
     }

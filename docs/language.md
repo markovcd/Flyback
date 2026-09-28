@@ -415,13 +415,14 @@ binding to be said by, including the `x` and `t` of section 5.
 
 ## 8. What a module carries that is not a knob
 
-A sequencer's notes, a Quantiser's scale, a Sample's file
+A sequencer's notes, a Quantiser's scale, an Arrangement's parts, a Sample's file
 ([0061](adr/0061-what-a-module-carries-is-kept-in-one-store.md)) go in a
 trailing block:
 
 ```
 let riff  = notes(rate: 4, gate_length: 0.5) [ A3 C4 [E4 G4] ~ ]
 let snap  = quantiser() [ C D E G A ]
+let song  = arrangement(rate: 1/32) [ 1 1 0 1 | 0 >1 1 0 ]
 let clip  = sample("kick.wav")
 let photo = picture("sunset.png")
 ```
@@ -564,6 +565,25 @@ permissive and let the engine's own tolerance do the work.
 second keeps the pitch in the program, which is what a phrase does when it holds
 a note through a gap rather than stopping. Whole band's lead uses the second,
 and writing `~` there is a patch that plays the same and is not the same patch.
+
+### Arrangement notation
+
+An Arrangement's block is a row of levels for each part, one a section, with `|`
+between the parts. A level is a number, `~` for nought, or `>` before a number
+that glides there from the section before's level across the whole section:
+
+```
+let song = arrangement(in: beats, rate: 1/32) [
+    1 1 1 1 0 0 1 1 |
+    0 0.8 0.8 0.8 0 0 0.8 0.8 |
+    0 0 >1 1 0.5 >1 1 0 ]
+```
+
+Part N comes out of `song.part_N`, the first of them out of `song` itself. Only
+`|` ends a part, so a long one may run over several lines, and a printing breaks a
+block too long for one line at each `|`. A part shorter than the longest holds at
+nought to the end. Up to 8 parts of up to 32 sections; more is `too-many-parts`,
+and anything that is not a level is `level-syntax`.
 
 ---
 
@@ -841,7 +861,8 @@ outputs    = { "." ident } ;
 
 call       = name "(" [ arg { "," arg } ] ")" [ block ] ;
 arg        = [ ident ":" ] ( expr | "_" ) ;
-block      = "[" { step } "]" ;
+block      = "[" { step } "]" | "[" levels { "|" levels } "]" ;
+levels     = { [ ">" ] ( number | "~" ) } ;
 
 selector   = ident [ "." ident ] ;
 name       = ident { "." ident } ;

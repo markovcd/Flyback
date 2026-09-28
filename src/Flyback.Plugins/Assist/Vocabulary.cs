@@ -14,6 +14,7 @@ internal static class Vocabulary
 {
     public const string SetSteps = "set_steps";
     public const string SetScale = "set_scale";
+    public const string SetArrangement = "set_arrangement";
     public const string SetSample = "set_sample";
     public const string SetPicture = "set_picture";
     public const string SetExtra = "set_extra";
@@ -26,7 +27,7 @@ internal static class Vocabulary
     /// </summary>
     /// <remarks>
     /// Anything not named here is <see cref="SetExtra"/>, which is right by
-    /// construction: the four below are the kinds the engine ships and the only ones
+    /// construction: the five below are the kinds the engine ships and the only ones
     /// with a tool of their own, and every other kind is one a plugin declared through
     /// <see cref="NodeExtra.Fields"/> (ADR-0055).
     /// </remarks>
@@ -34,6 +35,7 @@ internal static class Vocabulary
     {
         StepsExtra.Name => SetSteps,
         ScaleExtra.Name => SetScale,
+        ArrangementExtra.Name => SetArrangement,
         SampleExtra.Name => SetSample,
         PictureExtra.Name => SetPicture,
         _ => SetExtra,

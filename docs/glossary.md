@@ -49,7 +49,8 @@ has patched a hardware synthesizer should already know most of them.
 | **box** | A group as it is drawn: open, showing its modules, or shut, drawn as one. | — | frame, container |
 | **bus** | A named connection between a Send and every Receive that shares its name: a wire with no line drawn. | `Buses` | channel, send (the module is the Send) |
 | **Expression** | The module that computes a typed formula over four inputs. Arithmetic in the text language and in presets arrives as one. | type id `math.expression` | formula module |
-| **what a module carries** | Anything a module holds that is not a knob: a sequencer's steps, a quantizer's scale, a Sample's file, a plugin's fields. Named by what it is ("its scale", "its file") wherever possible. | `NodeExtra`, `NodeInstance.State` | extra, state, payload |
+| **what a module carries** | Anything a module holds that is not a knob: a sequencer's steps, a quantizer's scale, an Arrangement's parts, a Sample's file, a plugin's fields. Named by what it is ("its scale", "its file") wherever possible. | `NodeExtra`, `NodeInstance.State` | extra, state, payload |
+| **part**, **section** | An Arrangement's rows and columns: a part is one thing brought in and out, a section one stretch of the piece. | `PartLevel`, `ArrangementExtra` | track, lane, scene |
 | **field** | One thing a plugin's module carries, edited in the inspector. | `ExtraField` | property, attribute |
 | **preset** | A patch that ships with Flyback or with a plugin, picked from the gallery. | `PatchPreset`, `Presets` | example, template, demo |
 | **shared preset** | A preset from the preset site rather than from Flyback. | `PresetSite` | community preset, online preset |

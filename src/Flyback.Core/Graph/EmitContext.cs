@@ -140,6 +140,16 @@ public readonly record struct EmitContext(Slot[] Inputs)
     public LoadedImage? Picture { get; init; }
 
     /// <summary>
+    /// An Arrangement's parts, tidied to the same number of sections each, and
+    /// empty for every other module.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyList<PartLevel>> Parts
+    {
+        get => field ?? [];
+        init;
+    }
+
+    /// <summary>
     /// What a plugin's own kinds of extra folded onto this context, keyed by
     /// <see cref="NodeExtra.Key"/>. Empty for every module in the engine's own
     /// catalog, which read the typed properties above.

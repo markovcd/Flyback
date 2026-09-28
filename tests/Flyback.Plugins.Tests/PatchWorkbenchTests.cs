@@ -787,6 +787,34 @@ public class PatchWorkbenchTests
         notes[2].ShouldBe(new Step(64f, 1f, 0f));
     }
 
+    [Fact]
+    public async Task An_arrangement_is_written_a_part_a_string()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", """{"type_id":"seq.arrangement","handle":"song1"}""");
+
+        var set = await Call(bench, "set_arrangement", """{"handle":"song1","parts":["1 0 >1","0.5"]}""");
+
+        set.Ok.ShouldBeTrue(set.Text);
+
+        var parts = ArrangementExtra.Of(bench.Snapshot().Nodes.Single(n => n.TypeId == "seq.arrangement"));
+
+        parts[0].ShouldBe([new PartLevel(1f), new PartLevel(0f), new PartLevel(1f, Glides: true)]);
+        parts[1].Select(l => l.Value).ShouldBe([0.5f, 0f, 0f]);
+    }
+
+    [Fact]
+    public async Task A_part_that_does_not_read_is_refused_by_number()
+    {
+        var bench = Bench();
+        await Call(bench, "add_module", """{"type_id":"seq.arrangement","handle":"song1"}""");
+
+        var set = await Call(bench, "set_arrangement", """{"handle":"song1","parts":["1 1","1 loud"]}""");
+
+        set.Ok.ShouldBeFalse();
+        set.Text.ShouldContain("part 2");
+    }
+
     /// <summary>Replaced outright, so a shorter tune does not leave the tail of a longer one behind.</summary>
     [Fact]
     public async Task Setting_the_notes_replaces_the_whole_tune()

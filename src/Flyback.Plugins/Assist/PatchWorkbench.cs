@@ -323,6 +323,46 @@ public sealed partial class PatchWorkbench
     }
 
     /// <summary>
+    /// Every part of an Arrangement at once, each written as the text language writes
+    /// one, for the reason a tune is sent whole.
+    /// </summary>
+    private ToolOutcome SetArrangement(JsonElement arguments)
+    {
+        if (!Node(arguments, "handle", out var node, out var def, out var refusal))
+            return ToolOutcome.Refused(refusal);
+
+        if (def.Extra<ArrangementExtra>() is not { } carries)
+            return ToolOutcome.Refused($"{Handle(node)} is a {def.Name}, which has no parts. Only an Arrangement does.");
+
+        if (!arguments.TryGetProperty("parts", out var given) || given.ValueKind != JsonValueKind.Array)
+            return ToolOutcome.Refused("'parts' is required: a list of strings, one a part, like \"0 1 >1 0.5\".");
+
+        if (given.GetArrayLength() > NodeCatalog.MaxParts)
+            return ToolOutcome.Refused(
+                $"an Arrangement holds at most {NodeCatalog.MaxParts} parts, and that is {given.GetArrayLength()}.");
+
+        var parts = new List<List<PartLevel>>();
+
+        foreach (var part in given.EnumerateArray())
+        {
+            if (part.ValueKind != JsonValueKind.String || part.GetString() is not { } written || written.Contains('|'))
+                return ToolOutcome.Refused("every part is one string of levels, with no '|'.");
+
+            var issues = new List<LanguageIssue>();
+            var read = ArrangementNotation.Read(written, 1, 1, issues);
+
+            if (issues.Count > 0) return ToolOutcome.Refused($"part {parts.Count + 1}: {issues[0].Message}");
+
+            parts.Add(read.Count == 0 ? [] : read[0]);
+        }
+
+        ArrangementExtra.Set(node, ArrangementExtra.Tidy(parts));
+        Edits++;
+
+        return Fine($"set {parts.Count} parts on {Handle(node)}. {carries.Report(node)} {Issues()}");
+    }
+
+    /// <summary>
     /// The computer keyboard's layout, which is the patch's rather than any
     /// module's (ADR-0099) — so it takes no handle.
     /// </summary>
@@ -1081,6 +1121,24 @@ public sealed partial class PatchWorkbench
                 }
                 """),
 
+            Does(Vocabulary.SetArrangement, SetArrangement,
+                "Replaces every part on an Arrangement. Its parts are a grid on the module rather "
+                + "than knobs, so this is the only way to write them — send every part, because "
+                + "this replaces what was there. Each part is one string with a level for each "
+                + "section, in order: a number, '~' for nought, or '>' before a number that "
+                + "glides there from the section before's level across the whole section. Parts "
+                + "shorter than the longest hold at nought to the end. Up to 8 parts of up to 32 "
+                + "sections; part N comes out of the socket 'part N'.",
+                """
+                {
+                  "properties": {
+                    "handle": { "type": "string" },
+                    "parts": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "required": ["handle", "parts"]
+                }
+                """),
+
             Does(Vocabulary.SetKeyboard, SetKeyboard,
                 "Lays the computer keyboard out for whoever plays a MIDI In listening to it. "
                 + "'piano' is the tracker layout, and the default. 'scale' puts the seven notes of "
@@ -1144,8 +1202,8 @@ public sealed partial class PatchWorkbench
                 + "true or false, a choice takes the id of one of the things it offers — "
                 + "describe_module lists them, and a refusal names them too — and text takes a "
                 + "string, with \\n between lines where it holds several. The built-in "
-                + "notes, scale, file and picture are not set this way: they have set_steps, "
-                + "set_scale, set_sample and set_picture.",
+                + "notes, scale, parts, file and picture are not set this way: they have set_steps, "
+                + "set_scale, set_arrangement, set_sample and set_picture.",
                 """
                 {
                   "properties": {

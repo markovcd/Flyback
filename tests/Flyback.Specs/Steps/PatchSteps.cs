@@ -352,6 +352,14 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenASequencer(string values, int rate) =>
         Written($"values(rate: {rate}) [ {string.Join(' ', values.Split(',', StringSplitOptions.TrimEntries))} ] |> out.left");
 
+    [Given("an arrangement of sections {float} seconds long whose first part is {string}")]
+    public void GivenAnArrangement(float seconds, string part) =>
+        Written($"arrangement(rate: {Number(1f / seconds)}) [ {part} | 1 ] |> out.left");
+
+    [Given("an arrangement of sections {float} seconds long whose first part is {string}, telling which section is playing")]
+    public void GivenAnArrangementsSection(float seconds, string part) =>
+        Written($"arrangement(rate: {Number(1f / seconds)}) [ {part} ].section |> out.left");
+
     [Given("the gate of a sequencer stepping {int} times a second")]
     public void GivenASequencersGate(int rate) =>
         Written($"let s = values(rate: {rate}) [ 0.5 ]{(char)10}s.gate |> out.left");

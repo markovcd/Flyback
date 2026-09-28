@@ -1088,6 +1088,9 @@ internal sealed class Inspector
         // as the octave it is a subset of rather than as a list of numbers.
         ScaleExtra => new ScaleKeys(node, def, because => document.Edited(node, because)).View,
 
+        // An Arrangement's parts are a grid, read as a shape and written a row at a time.
+        ArrangementExtra => new PartGrid(node, def, because => document.Edited(node, because)).View,
+
         // The one a node carries that is not a number, so it is a name and a
         // button rather than a control with a range.
         SampleExtra => BuildSampleRow(node),

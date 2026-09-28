@@ -57,6 +57,14 @@ public static class IssueCode
     /// <summary>A block that spells more steps than a sequence holds.</summary>
     public const string TooManySteps = "too-many-steps";
 
+    // --- arrangement blocks ----------------------------------------------------
+
+    /// <summary>A level in an Arrangement's block that is not a number, a '>' before one, or '~'.</summary>
+    public const string LevelSyntax = "level-syntax";
+
+    /// <summary>A block that writes more parts, or a part more sections, than an Arrangement holds.</summary>
+    public const string TooManyParts = "too-many-parts";
+
     // --- names -----------------------------------------------------------------
 
     public const string UnknownName = "unknown-name";

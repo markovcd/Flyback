@@ -33,6 +33,7 @@ seq.hold
 seq.chance
 seq.notes
 seq.values
+seq.arrangement
 env.adsr
 audio.duck
 audio.filter

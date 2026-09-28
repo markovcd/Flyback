@@ -643,7 +643,7 @@ internal sealed class Document
         // A block that says nothing rather than no block at all: a tune emptied
         // in the panel has to empty in the text too, and a call with nothing
         // after it is a call that leaves whatever is there alone.
-        if (def.Extra<StepsExtra>() is not null || def.Extra<ScaleExtra>() is not null)
+        if (def.Extra<StepsExtra>() is not null || def.Extra<ScaleExtra>() is not null || def.Extra<ArrangementExtra>() is not null)
         {
             Put(Map.Carried(id, PatchPrinter.Carried(node, def) ?? "[ ]"), id, ref lost);
             return;
