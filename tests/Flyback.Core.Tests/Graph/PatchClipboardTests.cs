@@ -451,4 +451,34 @@ public class PatchClipboardTests
         fresh.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops
             .ShouldBe(patch.CompileForAudio(NodeCatalog.BuiltIn).Program.Ops);
     }
+
+    /// <summary>
+    /// What crosses between the text and the canvas is the modules, their wires and
+    /// their groups; what the patch says about itself stays where it was.
+    /// </summary>
+    [Fact]
+    public void A_bare_patch_is_its_modules_wires_and_groups_alone()
+    {
+        var patch = Chain(out var time, out var osc, out var gain, out _);
+        var knob = new PatchControl { Id = Guid.NewGuid(), Name = "Level" };
+
+        patch.Description = "a chain";
+        patch.Length = 30;
+        patch.Controls = [knob];
+        patch.Groups = [new NodeGroup { Id = Guid.NewGuid(), Name = "Pair", Members = [time.Id, osc.Id] }];
+        ControlMap.Link(gain, 1, ControlLink.For(knob.Id, NodeCatalog.BuiltIn.Get("math.mul")!.Inputs[1], 0.5f));
+
+        var bare = PatchClipboard.Bare(patch);
+
+        bare.Nodes.Select(n => n.TypeId).Order().ShouldBe(["math.mul", "osc.sine", "time"]);
+        bare.Connections.Count.ShouldBe(2, "the wire into the Output has nothing to be plugged into");
+        bare.Groups.ShouldHaveSingleItem().Name.ShouldBe("Pair");
+
+        bare.Description.ShouldBeNull();
+        bare.Length.ShouldBeNull();
+        bare.Controls.ShouldBeNull();
+        bare.Nodes.ShouldAllBe(n => !ControlMap.All(n).Any());
+
+        ControlMap.Of(gain, 1).ShouldNotBeNull("the patch it came from keeps its link");
+    }
 }

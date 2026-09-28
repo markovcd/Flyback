@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -397,6 +398,49 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Presses a key with Ctrl held, as every editing shortcut is.</summary>
     public void PressCtrl(PhysicalKey key, bool shift = false) =>
         Press(key, RawInputModifiers.Control | (shift ? RawInputModifiers.Shift : RawInputModifiers.None));
+
+    /// <summary>Puts text on the clipboard, as copying it anywhere else would.</summary>
+    public void Clip(string text) =>
+        Run(async () =>
+        {
+            var clipboard = TopLevel.GetTopLevel(Window())?.Clipboard
+                ?? throw new InvalidOperationException("no clipboard under the window");
+
+            await clipboard.SetTextAsync(text);
+            return true;
+        });
+
+    /// <summary>Shows the text view, writes <paramref name="source"/> into it and applies it, which makes the text the document.</summary>
+    public void ApplyText(string source)
+    {
+        // Its own turn, since the text view is laid out only once it is showing.
+        DoWindow((open, _) => open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == "code").IsChecked = true);
+
+        DoWindow((open, _) =>
+        {
+            Source(open).Text = source;
+            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        });
+    }
+
+    /// <summary>What the text view holds.</summary>
+    public string Text => ReadWindow(open => Source(open).Text);
+
+    /// <summary>Presses Ctrl+V in the text view, with the caret at the end of the text.</summary>
+    public void PasteIntoText() =>
+        DoWindow((open, _) =>
+        {
+            var text = Source(open);
+
+            text.CaretOffset = text.Document.TextLength;
+            text.TextArea.Focus();
+
+            open.KeyPressQwerty(PhysicalKey.V, RawInputModifiers.Control);
+            open.KeyReleaseQwerty(PhysicalKey.V, RawInputModifiers.Control);
+        });
+
+    private static AvaloniaEdit.TextEditor Source(MainWindow open) =>
+        open.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().Single(t => t.Name == "source");
 
     /// <summary>Runs what a step does to the canvas, where no key does it: a panel's button, say.</summary>
     internal void Do(Action<NodeEditor> act) => DoWindow((_, canvas) => act(canvas));

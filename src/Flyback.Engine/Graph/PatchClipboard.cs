@@ -68,6 +68,24 @@ public static class PatchClipboard
     }
 
     /// <summary>
+    /// The modules of <paramref name="patch"/>, the wires between them and the
+    /// groups round them, and nothing the patch says about itself: no Output, no
+    /// panel and no link to one, no length, credits or keyboard.
+    /// </summary>
+    /// <remarks>
+    /// What crosses from one kind of document to the other: a patch file pasted
+    /// into the text, and text pasted onto the canvas.
+    /// </remarks>
+    public static Patch Bare(Patch patch)
+    {
+        var bare = Copy(patch, patch.Nodes.Select(node => node.Id));
+
+        foreach (var node in bare.Nodes) node.SetState(ControlMap.StateKey, null);
+
+        return bare;
+    }
+
+    /// <summary>
     /// Adds a copy of <paramref name="fragment"/> to <paramref name="into"/>,
     /// shifted by (<paramref name="dx"/>, <paramref name="dy"/>), and hands back
     /// the modules that arrived.

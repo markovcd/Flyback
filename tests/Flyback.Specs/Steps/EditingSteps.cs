@@ -262,6 +262,84 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
     [Then("the patch still has one Output")]
     public void ThenOneOutput() => context.Patch.Nodes.Count(n => NodeCatalog.IsSink(n.TypeId)).ShouldBe(1);
 
+    // --- pasting between the canvas and the text ------------------------------
+
+    private const string Grouped = """
+        description "somebody else's patch"
+        panel level = 0.5
+
+        group "Bass" {
+          let tone = sine(freq: 110)
+          let quiet = tone * 0.5
+        }
+
+        quiet |> out.left
+        out.volume = level
+        """;
+
+    [When("patch text holding a group of two modules, a panel knob and a description is pasted onto the canvas")]
+    public void WhenTextIsPastedOntoTheCanvas()
+    {
+        editor.Open();
+        editor.Clip(Grouped);
+        editor.PressCtrl(PhysicalKey.V);
+
+        session.Pasted = editor.Selected;
+    }
+
+    [Then("the canvas has those two modules in their group")]
+    public void ThenTheGroupArrived()
+    {
+        session.Pasted.Count.ShouldBe(2);
+        session.Pasted.ShouldContain(n => n.TypeId == "osc.sine");
+
+        var group = context.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+
+        group.Name.ShouldBe("Bass");
+        group.Members.Order().ShouldBe(session.Pasted.Select(n => n.Id).Order());
+    }
+
+    [Then("the patch keeps its own panel and description")]
+    public void ThenThePatchKeepsItsOwn()
+    {
+        context.Patch.Controls.ShouldBeNull();
+        context.Patch.Description.ShouldBeNull();
+    }
+
+    [Given("the text is the document")]
+    public void GivenTheTextIsTheDocument() =>
+        editor.ApplyText("""
+            let hum = t |> sine(freq: 220)
+            hum |> out.left
+            """);
+
+    [When("modules copied off a canvas are pasted into the text")]
+    public void WhenACopyIsPastedIntoTheText()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var tone = b.Add("osc.sine", 0, 0, (1, 330f));
+        var half = b.Add("math.mul", 200, 0, (1, 0.5f));
+
+        // Named as the text already names its own, which the paste must not repeat.
+        tone.Name = "hum";
+        b.Wire(tone, 0, half, 0);
+
+        editor.Clip(PatchIO.ToJson(b.Patch));
+        editor.PasteIntoText();
+    }
+
+    [Then("the text builds the pasted modules beside the ones already written")]
+    public void ThenTheTextBuildsBoth()
+    {
+        Read(editor.Text);
+
+        Text.Ok.ShouldBeTrue(Text.Report);
+        context.Patch.Nodes.Count(n => n.TypeId == "osc.sine").ShouldBe(2);
+
+        var pasted = context.Patch.Nodes.Single(n => n.TypeId == "osc.sine" && n.InputValues[1] == 330f);
+        context.Patch.Connections.Any(c => c.SourceNode == pasted.Id).ShouldBeTrue("the wire out of it came too");
+    }
+
     // --- building blocks ------------------------------------------------------
 
     private PatchLoad Opened => session.Opened.ShouldNotBeNull("no file has been opened");

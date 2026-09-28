@@ -24,10 +24,11 @@ internal sealed class PatchPrintPlan(
     internal static PatchPrintPlan Create(
         Patch patch,
         ModuleCatalog modules,
-        IReadOnlyDictionary<Guid, string>? called)
+        IReadOnlyDictionary<Guid, string>? called,
+        IReadOnlyCollection<string>? used = null)
     {
         var bound = new HashSet<Guid>();
-        var taken = new HashSet<string>(StringComparer.Ordinal);
+        var taken = new HashSet<string>(used ?? [], StringComparer.Ordinal);
 
         // Panel words win collisions, because modules following those knobs
         // need to use the same word.
@@ -93,7 +94,7 @@ internal sealed class PatchPrintPlan(
 
         // Equal group labels would parse as one group, so make each one distinct.
         var boxes = new Dictionary<Guid, string?>();
-        var labels = new HashSet<string>(StringComparer.Ordinal);
+        var labels = new HashSet<string>(used ?? [], StringComparer.Ordinal);
 
         foreach (var group in patch.Groups ?? [])
         {

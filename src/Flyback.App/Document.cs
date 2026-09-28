@@ -76,6 +76,7 @@ internal sealed class Document
             reactions.Raise(new EditStateChanged());
         };
         source.Moved += (_, at) => PointAt(at);
+        source.Pasting = Written;
 
         // Asked rather than done: what it settles is which view is the document,
         // and typing not yet applied is asked about first, by whoever owns that question.
@@ -408,6 +409,44 @@ internal sealed class Document
     /// </remarks>
     private bool Adrift(Guid id) =>
         means is { } text && text.Find(id)?.TypeId != editor.History.Patch.Find(id)?.TypeId;
+
+    /// <summary>
+    /// A patch file pasted into the text, written as the text its modules and
+    /// groups would be, or null for anything else, which pastes as it is.
+    /// </summary>
+    /// <remarks>
+    /// The names it binds and the groups it opens are ones the text does not
+    /// already say, so it builds beside what is there.
+    /// </remarks>
+    private string? Written(string pasted)
+    {
+        if (!pasted.TrimStart().StartsWith('{')) return null;
+
+        PatchLoad loaded;
+
+        try
+        {
+            loaded = PatchIO.Read(pasted, NodeCatalog.Current);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        if (!loaded.IsComplete)
+        {
+            report.Say($"Not pasted. {loaded.Summary}");
+            return string.Empty;
+        }
+
+        var bare = PatchClipboard.Bare(loaded.Patch);
+
+        if (bare.Nodes.Count == 0) return string.Empty;
+
+        usage.Count(Used.Pasted);
+
+        return PatchPrinter.Beside(bare, source.Source);
+    }
 
     /// <summary>Notes a knob the panel has just turned, for the next write-back.</summary>
     public void Turned(Guid node, int port) => turned.Add((node, port));

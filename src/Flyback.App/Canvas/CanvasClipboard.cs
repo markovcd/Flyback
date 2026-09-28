@@ -1,6 +1,7 @@
 using Avalonia.Input.Platform;
 using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 
 namespace Flyback.App.Canvas;
 
@@ -46,9 +47,10 @@ internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection sel
     }
 
     /// <summary>
-    /// Reads a patch off the clipboard and merges it in, centered on the view and left
-    /// selected, as one edit. A fragment naming a module this build has not got is
-    /// refused with the sentence <see cref="PatchLoad.Summary"/> already words.
+    /// Reads a patch off the clipboard, as a patch file or as patch text, and merges
+    /// it in, centered on the view and left selected, as one edit. A fragment naming
+    /// a module this build has not got is refused with the sentence
+    /// <see cref="PatchLoad.Summary"/> already words.
     /// </summary>
     /// <returns>What to say about it, or null where there is nothing to say.</returns>
     public async Task<string?> PasteAsync(IClipboard? clipboard)
@@ -58,23 +60,41 @@ internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection sel
         var text = await clipboard.TryGetTextAsync();
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        PatchLoad loaded;
+        Patch fragment;
 
         try
         {
-            loaded = PatchIO.Read(text, NodeCatalog.Current);
+            var loaded = PatchIO.Read(text, NodeCatalog.Current);
+
+            if (!loaded.IsComplete) return $"Not pasted. {loaded.Summary}";
+
+            fragment = loaded.Patch;
         }
         catch (Exception)
         {
-            // Without the parser's wording: the ordinary way here is having copied
-            // something else entirely.
-            return "Nothing to paste: the clipboard does not hold a patch.";
+            if (Built(text) is not { } built)
+                return "Nothing to paste: the clipboard holds neither a patch nor text that builds one.";
+
+            fragment = built;
         }
 
-        if (!loaded.IsComplete) return $"Not pasted. {loaded.Summary}";
-
-        edits.AddFragment(loaded.Patch);
+        edits.AddFragment(fragment);
         usage.Count(Used.Pasted);
         return null;
+    }
+
+    /// <summary>
+    /// The modules and groups patch text builds, or null where it does not build or
+    /// builds none. What the text says about the whole patch stays behind.
+    /// </summary>
+    private static Patch? Built(string text)
+    {
+        var load = PatchLanguage.Build(text);
+
+        if (!load.Ok) return null;
+
+        var bare = PatchClipboard.Bare(load.Patch);
+
+        return bare.Nodes.Count == 0 ? null : bare;
     }
 }

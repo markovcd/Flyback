@@ -67,6 +67,28 @@ public static class PatchPrinter
     }
 
     /// <summary>
+    /// The patch as source to be written into <paramref name="text"/>: no name it
+    /// binds and no group it opens is one the text already says.
+    /// </summary>
+    /// <remarks>
+    /// Every word and string in the text counts as said, which spares a few names
+    /// nothing binds and needs no text that builds.
+    /// </remarks>
+    public static string Beside(Patch patch, string text, ModuleCatalog? against = null)
+    {
+        var modules = against ?? NodeCatalog.Current;
+
+        var used = Lexer.Scan(text, [])
+            .Where(token => token.Kind is TokenKind.Identifier or TokenKind.Text)
+            .Select(token => token.Text)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var plan = PatchPrintPlan.Create(patch, modules, null, used);
+
+        return new Writer(patch, modules, plan).Run().Source;
+    }
+
+    /// <summary>
     /// Where each module stands in a printing that has been written into since.
     /// </summary>
     /// <remarks>

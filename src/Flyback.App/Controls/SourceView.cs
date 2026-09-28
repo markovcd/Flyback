@@ -2,6 +2,7 @@ using System.Xml;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -146,6 +147,7 @@ internal sealed class SourceView : UserControl
         // Tunneled for the same reason: the editor's scroller takes the wheel.
         text.AddHandler(PointerWheelChangedEvent, Zoomed, RoutingStrategies.Tunnel);
         text.AddHandler(KeyDownEvent, Resized, RoutingStrategies.Tunnel);
+        text.AddHandler(KeyDownEvent, Pasted, RoutingStrategies.Tunnel);
 
         // A run of typing is one thing to take back. The stack takes an operation
         // per change and a change is a keystroke, so without this a sentence comes
@@ -304,6 +306,67 @@ internal sealed class SourceView : UserControl
         }
 
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Ctrl+V and Shift+Insert: what <see cref="Pasting"/> makes of the clipboard,
+    /// or the clipboard as it is.
+    /// </summary>
+    /// <remarks>
+    /// Taken from the editor on the way down, because whether the clipboard holds
+    /// something to translate is only known once it has been read, and reading it
+    /// is asynchronous.
+    /// </remarks>
+    private async void Pasted(object? sender, KeyEventArgs e)
+    {
+        var control = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        var shift = e.KeyModifiers == KeyModifiers.Shift;
+
+        if (!(control && e.Key == Key.V) && !(shift && e.Key == Key.Insert)) return;
+        if (Pasting is not { } translate || !Editable) return;
+
+        e.Handled = true;
+
+        try
+        {
+            var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+            var held = clipboard is null ? null : await clipboard.TryGetTextAsync();
+
+            if (held is not null && translate(held) is { } written) Insert(written);
+            else text.Paste();
+        }
+        catch (Exception ex)
+        {
+            Say($"Clipboard unavailable: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// What to write in place of text pasted here, or null to paste it as it is.
+    /// </summary>
+    public Func<string, string?>? Pasting { get; set; }
+
+    /// <summary>
+    /// Puts whole statements in place of the selection, on lines of their own, as
+    /// one thing to take back.
+    /// </summary>
+    public void Insert(string statements)
+    {
+        if (text.Document is not { } document || statements.Length == 0) return;
+
+        var start = text.SelectionStart;
+        var end = start + text.SelectionLength;
+        var newline = TextUtilities.GetNewLineFromDocument(document, document.GetLineByOffset(start).LineNumber);
+
+        var before = start > 0 && document.GetCharAt(start - 1) != '\n' ? newline : string.Empty;
+        var after = end < document.TextLength && document.GetCharAt(end) is not ('\r' or '\n') ? newline : string.Empty;
+        var body = statements.Trim('\r', '\n').ReplaceLineEndings(newline);
+
+        document.Replace(start, end - start, before + body + after);
+
+        text.SelectionLength = 0;
+        text.TextArea.Caret.Offset = start + before.Length + body.Length;
+        text.TextArea.Caret.BringCaretToView();
     }
 
     /// <summary>The text's font size, in points, held between <see cref="CanvasSettings"/>'s bounds.</summary>
