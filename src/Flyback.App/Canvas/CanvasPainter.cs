@@ -691,8 +691,8 @@ internal sealed class CanvasPainter(
     /// <summary>What a Shift-drag is taking out of its group, which the ring is drawn without.</summary>
     private IReadOnlySet<Guid>? Leaving => gestures.Regrouping ? gestures.Regrouped : null;
 
-    /// <summary>Whether letting go of a Shift-drag now puts modules into this group.</summary>
-    private bool DropsInto(NodeGroup group) => gestures.Regrouping && ReferenceEquals(gestures.RegroupInto, group);
+    /// <summary>Whether letting go of a Shift-drag now leaves modules in this group.</summary>
+    private bool DropsInto(NodeGroup group) => ReferenceEquals(gestures.Landing, group);
 
     private void DrawRing(DrawingContext context, NodeGroup group, Rect outline, Rect handle, bool lifted)
     {

@@ -62,17 +62,57 @@ public class RegroupTests : UiTest
         Settle(window);
 
         editor.Gestures.Regrouping.ShouldBeFalse("without Shift a carry is a move and nothing else");
+        editor.Gestures.Landing.ShouldBeNull();
 
         window.MouseMove(Screen(editor, window, InsideRing + new Vector(2, 0)), RawInputModifiers.Shift);
         Settle(window);
 
         editor.Gestures.Regrouping.ShouldBeTrue();
-        editor.Gestures.RegroupInto.ShouldBe(group);
+        editor.Gestures.Landing.ShouldBe(group);
 
         window.MouseUp(Screen(editor, window, InsideRing), MouseButton.Left);
         Settle(window);
 
         group.Members.ShouldNotContain(loose.Id, "Shift let go of before the button leaves it a move");
+    }
+
+    /// <summary>
+    /// Shift on a member lights its own group, carrying it off puts the light out, and
+    /// bringing it back lights it again; let go there, it stays in.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_members_own_group_is_lit_while_it_is_over_it()
+    {
+        var patch = Row(out var group, out var first, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        // The first module, at the ring's edge: the rest of the ring does not reach it.
+        var from = Body(first);
+        var away = from + new Vector(0, 500);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left, RawInputModifiers.Shift);
+        Settle(window);
+
+        editor.Gestures.Landing.ShouldBe(group, "pressed with Shift, a member is over its own group");
+        editor.Gestures.Regrouping.ShouldBeFalse();
+
+        window.MouseMove(Screen(editor, window, away), RawInputModifiers.Shift);
+        Settle(window);
+
+        editor.Gestures.Landing.ShouldBeNull();
+        editor.Gestures.Regrouping.ShouldBeTrue();
+
+        window.MouseMove(Screen(editor, window, from + new Vector(10, 10)), RawInputModifiers.Shift);
+        Settle(window);
+
+        editor.Gestures.Landing.ShouldBe(group, "back over where its group stood");
+        editor.Gestures.Regrouping.ShouldBeFalse();
+
+        window.MouseUp(Screen(editor, window, from + new Vector(10, 10)), MouseButton.Left, RawInputModifiers.Shift);
+        Settle(window);
+
+        group.Members.ShouldContain(first.Id);
+        editor.Gestures.Landing.ShouldBeNull("the light goes out with the carry");
     }
 
     [AvaloniaFact]

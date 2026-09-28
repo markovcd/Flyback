@@ -124,6 +124,12 @@ internal sealed class CanvasGestures
     /// </summary>
     private readonly HashSet<Guid> regrouping = [];
 
+    /// <summary>
+    /// Where each group a carry reaches into stood when it began, so the carry is back
+    /// in its own group whenever it is back over that ground.
+    /// </summary>
+    private readonly Dictionary<NodeGroup, Rect> startRings = [];
+
     private readonly Reactions reactions;
 
     public CanvasGestures(
@@ -180,8 +186,11 @@ internal sealed class CanvasGestures
     /// <summary>Whether letting go now moves modules between groups.</summary>
     public bool Regrouping => regrouping.Count > 0;
 
-    /// <summary>The group letting go now puts modules into; null for out of every group.</summary>
-    public NodeGroup? RegroupInto { get; private set; }
+    /// <summary>
+    /// With Shift held, the group the carried modules belong to if let go now, their own
+    /// included; null over bare canvas and without Shift.
+    /// </summary>
+    public NodeGroup? Landing { get; private set; }
 
     /// <summary>The modules letting go now moves, which their old group's ring is drawn without.</summary>
     public IReadOnlySet<Guid> Regrouped => regrouping;
@@ -317,6 +326,8 @@ internal sealed class CanvasGestures
                 selection.Select(node.Id);
 
             PressNode(node, ctrl);
+            if (!history.Locked) Aim(graph, e.KeyModifiers);
+
             e.Pointer.Capture(canvas);
             repaint.Request();
             return;
@@ -495,7 +506,7 @@ internal sealed class CanvasGestures
         if (drag == Drag.Node && !history.Locked && Displaced) Aim(graph, e.KeyModifiers);
         else regrouping.Clear();
 
-        if (drag == Drag.Node && regrouping.Count > 0) edits.Regroup([.. regrouping], RegroupInto);
+        if (drag == Drag.Node && regrouping.Count > 0) edits.Regroup([.. regrouping], Landing);
         else if (drag == Drag.Node && !RecordMove() && pendingNarrow is { } one) selection.Select(one);
 
         End();
@@ -607,7 +618,8 @@ internal sealed class CanvasGestures
         marqueeBase.Clear();
         marqueeWas.Clear();
         regrouping.Clear();
-        RegroupInto = null;
+        startRings.Clear();
+        Landing = null;
 
         if (ended) reactions.Raise(new GestureFinished());
     }
@@ -654,7 +666,7 @@ internal sealed class CanvasGestures
     /// <summary>Shift went down or came up: a carry mid-way shows at once what letting go would do.</summary>
     public void ModifiersChanged(KeyModifiers modifiers)
     {
-        if (drag != Drag.Node || history.Locked || !Displaced || LastPointer is not { } over) return;
+        if (drag != Drag.Node || history.Locked || LastPointer is not { } over) return;
 
         Aim(over, modifiers);
         repaint.Request();
@@ -668,26 +680,26 @@ internal sealed class CanvasGestures
     private void Aim(Point graph, KeyModifiers modifiers)
     {
         regrouping.Clear();
-        RegroupInto = null;
+        Landing = null;
 
         if ((modifiers & KeyModifiers.Shift) == 0) return;
 
         var patch = history.Patch;
         var carried = dragOrigins.Keys.ToHashSet();
-        var into = selection.Scene.DropTarget(graph, carried);
 
-        foreach (var id in carried)
-        {
-            var own = patch.GroupOf(id);
+        // A whole group rides along as itself, since groups do not nest, and so does the Output.
+        var loose = carried
+            .Where(id => patch.GroupOf(id) is not { } own || !own.Members.All(carried.Contains))
+            .Where(id => patch.Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .ToArray();
 
-            // A whole group rides along as itself: groups do not nest.
-            if (own is not null && own.Members.All(carried.Contains)) continue;
-            if (own == into || patch.Find(id) is not { } node || NodeCatalog.IsSink(node.TypeId)) continue;
+        if (loose.Length == 0) return;
 
-            regrouping.Add(id);
-        }
+        Landing = selection.Scene.DropTarget(graph, carried, startRings);
 
-        if (regrouping.Count > 0) RegroupInto = into;
+        foreach (var id in loose)
+            if (patch.GroupOf(id) != Landing)
+                regrouping.Add(id);
     }
 
     /// <summary>Stops a turn of a socket, and puts the cursor back to what the pointer is over.</summary>
@@ -764,6 +776,14 @@ internal sealed class CanvasGestures
         dragOrigins.Clear();
         foreach (var moving in selection.Nodes)
             dragOrigins[moving.Id] = new Point(moving.X, moving.Y);
+
+        startRings.Clear();
+
+        var scene = selection.Scene;
+
+        foreach (var group in selection.Groups)
+            if (scene.OpenGroup(group) is var (outline, handle))
+                startRings[group] = outline.Union(handle);
     }
 
     /// <summary>

@@ -249,12 +249,16 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     }
 
     /// <summary>
-    /// The group modules let go of at a point would land in: a ring drawn without them,
-    /// or a shut box none of them makes up the whole of.
+    /// The group modules let go of at a point would land in: a ring drawn without them
+    /// or where it stood when they were picked up, or a shut box none of them makes up
+    /// the whole of.
     /// </summary>
-    public NodeGroup? DropTarget(Point graph, IReadOnlySet<Guid> carried)
+    /// <param name="graph">Where they are let go.</param>
+    /// <param name="carried">The modules being carried.</param>
+    /// <param name="started">Where the rings of groups they were carried from stood.</param>
+    public NodeGroup? DropTarget(Point graph, IReadOnlySet<Guid> carried, IReadOnlyDictionary<NodeGroup, Rect> started)
     {
-        if (peek is not null && InRing(peek, graph, carried)) return peek;
+        if (peek is not null && Over(peek, graph, carried, started)) return peek;
 
         NodeGroup? box = null;
 
@@ -262,8 +266,17 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
             if (bounds.Contains(graph) && !group.Members.All(carried.Contains))
                 box = group;
 
-        return box ?? RingAt(graph, carried);
+        if (box is not null || patch.Groups is null) return box;
+
+        for (var i = patch.Groups.Count - 1; i >= 0; i--)
+            if (!ReferenceEquals(patch.Groups[i], peek) && OpenGroup(patch.Groups[i]) is not null && Over(patch.Groups[i], graph, carried, started))
+                return patch.Groups[i];
+
+        return null;
     }
+
+    private bool Over(NodeGroup group, Point graph, IReadOnlySet<Guid> carried, IReadOnlyDictionary<NodeGroup, Rect> started) =>
+        InRing(group, graph, carried) || (started.TryGetValue(group, out var ring) && ring.Contains(graph));
 
     private bool InRing(NodeGroup group, Point graph, IReadOnlySet<Guid>? without) =>
         OpenGroup(group, without) is var (outline, handle) && (outline.Contains(graph) || handle.Contains(graph));
