@@ -8,6 +8,11 @@ namespace Flyback.Gpu;
 /// it and ES 3.0 where it does not. Mesa's surfaceless platform needs no display
 /// server, which is what lets a container with no X in it draw on llvmpipe.
 /// </summary>
+/// <remarks>
+/// A display is never terminated. EGL hands every caller the same one, so
+/// terminating it on the way out of one context takes down every other thread's
+/// with it.
+/// </remarks>
 [SupportedOSPlatform("linux")]
 internal sealed unsafe class EglContext : HeadlessContext
 {
@@ -34,6 +39,9 @@ internal sealed unsafe class EglContext : HeadlessContext
 
     private static readonly int[] Pixel = [Width, 1, Height, 1, None];
 
+    /// <summary>Held while a context is made or taken down, which share the display's state.</summary>
+    private static readonly Lock Gate = new();
+
     private readonly Egl egl;
     private readonly IntPtr display;
     private readonly IntPtr surface;
@@ -50,6 +58,11 @@ internal sealed unsafe class EglContext : HeadlessContext
     }
 
     public static new EglContext? Open(out string? why)
+    {
+        lock (Gate) return Make(out why);
+    }
+
+    private static EglContext? Make(out string? why)
     {
         if (!NativeLibrary.TryLoad("libEGL.so.1", out var library))
         {
@@ -103,7 +116,6 @@ internal sealed unsafe class EglContext : HeadlessContext
                 return new EglContext(egl, display, surface, context, Libraries(api));
             }
 
-            egl.Terminate(display);
             why = "EGL has no OpenGL 3.2 core or OpenGL ES 3.0 context.";
         }
 
@@ -196,10 +208,12 @@ internal sealed unsafe class EglContext : HeadlessContext
 
     public override void Dispose()
     {
-        egl.MakeCurrent(display, 0, 0, 0);
-        egl.DestroyContext(display, context);
-        if (surface != 0) egl.DestroySurface(display, surface);
-        egl.Terminate(display);
+        lock (Gate)
+        {
+            egl.MakeCurrent(display, 0, 0, 0);
+            egl.DestroyContext(display, context);
+            if (surface != 0) egl.DestroySurface(display, surface);
+        }
     }
 
     /// <summary>The slice of EGL this needs, bound from the library by name.</summary>
@@ -216,9 +230,6 @@ internal sealed unsafe class EglContext : HeadlessContext
 
         public readonly delegate* unmanaged<IntPtr, int*, int*, int> Initialize =
             (delegate* unmanaged<IntPtr, int*, int*, int>)NativeLibrary.GetExport(library, "eglInitialize");
-
-        public readonly delegate* unmanaged<IntPtr, int> Terminate =
-            (delegate* unmanaged<IntPtr, int>)NativeLibrary.GetExport(library, "eglTerminate");
 
         public readonly delegate* unmanaged<int, int> BindApi =
             (delegate* unmanaged<int, int>)NativeLibrary.GetExport(library, "eglBindAPI");
