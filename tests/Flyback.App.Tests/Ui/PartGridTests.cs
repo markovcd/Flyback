@@ -165,6 +165,26 @@ public class PartGridTests : UiTest
         changes.Distinct().Count().ShouldBe(1, "a drag is one step in the history, however far it goes");
     }
 
+    /// <summary>
+    /// Each time the patch is told, it recompiles both programs, which a heavy patch cannot
+    /// do at the pointer's rate, so a drag tells it once, when it is let go.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_drag_tells_the_patch_once_when_it_is_let_go()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var changes = new List<string?>();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0f), new PartLevel(1f)]]);
+        var window = Show(new PartGrid(node, def, changes.Add).View);
+
+        Drag(window, 0, -160);
+
+        changes.Count.ShouldBe(1, "ten moves are one recompile, at the end");
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
+    }
+
     private static void Drag(Window window, int index, double by)
     {
         var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);

@@ -57,6 +57,12 @@ internal sealed class PartGrid
     /// <summary>The cell being dragged, where the drag started and what the level was then.</summary>
     private (Border Cell, int Part, int Section, double Y, float From, float Low, float High, bool Moved)? drag;
 
+    /// <summary>
+    /// What a drag's level is filed under until it is let go. The cell follows every move,
+    /// and the patch, which recompiles both programs when told, hears it once at the end.
+    /// </summary>
+    private string? unheard;
+
     /// <summary>The cell a click last switched and what it was, which a double-click puts back before it glides.</summary>
     private (int Part, int Section, PartLevel Before)? clicked;
 
@@ -182,7 +188,13 @@ internal sealed class PartGrid
                 cell.PointerPressed += (_, e) => Grab(cell, at, section, e);
                 cell.PointerMoved += (_, e) => Turn(e);
                 cell.PointerReleased += (_, e) => LetGo(e);
-                cell.PointerCaptureLost += (_, _) => drag = null;
+                cell.PointerCaptureLost += (_, _) =>
+                {
+                    if (drag is null) return;
+
+                    drag = null;
+                    Heard();
+                };
 
                 Grid.SetRow(cell, p);
                 Grid.SetColumn(cell, s + 1);
@@ -243,12 +255,20 @@ internal sealed class PartGrid
         drag = held with { Moved = true };
         parts[held.Part][held.Section] = parts[held.Part][held.Section] with { Value = turned };
 
-        ArrangementExtra.Set(node, parts);
         held.Cell.Background = new SolidColorBrush(Shade(turned));
         Describe(held.Cell, held.Part, held.Section);
 
-        // One step in the history for the whole drag, as a knob's is.
-        changed($"{node.Id} part {held.Part} section {held.Section}");
+        unheard = $"{node.Id} part {held.Part} section {held.Section}";
+    }
+
+    /// <summary>Puts the dragged level on the node and tells the patch.</summary>
+    private void Heard()
+    {
+        if (unheard is not { } because) return;
+
+        unheard = null;
+        ArrangementExtra.Set(node, parts);
+        changed(because);
     }
 
     private void LetGo(PointerReleasedEventArgs e)
@@ -258,6 +278,8 @@ internal sealed class PartGrid
         drag = null;
         e.Pointer.Capture(null);
         e.Handled = true;
+
+        Heard();
 
         if (held.Moved) Fill();
         else Toggle(held.Part, held.Section);
