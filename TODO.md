@@ -12,3 +12,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - Allow to change a patch while agent is working. Also changing a patch shouldnt invalidate agent session
 - Forbid opening files/presets during recording
 - figure how to accept legacy currencies
+- **A decision model behind the plugin boundary.** Laya in-process over ONNX (downloaded once, with consent, from a Hugging Face repo the maintainer owns), hosted Jev over HTTP, `flyback-cli decide`, a Decisions section in the settings, and three first uses: the assistant routed and gated, a module found by a phrase, diagnostics triaged. The contract, the plugins and the file-level sequence are in [docs/handoff/decision-model.md](docs/handoff/decision-model.md).
