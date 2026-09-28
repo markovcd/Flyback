@@ -33,8 +33,27 @@ If the main worktree is on another branch, it is someone's work in progress: do 
 Say so and leave the build for the user.
 
 Run it in the background: the gate alone is a couple of minutes and the publishes add a few
-more, and nothing else in the session waits on it. One build at a time; a second
-`docker build` beside it fights for the same cores and the same cache.
+more, and nothing else in the session waits on it.
+
+## One build at a time: if one is running, report it and stop
+
+Several sessions land on `main` at once and each builds, and a build starts by emptying
+`dist/`, so a second build deletes the first one's output from under it. `release.sh` holds
+`release.lock` in the git common directory while it runs and refuses to start beside a
+live one, exiting 3 with `release: a build is already running (pid …, since …)`.
+
+Look before starting:
+
+```bash
+lock="$(git rev-parse --path-format=absolute --git-common-dir)/release.lock"
+[ -d "$lock" ] && kill -0 "$(cat "$lock/pid")" 2>/dev/null \
+  && echo "running since $(cat "$lock/since")"
+```
+
+If a build is running, or `release.sh` exits 3, tell the user a build is already running
+and since when, and do not start a second: no retry, no waiting loop, no build afterwards.
+A build that started before this commit landed does not hold it, so say that too; the next
+session to land, or the user, builds a `main` that does.
 
 ## Read the whole log, then filter
 

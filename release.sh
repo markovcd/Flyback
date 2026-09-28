@@ -18,13 +18,29 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
+# One build at a time per clone, worktrees included: a build starts by emptying
+# dist/, so a second would delete the first one's output from under it.
+lock="$(git rev-parse --path-format=absolute --git-common-dir)/release.lock"
+if ! mkdir "$lock" 2>/dev/null; then
+  owner=$(cat "$lock/pid" 2>/dev/null || { sleep 1; cat "$lock/pid" 2>/dev/null; } || true)
+  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+    echo "release: a build is already running (pid $owner, since $(cat "$lock/since" 2>/dev/null || echo '?')); not starting a second" >&2
+    exit 3
+  fi
+  rm -rf "$lock"
+  mkdir "$lock"
+fi
+echo $$ > "$lock/pid"
+date '+%H:%M:%S' > "$lock/since"
+trap 'rm -rf "$lock"' EXIT
+
 github=false
 [ "${GITHUB_ACTIONS:-}" = true ] && github=true
 
 . ./release-key.sh
 
 temp="$(mktemp -d)"
-trap 'rm -rf "$temp"' EXIT
+trap 'rm -rf "$temp" "$lock"' EXIT
 
 # First, so a bad key fails in seconds rather than after the build.
 if ! printf '%s\n' "$RELEASE_SIGNING_KEY" | openssl pkey -pubout -outform DER -out "$temp/derived.der"; then
