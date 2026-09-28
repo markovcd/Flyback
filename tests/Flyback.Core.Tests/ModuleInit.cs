@@ -5,16 +5,13 @@ namespace Flyback.Core.Tests;
 internal static class ModuleInit
 {
     /// <summary>
-    /// Snapshots are compared as decoded pixels, not as file bytes. Two things
-    /// make byte comparison the wrong choice here: PngWriter compresses through
-    /// DeflateStream, whose output may change across runtime versions, and MathF
-    /// results can differ slightly across architectures. Neither is a behavior
-    /// change, and neither should fail a test.
+    /// PNG snapshots are compared as decoded pixels, exactly: DeflateStream's bytes
+    /// differ between runtimes built against different zlibs, and the picture does not.
     /// </summary>
     [ModuleInitializer]
     public static void Initialize()
     {
-        VerifyImageMagick.Initialize();
+        VerifierSettings.RegisterStreamComparer("png", PngPixelComparer.Compare);
 
         // Shader sources are approved as text, not as an opaque blob. Verify
         // assumes an unknown extension is binary, and a binary diff of GLSL is

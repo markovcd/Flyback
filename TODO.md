@@ -2,8 +2,6 @@
 
 Work the user has asked for and nobody has started. Take an item off when it lands on `main`.
 
-- **Compare the preset snapshots as pixels, as their comment already claims.** They compare PNG bytes today, so all 25 fail wherever .NET's zlib differs from the one that wrote the approved files. Diagnosis, proof and the fix to make are in [docs/handoff/preset-snapshots-compare-bytes.md](docs/handoff/preset-snapshots-compare-bytes.md). Make and check it on Windows.
-
 - **Find why an undo freezes the window on a large patch.** Ctrl+Z on Mycelium stops the whole window for about two seconds on Windows; an edit does not. What is ruled out, what is left and how to find it are in [docs/handoff/undo-freezes-the-window.md](docs/handoff/undo-freezes-the-window.md). Find and fix it on Windows.
 
 - **Loop any stretch of the seek bar.** Two handles on the bar set where a loop starts and ends, so a passage in the middle of a piece repeats rather than always the start.
