@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The preset site starts with Easy, a plugin whose Easy Synth is a whole synth in one module that sounds good with nothing wired and can never clip: a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan, with First notes as its preset.
 - Slow weather: six panel knobs — echo level, chime decay, reverb space, visual warp, color shift and trails spin — and a thirty-minute length.
 - Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.
 - A plugin's preset can carry the sound files and pictures it plays.

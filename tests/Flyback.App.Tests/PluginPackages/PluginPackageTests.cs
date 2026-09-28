@@ -82,6 +82,7 @@ public sealed class PluginPackageTests : IDisposable
     [InlineData(typeof(Plugins.Mastering.MasteringPlugin))]
     [InlineData(typeof(Plugins.Figures.FiguresPlugin))]
     [InlineData(typeof(Plugins.Fractals.FractalsPlugin))]
+    [InlineData(typeof(Plugins.Easy.EasyPlugin))]
     public void A_shipped_module_plugin_embeds_a_preview_of_its_modules(Type plugin)
     {
         var assembly = plugin.Assembly;

@@ -27,6 +27,7 @@ on:
       - "src/Flyback.Plugins/**"
       - "src/Flyback.Plugins.Figures/**"
       - "src/Flyback.Plugins.Fractals/**"
+      - "src/Flyback.Plugins.Easy/**"
       - "site/**"
       - ".editorconfig"
       - "Directory.Build.props"

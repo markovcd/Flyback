@@ -23,6 +23,7 @@
   </Folder>
   <Folder Name="/src/plugins/">
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
+    <Project Path="src/Flyback.Plugins.Easy/Flyback.Plugins.Easy.csproj" />
     <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
     <Project Path="src/Flyback.Plugins.Figures/Flyback.Plugins.Figures.csproj" />
     <Project Path="src/Flyback.Plugins.Fractals/Flyback.Plugins.Fractals.csproj" />

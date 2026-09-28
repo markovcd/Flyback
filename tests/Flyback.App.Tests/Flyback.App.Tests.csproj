@@ -34,6 +34,7 @@
     <!-- Not in the box: the preset site starts with these, and their previews are retaken here like the others'. -->
     <ProjectReference Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
 
     <!-- The worked example, whose project sets everything a package can say about a plugin. -->
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />

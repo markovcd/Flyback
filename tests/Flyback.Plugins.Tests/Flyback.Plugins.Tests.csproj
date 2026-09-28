@@ -45,6 +45,7 @@
     <!-- Not in the box: the preset site starts with these, and they are tested here the way an install loads them. -->
     <PluginProject Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
     <PluginProject Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\..\src\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
   </ItemGroup>
 
   <!-- The preset site's defaults, which have to open and compile against the plugins above (ADR-0138). -->

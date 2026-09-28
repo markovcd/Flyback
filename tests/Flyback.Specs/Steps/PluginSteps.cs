@@ -16,6 +16,7 @@ public sealed class PluginSteps
     private const string Mandelbrot = "flyback.fractals.mandelbrot";
     private const string Julia = "flyback.fractals.julia";
     private const string Orbit = "flyback.fractals.orbit";
+    private const string EasySynth = "flyback.easy.synth";
 
     /// <summary>Where the Mandelbrot module's picture is centered, and half its height, at zoom nought.</summary>
     private const float Middle = -0.75f;
@@ -30,6 +31,7 @@ public sealed class PluginSteps
 
     private Frame? frame;
     private float[]? sound;
+    private float[]? right;
 
     [Given("the Mandelbrot set on the screen")]
     public void GivenTheSet() => Show(Mandelbrot, ("shift", 0f));
@@ -54,6 +56,63 @@ public sealed class PluginSteps
         orbit.SetState("orbit", new System.Text.Json.Nodes.JsonObject { ["mode"] = "julia" });
 
         Play(orbit);
+    }
+
+    [Given("an Easy Synth with nothing wired")]
+    public void GivenAnEasySynth() => PlayBoth(Easy());
+
+    [Given("an Easy Synth playing a {word} at note {float}")]
+    public void GivenAnEasySynthPlaying(string wave, float note) =>
+        PlayBoth(Set(Easy(("wave", wave), ("filter", "off")), ("pitch", note)));
+
+    [Given("an Easy Synth with every knob but its attack turned all the way up")]
+    public void GivenAnEasySynthFlatOut()
+    {
+        var synth = Easy(("wave", "supersaw"), ("filter", "band"));
+        var inputs = Modules.Require(EasySynth).Inputs;
+
+        for (var i = 1; i < inputs.Count; i++)
+            synth.InputValues[i] = inputs[i].Name == "attack" ? inputs[i].Min : inputs[i].Max;
+
+        PlayBoth(synth);
+    }
+
+    [Given("an Easy Synth whose note has been let go")]
+    public void GivenAnEasySynthLetGo() => PlayBoth(Set(Easy(), ("gate", 0f)));
+
+    /// <summary>One second of <paramref name="synth"/>, its 'left' on the left and its 'right' on the right.</summary>
+    private void PlayBoth(NodeInstance synth)
+    {
+        var b = new PatchBuilder(Modules);
+        b.Patch.Nodes.Add(synth);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        b.Wire(synth, 0, output, NodeCatalog.OutputLeftPort).Wire(synth, 1, output, NodeCatalog.OutputRightPort);
+
+        var program = b.Build().CompileForAudio(Modules).Program;
+        var state = new DelayState(program, Rate);
+        var registers = program.AllocateRegisters();
+
+        sound = new float[Rate];
+        right = new float[Rate];
+
+        for (var i = 0; i < sound.Length; i++)
+        {
+            program.Evaluate(0d, 0d, i / (double)Rate, registers, default, state);
+            sound[i] = (float)registers[program.OutputBase];
+            right[i] = (float)registers[program.OutputBase + 1];
+        }
+    }
+
+    private static NodeInstance Easy(params (string Key, string Value)[] settings)
+    {
+        var synth = NodeInstance.Create(Modules.Require(EasySynth), 0, 0);
+
+        var state = new System.Text.Json.Nodes.JsonObject();
+        foreach (var (key, value) in settings) state[key] = value;
+        synth.SetState("synth", state);
+
+        return synth;
     }
 
     /// <summary>One second of <paramref name="orbit"/>'s left side, sample by sample.</summary>
@@ -106,6 +165,23 @@ public sealed class PluginSteps
 
         Rms(Apart(settled, period)).ShouldBeLessThan(Rms(settled) * 0.05);
         Rms(Apart(settled, period / 2)).ShouldBeGreaterThan(Rms(settled) * 0.2);
+    }
+
+    [Then("the sound is heard")]
+    public void ThenHeard() =>
+        Math.Max(Rms(sound.ShouldNotBeNull()), Rms(right.ShouldNotBeNull())).ShouldBeGreaterThan(0.05);
+
+    [Then("the sound never goes past full scale")]
+    public void ThenInsideFullScale()
+    {
+        foreach (var sample in sound.ShouldNotBeNull().Concat(right.ShouldNotBeNull())) sample.ShouldBeInRange(-1f, 1f);
+    }
+
+    [Then("the sound has faded to silence")]
+    public void ThenFaded()
+    {
+        Rms(sound.ShouldNotBeNull().AsSpan(Rate / 2)).ShouldBeLessThan(1e-4);
+        Rms(right.ShouldNotBeNull().AsSpan(Rate / 2)).ShouldBeLessThan(1e-4);
     }
 
     private void Show(string typeId, params (string Port, float Value)[] knobs)

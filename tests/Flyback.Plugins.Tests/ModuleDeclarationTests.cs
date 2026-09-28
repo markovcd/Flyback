@@ -114,6 +114,7 @@ public class ModuleDeclarationTests
     [InlineData("Sample", "flyback.sample")]
     [InlineData("Figures", "flyback.figures")]
     [InlineData("Fractals", "flyback.fractals")]
+    [InlineData("Easy", "flyback.easy")]
     public void A_shipped_plugin_declares_exactly_the_modules_it_registers(string folder, string provider)
     {
         var declared = PluginDescription.OfFolder(Path.Combine(PluginHost.DefaultDirectory, folder))!.Modules;
