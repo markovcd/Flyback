@@ -72,7 +72,16 @@ What stays a C# event: a control telling the region that owns it
 (`ControlsPanel` to `PanelKnobs`, `SourceView` to `Document`), and what the
 viewer shares with the editor and so cannot raise an editor's notice
 (`MidiHub`, `PreviewHost`, `IlCompiler`), which the part that already takes it
-subscribes to in its constructor. Nothing raises a notice from a constructor.
+subscribes to in its constructor.
+
+Three things are refused, each because it would only ever show up as a test
+that fails one run in fifty. Every reactor is built with the window, so no
+notice raised later constructs one mid-chain, and a notice raised while the
+window is being built throws: what a part has to say at start it says from
+`Start`. A notice raised off the UI thread throws at the raiser rather than
+reaching a control from the wrong thread. A notice raised after the window's
+container is disposed goes nowhere, and a chain still awaiting stops at the
+next reactor, so nothing touches a closed window's controls.
 
 The hubs, the regions, the notices and the window are composed in a container
 ([0150](0150-the-editor-is-composed-in-a-container.md)); `AddPart<T>` registers

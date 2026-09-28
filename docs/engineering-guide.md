@@ -447,8 +447,12 @@ find every reaction, search the notice's name. `Raise` is for a raiser that
 cannot wait, `RaiseAsync` for one that can, and a reaction is a `Task` either
 way. A control tells the region that owns it through a C# event; what the
 viewer shares (`MidiHub`, `PreviewHost`, `IlCompiler`) keeps its events too, and
-the part that takes it subscribes in its constructor. Never raise a notice from
-a constructor.
+the part that takes it subscribes in its constructor. Three things are refused
+outright because each is a flaky test waiting to happen: a notice raised from a
+constructor (every reactor is built with the window, and a raise meanwhile
+throws), a notice raised off the UI thread (it throws at the raiser), and a
+notice raised after the window is disposed (it goes nowhere, and a chain still
+running stops).
 
 **A folder per feature.** The project's root holds the composition, the window,
 the hubs and `ReportLine`. Everything else sits in the folder of what it is for,

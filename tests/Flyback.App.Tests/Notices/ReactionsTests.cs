@@ -1,15 +1,18 @@
+using Avalonia.Headless.XUnit;
 using Flyback.App.Notices;
+using Flyback.App.Tests.Ui;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
-using Xunit;
 
 namespace Flyback.App.Tests.Notices;
 
 /// <summary>
 /// A notice reaches every reactor the container holds, in priority order, one at a
-/// time, and a raiser that waits gets each reaction's task in turn (ADR-0148).
+/// time, and a raiser that waits gets each reaction's task in turn (ADR-0148). What
+/// would make a reaction flaky is refused outright: a notice raised while the editor
+/// is being built, one raised off the UI thread, and one raised after the window is gone.
 /// </summary>
-public class ReactionsTests
+public class ReactionsTests : UiTest
 {
     private sealed record Ping;
 
@@ -41,7 +44,22 @@ public class ReactionsTests
         public Task On(Ping notice) => throw new InvalidOperationException("no");
     }
 
-    [Fact]
+    private sealed class Declaring(List<string> log) : IReactTo<Ping>
+    {
+        public Task On(Ping notice)
+        {
+            log.Add("declared");
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>A part that says something as it is made, which is the one thing a part may not do.</summary>
+    private sealed class Talkative
+    {
+        public Talkative(Reactions reactions) => reactions.Raise(new Ping());
+    }
+
+    [AvaloniaFact]
     public void Reactors_run_lowest_priority_first_whatever_order_they_were_registered_in()
     {
         var log = new List<string>();
@@ -56,7 +74,7 @@ public class ReactionsTests
         log.ShouldBe(["first", "middle", "last"]);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void Ties_keep_the_order_they_were_registered_in()
     {
         var log = new List<string>();
@@ -70,7 +88,7 @@ public class ReactionsTests
         log.ShouldBe(["a", "b"]);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public async Task A_reaction_that_waits_finishes_before_the_next_one_starts()
     {
         var log = new List<string>();
@@ -83,8 +101,8 @@ public class ReactionsTests
         log.ShouldBe(["one in", "one out", "two"]);
     }
 
-    [Fact]
-    public void A_part_registered_as_a_part_reacts_to_what_it_declares()
+    [AvaloniaFact]
+    public void A_part_reacts_to_what_it_declares()
     {
         var log = new List<string>();
         var services = new ServiceCollection();
@@ -99,7 +117,7 @@ public class ReactionsTests
         provider.GetRequiredService<IReactTo<Ping>>().ShouldBeSameAs(provider.GetRequiredService<Declaring>());
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void A_reactor_added_later_is_heard_until_it_is_taken_away()
     {
         var log = new List<string>();
@@ -113,7 +131,7 @@ public class ReactionsTests
         log.ShouldBe(["heard"]);
     }
 
-    [Fact]
+    [AvaloniaFact]
     public void A_fault_that_finishes_at_once_reaches_the_raiser()
     {
         var reactions = new Reactions();
@@ -122,7 +140,7 @@ public class ReactionsTests
         Should.Throw<InvalidOperationException>(() => reactions.Raise(new Ping()));
     }
 
-    [Fact]
+    [AvaloniaFact]
     public async Task A_raiser_that_waits_gets_the_fault()
     {
         var reactions = new Reactions();
@@ -131,12 +149,68 @@ public class ReactionsTests
         await Should.ThrowAsync<InvalidOperationException>(() => reactions.RaiseAsync(new Ping()));
     }
 
-    private sealed class Declaring(List<string> log) : IReactTo<Ping>
+    [AvaloniaFact]
+    public void Every_declared_reactor_is_built_with_the_window()
     {
-        public Task On(Ping notice)
-        {
-            log.Add("declared");
-            return Task.CompletedTask;
-        }
+        var log = new List<string>();
+        var services = new ServiceCollection();
+        services.AddSingleton<Reactions>();
+        services.AddSingleton(log);
+        services.AddPart<Declaring>();
+        var provider = services.BuildServiceProvider();
+        var built = false;
+
+        provider.GetRequiredService<Reactions>().Building(() => built = true);
+
+        built.ShouldBeTrue();
+        provider.GetService<IReactTo<Ping>>().ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void A_notice_raised_while_the_editor_is_being_built_is_refused()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<Reactions>();
+        services.AddPart<Talkative>();
+        var provider = services.BuildServiceProvider();
+
+        Should.Throw<InvalidOperationException>(() => provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<Talkative>))
+            .Message.ShouldContain("Ping");
+    }
+
+    [AvaloniaFact]
+    public async Task A_notice_raised_off_the_UI_thread_is_refused()
+    {
+        var reactions = new Reactions();
+        reactions.Add<Ping>(_ => { });
+
+        await Should.ThrowAsync<InvalidOperationException>(() => Task.Run(() => reactions.Raise(new Ping())));
+    }
+
+    [AvaloniaFact]
+    public void A_notice_raised_after_the_window_is_gone_goes_nowhere()
+    {
+        var log = new List<string>();
+        var reactions = new Reactions();
+        reactions.Add<Ping>(_ => log.Add("heard"));
+
+        reactions.Dispose();
+        reactions.Raise(new Ping());
+
+        log.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public async Task A_chain_still_running_when_the_window_goes_stops_there()
+    {
+        var log = new List<string>();
+        var reactions = new Reactions();
+        reactions.Add(new Slow(log, "one", 0));
+        reactions.Add<Ping>(_ => reactions.Dispose(), 1);
+        reactions.Add(new Counted(log, "three", 2));
+
+        await reactions.RaiseAsync(new Ping());
+
+        log.ShouldBe(["one in", "one out"]);
     }
 }

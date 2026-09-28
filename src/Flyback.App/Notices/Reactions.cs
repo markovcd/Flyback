@@ -12,20 +12,58 @@ namespace Flyback.App.Notices;
 /// <remarks>
 /// The reactors are looked up in the container the first time their notice is raised,
 /// never while the container is being built, which is what keeps a reaction from
-/// being a constructor dependency. So nothing raises a notice from a constructor:
-/// a part that has something to say at start says it from <c>Start</c>.
+/// being a constructor dependency. Every reactor is built with the window, through
+/// <see cref="Building{T}"/>, and a notice raised meanwhile is an error: what is
+/// said at start is said from <c>Start</c>. A notice is raised on the UI thread, since
+/// its reactors touch controls, and one raised off it is an error too. Once disposed
+/// with its window, a notice goes nowhere.
 /// </remarks>
 /// <param name="provider">The container the reactors are registered in, or null for one that holds only what <see cref="Add{T}(IReactTo{T})"/> gives it.</param>
-internal sealed class Reactions(IServiceProvider? provider = null)
+internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
 {
     private readonly ConcurrentDictionary<Type, object> ordered = new();
     private readonly List<(Type Notice, object Reactor)> added = [];
     private readonly Lock gate = new();
 
+    private bool building;
+    private bool disposed;
+
+    /// <summary>
+    /// Builds every reactor the container declares, then what <paramref name="build"/>
+    /// makes, refusing any notice raised meanwhile.
+    /// </summary>
+    public T Building<T>(Func<T> build)
+    {
+        building = true;
+
+        try
+        {
+            foreach (var declared in provider?.GetServices<DeclaredReaction>() ?? [])
+                foreach (var _ in provider!.GetServices(declared.Reaction)) { }
+
+            return build();
+        }
+        finally
+        {
+            building = false;
+        }
+    }
+
     /// <summary>Runs every reactor to <paramref name="notice"/> in turn, waiting for each before the next.</summary>
     public async Task RaiseAsync<T>(T notice) where T : notnull
     {
-        foreach (var reactor in Reactors<T>()) await reactor.On(notice);
+        if (disposed) return;
+
+        if (building) throw new InvalidOperationException($"{typeof(T).Name} was raised while the editor was being built. Say it from Start.");
+
+        Dispatcher.UIThread.VerifyAccess();
+
+        foreach (var reactor in Reactors<T>())
+        {
+            if (disposed) return;
+
+            await reactor.On(notice);
+        }
     }
 
     /// <summary>
@@ -77,6 +115,14 @@ internal sealed class Reactions(IServiceProvider? provider = null)
             return Task.CompletedTask;
         },
         priority);
+
+    public void Dispose()
+    {
+        disposed = true;
+        ordered.Clear();
+
+        lock (gate) added.Clear();
+    }
 
     private IReactTo<T>[] Reactors<T>() where T : notnull =>
         (IReactTo<T>[])ordered.GetOrAdd(typeof(T), _ => Sorted<T>());

@@ -14,7 +14,10 @@ internal static class Parts
         services.AddSingleton<T>();
 
         foreach (var reaction in ReactionsOf(typeof(T)))
+        {
             services.AddSingleton(reaction, provider => provider.GetRequiredService<T>());
+            services.AddSingleton(new DeclaredReaction(reaction));
+        }
 
         return services;
     }

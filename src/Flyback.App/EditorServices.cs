@@ -39,7 +39,8 @@ internal static class EditorServices
     /// <summary>Builds the window <paramref name="setup"/> describes, with any registration <paramref name="replace"/> swaps.</summary>
     public static MainWindow Window(this ServiceProvider provider)
     {
-        var window = provider.GetRequiredService<MainWindow>();
+        // Every reactor is built here, so no notice raised later builds one mid-chain.
+        var window = provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<MainWindow>);
         provider.GetRequiredService<WindowHolder>().Attach(window);
         window.Closed += (_, _) => provider.Dispose();
         return window;
