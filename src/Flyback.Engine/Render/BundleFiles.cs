@@ -30,7 +30,7 @@ public sealed class BundleFiles(
     /// <summary>What a bundle read out of a stream holds, ready to be compiled against.</summary>
     public static BundleFiles Of(LoadedBundle bundle) => new(bundle.Files);
 
-    /// <summary>What the archive holds, as it holds it — see <see cref="Held"/>.</summary>
+    /// <summary>What the archive holds, as it holds it.</summary>
     public IReadOnlyDictionary<string, byte[]> Bytes => files;
     
     LoadedSample? ISampleLibrary.Find(string path) =>
