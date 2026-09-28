@@ -136,7 +136,7 @@ public class ArrangementTests
         parts.Select(p => p.Count(l => l.Value > 0f)).ShouldBe([4, 3, 2]);
     }
 
-    /// <summary>The windows are shared, so a part costs its changes rather than its sections.</summary>
+    /// <summary>A part costs its changes rather than its sections.</summary>
     [Fact]
     public void A_part_that_never_changes_costs_only_its_level()
     {

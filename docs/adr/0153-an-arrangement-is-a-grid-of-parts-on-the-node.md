@@ -30,10 +30,15 @@ steps on `in` at `rate` sections a unit like a Sequencer: Time without a wire, o
 a Tempo's beats. It has an output for each part, `progress` through the section
 and `section`, counting from 1.
 
-- **Stateless, a sum of windows**, as [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md)
-  set out, so it runs on the picture too. The windows are emitted once and shared
-  by every part, so a part costs its changes rather than its sections, and a part
-  that never changes is one constant.
+- **Stateless**, as [0031](0031-a-sequencer-is-eight-inputs-and-no-memory.md) set
+  out, so it runs on the picture too. Each part is where it is and where it came
+  from, each a chain of Mixes on section edges every part shares, blended by how
+  far the change has got: an op for each change of level, nothing for a section
+  that holds, and one constant for a part that never changes. A sum of windows
+  like a sequence's would cost two ops a section whatever the part does, and
+  Warehouse on it came out 8% heavier on the sound and 39% on the picture than on
+  the Sequencers it replaced; on chains it is 5% lighter on the picture and
+  within 1% on the sound.
 - **A level that differs from the section before's is reached over `fade`**, a
   fraction of the section held above a thousandth so that no change clicks, or
   **across the whole section where it glides**, which is a build. Section one's

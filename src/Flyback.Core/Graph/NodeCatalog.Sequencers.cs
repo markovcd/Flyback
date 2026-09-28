@@ -468,13 +468,14 @@ public partial class NodeCatalog
     }
 
     /// <summary>
-    /// Each part as a sum of windows over the section playing, like a sequence's notes,
-    /// with the windows shared by every part.
+    /// Each part as where it is and where it came from, blended by how far the change
+    /// between them has got.
     /// </summary>
     /// <remarks>
-    /// A level that differs from the section before's is reached over 'fade', or over the
-    /// whole section where it glides. Section one's "before" is the last section, which
-    /// is where a looping arrangement comes from.
+    /// Both are chains of Mixes on section edges every part shares, so a part costs an op
+    /// for each change of level and nothing for a section that holds the one before's. A
+    /// level is reached over 'fade', or over the whole section where it glides. Section
+    /// one comes from the last section, which is where a looping arrangement comes from.
     /// </remarks>
     private static Slot[] EmitArrangement(Emitter em, EmitContext node)
     {
@@ -490,15 +491,9 @@ public partial class NodeCatalog
         var index = em.Unary(OpCode.Floor, em.Binary(OpCode.Mod, traveled, em.Constant(sections)));
         var progress = em.Unary(OpCode.Fract, traveled);
 
-        var edges = new Slot[sections + 1];
-        edges[0] = em.Constant(1f);
-        edges[sections] = zero;
-
-        for (var s = 1; s < sections; s++)
-            edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
-
-        var windows = new Slot[sections];
-        for (var s = 0; s < sections; s++) windows[s] = em.Sub(edges[s], edges[s + 1]);
+        // Whether the section playing is at or past each one: the same edges a sequence's windows use.
+        var edges = new Slot[sections];
+        for (var s = 1; s < sections; s++) edges[s] = em.Binary(OpCode.Step, em.Constant(s), index);
 
         var fade = em.Ternary(OpCode.Clamp, node[2], em.Constant(ShortestFade), em.Constant(1f));
         var eased = em.Ternary(OpCode.Smoothstep, zero, fade, progress);
@@ -518,22 +513,32 @@ public partial class NodeCatalog
             // ReSharper disable once CompareOfFloatsByEqualityOperator
             if (levels.All(level => level.Value == levels[0].Value)) return em.Constant(levels[0].Value);
 
-            Slot? sum = null;
+            var now = Chain(s => levels[s].Value);
+            var was = Chain(s => levels[(s + sections - 1) % sections].Value);
 
-            for (var s = 0; s < sections; s++)
+            var ramp = levels.Any(level => level.Glides)
+                ? em.Ternary(OpCode.Mix, eased, progress, Chain(s => levels[s].Glides ? 1f : 0f))
+                : eased;
+
+            return em.Add(was, em.Mul(em.Sub(now, was), ramp));
+        }
+
+        // The value for the section playing, a Mix at each edge where it changes.
+        Slot Chain(Func<int, float> at)
+        {
+            var held = at(0);
+            var value = em.Constant(held);
+
+            for (var s = 1; s < sections; s++)
             {
-                var was = levels[(s + sections - 1) % sections].Value;
-                var level = levels[s];
-
                 // ReSharper disable once CompareOfFloatsByEqualityOperator
-                var term = level.Value == was
-                    ? level.Value == 0f ? (Slot?)null : em.Mul(windows[s], level.Value)
-                    : em.Mul(windows[s], em.Add(em.Mul(level.Glides ? progress : eased, level.Value - was), was));
+                if (at(s) == held) continue;
 
-                if (term is { } t) sum = sum is { } so ? em.Add(so, t) : t;
+                held = at(s);
+                value = em.Ternary(OpCode.Mix, value, em.Constant(held), edges[s]);
             }
 
-            return sum ?? zero;
+            return value;
         }
     }
 }
