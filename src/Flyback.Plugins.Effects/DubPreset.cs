@@ -92,15 +92,15 @@ internal sealed class DubPreset : PresetBench
     /// </summary>
     private static readonly float[][] Slow =
     [
-        [0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],
-        [0, 1, 1, 1, 1, 1, 0, 1, 0.6f, 0.6f, 1, 1, 0, 1, 1, 0.5f, 1, 1, 1, 1, 0, 0, 0.5f, 1, 1, 1, 0, 1, 1, 0.5f, 0, 0],
-        [0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0],
-        [1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0.5f, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0.5f, 1, 1, 0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 1, 0, 1, 0.6f, 0.6f, 1, 1, 0, 1, 1, 0.5f, 0, 0, 0.5f, 1, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0],
+        [1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0.5f, 0, 0, 1, 0, 1, 0, 0, 0.5f, 1, 0, 0],
         [0.8f, 0.6f, 0.3f, 0.3f, 0.3f, 0.5f, 0.6f, 0.4f, 0.5f, 0.8f, 1, 0.5f, 0.7f, 0.4f, 0.5f, 1,
-         0.3f, 0.3f, 0.6f, 0.4f, 0.5f, 0.5f, 1, 1, 0.4f, 0.5f, 0.7f, 0.4f, 0.5f, 0.7f, 1, 1],
-        [0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+         0.5f, 0.5f, 1, 1, 1, 1],
+        [0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0],
     ];
 
     /// <summary>
@@ -123,17 +123,20 @@ internal sealed class DubPreset : PresetBench
     ];
 
     /// <summary>
-    /// Where the slow part ends, where the last line is said, and the song, in seconds:
-    /// sixty-four bars at seventy-four, sixty-four at a hundred and forty-eight, and the
-    /// last line's echo left to ring for twenty-four seconds. Spelled as formulas fold them.
+    /// The slow part's length in beats, forty-four bars, the last four of them the drop;
+    /// and where it ends, where the last line is said, and the song, in seconds, with
+    /// sixty-four bars of steppers at a hundred and forty-eight and the last line's echo
+    /// left to ring for twenty-four seconds. Spelled as formulas fold them.
     /// </summary>
-    private const string SlowEnd = "256 * 60 / 74";
+    private const int SlowBeats = 176;
 
-    private const string LastLine = "256 * 60 / 74 + 248 * 60 / 148";
+    private const string SlowEnd = "176 * 60 / 74";
 
-    private const string Song = "256 * 60 / 74 + 256 * 60 / 148 + 24";
+    private const string LastLine = "176 * 60 / 74 + 248 * 60 / 148";
 
-    private static readonly double Length = 256 * 60.0 / 74 + 256 * 60.0 / 148 + 24;
+    private const string Song = "176 * 60 / 74 + 256 * 60 / 148 + 24";
+
+    private static readonly double Length = SlowBeats * 60.0 / 74 + 256 * 60.0 / 148 + 24;
 
     /// <summary>
     /// A formula for how far into its clip a line is, in seconds, from how far into the
@@ -202,13 +205,14 @@ internal sealed class DubPreset : PresetBench
         // the slow part's level until the steppers, theirs after it, and nothing once the
         // steppers are done.
         var slow = Arranged(beats, 1f / 8f, [.. Slow.Select(Levels)]);
-        var faster = Arranged(beats, 1f / 8f, [.. Fast.Select(Levels)]);
+        var fastBeats = Formula($"a - {SlowBeats}", beats);
+        var faster = Arranged(fastBeats, 1f / 8f, [.. Fast.Select(Levels)]);
         var part = Enumerable.Range(0, Slow.Length)
-            .Select(p => Formula("mix(a, b, c) * (1 - step(512, d))", new Read(slow, p), new Read(faster, p), fast, beats))
+            .Select(p => Formula($"mix(a, b, c) * (1 - step({SlowBeats + 256}, d))", new Read(slow, p), new Read(faster, p), fast, beats))
             .ToArray();
 
         // A minor and D minor, two bars each, and four each in the steppers.
-        var onD = Formula("step(1, a * mix(0.125, 0.0625, b) % 2)", beats, fast);
+        var onD = Formula("step(1, mix(a * 0.125, c * 0.0625, b) % 2)", beats, fast, fastBeats);
 
         Box("Arrangement");
 
@@ -426,7 +430,7 @@ internal sealed class DubPreset : PresetBench
         var hiss = Hiss(null, 4500f, 0f, "low", 0.35f, "pink", 3f);
         var chance = b.Add(NoiseType, (1, 180f), (2, 5f));
         var tick = b.Add("math.step", (0, 0.988f));
-        var dust = Formula($"(a + b * c * 0.6) * (1 - step(240 * 60 / 74, d) * (1 - step({SlowEnd}, d)))",
+        var dust = Formula($"(a + b * c * 0.6) * (1 - step(160 * 60 / 74, d) * (1 - step({SlowEnd}, d)))",
             hiss, tick, chance, songAt);
 
         b.Wire(chance, 2, tick, 1);
@@ -455,11 +459,11 @@ internal sealed class DubPreset : PresetBench
         }
 
         // The first in the second bar, where only the rim and the bass play, there again
-        // in the steppers, and to end the song; the second over the bass alone, where the
-        // kick next drops out, and alone in the drop.
+        // in the steppers, and to end the song; the second over the bass alone, and alone
+        // in the drop.
         var first = Spoken(NoSense,
             Due("4 * 60 / 74", "96 * 60 / 74", $"{SlowEnd} + 96 * 60 / 148", LastLine), out var firstThrown);
-        var second = Spoken(Dread, Due("160 * 60 / 74", "208 * 60 / 74", "240 * 60 / 74"), out var secondThrown);
+        var second = Spoken(Dread, Due("128 * 60 / 74", "160 * 60 / 74"), out var secondThrown);
 
         var said = Formula("a * max(1 - b * 0.6, 0) + c * (1 - d * 0.6)", first, firstThrown, second, secondThrown);
         var voiceTaps = Echo(
@@ -547,7 +551,7 @@ internal sealed class DubPreset : PresetBench
         // the steppers. Then nothing under thirty hertz, a little more weight under the
         // bass, the mud taken out of the low middle and air on top; then wider, with the
         // kick and the bass kept in the middle; then glued and held under a decibel.
-        var hush = Formula($"1 - smoothstep(246 * 60 / 74, 252 * 60 / 74, a) * (1 - step({SlowEnd}, a))", songAt);
+        var hush = Formula($"1 - smoothstep(166 * 60 / 74, 172 * 60 / 74, a) * (1 - step({SlowEnd}, a))", songAt);
         var equalized = b.Add("flyback.mastering.eq",
             (2, 30f), (3, 90f), (4, 1.5f), (5, 350f), (6, -2f), (7, 0.8f), (8, 9000f), (9, 2.5f));
         var wider = b.Add("flyback.mastering.width", (2, 1.2f), (3, 150f));
