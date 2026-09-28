@@ -85,6 +85,13 @@ in `site/plugins.html` gets the command.
 - **The site as a trust root.** Above.
 - **Beating an attacker who can write any file as the user.** They replace `Flyback.exe`.
   The goal is that extracting a zip into `plugins/` is no longer code execution.
+- **Signing in with the provider in place of a key.** Checked 2026-09-28: Anthropic forbids
+  its OAuth tokens in any product but Claude Code and claude.ai (February 2026); Google cut
+  consumer accounts off Gemini's OAuth (June 2026) and calls third-party use a policy
+  violation; OpenAI's "Sign in with ChatGPT" (August 2026) is identity only, no model usage.
+  All three point third-party apps at API keys, so there is no short-lived token to lean on
+  and D stays a decision worth making. The assistant panel should tell the user to make a
+  dedicated key with a spend cap, the one bounded thing a person can hand a BYOK app.
 
 ## Scenarios
 
