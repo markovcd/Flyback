@@ -12,10 +12,10 @@ internal static partial class Presets
     /// one of the parts moves.
     /// </summary>
     /// <remarks>
-    /// The arrangement is three lanes of one step a phrase, and each part decides
-    /// what it needs of them. Nothing in a lane has any memory, so the picture reads
-    /// the same lanes the sound does — but it never reads a filter or an envelope,
-    /// which mean something else where there is no evaluation before this one.
+    /// Two Arrangements of one section a phrase say what plays when, a row a part.
+    /// An Arrangement has no memory, so the picture reads the same rows the sound
+    /// does — but it never reads a filter or an envelope, which mean something else
+    /// where there is no evaluation before this one.
     /// </remarks>
     public static Patch WholeBand(ModuleCatalog modules) => new Band(modules).Assemble();
 
@@ -40,6 +40,18 @@ internal static partial class Presets
 
         /// <summary>A Filter's outputs.</summary>
         private const int Low = 0, High = 2;
+
+        /// <summary>An Arrangement's output after its parts: how far through its section it is.</summary>
+        private const int Progress = NodeCatalog.MaxParts;
+
+        /// <summary>The band's parts: who plays, how loud the pad is and how far the filters open.</summary>
+        private const int Drums = 0, Snare = 1, Bass = 2, SecondString = 3, Pad = 4, Open = 5;
+
+        /// <summary>
+        /// The form's parts: the chorus, whether the lead plays, and which phrases end in a fill.
+        /// The chorus is its first output, which a switch between verse and chorus reads.
+        /// </summary>
+        private const int Chorus = 0, Lead = 1, Fill = 2;
 
         /// <summary>
         /// A natural minor on A, and the G sharp as well: the one note the E chord
@@ -102,11 +114,11 @@ internal static partial class Presets
             return node;
         }
 
-        /// <summary>A Threshold on a lane: whether the song has got as far as a part needs.</summary>
-        private NodeInstance Reached(NodeInstance lane, float level)
+        /// <summary>A Threshold: whether a signal has got as far as <paramref name="level"/>.</summary>
+        private NodeInstance Reached(NodeInstance a, float level, int from = 0)
         {
             var node = b.Add("math.step", (0, level));
-            b.Wire(lane, 0, node, 1);
+            b.Wire(a, from, node, 1);
             return node;
         }
 
@@ -155,8 +167,17 @@ internal static partial class Presets
             return node;
         }
 
-        /// <summary>A lane of the arrangement: one step to a phrase of eight bars, open the whole way.</summary>
-        private NodeInstance Lane(params Step[] steps) => Steps("seq.values", 1f / 32f, 1f, 0f, steps);
+        /// <summary>An Arrangement of one section to a phrase of eight bars, a row of levels a part.</summary>
+        private NodeInstance Arranged(params PartLevel[][] parts)
+        {
+            var node = b.Add(NodeCatalog.ArrangementTypeId, (1, 1f / 32f));
+            ArrangementExtra.Set(node, parts);
+            b.Wire(tempo, Beats, node, 0);
+            return node;
+        }
+
+        /// <summary>A part's levels, each held for its phrase.</summary>
+        private static PartLevel[] Levels(params float[] levels) => [.. levels.Select(level => new PartLevel(level))];
 
         /// <summary>A step nothing is struck on.</summary>
         private static Step Rest(float value = 0f, float length = 1f) => new(value, length, 0f);
@@ -178,37 +199,31 @@ internal static partial class Presets
 
             // --- the song --------------------------------------------------------
 
-            // How much band there is, a phrase at a time: an intro of strings and pad,
-            // the drums, two verses, a chorus of two phrases, a verse, a bridge with
-            // no drums in it, the chorus again, and a way out that ends where the
-            // intro begins. The step's volume is spare, so it carries the one thing
-            // that does not rise with the rest: how loud the pad is, which is most of
-            // what there is in the bridge and least in a verse.
-            var song = Lane(
-                new Step(0.1f, 1f, 0.9f), new Step(0.3f, 1f, 0.8f), new Step(0.6f, 1f, 0.45f),
-                new Step(0.7f, 1f, 0.5f), new Step(1f, 1f, 0.75f), new Step(1f, 1f, 0.75f),
-                new Step(0.7f, 1f, 0.5f), new Step(0.2f), new Step(1f, 1f, 0.8f),
-                new Step(1f, 1f, 0.8f), new Step(0.45f, 1f, 0.6f), new Step(0.1f, 1f, 0.9f));
+            // Twelve phrases: an intro of strings and pad, the drums, two verses, a
+            // chorus of two phrases, a verse, a bridge with no drums in it, the chorus
+            // again, and a way out that ends where the intro begins. The pad is most
+            // of what there is in the bridge and least in a verse, and the filters
+            // open as the song fills.
+            var band = Arranged(
+                Levels(0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0),
+                Levels(0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0),
+                Levels(0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0),
+                Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+                Levels(0.9f, 0.8f, 0.45f, 0.5f, 0.75f, 0.75f, 0.5f, 1, 0.8f, 0.8f, 0.6f, 0.9f),
+                Levels(0.1f, 0.3f, 0.6f, 0.7f, 1, 1, 0.7f, 0.2f, 1, 1, 0.45f, 0.1f));
 
             // Which half of the song it is: nought is the verse, and its chords and
-            // its bass and its kick, and one is the chorus. The volume is whether the
-            // lead plays at all — not in the intro or the first verse, and alone over
-            // the pad in the bridge.
-            var theme = Lane(
-                Rest(), Rest(), Rest(), new Step(0f),
-                new Step(1f), new Step(1f), new Step(0f), new Step(0f),
-                new Step(1f), new Step(1f), new Step(0f), Rest());
-
-            // And which phrases end in a fill: the ones a chorus begins or ends after.
-            var turn = Lane(
-                new Step(0f), new Step(0f), new Step(0f), new Step(1f),
-                new Step(0f), new Step(1f), new Step(0f), new Step(1f),
-                new Step(0f), new Step(1f), new Step(0f), new Step(0f));
+            // its bass and its kick, and one is the chorus. The lead plays from the
+            // second verse on, alone over the pad in the bridge, and a phrase a
+            // chorus begins or ends after ends in a fill.
+            var form = Arranged(
+                Levels(0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0),
+                Levels(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+                Levels(0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0));
 
             // The fill is the last bar of such a phrase, and a ramp across it.
-            var phrase = Through("math.fract", Times(tempo, 1f / 32f, Beats));
-            var filling = Product(Reached(phrase, 0.875f), turn);
-            var ramp = Span(phrase, 0.875f, 1f, 0.35f, 1f);
+            var filling = Product(Reached(form, 0.875f, Progress), form, 0, Fill);
+            var ramp = Span(form, 0.875f, 1f, 0.35f, 1f, Progress);
 
             // The harmony, a bar at a time, in semitones from A. The verse falls
             // A minor, G, F, E and the E is major; the chorus rises F, C, G to A
@@ -218,7 +233,7 @@ internal static partial class Presets
             var chorusRoots = Steps("seq.values", 0.25f, 1f, 0f,
                 new Step(-4f), new Step(3f), new Step(-2f), new Step(0f),
                 new Step(-4f), new Step(3f), new Step(-5f), new Step(-5f));
-            var root = Either(verseRoots, chorusRoots, theme);
+            var root = Either(verseRoots, chorusRoots, form);
 
             Box("Song");
 
@@ -240,8 +255,8 @@ internal static partial class Presets
             var chorusKick = Steps("seq.values", 4f, 0.5f, 0.01f, Hits(
                 1f, 0f, 0f, 0f, 0.9f, 0f, 0f, 0f, 0.95f, 0f, 0f, 0f, 0.9f, 0f, 0.6f, 0f));
 
-            var kickGate = Product(Either(verseKick, chorusKick, theme, Gate), Reached(song, 0.25f));
-            var kickHard = Wired(NodeCatalog.HoldTypeId, Either(verseKick, chorusKick, theme), kickGate);
+            var kickGate = Product(Either(verseKick, chorusKick, form, Gate), band, second: Drums);
+            var kickHard = Wired(NodeCatalog.HoldTypeId, Either(verseKick, chorusKick, form), kickGate);
 
             // Two envelopes and a sine, which is the whole of a kick drum: one shapes
             // how loud it is, the shorter one what pitch it is.
@@ -278,11 +293,11 @@ internal static partial class Presets
                 new Step(0.8f), new Step(0.3f), new Step(0.55f), new Step(0.3f),
                 new Step(0.75f), new Step(0.35f), new Step(0.65f), new Step(0.5f));
 
-            var shut = Product(Product(Stroke(tempo, 4f, 10f), hatSeq), Reached(song, 0.25f));
+            var shut = Product(Product(Stroke(tempo, 4f, 10f), hatSeq), band, second: Drums);
 
             var offBeat = b.Add("math.sub", (0, 1f));
             b.Wire(Through("math.fract", Plus(tempo, 0.5f, Beats)), 0, offBeat, 1);
-            var open = Product(Knobbed("math.pow", offBeat, 3f), theme);
+            var open = Product(Knobbed("math.pow", offBeat, 3f), form, second: Chorus);
 
             var hatLevel = Sum(shut, Times(open, 0.6f));
             var hats = Product(Filtered(hiss, 7000f), hatLevel, High);
@@ -300,7 +315,7 @@ internal static partial class Presets
             var snareGate = b.Add("math.mix");
             var snareHard = b.Add("math.mix");
 
-            b.Wire(Product(snareSeq, Reached(song, 0.5f), Gate), 0, snareGate, 0)
+            b.Wire(Product(snareSeq, band, Gate, Snare), 0, snareGate, 0)
              .Wire(hatSeq, Gate, snareGate, 1)
              .Wire(filling, 0, snareGate, 2)
              .Wire(snareSeq, 0, snareHard, 0)
@@ -332,8 +347,8 @@ internal static partial class Presets
                 new Step(0f), new Step(0f, 1f, 0.7f), new Step(0f, 1f, 0.85f), new Step(0f, 1f, 0.7f),
                 new Step(0f), new Step(0f, 1f, 0.7f), new Step(12f, 1f, 0.85f), new Step(0f, 1f, 0.75f));
 
-            var bassGate = Product(Either(verseBass, chorusBass, theme, Gate), Reached(song, 0.4f));
-            var bassHz = Through("audio.note", Plus(Sum(Either(verseBass, chorusBass, theme), root), 33f));
+            var bassGate = Product(Either(verseBass, chorusBass, form, Gate), band, second: Bass);
+            var bassHz = Through("audio.note", Plus(Sum(Either(verseBass, chorusBass, form), root), 33f));
 
             // The gate is as high as the note is loud, so smoothed it is the accent,
             // and the envelope times it is what opens the filter as well as the note.
@@ -349,7 +364,7 @@ internal static partial class Presets
             b.Wire(bassGate, 0, bassEnv, 0)
              .Wire(bassHz, 0, saw, 1)
              .Wire(pluck, 0, cutoff, 0)
-             .Wire(Span(song, 0f, 1f, 900f, 2600f), 0, cutoff, 4)
+             .Wire(Span(band, 0f, 1f, 900f, 2600f, Open), 0, cutoff, 4)
              .Wire(cutoff, 0, filter, 1);
 
             // Driven, and a sine at the same pitch added after it so that it stays a sine.
@@ -388,7 +403,7 @@ internal static partial class Presets
             // by itself, so each goes through a lowpass, which opens as the song fills
             // — from a nylon string to a steel one — and is made up after it for what
             // it took.
-            var stringTone = Span(song, 0f, 1f, 900f, 2200f);
+            var stringTone = Span(band, 0f, 1f, 900f, 2200f, Open);
 
             NodeInstance Mellowed(NodeInstance plucked)
             {
@@ -407,7 +422,7 @@ internal static partial class Presets
              .Wire(root, 0, secondTune, 1)
              .Wire(firstArp, Gate, firstPlucked, 1)
              .Wire(firstTune, 0, firstPlucked, 2)
-             .Wire(Product(secondArp, Reached(song, 0.2f), Gate), 0, secondPlucked, 1)
+             .Wire(Product(secondArp, band, Gate, SecondString), 0, secondPlucked, 1)
              .Wire(secondTune, 0, secondPlucked, 2);
 
             // A side each, and half of both in the middle.
@@ -443,13 +458,13 @@ internal static partial class Presets
             // opens with the song.
             var padL = b.Add("math.mixer", (1, 0.8f), (3, 0.9f), (5, 0.35f));
             var padR = b.Add("math.mixer", (1, 0.8f), (3, 0.35f), (5, 0.9f));
-            var padTone = Span(song, 0f, 1f, 700f, 2400f);
+            var padTone = Span(band, 0f, 1f, 700f, 2400f, Open);
             var padToneL = Filtered(padL);
             var padToneR = Filtered(padR);
 
             // A chord that cuts out is a mistake and one that swells is not, so its
             // level gets where the lane says over a couple of seconds.
-            var padLevel = Product(Slewed(song, 0.4f, Gate), duck, second: 2);
+            var padLevel = Product(Slewed(band, 0.4f, Pad), duck, second: 2);
 
             b.Wire(padRoot, 0, padL, 0).Wire(padMiddle, 0, padL, 2).Wire(padFifth, 0, padL, 4)
              .Wire(padRoot, 0, padR, 0).Wire(padMiddle, 0, padR, 2).Wire(padFifth, 0, padR, 4)
@@ -482,8 +497,8 @@ internal static partial class Presets
                 new Step(74f, 3f), new Step(71f, 1f, 0.8f), new Step(74f, 2f, 0.9f), new Step(79f, 2f),
                 new Step(76f, 6f), Rest(76f, 2f));
 
-            var leadStep = Either(hook, tune, theme);
-            var leadGate = Product(Either(hook, tune, theme, Gate), theme, 0, Gate);
+            var leadStep = Either(hook, tune, form);
+            var leadGate = Product(Either(hook, tune, form, Gate), form, 0, Lead);
 
             var leadNote = Through("audio.note", leadStep);
 
@@ -500,7 +515,7 @@ internal static partial class Presets
             var swell = b.Add("osc.sine", (1, 0.043f), (3, 0.5f), (4, 0.5f));
             var fifth = Product(fifthOsc, swell);
 
-            // Plucked in the verse and sung in the chorus: the sustain is the theme.
+            // Plucked in the verse and sung in the chorus.
             var leadEnv = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -0.95f), (4, -0.85f));
 
             // Left and right differ in which saw they carry and in nothing else, which
@@ -509,7 +524,7 @@ internal static partial class Presets
             var leadTone = Span(leadEnv, 0f, 1f, 500f, 5200f);
             var leadToneL = Filtered(Sum(leadA, fifth));
             var leadToneR = Filtered(Sum(leadB, fifth));
-            var leadLevel = Product(leadEnv, Span(theme, 0f, 1f, 0.6f, 0.9f));
+            var leadLevel = Product(leadEnv, Span(form, 0f, 1f, 0.6f, 0.9f, Chorus));
 
             b.Wire(leadNote, 1, wide, 0)
              .Wire(vibrato, 0, wide, 2)
@@ -517,7 +532,7 @@ internal static partial class Presets
              .Wire(wide, 0, leadB, 1)
              .Wire(Through("audio.note", Plus(leadStep, 7f)), 0, fifthOsc, 1)
              .Wire(leadGate, 0, leadEnv, 0)
-             .Wire(Span(theme, 0f, 1f, 0.3f, 0.7f), 0, leadEnv, 3)
+             .Wire(Span(form, 0f, 1f, 0.3f, 0.7f, Chorus), 0, leadEnv, 3)
              .Wire(leadTone, 0, leadToneL, 1)
              .Wire(leadTone, 0, leadToneR, 1);
 
@@ -630,7 +645,7 @@ internal static partial class Presets
 
              .Wire(bend, 0, bands, 0)
              .Wire(bend, 1, bands, 1)
-             .Wire(Sum(Span(leadGate, 0f, 1f, 2.2f, 4.4f), Times(song, 1.6f)), 0, bands, 2)
+             .Wire(Sum(Span(leadGate, 0f, 1f, 2.2f, 4.4f), Times(band, 1.6f, Open)), 0, bands, 2)
              .Wire(drift, 0, bands, 3)
              .Wire(bands, 0, filament, 2);
 
@@ -645,7 +660,7 @@ internal static partial class Presets
             // rather than clamped, because a hue is a wheel.
             var hue = Through("math.fract", Sum(
                 Sum(Times(leadStep, 1f / 12f), Times(field, 0.9f)),
-                Sum(crawl, Times(theme, 0.45f))));
+                Sum(crawl, Times(form, 0.45f, Chorus))));
 
             // The bass's gate takes the color out of the image between its notes,
             // which is the same rhythm the ear is getting from it, and the snare takes
@@ -702,7 +717,7 @@ internal static partial class Presets
              .Wire(cool, 1, ghost, 1)
              .Wire(cool, 2, ghost, 2)
              .Wire(ghost, 0, trail, 0)
-             .Wire(Span(song, 0f, 1f, 0.78f, 0.9f), 0, trail, 1)
+             .Wire(Span(band, 0f, 1f, 0.78f, 0.9f, Open), 0, trail, 1)
 
              .Wire(trail, 0, combine, 0)
              .Wire(fresh, 0, combine, 1)

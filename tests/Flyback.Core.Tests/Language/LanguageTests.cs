@@ -423,29 +423,32 @@ public class LanguageTests
         let beat = tempo(112)
 
         group "Song" {
-          let song = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
-            0.1%0.9 0.3%0.8 0.6%0.45 0.7%0.5  1%0.75 1%0.75 0.7%0.5 0.2
-            1%0.8 1%0.8 0.45%0.6 0.1%0.9
+          # drums, snare, bass, second string, pad, how far the filters open
+          let band = beat.beats |> arrangement(rate: 1/32) [
+            0 1 1 1  1 1 1 0  1 1 1 0 |
+            0 0 1 1  1 1 1 0  1 1 0 0 |
+            0 0 1 1  1 1 1 0  1 1 1 0 |
+            0 1 1 1  1 1 1 1  1 1 1 0 |
+            0.9 0.8 0.45 0.5  0.75 0.75 0.5 1  0.8 0.8 0.6 0.9 |
+            0.1 0.3 0.6 0.7  1 1 0.7 0.2  1 1 0.45 0.1
           ]
 
-          let theme = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
-            ~ ~ ~ 0  1 1 0 0  1 1 0 ~
-          ]
-
-          let turn = beat.beats |> values(rate: 0.03125, gate_length: 1, shape: 0) [
+          # the chorus, the lead, a fill
+          let form = beat.beats |> arrangement(rate: 1/32) [
+            0 0 0 0  1 1 0 0  1 1 0 0 |
+            0 0 0 1  1 1 1 1  1 1 1 0 |
             0 0 0 1  0 1 0 1  0 1 0 0
           ]
 
-          let phrase  = beat.beats * 0.03125 |> fract()
-          let filling = (phrase |> step(edge: 0.875)) * turn
-          let ramp    = phrase |> remap(0.875..1, 0.35..1)
+          let filling = (form.progress |> step(edge: 0.875)) * form.part_3
+          let ramp    = form.progress |> remap(0.875..1, 0.35..1)
 
           let chorusRoot = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ -4 3 -2 0  -4 3 -5 -5 ]
           let verseRoot  = beat.beats |> values(rate: 0.25, gate_length: 1, shape: 0) [ 0 -2 -4 -5 ]
           let root = math.mix(
             verseRoot,
             chorusRoot,
-            theme)
+            form)
         }
 
         let hiss = noise()
@@ -459,8 +462,8 @@ public class LanguageTests
             1 ~ ~ ~  0.9 ~ ~ ~  0.95 ~ ~ ~  0.9 ~ 0.6 ~
           ]
 
-          let kickGate = math.mix(verseKick.gate, chorusKick.gate, theme) * (song |> step(edge: 0.25))
-          let kickHard = math.mix(verseKick, chorusKick, theme) |> hold(trigger: kickGate)
+          let kickGate = math.mix(verseKick.gate, chorusKick.gate, form) * band
+          let kickHard = math.mix(verseKick, chorusKick, form) |> hold(trigger: kickGate)
 
           let kickLevel = kickGate |> adsr(gate: _, attack: 1.26ms, decay: 240ms, sustain: 0, release: 79ms)
           let sweep     = kickGate |> adsr(gate: _, attack: 0.5ms, decay: 44.7ms, sustain: 0, release: 15.8ms)
@@ -477,8 +480,8 @@ public class LanguageTests
             0.8 0.3 0.55 0.3  0.75 0.3 0.6 0.35  0.8 0.3 0.55 0.3  0.75 0.35 0.65 0.5
           ]
 
-          let shut = (1 - fract(beat.beats * 4) |> pow(a: _, 10)) * hatSeq * (song |> step(edge: 0.25))
-          let open = (1 - fract(beat.beats + 0.5) |> pow(a: _, 3)) * theme
+          let shut = (1 - fract(beat.beats * 4) |> pow(a: _, 10)) * hatSeq * band
+          let open = (1 - fract(beat.beats + 0.5) |> pow(a: _, 3)) * form
 
           let hatLevel = shut + open * 0.6
 
@@ -490,7 +493,7 @@ public class LanguageTests
             ~ ~ ~ ~  1 ~ ~ ~  ~ ~ ~ ~  0.95 ~ ~ 0.45
           ]
 
-          let snareHit = snareSeq.gate * (song |> step(edge: 0.5))
+          let snareHit = snareSeq.gate * band.part_2
           let snareGate = math.mix(snareHit, hatSeq.gate, filling)
           let snareHard = math.mix(snareSeq, ramp, filling) |> hold(trigger: snareGate)
 
@@ -511,14 +514,14 @@ public class LanguageTests
             0 0%0.7 0%0.85 0%0.7  0 0%0.7 12%0.85 0%0.75
           ]
 
-          let bassGate = math.mix(verseBass.gate, chorusBass.gate, theme) * (song |> step(edge: 0.4))
-          let bassHz   = math.mix(verseBass, chorusBass, theme) + root + 33 |> note(note: _)
+          let bassGate = math.mix(verseBass.gate, chorusBass.gate, form) * band.part_3
+          let bassHz   = math.mix(verseBass, chorusBass, form) + root + 33 |> note(note: _)
 
           let accent = bassGate |> slew(rise: 25.1188643ms, fall: 25.1188643ms)
 
           let pluck = (bassGate |> adsr(gate: _, attack: 1ms, decay: 126ms, sustain: 0.4, release: 63ms)) * accent
 
-          let cutoffTop = song |> remap(0..1, 900..2600)
+          let cutoffTop = band.part_6 |> remap(0..1, 900..2600)
           let cutoff = pluck |> remap(in_low: 0, out_low: 70,
                                       out_high: cutoffTop)
 
@@ -536,7 +539,7 @@ public class LanguageTests
             69 72.6 76 72.6  69 76 72.6 69
           ]
 
-          let stringTone = song |> remap(0..1, 900..2200)
+          let stringTone = band.part_6 |> remap(0..1, 900..2200)
 
           let firstTuned = firstArp |> tune(transpose: root) [ C D E F G G# A B ]
           let firstPlucked = string(trigger: firstArp.gate,
@@ -544,7 +547,7 @@ public class LanguageTests
                                     decay: 708ms)
 
           let secondTuned = secondArp |> tune(transpose: root) [ C D E F G G# A B ]
-          let secondStrike = secondArp.gate * (song |> step(edge: 0.2))
+          let secondStrike = secondArp.gate * band.part_4
           let secondPlucked = string(trigger: secondStrike,
                                      freq: secondTuned,
                                      decay: 708ms)
@@ -568,7 +571,7 @@ public class LanguageTests
           let padFifth  = pulse(freq: padFifthFreq,
                                 width: sine(freq: 0.29, amp: 0.22, bias: 0.5), amp: 0.5)
 
-          let padTone = song |> remap(0..1, 700..2400)
+          let padTone = band.part_6 |> remap(0..1, 700..2400)
 
           let padToneL = mixer(in_1: padRoot, level_1: 0.8, in_2: padMiddle, level_2: 0.9,
                                in_3: padFifth, level_3: 0.35)
@@ -577,7 +580,7 @@ public class LanguageTests
                                in_3: padFifth, level_3: 0.9)
                            |> filter(cutoff: padTone, resonance: 0)
 
-          let padLevel = (song.gate |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
+          let padLevel = (band.part_5 |> slew(rise: 2.51188643s, fall: 2.51188643s)) * duck.gain
           let padL = padToneL * padLevel
           let padR = padToneR * padLevel
         }
@@ -594,8 +597,8 @@ public class LanguageTests
             D5@3 B4%0.8 D5%0.9@2 G5@2   E5@6 E5%0@2
           ]
 
-          let leadStep = math.mix(hook, melody, theme)
-          let leadGate = math.mix(hook.gate, melody.gate, theme) * theme.gate
+          let leadStep = math.mix(hook, melody, form)
+          let leadGate = math.mix(hook.gate, melody.gate, form) * form.part_2
 
           let tuned = leadStep |> note(note: _)
           let wide  = note(tuned.note, cents: sine(freq: 5.4, amp: 9))
@@ -603,7 +606,7 @@ public class LanguageTests
           let fifth = triangle(freq: fifthFreq, amp: 0.5)
                         * sine(freq: 0.043, amp: 0.5, bias: 0.5)
 
-          let leadEnvSustain = theme |> remap(0..1, 0.3..0.7)
+          let leadEnvSustain = form |> remap(0..1, 0.3..0.7)
           let leadEnv = leadGate |> adsr(gate: _, attack: 3.16ms, decay: 112ms,
                                          sustain: leadEnvSustain, release: 141ms)
 
@@ -611,7 +614,7 @@ public class LanguageTests
           let leadToneL = saw(freq: tuned, amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
           let leadToneR = saw(freq: wide,  amp: 0.7) + fifth |> filter(cutoff: leadTone, resonance: 0)
 
-          let leadLevel = leadEnv * (theme |> remap(0..1, 0.6..0.9))
+          let leadLevel = leadEnv * (form |> remap(0..1, 0.6..0.9))
           let leadL = leadToneL * leadLevel
           let leadR = leadToneR * leadLevel
         }
@@ -654,14 +657,14 @@ public class LanguageTests
           let filament = fold
             |> warp(by: field,
                     amount: sine(freq: 0.071, amp: 0.25, bias: 0.45) + firstArp.gate * 0.15)
-            |> rings(freq: filamentBands + song * 1.6, offset: t * 0.4)
+            |> rings(freq: filamentBands + band.part_6 * 1.6, offset: t * 0.4)
             |> smoothstep(0.2, 0.95)
         }
 
         group "Picture: Color" {
           let freshValue = filament * ((kickGate |> remap(0..1, 0.75..1.7)) + hatLevel * 0.35) |> clamp(0, 1)
           let bassLift = bassGate |> remap(0..1, 0.55..0.95)
-          let freshHue = leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + theme * 0.45) |> fract()
+          let freshHue = leadStep * (1 / 12) + field * 0.9 + (t * 0.02 + form * 0.45) |> fract()
           let freshSaturation = bassLift * (snareGate |> remap(0..1, 1..0.3))
           let fresh = hsv(
             hue:        freshHue,
@@ -679,7 +682,7 @@ public class LanguageTests
                        |> feedback()
                        |> color.split()
 
-          let fade = song |> remap(0..1, 0.78..0.9)
+          let fade = band.part_6 |> remap(0..1, 0.78..0.9)
           rgb(warm, cool.g, cool.b)
             |> gain(gain: fade, bias: 0)
             |> max(a: _, b: fresh)
