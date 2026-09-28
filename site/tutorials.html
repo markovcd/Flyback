@@ -109,7 +109,8 @@
 
     <p>Flyback opens with a patch already playing. The window has four parts: the <strong>toolbar</strong> across
     the top, the <strong>canvas</strong> where modules are wired, the <strong>preview</strong> on the right, and
-    under the preview the <strong>inspector</strong>, which shows hints until you select a module.
+    under the preview the <strong>inspector</strong>, which shows hints until you select a module. The
+    <strong>assistant</strong>, when opened, is a fifth: a column to the left of the canvas.
     <strong>Settings → Canvas → Compact modules</strong> puts each input beside an output on one row and shows an
     input&rsquo;s value when you hover it.</p>
 
@@ -168,7 +169,7 @@
     <ol class="steps">
       <li>Point at an empty part of the canvas and press <kbd>Space</kbd> (or right-click). The module list opens
       where you are pointing.</li>
-      <li>Type <code>rings</code>. The list narrows as you type, and the first match is highlighted, so press
+      <li>Type <code>rings</code>. The list narrows as you type and the first match is highlighted, so press
       <kbd>Enter</kbd> to add it.</li>
       <li>Drag from the round socket beside Rings' <code>out</code> to the Output's <code>color</code> socket.</li>
     </ol>
@@ -265,10 +266,10 @@
       </a>
     </figure>
 
-    <p>The Sine's <code>in</code> is normalled to Time. That is what makes an oscillator oscillate as soon as it
-    is placed. In the rings patch you wired a position into Rings instead, which is why it drew across the
-    screen rather than changing over time. The input a module reads across decides what it does: Coordinates
-    for a picture, Time for a sound.</p>
+    <p>The Sine's <code>in</code> is normalled to Time, which is what makes an oscillator oscillate as soon as it
+    is placed. Rings reads a position instead, which is why it drew across the screen rather than changing
+    over time. What a module reads across decides what it does: Coordinates for a picture, Time for a
+    sound.</p>
 
     <div class="note">
       <span class="tag">How one patch does both</span>
@@ -328,17 +329,19 @@ rings(freq: 3, offset: t)
 out.volume = 0.6</code></pre>
 
     <p>Read <code>|&gt;</code> as a wire. Its left side is plugged into the module on its right: into
-    <code>in</code> if the module has one or into its only socket, a color into a module's one color socket,
-    otherwise into the socket written as <code>_</code>, like
-    <code>value: _</code> above. Named arguments set knobs or take other wires, and a wire from a chain of its
-    own is a <code>let</code> above, never a pipeline inside the brackets. <code>x</code>, <code>y</code> and <code>t</code> are
-    Coordinates and Time, and arithmetic such as <code>a * b</code> is an Expression, one block that computes
-    the whole sum. A line of <code>off slow</code> switches that module off, which is
-    <kbd>Ctrl</kbd>+<kbd>B</kbd> on the canvas: what is patched into it comes straight out of it, and nothing
-    does where nothing is patched in. A line of <code>description "..."</code> says what the patch is for; it is
-    what the panel shows with nothing selected, where a double-click edits it, and what the preset gallery
-    shows under a saved preset's name. Under it, <code>author "..."</code> says who made the patch and
-    <code>tags "drone" "slow"</code> gives it words to find it by; the panel edits both the same way.
+    <code>in</code> if the module has one, into its only socket if it has one, a color into a module's one
+    color socket, and otherwise into the socket written as <code>_</code>, like <code>value: _</code> above.
+    Named arguments set knobs or take other wires. A signal that comes from a chain of its own gets a
+    <code>let</code> above, never a pipeline inside the brackets. <code>x</code>, <code>y</code> and
+    <code>t</code> are Coordinates and Time, and arithmetic such as <code>a * b</code> is an Expression, one
+    block that computes the whole sum.</p>
+
+    <p>A few lines describe the patch rather than build it. <code>off slow</code> switches that module off,
+    which is <kbd>Ctrl</kbd>+<kbd>B</kbd> on the canvas: what is patched into it comes straight out of it,
+    and nothing does where nothing is patched in. <code>description "..."</code> says what the patch is for;
+    it is what the inspector shows with nothing selected, where a double-click edits it, and what the preset
+    gallery shows under a saved preset's name. <code>author "..."</code> says who made the patch and
+    <code>tags "drone" "slow"</code> gives it words to find it by; the inspector edits both the same way.
     <code>length 2:30.50</code> says how long the patch plays, and is what the seek bar's box writes.</p>
 
     <ol class="steps">
@@ -379,11 +382,11 @@ out.volume = 0.6</code></pre>
     <p>The <strong>MIDI In</strong> module has four outputs: <code>pitch</code> (the note number),
     <code>gate</code> (high while a key is held), <code>velocity</code> and <code>trigger</code> (a pulse at the
     start of each note). With a MIDI keyboard connected, pick it on the module's <strong>listens to</strong>
-    field, and set <strong>channel</strong> to hear one of its channels rather than all of them, which is how
-    each track of a drum machine gets a module of its own. For an instrument Flyback knows by name, such as the
-    Elektron Syntakt, the channel is picked as a track. Without a controller, the computer keyboard plays instead. <strong>Settings → MIDI</strong> names the
-    plugin doing the hearing and sets whether the first MIDI In added to a patch lays the computer keyboard out as a
-    piano or as a scale.</p>
+    field. Set <strong>channel</strong> to hear one of its channels rather than all of them, which is how
+    each track of a drum machine gets a module of its own; for an instrument Flyback knows by name, such as the
+    Elektron Syntakt, the channel is picked as a track. Without a controller, the computer keyboard plays
+    instead. <strong>Settings → MIDI</strong> names the plugin doing the hearing and sets whether the first MIDI
+    In added to a patch lays the computer keyboard out as a piano or as a scale.</p>
 
     <p>An instrument Flyback knows by name is also at the top of the module list, under <strong>Instruments</strong>,
     while it is plugged in. Picking it adds the whole box: a Clock In and a MIDI In per track, each on its channel and
@@ -505,15 +508,15 @@ out.volume = 0.5</code></pre>
     <h2><span class="num">10</span>Record and render</h2>
 
     <h3>Record a live take</h3>
-    <p>Press <kbd>Ctrl</kbd>+<kbd>R</kbd> (or <strong>Record</strong>), choose a file and play. The video
-    kind records the picture from the GPU with the sound alongside it; the sound kind records the sound only.
+    <p>Press <kbd>Ctrl</kbd>+<kbd>R</kbd> (or <strong>Record</strong>), choose a file and play. A video file
+    records the picture from the GPU with the sound alongside it; a sound file records the sound only.
     Once the file is named the status bar counts three seconds in — press <kbd>Ctrl</kbd>+<kbd>R</kbd>
     during the count to call it off — and then the clock goes back to zero, so the take starts where the
     patch does. Both are yours to set: <strong>Settings → Recording</strong> picks the count-in, or
     <strong>None</strong> to start on the press, and <strong>Rewind to zero first</strong> can be switched
     off to record a session as it stands. A take runs until you press <kbd>Ctrl</kbd>+<kbd>R</kbd> again,
-    and it includes every knob you turn and every note you play — a fade of the Output's
-    <code>volume</code> to zero included, which is recorded as the silence it is. The picture size is set under
+    and it includes every knob you turn and every note you play; a fade of the Output's
+    <code>volume</code> to zero is recorded as the silence it is. The picture size is set under
     <strong>Settings → Graphics</strong>, and the frame rate, quality and both formats under
     <strong>Recording</strong>.</p>
 
@@ -593,16 +596,23 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     <h2><span class="num">11</span>The assistant</h2>
 
     <p>The assistant builds and edits patches from a description. It works with any chat-completions endpoint,
-    or with Gemini, whose models can also listen to what the patch sounds like.</p>
+    or with Gemini, whose models can also listen to what the patch sounds like. It does not hand you text to
+    paste: it works the patch on a copy, module by module or as a whole text patch, reads the compiler's
+    complaints after every edit, renders frames to look at the motion and, with hearing on, listens to a few
+    seconds of the sound before it answers.</p>
 
     <ol class="steps">
       <li>Open <strong>Settings → Assistant</strong>, choose a provider, fill in what it asks for, and paste an API
-      key. Tick <strong>Keep this key</strong> to store it in the operating system's secret store.</li>
+      key. Tick <strong>Keep this key</strong> to store it in the operating system's secret store. Tick
+      <strong>Let it listen to the sound</strong>, with a model that can, to give it ears; it is off by default,
+      because every listen is a second request.</li>
       <li>Open <strong>Assistant</strong> on the toolbar, describe what you want, for example <em>"a slow kick
       drum that makes the rings flash"</em>, and press <kbd>Enter</kbd>.</li>
-      <li>Nothing is sent until you ask. What comes back is an ordinary edit: <kbd>Ctrl</kbd>+<kbd>Z</kbd> takes
-      it off again. Where the text is the document, the new patch is written into the text, and the same
-      press puts your text back.</li>
+      <li>Nothing is sent until you ask. What comes back lands on the canvas as an ordinary edit:
+      <kbd>Ctrl</kbd>+<kbd>Z</kbd> takes it off again. Where the text is the document, the new patch is
+      written into the text, and the same press puts your text back. Ask again and it carries on from the patch
+      it built; edit the patch yourself in between, and the next answer starts a new conversation about the one
+      on screen. The same button stops a turn, at the next thing the assistant does.</li>
     </ol>
 
     <p>Conversations are saved beside the patch they are about. <strong>Probe this model</strong>, in

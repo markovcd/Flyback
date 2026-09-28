@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flyback — a patchable video and audio synthesizer</title>
-<meta name="description" content="Flyback is a patchable synthesizer where one graph generates both a picture and a sound. Wire modules together, watch and hear the result live, and export it from the command line.">
+<meta name="description" content="Flyback is a patchable synthesizer where one patch makes both a picture and a sound. Wire modules together or describe the patch to the built-in assistant, which builds it, looks at it and listens to it. Watch and hear the result live, and render it from the command line.">
 <link rel="canonical" href="https://markovcd.github.io/Flyback/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Flyback">
@@ -113,7 +113,7 @@
   /* ---- features ---- */
   .modules { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 40px; }
   @media (min-width: 640px) { .modules { grid-template-columns: repeat(2, 1fr); } }
-  @media (min-width: 1040px) { .modules { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1040px) { .modules { grid-template-columns: repeat(3, 1fr); } }
 
   /* ---- tour ---- */
   .tour { display: flex; flex-direction: column; gap: 80px; margin-top: 48px; }
@@ -166,9 +166,10 @@
     <div class="intro">
       <p class="eyebrow">A patchable synthesizer for Windows, macOS and Linux</p>
       <h1>One patch.<br><span class="sweep">A picture and a sound.</span></h1>
-      <p class="lede">Flyback is a modular synthesizer where the same graph of modules draws on the screen
-      and plays through the speakers. Wire oscillators, patterns, geometry and feedback together, and watch
-      and hear the result change as you turn a knob.</p>
+      <p class="lede">Flyback is a modular synthesizer where the same patch draws on the screen and plays
+      through the speakers. Wire oscillators, patterns, geometry and feedback together, and watch and hear
+      the result change as you turn a knob. Or say what you want: the assistant built into the editor wires
+      it, looks at what it drew, listens to what it plays, and puts it on the canvas as an edit you can undo.</p>
       <div class="actions">
         <a class="button primary" href="https://github.com/markovcd/Flyback/releases/latest">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v10M5.5 8.5 10 13l4.5-4.5M4 17h12"/></svg>
@@ -202,10 +203,12 @@
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow">How it works</p>
-      <h2>A graph you draw, compiled to a program that runs twice.</h2>
-      <p>Every module declares its sockets, and every wire says where a signal goes. When the patch changes,
-      Flyback compiles the graph backwards from the Output into one flat list of instructions. The screen
-      runs that list once per pixel, and the speakers run it once per sample.</p>
+      <h2>Wire it once. The screen draws it and the speakers play it.</h2>
+      <p>Every module has sockets, and a wire carries a signal from one socket to another. Whatever reaches
+      the Output's <code>color</code> is drawn, and whatever reaches its <code>left</code> and
+      <code>right</code> is heard. Under the hood the patch becomes one small program, run once for every
+      pixel of the picture and once for every sample of the sound, so a change to any wire shows and sounds
+      at the same moment.</p>
     </div>
 
     <figure class="diagram">
@@ -255,7 +258,46 @@ let slowly = t * 0.2
   </div>
 </section>
 
-<section class="band panel" id="gallery">
+<section class="band panel" id="assistant">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow" style="color: var(--tint)">Built in</p>
+      <h2>Say what you want. The assistant patches it, then looks and listens.</h2>
+      <p>The assistant lives in a column beside the patch, and it is not a chat box that hands you something
+      to paste. It works the patch the way you do: it adds modules, wires sockets, sets knobs, or writes the
+      whole patch in the text language, and every edit comes back with what the compiler makes of it. It
+      renders a strip of frames to see the motion, not one still. Given a model that can hear, it listens to
+      a few seconds of the sound, with the levels measured beside what it heard, so a patch that compiles
+      but plays nothing does not get past it. It is told what every module does and what every preset is,
+      and can read a preset in full for the idea in it.</p>
+    </div>
+
+    <div class="facts">
+      <div class="fact">
+        <h3>An edit, not a paste</h3>
+        <p>When a turn ends, what it built lands on the canvas as one edit, and <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+        takes the whole thing back. Say <em>now make it slower</em> and it carries on from where it left off.
+        The conversation is saved beside the patch it is about.</p>
+      </div>
+      <div class="fact">
+        <h3>Any model, your key</h3>
+        <p>Any endpoint that speaks chat completions, from OpenAI to a local Ollama, or Google's Gemini,
+        whose models hear the patch themselves. The key stays in the operating system's secret store, and
+        nothing is sent until you press Ask.</p>
+      </div>
+      <div class="fact">
+        <h3>Made the same way</h3>
+        <p>Flyback itself is written entirely by agents, with a person directing the work and deciding what
+        ships. The assistant is handed what they were: a compiler that says what is wrong and where, a
+        renderer that needs no window, and a language a patch can be written in.</p>
+      </div>
+    </div>
+    <p class="quiet" style="margin-top: 32px">Setting it up is <a href="tutorials.html#assistant">step eleven of
+    the tutorial</a>.</p>
+  </div>
+</section>
+
+<section class="band" id="gallery">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow" style="color: var(--tint)">Gallery</p>
@@ -374,26 +416,25 @@ let slowly = t * 0.2
       chords under a slatted sun, a ridge and a grid that scrolls to the beat. Overworld is a chiptune on a
       console's four voices, under a side-scroller drawn a pixel at a time. Dub is dub techno to play: four keys
       hold a chord and eight knobs ride the filter, the echo and the room. Dodge is a game on the keys
-      <kbd>Z</kbd> to <kbd>M</kbd>, steering through the one gap in each falling wall. And the
-      <a href="presets.html">preset site</a> starts with Tranquility: psytrance in G sharp with a rolling FM bass, an FM
-      lead, alien FM chatter played on three panel knobs, and three builds that each land on a drop, with two lines of Apollo 11 radio,
-      subtitled, down a tunnel with a moon at the end and a fading outro. It starts with a plugin too, Figures, whose three modules are
-      each a picture and a sound: a struck plate and the sand figure it settles into, a harmonograph whose drawing is
-      its chord, and any picture read along a row as the overtones of a tone. And Fractals, three modules about one
-      point c: the Mandelbrot set in its classic colors, which maps every c, the Julia set of c, and the orbit of c
-      played as a sound, a tone where it settles and a hiss where it never does. And Easy, two modules that sound
-      good before anything is wired and can never clip: Easy Synth, where you pick a wave, wire in a keyboard, and
-      the envelope, the filter, the two LFOs, the sub, the glide and the drive are already there; and Easy Drum,
-      where you pick a kick, a psy kick, a snare, a clap, a hat, a tom, a rim or a cowbell and it plays in time on its own.
-      Its Warehouse is a whole acid house track on the two: builds, drops and a breakdown in A minor, a bass line,
-      a chord stab and an organ hook, with knobs for the pump, the echo and the swing.</p>
+      <kbd>Z</kbd> to <kbd>M</kbd>, steering through the one gap in each falling wall.</p>
+      <p class="quiet" style="margin-top: 20px">The <a href="presets.html">preset site</a> starts with Tranquility:
+      psytrance in G sharp with a rolling FM bass, an FM lead, alien chatter played on three panel knobs, three
+      builds that each land on a drop, and two lines of Apollo 11 radio, subtitled, down a tunnel with a moon at
+      the end. It starts with plugins too. Figures has three modules that are each a picture and a sound: a struck
+      plate and the sand figure it settles into, a harmonograph whose drawing is its chord, and any picture read
+      along a row as the overtones of a tone. Fractals has three modules about one point c: the Mandelbrot set in
+      its classic colors, the Julia set of c, and the orbit of c played as a sound, a tone where it settles and a
+      hiss where it never does. Easy has two modules that sound good before anything is wired and can never clip:
+      Easy Synth, a whole synth behind one wave you pick, and Easy Drum, nine drum sounds that play in time on
+      their own. Its Warehouse is a whole acid house track on the two, with knobs for the pump, the echo and the
+      swing.</p>
       <p class="quiet" style="margin-top: 32px">More tracks go up on the
       <a href="https://www.youtube.com/@flyback-modular">Flyback channel on YouTube</a>.</p>
     </div>
   </div>
 </section>
 
-<section class="band" id="features">
+<section class="band panel" id="features">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow" style="color: var(--oscillator)">Features</p>
@@ -409,9 +450,9 @@ let slowly = t * 0.2
         <kbd>Ctrl</kbd>+<kbd>B</kbd> switches one off, passing what is patched into it straight through.</p></div>
       </article>
       <article class="card" style="--accent: var(--oscillator)">
-        <header>Thirteen families</header>
+        <header>Fourteen families</header>
         <div class="body"><p>Sources, oscillators, patterns, forms, geometry, color, maths, pitch, timing, shaping,
-        time effects, feedback and measurement modules, with a preset for each family.</p></div>
+        time effects, feedback, measurement and routing modules, with a preset for each family.</p></div>
       </article>
       <article class="card" style="--accent: var(--feedback)">
         <header>Feedback</header>
@@ -438,19 +479,26 @@ let slowly = t * 0.2
       </article>
       <article class="card" style="--accent: var(--tint)">
         <header>Assistant</header>
-        <div class="body"><p>Describe a patch and have one built, over any chat-completions endpoint or Gemini,
-        whose models can listen to the patch themselves. What comes back is an edit you can undo.</p></div>
+        <div class="body"><p>Describe a patch and have one built, looked at and listened to, over any
+        chat-completions endpoint or Gemini. What comes back is an edit you can undo.
+        <a href="#assistant">How it works.</a></p></div>
       </article>
       <article class="card" style="--accent: var(--sequencer)">
         <header>Plugins</header>
         <div class="body"><p>Modules, presets, sound backends and assistants all load from a folder. The
         Picture, Voice, Effects and Mastering modules ship as plugins themselves. <a href="plugins.html">Write your own.</a></p></div>
       </article>
+      <article class="card" style="--accent: var(--shaping)">
+        <header>Share</header>
+        <div class="body"><p>Presets and plugins people make go on the <a href="presets.html">preset site</a>,
+        with a picture and a sound of each. The gallery in the app lists them, and one click downloads and
+        opens one. A plugin is a signed package, installed from the same window.</p></div>
+      </article>
     </div>
   </div>
 </section>
 
-<section class="band panel" id="tour">
+<section class="band" id="tour">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow" style="color: var(--source)">A look around</p>
@@ -514,17 +562,15 @@ let slowly = t * 0.2
         <div>
           <h3>Start from a preset</h3>
           <p>The first toolbar button opens a gallery of every preset: a tile for each, with a frame of what
-          it draws (or a speaker for one that is only heard), its name and a line saying what it shows,
-          under a heading for each kind: the blank canvas and the two presets that wait on a file of yours,
-          then the patches about one idea, then the ones where sound and picture
-          are the same thought, then the showcases. Presets that plugins add appear under those same headings,
-          after the built-in ones, and presets of your own come last, under YOUR PRESETS: its first tile saves the patch
-          on the canvas as one, with the sounds and pictures it uses, into a <code>presets</code> folder beside
-          Flyback&rsquo;s settings. Right-click one of yours to delete it. After those, ON THE PRESET SITE, with an Open
-          link beside it to the site itself, lists the presets people have shared, with their stars, searched with
-          whatever you type; click one to download it and open it, or right-click it to report it to the site&rsquo;s admin. Rate one on its page on the preset site. Type to narrow the gallery to the presets whose name, heading, author or tags have what you typed, as in the module list: the arrows move through what is left and Enter starts from it. Rest the pointer on a tile for a second to try it: its picture plays on
-          the tile, its sound fades in, and the patch you have fades out until you move on. Click a tile to start from it. Settings → Graphics picks which one Flyback
-          opens on the next time it starts, from the same gallery.</p>
+          it draws, or a speaker for one that is only heard, its name and a line on what it shows. The tiles
+          sit under headings: the blank canvas, then patches about one idea, then the ones where the picture
+          and the sound are one thought, then the showcases. Presets from plugins follow the built-in ones
+          under the same headings. Yours come last, under YOUR PRESETS, where the first tile saves the patch on
+          the canvas as one, with the sounds and pictures it uses, and a right-click deletes one. After those,
+          ON THE PRESET SITE lists what people have shared, with their stars; click one to download and open
+          it. Type to narrow the gallery by name, heading, author or tag, and rest the pointer on a tile to try
+          it: its picture plays on the tile and its sound fades in over the patch you have. Click a tile to
+          start from it. Settings → Graphics picks the one Flyback opens on next time.</p>
         </div>
         <figure>
           <div class="window">
@@ -539,7 +585,7 @@ let slowly = t * 0.2
   </div>
 </section>
 
-<section class="band" id="start">
+<section class="band panel" id="start">
   <div class="wrap">
     <div class="section-head">
       <p class="eyebrow" style="color: var(--sequencer)">Get started</p>
@@ -561,14 +607,13 @@ let slowly = t * 0.2
         <p>After that it keeps itself up to date: a new release is downloaded in the background and installed the
         next time Flyback starts, and only if it is signed with Flyback's release key. The window that opens then
         shows what changed since the version it replaced. Turn it off under <strong>Settings → Updates</strong>.</p>
-        <p>It also counts how it is used: the version, the operating system, which of its own plugins loaded and
-        which sound backend opened, roughly how many cores, how much memory and how tall a screen the machine has,
-        how many of each kind of module are in a patch when it plays, whether an assistant was asked and which
-        provider, and when a run ends, which kinds of module were picked from the module list, roughly how long
-        it lasted, which of the editor's features it used and how often, and how fast the picture was drawn.
-        If Flyback crashes, it sends the kind of error and where in Flyback it happened, never the message. Every
-        figure is sent as a coarse band. No patch, nothing typed, and nothing that identifies you or your
-        machine — two runs cannot be told apart from one. Turn it off under <strong>Settings → Usage</strong>.</p>
+        <p>It also counts how it is used, in coarse bands: the version, the operating system, which of its own
+        plugins loaded and which sound backend opened, roughly how big the machine is, how many of each kind of
+        module a playing patch holds, whether an assistant was asked and which, and at the end of a run, which
+        kinds of module were picked, how long it lasted, which of the editor's features it used and how fast the
+        picture drew. A crash sends the kind of error and where it happened, never the message. No patch,
+        nothing typed, and nothing that identifies you or your machine: two runs cannot be told apart from one.
+        Turn it off under <strong>Settings → Usage</strong>.</p>
         <p>To open <code>.fbk</code>, <code>.fbkb</code> and <code>.fbks</code> files by double-click, pick the editor
         or the viewer under <strong>Settings → Files</strong>; each kind then shows an icon of its own. A <code>.fbkp</code> plugin always opens in the editor,
         which shows what the plugin is, adds and reaches, and installs it if you say so. On macOS the build is <code>Flyback.app</code>, which
