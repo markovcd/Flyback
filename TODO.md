@@ -2,8 +2,6 @@
 
 Work the user has asked for and nobody has started. Take an item off when it lands on `main`.
 
-- **Find why an undo freezes the window on a large patch.** Ctrl+Z on Mycelium stops the whole window for about two seconds on Windows; an edit does not. What is ruled out, what is left and how to find it are in [docs/handoff/undo-freezes-the-window.md](docs/handoff/undo-freezes-the-window.md). Find and fix it on Windows.
-
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 
 - **Loop any stretch of the seek bar.** Two handles on the bar set where a loop starts and ends, so a passage in the middle of a piece repeats rather than always the start.

@@ -82,6 +82,13 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
     private sealed record Building(int Program, int Vertex, int Fragment, ShaderSource Shaders);
 
     /// <summary>
+    /// Shaders whose patch moved on while the driver was still building them.
+    /// Deleting one waits for its link, which is seconds on a large patch, so each
+    /// is left to finish and then kept for an undo or a redo to come back to.
+    /// </summary>
+    private readonly List<Building> parked = [];
+
+    /// <summary>
     /// Programs that have been on the card, oldest first, for an undo or a redo
     /// to come back to: linking one again is seconds on a large patch.
     /// </summary>
@@ -288,22 +295,24 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         if (shaders.PlaneTargets > 0 && dialect is GlslDialect.Glsl150 && bindFragDataLocation is null)
             return "This context cannot be told where a shader's outputs go, and a loop in the patch needs to say.";
 
+        Settle(gl);
+
         if (shaders.PatchFragment == refusedSource)
         {
-            Abandon(gl);
+            Park(gl);
             return null;
         }
 
         if (shaders.PatchFragment == liveSource)
         {
-            Abandon(gl);
+            Park(gl);
             Adopt(gl, patch);
             return null;
         }
 
         if (building?.Shaders.PatchFragment != shaders.PatchFragment)
         {
-            Abandon(gl);
+            Park(gl);
 
             // Undo and redo come back to a program linked before, which is still
             // on the card and needs nothing from the driver.
@@ -313,7 +322,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
                 return null;
             }
 
-            building = Start(gl, shaders);
+            building = Unpark(shaders.PatchFragment) ?? Start(gl, shaders);
         }
 
         opening = patch.Waiting;
@@ -969,15 +978,58 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         return null;
     }
 
-    /// <summary>Drops a shader still being built, whose patch has moved on.</summary>
-    private void Abandon(GlInterface gl)
+    /// <summary>Sets the shader being built aside to finish, its patch having moved on.</summary>
+    private void Park(GlInterface gl)
     {
-        if (building is not { } dropped) return;
+        if (building is not { } set) return;
 
+        building = null;
+        parked.Add(set);
+
+        // Past this many, the oldest is waited for rather than more piling onto the driver's threads.
+        if (parked.Count <= Remembered) return;
+
+        Drop(gl, parked[0]);
+        parked.RemoveAt(0);
+    }
+
+    /// <summary>The parked shader built from <paramref name="source"/>, taken back to be waited on, or null.</summary>
+    private Building? Unpark(string source)
+    {
+        var at = parked.FindIndex(set => set.Shaders.PatchFragment == source);
+        if (at < 0) return null;
+
+        var found = parked[at];
+        parked.RemoveAt(at);
+
+        return found;
+    }
+
+    /// <summary>Keeps every parked shader the driver has finished with.</summary>
+    private void Settle(GlInterface gl)
+    {
+        for (var i = 0; i < parked.Count;)
+        {
+            var set = parked[i];
+
+            if (ProgramParameter(gl, set.Program, GlCompletionStatus) == 0)
+            {
+                i++;
+                continue;
+            }
+
+            parked.RemoveAt(i);
+
+            if (Finish(gl, set, out _) is { } program) Keep(gl, set.Shaders.PatchFragment, program);
+        }
+    }
+
+    /// <summary>Deletes a shader, waiting for the driver where it is still being built.</summary>
+    private static void Drop(GlInterface gl, Building dropped)
+    {
         gl.DeleteShader(dropped.Vertex);
         gl.DeleteShader(dropped.Fragment);
         gl.DeleteProgram(dropped.Program);
-        building = null;
     }
 
     private static unsafe int ProgramParameter(GlInterface gl, int program, int name)
@@ -1066,7 +1118,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
             // dragged the window.
             foreach (var texture in pictures) gl.DeleteTexture(texture);
 
-            Abandon(gl);
+            if (building is { } dropped) Drop(gl, dropped);
+            foreach (var set in parked) Drop(gl, set);
 
             if (patchProgram != 0) gl.DeleteProgram(patchProgram);
             foreach (var (_, program) in linked) gl.DeleteProgram(program);
@@ -1083,6 +1136,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect)
         pictures = [];
         shown = [];
         linked.Clear();
+        parked.Clear();
+        building = null;
 
         patchProgram = 0;
         blitProgram = 0;

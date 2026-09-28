@@ -200,5 +200,17 @@ take over together when its shader does; a frozen frame for two seconds after ev
 rewire read as the app hanging. A patch just opened is the exception: the old one
 holds its last frame, because the new picture starts with its sound. The last eight
 programs to leave the card are kept, keyed by their text, so an undo or a redo
-switches at once rather than linking again, which froze the preview on an undo
-through ANGLE. Without the extension it links as before.
+switches at once rather than linking again. Without the extension it links as before.
+
+**2026-09-28 — a link is never deleted half done.** Deleting a program ANGLE is still
+linking waits for the link, and an undo made while an edit's shader was linking
+deleted it: Mycelium's 63,000-character shader links in about 8 s here, so the window
+stopped for whatever was left of that. A shader whose patch moves on is now parked,
+polled each frame, and kept with the others once linked, so a redo finds it built.
+
+Two things measured on the way are still true. On Windows, `OnOpenGlRender` runs on
+the UI thread, so a GL call that blocks stops the whole window, not only the canvas.
+And ANGLE's D3D11 link builds the pixel shader for one output only; a patch with
+planes draws to two attachments, so its first draw compiles the shader again, on the
+drawing thread: 7-8 s for Mycelium, once per new program. Nothing ANGLE offers moves
+that compile off the thread that draws.
