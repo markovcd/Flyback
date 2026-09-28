@@ -25,8 +25,8 @@ public class PartGridTests : UiTest
         return Show(new PartGrid(node, def, said.Add).View);
     }
 
-    private static TextBox[] Rows(Window window) =>
-        [.. All<TextBox>(window).Where(box => Equals(box.Tag, PartGrid.RowTag))];
+    private static Button[] Removers(Window window) =>
+        [.. All<Button>(window).Where(button => Equals(button.Tag, PartGrid.RemoveTag))];
 
     [AvaloniaFact]
     public void Every_part_gets_a_row_and_every_level_a_cell()
@@ -34,41 +34,24 @@ public class PartGridTests : UiTest
         var window = Showing(out var node, out _);
         var parts = ArrangementExtra.Of(node);
 
-        Rows(window).Length.ShouldBe(parts.Count);
+        Removers(window).Length.ShouldBe(parts.Count);
         All<Border>(window).Count(b => Equals(b.Tag, PartGrid.CellTag)).ShouldBe(parts.Count * parts[0].Count);
-        Rows(window)[1].Text.ShouldBe("0 1 1 1");
+        All<TextBox>(window).ShouldBeEmpty();
     }
 
     [AvaloniaFact]
-    public void Levels_typed_into_a_row_are_kept_on_Enter()
+    public void A_parts_cross_takes_it_away()
     {
         var window = Showing(out var node, out var changes);
-        var row = Rows(window)[0];
 
-        row.Focus();
-        row.Text = "0 >1 0.5 0 1";
-        window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+        Removers(window)[0].RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
         var parts = ArrangementExtra.Of(node);
 
-        parts[0].ShouldBe([new(0f), new(1f, Glides: true), new(0.5f), new(0f), new(1f)]);
-        parts.ShouldAllBe(part => part.Count == 5);
+        parts.Count.ShouldBe(2);
+        parts[0].Select(l => l.Value).ShouldBe([0f, 1f, 1f, 1f]);
+        Removers(window).Length.ShouldBe(2);
         changes.ShouldNotBeEmpty();
-    }
-
-    [AvaloniaFact]
-    public void A_row_that_does_not_read_is_left_as_it_was()
-    {
-        var window = Showing(out var node, out var changes);
-        var before = ArrangementExtra.Of(node);
-        var row = Rows(window)[0];
-
-        row.Focus();
-        row.Text = "1 loud";
-        window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
-
-        ArrangementExtra.Of(node).ShouldBe(before);
-        changes.ShouldBeEmpty();
     }
 
     [AvaloniaFact]
@@ -83,7 +66,7 @@ public class PartGridTests : UiTest
 
         parts.Count.ShouldBe(4);
         parts.ShouldAllBe(part => part.Count == 5);
-        Rows(window).Length.ShouldBe(4);
+        Removers(window).Length.ShouldBe(4);
     }
 
     /// <summary>Cells are counted across, then down: part 1 is cells 0 and 1, part 2 cells 2 and 3.</summary>
@@ -100,13 +83,35 @@ public class PartGridTests : UiTest
         ClickCell(window, 0);
         ArrangementExtra.Of(node)[0].Select(l => l.Value).ShouldBe([0f, 0.5f]);
 
-        ClickCell(window, 0);
+        // Another cell between, since the same one twice is a double-click.
         ClickCell(window, 2);
+        ClickCell(window, 0);
         var parts = ArrangementExtra.Of(node);
 
         parts[0].Select(l => l.Value).ShouldBe([0.5f, 0.5f]);
         parts[1].Select(l => l.Value).ShouldBe([1f, 0f]);
         changes.Count.ShouldBe(3);
+    }
+
+    [AvaloniaFact]
+    public void Double_clicking_a_cell_makes_its_level_glide_and_again_hold()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var changes = new List<string?>();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0f), new PartLevel(1f)]]);
+        var window = Show(new PartGrid(node, def, changes.Add).View);
+
+        ClickCell(window, 1);
+        ClickCell(window, 1);
+        ArrangementExtra.Of(node)[0][1].ShouldBe(new PartLevel(1f, Glides: true));
+
+        ClickCell(window, 1);
+        ClickCell(window, 1);
+        ArrangementExtra.Of(node)[0][1].ShouldBe(new PartLevel(1f));
+
+        changes.Distinct().Count().ShouldBe(1, "a double-click and the click it began with are one step");
     }
 
     [AvaloniaFact]

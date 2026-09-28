@@ -12,17 +12,17 @@ using Colors = Flyback.App.Controls.Colors;
 namespace Flyback.App.Inspect;
 
 /// <summary>
-/// An Arrangement's parts: a map of every level shaded in the module's accent, where a
-/// click switches a level off or back on and a drag turns it like a knob, and under it
-/// one line of the text language's levels to type into for each part.
+/// An Arrangement's parts: a map of every level shaded in the module's accent, a row a
+/// part, where a click switches a level off or back on, a double-click makes it glide or
+/// hold, and a drag turns it like a knob.
 /// </summary>
 /// <remarks>
-/// Typed rather than a knob a cell, because a grid of up to 256 numbers is read as a
-/// shape and written as a row, and the row is exactly what a text patch holds.
+/// A cell rather than a knob for each level, because a grid of up to 256 numbers is read
+/// as a shape; the exact numbers are in each cell's tooltip and in the text.
 /// </remarks>
 internal sealed class PartGrid
 {
-    private const double CellHeight = 8;
+    private const double CellHeight = 14;
 
     /// <summary>How far a drag goes for a part's whole range, as a knob's does; Shift makes it five times finer.</summary>
     private const double Travel = 160;
@@ -30,11 +30,11 @@ internal sealed class PartGrid
     /// <summary>How far the pointer moves before a press is a drag rather than a click.</summary>
     private const double Slop = 3;
 
-    /// <summary>The columns of a part's row: its name, its levels, its remove button. The map lines up with the middle one.</summary>
+    /// <summary>Either side of a part's cells: its name, and the button that takes it away.</summary>
     private const double NameWidth = 44, RemoveWidth = 22;
 
-    /// <summary>Marks the boxes a part's levels are typed into, for the UI tests.</summary>
-    internal const string RowTag = "part-row";
+    /// <summary>Marks the buttons that take a part away, for the UI tests.</summary>
+    internal const string RemoveTag = "part-remove";
 
     /// <summary>Marks the shaded cells of the map, for the UI tests.</summary>
     internal const string CellTag = "part-cell";
@@ -50,6 +50,9 @@ internal sealed class PartGrid
 
     /// <summary>The cell being dragged, where the drag started and what the level was then.</summary>
     private (Border Cell, int Part, int Section, double Y, float From, float Low, float High, bool Moved)? drag;
+
+    /// <summary>The cell a click last switched and what it was, which a double-click puts back before it glides.</summary>
+    private (int Part, int Section, PartLevel Before)? clicked;
 
     public PartGrid(NodeInstance node, NodeDef def, Action<string?> changed)
     {
@@ -90,13 +93,12 @@ internal sealed class PartGrid
         else
             body.Children.Add(Map());
 
-        for (var i = 0; i < parts.Count; i++) body.Children.Add(Row(i));
-
         body.Children.Add(Buttons());
     }
 
     /// <summary>Puts the parts back on the node and says so, which files the change in the history.</summary>
-    private void Save()
+    /// <param name="because">What the change is filed under, so edits under the same name are one step.</param>
+    private void Save(string? because = null)
     {
         var tidy = ArrangementExtra.Tidy(parts);
 
@@ -105,25 +107,50 @@ internal sealed class PartGrid
 
         ArrangementExtra.Set(node, parts);
         Fill();
-        changed(null);
+        changed(because);
     }
 
     /// <summary>
     /// Every level as a cell, brighter the higher it is within its own part, and a
-    /// gliding one shaded from where it comes from to where it goes.
+    /// gliding one shaded from where it comes from to where it goes; each part named on
+    /// its left and taken away on its right.
     /// </summary>
     private Control Map()
     {
         var map = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions(string.Join(',', Enumerable.Repeat("*", Sections))),
+            ColumnDefinitions = new ColumnDefinitions(
+                string.Join(',', [NameWidth.ToString(), .. Enumerable.Repeat("*", Sections), RemoveWidth.ToString()])),
             RowDefinitions = new RowDefinitions(string.Join(',', Enumerable.Repeat("Auto", parts.Count))),
-            Margin = new Thickness(NameWidth, 0, RemoveWidth, 6),
         };
 
         for (var p = 0; p < parts.Count; p++)
         {
             var part = parts[p];
+
+            var name = new TextBlock
+            {
+                Text = $"part {p + 1}",
+                FontSize = Text.Small,
+                Foreground = Text.Muted,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            var index = p;
+            var remove = Small("✕", "Remove this part");
+            remove.Tag = RemoveTag;
+            remove.HorizontalAlignment = HorizontalAlignment.Right;
+            remove.Click += (_, _) =>
+            {
+                parts.RemoveAt(index);
+                Save();
+            };
+
+            Grid.SetRow(name, p);
+            Grid.SetRow(remove, p);
+            Grid.SetColumn(remove, Sections + 1);
+            map.Children.Add(name);
+            map.Children.Add(remove);
             var highest = Math.Max(part.Max(level => Math.Abs(level.Value)), 1e-6f);
 
             for (var s = 0; s < part.Count; s++)
@@ -149,7 +176,7 @@ internal sealed class PartGrid
                 cell.PointerCaptureLost += (_, _) => drag = null;
 
                 Grid.SetRow(cell, p);
-                Grid.SetColumn(cell, s);
+                Grid.SetColumn(cell, s + 1);
                 map.Children.Add(cell);
             }
         }
@@ -160,11 +187,18 @@ internal sealed class PartGrid
     private void Describe(Border cell, int part, int section) =>
         ToolTip.SetTip(cell,
             $"part {part + 1}, section {section + 1}: {ArrangementNotation.Row([parts[part][section]])}. "
-            + "Click to switch it off or on, drag up or down to turn it.");
+            + "Click to switch it off or on, double-click to make it glide, drag up or down to turn it.");
 
     private void Grab(Border cell, int part, int section, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(cell).Properties.IsLeftButtonPressed) return;
+
+        if (e.ClickCount == 2 && clicked is { } first && first.Part == part && first.Section == section)
+        {
+            Glide(part, section);
+            e.Handled = true;
+            return;
+        }
 
         // The part's own range, so a drag means the same on a row of levels and a row of fold counts.
         var levels = parts[part];
@@ -192,7 +226,7 @@ internal sealed class PartGrid
         turned = MathF.Round(turned / grain) * grain;
 
         drag = held with { Moved = true };
-        parts[held.Part][held.Section] = new PartLevel(turned);
+        parts[held.Part][held.Section] = parts[held.Part][held.Section] with { Value = turned };
 
         ArrangementExtra.Set(node, parts);
         held.Cell.Background = new SolidColorBrush(Shade(turned / held.High));
@@ -223,12 +257,33 @@ internal sealed class PartGrid
         var levels = parts[part];
         var strongest = levels.MaxBy(level => Math.Abs(level.Value)).Value;
 
+        clicked = (part, section, levels[section]);
+
         levels[section] = levels[section].Value != 0f
             ? new PartLevel(0f)
             : new PartLevel(strongest != 0f ? strongest : 1f);
 
-        Save();
+        Save(Cell(part, section));
     }
+
+    /// <summary>
+    /// A double-click: the level its first click switched is put back, and made to glide
+    /// there across its section, or to hold where it glided. Filed with that click, so the
+    /// two are one step.
+    /// </summary>
+    internal void Glide(int part, int section)
+    {
+        var before = clicked is { } first && first.Part == part && first.Section == section
+            ? first.Before
+            : parts[part][section];
+
+        clicked = null;
+        parts[part][section] = before with { Glides = !before.Glides };
+
+        Save(Cell(part, section));
+    }
+
+    private string Cell(int part, int section) => $"{node.Id} part {part} section {section} click";
 
     private Color Shade(float share) => Colors.Blend(Colors.Node, accent, Math.Clamp(Math.Abs(share), 0f, 1f));
 
@@ -238,95 +293,6 @@ internal sealed class PartGrid
         EndPoint = new RelativePoint(1, 0.5, RelativeUnit.Relative),
         GradientStops = { new GradientStop(Shade(from), 0), new GradientStop(Shade(to), 1) },
     };
-
-    /// <summary>A part's name, its levels to type into, and the button that takes it away.</summary>
-    private Control Row(int index)
-    {
-        var row = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions($"{NameWidth},*,{RemoveWidth}"),
-            Margin = new Thickness(0, 1),
-        };
-
-        var name = new TextBlock
-        {
-            Text = $"part {index + 1}",
-            FontSize = Text.Small,
-            Foreground = Text.Muted,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        var written = ArrangementNotation.Row(parts[index]);
-
-        var box = new TextBox
-        {
-            Tag = RowTag,
-            Text = written,
-            FontSize = Text.Small,
-            MinHeight = 23,
-            TextWrapping = TextWrapping.Wrap,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-
-        ToolTip.SetTip(box, "A level for each section: a number, with '>' before one that glides there.");
-
-        box.KeyDown += (_, e) =>
-        {
-            switch (e.Key)
-            {
-                case Key.Enter:
-                    Keep();
-                    break;
-
-                case Key.Escape:
-                    box.Text = written;
-                    break;
-
-                default:
-                    return;
-            }
-
-            e.Handled = true;
-        };
-
-        box.LostFocus += (_, _) => Keep();
-
-        var remove = Small("✕", "Remove this part");
-        remove.HorizontalAlignment = HorizontalAlignment.Right;
-        remove.Click += (_, _) =>
-        {
-            parts.RemoveAt(index);
-            Save();
-        };
-
-        Grid.SetColumn(name, 0);
-        Grid.SetColumn(box, 1);
-        Grid.SetColumn(remove, 2);
-        row.Children.Add(name);
-        row.Children.Add(box);
-        row.Children.Add(remove);
-
-        return row;
-
-        void Keep()
-        {
-            var typed = box.Text ?? string.Empty;
-            if (typed == written) return;
-
-            var issues = new List<LanguageIssue>();
-            var read = typed.Contains('|') ? null : ArrangementNotation.Read(typed, 1, 1, issues);
-
-            if (read is not { Count: 1 } || issues.Count > 0)
-            {
-                box.BorderBrush = new SolidColorBrush(Colors.Attention);
-                ToolTip.SetTip(box, issues.Count > 0 ? issues[0].Message : "One part's levels, with no '|': add a part with the button below.");
-                return;
-            }
-
-            parts[index] = read[0];
-            Save();
-        }
-    }
 
     private Control Buttons()
     {
