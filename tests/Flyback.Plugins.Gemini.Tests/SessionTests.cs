@@ -442,7 +442,7 @@ public class SessionTests
     {
         var assistant = new GeminiAssistant();
         var bench = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch());
-        var config = new AssistantConfig("no-key-needed", SettingValues.None);
+        var config = AssistantConfig.Unset;
 
         using var carried = assistant.Resume(bench, config, "[]");
 
@@ -520,11 +520,10 @@ public class SessionTests
                 Driver,
                 Hearing: hearing is not Listener.None,
                 EarModel: ear),
-            "no-key-needed",
             "https://nowhere.invalid/v1beta",
+            canned,
             thinking: null,
-            ownEars,
-            canned);
+            ownEars);
     }
 
     // --- canned replies -----------------------------------------------------

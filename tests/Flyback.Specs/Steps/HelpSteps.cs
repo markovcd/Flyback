@@ -14,7 +14,7 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class HelpSteps
 {
-    private static readonly ModuleCatalog Modules = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Modules = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)).Modules;
 
     private string read = string.Empty;
     private ToolOutcome? answered;

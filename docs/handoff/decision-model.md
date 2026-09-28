@@ -88,8 +88,9 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   Name, Sha256, Size)`) and `bool Prepared(string folder)`. The plugin declares; **the
   host downloads and verifies**, so the plugin never touches the network and the
   install dialog's "reaches the network" stays false for Laya.
-- `DecisionConfig(string ApiKey, SettingValues Values, string? Folder)`: `Folder` is
-  where the host put the model's files.
+- `DecisionConfig(IAssistantTransport Transport, SettingValues Values, string? Folder)`:
+  `Folder` is where the host put the model's files. A transport rather than a key, as
+  an assistant gets ([0158](../adr/0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md)).
 - `DecisionRequest(string State, IReadOnlyDictionary<string, Question> Questions)`;
   `Question` abstract record: `Choice(Instructions, options label→description)`,
   `Score(Instructions, levels)`, `YesNo(Instructions)`. Limits as laya-serve's: 64

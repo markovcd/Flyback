@@ -45,6 +45,10 @@ public sealed record AssistantSchema(
     /// <summary>What this provider says about the key it needs.</summary>
     public AssistantCredential Credential => new(EnvironmentVariable, CredentialHelp);
 
+    /// <summary>Where the form as filled in sends requests, or null where it names no address.</summary>
+    public Uri? Endpoint(SettingValues values) =>
+        Uri.TryCreate(Read(values).BaseUrl ?? DefaultBaseUrl, UriKind.Absolute, out var address) ? address : null;
+
     /// <summary>
     /// What is known about the model somebody has typed, or null when it is not one
     /// of these. Null is not "cannot" but "nobody here knows", which is the

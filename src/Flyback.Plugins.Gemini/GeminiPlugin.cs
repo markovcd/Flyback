@@ -65,8 +65,12 @@ public sealed partial class GeminiAssistant : IPatchAssistant
         + "spoken in one place, unlike chat completions.",
         "https://generativelanguage.googleapis.com/v1beta");
 
-    /// <summary>What this one's key comes from. The host holds it; see ADR-0034.</summary>
-    public AssistantCredential Credential => Schema.Credential;
+    /// <summary>
+    /// What this one's key comes from. The host holds it; see ADR-0034. A header of its
+    /// own rather than the key= parameter the quickstarts use: a secret in a query string
+    /// is a secret in every log and proxy between here and there.
+    /// </summary>
+    public AssistantCredential Credential => Schema.Credential with { Header = "x-goog-api-key", Scheme = null };
 
     /// <summary>
     /// The ordinary five questions, declared by the schema rather than written out
@@ -83,6 +87,8 @@ public sealed partial class GeminiAssistant : IPatchAssistant
 
     public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 
+    public Uri? Endpoint(SettingValues values) => Schema.Endpoint(values);
+
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
     /// that costs anything. The endpoint is only found out to be wrong when
@@ -90,7 +96,7 @@ public sealed partial class GeminiAssistant : IPatchAssistant
     /// </summary>
     public string? Unavailable(AssistantConfig config)
     {
-        if (string.IsNullOrWhiteSpace(config.ApiKey))
+        if (!config.Transport.HasKey)
             return "No key yet — set GEMINI_API_KEY, or put one in Settings.";
 
         var chosen = Schema.Surveyed(config.Values).Read(config.Values);
@@ -129,8 +135,8 @@ public sealed partial class GeminiAssistant : IPatchAssistant
         return new GeminiSession(
             workbench,
             chosen,
-            config.ApiKey,
             Schema.DefaultBaseUrl!,
+            config.Transport.Handler,
             Thinking(config.Values, chosen),
             ownEars: schema.Known(chosen.Model)?.Hearing == true);
     }

@@ -412,6 +412,8 @@ public sealed class ProbeCommandTests : IDisposable
 
         public AssistantCredential Credential => new(variable, "A key from somewhere.");
 
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 
         public AssistantSenses Senses(SettingValues values) => new(false);
@@ -447,6 +449,8 @@ public sealed class ProbeCommandTests : IDisposable
         public int Priority => 0;
 
         public AssistantCredential Credential => new("MUTE_KEY", "A key from somewhere.");
+
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
 
         public IReadOnlyList<SettingField> Form(SettingValues values) => [];
 

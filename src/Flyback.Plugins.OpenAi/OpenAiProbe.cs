@@ -16,10 +16,9 @@ namespace Flyback.Plugins.OpenAi;
 /// conditional — see <see cref="Run"/>. Nothing here measures a thinking budget, since
 /// this adapter sends no effort at all.
 /// </remarks>
-/// <param name="apiKey">The key. A local runtime will take any value.</param>
+/// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
 /// <param name="baseUrl">The endpoint, which may be anybody's.</param>
-/// <param name="transport">Supplied by the tests; a real run makes its own.</param>
-internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHandler? transport = null) : IDisposable
+internal sealed class OpenAiProbe(HttpMessageHandler transport, string baseUrl) : IDisposable
 {
     private const string Ping = "Reply with the single word: ok";
 
@@ -48,7 +47,7 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
     ];
 
     private readonly string address = baseUrl.TrimEnd('/');
-    private readonly HttpClient http = Client(apiKey, transport);
+    private readonly HttpClient http = Probe.Client(transport);
 
     public void Dispose() => http.Dispose();
 
@@ -223,15 +222,6 @@ internal sealed class OpenAiProbe(string apiKey, string baseUrl, HttpMessageHand
 
     private static bool Candidate(string model) =>
         !Elsewhere.Any(m => model.Contains(m, StringComparison.OrdinalIgnoreCase));
-
-    private static HttpClient Client(string key, HttpMessageHandler? transport)
-    {
-        var client = Probe.Client(transport);
-
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
-
-        return client;
-    }
 
     private static string Says(ModelReport report) => (report.Vision, report.Hearing) switch
     {

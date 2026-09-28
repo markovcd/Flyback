@@ -154,7 +154,7 @@ public class SurveyTests
         SurveyOptions? options = null,
         IProgress<string>? said = null)
     {
-        using var probe = new OpenAiProbe("key", "https://example.test/v1", endpoint);
+        using var probe = new OpenAiProbe(endpoint, "https://example.test/v1");
 
         return await probe.Run(options ?? new SurveyOptions(), said, CancellationToken.None);
     }

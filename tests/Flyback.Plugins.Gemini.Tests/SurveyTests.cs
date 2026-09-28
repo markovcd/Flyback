@@ -144,7 +144,7 @@ public class SurveyTests
         SurveyOptions? options = null,
         IProgress<string>? said = null)
     {
-        using var probe = new GeminiProbe("key", "https://example.test/v1beta", endpoint);
+        using var probe = new GeminiProbe(endpoint, "https://example.test/v1beta");
 
         return await probe.Run(options ?? new SurveyOptions(), said, CancellationToken.None);
     }

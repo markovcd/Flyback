@@ -62,18 +62,14 @@ internal sealed class OpenAiSession : IPatchSession
     private readonly JsonArray messages = [];
 
     /// <param name="fallbackBaseUrl">Where to send requests when the configuration names nowhere.</param>
-    /// <param name="transport">
-    /// Where the requests actually go, defaulting to the network. Named only so the
-    /// loop can be driven by canned replies.
-    /// </param>
+    /// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
     /// <param name="workbench">The patch being built, and the only thing here that may touch it.</param>
     /// <param name="chosen">Model, endpoint and ear, as the provider read them off the form.</param>
     public OpenAiSession(
         PatchWorkbench workbench,
         AssistantChoices chosen,
-        string apiKey,
         string fallbackBaseUrl,
-        HttpMessageHandler? transport = null)
+        HttpMessageHandler transport)
     {
         this.workbench = workbench;
         this.chosen = chosen;
@@ -81,15 +77,13 @@ internal sealed class OpenAiSession : IPatchSession
         var address = (chosen.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
         endpoint = new Uri(address + "/chat/completions");
 
-        // A handler that was handed in belongs to whoever handed it in.
-        http = transport is null ? new HttpClient() : new HttpClient(transport, disposeHandler: false);
+        // The handler is the host's.
+        http = new HttpClient(transport, disposeHandler: false);
 
         // A single turn at high effort is minutes, not seconds. Cancellation is
         // what actually stops this; the timeout is only a backstop for a
         // connection that has died without saying so.
         http.Timeout = TimeSpan.FromMinutes(10);
-
-        http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         messages.Add(Wire.System(workbench.Briefing));
     }

@@ -1,9 +1,11 @@
 using Flyback.Plugins.Secrets;
+using Flyback.Plugins.Settings;
 
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// Where an assistant's key comes from, in order of preference.
+/// Where an assistant's key comes from, in order of preference, and the transport that
+/// sends it (<see cref="Transport"/>): the key itself never reaches the assistant.
 /// </summary>
 /// <remarks>
 /// A key somebody entered wins, because entering one is a deliberate act and an
@@ -16,19 +18,51 @@ namespace Flyback.Plugins.Assist;
 /// <see cref="Forget"/> is the way back to it. Nothing here writes a secret to disk
 /// itself (ADR-0034).
 /// </para>
+/// <para>
+/// An entered key is bound to the origin the assistant sent to when it was entered, and
+/// kept with it. A variable is bound to wherever the assistant sends now, being the room
+/// somebody is standing in rather than a thing they handed over.
+/// </para>
 /// </remarks>
 internal sealed class Credentials(ISecretStore? store)
 {
-    private readonly Dictionary<string, string> session = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, BoundKey> session = new(StringComparer.Ordinal);
 
     /// <summary>Whether a key can outlive the window, and what would hold it if so.</summary>
     public ISecretStore? Store { get; } = store;
 
     public bool CanKeep => Store is not null;
 
-    /// <summary>The key to use, or null when there is none.</summary>
-    public string? Of(string account, string environmentVariable) =>
-        session.GetValueOrDefault(account) ?? FromStore(account) ?? FromEnvironment(environmentVariable);
+    /// <summary>
+    /// The key to use, or null when there is none. <paramref name="origin"/> is where the
+    /// assistant sends now, which a variable, or a key kept before keys had an origin, is bound to.
+    /// </summary>
+    public BoundKey? Of(string account, string environmentVariable, string? origin) =>
+        session.GetValueOrDefault(account) ?? FromStore(account, origin) ?? FromEnvironment(environmentVariable, origin);
+
+    /// <summary>What <paramref name="assistant"/> sends over, configured as <paramref name="values"/>.</summary>
+    /// <param name="network">Where signed requests go; the network unless a test says otherwise.</param>
+    public IAssistantTransport Transport(IPatchAssistant assistant, SettingValues values, HttpMessageHandler? network = null)
+    {
+        var key = Of(assistant.Id, assistant.Credential.EnvironmentVariable, KeyedTransport.OriginOf(assistant, values));
+
+        return new KeyedTransport(key?.Secret, key?.Origin, assistant.Credential, network);
+    }
+
+    /// <summary>
+    /// Why the key in <paramref name="config"/> will not be sent where <paramref name="assistant"/>
+    /// is set to send, or null where it will.
+    /// </summary>
+    public static string? Elsewhere(IPatchAssistant assistant, AssistantConfig config)
+    {
+        if (config.Transport is not { HasKey: true, Origin: { } bound }) return null;
+
+        var now = KeyedTransport.OriginOf(assistant, config.Values);
+
+        return now is null || string.Equals(now, bound, StringComparison.Ordinal)
+            ? null
+            : $"The key was entered for {bound}, and this is set to send to {now}. Enter it again to send it there.";
+    }
 
     /// <summary>
     /// Whether a key somebody entered here exists at all. Not the same question
@@ -38,7 +72,7 @@ internal sealed class Credentials(ISecretStore? store)
     /// back to.
     /// </summary>
     public bool HasEntered(string account) =>
-        FromStore(account) is not null || session.ContainsKey(account);
+        FromStore(account, null) is not null || session.ContainsKey(account);
 
     /// <summary>Where <see cref="Of"/> would get it, so the panel can say so.</summary>
     public CredentialSource SourceOf(string account, string environmentVariable)
@@ -47,50 +81,40 @@ internal sealed class Credentials(ISecretStore? store)
         // sentence the panel prints, and one that disagreed with what was
         // actually sent would be worse than no sentence at all.
         var entered = session.GetValueOrDefault(account);
-        var kept = FromStore(account);
+        var kept = FromStore(account, entered?.Origin);
 
         if (entered is not null)
         {
-            // Kept rather than Session when the store has the same secret, even
+            // Kept rather than Session when the store has the same key, even
             // though the session is holding it too. Accept keeps a copy in
             // memory whatever happens, so that it survives a store that failed —
             // but reporting "gone when this window closes" about a key that is
             // on disk is the lie ADR-0034 exists to prevent, and in the other
             // direction. Read back rather than assumed, for the same reason:
             // Keep not throwing is not the same as Keep having worked.
-            return string.Equals(entered, kept, StringComparison.Ordinal)
-                ? CredentialSource.Kept
-                : CredentialSource.Session;
+            return entered == kept ? CredentialSource.Kept : CredentialSource.Session;
         }
 
         if (kept is not null) return CredentialSource.Kept;
 
-        return FromEnvironment(environmentVariable) is not null
+        return FromEnvironment(environmentVariable, "") is not null
             ? CredentialSource.Environment
             : CredentialSource.None;
     }
 
     /// <summary>
-    /// Takes a key someone typed. <paramref name="keep"/> asks for it to outlive
-    /// the window, which only happens if something installed can hold it — a
-    /// caller that assumed otherwise would be lying to the person on its behalf,
-    /// so ask <see cref="CanKeep"/> first and say which it will be.
+    /// Takes a key someone typed, bound to <paramref name="origin"/>. <paramref name="keep"/>
+    /// asks for it to outlive the window, which only happens if something installed can hold
+    /// it — a caller that assumed otherwise would be lying to the person on its behalf, so ask
+    /// <see cref="CanKeep"/> first and say which it will be.
     /// </summary>
-    public void Accept(string account, string secret, bool keep)
+    public void Accept(string account, string secret, string origin, bool keep)
     {
-        session[account] = secret;
+        var key = new BoundKey(secret, origin);
 
-        if (!keep || Store is null) return;
+        session[account] = key;
 
-        try
-        {
-            Store.Keep(account, secret);
-        }
-        catch
-        {
-            // The store refused. The key still works for this run, and the panel
-            // reads the source back rather than trusting that this worked.
-        }
+        if (keep) Keep(account, key);
     }
 
     /// <summary>
@@ -101,17 +125,7 @@ internal sealed class Credentials(ISecretStore? store)
     /// </summary>
     public void KeepWhatIsHeld(string account)
     {
-        if (Store is null || session.GetValueOrDefault(account) is not { } secret) return;
-
-        try
-        {
-            Store.Keep(account, secret);
-        }
-        catch
-        {
-            // As Accept: the key still works for this run, and the panel reads
-            // the source back rather than trusting that this worked.
-        }
+        if (session.GetValueOrDefault(account) is { } key) Keep(account, key);
     }
 
     /// <summary>Removes a key from everywhere this can reach.</summary>
@@ -129,21 +143,45 @@ internal sealed class Credentials(ISecretStore? store)
         }
     }
 
-    private static string? FromEnvironment(string variable) =>
-        string.IsNullOrWhiteSpace(variable)
-            ? null
-            : Blank(Environment.GetEnvironmentVariable(variable));
-
-    private string? FromStore(string account)
+    private void Keep(string account, BoundKey key)
     {
+        if (Store is null) return;
+
         try
         {
-            return Blank(Store?.Recall(account));
+            Store.Keep(account, key.Stored());
+        }
+        catch
+        {
+            // The store refused. The key still works for this run, and the panel
+            // reads the source back rather than trusting that this worked.
+        }
+    }
+
+    private static BoundKey? FromEnvironment(string variable, string? origin) =>
+        string.IsNullOrWhiteSpace(variable) || origin is null || Blank(Environment.GetEnvironmentVariable(variable)) is not { } secret
+            ? null
+            : new BoundKey(secret, origin);
+
+    /// <summary>What the store holds; a key kept alone is bound to <paramref name="origin"/> and kept again with it.</summary>
+    private BoundKey? FromStore(string account, string? origin)
+    {
+        string? stored;
+
+        try
+        {
+            stored = Blank(Store?.Recall(account));
         }
         catch
         {
             return null;
         }
+
+        var key = BoundKey.Read(stored, origin ?? "");
+
+        if (key is not null && origin is not null && key.Stored() != stored) Keep(account, key);
+
+        return key;
     }
 
     /// <summary>An empty variable is the same as an unset one, and catches the classic export of nothing.</summary>

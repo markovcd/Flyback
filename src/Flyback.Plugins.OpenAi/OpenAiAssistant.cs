@@ -56,6 +56,8 @@ public sealed class OpenAiAssistant : IPatchAssistant
 
     public AssistantSenses Senses(SettingValues values) => Schema.Surveyed(values).Senses(values);
 
+    public Uri? Endpoint(SettingValues values) => Schema.Endpoint(values);
+
     /// <summary>
     /// Answered from the configuration alone — no request, no client, nothing
     /// that costs anything. The endpoint is only found out to be wrong when
@@ -63,7 +65,7 @@ public sealed class OpenAiAssistant : IPatchAssistant
     /// </summary>
     public string? Unavailable(AssistantConfig config)
     {
-        if (string.IsNullOrWhiteSpace(config.ApiKey))
+        if (!config.Transport.HasKey)
             return "No key yet — set OPENAI_API_KEY, or put one in Settings.";
 
         var chosen = Schema.Surveyed(config.Values).Read(config.Values);
@@ -98,8 +100,8 @@ public sealed class OpenAiAssistant : IPatchAssistant
         new(
             workbench,
             Schema.Surveyed(config.Values).Read(config.Values),
-            config.ApiKey,
-            Schema.DefaultBaseUrl!);
+            Schema.DefaultBaseUrl!,
+            config.Transport.Handler);
     
     public async Task<IReadOnlyList<ModelReport>> Survey(
         AssistantConfig config,
@@ -109,7 +111,7 @@ public sealed class OpenAiAssistant : IPatchAssistant
     {
         var chosen = Schema.Read(config.Values);
 
-        using var probe = new OpenAiProbe(config.ApiKey, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
+        using var probe = new OpenAiProbe(config.Transport.Handler, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
         return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }

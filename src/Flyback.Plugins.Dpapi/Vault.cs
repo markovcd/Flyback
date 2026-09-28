@@ -13,10 +13,9 @@ namespace Flyback.Plugins.Dpapi;
 internal static class Vault
 {
     /// <summary>
-    /// Mixed into the protection so a blob is bound to this application as well
-    /// as to the account. Not a secret and not doing a secret's job — it stops
-    /// one program's stored value being handed to another that happens to guess
-    /// the path.
+    /// Mixed into the protection, and in public source: it keeps nothing from another
+    /// program running as the same user. What does is that no plugin is handed a key
+    /// (IAssistantTransport) and no folder loads unasked (PluginTrust).
     /// </summary>
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Flyback.Assist.v1");
 

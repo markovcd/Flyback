@@ -79,6 +79,7 @@ internal static class Program
             Pack(plugins, patch, json),
             PackPlugin(),
             PluginKey(),
+            Plugin(plugins, json),
             Modules(plugins, json),
             Compare(plugins, json),
             Probe(plugins, json),
@@ -639,6 +640,55 @@ internal static class Program
             key: result.GetValue(key)));
 
         return command;
+    }
+
+    /// <summary>Which plugin folders load, and saying yes or no to one.</summary>
+    private static Command Plugin(PluginRegistry plugins, Option<bool> json)
+    {
+        var folder = new Argument<string>("folder")
+        {
+            Description = $"The plugin's folder: a path, or a name under {PluginHost.DirectoryName}/ beside this program.",
+        };
+
+        var secrets = new Option<bool>("--secrets")
+        {
+            Description = "Let it register a secret store, which holds every assistant key typed from then on.",
+        };
+
+        var allow = new Command("allow", "Load a plugin folder from the next start, as its files stand now.") { folder, secrets };
+
+        allow.SetAction(result => PluginCommand.Allow(
+            PluginCommand.Resolve(result.GetRequiredValue(folder), plugins.Directory),
+            result.GetValue(secrets),
+            plugins.Trust().Allowances,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        var denied = new Argument<string>("folder")
+        {
+            Description = $"The plugin's folder: a path, or a name under {PluginHost.DirectoryName}/ beside this program.",
+        };
+
+        var deny = new Command("deny", "Stop loading a plugin folder that was allowed.") { denied };
+
+        deny.SetAction(result => PluginCommand.Deny(
+            PluginCommand.Resolve(result.GetRequiredValue(denied), plugins.Directory),
+            plugins.Trust().Allowances,
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        var list = new Command("list", "Say which plugin folders load, and why the others do not.") { json };
+
+        list.SetAction(result => PluginCommand.List(
+            plugins.Directory,
+            plugins.Trust(),
+            result.GetValue(json),
+            result.InvocationConfiguration.Output));
+
+        return new Command("plugin", "Which plugin folders load: only one Flyback shipped, or one somebody allowed.")
+        {
+            allow, deny, list,
+        };
     }
 
     /// <summary>Makes the key a plugin's packages are signed with.</summary>

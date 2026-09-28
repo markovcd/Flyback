@@ -280,8 +280,8 @@
           <tr><td><code>AddModules</code></td><td>Modules in the palette, keyed by a provider</td><td>—</td></tr>
           <tr><td><code>AddPresets</code></td><td>Patches in the preset gallery</td><td>—</td></tr>
           <tr><td><code>AddAudioOutput</code></td><td>A sound backend</td><td>Open a device</td></tr>
-          <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret</td><td>Read or write one</td></tr>
-          <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch</td><td>Open a connection, or need a credential present</td></tr>
+          <tr><td><code>AddSecretStore</code></td><td>Somewhere the OS holds a secret, honored only from a plugin Flyback ships or one allowed with <code>--secrets</code></td><td>Read or write one</td></tr>
+          <tr><td><code>AddPatchAssistant</code></td><td>Something that can author a patch, sending over the <code>IAssistantTransport</code> it is handed: the host puts the key on requests to the one origin it was entered for, and the assistant never holds it</td><td>Open a connection, or need a credential present</td></tr>
           <tr><td><code>AddMidiInput</code></td><td>A MIDI backend</td><td>Open a device, or list the ones plugged in</td></tr>
         </tbody>
       </table>
@@ -289,7 +289,8 @@
 
     <p>A single plugin may call several. The Voice plugin adds eleven modules and four presets; a platform
     plugin such as WinIO adds a sound backend and a MIDI input and nothing else. Every kind is keyed by an id,
-    and a second registration under an id already taken is ignored, whichever plugin it comes from.</p>
+    and an id registered twice is refused to both, whichever plugins it comes from, so no folder can stand
+    in for a plugin it shares an id with.</p>
   </section>
 
   <section id="module">
@@ -829,8 +830,20 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
     <h2><span class="num">09</span>Building and installing</h2>
 
     <p>Drop your build output into a folder under <code>plugins/</code> beside the executable — assembly,
-    dependencies and <code>.deps.json</code> together. To ship one in the box instead, add a line to
-    <code>Flyback.App.csproj</code> and the build lays it out for you:</p>
+    dependencies and <code>.deps.json</code> together — and allow it. A folder copied in by hand is a
+    stranger's code until somebody says yes to it, so a Release build loads it only once allowed, and only
+    while its files are as they were then; a Debug build loads every folder. Allow it once per build:</p>
+
+    <pre><code>flyback-cli plugin allow plugins/Flyback.Plugins.Yours
+flyback-cli plugin allow plugins/Flyback.Plugins.Yours --secrets
+flyback-cli plugin list --json
+flyback-cli plugin deny plugins/Flyback.Plugins.Yours</code></pre>
+
+    <p><code>--secrets</code> lets it register a secret store, which holds every assistant key typed from then
+    on. <code>plugin list</code> says which folders load and why the others do not. The yes is kept in the
+    data folder, never in <code>plugins/</code>. To ship a plugin in the box instead, add a line to
+    <code>Flyback.App.csproj</code> and the build lays it out for you, with the list of its files that lets it
+    load:</p>
 
     <pre><code>&lt;<span class="k">PluginProject</span> Include=<span class="s">"..\Flyback.Plugins.Yours\Flyback.Plugins.Yours.csproj"</span>
                FolderName=<span class="s">"Yours"</span> /&gt;</code></pre>
@@ -853,7 +866,7 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
 
     <p>To hand a plugin to somebody else, pack it as a <code>.fbkp</code>, signed with your key. Opening one
     with Flyback shows what the plugin is and installs it only when asked, copying just the build for the
-    system it is on.</p>
+    system it is on. Installing is the yes that lets it load, for the files it unpacked and no others.</p>
 
     <pre><code>flyback-cli plugin-key -o ripple.key
 flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
@@ -974,7 +987,10 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</cod
           <tr><td>A provider claiming ids that already exist</td><td>Refused — it could answer for modules saved patches mean something else by</td></tr>
           <tr><td>Two plugins with one <code>Info.Id</code></td><td>The second is ignored</td></tr>
           <tr><td>A preset name already offered</td><td>The later preset is ignored</td></tr>
-          <tr><td>A sound backend, MIDI input, assistant or secret store id already registered</td><td>The later one is ignored</td></tr>
+          <tr><td>A sound backend, MIDI input, assistant or secret store id registered twice</td><td>Refused to both, and each is named</td></tr>
+          <tr><td>A folder nobody allowed, in a Release build</td><td>Not loaded, and listed as not yet allowed with the command that allows it</td></tr>
+          <tr><td>An allowed or shipped folder with a file changed since</td><td>Not loaded, naming the file</td></tr>
+          <tr><td>A secret store from a plugin not allowed to keep keys</td><td>Refused, and the plugin loads without it</td></tr>
           <tr><td>A stray host-owned dll in your folder</td><td>Ignored, and the host's copy used</td></tr>
           <tr><td>A folder under <code>plugins/</code> whose name starts with a dot</td><td>Never scanned</td></tr>
           <tr><td>A package's plugin sharing an id with one shipped or copied in</td><td>The package's is ignored</td></tr>

@@ -112,6 +112,79 @@
     <PluginBuildProperties>RuntimeIdentifier;SelfContained;PublishDir;PublishProfile;PublishSingleFile;PublishTrimmed;PublishAot;PublishReadyToRun</PluginBuildProperties>
   </PropertyGroup>
 
+  <!--
+    plugins.sha256 beside plugins/: a line of "<sha256>  <folder>/<path>" for every
+    file of every plugin this output was built with, which is how the host knows a
+    shipped plugin from a folder somebody dropped in (PluginTrust, ShippedList). Paths
+    with a part starting with a dot are left out, as PluginFiles leaves them out.
+  -->
+  <UsingTask TaskName="ShippedPluginList" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Root ParameterType="System.String" Required="true" />
+      <Folders ParameterType="System.String[]" Required="true" />
+      <Into ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public class ShippedPluginList : Task
+{
+    [Required] public string Root { get; set; }
+
+    [Required] public string[] Folders { get; set; }
+
+    [Required] public string Into { get; set; }
+
+    public override bool Execute()
+    {
+        var lines = new List<string>();
+
+        foreach (var name in Folders.Distinct())
+        {
+            var folder = Path.GetFullPath(Path.Combine(Root, name)).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            if (!Directory.Exists(folder)) continue;
+
+            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                var path = file.Substring(folder.Length + 1).Replace(Path.DirectorySeparatorChar, '/');
+
+                if (path.Split('/').Any(part => part.StartsWith("."))) continue;
+
+                using (var sha = SHA256.Create())
+                using (var stream = File.OpenRead(file))
+                {
+                    var hex = string.Concat(sha.ComputeHash(stream).Select(b => b.ToString("x2")));
+                    lines.Add(hex + "  " + name + "/" + path);
+                }
+            }
+        }
+
+        if (lines.Count == 0)
+        {
+            if (File.Exists(Into)) File.Delete(Into);
+            return true;
+        }
+
+        var text = string.Concat(lines.OrderBy(l => l.Substring(66), StringComparer.Ordinal).Select(l => l + "\n"));
+
+        if (!File.Exists(Into) || File.ReadAllText(Into) != text) File.WriteAllText(Into, text);
+
+        return true;
+    }
+}
+]]></Code>
+    </Task>
+  </UsingTask>
+
   <Target Name="BuildPlugins" AfterTargets="Build" DependsOnTargets="SelectPlugins" Condition="'@(PluginProject)' != ''">
 
     <PropertyGroup>
@@ -123,6 +196,8 @@
              Targets="Build"
              Properties="Configuration=$(Configuration);OutDir=$(PluginBuildRoot)%(ShippedPlugin.FolderName)/"
              RemoveProperties="$(PluginBuildProperties)" />
+
+    <ShippedPluginList Root="$(PluginBuildRoot)" Folders="@(ShippedPlugin->'%(FolderName)')" Into="$(PluginBuildRoot)..\plugins.sha256" />
 
   </Target>
 
@@ -166,10 +241,13 @@
 
     <Delete Files="@(PublishedPluginSymbol)" />
 
+    <ShippedPluginList Root="$(PluginPublishRoot)" Folders="@(ShippedPlugin->'%(FolderName)')" Into="$(PluginPublishRoot)..\plugins.sha256" />
+
   </Target>
 
   <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != ''">
     <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)plugins" />
+    <Delete Files="$(MSBuildProjectDirectory)\$(OutDir)plugins.sha256" />
   </Target>
 
   <!--

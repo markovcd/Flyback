@@ -332,4 +332,31 @@ public sealed class PluginInstallerTests : IDisposable
         File.Exists(Installed(PluginPackage.KeyMarkerName)).ShouldBeFalse();
         Installer().Refusal(Package(), "win").ShouldNotBeNull().ShouldContain("installed unsigned");
     }
+
+    /// <summary>The install is the yes: what it unpacked loads from the next start, with nothing else to run.</summary>
+    [Fact]
+    public void An_installed_plugin_is_allowed_as_it_was_unpacked()
+    {
+        var allowances = new PluginAllowances(Path.Combine(plugins, "..", $"allowed-{Guid.NewGuid():N}.json"));
+
+        try
+        {
+            InstallNow(Package(), new PluginInstaller(plugins, [], checkKeys: true, allowances));
+
+            var allowed = allowances.For(Installed()).ShouldNotBeNull();
+
+            allowed.Assembly.ShouldBe(Packages.Folder);
+            allowed.Signer.ShouldBe(PackageSigner.Of(Packages.Key).Key);
+            allowed.Secrets.ShouldBeFalse("keeping keys is asked for apart from installing");
+            new PluginTrust(true, ShippedList.Empty, allowances).Judge(Installed()).Standing.ShouldBe(PluginStanding.Allowed);
+
+            new PluginInstaller(plugins, [], checkKeys: true, allowances).Remove(Packages.Folder);
+
+            allowances.For(Installed()).ShouldBeNull("a plugin asked to be removed is not loaded again, even if the removal waits");
+        }
+        finally
+        {
+            File.Delete(allowances.File);
+        }
+    }
 }

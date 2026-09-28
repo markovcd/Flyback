@@ -28,7 +28,7 @@ public sealed class PluginSteps
 
     private const int Rate = GlobalConstants.SampleRate;
 
-    private static readonly ModuleCatalog Modules = PluginHost.Load().Modules;
+    private static readonly ModuleCatalog Modules = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)).Modules;
 
     private Frame? frame;
     private float[]? sound;

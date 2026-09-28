@@ -7,6 +7,6 @@ internal sealed class PluginInstallerFactory(EditorSetup setup, PluginCatalog pl
 {
     public PluginInstaller? Create() =>
         setup.PluginFolder is { } folder
-            ? new PluginInstaller(folder, plugins.Plugins)
+            ? new PluginInstaller(folder, plugins.Plugins, allowances: setup.AllowedPluginsPath is { } allowed ? new PluginAllowances(allowed) : null)
             : null;
 }

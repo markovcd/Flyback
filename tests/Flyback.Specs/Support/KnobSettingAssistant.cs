@@ -28,6 +28,8 @@ internal sealed class KnobSettingAssistant : IPatchAssistant, IPatchSession
 
     public AssistantCredential Credential => schema.Credential;
 
+    public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
     public IReadOnlyList<SettingField> Form(SettingValues values) => schema.Form(values);
 
     public AssistantSenses Senses(SettingValues values) => schema.Senses(values);

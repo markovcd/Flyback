@@ -10,5 +10,5 @@ namespace Flyback.Plugins.Tests;
 /// </remarks>
 internal static class ShippedPlugins
 {
-    public static PluginCatalog Loaded { get; } = PluginHost.Load();
+    public static PluginCatalog Loaded { get; } = PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory));
 }

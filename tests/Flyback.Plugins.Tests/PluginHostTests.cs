@@ -178,7 +178,7 @@ public class PluginHostTests
     [Fact]
     public void A_missing_directory_is_not_an_error()
     {
-        var catalog = PluginHost.Load(Path.Combine(Path.GetTempPath(), $"flyback-absent-{Guid.NewGuid():N}"));
+        var catalog = PluginHost.Load(Path.Combine(Path.GetTempPath(), $"flyback-absent-{Guid.NewGuid():N}"), PluginTrust.Unchecked);
 
         catalog.Plugins.ShouldBeEmpty();
         catalog.AudioOutputs.ShouldBeEmpty();
@@ -190,7 +190,7 @@ public class PluginHostTests
     {
         using var folder = new TempFolder();
 
-        PluginHost.Load(folder.Path).Plugins.ShouldBeEmpty();
+        PluginHost.Load(folder.Path, PluginTrust.Unchecked).Plugins.ShouldBeEmpty();
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public class PluginHostTests
         Directory.CreateDirectory(Path.Combine(folder.Path, "Broken"));
         File.WriteAllBytes(Path.Combine(folder.Path, "Broken", "not-really.dll"), [0x00, 0x01, 0x02, 0x03]);
 
-        var catalog = PluginHost.Load(folder.Path);
+        var catalog = PluginHost.Load(folder.Path, PluginTrust.Unchecked);
 
         catalog.Plugins.ShouldBeEmpty();
         catalog.AudioOutputs.ShouldBeEmpty();
@@ -241,7 +241,7 @@ public class PluginHostTests
 
         Directory.CreateDirectory(Path.Combine(folder.Path, "Nothing"));
 
-        PluginHost.Load(folder.Path).Problems.ShouldBeEmpty();
+        PluginHost.Load(folder.Path, PluginTrust.Unchecked).Problems.ShouldBeEmpty();
     }
 
     /// <summary>

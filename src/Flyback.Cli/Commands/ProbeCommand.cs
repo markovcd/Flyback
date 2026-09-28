@@ -102,7 +102,7 @@ internal static class ProbeCommand
     /// </remarks>
     private static bool Ready(IPatchAssistant assistant, Credentials credentials) =>
         assistant is IModelSurvey
-        && credentials.Of(assistant.Id, assistant.Credential.EnvironmentVariable) is not null;
+        && credentials.SourceOf(assistant.Id, assistant.Credential.EnvironmentVariable) != CredentialSource.None;
 
     /// <summary>
     /// Says what this is about to spend and waits for a yes.
@@ -235,8 +235,10 @@ internal static class ProbeCommand
         // there is a key. What this cannot reach is a key typed into the window
         // and not kept: that one lives in the window's memory and dies with it.
         var variable = assistant.Credential.EnvironmentVariable;
+        var values = settings.Of(assistant.Id);
+        var config = new AssistantConfig(credentials.Transport(assistant, values), values);
 
-        if (credentials.Of(assistant.Id, variable) is not { } key)
+        if (!config.Transport.HasKey)
         {
             error.WriteLine($"No key for {assistant.Name}.");
 
@@ -252,7 +254,12 @@ internal static class ProbeCommand
             return Exit.Failed;
         }
 
-        var values = settings.Of(assistant.Id);
+        if (Credentials.Elsewhere(assistant, config) is { } elsewhere)
+        {
+            error.WriteLine(elsewhere);
+
+            return Exit.Failed;
+        }
 
         if (!options.Json)
         {
@@ -265,7 +272,7 @@ internal static class ProbeCommand
         try
         {
             found = await survey.Survey(
-                new AssistantConfig(key, values),
+                config,
                 new SurveyOptions(options.Only, options.All, options.Bounds),
                 options.Json ? null : new Commentary(output),
                 cancel).ConfigureAwait(false);

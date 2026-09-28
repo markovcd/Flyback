@@ -357,9 +357,18 @@ otherwise the contract types get a second identity and every cast fails. That is
 why every plugin references Core and Plugins with `Private="false"
 ExcludeAssets="runtime"`.
 
-**Nothing throws.** A bad folder, a duplicate id or a refused module becomes a
-`PluginProblem` in the catalog. First registration wins for every kind, and
-folders are read in ordinal order so two runs agree.
+**Only what somebody said yes to loads**
+([0158](adr/0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md)).
+`PluginTrust` loads a folder the build listed in `plugins.sha256`, or one
+`allowed-plugins.json` in the data folder allows, and only while every file in it
+hashes as it did; a Debug build loads everything. A secret store registers only
+from a shipped plugin or one allowed with `--secrets`. An assistant gets an
+`IAssistantTransport` that signs requests to one origin, never the key.
+
+**Nothing throws.** A bad folder, a folder nobody allowed, a duplicate id or a
+refused module becomes a `PluginProblem` in the catalog. A backend, assistant or
+secret store id registered twice is refused to both; a plugin id is the first
+one's. Folders are read in ordinal order so two runs agree.
 
 **Module refusals** are `ModuleCatalog`'s, in Core. A provider is refused for a
 blank id, the reserved built-in id, an id already loaded, or an id that would
@@ -388,7 +397,8 @@ minor.
 `PluginProject` items and `Directory.Build.targets` builds each one straight into
 `plugins/<FolderName>/`, portable, with an optional `Platform` of `win`, `osx` or
 `linux` ([0028](adr/0028-publish-one-platform-at-a-time.md)). Only `Flyback.App`
-and `Flyback.Plugins.Tests` declare them. The CLI and the viewer publish into the
+and the test projects declare them, and the build writes `plugins.sha256` beside
+the folder for each. The CLI and the viewer publish into the
 app's folder and read what it laid out; declaring plugins there would clear the
 folder out from under it.
 

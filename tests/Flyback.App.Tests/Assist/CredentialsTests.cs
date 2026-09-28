@@ -1,5 +1,6 @@
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Secrets;
+using Flyback.Plugins.Settings;
 using Shouldly;
 using Xunit;
 
@@ -13,12 +14,14 @@ public class CredentialsTests
     private const string Account = "anthropic";
     private const string Variable = "FLYBACK_TEST_KEY_THAT_IS_NOT_SET";
 
+    private const string Origin = "https://api.example.test";
+
     [Fact]
     public void With_nothing_anywhere_there_is_no_key()
     {
         var credentials = new Credentials(null);
 
-        credentials.Of(Account, Variable).ShouldBeNull();
+        credentials.Of(Account, Variable, Origin).ShouldBeNull();
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.None);
     }
 
@@ -28,9 +31,9 @@ public class CredentialsTests
         var credentials = new Credentials(null);
 
         credentials.CanKeep.ShouldBeFalse();
-        credentials.Accept(Account, "sk-typed", keep: true);
+        credentials.Accept(Account, "sk-typed", Origin, keep: true);
 
-        credentials.Of(Account, Variable).ShouldBe("sk-typed");
+        credentials.Of(Account, Variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-typed");
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Session);
     }
 
@@ -41,9 +44,9 @@ public class CredentialsTests
         var credentials = new Credentials(store);
 
         credentials.CanKeep.ShouldBeTrue();
-        credentials.Accept(Account, "sk-kept", keep: true);
+        credentials.Accept(Account, "sk-kept", Origin, keep: true);
 
-        store.Held[Account].ShouldBe("sk-kept");
+        Secret(store.Held[Account]).ShouldBe("sk-kept");
         new Credentials(store).SourceOf(Account, Variable).ShouldBe(CredentialSource.Kept);
     }
 
@@ -62,10 +65,10 @@ public class CredentialsTests
     {
         var credentials = new Credentials(new FakeStore());
 
-        credentials.Accept(Account, "sk-kept", keep: true);
+        credentials.Accept(Account, "sk-kept", Origin, keep: true);
 
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Kept);
-        credentials.Of(Account, Variable).ShouldBe("sk-kept");
+        credentials.Of(Account, Variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-kept");
     }
 
     /// <summary>
@@ -77,10 +80,10 @@ public class CredentialsTests
     {
         var credentials = new Credentials(new ForgetfulStore());
 
-        credentials.Accept(Account, "sk-typed", keep: true);
+        credentials.Accept(Account, "sk-typed", Origin, keep: true);
 
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Session);
-        credentials.Of(Account, Variable).ShouldBe("sk-typed");
+        credentials.Of(Account, Variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-typed");
     }
 
     /// <summary>
@@ -94,12 +97,12 @@ public class CredentialsTests
         var store = new FakeStore();
         var credentials = new Credentials(store);
 
-        credentials.Accept(Account, "sk-typed", keep: false);
+        credentials.Accept(Account, "sk-typed", Origin, keep: false);
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Session);
 
         credentials.KeepWhatIsHeld(Account);
 
-        store.Held[Account].ShouldBe("sk-typed");
+        Secret(store.Held[Account]).ShouldBe("sk-typed");
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Kept);
     }
 
@@ -119,7 +122,7 @@ public class CredentialsTests
         var store = new FakeStore();
         var credentials = new Credentials(store);
 
-        credentials.Accept(Account, "sk-passing-through", keep: false);
+        credentials.Accept(Account, "sk-passing-through", Origin, keep: false);
 
         store.Held.ShouldNotContainKey(Account);
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Session);
@@ -140,7 +143,7 @@ public class CredentialsTests
         {
             Environment.SetEnvironmentVariable(variable, "sk-from-the-environment");
 
-            credentials.Of(Account, variable).ShouldBe("sk-from-the-environment");
+            credentials.Of(Account, variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-from-the-environment");
             credentials.SourceOf(Account, variable).ShouldBe(CredentialSource.Environment);
         }
         finally
@@ -165,9 +168,9 @@ public class CredentialsTests
         {
             Environment.SetEnvironmentVariable(variable, "sk-from-the-environment");
 
-            credentials.Accept(Account, "sk-typed", keep: true);
+            credentials.Accept(Account, "sk-typed", Origin, keep: true);
 
-            credentials.Of(Account, variable).ShouldBe("sk-typed");
+            credentials.Of(Account, variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-typed");
 
             // Kept rather than Session, because this one asked to be kept and
             // the store has it. Either way it is the entered key that answers,
@@ -176,7 +179,7 @@ public class CredentialsTests
 
             // And the environment is still exactly where it was. Preferring an
             // entered key is not the same as taking a copy of an exported one.
-            store.Held[Account].ShouldBe("sk-typed");
+            Secret(store.Held[Account]).ShouldBe("sk-typed");
             Environment.GetEnvironmentVariable(variable).ShouldBe("sk-from-the-environment");
         }
         finally
@@ -200,10 +203,10 @@ public class CredentialsTests
         {
             Environment.SetEnvironmentVariable(variable, "sk-from-the-environment");
 
-            credentials.Accept(Account, "sk-wrong", keep: true);
+            credentials.Accept(Account, "sk-wrong", Origin, keep: true);
             credentials.Forget(Account);
 
-            credentials.Of(Account, variable).ShouldBe("sk-from-the-environment");
+            credentials.Of(Account, variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-from-the-environment");
             credentials.SourceOf(Account, variable).ShouldBe(CredentialSource.Environment);
             credentials.HasEntered(Account).ShouldBeFalse();
         }
@@ -225,9 +228,9 @@ public class CredentialsTests
         store.Held[Account] = "sk-kept-earlier";
 
         var credentials = new Credentials(store);
-        credentials.Accept(Account, "sk-just-typed", keep: false);
+        credentials.Accept(Account, "sk-just-typed", Origin, keep: false);
 
-        credentials.Of(Account, Variable).ShouldBe("sk-just-typed");
+        credentials.Of(Account, Variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-just-typed");
         store.Held[Account].ShouldBe("sk-kept-earlier");
     }
 
@@ -238,7 +241,7 @@ public class CredentialsTests
 
         credentials.HasEntered(Account).ShouldBeFalse();
 
-        credentials.Accept(Account, "sk-typed", keep: false);
+        credentials.Accept(Account, "sk-typed", Origin, keep: false);
 
         credentials.HasEntered(Account).ShouldBeTrue();
     }
@@ -267,11 +270,11 @@ public class CredentialsTests
         var store = new FakeStore();
         var credentials = new Credentials(store);
 
-        credentials.Accept(Account, "sk-kept", keep: true);
+        credentials.Accept(Account, "sk-kept", Origin, keep: true);
         credentials.Forget(Account);
 
         store.Held.ShouldNotContainKey(Account);
-        credentials.Of(Account, Variable).ShouldBeNull();
+        credentials.Of(Account, Variable, Origin).ShouldBeNull();
     }
 
     /// <summary>
@@ -283,12 +286,99 @@ public class CredentialsTests
     {
         var credentials = new Credentials(new ThrowingStore());
 
-        Should.NotThrow(() => credentials.Accept(Account, "sk-typed", keep: true));
+        Should.NotThrow(() => credentials.Accept(Account, "sk-typed", Origin, keep: true));
 
-        credentials.Of(Account, Variable).ShouldBe("sk-typed");
+        credentials.Of(Account, Variable, Origin).ShouldNotBeNull().Secret.ShouldBe("sk-typed");
         credentials.SourceOf(Account, Variable).ShouldBe(CredentialSource.Session);
 
         Should.NotThrow(() => credentials.Forget(Account));
+    }
+
+    [Fact]
+    public void A_key_is_kept_with_the_origin_it_was_entered_for()
+    {
+        var store = new FakeStore();
+
+        new Credentials(store).Accept(Account, "sk-kept", Origin, keep: true);
+
+        BoundKey.Read(store.Held[Account], null).ShouldBe(new BoundKey("sk-kept", Origin));
+        new Credentials(store).Of(Account, Variable, "https://elsewhere.test").ShouldBe(new BoundKey("sk-kept", Origin));
+    }
+
+    /// <summary>A key kept alone, before keys had an origin, is bound to where it is next sent, and kept that way.</summary>
+    [Fact]
+    public void A_key_kept_alone_is_bound_to_where_it_is_next_sent()
+    {
+        var store = new FakeStore();
+
+        store.Held[Account] = "sk-kept-earlier";
+
+        new Credentials(store).Of(Account, Variable, Origin).ShouldBe(new BoundKey("sk-kept-earlier", Origin));
+        new Credentials(store).Of(Account, Variable, "https://elsewhere.test").ShouldBe(new BoundKey("sk-kept-earlier", Origin));
+        BoundKey.Read(store.Held[Account], null).ShouldBe(new BoundKey("sk-kept-earlier", Origin));
+    }
+
+    [Fact]
+    public void A_variable_goes_wherever_the_assistant_sends_now()
+    {
+        var variable = $"FLYBACK_TEST_KEY_{Guid.NewGuid():N}";
+
+        try
+        {
+            Environment.SetEnvironmentVariable(variable, "sk-from-the-environment");
+
+            new Credentials(null).Of(Account, variable, "https://elsewhere.test")
+                .ShouldBe(new BoundKey("sk-from-the-environment", "https://elsewhere.test"));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(variable, null);
+        }
+    }
+
+    [Fact]
+    public void A_key_is_not_sent_to_an_endpoint_moved_after_it_was_entered()
+    {
+        var credentials = new Credentials(null);
+        var assistant = new Pointed();
+
+        credentials.Accept(Account, "sk-typed", "https://api.example.test", keep: false);
+
+        var here = new AssistantConfig(credentials.Transport(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
+        var moved = new AssistantConfig(credentials.Transport(assistant, Pointing("http://localhost:11434/v1")), Pointing("http://localhost:11434/v1"));
+
+        Credentials.Elsewhere(assistant, here).ShouldBeNull();
+        moved.Transport.Origin.ShouldBe("https://api.example.test");
+        Credentials.Elsewhere(assistant, moved).ShouldBe(
+            "The key was entered for https://api.example.test, and this is set to send to http://localhost:11434. Enter it again to send it there.");
+    }
+
+    private static SettingValues Pointing(string endpoint) =>
+        new(new Dictionary<string, string> { [AssistantSchema.EndpointKey] = endpoint });
+
+    /// <summary>What a store holds, as the key alone.</summary>
+    private static string? Secret(string stored) => BoundKey.Read(stored, null)?.Secret;
+
+    /// <summary>An assistant that sends wherever its endpoint setting says.</summary>
+    private sealed class Pointed : IPatchAssistant
+    {
+        public string Id => Account;
+
+        public string Name => "Pointed";
+
+        public int Priority => 0;
+
+        public AssistantCredential Credential { get; } = new(Variable, "");
+
+        public Uri? Endpoint(SettingValues values) => new(values.Text(AssistantSchema.EndpointKey, ""));
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public AssistantSenses Senses(SettingValues values) => default;
+
+        public string? Unavailable(AssistantConfig config) => null;
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => throw new NotSupportedException();
     }
 
     private sealed class FakeStore : ISecretStore

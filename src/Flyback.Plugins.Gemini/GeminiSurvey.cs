@@ -21,7 +21,7 @@ public sealed partial class GeminiAssistant : IModelSurvey
     {
         var chosen = Schema.Read(config.Values);
 
-        using var probe = new GeminiProbe(config.ApiKey, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
+        using var probe = new GeminiProbe(config.Transport.Handler, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
         return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }
@@ -35,10 +35,9 @@ public sealed partial class GeminiAssistant : IModelSurvey
 /// none of what a session carries applies: no briefing, no tools, no history, no retry
 /// budget spent on behalf of somebody waiting for a patch.
 /// </remarks>
-/// <param name="apiKey">The key. Sent as a header rather than in the query, which keeps it out of logs.</param>
+/// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
 /// <param name="address">The endpoint, without a trailing slash.</param>
-/// <param name="transport">Supplied by the tests; a real run makes its own.</param>
-internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHandler? transport = null) : IDisposable
+internal sealed class GeminiProbe(HttpMessageHandler transport, string address) : IDisposable
 {
     /// <summary>
     /// The largest budget worth searching for. Above any published ceiling, so
@@ -60,7 +59,7 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
         "deep-research", "antigravity",
     ];
 
-    private readonly HttpClient http = Client(apiKey, transport);
+    private readonly HttpClient http = Probe.Client(transport);
 
     public void Dispose() => http.Dispose();
 
@@ -280,15 +279,6 @@ internal sealed class GeminiProbe(string apiKey, string address, HttpMessageHand
     private static bool Candidate(string model) =>
         model.StartsWith("gemini-", StringComparison.Ordinal)
         && !Elsewhere.Any(m => model.Contains(m, StringComparison.Ordinal));
-
-    private static HttpClient Client(string key, HttpMessageHandler? transport)
-    {
-        var client = Probe.Client(transport);
-
-        client.DefaultRequestHeaders.Add("x-goog-api-key", key);
-
-        return client;
-    }
 
     private static string Says(ModelReport report, Verdict sees, Verdict hears)
     {

@@ -16,7 +16,8 @@ namespace Flyback.Plugins.Hosting;
 /// its <c>.deps.json</c> and its private dependencies. Nothing here throws: a
 /// plugin that is missing, broken, built against another runtime or against a
 /// contract this host does not offer (<see cref="ContractVersion"/>), or simply
-/// hostile is a line in <see cref="PluginCatalog.Problems"/>.
+/// hostile is a line in <see cref="PluginCatalog.Problems"/>. So is a folder nobody
+/// allowed (<see cref="PluginTrust"/>), which is not loaded at all.
 /// </remarks>
 internal static class PluginHost
 {
@@ -25,9 +26,9 @@ internal static class PluginHost
     /// <summary>The <c>plugins</c> folder beside the executable.</summary>
     public static string DefaultDirectory => Path.Combine(AppContext.BaseDirectory, DirectoryName);
 
-    public static PluginCatalog Load() => Load(DefaultDirectory);
+    public static PluginCatalog Load() => Load(DefaultDirectory, PluginTrust.For(DefaultDirectory));
 
-    public static PluginCatalog Load(string directory)
+    public static PluginCatalog Load(string directory, PluginTrust trust)
     {
         if (!Directory.Exists(directory)) return PluginCatalog.Empty;
 
@@ -35,7 +36,7 @@ internal static class PluginHost
         var problems = new List<PluginProblem>();
         var registry = new Registry(problems);
 
-        foreach (var folder in Folders(directory)) LoadFolder(folder, plugins, registry, problems);
+        foreach (var folder in Folders(directory)) LoadFolder(folder, plugins, registry, problems, trust);
 
         return Catalog(plugins, registry, problems);
     }
@@ -67,7 +68,7 @@ internal static class PluginHost
         var plugins = new List<LoadedPlugin>();
         var problems = new List<PluginProblem>();
 
-        LoadFolder(folder, plugins, new Registry(problems), problems, contexts);
+        LoadFolder(folder, plugins, new Registry(problems), problems, PluginTrust.Unchecked, contexts);
 
         return (problems, plugins.Count);
     }
@@ -84,17 +85,58 @@ internal static class PluginHost
         return Catalog(plugins, registry, problems);
     }
 
-    private static PluginCatalog Catalog(List<LoadedPlugin> plugins, Registry registry, List<PluginProblem> problems) =>
-        new(
+    private static PluginCatalog Catalog(List<LoadedPlugin> plugins, Registry registry, List<PluginProblem> problems)
+    {
+        var providers = registry.Providers;
+
+        return new(
             plugins,
-            registry.AudioOutputs,
+            Unclashed(registry.AudioOutputs, o => o.Id, "audio output", providers, plugins, problems),
             registry.Modules,
             registry.Presets,
             problems,
-            registry.Assistants,
-            registry.SecretStores,
-            registry.MidiInputs,
-            registry.Providers);
+            Unclashed(registry.Assistants, a => a.Id, "assistant", providers, plugins, problems),
+            Unclashed(registry.SecretStores, s => s.Id, "secret store", providers, plugins, problems),
+            Unclashed(registry.MidiInputs, i => i.Id, "MIDI input", providers, plugins, problems),
+            providers);
+    }
+
+    /// <summary>
+    /// Everything offered under an id nobody else offered. An id offered twice is refused
+    /// to both, so a folder that loads first cannot stand in for a plugin it shares an id with.
+    /// </summary>
+    private static List<T> Unclashed<T>(
+        IReadOnlyList<T> offered,
+        Func<T, string> id,
+        string what,
+        IReadOnlyDictionary<object, PluginInfo> providers,
+        List<LoadedPlugin> plugins,
+        List<PluginProblem> problems) where T : notnull
+    {
+        var kept = new List<T>();
+
+        foreach (var group in offered.GroupBy(id, StringComparer.Ordinal))
+        {
+            if (group.Count() == 1)
+            {
+                kept.Add(group.First());
+                continue;
+            }
+
+            var by = group.Select(o => providers.GetValueOrDefault(o) ?? new PluginInfo("", "")).ToList();
+
+            foreach (var source in by)
+            {
+                var others = by.Where(o => !ReferenceEquals(o, source)).Select(o => o.Name).Distinct().ToList();
+                var also = others.Count == 0 ? "more than once by the same plugin" : $"by {string.Join(" and ", others)} as well";
+                var folder = plugins.FirstOrDefault(p => ReferenceEquals(p.Info, source))?.AssemblyPath is { } path ? Path.GetDirectoryName(path) : null;
+
+                problems.Add(new PluginProblem(source.Id, $"{what} '{group.Key}' is registered {also}, so neither is used.") { Folder = folder });
+            }
+        }
+
+        return kept;
+    }
 
     /// <summary>
     /// The plugin folders in the order they load: the same on every run, so priority
@@ -112,14 +154,24 @@ internal static class PluginHost
         List<LoadedPlugin> plugins,
         Registry registry,
         List<PluginProblem> problems,
+        PluginTrust trust,
         List<PluginLoadContext>? collectible = null)
     {
         var entries = EntryAssemblies(folder);
         if (entries.Count == 0) return;
 
         var before = problems.Count;
+        var verdict = trust.Judge(folder);
 
-        LoadEntries(entries, plugins, registry, problems, collectible);
+        if (verdict.Loads)
+        {
+            registry.Secrets = verdict.Secrets;
+            LoadEntries(entries, plugins, registry, problems, collectible);
+        }
+        else
+        {
+            problems.Add(new PluginProblem(Path.GetFileName(folder), verdict.Reason!));
+        }
 
         for (var i = before; i < problems.Count; i++) problems[i] = problems[i] with { Folder = folder };
     }
@@ -165,7 +217,7 @@ internal static class PluginHost
     /// candidate: it is easy to ship by accident, and its dependency file would
     /// otherwise be picked as the folder's.
     /// </remarks>
-    private static List<string> EntryAssemblies(string folder)
+    internal static List<string> EntryAssemblies(string folder)
     {
         var dlls = Directory.GetFiles(folder, "*.dll")
             .Where(d => !PluginLoadContext.IsHostOwned(Path.GetFileNameWithoutExtension(d)))
@@ -262,9 +314,8 @@ internal static class PluginHost
     }
 
     /// <summary>
-    /// Collects what plugins offer. Registration is last-loser: the first
-    /// backend to claim an id keeps it, so a plugin cannot shadow one that
-    /// loaded before it.
+    /// Collects what plugins offer, clashes and all: <see cref="Unclashed"/> refuses an id
+    /// offered twice once every plugin has had its turn.
     /// </summary>
     private sealed class Registry(List<PluginProblem> problems) : IPluginRegistry
     {
@@ -278,6 +329,9 @@ internal static class PluginHost
 
         /// <summary>Whoever is registering right now, for blaming in messages.</summary>
         public PluginInfo Source { get; set; } = new("", "");
+
+        /// <summary>Whether whoever is registering right now may register a secret store.</summary>
+        public bool Secrets { get; set; } = true;
 
         public IReadOnlyDictionary<object, PluginInfo> Providers => providers;
 
@@ -366,39 +420,23 @@ internal static class PluginHost
 
         public void AddAudioOutput(IAudioOutput output)
         {
-            if (audioOutputs.Any(o => o.Id == output.Id))
-            {
-                problems.Add(new PluginProblem(
-                    Source.Id,
-                    $"audio output '{output.Id}' is already registered and was ignored."));
-                return;
-            }
-
             audioOutputs.Add(output);
             providers[output] = Source;
         }
 
         public void AddPatchAssistant(IPatchAssistant assistant)
         {
-            if (assistants.Any(a => a.Id == assistant.Id))
-            {
-                problems.Add(new PluginProblem(
-                    Source.Id,
-                    $"assistant '{assistant.Id}' is already registered and was ignored."));
-                return;
-            }
-
             assistants.Add(assistant);
             providers[assistant] = Source;
         }
 
         public void AddSecretStore(ISecretStore store)
         {
-            if (secretStores.Any(s => s.Id == store.Id))
+            if (!Secrets)
             {
                 problems.Add(new PluginProblem(
                     Source.Id,
-                    $"secret store '{store.Id}' is already registered and was ignored."));
+                    $"secret store '{store.Id}' is refused: only a plugin Flyback ships, or one allowed with `flyback-cli plugin allow --secrets`, may keep keys."));
                 return;
             }
 
@@ -408,14 +446,6 @@ internal static class PluginHost
 
         public void AddMidiInput(IMidiInput input)
         {
-            if (midiInputs.Any(i => i.Id == input.Id))
-            {
-                problems.Add(new PluginProblem(
-                    Source.Id,
-                    $"MIDI input '{input.Id}' is already registered and was ignored."));
-                return;
-            }
-
             midiInputs.Add(input);
             providers[input] = Source;
         }

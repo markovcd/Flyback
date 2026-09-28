@@ -7,11 +7,19 @@ namespace Flyback.Cli;
 /// <remarks>
 /// A patch may name a module only a plugin defines, so everything that reads one asks
 /// for the catalog before it does, and the scan is what the report on stderr is about.
-/// Help, a completion, a refused command line and the two commands that only make a
-/// plugin file need no catalog: those load nothing and say nothing.
+/// Help, a completion, a refused command line, the two commands that only make a
+/// plugin file and the ones that say which folders load need no catalog: those load
+/// nothing and say nothing.
 /// </remarks>
-internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report)
+/// <param name="trust">Which folders load, for <c>plugin list</c>; <see cref="PluginTrust.For"/> the directory unless a test says otherwise.</param>
+internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null)
 {
+    /// <summary>The plugins folder.</summary>
+    public string Directory => directory;
+
+    /// <summary>Which folders load, asked afresh.</summary>
+    public PluginTrust Trust() => trust?.Invoke() ?? PluginTrust.For(directory);
+
     /// <summary>The catalog, scanning the folder if this is the first ask.</summary>
     public PluginCatalog Catalog => field ??= Scan();
 

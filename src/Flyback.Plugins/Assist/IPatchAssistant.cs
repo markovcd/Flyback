@@ -24,6 +24,12 @@ public interface IPatchAssistant
     AssistantCredential Credential { get; }
 
     /// <summary>
+    /// Where a run configured this way sends its requests, or null where that is not
+    /// an address yet. A key entered is bound to this origin (<see cref="IAssistantTransport"/>).
+    /// </summary>
+    Uri? Endpoint(SettingValues values);
+
+    /// <summary>
     /// Every setting this provider has, as the form should stand with
     /// <paramref name="values"/> on it.
     /// </summary>

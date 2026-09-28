@@ -1,1 +1,19 @@
 #nullable enable
+*REMOVED*Flyback.Plugins.Assist.AssistantConfig.ApiKey.get -> string!
+*REMOVED*Flyback.Plugins.Assist.AssistantConfig.ApiKey.init -> void
+*REMOVED*Flyback.Plugins.Assist.AssistantConfig.AssistantConfig(string! ApiKey, Flyback.Plugins.Settings.SettingValues! Values) -> void
+*REMOVED*Flyback.Plugins.Assist.AssistantConfig.Deconstruct(out string! ApiKey, out Flyback.Plugins.Settings.SettingValues! Values) -> void
+Flyback.Plugins.Assist.AssistantConfig.AssistantConfig(Flyback.Plugins.Assist.IAssistantTransport! Transport, Flyback.Plugins.Settings.SettingValues! Values) -> void
+Flyback.Plugins.Assist.AssistantConfig.Deconstruct(out Flyback.Plugins.Assist.IAssistantTransport! Transport, out Flyback.Plugins.Settings.SettingValues! Values) -> void
+Flyback.Plugins.Assist.AssistantConfig.Transport.get -> Flyback.Plugins.Assist.IAssistantTransport!
+Flyback.Plugins.Assist.AssistantConfig.Transport.init -> void
+Flyback.Plugins.Assist.AssistantCredential.Header.get -> string!
+Flyback.Plugins.Assist.AssistantCredential.Header.init -> void
+Flyback.Plugins.Assist.AssistantCredential.Scheme.get -> string?
+Flyback.Plugins.Assist.AssistantCredential.Scheme.init -> void
+Flyback.Plugins.Assist.AssistantSchema.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?
+Flyback.Plugins.Assist.IAssistantTransport
+Flyback.Plugins.Assist.IAssistantTransport.Handler.get -> System.Net.Http.HttpMessageHandler!
+Flyback.Plugins.Assist.IAssistantTransport.HasKey.get -> bool
+Flyback.Plugins.Assist.IAssistantTransport.Origin.get -> string?
+Flyback.Plugins.Assist.IPatchAssistant.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?

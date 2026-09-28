@@ -835,9 +835,16 @@ internal sealed class AssistantPanel : UserControl
 
             var keep = settingsRepository.Current.RememberKey && credentials.CanKeep;
 
-            if (!string.IsNullOrWhiteSpace(keyBox.Text))
+            var origin = KeyedTransport.OriginOf(chosenAssistant.Value, form.Values);
+
+            if (!string.IsNullOrWhiteSpace(keyBox.Text) && origin is null)
             {
-                credentials.Accept(chosenAssistant.Value.Id, keyBox.Text, keep);
+                // Left in the box: a key is kept for the address it goes to, and there is none yet.
+                editor.Report("Key not taken: the endpoint is not an address yet, and a key is kept for the one it goes to.", null);
+            }
+            else if (!string.IsNullOrWhiteSpace(keyBox.Text))
+            {
+                credentials.Accept(chosenAssistant.Value.Id, keyBox.Text, origin!, keep);
 
                 // Emptied once it has been taken. Left there it would hold the
                 // secret in a control for the life of the window, and the line
@@ -873,18 +880,14 @@ internal sealed class AssistantPanel : UserControl
     }
 
     /// <summary>
-    /// The provider, its form as it stands, and the key — which is all a
+    /// The provider, its form as it stands, and what it sends over — which is all a
     /// configuration is. Nothing is interpreted on the way past: what a set of
     /// answers means is the provider's to work out, on the other side of this call.
     /// </summary>
-    private AssistantConfig? Configured()
-    {
-        if (chosenAssistant.Value is null) return null;
-
-        var key = credentials.Of(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable) ?? string.Empty;
-
-        return new AssistantConfig(key, form.Values);
-    }
+    private AssistantConfig? Configured() =>
+        chosenAssistant.Value is { } assistant
+            ? new AssistantConfig(credentials.Transport(assistant, form.Values), form.Values)
+            : null;
 
     /// <summary>
     /// Reworks what the buttons and the footer say. The footer speaks only when
@@ -1056,7 +1059,7 @@ internal sealed class AssistantPanel : UserControl
                 $"In force, from {variable}. {GlobalConstants.ApplicationName} never wrote it and never will. A key entered here "
                 + "takes precedence over it, and forgetting that one comes back to this.",
 
-            _ => chosenAssistant.Value.Credential.Help,
+            _ => chosenAssistant.Value.Credential.Help + " Make one for Flyback alone, with a spending limit.",
         };
 
         // Nothing to forget, or nothing this could reach if it tried: an
@@ -1071,13 +1074,15 @@ internal sealed class AssistantPanel : UserControl
     /// hand, since a key typed here is not saved until Save and may under
     /// ADR-0034 never be written down at all.
     /// </summary>
-    private string? KeyOnTheForm()
+    private IAssistantTransport? KeyOnTheForm()
     {
-        if (chosenAssistant.Value is null) return null;
+        if (chosenAssistant.Value is not { } assistant) return null;
 
-        return string.IsNullOrWhiteSpace(keyBox.Text)
-            ? credentials.Of(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable)
-            : keyBox.Text;
+        var transport = string.IsNullOrWhiteSpace(keyBox.Text)
+            ? credentials.Transport(assistant, form.Values)
+            : new KeyedTransport(keyBox.Text, KeyedTransport.OriginOf(assistant, form.Values), assistant.Credential);
+
+        return transport.HasKey ? transport : null;
     }
 
     /// <summary>
@@ -1109,7 +1114,7 @@ internal sealed class AssistantPanel : UserControl
     {
         try
         {
-            return assistant.Unavailable(config);
+            return Credentials.Elsewhere(assistant, config) ?? assistant.Unavailable(config);
         }
         catch (Exception ex)
         {

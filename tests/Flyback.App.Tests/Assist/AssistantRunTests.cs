@@ -627,6 +627,8 @@ public class AssistantRunTests
 
         public AssistantCredential Credential => Schema.Credential;
 
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
         public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
 
         public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);

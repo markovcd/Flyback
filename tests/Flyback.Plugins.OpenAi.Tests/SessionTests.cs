@@ -122,7 +122,6 @@ public class SessionTests
         using var session = new OpenAiSession(
             workbench,
             new AssistantChoices("some-model"),
-            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 
@@ -160,7 +159,6 @@ public class SessionTests
         using var session = new OpenAiSession(
             workbench,
             new AssistantChoices("some-model"),
-            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 
@@ -561,7 +559,6 @@ public class SessionTests
     private static OpenAiSession Session(Canned canned) => new(
         new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
         new AssistantChoices("some-model"),
-        "no-key-needed",
         "https://nowhere.invalid/v1",
         canned);
 
@@ -610,7 +607,6 @@ public class SessionTests
                 "some-model",
                 Hearing: hearing,
                 EarModel: hearing ? Ears : null),
-            "no-key-needed",
             "https://nowhere.invalid/v1",
             canned);
 

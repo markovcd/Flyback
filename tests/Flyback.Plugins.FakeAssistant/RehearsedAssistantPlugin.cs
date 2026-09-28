@@ -44,6 +44,8 @@ public sealed class RehearsedAssistant : IPatchAssistant
 
     public AssistantCredential Credential => Schema.Credential;
 
+    public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
     /// <summary>
     /// The ordinary form, declared by the schema. Nothing here reads any of it —
     /// this one has made up its mind — but a worked example that skipped the

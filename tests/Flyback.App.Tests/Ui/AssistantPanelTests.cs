@@ -636,6 +636,8 @@ public sealed class AssistantPanelTests : UiTest
 
         public AssistantCredential Credential => Schema.Credential;
 
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
         // Through Surveyed, as both shipped adapters declare themselves: a
         // survey of the endpoint replaces the written-down models, and a fake
         // that skipped it would be a fake nothing could probe.
@@ -1403,7 +1405,8 @@ public sealed class AssistantPanelTests : UiTest
         Settle(host);
 
         provider.Asked.ShouldNotBeNull();
-        provider.Asked!.ApiKey.ShouldBe("sk-typed");
+        provider.Asked!.Transport.HasKey.ShouldBeTrue();
+        provider.Asked.Transport.Origin.ShouldBe("https://assistant.test");
         provider.Asked.Values.Text(AssistantSchema.ModelKey).ShouldBe("typed-model");
     }
 

@@ -20,8 +20,8 @@ internal sealed class ProbeSection : StackPanel
 
     private readonly Func<IPatchAssistant?> assistant;
 
-    /// <summary>The key the probe would go with, which may be typed and not yet saved.</summary>
-    private readonly Func<string?> keyOnTheForm;
+    /// <summary>What the probe would send over, with a key that may be typed and not yet saved; null without a key.</summary>
+    private readonly Func<IAssistantTransport?> keyOnTheForm;
 
     private readonly SettingsForm form;
 
@@ -75,10 +75,10 @@ internal sealed class ProbeSection : StackPanel
     private CancellationTokenSource? probing;
 
     /// <param name="assistant">The provider picked on the form, as it is now.</param>
-    /// <param name="key">The key the probe would go with.</param>
+    /// <param name="key">What the probe would send over, or null without a key.</param>
     /// <param name="form">The provider's form, read for the model and written with what was found.</param>
     /// <param name="refresh">Told when a probe ends, so the window around it catches up.</param>
-    public ProbeSection(Func<IPatchAssistant?> assistant, Func<string?> key, SettingsForm form, Action refresh)
+    public ProbeSection(Func<IPatchAssistant?> assistant, Func<IAssistantTransport?> key, SettingsForm form, Action refresh)
     {
         this.assistant = assistant;
         keyOnTheForm = key;
@@ -161,6 +161,12 @@ internal sealed class ProbeSection : StackPanel
         if (keyOnTheForm() is not { } key) return;
 
         var config = new AssistantConfig(key, form.Values);
+
+        if (Credentials.Elsewhere(asked, config) is { } elsewhere)
+        {
+            Say(elsewhere);
+            return;
+        }
 
         using var stopping = new CancellationTokenSource();
 

@@ -9,12 +9,19 @@ namespace Flyback.Plugins.Assist;
 /// <remarks>
 /// Apart from <see cref="SettingField"/> because it is the one part of a
 /// provider's configuration that must not become one (ADR-0034): the host reads
-/// the variable and draws the box, and the key reaches a plugin only as
-/// <see cref="AssistantConfig.ApiKey"/>, for the length of a run.
+/// the variable, draws the box, and puts the key on requests itself
+/// (<see cref="IAssistantTransport"/>).
 /// </remarks>
 /// <param name="EnvironmentVariable">
 /// The variable this provider is conventionally given its key in. The shell reads
 /// it, not the plugin.
 /// </param>
 /// <param name="Help">One line saying where a key comes from, shown under the field.</param>
-public sealed record AssistantCredential(string EnvironmentVariable, string Help);
+public sealed record AssistantCredential(string EnvironmentVariable, string Help)
+{
+    /// <summary>The request header the key goes in.</summary>
+    public string Header { get; init; } = "Authorization";
+
+    /// <summary>What goes before the key in <see cref="Header"/>, or null for the key alone.</summary>
+    public string? Scheme { get; init; } = "Bearer";
+}

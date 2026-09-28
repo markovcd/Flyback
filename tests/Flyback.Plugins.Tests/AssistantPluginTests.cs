@@ -196,7 +196,7 @@ public class AssistantPluginTests
 
         if (baseUrl is not null) values[AssistantSchema.EndpointKey] = baseUrl;
 
-        return new AssistantConfig(key, new SettingValues(values));
+        return new AssistantConfig(new KeyedTransport(key, "https://assistant.test", new AssistantCredential("", "")), new SettingValues(values));
     }
 
     /// <summary>

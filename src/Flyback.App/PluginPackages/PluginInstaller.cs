@@ -22,7 +22,8 @@ namespace Flyback.App.PluginPackages;
 /// <param name="folder">The plugins folder.</param>
 /// <param name="loaded">What this run loaded, whose assemblies a package may not bring a second copy of.</param>
 /// <param name="checkKeys">Whether to refuse unsigned packages and another signer's update; <see cref="PackageSigner.Checked"/> unless a test says otherwise.</param>
-internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin> loaded, bool? checkKeys = null)
+/// <param name="allowances">Where installing says yes to a plugin and removing takes it back, or null to record nothing.</param>
+internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin> loaded, bool? checkKeys = null, PluginAllowances? allowances = null)
 {
     /// <summary>Starts with a dot, so the host never scans it for plugins.</summary>
     public const string PendingName = ".pending";
@@ -125,6 +126,8 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
 
         if (Directory.Exists(staged)) Directory.Delete(staged, recursive: true);
 
+        allowances?.Deny(Path.Combine(folder, name));
+
         if (!FromPackage(Path.Combine(folder, name))) return true;
 
         Directory.CreateDirectory(Pending);
@@ -153,11 +156,15 @@ internal sealed class PluginInstaller(string folder, IReadOnlyList<LoadedPlugin>
             if (package.Signer is { } signer) File.WriteAllText(key, signer.Key + "\n");
             else File.Delete(key);
 
-            var staged = Path.Combine(Pending, package.Description(build).Assembly);
+            var assembly = package.Description(build).Assembly;
+            var staged = Path.Combine(Pending, assembly);
 
             if (Directory.Exists(staged)) Directory.Delete(staged, recursive: true);
 
             Directory.Move(unpacking, staged);
+
+            // The click that got here is the yes, for the files it unpacked and no others.
+            allowances?.Allow(new PluginAllowance(Path.Combine(folder, assembly), assembly, package.Signer?.Key, false, PluginFiles.Of(staged)));
 
             // Installing again takes back a removal.
             File.Delete(Path.Combine(Pending, RemovePrefix + package.Description(build).Assembly));

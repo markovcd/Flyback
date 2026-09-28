@@ -14,7 +14,7 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed partial class TutorialSteps
 {
-    private static readonly Lazy<PluginCatalog> Installed = new(PluginHost.Load);
+    private static readonly Lazy<PluginCatalog> Installed = new(() => PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)));
 
     /// <summary>Frames drawn one after another, so a trail has a past to show: two seconds at thirty a second.</summary>
     private const int Frames = 60;

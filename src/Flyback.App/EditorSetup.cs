@@ -65,6 +65,9 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>Where a plugin package opened in the window is installed.</summary>
     public string? PluginFolder { get; init; }
 
+    /// <summary>Where installing a plugin records the yes that lets it load, or null to record nothing.</summary>
+    public string? AllowedPluginsPath { get; init; }
+
     /// <summary>What the Files section tells the operating system.</summary>
     public FileTypes? FileTypes { get; init; }
 
@@ -123,6 +126,7 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
         LayoutPath = WindowLayout.File,
         RecoveryFolder = Recovery.Folder,
         PluginFolder = PluginHost.DefaultDirectory,
+        AllowedPluginsPath = PluginAllowances.DefaultFile,
         FileTypes = FileTypes.ForThisCopy(),
         Usage = usage,
         Relaunch = Restart.Launch,

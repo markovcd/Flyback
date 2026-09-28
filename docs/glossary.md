@@ -144,6 +144,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **provider**, **provider id** | Who a plugin's modules belong to, and the prefix of their type ids. | `ModuleProvider` | vendor, namespace |
 | **contract** | What a plugin is compiled against, with a version of its own. | `PluginContractVersion` in Directory.Build.props | API alone, SDK |
 | **plugin problem** | A plugin, or a part of one, that was refused, and why. | `PluginProblem` | error, failure |
+| **allowed** | A plugin folder somebody said yes to, by installing its package or with `flyback-cli plugin allow`, as its files stood then. | `PluginAllowances`, `PluginTrust` | trusted, whitelisted, approved |
 | **plugin site**, **preset site** | Where shared plugins and shared presets are published and found. | `PluginSite`, `PresetSite` | store, marketplace, repository |
 | **letter** | What somebody writes to Flyback's author from the status bar, and the site takes. | `SiteLetters`, `LetterStore` | feedback (that is the Feedback module), comment, ticket |
 

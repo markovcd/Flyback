@@ -8,12 +8,12 @@ namespace Flyback.Plugins.Assist;
 /// <remarks>
 /// The two halves are kept apart because they are owned by different sides:
 /// <see cref="Values"/> is what the provider asked for and reads back, and
-/// <see cref="ApiKey"/> is the host's and lives no longer than the run — never in
-/// the settings file, never logged (ADR-0034).
+/// <see cref="Transport"/> is the host's, carrying a key the provider never holds (ADR-0034).
 /// </remarks>
+/// <param name="Transport">What to send requests over, which signs them.</param>
 /// <param name="Values">Every setting this provider declared, as it stands.</param>
-public sealed record AssistantConfig(string ApiKey, SettingValues Values)
+public sealed record AssistantConfig(IAssistantTransport Transport, SettingValues Values)
 {
     /// <summary>Nothing configured, which is what a provider is asked about before anybody has.</summary>
-    public static AssistantConfig Unset { get; } = new(string.Empty, SettingValues.None);
+    public static AssistantConfig Unset { get; } = new(KeyedTransport.None, SettingValues.None);
 }
