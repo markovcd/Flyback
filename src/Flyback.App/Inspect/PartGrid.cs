@@ -30,6 +30,9 @@ internal sealed class PartGrid
     /// <summary>How far the pointer moves before a press is a drag rather than a click.</summary>
     private const double Slop = 3;
 
+    /// <summary>How far a drag holds at nought on its way through, so nought is easy to land on.</summary>
+    private const double Catch = 12;
+
     /// <summary>Either side of a part's cells: its name, and the button that takes it away.</summary>
     private const double NameWidth = 44, RemoveWidth = 22;
 
@@ -206,12 +209,12 @@ internal sealed class PartGrid
             return;
         }
 
-        // The part's own range, so a drag means the same on a row of levels and a row of fold counts.
+        // The part's own range either side of nought, so a drag means the same on a row of
+        // levels and a row of fold counts.
         var levels = parts[part];
         var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
-        var low = levels.Any(level => level.Value < 0f) ? -high : 0f;
 
-        drag = (cell, part, section, e.GetPosition(cell).Y, levels[section].Value, low, high, false);
+        drag = (cell, part, section, e.GetPosition(cell).Y, levels[section].Value, -high, high, false);
         e.Pointer.Capture(cell);
         e.Handled = true;
     }
@@ -224,11 +227,17 @@ internal sealed class PartGrid
         if (!held.Moved && Math.Abs(rise) < Slop) return;
 
         var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
-        var span = held.High - held.Low;
-        var turned = Math.Clamp(held.From + (float)(rise / (Travel * fine)) * span, held.Low, held.High);
+        var perPixel = held.High / (Travel * fine);
+
+        // Where the drag passes nought, in pixels, and the catch that holds it there.
+        var nought = -held.From / perPixel;
+        if (held.From >= 0f && rise < nought) rise = Math.Min(nought, rise + Catch);
+        else if (held.From < 0f && rise > nought) rise = Math.Max(nought, rise - Catch);
+
+        var turned = Math.Clamp(held.From + (float)(rise * perPixel), held.Low, held.High);
 
         // Hundredths of the range, so a level reads as a number somebody would type.
-        var grain = span <= 2f ? 0.01f : 0.1f;
+        var grain = held.High <= 2f ? 0.01f : 0.1f;
         turned = MathF.Round(turned / grain) * grain;
 
         drag = held with { Moved = true };

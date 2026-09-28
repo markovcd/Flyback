@@ -141,7 +141,7 @@ public class PartGridTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Dragging_a_cell_up_turns_its_level_up_and_down_turns_it_down()
+    public void Dragging_a_cell_turns_its_level_up_and_down_holding_at_nought_on_the_way()
     {
         var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
         var node = NodeInstance.Create(def, 0, 0);
@@ -154,9 +154,13 @@ public class PartGridTests : UiTest
         Drag(window, 0, -80);
         ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
 
-        // Far past the bottom stops at nought.
+        // A whole travel down from 1 is nought, and a few pixels past it are held there.
+        Drag(window, 0, 165);
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(0f, 0.001f);
+
+        // On past the catch it goes below nought, as far as the part reaches above it.
         Drag(window, 0, 400);
-        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(0f);
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(-1f);
 
         changes.Distinct().Count().ShouldBe(1, "a drag is one step in the history, however far it goes");
     }
