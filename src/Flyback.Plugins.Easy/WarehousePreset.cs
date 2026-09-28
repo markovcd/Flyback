@@ -17,8 +17,11 @@ namespace Flyback.Plugins.Easy;
 /// roll climbs through its second half and the kick sits out its last bar. A fourth
 /// Arrangement changes chord every two bars and transposes the bass line, as the machine
 /// itself transposes a pattern, and a coin picks each pass of the hook from it and two
-/// variations. The drums keep their own time at 124 bpm and everything else steps on
-/// Time at the same tempo, so nothing is wired for timing. The picture is rings bent by
+/// variations. The hook has its own echo, thrown into eighth by eighth and hardest on the
+/// ends of its phrases, a room and some drive, each set by a fifth Arrangement, which also
+/// washes a band of noise down into each drop and the breakdown. The drums keep their own
+/// time at 124 bpm and everything else steps on Time at the same tempo, so nothing is wired
+/// for timing. The picture is rings bent by
 /// folded clouds, colored by the chord and folded, bent and turned differently in each
 /// section, with the kick punching the zoom and trails carrying it rather than a flash.
 /// </remarks>
@@ -94,6 +97,20 @@ internal static class WarehousePreset
     private const int Root = 0, Voices = 1, Hue = 4;
 
     /// <summary>
+    /// What happens to the hook in each section: how much of it is thrown into its echo, how
+    /// much goes into the room, how hard it is driven, and where the noise washes down.
+    /// </summary>
+    private static readonly PartLevel[][] EffectParts =
+    [
+        Held(0, 0, 0, 0, 0.5f, 1, 0.8f, 0.4f, 0.6f, 0, 0, 0),
+        Held(0, 0, 0, 0, 0.25f, 0.7f, 0.45f, 0.2f, 0.3f, 0, 0, 0),
+        Held(0, 0, 0, 0, 0.15f, 0, 0.1f, 0.35f, 0.45f, 0, 0, 0),
+        Held(0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0),
+    ];
+
+    private const int Throw = 0, Room = 1, Grit = 2, Sweep = 3;
+
+    /// <summary>
     /// The picture in each section: how many wedges it is folded into, how far the fold turns
     /// each bar in radians, how hard the clouds bend the rings, how bright it is, how many rings,
     /// its energy (the kick's punch and the trails' pull) and how far the color is turned warm.
@@ -119,6 +136,16 @@ internal static class WarehousePreset
     [
         0, 0, 33, 0, 0, 0, 33, 0, 0, 0, 33, 0, 0, 33, 0, 36,
         0, 0, 33, 0, 0, 0, 45, 0, 0, 0, 33, 0, 0, 43, 0, 40,
+    ];
+
+    /// <summary>
+    /// How much of each eighth of the hook is thrown into its echo: a little throughout, more on
+    /// the high notes, and most on the ends of its phrases.
+    /// </summary>
+    private static readonly float[] Throws =
+    [
+        0.12f, 0.12f, 0.12f, 0.12f, 0.35f, 0.2f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.7f, 0.7f, 0.7f,
+        0.12f, 0.12f, 0.12f, 0.12f, 0.5f, 0.2f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.12f, 0.6f, 1f, 1f,
     ];
 
     /// <summary>Two bars of the stab, in eighths.</summary>
@@ -168,6 +195,7 @@ internal static class WarehousePreset
         var playing = Arranged(Sections, MusicParts);
         var chording = Arranged(Chords, ChordParts);
         var picturing = Arranged(Sections, PictureParts);
+        var effecting = Arranged(Sections, EffectParts);
 
         // A build's second half, climbing from nothing to one.
         var rise = Formula("a * smoothstep(0.5, 1, b)", new Read(drumming, Builds), new Read(drumming, Progress));
@@ -302,7 +330,8 @@ internal static class WarehousePreset
                 (SynthModule.ReleasePort, -0.7f),
                 (SynthModule.SweepPort, 0.3f),
                 (SynthModule.Lfo1RatePort, 5f),
-                (SynthModule.Lfo1DepthPort, 0.15f)),
+                (SynthModule.Lfo1DepthPort, 0.15f),
+                (SynthModule.PanPort, -0.1f)),
             (SynthModule.WaveKey, Waves.Organ));
 
         // Faded rather than stopped when a section drops the hook.
@@ -314,7 +343,7 @@ internal static class WarehousePreset
          .Wire(hooked, 0, lead, SynthModule.VelocityPort)
          .Wire(playing, Octave, lead, SynthModule.OctavePort)
          .Wire(playing, Tone, lead, SynthModule.BrightPort)
-         .Wire(lead, 0, chords, 9);
+         .Wire(effecting, Grit, lead, SynthModule.DrivePort);
 
         // A dotted eighth on the left and an eighth on the right.
         var echoLeft = b.Add("audio.delay", (1, 3f / Sixteenths), (2, 0.35f));
@@ -326,6 +355,61 @@ internal static class WarehousePreset
          .Wire(echoed, 0, echoRight, 3);
 
         Box("Chords");
+
+        // --- the hook's echo ---------------------------------------------------
+
+        // Thrown into a wet-only echo eighth by eighth, the phrase ends hardest; a harder throw
+        // also feeds back longer. Slewed, so the send never clicks between eighths.
+        var throws = b.Add("seq.values", (1, Sixteenths / 2f));
+        StepsExtra.Set(throws, [.. Throws.Select(n => new Step(n))]);
+        var thrown = b.Add(NodeCatalog.SlewTypeId, (1, -2f), (2, -2f));
+        var hookLeft = b.Add("audio.delay", (1, 3f / Sixteenths), (3, 1f));
+        var hookRight = b.Add("audio.delay", (1, 6f / Sixteenths), (3, 1f));
+        var hook = b.Add(NodeCatalog.DeskTypeId, (5, 0.8f));
+
+        b.Wire(Formula("a * b * c * 3.3", throws, new Read(effecting, Throw), echoed), 0, thrown, 0)
+         .Wire(Formula("a * b", new Read(lead, SynthModule.LeftPort), thrown), 0, hookLeft, 0)
+         .Wire(Formula("a * b", new Read(lead, SynthModule.RightPort), thrown), 0, hookRight, 0)
+         .Wire(Formula("0.25 + a * 0.35", throws), 0, hookLeft, 2)
+         .Wire(Formula("0.2 + a * 0.35", throws), 0, hookRight, 2)
+         .Wire(hookLeft, 0, hook, 3)
+         .Wire(hookRight, 0, hook, 4);
+        Channel(hook, 0, lead);
+
+        Box("Hook");
+
+        // --- the wash ----------------------------------------------------------
+
+        // A band of noise falling from a hiss to a rumble over the first two bars of each drop
+        // and of the breakdown, a different noise on each side, into the hook's room.
+        var fading = Formula(
+            "a * (1 - smoothstep(0, 0.25, b)) * (1 - smoothstep(0, 0.25, b))",
+            new Read(effecting, Sweep), new Read(effecting, Progress));
+        var falling = Formula("150 + a * 7000", fading);
+        var wash = b.Add(NodeCatalog.DeskTypeId, (5, 0.6f));
+        var bands = new NodeInstance[2];
+
+        for (var side = 0; side < bands.Length; side++)
+        {
+            var noise = b.Add(NodeCatalog.NoiseTypeId, (2, side * 5f));
+            bands[side] = b.Add(NodeCatalog.FilterTypeId, (2, 0.55f));
+
+            b.Wire(Formula("a * b * 0.8", new Read(noise, 0), fading), 0, bands[side], 0)
+             .Wire(falling, 0, bands[side], 1)
+             .Wire(bands[side], 1, wash, side);
+        }
+
+        var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (2, 0.8f), (3, 1f));
+
+        b.Wire(
+             Formula(
+                 "a * b + (c + d) * 0.4",
+                 new Read(lead, SynthModule.LeftPort), new Read(effecting, Room), new Read(bands[0], 1), new Read(bands[1], 1)),
+             0, room, 0)
+         .Wire(room, 0, wash, 3)
+         .Wire(room, 1, wash, 4);
+
+        Box("Wash");
 
         // --- the mix -----------------------------------------------------------
 
@@ -340,6 +424,8 @@ internal static class WarehousePreset
         b.Wire(echoLeft, 0, music, 3)
          .Wire(echoRight, 0, music, 4)
          .Wire(playing, BassLevel, music, 2)
+         .Wire(hook, 2, music, 12)
+         .Wire(hook, 3, music, 13)
          .Wire(music, 0, ducked, 0)
          .Wire(music, 1, ducked, 1)
          .Wire(kick, DrumModule.EnvPort, ducked, 2);
@@ -355,7 +441,10 @@ internal static class WarehousePreset
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.5f));
 
-        b.Wire(drums, 2, master, 12)
+        // The wash goes round the duck with the drums.
+        b.Wire(wash, 2, drums, 12)
+         .Wire(wash, 3, drums, 13)
+         .Wire(drums, 2, master, 12)
          .Wire(drums, 3, master, 13)
          .Wire(master, 0, output, NodeCatalog.OutputLeftPort)
          .Wire(master, 1, output, NodeCatalog.OutputRightPort);
