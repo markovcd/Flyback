@@ -13,15 +13,22 @@ namespace Flyback.Plugins.Hosting;
 internal sealed record PackageSigner(string Key)
 {
     /// <summary>
-    /// Whether keys are checked. A Debug build installs unsigned packages and lets one
-    /// author's package replace another's, so a plugin can be tried without a key.
+    /// Whether keys are checked. A Debug build, and the All plugins build beside it,
+    /// installs unsigned packages and lets one author's package replace another's, so a
+    /// plugin can be tried without a key.
     /// </summary>
-    public static bool Checked { get; } = !Debug;
+    public static bool Checked { get; } = !Debug && !AllPlugins;
 
 #if DEBUG
     private const bool Debug = true;
 #else
     private const bool Debug = false;
+#endif
+
+#if ALL_PLUGINS
+    private const bool AllPlugins = true;
+#else
+    private const bool AllPlugins = false;
 #endif
 
     /// <summary>The entry at a package's top that holds its signature.</summary>

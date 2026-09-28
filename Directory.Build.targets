@@ -1,6 +1,18 @@
 <Project>
 
   <!--
+    All plugins is optimized like Release; only which plugins ship is
+    different. Left to the SDK's own default for an unrecognized configuration
+    name, Optimize reads blank rather than true. PackageSigner reads the
+    ALL_PLUGINS constant the SDK already derives from the configuration's own
+    name to skip the signature check Release would make, so a plugin built
+    straight into plugins/ still installs unsigned from the dialog.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'All plugins'">
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <!--
     What the test runner's coverage switch needs present to measure anything.
     Attached to the one property every test project already sets rather than
     written into eight project files, so a ninth is covered by declaring itself
