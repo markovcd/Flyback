@@ -417,11 +417,15 @@ public sealed class FullScreenTransportTests : UiTest
         var button = All<Button>(Overlay(window)).Single(b => ToolTip.GetTip(b) as string == "Play the patch's length round and round");
         IBrush? Ink() => All<Avalonia.Controls.Presenters.ContentPresenter>(button).First().Foreground;
 
-        Overlay(window).Follow(0, 180, loops: false);
+        // Through the seek bar's own switch: its ticker pushes that state onto the
+        // overlay every tenth of a second, and would undo a state set on the overlay alone.
+        var loop = Service<SeekBar>(window).Loop;
+
+        loop.IsChecked = false;
         Settle(window);
         var off = (Ink() as ISolidColorBrush).ShouldNotBeNull().Color;
 
-        Overlay(window).Follow(0, 180, loops: true);
+        loop.IsChecked = true;
         Settle(window);
         var on = (Ink() as ISolidColorBrush).ShouldNotBeNull().Color;
 
