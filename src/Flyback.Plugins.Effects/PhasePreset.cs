@@ -64,6 +64,8 @@ internal sealed class PhasePreset : PresetBench
 
     private static Step[] Notes() => [.. Pattern.Select(note => new Step(note))];
 
+    private const int SecondPlayer = 0, Low = 1, Shaker = 2, Knock = 3, Agreement = 4, Organ = 5, Root = 6, Grade = 7;
+
     public static Patch Build(ModuleCatalog modules)
     {
         if (!modules.HasProvider(Voice))
@@ -114,38 +116,28 @@ internal sealed class PhasePreset : PresetBench
 
         // --- the arrangement -------------------------------------------------
 
-        // One number a stage saying how much ensemble there is. It only ever grows
-        // until the unison comes back, because a process that is thinning out cannot
-        // be heard getting anywhere.
-        var song = b.Add("seq.values", (1, 1f / Stage));
-        StepsExtra.Set(song,
+        // Which players are in, a stage at a time. The ensemble only ever grows until
+        // the unison comes back, because a process that is thinning out cannot be heard
+        // getting anywhere.
+        var parts = Arranged(count, 1f / Stage,
         [
-            new Step(0.1f), new Step(0.2f), new Step(0.3f), new Step(0.4f),
-            new Step(0.5f), new Step(0.55f), new Step(0.6f), new Step(0.7f),
-            new Step(0.75f), new Step(0.8f), new Step(0.9f), new Step(0.95f),
-            new Step(1f), new Step(1f), new Step(0.5f), new Step(0.25f),
-        ]);
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            Levels(0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0),
+            Levels(0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0),
 
-        // Each part below is brought in by a Fade off this number. The second player's
-        // entry is a Smoothstep of its own, because the picture wants it as well.
-        var secondIn = Rises(song, 0.12f, 0.18f);
+            // What the pulses stand on: D, F, G and C, two stages each and twice round.
+            Levels(38, 38, 41, 41, 43, 43, 36, 36, 38, 38, 41, 41, 43, 43, 38, 38),
+
+            // How bright the picture is graded.
+            Levels(0.895f, 0.94f, 0.985f, 1.03f, 1.075f, 1.0975f, 1.12f, 1.165f, 1.1875f, 1.21f, 1.255f, 1.2775f, 1.3f, 1.3f, 1.075f, 0.9625f),
+        ]);
 
         // A knock on every note, for the claps, from a little under halfway. Here
         // rather than with them because the rows of squares arrive when they do.
-        var knock = Enters(Stroke(count, 1f, 12f), song, 0.45f, 0.5f);
-
-        // What the pulses stand on: D, F, G and C, two stages each and twice round.
-        var root = b.Add("seq.notes", (1, 1f / Stage));
-        StepsExtra.Set(root,
-        [
-            new Step(38f), new Step(38f), new Step(41f), new Step(41f),
-            new Step(43f), new Step(43f), new Step(36f), new Step(36f),
-            new Step(38f), new Step(38f), new Step(41f), new Step(41f),
-            new Step(43f), new Step(43f), new Step(38f), new Step(38f),
-        ]);
-
-        b.Wire(count, 0, song, 0)
-         .Wire(count, 0, root, 0);
+        var knock = Product(Stroke(count, 1f, 12f), parts, Knock);
 
         Box("Arrangement");
 
@@ -157,7 +149,7 @@ internal sealed class PhasePreset : PresetBench
         // so nothing has to hold it.
         var (notesA, playerA) = Player(count);
         var (notesB, second) = Player(countB);
-        var playerB = Product(second, secondIn);
+        var playerB = Product(second, parts, SecondPlayer);
 
         Box("Players");
 
@@ -169,7 +161,7 @@ internal sealed class PhasePreset : PresetBench
         // a listener starts to pick out unaided and which is here said aloud.
         var differ = b.Add("math.step", (0, 0.5f));
         var agree = From(1f, differ);
-        var agreeStroke = Enters(Product(agree, noteA), song, 0.55f, 0.6f);
+        var agreeStroke = Product(Product(agree, noteA), parts, Agreement);
         var chime = Bell(Through("audio.note", Plus(notesA, 12f)), agreeStroke, 4f, 0.25f);
 
         b.Wire(Size(Less(notesA, notesB)), 0, differ, 1);
@@ -183,17 +175,17 @@ internal sealed class PhasePreset : PresetBench
         // breathe at different lengths, so they overlap a different way each time.
         var pulse = Stroke(count, 0.5f, 1.5f);
         var lowBreath = Sine(Times(Fraction(Times(stage, 2f)), MathF.PI));
-        var lowStroke = Enters(Product(pulse, lowBreath), song, 0.25f, 0.3f);
-        var lowHz = Through("audio.note", root);
+        var lowStroke = Product(Product(pulse, lowBreath), parts, Low);
+        var lowHz = Through("audio.note", parts, Root);
         var reed = b.Add("osc.triangle");
         var low = Sum(reed, Tone(Times(lowHz, 2f), Times(lowStroke, 0.4f)));
 
         // Two notes over the root, snapped to the five the pattern is made of.
         var highBreath = Sine(Times(Fraction(Times(stage, 3f)), MathF.PI));
-        var organStroke = Enters(Product(pulse, highBreath), song, 0.65f, 0.7f);
+        var organStroke = Product(Product(pulse, highBreath), parts, Organ);
         var organ = Sum(
-            Tone(InKey(root, Scale, 31f), organStroke),
-            Tone(InKey(root, Scale, 40f), Times(organStroke, 0.7f)));
+            Tone(InKey(parts, Scale, 31f, Root), organStroke),
+            Tone(InKey(parts, Scale, 40f, Root), Times(organStroke, 0.7f)));
 
         b.Wire(lowHz, 0, reed, 1)
          .Wire(lowStroke, 0, reed, 3);
@@ -223,7 +215,7 @@ internal sealed class PhasePreset : PresetBench
 
         // Every note, quietly: the top of a Hiss, and what is left of the note to the
         // tenth power.
-        var shaker = Hiss(Enters(Stroke(count, 1f, 10f), song, 0.35f, 0.4f), 7000f, 0.2f, "high");
+        var shaker = Hiss(Product(Stroke(count, 1f, 10f), parts, Shaker), 7000f, 0.2f, "high");
 
         Box("Shaker");
 
@@ -280,7 +272,7 @@ internal sealed class PhasePreset : PresetBench
         var dialA = Dial(sector, playing, 0.64f, noteA);
         var dialB = Product(
             Dial(Sum(sector, ahead), Floor(Knobbed("math.mod", countB, Round)), 0.4f, noteB),
-            Span(secondIn, 0f, 1f, 0.3f, 1f));
+            Span(parts, 0f, 1f, 0.3f, 1f, SecondPlayer));
 
         // The spoke. How far round from the middle of the bead being played a pixel
         // is, the short way, drawn thin between the middle and the rim.
@@ -314,7 +306,7 @@ internal sealed class PhasePreset : PresetBench
         // Only twelve of the cells are the row: the frame is a little wider than that.
         var fromFirst = b.Add("math.step", (0, -0.5f));
         var pastLast = b.Add("math.step", (0, Round - 0.5f));
-        var shown = Product(Product(fromFirst, From(1f, pastLast)), knock, FadeGate);
+        var shown = Product(Product(fromFirst, From(1f, pastLast)), parts, Knock);
 
         // The column being played. Both numbers are whole, so under a half apart is
         // the same.
@@ -360,7 +352,7 @@ internal sealed class PhasePreset : PresetBench
          .Wire(flow, 0, ringsB, 3)
          .Wire(ringsA, 0, cutA, 1)
          .Wire(ringsB, 0, cutB, 1)
-         .Wire(song, 2, tint, 0)
+         .Wire(Formula("(a - 1) / 16", new Read(parts, SectionNumber)), 0, tint, 0)
          .Wire(tint, 0, moireLit, 0)
          .Wire(moire, 0, moireLit, 1);
 
@@ -385,7 +377,7 @@ internal sealed class PhasePreset : PresetBench
 
         b.Wire(Sum(inkB, inkBoth), 0, printed, 0)
          .Wire(shaded, 0, graded, 0)
-         .Wire(Span(song, 0f, 1f, 0.85f, 1.3f), 0, graded, 1)
+         .Wire(parts, Grade, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture: Print");

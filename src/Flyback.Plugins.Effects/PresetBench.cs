@@ -220,6 +220,26 @@ internal abstract class PresetBench(ModuleCatalog modules)
         return node;
     }
 
+    /// <summary>
+    /// An Arrangement a section every 1/<paramref name="rate"/> of <paramref name="position"/>,
+    /// or of Time where there is none, with a row of levels for each part.
+    /// </summary>
+    protected NodeInstance Arranged(NodeInstance? position, float rate, params PartLevel[][] parts)
+    {
+        var node = b.Add(NodeCatalog.ArrangementTypeId, (1, rate));
+        ArrangementExtra.Set(node, parts);
+        if (position is not null) b.Wire(position, 0, node, 0);
+        return node;
+    }
+
+    /// <summary>The Arrangement's outputs after its parts: how far through its section it is, and which section, from one.</summary>
+    protected const int SectionProgress = NodeCatalog.MaxParts;
+
+    protected const int SectionNumber = NodeCatalog.MaxParts + 1;
+
+    /// <summary>A part's levels, each held for its section.</summary>
+    protected static PartLevel[] Levels(params float[] levels) => [.. levels.Select(level => new PartLevel(level))];
+
     /// <summary>The Drum's pitch, for one whose resting pitch is a wire.</summary>
     protected const int DrumPitch = 2;
 
