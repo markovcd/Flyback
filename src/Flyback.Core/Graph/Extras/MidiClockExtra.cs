@@ -21,19 +21,19 @@ public sealed record MidiClockExtra : NodeExtra
 
     public override string Key => StateKey;
 
-    public override IReadOnlyList<ExtraField> Fields =>
+    public override IReadOnlyList<ExtraField> Fields => FieldsFor(MidiSources.All);
+
+    internal static IReadOnlyList<ExtraField> FieldsFor(IReadOnlyList<MidiSource> sources) =>
     [
         new ExtraField.Choice(
             DeviceField,
             "follows",
-            [.. MidiSources.All.Select(source => new ChoiceOption(source.Id, source.Name))],
-            Conductor()) { Help = "The instrument whose clock it keeps time to." },
+            [.. sources.Select(source => new ChoiceOption(source.Id, source.Name))],
+            Conductor(sources)) { Help = "The instrument whose clock it keeps time to." },
     ];
 
-    private static string Conductor()
+    private static string Conductor(IReadOnlyList<MidiSource> sources)
     {
-        var sources = MidiSources.All;
-
         return (sources.FirstOrDefault(source => source.Conducts) is { Id: not null } conductor
                    ? conductor
                    : sources.FirstOrDefault(source => source.Id != MidiSources.Keyboard)).Id

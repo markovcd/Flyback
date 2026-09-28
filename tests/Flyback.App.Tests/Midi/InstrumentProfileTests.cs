@@ -156,26 +156,20 @@ public class InstrumentProfileTests
         profile.Pages.Single().Controls.Select(control => control.Name).ShouldBe(["Fine"]);
     }
 
-    /// <summary>A fresh Clock In follows the box that conducts, whichever socket it is in.</summary>
+    /// <summary>
+    /// A fresh Clock In follows the box that conducts, whichever socket it is in.
+    /// Handed the list rather than installing it: every editor window a parallel UI test opens reinstalls <see cref="MidiSources"/>.
+    /// </summary>
     [Fact]
     public void A_fresh_clock_in_follows_the_instrument_that_conducts()
     {
-        try
-        {
-            MidiSources.Install(() =>
+        var field = MidiClockExtra.FieldsFor(
             [
                 new MidiSource(MidiSources.Keyboard, "Computer keyboard"),
                 new MidiSource("midi:launchkey-mini", "Launchkey Mini"),
                 new MidiSource("midi:syntakt", "Syntakt") { Conducts = true },
-            ]);
+            ]).OfType<ExtraField.Choice>().Single();
 
-            var field = new MidiClockExtra().Fields.OfType<ExtraField.Choice>().Single();
-
-            field.Fallback.ShouldBe("midi:syntakt");
-        }
-        finally
-        {
-            MidiSources.Install(() => [new MidiSource(MidiSources.Keyboard, "Computer keyboard")]);
-        }
+        field.Fallback.ShouldBe("midi:syntakt");
     }
 }
