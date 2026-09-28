@@ -25,7 +25,7 @@ SHOT_DIR=<somewhere> ./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.T
 
 `SkinShotTests` for the other set. Both skip without `SHOT_DIR`. Convert the PNGs to webp at quality 88 and copy them in, keeping the `width`/`height` attributes on the site's `<img>` in step with the new pixel size. A new patch figure is a new `.fbks` in `PatchShotTests`, never a drawing — see ADR-0119.
 
-The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/preview.webp`) come from `PluginPreviewShotTests` the same way: four of each plugin's modules in a row. Retake them when one of those modules gains a port, a glyph or a skin.
+The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/preview.webp`) come from `PluginPreviewShotTests` the same way: four of each plugin's modules in a row. Retake them when one of those modules gains a port, a glyph or a skin. The plugins with no modules (sound and MIDI, key stores, assistants) have drawn previews instead, from `PluginArtShotTests`.
 
 ## The full-window shots
 

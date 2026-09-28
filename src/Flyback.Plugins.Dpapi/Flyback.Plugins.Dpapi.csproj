@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <AssemblyMetadata Include="Tags" Value="secrets; windows" />
+    <!-- Retaken by PluginArtShotTests. -->
+    <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
   </ItemGroup>
 
   <ItemGroup>
