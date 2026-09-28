@@ -20,7 +20,8 @@ namespace Flyback.Plugins.Easy;
 /// each pass of the hook from it and two variations. The drums keep
 /// their own time at 124 bpm and every lane steps on Time at the same tempo, so nothing
 /// is wired for timing. The picture is rings bent by folded clouds, colored by the chord
-/// and opened up by the arrangement, with trails to carry each kick rather than flash it.
+/// and folded, bent and turned differently in each phrase, with the kick punching the zoom
+/// and trails carrying it rather than a flash.
 /// </remarks>
 internal static class WarehousePreset
 {
@@ -54,6 +55,15 @@ internal static class WarehousePreset
 
     /// <summary>The stab's three voices, one chord each: A minor, D minor, A minor, E minor, voiced close.</summary>
     private static readonly int[][] Voices = [[57, 57, 57, 55], [60, 62, 60, 59], [64, 65, 64, 64]];
+
+    /// <summary>How many wedges the picture is folded into in each phrase.</summary>
+    private static readonly float[] Folds = [3f, 4f, 5f, 6f, 8f, 3f, 5f, 7f, 12f, 6f, 4f, 3f];
+
+    /// <summary>How far the fold turns on each bar of a phrase, in radians; the drops turn one way, then back.</summary>
+    private static readonly float[] Twists = [0f, 0.1f, 0.2f, 0.3f, -0.3f, 0f, 0.25f, 0.4f, -0.4f, 0.2f, 0.1f, 0f];
+
+    /// <summary>How hard the clouds bend the rings in each phrase.</summary>
+    private static readonly float[] Bends = [0.5f, 0.8f, 1f, 1.4f, 2f, 2.5f, 1.2f, 1.6f, 2.2f, 1f, 0.7f, 0.5f];
 
     /// <summary>Each chord's hue, and the next one's, turned toward it over the chord's last half bar.</summary>
     private static readonly float[] Hues = [0.6f, 0.72f, 0.6f, 0.5f];
@@ -314,18 +324,31 @@ internal static class WarehousePreset
 
         // --- the picture -------------------------------------------------------
 
-        // Clouds folded into more wedges the more is playing bend rings that travel one a bar.
+        // Each phrase has its own fold, bend and turn. The fold's center drifts, the kick punches
+        // the zoom, and on every bar the fold turns a notch, eased in on the downbeat.
+        var twist = Lane(Phrases, Twists);
+        var drifted = b.Add("space.translate");
+        var zoomed = b.Add("space.scale");
         var turned = b.Add("space.rotate");
         var folded = b.Add("space.kaleidoscope");
         var fog = b.Add("pattern.clouds", (3, 1.8f));
         var ripple = b.Add("pattern.rings");
         var color = b.Add("color.hsv");
-        var trails = b.Add("feedback.trails", (4, 0.003f), (7, 0.9f));
+        var trails = b.Add("feedback.trails", (7, 0.9f));
 
-        b.Wire(Formula("a * 0.05", time), 0, turned, 2)
+        b.Wire(Formula("sin(a * 0.13) * 0.25", time), 0, drifted, 2)
+         .Wire(Formula("sin(a * 0.089 + 1) * 0.18", time), 0, drifted, 3)
+         .Wire(drifted, 0, zoomed, 0)
+         .Wire(drifted, 1, zoomed, 1)
+         .Wire(Formula("1.3 + sin(a * 0.11) * 0.25 - b * c * 0.15", time, new Read(kick, DrumModule.EnvPort), song), 0, zoomed, 2)
+         .Wire(zoomed, 0, turned, 0)
+         .Wire(zoomed, 1, turned, 1)
+         .Wire(
+             Formula("a * 0.03 + (floor(b * 8) + smoothstep(0, 0.2, fract(b * 8))) * c", time, phrase, twist),
+             0, turned, 2)
          .Wire(turned, 0, folded, 0)
          .Wire(turned, 1, folded, 1)
-         .Wire(Formula("3 + floor(a * 5)", song), 0, folded, 2)
+         .Wire(Lane(Phrases, Folds), 0, folded, 2)
          .Wire(folded, 0, fog, 0)
          .Wire(folded, 1, fog, 1)
          .Wire(Formula("a * 0.08", time), 0, fog, 2)
@@ -333,20 +356,26 @@ internal static class WarehousePreset
          .Wire(folded, 1, ripple, 1)
          .Wire(Formula("2 + a * 4", song), 0, ripple, 2)
          .Wire(
-             Formula($"a * {N(Bars)} + b * (0.6 + c * 1.2) + d * 0.1", time, fog, song, new Read(kick, DrumModule.EnvPort)),
+             Formula($"a * {N(Bars)} + b * c + d * 0.1", time, fog, Lane(Phrases, Bends), new Read(kick, DrumModule.EnvPort)),
              0, ripple, 3);
 
-        // The hue follows the chord, turning to the next over its last half bar; the kick only lifts it a little.
+        // The hue follows the chord, turning to the next over its last half bar, and creeps round the wheel over the song.
         var turn = Formula($"smoothstep(0.75, 1, fract(a * {N(Chords)}))", time);
         var shape = Formula("(a * 0.5 + 0.5) * (0.4 + b)", ripple, fog);
 
-        b.Wire(Formula("a + (b - a) * c + d * 0.15", Lane(Chords, Hues), Lane(Chords, NextHues), turn, fog), 0, color, 0)
+        var chord = Formula("a + (b - a) * c", Lane(Chords, Hues), Lane(Chords, NextHues), turn);
+
+        // Each ring its own shade, and the last drop turned warm.
+        var shade = Formula("a + b * 0.15 + c * 0.003 + d * 0.12", chord, fog, time, ripple);
+
+        b.Wire(Formula("a + step(0.95, b) * 0.4", shade, song), 0, color, 0)
          .Wire(Formula("0.85 - a * 0.2", fog), 0, color, 1)
          .Wire(
              Formula("(0.25 + a * 0.45 + b * 0.25) * (0.3 + c * 0.7) + d * 0.1", song, rise, shape, new Read(kick, DrumModule.EnvPort)),
              0, color, 2)
          .Wire(color, 0, trails, 0)
          .Wire(Formula("0.995 - a * 0.012 - b * 0.02", song, rise), 0, trails, 3)
+         .Wire(Formula("a * 0.01", twist), 0, trails, 4)
          .Wire(trails, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture");
