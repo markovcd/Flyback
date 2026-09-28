@@ -12,9 +12,8 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Re-sourcing a wire: Ctrl+drag an output carrying one wire and the wire comes off
-/// that socket, staying in the input at its far end, to be dropped on a different
-/// output.
+/// Re-sourcing a wire: Ctrl+drag an output and a wire comes off that socket,
+/// staying in the input at its far end, to be dropped on a different output.
 /// </summary>
 /// <remarks>
 /// The mirror of dragging a connected input, which keeps the source; this keeps the
@@ -69,6 +68,14 @@ public class WireLiftTests : UiTest
         public Board Wired()
         {
             Patch.Connect(Source.Id, 0, Fed.Id, 0);
+            Editor.History.Record();
+            return this;
+        }
+
+        /// <summary>Wires the Sine into the second Add as well, after the first in the patch's list.</summary>
+        public Board AlsoWired()
+        {
+            Patch.Connect(Source.Id, 0, Spare.Id, 0);
             Editor.History.Record();
             return this;
         }
@@ -164,24 +171,69 @@ public class WireLiftTests : UiTest
         board.Patch.Connections.Count(c => c.SourceNode == board.Source.Id).ShouldBe(2);
     }
 
+    /// <summary>Of several wires on an output, the first in the patch comes off.</summary>
+    [AvaloniaFact]
+    public void An_output_with_two_wires_on_it_gives_up_the_first()
+    {
+        var board = Open().Wired().AlsoWired();
+
+        Drag(board.Window, Output(board.Source), Output(board.Other), RawInputModifiers.Control);
+
+        board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Other.Id);
+        board.Patch.IncomingTo(board.Spare.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Source.Id);
+    }
+
     /// <summary>
-    /// Several wires and there is no telling which one was meant, so the
-    /// modifier does nothing rather than picking one. A gesture that guesses is
-    /// worse than one that declines.
+    /// A wire put back where it came from says it was not the one wanted, so the
+    /// next press on that output takes the wire after it.
     /// </summary>
     [AvaloniaFact]
-    public void An_output_with_two_wires_on_it_is_left_alone()
+    public void Putting_a_wire_back_passes_on_to_the_next()
     {
-        var board = Open().Wired();
+        var board = Open().Wired().AlsoWired();
 
-        board.Patch.Connect(board.Source.Id, 0, board.Spare.Id, 0);
-        board.Editor.History.Record();
+        Drag(board.Window, Output(board.Source), Output(board.Source), RawInputModifiers.Control);
+        Drag(board.Window, Output(board.Source), Output(board.Other), RawInputModifiers.Control);
 
-        Drag(board.Window, Output(board.Source), Input(board.Spare, 1), RawInputModifiers.Control);
+        board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Source.Id);
+        board.Patch.IncomingTo(board.Spare.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Other.Id);
+    }
 
-        board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull();
-        board.Patch.IncomingTo(board.Spare.Id, 0).ShouldNotBeNull();
-        board.Patch.Connections.Count(c => c.SourceNode == board.Source.Id).ShouldBe(3);
+    /// <summary>Past the last wire it comes round to the first again.</summary>
+    [AvaloniaFact]
+    public void Putting_back_the_last_wire_comes_round_to_the_first()
+    {
+        var board = Open().Wired().AlsoWired();
+
+        Drag(board.Window, Output(board.Source), Output(board.Source), RawInputModifiers.Control);
+        Drag(board.Window, Output(board.Source), Output(board.Source), RawInputModifiers.Control);
+        Drag(board.Window, Output(board.Source), Output(board.Other), RawInputModifiers.Control);
+
+        board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Other.Id);
+        board.Patch.IncomingTo(board.Spare.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Source.Id);
+    }
+
+    /// <summary>
+    /// Only the very next press walks on. Anything pressed in between starts
+    /// the walk over, so a Ctrl+drag long after is not a guess at a stale one.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_press_in_between_starts_again_from_the_first()
+    {
+        var board = Open().Wired().AlsoWired();
+
+        Drag(board.Window, Output(board.Source), Output(board.Source), RawInputModifiers.Control);
+
+        var editor = board.Editor;
+        var bare = OnWindow(board.Window, editor.GraphToScreen.Invert().Transform(new Point(40, editor.Bounds.Height - 40)));
+
+        board.Window.MouseDown(bare, MouseButton.Left);
+        board.Window.MouseUp(bare, MouseButton.Left);
+        Settle(board.Window);
+
+        Drag(board.Window, Output(board.Source), Output(board.Other), RawInputModifiers.Control);
+
+        board.Patch.IncomingTo(board.Fed.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(board.Other.Id);
     }
 
     /// <summary>An output with nothing on it has nothing to lift, and draws a new wire.</summary>

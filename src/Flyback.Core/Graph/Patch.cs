@@ -607,8 +607,7 @@ public sealed class Patch
     /// <summary>
     /// The one wire leaving an output, or null where none does or several do.
     /// Not quite the mirror of <see cref="IncomingTo"/>: an input takes at most
-    /// one wire, an output fans out, so this answers only where there is exactly
-    /// one — lifting one of four would be picking for the user.
+    /// one wire, an output fans out.
     /// </summary>
     public Connection? SoleOutgoingFrom(Guid node, int port)
     {

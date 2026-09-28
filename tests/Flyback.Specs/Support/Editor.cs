@@ -136,6 +136,19 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             open.MouseUp(bare, MouseButton.Left);
         });
 
+    /// <summary>Ctrl+drags a wire off one output and lets it go over another, or over the same one to put it back.</summary>
+    public void LiftWire(Guid from, int output, Guid onto, int ontoOutput) =>
+        DoWindow((open, canvas) =>
+        {
+            var patch = canvas.History.Patch;
+            var start = OnWindow(open, canvas, NodeGeometry.OutputPort(patch.Find(from)!, output));
+            var end = OnWindow(open, canvas, NodeGeometry.OutputPort(patch.Find(onto)!, ontoOutput));
+
+            open.MouseDown(start, MouseButton.Left, RawInputModifiers.Control);
+            open.MouseMove(end, RawInputModifiers.Control);
+            open.MouseUp(end, MouseButton.Left, RawInputModifiers.Control);
+        });
+
     /// <summary>Carries a module by its title bar to a point of the patch, with <paramref name="modifiers"/> held throughout.</summary>
     public void Carry(Guid node, Point to, RawInputModifiers modifiers = RawInputModifiers.None) =>
         DoWindow((open, canvas) =>

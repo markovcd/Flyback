@@ -55,6 +55,34 @@ public sealed class CanvasEditingSteps(PatchContext context, Editor editor)
         context.Patch.Connections.ShouldContain(wire => wire.SourceNode == context.Node("clock").Id && wire.TargetNode == sine.Id);
     }
 
+    [Given("the clock feeding a sine and then a saw, with a second clock beside it")]
+    public void GivenTheClockFeedingTwo()
+    {
+        Place(context.Add("clock", NodeCatalog.TimeTypeId), 40, 40);
+        Place(context.Add("second clock", NodeCatalog.TimeTypeId), 40, 300);
+        Place(context.Add("sine", NodeCatalog.SineTypeId), 400, 40);
+        Place(context.Add("saw", "osc.saw"), 400, 300);
+
+        context.Wire("clock", "t", "sine", "freq");
+        context.Wire("clock", "t", "saw", "freq");
+    }
+
+    [When("a wire is Ctrl+dragged off the clock and put back")]
+    public void WhenPutBack() => editor.LiftWire(context.Node("clock").Id, 0, context.Node("clock").Id, 0);
+
+    [When("a wire is Ctrl+dragged off the clock onto the second clock")]
+    public void WhenMoved() => editor.LiftWire(context.Node("clock").Id, 0, context.Node("second clock").Id, 0);
+
+    [Then("the {word} is still fed by the clock")]
+    public void ThenStillFed(string module) => FedBy(module, "clock");
+
+    [Then("the {word} is fed by the second clock")]
+    public void ThenFedBySecond(string module) => FedBy(module, "second clock");
+
+    private void FedBy(string module, string clock) =>
+        context.Patch.Connections.Where(wire => wire.TargetNode == context.Node(module).Id)
+            .ShouldHaveSingleItem().SourceNode.ShouldBe(context.Node(clock).Id);
+
     [Then("the level and the halving module are drawn as one box")]
     public void ThenThePairIsOneBox() =>
         context.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().Members
@@ -73,6 +101,12 @@ public sealed class CanvasEditingSteps(PatchContext context, Editor editor)
 
     [Then("there is one halving module")]
     public void ThenOneHalver() => Halvers.ShouldHaveSingleItem();
+
+    private static void Place(NodeInstance node, double x, double y)
+    {
+        node.X = x;
+        node.Y = y;
+    }
 
     private NodeInstance[] Halvers => [.. context.Patch.Nodes.Where(node => node.TypeId == "math.mul")];
 }

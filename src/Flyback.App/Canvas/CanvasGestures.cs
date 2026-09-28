@@ -119,6 +119,12 @@ internal sealed class CanvasGestures
     private (Connection Wire, int At)? lifted;
 
     /// <summary>
+    /// The wire the last press lifted off an output, so pressing the same socket again
+    /// straight after putting it back takes the next wire along.
+    /// </summary>
+    private Connection? liftedOffOutput;
+
+    /// <summary>
     /// The carried modules Shift would move between groups on release: every one not
     /// riding along with the whole of its own group, and not already where it would go.
     /// </summary>
@@ -284,8 +290,12 @@ internal sealed class CanvasGestures
 
         if (!properties.IsLeftButtonPressed) return;
 
-        // Over a module Ctrl adds to the selection; over an output it lifts the wire off.
+        // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
         var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+
+        // Only the very next press walks on from the wire lifted last.
+        var liftedLast = liftedOffOutput;
+        liftedOffOutput = null;
 
         // A press outside the box being looked into puts it back, and goes on to be
         // whatever press it was. A socket keeps it, so a wire can be drawn in.
@@ -305,7 +315,7 @@ internal sealed class CanvasGestures
         // the module under it.
         if (!history.Locked && scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
-            StartWire(portNode, portIndex, isOutput, lifting: ctrl, graph);
+            StartWire(portNode, portIndex, isOutput, lifting: ctrl, liftedLast, graph);
             e.Pointer.Capture(canvas);
             repaint.Request();
             return;
@@ -790,11 +800,11 @@ internal sealed class CanvasGestures
     /// grabbed, so re-patching works the way it does on a real rig.
     /// </summary>
     /// <param name="lifting">
-    /// Whether Ctrl was held, which only matters on an output: an output holds any
-    /// number of wires, so reaching for the one already there asks for the modifier,
-    /// and only where exactly one leaves the socket.
+    /// Whether Ctrl was held, which only matters on an output: dragging from one already
+    /// means "start another wire", so taking one that is there asks for the modifier.
     /// </param>
-    private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Point graph)
+    /// <param name="liftedLast">The wire the press before this lifted off an output, if it did.</param>
+    private void StartWire(Guid nodeId, int portIndex, bool isOutput, bool lifting, Connection? liftedLast, Point graph)
     {
         var patch = history.Patch;
 
@@ -815,15 +825,16 @@ internal sealed class CanvasGestures
             wireFromOutput = true;
             history.Record(WireGesture);
         }
-        else if (isOutput && lifting && patch.SoleOutgoingFrom(nodeId, portIndex) is { } sole)
+        else if (isOutput && lifting && NextOutgoing(nodeId, portIndex, liftedLast) is { } taken)
         {
             // The mirror of the case above: the wire comes off the socket grabbed and
             // stays in the one at its far end, so what changes is where the signal
             // comes from while what it feeds stays put.
-            lifted = (sole, patch.Connections.IndexOf(sole));
-            patch.Disconnect(sole.TargetNode, sole.TargetPort);
-            wireNode = sole.TargetNode;
-            wirePort = sole.TargetPort;
+            lifted = (taken, patch.Connections.IndexOf(taken));
+            liftedOffOutput = taken;
+            patch.Disconnect(taken.TargetNode, taken.TargetPort);
+            wireNode = taken.TargetNode;
+            wirePort = taken.TargetPort;
             wireFromOutput = false;
             history.Record(WireGesture);
         }
@@ -833,6 +844,23 @@ internal sealed class CanvasGestures
             wirePort = portIndex;
             wireFromOutput = isOutput;
         }
+    }
+
+    /// <summary>
+    /// The wire a Ctrl-press on an output takes: the one after <paramref name="liftedLast"/>
+    /// when that was put back on this socket, and the first otherwise.
+    /// </summary>
+    private Connection? NextOutgoing(Guid nodeId, int portIndex, Connection? liftedLast)
+    {
+        var leaving = history.Patch.Connections
+            .Where(c => c.SourceNode == nodeId && c.SourcePort == portIndex)
+            .ToList();
+
+        if (leaving.Count == 0) return null;
+
+        var at = liftedLast is { } last ? leaving.IndexOf(last) : -1;
+
+        return leaving[(at + 1) % leaving.Count];
     }
 
     private void CompleteWire(Point graph)
