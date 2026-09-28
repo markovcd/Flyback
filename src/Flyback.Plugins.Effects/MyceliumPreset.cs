@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Effects;
 
 /// <summary>
 /// A whole psybient track: ninety-six bars in six sections that come round again,
-/// arranged by one sequencer, with a picture grown out of the same signals,
+/// arranged by two Arrangements, with a picture grown out of the same signals,
 /// one voice that is the picture being heard, and lines from Alice's meeting with
 /// the Caterpillar.
 /// </summary>
@@ -15,11 +15,10 @@ namespace Flyback.Plugins.Effects;
 /// The largest patch in the box, and sized against the two things that bound one.
 /// The sound runs at about two thirds of one core, which is as much as leaves the
 /// audio thread room to be late; every choice below that looks like thrift — an
-/// envelope made of the clock, a lowpass made of a wire, one arrangement list
-/// instead of a lane a part — is what paid for the reverb, the scan and the
-/// seven saws. The picture is the other way about: it runs on the GPU, where
-/// eighteen noise lookups a pixel is an afternoon's work, and is as dense as it
-/// could be made.
+/// envelope made of the clock, a lowpass made of a wire — is what paid for the
+/// reverb, the scan and the seven saws. The picture is the other way about: it
+/// runs on the GPU, where eighteen noise lookups a pixel is an afternoon's work,
+/// and is as dense as it could be made.
 /// </remarks>
 internal static class MyceliumPreset
 {
@@ -62,8 +61,6 @@ internal static class MyceliumPreset
 
     private const string StrokeType = "flyback.voice.stroke";
 
-    private const string FadeType = "flyback.voice.fade";
-
     private const string DrumType = "flyback.voice.drum";
 
     private const string DeskType = "math.desk";
@@ -96,6 +93,60 @@ internal static class MyceliumPreset
     /// music.
     /// </summary>
     private static readonly int[] Scale = [2, 3, 6, 7, 9, 10, 0];
+
+    // The sections, eight bars each: intro, intro, build, build, groove, groove,
+    // breakdown, breakdown, peak, peak, peak, outro. Ninety-six bars, three minutes
+    // fifty and round again.
+
+    /// <summary>
+    /// What cuts on a section's downbeat: the kick halfway up the build, the bass
+    /// coming in under it, the hats thinning out for the breakdown, the snare once
+    /// the groove has arrived, and the riser in the last section of each four but the
+    /// outro. Then how far the track has grown, 0 to 1, which the Filters open with
+    /// and the picture's turn, cells, palette, trail and grade each follow over a
+    /// range of their own; and how many wedges the picture is folded into.
+    /// </summary>
+    private static readonly PartLevel[][] Cuts =
+    [
+        Levels(0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0),
+        Levels(0, 0, 0.55f, 1, 1, 1, 0, 0, 1, 1, 1, 0),
+        Levels(0, 0, 0.464f, 0.857f, 1, 1, 0.0255f, 0.143f, 1, 1, 1, 0),
+        Levels(0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0),
+        Levels(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0),
+        Levels(0.1f, 0.16f, 0.38f, 0.5f, 0.64f, 0.7f, 0.22f, 0.28f, 0.9f, 1, 1, 0.12f),
+        Levels(3, 3, 5, 6, 6, 7, 4, 4, 8, 9, 9, 3),
+    ];
+
+    private const int Kick = 0, Bass = 1, Hats = 2, Snare = 3, Riser = 4, Growth = 5, Wedges = 6;
+
+    /// <summary>
+    /// What swells: the lead kept back for the peak, the arp, the pad running the
+    /// other way, and the voice of the picture only when almost nothing else plays.
+    /// </summary>
+    private static readonly PartLevel[][] Swells =
+    [
+        Levels(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0),
+        Levels(0, 0.031f, 0.764f, 1, 1, 1, 0.171f, 0.383f, 1, 1, 1, 0),
+        Levels(0.945f, 0.912f, 0.791f, 0.725f, 0.648f, 0.615f, 0.879f, 0.846f, 0.505f, 0.45f, 0.45f, 0.934f),
+        Levels(1, 1, 0, 0, 0, 0, 0.867f, 0.467f, 0, 0, 0, 1),
+    ];
+
+    private const int Lead = 0, Arp = 1, Pad = 2, Scan = 3;
+
+    /// <summary>The Arrangement's output after its parts: how far through its section it is.</summary>
+    private const int SectionProgress = NodeCatalog.MaxParts;
+
+    /// <summary>A part's levels, each held for its section.</summary>
+    private static PartLevel[] Levels(params float[] levels) => [.. levels.Select(level => new PartLevel(level))];
+
+    /// <summary>An Arrangement of the given parts, stepping on Time at <paramref name="rate"/> sections a second.</summary>
+    private static NodeInstance Arranged(PatchBuilder b, NodeInstance rate, PartLevel[][] parts)
+    {
+        var node = b.Add(NodeCatalog.ArrangementTypeId);
+        ArrangementExtra.Set(node, parts);
+        b.Wire(rate, 0, node, 1);
+        return node;
+    }
 
     /// <summary>
     /// Each line the patch speaks and the phrases of the song it starts on, from
@@ -224,62 +275,33 @@ internal static class MyceliumPreset
 
         // --- the arrangement -------------------------------------------------
 
-        // The whole arrangement is this one list: a number for each eight bars saying
-        // how much track there is. Intro, intro, build, build, groove, groove,
-        // breakdown, breakdown, peak, peak, peak, outro — twelve steps, ninety-six
-        // bars, three minutes fifty and round again.
-        //
-        // No part has a lane of its own. Each decides below how much of this number it
-        // needs before it comes in, so the sections cannot disagree about where they
-        // start, and the picture reads the same number to know which section it is
-        // drawing.
-        var song = b.Add("seq.values");
-        StepsExtra.Set(song,
-        [
-            new Step(0.1f), new Step(0.16f), new Step(0.38f), new Step(0.5f),
-            new Step(0.64f), new Step(0.7f), new Step(0.22f), new Step(0.28f),
-            new Step(0.9f), new Step(1f), new Step(1f), new Step(0.12f),
-        ]);
+        // Each part's level in each section, a row a part: what cuts on the section and
+        // what swells into it. Both step a section every eight bars.
+        var cutting = Arranged(b, phrases, Cuts);
+        var swelling = Arranged(b, phrases, Swells);
 
-        // The same number for the parts that fade rather than enter. A drum arrives on
-        // a downbeat and wants the step; a pad arriving as a step is a click. Audio
-        // only — on the screen a Slew is a wire, so the picture cuts on the section,
-        // which is what a picture should do. Four seconds up and two down: the knobs
-        // are in decades of a second, here and on every other time in the patch.
-        var swell = b.Add(SlewType, (1, 0.60206f), (2, 0.30103f));
+        // The sound's swells, and how far its Filters open. A drum arrives on a downbeat
+        // and wants the step; a pad arriving as a step is a click. The picture reads
+        // the rows themselves, and cuts on the section, which is what a picture should
+        // do. Four seconds up and two down: the knobs are in decades of a second, here
+        // and on every other time in the patch.
+        NodeInstance Swelled(NodeInstance arrangement, int part)
+        {
+            var swell = b.Add(SlewType, (1, 0.60206f), (2, 0.30103f));
+            b.Wire(arrangement, part, swell, 0);
+            return swell;
+        }
 
-        // Which phrases end in a riser: the last of every four, read off the
-        // sequencer's own index rather than off a second list, since three times the
-        // index has a fraction of three quarters exactly there. The last phrase of all
-        // is the outro, which falls away rather than building, so it is masked out.
-        var thirds = b.Add("math.mul", (1, 3f));
-        var lastOfFour = b.Add("math.fract");
-        var turning = b.Add("math.step", (0, 0.7f));
-        var notTheEnd = b.Add("math.step", (1, 0.9f));
-        var turns = b.Add("math.mul");
+        var leadIn = Swelled(swelling, Lead);
+        var arpIn = Swelled(swelling, Arp);
+        var padIn = Swelled(swelling, Pad);
+        var scanIn = Swelled(swelling, Scan);
+        var opening = Swelled(cutting, Growth);
 
-        // And how far through the phrase, so that the riser is the second half of it:
-        // four bars of climb into the groove, and four into the peak.
-        var phrasePos = b.Add("math.mul");
-        var throughIt = b.Add("math.fract");
+        // The riser is the second half of its section: four bars of climb into the
+        // groove, and four into the peak.
         var secondHalf = b.Add("math.smoothstep", (0, 0.5f), (1, 1f));
         var ramp = b.Add("math.mul");
-
-        // Who is in, as thresholds on the one number. Hard edges for what enters on a
-        // downbeat — the kick halfway up the build, the snare only once the groove has
-        // arrived — and wide ones for what swells.
-        var drumsIn = b.Add("math.smoothstep", (0, 0.42f), (1, 0.48f));
-        var bassIn = b.Add("math.smoothstep", (0, 0.3f), (1, 0.45f));
-        var hatsIn = b.Add("math.smoothstep", (0, 0.18f), (1, 0.6f));
-        var leadIn = b.Add("math.smoothstep", (0, 0.75f), (1, 0.9f));
-        var arpIn = b.Add("math.smoothstep", (0, 0.12f), (1, 0.5f));
-
-        // The pad runs the other way: all of the intro and the breakdown, under half
-        // of the peak. And the voice of the picture is only there when almost nothing
-        // else is.
-        var padIn = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1f), (4, 0.45f));
-        var scanFade = b.Add("math.remap", (1, 0.2f), (2, 0.35f), (3, 1f), (4, 0f));
-        var scanIn = b.Add("math.clamp", (1, 0f), (2, 1f));
 
         // The harmony, a bar at a time: four on D, two on E flat, two on C. All three
         // are in the scale, so the bass and the pad move in parallel underneath and
@@ -293,34 +315,14 @@ internal static class MyceliumPreset
         ]);
         var shift = b.Add("math.sub", (1, 38f));
 
-        b.Wire(phrases, 0, song, 1)
-         .Wire(song, 0, swell, 0)
-         .Wire(song, 2, thirds, 0)
-         .Wire(thirds, 0, lastOfFour, 0)
-         .Wire(lastOfFour, 0, turning, 1)
-         .Wire(song, 2, notTheEnd, 0)
-         .Wire(turning, 0, turns, 0)
-         .Wire(notTheEnd, 0, turns, 1)
-         .Wire(clock, 0, phrasePos, 0)
-         .Wire(phrases, 0, phrasePos, 1)
-         .Wire(phrasePos, 0, throughIt, 0)
-         .Wire(throughIt, 0, secondHalf, 2)
+        b.Wire(cutting, SectionProgress, secondHalf, 2)
          .Wire(secondHalf, 0, ramp, 0)
-         .Wire(turns, 0, ramp, 1)
-         .Wire(song, 0, drumsIn, 2)
-         .Wire(song, 0, bassIn, 2)
-         .Wire(song, 0, hatsIn, 2)
-         .Wire(swell, 0, leadIn, 2)
-         .Wire(swell, 0, arpIn, 2)
-         .Wire(swell, 0, padIn, 0)
-         .Wire(swell, 0, scanFade, 0)
-         .Wire(scanFade, 0, scanIn, 0)
+         .Wire(cutting, Riser, ramp, 1)
          .Wire(bars, 0, root, 1)
          .Wire(root, 0, shift, 0);
 
-        b.Group("Arrangement", song, swell, thirds, lastOfFour, turning, notTheEnd, turns,
-            phrasePos, throughIt, secondHalf, ramp, drumsIn, bassIn, hatsIn, leadIn, arpIn,
-            padIn, scanFade, scanIn, root, shift);
+        b.Group("Arrangement", cutting, swelling, leadIn, arpIn, padIn, scanIn,
+            opening, secondHalf, ramp, root, shift);
 
         // --- chance ----------------------------------------------------------
 
@@ -384,9 +386,9 @@ internal static class MyceliumPreset
          .Wire(kickHits, 0, thump, 0)
          .Wire(thump, 0, kickPunch, 1)
          .Wire(kickPunch, 0, kickOut, 0)
-         .Wire(drumsIn, 0, kickOut, 1)
+         .Wire(cutting, Kick, kickOut, 1)
          .Wire(thump, 0, kickLevel, 0)
-         .Wire(drumsIn, 0, kickLevel, 1)
+         .Wire(cutting, Kick, kickLevel, 1)
          .Wire(kickLevel, 0, duck, 2);
 
         b.Group("Kick", kickHits, thump, kickPunch, kickOut, kickLevel, duck);
@@ -407,9 +409,7 @@ internal static class MyceliumPreset
         var snareSum = b.Add("math.add");
         var snareHit = b.Add("math.mul");
 
-        // The snare comes in a little over halfway up the arrangement. A Fade, since
-        // nothing but the snare asks.
-        var snareOut = b.Add(FadeType, (2, 0.55f), (3, 0.62f));
+        var snareOut = b.Add("math.mul");
 
         b.Wire(beat, 0, halfBeat, 0)
          .Wire(halfBeat, 0, backbeat, 1)
@@ -418,7 +418,7 @@ internal static class MyceliumPreset
          .Wire(snareSum, 0, snareHit, 0)
          .Wire(backbeat, 0, snareHit, 1)
          .Wire(snareHit, 0, snareOut, 0)
-         .Wire(song, 0, snareOut, 1);
+         .Wire(cutting, Snare, snareOut, 1);
 
         b.Group("Snare", halfBeat, backbeat, rattle, shell, snareSum, snareHit, snareOut);
 
@@ -440,7 +440,7 @@ internal static class MyceliumPreset
          .Wire(hiss, 0, hatVoiced, 0)
          .Wire(hatHits, 3, hatVoiced, 1)
          .Wire(hatVoiced, 0, hatOut, 0)
-         .Wire(hatsIn, 0, hatOut, 1);
+         .Wire(cutting, Hats, hatOut, 1);
 
         b.Group("Hats", density, hatHits, hatVoiced, hatOut);
 
@@ -464,7 +464,7 @@ internal static class MyceliumPreset
         var bassSine = b.Add("osc.sine", (3, 0.6f));
         var bassBody = b.Add("math.add");
 
-        // How far the pluck opens the Filter is the arrangement: a thud in the build
+        // How far the pluck opens the Filter grows with the track: a thud in the build
         // and a bark at the peak, on the same notes.
         var bassReach = b.Add("math.remap", (1, 0f), (2, 1f), (3, 300f), (4, 2600f));
         var bassSweep = b.Add("math.mul");
@@ -491,7 +491,7 @@ internal static class MyceliumPreset
          .Wire(bassHz, 0, bassSine, 1)
          .Wire(bassSaw, 0, bassBody, 0)
          .Wire(bassSine, 0, bassBody, 1)
-         .Wire(swell, 0, bassReach, 0)
+         .Wire(opening, 0, bassReach, 0)
          .Wire(pluck, 0, bassSweep, 0)
          .Wire(bassReach, 0, bassSweep, 1)
          .Wire(bassSweep, 0, bassCut, 0)
@@ -509,7 +509,7 @@ internal static class MyceliumPreset
          .Wire(bassSum, 0, bassDucked, 0)
          .Wire(duck, 2, bassDucked, 1)
          .Wire(bassDucked, 0, bassOut, 0)
-         .Wire(bassIn, 0, bassOut, 1);
+         .Wire(cutting, Bass, bassOut, 1);
 
         b.Group("Bass", bassSeq, bassNote, bassHz, bassSaw, bassSine, bassBody, bassReach,
             bassSweep, bassCut, bassTone, bassVoiced, bassGrit, subHz, subOsc, sub, bassSum,
@@ -553,7 +553,7 @@ internal static class MyceliumPreset
          .Wire(pluck, 0, arpPlucked, 1)
          .Wire(arpPlucked, 0, arpTone, 0)
          .Wire(arpGate, 0, arpTone, 1)
-         .Wire(swell, 0, arpOpen, 0)
+         .Wire(opening, 0, arpOpen, 0)
          .Wire(arpTone, 0, arpVoice, 0)
          .Wire(arpOpen, 0, arpVoice, 1)
          .Wire(arpVoice, 0, arpOut, 0)
@@ -711,31 +711,26 @@ internal static class MyceliumPreset
         var kickSeen = b.Add("math.mul");
         var pump = b.Add("math.remap", (1, 0f), (2, 1f), (3, 1f), (4, 0.92f));
 
-        // How many wedges is the section, three in the intro and nine at the peak.
-        // Floored: a fold count between two whole numbers is a kaleidoscope with a
-        // seam in it.
-        var wedgeCount = b.Add("math.remap", (1, 0f), (2, 1f), (3, 3f), (4, 9f));
-        var wedges = b.Add("math.floor");
+        // How many wedges the section folds into, three in the intro and nine at the
+        // peak, always whole: a fold count between two whole numbers is a kaleidoscope
+        // with a seam in it.
         var placed = TurnedFirst(b.Add(TransformType));
         var plane = b.Add("space.kaleidoscope");
 
         b.Wire(clock, 0, creep, 0)
-         .Wire(song, 0, sectionTurn, 0)
+         .Wire(cutting, Growth, sectionTurn, 0)
          .Wire(creep, 0, spin, 0)
          .Wire(sectionTurn, 0, spin, 1)
          .Wire(kickHits, 0, kickSeen, 0)
-         .Wire(drumsIn, 0, kickSeen, 1)
+         .Wire(cutting, Kick, kickSeen, 1)
          .Wire(kickSeen, 0, pump, 0)
-         .Wire(song, 0, wedgeCount, 0)
-         .Wire(wedgeCount, 0, wedges, 0)
          .Wire(spin, 0, placed, TransformAngle)
          .Wire(pump, 0, placed, TransformZoom)
          .Wire(placed, 0, plane, 0)
          .Wire(placed, 1, plane, 1)
-         .Wire(wedges, 0, plane, 2);
+         .Wire(cutting, Wedges, plane, 2);
 
-        b.Group("Picture: Space", creep, sectionTurn, spin, kickSeen, pump, wedgeCount, wedges,
-            placed, plane);
+        b.Group("Picture: Space", creep, sectionTurn, spin, kickSeen, pump, placed, plane);
 
         // --- the picture: growth ---------------------------------------------
 
@@ -776,7 +771,7 @@ internal static class MyceliumPreset
          .Wire(field, 0, bent, 2)
          .Wire(reach, 0, bent, 3)
          .Wire(clock, 0, churn, 0)
-         .Wire(song, 0, cellSize, 0)
+         .Wire(cutting, Growth, cellSize, 0)
          .Wire(bent, 0, colony, 0)
          .Wire(bent, 1, colony, 1)
          .Wire(churn, 0, colony, 2)
@@ -792,7 +787,7 @@ internal static class MyceliumPreset
          .Wire(chosen, 0, sparkHit, 0)
          .Wire(hatHits, 0, sparkHit, 1)
          .Wire(sparkHit, 0, spark, 0)
-         .Wire(hatsIn, 0, spark, 1);
+         .Wire(cutting, Hats, spark, 1);
 
         b.Group("Picture: Growth", boil, field, reach, bent, churn, cellSize, colony, wall, threads,
             cellDice, hatStep, cellPick, cellRoll, chosen, sparkHit, spark);
@@ -852,7 +847,7 @@ internal static class MyceliumPreset
          .Wire(placeHue, 0, hueSum, 0)
          .Wire(timeHue, 0, hueSum, 1)
          .Wire(hueSum, 0, where, 0)
-         .Wire(song, 0, tint, 0)
+         .Wire(cutting, Growth, tint, 0)
          .Wire(where, 0, ground, 0)
          .Wire(tint, 0, ground, 2)
          .Wire(colony, 0, shade, 0)
@@ -865,7 +860,7 @@ internal static class MyceliumPreset
          .Wire(bassSeq, 1, bassSeen, 0)
          .Wire(pluck, 0, bassSeen, 1)
          .Wire(bassSeen, 0, bassLit, 0)
-         .Wire(bassIn, 0, bassLit, 1)
+         .Wire(cutting, Bass, bassLit, 1)
          .Wire(bassLit, 0, throb, 0)
          .Wire(threads, 0, threadLit, 0)
          .Wire(throb, 0, threadLit, 1)
@@ -925,7 +920,7 @@ internal static class MyceliumPreset
          .Wire(pump, 0, turned, TransformZoom)
          .Wire(shift, 0, points, 0)
          .Wire(leadSeq, 1, leadSeen, 0)
-         .Wire(leadIn, 0, leadSeen, 1)
+         .Wire(swelling, Lead, leadSeen, 1)
          .Wire(leadSeen, 0, sharpness, 0)
          .Wire(turned, 0, petals, 0)
          .Wire(turned, 1, petals, 1)
@@ -1001,7 +996,7 @@ internal static class MyceliumPreset
          .Wire(crestStruck, 0, crestGated, 0)
          .Wire(arpGate, 0, crestGated, 1)
          .Wire(crestGated, 0, crestIn, 0)
-         .Wire(arpIn, 0, crestIn, 1)
+         .Wire(swelling, Arp, crestIn, 1)
          .Wire(crestIn, 0, ripple, 0)
          .Wire(dripHits, 2, dripTurnX, 0)
          .Wire(dripTurnX, 0, dripSin, 0)
@@ -1017,7 +1012,7 @@ internal static class MyceliumPreset
          .Wire(drop, 1, dropStruck, 0)
          .Wire(dripHits, 0, dropStruck, 1)
          .Wire(dropStruck, 0, splash, 0)
-         .Wire(padIn, 0, splash, 1)
+         .Wire(swelling, Pad, splash, 1)
          .Wire(ripple, 0, marks, 0)
          .Wire(splash, 0, marks, 1);
 
@@ -1060,7 +1055,7 @@ internal static class MyceliumPreset
          .Wire(warm, 0, both, 0)
          .Wire(cool, 1, both, 1)
          .Wire(cool, 2, both, 2)
-         .Wire(song, 0, memory, 0)
+         .Wire(cutting, Growth, memory, 0)
          .Wire(both, 0, trail, 0)
          .Wire(memory, 0, trail, 1);
 
@@ -1110,9 +1105,13 @@ internal static class MyceliumPreset
         // Where the song is, in phrases. Each line is read from the moment it is due,
         // so it lands on its bar at any tempo, and a Sample is silent before its clip
         // starts and after it ends, so nothing needs a trigger.
+        var phrasePos = b.Add("math.mul");
+        b.Wire(clock, 0, phrasePos, 0)
+         .Wire(phrases, 0, phrasePos, 1);
+
         var songAt = Expression(b, "fract(a * (1 / 12)) * 12", phrasePos);
 
-        var wordsGroup = new List<NodeInstance> { songAt };
+        var wordsGroup = new List<NodeInstance> { phrasePos, songAt };
         var spoken = new List<NodeInstance>();
 
         foreach (var (file, at) in Lines)
@@ -1277,7 +1276,7 @@ internal static class MyceliumPreset
          .Wire(marks, 0, marked, 1)
          .Wire(marked, 0, traced, 0)
          .Wire(reader, 1, traced, 1)
-         .Wire(scanIn, 0, traced, 2)
+         .Wire(swelling, Scan, traced, 2)
          .Wire(traced, 0, fresh, 0)
          .Wire(trail, 0, combined, 0)
          .Wire(fresh, 0, combined, 1)
@@ -1285,7 +1284,7 @@ internal static class MyceliumPreset
          .Wire(strain, 0, foldDrive, 0)
          .Wire(combined, 0, creased, 0)
          .Wire(foldDrive, 0, creased, 1)
-         .Wire(song, 0, richness, 0)
+         .Wire(cutting, Growth, richness, 0)
          .Wire(creased, 0, graded, 0)
          .Wire(richness, 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
