@@ -8,6 +8,7 @@ Standing rules for working in this repo are in `.claude/rules/`, and Claude Code
 - `one-type-per-file.md`: one top-level type per file, named for it; split a file that holds several whenever a change touches it.
 - `prose-style.md`: American spelling; succinct comments that never narrate history.
 - `terminology.md`: when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
+- `agent-drivability.md`: drivability by an agent comes first; a hack needed to get something done is a feature to propose.
 
 Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill's full content when its description matches the task (the name and one-line description below are visible every session regardless):
 
