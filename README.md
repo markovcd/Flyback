@@ -38,6 +38,7 @@ dotnet run --project src/Flyback.App -c Release
 - CLI tools for rendering, checking, inspecting and bundling patches
 - A text language a patch can be written in, saved as and read back from — the same instrument, as source
 - A viewer that opens a patch and plays it at once, picture and sound, with no editor and nothing written
+- A web viewer that plays a patch in a browser, on the same engine compiled to WebAssembly
 - Plugin-based architecture for platform-specific audio/video backends and extensions
 - Patch bundles that package the patch with its referenced sample and image files
 - Agentic patch authoring through a model-backed assistant that can listen, propose changes and work inside the same patch graph — over any chat-completions endpoint, or over Gemini, whose models hear the patch themselves
@@ -241,6 +242,22 @@ Hover the top middle of the window for the transport: pause, rewind, the seek ba
 
 A patch made to be played is played here too: the computer's keys are notes wherever the patch reads them, a MIDI In hears the device it names, and a panel knob bound to a MIDI controller follows it. There is no knob panel, so a knob with no controller stays where the patch left it.
 
+## Web viewer
+
+`src/Flyback.Web` plays a patch in a browser: the engine and the module plugins compiled to WebAssembly, the picture drawn on WebGL 2 by the desktop's own GPU renderer. It opens a shipped preset or a `.fbk`, `.fbkb` or `.fbks` dropped on it, and plays it; nothing else. A patch whose sound renders too slowly there to keep up plays its picture alone and says how slow; heavy showcase presets such as Whole band do (ADR-0160).
+
+```bash
+dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -o artifacts/web
+```
+
+Serve `artifacts/web/wwwroot` from any static server; `?preset=Nebula`, `?file=<url>`, `?size=1280x720`, `?loop` and `?mute` pick what opens and how. The AOT switch needs `dotnet workload install wasm-tools`; without it the build runs interpreted, at a fifteenth of the speed. `window.flyback` drives the page from a script: `open`, `play`, `pause`, `seek`, `status()` and `still(seconds)`, the frame as a PNG at the patch's size.
+
+The sound runs without a page under Node, which the workload brings:
+
+```bash
+node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
+```
+
 ## How it works
 
 A patch is a graph, but during rendering it is compiled into a flat straight-line program over registers. Unused sections are not compiled, and the inner loop is designed to be cheap and predictable.
@@ -256,6 +273,7 @@ src/
   Flyback.Plugins   plugin host and built-in plugin logic
   Flyback.Ui        the preview, sound device and look the app and the viewer share
   Flyback.Viewer    the viewer: opens a patch and plays it
+  Flyback.Web       the web viewer: the same, in a browser
 
 tests/
   Flyback.Core.Tests      core engine tests

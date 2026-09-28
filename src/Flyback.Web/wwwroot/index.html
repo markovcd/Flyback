@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flyback Viewer</title>
+  <link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Flyback</span>
+    <select id="presets" aria-label="Preset" disabled></select>
+    <label class="file">Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
+    <button id="play" disabled aria-label="Play">▶</button>
+    <button id="rewind" disabled aria-label="Rewind">⏮</button>
+    <button id="mute" disabled aria-label="Mute">🔊</button>
+    <span id="clock">0:00 / 0:00</span>
+  </header>
+  <main>
+    <canvas id="screen"></canvas>
+    <div id="cover">Loading…</div>
+  </main>
+  <footer id="status"></footer>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

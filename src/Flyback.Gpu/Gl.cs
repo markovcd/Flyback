@@ -12,7 +12,7 @@ namespace Flyback.Gpu;
 /// Entry points a context may lack are null and have an <c>Is…Available</c> or a
 /// nullable caller; <see cref="Missing"/> names any of the rest that were not found.
 /// </remarks>
-internal sealed unsafe class Gl
+internal sealed unsafe class Gl : IGl
 {
     private readonly Func<string, IntPtr> find;
 
@@ -309,15 +309,6 @@ internal sealed unsafe class Gl
         return Encoding.UTF8.GetString(log, 0, length);
     }
 
-    /// <summary>Compiles <paramref name="source"/> into <paramref name="shader"/>, waiting for it. Null on success.</summary>
-    public string? CompileShaderAndGetError(int shader, string source)
-    {
-        ShaderSource(shader, source);
-        CompileShader(shader);
-
-        return GetShader(shader, GlConstants.GL_COMPILE_STATUS) != 0 ? null : ShaderLog(shader);
-    }
-
     public int CreateProgram() => createProgram();
     public void AttachShader(int program, int shader) => attachShader(program, shader);
     public void LinkProgram(int program) => linkProgram(program);
@@ -338,14 +329,6 @@ internal sealed unsafe class Gl
         fixed (byte* at = log) getProgramInfoLog(program, log.Length, &length, at);
 
         return Encoding.UTF8.GetString(log, 0, length);
-    }
-
-    /// <summary>Links <paramref name="program"/>, waiting for it. Null on success.</summary>
-    public string? LinkProgramAndGetError(int program)
-    {
-        LinkProgram(program);
-
-        return GetProgram(program, GlConstants.GL_LINK_STATUS) != 0 ? null : ProgramLog(program);
     }
 
     public void UseProgram(int program) => useProgram(program);

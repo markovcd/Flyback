@@ -170,7 +170,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         version.Es ? GlslDialect.GlslEs300 : GlslDialect.Glsl150;
 
     /// <summary>Builds the parts that do not depend on the patch. Null on success.</summary>
-    public string? Initialise(Gl gl)
+    public string? Initialise(IGl gl)
     {
         if (gl.Missing.Count > 0)
             return $"This context has no {string.Join(", ", gl.Missing)}.";
@@ -209,7 +209,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// has actually changed. Null on success — including the very common case
     /// where there was nothing to do.
     /// </summary>
-    public string? SetPatch(Gl gl, CompiledPatch patch)
+    public string? SetPatch(IGl gl, CompiledPatch patch)
     {
         var shaders = GlslEmitter.Emit(patch, dialect);
 
@@ -275,7 +275,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Puts a linked program on the card in place of the one there, which is kept for an undo.</summary>
-    private void Install(Gl gl, int compiled, ShaderSource shaders, CompiledPatch patch)
+    private void Install(IGl gl, int compiled, ShaderSource shaders, CompiledPatch patch)
     {
         if (patchProgram != 0) Keep(gl, liveSource, patchProgram);
 
@@ -353,7 +353,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Keeps a program that has left the card, and lets the oldest kept one go.</summary>
-    private void Keep(Gl gl, string source, int program)
+    private void Keep(IGl gl, string source, int program)
     {
         linked.Add((source, program));
         if (linked.Count <= Remembered) return;
@@ -367,7 +367,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// values behind its constants, which move with every knob, its pictures,
     /// which change without the text changing, and the names of its live inputs.
     /// </summary>
-    private void Adopt(Gl gl, CompiledPatch patch)
+    private void Adopt(IGl gl, CompiledPatch patch)
     {
         constants = GlslEmitter.Constants(patch);
         liveInputs = patch.LiveInputs;
@@ -386,7 +386,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// so the comparison is by reference and a knob drag uploads nothing.
     /// Eight-bit textures with linear filtering, which is what the file held.
     /// </remarks>
-    private void Upload(Gl gl, IReadOnlyList<LoadedImage> wanted)
+    private void Upload(IGl gl, IReadOnlyList<LoadedImage> wanted)
     {
         if (pictures.Length == wanted.Count)
         {
@@ -457,7 +457,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// letterboxed, into <paramref name="framebuffer"/>. Null on success.
     /// </summary>
     public string? Render(
-        Gl gl,
+        IGl gl,
         int framebuffer,
         SurfaceSize control,
         SurfaceSize resolution,
@@ -487,7 +487,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// <paramref name="rgba"/>, tightly packed and bottom-up. Waits for every link,
     /// so the frame is always the patch's. Null on success.
     /// </summary>
-    public string? Frame(Gl gl, SurfaceSize resolution, double time, LiveValues? live, Span<byte> rgba)
+    public string? Frame(IGl gl, SurfaceSize resolution, double time, LiveValues? live, Span<byte> rgba)
     {
         if (resolution.Width <= 0 || resolution.Height <= 0) return "A frame needs both dimensions.";
         if (building is not null) return "The patch's shader is still being built.";
@@ -502,7 +502,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Leaves the context as it was found, apart from the tests <see cref="Draw"/> turns off.</summary>
-    private static void Restore(Gl gl, int framebuffer)
+    private static void Restore(IGl gl, int framebuffer)
     {
         gl.BindVertexArray(0);
         gl.BindTexture(GL_TEXTURE_2D, 0);
@@ -511,7 +511,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Draws the patch into the history, where the next frame reads it and nothing shows it. Null on success.</summary>
-    private string? Draw(Gl gl, SurfaceSize resolution, double time, LiveValues? live)
+    private string? Draw(IGl gl, SurfaceSize resolution, double time, LiveValues? live)
     {
         if (Resize(gl, resolution) is { } failure) return failure;
 
@@ -556,7 +556,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         return null;
     }
 
-    private void DrawPatch(Gl gl, SurfaceSize resolution, double time, LiveValues? live)
+    private void DrawPatch(IGl gl, SurfaceSize resolution, double time, LiveValues? live)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffers[1 - read]);
         gl.Viewport(0, 0, resolution.Width, resolution.Height);
@@ -654,7 +654,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         }
     }
 
-    private void DrawBlit(Gl gl, int framebuffer, SurfaceSize control, SurfaceSize resolution)
+    private void DrawBlit(IGl gl, int framebuffer, SurfaceSize control, SurfaceSize resolution)
     {
         gl.BindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         gl.Viewport(0, 0, control.Width, control.Height);
@@ -698,7 +698,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// Allocates the history pair, half floats first. The history does not
     /// survive a resolution change, which is what the CPU renderer does too.
     /// </summary>
-    private string? Resize(Gl gl, SurfaceSize resolution)
+    private string? Resize(IGl gl, SurfaceSize resolution)
     {
         if (size == resolution && framebuffers[0] != 0) return null;
 
@@ -761,7 +761,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// already settled — and nothing to do for a patch with no planes, whose one
     /// output goes to attachment zero wherever the linker puts it.
     /// </remarks>
-    private void BindOutputs(Gl gl, int program, int targets)
+    private void BindOutputs(IGl gl, int program, int targets)
     {
         if (targets == 0 || dialect is not GlslDialect.Glsl150) return;
         if (!gl.IsBindFragDataLocationAvailable) return;
@@ -784,7 +784,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// where a color merely bands. Eight-bit is not offered at all: it cannot
     /// hold what a plane is allowed to carry, let alone hold it still.
     /// </remarks>
-    private string? Attach(Gl gl, SurfaceSize resolution)
+    private string? Attach(IGl gl, SurfaceSize resolution)
     {
         foreach (var (internalFormat, type) in
                  (ReadOnlySpan<(int, int)>)[(GL_RGBA32F, GL_FLOAT), (GL_RGBA16F, GL_HALF_FLOAT)])
@@ -843,7 +843,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// until it is told otherwise, so without this the planes would be written
     /// nowhere and read back as the nothing they started as.
     /// </summary>
-    private void Enable(Gl gl)
+    private void Enable(IGl gl)
     {
         if (!gl.IsDrawBuffersAvailable) return;
 
@@ -860,7 +860,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     private static int? Link(
-        Gl gl,
+        IGl gl,
         string vertex,
         string fragment,
         out string? error,
@@ -903,7 +903,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Hands the driver a patch's shader to compile and link, without asking how it went.</summary>
-    private Building Start(Gl gl, ShaderSource shaders)
+    private Building Start(IGl gl, ShaderSource shaders)
     {
         var vertex = gl.CreateShader(GL_VERTEX_SHADER);
         gl.ShaderSource(vertex, shaders.PatchVertex);
@@ -924,7 +924,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>The linked program, or null with what the driver said. Waits for the driver unless it has finished.</summary>
-    private static int? Finish(Gl gl, Building built, out string? error)
+    private static int? Finish(IGl gl, Building built, out string? error)
     {
         error = null;
 
@@ -942,7 +942,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Sets the shader being built aside to finish, its patch having moved on.</summary>
-    private void Park(Gl gl)
+    private void Park(IGl gl)
     {
         if (building is not { } set) return;
 
@@ -969,7 +969,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Keeps every parked shader the driver has finished with.</summary>
-    private void Settle(Gl gl)
+    private void Settle(IGl gl)
     {
         for (var i = 0; i < parked.Count;)
         {
@@ -988,14 +988,14 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     }
 
     /// <summary>Deletes a shader, waiting for the driver where it is still being built.</summary>
-    private static void Drop(Gl gl, Building dropped)
+    private static void Drop(IGl gl, Building dropped)
     {
         gl.DeleteShader(dropped.Vertex);
         gl.DeleteShader(dropped.Fragment);
         gl.DeleteProgram(dropped.Program);
     }
 
-    private void Release(Gl gl)
+    private void Release(IGl gl)
     {
         ReleasePlanes(gl);
 
@@ -1012,7 +1012,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// The planes alone, which one format's attempt hands back before the next is
     /// tried — the framebuffers they were hung off are still good.
     /// </summary>
-    private void ReleasePlanes(Gl gl)
+    private void ReleasePlanes(IGl gl)
     {
         for (var i = 0; i < 2; i++)
         {
@@ -1028,7 +1028,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     /// Hands everything back. Also the state to return to after the context is
     /// lost, where the objects are already gone and the names mean nothing.
     /// </summary>
-    public void Dispose(Gl? gl)
+    public void Dispose(IGl? gl)
     {
         // Unconditionally, because it owns unmanaged memory as well as GL names
         // and that has to go back whether or not there is still a context.

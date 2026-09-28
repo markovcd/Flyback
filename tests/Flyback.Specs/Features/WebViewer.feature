@@ -1,0 +1,13 @@
+Feature: The web viewer
+  A patch opened in a browser plays the sound it plays on the desktop, shipped
+  plugins' modules included.
+
+  Scenario Outline: A preset sounds in the browser as it does on the desktop
+    Given the shipped preset "<preset>"
+    When it plays in the web viewer for 1 second
+    Then its sound is the desktop's to within one step of 16 bits
+
+    Examples:
+      | preset           |
+      | Sidebands        |
+      | Beat you can see |

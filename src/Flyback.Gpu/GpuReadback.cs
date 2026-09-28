@@ -43,7 +43,7 @@ internal sealed class GpuReadback
     /// Finds the entry points. Called with the context current, once, alongside
     /// everything else that does not depend on the patch.
     /// </summary>
-    public void Initialise(Gl gl)
+    public void Initialise(IGl gl)
     {
         if (!gl.IsReadPixelsAvailable)
         {
@@ -65,7 +65,7 @@ internal sealed class GpuReadback
     /// Whether the frame is already a normalized eight-bit surface. When it is
     /// not, and it cannot be blitted to one, it cannot be read as bytes at all.
     /// </param>
-    public void Capture(Gl gl, int framebuffer, SurfaceSize resolution, bool eightBit, IFrameSink sink)
+    public void Capture(IGl gl, int framebuffer, SurfaceSize resolution, bool eightBit, IFrameSink sink)
     {
         if (Unavailable is not null) return;
         if (resolution.Width <= 0 || resolution.Height <= 0) return;
@@ -116,7 +116,7 @@ internal sealed class GpuReadback
     /// Reads <paramref name="framebuffer"/> into <paramref name="rgba"/>, tightly
     /// packed and bottom-up, waiting for the card. Null on success.
     /// </summary>
-    public unsafe string? Read(Gl gl, int framebuffer, SurfaceSize resolution, bool eightBit, Span<byte> rgba)
+    public unsafe string? Read(IGl gl, int framebuffer, SurfaceSize resolution, bool eightBit, Span<byte> rgba)
     {
         if (Unavailable is not null) return Unavailable;
         if (rgba.Length < Bytes(resolution)) throw new ArgumentException("The frame does not fit.", nameof(rgba));
@@ -137,7 +137,7 @@ internal sealed class GpuReadback
     /// Binds the eight-bit copy of <paramref name="framebuffer"/> for reading, and
     /// returns it; -1 when there is none, with <see cref="Unavailable"/> saying why.
     /// </summary>
-    private int Source(Gl gl, int framebuffer, SurfaceSize resolution, bool eightBit)
+    private int Source(IGl gl, int framebuffer, SurfaceSize resolution, bool eightBit)
     {
         var source = Resolve(gl, framebuffer, resolution, eightBit);
 
@@ -157,7 +157,7 @@ internal sealed class GpuReadback
     }
 
     /// <summary>Straight into memory, waiting for the card to catch up.</summary>
-    private void Direct(Gl gl, SurfaceSize resolution, IFrameSink sink)
+    private void Direct(IGl gl, SurfaceSize resolution, IFrameSink sink)
     {
         if (staging == IntPtr.Zero) return;
 
@@ -175,7 +175,7 @@ internal sealed class GpuReadback
     /// nothing and says nothing, and the buffer it left alone is black — so the
     /// only way to tell a failure from a dark patch is to ask.
     /// </summary>
-    private bool Check(Gl gl)
+    private bool Check(IGl gl)
     {
         var error = gl.GetError();
 
@@ -193,7 +193,7 @@ internal sealed class GpuReadback
     /// <c>glReadPixels</c> is obliged to hand back as bytes. Returns the
     /// framebuffer to read from, or -1 when there is no way to get one.
     /// </summary>
-    private int Resolve(Gl gl, int framebuffer, SurfaceSize resolution, bool eightBit)
+    private int Resolve(IGl gl, int framebuffer, SurfaceSize resolution, bool eightBit)
     {
         // Nowhere to convert to: readable directly only if it never needed
         // converting, which is the machine where half floats were refused.
@@ -213,7 +213,7 @@ internal sealed class GpuReadback
 
     private static IntPtr Bytes(SurfaceSize resolution) => new(resolution.Width * resolution.Height * 4L);
 
-    private void Resize(Gl gl, SurfaceSize resolution)
+    private void Resize(IGl gl, SurfaceSize resolution)
     {
         if (size == resolution && pixels.Length > 0) return;
 
@@ -249,7 +249,7 @@ internal sealed class GpuReadback
     /// than borrowed from the renderer's history pair, which is half float
     /// wherever the machine allows it and therefore unreadable as bytes.
     /// </summary>
-    private void MakeResolveTarget(Gl gl, SurfaceSize resolution)
+    private void MakeResolveTarget(IGl gl, SurfaceSize resolution)
     {
         if (!gl.IsBlitFramebufferAvailable) return;
 
@@ -281,7 +281,7 @@ internal sealed class GpuReadback
     }
 
     /// <summary>Hands the buffers back. Safe to call with the objects already gone.</summary>
-    public void Release(Gl? gl)
+    public void Release(IGl? gl)
     {
         for (var i = 0; i < 2; i++)
         {

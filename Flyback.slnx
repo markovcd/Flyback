@@ -33,6 +33,7 @@
     <Project Path="src/Flyback.Ui/Flyback.Ui.csproj" />
     <Project Path="src/Flyback.Viewer/Flyback.Viewer.csproj" />
     <Project Path="src/Flyback.Server/Flyback.Server.csproj" />
+    <Project Path="src/Flyback.Web/Flyback.Web.csproj" />
   </Folder>
   <Folder Name="/src/plugins/">
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />

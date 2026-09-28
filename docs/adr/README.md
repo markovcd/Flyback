@@ -22,6 +22,7 @@ context, decision, consequences.
 | [0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md) | A third program plays a patch and writes nothing *(user-directed)* |
 | [0144](0144-a-pipe-lands-where-the-text-says.md) | A pipe lands where the text says *(user-directed)* |
 | [0145](0145-the-panel-is-written-in-the-text.md) | The panel is written in the text *(user-directed)* |
+| [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) | A patch plays in a browser on the engine compiled to WebAssembly *(user-directed)* |
 
 ### The engine
 

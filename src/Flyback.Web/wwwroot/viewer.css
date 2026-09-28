@@ -1,0 +1,109 @@
+:root {
+  --edge: #101114;
+  --window: #16181B;
+  --toolbar: #22252A;
+  --separator: #3A3E46;
+  --bright: #E9ECF1;
+  --label: #C8CCD4;
+  --muted: #8A909A;
+  --attention: #FFB040;
+  --sink: #E05A5A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--edge);
+  color: var(--label);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--separator);
+}
+
+.brand {
+  color: var(--bright);
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+select, button, .file {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--separator);
+  border-radius: 6px;
+  background: var(--window);
+  color: var(--bright);
+  font: inherit;
+}
+
+button { min-width: 36px; cursor: pointer; }
+button:disabled, select:disabled { opacity: 0.5; cursor: default; }
+
+.file {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.file input { display: none; }
+
+#clock {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+main {
+  position: relative;
+  min-height: 0;
+}
+
+#screen {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  color: var(--bright);
+  font-size: 18px;
+  background: rgba(16, 17, 20, 0.6);
+  cursor: pointer;
+}
+
+#cover[hidden] { display: none; }
+
+footer {
+  padding: 6px 16px;
+  background: var(--toolbar);
+  border-top: 1px solid var(--separator);
+  color: var(--muted);
+  font-size: 12px;
+  min-height: 28px;
+}
+
+footer .warn { color: var(--attention); }
+footer .error { color: var(--sink); }

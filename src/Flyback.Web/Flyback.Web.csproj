@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.Web</RootNamespace>
+
+    <!--
+      Ahead-of-time compiled only when a publish asks: -p:RunAOTCompilation=true.
+      It needs the wasm-tools workload and several minutes, and the gate builds
+      this project on an SDK image that has neither. Interpreted, a patch's sound
+      renders at a fifteenth of the speed, which is enough to check it and too
+      slow to hear it.
+    -->
+    <RunAOTCompilation Condition="'$(RunAOTCompilation)' == ''">false</RunAOTCompilation>
+
+    <!--
+      The framework is trimmed and Flyback is not: the patch reader deserializes
+      by reflection, which a trimmed Flyback assembly would break without a word.
+    -->
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+
+    <!--
+      No lock file: this project asks for no package, and the ones the WebAssembly
+      SDK adds are versioned with the SDK, so a lock taken here would fail a locked
+      restore on the next SDK patch.
+    -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <!--
+    Referenced rather than loaded from a folder: a page cannot read one. The seven
+    that make modules, and none that talks to a device, a keychain or a model.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+  </ItemGroup>
+
+  <!-- The sound without a page, under Node, beside wwwroot. The package file makes the runtime's scripts modules there. -->
+  <ItemGroup>
+    <None Update="hear.mjs;package.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
