@@ -119,6 +119,12 @@ internal sealed class AcidPreset : PresetBench
         return node;
     }
 
+    private const int Drums = 0, Clap = 1, Drop = 2, Builds = 3;
+
+    private const int Bass = 0, Answer = 1, Pad = 2, Theme = 3, Knob = 4, Bands = 5;
+
+    private const int FirstRoot = 0, SecondRoot = 1;
+
     public static Patch Build(ModuleCatalog modules)
     {
         if (!modules.HasProvider(Voice))
@@ -137,11 +143,11 @@ internal sealed class AcidPreset : PresetBench
     {
     }
 
-    /// <summary>A Mix between two sources, read at the same output of each.</summary>
-    private NodeInstance Either(NodeInstance a, NodeInstance c, NodeInstance t, int from = 0)
+    /// <summary>A Mix between two sources.</summary>
+    private NodeInstance Either(Read a, Read c, Read t)
     {
         var mix = b.Add("math.mix");
-        b.Wire(a, from, mix, 0).Wire(c, from, mix, 1).Wire(t, 0, mix, 2);
+        b.Wire(a.Node, a.Port, mix, 0).Wire(c.Node, c.Port, mix, 1).Wire(t.Node, t.Port, mix, 2);
         return mix;
     }
 
@@ -199,93 +205,73 @@ internal sealed class AcidPreset : PresetBench
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
-        // Eight bars is one step of the arrangement.
-        var phraseGone = Fraction(Times(beats, 1f / 32f));
-
         Box("Clock");
 
         // --- the arrangement -------------------------------------------------
 
-        // One number for each eight bars saying how much track there is, and each part
-        // decides below how much of it it needs. An intro and a build, four phrases of
-        // the first drop, a phrase stripped back and a second build, the second drop, a
-        // breakdown with no drums at all, a third build, three phrases of everything and
-        // the way out. The builds are all at six tenths, which is how they are known.
-        var song = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(song,
+        // Eight bars a section: an intro and a build, four phrases of the first drop, a
+        // phrase stripped back and a second build, the second drop, a breakdown with no
+        // drums at all, a third build, three phrases of everything and the way out.
+        //
+        // The drums: the kick and the closed hats, out only for the breakdown; the clap;
+        // the open hat and the crash, which come with a drop; and which sections build.
+        var drumming = Arranged(beats, 1f / 32f,
         [
-            new Step(0.3f), new Step(0.6f), new Step(0.8f), new Step(0.8f),
-            new Step(0.85f), new Step(0.85f), new Step(0.45f), new Step(0.6f),
-            new Step(1f), new Step(1f), new Step(0.05f), new Step(0.6f),
-            new Step(1f), new Step(1f), new Step(0.95f), new Step(0.3f),
+            Levels(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1),
+            Levels(0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0),
+            Levels(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0),
         ]);
 
-        // Which theme it is, a phrase at a time: the second for the back half of the
-        // first drop, and from the breakdown through the build into the last drop, so
-        // that the first theme coming back is the track coming home. A lane of its own,
-        // and a switch, because a pattern half way between two patterns is neither.
-        var theme = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(theme,
+        // The bass, the answer, and the pad, which plays a little in the stripped-back phrase.
+        var playing = Arranged(beats, 1f / 32f,
         [
-            new Step(0f), new Step(0f), new Step(0f), new Step(0f),
-            new Step(1f), new Step(1f), new Step(0f), new Step(0f),
-            new Step(0f), new Step(0f), new Step(1f), new Step(1f),
-            new Step(1f), new Step(0f), new Step(0f), new Step(0f),
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0),
+            Levels(1, 0, 0, 0, 0, 0, 7f / 27f, 0, 0, 0, 1, 0, 0, 0, 0, 1),
+
+            // Which theme: the second for the back half of the first drop, and from the
+            // breakdown through the build into the last drop, so that the first theme coming
+            // back is the track coming home. A switch, because a pattern half way between two
+            // patterns is neither.
+            Levels(0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0),
+
+            // The hand on the cutoff knob, which is the other half of how this music is
+            // arranged: where it is left for each phrase.
+            Levels(0.15f, 0.4f, 0.7f, 0.85f, 0.7f, 0.9f, 0.3f, 0.5f, 0.85f, 1, 0.35f, 0.5f, 0.9f, 1, 0.8f, 0.2f),
+
+            // How many bands the picture is cut into.
+            Levels(11.3f, 17.6f, 21.8f, 21.8f, 22.85f, 22.85f, 14.45f, 17.6f, 26, 26, 6.05f, 17.6f, 26, 26, 24.95f, 11.3f),
         ]);
 
-        // And the hand on the cutoff knob, which is the other half of how this music is
-        // arranged: where it is left for each phrase. It gets there over six seconds and
-        // comes back over three, in decades of a second, so it is turned rather than set.
-        var knob = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(knob,
-        [
-            new Step(0.15f), new Step(0.4f), new Step(0.7f), new Step(0.85f),
-            new Step(0.7f), new Step(0.9f), new Step(0.3f), new Step(0.5f),
-            new Step(0.85f), new Step(1f), new Step(0.35f), new Step(0.5f),
-            new Step(0.9f), new Step(1f), new Step(0.8f), new Step(0.2f),
-        ]);
+        // The knob gets there over six seconds and comes back over three, in decades of
+        // a second, so it is turned rather than set.
         var turned = b.Add(SlewType, (1, 0.78f), (2, 0.48f));
 
-        // A build is a phrase at six tenths. Its second half is a ramp, which the riser,
-        // the roll and the knob all climb, and its last bar has no kick and no bass in
-        // it, so the drop lands on a bar of nothing.
-        var atLeast = b.Add("math.step", (0, 0.57f));
-        var atMost = b.Add("math.step", (1, 0.63f));
-        var building = Product(atLeast, atMost);
-        var ramp = Product(Rises(phraseGone, 0.5f, 1f), building);
+        // A build's second half is a ramp, which the riser, the roll and the knob all
+        // climb, and its last bar has no kick and no bass in it, so the drop lands on a
+        // bar of nothing.
+        var ramp = Product(Rises(drumming, 0.5f, 1f, SectionProgress), drumming, Builds);
         var lastBar = b.Add("math.step", (0, 0.875f));
-        var hush = From(1f, Product(lastBar, building));
+        var hush = From(1f, Product(lastBar, drumming, Builds));
 
         // The knob with the ramp on it, and a little of a hand that is never quite still.
         var hand = Sum(Sum(turned, Times(ramp, 0.3f)), Wander(0.07f, 4.1f, -0.06f, 0.06f));
 
-        // The harmony, a bar at a time, in semitones from A. The first theme stays home
-        // for six bars and goes up to C and down to G to come back; the second rocks
-        // between F and G and ends on E, which wants the A.
-        var firstRoots = b.Add("seq.values", (1, 0.25f));
-        StepsExtra.Set(firstRoots,
+        // The harmony, a bar at a time, in semitones from A, for each theme. The first
+        // stays home for six bars and goes up to C and down to G to come back; the second
+        // rocks between F and G and ends on E, which wants the A.
+        var roots = Arranged(beats, 0.25f,
         [
-            new Step(0f), new Step(0f), new Step(0f), new Step(0f),
-            new Step(0f), new Step(0f), new Step(3f), new Step(-2f),
-        ]);
-        var secondRoots = b.Add("seq.values", (1, 0.25f));
-        StepsExtra.Set(secondRoots,
-        [
-            new Step(-4f), new Step(-4f), new Step(-2f), new Step(-2f),
-            new Step(-4f), new Step(-4f), new Step(-2f), new Step(-5f),
+            Levels(0, 0, 0, 0, 0, 0, 3, -2),
+            Levels(-4, -4, -2, -2, -4, -4, -2, -5),
         ]);
 
-        b.Wire(beats, 0, song, 0)
-         .Wire(beats, 0, theme, 0)
-         .Wire(beats, 0, knob, 0)
-         .Wire(knob, 0, turned, 0)
-         .Wire(song, 0, atLeast, 1)
-         .Wire(song, 0, atMost, 0)
-         .Wire(phraseGone, 0, lastBar, 1)
-         .Wire(beats, 0, firstRoots, 0)
-         .Wire(beats, 0, secondRoots, 0);
+        b.Wire(playing, Knob, turned, 0)
+         .Wire(drumming, SectionProgress, lastBar, 1);
 
-        var root = Either(firstRoots, secondRoots, theme);
+        var theme = new Read(playing, Theme);
+        var root = Either(new(roots, FirstRoot), new(roots, SecondRoot), theme);
 
         Box("Arrangement");
 
@@ -294,7 +280,7 @@ internal sealed class AcidPreset : PresetBench
         // Four on the floor, from the first bar, and out for the breakdown. The pitch is
         // the level to the fifth power, so there is one envelope and the beater is over
         // long before the shell is.
-        var kickStroke = Enters(Product(Stroke(beats, 1f, 5f), hush), song, 0.1f, 0.15f);
+        var kickStroke = Product(Product(Stroke(beats, 1f, 5f), hush), drumming, Drums);
         var kick = Drum(kickStroke, 46f, 170f, 5f, 3f);
 
         // The sidechain: the kick's level on the bass and the pad.
@@ -304,11 +290,11 @@ internal sealed class AcidPreset : PresetBench
 
         // --- the acid line ---------------------------------------------------
 
-        // Both themes run the whole time and the lane chooses between them, so either
-        // is in the right place in its bar whenever it is switched to.
+        // Both themes run the whole time and the arrangement chooses between them, so
+        // either is in the right place in its bar whenever it is switched to.
         var (firstNotes, firstMarks) = Pattern(beats, First);
         var (secondNotes, secondMarks) = Pattern(beats, Second);
-        var gate = Either(firstNotes, secondNotes, theme, 1);
+        var gate = Either(new(firstNotes, 1), new(secondNotes, 1), theme);
         var slidInto = Either(firstMarks, secondMarks, theme);
 
         // The glide is on the frequency rather than on the note, because a Note snaps to
@@ -392,7 +378,7 @@ internal sealed class AcidPreset : PresetBench
         var answerTone = b.Add(FilterType, (2, 0.8f));
         var answerLevel = b.Add(SlewType, (1, -2.7f), (2, -1.5f));
         var answerDrive = b.Add(DriveType, (1, 3f));
-        var answered = Enters(answerDrive, song, 0.9f, 0.94f);
+        var answered = Product(answerDrive, playing, Answer);
 
         b.Wire(beats, 0, answer, 0)
          .Wire(Through("audio.note", Sum(answer, root)), 0, square, 1)
@@ -435,8 +421,8 @@ internal sealed class AcidPreset : PresetBench
         // And a sine at the same pitch for the part that is felt, added after the Drive
         // so that it stays a sine.
         var sub = b.Add("osc.sine", (3, 0.85f));
-        var bass = Enters(
-            Product(Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), hush), song, 0.4f, 0.45f);
+        var bass = Product(
+            Product(Product(Sum(bassGrit, Product(sub, bassLine, 1)), duck, DuckGain), hush), playing, Bass);
 
         b.Wire(root, 0, under, 0)
          .Wire(beats, 0, bassLine, 0)
@@ -457,8 +443,8 @@ internal sealed class AcidPreset : PresetBench
         // late and three times as long.
         var lean = b.Add("seq.values", (1, 4f));
         StepsExtra.Set(lean, [new Step(0.55f), new Step(0.3f), new Step(0.8f), new Step(0.4f)]);
-        var shut = Enters(Product(Stroke(beats, 4f, 7f), lean), song, 0.2f, 0.25f);
-        var open = Enters(Stroke(beats, 1f, 3f, 0.5f), song, 0.7f, 0.75f);
+        var shut = Product(Product(Stroke(beats, 4f, 7f), lean), drumming, Drums);
+        var open = Product(Stroke(beats, 1f, 3f, 0.5f), drumming, Drop);
         var hats = Hiss(Sum(shut, Times(open, 0.7f)), 8000f, 0.2f, "high");
 
         b.Wire(beats, 0, lean, 0);
@@ -473,7 +459,7 @@ internal sealed class AcidPreset : PresetBench
         var backbeat = Stroke(beats, 0.5f, 12f, 0.5f);
         var after = Rises(backbeat, 0.045f, 0.05f, StrokePhase);
         var hands = Sum(Product(Stroke(beats, 32f, 1.5f), From(1f, after)), Product(backbeat, after));
-        var clap = Hiss(Enters(hands, song, 0.55f, 0.58f), 1300f, 0.5f, "band", 3.5f, seed: 1f);
+        var clap = Hiss(Product(hands, drumming, Clap), 1300f, 0.5f, "band", 3.5f, seed: 1f);
 
         Box("Clap");
 
@@ -489,7 +475,7 @@ internal sealed class AcidPreset : PresetBench
         // And what the drop lands on: one stroke to the phrase, steep enough that eight
         // bars of it is two seconds of cymbal, wherever there is a drop to mark.
         var crash = Hiss(
-            Enters(Stroke(beats, 1f / 32f, 16f), song, 0.75f, 0.78f), 5000f, 0.1f, "high", 0.9f, seed: 4f);
+            Product(Stroke(beats, 1f / 32f, 16f), drumming, Drop), 5000f, 0.1f, "high", 0.9f, seed: 4f);
 
         b.Wire(beats, 0, roll, 0)
          .Wire(rollRate, 0, roll, 1)
@@ -505,7 +491,7 @@ internal sealed class AcidPreset : PresetBench
         // hear it in: the intro, the breakdown and the way out. Seven detuned saws on the
         // root and a saw each on the minor third and the fifth, counted in semitones
         // rather than found in a scale, so the chord moves in parallel with everything
-        // else. It follows the arrangement through a Slew, two seconds to go and half a
+        // else. It follows its row through a Slew, two seconds to go and half a
         // second to come, because a chord that cuts out is a mistake and one that
         // arrives with the silence is not.
         var padNote = Plus(root, 57f);
@@ -513,7 +499,7 @@ internal sealed class AcidPreset : PresetBench
         var third = b.Add("osc.saw", (3, 0.3f));
         var fifth = b.Add("osc.saw", (3, 0.3f));
         var padTone = b.Add(FilterType, (2, 0.2f));
-        var thin = b.Add(SlewType, (1, 0.3f), (2, -0.3f));
+        var thin = b.Add(SlewType, (1, -0.3f), (2, 0.3f));
 
         // The Chorus is what makes it stereo: 'out' and 'wide' are swept in opposite
         // directions, which is wider than panning and costs one module.
@@ -524,8 +510,8 @@ internal sealed class AcidPreset : PresetBench
          .Wire(Through("audio.note", Plus(padNote, 7f)), 0, fifth, 1)
          .Wire(Sum(Sum(strings, third), fifth), 0, padTone, 0)
          .Wire(Span(hand, 0f, 1f, 1500f, 4000f), 0, padTone, 1)
-         .Wire(song, 0, thin, 0)
-         .Wire(Enters(Product(padTone, duck, DuckGain), thin, 0.5f, 0.35f), 0, pad, 0);
+         .Wire(playing, Pad, thin, 0)
+         .Wire(Product(Product(padTone, duck, DuckGain), thin), 0, pad, 0);
 
         Box("Pad");
 
@@ -650,7 +636,7 @@ internal sealed class AcidPreset : PresetBench
         // the field plus the slowest of the three clocks, wrapped rather than clamped
         // because a palette is a loop — and moved most of half way round it by the
         // second theme, so a change of theme is a change of color.
-        var where = Fraction(Sum(Sum(Times(field, 0.7f), crawl), Times(theme, 0.4f)));
+        var where = Fraction(Sum(Sum(Times(field, 0.7f), crawl), Times(playing, 0.4f, Theme)));
 
         // And how wide the palette is comes off the knob, which is the correspondence
         // the whole patch is arranged around: a hum is tints of one color, and a
@@ -673,7 +659,7 @@ internal sealed class AcidPreset : PresetBench
          .Wire(palette, 0, inked, 0)
          .Wire(visible, 0, inked, 1)
          .Wire(inked, 0, flat, 0)
-         .Wire(Span(song, 0f, 1f, 5f, 26f), 0, flat, 1);
+         .Wire(playing, Bands, flat, 1);
 
         Box("Picture: Color");
 
