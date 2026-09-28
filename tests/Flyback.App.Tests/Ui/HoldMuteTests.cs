@@ -12,7 +12,8 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// Holding the right button on a module, or on a shut box, switches it off until
-/// the button comes up.
+/// the button comes up. Pressed on a module that is part of the selection, the
+/// whole selection flips together.
 /// </summary>
 public class HoldMuteTests : UiTest
 {
@@ -68,11 +69,28 @@ public class HoldMuteTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Only_the_module_under_the_pointer_is_muted_of_a_selection()
+    public void Pressing_a_selected_module_mutes_the_whole_selection()
     {
         var (editor, window) = Editing(Chain(out var clock, out var osc, out _));
 
         editor.Selection.SelectAll();
+        Down(editor, window, Body(osc));
+
+        osc.Off.ShouldBeTrue();
+        clock.Off.ShouldBeTrue();
+
+        Up(editor, window, Body(osc));
+
+        osc.Off.ShouldBeFalse();
+        clock.Off.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Pressing_a_module_outside_the_selection_mutes_only_it()
+    {
+        var (editor, window) = Editing(Chain(out var clock, out var osc, out _));
+
+        editor.Selection.Select(clock.Id);
         Down(editor, window, Body(osc));
 
         osc.Off.ShouldBeTrue();
@@ -146,16 +164,18 @@ public class HoldMuteTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_locked_canvas_is_not_muted_by_a_press()
+    public void A_locked_canvas_is_muted_by_a_press_all_the_same()
     {
         var (editor, window) = Editing(Chain(out _, out var osc, out _));
 
         editor.History.Locked = true;
         Down(editor, window, Body(osc));
 
-        osc.Off.ShouldBeFalse();
+        osc.Off.ShouldBeTrue();
 
         Up(editor, window, Body(osc));
+
+        osc.Off.ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -204,7 +224,29 @@ public class HoldMuteTests : UiTest
     }
 
     [AvaloniaFact]
-    public void In_an_open_group_only_the_module_pressed_is_muted()
+    public void In_an_open_group_with_nothing_selected_only_the_module_pressed_is_muted()
+    {
+        var patch = Chain(out var clock, out var osc, out _);
+        var group = patch.Group([clock.Id, osc.Id]).ShouldNotBeNull();
+        var (editor, window) = Editing(patch);
+
+        editor.Edits.ToggleBox(group);
+        editor.Selection.Select(null);
+        Settle(window);
+        group.Collapsed.ShouldBeFalse();
+
+        Down(editor, window, Body(osc));
+
+        osc.Off.ShouldBeTrue();
+        clock.Off.ShouldBeFalse();
+
+        Up(editor, window, Body(osc));
+
+        osc.Off.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Opening_a_group_selects_it_so_pressing_a_member_mutes_the_whole_group()
     {
         var patch = Chain(out var clock, out var osc, out _);
         var group = patch.Group([clock.Id, osc.Id]).ShouldNotBeNull();
@@ -217,10 +259,11 @@ public class HoldMuteTests : UiTest
         Down(editor, window, Body(osc));
 
         osc.Off.ShouldBeTrue();
-        clock.Off.ShouldBeFalse();
+        clock.Off.ShouldBeTrue();
 
         Up(editor, window, Body(osc));
 
         osc.Off.ShouldBeFalse();
+        clock.Off.ShouldBeFalse();
     }
 }

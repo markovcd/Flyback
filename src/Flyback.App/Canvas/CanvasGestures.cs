@@ -273,7 +273,8 @@ internal sealed class CanvasGestures
             if (!scene.HitPort(graph, out _, out _, out _))
             {
                 if (scene.HitBox(graph) is { } shut) held.Hold(shut.Members);
-                else if (scene.HitNode(graph) is { } under) held.Hold([under.Id]);
+                else if (scene.HitNode(graph) is { } under)
+                    held.Hold(selection.Contains(under.Id) ? selection.Nodes.Select(n => n.Id) : [under.Id]);
 
                 if (held.Holding) e.Pointer.Capture(canvas);
             }

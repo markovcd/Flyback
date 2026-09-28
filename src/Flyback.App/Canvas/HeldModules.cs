@@ -9,7 +9,8 @@ namespace Flyback.App.Canvas;
 /// <remarks>
 /// Not an edit: the patch is sounded with the module flipped and put back exactly as it
 /// was, so nothing reaches the history. A box flips together, going on only where every
-/// module in it is off.
+/// module in it is off. It works on a locked canvas too, source view owning the edits
+/// included, since nothing here is written back into the text.
 /// </remarks>
 internal sealed class HeldModules(CanvasHistory history, Repaint repaint)
 {
@@ -21,8 +22,6 @@ internal sealed class HeldModules(CanvasHistory history, Repaint repaint)
 
     public void Hold(IEnumerable<Guid> ids)
     {
-        if (history.Locked) return;
-
         var nodes = ids
             .Select(history.Patch.Find)
             .OfType<NodeInstance>()
