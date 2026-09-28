@@ -64,6 +64,10 @@ public sealed class PresetSteps(Session session)
         }
     }
 
+    [Then("it plays for {float} seconds before it comes round")]
+    public void ThenItLasts(double seconds) =>
+        (session.Presets.Single().Build(modules).Length ?? Patch.DefaultLength).ShouldBe(seconds, 0.01);
+
     [Then("each one saved and opened again is the same instrument")]
     public void ThenFilesKeepIt() => Each(patch => Differences(patch, PatchIO.Read(PatchIO.ToJson(patch)).Patch));
 

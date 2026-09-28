@@ -43,8 +43,9 @@ public sealed class EasyPlugin : IFlybackPlugin
             new PatchPreset(
                 WarehousePreset.Name,
                 WarehousePreset.Build,
-                "Acid house on the Easy modules: a squelching bass line with accents over a drum "
-                + "machine at 124 bpm, a supersaw stab on top, and the Acid knob on the filter.",
+                "A three-minute acid house track on the Easy modules at 124 bpm: builds, two drops and "
+                + "a breakdown in A minor, a bass line, a chord stab and an organ hook, and the Acid knob "
+                + "on the filter.",
                 PresetKind.Showcase),
         ]);
     }
