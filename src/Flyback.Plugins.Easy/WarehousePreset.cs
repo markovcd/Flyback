@@ -100,7 +100,15 @@ internal static class WarehousePreset
 
         b.Patch.Length = 96 * 240.0 / Bpm;
 
-        var acid = b.Patch.AddControl("Acid", 0f);
+        var pump = b.Patch.AddControl("Pump", 2f / 3f);
+        var echo = b.Patch.AddControl("Echo", 0.5f);
+        var swing = b.Patch.AddControl("Swing", 0.15f);
+
+        // Slewed, so a knob turned while it plays glides rather than steps.
+        var echoed = b.Add(NodeCatalog.SlewTypeId, (1, -1.52f), (2, -1.52f));
+        var swung = b.Add(NodeCatalog.SlewTypeId, (1, -1.52f), (2, -1.52f));
+        Knob(echoed, 0, echo, 0f, 0.6f);
+        Knob(swung, 0, swing, 0f, 1f);
 
         // --- the arrangement ---------------------------------------------------
 
@@ -123,7 +131,7 @@ internal static class WarehousePreset
         var kick = Drum(Kit.Kick, (DrumModule.DrivePort, 0.4f));
         var clap = Drum(Kit.Clap);
         var closed = DrumModule.Configure(
-            b.Add(DrumModule.TypeId, (DrumModule.BpmPort, Bpm), (DrumModule.SwingPort, 0.15f), (DrumModule.PanPort, -0.3f)),
+            b.Add(DrumModule.TypeId, (DrumModule.BpmPort, Bpm), (DrumModule.PanPort, -0.3f)),
             (DrumModule.SoundKey, Kit.ClosedHat), (DrumModule.RhythmKey, Rhythms.Sixteenths));
         var open = Drum(Kit.OpenHat, (DrumModule.DecayPort, 0.3f), (DrumModule.PanPort, 0.3f));
         var cowbell = DrumModule.Configure(
@@ -145,6 +153,8 @@ internal static class WarehousePreset
          .Wire(Formula("step(0.875, b) * step(0.25, a) * 0.6", song, phrase), 0, fill, DrumModule.VelocityPort)
          .Wire(Formula("a * 0.7", rise), 0, roll, DrumModule.VelocityPort);
 
+        foreach (var shuffled in new[] { closed, cowbell, fill, roll }) b.Wire(swung, 0, shuffled, DrumModule.SwingPort);
+
         Box("Drums");
 
         // --- the bass line -----------------------------------------------------
@@ -152,7 +162,7 @@ internal static class WarehousePreset
         var notes = b.Add("seq.notes", (1, Sixteenths), (2, 0.8f));
         StepsExtra.Set(notes, [.. Line.Select(n => new Step(n, 1f, n == 0 ? 0f : 1f))]);
 
-        // A square under a sub, round and warm; the Acid knob brings up the filter's ring.
+        // A square under a sub, round and warm.
         var bass = SynthModule.Configure(
             b.Add(
                 SynthModule.TypeId,
@@ -163,9 +173,9 @@ internal static class WarehousePreset
                 (SynthModule.SustainPort, 0.5f),
                 (SynthModule.ReleasePort, -1.2f),
                 (SynthModule.BrightPort, 0.15f),
+                (SynthModule.ResonancePort, 0.1f),
                 (SynthModule.DrivePort, 0.45f)),
             (SynthModule.WaveKey, Waves.Square));
-        Knob(bass, SynthModule.ResonancePort, acid, 0.1f, 0.85f);
 
         b.Wire(Formula("a + b", notes, root), 0, bass, SynthModule.PitchPort)
          .Wire(notes, 1, bass, SynthModule.GatePort)
@@ -257,11 +267,13 @@ internal static class WarehousePreset
          .Wire(lead, 0, chords, 9);
 
         // A dotted eighth on the left and an eighth on the right.
-        var echoLeft = b.Add("audio.delay", (1, 3f / Sixteenths), (2, 0.35f), (3, 0.3f));
-        var echoRight = b.Add("audio.delay", (1, 2f / Sixteenths), (2, 0.35f), (3, 0.3f));
+        var echoLeft = b.Add("audio.delay", (1, 3f / Sixteenths), (2, 0.35f));
+        var echoRight = b.Add("audio.delay", (1, 2f / Sixteenths), (2, 0.35f));
 
         b.Wire(chords, 0, echoLeft, 0)
-         .Wire(chords, 1, echoRight, 0);
+         .Wire(chords, 1, echoRight, 0)
+         .Wire(echoed, 0, echoLeft, 3)
+         .Wire(echoed, 0, echoRight, 3);
 
         Box("Chords");
 
@@ -269,7 +281,8 @@ internal static class WarehousePreset
 
         // The bass and the chords are ducked by the kick; the drums go round them on the bus.
         var music = b.Add(NodeCatalog.DeskTypeId, (5, 0.9f));
-        var ducked = b.Add("audio.duck", (3, 0.6f), (6, -0.74f));
+        var ducked = b.Add("audio.duck", (6, -0.74f));
+        Knob(ducked, 3, pump, 0f, 0.9f);
         var drums = b.Add(NodeCatalog.DeskTypeId);
         var master = b.Add(NodeCatalog.DeskTypeId, (5, 0.3f), (14, 0.8f));
 

@@ -44,8 +44,8 @@ public sealed class EasyPlugin : IFlybackPlugin
                 WarehousePreset.Name,
                 WarehousePreset.Build,
                 "A three-minute acid house track on the Easy modules at 124 bpm: builds, two drops and "
-                + "a breakdown in A minor, a bass line, a chord stab and an organ hook, and the Acid knob "
-                + "on the filter.",
+                + "a breakdown in A minor, a bass line, a chord stab and an organ hook, and knobs for the "
+                + "kick's pump, the echo and the swing.",
                 PresetKind.Showcase),
         ]);
     }
