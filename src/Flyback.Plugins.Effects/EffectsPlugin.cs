@@ -109,16 +109,16 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "echo, chime decay, reverb, warp, color and trails spin — ride on top of it.",
                 PresetKind.Showcase),
             new PatchPreset(
-                DubPreset.Name,
-                DubPreset.Build,
+                NoSenseDubPreset.Name,
+                NoSenseDubPreset.Build,
                 "Roots dub in A minor to perform: a one drop, a bass line and a skank that drop in and "
                 + "out and are thrown into the echo, a drop to silence and steppers at twice the tempo, "
-                + "four keys of organ to play over them, and six panel "
+                + "four keys of drawbar organ to play over them, and six panel "
                 + "knobs — filter, pluck, decay, echo, room — that move the rings on the screen as they "
                 + "move the sound. The voice is Nesnad's, from Wikimedia Commons, under CC BY-SA 3.0.",
                 PresetKind.Showcase)
             {
-                Files = PresetFiles.Embedded(typeof(DubPreset).Assembly, DubPreset.Name),
+                Files = PresetFiles.Embedded(typeof(NoSenseDubPreset).Assembly, NoSenseDubPreset.Clips),
             },
             new PatchPreset(
                 OverworldPreset.Name,

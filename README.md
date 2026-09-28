@@ -231,7 +231,7 @@ The app saves and opens all three. A `.fbks` is a copy rather than a document: i
 
 ```bash
 flyback-viewer nebula.fbk
-flyback-viewer --preset "Dub" --size 1080p --mute
+flyback-viewer --preset "No Sense Dub" --size 1080p --mute
 flyback-viewer drone.fbk --from 30 --cpu --for 10
 flyback-viewer --preset "Whole band" --hidden --for 10
 flyback-viewer --help

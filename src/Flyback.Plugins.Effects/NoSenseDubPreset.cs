@@ -8,7 +8,8 @@ namespace Flyback.Plugins.Effects;
 /// Roots dub to be played rather than listened to: a one drop at seventy-four, a bass
 /// line and a skank that drop in and out every few bars and are thrown into the echo,
 /// a drop to one line of Patois and silence, and steppers at twice the tempo after it;
-/// four keys of organ over them, and six knobs on the panel that are the performance.
+/// four keys of drawbar organ over them, and six knobs on the panel that are the
+/// performance. Named for the line of Patois it opens and closes on.
 /// </summary>
 /// <remarks>
 /// The chord is four MIDI Ins on voices 1 to 4 (ADR-0062) and everything worth
@@ -24,9 +25,12 @@ namespace Flyback.Plugins.Effects;
 /// at a time. Every key is snapped to the scale, and the computer keyboard is laid out in it.
 /// </para>
 /// </remarks>
-internal sealed class DubPreset : PresetBench
+internal sealed class NoSenseDubPreset : PresetBench
 {
-    public const string Name = "Dub";
+    public const string Name = "No Sense Dub";
+
+    /// <summary>The folder of this assembly's resources the voice's clips are in.</summary>
+    public const string Clips = "NoSenseDub";
 
     public const int Voices = 4;
 
@@ -166,10 +170,10 @@ internal sealed class DubPreset : PresetBench
             throw new InvalidOperationException(
                 $"it needs the Mastering plugin ({Mastering}), which is not installed.");
 
-        return new DubPreset(modules).Assemble();
+        return new NoSenseDubPreset(modules).Assemble();
     }
 
-    private DubPreset(ModuleCatalog modules)
+    private NoSenseDubPreset(ModuleCatalog modules)
         : base(modules)
     {
     }
@@ -305,27 +309,34 @@ internal sealed class DubPreset : PresetBench
             // A key off the scale plays the nearest note on it.
             var hz = tuned[voice] = InKey(keys[voice], [.. Key.Row.Select(note => note % 12)]);
 
-            // An organ: one knob from the short bubble of a reggae organ to one held
-            // down, the decay, the sustain it falls to and the release lengthening together.
-            var envelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.3f));
-            Follows(envelope, 2, decay, -1.2f, 0.2f);
-            Follows(envelope, 3, decay, 0.3f, 0.9f);
-            Follows(envelope, 4, decay, -1.3f, -0.3f);
+            // A drawbar organ, on as the key goes down and off as it comes up, and its
+            // percussion: the twelfth struck with the key and dying away as fast as the
+            // Decay knob says, with a click high over it.
+            var envelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -1f), (3, 1f), (4, -1.5f));
+            var struck = b.Add(NodeCatalog.AdsrTypeId, (1, -3f), (3, 0f), (4, -2f));
+            Follows(struck, 2, decay, -1.4f, -0.3f);
 
-            // Four drawbars: the note, its octave, the twelfth and two octaves up.
-            var drawbars = Formula("a + b * 0.5 + c * 0.35 + d * 0.3",
-                Oscillator("osc.sine", hz), Oscillator("osc.sine", Times(hz, 2f)),
-                Oscillator("osc.sine", Times(hz, 3f)), Oscillator("osc.sine", Times(hz, 4f)));
+            // The sixteen, the eight and the five and a third out, the way a reggae organ's
+            // bubble is set, and a little of the four.
+            var drawbars = Formula("(a * 0.8 + b + c * 0.8 + d * 0.3) * 0.7",
+                Oscillator("osc.sine", Times(hz, 0.5f)), Oscillator("osc.sine", hz),
+                Oscillator("osc.sine", Times(hz, 1.5f)), Oscillator("osc.sine", Times(hz, 2f)));
+            var click = Oscillator("osc.sine", Times(hz, 8f));
+            var percussed = Formula("a + b * c * 0.6 + d",
+                drawbars, Oscillator("osc.sine", Times(hz, 3f)), struck, click);
+
+            b.Wire(Formula("pow(a, 6) * 0.2", struck), 0, click, 3);
 
             var tone = b.Add(FilterType);
             Follows(tone, FilterResonance, resonance, 0.05f, 0.85f);
 
-            // The knob's cutoff, opened by the envelope, and held under the top of the
+            // The knob's cutoff, opened by the strike, and held under the top of the
             // Filter's range.
-            var opened = Formula("min(a * (b * c + 1) * 2, 11000)", cutoffHz, envelope, pluckDepth);
+            var opened = Formula("min(a * (b * c + 1) * 2, 11000)", cutoffHz, struck, pluckDepth);
 
             b.Wire(keys[voice], 1, envelope, 0)
-             .Wire(drawbars, 0, tone, 0)
+             .Wire(keys[voice], 1, struck, 0)
+             .Wire(percussed, 0, tone, 0)
              .Wire(opened, 0, tone, 1);
 
             // As loud as the key was struck, which a typist's never varies and a
@@ -343,10 +354,10 @@ internal sealed class DubPreset : PresetBench
 
         // --- the chord -------------------------------------------------------
 
-        // A little Drive for the warmth of a worn sampler, and a Chorus for the turning
-        // of a Leslie.
-        var warm = b.Add(DriveType, (1, 1.5f));
-        var wide = b.Add(ChorusModule.TypeId, (1, 0.3f), (2, 0.5f), (3, 0.5f));
+        // A little Drive for the valves of the amplifier, and a Chorus turning slowly for
+        // the horn of a Leslie.
+        var warm = b.Add(DriveType, (1, 2f));
+        var wide = b.Add(ChorusModule.TypeId, (1, 0.8f), (2, 0.7f), (3, 0.5f));
         var chordLeft = Product(wide, duck, DuckGain);
         var chordRight = Wired("math.mul", wide, duck, 1, DuckGain);
 

@@ -10,11 +10,11 @@ using Xunit;
 namespace Flyback.Plugins.Tests;
 
 /// <summary>
-/// The Dub preset: a backing that runs on its own, four played voices over it, and a
+/// The No Sense Dub preset: a backing that runs on its own, four played voices over it, and a
 /// panel of knobs. Building, compiling and layout are covered for every preset in
 /// <see cref="ShippedPresetTests"/>; this checks that it can be played and ridden.
 /// </summary>
-public class DubPresetTests
+public class NoSenseDubPresetTests
 {
     private const int Rate = GlobalConstants.SampleRate;
     private const int Voices = 4;
@@ -27,17 +27,17 @@ public class DubPresetTests
 
     private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
-    private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "Dub").Build(Loaded.Modules);
+    private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "No Sense Dub").Build(Loaded.Modules);
 
     /// <summary>The voice's clips, which the preset carries rather than names.</summary>
-    private static readonly BundleFiles Carried = new(Loaded.Presets.Single(p => p.Name == "Dub").Files!());
+    private static readonly BundleFiles Carried = new(Loaded.Presets.Single(p => p.Name == "No Sense Dub").Files!());
 
     private static string Key(int voice, string signal) => MidiSignal.Key(MidiSources.Keyboard, voice, signal);
 
     [Fact]
     public void It_is_a_showcase()
     {
-        Loaded.Presets.Single(p => p.Name == "Dub").Kind.ShouldBe(PresetKind.Showcase);
+        Loaded.Presets.Single(p => p.Name == "No Sense Dub").Kind.ShouldBe(PresetKind.Showcase);
     }
 
     [Fact]
@@ -147,12 +147,16 @@ public class DubPresetTests
     [Fact]
     public void Opening_the_filter_brightens_a_chord()
     {
-        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [("Cutoff", 0f), ("Pluck", 0f)]);
-        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [("Cutoff", 1f), ("Pluck", 0f)]);
+        // The chord alone: the same half second with and without it, one taken from the other.
+        float[] Chord(float cutoff)
+        {
+            (string, float)[] knobs = [("Cutoff", cutoff), ("Pluck", 0f)];
+            var with = Play(Rate / 2, [57f, 60f, 64f, 67f], knobs);
+            var without = Play(Rate / 2, null, knobs);
+            return [.. with.Zip(without, (a, b) => a - b)];
+        }
 
-        // The dust is the same in both and is most of what is bright in either, so half
-        // again is the organ's top arriving and not a rounding.
-        Brightness(open).ShouldBeGreaterThan(Brightness(shut) * 1.5f);
+        Brightness(Chord(1f)).ShouldBeGreaterThan(Brightness(Chord(0f)) * 2f);
     }
 
     /// <summary>The arrangement reaches the drums, the bass and the skank, and never the organ.</summary>
@@ -208,7 +212,7 @@ public class DubPresetTests
     [Fact]
     public void It_carries_both_sentences_of_its_voice()
     {
-        Loaded.Presets.Single(p => p.Name == "Dub").Files.ShouldNotBeNull()().Keys.Order()
+        Loaded.Presets.Single(p => p.Name == "No Sense Dub").Files.ShouldNotBeNull()().Keys.Order()
             .ShouldBe(["dread.wav", "no-sense.wav"]);
     }
 

@@ -30,7 +30,7 @@ calls, in 15 of 58 presets. Counting `+ - * / %` and each call as one:
 | Outrun | 25 | 56 | 2 |
 | Whole band | 25 | 42 | 3 |
 | Warehouse | 11 | 39 | 3 |
-| Dub | 17 | 32 | 0 |
+| No Sense Dub | 17 | 32 | 0 |
 | Acid | 14 | 28 | 1 |
 
 Calls by frequency: `step` 100, `smoothstep` 53, `fract` 45, `floor` 40, `mod` 29,

@@ -11,7 +11,7 @@ description: Use when you need to see a patch's picture or hear its sound, not t
 
 ```bash
 flyback-viewer nebula.fbk --mute --for 10
-flyback-viewer --preset "Dub" --size 720p --background
+flyback-viewer --preset "No Sense Dub" --size 720p --background
 flyback-viewer --preset "Whole band" --hidden --for 10
 ```
 
