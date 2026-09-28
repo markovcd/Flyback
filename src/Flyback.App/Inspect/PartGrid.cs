@@ -41,6 +41,9 @@ internal sealed class PartGrid
 
     private readonly NodeInstance node;
     private readonly Color accent;
+
+    /// <summary>What a level below nought is shaded in: the accent turned half-way round the color wheel.</summary>
+    private readonly Color below;
     private readonly Action<string?> changed;
 
     /// <summary>The parts being edited, written back by <see cref="Save"/> at every change.</summary>
@@ -59,6 +62,9 @@ internal sealed class PartGrid
         this.node = node;
         this.changed = changed;
         accent = Colors.Palette(def).Accent;
+
+        var hsl = accent.ToHsl();
+        below = new HslColor(hsl.A, (hsl.H + 180) % 360, hsl.S, hsl.L).ToRgb();
         parts = ArrangementExtra.Tidy(ArrangementExtra.Of(node));
 
         View = new StackPanel
@@ -111,7 +117,8 @@ internal sealed class PartGrid
     }
 
     /// <summary>
-    /// Every level as a cell, dark at nought and fully lit at one or more, and a
+    /// Every level as a cell, dark at nought and fully lit at one or more, in another
+    /// color below nought, and a
     /// gliding one shaded from where it comes from to where it goes; each part named on
     /// its left and taken away on its right.
     /// </summary>
@@ -284,8 +291,9 @@ internal sealed class PartGrid
 
     private string Cell(int part, int section) => $"{node.Id} part {part} section {section} click";
 
-    /// <summary>A level's shade: nought is the unlit cell, one or more the full accent, and a level below nought is shaded by its size.</summary>
-    private Color Shade(float level) => Colors.Blend(Colors.Node, accent, Math.Clamp(Math.Abs(level), 0f, 1f));
+    /// <summary>A level's shade: nought is the unlit cell and one or more the full accent; below nought, the other color by the level's size.</summary>
+    private Color Shade(float level) =>
+        Colors.Blend(Colors.Node, level < 0f ? below : accent, Math.Clamp(Math.Abs(level), 0f, 1f));
 
     private LinearGradientBrush Gradient(float from, float to) => new()
     {

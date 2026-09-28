@@ -49,8 +49,8 @@ and `section`, counting from 1.
   `>` before a level that glides. A level is only ever a number: `~` is a rest in a
   sequencer's block, and nought here would be a different thing by the same name. Only `|` ends a part, so a long
   one runs over lines, and a printing too long for one line breaks at each `|`.
-- **Its own control in the inspector**: a map of every level shaded in the
-  module's accent, a row a part, where a click switches a level to nought or back
+- **Its own control in the inspector**: a map of every level shaded from nought
+  to one in the module's accent, and below nought in its complement, a row a part, where a click switches a level to nought or back
   to its part's strongest, a double-click makes it glide or hold, and a drag turns
   it like a knob. The exact numbers are in each cell's tooltip and in the text.
   A grid of up to 256 knobs would be read as nothing at all.

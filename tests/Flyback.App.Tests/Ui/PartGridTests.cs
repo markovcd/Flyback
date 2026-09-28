@@ -59,6 +59,10 @@ public class PartGridTests : UiTest
         ShadeOf(0.5f, 0.5f).ShouldBe(ShadeOf(0.5f, 1f));
         ShadeOf(0.5f, 0.5f).ShouldNotBe(ShadeOf(1f, 1f));
         ShadeOf(1f, 0f).ShouldBe(ShadeOf(12f, 0f));
+
+        // Below nought is another color, as strong as the level is far from nought.
+        ShadeOf(-1f, 0f).ShouldNotBe(ShadeOf(1f, 0f));
+        ShadeOf(-0.5f, 0f).ShouldNotBe(ShadeOf(-1f, 0f));
     }
 
     [AvaloniaFact]
