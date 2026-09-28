@@ -35,6 +35,8 @@ internal sealed class DubPreset : PresetBench
 
     private const string Picture = "flyback.picture";
 
+    private const string Mastering = "flyback.mastering";
+
     /// <summary>The modules this borrows, named by id rather than by type.</summary>
     private const string SlewType = NodeCatalog.SlewTypeId;
 
@@ -120,6 +122,10 @@ internal sealed class DubPreset : PresetBench
         if (!modules.HasProvider(Picture))
             throw new InvalidOperationException(
                 $"it needs the Picture plugin ({Picture}), which is not installed.");
+
+        if (!modules.HasProvider(Mastering))
+            throw new InvalidOperationException(
+                $"it needs the Mastering plugin ({Mastering}), which is not installed.");
 
         return new DubPreset(modules).Assemble();
     }
@@ -525,10 +531,30 @@ internal sealed class DubPreset : PresetBench
         Channel(spaceDesk, 3, 1f, said);
         Channel(spaceDesk, 4, 1f, voiceLeft, voiceRight);
 
-        b.Wire(Chained(drumDesk, musicDesk, spaceDesk), 0, output, NodeCatalog.OutputLeftPort)
-         .Wire(spaceDesk, 1, output, NodeCatalog.OutputRightPort);
+        Chained(drumDesk, musicDesk, spaceDesk);
 
         Box("Desk", output);
+
+        // --- the master ------------------------------------------------------
+
+        // Nothing under thirty hertz, a little more weight under the bass, the mud
+        // taken out of the low middle and air on top; then wider, with the kick and
+        // the bass kept in the middle; then glued and held under a decibel.
+        var equalized = b.Add("flyback.mastering.eq",
+            (2, 30f), (3, 90f), (4, 1.5f), (5, 350f), (6, -2f), (7, 0.8f), (8, 9000f), (9, 2.5f));
+        var wider = b.Add("flyback.mastering.width", (2, 1.2f), (3, 150f));
+        var glued = b.Add("flyback.mastering.maximizer", (2, 0.4f), (3, 1f));
+
+        b.Wire(spaceDesk, 0, equalized, 0)
+         .Wire(spaceDesk, 1, equalized, 1)
+         .Wire(equalized, 0, wider, 0)
+         .Wire(equalized, 1, wider, 1)
+         .Wire(wider, 0, glued, 0)
+         .Wire(wider, 1, glued, 1)
+         .Wire(glued, 0, output, NodeCatalog.OutputLeftPort)
+         .Wire(glued, 1, output, NodeCatalog.OutputRightPort);
+
+        Box("Master", output);
 
         // --- the picture: fog ------------------------------------------------
 
