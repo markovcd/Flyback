@@ -209,6 +209,16 @@ public class NoSenseDubPresetTests
         Loudness([.. ending.Skip(Rate * 10)]).ShouldBeGreaterThan(Loudness([.. ending.Take(Rate * 3)]) * 0.1f);
     }
 
+    /// <summary>The roots riddim's bass line and the steppers' are two lines, not one played faster.</summary>
+    [Fact]
+    public void The_steppers_have_a_bass_line_of_their_own()
+    {
+        var lines = Patch().Nodes.Where(n => n.TypeId == "seq.values").Select(StepsExtra.Of).ToList();
+
+        lines.Count.ShouldBe(2);
+        lines[0].ShouldNotBe(lines[1]);
+    }
+
     [Fact]
     public void It_carries_both_sentences_of_its_voice()
     {

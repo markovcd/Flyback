@@ -397,9 +397,9 @@ internal sealed class NoSenseDubPreset : PresetBench
         // Two bars in sixteenths that leave the one to the kick and bounce: the root and
         // the octave over it, the fifth, a run down through the fourth and the third, a
         // push back up through the seventh, and pickups on the "a" of the beat, over A
-        // and then over D. Eighths in the steppers, so it runs at the same speed there.
-        // A rest holds the pitch it follows, so the glide has somewhere to come from.
-        var bassLine = b.Add("seq.values", (2, 0.65f), (3, 0.05f));
+        // and then over D. A rest holds the pitch it follows, so the glide has somewhere
+        // to come from.
+        var bassLine = b.Add("seq.values", (1, 4f), (2, 0.65f), (3, 0.05f));
         StepsExtra.Set(bassLine,
         [
             new Step(0f, 2f, 0f), new Step(0f, 2f), new Step(12f), new Step(12f, 1f, 0f),
@@ -409,6 +409,20 @@ internal sealed class NoSenseDubPreset : PresetBench
             new Step(10f), new Step(7f, 3f), new Step(7f, 1f, 0f), new Step(3f), new Step(5f),
             new Step(5f, 1f, 0f), new Step(7f), new Step(-5f),
         ]);
+
+        // The steppers' own, two bars in eighths and heavier: the root held, a pickup,
+        // the fifth and the octave, then down through the third to the seventh and the
+        // fifth under the root.
+        var stepperLine = b.Add("seq.values", (1, 2f), (2, 0.85f), (3, 0.05f));
+        StepsExtra.Set(stepperLine,
+        [
+            new Step(0f, 2f), new Step(0f, 1f, 0f), new Step(0f), new Step(7f, 2f), new Step(7f, 1f, 0f), new Step(12f),
+            new Step(3f, 2f), new Step(3f, 1f, 0f), new Step(0f), new Step(-2f, 2f), new Step(-5f, 2f),
+        ]);
+
+        // Whichever line is playing: the note, and the gate.
+        var bassNote = Formula($"mix(a, b, c) + {BassRoot} + d * 5", bassLine, stepperLine, fast, onD);
+        var bassGate = Formula("mix(a, b, c)", new Read(bassLine, 1), new Read(stepperLine, 1), fast);
 
         // Twenty milliseconds of glide on the hertz: a Note snaps to the semitone, so
         // the slide has to come after it.
@@ -423,12 +437,12 @@ internal sealed class NoSenseDubPreset : PresetBench
         var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), part[Bass]);
 
         b.Wire(beats, 0, bassLine, 0)
-         .Wire(Formula("4 - a * 2", fast), 0, bassLine, 1)
-         .Wire(Through("audio.note", Formula($"a + {BassRoot} + b * 5", bassLine, onD)), 0, bassHz, 0)
+         .Wire(beats, 0, stepperLine, 0)
+         .Wire(Through("audio.note", bassNote), 0, bassHz, 0)
          .Wire(body, 0, fat, 0)
          .Wire(fat, 0, bassTone, 0)
          .Wire(Formula("350 + a * 900", bassEnvelope), 0, bassTone, 1)
-         .Wire(bassLine, 1, bassEnvelope, 0);
+         .Wire(bassGate, 0, bassEnvelope, 0);
 
         Box("Bass");
 
@@ -593,7 +607,7 @@ internal sealed class NoSenseDubPreset : PresetBench
 
         // The bass is a glow along the bottom of the frame.
         var low = From(1f, Rises(coord, -1f, -0.3f, 1));
-        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), part[Bass]), 0.4f), 0.9f, 0.35f, 0.1f);
+        var glow = Ink(mist, Times(Product(Product(low, bassGate), part[Bass]), 0.4f), 0.9f, 0.35f, 0.1f);
 
         b.Wire(Times(clock, 0.05f), 0, fog, 2)
          .Wire(cold, 0, mist, 0)
