@@ -117,13 +117,16 @@ public class InfixPrinterTests
     }
 
     /// <summary>
-    /// A function that keeps its knobs as a module of its own, one the formula
-    /// computes once but the text would write twice, and one in a module that is
-    /// switched off would each read back as something else, so those are the call.
+    /// A function that keeps its knobs as a module of its own, a part the formula
+    /// computes once but the text around a function would write twice, and a
+    /// function in a module that is switched off would each read back as something
+    /// else, so those are the call.
     /// </summary>
     [Theory]
     [InlineData("clamp(a * 8, 0, 1)", false)]
     [InlineData("sin(a * 3) * sin(a * 3)", false)]
+    [InlineData("step(1.5, a % 4) * (4 - a % 4)", false)]
+    [InlineData("step(1.5, (a - 1) % 4) * (4 - (a - 1) % 4)", false)]
     [InlineData("floor(a * 8) / 8", true)]
     public void A_function_that_would_not_read_back_as_this_module_keeps_the_call(string formula, bool off)
     {

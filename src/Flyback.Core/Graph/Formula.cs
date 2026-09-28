@@ -165,8 +165,10 @@ internal sealed class Formula
     {
         if (Read(text, functions, out _) is not { root: var root }) return null;
 
-        // A call written twice is computed once here and would read back as two modules.
-        var called = new Dictionary<string, int>();
+        // A part written twice is computed once here. Beside a function, which
+        // reads back as a module of its own, the fusing will not fold it back in.
+        var written = new HashSet<string>();
+        var repeated = false;
 
         Count(root);
 
@@ -176,8 +178,7 @@ internal sealed class Formula
         {
             if (term is not Call call) return;
 
-            if (!Operators.ContainsKey(call.Module.TypeId) && call.Module.TypeId != "math.neg")
-                called[call.ToString()] = called.GetValueOrDefault(call.ToString()) + 1;
+            repeated |= !written.Add(call.ToString());
 
             foreach (var argument in call.Arguments) Count(argument);
         }
@@ -219,7 +220,7 @@ internal sealed class Formula
 
                 case Call call when !Operators.ContainsKey(call.Module.TypeId) && function(call.Module) is { } name:
                 {
-                    if (called[call.ToString()] > 1) return null;
+                    if (repeated) return null;
 
                     reads.Add(-1);
 
