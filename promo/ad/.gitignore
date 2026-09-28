@@ -1,0 +1,7 @@
+fonts/
+music.wav
+music.npy
+still_*.png
+sheet.png
+*.mp4
+__pycache__/

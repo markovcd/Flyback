@@ -1,0 +1,8 @@
+moderngl
+skia-python
+numpy
+numba
+scipy
+soundfile
+pyloudnorm
+pillow
