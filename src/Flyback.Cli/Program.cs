@@ -72,7 +72,7 @@ internal static class Program
 
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
-            Render(plugins, patch, exports),
+            Render(plugins, exports),
             Check(plugins, patch, json),
             Info(plugins, patch, json),
             Print(plugins),
@@ -256,14 +256,31 @@ internal static class Program
         return command;
     }
 
-    private static Command Render(PluginRegistry plugins, Argument<FileInfo> patch, ExportDefaults defaults)
+    private static Command Render(PluginRegistry plugins, ExportDefaults defaults)
     {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
         var output = new Option<FileInfo>("--out", "-o")
         {
             Description = "Where to write it. The extension picks the format: .png for a still, "
                 + string.Join(", ", ClipFormats.All.Select(f => f.Extension).Distinct())
                 + " for the rest.",
-            Required = true,
         };
 
         var size = new Option<(int Width, int Height)>("--size")
@@ -333,21 +350,82 @@ internal static class Program
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
-            patch, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, settings,
+            patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, settings,
         };
 
         command.SetAction((result, cancellation) =>
         {
+            var error = result.InvocationConfiguration.Error;
+
             plugins.Ready();
 
-            var file = result.GetRequiredValue(patch);
+            if (result.GetValue(presets))
+            {
+                foreach (var shipped in plugins.Catalog.Presets) result.InvocationConfiguration.Output.WriteLine(shipped.Name);
+
+                return Task.FromResult(Exit.Ok);
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to render: a patch, or --preset and its name.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (result.GetValue(output) is null)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to write it.");
+
+                return Task.FromResult(Exit.Failed);
+            }
 
             // A file named relatively is measured from wherever the patch is, so
             // a patch and the sounds and pictures beside it travel together — and
             // a bundle carries them, so one of those needs nothing beside it at
-            // all. Which of the two this is, is settled here and nowhere else.
-            if (Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened)
-                return Task.FromResult(Exit.Failed);
+            // all. A preset carries its own files the same way a bundle does.
+            Opened opened;
+
+            if (file is not null)
+            {
+                if (Patches.Open(file, error) is not { } fromFile) return Task.FromResult(Exit.Failed);
+
+                opened = fromFile;
+            }
+            else
+            {
+                if (plugins.Catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
+                {
+                    error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{named}'. --presets lists them.");
+
+                    return Task.FromResult(Exit.Failed);
+                }
+
+                try
+                {
+                    var built = wanted.Build(plugins.Catalog.Modules);
+
+                    if (wanted.Files is { } files)
+                    {
+                        var within = new BundleFiles(files());
+
+                        opened = new Opened(built, within, within);
+                    }
+                    else
+                    {
+                        opened = new Opened(built, new SampleLibrary(), new ImageLibrary());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    error.WriteLine($"{GlobalConstants.ApplicationName}: the '{wanted.Name}' preset would not build: {ex.Message}");
+
+                    return Task.FromResult(Exit.Failed);
+                }
+            }
 
             var (loaded, samples, pictures) = opened;
 

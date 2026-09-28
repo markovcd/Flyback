@@ -445,6 +445,44 @@ public class CommandTests
         File.ReadAllBytes(compiled.FullName).ShouldBe(File.ReadAllBytes(interpreted.FullName));
     }
 
+    /// <summary>A shipped preset is rendered by its name, with no file to have saved first.</summary>
+    [Fact]
+    public void A_preset_is_rendered_by_its_name()
+    {
+        using var directory = new Scratch();
+        var file = directory.File("out.png");
+
+        var code = Program.Run(
+            ["render", "--preset", "plasma", "--out", file.FullName, "--size", "64x36"],
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = TextWriter.Null, Error = TextWriter.Null });
+
+        code.ShouldBe(Exit.Ok);
+        file.Refresh();
+        file.Exists.ShouldBeTrue();
+        file.Length.ShouldBeGreaterThan(0);
+    }
+
+    [Theory]
+    [InlineData(new[] { "render", "--presets" }, Exit.Ok, "Whole band")]
+    [InlineData(new[] { "render", "--preset", "Nonesuch", "--out", "out.png" }, Exit.Failed, "no preset is called 'Nonesuch'")]
+    [InlineData(new[] { "render", "--out", "out.png" }, Exit.Failed, "say what to render")]
+    [InlineData(new[] { "render", "plasma.fbk", "--preset", "Plasma", "--out", "out.png" }, Exit.Failed, "say what to render")]
+    [InlineData(new[] { "render", "--preset", "Plasma" }, Exit.Failed, "--out says where to write it")]
+    public void A_render_is_refused_short_of_a_patch_or_a_preset(string[] args, int exit, string said)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var code = Program.Run(
+            args,
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = output, Error = error });
+
+        code.ShouldBe(exit, error.ToString());
+        (output.ToString() + error).ShouldContain(said);
+    }
+
     // --- print ---------------------------------------------------------------
 
     /// <summary>
