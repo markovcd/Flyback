@@ -18,6 +18,9 @@ public class DubPresetTests
     private const int Rate = GlobalConstants.SampleRate;
     private const int Voices = 4;
 
+    /// <summary>A section's length: eight bars at a hundred and twenty-two.</summary>
+    private const double Section = 32 * 60 / 122.0;
+
     private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
     private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "Dub").Build(Loaded.Modules);
@@ -133,11 +136,12 @@ public class DubPresetTests
         Loudness(played).ShouldBeGreaterThan(Loudness(backing) * 1.1f);
     }
 
+    /// <summary>In the fourth section, which has no stabs: the dub, drums and bass alone.</summary>
     [Fact]
     public void The_drums_and_the_bass_come_down_to_the_dust()
     {
-        var up = Play(Rate / 2);
-        var down = Play(Rate / 2, knobs: [("Drums", 0f), ("Bass", 0f)]);
+        var up = Play(Rate / 2, from: Section * 3);
+        var down = Play(Rate / 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: Section * 3);
 
         Loudness(down).ShouldBeLessThan(Loudness(up) * 0.2f);
     }
@@ -147,12 +151,47 @@ public class DubPresetTests
     {
         (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
 
-        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 0f), ("Pluck", 0f)]);
-        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 1f), ("Pluck", 0f)]);
+        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 0f), ("Pluck", 0f)], Section);
+        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 1f), ("Pluck", 0f)], Section);
 
         // The dust is the same in both and is most of what is bright in either, so
         // twice over is the chord's top arriving and not a rounding.
         Brightness(open).ShouldBeGreaterThan(Brightness(shut) * 2f);
+    }
+
+    [Fact]
+    public void No_two_sections_in_a_row_give_the_keys_the_same_sound()
+    {
+        var patch = Patch();
+        var envelopes = patch.Nodes.Where(n => n.TypeId == NodeCatalog.AdsrTypeId).Select(n => n.Id).ToHashSet();
+        var sound = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ArrangementTypeId
+            && patch.Connections.Any(c => c.SourceNode == n.Id && envelopes.Contains(c.TargetNode)));
+
+        var rows = ArrangementExtra.Of(sound);
+        var sections = rows[0].Count;
+
+        string Played(int section) => string.Join(", ", rows.Select(row => row[section % sections].Value));
+
+        for (var section = 0; section < sections; section++)
+            Played(section).ShouldNotBe(Played(section + 1), $"sections {section + 1} and {(section + 1) % sections + 1}");
+    }
+
+    /// <summary>The chord alone: the same moments played with and without it, one taken from the other.</summary>
+    [Fact]
+    public void A_held_chord_is_a_pad_in_the_intro_and_a_stab_in_the_next_section()
+    {
+        (string, float)[] dry = [("Drums", 0f), ("Bass", 0f), ("Echo", 0f), ("Space", 0f)];
+
+        float Ringing(double from)
+        {
+            var with = Play(Rate, [57f, 60f, 64f, 67f], dry, from);
+            var without = Play(Rate, null, dry, from);
+
+            // From six tenths of a second after the strike, with the key still down.
+            return Loudness([.. with.Zip(without, (a, b) => a - b).Skip(Rate * 7 / 10)]);
+        }
+
+        Ringing(0).ShouldBeGreaterThan(Ringing(Section) * 4f);
     }
 
     [Fact]
@@ -163,8 +202,12 @@ public class DubPresetTests
 
     // --- harness -----------------------------------------------------------------
 
-    /// <summary>The left channel, with <paramref name="chord"/> struck a tenth of a second in and held.</summary>
-    private static float[] Play(int length, float[]? chord = null, (string Name, float Value)[]? knobs = null)
+    /// <summary>
+    /// The left channel from <paramref name="from"/> seconds into the piece, with
+    /// <paramref name="chord"/> struck a tenth of a second in and held.
+    /// </summary>
+    private static float[] Play(
+        int length, float[]? chord = null, (string Name, float Value)[]? knobs = null, double from = 0)
     {
         var patch = Patch();
         var program = patch.CompileForAudio(Loaded.Modules, played: true).Program;
@@ -190,7 +233,7 @@ public class DubPresetTests
                     live.Set(Key(voice, MidiSignal.Strikes), 1f);
                 }
 
-            program.Evaluate(0, 0, i / (double)Rate, registers, default, state, live: live);
+            program.Evaluate(0, 0, from + i / (double)Rate, registers, default, state, live: live);
             left[i] = (float)registers[program.OutputBase];
         }
 

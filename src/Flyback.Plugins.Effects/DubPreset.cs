@@ -5,9 +5,9 @@ using Flyback.Core.Graph.Extras;
 namespace Flyback.Plugins.Effects;
 
 /// <summary>
-/// Dub techno to be played rather than listened to: a kick, hats and a sub that run
-/// on their own, four keys of chord over them, and eight knobs on the panel that
-/// are the performance.
+/// Dub techno to be played rather than listened to: eight sections of drums, a dub
+/// bass line and chord stabs thrown into the echo, four keys of chord over them whose
+/// sound changes with the section, and eight knobs on the panel that are the performance.
 /// </summary>
 /// <remarks>
 /// The chord is four MIDI Ins on voices 1 to 4 (ADR-0062) and everything worth
@@ -19,8 +19,9 @@ namespace Flyback.Plugins.Effects;
 /// on the screen.
 /// </para>
 /// <para>
-/// The sub follows the first voice folded into one octave, and sits on A until a
-/// key is struck.
+/// The bass line and the stabs follow the keys: the bass the first voice folded into
+/// one octave, the stabs every voice folded into the octave over A3. Both play A minor
+/// until a key is struck.
 /// </para>
 /// </remarks>
 internal sealed class DubPreset : PresetBench
@@ -53,17 +54,46 @@ internal sealed class DubPreset : PresetBench
 
     private const string GradeType = "flyback.picture.grade";
 
-    /// <summary>The Filter's resonance, and the ADSR's three stages a knob reaches.</summary>
+    /// <summary>The Filter's resonance.</summary>
     private const int FilterResonance = 2;
 
-    private const int AdsrDecay = 2;
+    /// <summary>The A the bass rests on, an octave and a half under the keyboard's bottom row.</summary>
+    private const int BassRoot = 33;
 
-    private const int AdsrSustain = 3;
+    /// <summary>The A the stabs are folded over.</summary>
+    private const int StabRoot = 57;
 
-    private const int AdsrRelease = 4;
+    /// <summary>The chord the stabs play until a key is struck: A minor seventh.</summary>
+    private static readonly int[] Resting = [57, 60, 64, 67];
 
-    /// <summary>The A the sub rests on, an octave and a half under the keyboard's bottom row.</summary>
-    private const float BassRoot = 33f;
+    /// <summary>The first Arrangement's parts: what plays in each section, and where the keys are sent.</summary>
+    private const int Kick = 0, Hats = 1, Rim = 2, Conga = 3, Bass = 4, Stabs = 5, Throw = 6, Wash = 7;
+
+    /// <summary>The second's: the sound the keys play in each section.</summary>
+    private const int Attack = 0, Decay = 1, Sustain = 2, Release = 3, Saws = 4, Organ = 5, Tines = 6, Bright = 7;
+
+    /// <summary>
+    /// A sound for the keys: an envelope in decades of a second, how much of each of the
+    /// three sources, how far the filter opens, and how much goes to the echo and the room.
+    /// </summary>
+    private readonly record struct Sound(
+        float Attack, float Decay, float Sustain, float Release,
+        float Saws, float Organ, float Tines, float Bright, float Throw, float Wash);
+
+    private static readonly Sound Pad = new(-0.5f, 0.3f, 0.8f, 0.1f, 1f, 0f, 0f, 0.6f, 0.35f, 0.9f);
+
+    private static readonly Sound Stab = new(-2.5f, -0.8f, 0f, -1f, 1f, 0f, 0f, 1.3f, 1f, 0.5f);
+
+    private static readonly Sound Keys = new(-2.5f, 0.2f, 0.1f, -0.5f, 0f, 0f, 0.6f, 1f, 0.6f, 0.6f);
+
+    private static readonly Sound Bubble = new(-2.3f, -0.8f, 0.35f, -1.2f, 0f, 1f, 0f, 2f, 0.7f, 0.4f);
+
+    /// <summary>
+    /// Eight bars a section: intro, the kick and bass arriving, the groove, a dub with
+    /// no kick, everything, a breakdown, the peak and the way out. No two sections in a
+    /// row give the keys the same sound.
+    /// </summary>
+    private static readonly Sound[] Sections = [Pad, Stab, Keys, Bubble, Stab, Pad, Bubble, Keys];
 
     public static Patch Build(ModuleCatalog modules)
     {
@@ -92,7 +122,7 @@ internal sealed class DubPreset : PresetBench
         var cutoff = Panel("Cutoff", 0.45f);
         var resonance = Panel("Resonance", 0.35f);
         var pluck = Panel("Pluck", 0.5f);
-        var decay = Panel("Decay", 0.4f);
+        var decay = Panel("Decay", 0.5f);
         var echo = Panel("Echo", 0.6f);
         var space = Panel("Space", 0.5f);
         var drums = Panel("Drums", 0.8f);
@@ -108,6 +138,35 @@ internal sealed class DubPreset : PresetBench
 
         Box("Clock");
 
+        // --- the arrangement -------------------------------------------------
+
+        // What plays in each section. Cut on the downbeat, since a kick faded in loses
+        // its first hit.
+        var parts = Arranged(beats, 1f / 32f,
+            Levels(0, 1, 1, 0, 1, 0, 1, 1),
+            Levels(0.4f, 0.7f, 1, 0.5f, 1, 0.3f, 1, 0.6f),
+            Levels(0.7f, 1, 1, 1, 1, 0.8f, 1, 1),
+            Levels(0, 0, 1, 1, 1, 0, 1, 0.5f),
+            Levels(0, 1, 1, 1, 1, 0, 1, 1),
+            Levels(1, 0.5f, 1, 0, 0.6f, 1, 1, 0.8f),
+            Levels([.. Sections.Select(s => s.Throw)]),
+            Levels([.. Sections.Select(s => s.Wash)]));
+
+        // The keys' sound, a third of a second from one to the next so a held chord
+        // turns into the new sound rather than clicking.
+        var sound = Arranged(beats, 1f / 32f,
+            Levels([.. Sections.Select(s => s.Attack)]),
+            Levels([.. Sections.Select(s => s.Decay)]),
+            Levels([.. Sections.Select(s => s.Sustain)]),
+            Levels([.. Sections.Select(s => s.Release)]),
+            Levels([.. Sections.Select(s => s.Saws)]),
+            Levels([.. Sections.Select(s => s.Organ)]),
+            Levels([.. Sections.Select(s => s.Tines)]),
+            Levels([.. Sections.Select(s => s.Bright)]));
+        sound.InputValues[2] = 0.02f;
+
+        Box("Arrangement");
+
         // --- the knobs as signals --------------------------------------------
 
         // A cutoff is heard in octaves, so the knob is an exponent: a hundred and
@@ -119,18 +178,24 @@ internal sealed class DubPreset : PresetBench
         // How many times over the envelope opens the filter.
         var pluckDepth = Times(Smoothed(pluck), 6f);
 
+        // The section's decay and release, each lengthened or shortened by the knob.
+        var longer = Knobbed("math.add", sound, 0f, Decay);
+        Follows(longer, 1, decay, -0.6f, 0.6f);
+        var later = Knobbed("math.add", sound, 0f, Release);
+        Follows(later, 1, decay, -0.6f, 0.6f);
+
         Box("Knobs");
 
         // --- the kick --------------------------------------------------------
 
         // Four on the floor, low and soft. What is left of the beat to the fifth
         // power is the envelope, and the pitch falls with it.
-        var kickStroke = Stroke(beats, 1f, 5f);
-        var kick = Drum(kickStroke, 47f, 110f, 4f, 1.8f);
+        var kickLevel = Product(Stroke(beats, 1f, 5f), parts, Kick);
+        var kick = Drum(kickLevel, 47f, 110f, 4f, 1.8f);
 
-        // The sidechain: the chords and the sub lean away from the kick, by as much
+        // The sidechain: the chords and the bass lean away from the kick, by as much
         // as the kick is up.
-        var duck = Ducking(kickStroke, 0f);
+        var duck = Ducking(kickLevel, 0f);
         Follows(duck, 3, drums, 0f, 0.55f);
 
         Box("Kick");
@@ -141,7 +206,7 @@ internal sealed class DubPreset : PresetBench
         var hatStroke = Sum(
             Times(Stroke(beats, 1f, 3.5f, 0.5f), 0.7f),
             Product(Times(Stroke(beats, 4f, 8f), 0.3f), Wander(0.07f, 2f, 0.3f)));
-        var hats = Hiss(hatStroke, 9000f, 0.15f, "high");
+        var hats = Hiss(Product(hatStroke, parts, Hats), 9000f, 0.15f, "high");
 
         Box("Hats");
 
@@ -150,7 +215,7 @@ internal sealed class DubPreset : PresetBench
         // Two and four, all of it a band of noise, and most of what is heard of it
         // is the echo.
         var rimStroke = Stroke(beats, 0.5f, 12f, 0.5f);
-        var rim = Hiss(rimStroke, 1700f, 0.5f, "band", 2.5f, seed: 1f);
+        var rim = Hiss(Product(rimStroke, parts, Rim), 1700f, 0.5f, "band", 2.5f, seed: 1f);
 
         Box("Rim");
 
@@ -161,7 +226,7 @@ internal sealed class DubPreset : PresetBench
         var conga = b.Add("flyback.voice.drum", (DrumPitch, 185f), (3, 45f), (4, 2f), (5, 0f));
 
         b.Wire(beats, 0, congaHits, 0)
-         .Wire(congaHits, EuclidStroke, conga, 1);
+         .Wire(Formula("a * b", new Read(congaHits, EuclidStroke), new Read(parts, Conga)), 0, conga, 1);
 
         Box("Conga");
 
@@ -179,36 +244,42 @@ internal sealed class DubPreset : PresetBench
 
             var hz = Through("audio.note", keys[voice]);
 
-            // One knob from a stab to a pad: the decay, the sustain it falls to and
-            // the release all lengthen together.
-            var envelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.3f));
-            Follows(envelope, AdsrDecay, decay, -1.2f, 0.5f);
-            Follows(envelope, AdsrSustain, decay, 0.05f, 0.7f);
-            Follows(envelope, AdsrRelease, decay, -1f, 0.6f);
+            // The section's envelope: a pad, a stab, an electric piano or an organ's bubble.
+            var envelope = b.Add(NodeCatalog.AdsrTypeId);
 
             // Two saws a few cents apart, each voice by its own amount so that a chord
             // does not beat in step, and a square an octave under them.
-            var saw = b.Add("osc.saw", (3, 0.5f));
-            var beside = b.Add("osc.saw", (3, 0.5f));
-            var under = b.Add("osc.square", (3, 0.3f));
+            var saw = Oscillator("osc.saw", hz, 0.5f);
+            var beside = Oscillator("osc.saw", Times(hz, 1.004f + 0.0015f * voice), 0.5f);
+            var under = Oscillator("osc.square", Times(hz, 0.5f), 0.3f);
+
+            // Three drawbars of organ, and a tine struck as hard as the envelope is up.
+            var drawbars = Formula("a + b * 0.5 + c * 0.25",
+                Oscillator("osc.sine", hz), Oscillator("osc.sine", Times(hz, 2f)), Oscillator("osc.sine", Times(hz, 3f)));
+            var tine = Bell(hz, envelope, 1f, 1.1f);
+
             var tone = b.Add(FilterType);
             Follows(tone, FilterResonance, resonance, 0.05f, 0.85f);
 
-            // The knob's cutoff, opened by the envelope and held under the top of the
-            // Filter's range.
-            var opened = Knobbed(
-                "math.min", Product(cutoffHz, Plus(Product(envelope, pluckDepth), 1f)), 11000f);
+            // The knob's cutoff, opened by the envelope and by the section, and held
+            // under the top of the Filter's range.
+            var opened = Formula("min(a * (b * c + 1) * d, 11000)",
+                cutoffHz, envelope, pluckDepth, new Read(sound, Bright));
 
             b.Wire(keys[voice], 1, envelope, 0)
-             .Wire(hz, 0, saw, 1)
-             .Wire(Times(hz, 1.004f + 0.0015f * voice), 0, beside, 1)
-             .Wire(Times(hz, 0.5f), 0, under, 1)
-             .Wire(Sum(Sum(saw, beside), under), 0, tone, 0)
+             .Wire(sound, Attack, envelope, 1)
+             .Wire(longer, 0, envelope, 2)
+             .Wire(sound, Sustain, envelope, 3)
+             .Wire(later, 0, envelope, 4)
+             .Wire(Formula("(a + b + c) * d", saw, beside, under, new Read(sound, Saws)), 0, tone, 0)
              .Wire(opened, 0, tone, 1);
+
+            // The tine carries its own envelope and is not filtered.
+            var played = Formula("(a + b * c) * d", tone, drawbars, new Read(sound, Organ), envelope);
 
             // As loud as the key was struck, which a typist's never varies and a
             // keyboard's does.
-            var voiced = Product(Product(tone, envelope), keys[voice], 2);
+            var voiced = Product(Formula("a + b * c", played, tine, new Read(sound, Tines)), keys[voice], 2);
 
             // The voice as the picture knows it: a twelfth of a second of loudness.
             heard[voice] = b.Add(NodeCatalog.MeterTypeId, (1, -1.1f), (2, 0.15f));
@@ -233,55 +304,77 @@ internal sealed class DubPreset : PresetBench
 
         Box("Chord");
 
-        // --- the sub ---------------------------------------------------------
+        // --- the stabs -------------------------------------------------------
+
+        // The chord last struck, folded into the octave over A3, hit on the off-beat of
+        // one and of three and left to the echo. Velocity is nought until a key is
+        // struck and never again, which holds each note on A minor until then.
+        NodeInstance? stabSaws = null;
+
+        for (var voice = 0; voice < Voices; voice++)
+        {
+            var note = Formula(
+                $"mix({Resting[voice]}, (a + {120 - StabRoot}) % 12 + {StabRoot}, step(0.01, b))",
+                keys[voice], new Read(keys[voice], 2));
+            var stabSaw = Oscillator("osc.saw", Through("audio.note", note));
+
+            stabSaws = stabSaws is null ? stabSaw : Sum(stabSaws, stabSaw);
+        }
+
+        // A tenth of a second of chord through a filter that drifts open and shut
+        // over half a minute, which is the sound of this music.
+        var stabStroke = Stroke(beats, 0.5f, 8f, 0.75f);
+        var stabLevel = Product(stabStroke, parts, Stabs);
+        var stabTone = b.Add(FilterType, (FilterResonance, 0.45f));
+        var stabs = Formula("a * b * 0.6", stabTone, stabLevel);
+
+        b.Wire(stabSaws!, 0, stabTone, 0)
+         .Wire(Formula("min(a * (1 + b * 2) * c, 8000)", cutoffHz, stabStroke, Wander(0.03f, 5f, 0.6f, 1.6f)),
+             0, stabTone, 1);
+
+        Box("Stabs");
+
+        // --- the bass --------------------------------------------------------
 
         // The first voice's note folded into the octave over the low A. A hundred and
         // twenty is ten octaves, so adding it changes no pitch class and keeps what
-        // is folded over nought. Velocity is nought until the first key is struck
-        // and never again, which is what holds the sub on A until then.
-        var folded = Plus(Knobbed("math.mod", Plus(keys[0], 120f - BassRoot), 12f), BassRoot);
-        var struck = b.Add("math.step", (0, 0.01f));
-        var root = b.Add("math.mix", (0, BassRoot));
+        // is folded over nought.
+        var root = Formula(
+            $"mix({BassRoot}, (a + {120 - BassRoot}) % 12 + {BassRoot}, step(0.01, b))",
+            keys[0], new Read(keys[0], 2));
 
-        // Two bars of off-beats, with the seventh under the root at the end of the
-        // first and the fifth under it at the end of the second. A rest holds the
-        // pitch it follows, so the glide has somewhere to come from.
-        var bassLine = b.Add("seq.values", (1, 4f), (2, 0.75f), (3, 0.05f));
+        // Two bars leaving the one to the kick: up from the root to the fifth, and back
+        // down through the third to the seventh and the fifth under it. A rest holds
+        // the pitch it follows, so the glide has somewhere to come from.
+        var bassLine = b.Add("seq.values", (1, 4f), (2, 0.9f), (3, 0.05f));
         StepsExtra.Set(bassLine,
         [
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0.7f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(-2f, 1f, 0.8f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(0f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(3f, 1f, 0.8f), new Step(3f, 1f, 0f), new Step(0f), new Step(0f, 1f, 0f),
-            new Step(0f, 1f, 0f), new Step(-5f, 1f, 0.8f), new Step(-5f, 1f, 0.7f), new Step(-5f, 1f, 0f),
+            new Step(0f, 2f, 0f), new Step(0f, 3f), new Step(0f, 1f, 0f),
+            new Step(3f, 2f), new Step(5f, 2f), new Step(7f, 4f), new Step(7f, 2f, 0f),
+            new Step(7f, 2f, 0f), new Step(7f, 2f), new Step(5f), new Step(3f),
+            new Step(0f, 4f), new Step(0f, 2f, 0f), new Step(-2f, 2f), new Step(-5f, 2f),
         ]);
 
-        // Fifty milliseconds of glide on the hertz: a Note snaps to the semitone, so
+        // Twenty milliseconds of glide on the hertz: a Note snaps to the semitone, so
         // the slide has to come after it.
-        var bassHz = b.Add(SlewType, (1, -1.3f), (2, -1.3f));
-        var sub = b.Add("osc.sine", (3, 0.9f));
-        var edge = b.Add("osc.triangle", (3, 0.2f));
-        var bassTone = b.Add(FilterType, (1, 320f), (2, 0.1f));
+        var bassHz = b.Add(SlewType, (1, -1.7f), (2, -1.7f));
 
-        // The gate with its corners taken off: three milliseconds up, an eighth of a
-        // second down.
-        var bassGate = b.Add(SlewType, (1, -2.5f), (2, -0.9f));
-        var subOut = Product(Product(bassTone, bassGate), duck, DuckGain);
+        // A sine with a little triangle, driven for the harmonics a small speaker can
+        // play, and a filter that opens with each note's thump.
+        var body = Formula("a - b * 0.5", Oscillator("osc.sine", bassHz), Oscillator("osc.saw", bassHz));
+        var fat = b.Add(DriveType, (1, 5f));
+        var bassEnvelope = b.Add(NodeCatalog.AdsrTypeId, (1, -2.5f), (2, -0.6f), (3, 0.7f), (4, -1.3f));
+        var bassTone = b.Add(FilterType, (FilterResonance, 0.2f));
+        var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), new Read(parts, Bass));
 
-        b.Wire(keys[0], 2, struck, 1)
-         .Wire(folded, 0, root, 1)
-         .Wire(struck, 0, root, 2)
-         .Wire(beats, 0, bassLine, 0)
+        b.Wire(beats, 0, bassLine, 0)
          .Wire(Through("audio.note", Sum(bassLine, root)), 0, bassHz, 0)
-         .Wire(bassHz, 0, sub, 1)
-         .Wire(Times(bassHz, 2f), 0, edge, 1)
-         .Wire(Sum(sub, edge), 0, bassTone, 0)
-         .Wire(bassLine, 1, bassGate, 0);
+         .Wire(body, 0, fat, 0)
+         .Wire(fat, 0, bassTone, 0)
+         .Wire(Formula("350 + a * 900", bassEnvelope), 0, bassTone, 1)
+         .Wire(bassLine, 1, bassEnvelope, 0);
 
-        Box("Sub");
+        Box("Bass");
 
         // --- the dust --------------------------------------------------------
 
@@ -301,8 +394,9 @@ internal sealed class DubPreset : PresetBench
 
         // The echo every record of this kind is made of: three sixteenths and then
         // two more, fed back by the knob, and each side darkened on the way out so
-        // that the repeats sit behind what is played.
-        var send = b.Add("math.mixer", (1, 0.7f), (3, 0.5f), (5, 0.4f));
+        // that the repeats sit behind what is played. The stabs go in hardest; the
+        // keys as hard as their section's sound wants.
+        var send = b.Add("math.mixer", (3, 0.5f), (5, 0.4f), (7, 0.9f));
         var taps = Echo(send, beat, 3f, 2f, 0.6f, 1f);
         Follows(taps, EchoFeedback, echo, 0.2f, 0.9f);
 
@@ -312,16 +406,19 @@ internal sealed class DubPreset : PresetBench
         // The room's size stays where it is, because a delay line that changes length
         // while it rings bends what is in it. The knob is how long it rings and how
         // much of it comes back.
-        var roomSend = b.Add("math.mixer", (1, 0.6f), (3, 0.4f), (5, 0.4f), (7, 0.15f));
+        var roomSend = b.Add("math.mixer", (3, 0.4f), (5, 0.4f), (7, 0.15f));
         var room = b.Add(NodeCatalog.ReverbTypeId, (1, 0.85f), (3, 1f));
         Follows(room, 2, space, 0.5f, 0.93f);
 
         b.Wire(warm, 0, send, 0)
+         .Wire(parts, Throw, send, 1)
          .Wire(rim, 0, send, 2)
          .Wire(conga, 0, send, 4)
+         .Wire(stabs, 0, send, 6)
          .Wire(taps, 0, tapsLeft, 0)
          .Wire(taps, EchoRight, tapsRight, 0)
          .Wire(warm, 0, roomSend, 0)
+         .Wire(parts, Wash, roomSend, 1)
          .Wire(tapsLeft, 0, roomSend, 2)
          .Wire(rim, 0, roomSend, 4)
          .Wire(hats, 0, roomSend, 6)
@@ -336,20 +433,21 @@ internal sealed class DubPreset : PresetBench
         // part was mixed at where the knob rests.
         var drumDesk = b.Add(DeskType);
         var musicDesk = b.Add(DeskType);
-        var spaceDesk = b.Add(DeskType, (DeskTrim, 0.28f));
+        var spaceDesk = b.Add(DeskType, (DeskTrim, 0.25f));
 
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.9f));
 
         Channel(drumDesk, 1, 0.8f, kick);
-        Channel(drumDesk, 2, 0.3f, hats);
+        Channel(drumDesk, 2, 0.45f, hats);
         Channel(drumDesk, 3, 0.35f, rim);
         Channel(drumDesk, 4, 0.35f, conga);
 
         for (var channel = 1; channel <= 4; channel++) Ridden(drumDesk, channel, drums);
 
-        Channel(musicDesk, 1, 0.75f, subOut);
+        Channel(musicDesk, 1, 0.75f, bassOut);
         Channel(musicDesk, 2, 0.85f, chordLeft, chordRight);
         Channel(musicDesk, 3, 0.2f, dust);
+        Channel(musicDesk, 4, 0.9f, stabs);
         Ridden(musicDesk, 1, bass);
 
         Channel(spaceDesk, 1, 0.6f, tapsLeft, tapsRight);
@@ -364,7 +462,7 @@ internal sealed class DubPreset : PresetBench
         // --- the picture: fog ------------------------------------------------
 
         // Slow Fractal noise in one cold color, with as much light in it as the
-        // filter is open.
+        // filter is open, and a flash of it on every stab.
         var coord = b.Add(NodeCatalog.CoordTypeId);
         var fog = b.Add(FractalType, (3, 1.6f), (4, 0.55f));
         var light = Times(fog, 0.7f);
@@ -373,13 +471,13 @@ internal sealed class DubPreset : PresetBench
         var cold = b.Add("color.rgb", (0, 0.12f), (1, 0.3f), (2, 0.36f));
         var mist = b.Add("color.gain");
 
-        // The sub is a glow along the bottom of the frame, as high as the Bass knob.
+        // The bass is a glow along the bottom of the frame, as high as the Bass knob.
         var low = From(1f, Rises(coord, -1f, -0.3f, 1));
-        var glow = Ink(mist, Times(Product(low, bassLine, 1), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
+        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), parts, Bass), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
 
         b.Wire(Times(clock, 0.05f), 0, fog, 2)
          .Wire(cold, 0, mist, 0)
-         .Wire(light, 0, mist, 1);
+         .Wire(Sum(light, Times(stabLevel, 0.5f)), 0, mist, 1);
 
         Box("Picture: Fog");
 
@@ -405,7 +503,7 @@ internal sealed class DubPreset : PresetBench
 
             // Which of the twelve notes it is, as a hue between teal and magenta, so a
             // note is always the color it was and an octave is the same color further
-            // out. The warm end of the wheel is left to the kick and the sub.
+            // out. The warm end of the wheel is left to the kick and the bass.
             var tint = b.Add("color.hsv", (1, 0.45f), (2, 1f));
             var lit = b.Add("color.gain");
 
@@ -426,8 +524,8 @@ internal sealed class DubPreset : PresetBench
         // --- the picture: scene ----------------------------------------------
 
         // The kick is a disc in the middle that every ring is drawn round, swelling
-        // on the beat and gone when the drums are down.
-        var kickSeen = Times(kickStroke, drums, 0f, 1f);
+        // on the beat and gone when the drums are down or out.
+        var kickSeen = Times(kickLevel, drums, 0f, 1f);
         var disc = b.Add(CircleType);
         var pulse = b.Add(FillType, (1, 0.06f));
         var scene = Ink(Sum(glow, rings!), Product(pulse, kickSeen), 0.75f, 0.95f, 1f);
@@ -460,6 +558,14 @@ internal sealed class DubPreset : PresetBench
         Box("Picture: Scene");
 
         return b.Build();
+    }
+
+    /// <summary>An oscillator at a frequency that is a wire.</summary>
+    private NodeInstance Oscillator(string type, NodeInstance hz, float amp = 1f)
+    {
+        var osc = b.Add(type, (3, amp));
+        b.Wire(hz, 0, osc, 1);
+        return osc;
     }
 
     /// <summary>A Slew of thirty milliseconds each way, for a knob that is heard.</summary>
