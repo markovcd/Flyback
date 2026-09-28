@@ -72,8 +72,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <!--
+        The All plugins configuration is a developer's own machine asking for
+        every platform's backend at once, not just the one it is running on —
+        see Flyback.App.csproj for where the site-only plugins join the list.
+      -->
       <ShippedPlugin Include="@(PluginProject)"
-                     Condition="'%(PluginProject.Platform)' == '' or '%(PluginProject.Platform)' == '$(PluginPlatform)'" />
+                     Condition="'$(Configuration)' == 'All plugins' or '%(PluginProject.Platform)' == '' or '%(PluginProject.Platform)' == '$(PluginPlatform)'" />
     </ItemGroup>
 
   </Target>

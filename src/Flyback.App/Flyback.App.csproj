@@ -85,6 +85,17 @@
     <PluginProject Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
   </ItemGroup>
 
+  <!--
+    The All plugins configuration: a developer's own machine, never Docker or a
+    release, asking for the site's plugins too (ADR-0141) so the editor loads
+    them without a trip through pack-plugin and the site's install dialog.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
+    <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
