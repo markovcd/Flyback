@@ -121,6 +121,12 @@ public sealed class OutputSettings
     public string DefaultPreset { get; set; } = string.Empty;
 
     /// <summary>
+    /// The library folder, where a sound file or picture a patch names is looked
+    /// for when it is not beside the patch — the Files section. Empty for none.
+    /// </summary>
+    public string Library { get; set; } = string.Empty;
+
+    /// <summary>
     /// What each sound backend's own form was last set to, filed under the backend's
     /// id — the rest of the Sound section, which the backend declares (ADR-0085).
     /// </summary>
@@ -237,6 +243,7 @@ public sealed class OutputSettings
             settings.VideoFormat = ClipFormats.Wanted(settings.VideoFormat, picture: true).Id;
             settings.SoundFormat = ClipFormats.Wanted(settings.SoundFormat, picture: false).Id;
             settings.FfmpegPath ??= string.Empty;
+            settings.Library ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
 
             // A "defaultPreset": null typed by hand is the one written here, not a fault.

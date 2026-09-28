@@ -16,6 +16,7 @@ internal sealed class OutputSettingsUse(
     PanelKnobs knobs,
     TransportControls transport,
     Playback playback,
+    PatchFiles files,
     ReportLine report)
 {
     /// <summary>Applies the settings already loaded for this run.</summary>
@@ -57,6 +58,8 @@ internal sealed class OutputSettingsUse(
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
 
         knobs.Hub.Takeover = settings.Takeover;
+
+        files.UseLibrary(settings.Library);
 
         if (transport.Overlay is { } overlay) TransportOverlay.Lay(settings.Transport, overlay, knobs.Stage);
         if (transport.PictureWindow is { } picture)

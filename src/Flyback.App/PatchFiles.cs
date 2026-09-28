@@ -148,6 +148,19 @@ internal sealed class PatchFiles
         reactions.Raise(new DocumentArrived(Sounds, Pictures));
     }
 
+    /// <summary>Looks in <paramref name="library"/> for what is not beside the patch, and reads the patch's files again.</summary>
+    public void UseLibrary(string? library)
+    {
+        library = string.IsNullOrWhiteSpace(library) ? null : library;
+
+        if (string.Equals(SoundFolder.Library, library, StringComparison.OrdinalIgnoreCase)) return;
+
+        SoundFolder.Library = library;
+        PictureFolder.Library = library;
+
+        reactions.Raise(new FilesMoved(Sounds, Pictures));
+    }
+
     /// <summary>Whether the document is a bundle, which is what the next save offers first.</summary>
     public bool IsBundle => bundled;
 
@@ -379,7 +392,7 @@ internal sealed class PatchFiles
     {
         if (Carried is { } held && held.Bytes.TryGetValue(path, out var bytes)) return bytes;
 
-        return PatchPaths.Carriable(path, SoundFolder.Beside);
+        return PatchPaths.Carriable(path, SoundFolder.Beside, SoundFolder.Library);
     }
 
     /// <summary>

@@ -3,10 +3,14 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
+using Flyback.App.Settings;
 
 namespace Flyback.App.Files;
 
-/// <summary>The Files section of the settings window: which program opens Flyback's files (ADR-0127).</summary>
+/// <summary>
+/// The Files section of the settings window: which program opens Flyback's files
+/// (ADR-0127), and the library folder.
+/// </summary>
 internal sealed class FilesSection
 {
     private readonly ComboBox opener = new Picker
@@ -28,7 +32,8 @@ internal sealed class FilesSection
 
     private readonly Action<string, string?> report;
 
-    public FilesSection(EditorSetup setup, ReportLine report)
+    /// <param name="output">Holds the library folder's row, which is saved with the output settings.</param>
+    public FilesSection(EditorSetup setup, ReportLine report, OutputSections output)
     {
         path = setup.FileTypeSettingsPath;
         system = setup.FileTypes;
@@ -50,6 +55,16 @@ internal sealed class FilesSection
                     + "when the viewer is chosen."
                 : "Only for you, and only this copy of Flyback. Saving with Nothing takes back what "
                     + "Flyback registered. A program you picked yourself for these files stays picked.",
+            FontSize = Text.Small,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        View.Children.Add(output.Library);
+
+        View.Children.Add(new TextBlock
+        {
+            Text = "Where a sound or a picture a patch names is looked for when it is not beside the patch.",
             FontSize = Text.Small,
             Foreground = Text.Muted,
             TextWrapping = TextWrapping.Wrap,

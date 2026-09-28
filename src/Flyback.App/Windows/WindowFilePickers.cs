@@ -12,4 +12,7 @@ internal sealed class WindowFilePickers(WindowHolder holder) : IFilePickers
 
     public Task<IStorageFile?> Save(FilePickerSaveOptions options) =>
         holder.Instance.StorageProvider.SaveFilePickerAsync(options);
+
+    public Task<IReadOnlyList<IStorageFolder>> OpenFolder(FolderPickerOpenOptions options) =>
+        holder.Instance.StorageProvider.OpenFolderPickerAsync(options);
 }

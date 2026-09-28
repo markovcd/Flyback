@@ -366,6 +366,93 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
         pictures.Explain(pictured!).ShouldContain("another machine");
     }
 
+    // --- the library folder ---------------------------------------------------
+
+    private string? library;
+    private string? patchFolder;
+    private string? savedShowing;
+    private Opened openedWithLibrary;
+    private NodeInstance? chosenFor;
+
+    [AfterScenario]
+    public void RemoveTheLibrary()
+    {
+        if (library is not null) Directory.Delete(library, recursive: true);
+        if (patchFolder is not null) Directory.Delete(patchFolder, recursive: true);
+    }
+
+    [Given("a picture {string} in the library folder")]
+    public void GivenAPictureInTheLibrary(string name)
+    {
+        library = Directory.CreateTempSubdirectory("flyback-library").FullName;
+
+        WritePicture(Path.Combine(library, name), width: 2);
+    }
+
+    [Given("a saved patch showing {string}, with no such picture beside it")]
+    public void GivenAPatchWithoutThePicture(string name) => SaveShowing(name);
+
+    [Given("a saved patch showing {string}, with a picture of that name beside it")]
+    public void GivenAPatchWithThePicture(string name)
+    {
+        SaveShowing(name);
+        WritePicture(Path.Combine(patchFolder!, name), width: 1);
+    }
+
+    [When("the patch is opened with the library folder")]
+    public void WhenOpenedWithTheLibrary() =>
+        openedWithLibrary = PatchFile.Open(new FileInfo(savedShowing.ShouldNotBeNull()), library).Patch.ShouldNotBeNull();
+
+    [When("that picture is chosen for a picture module")]
+    public void WhenChosenFromTheLibrary()
+    {
+        var picked = Directory.GetFiles(library.ShouldNotBeNull(), "*.png", SearchOption.AllDirectories).Single();
+
+        chosenFor = context.Add("shown", NodeCatalog.PictureTypeId);
+        PictureExtra.Set(chosenFor, PatchPaths.Named(picked, library));
+    }
+
+    [Then("it compiles with nothing wrong")]
+    public void ThenItCompilesClean() =>
+        openedWithLibrary.Patch
+            .CompileForVideo(samples: openedWithLibrary.Samples, pictures: openedWithLibrary.Pictures)
+            .Issues.ShouldBeEmpty();
+
+    [Then("the picture shown is the one beside the patch")]
+    public void ThenTheOneBeside()
+    {
+        var shown = PictureExtra.Of(openedWithLibrary.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.PictureTypeId));
+
+        openedWithLibrary.Pictures.Find(shown.ShouldNotBeNull()).ShouldNotBeNull().Width.ShouldBe(1);
+    }
+
+    [Then("the patch names it {string}")]
+    public void ThenNamed(string name) => PictureExtra.Of(chosenFor.ShouldNotBeNull()).ShouldBe(name);
+
+    /// <summary>A picture module on the screen, saved in a folder of its own.</summary>
+    private void SaveShowing(string name)
+    {
+        PictureExtra.Set(context.Add("shown", NodeCatalog.PictureTypeId), name);
+        context.Add("screen", "output");
+        context.Wire("shown", 0, "screen", "color");
+
+        patchFolder = Directory.CreateTempSubdirectory("flyback-patch").FullName;
+        savedShowing = Path.Combine(patchFolder, "shown.fbk");
+        File.WriteAllText(savedShowing, PatchIO.ToJson(context.Patch));
+    }
+
+    /// <summary>A black picture one pixel tall, its width telling it apart from another of the same name.</summary>
+    private static void WritePicture(string path, int width)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        var bgra = new byte[width * 4];
+
+        for (var x = 0; x < width; x++) bgra[x * 4 + 3] = 255;
+
+        PngWriter.WriteBgra(path, bgra, width, 1, width * 4);
+    }
+
     private void Rainbow()
     {
         context.Add("coords", "coord");

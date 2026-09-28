@@ -30,6 +30,19 @@ public sealed class ImageLibrary : IImageLibrary
         }
     }
 
+    /// <inheritdoc cref="SampleLibrary.Library"/>
+    public string? Library
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
+
+            field = value;
+            known.Clear();
+        }
+    }
+
     public LoadedImage? Find(string path) => Look(path).Picture;
 
     public string Explain(string path) => Look(path).Fault switch
@@ -47,7 +60,7 @@ public sealed class ImageLibrary : IImageLibrary
     public void Forget(string? path = null)
     {
         if (path is null) known.Clear();
-        else if (PatchPaths.Resolve(path, Beside) is { } full) known.Remove(full);
+        else known.Remove(path);
     }
 
     /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
@@ -57,11 +70,11 @@ public sealed class ImageLibrary : IImageLibrary
     {
         if (string.IsNullOrWhiteSpace(path)) return (null, PngFault.Missing);
 
-        if (PatchPaths.Resolve(path, Beside) is not { } full) return (null, PngFault.Elsewhere);
+        if (known.TryGetValue(path, out var already)) return already;
 
-        if (known.TryGetValue(full, out var already)) return already;
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return known[path] = (null, PngFault.Elsewhere);
 
         var picture = PngReader.Read(full, out var fault);
-        return known[full] = (picture, fault);
+        return known[path] = (picture, fault);
     }
 }

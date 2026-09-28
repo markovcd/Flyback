@@ -105,4 +105,76 @@ public sealed class PatchPathsTests : IDisposable
         PatchPaths.Carriable(key, beside: null).ShouldBeNull();
         PatchPaths.Carriable("id_rsa", folder).ShouldBeNull();
     }
+
+    // --- the library folder ----------------------------------------------------
+
+    [Fact]
+    public void A_relative_path_not_beside_the_patch_is_found_in_the_library()
+    {
+        var (patch, library) = (Sub("patch"), Sub("library"));
+        var shelved = Picture(Path.Combine(library, "stars", "moon.png"));
+
+        PatchPaths.Resolve("stars/moon.png", patch, library).ShouldBe(shelved);
+        PatchPaths.Carriable("stars/moon.png", patch, library).ShouldBe(File.ReadAllBytes(shelved));
+    }
+
+    [Fact]
+    public void A_file_beside_the_patch_comes_before_the_library()
+    {
+        var (patch, library) = (Sub("patch"), Sub("library"));
+        var beside = Picture(Path.Combine(patch, "moon.png"));
+        Picture(Path.Combine(library, "moon.png"));
+
+        PatchPaths.Resolve("moon.png", patch, library).ShouldBe(beside);
+    }
+
+    [Fact]
+    public void A_file_in_neither_is_named_beside_the_patch()
+    {
+        var (patch, library) = (Sub("patch"), Sub("library"));
+
+        PatchPaths.Resolve("moon.png", patch, library).ShouldBe(Path.Combine(patch, "moon.png"));
+    }
+
+    [Theory]
+    [InlineData("../secret.png")]
+    [InlineData(@"..\secret.png")]
+    public void The_library_is_never_climbed_out_of(string path)
+    {
+        var (patch, library) = (Sub(Path.Combine("a", "patch")), Sub("library"));
+        Picture(Path.Combine(folder, "secret.png"));
+
+        PatchPaths.Resolve(path, patch, library).ShouldBe(PatchPaths.Resolve(path, patch));
+    }
+
+    [Fact]
+    public void An_absolute_path_is_not_looked_for_in_the_library()
+    {
+        var library = Sub("library");
+        Picture(Path.Combine(library, "moon.png"));
+
+        var gone = Path.Combine(Sub("elsewhere"), "moon.png");
+
+        PatchPaths.Resolve(gone, beside: null, library).ShouldBe(gone);
+    }
+
+    [Fact]
+    public void A_file_picked_inside_the_library_is_named_from_it()
+    {
+        var library = Sub("library");
+
+        PatchPaths.Named(Path.Combine(library, "stars", "moon.png"), library).ShouldBe("stars/moon.png");
+        PatchPaths.Named(Path.Combine(folder, "moon.png"), library).ShouldBe(Path.Combine(folder, "moon.png"));
+        PatchPaths.Named(Path.Combine(library, "moon.png"), library: null).ShouldBe(Path.Combine(library, "moon.png"));
+    }
+
+    private string Sub(string name) => Directory.CreateDirectory(Path.Combine(folder, name)).FullName;
+
+    private static string Picture(string path)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        PngWriter.WriteBgra(path, [0, 0, 255, 255], 1, 1, 4);
+
+        return path;
+    }
 }

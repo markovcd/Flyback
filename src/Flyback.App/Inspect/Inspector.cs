@@ -1352,11 +1352,13 @@ internal sealed class Inspector
         SoundFileType,
         picked =>
         {
-            SampleExtra.Set(node, picked);
+            var named = PatchPaths.Named(picked, soundFolder.Library);
+
+            SampleExtra.Set(node, named);
 
             // Forgotten first, so a file that has been replaced since it was
             // last read is read again rather than answered from the cache.
-            soundFolder.Forget(picked);
+            soundFolder.Forget(named);
         });
 
     /// <summary>The same row for the other kind of file — see <see cref="PictureExtra"/>.</summary>
@@ -1368,8 +1370,10 @@ internal sealed class Inspector
         PictureFileType,
         picked =>
         {
-            PictureExtra.Set(node, picked);
-            pictureFolder.Forget(picked);
+            var named = PatchPaths.Named(picked, pictureFolder.Library);
+
+            PictureExtra.Set(node, named);
+            pictureFolder.Forget(named);
         });
 
     /// <summary>

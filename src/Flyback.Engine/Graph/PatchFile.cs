@@ -16,7 +16,8 @@ namespace Flyback.Core.Graph;
 public static class PatchFile
 {
     /// <summary>The patch a path names together with its files.</summary>
-    public static PatchOpen Open(FileInfo file)
+    /// <param name="library">The library folder, where a file not beside the patch is looked for next.</param>
+    public static PatchOpen Open(FileInfo file, string? library = null)
     {
         if (!Bundled(file))
         {
@@ -26,8 +27,8 @@ public static class PatchFile
                 read.Patch is { } loose
                     ? new Opened(
                         loose,
-                        new SampleLibrary { Beside = file.DirectoryName },
-                        new ImageLibrary { Beside = file.DirectoryName })
+                        new SampleLibrary { Beside = file.DirectoryName, Library = library },
+                        new ImageLibrary { Beside = file.DirectoryName, Library = library })
                     : null,
                 read.Problems);
         }

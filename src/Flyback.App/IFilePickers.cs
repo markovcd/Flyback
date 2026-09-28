@@ -10,4 +10,6 @@ internal interface IFilePickers
     Task<IReadOnlyList<IStorageFile>> Open(FilePickerOpenOptions options);
 
     Task<IStorageFile?> Save(FilePickerSaveOptions options);
+
+    Task<IReadOnlyList<IStorageFolder>> OpenFolder(FolderPickerOpenOptions options);
 }

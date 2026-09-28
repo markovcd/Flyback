@@ -41,6 +41,22 @@ public sealed class SampleLibrary : ISampleLibrary
         }
     }
 
+    /// <summary>
+    /// The library folder, where a relative path not found beside the patch is
+    /// looked for next, or null for none.
+    /// </summary>
+    public string? Library
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
+
+            field = value;
+            known.Clear();
+        }
+    }
+
     public LoadedSample? Find(string path) => Look(path).Clip;
 
     public string Explain(string path) => Look(path).Fault switch
@@ -60,7 +76,7 @@ public sealed class SampleLibrary : ISampleLibrary
     public void Forget(string? path = null)
     {
         if (path is null) known.Clear();
-        else if (PatchPaths.Resolve(path, Beside) is { } full) known.Remove(full);
+        else known.Remove(path);
     }
 
     /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
@@ -70,11 +86,11 @@ public sealed class SampleLibrary : ISampleLibrary
     {
         if (string.IsNullOrWhiteSpace(path)) return (null, WavFault.Missing);
 
-        if (PatchPaths.Resolve(path, Beside) is not { } full) return (null, WavFault.Elsewhere);
+        if (known.TryGetValue(path, out var already)) return already;
 
-        if (known.TryGetValue(full, out var already)) return already;
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return known[path] = (null, WavFault.Elsewhere);
 
         var clip = WavReader.Read(full, out var fault);
-        return known[full] = (clip, fault);
+        return known[path] = (clip, fault);
     }
 }

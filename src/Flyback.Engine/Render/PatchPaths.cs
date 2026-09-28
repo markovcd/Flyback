@@ -15,6 +15,42 @@ public static class PatchPaths
     private static readonly byte[] PngSignature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 
     /// <summary>
+    /// <see cref="Resolve(string, string?)"/>, then the library folder for a
+    /// relative path that is not beside the patch.
+    /// </summary>
+    public static string? Resolve(string path, string? beside, string? library)
+    {
+        var measured = Resolve(path, beside);
+
+        if (measured is null || library is not { Length: > 0 } || File.Exists(measured)) return measured;
+
+        return Inside(library, path.Trim()) is { } shelved && File.Exists(shelved) ? shelved : measured;
+    }
+
+    /// <summary>
+    /// How a picked file is named in a patch: relative to the library folder where
+    /// it is inside it, so the patch finds it on any machine with the same library.
+    /// </summary>
+    public static string Named(string picked, string? library)
+    {
+        if (library is not { Length: > 0 }) return picked;
+
+        try
+        {
+            var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(library)) + Path.DirectorySeparatorChar;
+            var full = Path.GetFullPath(picked);
+
+            return full.StartsWith(root, StringComparison.OrdinalIgnoreCase)
+                ? full[root.Length..].Replace(Path.DirectorySeparatorChar, '/')
+                : picked;
+        }
+        catch (Exception ex) when (ex is ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            return picked;
+        }
+    }
+
+    /// <summary>
     /// The full path of a file the patch names, measured from <paramref name="beside"/>
     /// when relative, or null where it is on another machine the patch is not on.
     /// </summary>
@@ -71,11 +107,11 @@ public static class PatchPaths
     /// The bytes of a file the patch names, for a bundle to carry: null where it
     /// cannot be read, is on another machine, or is not a WAV or a PNG.
     /// </summary>
-    public static byte[]? Carriable(string path, string? beside)
+    public static byte[]? Carriable(string path, string? beside, string? library = null)
     {
         try
         {
-            if (Resolve(path, beside) is not { } full || !File.Exists(full)) return null;
+            if (Resolve(path, beside, library) is not { } full || !File.Exists(full)) return null;
 
             using var file = File.OpenRead(full);
 

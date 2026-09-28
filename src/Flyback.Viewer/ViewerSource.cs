@@ -30,7 +30,7 @@ internal static class ViewerSource
     private static (Opened Opened, string Name)? Find(
         ViewerOptions options, OutputSettings settings, PluginCatalog plugins, PresetLibrary library, TextWriter error)
     {
-        if (options.Patch is { } path) return OpenFile(path, error);
+        if (options.Patch is { } path) return OpenFile(path, settings.Library, error);
 
         var ordered = PresetLibrary.Ordered(plugins.Presets, library);
 
@@ -63,10 +63,10 @@ internal static class ViewerSource
         return Build(wanted, library, plugins, error);
     }
 
-    private static (Opened, string)? OpenFile(string path, TextWriter error)
+    private static (Opened, string)? OpenFile(string path, string? shelf, TextWriter error)
     {
         var file = new FileInfo(path);
-        var open = PatchFile.Open(file);
+        var open = PatchFile.Open(file, shelf);
 
         // Said whether or not there is a patch: one short of a plugin plays anyway.
         foreach (var problem in open.Problems) error.WriteLine(problem);

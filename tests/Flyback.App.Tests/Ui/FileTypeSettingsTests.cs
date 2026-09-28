@@ -22,6 +22,8 @@ public sealed class FileTypeSettingsTests : UiTest
 
     private readonly Recorded system = new();
 
+    private string OutputPath => Path.Combine(Path.GetDirectoryName(settingsPath)!, "output.json");
+
     private const int FilesTab = 6;
 
     public override void Dispose()
@@ -42,7 +44,12 @@ public sealed class FileTypeSettingsTests : UiTest
 
     private MainWindow Open()
     {
-        var window = NewMainWindow(new EditorSetup { FileTypeSettingsPath = settingsPath, FileTypes = system });
+        var window = NewMainWindow(new EditorSetup
+        {
+            FileTypeSettingsPath = settingsPath,
+            OutputSettingsPath = OutputPath,
+            FileTypes = system,
+        });
 
         window.Show();
         Settle(window);
@@ -149,5 +156,17 @@ public sealed class FileTypeSettingsTests : UiTest
         Close(window, OpenSettings(window), "Save");
 
         system.Applied.ShouldBe([FileOpener.Editor, FileOpener.Editor]);
+    }
+
+    [AvaloniaFact]
+    public void The_library_folder_is_kept_with_the_output_settings()
+    {
+        var window = Open();
+        var dialog = OpenSettings(window);
+
+        All<TextBox>(dialog).Single(t => t.Name == "library").Text = @"  D:\Sounds  ";
+        Close(window, dialog, "Save");
+
+        OutputSettings.Load(OutputPath).Library.ShouldBe(@"D:\Sounds");
     }
 }

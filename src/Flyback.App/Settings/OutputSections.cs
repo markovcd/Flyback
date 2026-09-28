@@ -226,6 +226,17 @@ internal sealed class OutputSections
         TextWrapping = TextWrapping.Wrap,
     };
 
+    private readonly TextBox libraryBox = new()
+    {
+        Name = "library",
+        PlaceholderText = "none",
+        FontSize = Text.Body,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>The library folder's row, which the Files section shows.</summary>
+    public Grid Library { get; }
+
     private readonly ComboBox latency = new Picker
     {
         Name = "latency",
@@ -270,6 +281,8 @@ internal sealed class OutputSections
         BuildGraphics();
         BuildRecording();
         BuildSound();
+
+        Library = BuildLibrary();
 
         preview.BackendChanged += message =>
         {
@@ -320,6 +333,7 @@ internal sealed class OutputSections
         videoFormat.SelectedIndex = Row(ClipFormats.Pictures, current.VideoFormat, picture: true);
         soundFormat.SelectedIndex = Row(ClipFormats.Sounds, current.SoundFormat, picture: false);
         ffmpegBox.Text = current.FfmpegPath;
+        libraryBox.Text = current.Library;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
         Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
         KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
@@ -374,6 +388,7 @@ internal sealed class OutputSections
             // Trimmed, because a path pasted in with a space on the end is a
             // path nobody meant and one File.Exists would refuse.
             FfmpegPath = (ffmpegBox.Text ?? string.Empty).Trim(),
+            Library = (libraryBox.Text ?? string.Empty).Trim(),
 
             // Every backend's, not only the one showing, so a backend that is not
             // installed this launch keeps what it was set to. A copy, because the
@@ -621,6 +636,51 @@ internal sealed class OutputSections
         if (plugins.PreferredAudioOutput is not null) Sound.Children.Add(soundForm);
 
         Sound.Children.Add(InspectorRows.Field("Latency", latency));
+    }
+
+    /// <summary>A caption, the folder typed or picked, and a button that picks one.</summary>
+    private Grid BuildLibrary()
+    {
+        ToolTip.SetTip(libraryBox,
+            "A folder of sounds and pictures. A file chosen from inside it is named from it, "
+            + "so the patch finds it on any machine with the same library.");
+
+        var browse = new Button
+        {
+            Content = "…",
+            Width = 32,
+            FontSize = Text.Body,
+            Margin = new Thickness(4, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        ToolTip.SetTip(browse, "Choose the library folder.");
+
+        browse.Click += async (_, _) =>
+        {
+            var folders = await pickers.OpenFolder(new FolderPickerOpenOptions
+            {
+                Title = "Choose the library folder",
+                AllowMultiple = false,
+            });
+
+            if (folders is [{ } picked] && picked.TryGetLocalPath() is { } path) libraryBox.Text = path;
+        };
+
+        var row = InspectorRows.Row("*,Auto", InspectorRows.SettingsGutter);
+        var label = InspectorRows.Caption("Library", InspectorRows.SettingsGutter);
+
+        Grid.SetColumn(label, 0);
+        Grid.SetColumn(libraryBox, 1);
+        Grid.SetColumn(browse, 2);
+
+        row.Children.Add(label);
+        row.Children.Add(libraryBox);
+        row.Children.Add(browse);
+
+        return row;
     }
 
     /// <summary>Asks where ffmpeg is, and looks at what was picked.</summary>

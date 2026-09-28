@@ -139,6 +139,22 @@ public sealed class ImageLibraryTests : IDisposable
         library.Find("moon.png").ShouldBeNull();
     }
 
+    /// <summary>A picture missing beside the patch is found once the library folder is set.</summary>
+    [Fact]
+    public void Setting_the_library_folder_looks_again_for_what_was_missing()
+    {
+        var patch = Directory.CreateDirectory(Path.Combine(folder, "patch")).FullName;
+        Write("moon.png");
+
+        var library = new ImageLibrary { Beside = patch };
+
+        library.Find("moon.png").ShouldBeNull();
+
+        library.Library = folder;
+
+        library.Find("moon.png").ShouldNotBeNull();
+    }
+
     /// <summary>
     /// Pointing the library at another folder invalidates everything in it,
     /// because the same bare name means a different file there.

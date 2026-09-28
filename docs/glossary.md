@@ -133,6 +133,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **bundle** | `.fbkb`: a patch file with the sound files and pictures it names, and optionally its conversation. | `PatchBundle` | archive, package |
 | **text** | `.fbks`: the patch written in the Flyback language. | `PatchLanguage` | script, source |
 | **plugin package** | `.fbkp`: a signed plugin, ready to install. | `PluginPackage` | bundle |
+| **library folder** | The folder set under Settings → Files where a sound file or picture a patch names is looked for when it is not beside the patch. | `OutputSettings.Library`, `SampleLibrary.Library` | search path, assets folder |
 | **recovery** | The snapshot of unsaved work each window keeps, reopened after a crash. | `Recovery` | autosave, backup |
 
 ## Plugins
