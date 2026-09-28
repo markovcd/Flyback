@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Beat you can see and Two echoes, the presets the two new tutorials on the website build.
 - The assistant keeps its conversation when a knob is turned or an edit undone, is told in a line what changed, and keeps knobs turned while it works unless it set the same one; only adding or removing a module or a wire starts a new conversation.
 - Patch text pastes onto the canvas as its modules and groups, and modules copied off a canvas paste into the text view as text.
 - Dub is renamed No Sense Dub and is roots dub in A minor: a one drop at 74 BPM with a bouncing bass line and a skank over A minor and D minor that drop in and out every two bars and are thrown into the echo, a drop to one line of Patois and silence, steppers at 148 BPM after it with a heavier bass line of their own, two lines of Patois that trail off into their own echo, a drawbar organ with percussion, played a note at a time and held to the scale, six panel knobs, an ending on a last line of Patois and its longest, darkest echo, and a master of EQ, width and a Maximizer.

@@ -17,3 +17,8 @@ Feature: Every shipped preset works
 
   Scenario: Every preset written out as text reads back as the same instrument
     Then each one written out as text and read back is the same instrument
+
+  # A name is how a preset is asked for: the gallery's filter, --preset, a tutorial.
+  Scenario: No two presets share a name, the plugins' included
+    Given every preset the shipped plugins add as well
+    Then no two of them have the same name

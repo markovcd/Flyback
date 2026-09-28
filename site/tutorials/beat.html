@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make a beat you can see — Flyback Tutorials</title>
+<meta name="description" content="Build a beat in Flyback from one tempo: a kick, a Euclidean hat and a bass line, mixed and leveled, with rings the kick lights up and a knob on the panel for the bass filter.">
+<link rel="canonical" href="https://markovcd.github.io/Flyback/tutorials/beat.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Flyback">
+<meta property="og:url" content="https://markovcd.github.io/Flyback/tutorials/beat.html">
+<meta property="og:title" content="Make a beat you can see">
+<meta property="og:description" content="A kick, a hat and a bass line on one tempo, and rings the kick lights up: a Flyback tutorial.">
+<meta property="og:image" content="https://markovcd.github.io/Flyback/assets/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Flyback logo and the words One patch. A picture and a sound., in front of a wall of pictures Flyback presets make.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#22252A">
+<link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  .doc-head { border-bottom: 1px solid var(--edge); }
+  .result { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; margin-top: 24px; align-items: start; }
+  @media (min-width: 720px) { .result { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+  .result figure { margin: 0; }
+  .result img { display: block; width: 100%; height: auto; border-radius: var(--radius); border: 1px solid var(--edge); background: #000; }
+</style>
+</head>
+<body>
+
+<header class="toolbar">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/logo.svg" alt=""><span>Flyback</span></a>
+    <nav aria-label="Site">
+      <a href="../" class="optional">Overview</a>
+      <a href="../tutorials.html" aria-current="page">Tutorials</a>
+      <a href="../shared-plugins.html">Plugins</a>
+      <a href="../presets.html">Presets</a>
+      <span class="sep" aria-hidden="true"></span>
+      <a href="https://github.com/markovcd/Flyback">GitHub</a>
+      <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="canvas">
+  <div class="wrap">
+    <header class="doc-head" style="border: 0">
+      <p class="eyebrow" style="color: var(--sequencer)"><a href="../tutorials.html">Tutorials</a> · Rhythm</p>
+      <h1>Make a beat you can see.</h1>
+      <p class="lede">A kick, a hat and a bass line, all counting the same beats, and a picture the kick lights up
+      in time. Twenty-one modules, written as text a few lines at a time, with a knob at the end to play the bass
+      filter by hand. About fifteen minutes.</p>
+    </header>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+  <nav class="toc" aria-label="Contents">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#clock">One clock</a></li>
+      <li><a href="#kick">A kick on every beat</a></li>
+      <li><a href="#hats">Hats from a Euclid</a></li>
+      <li><a href="#bass">A bass line</a></li>
+      <li><a href="#mix">Mix and level it</a></li>
+      <li><a href="#picture">The picture</a></li>
+      <li><a href="#knob">A knob for the filter</a></li>
+      <li><a href="#whole">The whole patch</a></li>
+      <li><a href="#next">Where next</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <section id="clock">
+    <h2><span class="num">01</span>One clock</h2>
+
+    <p>Open <strong>Presets</strong>, choose <strong>Empty</strong>, and press <kbd>F2</kbd> for the text view. Every
+    snippet on this page goes there: type it or paste it over what is there, and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+    to build it. The canvas shows what it built whenever you press <kbd>F2</kbd> again.</p>
+
+    <p>A beat starts with a <strong>Tempo</strong>. Its <code>beats</code> output counts beats since the patch
+    started: 0 at the start, 1 one beat later, 2.5 halfway through the third. Everything rhythmic in this patch reads
+    that count rather than the clock in seconds, so the tempo is one knob. Turn <code>bpm</code> and the kick, the hat,
+    the bass and the picture all follow.</p>
+
+    <pre><code class="fbks">let beats = tempo(bpm: 118).beats</code></pre>
+
+    <p>The <code>.beats</code> takes that output by name; a Tempo's first output is beats per second, which is what a
+    sequencer's <code>rate</code> wants and not what this patch needs.</p>
+  </section>
+
+  <section id="kick">
+    <h2><span class="num">02</span>A kick on every beat</h2>
+
+    <p>Two modules from the Voice plugin make a kick. A <strong>Stroke</strong> is a drum hit without a trigger: it
+    jumps to 1 at the start of each stroke and falls to 0 by its end. Fed the beat count with <code>rate: 1</code>,
+    there is one stroke a beat. <code>curve</code> is how the fall bends: 1 is a straight line, 4 a quick fall with a
+    tail. A <strong>Drum</strong> turns that envelope into a kick: a sine that starts <code>sweep</code> hertz above
+    <code>pitch</code> and drops to it as the level falls.</p>
+
+    <pre><code class="fbks">let beats = tempo(bpm: 118).beats
+let kick  = beats |> stroke(rate: 1, curve: 4)
+
+drum(level: kick, pitch: 48, sweep: 160, drive: 2) |> out.left
+
+out.volume = 0.6</code></pre>
+
+    <div class="note">
+      <span class="tag">Why a Stroke and not a gate</span>
+      <p>An ADSR, a Decay and a Delay remember what happened a moment ago, and a picture has no moment ago, so they
+      only work on the sound. A Stroke is worked out from the beat count alone. The picture can read the same kick
+      the speakers hear, which is what <a href="#picture">step 06</a> does.</p>
+    </div>
+  </section>
+
+  <section id="hats">
+    <h2><span class="num">03</span>Hats from a Euclid</h2>
+
+    <p>A <strong>Euclid</strong> spreads <code>hits</code> as evenly as it can over <code>steps</code>. Five in eight
+    is a busy, off-balance hat that still lands on the beat. With the beat count on its <code>in</code>,
+    <code>rate</code> is steps a beat, so 4 makes each step a sixteenth. Its <code>stroke</code> output falls across
+    each hit step, the same shape a Stroke makes.</p>
+
+    <p>A <strong>Hiss</strong> is noise through a filter: high-passed at 9000 hertz, it is a closed hat. Give each
+    Hiss its own <code>seed</code> and two of them never move together.</p>
+
+    <pre><code class="fbks">let beats = tempo(bpm: 118).beats
+let kick  = beats |> stroke(rate: 1, curve: 4)
+let hats  = beats |> euclid(rate: 4, steps: 8, hits: 5)
+
+let drum = drum(level: kick, pitch: 48, sweep: 160, drive: 2)
+let hat  = hiss(level: hats.stroke, cutoff: 9000, seed: 3)
+
+drum * 0.8 + hat * 0.2 |> out.left
+
+out.volume = 0.6</code></pre>
+
+    <p>The last line is the mixer. Arithmetic in the text is an <strong>Expression</strong>, one module computing the
+    whole sum, here the kick at eight tenths and the hat at two. The Output's <code>left</code> takes one wire, so
+    anything heard goes through one sum.</p>
+  </section>
+
+  <section id="bass">
+    <h2><span class="num">04</span>A bass line</h2>
+
+    <p>A <strong>Note Sequencer</strong> steps through the notes in its block. On the beat count with
+    <code>rate: 2</code> it plays eighths, eight of them, so the line is one bar long. Its first output is the note
+    number, its <code>gate</code> is open for <code>gate_length</code> of each step, and a <strong>Note</strong>
+    turns the number into hertz.</p>
+
+    <pre><code class="fbks">let bass  = beats |> notes(rate: 2, gate_length: 0.4) [ A1 A1 C2 A1 G1 A1 E2 D2 ]
+let pitch = bass |> note(note: _)
+let pluck = bass.gate |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0.2, release: 80ms)
+let low   = saw(freq: pitch) * pluck |> filter(cutoff: 400, resonance: 0.35)</code></pre>
+
+    <ul>
+      <li>The <strong>ADSR</strong> shapes the gate into a pluck: quick in, down to a fifth over 180 milliseconds, and
+      gone 80 milliseconds after the gate closes. A saw straight from the gate would click on and off.</li>
+      <li>The <strong>Filter</strong> takes the saw's buzz off. Its first output is what is under the cutoff, so
+      piping it on reads <code>low</code>.</li>
+      <li>Add <code>+ low * 0.45</code> to the sum from step 03 to hear it with the drums.</li>
+    </ul>
+  </section>
+
+  <section id="mix">
+    <h2><span class="num">05</span>Mix and level it</h2>
+
+    <p>A kick, a hat and a bass line summed can go past what the speakers take. Leave headroom in the sum and set
+    the loudness with the Output's <code>volume</code>. To check how loud the patch is
+    as a streaming service would measure it, save it and render the sound with the command line:</p>
+
+    <pre><code>flyback-cli render beat.fbks -o beat.wav --seconds 16 --loudness</code></pre>
+
+    <p>It prints the integrated loudness and the true peak. The finished patch comes out at about -14 LUFS with its
+    peaks two decibels under the top, which is where most music sits.</p>
+  </section>
+
+  <section id="picture">
+    <h2><span class="num">06</span>The picture</h2>
+
+    <p>The picture reads the same signals the sound does. Rings, remapped from their -1 to 1 swing into the 0 to 1 a
+    brightness takes, are lit by the kick: bright on the beat and down to twelve hundredths by the next one.</p>
+
+    <pre><code class="fbks">let glow = rings(freq: 6, offset: kick * 0.25 - t * 0.2) |> remap(-1..1, 0..1)
+glow * (0.12 + kick * 0.88)
+  |> color.hsv(value: _, hue: fract(beats / 16), saturation: 0.85 - hats.stroke * 0.5)
+  |> out.color</code></pre>
+
+    <ul>
+      <li>The kick pushes the rings out a quarter of a ring on each hit, and <code>t</code> draws them slowly in.</li>
+      <li>The hue goes round the color wheel once every sixteen beats, four bars. <code>fract</code> keeps the
+      fraction, so it wraps rather than growing.</li>
+      <li>Each hat takes some color out, so the hits flash paler: the hat is seen as well as heard.</li>
+    </ul>
+
+    <div class="result">
+      <p style="margin: 0">Every flash is a kick you hear at the same moment. Nothing tells the picture where the
+      beat is: it reads the Stroke that plays the drum, so the two cannot drift apart, not even when the tempo
+      changes under them.</p>
+      <figure><a class="zoom" href="../assets/shots/preview-beat.webp"><img loading="lazy" src="../assets/shots/preview-beat.webp" width="888" height="500" alt="Salmon-pink rings on black, bright on the beat."></a></figure>
+    </div>
+  </section>
+
+  <section id="knob">
+    <h2><span class="num">07</span>A knob for the filter</h2>
+
+    <p>A beat is played as much as it is written, and a filter is the thing most often played. A panel knob is
+    declared at the top of the text, and a socket follows it by naming it where a number would go, over the range
+    written after it:</p>
+
+    <pre><code class="fbks">panel tone = 0.4, label: "Bass filter"
+
+let low = saw(freq: pitch) * pluck |> filter(cutoff: tone(150..3000), resonance: 0.35)</code></pre>
+
+    <p>A frequency follows a knob in decades, so the middle of the turn is a few hundred hertz rather than fifteen
+    hundred, and the whole of the knob is useful. Press <kbd>Ctrl</kbd>+<kbd>K</kbd> for the panel under the canvas
+    and turn it while the patch plays: nothing is rebuilt, and a recording keeps the move. To turn it from hardware,
+    open the knob's menu and choose <strong>Learn MIDI controller</strong>.</p>
+  </section>
+
+  <section id="whole">
+    <h2><span class="num">08</span>The whole patch</h2>
+
+    <p>All of it together, with a description the preset gallery and the inspector show. This is the
+    <strong>Beat you can see</strong> preset, under the ones where the picture and the sound meet, so if yours does not
+    sound like it, open that one and compare.</p>
+
+    <pre><code class="fbks" data-finished>description "A kick, a hat and a bass line on one tempo, and rings the kick lights up."
+
+panel tone = 0.4, label: "Bass filter"
+
+# One clock for everything.
+let beats = tempo(bpm: 118).beats
+
+# The drums: a kick on every beat, a hat on five sixteenths in eight.
+let kick = beats |> stroke(rate: 1, curve: 4)
+let hats = beats |> euclid(rate: 4, steps: 8, hits: 5)
+let drum = drum(level: kick, pitch: 48, sweep: 160, drive: 2)
+let hat  = hiss(level: hats.stroke, cutoff: 9000, seed: 3)
+
+# The bass: eight eighths through a filter the knob opens.
+let bass  = beats |> notes(rate: 2, gate_length: 0.4) [ A1 A1 C2 A1 G1 A1 E2 D2 ]
+let pitch = bass |> note(note: _)
+let pluck = bass.gate |> adsr(gate: _, attack: 2ms, decay: 180ms, sustain: 0.2, release: 80ms)
+let low   = saw(freq: pitch) * pluck |> filter(cutoff: tone(150..3000), resonance: 0.35)
+
+drum * 0.8 + hat * 0.2 + low * 0.45 |> out.left
+
+# The picture: rings the kick lights, a hue the bar turns, white where the hat hits.
+let glow = rings(freq: 6, offset: kick * 0.25 - t * 0.2) |> remap(-1..1, 0..1)
+glow * (0.12 + kick * 0.88)
+  |> color.hsv(value: _, hue: fract(beats / 16), saturation: 0.85 - hats.stroke * 0.5)
+  |> out.color
+
+out.volume = 0.6</code></pre>
+
+    <figure>
+      <a class="zoom" href="../assets/shots/beat-canvas.webp">
+        <img class="shot" loading="lazy" src="../assets/shots/beat-canvas.webp" width="1001" height="702"
+             alt="The finished patch on the canvas: a Tempo on the left feeding a Stroke named kick, a Euclid named hats and a Note Sequencer named bass; the kick into a Drum, the hats into a Hiss, the bass through a Note, an ADSR and a Saw into a Filter named low; an Expression summing the three into the Output's left; Rings, a Remap named glow and three Expressions into an HSV and the Output's color. Under the canvas, the knob panel with one knob, Bass filter.">
+      </a>
+      <figcaption>The same patch on the canvas, with the Bass filter knob on the panel under it. Each
+      <code>let</code> names its module.</figcaption>
+    </figure>
+  </section>
+
+  <section id="next">
+    <h2><span class="num">09</span>Where next</h2>
+
+    <ul>
+      <li>Change <code>bpm</code> and listen to everything follow. Change <code>hits</code> on the Euclid to 3 or 7,
+      or <code>rotate</code> it by a step.</li>
+      <li>Add a snare: a second Stroke with <code>rate: 0.5, offset: 0.5</code> is beats two and four, into a Hiss
+      band-passed at 1900 hertz. The band is set on the Hiss in the inspector.</li>
+      <li>Record it with <kbd>Ctrl</kbd>+<kbd>R</kbd>, turning the knob as it plays. The
+      <a href="../tutorials.html#record">recording section</a> of the first tutorial has the formats.</li>
+      <li>The <strong>Euclid kit</strong> preset is four Euclidean rhythms and a gliding bass, and
+      <strong>Whole band</strong> is a whole song built the same way, a Tempo at the start of it.</li>
+    </ul>
+
+    <p style="margin-top: 32px"><a class="button" href="echoes.html">Next: one knob, two echoes →</a></p>
+  </section>
+
+  </main>
+</div>
+</div>
+
+</div>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <span class="brand-foot"><img src="../assets/logo.svg" alt="">Flyback · MIT License</span>
+    <a href="../">Overview</a>
+    <a href="../plugins.html">Plugin guide</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">Language reference</a>
+    <a href="https://github.com/markovcd/Flyback/blob/main/CHANGELOG.md">Changelog</a>
+    <a href="https://github.com/markovcd/Flyback">GitHub</a>
+    <a href="https://www.youtube.com/@flyback-modular">YouTube</a>
+  </div>
+  <div class="wrap donate">
+    <button type="button" class="qr" title="Click to copy the address">
+      <img src="../assets/donate-qr.svg" alt="The donation address as a QR code" width="104" height="104">
+    </button>
+    <div class="ask">
+      <span>If this was worth anything to you, a little bitcoin is welcome.</span>
+      <span class="quiet">It buys tokens, which is what Flyback is written with. Strictly non-profit: nothing here is sold and nobody is paid out of it.</span>
+      <code>bc1qdu86tdtksg6mlqspdxmc2de9qppte3a5430lmg</code>
+      <span class="said" role="status">Click the code to copy the address.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/site.js"></script>
+</body>
+</html>

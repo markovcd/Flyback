@@ -20,6 +20,25 @@ public sealed class PresetSteps(Session session)
     [Given("every shipped preset")]
     public void GivenEveryPreset() => session.Presets = Presets.All;
 
+    [Given("every preset the shipped plugins add as well")]
+    public void GivenEveryInstalledPreset()
+    {
+        session.Presets = Installed.Value.Presets;
+        modules = Installed.Value.Modules;
+    }
+
+    [Then("no two of them have the same name")]
+    public void ThenNamesAreTheirOwn()
+    {
+        var twice = session.Presets
+            .GroupBy(preset => preset.Name, StringComparer.OrdinalIgnoreCase)
+            .Where(named => named.Count() > 1)
+            .Select(named => named.Key)
+            .ToList();
+
+        twice.ShouldBeEmpty(string.Join(", ", twice));
+    }
+
     [Given("the shipped preset {string}")]
     public void GivenAPreset(string name)
     {

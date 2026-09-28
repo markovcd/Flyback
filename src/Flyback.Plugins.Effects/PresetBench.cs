@@ -170,6 +170,21 @@ internal abstract class PresetBench(ModuleCatalog modules)
         ControlMap.Link(node, port, link);
     }
 
+    /// <summary>
+    /// The same, swept the way the text sweeps a socket it links: from the socket's own
+    /// knee, so a frequency turns in decades.
+    /// </summary>
+    protected static void Follows(ModuleCatalog catalog, NodeInstance node, int port, PatchControl knob, float low, float high)
+    {
+        var link = new ControlLink(knob.Id, low, high) { Knee = catalog.Get(node.TypeId)!.Inputs[port].Knee };
+
+        node.InputValues[port] = link.At(knob.Value);
+        ControlMap.Link(node, port, link);
+    }
+
+    /// <summary>A length of time as a Duration socket holds it, the power of ten the text makes of one.</summary>
+    protected static float Ms(double milliseconds) => (float)Math.Log10(milliseconds * 0.001);
+
     /// <summary>A signal times a panel knob turned from <paramref name="low"/> to <paramref name="high"/>.</summary>
     protected NodeInstance Times(NodeInstance a, PatchControl knob, float low, float high, int from = 0)
     {

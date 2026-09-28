@@ -53,6 +53,16 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 PlayedPreset.Build,
                 "The one preset you have to play: each key plucks a string, with a touch of reverb."),
             new PatchPreset(
+                SeenBeatPreset.Name,
+                SeenBeatPreset.Build,
+                SeenBeatPreset.Description,
+                PresetKind.Interplay),
+            new PatchPreset(
+                TwoEchoesPreset.Name,
+                TwoEchoesPreset.Build,
+                TwoEchoesPreset.Description,
+                PresetKind.Interplay),
+            new PatchPreset(
                 AcidPreset.Name,
                 AcidPreset.Build,
                 "A whole acid techno track: a hundred and twenty-eight bars of a 303 line in two "
