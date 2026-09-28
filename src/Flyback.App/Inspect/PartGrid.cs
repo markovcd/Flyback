@@ -111,7 +111,7 @@ internal sealed class PartGrid
     }
 
     /// <summary>
-    /// Every level as a cell, brighter the higher it is within its own part, and a
+    /// Every level as a cell, dark at nought and fully lit at one or more, and a
     /// gliding one shaded from where it comes from to where it goes; each part named on
     /// its left and taken away on its right.
     /// </summary>
@@ -151,12 +151,11 @@ internal sealed class PartGrid
             Grid.SetColumn(remove, Sections + 1);
             map.Children.Add(name);
             map.Children.Add(remove);
-            var highest = Math.Max(part.Max(level => Math.Abs(level.Value)), 1e-6f);
 
             for (var s = 0; s < part.Count; s++)
             {
-                var was = part[(s + part.Count - 1) % part.Count].Value / highest;
-                var now = part[s].Value / highest;
+                var was = part[(s + part.Count - 1) % part.Count].Value;
+                var now = part[s].Value;
 
                 var cell = new Border
                 {
@@ -229,7 +228,7 @@ internal sealed class PartGrid
         parts[held.Part][held.Section] = parts[held.Part][held.Section] with { Value = turned };
 
         ArrangementExtra.Set(node, parts);
-        held.Cell.Background = new SolidColorBrush(Shade(turned / held.High));
+        held.Cell.Background = new SolidColorBrush(Shade(turned));
         Describe(held.Cell, held.Part, held.Section);
 
         // One step in the history for the whole drag, as a knob's is.
@@ -285,7 +284,8 @@ internal sealed class PartGrid
 
     private string Cell(int part, int section) => $"{node.Id} part {part} section {section} click";
 
-    private Color Shade(float share) => Colors.Blend(Colors.Node, accent, Math.Clamp(Math.Abs(share), 0f, 1f));
+    /// <summary>A level's shade: nought is the unlit cell, one or more the full accent, and a level below nought is shaded by its size.</summary>
+    private Color Shade(float level) => Colors.Blend(Colors.Node, accent, Math.Clamp(Math.Abs(level), 0f, 1f));
 
     private LinearGradientBrush Gradient(float from, float to) => new()
     {

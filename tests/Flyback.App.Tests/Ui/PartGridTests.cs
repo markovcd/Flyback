@@ -39,6 +39,28 @@ public class PartGridTests : UiTest
         All<TextBox>(window).ShouldBeEmpty();
     }
 
+    /// <summary>Shaded against nought and one, not against the rest of its part.</summary>
+    [AvaloniaFact]
+    public void A_level_is_shaded_the_same_whatever_else_its_part_holds()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+
+        Avalonia.Media.Color ShadeOf(params float[] levels)
+        {
+            var node = NodeInstance.Create(def, 0, 0);
+            ArrangementExtra.Set(node, [levels.Select(level => new PartLevel(level))]);
+
+            var window = Show(new PartGrid(node, def, _ => { }).View);
+            var cell = All<Border>(window).First(b => Equals(b.Tag, PartGrid.CellTag));
+
+            return ((Avalonia.Media.ISolidColorBrush)cell.Background!).Color;
+        }
+
+        ShadeOf(0.5f, 0.5f).ShouldBe(ShadeOf(0.5f, 1f));
+        ShadeOf(0.5f, 0.5f).ShouldNotBe(ShadeOf(1f, 1f));
+        ShadeOf(1f, 0f).ShouldBe(ShadeOf(12f, 0f));
+    }
+
     [AvaloniaFact]
     public void A_parts_cross_takes_it_away()
     {
