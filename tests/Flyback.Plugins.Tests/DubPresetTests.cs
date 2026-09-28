@@ -195,6 +195,22 @@ public class DubPresetTests
     }
 
     [Fact]
+    public void The_computer_keyboard_is_laid_out_in_A_minor()
+    {
+        Patch().Keyboard.ShouldBe(new KeyboardScale(9, "aeolian"));
+    }
+
+    /// <summary>C sharp is not in A minor; the piece plays C or D in its place, whichever it snaps to.</summary>
+    [Fact]
+    public void A_key_off_the_scale_plays_the_nearest_note_on_it()
+    {
+        var sharp = Play(Rate / 4, [61f]);
+
+        (sharp.SequenceEqual(Play(Rate / 4, [60f])) || sharp.SequenceEqual(Play(Rate / 4, [62f])))
+            .ShouldBeTrue("C sharp sounds as neither C nor D");
+    }
+
+    [Fact]
     public void Nothing_reaches_the_rails_with_every_knob_at_rest()
     {
         Play(Rate * 2, [57f, 60f, 64f, 67f]).Max(MathF.Abs).ShouldBeLessThan(0.85f);

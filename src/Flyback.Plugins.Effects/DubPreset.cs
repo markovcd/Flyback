@@ -19,9 +19,9 @@ namespace Flyback.Plugins.Effects;
 /// on the screen.
 /// </para>
 /// <para>
-/// The bass line and the stabs follow the keys: the bass the first voice folded into
-/// one octave, the stabs every voice folded into the octave over A3. Both play A minor
-/// until a key is struck.
+/// The whole piece is in A minor. Every key is snapped to it, and the computer
+/// keyboard is laid out in it. The stabs play the chord last struck, folded into the
+/// octave over A3, and A minor seventh until a key is.
 /// </para>
 /// </remarks>
 internal sealed class DubPreset : PresetBench
@@ -57,8 +57,14 @@ internal sealed class DubPreset : PresetBench
     /// <summary>The Filter's resonance.</summary>
     private const int FilterResonance = 2;
 
-    /// <summary>The A the bass rests on, an octave and a half under the keyboard's bottom row.</summary>
+    /// <summary>The key the piece is in, and the keys are held to.</summary>
+    private static readonly KeyboardScale Key = new(9, "aeolian");
+
+    /// <summary>The A the bass line is written over, an octave and a half under the keyboard's bottom row.</summary>
     private const int BassRoot = 33;
+
+    /// <summary>The Tune's note number, after its frequency.</summary>
+    private const int TunedNote = 1;
 
     /// <summary>The A the stabs are folded over.</summary>
     private const int StabRoot = 57;
@@ -233,6 +239,7 @@ internal sealed class DubPreset : PresetBench
         // --- the voices ------------------------------------------------------
 
         var keys = new NodeInstance[Voices];
+        var tuned = new NodeInstance[Voices];
         var heard = new NodeInstance[Voices];
         var chord = b.Add("math.mixer", (1, 0.8f), (3, 0.8f), (5, 0.8f), (7, 0.8f));
 
@@ -242,7 +249,8 @@ internal sealed class DubPreset : PresetBench
             keys[voice].SetState(
                 MidiExtra.StateKey, new JsonObject { [MidiExtra.IndexField] = (float)(voice + 1) });
 
-            var hz = Through("audio.note", keys[voice]);
+            // A key off the scale plays the nearest note on it.
+            var hz = tuned[voice] = InKey(keys[voice], [.. Key.Row.Select(note => note % 12)]);
 
             // The section's envelope: a pad, a stab, an electric piano or an organ's bubble.
             var envelope = b.Add(NodeCatalog.AdsrTypeId);
@@ -308,14 +316,14 @@ internal sealed class DubPreset : PresetBench
 
         // The chord last struck, folded into the octave over A3, hit on the off-beat of
         // one and of three and left to the echo. Velocity is nought until a key is
-        // struck and never again, which holds each note on A minor until then.
+        // struck and never again, which holds each note on A minor seventh until then.
         NodeInstance? stabSaws = null;
 
         for (var voice = 0; voice < Voices; voice++)
         {
             var note = Formula(
                 $"mix({Resting[voice]}, (a + {120 - StabRoot}) % 12 + {StabRoot}, step(0.01, b))",
-                keys[voice], new Read(keys[voice], 2));
+                new Read(tuned[voice], TunedNote), new Read(keys[voice], 2));
             var stabSaw = Oscillator("osc.saw", Through("audio.note", note));
 
             stabSaws = stabSaws is null ? stabSaw : Sum(stabSaws, stabSaw);
@@ -335,13 +343,6 @@ internal sealed class DubPreset : PresetBench
         Box("Stabs");
 
         // --- the bass --------------------------------------------------------
-
-        // The first voice's note folded into the octave over the low A. A hundred and
-        // twenty is ten octaves, so adding it changes no pitch class and keeps what
-        // is folded over nought.
-        var root = Formula(
-            $"mix({BassRoot}, (a + {120 - BassRoot}) % 12 + {BassRoot}, step(0.01, b))",
-            keys[0], new Read(keys[0], 2));
 
         // Two bars leaving the one to the kick: up from the root to the fifth, and back
         // down through the third to the seventh and the fifth under it. A rest holds
@@ -368,7 +369,7 @@ internal sealed class DubPreset : PresetBench
         var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), new Read(parts, Bass));
 
         b.Wire(beats, 0, bassLine, 0)
-         .Wire(Through("audio.note", Sum(bassLine, root)), 0, bassHz, 0)
+         .Wire(Through("audio.note", Plus(bassLine, BassRoot)), 0, bassHz, 0)
          .Wire(body, 0, fat, 0)
          .Wire(fat, 0, bassTone, 0)
          .Wire(Formula("350 + a * 900", bassEnvelope), 0, bassTone, 1)
@@ -509,10 +510,10 @@ internal sealed class DubPreset : PresetBench
 
             b.Wire(coord, 0, ring, 0)
              .Wire(coord, 1, ring, 1)
-             .Wire(Knobbed("math.max", Span(keys[voice], 48f, 84f, 0.14f, 1f), 0.1f), 0, ring, 2)
+             .Wire(Knobbed("math.max", Span(tuned[voice], 48f, 84f, 0.14f, 1f, TunedNote), 0.1f), 0, ring, 2)
              .Wire(Sum(ring, wobble), 0, drawn, 0)
              .Wire(Plus(Times(level, 0.025f), 0.004f), 0, drawn, 2)
-             .Wire(Span(Fraction(Times(keys[voice], 1f / 12f)), 0f, 1f, 0.47f, 0.87f), 0, tint, 0)
+             .Wire(Span(Fraction(Times(tuned[voice], 1f / 12f, TunedNote)), 0f, 1f, 0.47f, 0.87f), 0, tint, 0)
              .Wire(tint, 0, lit, 0)
              .Wire(Product(level, drawn, 1), 0, lit, 1);
 
@@ -556,6 +557,8 @@ internal sealed class DubPreset : PresetBench
          .Wire(trails, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture: Scene");
+
+        b.Patch.Keyboard = Key;
 
         return b.Build();
     }

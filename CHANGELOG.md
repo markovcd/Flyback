@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Dub is arranged in eight sections, with a dub bass line, echoed chord stabs, and keys whose sound changes with the section.
+- Dub is arranged in eight sections in A minor, with a dub bass line, echoed chord stabs, and keys held to the scale whose sound changes with the section.
 - Plasma is three drifting fields read through a blue, cream and amber palette that cycles slowly.
 - The sound and MIDI, key store and assistant plugins show a picture in the plugins window and the install dialog.
 - Usage statistics also count which modules are picked from the module list and which of the editor's features a run uses.
