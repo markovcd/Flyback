@@ -117,3 +117,8 @@ the new one, or none. Setting one aside is not unsaved work — nothing new has 
 said — so it puts no dot in the title, and a patch closed straight afterwards opens
 next time with the old conversation still there. The button is dead while a turn
 runs, because stopping one is the other button's job.
+
+**2026-09-28 — edited means a module or a wire.** A patch whose knobs were turned,
+or which an undo handed back, is the same patch, and its conversation carries on
+and is saved with it;
+[0156](0156-a-conversation-follows-its-patch-while-the-modules-and-wires-hold.md).

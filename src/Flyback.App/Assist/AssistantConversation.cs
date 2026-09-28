@@ -1,5 +1,6 @@
 using Flyback.App.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 
 namespace Flyback.App.Assist;
 
@@ -7,7 +8,7 @@ internal sealed class AssistantConversation
 {
     private readonly Func<Patch> current;
     private SavedConversation? settled;
-    private (Patch Patch, int Nodes, int Wires)? anchored;
+    private PatchShape? anchored;
     private bool unsaved;
 
     public AssistantConversation(NodeEditor editor) : this(() => editor.History.Patch)
@@ -29,7 +30,7 @@ internal sealed class AssistantConversation
     public void Open(string? saved)
     {
         Waiting = SavedConversation.Read(saved);
-        anchored = Waiting is null ? null : Anchor(current());
+        anchored = Waiting is null ? null : PatchShape.Of(current());
         settled = Waiting;
         unsaved = false;
         Opened?.Invoke(this, EventArgs.Empty);
@@ -46,12 +47,12 @@ internal sealed class AssistantConversation
     public void Begin(SavedConversation? resuming, Patch current)
     {
         Waiting = null;
-        anchored = Anchor(current);
+        anchored = PatchShape.Of(current);
 
         if (resuming is null) settled = null;
     }
 
-    public void Rebase(Patch current) => anchored = Anchor(current);
+    public void Rebase(Patch current) => anchored = PatchShape.Of(current);
 
     public bool WaitingMoved(Patch current) => Moved(anchored, current);
 
@@ -72,12 +73,5 @@ internal sealed class AssistantConversation
     private bool Belongs() =>
         settled is not null && !Moved(anchored, current());
 
-    private static (Patch Patch, int Nodes, int Wires) Anchor(Patch patch) =>
-        (patch, patch.Nodes.Count, patch.Connections.Count);
-
-    private static bool Moved((Patch Patch, int Nodes, int Wires)? on, Patch now) =>
-        on is not { } was
-        || !ReferenceEquals(was.Patch, now)
-        || was.Nodes != now.Nodes.Count
-        || was.Wires != now.Connections.Count;
+    private static bool Moved(PatchShape? on, Patch now) => on is null || !on.Matches(now);
 }

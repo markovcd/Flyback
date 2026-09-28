@@ -490,8 +490,8 @@ internal sealed class AssistantPanel : UserControl
     /// is none, or where it is no longer about that patch.
     /// </summary>
     /// <remarks>
-    /// "No longer about it" is the rule a message already follows: a patch edited
-    /// underneath a conversation starts a new one (see <see cref="Restarting"/>), so
+    /// "No longer about it" is the rule a message already follows: a module or wire
+    /// changed underneath a conversation starts a new one (see <see cref="Restarting"/>), so
     /// saving the old one with it would only bring back, next time, a conversation
     /// that could not honestly go on.
     /// </remarks>
@@ -1127,8 +1127,9 @@ internal sealed class AssistantPanel : UserControl
     /// <remarks>
     /// Three reasons, and each of them is a conversation that could not honestly
     /// continue rather than a tidy-up. A run holds a copy of the patch it
-    /// started from, so a patch edited underneath it would be quietly discarded
-    /// by the next proposal. A run holds a session built around one model at one
+    /// started from, so modules or wires changed underneath it would be quietly
+    /// discarded by the next proposal; knobs are carried over instead (see
+    /// <see cref="AssistantRun.CatchUp"/>). A run holds a session built around one model at one
     /// endpoint, so changed settings are a different correspondent. And a run
     /// has a turn budget, which is there to stop a conversation growing without
     /// end.
@@ -1140,8 +1141,8 @@ internal sealed class AssistantPanel : UserControl
         if (!ReferenceEquals(runAssistant, chosenAssistant.Value) || runConfig != config)
             return "The settings changed, so this is a new conversation.";
 
-        return run.EditedUnderneath(editor.Current)
-            ? "The patch changed underneath, so this is a new conversation about the one on screen."
+        return run.Reshaped(editor.Current)
+            ? "The modules or wires changed underneath, so this is a new conversation about the patch on screen."
             : null;
     }
 
@@ -1164,7 +1165,7 @@ internal sealed class AssistantPanel : UserControl
             return "That conversation was had with other settings, so this is a new one.";
 
         return conversation.WaitingMoved(editor.Current)
-            ? "The patch changed since it was opened, so this is a new conversation about the one on screen."
+            ? "The modules or wires changed since it was opened, so this is a new conversation about the patch on screen."
             : null;
     }
 
@@ -1184,7 +1185,11 @@ internal sealed class AssistantPanel : UserControl
     {
         var because = Restarting(config);
 
-        if (because is null && run is { } going) return going;
+        if (because is null && run is { } going)
+        {
+            going.CatchUp(editor.Current);
+            return going;
+        }
 
         // No run and no reason not to is a conversation saved with the patch,
         // which this message carries on.
@@ -1247,6 +1252,12 @@ internal sealed class AssistantPanel : UserControl
 
         transcript.Put(Voice.You, wanted);
         log.Write("you", wanted);
+
+        if (conversation.Unsaid is { } told)
+        {
+            transcript.Put(Voice.Aside, $"Told it what changed on the canvas: {told}.");
+            log.Write("told", told);
+        }
 
         instruction.Text = string.Empty;
 
@@ -1372,9 +1383,9 @@ internal sealed class AssistantPanel : UserControl
     /// because this arrives as an edit rather than as a new document, undo is
     /// the way back.
     /// <para>
-    /// Editing the patch while a turn ran takes nothing to overrule: the
-    /// edits are replaced, and saying so is enough, because one press of
-    /// undo has them back.
+    /// Knobs turned while a turn ran are kept wherever the assistant left the
+    /// same knob alone. Modules or wires changed meanwhile are replaced, and
+    /// saying so is enough, because one press of undo has them back.
     /// </para>
     /// </remarks>
     private void Deliver()
@@ -1385,7 +1396,8 @@ internal sealed class AssistantPanel : UserControl
         // the transcript, and asking again is a keystroke.
         if (stopping) return;
 
-        var overwrote = run.EditedUnderneath(editor.Current);
+        var overwrote = run.Reshaped(editor.Current);
+        IReadOnlyList<Retuned> carried = overwrote ? [] : run.Merge(editor.Current);
 
         editor.Apply(proposed);
 
@@ -1396,10 +1408,21 @@ internal sealed class AssistantPanel : UserControl
         run.Rebase(editor.Current);
         conversation.Rebase(editor.Current);
 
-        transcript.Put(Voice.Aside, overwrote
-            ? "Applied — this replaced the edits you made while it ran. Ctrl+Z puts them back."
-            : "Applied. Ctrl+Z puts the patch back as it was.");
+        transcript.Put(Voice.Aside, Applied(overwrote, carried));
 
         editor.Report(string.Empty, null);
+    }
+
+    private static string Applied(bool overwrote, IReadOnlyList<Retuned> carried)
+    {
+        if (overwrote) return "Applied — this replaced the modules and wires you changed while it ran. Ctrl+Z puts them back.";
+
+        var kept = carried.Count(change => change.Kept);
+        var overruled = carried.Count - kept;
+
+        var keeping = kept == 0 ? string.Empty : $", keeping {TranscriptView.Tally(kept, "setting")} you changed while it ran";
+        var standing = overruled == 0 ? string.Empty : $" Its own value stands for {TranscriptView.Tally(overruled, "setting")} you also changed.";
+
+        return $"Applied{keeping}.{standing} Ctrl+Z puts the patch back as it was.";
     }
 }

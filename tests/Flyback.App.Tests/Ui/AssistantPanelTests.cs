@@ -109,17 +109,20 @@ public sealed class AssistantPanelTests : UiTest
     /// until somebody changes it — which is what a conversation saved with the
     /// patch is checked against.
     /// </summary>
-    private (Window Window, AssistantPanel Panel) Over(Patch patch)
+    private (Window Window, AssistantPanel Panel) Over(Patch patch) => Over(() => patch);
+
+    /// <summary>A panel over whatever patch the canvas holds, for an undo that hands back another object.</summary>
+    private (Window Window, AssistantPanel Panel) Over(Func<Patch> patch)
     {
         var settings = new AssistantSettings();
         var catalog = PluginCatalog.Empty;
         var repository = new AssistantSettingRepository(Kept, settings);
-        var editor = new Holding(() => patch);
+        var editor = new Holding(patch);
         var panel = new AssistantPanel(
             new ChosenAssistant(repository, catalog),
             catalog,
             editor,
-            new AssistantConversation(() => patch),
+            new AssistantConversation(patch),
             new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
@@ -173,6 +176,29 @@ public sealed class AssistantPanelTests : UiTest
         patch.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0));
 
         panel.ConversationToSave().ShouldBeNull();
+    }
+
+    /// <summary>
+    /// A knob turned is the same patch, and so is the copy an undo hands back: only a
+    /// module or a wire makes it another.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_conversation_opened_with_a_patch_stays_with_it_through_a_knob_and_an_undo()
+    {
+        var patch = new Patch();
+        var knob = NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0);
+        patch.Nodes.Add(knob);
+        patch.EnsureOutput();
+
+        var (_, panel) = Over(() => patch);
+
+        panel.Open(Saved(new TranscriptLine(Voice.You, "hello")));
+
+        knob.InputValues[0] = 0.8f;
+        panel.ConversationToSave().ShouldNotBeNull("a knob is not a new patch");
+
+        patch = PatchIO.Read(PatchIO.ToJson(patch)).Patch;
+        panel.ConversationToSave().ShouldNotBeNull("an undo hands back a copy of the same patch");
     }
 
     [AvaloniaFact]

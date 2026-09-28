@@ -177,3 +177,9 @@ Ask sends to wears the assistant's glyph, and its tooltip carries the standing
 word: which assistant gets the patch and its pictures, and where a key is kept.
 It is still a hover away, and still does not depend on the assistant panel being
 open.
+
+## Amendment, 2026-09-28: settings turned meanwhile are kept
+
+A proposal is merged with the knobs and other settings turned on the canvas while
+it was made, except where the assistant set the same one;
+[0156](0156-a-conversation-follows-its-patch-while-the-modules-and-wires-hold.md).

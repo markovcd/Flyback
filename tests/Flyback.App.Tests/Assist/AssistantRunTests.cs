@@ -116,11 +116,11 @@ public class AssistantRunTests
 
         await Drain(run);
 
-        run.EditedUnderneath(built).ShouldBeTrue("nothing has told it the editor took this");
+        run.Reshaped(built).ShouldBeTrue("nothing has told it the editor took this");
 
         run.Rebase(built);
 
-        run.EditedUnderneath(built).ShouldBeFalse();
+        run.Reshaped(built).ShouldBeFalse();
     }
 
     [Fact]
@@ -170,7 +170,6 @@ public class AssistantRunTests
         run.Workbench.Edits.ShouldBeGreaterThan(0);
         run.Workbench.Snapshot().Nodes.Count.ShouldBe(2);
 
-        run.Before.ShouldBeSameAs(open);
         open.Nodes.Count.ShouldBe(1);
         open.Nodes[0].X.ShouldBe(10);
         open.Connections.ShouldBeEmpty();
@@ -283,7 +282,7 @@ public class AssistantRunTests
         var open = new Patch();
         using var run = RunOf(new ScriptedAssistant(), open);
 
-        run.EditedUnderneath(open).ShouldBeFalse();
+        run.Reshaped(open).ShouldBeFalse();
     }
 
     [Fact]
@@ -294,15 +293,164 @@ public class AssistantRunTests
 
         open.Nodes.Add(NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0));
 
-        run.EditedUnderneath(open).ShouldBeTrue();
+        run.Reshaped(open).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void A_patch_that_lost_a_wire_is_noticed()
+    {
+        var (open, from, into) = TwoValues();
+        open.Connections.Add(new Connection(from.Id, 0, into.Id, 0));
+
+        using var run = RunOf(new ScriptedAssistant(), open);
+
+        open.Connections.Clear();
+
+        run.Reshaped(open).ShouldBeTrue();
     }
 
     [Fact]
     public void A_different_patch_altogether_is_noticed()
     {
-        using var run = RunOf(new ScriptedAssistant(), new Patch());
+        var (open, _, _) = TwoValues();
+        using var run = RunOf(new ScriptedAssistant(), open);
 
-        run.EditedUnderneath(new Patch()).ShouldBeTrue();
+        var (other, _, _) = TwoValues();
+
+        run.Reshaped(other).ShouldBeTrue("the same types under other ids are other modules");
+    }
+
+    /// <summary>
+    /// An undo hands back a new copy of the patch, and a knob turns in place; neither
+    /// is a different patch while its modules and wires are the ones there were.
+    /// </summary>
+    [Fact]
+    public void A_patch_with_the_same_modules_and_wires_is_the_same_patch()
+    {
+        var (open, from, into) = TwoValues();
+        open.Connections.Add(new Connection(from.Id, 0, into.Id, 0));
+
+        using var run = RunOf(new ScriptedAssistant(), open);
+
+        from.InputValues[0] = 0.9f;
+        into.Name = "Level";
+
+        run.Reshaped(open).ShouldBeFalse();
+        run.Reshaped(PatchIO.Read(PatchIO.ToJson(open)).Patch).ShouldBeFalse();
+    }
+
+    // --- knobs turned on the canvas -------------------------------------------
+
+    /// <summary>
+    /// A knob turned between turns reaches the workbench, and the model hears of it in
+    /// one line ahead of the next message rather than in a new conversation.
+    /// </summary>
+    [Fact]
+    public async Task A_knob_turned_between_turns_reaches_the_workbench_and_the_next_message()
+    {
+        var (open, from, _) = TwoValues();
+        var assistant = new ScriptedAssistant(new PatchEvent.Said("ok"));
+
+        using var run = RunOf(assistant, open);
+
+        await Drain(run, "first");
+
+        from.InputValues[0] = 0.25f;
+        run.CatchUp(open);
+
+        run.Workbench.Snapshot().Find(from.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.25f);
+        run.Unsaid.ShouldBe("value1.value=0.25");
+
+        await Drain(run, "second");
+
+        assistant.Heard[^1].ShouldStartWith("[Changed on the canvas since your last turn, and already on your workbench: value1.value=0.25.]");
+        assistant.Heard[^1].ShouldEndWith("second");
+        run.Unsaid.ShouldBeNull("the model has been told");
+        run.Turns.ShouldBe(2, "the same conversation");
+    }
+
+    [Fact]
+    public async Task Nothing_is_told_when_nothing_on_the_canvas_changed()
+    {
+        var (open, _, _) = TwoValues();
+        var assistant = new ScriptedAssistant(new PatchEvent.Said("ok"));
+
+        using var run = RunOf(assistant, open);
+
+        await Drain(run, "first");
+        run.CatchUp(open);
+        await Drain(run, "second");
+
+        assistant.Heard[^1].ShouldBe("second");
+    }
+
+    /// <summary>
+    /// A knob turned while a turn ran survives the proposal, unless the assistant set
+    /// the same knob itself: it was asked to change something, and its answer stands.
+    /// </summary>
+    [Fact]
+    public async Task A_knob_turned_while_it_worked_is_kept_in_the_proposal_where_the_assistant_left_it_alone()
+    {
+        var (open, left, right) = TwoValues();
+        var assistant = ScriptedAssistant.Proposing("""{"handle":"value2","knobs":[{"port":"value","value":0.9}]}""");
+
+        using var run = RunOf(assistant, open);
+
+        await Drain(run, "turn the second one up");
+
+        left.InputValues[0] = 0.1f;
+        right.InputValues[0] = 0.2f;
+
+        var carried = run.Merge(open);
+
+        var proposed = run.Proposal.ShouldNotBeNull();
+        proposed.Find(left.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.1f);
+        proposed.Find(right.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.9f);
+
+        carried.Count.ShouldBe(2);
+        carried.Count(change => change.Kept).ShouldBe(1);
+
+        run.Workbench.Snapshot().Find(left.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.1f, "the next proposal keeps it too");
+        run.Unsaid.ShouldBe("value1.value=0.1");
+    }
+
+    /// <summary>
+    /// A patch saved with knobs the workbench never saw carries them in when its
+    /// conversation is carried on.
+    /// </summary>
+    [Fact]
+    public async Task A_conversation_carried_on_takes_the_knobs_the_patch_was_saved_with()
+    {
+        var (open, from, _) = TwoValues();
+        var assistant = new ScriptedAssistant(new PatchEvent.Said("ok"));
+        SavedConversation saved;
+
+        using (var first = RunOf(assistant, open))
+        {
+            await Drain(first);
+            saved = first.Save([]);
+        }
+
+        from.InputValues[0] = 0.75f;
+
+        using var carried = new AssistantRun(
+            assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, open, resuming: saved);
+
+        carried.Workbench.Snapshot().Find(from.Id).ShouldNotBeNull().InputValues[0].ShouldBe(0.75f);
+        carried.Unsaid.ShouldBe("value1.value=0.75");
+    }
+
+    private static (Patch Patch, NodeInstance First, NodeInstance Second) TwoValues()
+    {
+        var patch = new Patch();
+        var first = NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0);
+        var second = NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0);
+
+        patch.Nodes.Add(first);
+        patch.Nodes.Add(second);
+        patch.EnsureOutput();
+
+        return (patch, first, second);
     }
 
     // --- carried on from a saved one ------------------------------------------
@@ -336,8 +484,7 @@ public class AssistantRunTests
         assistant.Given.ShouldBe(ScriptedAssistant.Remembered);
         carried.Turns.ShouldBe(1);
         carried.Workbench.Snapshot().Nodes.Count.ShouldBe(2, "the knob it built, and the Output");
-        carried.Before.ShouldBeSameAs(opened);
-        carried.EditedUnderneath(opened).ShouldBeFalse();
+        carried.Reshaped(opened).ShouldBeFalse();
     }
 
     /// <summary>
@@ -412,7 +559,7 @@ public class AssistantRunTests
 
         carried.PickedUp.ShouldBeFalse();
         carried.Turns.ShouldBe(0);
-        carried.Before.ShouldBeSameAs(opened);
+        carried.Reshaped(opened).ShouldBeFalse();
     }
 
     // --- the fake -----------------------------------------------------------
@@ -426,6 +573,7 @@ public class AssistantRunTests
         private string? throwsAfterStarting;
         private bool refusesToStart;
         private bool edits;
+        private string? proposes;
         private Queue<PatchEvent[]>? turns;
 
         /// <summary>Whether this one cannot take a saved conversation back.</summary>
@@ -433,6 +581,9 @@ public class AssistantRunTests
 
         /// <summary>What <see cref="Resume"/> was handed, or null where it never was.</summary>
         public string? Given { get; private set; }
+
+        /// <summary>Every message it was sent, as it arrived.</summary>
+        public List<string> Heard { get; } = [];
 
         public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
         {
@@ -453,6 +604,9 @@ public class AssistantRunTests
 
         /// <summary>One that actually builds something, so a copy can be told from the original.</summary>
         public static ScriptedAssistant Editing() => new() { edits = true };
+
+        /// <summary>One that sets knobs with these set_knobs arguments, then proposes what it has.</summary>
+        public static ScriptedAssistant Proposing(string knobs) => new() { proposes = knobs };
 
         /// <summary>
         /// One with something different to say each time it is asked, which is
@@ -489,7 +643,16 @@ public class AssistantRunTests
             string instruction,
             [EnumeratorCancellation] CancellationToken cancel)
         {
+            Heard.Add(instruction);
+
             if (refusesToStart) throw new InvalidOperationException("would not start");
+
+            if (proposes is not null && bench is not null)
+            {
+                await bench.InvokeAsync("set_knobs", JsonSerializer.Deserialize<JsonElement>(proposes), cancel);
+
+                yield return new PatchEvent.Proposed(bench.Snapshot(), "knobs set");
+            }
 
             if (edits && bench is not null)
             {

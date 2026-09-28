@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Core.Compile;
@@ -38,8 +39,16 @@ public sealed class AssistantRun : IDisposable
 
     private readonly SettingValues values;
 
-    private int startingNodes;
-    private int startingWires;
+    /// <summary>
+    /// The canvas as the workbench last took it in: a copy, since the editor edits
+    /// its patch in place.
+    /// </summary>
+    private Patch seen;
+
+    private PatchShape shape;
+
+    /// <summary>Settings carried in from the canvas that the model has not been told of yet.</summary>
+    private readonly List<Retuned> unsaid = [];
 
     private CancellationTokenSource? working;
     private bool spent;
@@ -72,14 +81,11 @@ public sealed class AssistantRun : IDisposable
         ProsePolicy? prose = null,
         IReadOnlyList<PatchPreset>? presets = null)
     {
-        Before = startingPoint;
+        See(startingPoint);
         MaxTurns = maxTurns;
 
         provider = assistant.Id;
         values = config.Values;
-
-        startingNodes = startingPoint.Nodes.Count;
-        startingWires = startingPoint.Connections.Count;
 
         // What the workbench may offer is the provider's answer rather than
         // this one's. The shell knows nothing about which model was chosen —
@@ -100,6 +106,10 @@ public sealed class AssistantRun : IDisposable
         }
 
         Turns = resuming!.Turns;
+
+        // The patch may have been saved again after this conversation's last turn,
+        // with knobs the workbench never saw.
+        Remember(Workbench.Follow(startingPoint));
 
         session = PickUp(assistant, config, resuming.History) ?? assistant.Start(Workbench, config);
     }
@@ -147,12 +157,6 @@ public sealed class AssistantRun : IDisposable
         }
     }
 
-    /// <summary>
-    /// The patch as it was before any of this, still exactly as it was. Putting
-    /// it back is assigning this to the editor.
-    /// </summary>
-    public Patch Before { get; private set; }
-
     /// <summary>Whether this conversation has had all the turns it may have.</summary>
     public bool Exhausted => Turns >= MaxTurns;
 
@@ -168,30 +172,63 @@ public sealed class AssistantRun : IDisposable
     public int Turns { get; private set; }
 
     /// <summary>
-    /// Whether the person edited the patch themselves while this was running.
-    /// A proposal replaces whatever they did, so the caller is expected to say
-    /// so — which is all it need do, because applying one is an edit somebody
-    /// can take back.
+    /// Whether the canvas gained or lost a module or a wire since the workbench last
+    /// took it in, which makes it a different patch. Settings changed alone do not.
     /// </summary>
-    public bool EditedUnderneath(Patch current) =>
-        !ReferenceEquals(current, Before)
-        || current.Nodes.Count != startingNodes
-        || current.Connections.Count != startingWires;
+    public bool Reshaped(Patch current) => !shape.Matches(current);
 
     /// <summary>
-    /// Takes the patch just applied as the new starting point, so what this run put
-    /// in the editor does not read as somebody editing behind it.
+    /// Takes the patch just applied as the canvas, so what this run put in the
+    /// editor does not read as somebody editing behind it.
     /// </summary>
-    /// <remarks>
-    /// What lets a conversation carry on after a proposal is applied: without it the
-    /// next message would conclude the person had changed the patch underneath and
-    /// start again, throwing away the history that produced what they accepted.
-    /// </remarks>
-    public void Rebase(Patch applied)
+    public void Rebase(Patch applied) => See(applied);
+
+    /// <summary>
+    /// Carries settings changed on the canvas since the workbench last looked into
+    /// it, for the next message to mention. Between turns.
+    /// </summary>
+    public void CatchUp(Patch current)
     {
-        Before = applied;
-        startingNodes = applied.Nodes.Count;
-        startingWires = applied.Connections.Count;
+        Remember(Workbench.Follow(seen, current));
+        See(current);
+    }
+
+    /// <summary>
+    /// Carries settings changed on the canvas while the turn ran into its proposal
+    /// and into the workbench, except where the assistant changed the same one.
+    /// </summary>
+    /// <returns>Every setting changed on the canvas, and whether each was kept.</returns>
+    internal IReadOnlyList<Retuned> Merge(Patch current)
+    {
+        if (Proposal is null) return [];
+
+        var carried = Retuning.Carry(seen, current, Proposal);
+
+        Remember(Workbench.Follow(seen, current));
+
+        return carried;
+    }
+
+    /// <summary>
+    /// The settings the next message tells the model were changed on the canvas, or
+    /// null where there are none.
+    /// </summary>
+    public string? Unsaid => unsaid.Count == 0 ? null : Workbench.Told(unsaid);
+
+    [MemberNotNull(nameof(seen), nameof(shape))]
+    private void See(Patch canvas)
+    {
+        seen = Retuning.Copy(canvas);
+        shape = PatchShape.Of(canvas);
+    }
+
+    private void Remember(IEnumerable<Retuned> carried)
+    {
+        foreach (var change in carried.Where(change => change.Kept))
+        {
+            unsaid.RemoveAll(change.SameSetting);
+            unsaid.Add(change);
+        }
     }
 
     /// <summary>
@@ -279,6 +316,16 @@ public sealed class AssistantRun : IDisposable
         }
 
         Turns++;
+
+        // One line ahead of the message rather than a new conversation: the
+        // history and the provider's cache of it stay good.
+        if (Unsaid is { } told)
+        {
+            instruction = $"[Changed on the canvas since your last turn, and already on your workbench: {told}.]"
+                + Environment.NewLine + Environment.NewLine + instruction;
+
+            unsaid.Clear();
+        }
 
         // Last turn's patch is not this turn's answer. A conversation that
         // carries on past a proposal would otherwise leave one standing, and the
