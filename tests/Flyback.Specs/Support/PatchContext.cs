@@ -57,6 +57,9 @@ public sealed class PatchContext
 
     public Patch Patch { get; private set; } = new();
 
+    /// <summary>The sound files a Sample in the patch plays, as the editor would read them.</summary>
+    public SampleLibrary Sounds { get; } = new();
+
     /// <summary>Every sample of the left channel played so far, across every edit.</summary>
     public IReadOnlyList<double> Heard => heard;
 
@@ -157,7 +160,7 @@ public sealed class PatchContext
     {
         if (result is null || compiledFor != sink)
         {
-            result = sink == Audio ? Patch.CompileForAudio() : Patch.CompileForVideo();
+            result = sink == Audio ? Patch.CompileForAudio(samples: Sounds) : Patch.CompileForVideo(samples: Sounds);
             compiledFor = sink;
         }
 

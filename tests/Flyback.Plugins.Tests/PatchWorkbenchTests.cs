@@ -1130,7 +1130,7 @@ public class PatchWorkbenchTests
         var briefing = Bench().Briefing;
 
         briefing.ShouldContain("set_sample");
-        briefing.ShouldContain("a path to a WAV");
+        briefing.ShouldContain("a path to a WAV or an MP3");
     }
 
     private static IReadOnlyList<int> Scale(PatchWorkbench bench) =>

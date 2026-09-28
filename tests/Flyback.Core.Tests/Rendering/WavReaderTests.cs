@@ -29,11 +29,11 @@ public class WavReaderTests
     {
         var clip = WavReader.Read(new MemoryStream(bytes), out var fault);
 
-        fault.ShouldBe(WavFault.None);
+        fault.ShouldBe(SoundFault.None);
         return clip.ShouldNotBeNull();
     }
 
-    private static WavFault Refused(byte[] bytes)
+    private static SoundFault Refused(byte[] bytes)
     {
         WavReader.Read(new MemoryStream(bytes), out var fault).ShouldBeNull();
         return fault;
@@ -126,13 +126,13 @@ public class WavReaderTests
     [InlineData("not a wave at all, just some text")]
     public void Something_that_is_not_a_wave_is_refused_as_one(string text)
     {
-        Refused(Encoding.ASCII.GetBytes(text)).ShouldBe(WavFault.NotWave);
+        Refused(Encoding.ASCII.GetBytes(text)).ShouldBe(SoundFault.NotSound);
     }
 
     [Fact]
     public void A_wave_with_no_audio_in_it_is_refused()
     {
-        Refused(Written([], 44100, 1)).ShouldBe(WavFault.Empty);
+        Refused(Written([], 44100, 1)).ShouldBe(SoundFault.Empty);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public class WavReaderTests
         // Format tag 85, which is MPEG layer 3 in a WAVE wrapper.
         BinaryPrimitives.WriteInt16LittleEndian(written.AsSpan(20, 2), 85);
 
-        Refused(written).ShouldBe(WavFault.Unsupported);
+        Refused(written).ShouldBe(SoundFault.Unsupported);
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public class WavReaderTests
         WavReader.Read(file, out var fault).ShouldBeNull();
         var spent = GC.GetAllocatedBytesForCurrentThread() - before;
 
-        fault.ShouldBe(WavFault.NotWave);
+        fault.ShouldBe(SoundFault.NotSound);
         spent.ShouldBeLessThan(1 << 20, $"a {file.Length}-byte file asked for {spent} bytes");
     }
 
@@ -181,7 +181,7 @@ public class WavReaderTests
         WavReader.Read(Path.Combine(Path.GetTempPath(), "flyback-no-such-sample.wav"), out var fault)
             .ShouldBeNull();
 
-        fault.ShouldBe(WavFault.Missing);
+        fault.ShouldBe(SoundFault.Missing);
     }
 
     /// <summary>Puts a chunk between the format chunk and the audio, as an editor does.</summary>

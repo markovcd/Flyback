@@ -464,7 +464,7 @@ public sealed partial class PatchWorkbench
         }
 
         if (!Text(arguments, "path", out var path))
-            return ToolOutcome.Refused("'path' is required: where the WAV file is.");
+            return ToolOutcome.Refused("'path' is required: where the sound file is.");
 
         SampleExtra.Set(node, path);
         Edits++;
@@ -1161,7 +1161,7 @@ public sealed partial class PatchWorkbench
                 "Points a Sample module at a sound file. The path is neither a knob nor a wire, "
                 + "so this is the only way to set one — and it is the one thing in a patch that "
                 + "refers to something outside it, so the file has to exist where you say it "
-                + "does. A WAV: mono or stereo, 8 to 32 bit or float, no other format. The "
+                + "does. A WAV (mono or stereo, 8 to 32 bit or float) or an MP3, no other format. The "
                 + "answer says whether it could be read, so a path that is wrong is answered "
                 + "now rather than by silence later. Ask the person for a path rather than "
                 + "guessing at one — nothing here can list what is on their machine.",
@@ -1169,7 +1169,7 @@ public sealed partial class PatchWorkbench
                 {
                   "properties": {
                     "handle": { "type": "string" },
-                    "path": { "type": "string", "description": "Where the WAV is, absolute or beside the patch." }
+                    "path": { "type": "string", "description": "Where the WAV or MP3 is, absolute or beside the patch." }
                   },
                   "required": ["handle", "path"]
                 }

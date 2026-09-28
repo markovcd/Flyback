@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Settings → Files → Library sets a folder where a sound file or picture a patch names is looked for when it is not beside the patch, and a file chosen from it is named from it.
+- A Sample plays an MP3 as well as a WAV, read by ffmpeg.
 - Added Arrangement, which gives up to eight parts a level in each of up to thirty-two sections of a piece, gliding where asked, and is written in text as a row of levels a part.
 - A def takes its arguments by name, gives a parameter a default, and takes a pipe on its `in`.
 - `flyback-cli render --preset` renders a shipped preset by name, and `--presets` lists them.

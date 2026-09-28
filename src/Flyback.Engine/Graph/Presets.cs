@@ -37,7 +37,7 @@ internal static partial class Presets
             "A photograph put through the same geometry a generated field goes through, once you choose one.",
             PresetKind.Blank),
         new("Clip", Clip,
-            "A WAV file played and retriggered every two seconds, once you choose one.",
+            "A sound file played and retriggered every two seconds, once you choose one.",
             PresetKind.Blank),
 
         // --- one idea, one sink ------------------------------------------------

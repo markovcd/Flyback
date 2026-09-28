@@ -88,7 +88,7 @@ public abstract record NodeExtra
     /// </summary>
     /// <remarks>
     /// Asked of the kind rather than read off the node, so nothing doing the
-    /// packing has to know that a Sample holds a WAV and an Image a PNG. A path
+    /// packing has to know that a Sample holds a sound file and an Image a PNG. A path
     /// as the patch stores it, which may be relative and may point at nothing:
     /// whether it can be read is the caller's question.
     /// </remarks>

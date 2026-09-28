@@ -132,6 +132,7 @@ context, decision, consequences.
 | [0030](0030-oscillators-accumulate-their-phase.md) | Oscillators accumulate their phase on the audio path |
 | [0036](0036-export-video-as-motion-jpeg-in-an-avi.md) | Export video as Motion JPEG in an AVI *(user-directed; demoted to the fallback by [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md))* |
 | [0089](0089-ffmpeg-encodes-what-it-can-and-the-avi-is-the-fallback.md) | ffmpeg encodes what it can, and the AVI is the fallback *(user-directed)* |
+| [0154](0154-an-mp3-sample-is-read-by-ffmpeg.md) | An MP3 sample is read by ffmpeg *(user-directed)* |
 | [0049](0049-record-the-gpu-frame-not-the-interpreter.md) | Record the GPU frame, not the interpreter *(user-directed)* |
 | [0038](0038-a-sequencers-notes-are-a-list-on-the-node.md) | A sequencer's notes are a list on the node *(user-directed)* |
 | [0153](0153-an-arrangement-is-a-grid-of-parts-on-the-node.md) | An Arrangement is a grid of parts on the node *(user-directed)* |

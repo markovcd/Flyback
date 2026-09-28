@@ -88,8 +88,12 @@ public sealed class PatchPathsTests : IDisposable
         var wav = Path.Combine(folder, "drums.wav");
         File.WriteAllBytes(wav, [.. "RIFF"u8, 0, 0, 0, 0, .. "WAVE"u8, 1, 2]);
 
+        var mp3 = Path.Combine(folder, "voice.mp3");
+        File.WriteAllBytes(mp3, [.. "ID3"u8, 4, 0, 0, 0, 0, 0, 0, 1, 2]);
+
         PatchPaths.Carriable("moon.png", folder).ShouldBe(File.ReadAllBytes(png));
         PatchPaths.Carriable(wav, beside: null).ShouldBe(File.ReadAllBytes(wav));
+        PatchPaths.Carriable(mp3, beside: null).ShouldBe(File.ReadAllBytes(mp3));
     }
 
     /// <summary>

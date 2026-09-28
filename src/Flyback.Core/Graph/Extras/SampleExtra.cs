@@ -81,7 +81,7 @@ public sealed record SampleExtra : NodeExtra
     }
 
     public override string Announce() =>
-        "  file   a path to a WAV — not a knob";
+        "  file   a path to a WAV or an MP3 — not a knob";
 
-    public override string Help => "The WAV it plays. The patch keeps its path, so moving the file breaks it.";
+    public override string Help => "The WAV or MP3 it plays. The patch keeps its path, so moving the file breaks it.";
 }

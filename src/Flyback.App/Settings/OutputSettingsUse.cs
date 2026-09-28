@@ -60,6 +60,7 @@ internal sealed class OutputSettingsUse(
         knobs.Hub.Takeover = settings.Takeover;
 
         files.UseLibrary(settings.Library);
+        files.SoundFolder.FfmpegPath = settings.FfmpegPath;
 
         if (transport.Overlay is { } overlay) TransportOverlay.Lay(settings.Transport, overlay, knobs.Stage);
         if (transport.PictureWindow is { } picture)

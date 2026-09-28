@@ -7,7 +7,7 @@ namespace Flyback.Core.Render;
 /// A patch is a file somebody else wrote. A path naming another machine makes
 /// Windows sign in to it the moment it is asked, handing that machine the user's
 /// credentials, so one is only followed where the patch itself lives on that
-/// share. A bundle carries only a WAV or a PNG, so a patch naming a key or a
+/// share. A bundle carries only a WAV, an MP3 or a PNG, so a patch naming a key or a
 /// document cannot smuggle it into a bundle the user then sends on.
 /// </remarks>
 public static class PatchPaths
@@ -105,7 +105,7 @@ public static class PatchPaths
 
     /// <summary>
     /// The bytes of a file the patch names, for a bundle to carry: null where it
-    /// cannot be read, is on another machine, or is not a WAV or a PNG.
+    /// cannot be read, is on another machine, or is not a WAV, an MP3 or a PNG.
     /// </summary>
     public static byte[]? Carriable(string path, string? beside, string? library = null)
     {
@@ -132,10 +132,9 @@ public static class PatchPaths
         }
     }
 
-    /// <summary>Whether bytes begin as a WAV or a PNG does.</summary>
+    /// <summary>Whether bytes begin as a WAV, an MP3 or a PNG does.</summary>
     public static bool Media(ReadOnlySpan<byte> bytes) =>
-        bytes.StartsWith(PngSignature)
-        || (bytes.Length >= 12 && bytes[..4].SequenceEqual("RIFF"u8) && bytes[8..12].SequenceEqual("WAVE"u8));
+        bytes.StartsWith(PngSignature) || WavReader.Looks(bytes) || Mp3Reader.Looks(bytes);
 
     private static bool SameShare(string full, string? beside)
     {

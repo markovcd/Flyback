@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Render;
+namespace Flyback.Core.Render;
 
 /// <summary>
 /// Why a file could not be read as audio, or <see cref="None"/> where it could. A
@@ -6,15 +6,15 @@
 /// something the compiler says about a patch, in the same sentence it says
 /// everything else.
 /// </summary>
-public enum WavFault
+public enum SoundFault
 {
     None,
 
     /// <summary>Nothing at that path.</summary>
     Missing,
 
-    /// <summary>Something is there and it is not a RIFF/WAVE file.</summary>
-    NotWave,
+    /// <summary>Something is there and it is neither a WAV nor an MP3.</summary>
+    NotSound,
 
     /// <summary>A WAVE this reader does not know how to read.</summary>
     Unsupported,
@@ -22,6 +22,12 @@ public enum WavFault
     /// <summary>On another machine, where a patch is not allowed to reach.</summary>
     Elsewhere,
 
-    /// <summary>A WAVE with no audio in it.</summary>
+    /// <summary>A sound file with no audio in it.</summary>
     Empty,
+
+    /// <summary>An MP3, on a machine with no ffmpeg to decode it.</summary>
+    NoFfmpeg,
+
+    /// <summary>An MP3 that ffmpeg would not decode.</summary>
+    Undecoded,
 }

@@ -572,7 +572,7 @@ internal sealed class OutputSections
         ToolTip.SetTip(soundFormat, "What a recorded sound is written as, when you record the sound on its own.");
 
         ToolTip.SetTip(ffmpegBox,
-            "Which ffmpeg to encode with. Left empty, the first one on PATH is used — "
+            "Which ffmpeg to encode with and to read an MP3 sample with. Left empty, the first one on PATH is used — "
             + "fill it in only if that is not the one you mean.");
 
         // As tall as the box it sits beside, and a step away from it.

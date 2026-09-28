@@ -45,11 +45,15 @@ public static class WavReader
     /// </summary>
     private const int MostFormatBytes = 40;
 
-    public static LoadedSample? Read(string path, out WavFault fault)
+    /// <summary>Whether bytes begin as a RIFF/WAVE file does.</summary>
+    public static bool Looks(ReadOnlySpan<byte> head) =>
+        head.Length >= 12 && head[..4].SequenceEqual("RIFF"u8) && head[8..12].SequenceEqual("WAVE"u8);
+
+    public static LoadedSample? Read(string path, out SoundFault fault)
     {
         if (!File.Exists(path))
         {
-            fault = WavFault.Missing;
+            fault = SoundFault.Missing;
             return null;
         }
 
@@ -63,19 +67,19 @@ public static class WavReader
             // Locked, or on a share that went away between the check and the
             // open. Indistinguishable from missing as far as a patch is
             // concerned, and said the same way.
-            fault = WavFault.Missing;
+            fault = SoundFault.Missing;
             return null;
         }
         catch (UnauthorizedAccessException)
         {
-            fault = WavFault.Missing;
+            fault = SoundFault.Missing;
             return null;
         }
     }
 
-    public static LoadedSample? Read(Stream input, out WavFault fault)
+    public static LoadedSample? Read(Stream input, out SoundFault fault)
     {
-        fault = WavFault.NotWave;
+        fault = SoundFault.NotSound;
 
         var header = new byte[12];
         if (!Fill(input, header)) return null;
@@ -124,7 +128,7 @@ public static class WavReader
             {
                 if (channels <= 0 || rate <= 0)
                 {
-                    fault = WavFault.NotWave;
+                    fault = SoundFault.NotSound;
                     return null;
                 }
 
@@ -148,7 +152,7 @@ public static class WavReader
 
         // Ran out before any audio. A header with no data chunk is a WAVE in
         // shape and not a sound.
-        fault = WavFault.Empty;
+        fault = SoundFault.Empty;
         return null;
     }
 
@@ -159,25 +163,25 @@ public static class WavReader
         int channels,
         int bits,
         int rate,
-        out WavFault fault)
+        out SoundFault fault)
     {
         var width = bits / 8;
 
         if (format is not (FormatPcm or FormatFloat) || width == 0)
         {
-            fault = WavFault.Unsupported;
+            fault = SoundFault.Unsupported;
             return null;
         }
 
         if (format == FormatPcm && bits is not (8 or 16 or 24 or 32))
         {
-            fault = WavFault.Unsupported;
+            fault = SoundFault.Unsupported;
             return null;
         }
 
         if (format == FormatFloat && bits is not (32 or 64))
         {
-            fault = WavFault.Unsupported;
+            fault = SoundFault.Unsupported;
             return null;
         }
 
@@ -186,7 +190,7 @@ public static class WavReader
 
         if (frames <= 0)
         {
-            fault = WavFault.Empty;
+            fault = SoundFault.Empty;
             return null;
         }
 
@@ -212,11 +216,11 @@ public static class WavReader
 
         if (samples.Length == 0)
         {
-            fault = WavFault.Empty;
+            fault = SoundFault.Empty;
             return null;
         }
 
-        fault = WavFault.None;
+        fault = SoundFault.None;
         return new LoadedSample(samples, rate);
     }
 

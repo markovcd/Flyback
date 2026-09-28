@@ -20,7 +20,7 @@ namespace Flyback.Core.Render;
 /// <param name="behindPictures">The same, for a picture.</param>
 public sealed class BundleFiles(
     IReadOnlyDictionary<string, byte[]> files,
-    ISampleLibrary? behindSounds = null,
+    SampleLibrary? behindSounds = null,
     IImageLibrary? behindPictures = null)
     : ISampleLibrary, IImageLibrary
 {
@@ -34,7 +34,7 @@ public sealed class BundleFiles(
     public IReadOnlyDictionary<string, byte[]> Bytes => files;
     
     LoadedSample? ISampleLibrary.Find(string path) =>
-        Cached<LoadedSample, WavFault>(clips, path, WavReader.Read)
+        Cached<LoadedSample, SoundFault>(clips, path, Sound)
         ?? behindSounds?.Find(path);
 
     LoadedImage? IImageLibrary.Find(string path) =>
@@ -55,6 +55,10 @@ public sealed class BundleFiles(
             ?? behindSounds?.Explain(path)
             ?? "the bundle does not hold it.";
     }
+
+    /// <summary>A sound, decoded with the ffmpeg the folder behind would use.</summary>
+    private LoadedSample? Sound(Stream from, out SoundFault fault) =>
+        SoundReader.Read(from, Ffmpeg.Resolve(behindSounds?.FfmpegPath), out fault);
 
     private T? Cached<T, TFault>(
         Dictionary<string, T?> known, string path, Reader<T, TFault> read)

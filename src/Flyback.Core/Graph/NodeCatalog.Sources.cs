@@ -91,7 +91,7 @@ public partial class NodeCatalog
             ],
             [Num("out") with { Help = "The sound, times 'level'. Silent while no file is loaded." }, Num("length") with { Help = "The clip's length in seconds, for loop timing or scrubbing." }],
             EmitSample,
-            "Plays a WAV file. The file path is stored with the patch, so moving or renaming it "
+            "Plays a WAV or MP3 file; an MP3 is read by ffmpeg. The file path is stored with the patch, so moving or renaming it "
             + "will break playback.")
         {
             Extras = [new SampleExtra()],

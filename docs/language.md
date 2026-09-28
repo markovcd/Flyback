@@ -945,7 +945,7 @@ in the editor, and `picture("sunset.png")` is how a patch that has one says so.
 ### Clip — [:793](../src/Flyback.Engine/Graph/Presets.cs)
 
 ```
-description "A WAV file played and retriggered every two seconds, once you choose one."
+description "A sound file played and retriggered every two seconds, once you choose one."
 
 sample(level: 0.9, trigger: pulse(freq: 0.5, width: 0.02)) |> out.left
 

@@ -1452,10 +1452,10 @@ internal sealed class Inspector
     }
 
     /// <summary>What the sound picker offers, which is what the reader can read.</summary>
-    private static FilePickerFileType SoundFileType => new("WAV audio")
+    private static FilePickerFileType SoundFileType => new("WAV or MP3 audio")
     {
-        Patterns = ["*.wav"],
-        MimeTypes = ["audio/wav", "audio/x-wav"],
+        Patterns = ["*.wav", "*.mp3"],
+        MimeTypes = ["audio/wav", "audio/x-wav", "audio/mpeg"],
     };
 
     /// <summary>And what the picture picker offers, for the same reason.</summary>

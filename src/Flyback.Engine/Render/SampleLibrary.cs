@@ -16,7 +16,7 @@ namespace Flyback.Core.Render;
 /// </remarks>
 public sealed class SampleLibrary : ISampleLibrary
 {
-    private readonly Dictionary<string, (LoadedSample? Clip, WavFault Fault)> known =
+    private readonly Dictionary<string, (LoadedSample? Clip, SoundFault Fault)> known =
         new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -57,15 +57,34 @@ public sealed class SampleLibrary : ISampleLibrary
         }
     }
 
+    /// <summary>
+    /// The ffmpeg an MP3 is decoded with, as picked in the settings, or empty for
+    /// the one on <c>PATH</c>. Setting it clears what is known, because an MP3
+    /// refused for want of one may read now.
+    /// </summary>
+    public string FfmpegPath
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value, StringComparison.OrdinalIgnoreCase)) return;
+
+            field = value;
+            known.Clear();
+        }
+    } = string.Empty;
+
     public LoadedSample? Find(string path) => Look(path).Clip;
 
     public string Explain(string path) => Look(path).Fault switch
     {
-        WavFault.Missing => "there is no file there.",
-        WavFault.NotWave => "it is not a WAV file.",
-        WavFault.Unsupported => "it is a WAV this cannot read — PCM only, 8 to 32 bit or float.",
-        WavFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
-        WavFault.Empty => "there is no audio in it.",
+        SoundFault.Missing => "there is no file there.",
+        SoundFault.NotSound => "it is not a WAV or an MP3.",
+        SoundFault.Unsupported => "it is a WAV this cannot read — PCM only, 8 to 32 bit or float.",
+        SoundFault.Elsewhere => "it is on another machine. Copy it beside the patch.",
+        SoundFault.Empty => "there is no audio in it.",
+        SoundFault.NoFfmpeg => "an MP3 is read by ffmpeg, and there is none on PATH. Pick one in Settings → Recording.",
+        SoundFault.Undecoded => "ffmpeg could not read it.",
         _ => "it could not be read.",
     };
 
@@ -82,15 +101,15 @@ public sealed class SampleLibrary : ISampleLibrary
     /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
     public int Count => known.Count(entry => entry.Value.Clip is not null);
 
-    private (LoadedSample? Clip, WavFault Fault) Look(string path)
+    private (LoadedSample? Clip, SoundFault Fault) Look(string path)
     {
-        if (string.IsNullOrWhiteSpace(path)) return (null, WavFault.Missing);
+        if (string.IsNullOrWhiteSpace(path)) return (null, SoundFault.Missing);
 
         if (known.TryGetValue(path, out var already)) return already;
 
-        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return known[path] = (null, WavFault.Elsewhere);
+        if (PatchPaths.Resolve(path, Beside, Library) is not { } full) return known[path] = (null, SoundFault.Elsewhere);
 
-        var clip = WavReader.Read(full, out var fault);
+        var clip = SoundReader.Read(full, Ffmpeg.Resolve(FfmpegPath), out var fault);
         return known[path] = (clip, fault);
     }
 }
