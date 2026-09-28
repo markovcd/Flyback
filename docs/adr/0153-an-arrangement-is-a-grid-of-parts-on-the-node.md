@@ -50,7 +50,9 @@ and `section`, counting from 1.
   sequencer's block, and nought here would be a different thing by the same name. Only `|` ends a part, so a long
   one runs over lines, and a printing too long for one line breaks at each `|`.
 - **Its own control in the inspector**: a map of every level shaded in the
-  module's accent, and a row of the text's levels to type into for each part.
+  module's accent, where a click switches a level to nought or back to its part's
+  strongest and a drag turns it like a knob, and a row of the text's levels to
+  type into for each part.
   A grid of up to 256 knobs would be read as nothing at all.
 - **Its own tool for the assistant**, `set_arrangement`, taking each part as one
   string in the text's notation, which every provider's schema can say.

@@ -12,8 +12,9 @@ using Colors = Flyback.App.Controls.Colors;
 namespace Flyback.App.Inspect;
 
 /// <summary>
-/// An Arrangement's parts: a map of every level shaded in the module's accent, and
-/// under it one line of the text language's levels to type into for each part.
+/// An Arrangement's parts: a map of every level shaded in the module's accent, where a
+/// click switches a level off or back on and a drag turns it like a knob, and under it
+/// one line of the text language's levels to type into for each part.
 /// </summary>
 /// <remarks>
 /// Typed rather than a knob a cell, because a grid of up to 256 numbers is read as a
@@ -22,6 +23,12 @@ namespace Flyback.App.Inspect;
 internal sealed class PartGrid
 {
     private const double CellHeight = 8;
+
+    /// <summary>How far a drag goes for a part's whole range, as a knob's does; Shift makes it five times finer.</summary>
+    private const double Travel = 160;
+
+    /// <summary>How far the pointer moves before a press is a drag rather than a click.</summary>
+    private const double Slop = 3;
 
     /// <summary>The columns of a part's row: its name, its levels, its remove button. The map lines up with the middle one.</summary>
     private const double NameWidth = 44, RemoveWidth = 22;
@@ -40,6 +47,9 @@ internal sealed class PartGrid
     private readonly List<List<PartLevel>> parts;
 
     private readonly StackPanel body = new();
+
+    /// <summary>The cell being dragged, where the drag started and what the level was then.</summary>
+    private (Border Cell, int Part, int Section, double Y, float From, float Low, float High, bool Moved)? drag;
 
     public PartGrid(NodeInstance node, NodeDef def, Action<string?> changed)
     {
@@ -129,7 +139,14 @@ internal sealed class PartGrid
                     Background = part[s].Glides ? Gradient(was, now) : new SolidColorBrush(Shade(now)),
                 };
 
-                ToolTip.SetTip(cell, $"part {p + 1}, section {s + 1}: {ArrangementNotation.Row([part[s]])}");
+                Describe(cell, p, s);
+
+                var (at, section) = (p, s);
+                cell.Cursor = new Cursor(StandardCursorType.SizeNorthSouth);
+                cell.PointerPressed += (_, e) => Grab(cell, at, section, e);
+                cell.PointerMoved += (_, e) => Turn(e);
+                cell.PointerReleased += (_, e) => LetGo(e);
+                cell.PointerCaptureLost += (_, _) => drag = null;
 
                 Grid.SetRow(cell, p);
                 Grid.SetColumn(cell, s);
@@ -138,6 +155,79 @@ internal sealed class PartGrid
         }
 
         return map;
+    }
+
+    private void Describe(Border cell, int part, int section) =>
+        ToolTip.SetTip(cell,
+            $"part {part + 1}, section {section + 1}: {ArrangementNotation.Row([parts[part][section]])}. "
+            + "Click to switch it off or on, drag up or down to turn it.");
+
+    private void Grab(Border cell, int part, int section, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(cell).Properties.IsLeftButtonPressed) return;
+
+        // The part's own range, so a drag means the same on a row of levels and a row of fold counts.
+        var levels = parts[part];
+        var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
+        var low = levels.Any(level => level.Value < 0f) ? -high : 0f;
+
+        drag = (cell, part, section, e.GetPosition(cell).Y, levels[section].Value, low, high, false);
+        e.Pointer.Capture(cell);
+        e.Handled = true;
+    }
+
+    private void Turn(PointerEventArgs e)
+    {
+        if (drag is not { } held) return;
+
+        var rise = held.Y - e.GetPosition(held.Cell).Y;
+        if (!held.Moved && Math.Abs(rise) < Slop) return;
+
+        var fine = (e.KeyModifiers & KeyModifiers.Shift) != 0 ? 5d : 1d;
+        var span = held.High - held.Low;
+        var turned = Math.Clamp(held.From + (float)(rise / (Travel * fine)) * span, held.Low, held.High);
+
+        // Hundredths of the range, so a level reads as a number somebody would type.
+        var grain = span <= 2f ? 0.01f : 0.1f;
+        turned = MathF.Round(turned / grain) * grain;
+
+        drag = held with { Moved = true };
+        parts[held.Part][held.Section] = new PartLevel(turned);
+
+        ArrangementExtra.Set(node, parts);
+        held.Cell.Background = new SolidColorBrush(Shade(turned / held.High));
+        Describe(held.Cell, held.Part, held.Section);
+
+        // One step in the history for the whole drag, as a knob's is.
+        changed($"{node.Id} part {held.Part} section {held.Section}");
+    }
+
+    private void LetGo(PointerReleasedEventArgs e)
+    {
+        if (drag is not { } held) return;
+
+        drag = null;
+        e.Pointer.Capture(null);
+        e.Handled = true;
+
+        if (held.Moved) Fill();
+        else Toggle(held.Part, held.Section);
+    }
+
+    /// <summary>
+    /// A level that is on goes to nought; one at nought comes back at the part's
+    /// strongest level, or at one where the whole part is nought.
+    /// </summary>
+    internal void Toggle(int part, int section)
+    {
+        var levels = parts[part];
+        var strongest = levels.MaxBy(level => Math.Abs(level.Value)).Value;
+
+        levels[section] = levels[section].Value != 0f
+            ? new PartLevel(0f)
+            : new PartLevel(strongest != 0f ? strongest : 1f);
+
+        Save();
     }
 
     private Color Shade(float share) => Colors.Blend(Colors.Node, accent, Math.Clamp(Math.Abs(share), 0f, 1f));

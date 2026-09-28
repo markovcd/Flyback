@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -83,6 +84,71 @@ public class PartGridTests : UiTest
         parts.Count.ShouldBe(4);
         parts.ShouldAllBe(part => part.Count == 5);
         Rows(window).Length.ShouldBe(4);
+    }
+
+    /// <summary>Cells are counted across, then down: part 1 is cells 0 and 1, part 2 cells 2 and 3.</summary>
+    [AvaloniaFact]
+    public void Clicking_a_cell_switches_it_off_and_back_on_at_the_parts_level()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var changes = new List<string?>();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0.8f), new PartLevel(0.5f)], [new PartLevel(0f), new PartLevel(0f)]]);
+        var window = Show(new PartGrid(node, def, changes.Add).View);
+
+        ClickCell(window, 0);
+        ArrangementExtra.Of(node)[0].Select(l => l.Value).ShouldBe([0f, 0.5f]);
+
+        ClickCell(window, 0);
+        ClickCell(window, 2);
+        var parts = ArrangementExtra.Of(node);
+
+        parts[0].Select(l => l.Value).ShouldBe([0.5f, 0.5f]);
+        parts[1].Select(l => l.Value).ShouldBe([1f, 0f]);
+        changes.Count.ShouldBe(3);
+    }
+
+    [AvaloniaFact]
+    public void Dragging_a_cell_up_turns_its_level_up_and_down_turns_it_down()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.ArrangementTypeId);
+        var node = NodeInstance.Create(def, 0, 0);
+        var changes = new List<string?>();
+
+        ArrangementExtra.Set(node, [[new PartLevel(0.5f), new PartLevel(1f)]]);
+        var window = Show(new PartGrid(node, def, changes.Add).View);
+
+        // Half the travel up is half the range: 0.5 to 1.
+        Drag(window, 0, -80);
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(1f, 0.02f);
+
+        // Far past the bottom stops at nought.
+        Drag(window, 0, 400);
+        ArrangementExtra.Of(node)[0][0].Value.ShouldBe(0f);
+
+        changes.Distinct().Count().ShouldBe(1, "a drag is one step in the history, however far it goes");
+    }
+
+    private static void Drag(Window window, int index, double by)
+    {
+        var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
+        var from = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(from, MouseButton.Left, RawInputModifiers.None);
+        for (var step = 1; step <= 10; step++)
+            window.MouseMove(from + new Point(0, by * step / 10), RawInputModifiers.LeftMouseButton);
+        window.MouseUp(from + new Point(0, by), MouseButton.Left, RawInputModifiers.None);
+    }
+
+    /// <summary>The <paramref name="index"/>th cell of the map, counted across then down, clicked in its middle.</summary>
+    private static void ClickCell(Window window, int index)
+    {
+        var cell = All<Border>(window).Where(b => Equals(b.Tag, PartGrid.CellTag)).ElementAt(index);
+        var middle = cell.TranslatePoint(new Point(cell.Bounds.Width / 2, cell.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(middle, MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(middle, MouseButton.Left, RawInputModifiers.None);
     }
 
     private static void Click(Window window, string label) =>
