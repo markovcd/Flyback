@@ -54,13 +54,7 @@ public sealed class WavStreamWriter : IDisposable
 
     /// <summary>Sample frames written so far — a stereo pair counts as one.</summary>
     public long SampleCount => dataBytes / sizeof(short) / channels;
-
-    /// <summary>
-    /// True once there is no room left under RIFF's ceiling. A recorder is
-    /// expected to stop and say so, rather than to find out by being thrown at.
-    /// </summary>
-    public bool IsFull => dataBytes >= MaximumDataBytes;
-
+    
     /// <summary>Appends interleaved float samples as 16-bit PCM.</summary>
     public void WriteAudio(ReadOnlySpan<float> interleaved)
     {

@@ -501,13 +501,7 @@ internal sealed class AssistantPanel : UserControl
     /// that could not honestly go on.
     /// </remarks>
     public string? ConversationToSave() => conversation.ConversationToSave();
-
-    /// <summary>The conversation has just gone to disk with the patch.</summary>
-    public void ConversationSaved()
-    {
-        conversation.ConversationSaved();
-    }
-
+    
     /// <summary>
     /// Whether there is a turn in the conversation that saving the patch would keep
     /// and closing it would lose.

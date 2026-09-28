@@ -32,18 +32,7 @@ public sealed class BundleFiles(
 
     /// <summary>What the archive holds, as it holds it — see <see cref="Held"/>.</summary>
     public IReadOnlyDictionary<string, byte[]> Bytes => files;
-
-    /// <summary>Whether the archive holds a path, without decoding it.</summary>
-    /// <remarks>
-    /// What saving asks. A bundle written again is written out of the bytes that
-    /// came in rather than out of what they decoded to: re-encoding a picture
-    /// from the floats it was read into would quietly make a sixteen-bit file an
-    /// eight-bit one and bake in the transparency that was multiplied away. So
-    /// the compressed bytes are kept for as long as the bundle is open, which is
-    /// the one thing this costs that a folder does not.
-    /// </remarks>
-    public bool Held(string path) => files.ContainsKey(path);
-
+    
     LoadedSample? ISampleLibrary.Find(string path) =>
         Cached<LoadedSample, WavFault>(clips, path, WavReader.Read)
         ?? behindSounds?.Find(path);

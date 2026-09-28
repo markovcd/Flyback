@@ -118,9 +118,6 @@ internal sealed class LiveRecorder : IFrameSink, IAudioSink, IDisposable
     /// <summary>Where the take is being written.</summary>
     public string Path => settings.Path;
 
-    /// <summary>True while the file is still open and taking frames.</summary>
-    public bool IsRunning => !stopping && stopped is null;
-
     public RecordingStatus Status => new(
         Elapsed,
         Volatile.Read(ref frames),

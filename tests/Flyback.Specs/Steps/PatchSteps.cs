@@ -665,14 +665,6 @@ public sealed class PatchSteps(PatchContext context)
         Show("brighten", "color");
     }
 
-    private void PlusOneHalf()
-    {
-        context.Add("offset", "math.add");
-        context.Wire("maths", "out", "offset", "a");
-        context.SetInput("offset", "b", 0.5f);
-        Show("offset");
-    }
-
     private void Halver(string name, string from)
     {
         context.Add(name, "math.mul");

@@ -59,9 +59,7 @@ internal sealed class FilesSection
     }
 
     internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
-
-    internal FileOpener Opener => saved.Opener;
-
+    
     /// <summary>Puts what was last saved back on the controls.</summary>
     internal void Show() => opener.SelectedIndex = (int)saved.Opener;
 

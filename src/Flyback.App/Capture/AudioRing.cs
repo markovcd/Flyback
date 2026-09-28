@@ -39,8 +39,6 @@ internal sealed class AudioRing
     /// <summary>Samples the producer could not fit, and so threw away.</summary>
     public long Dropped => Volatile.Read(ref dropped);
 
-    /// <summary>Samples handed over, whether or not they have been drained yet.</summary>
-    public long Accepted => Volatile.Read(ref written);
 
     /// <summary>
     /// Appends a callback's worth. Called on the audio thread, so it allocates
