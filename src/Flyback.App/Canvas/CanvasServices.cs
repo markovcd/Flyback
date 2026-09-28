@@ -1,5 +1,6 @@
 using Flyback.App.Controls;
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -19,6 +20,9 @@ internal static class CanvasServices
 
         // One for the whole window, since the editor's container adds the canvas to its own.
         services.TryAddSingleton<Reactions>();
+
+        // A canvas on its own counts nothing; the editor's container brings the run's.
+        services.TryAddSingleton(Usage.Off);
 
         services.AddSingleton<NodeGeometry>();
         services.AddSingleton<Repaint>();

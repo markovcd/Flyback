@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -24,7 +25,8 @@ internal sealed class SocketDial(
     CanvasSelection selection,
     Repaint repaint,
     IPointerAnchors anchors,
-    Reactions reactions)
+    Reactions reactions,
+    Usage usage)
 {
     /// <summary>How far a drag has to travel to turn the socket end to end, as on <see cref="Knob"/>.</summary>
     private const double DialTravel = 160;
@@ -63,6 +65,7 @@ internal sealed class SocketDial(
         dialAnchor = anchors.Take(canvas);
         canvas.Cursor = dialAnchor is null ? DialCursor : HiddenCursor;
 
+        usage.Count(Used.Dialed);
         repaint.Request();
         return true;
     }

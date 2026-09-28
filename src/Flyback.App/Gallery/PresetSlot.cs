@@ -289,6 +289,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     {
         if (RefuseWhileRecording()) return;
 
+        usage.Count(Used.Gallery);
+
         var current = picker.SelectedItem as PatchPreset;
         var parts = gallery.Build(
             [.. plugins.Presets.OrderBy(p => p.Kind)],
@@ -457,6 +459,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             var kept = saved.Save(name, editor.History.Patch, files.Bytes, plugins.Modules);
 
             Refresh();
+            usage.Count(Used.KeptPreset);
 
             report.Say(
                 replacing ? $"Replaced the preset “{kept.Name}”." : $"Saved “{kept.Name}” under Your presets.",
@@ -568,6 +571,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             }
 
             usage.Count(Used.Opened);
+            usage.Count(Used.Shared);
 
             playback.Show(patch);
             document.DropSource();

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 
 namespace Flyback.App.Canvas;
 
@@ -20,6 +21,7 @@ namespace Flyback.App.Canvas;
 internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
 {
     private readonly CanvasPainter painter;
+    private readonly Usage usage;
 
     public NodeEditor(
         CanvasHistory history,
@@ -36,7 +38,8 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         Repaint repaint,
         CanvasReport report,
         NodeGeometry geometry,
-        Reactions reactions)
+        Reactions reactions,
+        Usage usage)
     {
         History = history;
         Reactions = reactions;
@@ -52,6 +55,7 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         Tags = tags;
 
         this.painter = painter;
+        this.usage = usage;
         Report = report;
 
         Focusable = true;
@@ -192,7 +196,7 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
                 Key.B when editable => Edits.SwitchSelected,
 
                 // Under Control, since every bare letter belongs to the instrument.
-                Key.F => View.FrameAll,
+                Key.F => FrameAll,
                 _ => null,
             };
 
@@ -217,6 +221,12 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
                 e.Handled = true;
                 break;
         }
+    }
+
+    private void FrameAll()
+    {
+        usage.Count(Used.Framed);
+        View.FrameAll();
     }
 
     protected override void OnKeyUp(KeyEventArgs e)

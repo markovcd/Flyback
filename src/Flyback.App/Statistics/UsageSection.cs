@@ -54,8 +54,10 @@ internal sealed class UsageSection
                 + "or the first after an update; how many of each kind of module and how many "
                 + "wires are in a patch when it plays, and which of Flyback's presets it came from; "
                 + "whether an assistant was asked and which provider it was; and when the run "
-                + "ends, roughly how long it lasted, how often things like recording, saving or "
-                + "going full screen were done, and how fast the picture was drawn. If Flyback "
+                + "ends, how many of each kind of module were picked from the module list, "
+                + "roughly how long it lasted, how often each of the editor's features, like "
+                + "recording, undo, grouping or going full screen, was used, and how fast the "
+                + "picture was drawn. If Flyback "
                 + "crashes, the kind of error and where in Flyback it happened, without its "
                 + "message. Nothing else — no patch, no file, no knob, nothing typed, and no name "
                 + "of a plugin Flyback does not ship.",

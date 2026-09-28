@@ -1,4 +1,5 @@
 using Avalonia;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -18,7 +19,8 @@ internal sealed class CanvasEdits(
     Viewport view,
     Repaint repaint,
     CanvasReport report,
-    NodeGeometry geometry)
+    NodeGeometry geometry,
+    Usage usage)
 {
     /// <summary>How far a duplicate or a paste steps clear of what is already there.</summary>
     private const double Step = 28;
@@ -125,6 +127,8 @@ internal sealed class CanvasEdits(
 
         if (switching.Length == 0) return;
 
+        usage.Count(Used.Switched);
+
         var off = !SelectionIsOff;
 
         foreach (var node in switching) node.Off = off;
@@ -173,6 +177,8 @@ internal sealed class CanvasEdits(
     /// </summary>
     public void GroupSelected()
     {
+        usage.Count(Used.Grouped);
+
         // Never a new box round a whole group: that would dissolve it to make it,
         // without its name and the sockets left on its edge.
         if (Growing() is { } kept)
@@ -231,6 +237,8 @@ internal sealed class CanvasEdits(
             return;
         }
 
+        usage.Count(Used.Regrouped);
+
         // A box they joined is shut round them, and the rest of it comes along.
         selection.WholeBoxes();
         selection.Refocus();
@@ -266,6 +274,8 @@ internal sealed class CanvasEdits(
         var going = selection.Groups.Select(g => g.Id).ToArray();
 
         if (going.Length == 0) return;
+
+        usage.Count(Used.Ungrouped);
 
         foreach (var id in going) Patch.Ungroup(id);
 
@@ -364,6 +374,8 @@ internal sealed class CanvasEdits(
     public void DuplicateSelection()
     {
         if (selection.Count == 0) return;
+
+        usage.Count(Used.Duplicated);
 
         var fragment = PatchClipboard.Copy(Patch, selection.Ids);
 

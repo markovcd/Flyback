@@ -12,16 +12,7 @@ namespace Flyback.App.Tests.Statistics;
 /// </summary>
 public sealed class UsageTests
 {
-    private sealed class Collected : IUsageSink
-    {
-        public List<UsageEvent> Events { get; } = [];
-
-        public void Send(UsageEvent happened) => Events.Add(happened);
-
-        public void Drain(TimeSpan most) { }
-    }
-
-    private readonly Collected sink = new();
+    private readonly CollectedEvents sink = new();
 
     private Usage Run => new(sink);
 
@@ -268,6 +259,49 @@ public sealed class UsageTests
         ended.Props["fullScreen"].ShouldBe("0");
         ended.Props["renderer"].ShouldBe("gpu");
         ended.Props["fps"].ShouldBe("55-89");
+    }
+
+    [Fact]
+    public void The_end_of_a_run_says_which_modules_were_picked_from_the_palette()
+    {
+        var run = Run;
+
+        run.Added("flyback.oscillator");
+        run.Added("flyback.oscillator");
+        run.Added("flyback.picture.blur");
+        run.Added("acme.modular.wobble");
+        run.Ended();
+
+        sink.Events.Select(e => e.Name).ShouldBe(["added", "ended"]);
+
+        var added = sink.Events[0].Props;
+        added["flyback.oscillator"].ShouldBe(2);
+        added["flyback.picture.blur"].ShouldBe(1);
+        added[Usage.Other].ShouldBe(1);
+        added.ShouldNotContainKey("acme.modular.wobble");
+        sink.Events[1].Props["added"].ShouldBe("2-4");
+    }
+
+    [Fact]
+    public void Every_feature_counted_is_said_at_the_end_under_a_name_the_service_keeps()
+    {
+        Run.Ended();
+
+        foreach (var thing in Enum.GetValues<Used>().Where(thing => thing != Used.Played))
+        {
+            var name = char.ToLowerInvariant(thing.ToString()[0]) + thing.ToString()[1..];
+
+            Only.Props[name].ShouldBe("0");
+            name.Length.ShouldBeLessThanOrEqualTo(40);
+        }
+    }
+
+    [Fact]
+    public void A_run_that_picked_no_module_says_nothing_about_modules_picked()
+    {
+        Run.Ended();
+
+        Only.Name.ShouldBe("ended");
     }
 
     [Fact]

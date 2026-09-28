@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Usage statistics also count which modules are picked from the module list and which of the editor's features a run uses.
 - The status bar counts the picture's ops and the sound's apart.
 - Settings → Files → Library sets a folder where a sound file or picture a patch names is looked for when it is not beside the patch, and a file chosen from it is named from it.
 - A Sample plays an MP3 as well as a WAV, read by ffmpeg.

@@ -3,6 +3,7 @@ using Flyback.App.Assist;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
 using Flyback.App.Site;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
@@ -25,6 +26,7 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     private readonly Playback playback;
     private readonly ChosenAssistant chosenAssistant;
     private readonly Reactions reactions;
+    private readonly Usage usage;
 
     /// <summary>How long the site is given before a missing plugin's offer is dropped and the refusal stands alone.</summary>
     private static readonly TimeSpan Looking = TimeSpan.FromSeconds(3);
@@ -49,9 +51,11 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         ChosenAssistant chosenAssistant,
         PluginHubFactory pluginHubs,
         PluginInstallerFactory installers,
-        Reactions reactions)
+        Reactions reactions,
+        Usage usage)
     {
         this.reactions = reactions;
+        this.usage = usage;
         this.dialog = dialog;
         this.pluginHubs = pluginHubs;
         this.installers = installers;
@@ -64,7 +68,11 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         this.chosenAssistant = chosenAssistant;
     }
 
-    public Task On(PluginsAsked notice) => ShowAsync();
+    public Task On(PluginsAsked notice)
+    {
+        usage.Count(Used.Plugins);
+        return ShowAsync();
+    }
 
     /// <summary>
     /// What the patch the plugins window was opened for was short of, so an install
@@ -176,6 +184,8 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         {
             return $"{name} was not installed: {ex.Message}";
         }
+
+        usage.Count(Used.Installed);
 
         if (answer == PluginAnswer.InstallAndRestart
             && canRestart

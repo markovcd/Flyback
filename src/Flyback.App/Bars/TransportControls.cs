@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 using Flyback.App.Windows;
 
 namespace Flyback.App.Bars;
@@ -10,7 +11,7 @@ namespace Flyback.App.Bars;
 /// Play and pause, and the mute that goes with them, on the toolbar and on the
 /// pictures that have a window of their own or all of this one.
 /// </summary>
-internal sealed class TransportControls(Playback playback, Toolbar toolbar, TakeRecording recording)
+internal sealed class TransportControls(Playback playback, Toolbar toolbar, TakeRecording recording, Usage usage)
     : IReactTo<TakeMarked>, IReactTo<TransportChanged>, IReactTo<PauseAsked>
 {
     private bool pauseShowsPlay;
@@ -54,6 +55,8 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
         // A take is paced by the samples it is handed, so pausing under one would stop the file.
         if (recording.InHand || recording.Counting) return;
 
+        usage.Count(Used.Paused);
+
         if (playback.Paused) playback.Resume();
         else playback.Pause();
     }
@@ -87,6 +90,7 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
     public void ToggleStats(bool previewIsFullScreen)
     {
         statsShown = !statsShown;
+        if (statsShown) usage.Count(Used.Stats);
         SyncStats(previewIsFullScreen);
     }
 

@@ -164,6 +164,9 @@ public sealed class Usage
     /// <summary>How many times each thing in <see cref="Used"/> was done, indexed by it.</summary>
     private readonly int[] done = new int[Enum.GetValues<Used>().Length];
 
+    /// <summary>How many of each module type were picked from the palette, by the name each may be sent as.</summary>
+    private readonly SortedDictionary<string, int> added = new(StringComparer.Ordinal);
+
     /// <summary>How many status ticks fell in each frame-rate band, and on which renderer.</summary>
     private readonly Dictionary<string, int> frameRates = new(StringComparer.Ordinal);
 
@@ -333,6 +336,17 @@ public sealed class Usage
         Say("assistant", new Dictionary<string, object>(StringComparer.Ordinal) { ["id"] = Known(provider) });
     }
 
+    /// <summary>That a module was picked from the palette. Said at the end of the run, one number per module type.</summary>
+    public void Added(string module)
+    {
+        Count(Used.Added);
+
+        if (Silent) return;
+
+        var name = Module(module);
+        added[name] = added.GetValueOrDefault(name) + 1;
+    }
+
     /// <summary>That something in <see cref="Used"/> was done once more. Said at the end of the run, in a band.</summary>
     /// <remarks>Safe from any thread: a MIDI device is heard on its driver's.</remarks>
     public void Count(Used thing) => Interlocked.Increment(ref done[(int)thing]);
@@ -356,13 +370,18 @@ public sealed class Usage
     /// <summary>
     /// That the run is over, and what it did: how long it lasted, how many times a
     /// patch began to play, how often each thing in <see cref="Used"/> was done,
-    /// and how fast the picture was drawn and on what — all in bands.
+    /// and how fast the picture was drawn and on what — all in bands. Before it,
+    /// where any module was picked from the palette, an <c>added</c> event with one
+    /// number per module type, kept apart so a module's id never meets a feature's name.
     /// </summary>
     public void Ended()
     {
         if (Silent || ended) return;
 
         ended = true;
+
+        if (added.Count > 0)
+            Say("added", added.ToDictionary(module => module.Key, module => (object)module.Value, StringComparer.Ordinal));
 
         var props = new Dictionary<string, object>(StringComparer.Ordinal)
         {

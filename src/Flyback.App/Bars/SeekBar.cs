@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Bars;
@@ -29,15 +30,17 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     private readonly PreviewHost preview;
     private readonly NodeEditor editor;
     private readonly Document document;
+    private readonly Usage usage;
 
     private readonly List<TransportOverlay> overlays = [];
 
-    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, Document document)
+    public SeekBar(Playback playback, PreviewHost preview, CanvasSection settings, NodeEditor editor, Document document, Usage usage)
     {
         this.playback = playback;
         this.preview = preview;
         this.editor = editor;
         this.document = document;
+        this.usage = usage;
 
         Track = new SeekTrack
         {
@@ -66,6 +69,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         Loop.IsChecked = settings.SeekLoop;
         Loop.IsCheckedChanged += (_, _) =>
         {
+            if (Loop.IsChecked == true) usage.Count(Used.Looped);
             settings.SaveSeekLoop(Loop.IsChecked == true);
             Update();
         };

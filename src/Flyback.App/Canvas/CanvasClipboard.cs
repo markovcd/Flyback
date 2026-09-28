@@ -1,4 +1,5 @@
 using Avalonia.Input.Platform;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -13,7 +14,7 @@ namespace Flyback.App.Canvas;
 /// test can hand over one of its own. What goes wrong is returned to be said, since a
 /// clipboard is the one place the canvas reaches outside itself.
 /// </remarks>
-internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection selection, CanvasEdits edits)
+internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection selection, CanvasEdits edits, Usage usage)
 {
     /// <summary>
     /// Puts the selected modules on the clipboard. Nothing happens where the selection
@@ -31,6 +32,7 @@ internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection sel
         if (fragment.Nodes.Count == 0) return "The Output cannot be copied.";
 
         await clipboard.SetTextAsync(PatchIO.ToJson(fragment, NodeCatalog.Current));
+        usage.Count(Used.Copied);
         return null;
     }
 
@@ -72,6 +74,7 @@ internal sealed class CanvasClipboard(CanvasHistory history, CanvasSelection sel
         if (!loaded.IsComplete) return $"Not pasted. {loaded.Summary}";
 
         edits.AddFragment(loaded.Patch);
+        usage.Count(Used.Pasted);
         return null;
     }
 }

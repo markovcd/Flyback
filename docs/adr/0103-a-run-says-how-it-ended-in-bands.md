@@ -97,3 +97,26 @@ method is named instead, which is still the right place to start looking.
 
 **The disclosure grows with it.** The Usage tab lists every one of these, as
 0094 required, and so does the download page.
+
+## Amendment, 2026-09-28: which modules are picked, and more of the editor
+
+`played` names the modules in a patch, but the first play is usually the startup
+preset and a preset's modules are its author's choice, not the person's. What is
+reached for shows in the palette, so a run now keeps a tally of each module type
+picked from it, named as `played` names them, and sends it as `added` just before
+`ended`, only where anything was picked. It is its own event so a module's id
+never lands beside a feature's name. The counts go as numbers, like `played`'s:
+they are a fact about Flyback, not the machine. At most eight events in a run.
+
+`ended` counts more of the editor, each in the same bands, and each where the
+thing is done rather than where it is asked for, so a refused Pause or an Undo
+with nothing to undo is not counted: undo, redo, tidy, copy or cut, paste,
+duplicate, switching modules off or on, group, ungroup, Shift-dragging into or
+out of a group, looking into a shut box, turning a socket with the right button,
+framing the view, pause, Rewind, mute, looping switched on, the stats line, a
+knob added, a socket linked to a knob, a MIDI controller learned, the text
+applied, a patch handed back to the canvas, the preset gallery opened, a patch
+kept as a preset, a preset from the preset site opened, a group kept in the
+module list and one added from it, the plugins window opened, a plugin
+installed, and the letter to the author opened. Seeking is left out: one drag
+is dozens of seeks, and its band would always read 10+.

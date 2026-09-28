@@ -26,6 +26,7 @@ internal sealed class Palette
     private readonly Func<KeyboardLayout> keyboard;
     private readonly Lazy<ModulePalette> list;
     private readonly ReportLine report;
+    private readonly Usage usage;
 
     /// <summary>Where the palette is shown, at the pointer.</summary>
     public Flyout Flyout { get; } = new()
@@ -72,6 +73,7 @@ internal sealed class Palette
         this.document = document;
         keyboard = () => repository.Current.Keyboard;
         this.report = report;
+        this.usage = usage;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);
 
@@ -107,7 +109,7 @@ internal sealed class Palette
             if (wiring is { } drop) editor.Edits.AddNodeWired(typeId, drop);
             else editor.Edits.AddNode(typeId, addingAt);
 
-            usage.Count(Used.Added);
+            usage.Added(typeId);
 
             // Back to the canvas, or the next keypress would go to a filter box
             // that is no longer on screen.
@@ -147,6 +149,8 @@ internal sealed class Palette
 
             var added = editor.Edits.AddFragment(entry.Fragment, addingAt);
 
+            usage.Count(Used.FromLibrary);
+
             // A wire dropped on bare canvas asked what to plug into, and a box
             // has more than one answer to that — so it is left where it was and
             // said so, rather than guessed at. Which socket a module gets is
@@ -180,6 +184,7 @@ internal sealed class Palette
         try
         {
             var kept = Groups.Save(group, editor.History.Patch);
+            usage.Count(Used.KeptGroup);
 
             report.Say(
                 replacing

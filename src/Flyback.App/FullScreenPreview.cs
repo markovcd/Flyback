@@ -141,7 +141,7 @@ internal sealed class FullScreenPreview(
 
         window.Transport.PauseClicked += transport.TogglePause;
         window.Transport.MuteClicked += playback.ToggleMute;
-        window.Transport.RewindClicked += playback.Rewind;
+        window.Transport.RewindClicked += playback.RewindPressed;
 
         toolbar.Seek.Drive(window.Transport);
         TransportOverlay.Lay(settings.Current.Transport, window.Transport, window.Knobs);

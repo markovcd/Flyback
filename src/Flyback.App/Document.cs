@@ -62,7 +62,11 @@ internal sealed class Document
             sinceHandover = null;
         };
 
-        source.EvaluateRequested += (_, _) => Evaluate();
+        source.EvaluateRequested += (_, _) =>
+        {
+            usage.Count(Used.Applied);
+            Evaluate();
+        };
         source.Changed += (_, _) =>
         {
             // Typing empties the text's redo stack. A step being walked is not
@@ -776,7 +780,11 @@ internal sealed class Document
     {
         if (Gesturing) return;
 
-        switch (UndoLandsOn)
+        var landing = UndoLandsOn;
+
+        if (landing is not null) usage.Count(Used.Undone);
+
+        switch (landing)
         {
             case Landing.Text:
                 source.Undo();
@@ -797,7 +805,11 @@ internal sealed class Document
     {
         if (Gesturing) return;
 
-        switch (RedoLandsOn)
+        var landing = RedoLandsOn;
+
+        if (landing is not null) usage.Count(Used.Redone);
+
+        switch (landing)
         {
             case Landing.Text:
                 source.Redo();
@@ -963,6 +975,8 @@ internal sealed class Document
     public void Tidy(bool onlySelected = false)
     {
         if (Gesturing) return;
+
+        usage.Count(Used.Tidied);
 
         if (Coding) source.Tidy();
         else editor.Edits.Tidy(onlySelected);
@@ -1237,6 +1251,8 @@ internal sealed class Document
     public void HandBack()
     {
         if (!sourceOwned) return;
+
+        usage.Count(Used.HandedBack);
 
         // To the canvas, which is the one thing this gesture is asked for: the
         // button is under the text and pressing it means somebody wants to draw.

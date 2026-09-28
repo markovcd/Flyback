@@ -185,6 +185,8 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
             return;
         }
 
+        usage.Count(Used.Letter);
+
         // Built once and both shown and sent, so what was read is what goes.
         var about = SiteLetters.About(plugins, playback.Sound);
 

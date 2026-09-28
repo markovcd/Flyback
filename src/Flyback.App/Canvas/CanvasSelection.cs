@@ -1,4 +1,5 @@
 using Flyback.App.Notices;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Canvas;
@@ -18,19 +19,21 @@ internal sealed class CanvasSelection
     private readonly NodeGeometry geometry;
     private readonly CanvasReport report;
     private readonly Reactions reactions;
+    private readonly Usage usage;
 
     private readonly HashSet<Guid> ids = [];
 
     /// <summary>The shut box being looked into, which lives here and not in the patch.</summary>
     private Guid? peek;
 
-    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry, Reactions reactions)
+    public CanvasSelection(CanvasHistory history, Repaint repaint, CanvasReport report, NodeGeometry geometry, Reactions reactions, Usage usage)
     {
         this.history = history;
         this.geometry = geometry;
         this.repaint = repaint;
         this.report = report;
         this.reactions = reactions;
+        this.usage = usage;
 
         history.Replaced += (_, how) =>
         {
@@ -250,6 +253,8 @@ internal sealed class CanvasSelection
     public void Peek(NodeGroup group)
     {
         if (!group.Collapsed) return;
+
+        usage.Count(Used.Peeked);
 
         Take([]);
         peek = group.Id;

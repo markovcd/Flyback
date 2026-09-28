@@ -275,7 +275,7 @@ internal sealed class ShellLayout(
         var overlay = transport.Overlay = new TransportOverlay { IsVisible = false };
         overlay.PauseClicked += transport.TogglePause;
         overlay.MuteClicked += playback.ToggleMute;
-        overlay.RewindClicked += playback.Rewind;
+        overlay.RewindClicked += playback.RewindPressed;
         transport.Stats = new StatsOverlay(preview);
         toolbar.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);

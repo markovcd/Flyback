@@ -8,6 +8,7 @@ using Flyback.App.Inspect;
 using Flyback.App.Midi;
 using Flyback.App.Notices;
 using Flyback.App.Settings;
+using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
@@ -65,10 +66,12 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     public bool OverPicture { get; set; }
 
     private readonly Reactions reactions;
+    private readonly Usage usage;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions)
+    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions, Usage usage)
     {
         this.reactions = reactions;
+        this.usage = usage;
         Instruments = setup.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
         this.editor = editor;
         this.document = document;
@@ -129,6 +132,8 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
         View.AddRequested += () =>
         {
+            usage.Count(Used.Knob);
+
             var added = editor.History.Patch.AddControl();
 
             editor.History.Record();
@@ -369,6 +374,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
         ControlMap.Link(node, pick.Port, link);
         editor.History.Record();
+        usage.Count(Used.Linked);
         report.Say($"'{socket}' follows '{knob.Name}' from {spec.Format(link.Min)} to {spec.Format(link.Max)}. Esc when done.");
     }
 
@@ -427,6 +433,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
                 still.Midi = binding;
                 editor.History.Record();
+                usage.Count(Used.Learned);
                 document.PanelEdited();
                 last = moved;
 

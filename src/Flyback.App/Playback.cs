@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using Flyback.App.Midi;
 using Flyback.App.Notices;
 using Flyback.App.PluginPackages;
+using Flyback.App.Statistics;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -44,6 +45,7 @@ internal sealed class Playback
     private readonly ChosenAssistant chosenAssistant;
     private readonly RecordingState recording;
     private readonly Reactions reactions;
+    private readonly Usage usage;
 
     /// <summary>Where the patch's sound files are read from, as the document last said.</summary>
     private ISampleLibrary sounds = new SampleLibrary();
@@ -63,7 +65,8 @@ internal sealed class Playback
         AudioSetup sound,
         ChosenAssistant chosenAssistant,
         RecordingState recording,
-        Reactions reactions)
+        Reactions reactions,
+        Usage usage)
     {
         this.editor = editor;
         this.audio = audio;
@@ -74,6 +77,7 @@ internal sealed class Playback
         this.chosenAssistant = chosenAssistant;
         this.recording = recording;
         this.reactions = reactions;
+        this.usage = usage;
 
         Sound = sound;
 
@@ -114,7 +118,7 @@ internal sealed class Playback
 
     public Task On(RewindAsked notice)
     {
-        Rewind();
+        RewindPressed();
         return Task.CompletedTask;
     }
 
@@ -323,6 +327,7 @@ internal sealed class Playback
     /// <summary>Silences the speakers without stopping the device, so the clock does not drift.</summary>
     public void ToggleMute()
     {
+        usage.Count(Used.Muted);
         transport.Mute(!Muted);
         reactions.Raise(new TransportChanged());
     }
@@ -338,6 +343,13 @@ internal sealed class Playback
 
     /// <summary>Takes the picture and the sound back to zero seconds.</summary>
     public void Rewind() => transport.Rewind();
+
+    /// <summary>Rewinds because somebody pressed Rewind, which the run counts.</summary>
+    public void RewindPressed()
+    {
+        usage.Count(Used.Rewound);
+        Rewind();
+    }
 
     /// <inheritdoc cref="Transport.SeekTo"/>
     public void SeekTo(double seconds) => transport.SeekTo(seconds);
