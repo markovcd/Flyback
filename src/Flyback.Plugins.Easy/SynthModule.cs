@@ -85,9 +85,6 @@ internal static class SynthModule
 
     private const float LowestCutoff = 20f, HighestCutoff = 16_000f;
 
-    /// <summary>How hard a full 'drive' pushes into the curve.</summary>
-    private const float HardestDrive = 9f;
-
     private const float LongestGlide = 2f;
 
     private const float FastestLfo = 50f;
@@ -344,18 +341,12 @@ internal static class SynthModule
         var gain = em.Mul(em.Mul(env, velocity), tremolo);
         var drive = Unit(DrivePort);
 
-        left = Driven(em.Mul(left, gain));
-        right = stereo ? Driven(em.Mul(right, gain)) : left;
+        left = Finish.Driven(em, em.Mul(left, gain), drive);
+        right = stereo ? Finish.Driven(em, em.Mul(right, gain), drive) : left;
 
-        var pan = em.Ternary(OpCode.Clamp, em.Add(node[PanPort], Moved(Pan)), em.Constant(-1f), one);
+        var sides = Finish.Panned(em, left, right, em.Add(node[PanPort], Moved(Pan)));
 
-        return
-        [
-            Rail(em.Mul(left, em.Binary(OpCode.Min, em.Sub(one, pan), one))),
-            Rail(em.Mul(right, em.Binary(OpCode.Min, em.Add(pan, 1f), one))),
-            env,
-            lfo1,
-        ];
+        return [sides[0], sides[1], env, lfo1];
 
         Slot Rate(int port) => em.Ternary(OpCode.Clamp, node[port], zero, em.Constant(FastestLfo));
 
@@ -372,19 +363,6 @@ internal static class SynthModule
 
             sent[target] = sent.TryGetValue(target, out var already) ? em.Add(already, by) : by;
         }
-
-        // Faded in with the knob, so 0 is clean; the curve is the Drive module's, divided back out to full scale.
-        Slot Driven(Slot dry)
-        {
-            var push = em.Add(em.Mul(drive, HardestDrive), 1f);
-            var pushed = em.Mul(dry, push);
-            var curve = em.Binary(OpCode.Div, pushed, em.Add(em.Unary(OpCode.Abs, pushed), 1f));
-            var ceiling = em.Binary(OpCode.Div, push, em.Add(push, 1f));
-
-            return em.Ternary(OpCode.Mix, dry, em.Binary(OpCode.Div, curve, ceiling), drive);
-        }
-
-        Slot Rail(Slot signal) => em.Ternary(OpCode.Clamp, signal, em.Constant(-1f), one);
     }
 
     /// <summary>

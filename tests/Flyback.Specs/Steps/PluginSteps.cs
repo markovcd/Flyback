@@ -17,6 +17,7 @@ public sealed class PluginSteps
     private const string Julia = "flyback.fractals.julia";
     private const string Orbit = "flyback.fractals.orbit";
     private const string EasySynth = "flyback.easy.synth";
+    private const string EasyDrum = "flyback.easy.drummer";
 
     /// <summary>Where the Mandelbrot module's picture is centered, and half its height, at zoom nought.</summary>
     private const float Middle = -0.75f;
@@ -32,6 +33,7 @@ public sealed class PluginSteps
     private Frame? frame;
     private float[]? sound;
     private float[]? right;
+    private double[]? hits;
 
     [Given("the Mandelbrot set on the screen")]
     public void GivenTheSet() => Show(Mandelbrot, ("shift", 0f));
@@ -80,6 +82,37 @@ public sealed class PluginSteps
     [Given("an Easy Synth whose note has been let go")]
     public void GivenAnEasySynthLetGo() => PlayBoth(Set(Easy(), ("gate", 0f)));
 
+    [Given("an Easy Drum with nothing wired")]
+    public void GivenAnEasyDrum() => PlayBoth(Drum());
+
+    [Given("an Easy Drum playing {string}")]
+    public void GivenAnEasyDrumPlaying(string sound) => PlayBoth(Drum(("sound", sound)));
+
+    [Given("an Easy Drum on Trigger with nothing wired")]
+    public void GivenAnEasyDrumOnTrigger() => PlayBoth(Drum(("rhythm", "trigger")));
+
+    [Given("an Easy Drum with every knob turned all the way up")]
+    public void GivenAnEasyDrumFlatOut()
+    {
+        var drum = Drum(("sound", "open hat"), ("rhythm", "sixteenths"));
+        var inputs = Modules.Require(EasyDrum).Inputs;
+
+        for (var i = 1; i < inputs.Count; i++) drum.InputValues[i] = inputs[i].Max;
+
+        PlayBoth(drum);
+    }
+
+    private static NodeInstance Drum(params (string Key, string Value)[] settings)
+    {
+        var drum = NodeInstance.Create(Modules.Require(EasyDrum), 0, 0);
+
+        var state = new System.Text.Json.Nodes.JsonObject();
+        foreach (var (key, value) in settings) state[key] = value;
+        drum.SetState("drum", state);
+
+        return drum;
+    }
+
     /// <summary>One second of <paramref name="synth"/>, its 'left' on the left and its 'right' on the right.</summary>
     private void PlayBoth(NodeInstance synth)
     {
@@ -102,6 +135,36 @@ public sealed class PluginSteps
             sound[i] = (float)registers[program.OutputBase];
             right[i] = (float)registers[program.OutputBase + 1];
         }
+
+        hits = synth.TypeId == EasyDrum ? Hits(synth) : null;
+    }
+
+    /// <summary>The seconds of each hit in two seconds of a drum, where its 'env' jumps up.</summary>
+    private static double[] Hits(NodeInstance drum)
+    {
+        var b = new PatchBuilder(Modules);
+        b.Patch.Nodes.Add(drum);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
+        b.Wire(drum, 2, output, NodeCatalog.OutputLeftPort);
+
+        var program = b.Build().CompileForAudio(Modules).Program;
+        var state = new DelayState(program, Rate);
+        var registers = program.AllocateRegisters();
+
+        var found = new List<double>();
+        var previous = 0d;
+
+        for (var i = 0; i < 2 * Rate; i++)
+        {
+            program.Evaluate(0d, 0d, i / (double)Rate, registers, default, state);
+
+            var env = registers[program.OutputBase];
+            if (env - previous > 0.3) found.Add(i / (double)Rate);
+            previous = env;
+        }
+
+        return [.. found];
     }
 
     private static NodeInstance Easy(params (string Key, string Value)[] settings)
@@ -182,6 +245,25 @@ public sealed class PluginSteps
     {
         Rms(sound.ShouldNotBeNull().AsSpan(Rate / 2)).ShouldBeLessThan(1e-4);
         Rms(right.ShouldNotBeNull().AsSpan(Rate / 2)).ShouldBeLessThan(1e-4);
+    }
+
+    [Then(@"^it plays at (.+) seconds in the first two$")]
+    public void ThenItPlaysAt(string seconds)
+    {
+        var expected = seconds.Split([",", " and "], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(text => double.Parse(text, System.Globalization.CultureInfo.InvariantCulture))
+            .ToArray();
+        var found = hits.ShouldNotBeNull();
+
+        found.Length.ShouldBe(expected.Length, string.Join(", ", found));
+        for (var i = 0; i < expected.Length; i++) found[i].ShouldBe(expected[i], 0.002);
+    }
+
+    [Then("the sound is silent")]
+    public void ThenSilent()
+    {
+        Rms(sound.ShouldNotBeNull()).ShouldBe(0d);
+        Rms(right.ShouldNotBeNull()).ShouldBe(0d);
     }
 
     private void Show(string typeId, params (string Port, float Value)[] knobs)

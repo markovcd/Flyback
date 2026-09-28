@@ -7,11 +7,11 @@
     <!-- What the install dialog and the plugins window show. -->
     <Product>Easy</Product>
     <Authors>Flyback</Authors>
-    <Description>Easy Synth, a whole synth in one module that sounds good before anything is wired: a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan, and no setting that can make it clip. With First notes, a riff played on it.</Description>
+    <Description>Two modules that sound good before anything is wired and have no setting that can make them clip. Easy Synth: a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan. Easy Drum: a kick, snare, clap, hats, tom, rim or cowbell that plays the rhythm that suits it at a tempo, or on a trigger.</Description>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; synth; beginner; envelope; filter; lfo" />
+    <AssemblyMetadata Include="Tags" Value="sound; synth; drums; beginner; rhythm; filter" />
     <!-- Retaken by PluginPreviewShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" Condition="Exists('preview.webp')" />
     <!-- The pictures behind the module (ADR-0118), read out of the assembly by Art. -->

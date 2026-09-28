@@ -39,7 +39,7 @@ public class PluginPreviewShotTests : UiTest
         ("mastering", new MasteringPlugin(), ["eq", "compressor", "limiter", "loudness"]),
         ("figures", new FiguresPlugin(), ["plate", "harmonograph", "overtones"]),
         ("fractals", new FractalsPlugin(), ["mandelbrot", "julia", "orbit"]),
-        ("easy", new EasyPlugin(), ["synth"]),
+        ("easy", new EasyPlugin(), ["synth", "drummer"]),
     ];
 
     private const double Wide = 2200, Tall = 1100;
