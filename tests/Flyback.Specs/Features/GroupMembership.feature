@@ -30,6 +30,11 @@ Feature: Modules move into and out of a group after it is made
     When "Voice" and the Time are grouped
     Then the patch has a shut group "Voice" of 4 modules
 
+  Scenario: Grouping groups of which only one has a name keeps that name
+    Given a group of two modules with no name
+    When "Voice", the group with no name and the Time are grouped
+    Then the patch has a shut group "Voice" of 6 modules
+
   Scenario: A socket on a box's edge is named for itself while a wire is on it
     Given the Time feeds an Expression drawn in a box with a Multiply
     Then the box's edge reads "Expression.a" where the Time's wire arrives

@@ -167,8 +167,9 @@ internal sealed class CanvasEdits(
     public int Groupable => selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
     /// <summary>
-    /// Draws the selected modules as one box. Where they are one whole group and
-    /// modules in none, the rest join that group, which keeps its name and edge.
+    /// Draws the selected modules as one box. Where they take in whole groups of which
+    /// one is the only group or the only one named, the rest join it, and it keeps its
+    /// name and edge.
     /// </summary>
     public void GroupSelected()
     {
@@ -242,16 +243,17 @@ internal sealed class CanvasEdits(
     }
 
     /// <summary>
-    /// The one group the selection holds the whole of, where everything else selected
-    /// is in no group; null otherwise.
+    /// The group the rest of the selection joins: where every group it reaches is
+    /// selected whole, the only one, or else the only one with a name; null otherwise.
     /// </summary>
     private NodeGroup? Growing()
     {
         var reached = selection.Groups.ToArray();
 
-        if (reached is not [var only] || !only.Members.All(selection.Contains)) return null;
+        if (reached.Length == 0 || !reached.All(group => group.Members.All(selection.Contains))) return null;
+        if (reached is [var only]) return only;
 
-        return only;
+        return reached.Where(group => !string.IsNullOrWhiteSpace(group.Name)).ToArray() is [var named] ? named : null;
     }
 
     private static string Modules(int count) => count == 1 ? "one module" : $"{count} modules";

@@ -33,6 +33,22 @@ public sealed class GroupSteps(PatchContext context, Editor editor)
     [Given("a Time below it, in no group")]
     public void GivenALooseTime() => Place("Time", NodeCatalog.TimeTypeId, 0, 400);
 
+    [Given("a group of two modules with no name")]
+    public void GivenAnUnnamedGroup()
+    {
+        var left = Place("left", NodeCatalog.SineTypeId, 0, 700);
+        var right = Place("right", "math.mul", 300, 700);
+
+        context.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+    }
+
+    [When("{string}, the group with no name and the Time are grouped")]
+    public void WhenGroupedWithTheUnnamedGroup(string name)
+    {
+        editor.Select([.. Group(name).Members, context.Node("left").Id, context.Node("right").Id, context.Node("Time").Id]);
+        editor.PressCtrl(PhysicalKey.G);
+    }
+
     [Given("the Time feeds an Expression drawn in a box with a Multiply")]
     public void GivenAnExpressionInABox()
     {

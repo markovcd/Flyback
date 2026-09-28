@@ -36,6 +36,14 @@ public class RegroupTests : UiTest
         return builder.Patch;
     }
 
+    private static NodeInstance Place(Patch patch, string typeId, double x, double y)
+    {
+        var node = NodeInstance.Create(NodeCatalog.BuiltIn.Require(typeId), x, y);
+
+        patch.Nodes.Add(node);
+        return node;
+    }
+
     /// <summary>Inside the ring, between the first two modules.</summary>
     private static Point InsideRing => new(NodeGeometry.Width + (300 - NodeGeometry.Width) / 2, 40);
 
@@ -297,6 +305,53 @@ public class RegroupTests : UiTest
         kept.Name.ShouldBe("Voice");
         kept.Members.Count.ShouldBe(4);
         kept.Members.ShouldContain(loose.Id);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_g_on_several_groups_keeps_the_one_name_among_them()
+    {
+        var patch = Row(out var voice, out _, out _, out var loose);
+        var left = Place(patch, "osc.sine", 0, 700);
+        var right = Place(patch, "math.mul", 300, 700);
+        var unnamed = patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+
+        var (editor, window) = Editing(patch);
+
+        editor.Selection.Take([.. voice.Members, .. unnamed.Members, loose.Id]);
+        editor.Selection.Announce();
+        editor.Focus();
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        var kept = editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+
+        kept.Name.ShouldBe("Voice");
+        kept.Members.Count.ShouldBe(6);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_g_on_two_named_groups_makes_a_group_of_no_name()
+    {
+        var patch = Row(out var voice, out _, out _, out _);
+        var left = Place(patch, "osc.sine", 0, 700);
+        var right = Place(patch, "math.mul", 300, 700);
+        var bass = patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        bass.Name = "Bass";
+
+        var (editor, window) = Editing(patch);
+
+        editor.Selection.Take([.. voice.Members, .. bass.Members]);
+        editor.Selection.Announce();
+        editor.Focus();
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        var made = editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+
+        made.Name.ShouldBeNull("two names and no way to choose between them");
+        made.Members.Count.ShouldBe(5);
     }
 
     [AvaloniaFact]
