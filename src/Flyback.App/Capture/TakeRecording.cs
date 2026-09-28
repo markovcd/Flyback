@@ -73,6 +73,7 @@ internal sealed class TakeRecording
     private readonly Func<Patch> patch;
     private readonly Func<OutputSettings> settings;
     private readonly Playback playback;
+    private readonly RecordingState recordingState;
     private readonly PatchFiles files;
     private readonly IFilePickers pickers;
 
@@ -122,6 +123,7 @@ internal sealed class TakeRecording
         NodeEditor editor,
         ReportLine report,
         Playback playback,
+        RecordingState recordingState,
         OutputSettingRepository repository,
         PatchFiles files,
         IFilePickers pickers)
@@ -135,12 +137,10 @@ internal sealed class TakeRecording
         settings = () => repository.Current;
         this.report = (message, progress) => report.Say(message, progress: progress);
         this.playback = playback;
+        this.recordingState = recordingState;
         this.files = files;
         this.pickers = pickers;
     }
-
-    /// <summary>Whether a take is running.</summary>
-    internal bool Running => recorder is not null;
 
     /// <summary>Whether a take is being counted in, which is not yet a take.</summary>
     internal bool Counting => counting is not null;
@@ -214,7 +214,7 @@ internal sealed class TakeRecording
             return;
         }
 
-        if (Running)
+        if (recordingState.Running)
         {
             Stop();
             return;
@@ -239,7 +239,7 @@ internal sealed class TakeRecording
         if (file?.TryGetLocalPath() is not { } path) return;
 
         // A take is of a patch that is playing, and a paused one has no sound to record.
-        playback.Resume(() => Running);
+        playback.Resume();
 
         // Check before the count-in, then again as the file opens: the count
         // gives time for the sound to be turned down.
@@ -364,7 +364,7 @@ internal sealed class TakeRecording
 
         // The device was kept running for the take whatever Volume said, so it
         // is asked again now there is none — see Playback.SyncAudioToVolume.
-        playback.SyncAudioToVolume(() => Running);
+        playback.SyncAudioToVolume();
 
         Mark();
     }
@@ -518,6 +518,7 @@ internal sealed class TakeRecording
         if (withSound) audio.Capture = started;
 
         recorder = started;
+        recordingState.SetRunning(true);
 
         button.Content = Glyphs.Stop();
 
@@ -576,6 +577,7 @@ internal sealed class TakeRecording
         ticker = null;
 
         recorder = null;
+        recordingState.SetRunning(false);
 
         button.Content = Glyphs.Record();
         size.IsEnabled = true;

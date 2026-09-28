@@ -34,11 +34,7 @@ internal sealed class PresetAudition
     /// <summary>The presets somebody saved, whose bundles carry what they play.</summary>
     private readonly PresetLibrary saved;
 
-    /// <summary>Whether a preset may be heard at all: there is a device, and no take is reading it.</summary>
-    private readonly Func<bool> audible;
-
-    /// <summary>Hands the device back to the patch, which says for itself whether it should run.</summary>
-    private readonly Action syncAudio;
+    private readonly Playback playback;
 
     /// <summary>The tile the pointer is resting on, or null.</summary>
     private PointedTile? pointedAt;
@@ -60,12 +56,7 @@ internal sealed class PresetAudition
         this.compiler = compiler;
         modules = plugins.Modules;
         this.saved = saved;
-
-        // A take records what the speakers play, and a preset tried on the way past is not part of it.
-        audible = () => playback.CanSound;
-        
-        // We assume that during preset audition no recording should be running.
-        syncAudio = () => playback.SyncAudioToVolume(() => false);
+        this.playback = playback;
     }
 
     /// <summary>
@@ -92,9 +83,8 @@ internal sealed class PresetAudition
 
     private async Task AuditionAsync(PointedTile tile)
     {
-        // A take records what the speakers play, and a preset tried on the way
-        // past is not part of it.
-        var hear = audible();
+        // A take records what the speakers play, and a preset tried on the way past is not part of it.
+        var hear = playback.CanSound;
 
         Opened opened;
         AudioEngine.Audition? audition;
@@ -161,7 +151,7 @@ internal sealed class PresetAudition
         DispatcherTimer.RunOnce(
             () =>
             {
-                if (!audio.IsAuditioning) syncAudio();
+                if (!audio.IsAuditioning) playback.SyncAudioToVolume();
             },
             AudioEngine.AuditionFadeOut + TimeSpan.FromMilliseconds(200));
     }

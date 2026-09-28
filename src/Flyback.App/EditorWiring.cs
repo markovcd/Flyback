@@ -81,7 +81,7 @@ internal sealed class EditorWiring(
 
         files.Arrived += (_, _) => knobs.Hub.Forget();
         files.Saved += (_, _) => presets.Clear();
-        files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures, () => recording.Running);
+        files.Moved += (_, _) => playback.Recompile(files.Sounds, files.Pictures);
         recording.Marked += (_, _) => transport.Sync();
         // A capture cannot continue after its picture disappears.
         preview.CaptureLost += recording.Stop;
@@ -102,13 +102,13 @@ internal sealed class EditorWiring(
 
         editor.History.PatchChanged += (_, _) =>
         {
-            playback.Recompile(files.Sounds, files.Pictures, () => recording.Running, opened: editor.History.Opening);
+            playback.Recompile(files.Sounds, files.Pictures, opened: editor.History.Opening);
             inspector.Sync();
         };
         editor.Selection.Changed += (_, _) =>
         {
             inspector.Build();
-            playback.ProbeSelectionChanged(files.Sounds, files.Pictures, () => recording.Running);
+            playback.ProbeSelectionChanged(files.Sounds, files.Pictures);
         };
         editor.History.HistoryChanged += (_, _) => editState.Refresh();
         editor.Gestures.GestureFinished += (_, _) =>

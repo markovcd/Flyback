@@ -1,6 +1,5 @@
 using Flyback.App.Audio;
 using Flyback.App.Bars;
-using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
 using Flyback.Core.Render;
@@ -16,7 +15,6 @@ internal sealed class OutputSettingsUse(
     AudioEngine audio,
     PanelKnobs knobs,
     TransportControls transport,
-    TakeRecording recording,
     Playback playback,
     ReportLine report)
 {
@@ -32,7 +30,7 @@ internal sealed class OutputSettingsUse(
         Apply(saved);
 
         if (saved.LatencyMilliseconds != before.LatencyMilliseconds || sections.SoundChanged(before, saved))
-            playback.ReopenAudio(saved, () => recording.Running);
+            playback.ReopenAudio(saved);
 
         if (setup.OutputSettingsPath is not { } path) return;
 

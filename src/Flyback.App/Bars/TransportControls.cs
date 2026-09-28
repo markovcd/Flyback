@@ -34,7 +34,7 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
         // A take is paced by the samples it is handed, so pausing under one would stop the file.
         if (recording.InHand || recording.Counting) return;
 
-        if (playback.Paused) playback.Resume(() => recording.Running);
+        if (playback.Paused) playback.Resume();
         else playback.Pause();
     }
 

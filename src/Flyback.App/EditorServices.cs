@@ -124,6 +124,7 @@ internal static class EditorServices
         services.AddSingleton<EditState>();
         services.AddSingleton<SiteAccess>();
         services.AddSingleton<Playback>();
+        services.AddSingleton<RecordingState>();
         services.AddSingleton<PatchFiles>();
         services.AddSingleton<UnsavedWork>();
         services.AddSingleton<PatchOpening>();
