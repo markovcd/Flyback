@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Shift+drag moves modules into the group under the pointer or out of their own, a module picked over an open group or a box being looked into joins it, Ctrl+G on a group with loose modules adds them under its name, and looking into a box selects nothing.
+- A box's socket is named for the socket inside even while a wire is on it.
 - The preset site starts with Easy, a plugin whose Easy Synth is a whole synth in one module that sounds good with nothing wired and can never clip: a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan, with First notes as its preset.
 - Slow weather: six panel knobs — echo level, chime decay, reverb space, visual warp, color shift and trails spin — and a thirty-minute length.
 - Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.

@@ -227,14 +227,15 @@ public class UiTest : IDisposable
         Click(editor, window, Body(node), modifiers);
 
     /// <summary>Drags with the left button from one point of the patch to another, in one move.</summary>
-    internal static void Drag(NodeEditor editor, Window window, Point fromGraph, Point toGraph)
+    internal static void Drag(
+        NodeEditor editor, Window window, Point fromGraph, Point toGraph, RawInputModifiers modifiers = RawInputModifiers.None)
     {
         var from = Screen(editor, window, fromGraph);
         var to = Screen(editor, window, toGraph);
 
-        window.MouseDown(from, MouseButton.Left);
-        window.MouseMove(to);
-        window.MouseUp(to, MouseButton.Left);
+        window.MouseDown(from, MouseButton.Left, modifiers);
+        window.MouseMove(to, modifiers);
+        window.MouseUp(to, MouseButton.Left, modifiers);
         Settle(window);
     }
 

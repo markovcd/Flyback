@@ -177,10 +177,7 @@ public class GroupInspectorTests : UiTest
         lines.ShouldContain(l => l.StartsWith("▶ patched to ") && l.EndsWith(".left"));
     }
 
-    /// <summary>
-    /// The box labels an Expression's input by what feeds it, and the row already
-    /// says that, so the caption names the socket inside instead.
-    /// </summary>
+    /// <summary>The caption names the socket inside, and the row says what feeds it.</summary>
     [AvaloniaFact]
     public void An_expression_socket_is_captioned_by_its_own_name()
     {

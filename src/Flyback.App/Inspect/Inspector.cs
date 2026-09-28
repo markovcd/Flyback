@@ -635,8 +635,6 @@ internal sealed class Inspector
         {
             var row = new DockPanel { Margin = new Thickness(0, 0, 0, 1) };
 
-            // The inner socket itself, not the box's label for it: an Expression's
-            // is named for what feeds it, which the row already says.
             var name = WireEnds.Name(editor.History.Patch, socket.Node, socket.Port, socket.IsOutput);
 
             var body = socket.IsOutput

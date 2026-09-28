@@ -244,14 +244,14 @@ internal sealed class CanvasSelection
     }
 
     /// <summary>
-    /// Looks into a shut box without opening it, until Escape or a click outside. Not an
-    /// edit, so a locked canvas does it too.
+    /// Looks into a shut box without opening it, until Escape or a click outside, with
+    /// nothing selected. Not an edit, so a locked canvas does it too.
     /// </summary>
     public void Peek(NodeGroup group)
     {
         if (!group.Collapsed) return;
 
-        Take(group.Members);
+        Take([]);
         peek = group.Id;
 
         Announce();

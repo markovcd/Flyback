@@ -421,11 +421,11 @@ public class GroupTests : UiTest
     }
 
     /// <summary>
-    /// A module added while looking into a box is not in it, so it would land under
-    /// the ring. The box goes back, and the new module is on the canvas.
+    /// A module added outside the box being looked into is not in it. The box goes
+    /// back, and the new module is on the canvas.
     /// </summary>
     [AvaloniaFact]
-    public void Adding_a_module_puts_the_box_back()
+    public void Adding_a_module_outside_the_box_puts_it_back()
     {
         var patch = Chain(out _, out var first, out var second, out _);
         var (editor, window) = Editing(patch);
@@ -435,10 +435,11 @@ public class GroupTests : UiTest
         editor.Selection.Peek(group);
         Settle(window);
 
-        var added = editor.Edits.AddNode("osc.sine", Body(first)).ShouldNotBeNull();
+        var added = editor.Edits.AddNode("osc.sine", Body(first) + new Vector(0, 400)).ShouldNotBeNull();
         Settle(window);
 
         editor.Selection.Peeked.ShouldBeNull();
+        group.Members.ShouldNotContain(added.Id);
         editor.Selection.Nodes.ShouldBe([added]);
     }
 

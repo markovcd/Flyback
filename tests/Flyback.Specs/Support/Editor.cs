@@ -134,6 +134,32 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             open.MouseUp(bare, MouseButton.Left);
         });
 
+    /// <summary>Carries a module by its title bar to a point of the patch, with <paramref name="modifiers"/> held throughout.</summary>
+    public void Carry(Guid node, Point to, RawInputModifiers modifiers = RawInputModifiers.None) =>
+        DoWindow((open, canvas) =>
+        {
+            var found = canvas.History.Patch.Find(node)!;
+            var from = OnWindow(open, canvas, new Point(found.X + NodeGeometry.Width / 2, found.Y + NodeGeometry.HeaderHeight / 2));
+            var end = OnWindow(open, canvas, to);
+
+            open.MouseDown(from, MouseButton.Left, modifiers);
+            open.MouseMove(end, modifiers);
+            open.MouseUp(end, MouseButton.Left, modifiers);
+        });
+
+    /// <summary>Right-clicks a point of the patch, which over bare canvas or an open group opens the list of modules.</summary>
+    public void RightClick(Point at) =>
+        DoWindow((open, canvas) =>
+        {
+            var point = OnWindow(open, canvas, at);
+
+            open.MouseDown(point, MouseButton.Right);
+            open.MouseUp(point, MouseButton.Right);
+        });
+
+    private static Point OnWindow(MainWindow open, NodeEditor canvas, Point graph) =>
+        canvas.TranslatePoint(canvas.GraphToScreen.Transform(graph), open)!.Value;
+
     /// <summary>Picks a module by name from the list that is open.</summary>
     public void PickFromList(string name) =>
         DoWindow((open, _) =>

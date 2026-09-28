@@ -194,7 +194,9 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     /// double-click lands: a thing that opens by being double-clicked should shut
     /// the same way.
     /// </remarks>
-    public (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group)
+    /// <param name="group">The group, open or being looked into.</param>
+    /// <param name="without">Members to leave out of the ring, as when they are being carried out of it.</param>
+    public (Rect Outline, Rect Handle)? OpenGroup(NodeGroup group, IReadOnlySet<Guid>? without = null)
     {
         if (group.Collapsed && !ReferenceEquals(group, peek)) return null;
 
@@ -204,7 +206,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         var bottom = double.MinValue;
 
         foreach (var id in group.Members)
-            if (patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
+            if (without?.Contains(id) != true && patch.Find(id) is { } node && NodeCatalog.Get(node.TypeId) is { } def)
             {
                 var bounds = geometry.Bounds(node, def);
 
@@ -229,14 +231,48 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     }
 
     /// <summary>
+    /// The open group whose ring or strip lies under a point, the box being looked into
+    /// first and otherwise the one drawn on top; null over bare canvas.
+    /// </summary>
+    /// <param name="graph">The point, in graph space.</param>
+    /// <param name="without">Members each ring is drawn without.</param>
+    public NodeGroup? RingAt(Point graph, IReadOnlySet<Guid>? without = null)
+    {
+        if (peek is not null && InRing(peek, graph, without)) return peek;
+        if (patch.Groups is null) return null;
+
+        for (var i = patch.Groups.Count - 1; i >= 0; i--)
+            if (!ReferenceEquals(patch.Groups[i], peek) && InRing(patch.Groups[i], graph, without))
+                return patch.Groups[i];
+
+        return null;
+    }
+
+    /// <summary>
+    /// The group modules let go of at a point would land in: a ring drawn without them,
+    /// or a shut box none of them makes up the whole of.
+    /// </summary>
+    public NodeGroup? DropTarget(Point graph, IReadOnlySet<Guid> carried)
+    {
+        if (peek is not null && InRing(peek, graph, carried)) return peek;
+
+        NodeGroup? box = null;
+
+        foreach (var (group, _, bounds) in Boxes())
+            if (bounds.Contains(graph) && !group.Members.All(carried.Contains))
+                box = group;
+
+        return box ?? RingAt(graph, carried);
+    }
+
+    private bool InRing(NodeGroup group, Point graph, IReadOnlySet<Guid>? without) =>
+        OpenGroup(group, without) is var (outline, handle) && (outline.Contains(graph) || handle.Contains(graph));
+
+    /// <summary>
     /// What a socket is called and what it is, or null where it names a module or a
     /// port that is not there. "filter.cutoff" rather than a name of its own: the
-    /// socket is a way of pointing at an inner port and reads as one.
+    /// socket is a way of pointing at an inner port and reads as one, wired or not.
     /// </summary>
-    /// <remarks>
-    /// An Expression's input is the exception, named for what is wired into it:
-    /// "Clock.beats" says what socket a carries where "Expression.a" says nothing.
-    /// </remarks>
     public (string Label, PortSpec Spec)? Named(GroupSocket socket)
     {
         if (patch.Find(socket.Node) is not { } node) return null;
@@ -244,16 +280,6 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
 
         var ports = socket.IsOutput ? def.Outputs : def.Inputs;
         if (socket.Port >= ports.Count) return null;
-
-        if (!socket.IsOutput
-            && node.TypeId == NodeCatalog.ExpressionTypeId
-            && patch.IncomingTo(node.Id, socket.Port) is { } wire
-            && patch.Find(wire.SourceNode) is { } source
-            && NodeCatalog.Get(source.TypeId) is { } from
-            && wire.SourcePort < from.Outputs.Count)
-        {
-            return ($"{source.Title(from)}.{from.Outputs[wire.SourcePort].Name}", ports[socket.Port]);
-        }
 
         return ($"{node.Title(def)}.{ports[socket.Port].Name}", ports[socket.Port]);
     }

@@ -567,6 +567,100 @@ public class NodeGroupTests
         group.Title().ShouldBe("3 modules");
     }
 
+    [Fact]
+    public void Joining_keeps_the_group_and_its_name()
+    {
+        var patch = new Patch();
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 300, 0);
+        var c = Add(patch, "math.mul", 600, 0);
+
+        var group = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+        group.Name = "Voice";
+
+        patch.Join(group, [c.Id]).ShouldBeTrue();
+
+        patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem().ShouldBe(group);
+        group.Members.ShouldBe([a.Id, b.Id, c.Id]);
+        group.Name.ShouldBe("Voice");
+    }
+
+    [Fact]
+    public void Joining_takes_a_module_out_of_its_old_group_and_leaves_the_output_out()
+    {
+        var patch = new Patch();
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 300, 0);
+        var c = Add(patch, "math.mul", 0, 300);
+        var d = Add(patch, "math.mul", 300, 300);
+        var sink = Add(patch, NodeCatalog.OutputTypeId, 900, 0);
+
+        var top = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+        var low = patch.Group([c.Id, d.Id]).ShouldNotBeNull();
+
+        patch.Join(top, [c.Id, sink.Id]).ShouldBeTrue();
+
+        top.Members.ShouldBe([a.Id, b.Id, c.Id]);
+        patch.Groups.ShouldNotBeNull().ShouldNotContain(low, "a group of one is no group");
+    }
+
+    [Fact]
+    public void A_wire_to_a_joining_module_stops_being_a_socket_and_its_other_wires_become_ones()
+    {
+        var patch = new Patch();
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 300, 0);
+        var c = Add(patch, "math.mul", 600, 0);
+        var d = Add(patch, "math.mul", 900, 0);
+
+        patch.Connect(a.Id, 0, b.Id, 0);
+        patch.Connect(b.Id, 0, c.Id, 0);
+        patch.Connect(c.Id, 0, d.Id, 0);
+
+        var group = patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+        group.Exposed.ShouldContain(new GroupSocket(b.Id, 0, IsOutput: true));
+
+        patch.Join(group, [c.Id]);
+
+        group.Exposed.ShouldNotContain(new GroupSocket(b.Id, 0, IsOutput: true), "the wire runs inside now");
+        group.Exposed.ShouldContain(new GroupSocket(c.Id, 0, IsOutput: true));
+    }
+
+    [Fact]
+    public void Leaving_puts_the_wires_it_leaves_behind_on_the_edge()
+    {
+        var patch = new Patch();
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 300, 0);
+        var c = Add(patch, "math.mul", 600, 0);
+
+        patch.Connect(a.Id, 0, b.Id, 0);
+        patch.Connect(b.Id, 0, c.Id, 0);
+
+        var group = patch.Group([a.Id, b.Id, c.Id]).ShouldNotBeNull();
+        group.Exposed.ShouldBeEmpty();
+
+        patch.Leave([c.Id]).ShouldBeTrue();
+
+        group.Members.ShouldBe([a.Id, b.Id]);
+        group.Exposed.ShouldBe([new GroupSocket(b.Id, 0, IsOutput: true)]);
+    }
+
+    [Fact]
+    public void Leaving_a_group_of_two_dissolves_it()
+    {
+        var patch = new Patch();
+        var a = Add(patch, "osc.sine", 0, 0);
+        var b = Add(patch, "math.mul", 300, 0);
+
+        patch.Group([a.Id, b.Id]).ShouldNotBeNull();
+
+        patch.Leave([b.Id]).ShouldBeTrue();
+
+        patch.Groups.ShouldBeNull();
+        patch.Leave([a.Id]).ShouldBeFalse();
+    }
+
     private static NodeInstance Add(Patch patch, string typeId, double x, double y)
     {
         var node = NodeInstance.Create(Catalog.Require(typeId), x, y);

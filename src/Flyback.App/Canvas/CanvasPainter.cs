@@ -170,6 +170,9 @@ internal sealed class CanvasPainter(
 
     private static readonly IBrush OpenGroupTabSelected = new SolidColorBrush(Colors.Attention, 0.22);
 
+    /// <summary>The header of the group a Shift-drag would drop into.</summary>
+    private static readonly IBrush DropHeader = new SolidColorBrush(Colors.Attention, 0.55);
+
     /// <summary>The ring round a box being looked into: solid, because it is over everything.</summary>
     private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
 
@@ -656,7 +659,7 @@ internal sealed class CanvasPainter(
         if (Patch.Groups is null) return;
 
         foreach (var group in Patch.Groups)
-            if (group != scene.Peek && scene.OpenGroup(group) is var (outline, handle))
+            if (group != scene.Peek && scene.OpenGroup(group, Leaving) is var (outline, handle))
                 DrawRing(context, group, outline, handle, lifted: false);
     }
 
@@ -670,7 +673,7 @@ internal sealed class CanvasPainter(
     /// </remarks>
     private void DrawPeek(DrawingContext context, CanvasScene scene, IReadOnlySet<Guid> lifted)
     {
-        if (scene.Peek is not { } group || scene.OpenGroup(group) is not var (outline, handle)) return;
+        if (scene.Peek is not { } group || scene.OpenGroup(group, Leaving) is not var (outline, handle)) return;
 
         context.FillRectangle(PeekScrim, new Rect(view.ToGraph(default), view.ToGraph(new Point(view.Size.Width, view.Size.Height))));
 
@@ -684,6 +687,12 @@ internal sealed class CanvasPainter(
 
         DrawConnections(context, lifted, theirs: true, peeked: true);
     }
+
+    /// <summary>What a Shift-drag is taking out of its group, which the ring is drawn without.</summary>
+    private IReadOnlySet<Guid>? Leaving => gestures.Regrouping ? gestures.Regrouped : null;
+
+    /// <summary>Whether letting go of a Shift-drag now puts modules into this group.</summary>
+    private bool DropsInto(NodeGroup group) => gestures.Regrouping && ReferenceEquals(gestures.RegroupInto, group);
 
     private void DrawRing(DrawingContext context, NodeGroup group, Rect outline, Rect handle, bool lifted)
     {
@@ -725,7 +734,8 @@ internal sealed class CanvasPainter(
 
         if (lifted) context.DrawRectangle(Background, null, tabShape);
 
-        context.DrawRectangle(isSelected ? OpenGroupTabSelected : OpenGroupTab, null, tabShape);
+        context.DrawRectangle(
+            DropsInto(group) ? DropHeader : isSelected ? OpenGroupTabSelected : OpenGroupTab, null, tabShape);
 
         context.DrawText(
             label, new Point(tab.X + TabPadding, tab.Y + (tab.Height - label.Height) / 2));
@@ -779,6 +789,12 @@ internal sealed class CanvasPainter(
             NodeSkin.BoxHeaderOf(isSelected),
             null,
             new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+
+        if (DropsInto(group))
+            context.DrawRectangle(
+                DropHeader,
+                null,
+                new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
 
         NodeSkin.Relief(context, header);
 

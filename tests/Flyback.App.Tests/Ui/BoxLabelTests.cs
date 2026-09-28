@@ -10,7 +10,7 @@ namespace Flyback.App.Tests.Ui;
 
 /// <summary>
 /// What a shut box and a module's header say around an Expression: one line
-/// each, cut where it is too long, and a box's socket named for what feeds it.
+/// each, cut where it is too long, and a box's socket named for the socket inside.
 /// </summary>
 public class BoxLabelTests : UiTest
 {
@@ -50,12 +50,9 @@ public class BoxLabelTests : UiTest
         CanvasText.Fit("filter.cutoff", 170).ShouldBe("filter.cutoff");
     }
 
-    /// <summary>
-    /// An Expression's input on a box's edge is named for what is wired into it,
-    /// which says what the socket carries where the formula would say it once a socket.
-    /// </summary>
+    /// <summary>An Expression's input on a box's edge is named for the socket inside, wired or not.</summary>
     [AvaloniaFact]
-    public void A_box_names_an_expressions_input_for_what_feeds_it()
+    public void A_box_names_an_expressions_input_for_its_own_socket()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var clock = b.Add(NodeCatalog.TimeTypeId, 0, 0);
@@ -74,7 +71,7 @@ public class BoxLabelTests : UiTest
 
         var sockets = b.Patch.SocketsOf(group);
 
-        editor.Selection.Scene.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Time.t");
+        editor.Selection.Scene.Named(sockets.Inputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.a");
         editor.Selection.Scene.Named(sockets.Outputs.ShouldHaveSingleItem()).ShouldNotBeNull().Label.ShouldBe("Expression.out");
     }
 

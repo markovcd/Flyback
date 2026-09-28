@@ -117,6 +117,12 @@ internal sealed class CanvasGestures
     /// <summary>The wire this re-patch picked up and where in the patch's list it was, or null for a new wire.</summary>
     private (Connection Wire, int At)? lifted;
 
+    /// <summary>
+    /// The carried modules Shift would move between groups on release: every one not
+    /// riding along with the whole of its own group, and not already where it would go.
+    /// </summary>
+    private readonly HashSet<Guid> regrouping = [];
+
     public CanvasGestures(
         CanvasHistory history,
         CanvasSelection selection,
@@ -168,6 +174,15 @@ internal sealed class CanvasGestures
 
     /// <summary>Whether the selection is being carried, so its wires are drawn over everything else.</summary>
     public bool Carrying => drag == Drag.Node;
+
+    /// <summary>Whether letting go now moves modules between groups.</summary>
+    public bool Regrouping => regrouping.Count > 0;
+
+    /// <summary>The group letting go now puts modules into; null for out of every group.</summary>
+    public NodeGroup? RegroupInto { get; private set; }
+
+    /// <summary>The modules letting go now moves, which their old group's ring is drawn without.</summary>
+    public IReadOnlySet<Guid> Regrouped => regrouping;
 
     /// <summary>
     /// Whether a key may change the patch: not on a locked canvas, and not while the
@@ -294,6 +309,11 @@ internal sealed class CanvasGestures
         // A box before a module, because that is the order they are painted in.
         if (scene.HitBox(graph) is null && scene.HitNode(graph) is { } node)
         {
+            // Shift on one member of a group selected whole means that one: it is about
+            // to be carried out, and the whole group would ride along as itself.
+            if ((e.KeyModifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
+                selection.Select(node.Id);
+
             PressNode(node, ctrl);
             e.Pointer.Capture(canvas);
             repaint.Request();
@@ -400,6 +420,7 @@ internal sealed class CanvasGestures
                     moving.Y = from.Y + delta.Y;
                 }
 
+                Aim(graph, e.KeyModifiers);
                 repaint.Request();
                 return;
 
@@ -468,7 +489,12 @@ internal sealed class CanvasGestures
 
         // A move is a step and nothing the program can hear. A press on one module of a
         // group that turned out not to be a drag was a click, which picks it out.
-        if (drag == Drag.Node && !RecordMove() && pendingNarrow is { } one) selection.Select(one);
+        // Shift decides at the release as well, so letting go of it first changes nothing.
+        if (drag == Drag.Node && !history.Locked && Displaced) Aim(graph, e.KeyModifiers);
+        else regrouping.Clear();
+
+        if (drag == Drag.Node && regrouping.Count > 0) edits.Regroup([.. regrouping], RegroupInto);
+        else if (drag == Drag.Node && !RecordMove() && pendingNarrow is { } one) selection.Select(one);
 
         End();
 
@@ -578,6 +604,8 @@ internal sealed class CanvasGestures
         dragOrigins.Clear();
         marqueeBase.Clear();
         marqueeWas.Clear();
+        regrouping.Clear();
+        RegroupInto = null;
 
         if (ended) GestureFinished?.Invoke(this, EventArgs.Empty);
     }
@@ -619,6 +647,45 @@ internal sealed class CanvasGestures
             : new Rect(anchor, anchor);
 
         WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(wireEnd, wireEnd)), pen);
+    }
+
+    /// <summary>Shift went down or came up: a carry mid-way shows at once what letting go would do.</summary>
+    public void ModifiersChanged(KeyModifiers modifiers)
+    {
+        if (drag != Drag.Node || history.Locked || !Displaced || LastPointer is not { } over) return;
+
+        Aim(over, modifiers);
+        repaint.Request();
+    }
+
+    /// <summary>
+    /// Works out, with Shift held, which group the carried modules would land in if let
+    /// go over <paramref name="graph"/>: the one whose ring or box is under the pointer,
+    /// or none.
+    /// </summary>
+    private void Aim(Point graph, KeyModifiers modifiers)
+    {
+        regrouping.Clear();
+        RegroupInto = null;
+
+        if ((modifiers & KeyModifiers.Shift) == 0) return;
+
+        var patch = history.Patch;
+        var carried = dragOrigins.Keys.ToHashSet();
+        var into = selection.Scene.DropTarget(graph, carried);
+
+        foreach (var id in carried)
+        {
+            var own = patch.GroupOf(id);
+
+            // A whole group rides along as itself: groups do not nest.
+            if (own is not null && own.Members.All(carried.Contains)) continue;
+            if (own == into || patch.Find(id) is not { } node || NodeCatalog.IsSink(node.TypeId)) continue;
+
+            regrouping.Add(id);
+        }
+
+        if (regrouping.Count > 0) RegroupInto = into;
     }
 
     /// <summary>Stops a turn of a socket, and puts the cursor back to what the pointer is over.</summary>
@@ -797,15 +864,13 @@ internal sealed class CanvasGestures
     }
 
     /// <summary>Puts a drag that moved something into the history, and says whether it did.</summary>
-    private bool RecordMove()
-    {
-        var moved = selection.Nodes.Any(node =>
-            dragOrigins.TryGetValue(node.Id, out var from)
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            && (node.X != from.X || node.Y != from.Y));
+    private bool RecordMove() => Displaced && history.RecordMove();
 
-        return moved && history.RecordMove();
-    }
+    /// <summary>Whether the carry has taken anything away from where it started.</summary>
+    private bool Displaced => selection.Nodes.Any(node =>
+        dragOrigins.TryGetValue(node.Id, out var from)
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        && (node.X != from.X || node.Y != from.Y));
 
     /// <summary>
     /// What the pointer should look like over <paramref name="graph"/>. A box and the

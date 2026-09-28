@@ -119,3 +119,10 @@ this addition and the `PatchLayout.Arrange` selection parameter alike, straight
 into `PublicAPI.Shipped.txt` at `PluginContractVersion` 1.0.0. A minor bump for
 one addition among several, on a contract nothing has been built against yet,
 would say a version moved that no plugin had reason to know existed.
+
+## Amendment, 2026-09-28: a box's input is named for itself
+
+*User-directed.* A shut box's Expression input is `Expression.a`, wired or not,
+like every other box socket. Naming it for what feeds it made the label change
+with the wire and hid which socket inside it was; what feeds it is the wire's to
+say, and the panel's row says it too.

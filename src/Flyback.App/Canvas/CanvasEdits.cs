@@ -28,6 +28,8 @@ internal sealed class CanvasEdits(
     /// <summary>
     /// Drops a new module on the canvas and hands it back, or selects the one already
     /// there where the patch may not hold another: the Output, of which there is one.
+    /// Landing inside an open group's ring, or the box being looked into, puts it in
+    /// that group.
     /// </summary>
     /// <param name="typeId">Which module to add.</param>
     /// <param name="at">Where to center it, in graph space; the middle of the view when null.</param>
@@ -46,9 +48,19 @@ internal sealed class CanvasEdits(
         var node = Created(ref def, at ?? view.Middle);
 
         Patch.Nodes.Add(node);
+        JoinRingAt(node, at ?? view.Middle);
         selection.Select(node.Id);
         history.Record();
         return node;
+    }
+
+    /// <summary>
+    /// Puts a module just added into the open group whose ring <paramref name="at"/> is
+    /// in. Before it is selected, or the box being looked into would be put back.
+    /// </summary>
+    private void JoinRingAt(NodeInstance node, Point at)
+    {
+        if (selection.Scene.RingAt(at) is { } group) Patch.Join(group, [node.Id]);
     }
 
     /// <summary>
@@ -71,6 +83,7 @@ internal sealed class CanvasEdits(
             else Patch.Connect(node.Id, socket, drop.Node, drop.Port);
         }
 
+        JoinRingAt(node, drop.At);
         selection.Select(node.Id);
         history.Record();
         return node;
@@ -153,14 +166,31 @@ internal sealed class CanvasEdits(
     /// </summary>
     public int Groupable => selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
-    /// <summary>Draws the selected modules as one box.</summary>
+    /// <summary>
+    /// Draws the selected modules as one box. Where they are one whole group and
+    /// modules in none, the rest join that group, which keeps its name and edge.
+    /// </summary>
     public void GroupSelected()
     {
-        // Grouping a group again would dissolve it to make it: a new box round the
-        // same modules, without its name and the sockets left on its edge.
-        if (selection.Group is not null)
+        // Never a new box round a whole group: that would dissolve it to make it,
+        // without its name and the sockets left on its edge.
+        if (Growing() is { } kept)
         {
-            report.Say("These modules are a group already. Ctrl+Shift+G ungroups them.");
+            var before = kept.Members.Count;
+
+            if (!Patch.Join(kept, selection.Ids))
+            {
+                report.Say("These modules are a group already. Ctrl+Shift+G ungroups them.");
+                return;
+            }
+
+            kept.Collapsed = true;
+
+            selection.Take(kept.Members);
+            selection.Announce();
+            history.Record();
+
+            report.Say($"Added {Modules(kept.Members.Count - before)} to {kept.Title()}.");
             return;
         }
 
@@ -185,6 +215,46 @@ internal sealed class CanvasEdits(
             $"Grouped {made.Members.Count} modules. "
             + "Ctrl+Shift+G ungroups them, double-click looks inside.");
     }
+
+    /// <summary>
+    /// Moves modules into <paramref name="into"/>, or out of every group where that is
+    /// null: what letting go of a Shift-drag does. One step with the move that carried them.
+    /// </summary>
+    public void Regroup(IReadOnlyCollection<Guid> ids, NodeGroup? into)
+    {
+        var from = string.Join(", ", ids.Select(Patch.GroupOf).OfType<NodeGroup>().Distinct().Select(group => group.Title()));
+
+        if (!(into is null ? Patch.Leave(ids) : Patch.Join(into, ids)))
+        {
+            history.RecordMove();
+            return;
+        }
+
+        // A box they joined is shut round them, and the rest of it comes along.
+        selection.WholeBoxes();
+        selection.Refocus();
+        selection.Announce();
+        history.Record();
+
+        report.Say(into is null
+            ? $"Took {Modules(ids.Count)} out of {from}."
+            : $"Added {Modules(ids.Count)} to {into.Title()}.");
+    }
+
+    /// <summary>
+    /// The one group the selection holds the whole of, where everything else selected
+    /// is in no group; null otherwise.
+    /// </summary>
+    private NodeGroup? Growing()
+    {
+        var reached = selection.Groups.ToArray();
+
+        if (reached is not [var only] || !only.Members.All(selection.Contains)) return null;
+
+        return only;
+    }
+
+    private static string Modules(int count) => count == 1 ? "one module" : $"{count} modules";
 
     /// <summary>Stops drawing whatever groups the selection is inside, leaving every module and wire where it was.</summary>
     public void UngroupSelected()

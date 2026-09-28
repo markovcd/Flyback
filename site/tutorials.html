@@ -462,7 +462,10 @@ out.volume = 0.5</code></pre>
       <li><strong>Group</strong> a selection into one box with <kbd>Ctrl</kbd>+<kbd>G</kbd>. The box lists the
       sockets that cross its edge; the ⇤ beside an unwired socket in a grouped module's panel adds that one too,
       and the ✕ in the box's panel takes it off again. Double-click it to look inside: its modules come up over the rest of the
-      patch until <kbd>Esc</kbd> or a click outside. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> ungroups. <kbd>Ctrl</kbd>+<kbd>E</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> open and close
+      patch until <kbd>Esc</kbd> or a click outside. A module added from the list over an open group or a box
+      you are looking into lands in it, and <kbd>Shift</kbd>+drag moves modules into the group you let go over, or
+      out of their own onto bare canvas. <kbd>Ctrl</kbd>+<kbd>G</kbd> on a group and loose modules adds them to it,
+      name and all. <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> ungroups. <kbd>Ctrl</kbd>+<kbd>E</kbd> and <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> open and close
       every box the selection touches.</li>
       <li><strong>Switch off</strong> a module, a selection or a whole box with <kbd>Ctrl</kbd>+<kbd>B</kbd>
       to hear the patch without it. What is patched into it comes straight out of it, and nothing does
@@ -649,6 +652,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>Start or stop recording</td></tr>
           <tr><td><kbd>PgUp</kbd> / <kbd>PgDn</kbd></td><td>Move the computer keyboard up or down an octave</td></tr>
           <tr><td>double-click a box</td><td>Look inside it, over the rest of the patch</td></tr>
+          <tr><td><kbd>Shift</kbd>+drag modules</td><td>Put them into the group they are let go over, or take them out of theirs</td></tr>
           <tr><td>double-click the preview</td><td>Full-screen preview</td></tr>
           <tr><td><kbd>F3</kbd> over the full-screen preview</td><td>Show or hide how the picture is drawn: frames a second, a frame's cost, the ops</td></tr>
         </tbody>

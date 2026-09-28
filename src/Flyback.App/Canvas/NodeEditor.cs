@@ -143,6 +143,8 @@ internal sealed class NodeEditor : Control
     {
         base.OnKeyDown(e);
 
+        if (e.Key is Key.LeftShift or Key.RightShift) Gestures.ModifiersChanged(e.KeyModifiers | KeyModifiers.Shift);
+
         // Backing out of the gesture under way, as Escape does everywhere else here.
         // Before the modifier check, because the hand may still hold the Ctrl that
         // began it; unhandled with nothing under way, so the window still gets it.
@@ -204,6 +206,13 @@ internal sealed class NodeEditor : Control
                 e.Handled = true;
                 break;
         }
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+
+        if (e.Key is Key.LeftShift or Key.RightShift) Gestures.ModifiersChanged(e.KeyModifiers & ~KeyModifiers.Shift);
     }
 
     /// <summary>

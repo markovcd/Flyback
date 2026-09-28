@@ -2012,7 +2012,7 @@ public class SourceViewTests : UiTest
         group.Collapsed.ShouldBeTrue();
         steps.ShouldBe(0, "nothing done to a locked canvas is an edit to the patch");
         editor.Selection.Peeked.ShouldBe(group);
-        editor.Selection.Group.ShouldBe(group, "the press still selects what the box stands for");
+        editor.Selection.Count.ShouldBe(0, "looking into a box selects nothing inside it");
     }
 
     // --- an assistant's patch, and the text ---------------------------------

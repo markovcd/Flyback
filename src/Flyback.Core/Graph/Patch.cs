@@ -299,6 +299,97 @@ public sealed class Patch
         return group;
     }
 
+    /// <summary>
+    /// Puts <paramref name="members"/> into <paramref name="group"/>, taking each out
+    /// of any group it was in, and says whether any moved. The sink stays out.
+    /// </summary>
+    /// <remarks>
+    /// The wires they bring across the edge become sockets on it, as a new group's
+    /// do; a socket that stood for a wire to one of them is taken off, now the wire
+    /// runs inside.
+    /// </remarks>
+    internal bool Join(NodeGroup group, IEnumerable<Guid> members)
+    {
+        var arriving = members
+            .Distinct()
+            .Where(id => !group.Members.Contains(id) && Find(id) is { } node && !NodeCatalog.IsSink(node.TypeId))
+            .ToList();
+
+        if (arriving.Count == 0) return false;
+
+        foreach (var id in arriving) Forget(id);
+
+        group.Members.AddRange(arriving);
+
+        var joining = arriving.ToHashSet();
+
+        var inside = group.Members.ToHashSet();
+
+        group.Exposed.RemoveAll(socket =>
+            !joining.Contains(socket.Node)
+            && Connections.Any(wire => Across(wire, socket, joining))
+            && !Connections.Any(wire => Across(wire, socket, null) && !inside.Contains(Far(wire, socket))));
+
+        ExposeCrossings(group, joining);
+        return true;
+    }
+
+    /// <summary>
+    /// Takes <paramref name="members"/> out of whatever groups hold them, and says
+    /// whether any were in one. A group left with fewer than
+    /// <see cref="NodeGroup.Fewest"/> goes.
+    /// </summary>
+    /// <remarks>The wires they leave behind across an edge become sockets on it.</remarks>
+    internal bool Leave(IEnumerable<Guid> members)
+    {
+        var leaving = members.Where(id => GroupOf(id) is not null).ToHashSet();
+
+        if (leaving.Count == 0) return false;
+
+        var from = leaving.Select(id => GroupOf(id)!).Distinct().ToArray();
+
+        foreach (var id in leaving) Forget(id);
+
+        foreach (var group in from)
+            if (Groups?.Contains(group) == true)
+                ExposeCrossings(group, leaving);
+
+        return true;
+    }
+
+    /// <summary>Whether <paramref name="wire"/> is on <paramref name="socket"/> with its far end among <paramref name="ends"/>, or anywhere when that is null.</summary>
+    private static bool Across(Connection wire, GroupSocket socket, IReadOnlySet<Guid>? ends)
+    {
+        var on = socket.IsOutput
+            ? wire.SourceNode == socket.Node && wire.SourcePort == socket.Port
+            : wire.TargetNode == socket.Node && wire.TargetPort == socket.Port;
+
+        return on && (ends is null || ends.Contains(Far(wire, socket)));
+    }
+
+    /// <summary>The module at the other end of a wire on <paramref name="socket"/>.</summary>
+    private static Guid Far(Connection wire, GroupSocket socket) => socket.IsOutput ? wire.TargetNode : wire.SourceNode;
+
+    /// <summary>Puts on <paramref name="group"/>'s edge every socket a wire crossing it has, where one end is among <paramref name="moved"/>.</summary>
+    private void ExposeCrossings(NodeGroup group, IReadOnlySet<Guid> moved)
+    {
+        var inside = group.Members.ToHashSet();
+
+        foreach (var wire in Connections)
+        {
+            if (!moved.Contains(wire.SourceNode) && !moved.Contains(wire.TargetNode)) continue;
+
+            var from = inside.Contains(wire.SourceNode);
+            var to = inside.Contains(wire.TargetNode);
+
+            if (from == to) continue;
+
+            group.Expose(to
+                ? new GroupSocket(wire.TargetNode, wire.TargetPort, IsOutput: false)
+                : new GroupSocket(wire.SourceNode, wire.SourcePort, IsOutput: true));
+        }
+    }
+
     /// <summary>Stops drawing a group, without touching anything inside it.</summary>
     public bool Ungroup(Guid groupId)
     {
