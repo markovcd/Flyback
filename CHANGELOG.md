@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Plasma is three drifting fields read through a blue, cream and amber palette that cycles slowly.
 - The sound and MIDI, key store and assistant plugins show a picture in the plugins window and the install dialog.
 - Usage statistics also count which modules are picked from the module list and which of the editor's features a run uses.
 - The status bar counts the picture's ops and the sound's apart.

@@ -3,14 +3,13 @@ using Flyback.Core.Graph;
 namespace Flyback.Plugins.Picture;
 
 /// <summary>
-/// The Plasma preset's own field, colored out of a palette instead of off the hue
-/// wheel — and then graded, posterised, and read back apart again.
+/// Two crossed sine fields colored out of a palette — and then graded, posterised,
+/// and read back apart again.
 /// </summary>
 /// <remarks>
-/// Deliberately the same two sines the engine's first preset is built on, so what
-/// is demonstrated is the color and nothing else. A slow sweep walks 'spread' from
-/// nothing to a third — from tints of one color, through the sunsets and teals, to
-/// the rainbow Plasma is stuck at. After it a Grade and a Posterise, both on the
+/// The field is deliberately plain, so what is demonstrated is the color and
+/// nothing else. A slow sweep walks 'spread' from nothing to a third — from tints
+/// of one color, through the sunsets and teals, to the rainbow. After it a Grade and a Posterise, both on the
 /// finished color rather than the signal behind it, which is the point of their
 /// being color modules.
 /// <para>
@@ -29,8 +28,7 @@ internal static class SpectrumPreset
         var coord = b.Add("coord");
         var clock = b.Add("time");
 
-        // Plasma's own arrangement, unchanged: a sine along x, a second along y
-        // whose phase drifts, and the two summed.
+        // A sine along x, a second along y whose phase drifts, and the two summed.
         var slowly = b.Add("math.mul", (1, 0.2f));
         var across = b.Add("osc.sine", (1, 1.5f));
         var down = b.Add("osc.sine", (1, 1.1f));

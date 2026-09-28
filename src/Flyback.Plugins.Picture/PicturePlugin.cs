@@ -96,7 +96,7 @@ public sealed class PicturePlugin : IFlybackPlugin
             new PatchPreset(
                 SpectrumPreset.Name,
                 SpectrumPreset.Build,
-                "Plasma's field colored out of a palette instead of off the hue wheel, then graded."),
+                "Two crossed sine fields colored out of a palette, then graded."),
             new PatchPreset(
                 MarblePreset.Name,
                 MarblePreset.Build,

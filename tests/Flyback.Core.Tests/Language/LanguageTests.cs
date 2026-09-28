@@ -80,14 +80,16 @@ public class LanguageTests
 
     [Fact]
     public void Plasma() => Same("Plasma", """
-        let slowly = t * 0.2
-        let wave   = y |> sine(freq: 1.1, phase: slowly)
+        let across = x |> sine(freq: 0.8, phase: t * 0.11)
+        let down   = y |> sine(freq: 0.9, phase: t * -0.07)
+        let round  = rings(freq: 1.1, offset: t * -0.13)
+        let field  = across + down + round + t * 0.15
 
-        x |> sine(freq: 1.5)
-          |> add(a: _, b: wave)
-          |> remap(-2..2, 0..1)
-          |> hsv(hue: _, saturation: 0.85, value: 1)
-          |> out.color
+        let r = field |> sine(freq: 0.2, phase: 0,   amp: 0.42, bias: 0.5)
+        let g = field |> sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+        let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
+
+        rgb(r: r, g: g, b: b) |> out.color
         """);
 
     [Fact]

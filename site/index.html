@@ -213,25 +213,29 @@
 
     <figure class="diagram">
       <a class="zoom" href="assets/shots/patch-plasma.webp" target="_blank" rel="noopener">
-        <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="418"
-             alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through an Expression reading a * 0.2 into the second Sine's phase, an Expression reading a + b sums the two Sines, a Remap brings the sum into 0 to 1, and an HSV turns it into the color wired into the Output.">
+        <img class="shot" loading="lazy" src="assets/shots/patch-plasma.webp" width="2144" height="692"
+             alt="The Plasma patch on the canvas: Coordinates x and y each feed a Sine, Time goes through three Expressions into the two Sines' phases and a Rings' offset, an Expression reading a + b + c + d * 0.15 sums the three fields with the clock, and three Sines a tenth of a turn apart read the sum as red, green and blue into an RGB wired into the Output.">
       </a>
-      <figcaption>The Plasma preset on the canvas: nine modules and nine wires.</figcaption>
+      <figcaption>The Plasma preset on the canvas: fourteen modules and nineteen wires.</figcaption>
     </figure>
 
     <div class="twosinks">
       <div class="as-text">
         <pre><code class="fbks"># The same patch, as text.
-let slowly = t * 0.2
+let across = x |> sine(freq: 0.8, phase: t * 0.11)
+let down   = y |> sine(freq: 0.9, phase: t * -0.07)
+let round  = rings(freq: 1.1, offset: t * -0.13)
+let field  = across + down + round + t * 0.15
 
-(x |> sine(freq: 1.5)) + (y |> sine(freq: 1.1, phase: slowly))
-  |> remap(-2..2, 0..1)
-  |> color.hsv(hue: _, saturation: 0.85, value: 1)
-  |> out.color</code></pre>
+let r = field |> sine(freq: 0.2, phase: 0,   amp: 0.42, bias: 0.5)
+let g = field |> sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
+
+color.rgb(r: r, g: g, b: b) |> out.color</code></pre>
       </div>
       <div class="window">
         <video data-autoplay muted loop playsinline preload="none" poster="assets/shots/preview-plasma.webp" width="960" height="540"
-               aria-label="The Plasma patch rendering: diamonds of rainbow hue drifting slowly.">
+               aria-label="The Plasma patch rendering: soft blobs of deep blue, cream and amber drifting and cycling slowly.">
           <source src="assets/clips/plasma.mp4" type="video/mp4">
         </video>
       </div>

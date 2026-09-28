@@ -110,7 +110,7 @@ public class PrinterTests
         var source = PatchPrinter.Print(Preset("Plasma"), NodeCatalog.BuiltIn);
 
         source.ShouldContain("x |>");
-        source.ShouldContain("phase: t * 0.2");
+        source.ShouldContain("phase: t * 0.11");
         source.ShouldNotContain("coord(");
         source.ShouldNotContain("time(");
     }

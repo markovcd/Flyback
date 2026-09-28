@@ -115,17 +115,24 @@ the text matches a name in the catalog exactly. Short names stay legal input.
 The cost is verbosity, which is the trade being asked for. Plasma, whole:
 
 ```
-let slowly  = t * 0.2
-let wave_y  = y |> osc.sine(freq: 1.1, phase: slowly)
-let crossed = x |> osc.sine(freq: 1.5) |> math.add(a: _, b: wave_y)
-let level   = crossed |> math.remap(in_low: -2, in_high: 2, out_low: 0, out_high: 1)
+let drift_x = t * 0.11
+let drift_y = t * -0.07
+let outward = t * -0.13
+let cycle   = t * 0.15
+let across  = x |> osc.sine(freq: 0.8, phase: drift_x)
+let down    = y |> osc.sine(freq: 0.9, phase: drift_y)
+let round   = pattern.rings(freq: 1.1, offset: outward)
+let field   = across |> math.add(a: _, b: down) |> math.add(a: _, b: round) |> math.add(a: _, b: cycle)
+let r       = field |> osc.sine(freq: 0.2, phase: 0, amp: 0.42, bias: 0.5)
+let g       = field |> osc.sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+let b       = field |> osc.sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
 
-level |> color.hsv(hue: _, saturation: 0.85, value: 1) |> out.color
+color.rgb(r: r, g: g, b: b) |> out.color
 ```
 
 One binding per nesting that had to be lifted, and longer lines. Against the
-form in §1 of the reference it is the same program — nine modules, nine wires,
-twenty-nine picture ops, thirty-six registers — and every line of it builds.
+form in §1 of the reference it is the same program — fifty-seven picture ops,
+sixty-four registers — and every line of it builds.
 
 ## 5. `print` emits the canonical form
 

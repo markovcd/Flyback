@@ -43,7 +43,7 @@ internal static partial class Presets
         // --- one idea, one sink ------------------------------------------------
 
         new("Plasma", Plasma,
-            "Two sine fields crossed and read as hue — the hello world of video synths."),
+            "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths."),
         new("Kaleidoscope", Kaleidoscope,
             "Rotating wedges filled with clouds that boil over time."),
         new("Grid", Grid,
@@ -271,7 +271,7 @@ internal static partial class Presets
         return b.Build();
     }
 
-    /// <summary>Two sine fields crossed and read as hue — the "hello world" of video synths.</summary>
+    /// <summary>Three drifting sine fields summed and read through a cosine palette — the "hello world" of video synths.</summary>
     public static Patch Plasma(ModuleCatalog modules)
     {
         var b = new PatchBuilder(modules);
@@ -279,27 +279,52 @@ internal static partial class Presets
         var coord = b.Add("coord");
         var time = b.Add("time");
 
-        // A fifth of a radian a second into the phase below. Time is seconds and
-        // nothing else, so a patch that wants less than that says so here.
-        var slowly = b.Add("math.mul", (1, 0.2f));
+        // A sine along x, one along y and rings out from the middle, each drifting
+        // at its own rate so the three never line up the same way twice.
+        var acrossDrift = b.Add("math.mul", (1, 0.11f));
+        var across = b.Add("osc.sine", (1, 0.8f));
+        var downDrift = b.Add("math.mul", (1, -0.07f));
+        var down = b.Add("osc.sine", (1, 0.9f));
+        var outward = b.Add("math.mul", (1, -0.13f));
+        var round = b.Add("pattern.rings", (2, 1.1f));
 
-        // Sine along x, and a second along y whose phase drifts with time.
-        var horizontal = b.Add("osc.sine", (1, 1.5f));
-        var vertical = b.Add("osc.sine", (1, 1.1f));
+        // Time added straight onto the field walks it through the palette.
+        var cycle = b.Add("math.mul", (1, 0.15f));
 
-        var sum = b.Add("math.add");
-        var hue = b.Add("math.remap", (1, -2f), (2, 2f), (3, 0f), (4, 1f));
-        var color = b.Add("color.hsv", (1, 0.85f), (2, 1f));
+        var crossed = b.Add("math.add");
+        var ringed = b.Add("math.add");
+        var field = b.Add("math.add");
+
+        // One sine a channel, a tenth of a turn apart: deep blue through cream to amber.
+        var red = b.Add("osc.sine", (1, 0.2f), (2, 0f), (3, 0.42f), (4, 0.5f));
+        var green = b.Add("osc.sine", (1, 0.2f), (2, 0.1f), (3, 0.42f), (4, 0.5f));
+        var blue = b.Add("osc.sine", (1, 0.2f), (2, 0.2f), (3, 0.42f), (4, 0.5f));
+        var color = b.Add("color.rgb");
         var output = b.Add(NodeCatalog.OutputTypeId);
 
-        b.Wire(coord, 0, horizontal, 0)
-         .Wire(coord, 1, vertical, 0)
-         .Wire(time, 0, slowly, 0)
-         .Wire(slowly, 0, vertical, 2)
-         .Wire(horizontal, 0, sum, 0)
-         .Wire(vertical, 0, sum, 1)
-         .Wire(sum, 0, hue, 0)
-         .Wire(hue, 0, color, 0)
+        b.Wire(time, 0, acrossDrift, 0)
+         .Wire(coord, 0, across, 0)
+         .Wire(acrossDrift, 0, across, 2)
+         .Wire(time, 0, downDrift, 0)
+         .Wire(coord, 1, down, 0)
+         .Wire(downDrift, 0, down, 2)
+         .Wire(time, 0, outward, 0)
+         .Wire(outward, 0, round, 3)
+         .Wire(time, 0, cycle, 0)
+
+         .Wire(across, 0, crossed, 0)
+         .Wire(down, 0, crossed, 1)
+         .Wire(crossed, 0, ringed, 0)
+         .Wire(round, 0, ringed, 1)
+         .Wire(ringed, 0, field, 0)
+         .Wire(cycle, 0, field, 1)
+
+         .Wire(field, 0, red, 0)
+         .Wire(field, 0, green, 0)
+         .Wire(field, 0, blue, 0)
+         .Wire(red, 0, color, 0)
+         .Wire(green, 0, color, 1)
+         .Wire(blue, 0, color, 2)
          .Wire(color, 0, output, 0);
 
         return b.Build();

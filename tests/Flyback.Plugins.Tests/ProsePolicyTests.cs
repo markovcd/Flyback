@@ -135,7 +135,7 @@ public sealed class ProsePolicyTests : IDisposable
     {
         var briefing = new PatchWorkbench(Shipped, new Patch()).Briefing;
 
-        briefing.ShouldContain("Plasma | Two sine fields crossed");
+        briefing.ShouldContain("Plasma | Three drifting sine fields");
         briefing.ShouldNotContain("Some presets below have no description line");
     }
 
@@ -170,7 +170,7 @@ public sealed class ProsePolicyTests : IDisposable
             CancellationToken.None);
 
         read.Ok.ShouldBeTrue(read.Text);
-        read.Text.ShouldContain("Two sine fields crossed");
+        read.Text.ShouldContain("Three drifting sine fields");
     }
 
     [Fact]

@@ -21,20 +21,22 @@ Source files are `.fbks`, beside the `.fbk` document they build into and the
 ## 1. Hello
 
 ```
-# Two sine fields crossed and read as hue.
+# Three drifting sine fields summed and read through a cosine palette.
 
-let slowly = t * 0.2
-let wave   = y |> sine(freq: 1.1, phase: slowly)
+let across = x |> sine(freq: 0.8, phase: t * 0.11)
+let down   = y |> sine(freq: 0.9, phase: t * -0.07)
+let round  = rings(freq: 1.1, offset: t * -0.13)
+let field  = across + down + round + t * 0.15
 
-x |> sine(freq: 1.5)
-  |> add(a: _, b: wave)
-  |> remap(-2..2, 0..1)
-  |> hsv(hue: _, saturation: 0.85, value: 1)
-  |> out.color
+let r = field |> sine(freq: 0.2, phase: 0,   amp: 0.42, bias: 0.5)
+let g = field |> sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
+
+rgb(r: r, g: g, b: b) |> out.color
 ```
 
-That is the Plasma preset: eight modules and nine wires, and every line of it is
-a decision. `_` is where the pipe lands when the module has no `in` for it.
+That is the Plasma preset: fourteen modules and nineteen wires, and every line of
+it is a decision. `_` is where the pipe lands when the module has no `in` for it.
 
 ---
 
@@ -955,16 +957,18 @@ out.volume = 0.7
 ### Plasma — [:182](../src/Flyback.Engine/Graph/Presets.cs)
 
 ```
-description "Two sine fields crossed and read as hue — the hello world of video synths."
+description "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths."
 
-let slowly = t * 0.2
-let wave   = y |> sine(freq: 1.1, phase: slowly)
+let across = x |> sine(freq: 0.8, phase: t * 0.11)
+let down   = y |> sine(freq: 0.9, phase: t * -0.07)
+let round  = rings(freq: 1.1, offset: t * -0.13)
+let field  = across + down + round + t * 0.15
 
-x |> sine(freq: 1.5)
-  |> add(a: _, b: wave)
-  |> remap(-2..2, 0..1)
-  |> hsv(hue: _, saturation: 0.85, value: 1)
-  |> out.color
+let r = field |> sine(freq: 0.2, phase: 0,   amp: 0.42, bias: 0.5)
+let g = field |> sine(freq: 0.2, phase: 0.1, amp: 0.42, bias: 0.5)
+let b = field |> sine(freq: 0.2, phase: 0.2, amp: 0.42, bias: 0.5)
+
+rgb(r: r, g: g, b: b) |> out.color
 ```
 
 ### Kaleidoscope — [:216](../src/Flyback.Engine/Graph/Presets.cs)

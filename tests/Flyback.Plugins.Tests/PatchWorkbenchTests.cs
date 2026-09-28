@@ -199,7 +199,7 @@ public class PatchWorkbenchTests
         var briefing = Bench().Briefing;
 
         briefing.ShouldContain("# Presets");
-        briefing.ShouldContain("Plasma | Two sine fields crossed");
+        briefing.ShouldContain("Plasma | Three drifting sine fields");
         briefing.ShouldNotContain("Empty | The Output");
     }
 
