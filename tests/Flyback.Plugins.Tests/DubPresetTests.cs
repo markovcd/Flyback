@@ -22,6 +22,9 @@ public class DubPresetTests
     /// <summary>A beat at seventy-four a minute, in seconds.</summary>
     private const double Beat = 60 / 74.0;
 
+    /// <summary>A beat of the steppers, at twice the tempo.</summary>
+    private const double FastBeat = 60 / 148.0;
+
     private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
     private static Patch Patch() => Loaded.Presets.Single(p => p.Name == "Dub").Build(Loaded.Modules);
@@ -163,17 +166,33 @@ public class DubPresetTests
         patch.Connections.ShouldNotContain(c => arrangements.Contains(c.SourceNode) && envelopes.Contains(c.TargetNode));
     }
 
+    /// <summary>Sixty-four bars at seventy-four and sixty-four at twice that.</summary>
     [Fact]
-    public void It_lasts_sixty_four_bars()
+    public void It_lasts_sixty_four_bars_slow_and_sixty_four_fast()
     {
-        Patch().Length.ShouldBe(Math.Round(256 * Beat, 2));
+        Patch().Length.ShouldBe(Math.Round(256 * Beat + 256 * FastBeat, 2));
+    }
+
+    /// <summary>The slow part's last bar, after the drop's line of Patois has faded out.</summary>
+    [Fact]
+    public void Silence_comes_before_the_steppers()
+    {
+        Play(Rate, from: 253 * Beat).Max(MathF.Abs).ShouldBe(0f);
+    }
+
+    /// <summary>The first second of the steppers against the second before them.</summary>
+    [Fact]
+    public void The_steppers_come_in_after_the_silence()
+    {
+        Loudness(Play(Rate, from: 256 * Beat)).ShouldBeGreaterThan(0.01f);
     }
 
     /// <summary>Played from the last two bars, which leave everything to the echo.</summary>
     [Fact]
     public void It_ends_on_the_echo_alone()
     {
-        Loudness(Play(Rate, from: 248 * Beat)).ShouldBeLessThan(Loudness(Play(Rate, from: 240 * Beat)) * 0.2f);
+        Loudness(Play(Rate, from: 256 * Beat + 248 * FastBeat))
+            .ShouldBeLessThan(Loudness(Play(Rate, from: 256 * Beat + 240 * FastBeat)) * 0.2f);
     }
 
     [Fact]
