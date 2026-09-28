@@ -7,7 +7,7 @@ namespace Flyback.Plugins.Effects;
 /// <summary>
 /// Roots dub to be played rather than listened to: a one drop, a bass line and a skank
 /// that drop in and out every few bars and are thrown into the echo, four keys of organ
-/// over them, and eight knobs on the panel that are the performance.
+/// over them, and six knobs on the panel that are the performance.
 /// </summary>
 /// <remarks>
 /// The chord is four MIDI Ins on voices 1 to 4 (ADR-0062) and everything worth
@@ -133,16 +133,13 @@ internal sealed class DubPreset : PresetBench
     {
         // --- the panel -------------------------------------------------------
 
-        // Eight, which is a row on most controllers. Each rests where the patch
-        // sounds like the genre with nobody touching it.
+        // Each rests where the patch sounds like the genre with nobody touching it.
         var cutoff = Panel("Cutoff", 0.45f);
         var resonance = Panel("Resonance", 0.35f);
         var pluck = Panel("Pluck", 0.5f);
         var decay = Panel("Decay", 0.5f);
         var echo = Panel("Echo", 0.6f);
         var space = Panel("Space", 0.5f);
-        var drums = Panel("Drums", 0.8f);
-        var bass = Panel("Bass", 0.8f);
 
         // --- the clock -------------------------------------------------------
 
@@ -186,8 +183,7 @@ internal sealed class DubPreset : PresetBench
 
         // The sidechain: the chords and the bass lean away from the kick, by as much
         // as the kick is up.
-        var duck = Ducking(kickLevel, 0f);
-        Follows(duck, 3, drums, 0f, 0.55f);
+        var duck = Ducking(kickLevel, 0.44f);
 
         Box("Kick");
 
@@ -460,13 +456,10 @@ internal sealed class DubPreset : PresetBench
         Channel(drumDesk, 3, 0.7f, rim);
         Channel(drumDesk, 4, 0.7f, percussion);
 
-        for (var channel = 1; channel <= 4; channel++) Ridden(drumDesk, channel, drums);
-
         Channel(musicDesk, 1, 0.75f, bassOut);
         Channel(musicDesk, 2, 0.85f, chordLeft, chordRight);
         Channel(musicDesk, 3, 0.2f, dust);
         Channel(musicDesk, 4, 0.9f, skank);
-        Ridden(musicDesk, 1, bass);
 
         Channel(spaceDesk, 1, 0.6f, tapsLeft, tapsRight);
         Channel(spaceDesk, 2, 0.45f, room, room, rightFrom: 1);
@@ -511,9 +504,9 @@ internal sealed class DubPreset : PresetBench
         var cold = b.Add("color.rgb", (0, 0.12f), (1, 0.3f), (2, 0.36f));
         var mist = b.Add("color.gain");
 
-        // The bass is a glow along the bottom of the frame, as high as the Bass knob.
+        // The bass is a glow along the bottom of the frame.
         var low = From(1f, Rises(coord, -1f, -0.3f, 1));
-        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), mix, Bass), bass, 0f, 0.5f), 0.9f, 0.35f, 0.1f);
+        var glow = Ink(mist, Times(Product(Product(low, bassLine, 1), mix, Bass), 0.4f), 0.9f, 0.35f, 0.1f);
 
         b.Wire(Times(clock, 0.05f), 0, fog, 2)
          .Wire(cold, 0, mist, 0)
@@ -564,8 +557,8 @@ internal sealed class DubPreset : PresetBench
         // --- the picture: scene ----------------------------------------------
 
         // The kick is a disc in the middle that every ring is drawn round, swelling
-        // on the beat and gone when the drums are down or out.
-        var kickSeen = Times(kickLevel, drums, 0f, 1f);
+        // on the beat and gone while the kick is out.
+        var kickSeen = Times(kickLevel, 0.8f);
         var disc = b.Add(CircleType);
         var pulse = b.Add(FillType, (1, 0.06f));
         var scene = Ink(Sum(glow, rings!), Product(pulse, kickSeen), 0.75f, 0.95f, 1f);
@@ -617,16 +610,5 @@ internal sealed class DubPreset : PresetBench
         var slew = b.Add(SlewType, (1, -1.5f), (2, -1.5f));
         Follows(slew, 0, knob, 0f, 1f);
         return slew;
-    }
-
-    /// <summary>
-    /// A Desk's fader handed to a panel knob: nothing with the knob down, and the
-    /// level the channel was given where the knob rests.
-    /// </summary>
-    private static void Ridden(NodeInstance desk, int channel, PatchControl knob)
-    {
-        var fader = (channel - 1) * 3 + 2;
-
-        Follows(desk, fader, knob, 0f, desk.InputValues[fader] / knob.Value);
     }
 }

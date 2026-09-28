@@ -48,10 +48,10 @@ public class DubPresetTests
     }
 
     [Fact]
-    public void The_panel_has_a_row_of_eight()
+    public void The_panel_has_six_knobs()
     {
         Patch().Controls.ShouldNotBeNull().Select(c => c.Name).ShouldBe(
-            ["Cutoff", "Resonance", "Pluck", "Decay", "Echo", "Space", "Drums", "Bass"]);
+            ["Cutoff", "Resonance", "Pluck", "Decay", "Echo", "Space"]);
     }
 
     /// <summary>Nothing is bound: which controller a knob follows is the player's to say.</summary>
@@ -140,23 +140,12 @@ public class DubPresetTests
         Loudness(played).ShouldBeGreaterThan(Loudness(backing) * 1.1f);
     }
 
-    /// <summary>In the seventeenth bar, where the drums and the bass play and the skank does not.</summary>
-    [Fact]
-    public void The_drums_and_the_bass_come_down_to_the_dust()
-    {
-        var up = Play(Rate * 2, from: 64 * Beat);
-        var down = Play(Rate * 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: 64 * Beat);
-
-        Loudness(down).ShouldBeLessThan(Loudness(up) * 0.2f);
-    }
-
+    /// <summary>In the first bar, where only the dust plays for the first half second.</summary>
     [Fact]
     public void Opening_the_filter_brightens_a_chord()
     {
-        (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
-
-        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 0f), ("Pluck", 0f)], 32 * Beat);
-        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 1f), ("Pluck", 0f)], 32 * Beat);
+        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [("Cutoff", 0f), ("Pluck", 0f)]);
+        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [("Cutoff", 1f), ("Pluck", 0f)]);
 
         // The dust is the same in both and is most of what is bright in either, so half
         // again is the organ's top arriving and not a rounding.
@@ -198,10 +187,7 @@ public class DubPresetTests
     [Fact]
     public void The_voice_speaks_in_the_second_bar()
     {
-        (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
-
-        Loudness(Play(Rate, knobs: quiet, from: 4 * Beat))
-            .ShouldBeGreaterThan(Loudness(Play(Rate, knobs: quiet)) * 2f);
+        Loudness(Play(Rate, from: 4 * Beat)).ShouldBeGreaterThan(Loudness(Play(Rate)) * 2f);
     }
 
     [Fact]
