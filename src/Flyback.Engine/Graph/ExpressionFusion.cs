@@ -224,8 +224,8 @@ internal static class ExpressionFusion
                 : modules.Require(node.TypeId).Inputs.Count;
 
             var decided = new Term[count];
-            var taken = new List<Guid>();
-            var left = new List<NodeInstance>();
+            var sources = new NodeInstance?[count];
+            var inners = new (Term Term, List<Guid> Taken, List<NodeInstance> Left)?[count];
             var reads = Reads(node, count);
 
             for (var port = 0; port < count; port++)
@@ -240,35 +240,63 @@ internal static class ExpressionFusion
                     continue;
                 }
 
+                sources[port] = source;
+
                 // A socket read twice would put the branch in the formula twice.
-                if (reads[port] > 1)
+                if (reads[port] > 1) continue;
+
+                inners[port] = Tree(source);
+            }
+
+            // A branch turned away for a fifth signal may fit once another folds
+            // down onto a signal the formula already reads.
+            var folded = new bool[count];
+
+            for (var more = true; more;)
+            {
+                more = false;
+
+                for (var port = 0; port < count; port++)
+                {
+                    if (folded[port] || inners[port] is not { } inner) continue;
+
+                    var at = port;
+
+                    Term Trial(Term here) => Build(node, p => p == at ? here : decided[p]);
+
+                    var trial = Trial(inner.Term);
+                    var needed = new List<Term>();
+
+                    Gather(trial, needed);
+
+                    if (needed.Count <= Sockets
+                        && Written(trial, _ => "a") is { Length: <= Longest }
+                        && Repeats(trial) == Repeats(Trial(decided[port])) + Repeats(inner.Term))
+                    {
+                        decided[port] = inner.Term;
+                        folded[port] = true;
+                        more = true;
+                    }
+                }
+            }
+
+            var taken = new List<Guid>();
+            var left = new List<NodeInstance>();
+
+            for (var port = 0; port < count; port++)
+            {
+                if (sources[port] is not { } source) continue;
+
+                if (!folded[port])
                 {
                     left.Add(source);
                     continue;
                 }
 
-                var inner = Tree(source);
-                var at = port;
-
-                Term Trial(Term here) => Build(node, p => p < at ? decided[p] : p == at ? here : Leaf(node, p));
-
-                var trial = Trial(inner.Term);
-                var needed = new List<Term>();
-
-                Gather(trial, needed);
-
-                if (needed.Count <= Sockets
-                    && Written(trial, _ => "a") is { Length: <= Longest }
-                    && Repeats(trial) == Repeats(Trial(decided[port])) + Repeats(inner.Term))
-                {
-                    decided[port] = inner.Term;
-                    taken.Add(source.Id);
-                    taken.AddRange(inner.Taken);
-                    left.AddRange(inner.Left);
-                    continue;
-                }
-
-                left.Add(source);
+                var inner = inners[port]!.Value;
+                taken.Add(source.Id);
+                taken.AddRange(inner.Taken);
+                left.AddRange(inner.Left);
             }
 
             return (Build(node, port => decided[port]), taken, left);

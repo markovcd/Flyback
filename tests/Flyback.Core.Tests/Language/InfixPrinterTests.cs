@@ -116,6 +116,31 @@ public class InfixPrinterTests
         PatchPrinter.Print(again, NodeCatalog.BuiltIn).ShouldBe(printed);
     }
 
+    /// <summary>A function over a socket the sum already reads takes no socket of its own.</summary>
+    [Fact]
+    public void A_function_over_a_fourth_socket_read_again_stays_one_expression()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coord = b.Add(NodeCatalog.CoordTypeId);
+        var low = b.Add("osc.sine", (1, 3f));
+        var high = b.Add("osc.sine", (1, 8f));
+        var mixed = b.Add(NodeCatalog.ExpressionTypeId);
+        mixed.SetState("expression", new JsonObject { ["formula"] = "a + b * c * 0.6 + d * pow(c, 6) * 0.2" });
+        b.Wire(coord, NodeCatalog.CoordXPort, mixed, 0);
+        b.Wire(low, 0, mixed, 1);
+        b.Wire(coord, NodeCatalog.CoordYPort, mixed, 2);
+        b.Wire(high, 0, mixed, 3);
+        var sink = b.Add(NodeCatalog.OutputTypeId);
+        b.Wire(mixed, 0, sink, NodeCatalog.OutputColorPort);
+
+        var printed = PatchPrinter.Print(b.Patch, NodeCatalog.BuiltIn);
+        var again = Build(printed);
+
+        printed.ShouldBe("x + sine(freq: 3) * y * 0.6 + sine(freq: 8) * pow(y, 6) * 0.2 |> out.color\n");
+        Expressions(again).ShouldBe(1, printed);
+        SameInstrument(b.Patch, again, printed);
+    }
+
     /// <summary>
     /// A function that keeps its knobs as a module of its own, a part the formula
     /// computes once but the text around a function would write twice, and a
