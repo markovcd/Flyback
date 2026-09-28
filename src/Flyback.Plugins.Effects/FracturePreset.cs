@@ -59,6 +59,12 @@ internal sealed class FracturePreset : PresetBench
     /// <summary>F natural minor, written from its root: F, G, A flat, B flat, C, D flat and E flat.</summary>
     private static readonly int[] Scale = [5, 7, 8, 10, 0, 1, 3];
 
+    /// <summary>
+    /// The Arrangement's rows: the kick and snare, the hats, the bass, whether the break is
+    /// chopped, the pad's level and how bright the picture is graded.
+    /// </summary>
+    private const int Break = 0, Hats = 1, Bass = 2, Chopped = 3, Pad = 4, Grade = 5;
+
     public static Patch Build(ModuleCatalog modules)
     {
         if (!modules.HasProvider(Voice))
@@ -87,56 +93,45 @@ internal sealed class FracturePreset : PresetBench
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
-        // Eight bars is one step of the arrangement.
-        var phraseGone = Fraction(Times(beats, 1f / 32f));
-
         Box("Clock");
 
         // --- the arrangement -------------------------------------------------
 
-        // One number for each eight bars saying how much track there is: two of intro,
-        // two of build, the drop played straight, the same drop chopped, a breakdown
-        // and a build, then four of everything before it thins out. The third quarter —
-        // the breakdown, the build and the first phrase back at full — is the second
-        // theme, and the last quarter is the first one come home.
-        var song = b.Add("seq.values", (1, 1f / 32f));
-        StepsExtra.Set(song,
+        // Sixteen sections of eight bars: two of intro, two of build, the drop played
+        // straight, the same drop chopped, a breakdown and a build, then four of
+        // everything before it thins out. The third quarter — the breakdown, the build
+        // and the first section back at full — is the second theme, and the last quarter
+        // is the first one come home.
+        var parts = Arranged(beats, 1f / 32f,
         [
-            new Step(0.15f), new Step(0.3f), new Step(0.45f), new Step(0.6f),
-            new Step(0.8f), new Step(0.8f), new Step(0.9f), new Step(0.9f),
-            new Step(0.2f), new Step(0.5f), new Step(0.6f), new Step(0.95f),
-            new Step(1f), new Step(1f), new Step(0.85f), new Step(0.25f),
+            Levels(0, 0, 0.5f, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0),
+            Levels(0.925f, 0.85f, 0.775f, 0.7f, 0.6f, 0.6f, 0.55f, 0.55f, 0.9f, 0.75f, 0.7f, 0.525f, 0.5f, 0.5f, 0.575f, 0.875f),
+            Levels(0.875f, 0.95f, 1.025f, 1.1f, 1.2f, 1.2f, 1.25f, 1.25f, 0.9f, 1.05f, 1.1f, 1.275f, 1.3f, 1.3f, 1.225f, 0.925f),
         ]);
 
-        // The same number for what fades rather than enters: four seconds up and two
-        // down, in decades of a second. On the screen a Slew is a wire.
-        var swell = b.Add(SlewType, (1, 0.60206f), (2, 0.30103f));
+        // The pad settles rather than steps: two seconds up and four down, in decades
+        // of a second. On the screen a Slew is a wire.
+        var swell = b.Add(SlewType, (1, 0.30103f), (2, 0.60206f));
 
-        // Whether the break is being chopped: a switch, thrown on the phrase, because
-        // half way between two places in a bar is not a place.
-        var chopped = b.Add("math.step", (0, 0.87f));
+        // Whether the break is being chopped: a switch, because half way between two
+        // places in a bar is not a place.
+        var chopped = b.Add("math.step", (0, 0.5f));
 
-        // The last of every four phrases ends in a riser, read off the sequencer's own
-        // index: four times it has a fraction of three quarters exactly there. The very
-        // last is the outro, which is masked out.
-        var turning = b.Add("math.step", (0, 0.7f));
-        var notTheEnd = b.Add("math.step", (1, 0.9f));
-        var ramp = Product(Rises(phraseGone, 0.5f, 1f), Product(turning, notTheEnd));
+        // The last of every four sections but the very last ends in a riser, climbing
+        // through its second half.
+        var ramp = Formula(
+            "smoothstep(0.5, 1, b) * step(3, (a - 1) % 4) * step(a, 15)",
+            new Read(parts, SectionNumber), new Read(parts, SectionProgress));
 
-        // Whether it is the second theme: from half way through the list to three
-        // quarters, read off the same index. A switch, like the chop, because a bass
-        // line half way between two tunes is neither.
-        var pastHalf = b.Add("math.step", (0, 0.47f));
-        var shortOfLast = b.Add("math.step", (1, 0.72f));
-        var second = Product(pastHalf, shortOfLast);
+        // Whether it is the second theme, sections nine to twelve. A switch, like the
+        // chop, because a bass line half way between two tunes is neither.
+        var second = Formula("step(9, a) * step(a, 12)", new Read(parts, SectionNumber));
 
-        b.Wire(beats, 0, song, 0)
-         .Wire(song, 0, swell, 0)
-         .Wire(song, 0, chopped, 1)
-         .Wire(Fraction(Times(song, 4f, 2)), 0, turning, 1)
-         .Wire(song, 2, notTheEnd, 0)
-         .Wire(song, 2, pastHalf, 1)
-         .Wire(song, 2, shortOfLast, 0);
+        b.Wire(parts, Pad, swell, 0)
+         .Wire(parts, Chopped, chopped, 1);
 
         Box("Arrangement");
 
@@ -210,12 +205,12 @@ internal sealed class FracturePreset : PresetBench
         // A sixteenth at this tempo is under ninety milliseconds, so the fall is left
         // nearly straight: a steeper one is over before the drum has a body. The click at
         // the front is the Drum's own, whose pitch falls by a power of the level.
-        var kickStroke = Enters(Product(Stroke(drumBeats, 4f, 1.3f), pattern), song, 0.42f, 0.48f);
+        var kickStroke = Product(Product(Stroke(drumBeats, 4f, 1.3f), pattern), parts, Break);
         var kick = Drum(kickStroke, 55f, 240f, 5f, 4f);
 
         // A Drum for the shell, and white noise for the wires: the band round two
         // kilohertz for the crack and what is over it for the air.
-        var snareStroke = Enters(Product(Stroke(drumBeats, 4f, 1.6f), pattern, 1), song, 0.42f, 0.48f);
+        var snareStroke = Product(Product(Stroke(drumBeats, 4f, 1.6f), pattern, 1), parts, Break);
         var noise = b.Add(NoiseType, (2, 1f));
         var rattle = b.Add(FilterType, (1, 2100f), (2, 0.3f));
         var wires = Sum(Times(rattle, 3.5f, 1), Times(rattle, 1.2f, 2));
@@ -225,7 +220,7 @@ internal sealed class FracturePreset : PresetBench
         // too. The Euclid's own stroke is the envelope, and the Hiss shares the wires'
         // seed, so it is the same noise.
         var hatHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 11f), (EuclidCurve, 4f));
-        var hatStroke = Enters(hatHits, song, 0.25f, 0.3f, EuclidStroke);
+        var hatStroke = Wired("math.mul", hatHits, parts, EuclidStroke, Hats);
         var hats = Hiss(hatStroke, 8500f, 0.2f, "high", 0.8f, seed: 1f);
 
         // And the other thing done to a break: a Sample and Hold clocked at five
@@ -296,8 +291,8 @@ internal sealed class FracturePreset : PresetBench
 
         // The sub stays a sine, and the kick ducks both.
         var sub = b.Add("osc.sine", (3, 0.45f));
-        var bass = Enters(
-            Product(Sum(grit, sub), Ducking(kickStroke, 0.6f), DuckGain), song, 0.62f, 0.7f);
+        var bass = Product(
+            Product(Sum(grit, sub), Ducking(kickStroke, 0.6f), DuckGain), parts, Bass);
 
         b.Wire(beats, 0, firstLine, 0)
          .Wire(beats, 0, secondLine, 0)
@@ -332,7 +327,7 @@ internal sealed class FracturePreset : PresetBench
          .Wire(InKey(padNote, Scale, 10.4f), 0, seventh, 1)
          .Wire(Sum(Sum(strings, third), seventh), 0, padTone, 0)
          .Wire(Wander(0.07f, 1f, 600f, 2600f), 0, padTone, 1)
-         .Wire(Product(padTone, Span(swell, 0f, 1f, 1f, 0.5f)), 0, pad, 0);
+         .Wire(Product(padTone, swell), 0, pad, 0);
 
         Box("Pad");
 
@@ -455,7 +450,7 @@ internal sealed class FracturePreset : PresetBench
         var slide = Product(Times(Sine(Plus(Times(strip, 2.4f), 1f)), 0.12f), farMoved);
         var ripple = Product(
             Sine(Sum(Times(coord, 9f, 1), Times(beats, 2f))),
-            Enters(Span(bassOpen, 250f, 1400f, 0f, 0.03f), song, 0.62f, 0.7f));
+            Product(Span(bassOpen, 250f, 1400f, 0f, 0.03f), parts, Bass));
         var cutX = Sum(Sum(slide, ripple), coord);
 
         // A roll is the picture as many times smaller, and the kick pushes it in.
@@ -539,9 +534,10 @@ internal sealed class FracturePreset : PresetBench
 
         // --- the picture: print ----------------------------------------------
 
-        // A short trail, smeared sideways. While the drums are crushed the picture is
-        // too: a Posterise is the same thing done to a color as the Sample and Hold does
-        // to a sound, fewer levels instead of fewer moments.
+        // A short trail, shorter the brighter the section, smeared sideways. While the
+        // drums are crushed the picture is too: a Posterise is the same thing done to a
+        // color as the Sample and Hold does to a sound, fewer levels instead of fewer
+        // moments.
         var trailed = b.Add(TrailsType, (TrailsZoom, 0.99f), (TrailsDx, 0.004f));
         var banded = b.Add(PosteriseType);
 
@@ -550,11 +546,11 @@ internal sealed class FracturePreset : PresetBench
         var graded = b.Add(GradeType, (2, 1.1f));
 
         b.Wire(Sum(sparks, grain), 0, trailed, 0)
-         .Wire(Span(song, 0f, 1f, 0.85f, 0.6f), 0, trailed, TrailsPersist)
+         .Wire(Span(parts, 0.8f, 1.3f, 0.85f, 0.6f, Grade), 0, trailed, TrailsPersist)
          .Wire(trailed, 0, banded, 0)
          .Wire(Span(crush, 0f, 1f, 24f, 3f), 0, banded, 1)
          .Wire(shaded, 0, graded, 0)
-         .Wire(Span(song, 0f, 1f, 0.8f, 1.3f), 0, graded, 1)
+         .Wire(parts, Grade, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture: Print");
