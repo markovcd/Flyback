@@ -251,4 +251,16 @@ public class PanelTests
         ControlMap.Of(Only(again, "audio.filter"), 1).ShouldNotBeNull().Max.ShouldBe(4000f);
         ControlMap.Of(again.Output, NodeCatalog.OutputVolumePort).ShouldNotBeNull();
     }
+
+    /// <summary>A socket that follows a knob rests where the knob rests, as one linked on the canvas does.</summary>
+    [Theory]
+    [InlineData("sine(amp: level)")]
+    [InlineData("sine(amp: level(0..0.5))")]
+    public void A_socket_that_follows_a_knob_rests_where_the_knob_rests(string module)
+    {
+        var sine = Only(Built($"panel level = 0.6\n{module} |> out.left"), "osc.sine");
+        var (port, link) = ControlMap.All(sine).ShouldHaveSingleItem();
+
+        sine.InputValues[port].ShouldBe(link.At(0.6f), 1e-6f);
+    }
 }

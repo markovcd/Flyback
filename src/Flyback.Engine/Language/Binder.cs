@@ -1331,6 +1331,7 @@ public sealed class Binder
             link = ControlLink.For(dial.Control.Id, spec, node.InputValues[port]);
         }
 
+        node.InputValues[port] = link.At(dial.Control.Value);
         ControlMap.Link(node, port, link);
         turned[(node.Id, port)] = line;
     }
