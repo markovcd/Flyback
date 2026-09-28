@@ -26,7 +26,10 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
     /// </remarks>
     public SourceMap Map { get; init; } = SourceMap.Empty;
 
-    public bool Ok => Issues.Count == 0;
+    /// <summary>Whether the text built, warnings or not.</summary>
+    public bool Ok => Errors == 0;
+
+    public int Errors => Issues.Count(issue => issue.IsError);
 
     /// <summary>
     /// Every complaint, each above the line it is about with the column marked.
@@ -50,7 +53,7 @@ public sealed record LanguageLoad(Patch Patch, IReadOnlyList<LanguageIssue> Issu
             foreach (var issue in Issues)
             {
                 text.Append(issue.Line).Append(':').Append(issue.Column).Append(": ")
-                    .AppendLine(issue.Message);
+                    .Append(issue.IsError ? "" : "warning: ").AppendLine(issue.Message);
 
                 if (issue.Line < 1 || issue.Line > lines.Length) continue;
 

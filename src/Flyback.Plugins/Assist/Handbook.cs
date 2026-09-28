@@ -112,9 +112,12 @@ internal static class Handbook
         - **`#` starts a comment**, to the end of the line. `//` is refused.
         - **`group "Bass" { … }`** draws the modules its statements place as one
           box, shut. Blocks with the same name are one group. A group holds
-          modules only: no group, `panel` or `requires` inside one. A patch with
-          parts — a clock, each voice, the picture — puts each in a group of
-          its own rather than heading it with a comment.
+          modules only: no group, `panel` or `requires` inside one. A group is
+          two modules or more, and one round a single module is left out with
+          a warning: a lone module, like a clock that is one Tempo, stands
+          outside every group or joins the group it serves. A patch with parts
+          — each voice, the picture — puts each in a group of its own rather
+          than heading it with a comment.
         - **`requires flyback.picture`**, on its own line, names the plugins
           whose modules the patch uses, so a build without one says so once.
         - **`description "What the patch is for."`** goes first, with

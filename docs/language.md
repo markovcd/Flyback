@@ -656,8 +656,9 @@ group "Bass" {
 Members are the nodes declared inside the block. A group built from text is
 shut, and the sockets on its edge are the ones its wires cross. A group with no
 name is `group { … }`. A group holds modules and nothing else: another group, a
-`panel` knob or a `requires` line inside one is refused, and so is a group of
-fewer than two modules, which the canvas never draws. The clock and the
+`panel` knob or a `requires` line inside one is refused. A group of fewer than
+two modules, which the canvas never draws, is left out with a warning, and its
+module is built all the same. The clock and the
 coordinates `t` and `x` reach for belong to the whole patch and are in no group,
 however early a block reads them; a group that holds its own is written
 `let time = time()` inside it.

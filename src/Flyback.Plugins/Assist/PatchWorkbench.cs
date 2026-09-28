@@ -759,7 +759,9 @@ public sealed partial class PatchWorkbench
         proposal = null;
         Edits++;
 
-        return Fine($"written. {DescribePatch()}");
+        return load.Issues.Count == 0
+            ? Fine($"written. {DescribePatch()}")
+            : Fine($"written, with warnings; the patch is built as it stands:{Environment.NewLine}{Complaints(load)}{Environment.NewLine}{DescribePatch()}");
     }
 
     /// <summary>
@@ -774,7 +776,7 @@ public sealed partial class PatchWorkbench
 
         foreach (var issue in load.Issues)
         {
-            text.Append(CultureInfo.InvariantCulture, $"{issue.Line}:{issue.Column} [{issue.Code}] {issue.Message}").AppendLine();
+            text.Append(CultureInfo.InvariantCulture, $"{issue.Line}:{issue.Column} [{issue.Code}] {(issue.IsError ? "" : "warning: ")}{issue.Message}").AppendLine();
 
             if (issue.Line >= 1 && issue.Line <= lines.Length)
             {

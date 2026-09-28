@@ -74,7 +74,7 @@ public static class PatchFile
         var problems = new List<string> { $"{GlobalConstants.ApplicationName}: {file.Name}: this patch does not read." };
 
         foreach (var issue in load.Issues)
-            problems.Add($"    {file.Name}:{issue.Line}:{issue.Column}: {issue.Message}");
+            problems.Add($"    {file.Name}:{issue}");
 
         return new PatchRead(null, problems);
     }

@@ -114,3 +114,15 @@ Feature: A patch can be written as text
     When the patch is written out as text and read back
     Then the patch has a shut group "Voice" of 2 modules
     And the speakers are not silent
+
+  Scenario: A group of one module is left out with a warning
+    Given the text:
+      """
+      group "Voice" {
+        let tone = sine(freq: 220)
+      }
+      tone |> out.left
+      """
+    Then it reads with a warning on line 1
+    And the patch has no groups
+    And the speakers are not silent

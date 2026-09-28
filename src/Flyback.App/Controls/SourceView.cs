@@ -551,7 +551,7 @@ internal sealed class SourceView : UserControl
 
         Say(load.Ok
             ? applied
-            : $"{load.Issues.Count} thing(s) to fix. The patch that was playing is untouched.");
+            : $"{load.Errors} thing(s) to fix. The patch that was playing is untouched.");
 
         footer.Foreground = new SolidColorBrush(load.Ok ? Colors.Inactive : Colors.Attention);
     }
@@ -591,7 +591,9 @@ internal sealed class SourceView : UserControl
                 FontFamily = Mono,
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = new SolidColorBrush(Colors.Attention),
-                Text = $"{issue.Line}:{issue.Column}  {issue.Message}",
+                Text = issue.IsError
+                    ? $"{issue.Line}:{issue.Column}  {issue.Message}"
+                    : $"{issue.Line}:{issue.Column}  warning: {issue.Message}",
             },
         };
 

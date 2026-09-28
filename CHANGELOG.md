@@ -23,7 +23,7 @@
 - In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
 - `flyback-cli check --json` and the assistant's `write_patch` give each complaint about a text patch a stable code.
 - A `//` comment in a text patch is one complaint that points at `#` and at groups, and the assistant is told to write both.
-- The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice, a knob set twice, a group, `panel` or `requires` inside a group and a group of one module, and `flyback-cli check --json` reports it by line.
+- The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice, a knob set twice, and a group, `panel` or `requires` inside a group, warns of a group of one module and leaves it out, and `flyback-cli check --json` reports each by line.
 - A rewire in a big patch goes back to compiled speed about three times sooner.
 - An opened preset or file starts its sound and picture together once both are compiled, from the beginning, and the status line says "Compiling…" while it waits.
 - A large patch no longer freezes the window while its shader is built, its picture plays on until the new one is ready, and an undo or a redo switches pictures at once.

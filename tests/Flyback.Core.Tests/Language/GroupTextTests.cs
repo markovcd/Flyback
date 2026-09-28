@@ -1,3 +1,4 @@
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Shouldly;
@@ -44,13 +45,20 @@ public class GroupTextTests
             .ShouldNotContain(type => type == NodeCatalog.TimeTypeId || type == NodeCatalog.CoordTypeId);
     }
 
-    /// <summary>A box round one module is not drawn on the canvas, so the text refuses one rather than dropping it.</summary>
+    /// <summary>A box round one module is not drawn on the canvas, so the text builds the module and warns of the box.</summary>
     [Fact]
-    public void A_group_of_one_module_is_refused()
+    public void A_group_of_one_module_is_left_out_with_a_warning()
     {
         var load = PatchLanguage.Build("group \"Lone\" {\n  let s = sine()\n}\ns |> out.left", NodeCatalog.BuiltIn);
 
-        load.Issues.ShouldHaveSingleItem(load.Report).Code.ShouldBe(IssueCode.GroupTooSmall);
+        load.Ok.ShouldBeTrue(load.Report);
+
+        var issue = load.Issues.ShouldHaveSingleItem(load.Report);
+        issue.Code.ShouldBe(IssueCode.GroupTooSmall);
+        issue.Severity.ShouldBe(IssueSeverity.Warning);
+
+        (load.Patch.Groups?.Count ?? 0).ShouldBe(0);
+        load.Patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
     }
 
     [Fact]

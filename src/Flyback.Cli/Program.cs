@@ -628,11 +628,12 @@ internal static class Program
 
             var file = result.GetRequiredValue(patch);
 
+            var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
+
             // Text that does not read is a patch with something wrong with it, not
             // a file that could not be looked at, so it answers the way a compile
             // error does.
-            if (Patches.Sourced(file) && file.Exists
-                && PatchLanguage.Build(File.ReadAllText(file.FullName)) is { Ok: false } unread)
+            if (read is { Ok: false } unread)
             {
                 return CheckCommand.Unread(
                     unread.Issues,
@@ -652,7 +653,8 @@ internal static class Program
                     result.InvocationConfiguration.Error,
                     opened.Samples,
                     opened.Pictures,
-                    result.GetValue(strict));
+                    result.GetValue(strict),
+                    read?.Issues);
         });
 
         return command;

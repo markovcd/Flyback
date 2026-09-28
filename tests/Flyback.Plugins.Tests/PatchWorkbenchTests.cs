@@ -1378,6 +1378,26 @@ public class PatchWorkbenchTests
         bench.Snapshot().Nodes.ShouldContain(n => n.TypeId == "value");
     }
 
+    /// <summary>A group round one module costs the box, not the write, and the reply says so.</summary>
+    [Fact]
+    public async Task A_group_of_one_module_is_written_with_a_warning()
+    {
+        var bench = await Lit(0.25f);
+
+        var written = await Call(bench, "write_patch", JsonSerializer.Serialize(new
+        {
+            source = "group \"Voice\" {\n  let tone = sine(freq: 220)\n}\ntone |> out.left",
+        }));
+
+        written.Ok.ShouldBeTrue(written.Text);
+        written.Text.ShouldContain("[group-too-small] warning:");
+
+        var patch = bench.Snapshot();
+
+        (patch.Groups?.Count ?? 0).ShouldBe(0);
+        patch.Nodes.ShouldContain(n => n.TypeId == "osc.sine");
+    }
+
     /// <summary>A refusal names each mistake by its code, which a program can match on.</summary>
     [Fact]
     public async Task A_refusal_gives_each_mistake_its_code()

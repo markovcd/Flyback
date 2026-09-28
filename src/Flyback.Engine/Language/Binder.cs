@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language.Ast;
@@ -156,8 +157,11 @@ public sealed class Binder
 
                 var (line, column) = opened.First(open => open.Box == i).Where;
 
-                Complain(IssueCode.GroupTooSmall, line, column,
-                    $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}.");
+                // A warning, since the modules are built all the same and only the box is missing.
+                issues.Add(new LanguageIssue(line, column, IssueCode.GroupTooSmall,
+                    $"a group is drawn round {NodeGroup.Fewest} modules or more, and this one has {members.Count}, "
+                    + "so it is left out. Put a lone module outside any group, or in the group it belongs to.",
+                    IssueSeverity.Warning));
                 continue;
             }
 

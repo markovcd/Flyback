@@ -1037,7 +1037,7 @@ internal sealed class Document
         {
             source.Show(load);
             report.Say(
-                $"The text does not read — {load.Issues.Count} thing(s) to fix. Nothing has changed.",
+                $"The text does not read — {load.Errors} thing(s) to fix. Nothing has changed.",
                 load.Report);
 
             return false;

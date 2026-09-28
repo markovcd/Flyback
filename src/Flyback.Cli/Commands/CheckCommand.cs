@@ -27,7 +27,8 @@ internal static class CheckCommand
         TextWriter error,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        bool strict = false)
+        bool strict = false,
+        IReadOnlyList<LanguageIssue>? read = null)
     {
         var video = patch.CompileForVideo(samples: samples, pictures: pictures);
         var audio = patch.CompileForAudio(samples: samples);
@@ -35,13 +36,15 @@ internal static class CheckCommand
         // Deduplicated across the two, the way the window's status line does it:
         // a module both sinks reach complains once about the same thing, and
         // hearing it twice would say something untrue about how many there are.
-        var complaints = video.Issues
-            .Concat(audio.Issues)
-            .DistinctBy(i => (i.NodeId, i.Message))
-            .Select(i => new Complaint(
-                i.Severity == IssueSeverity.Error ? "error" : "warning",
-                NameOf(patch, i.NodeId),
-                i.Message))
+        var complaints = (read ?? [])
+            .Select(Complained)
+            .Concat(video.Issues
+                .Concat(audio.Issues)
+                .DistinctBy(i => (i.NodeId, i.Message))
+                .Select(i => new Complaint(
+                    i.Severity == IssueSeverity.Error ? "error" : "warning",
+                    NameOf(patch, i.NodeId),
+                    i.Message)))
             .ToArray();
 
         var errors = complaints.Count(c => c.Severity == "error");
@@ -73,23 +76,25 @@ internal static class CheckCommand
     {
         if (json)
         {
-            var complaints = issues
-                .Select(i => new Complaint("error", null, i.Message, i.Line, i.Column, i.Code))
-                .ToArray();
+            var complaints = issues.Select(Complained).ToArray();
+            var errors = complaints.Count(c => c.Severity == "error");
 
             output.WriteLine(JsonSerializer.Serialize(
-                new { patch = name, errors = complaints.Length, warnings = 0, issues = complaints },
+                new { patch = name, errors, warnings = complaints.Length - errors, issues = complaints },
                 Writing.Json));
         }
         else
         {
             error.WriteLine($"{GlobalConstants.ApplicationName}: {name}: this patch does not read.");
 
-            foreach (var issue in issues) error.WriteLine($"    {name}:{issue.Line}:{issue.Column}: {issue.Message}");
+            foreach (var issue in issues) error.WriteLine($"    {name}:{issue}");
         }
 
         return Exit.Problems;
     }
+
+    private static Complaint Complained(LanguageIssue issue) =>
+        new(issue.IsError ? "error" : "warning", null, issue.Message, issue.Line, issue.Column, issue.Code);
 
     private static void Write(string name, Complaint[] complaints, int errors, TextWriter output)
     {
@@ -103,7 +108,9 @@ internal static class CheckCommand
 
         foreach (var complaint in complaints)
         {
-            var about = complaint.Module is null ? string.Empty : $"{complaint.Module}: ";
+            var about = complaint.Module is not null ? $"{complaint.Module}: "
+                : complaint.Line is { } line ? $"{line}:{complaint.Column}: "
+                : string.Empty;
             output.WriteLine($"  {complaint.Severity,-7}  {about}{complaint.Message}");
         }
 

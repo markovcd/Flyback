@@ -149,6 +149,19 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
     [Then("it reads without complaint")]
     public void ThenReadsCleanly() => Text.Ok.ShouldBeTrue(Text.Report);
 
+    [Then("it reads with a warning on line {int}")]
+    public void ThenReadsWithAWarning(int line)
+    {
+        Text.Ok.ShouldBeTrue(Text.Report);
+
+        var issue = Text.Issues.ShouldHaveSingleItem(Text.Report);
+        issue.IsError.ShouldBeFalse();
+        issue.Line.ShouldBe(line);
+    }
+
+    [Then("the patch has no groups")]
+    public void ThenNoGroups() => (context.Patch.Groups?.Count ?? 0).ShouldBe(0);
+
     /// <summary>The line is quoted beside its number, so the reader sees which statement is at fault.</summary>
     [Then("the complaint quotes line {int}")]
     public void ThenTheComplaintQuotes(int line)
