@@ -537,6 +537,28 @@ public class CommandTests
         (output.ToString() + error).ShouldContain(said);
     }
 
+    /// <summary>A shipped preset is described by its name, with no file to have saved first.</summary>
+    [Theory]
+    [InlineData(new[] { "info", "--preset", "plasma" }, Exit.Ok, "Plasma")]
+    [InlineData(new[] { "info", "--preset", "plasma", "--json" }, Exit.Ok, "\"patch\": \"Plasma\"")]
+    [InlineData(new[] { "info", "--presets" }, Exit.Ok, "Whole band")]
+    [InlineData(new[] { "info", "--preset", "Nonesuch" }, Exit.Failed, "no preset is called 'Nonesuch'")]
+    [InlineData(new[] { "info" }, Exit.Failed, "say what to describe")]
+    [InlineData(new[] { "info", "plasma.fbk", "--preset", "Plasma" }, Exit.Failed, "say what to describe")]
+    public void A_preset_is_described_by_its_name(string[] args, int exit, string said)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var code = Program.Run(
+            args,
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = output, Error = error });
+
+        code.ShouldBe(exit, error.ToString());
+        (output.ToString() + error).ShouldContain(said);
+    }
+
     /// <summary>A preset that will not build, short of a plugin, is said and not thrown.</summary>
     [Fact]
     public void A_preset_that_will_not_build_is_said_rather_than_thrown()

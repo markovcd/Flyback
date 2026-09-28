@@ -141,6 +141,7 @@ flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
 flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
+flyback-cli info --preset "Plasma"
 flyback-cli modules
 flyback-cli modules adsr
 flyback-cli pack nebula.fbk -o nebula.fbkb
@@ -159,7 +160,7 @@ flyback-cli viewer nebula.fbk
 
 - `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does. The patch runs compiled; `--interpreted` keeps it on the interpreter, which writes the same bytes more slowly.
 - `check`: compiles the patch and reports issues; for a text patch, `--json` gives each complaint's line, column and a stable `code`
-- `info`: shows module and wire counts and compile cost
+- `info`: shows module and wire counts and compile cost; `--preset` describes a shipped preset by name, and `--presets` lists them
 - `pack`: packs a patch together with the files it references
 - `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too

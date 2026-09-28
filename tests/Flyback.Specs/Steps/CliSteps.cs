@@ -34,6 +34,9 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     [When("flyback-cli compares {string} with {string}")]
     public void WhenCompared(string first, string second) => Run("compare", Path(first), Path(second));
 
+    [When("flyback-cli describes the preset {string}")]
+    public void WhenDescribed(string name) => Run("info", "--preset", name);
+
     [Then("the command succeeds")]
     public void ThenSucceeds() => code.ShouldBe(Exit.Ok, said);
 
@@ -48,6 +51,9 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [Then("it says they are not the same instrument")]
     public void ThenNotSame() => said.ShouldContain("are not the same instrument");
+
+    [Then("it says what the picture costs")]
+    public void ThenPictureCost() => said.ShouldMatch(@"picture\s+\d+ ops");
 
     public void Dispose() => folder.Delete(recursive: true);
 

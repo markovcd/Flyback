@@ -74,7 +74,7 @@ internal static class Program
         {
             Render(plugins, exports),
             Check(plugins, patch, json),
-            Info(plugins, patch, json),
+            Info(plugins, json),
             Print(plugins),
             Pack(plugins, patch, json),
             PackPlugin(),
@@ -361,7 +361,7 @@ internal static class Program
 
             if (result.GetValue(presets))
             {
-                foreach (var shipped in plugins.Catalog.Presets) result.InvocationConfiguration.Output.WriteLine(shipped.Name);
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
 
                 return Task.FromResult(Exit.Ok);
             }
@@ -397,34 +397,9 @@ internal static class Program
             }
             else
             {
-                if (plugins.Catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
-                {
-                    error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{named}'. --presets lists them.");
+                if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Task.FromResult(Exit.Failed);
 
-                    return Task.FromResult(Exit.Failed);
-                }
-
-                try
-                {
-                    var built = wanted.Build(plugins.Catalog.Modules);
-
-                    if (wanted.Files is { } files)
-                    {
-                        var within = new BundleFiles(files());
-
-                        opened = new Opened(built, within, within);
-                    }
-                    else
-                    {
-                        opened = new Opened(built, new SampleLibrary(), new ImageLibrary());
-                    }
-                }
-                catch (Exception ex)
-                {
-                    error.WriteLine($"{GlobalConstants.ApplicationName}: the '{wanted.Name}' preset would not build: {ex.Message}");
-
-                    return Task.FromResult(Exit.Failed);
-                }
+                opened = shipped.Opened;
             }
 
             var (loaded, samples, pictures) = opened;
@@ -520,7 +495,7 @@ internal static class Program
 
             if (result.GetValue(presets))
             {
-                foreach (var shipped in plugins.Catalog.Presets) result.InvocationConfiguration.Output.WriteLine(shipped.Name);
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output);
 
                 return Exit.Ok;
             }
@@ -537,38 +512,18 @@ internal static class Program
 
             if (file is null)
             {
-                if (plugins.Catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, named, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
-                {
-                    error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{named}'. --presets lists them.");
-
-                    return Exit.Failed;
-                }
-
-                Patch built;
-
-                try
-                {
-                    built = wanted.Build(plugins.Catalog.Modules);
-                }
-                catch (Exception ex)
-                {
-                    error.WriteLine($"{GlobalConstants.ApplicationName}: the '{wanted.Name}' preset would not build: {ex.Message}");
-
-                    return Exit.Failed;
-                }
-
-                var carried = wanted.Files is { } files ? new BundleFiles(files()) : null;
+                if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
 
                 return PrintCommand.Run(
-                    built,
+                    shipped.Opened.Patch,
                     null,
                     into,
                     checking,
                     result.InvocationConfiguration.Output,
                     error,
-                    carried,
-                    carried,
-                    name: wanted.Name);
+                    shipped.Opened.Samples,
+                    shipped.Opened.Pictures,
+                    name: shipped.Name);
             }
 
             // Opened rather than read, so that --check compiles a bundle against
@@ -738,29 +693,74 @@ internal static class Program
         return command;
     }
 
-    private static Command Info(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Info(PluginRegistry plugins, Option<bool> json)
     {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
         var command = new Command("info", "Say what a patch is made of and what each half of it costs.")
         {
-            patch, json,
+            patch, preset, presets, json,
         };
 
         command.SetAction(result =>
         {
+            var output = result.InvocationConfiguration.Output;
+            var error = result.InvocationConfiguration.Error;
+
             plugins.Ready();
 
-            var file = result.GetRequiredValue(patch);
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, output);
 
-            return Patches.Open(file, result.InvocationConfiguration.Error) is not { } opened
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to describe: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            Opened? opened;
+            string name;
+
+            if (file is not null)
+            {
+                opened = Patches.Open(file, error);
+                name = file.Name;
+            }
+            else
+            {
+                var shipped = ShippedPresets.Open(plugins.Catalog, named!, error);
+
+                opened = shipped?.Opened;
+                name = shipped?.Name ?? named!;
+            }
+
+            return opened is not { } found
                 ? Exit.Failed
-                : InfoCommand.Run(
-                    opened.Patch,
-                    file.Name,
-                    result.GetValue(json),
-                    result.InvocationConfiguration.Output,
-                    result.InvocationConfiguration.Error,
-                    opened.Samples,
-                    opened.Pictures);
+                : InfoCommand.Run(found.Patch, name, result.GetValue(json), output, error, found.Samples, found.Pictures);
         });
 
         return command;

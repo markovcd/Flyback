@@ -18,6 +18,11 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command says the patch has problems
     And it points at line 2
 
+  Scenario: A shipped preset is described by its name, with no file saved first
+    When flyback-cli describes the preset "Plasma"
+    Then the command succeeds
+    And it says what the picture costs
+
   Scenario: A patch saved twice is the same instrument
     Given a 220 Hz sine is playing
     And the patch is saved as "first.fbk"
