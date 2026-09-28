@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
@@ -285,6 +286,31 @@ public class UiTest : IDisposable
         window.UpdateLayout();
         Dispatcher.UIThread.RunJobs();
         window.UpdateLayout();
+    }
+
+    /// <summary>
+    /// Runs the dispatcher until <paramref name="until"/> holds, for work that finishes on the
+    /// thread pool. Lays out <paramref name="window"/> as it goes, where a list builds its rows in layout.
+    /// </summary>
+    /// <remarks>
+    /// The deadline only catches a hang: a loaded machine runs a quarter-second debounce and
+    /// a pool hop many times slower, and a wait that gives up quietly fails an assertion later.
+    /// </remarks>
+    protected static void Pump(
+        Func<bool> until,
+        Window? window = null,
+        [CallerArgumentExpression(nameof(until))] string waitingFor = "")
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+
+        while (!until())
+        {
+            if (DateTime.UtcNow > deadline) throw new TimeoutException($"Waited 30 s for {waitingFor}");
+
+            Dispatcher.UIThread.RunJobs();
+            window?.UpdateLayout();
+            Thread.Sleep(5);
+        }
     }
 
     /// <summary>Every descendant of a control, itself included.</summary>

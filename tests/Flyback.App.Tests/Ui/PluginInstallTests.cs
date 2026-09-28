@@ -69,18 +69,6 @@ public sealed class PluginInstallTests : UiTest
         return (IStorageFile)ctor.Invoke([new FileInfo(path)]);
     }
 
-    /// <summary>Opening the package crosses a disk read that finishes on the thread pool.</summary>
-    private static void Pump(Func<bool> until)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-
-        while (!until() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-    }
-
     private static Button Named(Control dialog, string name) => All<Button>(dialog).Single(b => b.Name == name);
 
     private static IEnumerable<string?> Texts(Control dialog) => All<SelectableTextBlock>(dialog).Select(t => t.Text);

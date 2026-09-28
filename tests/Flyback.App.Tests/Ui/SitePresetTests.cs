@@ -43,18 +43,6 @@ public sealed class SitePresetTests : UiTest
         return (window, parts, tiles);
     }
 
-    /// <summary>The site answers on the thread pool, and a search waits a quarter of a second for typing to stop.</summary>
-    private static void Pump(Func<bool> until)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-
-        while (!until() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-    }
-
     private static string?[] Shared(Control root) =>
         [.. All<Button>(root).Where(b => b.Name == "site-tile").Select(b => ((SitePreset)b.Tag!).Name)];
 

@@ -68,22 +68,6 @@ public sealed class PluginHubTests : UiTest
         return (hub, window);
     }
 
-    /// <summary>
-    /// The site answers on the thread pool, and a search waits a quarter of a second for
-    /// typing to stop. Lays out <paramref name="window"/> as it goes, which is what builds the site's rows.
-    /// </summary>
-    private static void Pump(Func<bool> until, Window? window = null)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-
-        while (!until() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            window?.UpdateLayout();
-            Thread.Sleep(5);
-        }
-    }
-
     /// <summary>The names on a list's rows, in order; for the site's, only the rows built.</summary>
     private static IEnumerable<string?> Names(Control view, string list)
     {
@@ -388,8 +372,9 @@ public sealed class PluginHubTests : UiTest
         new PluginInstaller(Plugins, [], checkKeys: false).Stage(package, PluginPackage.ThisPlatform);
 
         var window = OpenPlugins();
+        var row = InstalledRow(window);
 
-        Click(window, InstalledRow(window));
+        Click(window, row);
         Pump(() => All<StackPanel>(window).Any(p => p.Name == "pluginInstalled"), window);
         Settle(window);
 
@@ -402,7 +387,9 @@ public sealed class PluginHubTests : UiTest
         All<TextBlock>(shown).Single(t => t.Name == "pluginState").Text.ShouldBe("Loads at the next start");
 
         Press(All<Button>(shown).Single(b => b.Name == "close"));
-        Settle(window);
+
+        // Closing it reads the plugins folder again, off the UI thread; the folder is deleted once the test ends.
+        Pump(() => InstalledRow(window) != row, window);
 
         All<ModalOverlay>(window).Count().ShouldBe(1, "closing it leaves the plugins window up");
     }

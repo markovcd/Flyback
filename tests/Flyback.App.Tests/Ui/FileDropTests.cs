@@ -97,24 +97,6 @@ public sealed class FileDropTests : UiTest
         return e.DragEffects;
     }
 
-    /// <summary>
-    /// Pumps the dispatcher until <paramref name="until"/> says so, or gives up.
-    /// Opening a file crosses a real disk read, which finishes on the thread
-    /// pool rather than inside whichever <c>RunJobs</c> call happens to run
-    /// first — so this waits on the clock as well as the queue, rather than
-    /// spinning through a fixed number of empty pumps.
-    /// </summary>
-    private static void Pump(Func<bool> until)
-    {
-        var deadline = DateTime.UtcNow.AddSeconds(2);
-
-        while (!until() && DateTime.UtcNow < deadline)
-        {
-            Dispatcher.UIThread.RunJobs();
-            Thread.Sleep(5);
-        }
-    }
-
     private static void WaitForTitleChange(MainWindow window, string? before)
     {
         Pump(() => window.Title != before);
