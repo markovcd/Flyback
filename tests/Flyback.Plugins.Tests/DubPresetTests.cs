@@ -19,8 +19,8 @@ public class DubPresetTests
     private const int Rate = GlobalConstants.SampleRate;
     private const int Voices = 4;
 
-    /// <summary>A section's length: eight bars at seventy-four.</summary>
-    private const double Section = 32 * 60 / 74.0;
+    /// <summary>A beat at seventy-four a minute, in seconds.</summary>
+    private const double Beat = 60 / 74.0;
 
     private static readonly PluginCatalog Loaded = ShippedPlugins.Loaded;
 
@@ -140,12 +140,12 @@ public class DubPresetTests
         Loudness(played).ShouldBeGreaterThan(Loudness(backing) * 1.1f);
     }
 
-    /// <summary>In the fourth section, which has no stabs: the dub, drums and bass alone.</summary>
+    /// <summary>In the seventeenth bar, where the drums and the bass play and the skank does not.</summary>
     [Fact]
     public void The_drums_and_the_bass_come_down_to_the_dust()
     {
-        var up = Play(Rate * 2, from: Section * 3);
-        var down = Play(Rate * 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: Section * 3);
+        var up = Play(Rate * 2, from: 64 * Beat);
+        var down = Play(Rate * 2, knobs: [("Drums", 0f), ("Bass", 0f)], from: 64 * Beat);
 
         Loudness(down).ShouldBeLessThan(Loudness(up) * 0.2f);
     }
@@ -155,48 +155,36 @@ public class DubPresetTests
     {
         (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
 
-        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 0f), ("Pluck", 0f)], Section);
-        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 1f), ("Pluck", 0f)], Section);
+        var shut = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 0f), ("Pluck", 0f)], 32 * Beat);
+        var open = Play(Rate / 2, [57f, 60f, 64f, 67f], [.. quiet, ("Cutoff", 1f), ("Pluck", 0f)], 32 * Beat);
 
-        // The dust is the same in both and is most of what is bright in either, so
-        // twice over is the chord's top arriving and not a rounding.
-        Brightness(open).ShouldBeGreaterThan(Brightness(shut) * 2f);
+        // The dust is the same in both and is most of what is bright in either, so half
+        // again is the organ's top arriving and not a rounding.
+        Brightness(open).ShouldBeGreaterThan(Brightness(shut) * 1.5f);
     }
 
+    /// <summary>The arrangement reaches the drums, the bass and the skank, and never the organ.</summary>
     [Fact]
-    public void No_two_sections_in_a_row_give_the_keys_the_same_sound()
+    public void The_keys_play_one_sound_all_the_way_through()
     {
         var patch = Patch();
         var envelopes = patch.Nodes.Where(n => n.TypeId == NodeCatalog.AdsrTypeId).Select(n => n.Id).ToHashSet();
-        var sound = patch.Nodes.Single(n => n.TypeId == NodeCatalog.ArrangementTypeId
-            && patch.Connections.Any(c => c.SourceNode == n.Id && envelopes.Contains(c.TargetNode)));
+        var arrangements = patch.Nodes.Where(n => n.TypeId == NodeCatalog.ArrangementTypeId).Select(n => n.Id).ToHashSet();
 
-        var rows = ArrangementExtra.Of(sound);
-        var sections = rows[0].Count;
-
-        string Played(int section) => string.Join(", ", rows.Select(row => row[section % sections].Value));
-
-        for (var section = 0; section < sections; section++)
-            Played(section).ShouldNotBe(Played(section + 1), $"sections {section + 1} and {(section + 1) % sections + 1}");
+        patch.Connections.ShouldNotContain(c => arrangements.Contains(c.SourceNode) && envelopes.Contains(c.TargetNode));
     }
 
-    /// <summary>The chord alone: the same moments played with and without it, one taken from the other.</summary>
     [Fact]
-    public void A_held_chord_is_a_pad_in_the_intro_and_a_stab_in_the_next_section()
+    public void It_lasts_sixty_four_bars()
     {
-        (string, float)[] dry = [("Drums", 0f), ("Bass", 0f), ("Echo", 0f), ("Space", 0f)];
+        Patch().Length.ShouldBe(Math.Round(256 * Beat, 2));
+    }
 
-        float Ringing(double from)
-        {
-            var with = Play(Rate, [57f, 60f, 64f, 67f], dry, from);
-            var without = Play(Rate, null, dry, from);
-
-            // Four to six tenths of a second after the strike, with the key still down
-            // and before the echo's first repeat.
-            return Loudness([.. with.Zip(without, (a, b) => a - b).Skip(Rate / 2).Take(Rate / 5)]);
-        }
-
-        Ringing(0).ShouldBeGreaterThan(Ringing(Section) * 4f);
+    /// <summary>Played from the last two bars, which leave everything to the echo.</summary>
+    [Fact]
+    public void It_ends_on_the_echo_alone()
+    {
+        Loudness(Play(Rate, from: 248 * Beat)).ShouldBeLessThan(Loudness(Play(Rate, from: 240 * Beat)) * 0.2f);
     }
 
     [Fact]
@@ -206,15 +194,14 @@ public class DubPresetTests
             .ShouldBe(["dread.wav", "no-sense.wav"]);
     }
 
-    /// <summary>The fifth bar of the intro against the fourth, neither with a skank in its first second.</summary>
+    /// <summary>The second bar against the first, neither with a skank or a rim in its first second.</summary>
     [Fact]
-    public void The_voice_speaks_in_the_fifth_bar_of_the_intro()
+    public void The_voice_speaks_in_the_second_bar()
     {
         (string, float)[] quiet = [("Drums", 0f), ("Bass", 0f)];
-        const double bar = 4 * 60 / 74.0;
 
-        Loudness(Play(Rate, knobs: quiet, from: 4 * bar))
-            .ShouldBeGreaterThan(Loudness(Play(Rate, knobs: quiet, from: 3 * bar)) * 2f);
+        Loudness(Play(Rate, knobs: quiet, from: 4 * Beat))
+            .ShouldBeGreaterThan(Loudness(Play(Rate, knobs: quiet)) * 2f);
     }
 
     [Fact]

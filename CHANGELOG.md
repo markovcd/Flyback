@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Dub is roots dub at 74 BPM in eight sections in A minor: a one drop that turns to steppers, a bass line, a skank thrown into the echo, two lines of Patois that trail off into their own echo, keys held to the scale whose sound changes with the section, and a master of EQ, width and a Maximizer.
+- Dub is roots dub at 74 BPM in A minor: a one drop, a bass line and a skank over A minor and D minor that drop in and out every two bars and are thrown into the echo, two lines of Patois that trail off into their own echo, four keys of organ held to the scale, an ending on the echo, and a master of EQ, width and a Maximizer.
 - Plasma is three drifting fields read through a blue, cream and amber palette that cycles slowly.
 - The sound and MIDI, key store and assistant plugins show a picture in the plugins window and the install dialog.
 - Usage statistics also count which modules are picked from the module list and which of the editor's features a run uses.
