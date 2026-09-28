@@ -168,14 +168,14 @@ public class NoSenseDubPresetTests
         patch.Connections.ShouldNotContain(c => arrangements.Contains(c.SourceNode) && envelopes.Contains(c.TargetNode));
     }
 
-    /// <summary>Forty-four bars at seventy-four, sixty-four at twice that, and the last line's echo.</summary>
+    /// <summary>Forty-three bars at seventy-four, sixty-four at twice that, and the last line's echo.</summary>
     [Fact]
-    public void It_lasts_forty_four_bars_slow_sixty_four_fast_and_an_echo()
+    public void It_lasts_forty_three_bars_slow_sixty_four_fast_and_an_echo()
     {
-        Patch().Length.ShouldBe(Math.Round(176 * Beat + 256 * FastBeat + 24, 2));
+        Patch().Length.ShouldBe(Math.Round(172 * Beat + 256 * FastBeat + 24, 2));
     }
 
-    /// <summary>The slow part's last bar, after the drop's line of Patois has faded out.</summary>
+    /// <summary>The slow part's last two beats, after the drop's line of Patois has faded out.</summary>
     [Fact]
     public void The_drop_comes_at_two_minutes_ten()
     {
@@ -185,14 +185,14 @@ public class NoSenseDubPresetTests
     [Fact]
     public void Silence_comes_before_the_steppers()
     {
-        Play(Rate, from: 173 * Beat).Max(MathF.Abs).ShouldBe(0f);
+        Play(Rate, from: 170.5 * Beat).Max(MathF.Abs).ShouldBe(0f);
     }
 
     /// <summary>The first second of the steppers against the second before them.</summary>
     [Fact]
     public void The_steppers_come_in_after_the_silence()
     {
-        Loudness(Play(Rate, from: 176 * Beat)).ShouldBeGreaterThan(0.01f);
+        Loudness(Play(Rate, from: 172 * Beat)).ShouldBeGreaterThan(0.01f);
     }
 
     /// <summary>
@@ -202,7 +202,7 @@ public class NoSenseDubPresetTests
     [Fact]
     public void It_ends_on_a_line_of_Patois_and_its_long_echo()
     {
-        var ending = Play(Rate * 14, from: 176 * Beat + 248 * FastBeat);
+        var ending = Play(Rate * 14, from: 172 * Beat + 248 * FastBeat);
 
         Loudness([.. ending.Skip(Rate * 10)]).ShouldBeGreaterThan(Loudness([.. ending.Take(Rate * 3)]) * 0.1f);
     }

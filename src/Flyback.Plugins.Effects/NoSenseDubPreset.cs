@@ -126,18 +126,18 @@ internal sealed class NoSenseDubPreset : PresetBench
     ];
 
     /// <summary>
-    /// The slow part's length in beats, forty-four bars, the last four of them the drop;
+    /// The slow part's length in beats, forty-three bars, the last three of them the drop;
     /// and where it ends, where the last line is said, and the song, in seconds, with
     /// sixty-four bars of steppers at a hundred and forty-eight and the last line's echo
     /// left to ring for twenty-four seconds. Spelled as formulas fold them.
     /// </summary>
-    private const int SlowBeats = 176;
+    private const int SlowBeats = 172;
 
-    private const string SlowEnd = "176 * 60 / 74";
+    private const string SlowEnd = "172 * 60 / 74";
 
-    private const string LastLine = "176 * 60 / 74 + 248 * 60 / 148";
+    private const string LastLine = "172 * 60 / 74 + 248 * 60 / 148";
 
-    private const string Song = "176 * 60 / 74 + 256 * 60 / 148 + 24";
+    private const string Song = "172 * 60 / 74 + 256 * 60 / 148 + 24";
 
     private static readonly double Length = SlowBeats * 60.0 / 74 + 256 * 60.0 / 148 + 24;
 
@@ -208,14 +208,16 @@ internal sealed class NoSenseDubPreset : PresetBench
         // the slow part's level until the steppers, theirs after it, and nothing once the
         // steppers are done.
         var slow = Arranged(beats, 1f / 8f, [.. Slow.Select(Levels)]);
-        var fastBeats = Formula($"a - {SlowBeats}", beats);
-        var faster = Arranged(fastBeats, 1f / 8f, [.. Fast.Select(Levels)]);
+        // The beats counted from the start of whichever part is playing, for what
+        // counts sections and phrases.
+        var partBeats = Formula($"a - b * {SlowBeats}", beats, fast);
+        var faster = Arranged(partBeats, 1f / 8f, [.. Fast.Select(Levels)]);
         var part = Enumerable.Range(0, Slow.Length)
             .Select(p => Formula($"mix(a, b, c) * (1 - step({SlowBeats + 256}, d))", new Read(slow, p), new Read(faster, p), fast, beats))
             .ToArray();
 
         // A minor and D minor, two bars each, and four each in the steppers.
-        var onD = Formula("step(1, mix(a * 0.125, c * 0.0625, b) % 2)", beats, fast, fastBeats);
+        var onD = Formula("step(1, a * mix(0.125, 0.0625, b) % 2)", partBeats, fast);
 
         Box("Arrangement");
 
@@ -282,7 +284,7 @@ internal sealed class NoSenseDubPreset : PresetBench
         var hand = Drum(heartbeat, 140f, 45f, 2f, 0f);
 
         // Down the toms in sixteenths through the last beat of a section, into the next.
-        var roll = Formula("pow(1 - fract(a * 4), 5) * step(7, a % 8) * b", beats, part[Rolls]);
+        var roll = Formula("pow(1 - fract(a * 4), 5) * step(7, a % 8) * b", partBeats, part[Rolls]);
         var toms = b.Add("flyback.voice.drum", (3, 60f), (4, 3f), (5, 0.3f));
 
         b.Wire(roll, 0, toms, 1)
@@ -426,7 +428,7 @@ internal sealed class NoSenseDubPreset : PresetBench
         var bassOut = Formula("a * b * c * d * 1.6", bassTone, bassEnvelope, new Read(duck, DuckGain), part[Bass]);
 
         b.Wire(beats, 0, bassLine, 0)
-         .Wire(beats, 0, stepperLine, 0)
+         .Wire(partBeats, 0, stepperLine, 0)
          .Wire(Through("audio.note", bassNote), 0, bassHz, 0)
          .Wire(body, 0, fat, 0)
          .Wire(fat, 0, bassTone, 0)
@@ -565,7 +567,7 @@ internal sealed class NoSenseDubPreset : PresetBench
         // the steppers. Then nothing under thirty hertz, a little more weight under the
         // bass, the mud taken out of the low middle and air on top; then wider, with the
         // kick and the bass kept in the middle; then glued and held under a decibel.
-        var hush = Formula($"1 - smoothstep(166 * 60 / 74, 172 * 60 / 74, a) * (1 - step({SlowEnd}, a))", songAt);
+        var hush = Formula($"1 - smoothstep(164 * 60 / 74, 170 * 60 / 74, a) * (1 - step({SlowEnd}, a))", songAt);
         var equalized = b.Add("flyback.mastering.eq",
             (2, 30f), (3, 90f), (4, 1.5f), (5, 350f), (6, -2f), (7, 0.8f), (8, 9000f), (9, 2.5f));
         var wider = b.Add("flyback.mastering.width", (2, 1.2f), (3, 150f));
