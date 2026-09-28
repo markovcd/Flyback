@@ -112,6 +112,8 @@ internal sealed class BronzePreset : PresetBench
         [.. Enumerable.Range(0, 2 * Pelog.Length)
             .Select(key => new Step(root * Pelog[key % Pelog.Length] * (1 << (key / Pelog.Length))))];
 
+    private const int Melody = 0, Kempli = 1, Figure = 2, Chimes = 3, Burst = 4, Flute = 5, Drums = 6, Hits = 7;
+
     public static Patch Build(ModuleCatalog modules)
     {
         if (!modules.HasProvider(Voice))
@@ -160,48 +162,56 @@ internal sealed class BronzePreset : PresetBench
 
         // --- the arrangement -------------------------------------------------
 
-        // One number a gong saying how much orchestra there is. It opens with the
-        // gong and the flute alone, fills as the tempo climbs, bursts at the top,
-        // drops to almost nothing at full speed — the break a drummer calls — comes
-        // back, and thins as it slows. Sixteen gongs and round again.
-        var song = b.Add("seq.values", (1, 1f / Cycle));
-        StepsExtra.Set(song,
+        // Who plays, a gong at a time. It opens with the gong and the flute alone,
+        // fills as the tempo climbs, bursts at the top, drops to almost nothing at
+        // full speed — the break a drummer calls — comes back, and thins as it slows.
+        // Parts change on a gong, where every stroke in the orchestra restarts anyway.
+        var orchestra = Arranged(beats, 1f / Cycle,
         [
-            new Step(0.1f), new Step(0.25f), new Step(0.4f), new Step(0.55f),
-            new Step(0.7f), new Step(0.85f), new Step(1f), new Step(1f),
-            new Step(0.3f), new Step(0.55f), new Step(0.85f), new Step(1f),
-            new Step(1f), new Step(0.7f), new Step(0.4f), new Step(0.25f),
+            Levels(0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            Levels(0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0),
+            Levels(0, 0.343f, 0.938f, 1, 1, 1, 1, 1, 0.568f, 1, 1, 1, 1, 1, 0.938f, 0.343f),
+            Levels(0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0),
+
+            // The burst: the whole orchestra on the gong, for a twentieth of a second,
+            // in the two fullest gongs of each half. The chimes and the cymbals both take it.
+            Levels(0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0),
+
+            // The flute runs the other way.
+            Levels(1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1),
+
+            // The drums, which the cymbals come in with, and how many of sixteen steps
+            // the low drum strikes, which is held from a section beside it where the
+            // drums are out.
+            Levels(0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0),
+            Levels(3, 3, 3, 3, 5, 6, 7, 7, 3, 3, 6, 7, 7, 5, 5, 5),
         ]);
 
-        // The whole melody moved up the scale, a gong at a time. Degrees rather than
-        // semitones, so what moves stays in the scale and every part that adds this
-        // moves with it.
-        var lift = b.Add("seq.values", (1, 1f / Cycle));
-        StepsExtra.Set(lift, [new Step(0f), new Step(0f), new Step(2f), new Step(1f)]);
+        // The whole melody moved up the scale by nought, nought, two and one degrees,
+        // four gongs round. Degrees rather than semitones, so what moves stays in the
+        // scale and every part that adds this moves with it.
+        var round = Formula("(a - 1) % 4", new Read(orchestra, SectionNumber));
+        var lift = Formula("step(1.5, a) * (4 - b)", round, round);
 
-        // Irama: where the beat is slow the figuration doubles, so the surface runs
-        // at the same speed over a melody half as fast. A Threshold read backwards —
-        // the number on 'in', the song on 'edge' — is one when the song is under it.
-        var slow = b.Add("math.step", (1, 0.28f));
-        var figureRate = Span(slow, 0f, 1f, 4f, 8f);
+        // How bright the picture is graded: muted while the orchestra is thin.
+        var grading = Arranged(beats, 1f / Cycle,
+        [
+            Levels(0.85f, 0.925f, 1, 1.075f, 1.15f, 1.225f, 1.3f, 1.3f, 0.95f, 1.075f, 1.225f, 1.3f, 1.3f, 1.15f, 1, 0.925f),
+        ]);
 
-        // Who is in is a Fade on the one number, made where each part is struck. They
-        // change on a gong, where every stroke in the orchestra restarts anyway, so
-        // nothing is cut off. The burst at the top is here because the chimes and the
-        // cymbals both take it.
-        var burst = Enters(Stroke(beats, 1f / Cycle, 70f), song, 0.9f, 0.95f);
+        // Irama: where the beat is slow, in the first two gongs and the last, the
+        // figuration doubles, so the surface runs at the same speed over a melody half
+        // as fast. Worked out from the section so that it jumps: a rate passing
+        // between the two would sweep the figure through every step in between.
+        var figureRate = Formula("4 + 4 * (step(a, 2.5) + step(15.5, a))", new Read(orchestra, SectionNumber));
 
-        // The flute runs the other way, and fades rather than enters: three seconds
-        // up and one and a half down, in decades of a second. On the screen a Slew is
-        // a wire.
-        var fluteIn = b.Add("math.clamp", (1, 0f), (2, 1f));
+        var burst = Product(Stroke(beats, 1f / Cycle, 70f), orchestra, Burst);
+
+        // The flute fades rather than enters: three seconds up and one and a half
+        // down, in decades of a second. On the screen a Slew is a wire.
         var fluteSwell = b.Add(SlewType, (1, 0.4771f), (2, 0.1761f));
 
-        b.Wire(beats, 0, song, 0)
-         .Wire(beats, 0, lift, 0)
-         .Wire(song, 0, slow, 0)
-         .Wire(Span(song, 0.3f, 0.4f, 1f, 0f), 0, fluteIn, 0)
-         .Wire(fluteIn, 0, fluteSwell, 0);
+        b.Wire(orchestra, Flute, fluteSwell, 0);
 
         Box("Arrangement");
 
@@ -267,7 +277,7 @@ internal sealed class BronzePreset : PresetBench
 
         // And the timekeeper: one dry note on every beat, which is what the rest of
         // the orchestra is listening to while the tempo moves.
-        var timeStroke = Enters(Stroke(beats, 1f, 16f), song, 0.36f, 0.4f);
+        var timeStroke = Product(Stroke(beats, 1f, 16f), orchestra, Kempli);
         var kempli = Bell(620f, timeStroke, 1.41f, 0.6f);
 
         Box("Gongs");
@@ -284,8 +294,8 @@ internal sealed class BronzePreset : PresetBench
             Tone(Plus(jegogHz, 3.5f), jegogStroke));
 
         // Every second note, an octave up, the same way and beating faster.
-        var calungStroke = Enters(
-            Product(twoFall, Rises(twoFall, 0f, 0.006f, StrokePhase)), song, 0.15f, 0.2f);
+        var calungStroke = Product(
+            Product(twoFall, Rises(twoFall, 0f, 0.006f, StrokePhase)), orchestra, Melody);
         var calungHz = Tuned(calung, 277.2f);
         var calungPair = Sum(
             Bell(calungHz, calungStroke, 2.76f, 0.35f),
@@ -293,7 +303,7 @@ internal sealed class BronzePreset : PresetBench
 
         // And the melody itself, a beat a note. 2.76 is the second partial of a bar
         // free at both ends, which is what these keys are.
-        var pokokStroke = Enters(Stroke(beats, 1f, 5f), song, 0.15f, 0.2f);
+        var pokokStroke = Product(Stroke(beats, 1f, 5f), orchestra, Melody);
         var ugal = Bell(Tuned(pokok, 554.4f), pokokStroke, 2.76f, 0.45f);
 
         Box("Low Metal");
@@ -304,7 +314,7 @@ internal sealed class BronzePreset : PresetBench
         // different ones, and an instrument each seven hertz apart. Whose note it is
         // is the step itself: nought is the first player's alone, two the second's,
         // and one is both.
-        var figureStroke = Product(Enters(figureFall, song, 0.12f, 0.45f), figure, 1);
+        var figureStroke = Product(Product(figureFall, orchestra, Figure), figure, 1);
         var figureHz = Tuned(figureDegree, 1108.7f);
         var firstHand = b.Add("math.min", (1, 1f));
         var secondHand = b.Add("math.min", (1, 1f));
@@ -320,14 +330,11 @@ internal sealed class BronzePreset : PresetBench
 
         // --- the chimes ------------------------------------------------------
 
-        // The burst: the whole orchestra on the gong, for a twentieth of a second,
-        // in the two gongs of each half that are marked full.
-
         // Five in sixteen, off the beat, a fourth of the scale above the melody. The
         // bell is folded after its envelope, so the fold opens with the stroke and
         // closes as it rings: brass at the front of the note and bronze at the back.
         var chimeHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 2f), (EuclidCurve, 6f));
-        var chimeStroke = Enters(Wired("math.max", chimeHits, burst, EuclidStroke), song, 0.6f, 0.7f);
+        var chimeStroke = Product(Wired("math.max", chimeHits, burst, EuclidStroke), orchestra, Chimes);
         var chimeBell = Bell(Tuned(Plus(pokok, 3f), 554.4f), chimeStroke, 1.41f, 0.5f);
         var chimes = b.Add(FoldType, (1, 2.2f));
 
@@ -341,9 +348,9 @@ internal sealed class BronzePreset : PresetBench
         // Every quarter of a beat, with the tresillo leaned on, and the top of a
         // Hiss for the sizzle.
         var accents = b.Add(EuclidType, (1, 4f), (2, 8f), (3, 3f));
-        var cymbalStroke = Enters(
+        var cymbalStroke = Product(
             Sum(Product(Stroke(beats, 4f, 8f), Span(accents, 0f, 1f, 0.3f, 1f, 1)), burst),
-            song, 0.5f, 0.55f);
+            orchestra, Drums);
         var cymbals = Hiss(cymbalStroke, 6500f, 0.3f, "high");
 
         b.Wire(beats, 0, accents, 0);
@@ -353,14 +360,14 @@ internal sealed class BronzePreset : PresetBench
         // --- the drums -------------------------------------------------------
 
         // The pair of drums that lead a gamelan. The lower plays more as the
-        // orchestra fills — its hits are the song — and its pitch is its own stroke
-        // cubed, so the skin drops as it is let go.
+        // orchestra fills, by its row of hits, and its pitch is its own stroke cubed,
+        // so the skin drops as it is let go.
         var lowHits = b.Add(EuclidType, (1, 4f), (2, 16f), (4, 3f), (EuclidCurve, 4f));
-        var lowStroke = Enters(lowHits, song, 0.5f, 0.55f, EuclidStroke);
+        var lowStroke = Wired("math.mul", lowHits, orchestra, EuclidStroke, Drums);
         var lowDrum = Drum(lowStroke, 82f, 68f, 3f, 0f);
 
         var highHits = b.Add(EuclidType, (1, 4f), (2, 16f), (3, 5f), (4, 7f), (EuclidCurve, 7f));
-        var highStroke = Enters(highHits, song, 0.5f, 0.55f, EuclidStroke);
+        var highStroke = Wired("math.mul", highHits, orchestra, EuclidStroke, Drums);
         var highDrum = Drum(highStroke, 210f, 120f, 3f, 0f);
 
         // A Drive for the hand on the skin. It normalizes as it goes, so this is
@@ -368,7 +375,7 @@ internal sealed class BronzePreset : PresetBench
         var kendang = b.Add(DriveType, (1, 2.5f));
 
         b.Wire(beats, 0, lowHits, 0)
-         .Wire(Span(song, 0.5f, 1f, 3f, 7f), 0, lowHits, 3)
+         .Wire(orchestra, Hits, lowHits, 3)
          .Wire(beats, 0, highHits, 0)
          .Wire(Sum(lowDrum, highDrum), 0, kendang, 0);
 
@@ -614,7 +621,7 @@ internal sealed class BronzePreset : PresetBench
         var placed = b.Add("space.translate");
         var light = b.Add(CircleType, (2, 0.03f));
         var glow = b.Add(FillType, (1, 0.05f));
-        var breathLit = Product(glow, fluteIn);
+        var breathLit = Product(glow, orchestra, Flute);
 
         b.Wire(Product(Through("math.cos", orbit), reach), 0, placed, 2)
          .Wire(Product(Sine(orbit), reach), 0, placed, 3)
@@ -680,21 +687,22 @@ internal sealed class BronzePreset : PresetBench
 
         // Bronze rings, so the picture does. The last frame is read from a little
         // nearer the middle than where it is drawn, which moves everything in it
-        // outwards: each stroke leaves the wheel as a fading copy of itself. A long
-        // memory while the orchestra is thin and a short one when it is full.
+        // outwards: each stroke leaves the wheel as a fading copy of itself. The
+        // memory follows the grade: long while the picture is muted, short when it is
+        // bright.
         // The brighter of the two rather than a blend, so an echo brighter than the
         // new frame keeps its brightness and reads as a wake.
         var printed = b.Add(TrailsType, (TrailsZoom, 0.982f), (TrailsAngle, -0.008f));
 
-        // Darkened at the corners, and graded by the song last so the opening is
-        // muted and the burst is not.
+        // Darkened at the corners, and graded last so the opening is muted and the
+        // burst is not.
         var shaded = Vignette(printed, 0.4f, 1.7f, 0.3f);
         var graded = b.Add(GradeType, (2, 1.1f));
 
         b.Wire(fresh, 0, printed, 0)
-         .Wire(Span(song, 0f, 1f, 0.92f, 0.8f), 0, printed, TrailsPersist)
+         .Wire(Span(grading, 0.8f, 1.3f, 0.92f, 0.8f), 0, printed, TrailsPersist)
          .Wire(shaded, 0, graded, 0)
-         .Wire(Span(song, 0f, 1f, 0.8f, 1.3f), 0, graded, 1)
+         .Wire(grading, 0, graded, 1)
          .Wire(graded, 0, output, NodeCatalog.OutputColorPort);
 
         Box("Picture: Ringing");
