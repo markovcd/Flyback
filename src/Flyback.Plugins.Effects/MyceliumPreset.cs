@@ -247,6 +247,8 @@ internal static class MyceliumPreset
         // rate in the patch is this number multiplied, so nothing is typed in seconds
         // and no two parts can be left disagreeing about the tempo.
         var beat = b.Add(NodeCatalog.TempoTypeId, (0, 100f));
+        // Twelve sections of 32 beats: the outro comes round to the intro.
+        b.Patch.Length = 12 * 32 * 60.0 / 100;
         var sixteenths = b.Add("math.mul", (1, 4f));
         var eighths = b.Add("math.mul", (1, 2f));
         var bars = b.Add("math.mul", (1, 0.25f));

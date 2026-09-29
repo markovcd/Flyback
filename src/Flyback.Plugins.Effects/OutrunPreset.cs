@@ -109,6 +109,8 @@ internal sealed class OutrunPreset : PresetBench
         // than the clock, so the tempo is this one knob and nothing can disagree
         // about it.
         var beat = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
+        // Twelve sections of 32 beats: the outro comes round to the intro.
+        b.Patch.Length = 12 * 32 * 60.0 / 112;
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 

@@ -134,6 +134,9 @@ internal sealed class BronzePreset : PresetBench
 
     private Patch Assemble()
     {
+        // One breath of the tempo: sixteen gongs, and the tempo back where it began.
+        b.Patch.Length = Cycle * Cycles / (double)Pace;
+
         // --- the clock -------------------------------------------------------
 
         // Beats gone by: the steady pace, less the two sines. What is subtracted is

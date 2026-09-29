@@ -43,6 +43,8 @@ internal static class VigilPreset
     {
         var b = new PatchBuilder(modules);
 
+        b.Patch.Length = Song;
+
         var fog = b.Patch.AddControl("fog", 0.4f);
         var glow = b.Patch.AddControl("glow", 0.5f);
         var drive = b.Patch.AddControl("drive", 0.4f);

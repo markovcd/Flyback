@@ -19,7 +19,7 @@ namespace Flyback.Plugins.Effects;
 /// <para>
 /// A Sequencer has no memory and follows whatever is on its 'in', which is what makes
 /// this a wire and not a program. Twelve notes ahead is the pattern itself, so the last
-/// stage is the first and the piece comes round with nothing to reset.
+/// stage is the first and the piece comes round when the count of stages does.
 /// </para>
 /// </remarks>
 internal sealed class PhasePreset : PresetBench
@@ -51,6 +51,9 @@ internal sealed class PhasePreset : PresetBench
     private const float Round = 12f;
 
     private const float Stage = 96f;
+
+    /// <summary>Stages in the piece.</summary>
+    private const float Stages = 16f;
 
     /// <summary>
     /// The pattern: D, A, E, G, C, A, D, G, E, C, A, G. Five pitches and no semitone
@@ -86,12 +89,15 @@ internal sealed class PhasePreset : PresetBench
 
     private Patch Assemble()
     {
+        // Sixteen stages of 96 notes.
+        b.Patch.Length = Stages * Stage / (double)Pace;
+
         // --- the process -----------------------------------------------------
 
         // The count of notes, and which stage of sixteen it has reached.
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var count = Times(clock, Pace);
-        var stage = Times(count, 1f / Stage);
+        var stage = Knobbed("math.mod", Times(count, 1f / Stage), Stages);
         var stageGone = Fraction(stage);
 
         // How far ahead the second player is. One less than the stage, because the

@@ -32,6 +32,12 @@ internal static partial class Presets
         /// <summary>How many modules were already in a box when the last one was closed.</summary>
         private int boxed;
 
+        /// <summary>Beats a minute.</summary>
+        private const float Bpm = 112f;
+
+        /// <summary>Twelve phrases of 32 beats: the way out ends where the intro begins.</summary>
+        private const double Length = 12 * 32 * 60.0 / Bpm;
+
         /// <summary>The Tempo's second output: the count of beats so far.</summary>
         private const int Beats = 1;
 
@@ -192,7 +198,8 @@ internal static partial class Presets
 
             // Every part reads the count of beats rather than the clock, so the tempo
             // is this one knob. The clock itself is here for the picture's drifts.
-            tempo = b.Add(NodeCatalog.TempoTypeId, (0, 112f));
+            tempo = b.Add(NodeCatalog.TempoTypeId, (0, Bpm));
+            b.Patch.Length = Length;
             var clock = b.Add(NodeCatalog.TimeTypeId);
 
             Box("Clock");

@@ -202,6 +202,8 @@ internal sealed class AcidPreset : PresetBench
         // A hundred and thirty a minute, which is where this music lives. Every part
         // reads the count of beats rather than the clock, so the tempo is this one knob.
         var beat = b.Add(NodeCatalog.TempoTypeId, (0, 130f));
+        // Sixteen sections of 32 beats: the way out comes round to the intro.
+        b.Patch.Length = 16 * 32 * 60.0 / 130;
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 

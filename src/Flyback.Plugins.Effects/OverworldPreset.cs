@@ -251,6 +251,8 @@ internal sealed class OverworldPreset : PresetBench
         // A hundred and fifty a minute. Every part reads the count of beats, so the
         // tempo is this one knob.
         var beat = b.Add(NodeCatalog.TempoTypeId, (0, 150f));
+        // Thirteen sections of 32 beats: the credits come round to the title screen.
+        b.Patch.Length = 13 * 32 * 60.0 / 150;
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 

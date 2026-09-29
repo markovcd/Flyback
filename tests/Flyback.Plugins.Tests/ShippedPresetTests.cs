@@ -22,6 +22,38 @@ public class ShippedPresetTests
     public static TheoryData<string> Every =>
         [.. ShippedPlugins.Loaded.Presets.Select(p => p.Name)];
 
+    /// <summary>The presets that say how long they play, in seconds; every other one plays on.</summary>
+    private static readonly Dictionary<string, double> Lengths = new()
+    {
+        ["Whole band"] = 205.71,
+        ["Warehouse"] = 185.81,
+        ["Acid"] = 236.31,
+        ["Mycelium"] = 230.4,
+        ["Bronze"] = 170.67,
+        ["Outrun"] = 205.71,
+        ["Phase"] = 236.31,
+        ["Fracture"] = 180.71,
+        ["Slow weather"] = 1800,
+        ["No Sense Dub"] = 267.24,
+        ["Overworld"] = 166.4,
+        ["Flyback Theme"] = 180,
+        ["Vigil"] = 320,
+    };
+
+    /// <summary>
+    /// A piece with an arrangement lasts one pass of it, ending where it comes round;
+    /// a loop, a generative patch or one that is played says no length and plays on.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(Every))]
+    public void Every_preset_lasts_one_pass_of_its_arrangement_or_plays_on(string name)
+    {
+        var loaded = ShippedPlugins.Loaded;
+        var patch = loaded.Presets.Single(p => p.Name == name).Build(loaded.Modules);
+
+        patch.Length.ShouldBe(Lengths.TryGetValue(name, out var seconds) ? seconds : null, name);
+    }
+
     /// <summary>Every preset in the picker builds and compiles for both sinks, against what it carries.</summary>
     [Theory]
     [MemberData(nameof(Every))]

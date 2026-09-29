@@ -90,6 +90,9 @@ internal sealed class FracturePreset : PresetBench
         // A hundred and seventy a minute, and the count of beats everything that is
         // not a drum reads.
         var beat = b.Add(NodeCatalog.TempoTypeId, (0, 170f));
+
+        // Sixteen sections of 32 beats: the way out comes round to the intro.
+        b.Patch.Length = 16 * 32 * 60.0 / 170;
         var clock = b.Add(NodeCatalog.TimeTypeId);
         var beats = Product(clock, beat);
 
