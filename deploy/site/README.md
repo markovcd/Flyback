@@ -23,7 +23,7 @@ The site is an image on GitHub's registry, `ghcr.io/markovcd/flyback-site`, for 
 
 The Site workflow is separate from the app's Release, and signs the plugins at the version of the latest `vX.Y.Z` tag.
 
-The NAS runs one Docker project per channel, each a folder holding `compose.yaml` and its own `data/` and `media/`. The dev project's `compose.yaml` names `:dev` and another container name, `flyback-dev`, since two containers cannot share one. The container runs as user 1654, so `data/` has to be writable by that user:
+The NAS runs one Docker project per channel, each a folder holding `compose.yaml` and its own `data/` and `media/`. The dev project's `compose.yaml` names `:dev` and another container name, `flyback-dev`, since two containers cannot share one. The container runs as user 1654, so `data/` has to be writable by that user. On a NAS whose shared folders carry their own permissions, UGREEN's among them, set `user:` in `compose.yaml` to the NAS user's uid and gid and give `data/` to that user instead. Either way:
 
 ```bash
 sudo mkdir -p data media && sudo chown -R 1654 data
@@ -54,6 +54,8 @@ To build the image here without pushing it:
 ```bash
 docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 ```
+
+[cloudflare.md](cloudflare.md) is how the live site at `flyback.nasik2137.uk` is set up: the tunnel, Access on the admin sign-in, and the worker that falls back to GitHub Pages.
 
 It listens on port 8080, published to nothing: put a Cloudflare Tunnel or the NAS reverse proxy on a Docker network with it, and point that at `http://flyback:8080`. Joining the tunnel's network is a few lines in `compose.yaml`:
 
