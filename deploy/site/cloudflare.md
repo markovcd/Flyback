@@ -22,6 +22,12 @@ The SSL/TLS encryption mode (Full, Full strict) does not apply: the tunnel carri
 
 Cloudflare's own HSTS setting is off, since it would cover the whole zone too. The site sends its own `Strict-Transport-Security` over HTTPS.
 
+## Caching
+
+**nasik2137.uk → Caching → Configuration → Browser Cache TTL: Respect Existing Headers.** Left at its default, Cloudflare turns the site's `no-cache` into four hours, and a browser keeps an old `dotnet.js` asking for files the new build no longer has.
+
+The site sends `no-cache` on every file whose name outlives a release or a render, so Cloudflare checks each with the NAS, a 304 when nothing changed, and a release needs no purge. The web viewer's fingerprinted files are the exception, kept for good; the worker below makes Cloudflare hold them.
+
 ## Access on the admin sign-in
 
 Cloudflare Access needs the Zero Trust **Free** plan, picked once under **Choose a plan**.

@@ -168,19 +168,19 @@ types.Mappings[".pdb"] = "application/octet-stream";
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = types,
-    OnPrepareResponse = served =>
-    {
-        if (ViewerCache.For(served.Context.Request.Path) is { } keep)
-            served.Context.Response.Headers.CacheControl = keep;
-    },
+    OnPrepareResponse = Kept,
 });
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(media.Root),
     RequestPath = MediaFolder.Route,
+    OnPrepareResponse = Kept,
 });
 app.UseRateLimiter();
 app.UseAuthentication();
+
+static void Kept(StaticFileResponseContext served) =>
+    served.Context.Response.Headers.CacheControl = StaticCache.For(served.Context.Request.Path);
 
 bool Signed(HttpContext http) => admin.Enabled && http.User.Identity?.IsAuthenticated == true;
 

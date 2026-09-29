@@ -315,6 +315,22 @@ public sealed class ServerTests : IDisposable
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
+    /// <summary>A cache in front of the site keeps a page, a script or a render only as long as the site says it is still the same.</summary>
+    [Theory]
+    [InlineData("/presets.html")]
+    [InlineData("/assets/presets.js")]
+    [InlineData("/media/abc.webp")]
+    public async Task A_file_whose_name_outlives_a_release_is_checked_before_each_use(string path)
+    {
+        Directory.CreateDirectory(Media);
+        await File.WriteAllBytesAsync(Path.Combine(Media, "abc.webp"), [0], TestContext.Current.CancellationToken);
+
+        using var response = await client.GetAsync(new Uri(path, UriKind.Relative), TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        (response.Headers.CacheControl?.NoCache ?? false).ShouldBeTrue();
+    }
+
     [Fact]
     public async Task The_pages_and_the_shared_stylesheet_are_served()
     {
