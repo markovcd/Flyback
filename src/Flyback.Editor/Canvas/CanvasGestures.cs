@@ -234,37 +234,55 @@ internal sealed class CanvasGestures
     /// <summary>Opens the palette where the pointer last was, or in the middle of the view.</summary>
     public void RequestMenu() => MenuRequested?.Invoke(this, LastPointer ?? view.Middle);
 
+    /// <summary>Opens the palette in the middle of the view, for a button with no point of its own.</summary>
+    public void RequestMenuInMiddle() => MenuRequested?.Invoke(this, view.Middle);
+
     public void Pressed(Control canvas, PointerPressedEventArgs e)
     {
         var properties = e.GetCurrentPoint(canvas).Properties;
-        var screen = e.GetPosition(canvas);
+
+        var button = properties.IsMiddleButtonPressed ? MouseButton.Middle
+            : properties.IsRightButtonPressed ? MouseButton.Right
+            : properties.IsLeftButtonPressed ? MouseButton.Left
+            : MouseButton.None;
+
+        if (Pressed(canvas, e.Pointer, e.GetPosition(canvas), button, e.KeyModifiers, e.ClickCount)) e.Handled = true;
+    }
+
+    /// <summary>
+    /// A press of <paramref name="button"/> at <paramref name="screen"/>, from a mouse
+    /// or from <see cref="Fingers"/>, and whether it was answered in full.
+    /// </summary>
+    /// <param name="pointer">What is captured for the length of the gesture, if anything is.</param>
+    public bool Pressed(Control canvas, IPointer? pointer, Point screen, MouseButton button, KeyModifiers modifiers, int clickCount)
+    {
         var graph = view.ToGraph(screen);
         var scene = selection.Scene;
-
-        dragOrigin = graph;
 
         // Panning is the middle button and nothing else (ADR-0046). It pans
         // mid-gesture too: whatever was under way is put on hold and picks back up
         // once the button comes up.
-        if (properties.IsMiddleButtonPressed)
+        if (button == MouseButton.Middle)
         {
             if (drag != Drag.Pan) panSuspended = drag;
             drag = Drag.Pan;
             panOrigin = screen;
             canvas.Cursor = PanCursor;
-            e.Pointer.Capture(canvas);
-            return;
+            pointer?.Capture(canvas);
+            return false;
         }
 
-        if (properties.IsRightButtonPressed)
+        // After the pan, which leaves the grip of a carry it puts on hold where it was.
+        dragOrigin = graph;
+
+        if (button == MouseButton.Right)
         {
             // Over an unpatched input, the button held down is a knob for its value.
-            if (drag == Drag.None && dial.Start(canvas, graph, screen))
+            if (drag == Drag.None && dial.Start(canvas, graph, screen, anchored: pointer?.Type != PointerType.Touch))
             {
                 tips.Down(canvas);
-                e.Pointer.Capture(canvas);
-                e.Handled = true;
-                return;
+                pointer?.Capture(canvas);
+                return true;
             }
 
             // Not over a module, where a right-click is about that module, and not on
@@ -282,16 +300,16 @@ internal sealed class CanvasGestures
                 else if (scene.HitNode(graph) is { } under)
                     held.Hold(selection.Contains(under.Id) ? selection.Nodes.Select(n => n.Id) : [under.Id]);
 
-                if (held.Holding) e.Pointer.Capture(canvas);
+                if (held.Holding) pointer?.Capture(canvas);
             }
 
-            return;
+            return false;
         }
 
-        if (!properties.IsLeftButtonPressed) return;
+        if (button != MouseButton.Left) return false;
 
         // Over a module Ctrl adds to the selection; over an output it lifts a wire off.
-        var ctrl = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        var ctrl = (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
 
         // Only the very next press walks on from the wire lifted last.
         var liftedLast = liftedOffOutput;
@@ -307,8 +325,7 @@ internal sealed class CanvasGestures
 
         if (linking.Pick(graph))
         {
-            e.Handled = true;
-            return;
+            return true;
         }
 
         // A socket on a locked canvas is not a handle, so the press falls through to
@@ -316,16 +333,15 @@ internal sealed class CanvasGestures
         if (!history.Locked && scene.HitPort(graph, out var portNode, out var portIndex, out var isOutput))
         {
             StartWire(portNode, portIndex, isOutput, lifting: ctrl, liftedLast, graph);
-            e.Pointer.Capture(canvas);
+            pointer?.Capture(canvas);
             repaint.Request();
-            return;
+            return false;
         }
 
         if (marks.At(graph) is var (wire, at))
         {
             marks.Splice(wire, at);
-            e.Handled = true;
-            return;
+            return true;
         }
 
         // A box before a module, because that is the order they are painted in.
@@ -333,39 +349,39 @@ internal sealed class CanvasGestures
         {
             // Shift on one member of a group selected whole means that one: it is about
             // to be carried out, and the whole group would ride along as itself.
-            if ((e.KeyModifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
+            if ((modifiers & KeyModifiers.Shift) != 0 && selection.Group is { } whole && whole.Members.Contains(node.Id))
                 selection.Select(node.Id);
 
             PressNode(node, ctrl);
-            if (!history.Locked) Aim(graph, e.KeyModifiers);
+            if (!history.Locked) Aim(graph, modifiers);
 
-            e.Pointer.Capture(canvas);
+            pointer?.Capture(canvas);
             repaint.Request();
-            return;
+            return false;
         }
 
         // A double-click on a box looks into it; a single click selects what is inside,
         // which the ordinary drag then moves.
         if (scene.HitBox(graph) is { } box)
         {
-            if (e.ClickCount == 2) selection.Peek(box);
+            if (clickCount == 2) selection.Peek(box);
             else PressGroup(box, ctrl);
 
-            e.Pointer.Capture(canvas);
+            pointer?.Capture(canvas);
             repaint.Request();
-            return;
+            return false;
         }
 
         if (scene.HitOpenGroupHandle(graph) is { } opened)
         {
-            if (e.ClickCount == 2 && opened == selection.Peeked) selection.EndPeek();
+            if (clickCount == 2 && opened == selection.Peeked) selection.EndPeek();
             // Shutting a group is an edit, so a locked canvas selects it instead.
-            else if (e.ClickCount == 2 && !history.Locked) edits.ToggleBox(opened);
+            else if (clickCount == 2 && !history.Locked) edits.ToggleBox(opened);
             else PressGroup(opened, ctrl);
 
-            e.Pointer.Capture(canvas);
+            pointer?.Capture(canvas);
             repaint.Request();
-            return;
+            return false;
         }
 
         // Left on empty canvas draws a rubber band. A band that sweeps nothing selects
@@ -381,26 +397,29 @@ internal sealed class CanvasGestures
         drag = Drag.Marquee;
         Sweep();
 
-        e.Pointer.Capture(canvas);
+        pointer?.Capture(canvas);
         repaint.Request();
+        return false;
     }
 
-    public void Moved(Control canvas, PointerEventArgs e)
+    public void Moved(Control canvas, PointerEventArgs e) =>
+        Moved(canvas, e.GetPosition(canvas), e.KeyModifiers, e.GetCurrentPoint(canvas).Properties.IsMiddleButtonPressed);
+
+    /// <param name="middleDown">
+    /// The middle button's own state: a second button going down while the first is
+    /// captured does not reliably raise a press of its own.
+    /// </param>
+    public void Moved(Control canvas, Point screen, KeyModifiers modifiers, bool middleDown)
     {
-        var screen = e.GetPosition(canvas);
         var graph = view.ToGraph(screen);
 
         LastPointer = graph;
 
         if (dial.Turning)
         {
-            dial.Move(canvas, screen, e.KeyModifiers);
+            dial.Move(canvas, screen, modifiers);
             return;
         }
-
-        // The middle button's own state, sampled here: a second button going down while
-        // the first is captured does not reliably raise a press of its own.
-        var middleDown = e.GetCurrentPoint(canvas).Properties.IsMiddleButtonPressed;
 
         if (middleDown && drag != Drag.Pan)
         {
@@ -442,7 +461,7 @@ internal sealed class CanvasGestures
                     moving.Y = from.Y + delta.Y;
                 }
 
-                if (!history.Locked) Aim(graph, e.KeyModifiers);
+                if (!history.Locked) Aim(graph, modifiers);
                 repaint.Request();
                 return;
 
@@ -465,13 +484,17 @@ internal sealed class CanvasGestures
         }
     }
 
-    public void Released(Control canvas, PointerReleasedEventArgs e)
-    {
-        var graph = view.ToGraph(e.GetPosition(canvas));
+    public void Released(Control canvas, PointerReleasedEventArgs e) =>
+        Released(canvas, e.Pointer, e.GetPosition(canvas), e.InitialPressMouseButton, e.KeyModifiers);
 
-        if (e.InitialPressMouseButton == MouseButton.Right)
+    /// <param name="button">The button whose press began what is being let go of.</param>
+    public void Released(Control canvas, IPointer? pointer, Point screen, MouseButton button, KeyModifiers modifiers)
+    {
+        var graph = view.ToGraph(screen);
+
+        if (button == MouseButton.Right)
         {
-            if (EndTurn(canvas)) e.Pointer.Capture(null);
+            if (EndTurn(canvas)) pointer?.Capture(null);
 
             held.Release();
             return;
@@ -479,7 +502,7 @@ internal sealed class CanvasGestures
 
         // The middle button's own release is answered here whatever drag is by now: the
         // gesture it interrupted must not be finished by a button that never held it.
-        if (e.InitialPressMouseButton == MouseButton.Middle)
+        if (button == MouseButton.Middle)
         {
             if (panSuspended != Drag.None)
             {
@@ -495,7 +518,7 @@ internal sealed class CanvasGestures
             {
                 End();
                 canvas.Cursor = CursorOver(graph);
-                e.Pointer.Capture(null);
+                pointer?.Capture(null);
                 repaint.Request();
             }
 
@@ -512,7 +535,7 @@ internal sealed class CanvasGestures
         // A move is a step and nothing the program can hear. A press on one module of a
         // group that turned out not to be a drag was a click, which picks it out.
         // Shift decides at the release as well, so letting go of it first changes nothing.
-        if (drag == Drag.Node && !history.Locked && Displaced) Aim(graph, e.KeyModifiers);
+        if (drag == Drag.Node && !history.Locked && Displaced) Aim(graph, modifiers);
         else regrouping.Clear();
 
         if (drag == Drag.Node && regrouping.Count > 0) edits.Regroup([.. regrouping], Landing);
@@ -523,7 +546,7 @@ internal sealed class CanvasGestures
         // Taken from where the pointer is, which after a pan is rarely where it was.
         canvas.Cursor = CursorOver(graph);
 
-        e.Pointer.Capture(null);
+        pointer?.Capture(null);
         repaint.Request();
     }
 

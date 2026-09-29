@@ -369,6 +369,49 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
     }
 
     /// <summary>
+    /// The reachable socket nearest <paramref name="graph"/> within <paramref name="reach"/>,
+    /// or null: a fingertip landing beside a socket means the socket.
+    /// </summary>
+    public Point? NearestSocket(Point graph, double reach)
+    {
+        Point? nearest = null;
+        var best = reach * reach;
+
+        foreach (var at in SocketAnchors())
+        {
+            var dx = at.X - graph.X;
+            var dy = at.Y - graph.Y;
+            var distance = dx * dx + dy * dy;
+
+            // Through HitPort, so a socket under a box or behind the one being looked into is out of reach.
+            if (distance > best || !HitPort(at, out _, out _, out _)) continue;
+
+            nearest = at;
+            best = distance;
+        }
+
+        return nearest;
+    }
+
+    /// <summary>Where every socket is drawn, on boxes and on the modules not inside a shut one.</summary>
+    private IEnumerable<Point> SocketAnchors()
+    {
+        foreach (var (_, sockets, bounds) in Boxes())
+        {
+            for (var p = 0; p < sockets.Outputs.Count; p++) yield return NodeGeometry.GroupOutputPort(bounds, p);
+            for (var p = 0; p < sockets.Inputs.Count; p++) yield return geometry.GroupInputPort(bounds, sockets, p);
+        }
+
+        foreach (var node in patch.Nodes)
+        {
+            if (Shut(node.Id) || NodeCatalog.Get(node.TypeId) is not { } def) continue;
+
+            for (var p = 0; p < def.Outputs.Count; p++) yield return NodeGeometry.OutputPort(node, p);
+            for (var p = 0; p < def.Inputs.Count; p++) yield return geometry.InputPort(node, def, p);
+        }
+    }
+
+    /// <summary>
     /// Which port on a module is under the pointer, among the modules of the box being
     /// looked into or among the rest.
     /// </summary>

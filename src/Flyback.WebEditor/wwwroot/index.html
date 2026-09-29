@@ -6,6 +6,8 @@
   <title>Flyback</title>
   <style>
     html, body, #out { margin: 0; height: 100%; background: #16181c; overflow: hidden; }
+    /* Every finger is the editor's: no page pinch, scroll or pull-to-refresh. */
+    html, body, #out { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
   </style>
 </head>
 <body>

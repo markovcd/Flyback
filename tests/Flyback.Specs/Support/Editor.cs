@@ -172,6 +172,39 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             open.MouseUp(point, MouseButton.Right);
         });
 
+    /// <summary>
+    /// Puts a finger down at each start, a point on the canvas's own control, moves them
+    /// all to their ends together in a few steps, and lifts them in the order they went down.
+    /// </summary>
+    public void Touch(params (Point From, Point To)[] fingers) =>
+        DoWindow((_, canvas) =>
+        {
+            const int steps = 8;
+
+            var pointers = fingers.Select(_ => new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, false)).ToArray();
+            ulong time = 1_000;
+
+            for (var i = 0; i < fingers.Length; i++) canvas.Fingers.Down(canvas, pointers[i], fingers[i].From, time += 10);
+
+            for (var step = 1; step <= steps; step++)
+                for (var i = 0; i < fingers.Length; i++)
+                    canvas.Fingers.Move(canvas, pointers[i], fingers[i].From + (fingers[i].To - fingers[i].From) * step / steps);
+
+            for (var i = 0; i < fingers.Length; i++) canvas.Fingers.Up(canvas, pointers[i], fingers[i].To, time += 10);
+        });
+
+    /// <summary>Holds a finger still at a point of the patch until it is the right button, and lifts it.</summary>
+    public void HoldFinger(Point graph) =>
+        DoWindow((_, canvas) =>
+        {
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+            var at = canvas.GraphToScreen.Transform(graph);
+
+            canvas.Fingers.Down(canvas, finger, at, 1_000);
+            canvas.Fingers.Held();
+            canvas.Fingers.Up(canvas, finger, at, 1_000 + (ulong)Fingers.HoldTime.TotalMilliseconds);
+        });
+
     private static Point OnWindow(MainWindow open, NodeEditor canvas, Point graph) =>
         canvas.TranslatePoint(canvas.GraphToScreen.Transform(graph), open)!.Value;
 

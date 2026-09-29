@@ -173,6 +173,10 @@
     next start. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
     to zoom. <kbd>Ctrl</kbd>+<kbd>F</kbd> frames the whole patch. <kbd>Esc</kbd> backs out of a drag part way
     through it — a module goes back where it was, a wire back onto the socket it was lifted off.</p>
+    <p>On a touch screen, one finger does what the left button does. Two fingers drag the view and spread or pinch
+    to zoom; a second finger put down mid-drag pans under it. A finger held still is a right-click: on bare canvas
+    it opens the module list there, and on an unpatched input it turns the value as you drag. The toolbar gains
+    buttons to add a module and to frame the patch, and the panel has one to duplicate the selection.</p>
   </section>
 
   <section id="first">
@@ -687,6 +691,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
         <tbody>
           <tr><td><kbd>Space</kbd> or right-click</td><td>Open the module list at the pointer</td></tr>
           <tr><td>right-drag up or down on an unpatched input</td><td>Turn that input&rsquo;s value</td></tr>
+          <tr><td>two fingers: drag / spread or pinch</td><td>Pan / zoom the canvas</td></tr>
+          <tr><td>hold a finger still</td><td>Right-click where it is</td></tr>
           <tr><td>type, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Enter</kbd></td><td>Filter the list, move through it, add the highlighted module</td></tr>
           <tr><td><kbd>Esc</kbd></td><td>Back out of a drag on the canvas; put back a box being looked into; clear the filter, then close the list; leave full-screen preview</td></tr>
           <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd> / <kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Open a patch / save this one</td></tr>

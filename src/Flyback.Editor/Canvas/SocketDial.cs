@@ -49,7 +49,8 @@ internal sealed class SocketDial(
     public bool Turning => dialed is not null;
 
     /// <summary>Starts turning the input under <paramref name="graph"/>, and says whether there was one to turn.</summary>
-    public bool Start(Control canvas, Point graph, Point screen)
+    /// <param name="anchored">Whether the pointer is held where the turn began, which a finger cannot be.</param>
+    public bool Start(Control canvas, Point graph, Point screen, bool anchored = true)
     {
         if (!selection.Scene.HitPort(graph, out var nodeId, out var port, out var isOutput) || isOutput) return false;
         if (!Dialable(nodeId, port, out var node, out var spec)) return false;
@@ -62,7 +63,7 @@ internal sealed class SocketDial(
         dialAt = spec.Travel(value, min, max);
         dialLast = dialHome = screen;
 
-        dialAnchor = anchors.Take(canvas);
+        dialAnchor = anchored ? anchors.Take(canvas) : null;
         canvas.Cursor = dialAnchor is null ? DialCursor : HiddenCursor;
 
         usage.Count(Used.Dialed);

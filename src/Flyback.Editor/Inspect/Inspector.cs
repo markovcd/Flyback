@@ -361,6 +361,13 @@ internal sealed class Inspector
         // would be lying about what pressing it does.
         var going = editor.Selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
 
+        if (going > 0)
+            Act(
+                "duplicate-modules",
+                Glyphs.Duplicate(),
+                going > 1 ? $"Duplicate these {going} modules  (Ctrl+D)" : "Duplicate this module  (Ctrl+D)",
+                editor.Edits.DuplicateSelection);
+
         Act(
             "delete-modules",
             Glyphs.Delete(),

@@ -233,7 +233,7 @@ internal sealed class PartGrid
         var levels = parts[part];
         var high = Math.Max(1f, levels.Max(level => Math.Abs(level.Value)));
 
-        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, Anchors.Take(cell));
+        drag = new Held(cell, part, section, e.GetPosition(cell), levels[section].Value, -high, high, e.Pointer.Type == PointerType.Touch ? null : Anchors.Take(cell));
         e.Pointer.Capture(cell);
         e.Handled = true;
     }

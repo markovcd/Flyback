@@ -19,7 +19,7 @@ namespace Flyback.App.Bars;
 /// stand in (ADR-0148). A press raises a notice, and the part that does the thing
 /// reacts to it, as it does to the same thing asked for with a key.
 /// </summary>
-internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
+internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IReactTo<Touched>
 {
     private readonly RecordingState recording;
 
@@ -57,6 +57,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     /// which view is showing, so the window rewrites its tip and whether it is on.
     /// </summary>
     public Button Tidy { get; } = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
+
+    /// <summary>The module list, for a hand with no right button and no Space bar. Shown once a finger has touched the canvas.</summary>
+    public Button Add { get; } = ToolbarButtons.Drawn("add", Glyphs.Add(), "Add a module in the middle of the view  (Space, or hold a finger on the canvas)");
+
+    /// <summary>Framing the whole patch, the other thing a hand has no key for. Shown with <see cref="Add"/>.</summary>
+    public Button Frame { get; } = ToolbarButtons.Drawn("frame", Glyphs.Frame(), "Bring the whole patch into view  (Ctrl+F)");
 
     public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", Glyphs.Code(), "Show the patch as text  (F2)");
 
@@ -118,6 +124,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
         Save.Click += (_, _) => reactions.Raise(new SaveAsked());
         Undo.Click += (_, _) => reactions.Raise(new UndoAsked());
         Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
+        Add.Click += (_, _) => reactions.Raise(new ModuleAsked());
+        Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
         Swap.IsCheckedChanged += (_, _) => reactions.Raise(new SwapAsked(Swap.IsChecked == true));
@@ -180,7 +188,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
             patchwork.Children.Add(Save);
         }
 
+        // First among the edits, where a hand looks for them; a mouse has the canvas for both.
+        Add.IsVisible = Frame.IsVisible = false;
+
         patchwork.Children.Add(ToolbarButtons.Separator());
+        patchwork.Children.Add(Add);
+        patchwork.Children.Add(Frame);
         patchwork.Children.Add(Undo);
         patchwork.Children.Add(Redo);
         patchwork.Children.Add(Tidy);
@@ -241,6 +254,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     {
         if (Code.IsChecked != notice.ShowingCode) Code.IsChecked = notice.ShowingCode;
 
+        return Task.CompletedTask;
+    }
+
+    public Task On(Touched notice)
+    {
+        Add.IsVisible = Frame.IsVisible = true;
         return Task.CompletedTask;
     }
 

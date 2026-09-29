@@ -110,7 +110,8 @@ internal class Knob : Control
         e.Pointer.Capture(this);
         e.Handled = true;
 
-        anchor = Anchors.Take(this);
+        // A finger is not a cursor, and cannot be held where it was put down.
+        anchor = e.Pointer.Type == PointerType.Touch ? null : Anchors.Take(this);
         if (anchor is not null) Cursor = Hidden;
     }
 

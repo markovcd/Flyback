@@ -13,6 +13,7 @@
 - Whole band, Acid, Mycelium, Bronze, Outrun, Phase, Fracture, Overworld and Vigil last one pass of their arrangement, so they loop where they come round, and Phase goes through its canons again the second time.
 - `flyback-cli info` says how long a patch plays, and whether it sets its length.
 - `flyback-cli pack` and `check` take `--preset`, and a preset name nobody shipped is answered with the ones there are.
+- The editor works on a touch screen: two fingers pan and zoom, a finger held still is a right-click, and the toolbar and panel gain buttons for adding a module, framing the patch and duplicating.
 
 ## 0.5.1 — 2026-09-29
 

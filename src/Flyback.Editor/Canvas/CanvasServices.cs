@@ -39,6 +39,7 @@ internal static class CanvasServices
         services.AddSingleton<SocketDial>();
         services.AddSingleton<CanvasTips>();
         services.AddSingleton<CanvasGestures>();
+        services.AddSingleton<Fingers>();
         services.AddSingleton<CanvasPainter>();
         services.AddPart<NodeEditor>();
 

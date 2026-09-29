@@ -221,6 +221,19 @@ internal static class Glyphs
         "M4.8,4.6 A5,5 0 1 0 11.2,4.6 "
         + "M8,2 L8,7.5");
 
+    /// <summary>Two modules, one a step down and right of the other: a copy of what is selected.</summary>
+    public static Control Duplicate() => Stroked(
+        "M2.5,2.5 L9.5,2.5 L9.5,9.5 L2.5,9.5 Z "
+        + "M6.5,12 L6.5,13.5 L13.5,13.5 L13.5,6.5 L12,6.5");
+
+    /// <summary>A plus: something new on the canvas.</summary>
+    public static Control Add() => Stroked("M8,2.5 L8,13.5 M2.5,8 L13.5,8");
+
+    /// <summary>A frame's four corners around a module: the whole patch brought into view.</summary>
+    public static Control Frame() => Stroked(
+        "M2,5 L2,2 L5,2 M11,2 L14,2 L14,5 M14,11 L14,14 L11,14 M5,14 L2,14 L2,11 "
+        + "M5.5,6 L10.5,6 L10.5,10 L5.5,10 Z");
+
     /// <summary>A bookmark — a group put by, to be added again later.</summary>
     public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 

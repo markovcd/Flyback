@@ -18,7 +18,7 @@ namespace Flyback.App.Canvas;
 /// selection, the view, the edits, the gestures and the painting. What is left here is
 /// what only a control can be: its size, its keys, and where its pointer goes.
 /// </remarks>
-internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
+internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<ModuleAsked>, IReactTo<FrameAsked>
 {
     private readonly CanvasPainter painter;
     private readonly Usage usage;
@@ -30,6 +30,7 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         CanvasEdits edits,
         CanvasClipboard clipboard,
         CanvasGestures gestures,
+        Fingers fingers,
         CanvasTips tips,
         SocketDial dial,
         KnobLinking linking,
@@ -49,6 +50,7 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         Edits = edits;
         Clipboard = clipboard;
         Gestures = gestures;
+        Fingers = fingers;
         Tips = tips;
         Dial = dial;
         Linking = linking;
@@ -73,6 +75,18 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         return Task.CompletedTask;
     }
 
+    public Task On(ModuleAsked notice)
+    {
+        if (Gestures.Editable) Gestures.RequestMenuInMiddle();
+        return Task.CompletedTask;
+    }
+
+    public Task On(FrameAsked notice)
+    {
+        FrameAll();
+        return Task.CompletedTask;
+    }
+
     internal CanvasHistory History { get; }
 
     internal CanvasSelection Selection { get; }
@@ -84,6 +98,8 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
     internal CanvasClipboard Clipboard { get; }
 
     internal CanvasGestures Gestures { get; }
+
+    internal Fingers Fingers { get; }
 
     internal CanvasTips Tips { get; }
 
@@ -116,28 +132,32 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         base.OnPointerPressed(e);
         Focus();
 
-        Gestures.Pressed(this, e);
+        if (e.Pointer.Type == PointerType.Touch) Fingers.Down(this, e.Pointer, e.GetPosition(this), e.Timestamp);
+        else Gestures.Pressed(this, e);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
 
-        Gestures.Moved(this, e);
+        if (e.Pointer.Type == PointerType.Touch) Fingers.Move(this, e.Pointer, e.GetPosition(this));
+        else Gestures.Moved(this, e);
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
 
-        Gestures.Released(this, e);
+        if (e.Pointer.Type == PointerType.Touch) Fingers.Up(this, e.Pointer, e.GetPosition(this), e.Timestamp);
+        else Gestures.Released(this, e);
     }
 
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
     {
         base.OnPointerCaptureLost(e);
 
-        Gestures.CaptureLost(this);
+        if (e.Pointer.Type == PointerType.Touch) Fingers.Lost(this, e.Pointer);
+        else Gestures.CaptureLost(this);
     }
 
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
@@ -223,7 +243,8 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>
         }
     }
 
-    private void FrameAll()
+    /// <summary>Frames the whole patch in the view, as Ctrl+F does.</summary>
+    internal void FrameAll()
     {
         usage.Count(Used.Framed);
         View.FrameAll();
