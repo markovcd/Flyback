@@ -40,6 +40,9 @@ internal sealed class PresetThumbnails
     private readonly Lazy<ThumbnailStore>? store;
     private readonly IStillShelf? shelf;
 
+    /// <summary>A page never draws a still live: no preview beats one thread split with the patch.</summary>
+    private readonly bool inPage;
+
     /// <summary>The build's index, read the first time a thumbnail is asked for; null where there is none or it is another build's.</summary>
     private Task<StillIndex?>? index;
 
@@ -57,6 +60,7 @@ internal sealed class PresetThumbnails
         this.compiler = compiler;
         this.saved = saved;
         this.shelf = shelf;
+        inPage = setup?.InPage ?? false;
 
         if (setup?.ThumbnailFolder is not { } folder) return;
 
@@ -107,7 +111,13 @@ internal sealed class PresetThumbnails
 
         return drawn[preset] = Task.Run(async () =>
         {
-            if (path is null && await Still(preset) is { } still) return still;
+            if (path is null)
+            {
+                if (await Still(preset) is { } still) return still;
+
+                // A page fetches a build's still over the network; it never renders one itself.
+                if (inPage) return Thumbnail.Unavailable;
+            }
 
             var key = Key(preset, path);
 

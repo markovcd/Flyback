@@ -164,6 +164,34 @@ public sealed class PresetThumbnailsTests : IDisposable
         (Directory.Exists(folder) ? Directory.GetFiles(folder, "*.thumb") : []).ShouldBeEmpty();
     }
 
+    /// <summary>A page never draws a still live: a preset with nothing fetched says so instead.</summary>
+    [Fact]
+    public async Task A_page_with_no_still_to_fetch_says_no_preview_rather_than_drawing_one()
+    {
+        var preset = Counted();
+
+        var tile = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { InPage = true }).Of(preset, TestContext.Current.CancellationToken);
+
+        builds.ShouldBe(0);
+        tile.Words.ShouldBe(Thumbnail.Unavailable.Words);
+    }
+
+    /// <summary>A page shows a still it fetches, same as any other build.</summary>
+    [Fact]
+    public async Task A_page_shows_a_fetched_still()
+    {
+        var preset = Counted();
+        byte[] still = [1, 2, 3];
+
+        var tile = await new PresetThumbnails(
+            PluginCatalog.Empty,
+            setup: new() { InPage = true },
+            shelf: Stilled(preset, StillIndex.ThisBuild, still)).Of(preset, TestContext.Current.CancellationToken);
+
+        builds.ShouldBe(0);
+        tile.Still.ShouldBe(still);
+    }
+
     /// <summary>
     /// A tile reads a thumbnail while another Flyback keeps a fresh one under the
     /// same name, and the fresh one goes in rather than being dropped.
