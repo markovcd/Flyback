@@ -50,7 +50,7 @@ Flyback.App       the editor on the desktop      Flyback.exe
 Flyback.Viewer    plays a patch, writes nothing  flyback-viewer.exe
 Flyback.Cli       render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
 Flyback.Web       the viewer in a browser        wwwroot/           (Gpu, the module plugins referenced, no Ui)
-Flyback.WebEditor the editor in a browser        wwwroot/           (Editor under Avalonia.Browser; not in the solution)
+Flyback.WebEditor the editor in a browser        wwwroot/           (Editor under Avalonia.Browser; the site builds it)
 
 Flyback.Plugins.* twelve plugins, built into plugins/<Name>/ and loaded at run time
 ```
@@ -70,7 +70,7 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.App` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Web` | `WebSound`, `WebPicture`, `WebExports`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
-| `Flyback.WebEditor` | `PageApp`, `CanvasPreview`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, title, focus and close registered in its container; the picture on a canvas of its own. Served by the preset site at `/editor/`, which builds it; kept out of `Flyback.slnx`, since it needs the wasm-tools workload, which the gate's image installs ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
+| `Flyback.WebEditor` | `PageApp`, `CanvasPreview`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, title, focus and close registered in its container; the picture on a canvas of its own. Served by the preset site at `/editor/`, which builds it; listed in `Flyback.slnx` but not built by it, since it needs the wasm-tools workload, which the gate's image installs ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 
 Two namespace quirks are deliberate. `Flyback.Engine` declares
