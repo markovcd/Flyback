@@ -137,6 +137,12 @@ public sealed class EffectsPlugin : IFlybackPlugin
                 + "and crunching noise — with a key change, the music ducked under the kick, "
                 + "under a side-scroller drawn a pixel at a time.",
                 PresetKind.Showcase),
+            new PatchPreset(
+                ThemePreset.Name,
+                ThemePreset.Build,
+                "Flyback's theme: three minutes of synthwave in A minor, an arp, a pumping bass and "
+                + "a hook, on a two-channel scope whose beam crosses the screen once a beat.",
+                PresetKind.Showcase),
         ]);
     }
 }
