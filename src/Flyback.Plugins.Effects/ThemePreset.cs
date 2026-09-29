@@ -264,6 +264,7 @@ internal sealed class ThemePreset : PresetBench
         // starting half again as high for its first few milliseconds.
         float[][] runs = [[69f, 74f, 79f, 84f], [72f, 76f, 81f]];
         var pops = new NodeInstance[2];
+        var popLevels = new NodeInstance[2];
 
         for (var voice = 0; voice < 2; voice++)
         {
@@ -284,6 +285,7 @@ internal sealed class ThemePreset : PresetBench
             pops[voice] = Sum(
                 Tone(hz, level),
                 Sum(Tone(Times(hz, 2f), Times(level, 0.35f)), Tone(Times(hz, 3f), Times(level, 0.12f))));
+            popLevels[voice] = level;
         }
 
         var pop = Sum(pops[0], pops[1]);
@@ -407,16 +409,19 @@ internal sealed class ThemePreset : PresetBench
             "max(smoothstep(0.46, 0.49, abs(fract(a * 2) - 0.5)), smoothstep(0.46, 0.49, abs(fract(b * 2) - 0.5))) * (0.1 + 0.25 * c)",
             coord, new Read(coord, 1), hatStroke);
 
-        // The name, typed out across the first bar of the first chorus of each run, the
-        // peak and the outro.
+        // The name, a letter on each pop of the hook, which starts 28 beats into a
+        // section, flaring as it lands and fading over the next section's first two
+        // bars. Counting back to the section the run played in keeps the silent run of
+        // the first from typing anything.
         var name = b.Add(TextType, (2, 0.24f));
         name.SetState("text", new JsonObject { ["lines"] = "FLYBACK", ["font"] = "pixel" });
         var nameInk = b.Add(FillType, (1, 0.004f));
+        var typed = Formula("(floor(mod(a - 28, 32) * 2) + 1.5) / 7", beats);
         var shown = Formula(
-            "max(step(4.5, a) * step(a, 5.5), max(step(8.5, a) * step(a, 9.5), step(10.5, a))) * (0.7 + 0.5 * b)",
-            new Read(parts, SectionNumber), kickStroke);
+            "step(32, mod(a - mod(a - 28, 32), 384)) * (1 - smoothstep(4, 12, mod(a - 28, 32))) * (0.8 + 0.6 * max(b, c))",
+            beats, popLevels[0], popLevels[1]);
 
-        b.Wire(Rises(parts, 0f, 0.125f, SectionProgress), 0, name, 4)
+        b.Wire(typed, 0, name, 4)
          .Wire(name, 0, nameInk, 0);
 
         Box("Picture: Scope");
