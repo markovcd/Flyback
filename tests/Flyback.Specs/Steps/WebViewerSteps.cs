@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.Json.Nodes;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
@@ -29,35 +30,17 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private float[] heard = [];
     private double seconds;
 
+    private List<(string Name, string Heading)> listed = [];
+
     [When("it plays in the web viewer for {float} second(s)")]
     public void WhenPlayedInTheBrowser(float length)
     {
-        var node = Node();
-        if (node is null) runtime.TestIgnore("no Node on this machine to run the web viewer with.");
-
-        var build = typeof(WebViewerSteps).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
-            .Single(a => a.Key == "WebViewer").Value!;
-
         var output = Path.Combine(folder.FullName, "heard.f32");
-        var start = new ProcessStartInfo(node!, [
-            Path.Combine(build, "hear.mjs"),
+        var status = Hear(
             "--preset", session.Presets.Single().Name,
             "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture),
             "--size", $"{Width}x{Height}",
-            "--out", output,
-        ])
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            WorkingDirectory = build,
-        };
-
-        using var process = Process.Start(start)!;
-        var said = process.StandardError.ReadToEndAsync();
-        var status = process.StandardOutput.ReadToEnd();
-        process.WaitForExit();
-
-        process.ExitCode.ShouldBe(0, said.Result);
+            "--out", output);
 
         // The interpreter plays the same samples, so without this a script that failed to build would pass unseen.
         status.ShouldContain("\"soundBackend\":\"javascript\"");
@@ -94,6 +77,51 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
 
         var worst = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
         worst.ShouldBeLessThanOrEqualTo(1f / 32768f);
+    }
+
+    [When("the web viewer lists its presets")]
+    public void WhenTheViewerLists() => listed =
+    [
+        .. JsonNode.Parse(Hear("--presets"))!.AsArray()
+            .Select(preset => ((string)preset!["name"]!, (string)preset["heading"]!)),
+    ];
+
+    [Then("they are the editor's, in its order and under its headings, less the blank canvas")]
+    public void ThenTheEditorsList()
+    {
+        var editor = PresetLibrary.Ordered(session.Presets, null)
+            .Where(preset => preset.Kind != PresetKind.Blank)
+            .Select(preset => (preset.Name, PresetKinds.Heading(preset.Kind)))
+            .ToList();
+
+        editor.Count.ShouldBeGreaterThan(1);
+        listed.ShouldBe(editor);
+    }
+
+    /// <summary>Runs the web viewer's build under Node with <paramref name="arguments"/>, and answers what it printed.</summary>
+    private string Hear(params string[] arguments)
+    {
+        var node = Node();
+        if (node is null) runtime.TestIgnore("no Node on this machine to run the web viewer with.");
+
+        var build = typeof(WebViewerSteps).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .Single(a => a.Key == "WebViewer").Value!;
+
+        var start = new ProcessStartInfo(node!, [Path.Combine(build, "hear.mjs"), .. arguments])
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = build,
+        };
+
+        using var process = Process.Start(start)!;
+        var said = process.StandardError.ReadToEndAsync();
+        var printed = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+
+        process.ExitCode.ShouldBe(0, said.Result);
+
+        return printed;
     }
 
     /// <summary>Node on the path, or the one the WebAssembly workload brings with it.</summary>

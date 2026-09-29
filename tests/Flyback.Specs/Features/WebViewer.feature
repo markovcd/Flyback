@@ -12,6 +12,11 @@ Feature: The web viewer
       | Sidebands        |
       | Beat you can see |
 
+  Scenario: The web viewer offers the presets the editor does
+    Given every preset the shipped plugins add as well
+    When the web viewer lists its presets
+    Then they are the editor's, in its order and under its headings, less the blank canvas
+
   Scenario: The preset site serves the web viewer
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there

@@ -25,7 +25,9 @@
   /** The web viewer playing the preset's file, which a play does not count as a download. */
   function inBrowser(preset) {
     return "viewer/?file=" + encodeURIComponent(preset.file + "?count=false")
-      + "&name=" + encodeURIComponent(preset.fileName);
+      + "&name=" + encodeURIComponent(preset.fileName)
+      + "&title=" + encodeURIComponent(preset.name)
+      + "&back=" + encodeURIComponent("preset.html?id=" + preset.id);
   }
 
   /** The still, with the loop playing over it while pointed at. */

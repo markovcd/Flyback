@@ -23,10 +23,12 @@ html, body {
 
 body {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto 1fr auto auto;
 }
 
-header {
+[hidden] { display: none !important; }
+
+header, .transport {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -42,6 +44,37 @@ header {
   margin-right: 8px;
   text-decoration: none;
 }
+
+.back {
+  color: var(--label);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.back:hover { color: var(--attention); }
+
+#size { margin-left: auto; }
+
+optgroup { color: var(--muted); font-style: normal; }
+option { color: var(--bright); }
+
+.transport {
+  flex-wrap: nowrap;
+  border-top: 1px solid var(--separator);
+  border-bottom: none;
+}
+
+#seek {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--attention);
+  cursor: pointer;
+}
+
+#seek:disabled { opacity: 0.5; cursor: default; }
 
 select, button, .file {
   height: 30px;
@@ -65,8 +98,8 @@ button:disabled, select:disabled { opacity: 0.5; cursor: default; }
 .file input { display: none; }
 
 #clock {
-  margin-left: auto;
   color: var(--muted);
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
@@ -74,6 +107,8 @@ main {
   position: relative;
   min-height: 0;
 }
+
+main:fullscreen { background: #000; }
 
 #screen {
   display: block;
@@ -108,3 +143,14 @@ footer {
 
 footer .warn { color: var(--attention); }
 footer .error { color: var(--sink); }
+
+#presets { flex: 0 1 auto; min-width: 0; }
+
+/* A phone: the seek bar gets a row of its own. */
+@media (max-width: 480px) {
+  header, .transport { padding: 8px; gap: 6px; }
+  .transport { flex-wrap: wrap; }
+  #seek { order: -1; flex-basis: 100%; }
+  #clock { margin-right: auto; }
+  #size { flex: 0 1 auto; min-width: 0; }
+}

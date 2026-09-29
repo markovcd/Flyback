@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The web viewer has a seek bar, a resolution list up to 720p, full screen and the editor's preset groups; a preset site preset plays there alone, and the site's presets page opens it on the shipped ones.
+
 ## 0.5.0 — 2026-09-29
 
 528 commits since 0.4.0.

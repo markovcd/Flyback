@@ -49,9 +49,17 @@ public static partial class WebExports
         return catalog;
     }
 
-    /// <summary>Every shipped preset's name, one a line.</summary>
+    /// <summary>
+    /// The shipped presets as JSON, each with the heading of its run, in the editor's
+    /// order. The blank canvas is left out, having nothing to play.
+    /// </summary>
     [JSExport]
-    public static string Presets() => string.Join('\n', Plugins.Presets.Select(p => p.Name));
+    public static string Presets() => new JsonArray([
+        .. Plugins.Presets
+            .Where(p => p.Kind != PresetKind.Blank)
+            .OrderBy(p => p.Kind)
+            .Select(p => new JsonObject { ["name"] = p.Name, ["heading"] = PresetKinds.Heading(p.Kind) }),
+    ]).ToJsonString();
 
     /// <summary>Opens a shipped preset. Null on success, or why not.</summary>
     [JSExport]

@@ -34,18 +34,10 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
     /// <summary>
     /// What a <see cref="PresetKind"/> is called where it heads its own run of
-    /// presets — said in the words somebody choosing a patch would use, since
-    /// nobody opening the list is looking for an Interplay. Shouted like the
-    /// module palette's section headings, being the same thing in the same kind
-    /// of list.
+    /// presets, shouted like the module palette's section headings, being the same
+    /// thing in the same kind of list.
     /// </summary>
-    public static string Heading(PresetKind kind) => kind switch
-    {
-        PresetKind.Idea => "ONE IDEA",
-        PresetKind.Interplay => "SOUND AND PICTURE",
-        PresetKind.Showcase => "SHOWCASE",
-        _ => "BLANK",
-    };
+    public static string Heading(PresetKind kind) => PresetKinds.Heading(kind);
 
     /// <summary>What heads the presets somebody saved, last of all.</summary>
     public const string YoursHeading = "YOUR PRESETS";

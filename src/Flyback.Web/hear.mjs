@@ -2,9 +2,11 @@
 //
 //   node hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 //   node hear.mjs patch.fbkb --seconds 5
+//   node hear.mjs --presets
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered, and
 // writes the samples as raw 32-bit floats, left and right interleaved, when --out names a file.
+// With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
 
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -25,6 +27,7 @@ const { values, positionals } = parseArgs({
     seconds: { type: 'string', default: '1' },
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
+    presets: { type: 'boolean' },
   },
 });
 
@@ -38,6 +41,11 @@ program.attach({
   u8: () => runtime.localHeapViewU8(),
 });
 const web = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
+
+if (values.presets) {
+  console.log(web.Presets());
+  process.exit(0);
+}
 
 const file = positionals[0];
 const failure = values.preset !== undefined

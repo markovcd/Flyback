@@ -7,8 +7,16 @@ import * as gl from './gl.js';
 import * as program from './program.js';
 
 const params = new URLSearchParams(location.search);
-const [width, height] = (params.get('size') ?? '960x540').split('x').map(Number);
 const looped = params.has('loop');
+
+/** Playing one file from the preset site, with nothing to pick. */
+const preview = params.has('file');
+
+/** The sizes offered: the editor's own, up to 720p. */
+const SIZES = [[320, 180], [480, 270], [640, 360], [960, 540], [1280, 720], [1024, 768]];
+
+let [width, height] = (params.get('size') ?? '960x540').split('x').map(Number);
+if (!(width > 0 && height > 0)) [width, height] = [960, 540];
 
 /** Frames rendered per call, and how far ahead of the speaker the queue is kept. */
 const CHUNK = 1024;
@@ -27,8 +35,9 @@ const DROPOUTS_ALLOWED = 20;
 
 const $ = id => document.getElementById(id);
 const ui = {
-  presets: $('presets'), file: $('file'), play: $('play'), rewind: $('rewind'), mute: $('mute'),
-  clock: $('clock'), canvas: $('screen'), cover: $('cover'), status: $('status'),
+  presets: $('presets'), file: $('file'), size: $('size'), back: $('back'),
+  play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), fullscreen: $('fullscreen'),
+  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
 };
 
 const runtime = await dotnet.create();
@@ -47,6 +56,12 @@ const noPicture = gl.attach(ui.canvas, () => runtime.localHeapViewU8());
 let error = null;
 let warning = null;
 let name = '';
+
+/** Opens the patch on screen again at a size, which is how a new resolution takes. */
+let opener = null;
+
+/** Whether the seek bar is held, which is when the playhead leaves it alone. */
+let dragging = false;
 
 let playing = false;
 let pausedAt = 0;
@@ -238,13 +253,17 @@ function toggleMute() {
   paint();
 }
 
-async function open(opening, label) {
+/** Opens a patch with <opening>, at the page's size, and starts it at <at> seconds. */
+async function open(opening, label, at = 0) {
   const was = playing;
 
   stop();
-  error = opening();
+  opener = opening;
+  error = opening(width, height);
   warning = null;
   name = label;
+
+  const shown = preview ? params.get('title') ?? label : label;
   info = null;
 
   if (error === null) {
@@ -258,11 +277,14 @@ async function open(opening, label) {
       if (speed < FAST_ENOUGH) tooSlow(speed);
     }
 
-    document.title = `${label} · Flyback Viewer`;
+    document.title = `${shown} · Flyback Viewer`;
+    ui.seek.max = info.length;
   }
 
-  seek(0);
-  ui.cover.hidden = error !== null ? false : was;
+  if (preview) ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
+
+  seek(info === null ? 0 : Math.min(at, info.length));
+  ui.cover.hidden = error === null && (was || at > 0);
   ui.cover.textContent = error ?? '▶  Click to play';
 
   if (was && error === null) await play();
@@ -271,22 +293,63 @@ async function open(opening, label) {
 
 async function openPreset(preset) {
   ui.presets.value = preset;
-  await open(() => flyback.OpenPreset(preset, width, height), preset);
+  if (!preview) remember({ preset });
+  await open((w, h) => flyback.OpenPreset(preset, w, h), preset);
 }
 
 async function openBytes(file, bytes) {
-  return open(() => flyback.OpenFile(file, bytes, width, height), file);
+  return open((w, h) => flyback.OpenFile(file, bytes, w, h), file);
 }
 
 async function openUrl(url, name) {
-  const response = await fetch(url);
+  const response = await fetch(url).catch(failure => ({ ok: false, status: 0, statusText: failure.message }));
   if (!response.ok) {
     error = `${url}: ${response.status} ${response.statusText}`;
+    ui.cover.hidden = false;
+    ui.cover.textContent = error;
     paint();
     return;
   }
 
   await openBytes(name ?? url.split('/').pop().split('?')[0], new Uint8Array(await response.arrayBuffer()));
+}
+
+/** Draws and plays at <w>×<h> from here on, carrying on from where the patch is. */
+async function resize(w, h) {
+  if (!(w > 0 && h > 0)) return;
+
+  const changed = w !== width || h !== height;
+  [width, height] = [w, h];
+  offerSize(w, h);
+  remember({ size: `${w}x${h}` });
+
+  if (changed && opener !== null) await open(opener, name, now());
+}
+
+/** Picks <w>×<h> in the size list, adding it where the address asked for one the list does not offer. */
+function offerSize(w, h) {
+  const value = `${w}x${h}`;
+  if (![...ui.size.options].some(option => option.value === value)) ui.size.add(new Option(`${w} × ${h}`, value));
+  ui.size.value = value;
+}
+
+/** Keeps the address naming what is open, so it can be reloaded or passed on. */
+function remember(changes) {
+  const next = new URLSearchParams(location.search);
+  for (const [key, value] of Object.entries(changes)) next.set(key, value);
+  history.replaceState(null, '', `?${next}`);
+}
+
+function seekBy(seconds) {
+  if (info === null) return;
+
+  seek(Math.min(Math.max(now() + seconds, 0), info.length));
+  paint();
+}
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else ui.main.requestFullscreen?.().catch(() => {});
 }
 
 const clockText = seconds => {
@@ -298,7 +361,8 @@ const clockText = seconds => {
 function paint() {
   const ready = info !== null;
 
-  ui.play.disabled = ui.rewind.disabled = ui.mute.disabled = !ready;
+  ui.play.disabled = ui.rewind.disabled = ui.mute.disabled = ui.seek.disabled = !ready;
+  if (ready && !dragging) ui.seek.value = now();
   ui.play.textContent = playing ? '⏸' : '▶';
   ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   ui.mute.textContent = !soundAllowed || muted ? '🔇' : '🔊';
@@ -328,16 +392,7 @@ function paint() {
 
 function frame() {
   requestAnimationFrame(frame);
-  if (info === null || noPicture !== null) return;
-
-  const dpr = window.devicePixelRatio || 1;
-  const w = Math.max(1, Math.round(ui.canvas.clientWidth * dpr));
-  const h = Math.max(1, Math.round(ui.canvas.clientHeight * dpr));
-
-  if (ui.canvas.width !== w || ui.canvas.height !== h) {
-    ui.canvas.width = w;
-    ui.canvas.height = h;
-  }
+  if (info === null) return;
 
   let t = now();
 
@@ -349,6 +404,18 @@ function frame() {
       pause();
       pausedAt = t = info.length;
     }
+  }
+
+  if (!dragging) ui.seek.value = t;
+  if (noPicture !== null) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(ui.canvas.clientWidth * dpr));
+  const h = Math.max(1, Math.round(ui.canvas.clientHeight * dpr));
+
+  if (ui.canvas.width !== w || ui.canvas.height !== h) {
+    ui.canvas.width = w;
+    ui.canvas.height = h;
   }
 
   const size = `${w}x${h}`;
@@ -370,7 +437,14 @@ ui.play.onclick = () => (playing ? pause() : play());
 ui.cover.onclick = () => { if (info !== null) play(); };
 ui.rewind.onclick = () => { seek(0); paint(); };
 ui.mute.onclick = toggleMute;
+ui.fullscreen.onclick = toggleFullscreen;
+ui.canvas.ondblclick = toggleFullscreen;
 ui.presets.onchange = () => openPreset(ui.presets.value);
+ui.size.onchange = () => resize(...ui.size.value.split('x').map(Number));
+
+ui.seek.onpointerdown = () => { dragging = true; };
+ui.seek.onpointerup = ui.seek.onpointercancel = () => { dragging = false; };
+ui.seek.oninput = () => { seek(Number(ui.seek.value)); paint(); };
 
 ui.file.onchange = async () => {
   const file = ui.file.files[0];
@@ -385,21 +459,36 @@ document.addEventListener('drop', async event => {
 });
 
 document.addEventListener('keydown', event => {
-  if (event.target instanceof HTMLSelectElement) return;
-  if (event.code === 'Space') { event.preventDefault(); playing ? pause() : play(); }
-  if (event.code === 'Home') { seek(0); paint(); }
+  const target = event.target;
+
+  // What already answers the key itself: a list, a focused button, the seek bar's arrows.
+  if (target instanceof HTMLSelectElement) return;
+  if (target instanceof HTMLButtonElement && (event.code === 'Space' || event.code === 'Enter')) return;
+  if (target === ui.seek && event.code.startsWith('Arrow')) return;
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+  switch (event.code) {
+    case 'Space': event.preventDefault(); playing ? pause() : play(); break;
+    case 'Home': seek(0); paint(); break;
+    case 'ArrowLeft': seekBy(-5); break;
+    case 'ArrowRight': seekBy(5); break;
+    case 'KeyM': if (info !== null) toggleMute(); break;
+    case 'KeyF': toggleFullscreen(); break;
+  }
 });
 
 window.flyback = {
-  presets: () => flyback.Presets().split('\n'),
+  presets: () => JSON.parse(flyback.Presets()),
+  sizes: () => SIZES.map(([w, h]) => `${w}x${h}`),
   open: openPreset,
   openUrl,
   play,
   pause,
   seek: seconds => { seek(seconds); paint(); },
+  size: resize,
   status: () => ({
     ...JSON.parse(flyback.Status()),
-    name, playing, time: now(), sound: heard, soundAllowed, held, muted,
+    name, preview, playing, time: now(), sound: heard, soundAllowed, held, muted,
     queued: info ? (sent - played) / info.sampleRate : 0, starved, warning, error,
   }),
   snapshot: () => ui.canvas.toDataURL('image/png'),
@@ -430,9 +519,35 @@ function still(seconds) {
   return canvas.toDataURL('image/png');
 }
 
-const presets = window.flyback.presets();
-for (const preset of presets) ui.presets.add(new Option(preset, preset));
-ui.presets.disabled = false;
+for (const [w, h] of SIZES) ui.size.add(new Option(`${w} × ${h}${w * 9 === h * 16 ? '' : ' (4:3)'}`, `${w}x${h}`));
+offerSize(width, height);
+
+const listed = window.flyback.presets();
+const presets = listed.map(preset => preset.name);
+
+if (preview) {
+  ui.presets.hidden = true;
+
+  // Back to the preset's own page, and never anywhere off this site.
+  const back = params.get('back');
+  const to = back === null ? null : new URL(back, new URL('../', location.href));
+  if (to !== null && to.origin === location.origin) ui.back.href = to.href;
+  ui.back.hidden = false;
+} else {
+  let run = null;
+
+  for (const { name: preset, heading } of listed) {
+    if (run?.label !== heading) {
+      run = document.createElement('optgroup');
+      run.label = heading;
+      ui.presets.append(run);
+    }
+
+    run.append(new Option(preset, preset));
+  }
+
+  ui.presets.disabled = false;
+}
 
 setInterval(pump, 10);
 setInterval(() => { judge(); paint(); }, 250);

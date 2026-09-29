@@ -9,17 +9,23 @@
 <body>
   <header>
     <a class="brand" href="../">Flyback</a>
+    <a id="back" class="back" hidden></a>
     <select id="presets" aria-label="Preset" disabled></select>
-    <label class="file">Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
-    <button id="play" disabled aria-label="Play">▶</button>
-    <button id="rewind" disabled aria-label="Rewind">⏮</button>
-    <button id="mute" disabled aria-label="Mute">🔊</button>
-    <span id="clock">0:00 / 0:00</span>
+    <label class="file" hidden>Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
+    <select id="size" aria-label="Resolution"></select>
   </header>
   <main>
     <canvas id="screen"></canvas>
     <div id="cover">Loading…</div>
   </main>
+  <nav class="transport" aria-label="Transport">
+    <button id="play" disabled aria-label="Play" title="Play (Space)">▶</button>
+    <button id="rewind" disabled aria-label="Rewind" title="Rewind (Home)">⏮</button>
+    <input id="seek" type="range" min="0" max="1" step="any" value="0" disabled aria-label="Position">
+    <span id="clock">0:00 / 0:00</span>
+    <button id="mute" disabled aria-label="Mute" title="Mute (M)">🔊</button>
+    <button id="fullscreen" aria-label="Full screen" title="Full screen (F)">⛶</button>
+  </nav>
   <footer id="status"></footer>
   <script type="module" src="main.js"></script>
 </body>
