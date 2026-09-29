@@ -24,6 +24,7 @@
   <!-- The shell: Avalonia, and the two controls it does not come with. -->
   <ItemGroup>
     <PackageVersion Include="Avalonia" Version="12.1.3" />
+    <PackageVersion Include="Avalonia.Browser" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.3" />
     <PackageVersion Include="Avalonia.Headless" Version="12.1.3" />
@@ -37,6 +38,13 @@
     -->
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.17" />
+
+    <!--
+      The editor in a browser: the natives Avalonia.Browser brings are older than
+      the managed SkiaSharp and HarfBuzzSharp the editor resolves.
+    -->
+    <PackageVersion Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.148.0" />
+    <PackageVersion Include="HarfBuzzSharp.NativeAssets.WebAssembly" Version="14.2.0" />
 
     <!-- The editor's container and its HTTP clients (ADR-0150): the runtime's own, versioned with it. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />

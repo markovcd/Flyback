@@ -15,6 +15,8 @@ internal static partial class StaticCache
 {
     public const string ViewerRoute = "/viewer";
 
+    public const string EditorRoute = "/editor";
+
     /// <summary>The Cache-Control a file at <paramref name="path"/> is served with.</summary>
     public static string For(PathString path) =>
         path.StartsWithSegments(ViewerRoute) && Fingerprinted().IsMatch(path.Value ?? "")

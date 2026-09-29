@@ -19,6 +19,17 @@
     <ProjectReference Include="..\Flyback.Web\Flyback.Web.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <!--
+    The web editor (ADR-0162), published under editor\ beside the site and served at
+    /editor/, only where asked for with -p:WebEditor=true: it links Skia into the
+    runtime, which needs the wasm-tools workload the gate's image does not have.
+  -->
+  <Target Name="PublishWebEditor" AfterTargets="Build" Condition="'$(WebEditor)' == 'true'">
+    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+             Targets="Restore;Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(OutDir)editor'))\" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>

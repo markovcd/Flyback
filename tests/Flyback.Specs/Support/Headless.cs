@@ -1,7 +1,5 @@
 using Avalonia;
 using Avalonia.Headless;
-using Avalonia.Styling;
-using Avalonia.Themes.Fluent;
 using Flyback.App;
 
 namespace Flyback.Specs.Support;
@@ -63,8 +61,6 @@ public sealed class EditorApp : Application
 
     public override void Initialize()
     {
-        Styles.Add(new FluentTheme());
-        Styles.Add(FlybackApp.EditorStyles());
-        RequestedThemeVariant = ThemeVariant.Dark;
+        EditorTheme.Apply(this);
     }
 }

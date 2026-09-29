@@ -1,0 +1,35 @@
+// The page around the editor: hands the runtime what it cannot reach itself (a canvas
+// for the preview, WebGL on it, the page's focus) and answers window.flyback for
+// anything that wants to drive the editor without looking.
+
+import { dotnet } from './_framework/dotnet.js';
+import * as gl from '../viewer/gl.js';
+
+const runtime = await dotnet.create();
+
+runtime.setModuleImports('gl', gl);
+runtime.setModuleImports('page', {
+  createCanvas: () => {
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.display = 'block';
+    return canvas;
+  },
+  sizeCanvas: (canvas, width, height) => {
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+  },
+  attachGl: canvas => gl.attach(canvas, () => runtime.localHeapViewU8()),
+  hasFocus: () => document.hasFocus(),
+});
+
+const name = runtime.getConfig().mainAssemblyName;
+const exports = (await runtime.getAssemblyExports(name)).Flyback.WebEditor.PageExports;
+
+globalThis.flyback = {
+  state: () => JSON.parse(exports.State()),
+  preset: preset => exports.Preset(preset),
+};
+
+await runtime.runMain(name, []);

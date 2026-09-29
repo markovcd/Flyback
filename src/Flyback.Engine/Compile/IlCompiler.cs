@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Flyback.Core.Compile;
 
 /// <summary>
@@ -51,7 +53,8 @@ public sealed class IlCompiler : IDisposable
 
     public IlCompiler(IIlCompilerSetup? setup = null)
     {
-        enabled = setup is not { Interpreted: true };
+        // A runtime that cannot compile code, as in a browser, has no thread to build it on either.
+        enabled = setup is not { Interpreted: true } && RuntimeFeature.IsDynamicCodeCompiled;
     }
 
     /// <summary>

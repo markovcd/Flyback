@@ -217,11 +217,6 @@
         "resolved": "14.2.0",
         "contentHash": "v2AfGa0Q0aNRz7glbRTvkrR8w2pipUpyRHDNjOCPXnnHE3pjY0ycTY0L7dL/AByd53aQ0AGPwIEP1H9hZPPywg=="
       },
-      "HarfBuzzSharp.NativeAssets.WebAssembly": {
-        "type": "Transitive",
-        "resolved": "8.3.1.3",
-        "contentHash": "w2QfdNm9Uz/sUa0B5D+OnVQhyq3G/fBq6ibQMdWBlQqqwh0g0/5j3RFvYqZAmRZ5+RzvjVe8o8SFFnWYUSkuxA=="
-      },
       "HarfBuzzSharp.NativeAssets.Win32": {
         "type": "Transitive",
         "resolved": "14.2.0",
@@ -621,11 +616,6 @@
         "resolved": "4.148.0",
         "contentHash": "1iESVxlqNNbQUiFODuyQJ/5dYUNYwGzZBUyaKNU3pJRM8zPFUkdMW0UZcZPvd6xwrjn53HYklJyKvetXC6ri+A=="
       },
-      "SkiaSharp.NativeAssets.WebAssembly": {
-        "type": "Transitive",
-        "resolved": "3.119.4",
-        "contentHash": "S1HOxtBbD4bYDtA2e9WH5TX+lxqRrTPvKjrjttRhxnHNNu7YY8VFo/LeCP7tNqoTA6PV+8vsvNbmRUEC2ip8RQ=="
-      },
       "SkiaSharp.NativeAssets.Win32": {
         "type": "Transitive",
         "resolved": "4.148.0",
@@ -964,6 +954,12 @@
           "Avalonia.Angle.Windows.Natives": "2.1.27548.20260419"
         }
       },
+      "HarfBuzzSharp.NativeAssets.WebAssembly": {
+        "type": "CentralTransitive",
+        "requested": "[14.2.0, )",
+        "resolved": "8.3.1.3",
+        "contentHash": "w2QfdNm9Uz/sUa0B5D+OnVQhyq3G/fBq6ibQMdWBlQqqwh0g0/5j3RFvYqZAmRZ5+RzvjVe8o8SFFnWYUSkuxA=="
+      },
       "Microsoft.Data.Sqlite": {
         "type": "CentralTransitive",
         "requested": "[10.0.12, )",
@@ -997,6 +993,12 @@
           "Microsoft.Extensions.Logging.Abstractions": "10.0.12",
           "Microsoft.Extensions.Options": "10.0.12"
         }
+      },
+      "SkiaSharp.NativeAssets.WebAssembly": {
+        "type": "CentralTransitive",
+        "requested": "[4.148.0, )",
+        "resolved": "3.119.4",
+        "contentHash": "S1HOxtBbD4bYDtA2e9WH5TX+lxqRrTPvKjrjttRhxnHNNu7YY8VFo/LeCP7tNqoTA6PV+8vsvNbmRUEC2ip8RQ=="
       },
       "Svg.Controls.Skia.Avalonia": {
         "type": "CentralTransitive",

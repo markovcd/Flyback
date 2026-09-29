@@ -4,10 +4,8 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Avalonia.Themes.Fluent;
 using Xunit.Sdk;
 using Xunit.v3;
 using Flyback.Core.Graph;
@@ -355,13 +353,8 @@ public sealed class TestApp : Application
 {
     public override void Initialize()
     {
-        Styles.Add(new FluentTheme());
-
-        // The code editor's own, taken from the shell so the two cannot drift.
-        // Without it the editor is an unstyled shell and a test would be looking
-        // at a control nobody has — the same reason the Fluent theme is here.
-        Styles.Add(FlybackApp.EditorStyles());
-
-        RequestedThemeVariant = ThemeVariant.Dark;
+        // The editor's own, so the two cannot drift: without it the editor is an
+        // unstyled shell and a test would be looking at a control nobody has.
+        EditorTheme.Apply(this);
     }
 }

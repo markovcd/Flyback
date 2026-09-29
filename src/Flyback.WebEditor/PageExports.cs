@@ -1,0 +1,49 @@
+using System.Runtime.InteropServices.JavaScript;
+using System.Text.Json.Nodes;
+using Flyback.App;
+using Flyback.App.Canvas;
+using Flyback.App.Controls;
+using Flyback.App.Gallery;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Flyback.WebEditor;
+
+/// <summary>
+/// What a script driving the page can ask of the editor without looking at it:
+/// <c>window.flyback</c> in <c>main.js</c>.
+/// </summary>
+internal static partial class PageExports
+{
+    internal static IServiceProvider? Provider { get; set; }
+
+    private static T Get<T>() where T : notnull =>
+        (Provider ?? throw new InvalidOperationException("The editor has not started.")).GetRequiredService<T>();
+
+    /// <summary>The patch on the canvas, the preview drawing it, and the last thing the editor said, as JSON.</summary>
+    [JSExport]
+    public static string State()
+    {
+        if (Provider is null) return new JsonObject { ["started"] = false }.ToJsonString();
+
+        var patch = Get<CanvasHistory>().Patch;
+        var preview = Get<PreviewHost>();
+        var said = Get<ReportLine>().History;
+
+        return new JsonObject
+        {
+            ["started"] = true,
+            ["preset"] = Get<PresetSlot>().Showing?.Name,
+            ["modules"] = patch.Nodes.Count,
+            ["wires"] = patch.Connections.Count,
+            ["backend"] = preview.Backend.ToString(),
+            ["framesPerSecond"] = Math.Round(preview.FramesPerSecond, 1),
+            ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),
+            ["time"] = Math.Round(preview.Time, 2),
+            ["said"] = said.Count > 0 ? said[^1] : null,
+        }.ToJsonString();
+    }
+
+    /// <summary>Opens the preset called <paramref name="name"/>, or the first on the list where none is.</summary>
+    [JSExport]
+    public static void Preset(string name) => Get<PresetSlot>().StartOn(name);
+}

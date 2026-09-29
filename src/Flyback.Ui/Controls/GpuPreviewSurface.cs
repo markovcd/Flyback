@@ -23,7 +23,7 @@ namespace Flyback.App.Controls;
 /// everything crossing between them goes through <see cref="gate"/> apart from the
 /// frame count, which keeps a lock of its own.
 /// </remarks>
-public sealed class GpuPreviewSurface : OpenGlControlBase, IPreviewSurface
+public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
 {
     /// <summary>
     /// How long to wait for a graphics context before giving up on one. Avalonia

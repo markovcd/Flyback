@@ -170,6 +170,20 @@ app.UseStaticFiles(new StaticFileOptions
     ContentTypeProvider = types,
     OnPrepareResponse = Kept,
 });
+
+// The web editor, where a build with -p:WebEditor=true published it beside the site.
+var editor = Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot");
+
+if (Directory.Exists(editor))
+{
+    app.UseFileServer(new FileServerOptions
+    {
+        FileProvider = new PhysicalFileProvider(editor),
+        RequestPath = StaticCache.EditorRoute,
+        StaticFileOptions = { ContentTypeProvider = types, OnPrepareResponse = Kept },
+    });
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(media.Root),

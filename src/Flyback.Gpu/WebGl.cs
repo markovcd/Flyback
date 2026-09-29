@@ -1,11 +1,10 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
-using Flyback.Gpu;
 
-namespace Flyback.Web;
+namespace Flyback.Gpu;
 
 /// <summary>
-/// The desktop's GL calls made on the page's WebGL 2 context, through <c>gl.js</c>.
+/// The desktop's GL calls made on a page's WebGL 2 context, through the web viewer's <c>gl.js</c>.
 /// Every GL name is an integer there as it is here; the script keeps the objects.
 /// </summary>
 /// <remarks>

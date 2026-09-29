@@ -32,7 +32,19 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </summary>
     private IPreviewSurface active;
 
-    public PreviewHost() => Switch(PreviewBackend.Gpu);
+    /// <summary>Builds the GPU's surface, which must be a control.</summary>
+    private readonly Func<IGpuPreview> gpu;
+
+    public PreviewHost() : this(() => new GpuPreviewSurface())
+    {
+    }
+
+    /// <param name="gpu">Builds the surface the GPU draws on, for a host with no OpenGL control: a page.</param>
+    public PreviewHost(Func<IGpuPreview> gpu)
+    {
+        this.gpu = gpu;
+        Switch(PreviewBackend.Gpu);
+    }
 
     /// <summary>Which renderer is drawing now.</summary>
     public PreviewBackend Backend { get; private set; }
@@ -219,9 +231,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     {
         if (backend == PreviewBackend.Gpu)
         {
-            var gpu = new GpuPreviewSurface();
-            gpu.Failed += OnGpuFailed;
-            Activate(gpu);
+            var surface = gpu();
+            surface.Failed += OnGpuFailed;
+            Activate(surface);
         }
         else
         {
@@ -257,8 +269,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </remarks>
     /// <param name="surface">The renderer taking over, already built.</param>
     [MemberNotNull(nameof(active))]
-    private void Activate<TSurface>(TSurface surface)
-        where TSurface : Control, IPreviewSurface
+    private void Activate(IPreviewSurface surface)
     {
         // Null for the one call that comes from the constructor, and a renderer
         // with a timeline to hand over for every call after it.
@@ -271,11 +282,11 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
             surface.Clock = active.Clock;
             surface.FrameRate = active.FrameRate;
 
-            if (active is GpuPreviewSurface outgoing) outgoing.Failed -= OnGpuFailed;
+            if (active is IGpuPreview outgoing) outgoing.Failed -= OnGpuFailed;
         }
 
         active = surface;
-        Child = surface;
+        Child = surface as Control ?? throw new ArgumentException("A preview surface must be a control.", nameof(surface));
 
         // A take reading from a renderer that has just been dropped would go on
         // writing the last frame it got, for as long as anyone left it running.

@@ -258,6 +258,16 @@ The sound runs without a page under Node, which the workload brings; `--knob fog
 node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 ```
 
+## Web editor
+
+`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits and plays no sound yet. The preset site serves it at `/editor/` when built with it; it needs `dotnet workload install wasm-tools`:
+
+```bash
+dotnet run --project src/Flyback.Server -p:WebEditor=true
+```
+
+`window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset.
+
 ## How it works
 
 A patch is a graph, but during rendering it is compiled into a flat straight-line program over registers. Unused sections are not compiled, and the inner loop is designed to be cheap and predictable.
@@ -266,7 +276,8 @@ The project is split roughly as:
 
 ```text
 src/
-  Flyback.App       app shell and editor
+  Flyback.App       the editor on the desktop
+  Flyback.Editor    the editor itself: its window, canvas and regions
   Flyback.Cli       command line tool
   Flyback.Core      patch model, module API and the built-in modules
   Flyback.Engine    compiler, text language, renderers and file formats
@@ -274,6 +285,7 @@ src/
   Flyback.Ui        the preview, sound device and look the app and the viewer share
   Flyback.Viewer    the viewer: opens a patch and plays it
   Flyback.Web       the web viewer: the same, in a browser
+  Flyback.WebEditor the web editor: the editor in a browser
 
 tests/
   Flyback.Core.Tests      core engine tests

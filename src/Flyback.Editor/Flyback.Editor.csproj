@@ -18,8 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The program around it starts the editor, and the UI tests and scenarios drive its internal controls. -->
+    <!-- The programs around it start the editor, and the UI tests and scenarios drive its internal controls. -->
     <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="Flyback.WebEditor" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>

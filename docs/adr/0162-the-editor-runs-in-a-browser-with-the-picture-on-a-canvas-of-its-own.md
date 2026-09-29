@@ -2,8 +2,8 @@
 
 **Status:** Accepted · 2026-09-29 · *user-directed* · builds on
 [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) and
-[0150](0150-the-editor-is-composed-in-a-container.md) · the split into `Flyback.Editor`
-is implemented; the page is not yet
+[0150](0150-the-editor-is-composed-in-a-container.md) · the page edits and draws; its
+sound is not implemented yet
 
 ## Context
 
@@ -34,9 +34,19 @@ draws the window; the picture is compiled where the patch is edited, with nothin
 serialized between them.
 
 **The picture draws on a canvas of its own.** A `NativeControlHost` places an HTML
-`<canvas>` where the preview is in the layout, and a browser `IPreviewSurface`
-draws into it with the viewer's `WebGl` and `GpuFrameRenderer`. The rest of the
-editor talks to `IPreviewSurface` and does not know.
+`<canvas>` where the preview is in the layout, and the page hands `PreviewHost` a
+GPU surface of its own, `CanvasPreview`, which draws into it with the viewer's
+`WebGl` and `GpuFrameRenderer`. The rest of the editor talks to `IPreviewSurface`
+and does not know.
+
+**The editor is a control a window or a page holds.** `EditorView` lays out the
+regions and answers the keys and dropped files of whichever top level it is handed;
+`MainWindow` is the desktop's window around it. Title, focus and close are the
+container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own.
+
+**The preset site serves it at `/editor/`, beside the viewer at `/viewer/`**, whose
+`gl.js` the page imports and whose worker will play its sound. The site publishes
+it beside itself when built with `-p:WebEditor=true`.
 
 **The sound plays in a worker, on the viewer's build.** The worker needs the engine
 and the plugins, not Avalonia, so it loads the 7 MB viewer rather than the editor.
@@ -79,6 +89,9 @@ paid on every frame, to keep overlays that can sit beside the preview instead.
   Skia, the Inter font and SVG.
 - The window, the editing and the picture share the page's one thread. The sound
   does not.
+- Avalonia.Browser links Skia and HarfBuzz into the runtime, which needs the
+  wasm-tools workload the gate's image does not have, so the page is in neither
+  `Flyback.slnx` nor the gate.
 - A browser build of the editor pins the WebAssembly Skia and HarfBuzz natives to
   the managed SkiaSharp the editor resolves; Avalonia.Browser's own are older.
 - The release key's public half is `src/Flyback.Editor/Updates/release-key.pem`,

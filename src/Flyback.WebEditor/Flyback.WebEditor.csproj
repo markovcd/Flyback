@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!--
+    The editor in a browser (ADR-0162): Flyback.Editor under Avalonia.Browser, with
+    the picture on a canvas of its own. Needs the wasm-tools workload, which links
+    Skia and HarfBuzz into the runtime, so it is in neither Flyback.slnx nor the
+    gate. The preset site publishes it beside itself and serves it at /editor/,
+    beside the web viewer whose GL calls it makes, when built with -p:WebEditor=true.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Flyback.WebEditor</RootNamespace>
+
+    <!-- As the web viewer: ahead-of-time compiled only when a publish asks. -->
+    <RunAOTCompilation Condition="'$(RunAOTCompilation)' == ''">false</RunAOTCompilation>
+
+    <!-- As the web viewer: the patch reader deserializes by reflection, so Flyback is not trimmed. -->
+    <TrimMode>partial</TrimMode>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+
+    <!-- As the web viewer: the packages the WebAssembly SDK adds are versioned with it. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Browser" />
+    <!-- The natives Avalonia.Browser brings are older than the managed SkiaSharp the editor resolves. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.WebAssembly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
+    <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
+  </ItemGroup>
+
+  <!-- As the web viewer: the seven that make modules, and none that talks to a device, a keychain or a model. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+  </ItemGroup>
+
+</Project>
