@@ -17,6 +17,7 @@ runtime.setModuleImports('page', {
     return canvas;
   },
   showCanvas: (canvas, shown) => { canvas.style.visibility = shown ? 'visible' : 'hidden'; },
+  clipCanvas: (canvas, path) => { canvas.style.clipPath = path ? `path(evenodd, "${path}")` : ''; },
   sizeCanvas: (canvas, width, height) => {
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;

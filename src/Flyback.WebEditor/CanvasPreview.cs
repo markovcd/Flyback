@@ -19,7 +19,8 @@ namespace Flyback.WebEditor;
 /// A page has one thread, so a frame is drawn in the tick that moves the clock
 /// rather than handed to a render thread. The canvas is the browser's, drawn above
 /// Avalonia's own, so nothing of Avalonia's can overlay it: while a dialog is up it
-/// is hidden, and the black box it sits in shows instead.
+/// is hidden, and the black box it sits in shows instead, and wherever a popup lies
+/// over it a hole is cut for the popup to show through.
 /// </remarks>
 internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 {
@@ -37,6 +38,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     private CompiledPatch program = CompiledPatch.Black;
     private PixelSize drawn;
+    private string? clip;
     private TimeSpan lastTick;
     private bool rewindPending;
     private bool dirty = true;
@@ -185,6 +187,14 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
             dirty = true;
         }
 
+        var holes = PopupHoles.ClipPath(Bounds.Size, PopupHoles.Over(this));
+
+        if (holes != clip)
+        {
+            ClipCanvas(canvas, holes);
+            clip = holes;
+        }
+
         if (Clock is { } clock)
         {
             var driven = clock();
@@ -284,6 +294,10 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     [JSImport("showCanvas", PageModule.Name)]
     private static partial void ShowCanvas(JSObject canvas, bool shown);
+
+    /// <summary>Cuts the even-odd SVG <paramref name="path"/> out of the canvas, or nothing where it is null.</summary>
+    [JSImport("clipCanvas", PageModule.Name)]
+    private static partial void ClipCanvas(JSObject canvas, string? path);
 
     [JSImport("sizeCanvas", PageModule.Name)]
     private static partial void SizeCanvas(JSObject canvas, int width, int height);
