@@ -2,122 +2,105 @@
 
 ## Unreleased
 
-- An assistant plugin whose session is an `IModelConversation` writes only its format; Flyback runs every turn, and `AssistantPost` sends and retries its requests.
-- The assistant's tool budget is a turn's rather than a conversation's, stopping it mid-turn no longer breaks the conversation, a turn that fails before anything comes back is not counted, and it spends fewer tokens: a written patch keeps its `let` names and is not printed back, a warning is said once, and pictures from earlier turns are not sent again.
+### Sharing and plugins
+- Presets and plugins people make are shared on a preset site linked from the website, with a picture, a sound, star ratings and a report button; the preset gallery and the plugins window list what it offers.
+- A signed `.fbkp` plugin package opens to show what the plugin is, adds and reaches, and installs or updates it when asked; `flyback-cli pack-plugin` makes one, signed with a key from `flyback-cli plugin-key`.
+- A plugins window beside the settings button searches the installed plugins and the shared ones together, says what failed to load, and installs, updates or removes a plugin clicked there.
+- A patch that will not open for want of a plugin offers the one the site has, and opens again once it is installed.
+- A plugin declares its modules and is refused for one it did not, and the shipped plugins carry a name, author, description, tags and a preview picture.
 - A plugin folder loads only once somebody allowed it, by installing its package or with `flyback-cli plugin allow`, and an assistant plugin is never handed the key it sends with.
-- Ctrl+drag takes a wire off an output with any number of wires on it; a wire put back passes the next Ctrl+drag on to the wire after it.
-- A web viewer plays a shipped preset or a patch file in a browser, picture and sound, Whole band and the other showcase presets included; a patch whose sound is too heavy for the machine plays its picture alone.
-- Beat you can see and Two echoes, the presets the two new tutorials on the website build.
-- The assistant keeps its conversation when a knob is turned or an edit undone, is told in a line what changed, and keeps knobs turned while it works unless it set the same one; only adding or removing a module or a wire starts a new conversation.
-- Patch text pastes onto the canvas as its modules and groups, and modules copied off a canvas paste into the text view as text.
-- `flyback-cli render` draws the picture on the GPU with no window where there is one, and on the processor where there is not; `--processor` asks for the processor's exact picture, and `--gpu` fails rather than fall back.
-- Dub is renamed No Sense Dub and is roots dub in A minor: a one drop at 74 BPM with a bouncing bass line and a skank over A minor and D minor that drop in and out every two bars and are thrown into the echo, a drop to one line of Patois and silence, steppers at 148 BPM after it with a heavier bass line of their own, two lines of Patois that trail off into their own echo, a drawbar organ with percussion, played a note at a time and held to the scale, six panel knobs, an ending on a last line of Patois and its longest, darkest echo, and a master of EQ, width and a Maximizer.
-- Plasma is three drifting fields read through a blue, cream and amber palette that cycles slowly.
-- The sound and MIDI, key store and assistant plugins show a picture in the plugins window and the install dialog.
-- Usage statistics also count which modules are picked from the module list and which of the editor's features a run uses.
-- The status bar counts the picture's ops and the sound's apart.
-- Settings → Files → Library sets a folder where a sound file or picture a patch names is looked for when it is not beside the patch, and a file chosen from it is named from it.
-- A Sample plays an MP3 as well as a WAV, read by ffmpeg.
-- Added Arrangement, which gives up to eight parts a level in each of up to thirty-two sections of a piece, gliding where asked, and is written in text as a row of levels a part.
-- A def takes its arguments by name, gives a parameter a default, and takes a pipe on its `in`.
-- `flyback-cli render --preset` and `info --preset` take a shipped preset by name, and `--presets` lists them.
-- Shift+drag moves modules into the group under the pointer or out of their own, a module picked over an open group or a box being looked into joins it, Ctrl+G on groups and loose modules keeps the one group name among them, and looking into a box selects nothing.
-- A box's socket is named for the socket inside even while a wire is on it.
-- The preset site starts with Easy, a plugin of two modules that sound good with nothing wired and can never clip: Easy Synth, a whole synth with a wave picked from a list, an envelope, a filter that follows the note, two LFOs, a sub, noise, glide, drive and pan; and Easy Drum, nine drum sounds, a psy kick among them, that each play the rhythm that suits them at a tempo, or on a trigger.
-- Warehouse, a three-minute acid house track on the Easy plugin: intro, builds, two drops and a breakdown over A minor, D minor and E minor, with a bass line, a chord stab, an organ hook thrown into its own echo hardest at the ends of its phrases, a noise wash falling into each drop, Pump, Echo and Swing knobs, and a picture that opens up with the arrangement.
-- Slow weather: six panel knobs — echo level, chime decay, reverb space, visual warp, color shift and trails spin — and a thirty-minute length.
-- Mycelium speaks: lines from Alice's meeting with the Caterpillar, from LibriVox's public-domain reading.
-- A plugin's preset can carry the sound files and pictures it plays.
-- The computer keyboard's Scale layout plays a tonic and one of Auto Chord's scales.
-- Added Chord, which plays one of 23 two-, three- and four-note chords on a root as four frequencies, and Auto Chord, the seventh chord on a played note or a step of one of 26 seven-note scales.
-- A group's `{` may stand on a line of its own in a text patch, and an output may be taken off on the next line.
-- F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops in the corner.
-- A seek bar on the toolbar and in the full-screen and viewer transport, which now waits at the top of the picture, moves the patch's clock anywhere along the patch's own length, `length 2:30.50` in text, and stops or loops at its end.
-- Settings → Graphics → Controls, or `flyback-viewer --transport bottom`, puts the full-screen transport at the bottom and the knobs at the top.
-- Settings → Canvas → Compact modules puts each input beside an output on one row, with an input's value in its tooltip.
-- A patched socket in the panel names the socket at the other end of its wire, `◀ patched from Time.t`, and an output names every socket it feeds; a group's socket in the panel is its module's row, help and slider included.
-- Every socket and every setting on a node says what it is for: hovering its row in the panel shows it, the panel lists a module's outputs with theirs, and the assistant and `flyback-cli modules <module>` read the same words.
-- The preset site starts with Fractals, a plugin of three modules about one point c: Mandelbrot, which maps every c in the classic colors, Julia, its picture, and Orbit, its sound, from nought or from a pixel of the Julia set, with Dive and Julia walk as presets.
-- A note played over a busy MIDI voice gives the voice back to the note it took when let go, so one MIDI In plays legato.
-- A patch's groups are written in its text and read back, a group built from text opens shut, and the cursor on a group's block in the text view shows the group in the panel.
-- A text patch names the plugins it needs, `requires flyback.picture`, and a build without one says so once.
-- A patch's knob panel is written in the text, `panel cutoff = 0.4, cc: 21, device: "…"`, with the sockets that follow each knob and the sums that read one, `t * rate(0..2)`, so a played patch keeps its knobs through the text view and `flyback-cli print`, and a knob turned by hand, moved, renamed, learned, added or removed on the panel is written back into it.
-- A patch written out as text follows its own chain, with what the chain reads in the brackets, keeps its arithmetic as arithmetic, functions and panel knobs included, and names a sum after what it drives.
-- In the text language a pipe lands on `in`, a module's only socket, a position, a module's one color socket for a color, or the socket written `socket: _`, and a pipeline inside a call's argument is refused.
-- `flyback-cli check --json` and the assistant's `write_patch` give each complaint about a text patch a stable code.
-- A `//` comment in a text patch is one complaint that points at `#` and at groups, and the assistant is told to write both.
-- The text language refuses a name bound twice, a `let` of `t`, `x` or `out`, a socket wired twice, a knob set twice, and a group, `panel` or `requires` inside a group, warns of a group of one module and leaves it out, and `flyback-cli check --json` reports each by line.
-- A rewire in a big patch goes back to compiled speed about three times sooner.
-- An opened preset or file starts its sound and picture together once both are compiled, from the beginning, and the status line says "Compiling…" while it waits.
-- A large patch no longer freezes the window while its shader is built, its picture plays on until the new one is ready, and an undo or a redo switches pictures at once.
-- Windows draws through the graphics card's own OpenGL, which builds a large patch's picture in about a second, and Settings → Graphics → Driver goes back to Direct3D.
-- AVI clips are encoded three times faster, so a full-HD AVI take keeps up at 30 fps.
-- `flyback-cli render` takes the size, frame rate, quality, format and ffmpeg it is not given from the editor's settings.
-- `flyback-cli print --preset <name>` writes a shipped preset out as text.
-- `flyback-cli modules <module>` describes one module: its sockets with their defaults and ranges, where a pipe lands, and what it does.
-- Added Crush, a bitcrusher.
-- Added Arc, part of a ring opening from the top, filled like a dial by its `sweep`, and Four forms has one filling in its middle.
-- Added Chance: each note on a gate plays on its `gate` as often as a knob says, and on its `else` the rest of the time, and the Heads or tails preset plays one riff through it.
-- `flyback-cli compare` plays two patches side by side and says whether they are the same instrument, bit for bit, or where they part.
-- Added Clock In, which keeps a patch's beats, tempo and transport to the MIDI clock of a drum machine or sequencer.
-- A MIDI In can listen to one channel of its instrument.
-- A knob's menu learns it and every knob after it in one pass, and a knob learned from an instrument with a track per channel keeps the channel.
-- The module list offers a plugged-in instrument Flyback knows by name, under Instruments, and adds it whole: its clock and a MIDI In per track.
-- Flyback knows the Elektron Syntakt by name: a MIDI In offers its tracks, a knob binds to one of its knobs from the panel's menu, and a learned knob says what it follows in the box's own words. Other instruments are a `.json` file in the data folder's `instruments`.
-- Settings → Agent is now Settings → Assistant.
-- The assistant's conversation shows the briefing it is handed and the handbook text it looks up, each hidden by its own box in Settings → Assistant.
-- Patches carry an author and tags, edited in the panel and written as `author "..."` and `tags "..."` in the text, and found by in the preset gallery.
-- A patch has a description, edited by double-clicking it in the panel with nothing selected, written as `description "..."` in the text and shown in the preset gallery.
-- Saving a preset under a name already saved asks first, in place.
-- Settings → Graphics sends the full-screen picture to another monitor, or to a chosen one, and leaves the editor where it is.
-- A patch's knobs can be played over the full-screen picture, in the editor and the viewer.
-- The viewer opens a patch with no picture as just its buttons and knobs.
-- Dragging the right button on an unpatched input turns its value.
-- Frequency and delay-time knobs sweep in decades, and an oscillator's `freq` reaches from a slow wobble up to 20 kHz.
-- A panel knob can sweep its sockets logarithmically, from its menu.
-- Added Auto remap, a Remap whose ranges are read off its wires and set as fractions of each end.
-- A wire between two different ranges has a mark that puts an Auto remap into it.
-- A wire swinging past the range its socket takes is drawn in orange and warned about.
-- The Frequency module is gone: an oscillator's own `freq` knob reaches audible pitches, and a patch that still holds one no longer opens.
-- Random is now Noise and the old Noise is now Clouds, in the canvas and the text, and a patch holding either old one no longer opens.
-- A turning knob holds the pointer still, so the edge of the screen never stops it.
-- A dragged side panel comes back at the width it was left at.
-- Double-clicking a box looks inside it, over the rest of the patch, without opening it.
 - A patch or bundle from somebody else reaches only its own files.
-- The preset gallery's tiles and auditions run as compiled code.
-- `flyback-cli render` and the assistant's looking and listening run the patch as compiled code, and `flyback-cli render --interpreted` keeps it on the interpreter.
-- A large patch's sound runs more than twice as fast.
+- A plugin's preset can carry the sound files and pictures it plays.
+- An assistant plugin whose session is an `IModelConversation` writes only its format; Flyback runs every turn, and `AssistantPost` sends and retries its requests.
+- The plugin contract is 1.0.0.
+
+### Modules
+- The preset site starts with Easy, a plugin of two modules that sound good with nothing wired and never clip: Easy Synth, a whole synth, and Easy Drum, nine drum sounds that each play their own rhythm; Warehouse, three minutes of acid house, is played on both.
+- The preset site starts with Figures, three modules that are each a picture and a sound: Plate, Harmonograph and Overtones; Vigil, dark ambient in D phrygian dominant, is played on all three.
+- The preset site starts with Fractals, three modules about one point c: Mandelbrot, Julia and Orbit, its sound, with Dive and Julia walk as presets.
+- Added Arrangement: up to eight parts get a level in each of up to thirty-two sections of a piece, gliding where asked.
+- Added Chord, one of 23 chords on a root as four frequencies, and Auto Chord, the seventh chord on a played note or a step of one of 26 scales; the computer keyboard's Scale layout plays a tonic and one of those scales.
+- Added Chance: each note on a gate plays on `gate` as often as a knob says and on `else` the rest of the time, shown off by the Heads or tails preset.
+- Added Arc, part of a ring filled like a dial by its `sweep`, and Four forms has one in its middle.
+- Added Crush, a bitcrusher.
+- Added Auto remap, a Remap whose ranges are read off its wires; a wire between two different ranges has a mark that puts one in, and a wire swinging past its socket's range is drawn in orange.
+- A Sample plays an MP3 as well as a WAV.
+- Frequency and delay-time knobs sweep in decades, an oscillator's `freq` reaches from a slow wobble up to 20 kHz, and a panel knob can sweep logarithmically from its menu.
+- The Frequency module is gone, and Random is now Noise and the old Noise is Clouds; a patch holding any of the old ones no longer opens.
+
+### MIDI
+- Added Clock In, which keeps a patch's beats, tempo and transport to an instrument's MIDI clock.
+- The module list adds a plugged-in instrument Flyback knows by name, its clock and a MIDI In per track; the Elektron Syntakt ships known, and others are a `.json` file in the data folder's `instruments`.
+- A MIDI In can listen to one channel of its instrument, and a note played over a busy voice gives the voice back when let go.
+- A knob's menu learns it and every knob after it in one pass, keeping an instrument's channel.
+
+### Presets
+- Dub is now No Sense Dub, roots dub in A minor: a one drop at 74 BPM, a drop to Patois and silence, steppers at 148, a drawbar organ and six panel knobs.
+- Tranquility, on the preset site: psytrance in G sharp with Apollo 11 on the radio and alien FM chatter on three panel knobs.
+- Irrational: seven orbits, each on a knob, drawing together into an alignment never quite exact.
+- Beat you can see and Two echoes, the presets the two new tutorials on the website build.
+- Mycelium speaks, from LibriVox's public-domain reading of *Alice*.
+- Slow weather has six panel knobs and a thirty-minute length.
+- Plasma is three drifting fields in a blue, cream and amber palette.
+
+### Text patches
+- A patch's groups, knob panel, needed plugins, author, tags and description are written in its text and read back.
+- A patch written out as text follows its own chain, keeps its arithmetic as arithmetic and names a sum after what it drives.
+- A pipe lands on `in`, a module's only socket, a position, a module's one color socket, or the socket written `socket: _`.
+- A def takes its arguments by name, gives a parameter a default, and takes a pipe on its `in`.
+- Patch text pastes onto the canvas as its modules and groups, and modules copied off a canvas paste into the text view as text.
+- A mistake in a text patch is said as what it is and where, with a stable code in `flyback-cli check --json`; a name bound twice, a socket wired twice, a knob set twice and a group inside a group are among them.
+
+### Command line
+- `flyback-cli render` draws the picture on the GPU with no window where there is one; `--processor` asks for the processor's exact picture, and `--gpu` fails rather than fall back.
+- `flyback-cli render`, `print` and `info` take a shipped preset with `--preset`, and `--presets` lists them.
+- `flyback-cli render` takes what it is not given from the editor's settings.
+- `flyback-cli modules <module>` describes one module, socket by socket.
+- `flyback-cli compare` says whether two patches are the same instrument, bit for bit, or where they part.
+- `flyback-viewer` and `flyback-cli` list the plugins they loaded.
+- `install.sh` installs, updates or uninstalls the latest release on Linux, macOS and Windows.
+
+### Viewer and full screen
+- A web viewer plays a shipped preset or a patch file in a browser, picture and sound.
+- A patch's knobs can be played over the full-screen picture, which Settings → Graphics sends to another monitor.
+- F11 switches the viewer to full screen, and a patch with no picture opens as just its buttons and knobs.
+- F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second, frame cost and ops.
+- Settings → Graphics → Controls, or `flyback-viewer --transport bottom`, puts the transport at the bottom and the knobs at the top.
+
+### Assistant
+- The assistant keeps its conversation when a knob is turned or an edit undone; only adding or removing a module or a wire starts a new one.
+- The assistant's tool budget is a turn's, stopping it mid-turn no longer breaks the conversation, and it spends fewer tokens.
+- Settings → Agent is now Settings → Assistant, where the assistant's briefing and handbook lookups can each be shown in its conversation.
+
+### Canvas and interface
+- A seek bar on the toolbar and the transports moves the patch's clock along its own length, `length 2:30.50` in text, and stops or loops at its end.
+- Every socket and setting on a module says what it is for, in the panel, to the assistant and in `flyback-cli modules`.
+- A patched socket in the panel names the socket at the other end of its wire, and a group's socket is its module's own row.
+- Shift+drag moves modules into or out of a group, Ctrl+G keeps the one group name among them, and a box's socket is named for the socket inside.
+- Double-clicking a box looks inside it without opening it.
+- Ctrl+drag takes a wire off an output with any number of wires on it.
+- Settings → Canvas → Compact modules puts each input beside an output on one row.
+- Dragging the right button on an unpatched input turns its value, and a turning knob holds the pointer still.
+- Settings → Files → Library sets a folder where a patch's sound files and pictures are also looked for.
+- Saving a preset under a name already saved asks first.
+- The status bar counts the picture's ops and the sound's apart, and its envelope writes to Flyback's author.
+- A dragged side panel comes back at the width it was left at.
+- Patches, bundles, text files and plugin packages each have an icon, and on macOS a file opened from Finder or the Dock opens in Flyback.
+- Usage statistics also count which modules are picked and which editor features a run uses.
+
+### Performance
+- A large patch's sound runs more than twice as fast, and a rewire in one goes back to compiled speed about three times sooner.
+- The preset gallery, `flyback-cli render` and the assistant's looking and listening run the patch as compiled code; `render --interpreted` keeps it on the interpreter.
+- A large patch's shader builds without freezing the window, and an opened patch starts its sound and picture together, "Compiling…" in the status line until then.
+- Windows draws through the graphics card's own OpenGL, and Settings → Graphics → Driver goes back to Direct3D.
 - The preset gallery draws only the tiles in sight, and keeps their pictures between runs.
-- A module read through a Probe or Overtones is copied only as far as it depends on the place being read.
-- Presets people make can be shared on a site of their own, with a picture and a sound of each, linked from the website.
-- Opening a signed `.fbkp` plugin package shows what the plugin is, with its preview, author, description and tags, what it adds and reaches and, when asked, installs or updates its build for this system and restarts Flyback; `flyback-cli pack-plugin` makes one, signed with a key from `flyback-cli plugin-key`.
-- Plugin packages can be shared on the preset site, with their preview and tags, listed once the admin has published them.
-- The preset gallery lists the presets shared on the preset site, searched with its filter, and opens one when picked.
-- `flyback-viewer` and `flyback-cli` list the plugins they loaded on the terminal, as the editor does.
-- Patches, bundles, text files and plugin packages each have an icon of their own.
-- F11 switches the viewer to full screen and back, and `--full-screen` refuses a patch with no picture.
-- A plugins window, beside the settings button, takes over About's plugin list: it searches the installed plugins and the shared ones together, says what failed to load, and a plugin clicked there installs, updates or removes.
-- On macOS, a file opened from Finder or dropped on the Dock icon opens in Flyback.
-- The shipped plugins have a name, author, description and tags, and the module plugins a preview of their modules.
-- A plugin declares its modules, so the install dialog and the shared plugins site list them by name, and one that registers a module it did not declare is refused.
-- Shared presets and plugins can be reported to the preset site's admin, from the site, the preset gallery and the plugins window, and the admin lists the reports.
-- Shared presets and plugins are rated with stars on the preset site, and the preset gallery and the plugins window show them.
-- A patch that will not open for want of a plugin offers the one the plugin site has, and opens the plugins window at it.
-- Added Irrational: seven concentric orbits a turn apart every four minutes, each on a knob, drawing together into an alignment that is never quite exact and striking a degree of A minor into a long delay and a large room.
-- Installing a plugin a patch was refused for opens that patch again once Flyback has restarted.
-- The preset site starts with Tranquility: psytrance in G sharp with alien FM chatter played on three panel knobs, a rolling FM bass ducked under the kick, three builds that each land on a drop, Apollo 11 on the radio, subtitled, down a tunnel with a moon at the end, and a fading outro.
-- The preset site starts with Figures, a plugin of three modules that are each a picture and a sound: Plate, a struck plate and the sand figure it settles into; Harmonograph, damped pendulums whose drawing is their chord; and Overtones, any picture read along a row as the overtones of a tone. Vigil, its preset, is dark ambient in D phrygian dominant played on all three.
-- The envelope at the end of the status bar writes to Flyback's author, with what build it was written from.
-- Noise read off a fast clock no longer sticks at full level after a day or more of playing.
-- A picture drawn on the graphics card no longer stutters after hours or days of playing.
-- Fracture lights the same squares on the graphics card as on the processor.
-- Renaming a module or a group in the panel puts the caret beside the name rather than at the panel's left edge.
+- AVI clips encode three times faster.
 
 ### Fixes
-
-- A text patch nested thousands of brackets deep, or a step block repeated past what memory holds, is refused instead of closing the editor.
-- A mistake in a text patch is said as what it is and where: a malformed number, a curly quote or long minus, an arrow for a pipe, a bracket that closes nothing or never closes, a name read above its `let`, and a step block's own mistakes at their column.
-- A step block longer than a sequence holds, a Euclidean pattern or alternation left open and a bare `@`, `%` or `!` are refused rather than read as something else.
+- Noise read off a fast clock no longer sticks at full level after a day of playing, and a picture on the graphics card no longer stutters after hours.
+- Fracture lights the same squares on the graphics card as on the processor.
+- A text patch nested thousands of brackets deep, a step block past what a sequence or memory holds, an open Euclidean pattern and a bare `@`, `%` or `!` are refused rather than crashing or being misread.
+- Renaming a module or a group puts the caret beside the name.
 
 ## 0.4.0 — 2026-09-21
 
