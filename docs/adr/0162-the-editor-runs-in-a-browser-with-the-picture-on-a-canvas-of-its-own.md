@@ -46,7 +46,12 @@ container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own
 
 **The preset site serves it at `/editor/`, beside the viewer at `/viewer/`**, whose
 `gl.js` the page imports and whose worker will play its sound. The site publishes
-it beside itself when built with `-p:WebEditor=true`.
+it beside itself when built with `-p:WebEditor=true`, as its image is.
+
+**The landing page shows it where it shows the editor's photograph.** The hero's
+screenshot of Slow weather carries a button that swaps it for the page in a frame,
+opened on the same preset with `?preset=`. Nothing loads until it is pressed; a
+screen narrower than 900 pixels opens the page in a tab instead.
 
 **The sound plays in a worker, on the viewer's build.** The worker needs the engine
 and the plugins, not Avalonia, so it loads the 7 MB viewer rather than the editor.

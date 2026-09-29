@@ -84,6 +84,10 @@
   .hero figure { margin: 56px 0 0; position: relative; }
   .hero .window { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: none; }
   @media (min-width: 900px) { .hero .window { margin: 0 -24px; } }
+  /* The photograph of the editor, until asked for the editor itself (site.js). */
+  .hero .live { position: relative; }
+  .hero .live .try { position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.9); }
+  .hero .live iframe { display: block; width: 100%; height: auto; aspect-ratio: 1442 / 939; max-height: 88vh; border: 0; background: var(--window); }
 
   /* ---- sections ---- */
   .band { padding: 96px 0; border-bottom: 1px solid var(--edge); }
@@ -222,7 +226,11 @@
     </div>
 
     <figure>
-      <div class="window">
+      <div class="window live">
+        <a class="button primary try" href="editor/?preset=Slow%20weather" data-editor>
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
+          Try the editor here
+        </a>
         <a class="zoom" href="assets/shots/slow-weather.webp">
           <img src="assets/shots/slow-weather.webp" width="1442" height="939"
                alt="The Flyback window with the Slow weather preset: a hundred and eighty-eight modules in named boxes wired across the canvas, the Picture: Color box selected with its patched sockets listed in the inspector, six knobs on the panel under the canvas, and a teal and blue star of warped rings in the preview.">

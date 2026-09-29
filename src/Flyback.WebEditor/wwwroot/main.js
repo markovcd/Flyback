@@ -33,3 +33,7 @@ globalThis.flyback = {
 };
 
 await runtime.runMain(name, []);
+
+// ?preset=<name> opens that shipped preset, as a page embedding the editor asks for.
+const preset = new URLSearchParams(location.search).get('preset');
+if (preset) exports.Preset(preset);

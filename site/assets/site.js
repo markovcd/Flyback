@@ -171,6 +171,27 @@
   }
 })();
 
+// The editor itself takes the place of its photograph when asked, on a screen wide
+// enough to patch on; a phone, or a page without this script, opens it in a tab.
+(function () {
+  document.querySelectorAll("a[data-editor]").forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      if (window.innerWidth < 900) return;
+      e.preventDefault();
+
+      var frame = document.createElement("iframe");
+      frame.src = link.href;
+      frame.title = "The Flyback editor";
+      frame.allow = "fullscreen";
+      frame.addEventListener("load", function () { frame.focus(); });
+
+      var holder = link.parentNode;
+      while (holder.firstChild) holder.removeChild(holder.firstChild);
+      holder.appendChild(frame);
+    });
+  });
+})();
+
 // A picture opens over the page, fitted to the screen, rather than in a tab of
 // its own. Pinch, wheel, double-tap or click to look closer, drag to move about,
 // swipe or the arrow keys for the next one; Esc, the back button or a tap

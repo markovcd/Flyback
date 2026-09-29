@@ -30,6 +30,12 @@
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(OutDir)editor'))\" />
   </Target>
 
+  <Target Name="PublishWebEditorBeside" AfterTargets="Publish" Condition="'$(WebEditor)' == 'true'">
+    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+             Targets="Restore;Publish"
+             Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(PublishDir)editor'))\" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>

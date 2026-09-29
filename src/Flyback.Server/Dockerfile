@@ -46,8 +46,9 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 
+# The web editor (ADR-0162) rides along under /editor/, on the same workload.
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app
+    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -p:WebEditor=true -o /app
 
 FROM ${RUNTIME}
 LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback
