@@ -74,7 +74,8 @@ files.
 meets CORS, and a key has nowhere safe to live), export, MIDI and installing plugins.
 `EditorSetup.InPage` takes open, save, record, the assistant, settings, plugins and
 About off the toolbar and their keys, leaves the picture in place on a double-click,
-and the page hides its canvas while a dialog is up, since nothing can draw over it.
+tries no preset the gallery's pointer rests on, and the page hides its canvas while
+a dialog is up, since nothing can draw over it.
 The plugins that ship and make modules are referenced, as in the desktop editor;
 the ones the preset site hosts are added only in the All plugins configuration
 ([0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)).

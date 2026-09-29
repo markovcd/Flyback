@@ -53,6 +53,9 @@ public sealed partial class WebsiteSteps : IDisposable
 
                 if (to.Host != root.Host || !seen.Add(path)) continue;
 
+                // Built without the web editor, as the gate is, the site has no /editor/ and shows no link to it.
+                if (path.StartsWith("/editor/", StringComparison.Ordinal) && !EditorBuilt) continue;
+
                 using var response = await client.GetAsync(new Uri(path, UriKind.Relative));
 
                 if (response.StatusCode != HttpStatusCode.OK)
@@ -64,6 +67,9 @@ public sealed partial class WebsiteSteps : IDisposable
 
         seen.Count.ShouldBeGreaterThan(20);
     }
+
+    /// <summary>Whether this build published the web editor where the site serves it from.</summary>
+    private static bool EditorBuilt => Directory.Exists(Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot"));
 
     [Then("none of them is missing")]
     public void ThenNoneIsMissing() => missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));

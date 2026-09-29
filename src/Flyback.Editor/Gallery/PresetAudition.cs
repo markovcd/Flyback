@@ -36,6 +36,9 @@ internal sealed class PresetAudition
 
     private readonly Playback playback;
 
+    /// <summary>A page tries nothing: a preset's picture and sound would share its one thread with the patch.</summary>
+    private readonly bool off;
+
     /// <summary>The tile the pointer is resting on, or null.</summary>
     private PointedTile? pointedAt;
 
@@ -50,8 +53,10 @@ internal sealed class PresetAudition
         IlCompiler compiler,
         PluginCatalog plugins,
         PresetLibrary saved,
-        Playback playback)
+        Playback playback,
+        EditorSetup setup)
     {
+        off = setup.InPage;
         this.audio = audio;
         this.compiler = compiler;
         modules = plugins.Modules;
@@ -77,7 +82,7 @@ internal sealed class PresetAudition
 
         StopAuditioning();
 
-        if (tile is not null)
+        if (tile is not null && !off)
             waiting = DispatcherTimer.RunOnce(() => _ = AuditionAsync(tile), Delay);
     }
 
