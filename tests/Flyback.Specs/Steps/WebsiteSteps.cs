@@ -102,7 +102,7 @@ public sealed partial class WebsiteSteps : IDisposable
     }
 
     /// <summary>A file the runtime's loader fetches: named with its fingerprint, where its logical name has none.</summary>
-    [GeneratedRegex("""["'](?<name>[A-Za-z0-9_.\-]+\.[a-z0-9]{10}\.(?:wasm|js))["']""")]
+    [GeneratedRegex("""["'](?<name>[A-Za-z0-9_.\-]+\.[a-z0-9]{10}\.(?:wasm|js|pdb))["']""")]
     private static partial Regex Framework();
 
     /// <summary>A link within the site: not another host, an anchor, mail or inline data.</summary>

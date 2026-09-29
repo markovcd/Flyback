@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 
 const long uploadLimit = 20 * 1024 * 1024;
@@ -151,7 +152,12 @@ var letters = new LetterStore(database);
 
 app.UseForwardedHeaders();
 app.UseDefaultFiles();
-app.UseStaticFiles();
+
+// A Debug build of the web viewer loads its symbols, and a type this does not know is a 404.
+var types = new FileExtensionContentTypeProvider();
+types.Mappings[".pdb"] = "application/octet-stream";
+
+app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = types });
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(media.Root),
