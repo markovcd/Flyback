@@ -2,14 +2,16 @@
 
 ## Unreleased
 
+## 0.5.0 — 2026-09-29
+
+528 commits since 0.4.0.
+
 ### Sharing and plugins
 - Presets and plugins people make are shared on a preset site linked from the website, with a picture, a sound, star ratings and a report button; the preset gallery and the plugins window list what it offers.
-- Opening a `.fbkp` plugin package shows what the plugin is, adds and reaches, and installs or updates it when asked.
-- A plugins window beside the settings button searches the installed plugins and the shared ones together, says what failed to load, and installs, updates or removes a plugin clicked there.
+- A plugins window beside the settings button searches the installed plugins and the shared ones together, says what failed to load, and installs, updates or removes a plugin; opening a `.fbkp` package shows the plugin, its modules and what it reaches, and installs it.
+- The shipped plugins have a name, author, description, tags and a preview picture.
 - A patch that will not open for want of a plugin offers the one the site has, and opens again once it is installed.
-- The shipped plugins have a name, author, description, tags and a preview picture, and the install dialog lists a plugin's modules.
-- A plugin folder loads only once you allow it, by installing its package or with `flyback-cli plugin allow`.
-- A patch or bundle from somebody else reaches only its own files.
+- A plugin folder loads only once you allow it, and a patch or bundle from somebody else reaches only its own files.
 - A plugin's preset can carry the sound files and pictures it plays.
 
 ### Modules
@@ -18,8 +20,8 @@
 - The preset site starts with Fractals, three modules about one point c: Mandelbrot, Julia and Orbit, its sound, with Dive and Julia walk as presets.
 - Added Arrangement: up to eight parts get a level in each of up to thirty-two sections of a piece, gliding where asked.
 - Added Chord, one of 23 chords on a root, and Auto Chord, the seventh chord on a played note or a step of one of 26 scales; the computer keyboard's Scale layout plays a tonic and one of those scales.
-- Added Chance: each note on a gate plays on `gate` as often as a knob says and on `else` the rest of the time, shown off by the Heads or tails preset.
-- Added Arc, part of a ring filled like a dial by its `sweep`, and Four forms has one in its middle.
+- Added Chance: each note on a gate plays on `gate` as often as a knob says and on `else` the rest of the time.
+- Added Arc, part of a ring filled like a dial by its `sweep`.
 - Added Crush, a bitcrusher.
 - Added Auto remap, a Remap whose ranges are read off its wires; a wire between two different ranges has a mark that puts one in, and a wire swinging past its socket's range is drawn in orange.
 - A Sample plays an MP3 as well as a WAV.
@@ -36,23 +38,18 @@
 - Dub is now No Sense Dub, roots dub in A minor: a one drop at 74 BPM, a drop to Patois and silence, steppers at 148, a drawbar organ and six panel knobs.
 - Tranquility, on the preset site: psytrance in G sharp with Apollo 11 on the radio and alien FM chatter on three panel knobs.
 - Irrational: seven orbits, each on a knob, drawing together into an alignment never quite exact.
-- Beat you can see and Two echoes, the presets the two new tutorials on the website build.
-- Mycelium speaks, from LibriVox's public-domain reading of *Alice*.
-- Slow weather has six panel knobs and a thirty-minute length.
-- Plasma is three drifting fields in a blue, cream and amber palette.
+- Beat you can see and Two echoes join the teaching presets, Mycelium speaks, Slow weather has six panel knobs and thirty minutes, and Plasma is three drifting fields in blue, cream and amber.
 
 ### Text patches
 - A patch's groups, knob panel, needed plugins, author, tags and description are written in its text and read back.
 - A patch written out as text follows its own chain and keeps its arithmetic as arithmetic.
-- A pipe lands on `in`, a module's only socket, a position, a module's one color socket, or the socket written `socket: _`.
-- A def takes its arguments by name, gives a parameter a default, and takes a pipe on its `in`.
+- A pipe lands on `in`, a module's only socket, a position, a module's one color socket, or the socket written `socket: _`, and a def takes its arguments by name, with defaults and a pipe on its `in`.
 - Patch text pastes onto the canvas as its modules and groups, and modules copied off a canvas paste into the text view as text.
 - A mistake in a text patch is said as what it is and where.
 
 ### Command line
-- `flyback-cli render` draws the picture on the graphics card, with no window.
+- `flyback-cli render` draws the picture on the graphics card with no window, and takes what it is not given from the editor's settings.
 - `flyback-cli render`, `print` and `info` take a shipped preset with `--preset`, and `--presets` lists them.
-- `flyback-cli render` takes what it is not given from the editor's settings.
 - `flyback-cli modules <module>` describes one module, socket by socket.
 - `flyback-cli compare` says whether two patches are the same instrument.
 - `install.sh` installs, updates or uninstalls the latest release on Linux, macOS and Windows.

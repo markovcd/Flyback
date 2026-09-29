@@ -201,6 +201,8 @@ Flyback.Core.Graph.EmitContext.Inputs.get -> Flyback.Core.Compile.Slot[]!
 Flyback.Core.Graph.EmitContext.Inputs.init -> void
 Flyback.Core.Graph.EmitContext.Node.get -> System.Guid
 Flyback.Core.Graph.EmitContext.Node.init -> void
+Flyback.Core.Graph.EmitContext.Parts.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>!
+Flyback.Core.Graph.EmitContext.Parts.init -> void
 Flyback.Core.Graph.EmitContext.Picture.get -> Flyback.Core.Compile.LoadedImage?
 Flyback.Core.Graph.EmitContext.Picture.init -> void
 Flyback.Core.Graph.EmitContext.Resolve(int port) -> Flyback.Core.Compile.Slot
@@ -279,6 +281,12 @@ Flyback.Core.Graph.ExtraState.ExtraState(System.Collections.Generic.IReadOnlyLis
 Flyback.Core.Graph.ExtraState.Number(string! key) -> float
 Flyback.Core.Graph.ExtraState.Text(string! key) -> string!
 Flyback.Core.Graph.ExtraState.Toggle(string! key) -> bool
+Flyback.Core.Graph.Extras.ArrangementExtra
+Flyback.Core.Graph.Extras.ArrangementExtra.ArrangementExtra(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>! Default) -> void
+Flyback.Core.Graph.Extras.ArrangementExtra.Deconstruct(out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>! Default) -> void
+Flyback.Core.Graph.Extras.ArrangementExtra.Default.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.PartLevel>!>!
+Flyback.Core.Graph.Extras.ArrangementExtra.Default.init -> void
+Flyback.Core.Graph.Extras.ArrangementExtra.Equals(Flyback.Core.Graph.Extras.ArrangementExtra? other) -> bool
 Flyback.Core.Graph.Extras.FormulaExtra
 Flyback.Core.Graph.Extras.FormulaExtra.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, Flyback.Core.Graph.NodeDef!>! Functions) -> void
 Flyback.Core.Graph.Extras.FormulaExtra.Equals(Flyback.Core.Graph.Extras.FormulaExtra? other) -> bool
@@ -527,6 +535,16 @@ Flyback.Core.Graph.NodeInstance.X.get -> double
 Flyback.Core.Graph.NodeInstance.X.set -> void
 Flyback.Core.Graph.NodeInstance.Y.get -> double
 Flyback.Core.Graph.NodeInstance.Y.set -> void
+Flyback.Core.Graph.PartLevel
+Flyback.Core.Graph.PartLevel.Deconstruct(out float Value, out bool Glides) -> void
+Flyback.Core.Graph.PartLevel.Equals(Flyback.Core.Graph.PartLevel other) -> bool
+Flyback.Core.Graph.PartLevel.Glides.get -> bool
+Flyback.Core.Graph.PartLevel.Glides.init -> void
+Flyback.Core.Graph.PartLevel.PartLevel() -> void
+Flyback.Core.Graph.PartLevel.PartLevel(float Value, bool Glides = false) -> void
+Flyback.Core.Graph.PartLevel.Sane() -> Flyback.Core.Graph.PartLevel
+Flyback.Core.Graph.PartLevel.Value.get -> float
+Flyback.Core.Graph.PartLevel.Value.init -> void
 Flyback.Core.Graph.Patch
 Flyback.Core.Graph.Patch.AddControl(string? name = null, float value = 0.5) -> Flyback.Core.Graph.PatchControl!
 Flyback.Core.Graph.Patch.Author.get -> string?
@@ -749,6 +767,7 @@ const Flyback.Core.Graph.Chords.Major = 4 -> int
 const Flyback.Core.Graph.Chords.Notes = 4 -> int
 const Flyback.Core.Graph.ControlMap.StateKey = "controls" -> string!
 const Flyback.Core.Graph.ExtraField.Text.Limit = 4096 -> int
+const Flyback.Core.Graph.Extras.ArrangementExtra.Name = "arrangement" -> string!
 const Flyback.Core.Graph.Extras.FormulaExtra.FormulaField = "formula" -> string!
 const Flyback.Core.Graph.Extras.FormulaExtra.Fresh = "a * b + c" -> string!
 const Flyback.Core.Graph.Extras.FormulaExtra.StateKey = "expression" -> string!
@@ -790,6 +809,7 @@ const Flyback.Core.Graph.ModuleCategories.TimeEffects = "Time effects" -> string
 const Flyback.Core.Graph.ModuleCategories.Timing = "Timing" -> string!
 const Flyback.Core.Graph.NodeCatalog.AdsrTypeId = "env.adsr" -> string!
 const Flyback.Core.Graph.NodeCatalog.AnalyzerTypeId = "analyzer" -> string!
+const Flyback.Core.Graph.NodeCatalog.ArrangementTypeId = "seq.arrangement" -> string!
 const Flyback.Core.Graph.NodeCatalog.AudioChannels = 2 -> int
 const Flyback.Core.Graph.NodeCatalog.AutoChordScaleField = "scale" -> string!
 const Flyback.Core.Graph.NodeCatalog.AutoChordStateKey = "autochord" -> string!
@@ -814,6 +834,8 @@ const Flyback.Core.Graph.NodeCatalog.HoldTypeId = "seq.hold" -> string!
 const Flyback.Core.Graph.NodeCatalog.InkModeKey = "mode" -> string!
 const Flyback.Core.Graph.NodeCatalog.InkOver = "over" -> string!
 const Flyback.Core.Graph.NodeCatalog.InkStateKey = "ink" -> string!
+const Flyback.Core.Graph.NodeCatalog.MaxParts = 8 -> int
+const Flyback.Core.Graph.NodeCatalog.MaxSections = 32 -> int
 const Flyback.Core.Graph.NodeCatalog.MaxSteps = 32 -> int
 const Flyback.Core.Graph.NodeCatalog.MeterTypeId = "meter" -> string!
 const Flyback.Core.Graph.NodeCatalog.MidiTypeId = "midi.in" -> string!
@@ -910,6 +932,16 @@ override Flyback.Core.Graph.ExtraField.Toggle.Format(System.Text.Json.Nodes.Json
 override Flyback.Core.Graph.ExtraField.Toggle.GetHashCode() -> int
 override Flyback.Core.Graph.ExtraField.Toggle.Sane(System.Text.Json.Nodes.JsonNode? stored) -> System.Text.Json.Nodes.JsonNode!
 override Flyback.Core.Graph.ExtraField.Toggle.ToString() -> string!
+override Flyback.Core.Graph.Extras.ArrangementExtra.<Clone>$() -> Flyback.Core.Graph.Extras.ArrangementExtra!
+override Flyback.Core.Graph.Extras.ArrangementExtra.Announce() -> string!
+override Flyback.Core.Graph.Extras.ArrangementExtra.Equals(object? obj) -> bool
+override Flyback.Core.Graph.Extras.ArrangementExtra.Fold(Flyback.Core.Graph.EmitContext ctx, Flyback.Core.Graph.NodeInstance! node, Flyback.Core.Graph.ExtraEnv env) -> Flyback.Core.Graph.EmitContext
+override Flyback.Core.Graph.Extras.ArrangementExtra.GetHashCode() -> int
+override Flyback.Core.Graph.Extras.ArrangementExtra.Help.get -> string!
+override Flyback.Core.Graph.Extras.ArrangementExtra.Key.get -> string!
+override Flyback.Core.Graph.Extras.ArrangementExtra.Report(Flyback.Core.Graph.NodeInstance! node) -> string!
+override Flyback.Core.Graph.Extras.ArrangementExtra.Seed(Flyback.Core.Graph.NodeInstance! node) -> void
+override Flyback.Core.Graph.Extras.ArrangementExtra.ToString() -> string!
 override Flyback.Core.Graph.Extras.FormulaExtra.<Clone>$() -> Flyback.Core.Graph.Extras.FormulaExtra!
 override Flyback.Core.Graph.Extras.FormulaExtra.Announce() -> string!
 override Flyback.Core.Graph.Extras.FormulaExtra.Equals(object? obj) -> bool
@@ -1020,6 +1052,7 @@ override Flyback.Core.Graph.NodeDef.ToString() -> string!
 override Flyback.Core.Graph.NodeExtra.Equals(object? obj) -> bool
 override Flyback.Core.Graph.NodeExtra.GetHashCode() -> int
 override Flyback.Core.Graph.NodeExtra.ToString() -> string!
+override Flyback.Core.Graph.PartLevel.GetHashCode() -> int
 override Flyback.Core.Graph.PatchPreset.Equals(object? obj) -> bool
 override Flyback.Core.Graph.PatchPreset.GetHashCode() -> int
 override Flyback.Core.Graph.PatchPreset.ToString() -> string!
@@ -1037,6 +1070,7 @@ override sealed Flyback.Core.Graph.ExtraField.Choice.Equals(Flyback.Core.Graph.E
 override sealed Flyback.Core.Graph.ExtraField.Number.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.ExtraField.Text.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
 override sealed Flyback.Core.Graph.ExtraField.Toggle.Equals(Flyback.Core.Graph.ExtraField? other) -> bool
+override sealed Flyback.Core.Graph.Extras.ArrangementExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.FormulaExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.MidiClockExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
 override sealed Flyback.Core.Graph.Extras.MidiExtra.Equals(Flyback.Core.Graph.NodeExtra? other) -> bool
@@ -1101,6 +1135,11 @@ static Flyback.Core.Graph.ExtraField.Toggle.operator !=(Flyback.Core.Graph.Extra
 static Flyback.Core.Graph.ExtraField.Toggle.operator ==(Flyback.Core.Graph.ExtraField.Toggle? left, Flyback.Core.Graph.ExtraField.Toggle? right) -> bool
 static Flyback.Core.Graph.ExtraField.operator !=(Flyback.Core.Graph.ExtraField? left, Flyback.Core.Graph.ExtraField? right) -> bool
 static Flyback.Core.Graph.ExtraField.operator ==(Flyback.Core.Graph.ExtraField? left, Flyback.Core.Graph.ExtraField? right) -> bool
+static Flyback.Core.Graph.Extras.ArrangementExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> System.Collections.Generic.List<System.Collections.Generic.List<Flyback.Core.Graph.PartLevel>!>!
+static Flyback.Core.Graph.Extras.ArrangementExtra.Set(Flyback.Core.Graph.NodeInstance! node, System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<Flyback.Core.Graph.PartLevel>!>! parts) -> void
+static Flyback.Core.Graph.Extras.ArrangementExtra.Tidy(System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<Flyback.Core.Graph.PartLevel>!>! parts) -> System.Collections.Generic.List<System.Collections.Generic.List<Flyback.Core.Graph.PartLevel>!>!
+static Flyback.Core.Graph.Extras.ArrangementExtra.operator !=(Flyback.Core.Graph.Extras.ArrangementExtra? left, Flyback.Core.Graph.Extras.ArrangementExtra? right) -> bool
+static Flyback.Core.Graph.Extras.ArrangementExtra.operator ==(Flyback.Core.Graph.Extras.ArrangementExtra? left, Flyback.Core.Graph.Extras.ArrangementExtra? right) -> bool
 static Flyback.Core.Graph.Extras.FormulaExtra.Of(Flyback.Core.Graph.NodeInstance! node) -> string!
 static Flyback.Core.Graph.Extras.FormulaExtra.operator !=(Flyback.Core.Graph.Extras.FormulaExtra? left, Flyback.Core.Graph.Extras.FormulaExtra? right) -> bool
 static Flyback.Core.Graph.Extras.FormulaExtra.operator ==(Flyback.Core.Graph.Extras.FormulaExtra? left, Flyback.Core.Graph.Extras.FormulaExtra? right) -> bool
@@ -1187,6 +1226,8 @@ static Flyback.Core.Graph.NodeDef.operator ==(Flyback.Core.Graph.NodeDef? left, 
 static Flyback.Core.Graph.NodeExtra.operator !=(Flyback.Core.Graph.NodeExtra? left, Flyback.Core.Graph.NodeExtra? right) -> bool
 static Flyback.Core.Graph.NodeExtra.operator ==(Flyback.Core.Graph.NodeExtra? left, Flyback.Core.Graph.NodeExtra? right) -> bool
 static Flyback.Core.Graph.NodeInstance.Create(Flyback.Core.Graph.NodeDef! def, double x, double y, System.Guid? id = null) -> Flyback.Core.Graph.NodeInstance!
+static Flyback.Core.Graph.PartLevel.operator !=(Flyback.Core.Graph.PartLevel left, Flyback.Core.Graph.PartLevel right) -> bool
+static Flyback.Core.Graph.PartLevel.operator ==(Flyback.Core.Graph.PartLevel left, Flyback.Core.Graph.PartLevel right) -> bool
 static Flyback.Core.Graph.Patch.Tidied(string? text) -> string?
 static Flyback.Core.Graph.Patch.TidiedAuthor(string? author) -> string?
 static Flyback.Core.Graph.Patch.TidiedTags(System.Collections.Generic.IEnumerable<string!>? tags) -> System.Collections.Generic.List<string!>?
@@ -1250,6 +1291,8 @@ virtual Flyback.Core.Graph.NodeExtra.Seed(Flyback.Core.Graph.NodeInstance! node)
 ~override Flyback.Core.Graph.MidiSource.ToString() -> string
 ~override Flyback.Core.Graph.NodeCatalog.SinkKind.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.NodeCatalog.SinkKind.ToString() -> string
+~override Flyback.Core.Graph.PartLevel.Equals(object obj) -> bool
+~override Flyback.Core.Graph.PartLevel.ToString() -> string
 ~override Flyback.Core.Graph.PortNormal.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.PortNormal.ToString() -> string
 ~override Flyback.Core.Graph.PortSpec.Equals(object obj) -> bool
