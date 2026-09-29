@@ -86,6 +86,7 @@ internal static class EditorServices
         services.AddPart<SettingsSession>();
         services.AddPart<EditorStart>();
 
+        services.AddSingleton<IStillShelf, FolderStills>();
         services.AddPart<PresetThumbnails>();
         services.AddPart<PresetGallery>();
 

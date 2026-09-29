@@ -14,6 +14,9 @@ namespace Flyback.App.Gallery;
 internal sealed record Thumbnail(
     byte[]? Pixels, string Words, string? Description = null, string? Author = null, IReadOnlyList<string>? Tags = null)
 {
+    /// <summary>The build's still, as the file it drew, where it drew one (ADR-0163); shown in place of <see cref="Pixels"/>.</summary>
+    public byte[]? Still { get; init; }
+
     /// <summary>
     /// A patch that is heard and never seen, which has no frame to take. Shown as a
     /// speaker, the words being what it says when pointed at.

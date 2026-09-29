@@ -83,6 +83,14 @@ public sealed partial class WebsiteSteps : IDisposable
     [When("someone opens the web viewer on the preset site")]
     public async Task WhenTheViewerIsOpened() => page = await client.GetStringAsync(new Uri("/viewer/", UriKind.Relative));
 
+    [Then("its presets are picked from a gallery that a box narrows")]
+    public void ThenAGallery()
+    {
+        page.ShouldContain("<dialog id=\"gallery\"");
+        page.ShouldContain("id=\"gallery-filter\"");
+        page.ShouldNotContain("<select id=\"presets\"");
+    }
+
     /// <summary>
     /// The page's own script and style, and every file of the runtime its loader names,
     /// each there and a WebAssembly module served as one, which a browser insists on.

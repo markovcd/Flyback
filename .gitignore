@@ -50,3 +50,6 @@ TestResults/
 [Tt]humbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Stills drawn for a local run of the preset site (./stills.sh src/Flyback.Server/wwwroot/stills).
+src/Flyback.Server/wwwroot/stills/

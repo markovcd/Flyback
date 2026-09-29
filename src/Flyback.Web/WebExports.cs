@@ -83,6 +83,10 @@ public static partial class WebExports
             }),
     ]).ToJsonString();
 
+    /// <summary>The build, which the stills' index names when this build drew it (ADR-0163).</summary>
+    [JSExport]
+    public static string Build() => StillIndex.ThisBuild;
+
     /// <summary>
     /// A shipped preset built once and packed as a bundle, with the files it plays, for
     /// <see cref="OpenFile"/>; empty for a name no preset has.

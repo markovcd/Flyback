@@ -234,6 +234,19 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
       dotnet publish src/Flyback.Viewer -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
     done
 
+# Every preset's still, drawn once and laid beside each platform's programs, so the
+# gallery shows the presets the release ships without drawing them (ADR-0163).
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    set -eu; \
+    CONFIGURATION=${CONFIGURATION} Version=${VERSION} ./stills.sh /tmp/stills; \
+    for rid in ${RIDS}; do \
+      case ${rid} in \
+        osx-*) out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
+        *)     out=/out/${rid} ;; \
+      esac; \
+      cp -r /tmp/stills ${out}/stills; \
+    done
+
 # A release as the Release workflow publishes it: a zip of each platform's
 # folder and SHA256SUMS with its signature. release.sh runs it, on GitHub and on
 # a machine with a local test key:

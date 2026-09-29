@@ -85,6 +85,7 @@ internal static class Program
             Probe(plugins, json),
             ViewerCommand.Build(),
             RenderPresetsCommand.Build(plugins),
+            StillsCommand.Build(plugins),
         };
 
         // What dotnet-suggest asks for completions with, and the only reason the

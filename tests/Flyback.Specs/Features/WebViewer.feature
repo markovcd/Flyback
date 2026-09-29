@@ -42,4 +42,8 @@ Feature: The web viewer
   Scenario: The preset site serves the web viewer
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
+
+  Scenario: The web viewer picks a preset from the editor's gallery
+    When someone opens the web viewer on the preset site
+    Then its presets are picked from a gallery that a box narrows
     And a browser that kept an earlier build of it asks for this one

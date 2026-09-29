@@ -6,6 +6,8 @@
 - The viewer and the web viewer show no seek bar for a patch that does not say its length, and play it on past three minutes.
 - The editor starts again with a library folder set under Settings → Files.
 - `flyback-cli plugin describe` says what a `.fbkp` package is and what its code reaches, as the install dialog would, without running it.
+- The preset gallery shows the shipped presets by stills the release drew, rather than drawing each one; `flyback-cli stills` draws them.
+- The web viewer picks a preset from the editor's gallery, with a still on each tile and a box that narrows it.
 
 ## 0.5.1 — 2026-09-29
 

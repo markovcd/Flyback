@@ -21,6 +21,7 @@ on:
       - "Directory.Build.targets"
       - "Directory.Packages.props"
       - "global.json"
+      - "stills.sh"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -46,8 +47,9 @@ jobs:
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       # The workload and the Python its Emscripten runs on, as in the site's
-      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/.
-      - name: Build the web viewer and editor
+      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/, and both
+      # show the presets by the stills at ../stills/ (ADR-0163).
+      - name: Build the web viewer and editor, and draw the stills
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
             apt-get update
@@ -55,9 +57,11 @@ jobs:
             dotnet workload install wasm-tools
             dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/web
             dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/editor
+            CONFIGURATION="All plugins" ./stills.sh out/stills
           '
           cp -r out/web/wwwroot/viewer site/viewer
           cp -r out/editor/wwwroot site/editor
+          cp -r out/stills site/stills
 
       # The presets page lists what the viewer offers, as the viewer itself says it.
       - name: List the viewer's presets

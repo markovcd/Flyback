@@ -1,7 +1,9 @@
+using System.Text;
 using Flyback.App.Gallery;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Shouldly;
 using Xunit;
@@ -33,6 +35,44 @@ public sealed class PresetThumbnailsTests : IDisposable
             Interlocked.Increment(ref builds);
             return pictured.Build(catalog);
         }, pictured.Description, pictured.Kind);
+    }
+
+    /// <summary>A shelf holding what it is handed, as a build's stills folder would.</summary>
+    private sealed class Shelf(Dictionary<string, byte[]> files) : IStillShelf
+    {
+        public Task<byte[]?> Read(string name) => Task.FromResult(files.GetValueOrDefault(name));
+    }
+
+    private static Shelf Stilled(PatchPreset preset, string version, byte[] still) => new(new()
+    {
+        [StillIndex.FileName] = Encoding.UTF8.GetBytes(new StillIndex(version,
+            [new StillEntry(preset.Name, preset.Kind, StillKind.Picture, "still.jpg", "Drawn by the build.")]).Write()),
+        ["still.jpg"] = still,
+    });
+
+    [Fact]
+    public async Task A_preset_the_build_drew_is_shown_by_its_still_without_being_built()
+    {
+        var preset = Counted();
+        byte[] still = [1, 2, 3];
+
+        var tile = await new PresetThumbnails(PluginCatalog.Empty, shelf: Stilled(preset, StillIndex.ThisBuild, still)).Of(preset, TestContext.Current.CancellationToken);
+
+        builds.ShouldBe(0);
+        tile.Still.ShouldBe(still);
+        tile.Description.ShouldBe("Drawn by the build.");
+    }
+
+    [Fact]
+    public async Task Stills_another_build_drew_are_passed_over_for_a_drawing()
+    {
+        var preset = Counted();
+
+        var tile = await new PresetThumbnails(PluginCatalog.Empty, shelf: Stilled(preset, "another build", [1, 2, 3])).Of(preset, TestContext.Current.CancellationToken);
+
+        builds.ShouldBe(1);
+        tile.Still.ShouldBeNull();
+        tile.Pixels.ShouldNotBeNull();
     }
 
     /// <summary>A tile drawn from IL is the tile the interpreter draws, to the byte.</summary>

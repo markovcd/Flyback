@@ -34,6 +34,7 @@ const VOLUME_KEPT = 'flyback-viewer-volume';
 const $ = id => document.getElementById(id);
 const ui = {
   presets: $('presets'), file: $('file'), size: $('size'), back: $('back'),
+  gallery: $('gallery'), galleryClose: $('gallery-close'), filter: $('gallery-filter'), tiles: $('gallery-tiles'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
@@ -501,7 +502,8 @@ async function open(opening, label, at = 0, keepKnobs = false) {
 }
 
 async function openPreset(preset) {
-  ui.presets.value = preset;
+  showing = preset;
+  ui.presets.textContent = `${preset} ▾`;
   if (!preview) remember({ preset });
   const bytes = flyback.Pack(preset);
   const file = `${preset}.fbkb`;
@@ -660,7 +662,9 @@ ui.mute.onclick = toggleMute;
 ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.canvas.ondblclick = toggleFullscreen;
-ui.presets.onchange = () => openPreset(ui.presets.value);
+ui.presets.onclick = () => openGallery();
+ui.galleryClose.onclick = () => ui.gallery.close();
+ui.filter.oninput = () => filterGallery(ui.filter.value);
 ui.size.onchange = () => resize(...ui.size.value.split('x').map(Number));
 
 ui.seek.onpointerdown = () => { dragging = true; };
@@ -684,6 +688,9 @@ window.addEventListener('blur', release);
 document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
 
 document.addEventListener('keydown', event => {
+  // The gallery's filter is typed into, not played.
+  if (ui.gallery.open) return;
+
   if (typed(event, true)) return;
 
   const target = event.target;
@@ -726,6 +733,7 @@ window.flyback = {
     pressed.clear();
     speaker.postMessage({ release: true });
   },
+  stills: () => [...stills.keys()],
   knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
   turn: (knob, value) => {
     const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());
@@ -735,6 +743,102 @@ window.flyback = {
   snapshot: () => ui.canvas.toDataURL('image/png'),
   still,
 };
+
+/** The preset open now, or null for a file. */
+let showing = null;
+
+/** Each preset's entry in the build's stills (ADR-0163), by name; empty where the site has none of this build's. */
+const stills = new Map();
+
+async function readStills() {
+  try {
+    const response = await fetch('../stills/index.json');
+    if (!response.ok) return;
+
+    const index = await response.json();
+    if (index.version !== flyback.Build()) return;
+
+    for (const entry of index.presets) stills.set(entry.name, entry);
+  } catch {
+    // No stills: the gallery shows names and descriptions alone.
+  }
+}
+
+/** What a tile says in place of a picture. */
+const STILL_WORDS = { soundOnly: 'Sound only', unavailable: 'No preview', nothing: '' };
+
+/** The editor's gallery, in the page: a run of tiles under each heading, each opening its preset. */
+function buildGallery() {
+  let tiles = null;
+
+  for (const { name: preset, heading, description } of listed) {
+    if (tiles?.dataset.heading !== heading) {
+      const run = document.createElement('section');
+      const title = document.createElement('h3');
+      title.textContent = heading;
+      tiles = document.createElement('div');
+      tiles.className = 'tiles';
+      tiles.dataset.heading = heading;
+      run.append(title, tiles);
+      ui.tiles.append(run);
+    }
+
+    const tile = document.createElement('button');
+    tile.className = 'tile';
+    tile.dataset.find = `${preset} ${description ?? ''}`.toLowerCase();
+
+    const frame = document.createElement('div');
+    frame.className = 'frame';
+    const entry = stills.get(preset);
+
+    if (entry?.file) {
+      const image = document.createElement('img');
+      image.src = `../stills/${encodeURIComponent(entry.file)}`;
+      image.alt = '';
+      image.loading = 'lazy';
+      frame.append(image);
+    } else if (entry) {
+      frame.textContent = STILL_WORDS[entry.still] ?? '';
+    }
+
+    const name = document.createElement('strong');
+    name.textContent = preset;
+    const said = document.createElement('span');
+    said.textContent = entry?.description ?? description ?? '';
+
+    tile.append(frame, name, said);
+    tile.onclick = () => {
+      ui.gallery.close();
+      openPreset(preset);
+    };
+    tiles.append(tile);
+  }
+}
+
+function openGallery() {
+  ui.filter.value = '';
+  filterGallery('');
+  ui.gallery.showModal();
+  ui.filter.focus();
+  ui.tiles.querySelector('.tile.showing')?.classList.remove('showing');
+  [...ui.tiles.querySelectorAll('.tile')].find(t => t.querySelector('strong').textContent === showing)?.classList.add('showing');
+}
+
+/** Hides the tiles the words do not find, and a heading with none left under it. */
+function filterGallery(words) {
+  const wanted = words.trim().toLowerCase();
+
+  for (const run of ui.tiles.children) {
+    let any = false;
+
+    for (const tile of run.querySelectorAll('.tile')) {
+      tile.hidden = wanted.length > 0 && !tile.dataset.find.includes(wanted);
+      any ||= !tile.hidden;
+    }
+
+    run.hidden = !any;
+  }
+}
 
 /** The frame at <seconds> as a PNG data URL at the patch's own size, or null where there is none. */
 function still(seconds) {
@@ -775,18 +879,8 @@ if (preview) {
   if (to !== null && to.origin === location.origin) ui.back.href = to.href;
   ui.back.hidden = false;
 } else {
-  let run = null;
-
-  for (const { name: preset, heading } of listed) {
-    if (run?.label !== heading) {
-      run = document.createElement('optgroup');
-      run.label = heading;
-      ui.presets.append(run);
-    }
-
-    run.append(new Option(preset, preset));
-  }
-
+  await readStills();
+  buildGallery();
   ui.presets.disabled = false;
 }
 
@@ -797,8 +891,7 @@ if (params.has('file')) {
   await openUrl(params.get('file'), params.get('name') ?? undefined);
 } else {
   const wanted = params.get('preset') ?? 'Beat you can see';
-  ui.presets.value = presets.find(p => p.toLowerCase() === wanted.toLowerCase()) ?? presets[0];
-  await openPreset(ui.presets.value);
+  await openPreset(presets.find(p => p.toLowerCase() === wanted.toLowerCase()) ?? presets[0]);
 }
 
 if (noPicture !== null) ui.cover.textContent = `${noPicture} The sound still plays: click to start it.`;

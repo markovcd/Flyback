@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.App;
 using Flyback.App.Controls;
+using Flyback.App.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ internal sealed class PageApp : Application
             services.AddSingleton<ITitle, PageTitle>();
             services.AddSingleton<IFocus, PageFocus>();
             services.AddSingleton<IClose, PageClose>();
+            services.AddSingleton<IStillShelf, PageStills>();
         });
 
         var view = provider.View();

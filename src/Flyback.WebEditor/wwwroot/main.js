@@ -23,6 +23,7 @@ runtime.setModuleImports('page', {
   },
   attachGl: canvas => gl.attach(canvas, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
+  stillsUrl: () => new URL('../stills/', location.href).href,
 });
 
 const name = runtime.getConfig().mainAssemblyName;

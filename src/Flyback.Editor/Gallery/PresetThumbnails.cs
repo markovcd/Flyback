@@ -9,8 +9,8 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App.Gallery;
 
 /// <summary>
-/// The still each preset's tile is drawn with, taken from the preset's own patch
-/// rather than from a file that would have to be re-shot every time a patch changed.
+/// The still each preset's tile is drawn with: the one this build's pipeline drew
+/// (ADR-0163) where there is one, and otherwise drawn here from the preset's own patch.
 /// </summary>
 /// <remarks>
 /// Compiled to IL before its frames are drawn, one preset at a time and only once
@@ -31,21 +31,32 @@ namespace Flyback.App.Gallery;
 [SuppressMessage("Design", "CA1001", Justification = "A SemaphoreSlim that never hands out its wait handle holds nothing to free.")]
 internal sealed class PresetThumbnails
 {
-    public const int Width = 320;
-    public const int Height = 180;
+    public const int Width = PresetStill.Width;
+    public const int Height = PresetStill.Height;
 
     private readonly ModuleCatalog modules;
     private readonly IlCompiler? compiler;
     private readonly PresetLibrary? saved;
     private readonly Lazy<ThumbnailStore>? store;
+    private readonly IStillShelf? shelf;
+
+    /// <summary>The build's index, read the first time a thumbnail is asked for; null where there is none or it is another build's.</summary>
+    private Task<StillIndex?>? index;
 
     /// <param name="setup">Its <see cref="EditorSetup.ThumbnailFolder"/> keeps thumbnails between runs. Null keeps them for this run only.</param>
     /// <param name="saved">Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</param>
-    public PresetThumbnails(PluginCatalog plugins, IlCompiler? compiler = null, EditorSetup? setup = null, PresetLibrary? saved = null)
+    /// <param name="shelf">Where the build's stills are. Null draws every preset here.</param>
+    public PresetThumbnails(
+        PluginCatalog plugins,
+        IlCompiler? compiler = null,
+        EditorSetup? setup = null,
+        PresetLibrary? saved = null,
+        IStillShelf? shelf = null)
     {
         modules = plugins.Modules;
         this.compiler = compiler;
         this.saved = saved;
+        this.shelf = shelf;
 
         if (setup?.ThumbnailFolder is not { } folder) return;
 
@@ -58,11 +69,6 @@ internal sealed class PresetThumbnails
             return opened;
         });
     }
-
-    /// <summary>What a patch that reads its previous frame is given to settle in.</summary>
-    private const double Settle = 1.5d;
-
-    private const double Step = 1d / 20d;
 
     /// <summary>
     /// Kept by the preset itself rather than its name: a preset somebody saved can
@@ -101,6 +107,8 @@ internal sealed class PresetThumbnails
 
         return drawn[preset] = Task.Run(async () =>
         {
+            if (path is null && await Still(preset) is { } still) return still;
+
             var key = Key(preset, path);
 
             if (key is not null && store?.Value.Find(key) is { } kept) return kept;
@@ -141,6 +149,8 @@ internal sealed class PresetThumbnails
 
         return said[preset] = Task.Run(async () =>
         {
+            if (path is null && await Entry(preset) is { } entry) return Tile(entry);
+
             if (Key(preset, path) is { } key && store?.Value.Find(key, pixels: false) is { } kept) return kept;
 
             await oneReadAtATime.WaitAsync();
@@ -160,6 +170,37 @@ internal sealed class PresetThumbnails
                 oneReadAtATime.Release();
             }
         });
+    }
+
+    /// <summary>The build's still of <paramref name="preset"/>, or null where it has none to offer.</summary>
+    private async Task<Thumbnail?> Still(PatchPreset preset)
+    {
+        if (await Entry(preset) is not { } entry) return null;
+
+        if (entry.File is null) return Tile(entry);
+
+        return shelf is not null && await shelf.Read(entry.File) is { } file ? Tile(entry) with { Still = file } : null;
+    }
+
+    private async Task<StillEntry?> Entry(PatchPreset preset) =>
+        shelf is null ? null : (await (index ??= Index(shelf)))?.Of(preset.Name, preset.Kind);
+
+    private static async Task<StillIndex?> Index(IStillShelf shelf) =>
+        await shelf.Read(StillIndex.FileName) is { } bytes && StillIndex.Read(Encoding.UTF8.GetString(bytes)) is { Current: true } read
+            ? read
+            : null;
+
+    /// <summary>The tile an entry makes, but for its picture.</summary>
+    private static Thumbnail Tile(StillEntry entry)
+    {
+        var words = entry.Still switch
+        {
+            StillKind.SoundOnly => Thumbnail.SoundOnly,
+            StillKind.Unavailable => Thumbnail.Unavailable,
+            _ => Thumbnail.Nothing,
+        };
+
+        return words with { Description = entry.Description, Author = entry.Author, Tags = entry.Tags };
     }
 
     /// <summary>
@@ -193,28 +234,11 @@ internal sealed class PresetThumbnails
             // A preset from a plugin is built here for the same reason the toolbar
             // builds it when it is picked: it needs the modules that plugin added.
             var (patch, samples, pictures) = PresetLibrary.Open(preset, saved, modules);
-            var (picture, sound) = patch.Reaches();
-            var described = patch.Description;
-            var author = patch.Author;
-            var tags = patch.Tags;
+            var (kind, pixels) = PresetStill.Draw(patch, samples, pictures, program => compiler?.Compile(program, IlLane.AuditionPicture));
 
-            if (!picture)
-                return (sound ? Thumbnail.SoundOnly : Thumbnail.Nothing) with { Description = described, Author = author, Tags = tags };
+            var said = Tile(new StillEntry(preset.Name, preset.Kind, kind, null, patch.Description, patch.Author, patch.Tags));
 
-            var video = patch.CompileForVideo(samples: samples, pictures: pictures);
-
-            if (video.HasErrors) return Thumbnail.Unavailable with { Description = described, Author = author, Tags = tags };
-
-            compiler?.Compile(video.Program, IlLane.AuditionPicture);
-
-            var stride = Width * 4;
-            var pixels = new byte[stride * Height];
-            var renderer = new SynthRenderer();
-
-            for (var step = 0; step * Step <= Settle; step++)
-                renderer.Render(video.Program, step * Step, Width, Height, pixels, stride);
-
-            return new Thumbnail(pixels, "", described, author, tags);
+            return said with { Pixels = pixels };
         }
         catch (Exception)
         {

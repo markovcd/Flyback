@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 
@@ -59,6 +60,22 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [When("flyback-cli describes the preset {string}")]
     public void WhenDescribed(string name) => Run("info", "--preset", name);
+
+    [When("flyback-cli draws the stills")]
+    public void WhenStillsDrawn() => Run("stills", "--out", Path("stills"));
+
+    [Then("the index lists every preset, each picture with its still")]
+    public void ThenEveryPresetIsIndexed()
+    {
+        var index = StillIndex.Read(File.ReadAllText(Path(System.IO.Path.Combine("stills", StillIndex.FileName)))).ShouldNotBeNull();
+
+        index.Current.ShouldBeTrue();
+        index.Presets.Select(entry => entry.Name).ShouldBe(PluginCatalog.Empty.Presets.Select(preset => preset.Name));
+        index.Presets.ShouldContain(entry => entry.Still == StillKind.Picture);
+
+        foreach (var entry in index.Presets.Where(entry => entry.Still == StillKind.Picture))
+            File.Exists(Path(System.IO.Path.Combine("stills", entry.File.ShouldNotBeNull()))).ShouldBeTrue(entry.Name);
+    }
 
     [When("flyback-cli describes the package")]
     public void WhenPackageDescribed() => Run("plugin", "describe", Path(PackageName));

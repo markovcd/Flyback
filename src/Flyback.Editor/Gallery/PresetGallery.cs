@@ -550,7 +550,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
             }
         }
 
-        if (thumbnail.Pixels is null && thumbnail.Words == Thumbnail.SoundOnly.Words)
+        if (thumbnail.Pixels is null && thumbnail.Still is null && thumbnail.Words == Thumbnail.SoundOnly.Words)
         {
             speaker.IsVisible = true;
             ToolTip.SetTip(speaker, thumbnail.Words);
@@ -560,7 +560,8 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
             words.Text = thumbnail.Words;
         }
 
-        if (thumbnail.Pixels is { } pixels) image.Source = Bitmap(pixels);
+        if (thumbnail.Still is { } still) image.Source = new Bitmap(new MemoryStream(still));
+        else if (thumbnail.Pixels is { } pixels) image.Source = Bitmap(pixels);
     }
 
     /// <summary>

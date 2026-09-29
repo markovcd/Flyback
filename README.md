@@ -170,6 +170,7 @@ flyback-cli viewer nebula.fbk
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
 - `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
+- `stills`: draws a still of every preset into `--out`, with the `index.json` the galleries show them by in place of drawing them (ADR-0163); `./stills.sh <folder>` lays out the plugins a build ships first, and every release and site build runs it
 
 `check` exits with:
 
@@ -250,7 +251,7 @@ A patch made to be played is played here too: the computer's keys are notes wher
 dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -o artifacts/web
 ```
 
-The preset site serves it at `/viewer/`, and each preset's page has a Play in your browser button that opens it there. On its own, serve `artifacts/web/wwwroot` from any static server and open `/viewer/`; `?preset=Nebula`, `?file=<url>` (with `&name=` where the URL does not end in the file's name, `&title=` for the name shown and `&back=` for the page to return to), `?size=1280x720`, `?loop` and `?mute` pick what opens and how; a `file` plays alone, with no preset list. Space plays and pauses, left and right seek five seconds, up and down set the volume, M mutes and F goes full screen. A patch's panel knobs are sliders under the picture, and a double-click puts one back. A patch played on the computer keyboard takes its keys as the editor does, as a piano or in the patch's scale, with PageUp and PageDown moving the octave; its note keys win over the shortcuts. The AOT switch needs `dotnet workload install wasm-tools`; without it the page around the sound runs interpreted, at under half the speed. `window.flyback` drives the page from a script: `presets()`, `open`, `play`, `pause`, `seek`, `size(width, height)`, `volume(level)`, `knobs()`, `turn(knob, value)`, `strike(note, down)`, `release()`, `status()` and `still(seconds)`, the frame as a PNG at the patch's size.
+The preset site serves it at `/viewer/`, and each preset's page has a Play in your browser button that opens it there. On its own, serve `artifacts/web/wwwroot` from any static server and open `/viewer/`; `?preset=Nebula`, `?file=<url>` (with `&name=` where the URL does not end in the file's name, `&title=` for the name shown and `&back=` for the page to return to), `?size=1280x720`, `?loop` and `?mute` pick what opens and how; a `file` plays alone, with no preset list. The preset button opens the editor's gallery, a tile per preset under the editor's headings with the build's still where the site has one (ADR-0163), and a box that narrows it. Space plays and pauses, left and right seek five seconds, up and down set the volume, M mutes and F goes full screen. A patch's panel knobs are sliders under the picture, and a double-click puts one back. A patch played on the computer keyboard takes its keys as the editor does, as a piano or in the patch's scale, with PageUp and PageDown moving the octave; its note keys win over the shortcuts. The AOT switch needs `dotnet workload install wasm-tools`; without it the page around the sound runs interpreted, at under half the speed. `window.flyback` drives the page from a script: `presets()`, `open`, `play`, `pause`, `seek`, `size(width, height)`, `volume(level)`, `knobs()`, `turn(knob, value)`, `strike(note, down)`, `release()`, `status()`, `stills()`, the presets the gallery has a still of, and `still(seconds)`, the frame as a PNG at the patch's size.
 
 The sound runs without a page under Node, which the workload brings; `--knob fog=0` turns a panel knob first, `--note 60:0.1:0.6` holds a note on the computer keyboard from one second to another, and `--presets` lists the presets:
 
@@ -265,6 +266,8 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 ```bash
 dotnet run --project src/Flyback.Server
 ```
+
+The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `./stills.sh src/Flyback.Server/wwwroot/stills` gives a local run of the site the stills.
 
 `window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load.
 

@@ -21,7 +21,7 @@ ARG VERSION=""
 
 # Directory.Packages.props among them: it carries every package version, so a
 # restore without it has none.
-COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
+COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json stills.sh ./
 COPY site site
 # All of src/, since the plugins the site starts with are whatever
 # Flyback.Server.csproj lists.
@@ -46,8 +46,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && dotnet workload install wasm-tools
 
+# The stills of every preset the web editor and viewer carry, at /stills/ (ADR-0163).
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app
+    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi; \
+    dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app \
+ && CONFIGURATION="All plugins" ./stills.sh /app/wwwroot/stills
 
 FROM ${RUNTIME}
 LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback
