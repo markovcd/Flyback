@@ -172,9 +172,15 @@
 })();
 
 // The editor itself takes the place of its photograph when asked, on a screen wide
-// enough to patch on; a phone, or a page without this script, opens it in a tab.
+// enough to patch on; a phone opens it in a tab. The button shows only where the
+// editor is served: a site built without it answers 404 there, and elsewhere
+// (Pages pointing at the preset site) the answer is opaque and taken as there.
 (function () {
   document.querySelectorAll("a[data-editor]").forEach(function (link) {
+    fetch(link.href, { method: "HEAD", mode: "no-cors" }).then(function (r) {
+      if (r.ok || r.type === "opaque") link.hidden = false;
+    }).catch(function () {});
+
     link.addEventListener("click", function (e) {
       if (window.innerWidth < 900) return;
       e.preventDefault();

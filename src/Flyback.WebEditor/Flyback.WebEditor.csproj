@@ -5,7 +5,7 @@
     the picture on a canvas of its own. Needs the wasm-tools workload, which links
     Skia and HarfBuzz into the runtime, so it is in neither Flyback.slnx nor the
     gate. The preset site publishes it beside itself and serves it at /editor/,
-    beside the web viewer whose GL calls it makes, when built with -p:WebEditor=true.
+    beside the web viewer whose GL calls it makes, unless built with -p:WebEditor=false.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>

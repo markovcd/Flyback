@@ -86,6 +86,7 @@
   @media (min-width: 900px) { .hero .window { margin: 0 -24px; } }
   /* The photograph of the editor, until asked for the editor itself (site.js). */
   .hero .live { position: relative; }
+  .hero .live .try[hidden] { display: none; }
   .hero .live .try { position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.9); }
   .hero .live iframe { display: block; width: 100%; height: auto; aspect-ratio: 1442 / 939; max-height: 88vh; border: 0; background: var(--window); }
 
@@ -227,7 +228,7 @@
 
     <figure>
       <div class="window live">
-        <a class="button primary try" href="editor/?preset=Slow%20weather" data-editor>
+        <a class="button primary try" href="editor/?preset=Slow%20weather" data-editor hidden>
           <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6 4.5v11l9-5.5z"/></svg>
           Try the editor here
         </a>

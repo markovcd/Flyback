@@ -21,9 +21,13 @@
 
   <!--
     The web editor (ADR-0162), published under editor\ beside the site and served at
-    /editor/, only where asked for with -p:WebEditor=true: it links Skia into the
-    runtime, which needs the wasm-tools workload the gate's image does not have.
+    /editor/. It links Skia into the runtime, which needs the wasm-tools workload, so
+    the gate, whose image has none, builds with -p:WebEditor=false.
   -->
+  <PropertyGroup>
+    <WebEditor Condition="'$(WebEditor)' == ''">true</WebEditor>
+  </PropertyGroup>
+
   <Target Name="PublishWebEditor" AfterTargets="Build" Condition="'$(WebEditor)' == 'true'">
     <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
              Targets="Restore;Publish"

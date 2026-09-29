@@ -46,7 +46,7 @@ container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own
 
 **The preset site serves it at `/editor/`, beside the viewer at `/viewer/`**, whose
 `gl.js` the page imports and whose worker will play its sound. The site publishes
-it beside itself when built with `-p:WebEditor=true`, as its image is.
+it beside itself unless built with `-p:WebEditor=false`, as the gate is.
 
 **The landing page shows it where it shows the editor's photograph.** The hero's
 screenshot of Slow weather carries a button that swaps it for the page in a frame,
@@ -95,8 +95,8 @@ paid on every frame, to keep overlays that can sit beside the preview instead.
 - The window, the editing and the picture share the page's one thread. The sound
   does not.
 - Avalonia.Browser links Skia and HarfBuzz into the runtime, which needs the
-  wasm-tools workload the gate's image does not have, so the page is in neither
-  `Flyback.slnx` nor the gate.
+  wasm-tools workload the gate's image does not have, so the page is not in
+  `Flyback.slnx` and the gate builds the site with `-p:WebEditor=false`.
 - A browser build of the editor pins the WebAssembly Skia and HarfBuzz natives to
   the managed SkiaSharp the editor resolves; Avalonia.Browser's own are older.
 - The release key's public half is `src/Flyback.Editor/Updates/release-key.pem`,

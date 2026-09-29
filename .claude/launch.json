@@ -14,12 +14,6 @@
       "port": 8790
     },
     {
-      "name": "web-editor",
-      "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "src/Flyback.Server", "-p:WebEditor=true"],
-      "port": 8790
-    },
-    {
       "name": "web",
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "src/Flyback.Web"],

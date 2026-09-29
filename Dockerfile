@@ -113,7 +113,7 @@ RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
     fi
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
+    dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore -p:WebEditor=false
 
 # The gate. Every test in the solution — the engine's, the shell's headless UI
 # ones, the plugins' — and the build stops here if any of them does.

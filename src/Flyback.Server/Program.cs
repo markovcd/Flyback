@@ -171,7 +171,7 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = Kept,
 });
 
-// The web editor, where a build with -p:WebEditor=true published it beside the site.
+// The web editor, which every build but -p:WebEditor=false publishes beside the site.
 var editor = Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot");
 
 if (Directory.Exists(editor))
