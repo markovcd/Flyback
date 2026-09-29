@@ -16,6 +16,8 @@
 
 name: Release
 
+run-name: Release ${{ inputs.version && format('v{0}', inputs.version) || 'next minor' }}
+
 on:
   workflow_dispatch:
     inputs:
