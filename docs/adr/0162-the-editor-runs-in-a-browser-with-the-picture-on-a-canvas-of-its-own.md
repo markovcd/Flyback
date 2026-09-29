@@ -48,7 +48,7 @@ container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own
 it beside itself unless built with `-p:WebEditor=false`.
 
 **The landing page shows it where it shows the editor's photograph.** The hero's
-screenshot of Slow weather carries a button that swaps it for the page in a frame,
+screenshot of Flyback Theme carries a button that swaps it for the page in a frame,
 opened on the same preset with `?preset=`. Nothing loads until it is pressed; a
 screen narrower than 900 pixels opens the page in a tab instead.
 
