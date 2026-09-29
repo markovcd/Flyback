@@ -54,10 +54,12 @@ public static partial class WebExports
     private static PluginCatalog Load()
     {
         var catalog = PluginHost.LoadTypes(
+#if SITE_PLUGINS
             typeof(Flyback.Plugins.Easy.EasyPlugin),
-            typeof(Flyback.Plugins.Effects.EffectsPlugin),
             typeof(Flyback.Plugins.Figures.FiguresPlugin),
             typeof(Flyback.Plugins.Fractals.FractalsPlugin),
+#endif
+            typeof(Flyback.Plugins.Effects.EffectsPlugin),
             typeof(Flyback.Plugins.Mastering.MasteringPlugin),
             typeof(Flyback.Plugins.Picture.PicturePlugin),
             typeof(Flyback.Plugins.Voice.VoicePlugin));

@@ -46,7 +46,8 @@ jobs:
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      # The workload and the Python its Emscripten runs on, as in the site's
+      # Only the plugins the desktop ships (SitePlugins=false); the preset site's stay on
+      # the preset site. The workload and the Python its Emscripten runs on, as in the site's
       # Dockerfile. The editor imports the viewer's gl.js from ../viewer/, and the
       # editor and the presets page show the presets by the stills at stills/ (ADR-0163).
       - name: Build the web viewer and editor, and draw the stills
@@ -55,9 +56,9 @@ jobs:
             apt-get update
             apt-get install --yes --no-install-recommends python3
             dotnet workload install wasm-tools
-            dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/web
-            dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/editor
-            CONFIGURATION="All plugins" ./stills.sh out/stills
+            dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -p:SitePlugins=false -o out/web
+            dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -p:SitePlugins=false -o out/editor
+            ./stills.sh out/stills
           '
           cp -r out/web/wwwroot/viewer site/viewer
           cp -r out/editor/wwwroot site/editor

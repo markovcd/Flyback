@@ -23,8 +23,10 @@ author, tags and still, and the build that drew them.
 **The pipeline runs it once per build**, through `stills.sh`, which lays the editor and
 the command line out side by side so the shipped plugins load: the release lays the
 stills beside each platform's programs, and the preset site's image and the Pages
-workflow publish them at `/stills/`, with the preset site's plugins as well, since the
-web viewer carries them. The index is the presets page's list of shipped presets.
+workflow publish them at `/stills/`. The preset site's web viewer carries the site's
+plugins and its stills are drawn with them (`CONFIGURATION="All plugins"`); Pages builds
+the viewer with `-p:SitePlugins=false` and draws only what the desktop ships. The index
+is the presets page's list of shipped presets.
 
 **A program shows a still only when the index is its own build's.** The desktop reads
 `stills/` beside itself and the web editor fetches `../stills/`; a saved preset, a
