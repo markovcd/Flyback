@@ -15,3 +15,4 @@ Feature: The web viewer
   Scenario: The preset site serves the web viewer
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
+    And a browser that kept an earlier build of it asks for this one

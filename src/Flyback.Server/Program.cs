@@ -157,7 +157,15 @@ app.UseDefaultFiles();
 var types = new FileExtensionContentTypeProvider();
 types.Mappings[".pdb"] = "application/octet-stream";
 
-app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = types });
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = types,
+    OnPrepareResponse = served =>
+    {
+        if (ViewerCache.For(served.Context.Request.Path) is { } keep)
+            served.Context.Response.Headers.CacheControl = keep;
+    },
+});
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(media.Root),

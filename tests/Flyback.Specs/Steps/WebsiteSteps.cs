@@ -101,6 +101,26 @@ public sealed partial class WebsiteSteps : IDisposable
         missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
     }
 
+    /// <summary>
+    /// The files whose names stay put across builds, the loader among them, are checked
+    /// with the site before each use; a file named with its fingerprint is kept for good.
+    /// </summary>
+    [Then("a browser that kept an earlier build of it asks for this one")]
+    public async Task ThenANewBuildReachesAKeptPage()
+    {
+        foreach (var file in (string[])["", "main.js", "_framework/dotnet.js"])
+        {
+            using var response = await client.GetAsync(new Uri($"/viewer/{file}", UriKind.Relative));
+            (response.Headers.CacheControl?.NoCache ?? false).ShouldBeTrue($"/viewer/{file}");
+        }
+
+        var loader = await client.GetStringAsync(new Uri("/viewer/_framework/dotnet.js", UriKind.Relative));
+        var fingerprinted = Framework().Match(loader).Groups["name"].Value;
+
+        using var kept = await client.GetAsync(new Uri($"/viewer/_framework/{fingerprinted}", UriKind.Relative));
+        (kept.Headers.CacheControl?.MaxAge).ShouldBe(TimeSpan.FromDays(365), fingerprinted);
+    }
+
     /// <summary>A file the runtime's loader fetches: named with its fingerprint, where its logical name has none.</summary>
     [GeneratedRegex("""["'](?<name>[A-Za-z0-9_.\-]+\.[a-z0-9]{10}\.(?:wasm|js|pdb))["']""")]
     private static partial Regex Framework();
