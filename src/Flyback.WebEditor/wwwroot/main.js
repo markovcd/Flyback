@@ -16,6 +16,7 @@ runtime.setModuleImports('page', {
     canvas.style.display = 'block';
     return canvas;
   },
+  showCanvas: (canvas, shown) => { canvas.style.visibility = shown ? 'visible' : 'hidden'; },
   sizeCanvas: (canvas, width, height) => {
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;

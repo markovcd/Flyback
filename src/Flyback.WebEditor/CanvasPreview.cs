@@ -18,7 +18,8 @@ namespace Flyback.WebEditor;
 /// <remarks>
 /// A page has one thread, so a frame is drawn in the tick that moves the clock
 /// rather than handed to a render thread. The canvas is the browser's, drawn above
-/// Avalonia's own, so nothing of Avalonia's can overlay it.
+/// Avalonia's own, so nothing of Avalonia's can overlay it: while a dialog is up it
+/// is hidden, and the black box it sits in shows instead.
 /// </remarks>
 internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 {
@@ -29,6 +30,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     private readonly Stopwatch frameClock = Stopwatch.StartNew();
     private readonly FrameRateMeter meter = new();
     private readonly WebGl gl = new();
+    private readonly IDialog dialog;
 
     private JSObject? canvas;
     private GpuFrameRenderer? renderer;
@@ -40,12 +42,14 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     private bool dirty = true;
     private bool linking;
     private bool finished;
+    private bool hidden;
 
     /// <summary>The cue this surface holds a part of until the program's shader is built.</summary>
     private Cue? part;
 
-    public CanvasPreview()
+    public CanvasPreview(IDialog dialog)
     {
+        this.dialog = dialog;
         timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = UncappedInterval };
         timer.Tick += OnTick;
     }
@@ -160,6 +164,15 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
         var delta = now - lastTick;
         lastTick = now;
 
+        if (dialog.IsShowing != hidden)
+        {
+            hidden = !hidden;
+            ShowCanvas(canvas, !hidden);
+            dirty = true;
+        }
+
+        if (hidden) return;
+
         var scaling = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1d;
         var pixels = new PixelSize(
             Math.Max(1, (int)Math.Round(Bounds.Width * scaling)),
@@ -268,6 +281,9 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     [JSImport("createCanvas", PageModule.Name)]
     private static partial JSObject CreateCanvas();
+
+    [JSImport("showCanvas", PageModule.Name)]
+    private static partial void ShowCanvas(JSObject canvas, bool shown);
 
     [JSImport("sizeCanvas", PageModule.Name)]
     private static partial void SizeCanvas(JSObject canvas, int width, int height);

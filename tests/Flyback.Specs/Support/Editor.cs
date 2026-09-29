@@ -365,6 +365,13 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
     public bool Paused => ReadWindow(open => ToolTip.GetTip(open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "pause")) as string == Toolbar.PlayTip);
 
+    /// <summary>The names of the buttons on the toolbar, left to right.</summary>
+    public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>
+        Service<Toolbar>().View.GetVisualDescendants().OfType<Button>().Select(b => b.Name).ToList());
+
+    /// <summary>Whether the picture has the whole window.</summary>
+    public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
+
     /// <summary>Gives the picture the whole window, as a double-click on it does.</summary>
     public void FullScreen() =>
         DoWindow((open, _) =>

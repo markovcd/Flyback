@@ -45,16 +45,19 @@ jobs:
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      # The workload and the Python its Emscripten runs on, as in the site's Dockerfile.
-      - name: Build the web viewer
+      # The workload and the Python its Emscripten runs on, as in the site's
+      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/.
+      - name: Build the web viewer and editor
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
             apt-get update
             apt-get install --yes --no-install-recommends python3
             dotnet workload install wasm-tools
             dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/web
+            dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/editor
           '
           cp -r out/web/wwwroot/viewer site/viewer
+          cp -r out/editor/wwwroot site/editor
 
       # The presets page lists what the viewer offers, as the viewer itself says it.
       - name: List the viewer's presets

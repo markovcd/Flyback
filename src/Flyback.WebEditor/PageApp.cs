@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Flyback.WebEditor;
 
 /// <summary>
-/// The editor in a page (ADR-0162): the seven plugins that make modules, nothing kept
+/// The editor in a page (ADR-0162): the shipped plugins that make modules, nothing kept
 /// between visits, and the picture on a canvas of its own.
 /// </summary>
 internal sealed class PageApp : Application
@@ -23,19 +23,21 @@ internal sealed class PageApp : Application
             throw new NotSupportedException("The web editor runs in a page.");
 
         var plugins = PluginHost.LoadTypes(
-            typeof(Flyback.Plugins.Easy.EasyPlugin),
             typeof(Flyback.Plugins.Effects.EffectsPlugin),
-            typeof(Flyback.Plugins.Figures.FiguresPlugin),
-            typeof(Flyback.Plugins.Fractals.FractalsPlugin),
             typeof(Flyback.Plugins.Mastering.MasteringPlugin),
             typeof(Flyback.Plugins.Picture.PicturePlugin),
+#if ALL_PLUGINS
+            typeof(Flyback.Plugins.Easy.EasyPlugin),
+            typeof(Flyback.Plugins.Figures.FiguresPlugin),
+            typeof(Flyback.Plugins.Fractals.FractalsPlugin),
+#endif
             typeof(Flyback.Plugins.Voice.VoicePlugin));
 
         NodeCatalog.Install(plugins.Modules);
 
-        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins }, services =>
+        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, InPage = true }, services =>
         {
-            services.AddSingleton<Func<IGpuPreview>>(() => new CanvasPreview());
+            services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(sp.GetRequiredService<IDialog>()));
             services.AddSingleton<ITitle, PageTitle>();
             services.AddSingleton<IFocus, PageFocus>();
             services.AddSingleton<IClose, PageClose>();

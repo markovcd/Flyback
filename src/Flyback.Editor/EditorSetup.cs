@@ -98,6 +98,12 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>Keep the CPU's programs on the interpreter for the whole run.</summary>
     public bool Interpreted { get; init; }
 
+    /// <summary>
+    /// The editor is in a browser page (ADR-0162): nothing is opened, saved or recorded,
+    /// there is no assistant, settings, plugins or About, and the picture stays put.
+    /// </summary>
+    public bool InPage { get; init; }
+
     /// <summary>What the last update and any plugin just installed did, said once on the status bar.</summary>
     public string? OpeningNote { get; init; }
 

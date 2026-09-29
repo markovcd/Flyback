@@ -102,8 +102,11 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, Reactions reactions, IDialog dialog, RecordingState recording)
+    /// <param name="setup">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, Reactions reactions, IDialog dialog, RecordingState recording, EditorSetup setup)
     {
+        var full = !setup.InPage;
+
         Seek = seek;
         this.recording = recording;
 
@@ -166,14 +169,19 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
         var patchwork = ToolbarButtons.Group();
 
         patchwork.Children.Add(presets.View);
-        patchwork.Children.Add(Open);
-        patchwork.Children.Add(Save);
+
+        if (full)
+        {
+            patchwork.Children.Add(Open);
+            patchwork.Children.Add(Save);
+        }
+
         patchwork.Children.Add(ToolbarButtons.Separator());
         patchwork.Children.Add(Undo);
         patchwork.Children.Add(Redo);
         patchwork.Children.Add(Tidy);
         patchwork.Children.Add(ToolbarButtons.Separator());
-        patchwork.Children.Add(Assistant);
+        if (full) patchwork.Children.Add(Assistant);
         patchwork.Children.Add(Code);
         patchwork.Children.Add(Knobs);
         patchwork.Children.Add(Swap);
@@ -185,7 +193,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
         transport.Children.Add(Pause);
         transport.Children.Add(Rewind);
         transport.Children.Add(Seek.View);
-        transport.Children.Add(Record);
+        if (full) transport.Children.Add(Record);
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
@@ -206,8 +214,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
         bar.Children.Add(patchwork);
         bar.Children.Add(ToolbarButtons.Separator());
         bar.Children.Add(transport);
-        bar.Children.Add(ToolbarButtons.Separator());
-        bar.Children.Add(program);
+
+        if (full)
+        {
+            bar.Children.Add(ToolbarButtons.Separator());
+            bar.Children.Add(program);
+        }
 
         View = new Border
         {

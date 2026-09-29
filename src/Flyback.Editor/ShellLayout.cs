@@ -33,7 +33,8 @@ internal sealed class ShellLayout(
     OutputSettingRepository settings,
     Document document,
     Usage usage,
-    WindowLayoutKeeper layoutKeeper)
+    WindowLayoutKeeper layoutKeeper,
+    EditorSetup setup)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -240,7 +241,7 @@ internal sealed class ShellLayout(
         KeyboardNavigation.SetIsTabStop(previewBox, false);
         previewBox.DoubleTapped += (_, e) =>
         {
-            fullScreen.Toggle();
+            if (!setup.InPage) fullScreen.Toggle();
             e.Handled = true;
         };
         Grid.SetColumn(previewBox, column);

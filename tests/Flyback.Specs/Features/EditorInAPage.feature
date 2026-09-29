@@ -1,0 +1,17 @@
+Feature: The editor in a page offers only what a page can do
+  In a browser page the editor opens, saves and records nothing, and has no assistant,
+  settings, plugins or About. Its picture stays where the layout puts it.
+
+  Scenario: A page's toolbar keeps the patch's buttons and drops the program's
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
+    And the toolbar still has "undo, redo, tidy, code, controls, swap, pause, rewind"
+
+  Scenario: A double-click on a page's picture leaves it where it is
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    When the picture is double-clicked
+    Then the picture does not have the whole window
