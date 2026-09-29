@@ -55,4 +55,4 @@ jobs:
             dist/*.zip
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
-          generate_release_notes: true
+          body_path: dist/RELEASE_NOTES.md

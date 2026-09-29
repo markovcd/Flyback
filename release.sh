@@ -119,6 +119,12 @@ if ! $github; then
   cp "$temp/site-plugins/"*.fbkp dist/
 fi
 
+# The release page shows this version's changelog section.
+awk -v h="${version}" '
+  /^## / { on = ($2 == h || $2 == "v" h) ; next }
+  on
+' CHANGELOG.md | sed -e '/./,$!d' > dist/RELEASE_NOTES.md
+
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   echo "version=$version" >> "$GITHUB_OUTPUT"
   echo "tag=$tag" >> "$GITHUB_OUTPUT"
