@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Flyback.App.Site;
@@ -7,8 +8,10 @@ namespace Flyback.App.Site;
 /// <summary>The presets shared on the preset site, as <c>/api/v1/presets</c> lists them.</summary>
 internal sealed class PresetSite(HttpClient http, Uri root)
 {
-    /// <summary>The public preset site.</summary>
-    public static readonly Uri Live = new("https://flyback.nasik2137.uk/");
+    /// <summary>The site this copy was built to ask: <c>PresetSite</c> in Flyback.App.csproj.</summary>
+    public static Uri Built { get; } = new(typeof(PresetSite).Assembly
+        .GetCustomAttributes<AssemblyMetadataAttribute>()
+        .Single(a => a.Key == "PresetSite").Value!);
 
     public Uri Root { get; } = root;
 

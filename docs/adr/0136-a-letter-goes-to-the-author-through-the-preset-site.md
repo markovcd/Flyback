@@ -73,4 +73,4 @@ its emoji face, which is a full-color picture in a bar of thin gray strokes.
 
 ## Amendment, 2026-09-29: the public address
 
-From 0.5.1 the shipped build points at `PresetSite.Live`, `https://flyback.nasik2137.uk/`, so a letter and a shared preset reach the site.
+From 0.5.1 a release points at `https://flyback.nasik2137.uk/`, so a letter and a shared preset reach the site; see the amendment to [0133](0133-a-shared-plugin-is-unpublished-until-the-admin-publishes-it.md).

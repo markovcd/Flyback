@@ -69,4 +69,4 @@ request limit.
 
 ## Amendment, 2026-09-29: the public address
 
-The editor asks the public site, `https://flyback.nasik2137.uk/`, from 0.5.1 on.
+The editor asks the site its build names, `PresetSite` in Flyback.App.csproj: `https://flyback.nasik2137.uk/` for a release and `http://localhost:8790/` for a Debug build, as Rider makes. It is fixed at build time and never read at run time, so nothing outside the binary can send the editor to another site.

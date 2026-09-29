@@ -56,6 +56,20 @@
   </ItemGroup>
 
   <!--
+    The preset site is fixed at build time, never read at run time, so nothing
+    outside the binary can send the editor elsewhere. A Debug build, as Rider
+    makes, asks the site running locally; -p:PresetSite= names another.
+  -->
+  <PropertyGroup>
+    <PresetSite Condition="'$(PresetSite)' == '' and '$(Configuration)' == 'Debug'">http://localhost:8790/</PresetSite>
+    <PresetSite Condition="'$(PresetSite)' == ''">https://flyback.nasik2137.uk/</PresetSite>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="PresetSite" Value="$(PresetSite)" />
+  </ItemGroup>
+
+  <!--
     Not a reference: the shell must not know what a WASAPI is. This only says
     that the plugin ships in the box, and Directory.Build.targets puts it under
     plugins\WinIO\ in the output. Deleting one of these lines removes sound and
