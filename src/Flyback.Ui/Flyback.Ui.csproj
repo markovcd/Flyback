@@ -24,8 +24,8 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
 
-    <!-- For the driver both programs start Windows on; see GraphicsDrivers. -->
-    <PackageReference Include="Avalonia.Win32" />
+    <!-- For the driver both programs start Windows on; see GraphicsDrivers. Not passed on: the desktop shells get it from Avalonia.Desktop, and the web editor must not ship it. -->
+    <PackageReference Include="Avalonia.Win32" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- One file per instrument Flyback knows by name: its tracks, its knobs and whether it conducts. -->
