@@ -407,9 +407,53 @@ public class ViewerWindowTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_patch_with_no_length_plays_on_past_the_editors_three_minutes()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var run = Clocked(Options() with { From = Patch.DefaultLength - 0.5 }, () => now, device, Files(Tone()));
+        var player = run.Player;
+
+        device.Pump((int)(GlobalConstants.SampleRate * 1.2));
+        now = 1.2;
+        player.Tick();
+
+        player.Paused.ShouldBeFalse();
+        player.Time.ShouldBeGreaterThan(Patch.DefaultLength);
+    }
+
+    [AvaloniaFact]
+    public void A_run_with_no_window_ends_a_patch_with_no_length_at_three_minutes()
+    {
+        var now = 0.0;
+        var device = new Loopback();
+        using var run = Clocked(Options() with { Hidden = true, From = Patch.DefaultLength - 0.5 }, () => now, device, Files(Tone()));
+        var finished = 0;
+        run.Player.Finished += () => finished++;
+
+        device.Pump((int)(GlobalConstants.SampleRate * 1.2));
+        now = 1.2;
+        run.Player.Tick();
+
+        finished.ShouldBe(1);
+    }
+
+    [AvaloniaFact]
+    public void A_patch_with_no_length_has_no_strip_and_no_loop()
+    {
+        var window = Open(Plasma(), Options());
+        var overlay = window.Overlay.ShouldNotBeNull();
+
+        overlay.Track.IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void The_transport_waits_behind_dots_at_the_top_and_its_strip_moves_the_clock()
     {
-        var window = Open(Plasma(), Options() with { Size = new PixelSize(640, 360) });
+        var lasting = Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+        lasting.Length = Patch.DefaultLength;
+
+        var window = Open(Files(lasting), Options() with { Size = new PixelSize(640, 360) });
         var seek = window.Overlay.ShouldNotBeNull();
 
         seek.VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);

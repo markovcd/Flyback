@@ -162,11 +162,19 @@ public sealed class TransportOverlay : TuckedAway
         set => track.IsEnabled = value;
     }
 
-    /// <summary>Moves the thumb to <paramref name="seconds"/> of <paramref name="length"/>, unless a hand has it.</summary>
-    public void Follow(double seconds, double length, bool loops)
+    /// <summary>
+    /// Moves the thumb to <paramref name="seconds"/> of <paramref name="length"/>, unless a
+    /// hand has it. A patch with no length plays on, so it has no strip and no loop.
+    /// </summary>
+    public void Follow(double seconds, double? length, bool loops)
     {
-        track.Maximum = length;
-        if (!track.Held) track.Value = Math.Min(seconds, length);
+        track.IsVisible = loopButton.IsVisible = length is not null;
+
+        if (length is { } end)
+        {
+            track.Maximum = end;
+            if (!track.Held) track.Value = Math.Min(seconds, end);
+        }
 
         if (Looped == loops) return;
 

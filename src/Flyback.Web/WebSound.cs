@@ -35,7 +35,7 @@ internal sealed class WebSound : IDisposable
     {
         var (patch, samples, pictures) = opened;
 
-        Length = patch.Lasts;
+        Length = patch.Length;
 
         sound = patch.CompileForAudio(samples: samples, pictures: pictures, played: true).Program;
         picture = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
@@ -59,8 +59,8 @@ internal sealed class WebSound : IDisposable
     /// <summary>Why the sound runs on the interpreter rather than as JavaScript, or null when it does not.</summary>
     public string? Interpreted { get; }
 
-    /// <summary>How long the patch plays for, in seconds.</summary>
-    public double Length { get; }
+    /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
+    public double? Length { get; }
 
     public int SoundOps => sound.Ops.Length;
 

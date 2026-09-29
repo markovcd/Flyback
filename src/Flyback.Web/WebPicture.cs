@@ -28,7 +28,7 @@ internal sealed class WebPicture
         var (patch, samples, pictures) = opened;
 
         Resolution = new SurfaceSize(width, height);
-        Length = patch.Lasts;
+        Length = patch.Length;
 
         picture = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
 
@@ -38,8 +38,8 @@ internal sealed class WebPicture
 
     public SurfaceSize Resolution { get; }
 
-    /// <summary>How long the patch plays for, in seconds.</summary>
-    public double Length { get; }
+    /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
+    public double? Length { get; }
 
     public int PictureOps => picture.Ops.Length;
 

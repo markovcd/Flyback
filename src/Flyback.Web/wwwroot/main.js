@@ -199,13 +199,16 @@ function seek(seconds) {
   speaker.postMessage({ seek: seconds, generation });
 }
 
+/** Where the open patch ends, in seconds: never, for one that has not said how long it plays. */
+const end = () => info?.length ?? Infinity;
+
 /** Why the sound is not playing along, when it is not and could. */
 let held = null;
 
 async function play() {
   if (info === null || playing) return;
 
-  if (pausedAt >= info.length) seek(0);
+  if (pausedAt >= end()) seek(0);
 
   // A queue left by a pause carries on where it stopped; anything else starts again where the picture is.
   const carryOn = heard;
@@ -479,7 +482,8 @@ async function open(opening, label, at = 0, keepKnobs = false) {
     else if (sound.speed !== null && sound.speed < FAST_ENOUGH) tooSlow(sound.speed);
 
     document.title = `${shown} · Flyback Viewer`;
-    ui.seek.max = info.length;
+    ui.seek.hidden = !Number.isFinite(end());
+    if (!ui.seek.hidden) ui.seek.max = end();
   }
 
   ui.about.textContent = ui.about.title = info?.description ?? '';
@@ -488,7 +492,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
 
   if (preview) ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
 
-  seek(info === null ? 0 : Math.min(at, info.length));
+  seek(info === null ? 0 : Math.min(at, end()));
   ui.cover.hidden = error === null && (was || at > 0);
   ui.cover.textContent = error ?? '▶  Click to play';
 
@@ -557,7 +561,7 @@ function remember(changes) {
 function seekBy(seconds) {
   if (info === null) return;
 
-  seek(Math.min(Math.max(now() + seconds, 0), info.length));
+  seek(Math.min(Math.max(now() + seconds, 0), end()));
   paint();
 }
 
@@ -581,7 +585,7 @@ function paint() {
   ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   ui.mute.textContent = !soundAllowed || muted || loudness === 0 ? '🔇' : '🔊';
   ui.volume.value = loudness;
-  ui.clock.textContent = ready ? `${clockText(now())} / ${clockText(info.length)}` : '';
+  ui.clock.textContent = !ready ? '' : Number.isFinite(end()) ? `${clockText(now())} / ${clockText(end())}` : clockText(now());
 
   const parts = [];
 
@@ -612,13 +616,13 @@ function frame() {
 
   let t = now();
 
-  if (playing && t >= info.length) {
+  if (playing && t >= end()) {
     if (looped) {
       seek(0);
       t = 0;
     } else {
       pause();
-      pausedAt = t = info.length;
+      pausedAt = t = end();
     }
   }
 

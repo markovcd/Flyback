@@ -153,6 +153,7 @@ button:disabled, select:disabled { opacity: 0.5; cursor: default; }
 .file input { display: none; }
 
 #clock {
+  margin-right: auto;
   color: var(--muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -206,7 +207,6 @@ footer .error { color: var(--sink); }
   header, .transport { padding: 8px; gap: 6px; }
   .transport { flex-wrap: wrap; }
   #seek { order: -1; flex-basis: 100%; }
-  #clock { margin-right: auto; }
   #volume { width: 64px; }
   #panel { padding: 8px; gap: 6px 12px; }
   #panel label { flex-basis: 40%; }

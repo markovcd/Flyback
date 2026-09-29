@@ -145,8 +145,8 @@ internal sealed class ViewerPlayer : IDisposable
     /// <summary>Where the picture is, in seconds.</summary>
     public double Time => transport.Time;
 
-    /// <summary>How long the patch plays for, in seconds.</summary>
-    public double Length => patch.Lasts;
+    /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
+    public double? Length => patch.Length;
 
     /// <summary>Whether the patch comes round to nought at the end of its length rather than stopping there.</summary>
     public bool Looped { get; set; }
@@ -193,6 +193,8 @@ internal sealed class ViewerPlayer : IDisposable
     /// <remarks>
     /// At the end of its length a looped patch comes round to nought. Otherwise it
     /// stops there, which ends a run with no window or with a <c>--for</c> still to run.
+    /// A patch with no length has no end, except in a run with no window and no
+    /// <c>--for</c>, which ends at <see cref="Patch.DefaultLength"/>.
     /// </remarks>
     internal void Tick()
     {
@@ -214,7 +216,14 @@ internal sealed class ViewerPlayer : IDisposable
 
         if (options.Loop is { } every && sinceLoop >= every) Rewind();
 
-        if (Time < Length) return;
+        if (Length is not { } length)
+        {
+            // Plays on in a window; a run with none ends where the editor's clock would.
+            if (options.Hidden && options.For is null && Time >= Patch.DefaultLength) Finish();
+            return;
+        }
+
+        if (Time < length) return;
 
         if (Looped)
         {

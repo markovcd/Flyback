@@ -105,6 +105,13 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         furthest.ShouldBeGreaterThan(16f / 32768f, "what was done to it changed nothing a listener could hear");
     }
 
+    [Then("the web viewer gives it no length, so no end and no seek bar")]
+    public void ThenItHasNoLength()
+    {
+        session.Presets.Single().Build(Installed.Value.Modules).Length.ShouldBeNull("the preset says a length, so this proves nothing");
+        said!["length"].ShouldBeNull();
+    }
+
     [Then("the web viewer says what the preset is for")]
     public void ThenItIsDescribed()
     {

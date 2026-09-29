@@ -24,6 +24,11 @@ Feature: The web viewer
     Then its sound is the desktop's with the same note played, to within one step of 16 bits
     And it is not the sound with nothing played
 
+  Scenario: A patch that says no length plays on in the web viewer
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 0.1 seconds
+    Then the web viewer gives it no length, so no end and no seek bar
+
   Scenario: The web viewer says what a preset is for
     Given the shipped preset "Sidebands"
     When it plays in the web viewer for 0.1 seconds
