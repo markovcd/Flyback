@@ -63,7 +63,7 @@ public class PatchWorkbenchTests
         await Call(bench, "add_module", """
             {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}
             """);
-        await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}""");
         await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""");
 
         return bench;
@@ -1273,7 +1273,7 @@ public class PatchWorkbenchTests
 
         await Call(bench, "add_module", """{"type_id":"time","handle":"clock1"}""");
         await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
-        await Call(bench, "connect", """{"from":"clock1","to":"tone1","to_port":"in"}""");
+        await Call(bench, "connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}""");
         var wired = await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"color"}""");
 
         wired.Text.ShouldContain("No issues.");

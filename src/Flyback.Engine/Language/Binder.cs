@@ -88,6 +88,7 @@ public sealed class Binder
         expressions = new ExpressionBinder(new ExpressionBinder.Context
         {
             Source = Source,
+            Clock = () => new Placed(Shared(ref clock, NodeCatalog.TimeTypeId), modules.Require(NodeCatalog.TimeTypeId)),
             Unknown = Unknown,
             Mention = Mention,
             Find = Find,

@@ -20,3 +20,25 @@ Feature: A patch says how long it plays
       sine(freq: 220) |> out.left
       """
     Then the patch plays for 180 seconds
+
+  # Time's progress runs 0 to 1 across the length, so a fade or a sweep follows
+  # the length when it changes.
+  Scenario: The clock says how far through its length the patch is
+    Given the text:
+      """
+      length 4
+      t.progress |> out.left
+      out.volume = 1
+      """
+    Then the sound is about 0.25 at 1 seconds
+    And the sound is about 0.75 at 3 seconds
+    When the patch is written out as text and read back
+    Then the sound is about 0.75 at 3 seconds
+
+  Scenario: The clock says how long the patch plays for
+    Given the text:
+      """
+      t.length / 1000 |> out.left
+      out.volume = 1
+      """
+    Then the sound is about 0.18 at 0 seconds

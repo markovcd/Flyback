@@ -36,7 +36,9 @@ internal static class Handbook
           1.78 on 16:9, so `Length(x, y)` is a true radius. Coordinates'
           `aspect` is that 1.78, for reaching the edge of the frame.
         - `t` is seconds since the patch started, from the **Time** module or
-          a socket normalled to it.
+          a socket normalled to it. `t.length` is how long the patch plays for
+          and `t.progress` how far through it, 0 to 1: a fade-out or a sweep
+          across the piece reads `t.progress`.
         - The screen takes 0..1 per channel, clamped, with no gamma: 0.5 is mid
           gray, 4 is as white as 1, -1 is black. There is no headroom to pull
           back down later.
@@ -154,7 +156,7 @@ internal static class Handbook
 
         Some sockets already carry a signal with nothing patched in.
         `describe_patch` lists them as `carrying a signal with no wire:
-        sine1.in <- Time`; one hidden Time and one hidden Coordinates serve the
+        sine1.in <- Time t`; one hidden Time and one hidden Coordinates serve the
         whole patch.
 
         - **`in` on every oscillator and sequencer is normalled to Time**, so

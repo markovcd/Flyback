@@ -157,7 +157,7 @@ public static class PatchCompiler
                 IssueSeverity.Warning));
         }
 
-        var emitter = new Emitter();
+        var emitter = new Emitter { Length = patch.Lasts };
 
         // Each node as lowered so far, with the x, y and t it read. A sweep reuses
         // one only where the domain it pushed left those registers alone: a clock

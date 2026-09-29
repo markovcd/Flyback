@@ -952,7 +952,12 @@ public static class PatchPrinter
                 });
             }
 
-            if (wire.SourceNode == plan.Clock) return Part.Of("t");
+            if (wire.SourceNode == plan.Clock)
+            {
+                return Part.Of(wire.SourcePort == 0
+                    ? "t"
+                    : $"t.{modules.Require(NodeCatalog.TimeTypeId).Outputs[wire.SourcePort].Name}");
+            }
 
             if (patch.Find(wire.SourceNode) is not { } node || modules.Get(node.TypeId) is not { } def)
                 return Part.Of("0");

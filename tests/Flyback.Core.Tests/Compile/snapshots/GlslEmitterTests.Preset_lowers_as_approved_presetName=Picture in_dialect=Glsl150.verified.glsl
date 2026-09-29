@@ -199,20 +199,20 @@ void main()
     float py = vUv.y * 2.0 - 1.0;
 
     vec2 w5 = vec2(uTime, uTimeLo); float r5 = w5.x + w5.y;
-    float r6 = uK[0];
-    float r7 = uK[1];
-    vec2 w9 = dad(dml(w5, vec2(r6, 0.0)), vec2(r7, 0.0)); float r9 = w9.x + w9.y;
-    float r45 = r7;
-    float r46 = r7;
-    float r47 = r7;
-    float r48 = uK[2];
-    float r49 = uK[3];
-    float r50 = r45 * r48;
-    float r51 = r46 * r48;
-    float r52 = r47 * r48;
-    float r53 = r50 + r49;
-    float r54 = r51 + r49;
-    float r55 = r52 + r49;
+    float r8 = uK[0];
+    float r9 = uK[1];
+    vec2 w11 = dad(dml(w5, vec2(r8, 0.0)), vec2(r9, 0.0)); float r11 = w11.x + w11.y;
+    float r48 = r9;
+    float r49 = r9;
+    float r50 = r9;
+    float r51 = uK[2];
+    float r52 = uK[3];
+    float r53 = r48 * r51;
+    float r54 = r49 * r51;
+    float r55 = r50 * r51;
+    float r56 = r53 + r52;
+    float r57 = r54 + r52;
+    float r58 = r55 + r52;
 
-    fragColor = vec4(sat(r53), sat(r54), sat(r55), 1.0);
+    fragColor = vec4(sat(r56), sat(r57), sat(r58), 1.0);
 }

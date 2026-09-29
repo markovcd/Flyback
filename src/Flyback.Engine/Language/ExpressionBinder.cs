@@ -8,6 +8,7 @@ namespace Flyback.Core.Language;
 internal sealed class ExpressionBinder
 {
     private readonly Func<string, Binder.Value?> source;
+    private readonly Func<Binder.Value> clock;
     private readonly Action<NameExpr> unknown;
     private readonly Action<Expr, Binder.Value> mention;
     private readonly Func<IReadOnlyList<PortSpec>, string, int> find;
@@ -21,6 +22,7 @@ internal sealed class ExpressionBinder
     internal sealed class Context
     {
         internal required Func<string, Binder.Value?> Source { get; init; }
+        internal required Func<Binder.Value> Clock { get; init; }
         internal required Action<NameExpr> Unknown { get; init; }
         internal required Action<Expr, Binder.Value> Mention { get; init; }
         internal required Func<IReadOnlyList<PortSpec>, string, int> Find { get; init; }
@@ -38,6 +40,7 @@ internal sealed class ExpressionBinder
     internal ExpressionBinder(Context context)
     {
         source = context.Source;
+        clock = context.Clock;
         unknown = context.Unknown;
         mention = context.Mention;
         find = context.Find;
@@ -70,6 +73,8 @@ internal sealed class ExpressionBinder
     private Binder.Value? Read(NameExpr expr, Binder.Scope scope)
     {
         if (expr.Port is null && source(expr.Name) is { } value) return value;
+
+        if (expr is { Name: "t", Port: { } port }) return Output(clock(), port, expr.Line, expr.Column);
 
         if (expr.Name == "out")
         {

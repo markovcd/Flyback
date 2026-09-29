@@ -207,7 +207,7 @@ public class NormalledTests
         var osc = Modules.Require("osc.sine");
         var rings = Modules.Require("pattern.rings");
 
-        Modules.Normalled(osc.Inputs[0]).ShouldBe("Time");
+        Modules.Normalled(osc.Inputs[0]).ShouldBe("Time t");
         Modules.Normalled(rings.Inputs[0]).ShouldBe("Coordinates x");
         Modules.Normalled(rings.Inputs[1]).ShouldBe("Coordinates y");
 

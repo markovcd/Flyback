@@ -77,10 +77,20 @@ public partial class NodeCatalog
         // other signal in the catalog.
         yield return new NodeDef(
             TimeTypeId, "Time", ModuleCategories.Sources,
-            [], [Num("t") with { Help = "Seconds since the patch started." }],
-            (em, _) => [em.Load(OpCode.LoadT)],
-            "The clock, for motion or time-varying signals. Scale it with Multiply when you want "
-            + "a slower rhythm.");
+            [],
+            [
+                Num("t") with { Help = "Seconds since the patch started." },
+                Num("length") with { Help = "How long the patch plays for, in seconds: the length it sets, or three minutes." },
+                Num("progress", 0f, 0f, 1f) with { Help = "How far through its length the patch is, 0 to 1: t divided by length." },
+            ],
+            (em, _) =>
+            {
+                var t = em.Load(OpCode.LoadT);
+                var length = em.Constant((float)em.Length);
+                return [t, length, em.Binary(OpCode.Div, t, length)];
+            },
+            "The clock, for motion or time-varying signals, and how far through its length the patch is. "
+            + "Scale t with Multiply when you want a slower rhythm.");
 
         yield return new NodeDef(
             SampleTypeId, "Sample", ModuleCategories.Sources,

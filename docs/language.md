@@ -286,6 +286,7 @@ not.
 |---|---|
 | `x`, `y`, `radius`, `angle`, `aspect` | the five outputs of `coord` |
 | `t` | the output of `time` |
+| `t.length`, `t.progress` | its other two: how long the patch plays for, and `t` divided by it |
 | `a + b`, `a - b`, `a * b`, `a / b`, `a % b`, `-a` | one `math.expression` for the whole sum |
 | `A3`, `C#4`, `Bb2` | a note number, on any `PortDisplay.Note` port |
 | `20ms`, `1.5s`, `4us` | log₁₀ seconds, on any `PortDisplay.Duration` port |

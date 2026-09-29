@@ -82,7 +82,7 @@ public class InspectorWiringTests : UiTest
 
     /// <summary>How many rows say the socket is driven with no wire to show for it.</summary>
     private static int Normalled(MainWindow window) =>
-        All<TextBlock>(window).Count(t => t.Text?.Contains("◀ Time, without a wire") == true);
+        All<TextBlock>(window).Count(t => t.Text?.Contains("◀ Time t, without a wire") == true);
 
     /// <summary>How many rows name a specific socket as what drives another without a wire.</summary>
     private static int NormalledFrom(MainWindow window, string socket) =>

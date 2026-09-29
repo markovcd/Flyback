@@ -68,6 +68,9 @@ public sealed class Emitter
         [.. unitOwners],
         [.. planeOwners]);
 
+    /// <summary>How long the patch plays for, in seconds, as Time's length reads it.</summary>
+    internal double Length { get; init; } = Graph.Patch.DefaultLength;
+
     internal int RegisterCount { get; private set; }
 
     /// <summary>

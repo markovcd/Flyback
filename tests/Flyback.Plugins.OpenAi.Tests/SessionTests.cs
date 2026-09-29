@@ -39,7 +39,7 @@ public class SessionTests
     [
         ("add_module", """{"type_id":"time","handle":"clock1"}"""),
         ("add_module", """{"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"freq","value":440}]}"""),
-        ("connect", """{"from":"clock1","to":"tone1","to_port":"in"}"""),
+        ("connect", """{"from":"clock1","from_port":"t","to":"tone1","to_port":"in"}"""),
         ("connect", """{"from":"tone1","to":"output1","to_port":"left"}"""),
     ];
 

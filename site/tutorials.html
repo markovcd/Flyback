@@ -231,7 +231,8 @@
     <h2><span class="num">03</span>Make it move</h2>
 
     <p>A signal that changes over time is what makes a patch move. The <strong>Time</strong> module outputs
-    <code>t</code>, the clock in seconds.</p>
+    <code>t</code>, the clock in seconds, along with the patch's <code>length</code> and its
+    <code>progress</code> through it, 0 to 1: wire <code>progress</code> into a fade and it follows the length.</p>
 
     <ol class="steps">
       <li>Add a <strong>Time</strong> module and wire <code>t</code> into Rings' <code>offset</code>. The rings
@@ -352,7 +353,8 @@ out.volume = 0.6</code></pre>
     color socket, and otherwise into the socket written as <code>_</code>, like <code>value: _</code> above.
     Named arguments set knobs or take other wires. A signal that comes from a chain of its own gets a
     <code>let</code> above, never a pipeline inside the brackets. <code>x</code>, <code>y</code> and
-    <code>t</code> are Coordinates and Time, and arithmetic such as <code>a * b</code> is an Expression, one
+    <code>t</code> are Coordinates and Time, <code>t.length</code> and <code>t.progress</code> Time's other two
+    outputs, and arithmetic such as <code>a * b</code> is an Expression, one
     block that computes the whole sum.</p>
 
     <p>A few lines describe the patch rather than build it. <code>off slow</code> switches that module off,
