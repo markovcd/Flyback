@@ -244,13 +244,13 @@ A patch made to be played is played here too: the computer's keys are notes wher
 
 ## Web viewer
 
-`src/Flyback.Web` plays a patch in a browser: the engine and the module plugins compiled to WebAssembly, the picture drawn on WebGL 2 by the desktop's own GPU renderer. It opens a shipped preset or a `.fbk`, `.fbkb` or `.fbks` dropped on it, and plays it; nothing else. A patch whose sound renders too slowly there to keep up plays its picture alone and says how slow; heavy showcase presets such as Whole band do (ADR-0160).
+`src/Flyback.Web` plays a patch in a browser: the engine and the module plugins compiled to WebAssembly, the picture drawn on WebGL 2 by the desktop's own GPU renderer. It opens a shipped preset or a `.fbk`, `.fbkb` or `.fbks` dropped on it, and plays it; nothing else. The sound runs as JavaScript written from the patch, the heaviest showcase presets with a fifth of real time to spare; a patch whose sound still cannot keep up plays its picture alone and says how slow (ADR-0160).
 
 ```bash
 dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -o artifacts/web
 ```
 
-Serve `artifacts/web/wwwroot` from any static server; `?preset=Nebula`, `?file=<url>`, `?size=1280x720`, `?loop` and `?mute` pick what opens and how. The AOT switch needs `dotnet workload install wasm-tools`; without it the build runs interpreted, at a fifteenth of the speed. `window.flyback` drives the page from a script: `open`, `play`, `pause`, `seek`, `status()` and `still(seconds)`, the frame as a PNG at the patch's size.
+Serve `artifacts/web/wwwroot` from any static server; `?preset=Nebula`, `?file=<url>`, `?size=1280x720`, `?loop` and `?mute` pick what opens and how. The AOT switch needs `dotnet workload install wasm-tools`; without it the page around the sound runs interpreted, at under half the speed. `window.flyback` drives the page from a script: `open`, `play`, `pause`, `seek`, `status()` and `still(seconds)`, the frame as a PNG at the patch's size.
 
 The sound runs without a page under Node, which the workload brings:
 

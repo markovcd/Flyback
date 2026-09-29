@@ -209,9 +209,7 @@ public sealed class AudioRenderer
                 if (il is null) program.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
                 else il.Evaluate(0d, 0d, t, registers, default, lines, Aspect, live);
 
-                delayLines[0][historyPosition] = (float)registers[left];
-                delayLines[1][historyPosition] = (float)registers[right];
-                historyPosition = (historyPosition + 1) % Taps;
+                Hold((float)registers[left], (float)registers[right]);
             }
 
             interleavedStereo[frame * 2 + 0] = Finish(0);
@@ -219,6 +217,37 @@ public sealed class AudioRenderer
 
             Time += outerStep;
         }
+    }
+
+    /// <summary>
+    /// Fills an interleaved stereo buffer from evaluations made elsewhere: left and right
+    /// for each of <see cref="Oversample"/> evaluations a frame, at the times
+    /// <see cref="Render"/> would have made them, and moves the clock as it would have.
+    /// </summary>
+    internal void Decimate(ReadOnlySpan<float> evaluated, Span<float> interleavedStereo)
+    {
+        var frames = interleavedStereo.Length / 2;
+        var outerStep = 1.0 / SampleRate;
+        var at = 0;
+
+        for (var frame = 0; frame < frames; frame++)
+        {
+            for (var k = 0; k < Oversample; k++, at += 2) Hold(evaluated[at], evaluated[at + 1]);
+
+            interleavedStereo[frame * 2 + 0] = Finish(0);
+            interleavedStereo[frame * 2 + 1] = Finish(1);
+
+            Time += outerStep;
+        }
+    }
+
+    /// <summary>Puts one evaluation's left and right into the decimation filter's history.</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void Hold(float left, float right)
+    {
+        delayLines[0][historyPosition] = left;
+        delayLines[1][historyPosition] = right;
+        historyPosition = (historyPosition + 1) % Taps;
     }
 
     /// <summary>

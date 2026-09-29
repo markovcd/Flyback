@@ -48,6 +48,9 @@ internal sealed class LiveValues
 
     public int Count => values.Length;
 
+    /// <summary>The values themselves, for a backend that reads them where they are.</summary>
+    internal float[] Storage => values;
+
     /// <summary>
     /// Live input <paramref name="index"/>, and zero for one this program does not
     /// have. Bounds-checked rather than trusted, because the block and the program

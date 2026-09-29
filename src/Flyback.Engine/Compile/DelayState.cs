@@ -247,6 +247,10 @@ public sealed class DelayState
             into[Index(newest - k, into.Length)] = from[Index(head - k, from.Length)];
     }
 
+    /// <summary>The arrays themselves, for a backend that works on them where they are.</summary>
+    internal DelayArrays Arrays =>
+        new(lines, positions, phases, previousInputs, running, units, planes, traces, traceHeads);
+
     public int Count => lines.Length;
 
     public int PhaseCount => phases.Length;

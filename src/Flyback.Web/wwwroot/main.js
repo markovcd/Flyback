@@ -4,6 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
+import * as program from './program.js';
 
 const params = new URLSearchParams(location.search);
 const [width, height] = (params.get('size') ?? '960x540').split('x').map(Number);
@@ -16,6 +17,14 @@ const AHEAD = 0.25;
 /** Below this many seconds rendered per second spent, the sound would stutter, so the picture plays alone. */
 const FAST_ENOUGH = 1.2;
 
+/**
+ * How the JavaScript sound is judged instead: by the dropouts it makes once the
+ * engine has optimized it, which a timing taken on opening is too early to see.
+ */
+const SETTLING = 3000;
+const JUDGED_OVER = 2000;
+const DROPOUTS_ALLOWED = 20;
+
 const $ = id => document.getElementById(id);
 const ui = {
   presets: $('presets'), file: $('file'), play: $('play'), rewind: $('rewind'), mute: $('mute'),
@@ -24,6 +33,13 @@ const ui = {
 
 const runtime = await dotnet.create();
 runtime.setModuleImports('gl', gl);
+runtime.setModuleImports('program', program);
+program.attach({
+  f32: () => runtime.localHeapViewF32(),
+  f64: () => runtime.localHeapViewF64(),
+  i32: () => runtime.localHeapViewI32(),
+  u8: () => runtime.localHeapViewU8(),
+});
 const flyback = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
 
 let info = null;
@@ -134,6 +150,7 @@ async function play() {
   heard = soundAllowed && (await startSound());
 
   if (heard && !carryOn) seek(pausedAt);
+  if (heard) soundSince = performance.now();
 
   held = soundAllowed && !heard ? 'The browser holds the sound back until the page is clicked, so the picture plays alone.' : null;
 
@@ -165,6 +182,44 @@ function stop() {
   heard = false;
 }
 
+/** Whether the sound was asked for after it was found too slow, which is never taken back. */
+let insisted = false;
+
+/** When the sound started this run, and the dropouts counted when it was last judged. */
+let soundSince = 0;
+let judgedAt = 0;
+let judgedStarved = 0;
+
+function tooSlow(speed) {
+  soundAllowed = false;
+  warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
+}
+
+/** Hands the picture the clock when the sound keeps running dry once it has had time to settle. */
+function judge() {
+  if (!playing || !heard || insisted) return;
+
+  const at = performance.now();
+
+  if (at - soundSince < SETTLING) {
+    judgedAt = at;
+    judgedStarved = starved;
+    return;
+  }
+
+  if (at - judgedAt < JUDGED_OVER) return;
+
+  const dropped = starved - judgedStarved;
+  judgedAt = at;
+  judgedStarved = starved;
+
+  if (dropped <= DROPOUTS_ALLOWED) return;
+
+  stop();
+  tooSlow(JSON.parse(flyback.Status()).speed);
+  play();
+}
+
 function toggleMute() {
   if (!soundAllowed) {
     // Asked to hear a patch too heavy to keep up: its sound joins where the picture is.
@@ -172,6 +227,7 @@ function toggleMute() {
 
     stop();
     soundAllowed = true;
+    insisted = true;
     warning = `${warning ?? ''} Sound on anyway; expect it to stutter.`.trim();
     if (was) play();
   } else {
@@ -193,12 +249,14 @@ async function open(opening, label) {
 
   if (error === null) {
     info = JSON.parse(flyback.Status());
+    insisted = false;
+    soundAllowed = true;
 
-    const speed = flyback.Measure(0.2);
-    soundAllowed = speed >= FAST_ENOUGH;
-
-    if (!soundAllowed)
-      warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
+    // The interpreter is as fast on opening as it will ever be, so it can be judged at once.
+    if (info.soundBackend === 'interpreter') {
+      const speed = flyback.Measure(0.2);
+      if (speed < FAST_ENOUGH) tooSlow(speed);
+    }
 
     document.title = `${label} · Flyback Viewer`;
   }
@@ -377,7 +435,7 @@ for (const preset of presets) ui.presets.add(new Option(preset, preset));
 ui.presets.disabled = false;
 
 setInterval(pump, 10);
-setInterval(paint, 250);
+setInterval(() => { judge(); paint(); }, 250);
 requestAnimationFrame(frame);
 
 if (params.has('file')) {

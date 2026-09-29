@@ -9,6 +9,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import { dotnet } from './wwwroot/_framework/dotnet.js';
+import * as program from './program.js';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -22,6 +23,13 @@ const { values, positionals } = parseArgs({
 
 const [width, height] = values.size.split('x').map(Number);
 const runtime = await dotnet.create();
+runtime.setModuleImports('program', program);
+program.attach({
+  f32: () => runtime.localHeapViewF32(),
+  f64: () => runtime.localHeapViewF64(),
+  i32: () => runtime.localHeapViewI32(),
+  u8: () => runtime.localHeapViewU8(),
+});
 const web = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
 
 const file = positionals[0];

@@ -37,6 +37,13 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 - **Measure:** GPU frame time on a heavy picture at 1080p, on an integrated GPU: this machine's RTX 4070 Super is nowhere near a 600-op shader's ceiling. The viewer does not print its frame rate, so this needs a timer of its own. Worth doing only if a real patch drops frames.
 - **Likely fix:** run the frame stage on the CPU once per frame and upload its registers as uniforms. The CPU is the reference (ADR-0035), so this moves the picture towards the specification rather than away from it.
 
+### 3. The web viewer's sound
+
+`JsEmitter`'s script, AOT build, under Node 18 (ADR-0160): Whole band 2.0x real time, Acid and Mycelium about 1.6x, Warehouse (4,346 ops) and No Sense Dub about 1.2x, Slow weather 1.1x; about 1 ns an op an evaluation. Chrome is faster than Node's older V8. The AOT interpreter it replaced was 23 ns an op a sample, a quarter of real time for Whole band. After remembering each power's last operands, no function takes more than 7%: `advance`, `readLine`, `noise3` and `hash` lead.
+
+- **Likely fix:** render the sound in a worker, so the page's thread draws the picture and nothing else. The memory would have to be shared with the page, where Meters and Scopes read it, which means `SharedArrayBuffer` and cross-origin isolation headers on whatever serves the page.
+- **Measure:** `node artifacts/web/hear.mjs --preset X --seconds 8` prints `speed`; `--cpu-prof` on the same line gives a profile. A 0.2 s timing on a freshly made script is before V8 has optimized it and reads low.
+
 ## Ruled out, with numbers
 
 Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of 2026-09-23):
@@ -46,6 +53,8 @@ Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of
 - **Chunk size:** 128, 256 and 512 ops per method measured the same; 1,024 fell to 1.13x. Keep 256.
 - **What is left of the gap after an edit:** emit 3 ms, compile 4-6 ms, the check against the interpreter 1 ms; none is worth more code.
 - **The CPU picture's frame stage, redone per row:** `SynthRenderer` reruns it on every row because each worker has its own bank. 526 ops over 1,080 rows against 72 a pixel over two million pixels is under half a percent.
+- **The web viewer's chunk size:** 256 ops a function left No Sense Dub and Slow weather's larger functions unoptimized (0.5x and 0.6x); 64 moved too many registers through the bank (Warehouse 0.72x). 128 is best for all.
+- **Baking the knobs in for the web viewer:** Warehouse is 4,337 ops baked against 4,346 played. Not what makes a patch heavy.
 - **A faster DCT or bit writer in `JpegWriter`:** micro. The frame is already spread across cores, and what stays sequential is the Huffman pass, which a faster DCT does not touch.
 
 ## Measuring without fooling yourself

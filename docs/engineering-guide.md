@@ -12,7 +12,7 @@ Where an ADR and the code disagree, that is a finding worth raising.
 - [1. The shape](#1-the-shape)
 - [2. The patch model](#2-the-patch-model)
 - [3. The compiler](#3-the-compiler)
-- [4. Three backends, one specification](#4-three-backends-one-specification)
+- [4. Four backends, one specification](#4-four-backends-one-specification)
 - [5. Picture and sound](#5-picture-and-sound)
 - [6. Threads](#6-threads)
 - [7. Files and the text language](#7-files-and-the-text-language)
@@ -36,7 +36,7 @@ program, or shows the result.
 ```text
 Flyback.Core      the patch model, the module catalog, the opcodes, the Emitter
    ^              what a plugin is compiled against; references nothing
-Flyback.Engine    the compiler, the three backends, the renderers, the language, file I/O
+Flyback.Engine    the compiler, the four backends, the renderers, the language, file I/O
    ^              free to change between releases; no third-party packages
 Flyback.Gpu       the GPU renderer, its OpenGL binding, a headless context
    ^              no Avalonia and no packages
@@ -59,13 +59,13 @@ layer between the layers: a shell calls the engine's concrete types
 | Project | Holds | Rule it lives under |
 |---|---|---|
 | `Flyback.Core` | `Patch`, `NodeDef`, `PortSpec`, `NodeCatalog`, `OpCode`, `Emitter` | The plugin-facing surface. Its public API is versioned separately ([0102](adr/0102-a-plugin-is-compiled-against-a-contract-with-a-version-of-its-own.md)). |
-| `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL and GLSL backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO`, the built-in `Presets` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
+| `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL, GLSL and JavaScript backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO`, the built-in `Presets` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
 | `Flyback.Gpu` | `GpuFrameRenderer`, `GpuReadback`, `IGl`, `Gl`, `HeadlessContext` (WGL and EGL), `HeadlessRenderer` | OpenGL through `IGl`: native function pointers the caller's context hands over, or WebGL 2 in the web viewer, so every picture on a GPU comes from one renderer ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md), [0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
 | `Flyback.App` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, updates, usage counts | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
-| `Flyback.Web` | `WebPlayer`, `WebExports`, `WebGl`, the page, and `hear.mjs` for Node | Interpreted sound, ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
+| `Flyback.Web` | `WebPlayer`, `WebExports`, `WebGl`, `JsSound`, the page, and `hear.mjs` for Node | The sound as JavaScript, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 
 Two namespace quirks are deliberate. `Flyback.Engine` declares
@@ -196,13 +196,14 @@ and both work by pushing a substitute domain onto the emitter before resolving a
 
 ---
 
-## 4. Three backends, one specification
+## 4. Four backends, one specification
 
 | Backend | Where | Runs |
 |---|---|---|
 | Interpreter | `CompiledPatch.Evaluate` | Everything, always. **It is the specification.** |
 | IL | `IlEmitter`, `IlOps`, `IlProgram`, `IlCompiler` | The CPU picture and the sound, once built, and every offline render ([0076](adr/0076-the-processor-runs-a-program-as-il-once-it-is-built.md)) |
 | GLSL | `GlslEmitter` | The live preview and live recording ([0035](adr/0035-a-glsl-backend-for-the-video-path.md)) |
+| JavaScript | `JsEmitter`, `JsLayout` | The web viewer's sound ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)) |
 
 **The interpreter** is one `switch` over the flat op array. Register access has no
 bounds check; `Vouch` checks the whole program once in the constructor instead.
@@ -221,8 +222,15 @@ interpreter before it is trusted, bit for bit, and refused if it differs.
 
 **The GLSL backend** emits text and touches no GL; `Flyback.Gpu` makes every GL call. Where a GLSL builtin disagrees
 with the interpreter (`fract`, `mod`, `mix`, `pow`, `smoothstep`, `atan`) it emits
-a helper that transcribes the interpreter instead. This is why the three opcode
+a helper that transcribes the interpreter instead. This is why the four opcode
 switches are not unified: the transcription is the point.
+
+**The JavaScript backend** emits text too, a function that renders a buffer of the
+sound's evaluations in a browser, which runs no IL. It works in place on the
+program's memory, whose arrays `JsLayout` names as indices into the heap, and cuts
+the ops into functions of 128, since a larger function goes unoptimized. Float
+arithmetic the interpreter does in `float` is rounded with `Math.fround` where it
+happens. A program that reads a picture is left to the interpreter.
 
 What keeps them in agreement is tests, all in `tests/Flyback.Core.Tests/Compile`,
 all theories over `Enum.GetValues<OpCode>()`:
@@ -234,6 +242,8 @@ all theories over `Enum.GetValues<OpCode>()`:
   except four that are named by hand as producing none.
 - `GlslEmitterTests.Preset_lowers_as_approved`: a snapshot of every preset's
   shader in both dialects.
+- `JsProgramTests`: the emitted script, run under Node, plays every preset's sound
+  and every op as the interpreter does; skipped where there is no Node.
 
 A new opcode fails all of these until it exists everywhere.
 

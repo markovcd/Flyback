@@ -103,6 +103,9 @@ public static partial class WebExports
 
     private static string? Open(Func<Opened> open, int width, int height)
     {
+        player?.Dispose();
+        player = null;
+
         try
         {
             player = new WebPlayer(open(), width, height);
@@ -110,7 +113,6 @@ public static partial class WebExports
         }
         catch (Exception ex)
         {
-            player = null;
             return ex.Message;
         }
     }
@@ -203,6 +205,8 @@ public static partial class WebExports
             ["sampleRate"] = player.SampleRate,
             ["rendered"] = player.Time,
             ["speed"] = Math.Round(player.Speed, 3),
+            ["soundBackend"] = player.Interpreted is null ? "javascript" : "interpreter",
+            ["interpreted"] = player.Interpreted,
             ["width"] = player.Resolution.Width,
             ["height"] = player.Resolution.Height,
             ["linking"] = player.Linking,

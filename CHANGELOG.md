@@ -6,7 +6,7 @@
 - The assistant's tool budget is a turn's rather than a conversation's, stopping it mid-turn no longer breaks the conversation, a turn that fails before anything comes back is not counted, and it spends fewer tokens: a written patch keeps its `let` names and is not printed back, a warning is said once, and pictures from earlier turns are not sent again.
 - A plugin folder loads only once somebody allowed it, by installing its package or with `flyback-cli plugin allow`, and an assistant plugin is never handed the key it sends with.
 - Ctrl+drag takes a wire off an output with any number of wires on it; a wire put back passes the next Ctrl+drag on to the wire after it.
-- A web viewer plays a shipped preset or a patch file in a browser, picture and sound; a patch whose sound is too heavy for the browser plays its picture alone.
+- A web viewer plays a shipped preset or a patch file in a browser, picture and sound, Whole band and the other showcase presets included; a patch whose sound is too heavy for the machine plays its picture alone.
 - Beat you can see and Two echoes, the presets the two new tutorials on the website build.
 - The assistant keeps its conversation when a knob is turned or an edit undone, is told in a line what changed, and keeps knobs turned while it works unless it set the same one; only adding or removing a module or a wire starts a new conversation.
 - Patch text pastes onto the canvas as its modules and groups, and modules copied off a canvas paste into the text view as text.

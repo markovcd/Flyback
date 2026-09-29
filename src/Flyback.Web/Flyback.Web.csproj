@@ -8,9 +8,9 @@
     <!--
       Ahead-of-time compiled only when a publish asks: -p:RunAOTCompilation=true.
       It needs the wasm-tools workload and several minutes, and the gate builds
-      this project on an SDK image that has neither. Interpreted, a patch's sound
-      renders at a fifteenth of the speed, which is enough to check it and too
-      slow to hear it.
+      this project on an SDK image that has neither. Interpreted, the sound's
+      decimation and the rest of the page run at under half the speed, which is
+      enough to check it and too slow to hear a heavy patch.
     -->
     <RunAOTCompilation Condition="'$(RunAOTCompilation)' == ''">false</RunAOTCompilation>
 
@@ -51,9 +51,21 @@
     <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
   </ItemGroup>
 
-  <!-- The sound without a page, under Node, beside wwwroot. The package file makes the runtime's scripts modules there. -->
+  <!--
+    The sound without a page, under Node, beside wwwroot. The package file makes the
+    runtime's scripts modules there. Copied by hand on publish, which the web SDK
+    otherwise leaves a package file and a second copy of a page's script out of.
+  -->
   <ItemGroup>
-    <None Update="hear.mjs;package.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <NodeEntryPoint Include="hear.mjs;package.json;wwwroot\program.js" />
   </ItemGroup>
+
+  <Target Name="CopyNodeEntryPoint" AfterTargets="Build">
+    <Copy SourceFiles="@(NodeEntryPoint)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="PublishNodeEntryPoint" AfterTargets="Publish">
+    <Copy SourceFiles="@(NodeEntryPoint)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

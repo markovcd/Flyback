@@ -54,10 +54,13 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
 
         using var process = Process.Start(start)!;
         var said = process.StandardError.ReadToEndAsync();
-        process.StandardOutput.ReadToEnd();
+        var status = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
         process.ExitCode.ShouldBe(0, said.Result);
+
+        // The interpreter plays the same samples, so without this a script that failed to build would pass unseen.
+        status.ShouldContain("\"soundBackend\":\"javascript\"");
 
         heard = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(output)).ToArray();
         seconds = length;

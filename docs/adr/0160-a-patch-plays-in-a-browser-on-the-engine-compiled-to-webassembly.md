@@ -1,7 +1,7 @@
 # ADR-0160: A patch plays in a browser on the engine compiled to WebAssembly
 
-**Status:** Accepted · 2026-09-29 · *user-directed* · implemented in `src/Flyback.Web/`
-and `src/Flyback.Gpu/IGl.cs`
+**Status:** Accepted · 2026-09-29 · *user-directed* · implemented in `src/Flyback.Web/`,
+`src/Flyback.Gpu/IGl.cs` and `src/Flyback.Engine/Compile/JsEmitter.cs`
 
 ## Context
 
@@ -16,10 +16,10 @@ which a browser does not allow. Plugins are assemblies loaded from a folder
 the GPU renderer called OpenGL through native function pointers
 ([0157](0157-flyback-cli-render-draws-on-the-gpu.md)).
 
-Measured before anything was built, the interpreter compiled ahead of time to
-WebAssembly renders about 23 ns an op a sample, five times the desktop interpreter.
-That is roughly 900 sound ops in real time. 32 of the 36 shipped presets fit; Whole
-band (2,788 ops), Acid, Mycelium and Warehouse do not, or barely.
+The interpreter compiled ahead of time to WebAssembly renders about 23 ns an op a
+sample, five times the desktop interpreter: roughly 900 sound ops in real time.
+Every teaching preset fits. Whole band (2,788 ops), Acid, Mycelium, Warehouse, No
+Sense Dub and Slow weather do not.
 
 ## Decision
 
@@ -30,16 +30,31 @@ plays it, and does nothing else: no editing and no panel, as with `flyback-viewe
 plugins that make modules are project references, loaded with
 `PluginHost.LoadTypes`; none that talks to a device, a keychain or a model comes.
 
-**The sound runs on the interpreter, ahead-of-time compiled.** The page renders
-it a buffer at a time on its own thread and posts the buffers to an
-`AudioWorklet`, which keeps a quarter of a second queued. The picture follows the
-samples the worklet has played, not the ones rendered. The samples are the
-desktop's to within one step of 16 bits.
+**The sound runs as JavaScript that `JsEmitter` writes from the program.** It is
+`CompiledPatch.Evaluate` transcribed, as `GlslEmitter` transcribes it for the
+picture, cut into functions of 128 ops with registers in locals, as the IL is cut
+into methods. The script works in place on the program's memory, pinned in the
+runtime's heap (`JsLayout`, `JsSound`), and hands its evaluations to
+`AudioRenderer.Decimate`, so the filter, the clock, every Meter and Scope, a rewind
+and a seek are the interpreter's own. A power remembers its last operands and answers
+from them while they hold, which is exact and a third of Whole band's time. Where a
+program cannot be emitted, which is one reading a picture, the interpreter plays it.
 
-**A patch whose sound cannot keep up plays its picture alone and says so.** On
-opening, a fifth of a second of sound is timed on a copy. Below 1.2 times real
-time the page draws on the wall clock and names the speed; a click on the speaker
-plays the sound anyway.
+The script's samples are the interpreter's to the bit on this machine, preset for
+preset (`JsProgramTests`); a browser's `Math.sin` or `exp` may round its last bit
+otherwise, which the tests allow a hair for. Under Node, Whole band renders at 2.0
+times real time and Warehouse, the heaviest at 4,346 ops, at 1.2: about 1 ns an op
+an evaluation, a sixth of the interpreter's.
+
+**The page renders the sound on its own thread and posts it to an `AudioWorklet`**,
+which keeps a quarter of a second queued. The picture follows the samples the
+worklet has played, not the ones rendered.
+
+**A patch whose sound cannot keep up plays its picture alone and says so.** The
+script is judged by the dropouts it makes once three seconds have let the engine
+optimize it: more than twenty in two seconds and the picture takes the wall clock.
+The interpreter is judged on opening, by a fifth of a second timed on a copy, below
+1.2 times real time. Either way a click on the speaker plays the sound anyway.
 
 **The picture is the desktop's own renderer on WebGL 2.** `IGl` is the interface
 `GpuFrameRenderer` and `GpuReadback` call; `Gl` implements it natively and `WebGl`
@@ -55,11 +70,11 @@ what an agent checks sound with.
 
 ## Consequences
 
-- Heavy showcase patches play silently in a browser until the sound path gets
-  faster there. A backend that emits JavaScript from `Op[]`, as `GlslEmitter` emits
-  GLSL, is the lead; this ADR does not build it.
-- The page's thread renders the sound, so a slow frame can starve the queue. A
-  quarter of a second covers what was measured.
+- The heaviest presets have a fifth of real time to spare, and the page's one
+  thread draws the picture too, so on a slower machine they may fall back to the
+  picture. Moving the script into a worker, with the memory shared, is the next lead.
+- An opcode added to the interpreter needs a line in `JsEmitter`, or the web viewer
+  plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move
   with it.
 - The site does not serve it yet.

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -13,9 +14,11 @@ namespace Flyback.Web;
 /// <remarks>
 /// The page's one thread does everything, so nothing here is guarded. The picture
 /// is compiled and drawn only once a context asks for it, which leaves the sound
-/// runnable where there is no canvas at all.
+/// runnable where there is no canvas at all. The sound runs as JavaScript where
+/// <see cref="JsSound"/> can make it, and on the interpreter where it cannot.
 /// </remarks>
-internal sealed class WebPlayer
+[SupportedOSPlatform("browser")]
+internal sealed class WebPlayer : IDisposable
 {
     private readonly CompiledPatch sound;
     private readonly CompiledPatch picture;
@@ -23,6 +26,7 @@ internal sealed class WebPlayer
     private readonly DelayState? memory;
     private readonly LiveValues heard;
     private readonly LiveValues watching;
+    private readonly JsSound? script;
     private readonly Stopwatch rendering = new();
 
     private GpuFrameRenderer? screen;
@@ -49,7 +53,13 @@ internal sealed class WebPlayer
         // Where the panel's knobs rest, since nothing here turns them.
         patch.Seed(heard);
         patch.Seed(watching);
+
+        script = JsSound.Create(sound, memory, heard, speakers, out var why);
+        Interpreted = why;
     }
+
+    /// <summary>Why the sound runs on the interpreter rather than as JavaScript, or null when it does not.</summary>
+    public string? Interpreted { get; }
 
     public SurfaceSize Resolution { get; }
 
@@ -75,26 +85,41 @@ internal sealed class WebPlayer
     public void Hear(Span<float> interleavedStereo)
     {
         rendering.Start();
-        speakers.Render(sound, interleavedStereo, memory, heard);
+
+        if (script is not null) script.Render(interleavedStereo);
+        else speakers.Render(sound, interleavedStereo, memory, heard);
+
         rendering.Stop();
 
         rendered += interleavedStereo.Length / 2.0 / speakers.SampleRate;
     }
 
-    /// <summary>How fast the sound renders here, measured on a copy so what is playing is untouched.</summary>
+    /// <summary>
+    /// How fast the sound renders here, measured on a copy so what is playing is
+    /// untouched, and on the same backend.
+    /// </summary>
     public double Measure(double seconds)
     {
         var copy = new AudioRenderer { Aspect = speakers.Aspect };
         var lines = copy.DelayMemoryFor(sound);
         var live = new LiveValues(sound.LiveInputs);
+        using var timed = script is null ? null : JsSound.Create(sound, lines, live, copy, out _);
         var buffer = new float[1024];
         var buffers = Math.Max(1, (int)(seconds * copy.SampleRate / 512));
 
         var clock = Stopwatch.StartNew();
-        for (var i = 0; i < buffers; i++) copy.Render(sound, buffer, lines, live);
+
+        for (var i = 0; i < buffers; i++)
+        {
+            if (timed is not null) timed.Render(buffer);
+            else copy.Render(sound, buffer, lines, live);
+        }
 
         return buffers * 512.0 / copy.SampleRate / clock.Elapsed.TotalSeconds;
     }
+
+    /// <summary>Lets the script and the memory it pinned go.</summary>
+    public void Dispose() => script?.Dispose();
 
     /// <summary>Back to <paramref name="seconds"/>, with everything the patch remembers emptied.</summary>
     public void SeekTo(double seconds)
