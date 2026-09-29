@@ -36,6 +36,8 @@ internal sealed class ThemePreset : PresetBench
 
     private const string TextType = "flyback.picture.text";
 
+    private const string CompressorType = "flyback.mastering.compressor";
+
     private const string EqType = "flyback.mastering.eq";
 
     private const string WidthType = "flyback.mastering.width";
@@ -82,17 +84,17 @@ internal sealed class ThemePreset : PresetBench
         // breakdown, build, three choruses and the outro.
         var parts = Arranged(beats, 1f / 32f,
         [
-            Levels(0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
+            Levels(0, 0, 0.85f, 0.85f, 1, 1, 0, 0.85f, 1, 1, 1, 0),
             Levels(0, 0.4f, 0.7f, 1, 1, 1, 0, 0.7f, 1, 1, 1, 0),
-            Levels(0, 0.7f, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0),
-            Levels(0.8f, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
-            Levels(1, 0.8f, 0.3f, 0.35f, 0.4f, 0.4f, 0.6f, 0.35f, 0.4f, 0.4f, 0.45f, 1),
-            Levels(0, 0, 0, 0, 1, 1, 0.6f, 0, 1, 1, 1, 0),
+            Levels(0, 0.5f, 0.85f, 0.85f, 1, 1, 0, 0.85f, 1, 1, 1, 0),
+            Levels(0.3f, 0.35f, 0.8f, 0.8f, 1, 1, 0.25f, 0.8f, 1, 1, 1, 0.25f),
+            Levels(0.35f, 0.3f, 0.3f, 0.35f, 0.3f, 0.3f, 0.2f, 0.35f, 0.3f, 0.3f, 0.35f, 0.3f),
+            Levels(0, 0, 0, 0, 1, 1, 0.35f, 0, 1, 1, 1, 0),
 
             // How far the filters open.
             Levels(0.3f, 0.4f, 0.55f, 0.65f, 1, 1, 0.45f, 0.65f, 1, 1, 1, 0.35f),
 
-            Levels(0, 0.7f, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+            Levels(0, 0.7f, 1, 1, 1, 1, 0.6f, 1, 1, 1, 1, 0.8f),
         ]);
 
         // Filters sweep open over four seconds and close over two.
@@ -119,7 +121,7 @@ internal sealed class ThemePreset : PresetBench
         // --- the drums -------------------------------------------------------
 
         var kickStroke = Product(Stroke(beats, 1f, 5f), parts, Kick);
-        var kick = Drum(kickStroke, 46f, 130f, 4f, 1.8f);
+        var kick = Drum(kickStroke, 46f, 130f, 4f, 3.5f);
 
         // Two and four.
         var clapStroke = Product(Stroke(beats, 0.5f, 7f, 0.5f), parts, Kick);
@@ -147,7 +149,7 @@ internal sealed class ThemePreset : PresetBench
         StepsExtra.Set(bassLine, [new Step(0f), new Step(12f)]);
         var bassSaw = b.Add("osc.saw", (3, 0.7f));
         var bassTone = b.Add(FilterType, (2, 0.25f));
-        var sub = b.Add("osc.sine", (3, 0.8f));
+        var sub = b.Add("osc.sine", (3, 0.6f));
         var bassPluck = Stroke(beats, 2f, 6f);
         var bass = Product(Product(Sum(bassTone, sub), bassLine, 1), parts, Bass);
 
@@ -162,30 +164,42 @@ internal sealed class ThemePreset : PresetBench
         // --- the arp ---------------------------------------------------------
 
         // Up the chord to the tenth and back, in sixteenths, an octave higher once the
-        // filters are open.
-        var arpLine = b.Add("seq.values", (1, 4f));
-        StepsExtra.Set(arpLine,
-        [
-            new Step(0f), new Step(Third), new Step(7f), new Step(12f),
-            new Step(12f + Third), new Step(12f), new Step(7f), new Step(Third),
-        ]);
-        var accent = b.Add("seq.values", (1, 4f));
-        StepsExtra.Set(accent, [new Step(1f), new Step(0.55f), new Step(0.72f), new Step(0.55f)]);
+        // filters are open. Four voices take the sixteenths in turn and each rings for
+        // a beat, so a note is still sounding under the three after it.
+        float[] steps = [0f, Third, 7f, 12f, 12f + Third, 12f, 7f, Third];
+        float[] accents = [1f, 0.55f, 0.72f, 0.55f];
+        var octave = Formula("12 + 12 * step(0.9, a)", swell);
+        var brightness = Span(swell, 0f, 1f, 900f, 6500f);
+        var arpVoices = new NodeInstance[4];
+        var arpStrokes = new NodeInstance[4];
+        var arpHz = default(NodeInstance)!;
 
-        var arpHz = InKey(Sum(arpLine, root), Scale, 12f);
-        var arpSaw = b.Add("osc.saw", (3, 0.6f));
-        var arpTwin = b.Add("osc.saw", (3, 0.4f));
-        var arpTone = b.Add(FilterType, (2, 0.35f));
-        var arpStroke = Product(Stroke(beats, 4f, 1.3f), accent);
-        var arp = Product(arpTone, parts, Arp);
+        for (var voice = 0; voice < 4; voice++)
+        {
+            var turn = voice / 4f;
+            var line = b.Add("seq.values", (1, 1f));
+            StepsExtra.Set(line, [new Step(steps[voice]), new Step(steps[voice + 4])]);
 
-        b.Wire(beats, 0, arpLine, 0)
-         .Wire(beats, 0, accent, 0)
-         .Wire(Formula("12 + 12 * step(0.9, a)", swell), 0, arpHz, 1)
-         .Wire(arpHz, 0, arpSaw, 1)
-         .Wire(Times(arpHz, 1.0045f), 0, arpTwin, 1)
-         .Wire(Product(Sum(arpSaw, arpTwin), arpStroke), 0, arpTone, 0)
-         .Wire(Formula("180 + a * b", Stroke(beats, 4f, 3f), Span(swell, 0f, 1f, 900f, 6500f)), 0, arpTone, 1);
+            var hz = InKey(Sum(line, root), Scale);
+            var saw = b.Add("osc.saw", (3, 0.6f));
+            var twin = b.Add("osc.saw", (3, 0.4f));
+            var voiceTone = b.Add(FilterType, (2, 0.35f));
+            var level = Times(Stroke(beats, 1f, 2.1f, turn), accents[voice]);
+
+            b.Wire(Plus(beats, -turn), 0, line, 0)
+             .Wire(octave, 0, hz, 1)
+             .Wire(hz, 0, saw, 1)
+             .Wire(Times(hz, 1.0045f), 0, twin, 1)
+             .Wire(Product(Sum(saw, twin), level), 0, voiceTone, 0)
+             .Wire(Formula("180 + a * b", Stroke(beats, 1f, 4.3f, turn), brightness), 0, voiceTone, 1);
+
+            arpVoices[voice] = voiceTone;
+            arpStrokes[voice] = level;
+            if (voice == 0) arpHz = hz;
+        }
+
+        var arp = Product(Sum(Sum(arpVoices[0], arpVoices[1]), Sum(arpVoices[2], arpVoices[3])), parts, Arp);
+        var arpStroke = Wired("math.max", Wired("math.max", arpStrokes[0], arpStrokes[1]), Wired("math.max", arpStrokes[2], arpStrokes[3]));
 
         Box("Arp");
 
@@ -206,7 +220,7 @@ internal sealed class ThemePreset : PresetBench
          .Wire(InKey(padNote, Scale, Third), 0, middle, 1)
          .Wire(InKey(padNote, Scale, 7f), 0, high, 1)
          .Wire(Sum(Sum(low, middle), high), 0, padTone, 0)
-         .Wire(Span(swell, 0f, 1f, 1100f, 7500f), 0, padTone, 1)
+         .Wire(Span(swell, 0f, 1f, 1100f, 9000f), 0, padTone, 1)
          .Wire(padTone, 0, pad, 0);
 
         Box("Chords");
@@ -245,22 +259,32 @@ internal sealed class ThemePreset : PresetBench
         // --- the pops --------------------------------------------------------
 
         // The hook: seven eighths up A minor pentatonic, A C D E G A C, on the last bar
-        // of every four, climbing into the next phrase. Each note starts half again as
-        // high and drops onto its pitch in a few milliseconds.
-        var popLine = b.Add("seq.notes", (1, 2f), (2, 1f), (3, 0.02f));
-        StepsExtra.Set(popLine,
-        [
-            new Step(69f, 24f, 0f),
-            new Step(69f), new Step(72f), new Step(74f), new Step(76f), new Step(79f), new Step(81f), new Step(84f),
-            new Step(84f, 1f, 0f),
-        ]);
-        var popHz = Through("audio.note", popLine);
-        var popStroke = Product(Product(Stroke(beats, 2f, 2f), popLine, 1), parts, Pops);
-        var pop = Drum(popStroke, 0f, 0f, 8f, 1f);
+        // of every four, climbing into the next phrase. Two voices take the eighths in
+        // turn, each a sine with its octave and twelfth, ringing over the next note and
+        // starting half again as high for its first few milliseconds.
+        float[][] runs = [[69f, 74f, 79f, 84f], [72f, 76f, 81f]];
+        var pops = new NodeInstance[2];
 
-        b.Wire(beats, 0, popLine, 0)
-         .Wire(popHz, 0, pop, DrumPitch)
-         .Wire(Times(popHz, 0.5f), 0, pop, 3);
+        for (var voice = 0; voice < 2; voice++)
+        {
+            var turn = voice / 2f;
+            var line = b.Add("seq.notes", (1, 1f), (2, 1f), (3, 0.02f));
+            var run = new List<Step> { new(runs[voice][0], 12f, 0f) };
+            run.AddRange(runs[voice].Select(note => new Step(note)));
+            if (run.Count < 5) run.Add(new Step(runs[voice][^1], 1f, 0f));
+            StepsExtra.Set(line, run);
+
+            var level = Product(Product(Stroke(beats, 1f, 2.9f, turn), line, 1), parts, Pops);
+            var hz = Formula("a * (1 + 0.5 * b)", Through("audio.note", line), Stroke(beats, 1f, 78f, turn));
+
+            b.Wire(Plus(beats, -turn), 0, line, 0);
+
+            pops[voice] = Sum(
+                Tone(hz, level),
+                Sum(Tone(Times(hz, 2f), Times(level, 0.35f)), Tone(Times(hz, 3f), Times(level, 0.12f))));
+        }
+
+        var pop = Sum(pops[0], pops[1]);
 
         Box("Pops");
 
@@ -296,45 +320,49 @@ internal sealed class ThemePreset : PresetBench
         var music = b.Add(DeskType);
         var space = b.Add(DeskType);
 
-        Channel(music, 1, 0.55f, bass);
-        Channel(music, 2, 0.35f, arp, Times(arp, 0.8f));
+        Channel(music, 1, 0.45f, bass);
+        Channel(music, 2, 0.13f, arp, Times(arp, 0.8f));
         Channel(music, 3, 1f, chords, chordsWide);
-        Channel(music, 4, 0.4f, lead);
+        Channel(music, 4, 0.25f, lead);
 
         Channel(space, 1, 0.3f, taps, taps, rightFrom: EchoRight);
         Channel(space, 2, 0.35f, room, room, rightFrom: 1);
         Channel(space, 3, 0.25f, riser);
-        Channel(space, 4, 0.3f, pop);
+        Channel(space, 4, 0.22f, pop);
 
-        // Everything pitched ducks under the kick.
-        var ducked = Ducking(kickStroke, 0.6f);
+        // The dry synths duck under the kick; their echoes and the hall do not.
+        var ducked = Ducking(kickStroke, 0.72f);
 
-        b.Wire(Chained(music, space), 0, ducked, 0)
-         .Wire(space, 1, ducked, 1);
+        b.Wire(music, 0, ducked, 0)
+         .Wire(music, 1, ducked, 1);
 
         var drums = b.Add(DeskType);
-        var master = b.Add(DeskType, (DeskTrim, 0.6f));
+        var master = b.Add(DeskType, (DeskTrim, 0.75f));
 
-        Channel(drums, 1, 0.9f, kick);
+        Channel(drums, 1, 0.65f, kick);
         Channel(drums, 2, 0.45f, Sum(clap, snare));
         Channel(drums, 3, 0.8f, hats);
         Channel(drums, 4, 0.3f, crash);
 
         Channel(master, 1, 1f, ducked, ducked, rightFrom: 1);
 
-        Chained(drums, master);
+        Chained(drums, space, master);
 
         Box("Desk");
 
         // --- the master ------------------------------------------------------
 
-        var tone = b.Add(EqType, (2, 30f), (8, 8000f), (9, 3.5f));
+        // Glued a few decibels, as the promo's saturation does, then brightened.
+        var glue = b.Add(CompressorType, (3, -10f), (4, 2f), (5, -1.5f), (6, -0.9f), (8, 8f));
+        var tone = b.Add(EqType, (2, 30f), (5, 350f), (6, -3f), (7, 0.8f), (8, 6000f), (9, 6f));
         var wide = b.Add(WidthType, (2, 1.25f), (3, 150f));
         var loud = b.Add(LimiterType, (2, -1f), (3, -1.3f));
         var output = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 0.8f));
 
-        b.Wire(master, 0, tone, 0)
-         .Wire(master, 1, tone, 1)
+        b.Wire(master, 0, glue, 0)
+         .Wire(master, 1, glue, 1)
+         .Wire(glue, 0, tone, 0)
+         .Wire(glue, 1, tone, 1)
          .Wire(tone, 0, wide, 0)
          .Wire(tone, 1, wide, 1)
          .Wire(wide, 0, loud, 0)
