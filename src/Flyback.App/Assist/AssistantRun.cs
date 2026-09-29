@@ -392,12 +392,17 @@ public sealed class AssistantRun : IDisposable
     }
 
     /// <summary>
-    /// The session's own sequence, with anything it throws turned into a
+    /// The turn's sequence, with anything it throws turned into a
     /// <see cref="PatchEvent.Failed"/>. The contract says a provider failure is
     /// already an event rather than an exception — this is here because a plugin
     /// runs in-process with full trust and a bug in one must still cost the turn
     /// rather than the window.
     /// </summary>
+    /// <remarks>
+    /// A session that is an <see cref="IModelConversation"/> has its turn run here,
+    /// by <see cref="TurnLoop"/>, whatever its own <c>Ask</c> would do: what a turn
+    /// promises the panel is this side's to keep.
+    /// </remarks>
     private async IAsyncEnumerable<PatchEvent> Guarded(
         string instruction,
         [EnumeratorCancellation] CancellationToken cancel)
@@ -407,7 +412,11 @@ public sealed class AssistantRun : IDisposable
 
         try
         {
-            events = session.Ask(instruction, cancel).GetAsyncEnumerator(cancel);
+            var turn = session is IModelConversation conversation
+                ? TurnLoop.Run(conversation, instruction, cancel)
+                : session.Ask(instruction, cancel);
+
+            events = turn.GetAsyncEnumerator(cancel);
         }
         catch (Exception ex)
         {

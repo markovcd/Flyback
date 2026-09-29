@@ -516,7 +516,7 @@ public class SessionTests
         using var session = Session(canned);
         using var stop = new CancellationTokenSource();
 
-        await foreach (var happened in session.Ask("look", stop.Token))
+        await foreach (var happened in ((IPatchSession)session).Ask("look", stop.Token))
         {
             if (happened is PatchEvent.Did) await stop.CancelAsync();
         }

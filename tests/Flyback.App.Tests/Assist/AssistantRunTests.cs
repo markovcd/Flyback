@@ -17,7 +17,7 @@ namespace Flyback.App.Tests.Assist;
 /// </summary>
 public class AssistantRunTests
 {
-    private static AssistantRun RunOf(ScriptedAssistant assistant, Patch? start = null, int maxTurns = 12) =>
+    private static AssistantRun RunOf(IPatchAssistant assistant, Patch? start = null, int maxTurns = 12) =>
         new(assistant,
             AssistantConfig.Unset,
             NodeCatalog.BuiltIn,
@@ -487,6 +487,21 @@ public class AssistantRunTests
         carried.Unsaid.ShouldBeNull();
     }
 
+    /// <summary>
+    /// A conversation's turn is run here, so what a turn promises holds even for a
+    /// provider that answers <c>Ask</c> some other way.
+    /// </summary>
+    [Fact]
+    public async Task The_host_runs_the_turn_of_a_conversation_whatever_its_own_ask_says()
+    {
+        using var run = RunOf(new Conversing());
+
+        var events = await Drain(run);
+
+        events.OfType<PatchEvent.Said>().ShouldHaveSingleItem().Text.ShouldBe("from the loop");
+        events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
+    }
+
     private static (Patch Patch, NodeInstance First, NodeInstance Second) TwoValues()
     {
         var patch = new Patch();
@@ -610,6 +625,70 @@ public class AssistantRunTests
     }
 
     // --- the fake -----------------------------------------------------------
+
+    /// <summary>
+    /// A provider whose sessions are conversations, and which answers <c>Ask</c> with
+    /// a loop of its own that the host must never reach.
+    /// </summary>
+    private sealed class Conversing : IPatchAssistant
+    {
+        public string Id => "scripted";
+
+        public string Name => "Conversing";
+
+        public int Priority => 0;
+
+        public AssistantSchema Schema { get; } =
+            new("scripted", [new AssistantModel("scripted")], "NONE", "none needed");
+
+        public AssistantCredential Credential => Schema.Credential;
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => Schema.Form(values);
+
+        public AssistantSenses Senses(SettingValues values) => Schema.Senses(values);
+
+        public string? Unavailable(AssistantConfig config) => null;
+
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Session(workbench);
+
+        private sealed class Session(PatchWorkbench workbench) : IModelConversation
+        {
+            public PatchWorkbench Workbench => workbench;
+
+            public bool HearsItself => false;
+
+            public string? EarModel => null;
+
+            public void Forget()
+            {
+            }
+
+            public void Add(string instruction)
+            {
+            }
+
+            public Task<ModelReply> Send(CancellationToken cancel) => Task.FromResult(new ModelReply("from the loop", []));
+
+            public void Add(IReadOnlyList<ToolAnswer> answers)
+            {
+            }
+
+            public Task<string?> Listen(string model, string briefing, byte[] wav, CancellationToken cancel) =>
+                Task.FromResult<string?>(null);
+
+            async IAsyncEnumerable<PatchEvent> IPatchSession.Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
+            {
+                await Task.Yield();
+                yield return new PatchEvent.Failed("its own loop");
+            }
+
+            public void Dispose()
+            {
+            }
+        }
+    }
 
     private sealed class ScriptedAssistant(params PatchEvent[] script) : IPatchAssistant, IPatchSession
     {

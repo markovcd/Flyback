@@ -173,3 +173,9 @@ a function call rather than speech; `listen` still renders the sound alone, so a
 patch whose picture and sound are one thing is examined through two tools; and
 this format takes video, which would let the agent see movement rather than
 three stills, which nothing here does yet.
+
+## Amendment, 2026-09-29: the turn is shared, the format is not
+
+The two adapters still share nothing of their wire formats, but the turn around
+them is one loop in `Flyback.Plugins` that each drives through its format;
+[0161](0161-a-turn-is-the-hosts-and-a-provider-writes-only-its-format.md).

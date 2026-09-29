@@ -270,20 +270,6 @@ public class WireTests
 
     // --- being told to wait -------------------------------------------------
 
-    [Theory]
-    [InlineData(429, true)]
-    [InlineData(408, true)]
-    [InlineData(500, true)]
-    [InlineData(503, true)]
-    [InlineData(529, true)]
-    [InlineData(400, false)]
-    [InlineData(401, false)]
-    [InlineData(403, false)]
-    [InlineData(404, false)]
-    [InlineData(422, false)]
-    public void Only_a_refusal_that_might_pass_is_worth_sending_again(int status, bool again) =>
-        Wire.Retryable(status).ShouldBe(again);
-
     /// <summary>
     /// The precise one wins. A real 429 asks for well under a second, which is
     /// what <c>Retry-After</c> would have to round up to a whole one.

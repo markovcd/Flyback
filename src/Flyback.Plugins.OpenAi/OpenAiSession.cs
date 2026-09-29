@@ -1,6 +1,3 @@
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
@@ -11,56 +8,14 @@ namespace Flyback.Plugins.OpenAi;
 /// One conversation over the chat-completions format.
 /// </summary>
 /// <remarks>
-/// The loop is written out rather than taken from a helper: a tool runner would
-/// invert control, and this needs to sit between the model asking for something
-/// and the workbench doing it. Not streamed, since a turn is short and the
-/// endpoints this is meant to reach vary more in how they stream than in anything
-/// else. Effort is not sent, because the parameter that carries it is
-/// model-specific and a wrong guess is a 400.
+/// Only the format is here: how the messages are written down and sent. The turn
+/// itself is <see cref="TurnLoop"/>'s, which the host runs. Not streamed,
+/// since a turn is short and the endpoints this is meant to reach vary more in how
+/// they stream than in anything else. Effort is not sent, because the parameter
+/// that carries it is model-specific and a wrong guess is a 400.
 /// </remarks>
-internal sealed class OpenAiSession : IPatchSession
+internal sealed class OpenAiSession : IModelConversation
 {
-    /// <summary>
-    /// How many times the model may be asked in one turn. The workbench caps tool
-    /// calls too; this bounds the exchange around them, including the requests that
-    /// carry a picture back. Reached only by a model that never stops asking for
-    /// things.
-    /// </summary>
-    private const int MaxModelTurns = 40;
-
-    /// <summary>
-    /// What the person is told when a turn changed the patch and ended without
-    /// offering it.
-    /// </summary>
-    /// <remarks>
-    /// The failure this exists for is a quiet one: nothing reaches the editor until
-    /// <c>propose</c>, so the person is told they were "set to further refine" a
-    /// patch that was not on their canvas. Said to them and not back to the model,
-    /// which would cost a request on every question — what was missing is the one
-    /// fact only this end knows.
-    /// </remarks>
-    private const string Unoffered =
-        "This turn changed the patch but did not offer it, so the canvas still shows what was "
-        + "there before. Ask for it to be applied if you want to see it.";
-
-    /// <summary>The answer to a call the person stopped the turn before it ran.</summary>
-    private const string Stopped = "not run: the person stopped this turn.";
-
-    /// <summary>The answer to a call that came after a proposal in the same batch.</summary>
-    private const string AfterProposal = "not run: you had already proposed the patch, and proposing ends the turn.";
-
-    /// <summary>
-    /// How many times one request may be sent before the turn is given up on.
-    /// </summary>
-    private const int MaxAttempts = 5;
-
-    /// <summary>
-    /// The longest this will sit waiting for a refusal to clear. A rate limit
-    /// that resets inside this is a hiccup worth absorbing; one that resets
-    /// beyond it is a quota, and no amount of waiting is the answer to a quota.
-    /// </summary>
-    private static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(20);
-
     private readonly PatchWorkbench workbench;
     private readonly AssistantChoices chosen;
     private readonly HttpClient http;
@@ -127,240 +82,21 @@ internal sealed class OpenAiSession : IPatchSession
         return true;
     }
 
-    public async IAsyncEnumerable<PatchEvent> Ask(
-        string instruction,
-        [EnumeratorCancellation] CancellationToken cancel)
-    {
-        // Whatever was offered last time is not this turn's answer. The patch
-        // itself stays: a conversation carries on from what it built.
-        workbench.Reopen();
+    PatchWorkbench IModelConversation.Workbench => workbench;
 
-        // Pictures and clips from earlier turns go as a line each: every request of
-        // this turn would otherwise carry them again, and the model can look again.
-        Wire.Forget(messages);
-
-        messages.Add(Wire.User(instruction));
-
-
-        for (var turn = 0; turn < MaxModelTurns; turn++)
-        {
-            if (cancel.IsCancellationRequested) yield break;
-
-            // The send is guarded and the yielding happens after it, because a
-            // yield may not sit inside a catch.
-            Reply? reply = null;
-            string? failure = null;
-
-            try
-            {
-                reply = await Send(cancel).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                yield break;
-            }
-            catch (Exception ex)
-            {
-                failure = ex.Message;
-            }
-
-            if (reply is null)
-            {
-                yield return new PatchEvent.Failed(failure ?? "the endpoint said nothing at all.");
-                yield break;
-            }
-
-            if (reply.Text is { } text) yield return new PatchEvent.Said(text);
-            if (reply.Input > 0 || reply.Output > 0)
-                yield return new PatchEvent.Cost(reply.Input, reply.Cached, reply.Output);
-
-            messages.Add(reply.RawMessage ?? new JsonObject
-            {
-                ["role"] = "assistant",
-                ["content"] = reply.Text ?? string.Empty,
-            });
-
-            if (reply.Calls.Count > 0)
-            {
-                var seen = new List<byte[]>();
-
-                foreach (var call in reply.Calls)
-                {
-                    // Every call gets exactly one reply, refusals included. One
-                    // left unanswered makes the whole next request a 400, which
-                    // would end the conversation rather than the call — so the
-                    // calls a stop or a proposal cut off are answered too.
-                    if (workbench.HasProposal || cancel.IsCancellationRequested)
-                    {
-                        messages.Add(Wire.ToolResult(call.Id, workbench.HasProposal ? AfterProposal : Stopped));
-                        continue;
-                    }
-
-                    ToolOutcome outcome;
-                    string said;
-
-                    try
-                    {
-                        outcome = await Answer(call, cancel).ConfigureAwait(false);
-                        said = outcome.Text;
-
-                        // A sound is described before it is answered for, because
-                        // what goes back to this model is the description: the ear
-                        // is a different model and this one may well not have one.
-                        if (outcome.Wav is { } wav)
-                            said += "\n\n" + await Described(wav, cancel).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        messages.Add(Wire.ToolResult(call.Id, Stopped));
-                        continue;
-                    }
-
-                    messages.Add(Wire.ToolResult(call.Id, said));
-
-                    if (outcome.Png is { } png)
-                    {
-                        seen.Add(png);
-                        yield return new PatchEvent.Saw(png, said);
-                    }
-                    else if (outcome.Wav is { } sound)
-                    {
-                        yield return new PatchEvent.Heard(sound, said);
-                    }
-                    else if (outcome.Reference)
-                    {
-                        yield return new PatchEvent.Read(said);
-                    }
-                    else
-                    {
-                        yield return new PatchEvent.Did(said);
-                    }
-                }
-
-                if (seen.Count > 0)
-                    messages.Add(Wire.UserWithPictures("Here is what that looked like.", seen));
-
-                if (cancel.IsCancellationRequested && !workbench.HasProposal) yield break;
-            }
-
-            // Asked for last, so a proposal is noticed whether it arrived among
-            // this turn's calls or the model simply stopped after making one.
-            if (workbench.HasProposal)
-            {
-                yield return new PatchEvent.Proposed(workbench.Snapshot(), workbench.ProposalSummary);
-                yield break;
-            }
-
-            if (reply.Calls.Count == 0)
-            {
-                // It has stopped asking for things and has not proposed anything,
-                // which is an ordinary way for a turn to end: the conversation is
-                // multi-turn and whatever it said is in the transcript, so the next
-                // thing to happen is the person typing.
-                //
-                // A turn that changed the patch and did not offer it is an ending
-                // nobody can see — the person is looking at the patch they started
-                // with while being told they are "set to further refine" something
-                // that is not on their canvas. Said to them rather than back to the
-                // model, which has given its answer.
-                if (workbench.Edits > 0) yield return new PatchEvent.Did(Unoffered);
-
-                yield break;
-            }
-        }
-
-        // Only a model that kept asking for things until the fuse ran out gets
-        // here. One that stopped of its own accord has already returned above,
-        // and this says nothing about whether a patch was proposed.
-        yield return new PatchEvent.Failed(
-            $"stopped after {MaxModelTurns} exchanges in one turn, which is as many as there are.");
-    }
+    string? IModelConversation.EarModel => chosen.EarModel;
 
     /// <summary>
-    /// What the ear is told before it is played anything. Deliberately about
-    /// listening rather than about synthesis: it is being asked what a sound
-    /// <em>is</em>, and a model told what the patch was meant to do will hear
-    /// what it was told rather than what came out.
+    /// Never: the models this format reaches that take a sound require every request
+    /// to carry one and take no picture, so they listen apart (ADR-0047).
     /// </summary>
-    private const string Ear = """
-        You are listening on behalf of somebody who cannot hear this clip. You
-        are not told what it is or what it was meant to be, and you should not
-        try to work it out — describe only what is there.
+    bool IModelConversation.HearsItself => false;
 
-        Answer in three or four sentences, covering: how many separate things
-        you can hear and roughly what pitch each sits at; whether the clip is
-        continuous or has separate hits in it, and if it has hits, how often;
-        whether anything changes over the clip or it stays as it starts; and
-        anything wrong with it — clicks, a tearing buzz, distortion, a tail
-        that cuts off.
+    void IModelConversation.Forget() => Wire.Forget(messages);
 
-        Most of what you will be sent is plain and unmusical, and saying so is
-        the useful answer: "two steady tones, one low and one high, and nothing
-        else" is worth far more than a generous reading. Do not name instruments
-        unless what you hear genuinely sounds like one. Do not guess at how it
-        was made, and do not offer advice.
-        """;
+    void IModelConversation.Add(string instruction) => messages.Add(Wire.User(instruction));
 
-    /// <summary>
-    /// What one model heard, as words for the model that cannot.
-    /// </summary>
-    /// <remarks>
-    /// A separate request rather than a turn of the conversation, and forced rather
-    /// than chosen: the models that take a sound require every request to carry one
-    /// and do not take a picture. The WAV is sent once and is never part of the
-    /// conversation, and the ear is told nothing about the patch — it only hears the
-    /// clip. A failure is a sentence in the tool result rather than the end of the
-    /// turn, since the levels are already known.
-    /// </remarks>
-    private async Task<string> Described(byte[] wav, CancellationToken cancel)
-    {
-        var ear = chosen.EarModel;
-
-        if (string.IsNullOrWhiteSpace(ear))
-            return "No model is set to listen with, so nobody has heard this.";
-
-        var body = Wire.Request(
-            ear,
-            [Wire.System(Ear), Wire.UserWithMedia("Here is the clip.", [], [wav])],
-            []);
-
-        try
-        {
-            var heard = Wire.Parse(await Post(body.ToJsonString(), cancel).ConfigureAwait(false));
-
-            return heard.Text is { Length: > 0 } text
-                ? $"{ear} listened to it and says: {text}"
-                : $"{ear} was played it and said nothing.";
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return $"It could not be played to {ear}: {ex.Message} The levels above are still measured "
-                + "from the sound itself, so use those and say you have not heard it.";
-        }
-    }
-
-    private async Task<ToolOutcome> Answer(Call call, CancellationToken cancel)
-    {
-        JsonElement arguments;
-
-        try
-        {
-            arguments = JsonSerializer.Deserialize<JsonElement>(
-                string.IsNullOrWhiteSpace(call.Arguments) ? "{}" : call.Arguments);
-        }
-        catch (JsonException ex)
-        {
-            return ToolOutcome.Refused($"those arguments were not valid JSON: {ex.Message}");
-        }
-
-        return await workbench.InvokeAsync(call.Name, arguments, cancel).ConfigureAwait(false);
-    }
-
-    private async Task<Reply> Send(CancellationToken cancel)
+    async Task<ModelReply> IModelConversation.Send(CancellationToken cancel)
     {
         // The conversation is copied into the request rather than handed to it:
         // a JSON node belongs to one parent, and this one has to survive being
@@ -368,46 +104,53 @@ internal sealed class OpenAiSession : IPatchSession
         var body = Wire.Request(chosen.Model, (JsonArray)messages.DeepClone(), workbench.Tools)
             .ToJsonString();
 
-        return Wire.Parse(await Post(body, cancel).ConfigureAwait(false));
-    }
+        var reply = Wire.Parse(await Post(body, cancel).ConfigureAwait(false));
 
-    /// <summary>
-    /// One request, retried where the endpoint asked to be. Shared by the
-    /// conversation and by the ear, so a rate limit is absorbed the same way
-    /// whichever of them met it.
-    /// </summary>
-    private async Task<JsonNode?> Post(string body, CancellationToken cancel)
-    {
-        for (var attempt = 1; ; attempt++)
+        messages.Add(reply.RawMessage ?? new JsonObject
         {
-            // Built inside the loop: an HttpContent that has been sent once
-            // cannot be sent again, and this is the one thing being retried.
-            using var content = new StringContent(body, Encoding.UTF8, "application/json");
-            using var response = await http.PostAsync(endpoint, content, cancel).ConfigureAwait(false);
+            ["role"] = "assistant",
+            ["content"] = reply.Text ?? string.Empty,
+        });
 
-            var said = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
-
-            if (response.IsSuccessStatusCode) return JsonNode.Parse(said);
-
-            var status = (int)response.StatusCode;
-            var wait = Wire.RetryAfter(response) ?? Backoff(attempt);
-
-            // Waiting is silent — there is no event for it, and a hiccup of
-            // under a second is not worth a line in the transcript. A limit that
-            // clears further out than LongestWait is not a hiccup but a quota,
-            // and the person is told rather than left watching a still panel.
-            if (attempt >= MaxAttempts || !Wire.Retryable(status) || wait > LongestWait)
-                throw new HttpRequestException(Wire.Complaint(status, said));
-
-            await Task.Delay(wait < TimeSpan.Zero ? TimeSpan.Zero : wait, cancel).ConfigureAwait(false);
-        }
+        return new ModelReply(
+            reply.Text,
+            [.. reply.Calls.Select(call => new ToolCall(call.Id, call.Name, call.Arguments))],
+            reply.Input,
+            reply.Cached,
+            reply.Output);
     }
 
     /// <summary>
-    /// What to wait when the endpoint refused without saying how long for.
-    /// Doubling from a second, which spends about fifteen across the attempts.
+    /// A tool message for each answer, then the pictures as a user message: a tool
+    /// message in this format carries a string and nothing else.
     /// </summary>
-    private static TimeSpan Backoff(int attempt) => TimeSpan.FromSeconds(Math.Pow(2, attempt - 1));
+    void IModelConversation.Add(IReadOnlyList<ToolAnswer> answers)
+    {
+        foreach (var answer in answers) messages.Add(Wire.ToolResult(answer.Call.Id, answer.Text));
+
+        List<byte[]> seen = [.. answers.Select(answer => answer.Png).OfType<byte[]>()];
+
+        if (seen.Count > 0) messages.Add(Wire.UserWithPictures("Here is what that looked like.", seen));
+    }
+
+    /// <summary>
+    /// A separate request rather than a turn of the conversation: the models that take
+    /// a sound require every request to carry one and do not take a picture.
+    /// </summary>
+    async Task<string?> IModelConversation.Listen(string model, string briefing, byte[] wav, CancellationToken cancel)
+    {
+        var body = Wire.Request(
+            model,
+            [Wire.System(briefing), Wire.UserWithMedia("Here is the clip.", [], [wav])],
+            []);
+
+        return Wire.Parse(await Post(body.ToJsonString(), cancel).ConfigureAwait(false)).Text;
+    }
+
+    private async Task<JsonNode?> Post(string body, CancellationToken cancel) =>
+        JsonNode.Parse(await AssistantPost
+            .Send(http, endpoint, body, (response, _) => Wire.RetryAfter(response), Wire.Complaint, cancel)
+            .ConfigureAwait(false));
 
     public void Dispose() => http.Dispose();
 }

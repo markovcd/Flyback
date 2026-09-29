@@ -17,3 +17,74 @@ Flyback.Plugins.Assist.IAssistantTransport.Handler.get -> System.Net.Http.HttpMe
 Flyback.Plugins.Assist.IAssistantTransport.HasKey.get -> bool
 Flyback.Plugins.Assist.IAssistantTransport.Origin.get -> string?
 Flyback.Plugins.Assist.IPatchAssistant.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?
+Flyback.Plugins.Assist.AssistantPost
+Flyback.Plugins.Assist.ModelReply
+Flyback.Plugins.Assist.ModelReply.<Clone>$() -> Flyback.Plugins.Assist.ModelReply!
+Flyback.Plugins.Assist.ModelReply.Cached.get -> int
+Flyback.Plugins.Assist.ModelReply.Cached.init -> void
+Flyback.Plugins.Assist.ModelReply.Calls.get -> System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ToolCall!>!
+Flyback.Plugins.Assist.ModelReply.Calls.init -> void
+Flyback.Plugins.Assist.ModelReply.Deconstruct(out string? Text, out System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ToolCall!>! Calls, out int Input, out int Cached, out int Output) -> void
+Flyback.Plugins.Assist.ModelReply.Equals(Flyback.Plugins.Assist.ModelReply? other) -> bool
+Flyback.Plugins.Assist.ModelReply.Input.get -> int
+Flyback.Plugins.Assist.ModelReply.Input.init -> void
+Flyback.Plugins.Assist.ModelReply.ModelReply(string? Text, System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ToolCall!>! Calls, int Input = 0, int Cached = 0, int Output = 0) -> void
+Flyback.Plugins.Assist.ModelReply.Output.get -> int
+Flyback.Plugins.Assist.ModelReply.Output.init -> void
+Flyback.Plugins.Assist.ModelReply.Text.get -> string?
+Flyback.Plugins.Assist.ModelReply.Text.init -> void
+Flyback.Plugins.Assist.ToolAnswer
+Flyback.Plugins.Assist.ToolAnswer.<Clone>$() -> Flyback.Plugins.Assist.ToolAnswer!
+Flyback.Plugins.Assist.ToolAnswer.Call.get -> Flyback.Plugins.Assist.ToolCall!
+Flyback.Plugins.Assist.ToolAnswer.Call.init -> void
+Flyback.Plugins.Assist.ToolAnswer.Deconstruct(out Flyback.Plugins.Assist.ToolCall! Call, out string! Text, out byte[]? Png, out byte[]? Wav) -> void
+Flyback.Plugins.Assist.ToolAnswer.Equals(Flyback.Plugins.Assist.ToolAnswer? other) -> bool
+Flyback.Plugins.Assist.ToolAnswer.Png.get -> byte[]?
+Flyback.Plugins.Assist.ToolAnswer.Png.init -> void
+Flyback.Plugins.Assist.ToolAnswer.Text.get -> string!
+Flyback.Plugins.Assist.ToolAnswer.Text.init -> void
+Flyback.Plugins.Assist.ToolAnswer.ToolAnswer(Flyback.Plugins.Assist.ToolCall! Call, string! Text, byte[]? Png = null, byte[]? Wav = null) -> void
+Flyback.Plugins.Assist.ToolAnswer.Wav.get -> byte[]?
+Flyback.Plugins.Assist.ToolAnswer.Wav.init -> void
+Flyback.Plugins.Assist.ToolCall
+Flyback.Plugins.Assist.ToolCall.<Clone>$() -> Flyback.Plugins.Assist.ToolCall!
+Flyback.Plugins.Assist.ToolCall.Arguments.get -> string!
+Flyback.Plugins.Assist.ToolCall.Arguments.init -> void
+Flyback.Plugins.Assist.ToolCall.Deconstruct(out string! Id, out string! Name, out string! Arguments) -> void
+Flyback.Plugins.Assist.ToolCall.Equals(Flyback.Plugins.Assist.ToolCall? other) -> bool
+Flyback.Plugins.Assist.ToolCall.Id.get -> string!
+Flyback.Plugins.Assist.ToolCall.Id.init -> void
+Flyback.Plugins.Assist.ToolCall.Name.get -> string!
+Flyback.Plugins.Assist.ToolCall.Name.init -> void
+Flyback.Plugins.Assist.ToolCall.ToolCall(string! Id, string! Name, string! Arguments) -> void
+Flyback.Plugins.Assist.TurnLoop
+const Flyback.Plugins.Assist.AssistantPost.MaxAttempts = 5 -> int
+const Flyback.Plugins.Assist.TurnLoop.MaxExchanges = 40 -> int
+override Flyback.Plugins.Assist.ModelReply.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ModelReply.GetHashCode() -> int
+override Flyback.Plugins.Assist.ModelReply.ToString() -> string!
+override Flyback.Plugins.Assist.ToolAnswer.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ToolAnswer.GetHashCode() -> int
+override Flyback.Plugins.Assist.ToolAnswer.ToString() -> string!
+override Flyback.Plugins.Assist.ToolCall.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.ToolCall.GetHashCode() -> int
+override Flyback.Plugins.Assist.ToolCall.ToString() -> string!
+static Flyback.Plugins.Assist.AssistantPost.Retryable(int status) -> bool
+static Flyback.Plugins.Assist.AssistantPost.Send(System.Net.Http.HttpClient! http, System.Uri! endpoint, string! body, System.Func<System.Net.Http.HttpResponseMessage!, string!, System.TimeSpan?>! waitAsked, System.Func<int, string!, string!>! complaint, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<string!>!
+static Flyback.Plugins.Assist.ModelReply.operator !=(Flyback.Plugins.Assist.ModelReply? left, Flyback.Plugins.Assist.ModelReply? right) -> bool
+static Flyback.Plugins.Assist.ModelReply.operator ==(Flyback.Plugins.Assist.ModelReply? left, Flyback.Plugins.Assist.ModelReply? right) -> bool
+static Flyback.Plugins.Assist.ToolAnswer.operator !=(Flyback.Plugins.Assist.ToolAnswer? left, Flyback.Plugins.Assist.ToolAnswer? right) -> bool
+static Flyback.Plugins.Assist.ToolAnswer.operator ==(Flyback.Plugins.Assist.ToolAnswer? left, Flyback.Plugins.Assist.ToolAnswer? right) -> bool
+static Flyback.Plugins.Assist.ToolCall.operator !=(Flyback.Plugins.Assist.ToolCall? left, Flyback.Plugins.Assist.ToolCall? right) -> bool
+static Flyback.Plugins.Assist.ToolCall.operator ==(Flyback.Plugins.Assist.ToolCall? left, Flyback.Plugins.Assist.ToolCall? right) -> bool
+static readonly Flyback.Plugins.Assist.AssistantPost.LongestWait -> System.TimeSpan
+Flyback.Plugins.Assist.IModelConversation
+Flyback.Plugins.Assist.IModelConversation.Add(System.Collections.Generic.IReadOnlyList<Flyback.Plugins.Assist.ToolAnswer!>! answers) -> void
+Flyback.Plugins.Assist.IModelConversation.Add(string! instruction) -> void
+Flyback.Plugins.Assist.IModelConversation.EarModel.get -> string?
+Flyback.Plugins.Assist.IModelConversation.Forget() -> void
+Flyback.Plugins.Assist.IModelConversation.HearsItself.get -> bool
+Flyback.Plugins.Assist.IModelConversation.Listen(string! model, string! briefing, byte[]! wav, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<string?>!
+Flyback.Plugins.Assist.IModelConversation.Send(System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.ModelReply!>!
+Flyback.Plugins.Assist.IModelConversation.Workbench.get -> Flyback.Plugins.Assist.PatchWorkbench!
+static Flyback.Plugins.Assist.TurnLoop.Run(Flyback.Plugins.Assist.IModelConversation! conversation, string! instruction, System.Threading.CancellationToken cancel = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Flyback.Plugins.Assist.PatchEvent!>!

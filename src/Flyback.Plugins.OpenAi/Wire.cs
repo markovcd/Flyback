@@ -264,19 +264,6 @@ internal static class Wire
     }
 
     /// <summary>
-    /// Whether a status is worth sending the same request for a second time.
-    /// </summary>
-    /// <remarks>
-    /// 429 is the one that matters: a rate limit on a conversation that resends a
-    /// large stable briefing every turn is an ordinary event, and the endpoint
-    /// usually says how long it wants. The 5xx are here because a gateway that is
-    /// briefly unwell says so twice as often as it means it; everything else in 4xx
-    /// will still be wrong in a second.
-    /// </remarks>
-    public static bool Retryable(int status) =>
-        status is 408 or 429 or 500 or 502 or 503 or 504 or 529;
-
-    /// <summary>
     /// How long the endpoint asked to be left alone, or null when it did not say.
     /// </summary>
     /// <remarks>

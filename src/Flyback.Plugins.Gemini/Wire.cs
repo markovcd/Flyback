@@ -5,24 +5,6 @@ using Flyback.Plugins.Assist;
 
 namespace Flyback.Plugins.Gemini;
 
-/// <summary>One tool call the model asked for.</summary>
-/// <remarks>
-/// No id, unlike the chat-completions spelling: a <c>functionCall</c> carries a
-/// name and nothing to match a reply to, so a turn that asked for the same tool
-/// twice is answered by order.
-/// </remarks>
-/// <param name="Arguments">Already a JSON object here, where the other format sends a string of one.</param>
-internal sealed record Call(string Name, JsonNode? Arguments);
-
-/// <summary>What came back from one request.</summary>
-internal sealed record Reply(
-    string? Text,
-    IReadOnlyList<Call> Calls,
-    JsonNode? RawContent,
-    int Input,
-    int Cached,
-    int Output);
-
 /// <summary>
 /// The generateContent wire format, and nothing else.
 /// </summary>
@@ -316,14 +298,6 @@ internal static class Wire
             // sees it.
             Count(usage?["candidatesTokenCount"]) + Count(usage?["thoughtsTokenCount"]));
     }
-
-    /// <summary>
-    /// Whether a status is worth sending the same request for a second time. Much
-    /// the same set the other adapter retries; 503 earns its place here because it
-    /// routinely means the model is overloaded, which is a queue rather than a fault.
-    /// </summary>
-    public static bool Retryable(int status) =>
-        status is 408 or 429 or 500 or 502 or 503 or 504;
 
     /// <summary>
     /// How long the endpoint asked to be left alone, or null when it did not say.
