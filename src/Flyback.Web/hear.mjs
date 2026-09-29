@@ -4,13 +4,16 @@
 //   node hear.mjs patch.fbkb --seconds 5
 //   node hear.mjs --preset "Vigil" --knob hall=0.9 --knob fog=0
 //   node hear.mjs --preset "Played" --note 60:0.1:0.6 --note 64:0.3:0.6
+//   node hear.mjs --edit 0:before.fbk --edit 0.5:after.fbk
 //   node hear.mjs --presets
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
 // panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
 // when --out names a file. --knob turns a knob, by name, 0 to 1, before anything plays.
 // --note holds a note on the computer keyboard from one second to another, struck at the
-// first buffer of 1,024 frames that starts at or after each.
+// first buffer of 1,024 frames that starts at or after each. --edit hands over a patch
+// file written as JSON as the web editor does, at the first such buffer at or after its
+// second; one at 0 stands for a preset or a file.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
 
 import { existsSync } from 'node:fs';
@@ -35,6 +38,7 @@ const { values, positionals } = parseArgs({
     presets: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
     note: { type: 'string', multiple: true, default: [] },
+    edit: { type: 'string', multiple: true, default: [] },
   },
 });
 
@@ -54,10 +58,37 @@ if (values.presets) {
   process.exit(0);
 }
 
+const edits = await Promise.all(values.edit.map(async given => {
+  const colon = given.indexOf(':');
+  const seconds = Number(given.slice(0, colon));
+
+  if (colon < 0 || !Number.isFinite(seconds)) {
+    console.error(`hear: --edit ${given}: write it seconds:file, as 0.5:after.fbk`);
+    process.exit(1);
+  }
+
+  return { seconds, text: await readFile(given.slice(colon + 1), 'utf8') };
+}));
+
+edits.sort((a, b) => a.seconds - b.seconds);
+
+/** Hands over the next edit, as the web editor's worker takes it. */
+function edit() {
+  const failed = web.Edit(edits.shift().text, width / height);
+
+  if (failed) {
+    console.error(`hear: ${failed}`);
+    process.exit(1);
+  }
+}
+
 // A preset is packed and opened as its bundle, as the page does.
 const packed = values.preset !== undefined ? web.Pack(values.preset) : null;
 const file = positionals[0];
-const failure = packed !== null
+const opening = edits.length > 0 && edits[0].seconds <= 0;
+if (opening) edit();
+
+const failure = opening ? null : packed !== null
   ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, 'sound') : `No preset is called '${values.preset}'.`
   : file !== undefined
     ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, 'sound')
@@ -102,7 +133,11 @@ const strikes = values.note.flatMap(held => {
   ];
 }).sort((a, b) => a.at - b.at);
 
+for (const later of edits) later.at = Math.round(later.seconds * status.sampleRate);
+
 for (let at = 0; at < frames; at += chunk) {
+  while (edits.length > 0 && edits[0].at <= at) edit();
+
   while (strikes.length > 0 && strikes[0].at <= at) {
     const { note, down } = strikes.shift();
     web.Strike(note, down);

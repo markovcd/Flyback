@@ -18,7 +18,7 @@ namespace Flyback.App.Audio;
 /// </remarks>
 /// <param name="sound">The device it plays through until <see cref="Use"/> hands it another. The engine owns each one.</param>
 /// <param name="compiler">What turns each program swapped in here into IL, or null for programs that are only ever interpreted.</param>
-internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null) : IDisposable
+internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null) : IAudioEngine, IDisposable
 {
     /// <summary>
     /// A program and everything that goes with it. The memory belongs here rather
@@ -85,7 +85,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// same way the program is, so the callback sees one sink or none and never
     /// half of a change.
     /// </summary>
-    internal IAudioSink? Capture
+    public IAudioSink? Capture
     {
         get => Volatile.Read(ref capture);
         set => Volatile.Write(ref capture, value);

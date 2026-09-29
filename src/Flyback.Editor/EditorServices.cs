@@ -96,7 +96,7 @@ internal static class EditorServices
             sp.GetRequiredService<PluginCatalog>(),
             sp.GetRequiredService<OutputSettingRepository>().Current));
 
-        services.AddSingleton<AudioEngine>();
+        services.AddSingleton<IAudioEngine, AudioEngine>();
 
         // Nothing is opened by this: the backend is asked for a device only once a
         // compiled program is reading one.

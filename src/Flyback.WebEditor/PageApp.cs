@@ -2,9 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Flyback.App;
+using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Gallery;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -43,6 +45,8 @@ internal sealed class PageApp : Application
             services.AddSingleton<IFocus, PageFocus>();
             services.AddSingleton<IClose, PageClose>();
             services.AddSingleton<IStillShelf, PageStills>();
+            services.AddSingleton<IAudioEngine, PageSound>();
+            services.AddSingleton(new AudioSetup(new SilentAudioDevice(), new PageSpeakers()));
         });
 
         var view = provider.View();

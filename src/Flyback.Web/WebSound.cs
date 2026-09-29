@@ -19,7 +19,7 @@ namespace Flyback.Web;
 internal sealed class WebSound : IDisposable
 {
     private readonly CompiledPatch sound;
-    private readonly CompiledPatch picture;
+    private readonly CompiledPatch? picture;
     private readonly AudioRenderer speakers;
     private readonly DelayState? memory;
     private readonly LiveValues heard;
@@ -32,21 +32,40 @@ internal sealed class WebSound : IDisposable
     private double rendered;
 
     public WebSound(Opened opened, int width, int height)
+        : this(opened, SynthRenderer.AspectOf(width, height), withPicture: true, after: null)
+    {
+    }
+
+    /// <summary>
+    /// The sound of an edited patch, playing on from <paramref name="after"/> with its
+    /// clock and what it remembers, as the editor's engine carries them through an edit.
+    /// </summary>
+    public WebSound(Opened opened, float aspect, WebSound? after)
+        : this(opened, aspect, withPicture: false, after)
+    {
+    }
+
+    /// <param name="withPicture">
+    /// Whether the picture's program is compiled too, for the viewer's Meters. The
+    /// editor says which Meters it wants by name instead, through <see cref="Readings"/>.
+    /// </param>
+    private WebSound(Opened opened, float aspect, bool withPicture, WebSound? after)
     {
         var (patch, samples, pictures) = opened;
 
         Length = patch.Length;
 
         sound = patch.CompileForAudio(samples: samples, pictures: pictures, played: true).Program;
-        picture = patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program;
+        picture = withPicture ? patch.CompileForVideo(samples: samples, pictures: pictures, played: true).Program : null;
 
-        speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(width, height) };
+        speakers = after?.speakers ?? new AudioRenderer();
+        speakers.Aspect = aspect;
         speakers.Prepare(sound);
-        memory = speakers.DelayMemoryFor(sound);
+        memory = speakers.DelayMemoryFor(sound, after?.memory);
 
         heard = new LiveValues(sound.LiveInputs);
-        shown = new LiveValues(picture.LiveInputs);
-        blocks = [shown, heard];
+        shown = picture is null ? LiveValues.None : new LiveValues(picture.LiveInputs);
+        blocks = picture is null ? [heard] : [shown, heard];
 
         // Where the panel's knobs rest until somebody turns them.
         patch.Seed(heard);
@@ -66,6 +85,13 @@ internal sealed class WebSound : IDisposable
 
     public int SampleRate => speakers.SampleRate;
 
+    /// <inheritdoc cref="AudioRenderer.Aspect"/>
+    public float Aspect
+    {
+        get => speakers.Aspect;
+        set => speakers.Aspect = value;
+    }
+
     /// <summary>Where the sound has been rendered up to, in seconds.</summary>
     public double Time => speakers.Time;
 
@@ -73,7 +99,7 @@ internal sealed class WebSound : IDisposable
     public double Speed => rendering.Elapsed.TotalSeconds > 0 ? rendered / rendering.Elapsed.TotalSeconds : 0;
 
     /// <summary>How many floats <see cref="Listen"/> packs.</summary>
-    public int StateLength => SoundState.Length(picture);
+    public int StateLength => picture is null ? 0 : SoundState.Length(picture);
 
     /// <summary>Fills <paramref name="interleavedStereo"/> with the next stretch of sound.</summary>
     public void Hear(Span<float> interleavedStereo)
@@ -94,10 +120,24 @@ internal sealed class WebSound : IDisposable
     /// </summary>
     public void Listen(Span<float> state)
     {
+        if (picture is null) return;
+
         Meters.Refresh(sound, memory, shown, heard);
 
         SoundState.Write(picture, shown, state);
     }
+
+    /// <summary>
+    /// Measures the Meters <paramref name="watched"/> is keyed by, playing the readings
+    /// into the sound too, and leaves them in its storage in the order of its keys.
+    /// </summary>
+    public void Readings(LiveValues watched) => Meters.Refresh(sound, memory, watched, heard);
+
+    /// <summary>Plays <paramref name="value"/> on <paramref name="key"/>, as it was written into the editor's block.</summary>
+    public void Play(string key, float value) => heard.Set(key, value);
+
+    /// <summary>Carries on from <paramref name="seconds"/> with what the patch remembers kept, as after an edit.</summary>
+    public void Carry(double seconds) => speakers.SeekTo(Math.Max(0, seconds));
 
     /// <summary>Turns a panel knob, 0 to 1.</summary>
     public void Turn(string key, float value)

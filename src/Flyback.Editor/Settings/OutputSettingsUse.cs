@@ -12,7 +12,7 @@ internal sealed class OutputSettingsUse(
     OutputSettingRepository repository,
     EditorSetup setup,
     PreviewHost preview,
-    AudioEngine audio,
+    IAudioEngine audio,
     PanelKnobs knobs,
     TransportControls transport,
     Playback playback,

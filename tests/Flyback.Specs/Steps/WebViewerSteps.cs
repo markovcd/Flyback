@@ -6,6 +6,7 @@ using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
 using Flyback.App;
+using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -33,6 +34,9 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private (string Name, float Value)? turned;
     private (int Note, float From, float To)? struck;
 
+    /// <summary>The desktop's sound through the same edits, where the web editor's were played.</summary>
+    private Func<float[]>? edited;
+
     private List<(string Name, string Heading, string Description)> listed = [];
 
     [When("it plays in the web viewer for {float} second(s)")]
@@ -56,11 +60,84 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         ((bool?)said!["played"]).ShouldBe(true, "the preset reads no computer keyboard, so a note proves nothing");
     }
 
+    /// <summary>
+    /// The preset handed over as text and then edited, as the web editor hands its
+    /// worker each edit, with its Output's volume the one thing changed.
+    /// </summary>
+    [When("it plays in the web editor for {float} second(s), its Output's volume set to {float} by an edit at {float} seconds")]
+    public void WhenEditedInThePage(float length, float volume, float at)
+    {
+        var modules = Installed.Value.Modules;
+        var patch = PresetLibrary.Open(session.Presets.Single(), null, modules).Patch;
+
+        patch.IncomingTo(patch.Output.Id, NodeCatalog.OutputVolumePort).ShouldBeNull("the Output's volume is wired, so setting it changes nothing");
+
+        var before = PatchIO.ToJson(patch, modules);
+        patch.Output.InputValues[NodeCatalog.OutputVolumePort] = volume;
+        var after = PatchIO.ToJson(patch, modules);
+
+        var first = Path.Combine(folder.FullName, "before.fbk");
+        var second = Path.Combine(folder.FullName, "after.fbk");
+        File.WriteAllText(first, before);
+        File.WriteAllText(second, after);
+
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        Play(length, "--edit", $"0:{first}", "--edit", $"{at.ToString(invariant)}:{second}");
+
+        edited = () => Edited([before, after], at);
+    }
+
+    /// <summary>
+    /// The desktop's sound through the same edits, as its engine takes one: the renderer
+    /// runs on, the memory is carried into the new program, and the knobs rest where the
+    /// editor's panel puts them. In the buffers the web build renders.
+    /// </summary>
+    private float[] Edited(string[] patches, float at)
+    {
+        const int buffer = 1024;
+
+        var modules = Installed.Value.Modules;
+        var speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(Width, Height) };
+        CompiledPatch program = CompiledPatch.Silent;
+        DelayState? memory = null;
+        var live = LiveValues.None;
+
+        void Take(string text)
+        {
+            var patch = PatchIO.Read(text, modules).Patch;
+
+            program = patch.CompileForAudio(modules, played: true).Program;
+            speakers.Prepare(program);
+            memory = speakers.DelayMemoryFor(program, memory);
+            live = new LiveValues(program.LiveInputs);
+            patch.Seed(live);
+        }
+
+        Take(patches[0]);
+
+        var frames = (int)Math.Round(seconds * speakers.SampleRate);
+        var editAt = (int)Math.Round(at * speakers.SampleRate);
+        var sound = new float[frames * 2];
+
+        for (var frame = 0; frame < frames; frame += buffer)
+        {
+            if (editAt <= frame)
+            {
+                Take(patches[1]);
+                editAt = int.MaxValue;
+            }
+
+            speakers.Render(program, sound.AsSpan(frame * 2, Math.Min(buffer, frames - frame) * 2), memory, live);
+        }
+
+        return sound;
+    }
+
     private void Play(float length, params string[] more)
     {
         var output = Path.Combine(folder.FullName, "heard.f32");
         var status = Hear([
-            "--preset", session.Presets.Single().Name,
+            .. more.Contains("--edit") ? [] : new[] { "--preset", session.Presets.Single().Name },
             "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture),
             "--size", $"{Width}x{Height}",
             "--out", output,
@@ -84,19 +161,22 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     [Then("its sound is the desktop's to within one step of 16 bits")]
     [Then("its sound is the desktop's with the same knob turned, to within one step of 16 bits")]
     [Then("its sound is the desktop's with the same note played, to within one step of 16 bits")]
+    [Then("its sound is the desktop's through the same edit, to within one step of 16 bits")]
     public void ThenTheDesktopsSound()
     {
-        var desktop = Desktop(turned, struck);
+        var desktop = edited?.Invoke() ?? Desktop(turned, struck);
 
         heard.Length.ShouldBe(desktop.Length);
         desktop.ShouldContain(sample => sample != 0f, "the desktop heard silence, so agreeing with it proves nothing");
 
         var worst = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
-        worst.ShouldBeLessThanOrEqualTo(1f / 32768f);
+        var parted = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).ToList().FindIndex(off => off > 1f / 32768f);
+        worst.ShouldBeLessThanOrEqualTo(1f / 32768f, $"the two part at {parted / 2 / (double)GlobalConstants.SampleRate:0.#####} seconds");
     }
 
     [Then("it is not the sound with the knob where it rests")]
     [Then("it is not the sound with nothing played")]
+    [Then("it is not the sound with nothing edited")]
     public void ThenItWasHeard()
     {
         var resting = Desktop(null, null);

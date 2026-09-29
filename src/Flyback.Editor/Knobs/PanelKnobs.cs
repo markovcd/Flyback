@@ -28,7 +28,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private readonly NodeEditor editor;
     private readonly Document document;
     private readonly PreviewHost preview;
-    private readonly AudioEngine audio;
+    private readonly IAudioEngine audio;
     private readonly MidiHub midi;
     private readonly ReportLine report;
 
@@ -68,7 +68,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private readonly Reactions reactions;
     private readonly Usage usage;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, AudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions, Usage usage)
+    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, IAudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions, Usage usage)
     {
         this.reactions = reactions;
         this.usage = usage;

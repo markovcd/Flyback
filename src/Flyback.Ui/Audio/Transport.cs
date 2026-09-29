@@ -17,7 +17,7 @@ namespace Flyback.App.Audio;
 /// </remarks>
 internal sealed class Transport
 {
-    private readonly AudioEngine audio;
+    private readonly IAudioEngine audio;
     private readonly PreviewHost? preview;
     private readonly IlCompiler compiler;
     private readonly MidiHub midi;
@@ -26,7 +26,7 @@ internal sealed class Transport
     private double frozenAt;
 
     /// <param name="preview">The picture's surface, or null where there is no picture.</param>
-    public Transport(AudioEngine audio, PreviewHost? preview, IlCompiler compiler, MidiHub midi)
+    public Transport(IAudioEngine audio, PreviewHost? preview, IlCompiler compiler, MidiHub midi)
     {
         this.audio = audio;
         this.preview = preview;

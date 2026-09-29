@@ -27,7 +27,7 @@ internal sealed class PresetAudition
     /// <summary>How long the pointer has to rest on a tile, so sweeping across the gallery plays nothing.</summary>
     private static readonly TimeSpan Delay = TimeSpan.FromSeconds(1);
 
-    private readonly AudioEngine audio;
+    private readonly IAudioEngine audio;
     private readonly IlCompiler compiler;
     private readonly ModuleCatalog modules;
 
@@ -49,7 +49,7 @@ internal sealed class PresetAudition
     private PresetMotion? motion;
 
     public PresetAudition(
-        AudioEngine audio,
+        IAudioEngine audio,
         IlCompiler compiler,
         PluginCatalog plugins,
         PresetLibrary saved,

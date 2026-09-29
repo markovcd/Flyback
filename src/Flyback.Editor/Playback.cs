@@ -37,7 +37,7 @@ internal sealed class Playback
         IReactTo<RewindAsked>
 {
     private readonly NodeEditor editor;
-    private readonly AudioEngine audio;
+    private readonly IAudioEngine audio;
     private readonly MidiHub midi;
     private readonly Transport transport;
     private readonly ReportLine report;
@@ -59,7 +59,7 @@ internal sealed class Playback
         PluginCatalog plugins,
         ReportLine report,
         PreviewHost preview,
-        AudioEngine audio,
+        IAudioEngine audio,
         IlCompiler compiler,
         MidiHub midi,
         AudioSetup sound,

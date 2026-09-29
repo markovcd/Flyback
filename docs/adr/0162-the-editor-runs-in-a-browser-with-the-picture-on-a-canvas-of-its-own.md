@@ -2,8 +2,7 @@
 
 **Status:** Accepted · 2026-09-29 · *user-directed* · builds on
 [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) and
-[0150](0150-the-editor-is-composed-in-a-container.md) · the page edits and draws; its
-sound is not implemented yet
+[0150](0150-the-editor-is-composed-in-a-container.md)
 
 ## Context
 
@@ -45,7 +44,7 @@ regions and answers the keys and dropped files of whichever top level it is hand
 container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own.
 
 **The preset site serves it at `/editor/`, beside the viewer at `/viewer/`**, whose
-`gl.js` the page imports and whose worker will play its sound. The site publishes
+`gl.js` the page imports and whose worker plays its sound. The site publishes
 it beside itself unless built with `-p:WebEditor=false`.
 
 **The landing page shows it where it shows the editor's photograph.** The hero's
@@ -55,10 +54,22 @@ screen narrower than 900 pixels opens the page in a tab instead.
 
 **The sound plays in a worker, on the viewer's build.** The worker needs the engine
 and the plugins, not Avalonia, so it loads the 7 MB viewer rather than the editor.
-Each edit posts the patch's bytes; the worker keeps only the latest, so a knob
-dragged through fifty values compiles as often as it can keep up, and it clears the
-speaker's queue when a new program starts, so the edit is heard in about a tenth of
-a second rather than after a quarter second of the old one.
+The editor's sound is an `IAudioEngine`: `AudioEngine` on a desktop, and in a page
+`PageSound`, which posts each edit as the patch's text, and the files it names
+when they change. The worker keeps only the latest edit, so a value dragged through
+fifty steps compiles as often as it can keep up, and carries the clock and the
+memory into the new program as the desktop's engine does. The speaker then keeps a
+tenth of a second of the old program's queue and says exactly where it ends, which
+is where the new program starts: the edit is heard in about a tenth of a second
+rather than after a quarter second of the old one, and the clock never slips.
+
+**The speaker is the clock, once it may play.** A browser holds sound back until the
+page is used, so until then, and until the worker is up, the picture runs on the
+wall clock; the first press lets the sound in, and it joins where the picture is.
+Knobs and keys write into a block on the page, as on the desktop, and what changed
+in it is posted once a frame. The Meters the picture reads are named to the worker,
+which measures them and posts the readings back; a Scope's chart is not carried,
+since the shader reads every table as silence.
 
 **The editor is a library, `Flyback.Editor`.** Its window, canvas, regions, the
 container that composes them, and what they read (usage, release notes, the running

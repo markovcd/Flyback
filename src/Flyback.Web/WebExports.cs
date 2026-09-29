@@ -3,6 +3,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.Json.Nodes;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
@@ -145,6 +146,92 @@ public static partial class WebExports
 
         return new Opened(load.Patch, new SampleLibrary(), new ImageLibrary());
     }, width, height, part);
+
+    /// <summary>The files the editor's patch names, as it handed them over with <see cref="Keep"/>.</summary>
+    private static readonly Dictionary<string, byte[]> Kept = new(StringComparer.OrdinalIgnoreCase);
+    private static BundleFiles keptFiles = new(Kept);
+
+    /// <summary>The Meters the editor's picture reads, measured by <see cref="Readings"/>.</summary>
+    private static LiveValues watched = LiveValues.None;
+
+    /// <summary>Keeps a file the editor's patch names, for every <see cref="Edit"/> after.</summary>
+    [JSExport]
+    public static void Keep(string path, byte[] bytes)
+    {
+        Kept[path] = bytes;
+        keptFiles = new BundleFiles(Kept);
+    }
+
+    /// <summary>Lets every kept file go, before the files of another patch are kept.</summary>
+    [JSExport]
+    public static void Forget()
+    {
+        Kept.Clear();
+        keptFiles = new BundleFiles(Kept);
+    }
+
+    /// <summary>
+    /// The editor's patch, as text, taking over the sound from the one playing: its
+    /// clock and what it remembers carry on, as the editor's engine carries them
+    /// through an edit. Null on success, or why not, with the old sound still playing.
+    /// </summary>
+    [JSExport]
+    public static string? Edit(string text, double aspect)
+    {
+        try
+        {
+            var load = PatchIO.Read(text, Plugins.Modules);
+            if (load.TooNew) return load.Detail;
+
+            var next = new WebSound(new Opened(load.Patch, keptFiles, keptFiles), (float)aspect, sound);
+
+            sound?.Dispose();
+            sound = next;
+            picture = null;
+            description = load.Patch.Description;
+            knobs = [.. load.Patch.Controls ?? []];
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            return ex.Message;
+        }
+    }
+
+    /// <summary>Says which Meters <see cref="Readings"/> measures, by the names the editor's picture reads them on.</summary>
+    [JSExport]
+    public static void Watch(string[] keys) => watched = new LiveValues(keys);
+
+    /// <summary>
+    /// Measures the Meters <see cref="Watch"/> named, in its order, and answers the
+    /// address the readings start at; zero where there are none.
+    /// </summary>
+    [JSExport]
+    public static int Readings()
+    {
+        if (sound is null || watched.Count == 0) return 0;
+
+        sound.Readings(watched);
+        watched.CopyTo(State.Take(watched.Count));
+
+        return State.Address;
+    }
+
+    /// <summary>A value the editor wrote into its sound's block, a knob or a note, played here as it was written.</summary>
+    [JSExport]
+    public static void Play(string key, double value) => sound?.Play(key, (float)value);
+
+    /// <summary>Carries on from <paramref name="seconds"/> with what the patch remembers kept, where the speaker has got to.</summary>
+    [JSExport]
+    public static void Carry(double seconds) => sound?.Carry(seconds);
+
+    /// <summary>The width over the height of the picture the sound belongs to, which Coordinates' <c>aspect</c> reads.</summary>
+    [JSExport]
+    public static void Aspect(double aspect)
+    {
+        if (sound is not null) sound.Aspect = (float)aspect;
+    }
 
     private static string? Open(Func<Opened> open, int width, int height, string part)
     {

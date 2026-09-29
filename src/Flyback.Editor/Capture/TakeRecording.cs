@@ -69,7 +69,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     private readonly ComboBox size;
 
     private readonly PreviewHost preview;
-    private readonly AudioEngine audio;
+    private readonly IAudioEngine audio;
     private readonly Usage usage;
     private readonly Func<Patch> patch;
     private readonly Func<OutputSettings> settings;
@@ -114,7 +114,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         Toolbar toolbar,
         OutputSections sections,
         PreviewHost preview,
-        AudioEngine audio,
+        IAudioEngine audio,
         Usage usage,
         NodeEditor editor,
         ReportLine report,
