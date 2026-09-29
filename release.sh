@@ -11,7 +11,7 @@
 # starts at 0.1.0 with none.
 #
 # On GitHub, RELEASE_SIGNING_KEY must be the private half of
-# src/Flyback.App/Updates/release-key.pem and CHANGELOG.md must have the version's
+# src/Flyback.Editor/Updates/release-key.pem and CHANGELOG.md must have the version's
 # heading. Here the key is whatever release-key.sh finds or makes, and a missing
 # heading is said but does not stop the build.
 set -euo pipefail
@@ -52,9 +52,9 @@ fi
 # secret that does not pair with it would publish a release that nothing installs.
 # Compared as DER, so line endings and wrapping in the PEM make no difference.
 if $github; then
-  if ! openssl pkey -pubin -in src/Flyback.App/Updates/release-key.pem -outform DER -out "$temp/committed.der" \
+  if ! openssl pkey -pubin -in src/Flyback.Editor/Updates/release-key.pem -outform DER -out "$temp/committed.der" \
      || ! cmp -s "$temp/derived.der" "$temp/committed.der"; then
-    echo "release: RELEASE_SIGNING_KEY is not the private half of src/Flyback.App/Updates/release-key.pem" >&2
+    echo "release: RELEASE_SIGNING_KEY is not the private half of src/Flyback.Editor/Updates/release-key.pem" >&2
     exit 1
   fi
 fi
@@ -108,7 +108,7 @@ docker build --build-arg VERSION="$version" "${here[@]}" --target release \
 
 # What every copy of Flyback will check it against, before anything is published.
 if $github; then
-  openssl dgst -sha256 -verify src/Flyback.App/Updates/release-key.pem -signature dist/SHA256SUMS.sig dist/SHA256SUMS
+  openssl dgst -sha256 -verify src/Flyback.Editor/Updates/release-key.pem -signature dist/SHA256SUMS.sig dist/SHA256SUMS
 fi
 
 # The preset site's plugins reach people from the site, never from a release.

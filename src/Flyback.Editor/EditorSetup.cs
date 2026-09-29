@@ -86,19 +86,16 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>The site the gallery lists shared presets from and the plugins window shared plugins.</summary>
     public Uri? PresetSite { get; init; }
 
-    /// <summary>
-    /// A file to open once there is a window for it, or null for the usual start on
-    /// the default preset — see <see cref="Startup.OpenPath"/>.
-    /// </summary>
+    /// <summary>A file to open once there is a window for it, or null for the usual start on the default preset.</summary>
     public string? OpenPath { get; init; }
 
     /// <summary>The shared preset a restart was carrying, by its id on the preset site.</summary>
     public string? OpenShared { get; init; }
 
-    /// <summary>
-    /// Keep the CPU's programs on the interpreter for the whole run — see
-    /// <see cref="Startup.Interpreted"/>.
-    /// </summary>
+    /// <summary>What <see cref="Interpreted"/> is asked for with on the command line.</summary>
+    public const string InterpretedFlag = "--interpreted";
+
+    /// <summary>Keep the CPU's programs on the interpreter for the whole run.</summary>
     public bool Interpreted { get; init; }
 
     /// <summary>What the last update and any plugin just installed did, said once on the status bar.</summary>

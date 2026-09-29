@@ -109,7 +109,7 @@ ENV RELEASE_PUBLIC_KEY=${RELEASE_PUBLIC_KEY}
 
 RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
       printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' "${RELEASE_PUBLIC_KEY}" \
-        > src/Flyback.App/Updates/release-key.pem; \
+        > src/Flyback.Editor/Updates/release-key.pem; \
     fi
 
 RUN --mount=type=cache,target=/root/.nuget/packages \

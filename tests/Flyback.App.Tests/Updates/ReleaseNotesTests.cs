@@ -81,6 +81,6 @@ public sealed class ReleaseNotesTests
     [Fact]
     public void The_changelog_is_built_in()
     {
-        ReleaseNotes.Of(new Version(0, 3, 0), since: new Version(0, 1, 0)).ShouldNotBeNull().Sections.Count.ShouldBe(2);
+        ReleaseNotes.Of(new Version(0, 3, 0), since: new Version(0, 1, 0), Startup.Changelog().ShouldNotBeNull()).ShouldNotBeNull().Sections.Count.ShouldBe(2);
     }
 }

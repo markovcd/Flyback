@@ -23,6 +23,7 @@ context, decision, consequences.
 | [0144](0144-a-pipe-lands-where-the-text-says.md) | A pipe lands where the text says *(user-directed)* |
 | [0145](0145-the-panel-is-written-in-the-text.md) | The panel is written in the text *(user-directed)* |
 | [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) | A patch plays in a browser on the engine compiled to WebAssembly *(user-directed)* |
+| [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed)* |
 
 ### The engine
 

@@ -8,7 +8,7 @@
 # there is no tag yet), or type one (e.g. 1.4.0) to release that exact version.
 #
 # Needs the repository secret RELEASE_SIGNING_KEY: the private half of the key
-# whose public half is src/Flyback.App/Updates/release-key.pem. See ADR-0088.
+# whose public half is src/Flyback.Editor/Updates/release-key.pem. See ADR-0088.
 #
 # The actions are pinned to commits rather than tags. This workflow is handed the
 # signing key and publishes what every copy of Flyback installs as an update, so

@@ -47,26 +47,22 @@
     <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
     <ProjectReference Include="..\Flyback.Ui\Flyback.Ui.csproj" />
+    <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The controls the inspector is built from are internal, and the UI tests and scenarios drive them. -->
+    <!-- The updater and the startup are internal, and the tests drive them. -->
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 
-  <!--
-    The preset site is fixed at build time, never read at run time, so nothing
-    outside the binary can send the editor elsewhere. A Debug build, as Rider
-    makes, asks the site running locally; -p:PresetSite= names another.
-  -->
-  <PropertyGroup>
-    <PresetSite Condition="'$(PresetSite)' == '' and '$(Configuration)' == 'Debug'">http://localhost:8790/</PresetSite>
-    <PresetSite Condition="'$(PresetSite)' == ''">https://flyback.nasik2137.uk/</PresetSite>
-  </PropertyGroup>
-
   <ItemGroup>
-    <AssemblyMetadata Include="PresetSite" Value="$(PresetSite)" />
+    <!--
+      The changelog, so the window that opens after an update can say what the
+      release changed without asking the network. Startup reads it; ReleaseNotes
+      parses it.
+    -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" Link="CHANGELOG.md" />
   </ItemGroup>
 
   <!--
@@ -110,77 +106,10 @@
     <PluginProject Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
   </ItemGroup>
 
+  <!-- The editor's own packages come with Flyback.Editor; this adds the desktop platform. -->
   <ItemGroup>
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
-    <PackageReference Include="Avalonia.Fonts.Inter" />
-    <PackageReference Include="Avalonia.Themes.Fluent" />
-
-    <!--
-      The text view's editor — the AvaloniaUI org's port of AvalonEdit, MIT.
-      The one package here that is not the framework itself, and it earns that:
-      a gutter, line numbers and highlighting are what a surface somebody types
-      a patch into while it plays needs, and none of them can be had from a
-      TextBox, which has no rich text in it at all. Avalonia's own
-      RichTextEditor is a word processor and wants a Pro license besides.
-
-      ADR-0019's rule is the engine's, and Core still answers to it: this is the
-      shell, which already carries Avalonia, Skia and a font.
-    -->
-    <PackageReference Include="Avalonia.AvaloniaEdit" />
-
-    <!--
-      SVG, for the picture a plugin may hang behind its own module. Avalonia
-      decodes PNG and, through the Skia it already carries, the frames of a GIF;
-      SVG it does not read at all, and a vector artwork drawn at whatever zoom
-      the canvas is at is the case worth having. Svg.Skia under it, MIT, by the
-      author of AvaloniaEdit's port. Named for Avalonia 12 — the Avalonia.Svg.Skia
-      package is the same library's Avalonia 11 line and stops there.
-
-      ADR-0019's rule is the engine's, and Core still answers to it: this is the
-      shell, which already carries Avalonia, Skia and a font.
-    -->
-    <PackageReference Include="Svg.Controls.Skia.Avalonia" />
-
-    <!--
-      The container the editor's window and its canvas are composed in, and the
-      HTTP clients it makes (ADR-0150). Microsoft's own.
-    -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="Microsoft.Extensions.Http" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Read at run time by SourceView, so it travels inside the assembly. -->
-    <EmbeddedResource Include="Controls\Flyback.xshd" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!--
-      The public half of the release signing key, which an update has to be signed
-      with before it is installed. A placeholder with no key in it installs
-      nothing. See ADR-0088.
-    -->
-    <EmbeddedResource Include="Updates\release-key.pem" LogicalName="release-key.pem" />
-  </ItemGroup>
-
-  <!-- A local build embeds the public half of RELEASE_SIGNING_KEY instead. -->
-  <Import Project="Updates\ReleaseKey.targets" />
-
-  <ItemGroup>
-    <!--
-      The changelog, so the window that opens after an update can say what the
-      release changed without asking the network. See ReleaseNotes.
-    -->
-    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" Link="CHANGELOG.md" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!--
-      The application key usage statistics are counted under, which is public and
-      names its own region. A file with no key in it counts nothing. See ADR-0094.
-    -->
-    <EmbeddedResource Include="Statistics\aptabase-key.txt" LogicalName="aptabase-key.txt" />
   </ItemGroup>
 
   <ItemGroup>

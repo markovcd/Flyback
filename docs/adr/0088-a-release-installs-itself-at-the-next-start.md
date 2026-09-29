@@ -116,3 +116,10 @@ attached to that terminal.
 wrong layout — against a fake GitHub, and the install and its rollback against a
 real folder. The hand-off between two processes is not unit-tested; it was tried by
 publishing two versions and letting one install the other.
+
+## Amendment, 2026-09-29: the key lives with the editor library
+
+The public key is `src/Flyback.Editor/Updates/release-key.pem`, embedded in
+`Flyback.Editor` beside `ReleaseSignature`, which reads it
+([0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)).
+Installing an update stays in `Flyback.App`.

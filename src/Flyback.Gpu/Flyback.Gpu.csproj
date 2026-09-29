@@ -19,6 +19,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Ui" />
     <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="Flyback.Editor" />
     <InternalsVisibleTo Include="flyback-cli" />
     <InternalsVisibleTo Include="flyback-viewer" />
     <InternalsVisibleTo Include="Flyback.Web" />

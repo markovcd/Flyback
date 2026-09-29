@@ -44,7 +44,9 @@ Flyback.Plugins   the plugin contract and the host that loads plugins off disk
    ^
 Flyback.Ui        what two shells draw with: preview, sound device, colors, settings
    ^
-Flyback.App       the editor (Avalonia)          Flyback.exe
+Flyback.Editor    the editor (Avalonia), no platform in it
+   ^
+Flyback.App       the editor on the desktop      Flyback.exe
 Flyback.Viewer    plays a patch, writes nothing  flyback-viewer.exe
 Flyback.Cli       render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
 Flyback.Web       the viewer in a browser        wwwroot/           (Gpu, the module plugins referenced, no Ui)
@@ -63,15 +65,16 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Gpu` | `GpuFrameRenderer`, `GpuReadback`, `IGl`, `Gl`, `HeadlessContext` (WGL and EGL), `HeadlessRenderer` | OpenGL through `IGl`: native function pointers the caller's context hands over, or WebGL 2 in the web viewer, so every picture on a GPU comes from one renderer ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md), [0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
-| `Flyback.App` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, updates, usage counts | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). |
+| `Flyback.Editor` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, the container they are composed in, usage counts, the running version and release notes | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). A library, so a browser page can host the editor as well as the desktop ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
+| `Flyback.App` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Web` | `WebSound`, `WebPicture`, `WebExports`, `WebGl`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 
 Two namespace quirks are deliberate. `Flyback.Engine` declares
-`RootNamespace=Flyback.Core`, and `Flyback.Ui` declares `RootNamespace=Flyback.App`:
-both projects were split out of their parent, and keeping the namespaces meant no
-moved file needed an edit. Find a type by project, not by namespace.
+`RootNamespace=Flyback.Core`, and `Flyback.Ui` and `Flyback.Editor` declare
+`RootNamespace=Flyback.App`: each was split out of its parent, and keeping the
+namespaces meant no moved file needed an edit. Find a type by project, not by namespace.
 
 ---
 

@@ -27,9 +27,6 @@ internal static class Startup
     /// </summary>
     public static string? OpenPath { get; private set; }
 
-    /// <summary>What <see cref="Interpreted"/> is asked for with on the command line.</summary>
-    public const string InterpretedFlag = "--interpreted";
-
     /// <summary>
     /// Whether this run keeps the CPU's programs on the interpreter rather than
     /// building machine code under them (ADR-0076). A flag rather than a setting:
@@ -101,7 +98,7 @@ internal static class Startup
 
         Updated = running is not null && UpdateNote == Updater.Installed(running);
 
-        if (Updated) WhatsNew = ReleaseNotes.Of(running!, since: replaced);
+        if (Updated) WhatsNew = Changelog() is { } changelog ? ReleaseNotes.Of(running!, replaced, changelog) : null;
 
         if (UpdateNote is not null) Trace.WriteLine($"updates: {UpdateNote}");
 
@@ -128,5 +125,24 @@ internal static class Startup
         // The window says as much in a tooltip, which is no use to somebody who started
         // the program from a shell to find out why their plugin is missing.
         foreach (var line in PluginReport.Lines(Plugins, PluginHost.DefaultDirectory)) Trace.WriteLine(line);
+    }
+
+    /// <summary>The changelog built into this program, or null where it cannot be read.</summary>
+    internal static string? Changelog()
+    {
+        try
+        {
+            using var stream = typeof(Startup).Assembly.GetManifestResourceStream("CHANGELOG.md");
+
+            if (stream is null) return null;
+
+            using var reader = new StreamReader(stream);
+
+            return reader.ReadToEnd();
+        }
+        catch (IOException)
+        {
+            return null;
+        }
     }
 }

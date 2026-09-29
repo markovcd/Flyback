@@ -124,6 +124,7 @@ public sealed class Usage
     {
         "Flyback",
         "Flyback.Core",
+        "Flyback.Editor",
         "Flyback.Engine",
         "Flyback.Plugins",
         "Flyback.Plugins.Dpapi",

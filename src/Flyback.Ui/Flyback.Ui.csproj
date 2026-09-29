@@ -35,6 +35,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="Flyback.Editor" />
     <InternalsVisibleTo Include="flyback-viewer" />
     <InternalsVisibleTo Include="Flyback.App.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />

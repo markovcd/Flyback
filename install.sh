@@ -12,7 +12,7 @@ set -euo pipefail
 
 repo=markovcd/Flyback
 
-# The public half of the key releases are signed with; src/Flyback.App/Updates/release-key.pem.
+# The public half of the key releases are signed with; src/Flyback.Editor/Updates/release-key.pem.
 release_key='-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAErHgbPx4egI1i8sCs5r+mRZBaGFB3
 xktcInkfCBtFj5RIKR6nb326r7tyR6kjNSOJ/O8DnblXrd+mtnvG1/toug==

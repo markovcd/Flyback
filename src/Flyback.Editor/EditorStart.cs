@@ -38,7 +38,7 @@ internal sealed class EditorStart(
         if (playback.Sound.Output is null)
             report.Say("No sound backend is installed, so Volume will do nothing. See About for where plugins are looked for.");
         if (setup.Interpreted)
-            report.Say($"Running interpreted ({Startup.InterpretedFlag}): the CPU's programs are not compiled this run.");
+            report.Say($"Running interpreted ({EditorSetup.InterpretedFlag}): the CPU's programs are not compiled this run.");
         if (setup.WhatsNew is null && setup.OpeningNote is not null) report.Say(setup.OpeningNote);
         shell.ApplyPanelLayout();
     }

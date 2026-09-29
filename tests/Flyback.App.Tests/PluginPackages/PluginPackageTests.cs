@@ -255,7 +255,7 @@ public sealed class PluginPackageTests : IDisposable
 
         var package = PluginPackage.Read(Packages.With("win/Helper.dll", helper));
 
-        package.Refusal("win").ShouldStartWith("Flyback.dll, which the plugin carries, was built against Flyback.Core");
+        package.Refusal("win").ShouldStartWith("Flyback.Editor.dll, which the plugin carries, was built against Flyback.Core");
         package.Refusal("win").ShouldEndWith("The plugin needs rebuilding.");
     }
 

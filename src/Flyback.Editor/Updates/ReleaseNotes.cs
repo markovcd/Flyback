@@ -5,10 +5,10 @@ namespace Flyback.App.Updates;
 /// the changelog says it — shown once in the window that opens after.
 /// </summary>
 /// <remarks>
-/// Read from the changelog the build carries inside itself, so a version can only
-/// describe itself and those before it, and never needs the network to do it. A
-/// release's section is headed with its number (<c>## 0.4.0 — 2026-09-30</c>); a
-/// build whose changelog still calls it Unreleased has no notes, and says it was
+/// Read from the changelog the desktop program carries inside itself, so a version
+/// can only describe itself and those before it, and never needs the network to do
+/// it. A release's section is headed with its number (<c>## 0.4.0 — 2026-09-30</c>);
+/// a build whose changelog still calls it Unreleased has no notes, and says it was
 /// updated on the status bar instead.
 /// </remarks>
 /// <param name="Version">The release installed.</param>
@@ -16,8 +16,6 @@ namespace Flyback.App.Updates;
 /// <param name="Sections">One a release, newest first as the changelog has them.</param>
 public sealed record ReleaseNotes(Version Version, Version? Since, IReadOnlyList<ReleaseNotes.Section> Sections)
 {
-    private const string Resource = "CHANGELOG.md";
-
     /// <summary>One release's part of the changelog.</summary>
     /// <param name="Heading">What its heading says after the <c>##</c>: the number, and the date.</param>
     /// <param name="Text">The lines under the heading, in the changelog's Markdown.</param>
@@ -25,28 +23,10 @@ public sealed record ReleaseNotes(Version Version, Version? Since, IReadOnlyList
 
     /// <summary>
     /// The notes for every release after <paramref name="since"/> up to
-    /// <paramref name="version"/> in the changelog built in — only
+    /// <paramref name="version"/> in <paramref name="changelog"/> — only
     /// <paramref name="version"/>'s own where <paramref name="since"/> is null — or
     /// null where the changelog has no section for <paramref name="version"/>.
     /// </summary>
-    public static ReleaseNotes? Of(Version version, Version? since = null)
-    {
-        try
-        {
-            using var stream = typeof(ReleaseNotes).Assembly.GetManifestResourceStream(Resource);
-
-            if (stream is null) return null;
-
-            using var reader = new StreamReader(stream);
-
-            return Of(version, since, reader.ReadToEnd());
-        }
-        catch (IOException)
-        {
-            return null;
-        }
-    }
-
     internal static ReleaseNotes? Of(Version version, Version? since, string changelog)
     {
         // A replaced copy no older than this one is a reinstall, or a downgrade by

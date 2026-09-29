@@ -58,7 +58,7 @@ internal static class Program
 
         Startup.Load(
             rest.FirstOrDefault(a => !a.StartsWith('-')),
-            interpreted: args.Contains(Startup.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
+            interpreted: args.Contains(EditorSetup.InterpretedFlag, StringComparer.OrdinalIgnoreCase),
             updates: updates,
             shared: shared);
 
