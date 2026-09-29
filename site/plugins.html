@@ -870,7 +870,8 @@ flyback-cli plugin deny plugins/Flyback.Plugins.Yours</code></pre>
 
     <pre><code>flyback-cli plugin-key -o ripple.key
 flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
-flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</code></pre>
+flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key
+flyback-cli plugin describe ripple.fbkp --json</code></pre>
 
     <p>Make the key once and keep it, out of the repository. Every package of the plugin is signed with it,
     because Flyback takes a package as an update to the plugin installed only when the same key signed both;
@@ -886,7 +887,9 @@ flyback-cli pack-plugin bin/Release/net10.0 -o ripple.fbkp --key ripple.key</cod
     holds one build for each. It holds each build to <a href="#project">the project file</a> above, refusing
     one without the <code>runtimeconfig.json</code> that <code>EnableDynamicLoading</code> writes, or one
     carrying a copy of <code>Flyback.Core</code> or <code>Flyback.Plugins</code>. Then it checks the package
-    the way the editor will, and prints what the install dialog is going to show.</p>
+    the way the editor will, and prints what the install dialog is going to show.
+    <code>plugin describe</code> prints the same for any package, yours or somebody else's, running none of it,
+    and says why the editor would refuse one it would.</p>
 
     <p>The package is a zip with a folder per system — <code>win</code>, <code>osx</code>,
     <code>linux</code>, or <code>any</code> for a build that is the same everywhere, used where there is no

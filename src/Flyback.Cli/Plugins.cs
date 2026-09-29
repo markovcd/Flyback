@@ -8,8 +8,8 @@ namespace Flyback.Cli;
 /// A patch may name a module only a plugin defines, so everything that reads one asks
 /// for the catalog before it does, and the scan is what the report on stderr is about.
 /// Help, a completion, a refused command line, the two commands that only make a
-/// plugin file and the ones that say which folders load need no catalog: those load
-/// nothing and say nothing.
+/// plugin file and the ones that say which folders load or what a package holds need
+/// no catalog: those load nothing and say nothing.
 /// </remarks>
 /// <param name="trust">Which folders load, for <c>plugin list</c>; <see cref="PluginTrust.For"/> the directory unless a test says otherwise.</param>
 internal sealed class Plugins(Func<PluginCatalog> load, string directory, TextWriter? report, Func<PluginTrust>? trust = null)

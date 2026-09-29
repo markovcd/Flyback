@@ -49,10 +49,12 @@ think of is judged by reading what it does.
    ./review-plugin.sh "<package or folder>" "<scratchpad>/plugin-review"
    ```
 
-   It builds `Flyback.Plugins` for the decompiler to resolve against, and prints one
-   line per package: name, floor, work folder. Each work folder holds `facts.md`,
-   `files/` (the package unpacked), `src/` (C# per assembly) and `il/` (IL, and every
-   string literal in `*.strings.txt`). The floor is **Reject** when a mechanical check
+   It builds `flyback-cli`, whose `plugin describe --json` is the editor's own
+   reading of a package: its refusals, the signature checked, what the code adds
+   and what it reaches. It prints one line per package: name, floor, work folder.
+   Each work folder holds `facts.md`, `describe.json`, `files/` (the package
+   unpacked), `src/` (C# per assembly) and `il/` (IL, and every string literal in
+   `*.strings.txt`). The floor is **Reject** when a mechanical check
    fails, and **none** when the reading decides. Its ceilings are at the top of the
    script; one review reads at most about 85k tokens of code, and an everyday plugin
    is 10–25k.
@@ -162,9 +164,8 @@ facts.md sections that name them>
 ```
 
 The SHA-256 column is the full hash, since it is how the admin panel entry is
-matched to this verdict. The signature itself is checked by the site on upload;
-the fingerprint here should be the signer the admin panel shows, and a mismatch
-means the file reviewed is not the one submitted. The *Plugin* and *Version* cells are read from the
+matched to this verdict. The signer's fingerprint should be the one the admin
+panel shows; a mismatch means the file reviewed is not the one submitted. The *Plugin* and *Version* cells are read from the
 package, so they get the same care as any quote: printable ASCII, cut to 40
 characters, in backticks with any backtick removed.
 

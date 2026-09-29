@@ -37,9 +37,14 @@ fi
 
 mkdir -p "$work"
 
-# The contract, so the decompiled source names Flyback's types instead of guessing at them.
-dotnet build "$repo/src/Flyback.Plugins/Flyback.Plugins.csproj" -c Release -v q --nologo >&2
-refs="$repo/src/Flyback.Plugins/bin/Release/net10.0"
+# flyback-cli reads a package the way the editor does, and its folder holds the contract the
+# decompiler resolves Flyback's types against.
+dotnet build "$repo/src/Flyback.Cli/Flyback.Cli.csproj" -c Release -v q --nologo >&2
+refs="$repo/src/Flyback.Cli/bin/Release/net10.0"
+flyback() { dotnet "$refs/flyback-cli.dll" "$@"; }
+
+# The lines of one array in describe's indented JSON, across every build.
+listed() { awk -v key="\"$1\": [" 'index($0, key) && /\[$/ { f = 1; next } f && /^ *\],?$/ { f = 0 } f' "$2" | sed 's/^ *"//; s/",\{0,1\}$//'; }
 
 # An assembly under one of these names is let into the host's internals, or stands in for the host.
 mapfile -t host_names < <({
@@ -121,19 +126,15 @@ review() {
     finish; return
   fi
 
-  local entries unpacked unsafe dupes links
+  local entries unpacked links
   entries=$(printf '%s\n' "$listing" | grep -c '' || true)
   unpacked=$(unzip -Zt "$package" 2>/dev/null | sed -n 's/.* \([0-9][0-9]*\) bytes uncompressed.*/\1/p')
-  unsafe=$(printf '%s\n' "$listing" | grep -niE '^/|(^|/)\.\.(/|$)|\\|:|[. ]$|(^|/)(con|prn|aux|nul|com[0-9]|lpt[0-9])(\.[^/]*)?(/|$)' || true)
-  dupes=$(printf '%s\n' "$listing" | tr '[:upper:]' '[:lower:]' | sort | uniq -d)
   links=$(unzip -Z "$package" 2>/dev/null | awk 'NR > 1 && $1 ~ /^l/' || true)
 
   [ "$size" -le "$MAX_PACKED" ] || rejects+=("too big to review: $size bytes packed, over $MAX_PACKED")
   [ "$size" -le "$WARN_PACKED" ] || [ "$size" -gt "$MAX_PACKED" ] || looks+=("unusually large: $size bytes packed")
   [ "$entries" -le "$MAX_ENTRIES" ] || rejects+=("too big to review: $entries entries, over $MAX_ENTRIES")
   [ "${unpacked:-0}" -le "$MAX_UNPACKED" ] || rejects+=("too big to review: unpacks to $unpacked bytes, over $MAX_UNPACKED")
-  [ -z "$unsafe" ] || rejects+=("an entry could land outside the folder it is unpacked into")
-  [ -z "$dupes" ] || rejects+=("two entries differ only in case")
   [ -z "$links" ] || rejects+=("a symbolic link")
 
   if [ ${#rejects[@]} -gt 0 ]; then
@@ -142,32 +143,44 @@ review() {
     finish; return
   fi
 
-  if ! unzip -qq "$package" -d "$out/files" 2>/dev/null; then
-    rejects+=("does not unpack cleanly")
+  # The editor's own reading: its refusals, the signature checked, and what the code adds and names.
+  local described="$out/describe.json" refused code=0
+  flyback plugin describe --json "$package" > "$described" 2>&1 || code=$?
+  [ "$code" -le 1 ] || { rejects+=("flyback-cli could not read it"); finish; return; }
+
+  refused=$(sed -n 's/^  "refused": "\(.*\)",\{0,1\}$/\1/p' "$described" | clean)
+  [ -z "$refused" ] || rejects+=("the editor refuses it: $refused")
+  while IFS= read -r line; do rejects+=("the editor refuses a build: $line"); done \
+    < <(sed -n 's/^      "refusal": "\(.*\)",\{0,1\}$/\1/p' "$described" | clean)
+  [ -n "$refused" ] || grep -q '^  "signer": ' "$described" || rejects+=("unsigned")
+
+  while IFS= read -r reach; do
+    case "$reach" in
+      "the network"|files|"other programs"|"the registry"|"native code"|"code it loads while running") rejects+=("the editor says it reaches $reach") ;;
+      *) looks+=("the editor says it reaches $(printf '%s' "$reach" | clean)") ;;
+    esac
+  done < <(listed reaches "$described" | sort -u)
+
+  while IFS= read -r adds; do
+    case "$adds" in
+      modules|presets) ;;
+      "a secret store") rejects+=("it adds a secret store") ;;
+      *) looks+=("it adds $(printf '%s' "$adds" | clean)") ;;
+    esac
+  done < <(listed adds "$described" | sort -u)
+
+  say '## What the editor reads'; say
+  fence < "$described"
+  say
+
+  if [ -n "$refused" ] || ! unzip -qq "$package" -d "$out/files" 2>/dev/null; then
+    [ -n "$refused" ] || rejects+=("does not unpack cleanly")
     finish; return
   fi
 
-  say '## Package'; say
-
-  # The signature, and what else is at the top.
   local top
-  if [ -f "$out/files/signature.json" ]; then
-    local key fingerprint
-    key=$(sed -n 's/.*"key":"\([^"]*\)".*/\1/p' "$out/files/signature.json" | sed 's/\\u002B/+/g; s/\\u002F/\//g')
-    fingerprint=$(printf '%s' "$key" | base64 -d 2>/dev/null | sha256sum | cut -d' ' -f1)
-
-    # A P-256 public key in the form the site signs with is 91 bytes.
-    [ "$(printf '%s' "$key" | base64 -d 2>/dev/null | wc -c)" -eq 91 ] || rejects+=("signature.json holds no P-256 public key")
-    say "- signer: key $fingerprint"
-  else
-    rejects+=("unsigned: no signature.json")
-    say "- signer: none"
-  fi
-
   top=$(cd "$out/files" && find . -mindepth 1 -maxdepth 1 | sed 's|^\./||' | grep -vxE 'win|osx|linux|any|signature\.json' || true)
   [ -z "$top" ] || rejects+=("something other than a build folder or signature.json at the top")
-  say "- builds: $(cd "$out/files" && find . -mindepth 1 -maxdepth 1 -type d | sed 's|^\./||' | sort | tr '\n' ' ' | clean)"
-  say
 
   # Every file, by what it is.
   say '## Entries'; say

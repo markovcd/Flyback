@@ -685,9 +685,27 @@ internal static class Program
             result.GetValue(json),
             result.InvocationConfiguration.Output));
 
-        return new Command("plugin", "Which plugin folders load: only one Flyback shipped, or one somebody allowed.")
+        var package = new Argument<FileInfo>("package")
         {
-            allow, deny, list,
+            Description = $"The {PluginPackage.Extension} to read.",
+        };
+
+        var describe = new Command(
+            "describe",
+            "Say what a plugin package is and what its code names, as the install dialog reads it, running none of it.")
+        {
+            package, json,
+        };
+
+        describe.SetAction(result => PluginDescribeCommand.Run(
+            result.GetRequiredValue(package),
+            result.GetValue(json),
+            result.InvocationConfiguration.Output,
+            result.InvocationConfiguration.Error));
+
+        return new Command("plugin", "Which plugin folders load, and what a plugin package holds.")
+        {
+            allow, deny, list, describe,
         };
     }
 
