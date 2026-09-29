@@ -61,8 +61,9 @@ public sealed partial class GeminiAssistant : IPatchAssistant
             new AssistantModel("gemini-3.5-flash-lite", Hearing: true),
         ],
         "GEMINI_API_KEY",
-        "A key from Google AI Studio. The endpoint is fixed — this format is "
-        + "spoken in one place, unlike chat completions.",
+        "A key from Google AI Studio, restricted in the Cloud console to the Generative "
+        + "Language API. The endpoint is fixed — this format is spoken in one place, unlike "
+        + "chat completions.",
         "https://generativelanguage.googleapis.com/v1beta");
 
     /// <summary>

@@ -842,6 +842,10 @@ internal sealed class AssistantPanel : UserControl
                 // Left in the box: a key is kept for the address it goes to, and there is none yet.
                 editor.Report("Key not taken: the endpoint is not an address yet, and a key is kept for the one it goes to.", null);
             }
+            else if (KeySafety.Refused(keyBox.Text) is { } refused)
+            {
+                editor.Report($"Key not taken: {refused}", null);
+            }
             else if (!string.IsNullOrWhiteSpace(keyBox.Text))
             {
                 credentials.Accept(chosenAssistant.Value.Id, keyBox.Text, origin!, keep);
@@ -1096,18 +1100,22 @@ internal sealed class AssistantPanel : UserControl
         if (chosenAssistant.Value is null) return;
 
         var source = credentials.SourceOf(chosenAssistant.Value.Id, chosenAssistant.Value.Credential.EnvironmentVariable);
+        var origin = credentials.Transport(chosenAssistant.Value, form.Values).Origin;
 
-        editor.Report(
-            source switch
-            {
-                CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
-                _ when !credentials.CanKeep =>
-                    "Key saved, for this window only — nothing installed can keep one.",
-                _ when settingsRepository.Current.RememberKey =>
-                    "Key saved, but it could not be kept — it will last this window only.",
-                _ => "Key saved, for this window only.",
-            },
-            null);
+        var said = source switch
+        {
+            CredentialSource.Kept => $"Key saved, and kept by {credentials.Store?.Name}.",
+            _ when !credentials.CanKeep =>
+                "Key saved, for this window only — nothing installed can keep one.",
+            _ when settingsRepository.Current.RememberKey =>
+                "Key saved, but it could not be kept — it will last this window only.",
+            _ => "Key saved, for this window only.",
+        };
+
+        if (KeySafety.Cleartext(origin))
+            said += $" It goes to {origin} over plain http, readable on the way: fine for a server that takes any value, not for a real key.";
+
+        editor.Report(said, null);
     }
 
     private static string? Excuse(IPatchAssistant assistant, AssistantConfig config)

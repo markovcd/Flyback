@@ -55,9 +55,24 @@ internal sealed class Credentials(ISecretStore? store)
     /// </summary>
     public static string? Elsewhere(IPatchAssistant assistant, AssistantConfig config)
     {
-        if (config.Transport is not { HasKey: true, Origin: { } bound }) return null;
-
         var now = KeyedTransport.OriginOf(assistant, config.Values);
+
+        if (!config.Transport.HasKey)
+        {
+            var variable = assistant.Credential.EnvironmentVariable;
+
+            if (string.IsNullOrWhiteSpace(variable) || Blank(Environment.GetEnvironmentVariable(variable)) is not { } exported)
+                return null;
+
+            if (KeySafety.Refused(exported) is { } why) return $"{variable} is not sent: {why}";
+
+            return KeySafety.Cleartext(now)
+                ? $"{variable} is not sent to {now}: over plain http it would cross the network readable. "
+                  + "A server that takes any value as a key can be given one here."
+                : null;
+        }
+
+        if (config.Transport.Origin is not { } bound) return null;
 
         return now is null || string.Equals(now, bound, StringComparison.Ordinal)
             ? null
@@ -158,8 +173,13 @@ internal sealed class Credentials(ISecretStore? store)
         }
     }
 
+    /// <summary>
+    /// A variable bound to where the assistant sends now, except over plain http to another
+    /// machine: an exported key is a real one, and nobody typed it for that address.
+    /// </summary>
     private static BoundKey? FromEnvironment(string variable, string? origin) =>
-        string.IsNullOrWhiteSpace(variable) || origin is null || Blank(Environment.GetEnvironmentVariable(variable)) is not { } secret
+        string.IsNullOrWhiteSpace(variable) || origin is null || KeySafety.Cleartext(origin)
+        || Blank(Environment.GetEnvironmentVariable(variable)) is not { } secret
             ? null
             : new BoundKey(secret, origin);
 

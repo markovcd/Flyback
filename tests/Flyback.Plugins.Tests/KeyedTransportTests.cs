@@ -86,6 +86,39 @@ public sealed class KeyedTransportTests
     }
 
     [Fact]
+    public async Task An_admin_key_is_never_sent()
+    {
+        var network = new Recorder();
+        var transport = new KeyedTransport("sk-admin-abcdefghijklmnop", "https://api.example.test", Bearer, network);
+
+        await transport.Send(new Uri("https://api.example.test/v1/models"), null, TestContext.Current.CancellationToken);
+
+        transport.HasKey.ShouldBeFalse();
+        network.Authorizations.ShouldBe([null]);
+    }
+
+    [Fact]
+    public void The_key_is_found_in_text_and_taken_out_of_it()
+    {
+        var transport = new KeyedTransport("sk-proj-abcdefghijklmnop", "https://api.example.test", Bearer);
+
+        transport.Holds("my key is sk-proj-abcdefghijklmnop, keep it safe").ShouldBeTrue();
+        transport.Holds("nothing here").ShouldBeFalse();
+        transport.Scrubbed("my key is sk-proj-abcdefghijklmnop").ShouldBe("my key is [key]");
+        transport.Scrubbed("nothing here").ShouldBe("nothing here");
+    }
+
+    /// <summary>A local runtime takes any value as a key, and a short one is in every sentence.</summary>
+    [Fact]
+    public void A_key_too_short_to_be_a_secret_is_never_found()
+    {
+        var transport = new KeyedTransport("x", "http://localhost:11434", Bearer);
+
+        transport.Holds("make a box").ShouldBeFalse();
+        transport.Scrubbed("make a box").ShouldBe("make a box");
+    }
+
+    [Fact]
     public void No_key_is_no_key_wherever_it_would_go()
     {
         var transport = new KeyedTransport("  ", "https://api.example.test", Bearer);

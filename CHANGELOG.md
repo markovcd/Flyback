@@ -68,6 +68,7 @@
 - The assistant keeps its conversation when a knob is turned or an edit undone; only adding or removing a module or a wire starts a new one.
 - Stopping the assistant mid-turn no longer breaks the conversation, and it spends fewer tokens.
 - Settings → Agent is now Settings → Assistant, where what the assistant is told and what it looks up can each be shown in its conversation.
+- An admin key is refused, an exported key is not sent over plain http to another machine, and a message with your key in it is not sent.
 
 ### Canvas and interface
 - A seek bar on the toolbar and the transports moves the patch's clock along its own length, and stops or loops at its end.

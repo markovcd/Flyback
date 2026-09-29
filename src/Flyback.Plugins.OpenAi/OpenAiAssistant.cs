@@ -38,8 +38,9 @@ public sealed class OpenAiAssistant : IPatchAssistant
             new AssistantModel("qwen2.5", Vision: false),
         ],
         "OPENAI_API_KEY",
-        "Any endpoint that speaks chat completions. A local runtime such as Ollama "
-        + "will accept any value as a key.",
+        "Any endpoint that speaks chat completions. On OpenAI, a restricted key in a "
+        + "project of its own, allowed Model capabilities and nothing else. A local runtime "
+        + "such as Ollama will accept any value as a key.",
         "https://api.openai.com/v1",
         BaseUrlEditable: true);
 

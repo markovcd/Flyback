@@ -353,6 +353,59 @@ public class CredentialsTests
             "The key was entered for https://api.example.test, and this is set to send to http://localhost:11434. Enter it again to send it there.");
     }
 
+    /// <summary>An exported key is a real one, and nobody typed it for an address the network can read.</summary>
+    [Fact]
+    public void An_exported_key_does_not_cross_the_network_unencrypted()
+    {
+        var variable = Exported("sk-proj-abcdefghijklmnop");
+
+        try
+        {
+            var credentials = new Credentials(null);
+            var assistant = new Pointed(variable);
+            var remote = new AssistantConfig(credentials.Transport(assistant, Pointing("http://192.0.2.10:11434/v1")), Pointing("http://192.0.2.10:11434/v1"));
+
+            remote.Transport.HasKey.ShouldBeFalse();
+            Credentials.Elsewhere(assistant, remote).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent to http://192.0.2.10:11434: over plain http");
+
+            credentials.Transport(assistant, Pointing("http://localhost:11434/v1")).HasKey.ShouldBeTrue();
+            credentials.Transport(assistant, Pointing("https://api.example.test/v1")).HasKey.ShouldBeTrue();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(variable, null);
+        }
+    }
+
+    [Fact]
+    public void An_exported_admin_key_is_not_sent_and_says_why()
+    {
+        var variable = Exported("sk-admin-abcdefghijklmnop");
+
+        try
+        {
+            var assistant = new Pointed(variable);
+            var config = new AssistantConfig(new Credentials(null).Transport(assistant, Pointing("https://api.example.test/v1")), Pointing("https://api.example.test/v1"));
+
+            config.Transport.HasKey.ShouldBeFalse();
+            Credentials.Elsewhere(assistant, config).ShouldNotBeNull().ShouldStartWith($"{variable} is not sent: it is an admin key");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(variable, null);
+        }
+    }
+
+    /// <summary>A variable of this test's own holding <paramref name="secret"/>, so no other test sees it.</summary>
+    private static string Exported(string secret)
+    {
+        var variable = $"FLYBACK_TEST_KEY_{Guid.NewGuid():N}";
+
+        Environment.SetEnvironmentVariable(variable, secret);
+
+        return variable;
+    }
+
     private static SettingValues Pointing(string endpoint) =>
         new(new Dictionary<string, string> { [AssistantSchema.EndpointKey] = endpoint });
 
@@ -360,7 +413,7 @@ public class CredentialsTests
     private static string? Secret(string stored) => BoundKey.Read(stored, null)?.Secret;
 
     /// <summary>An assistant that sends wherever its endpoint setting says.</summary>
-    private sealed class Pointed : IPatchAssistant
+    private sealed class Pointed(string variable = Variable) : IPatchAssistant
     {
         public string Id => Account;
 
@@ -368,7 +421,7 @@ public class CredentialsTests
 
         public int Priority => 0;
 
-        public AssistantCredential Credential { get; } = new(Variable, "");
+        public AssistantCredential Credential { get; } = new(variable, "");
 
         public Uri? Endpoint(SettingValues values) => new(values.Text(AssistantSchema.EndpointKey, ""));
 

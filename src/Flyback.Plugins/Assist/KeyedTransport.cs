@@ -22,9 +22,10 @@ internal sealed class KeyedTransport : IAssistantTransport
     private readonly HttpMessageHandler network;
 
     /// <param name="inner">Where requests go once signed; the network unless a test says otherwise.</param>
+    /// <remarks>An admin key is never sent, wherever it came from (<see cref="KeySafety.Refused"/>).</remarks>
     public KeyedTransport(string? secret, string? origin, AssistantCredential credential, HttpMessageHandler? inner = null)
     {
-        this.secret = string.IsNullOrWhiteSpace(secret) || origin is null ? null : secret;
+        this.secret = string.IsNullOrWhiteSpace(secret) || origin is null || KeySafety.Refused(secret) is not null ? null : secret;
         this.credential = credential;
         Origin = this.secret is null ? null : origin;
         network = inner ?? Network;
@@ -33,6 +34,14 @@ internal sealed class KeyedTransport : IAssistantTransport
     public bool HasKey => secret is not null;
 
     public string? Origin { get; }
+
+    /// <summary>Whether <paramref name="text"/> has this key in it. A key too short to be anybody's secret is never found.</summary>
+    public bool Holds(string? text) =>
+        secret is { Length: >= KeySafety.Findable } key && text is not null && text.Contains(key, StringComparison.Ordinal);
+
+    /// <summary><paramref name="text"/> with this key taken out of it.</summary>
+    public string? Scrubbed(string? text) =>
+        Holds(text) ? text!.Replace(secret!, "[key]", StringComparison.Ordinal) : text;
 
     public async Task<AssistantResponse> Send(Uri address, string? json, CancellationToken cancel)
     {

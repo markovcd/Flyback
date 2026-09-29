@@ -34,6 +34,36 @@ public class AssistantRunTests
         return events;
     }
 
+    // --- the key --------------------------------------------------------------
+
+    private const string Key = "sk-proj-abcdefghijklmnop";
+
+    private static AssistantConfig Keyed =>
+        new(new KeyedTransport(Key, "https://assistant.test", new AssistantCredential("", "")), SettingValues.None);
+
+    [Fact]
+    public async Task A_message_with_the_key_in_it_is_not_sent()
+    {
+        var assistant = new ScriptedAssistant(new PatchEvent.Said("thanks"));
+        using var run = new AssistantRun(assistant, Keyed, NodeCatalog.BuiltIn, new Patch());
+
+        var events = await Drain(run, $"my key is {Key}, make something");
+
+        events.ShouldHaveSingleItem().ShouldBeOfType<PatchEvent.Failed>().Message.ShouldContain("has your key in it");
+        assistant.Heard.ShouldBeEmpty();
+        run.Turns.ShouldBe(0);
+    }
+
+    [Fact]
+    public void A_saved_conversation_never_holds_the_key()
+    {
+        using var run = new AssistantRun(new ScriptedAssistant(), Keyed, NodeCatalog.BuiltIn, new Patch());
+
+        var saved = run.Save([new TranscriptLine(Voice.Failed, $"refused: {Key} is not valid")]);
+
+        saved.Transcript.ShouldHaveSingleItem().Text.ShouldBe("refused: [key] is not valid");
+    }
+
     // --- the happy path -----------------------------------------------------
 
     [Fact]
