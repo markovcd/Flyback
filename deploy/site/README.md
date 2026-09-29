@@ -47,6 +47,8 @@ The build packs each plugin the site starts with (the `PluginProject` items in `
 
 Run from the source (the `presets` profile in Rider, or `dotnet run --project src/Flyback.Server`), the build lays those plugins out beside the site instead, and the site packs them again at every start, so the shelf always holds what was just built and a Flyback pointed at `http://localhost:8790` installs it. The default presets are read from the build the same way, and a changed one replaces the stored copy. A Debug run checks no keys and signs with `RELEASE_SIGNING_KEY` only where it is set; a Release run signs with it, and makes one where there is none.
 
+The site serves the web viewer at `/viewer/` (ADR-0160), and each preset's page opens its file there. The image compiles the viewer ahead of time to WebAssembly, installing the `wasm-tools` workload to do it, which adds a few minutes to its build; a run from the source serves it interpreted.
+
 To build the image here without pushing it:
 
 ```bash

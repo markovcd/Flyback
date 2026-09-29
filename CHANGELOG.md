@@ -58,7 +58,7 @@
 - `install.sh` installs, updates or uninstalls the latest release on Linux, macOS and Windows.
 
 ### Viewer and full screen
-- A web viewer plays a shipped preset or a patch file in a browser, picture and sound.
+- A web viewer plays a shipped preset or a patch file in a browser, picture and sound, and each preset on the preset site plays there from its page.
 - A patch's knobs can be played over the full-screen picture, which Settings → Graphics sends to another monitor.
 - F11 switches the viewer to full screen, and a patch with no picture opens as just its buttons and knobs.
 - F3 over a full-screen picture, or `flyback-viewer --stats`, shows its frames a second.

@@ -68,6 +68,43 @@ public sealed partial class WebsiteSteps : IDisposable
     [Then("none of them is missing")]
     public void ThenNoneIsMissing() => missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
 
+    [When("someone opens the web viewer on the preset site")]
+    public async Task WhenTheViewerIsOpened() => page = await client.GetStringAsync(new Uri("/viewer/", UriKind.Relative));
+
+    /// <summary>
+    /// The page's own script and style, and every file of the runtime its loader names,
+    /// each there and a WebAssembly module served as one, which a browser insists on.
+    /// </summary>
+    [Then("its page and everything it loads to start are there")]
+    public async Task ThenTheViewerLoads()
+    {
+        page.ShouldContain("Flyback Viewer");
+
+        var loader = await client.GetStringAsync(new Uri("/viewer/_framework/dotnet.js", UriKind.Relative));
+        var files = Framework().Matches(loader).Select(m => "_framework/" + m.Groups["name"].Value)
+            .Concat(["main.js", "gl.js", "program.js", "sound.js", "viewer.css"])
+            .Distinct()
+            .ToList();
+
+        files.Count(f => f.EndsWith(".wasm", StringComparison.Ordinal)).ShouldBeGreaterThan(5);
+
+        foreach (var file in files)
+        {
+            using var response = await client.GetAsync(new Uri($"/viewer/{file}", UriKind.Relative));
+
+            if (response.StatusCode != HttpStatusCode.OK)
+                missing.Add($"{file}: {(int)response.StatusCode}");
+            else if (file.EndsWith(".wasm", StringComparison.Ordinal) && response.Content.Headers.ContentType?.MediaType != "application/wasm")
+                missing.Add($"{file}: served as {response.Content.Headers.ContentType}");
+        }
+
+        missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
+    }
+
+    /// <summary>A file the runtime's loader fetches: named with its fingerprint, where its logical name has none.</summary>
+    [GeneratedRegex("""["'](?<name>[A-Za-z0-9_.\-]+\.[a-z0-9]{10}\.(?:wasm|js))["']""")]
+    private static partial Regex Framework();
+
     /// <summary>A link within the site: not another host, an anchor, mail or inline data.</summary>
     [GeneratedRegex("""(?:href|src)="(?<to>(?![a-z]+:|#|//)[^"]+)""")]
     private static partial Regex Link();

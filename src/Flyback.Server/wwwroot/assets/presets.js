@@ -22,6 +22,12 @@
     return new Date(when).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   }
 
+  /** The web viewer playing the preset's file, which a play does not count as a download. */
+  function inBrowser(preset) {
+    return "viewer/?file=" + encodeURIComponent(preset.file + "?count=false")
+      + "&name=" + encodeURIComponent(preset.fileName);
+  }
+
   /** The still, with the loop playing over it while pointed at. */
   function frame(preset, href) {
     var box = make(href ? "a" : "div", href ? { class: "frame", href: href, tabindex: "-1" } : { class: "frame" });
@@ -246,6 +252,7 @@
 
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: preset.file, download: preset.fileName }, "Download"));
+      actions.appendChild(make("a", { class: "button", href: inBrowser(preset) }, "Play in your browser"));
       actions.appendChild(make("a", { class: "button", href: "presets.html" }, "All presets"));
       text.appendChild(actions);
 

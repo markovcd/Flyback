@@ -6,10 +6,17 @@
 // Prints what the viewer's status says as JSON, with how fast the sound rendered, and
 // writes the samples as raw 32-bit floats, left and right interleaved, when --out names a file.
 
+import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
-import { dotnet } from './wwwroot/_framework/dotnet.js';
 import * as program from './program.js';
+
+// A build keeps the runtime at wwwroot/_framework; a publish puts it under the path the site serves it at.
+const runtimeAt = ['./wwwroot/viewer/_framework/dotnet.js', './wwwroot/_framework/dotnet.js']
+  .map(path => new URL(path, import.meta.url))
+  .find(url => existsSync(url));
+
+const { dotnet } = await import(runtimeAt.href);
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,

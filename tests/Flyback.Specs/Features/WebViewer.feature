@@ -11,3 +11,7 @@ Feature: The web viewer
       | preset           |
       | Sidebands        |
       | Beat you can see |
+
+  Scenario: The preset site serves the web viewer
+    When someone opens the web viewer on the preset site
+    Then its page and everything it loads to start are there

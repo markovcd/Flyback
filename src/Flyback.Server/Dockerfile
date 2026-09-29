@@ -38,8 +38,16 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         -o "src/Flyback.Server/Defaults/$name.fbkp" --key /run/secrets/release-key; \
     done 3< /tmp/site-plugins
 
+# The web viewer the site serves at /viewer/ is compiled ahead of time to
+# WebAssembly (ADR-0160), which needs a workload the SDK image does not carry,
+# and the Python its Emscripten runs on, which on Linux it does not bring.
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends python3 \
+ && rm -rf /var/lib/apt/lists/* \
+ && dotnet workload install wasm-tools
+
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -o /app
+    if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi;     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app
 
 FROM ${RUNTIME}
 LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback

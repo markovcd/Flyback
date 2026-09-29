@@ -77,4 +77,4 @@ what an agent checks sound with.
   plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move
   with it.
-- The site does not serve it yet.
+- The preset site serves it at `/viewer/`, and each preset's page opens its file there; the site's image installs the workload to compile it ahead of time, which adds minutes to its build. GitHub Pages does not carry it yet.

@@ -5,6 +5,9 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>Flyback.Web</RootNamespace>
 
+    <!-- Where the preset site, which references this project, serves it. -->
+    <StaticWebAssetBasePath>viewer</StaticWebAssetBasePath>
+
     <!--
       Ahead-of-time compiled only when a publish asks: -p:RunAOTCompilation=true.
       It needs the wasm-tools workload and several minutes, and the gate builds

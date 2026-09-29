@@ -10,6 +10,15 @@
     <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
   </ItemGroup>
 
+  <!--
+    The web viewer (ADR-0160), served at /viewer/: from its own project folders when
+    run from the source, and copied under wwwroot/viewer by a publish. Ahead-of-time
+    compiled only where the publish passes -p:RunAOTCompilation=true, as the image does.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Web\Flyback.Web.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>

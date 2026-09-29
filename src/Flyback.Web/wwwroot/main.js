@@ -278,7 +278,7 @@ async function openBytes(file, bytes) {
   return open(() => flyback.OpenFile(file, bytes, width, height), file);
 }
 
-async function openUrl(url) {
+async function openUrl(url, name) {
   const response = await fetch(url);
   if (!response.ok) {
     error = `${url}: ${response.status} ${response.statusText}`;
@@ -286,7 +286,7 @@ async function openUrl(url) {
     return;
   }
 
-  await openBytes(url.split('/').pop().split('?')[0], new Uint8Array(await response.arrayBuffer()));
+  await openBytes(name ?? url.split('/').pop().split('?')[0], new Uint8Array(await response.arrayBuffer()));
 }
 
 const clockText = seconds => {
@@ -439,7 +439,7 @@ setInterval(() => { judge(); paint(); }, 250);
 requestAnimationFrame(frame);
 
 if (params.has('file')) {
-  await openUrl(params.get('file'));
+  await openUrl(params.get('file'), params.get('name') ?? undefined);
 } else {
   const wanted = params.get('preset') ?? 'Beat you can see';
   ui.presets.value = presets.find(p => p.toLowerCase() === wanted.toLowerCase()) ?? presets[0];
