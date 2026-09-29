@@ -25,15 +25,18 @@ internal sealed class PageApp : Application
         if (ApplicationLifetime is not ISingleViewApplicationLifetime page)
             throw new NotSupportedException("The web editor runs in a page.");
 
+        // In the desktop's order, by folder name, so the presets list in the editor's order.
         var plugins = PluginHost.LoadTypes(
-            typeof(Flyback.Plugins.Effects.EffectsPlugin),
-            typeof(Flyback.Plugins.Mastering.MasteringPlugin),
-            typeof(Flyback.Plugins.Picture.PicturePlugin),
 #if SITE_PLUGINS
             typeof(Flyback.Plugins.Easy.EasyPlugin),
+#endif
+            typeof(Flyback.Plugins.Effects.EffectsPlugin),
+#if SITE_PLUGINS
             typeof(Flyback.Plugins.Figures.FiguresPlugin),
             typeof(Flyback.Plugins.Fractals.FractalsPlugin),
 #endif
+            typeof(Flyback.Plugins.Mastering.MasteringPlugin),
+            typeof(Flyback.Plugins.Picture.PicturePlugin),
             typeof(Flyback.Plugins.Voice.VoicePlugin));
 
         NodeCatalog.Install(plugins.Modules);
