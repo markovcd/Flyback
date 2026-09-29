@@ -169,4 +169,15 @@ public sealed class FileTypeSettingsTests : UiTest
 
         OutputSettings.Load(OutputPath).Library.ShouldBe(@"D:\Sounds");
     }
+
+    [AvaloniaFact]
+    public void A_saved_library_folder_is_looked_in_from_launch()
+    {
+        new OutputSettings { Library = @"D:\Sounds" }.Save(OutputPath);
+
+        var window = Open();
+
+        Service<PatchFiles>(window).SoundFolder.Library.ShouldBe(@"D:\Sounds");
+        Service<PatchFiles>(window).PictureFolder.Library.ShouldBe(@"D:\Sounds");
+    }
 }

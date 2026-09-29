@@ -149,7 +149,8 @@ internal sealed class PatchFiles
     }
 
     /// <summary>Looks in <paramref name="library"/> for what is not beside the patch, and reads the patch's files again.</summary>
-    public void UseLibrary(string? library)
+    /// <param name="reread">False before any patch has arrived, when there is nothing to read again.</param>
+    public void UseLibrary(string? library, bool reread = true)
     {
         library = string.IsNullOrWhiteSpace(library) ? null : library;
 
@@ -158,7 +159,7 @@ internal sealed class PatchFiles
         SoundFolder.Library = library;
         PictureFolder.Library = library;
 
-        reactions.Raise(new FilesMoved(Sounds, Pictures));
+        if (reread) reactions.Raise(new FilesMoved(Sounds, Pictures));
     }
 
     /// <summary>Whether the document is a bundle, which is what the next save offers first.</summary>

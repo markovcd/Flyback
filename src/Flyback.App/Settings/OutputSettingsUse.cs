@@ -19,8 +19,8 @@ internal sealed class OutputSettingsUse(
     PatchFiles files,
     ReportLine report)
 {
-    /// <summary>Applies the settings already loaded for this run.</summary>
-    public void ApplyCurrent() => Apply(repository.Current);
+    /// <summary>Applies the settings already loaded for this run, while the editor is being built.</summary>
+    public void ApplyCurrent() => Apply(repository.Current, starting: true);
 
     /// <summary>Reads the settings controls, applies them and writes them to disk when configured.</summary>
     public void Save()
@@ -45,7 +45,7 @@ internal sealed class OutputSettingsUse(
         }
     }
 
-    private void Apply(OutputSettings settings)
+    private void Apply(OutputSettings settings, bool starting = false)
     {
         var size = OutputSections.SizeOf(settings);
 
@@ -59,7 +59,7 @@ internal sealed class OutputSettingsUse(
 
         knobs.Hub.Takeover = settings.Takeover;
 
-        files.UseLibrary(settings.Library);
+        files.UseLibrary(settings.Library, reread: !starting);
         files.SoundFolder.FfmpegPath = settings.FfmpegPath;
 
         if (transport.Overlay is { } overlay) TransportOverlay.Lay(settings.Transport, overlay, knobs.Stage);

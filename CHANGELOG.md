@@ -3,6 +3,8 @@
 ## Unreleased
 
 - The viewer and the web viewer show no seek bar for a patch that does not say its length, and play it on past three minutes.
+- The editor starts again with a library folder set under Settings → Files.
+
 ## 0.5.1 — 2026-09-29
 
 10 commits since 0.5.0.
