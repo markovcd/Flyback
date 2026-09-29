@@ -92,4 +92,4 @@ what an agent checks sound with.
   plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move
   with it.
-- The preset site serves it at `/viewer/`, and each preset's page opens its file there; the site's image installs the workload to compile it ahead of time, which adds minutes to its build. GitHub Pages does not carry it yet.
+- The preset site serves it at `/viewer/`, and each preset's page opens its file there; the site's image installs the workload to compile it ahead of time, which adds minutes to its build. GitHub Pages carries it at `viewer/` too, compiled the same way in the SDK image by the Pages workflow rather than committed, and its presets page lists the shipped presets from the viewer's own `hear.mjs --presets`.

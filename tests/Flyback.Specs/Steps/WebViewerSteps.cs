@@ -33,7 +33,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private (string Name, float Value)? turned;
     private (int Note, float From, float To)? struck;
 
-    private List<(string Name, string Heading)> listed = [];
+    private List<(string Name, string Heading, string Description)> listed = [];
 
     [When("it plays in the web viewer for {float} second(s)")]
     public void WhenPlayedInTheBrowser(float length) => Play(length);
@@ -182,15 +182,15 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     public void WhenTheViewerLists() => listed =
     [
         .. JsonNode.Parse(Hear("--presets"))!.AsArray()
-            .Select(preset => ((string)preset!["name"]!, (string)preset["heading"]!)),
+            .Select(preset => ((string)preset!["name"]!, (string)preset["heading"]!, (string)preset["description"]!)),
     ];
 
-    [Then("they are the editor's, in its order and under its headings, less the blank canvas")]
+    [Then("they are the editor's, in its order, under its headings and with their descriptions, less the blank canvas")]
     public void ThenTheEditorsList()
     {
         var editor = PresetLibrary.Ordered(session.Presets, null)
             .Where(preset => preset.Kind != PresetKind.Blank)
-            .Select(preset => (preset.Name, PresetKinds.Heading(preset.Kind)))
+            .Select(preset => (preset.Name, PresetKinds.Heading(preset.Kind), preset.Description))
             .ToList();
 
         editor.Count.ShouldBeGreaterThan(1);

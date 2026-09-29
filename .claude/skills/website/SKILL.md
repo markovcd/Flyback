@@ -9,7 +9,7 @@ The website in `site/` (index.html, tutorials.html, plugins.html; published to h
 
 After a user-visible change, grep `site/*.html` for the affected names and fix the prose.
 
-The preset site (`src/Flyback.Server`) serves all of `site/` too, beside its own pages in `wwwroot`. A static page goes in `site/`, never in `wwwroot`; a page that needs the server goes in `wwwroot` under a name `site/` does not use. Link between the two relatively (`presets.html`, not an address): `pages.yml` points those links at the preset site when it publishes to Pages.
+The preset site (`src/Flyback.Server`) serves all of `site/` too, beside its own pages in `wwwroot`. A static page goes in `site/`, never in `wwwroot`; a page that needs the server goes in `wwwroot` under a name `site/` does not use. Link between the two relatively (`presets.html`, not an address): `pages.yml` points those links at the preset site when it publishes to Pages. `presets.html` is the one name both use: on Pages it lists the shipped presets in the web viewer, which `pages.yml` builds into `viewer/`, and the server leaves `site/presets.html` out for its own shelf.
 
 - The tutorials' `.fbks` snippets and `data-patch` diagrams must still build. Check them with `flyback-cli check` and by opening them in the app, since the app loads plugins (`hsv` is ambiguous there and needs `color.hsv`) and the CLI does not.
 - If the UI changes visibly, a full-window screenshot in `site/assets/shots` it stales goes on `.claude/skills/site-screenshots/stale.md` for a retake session of its own; a canvas-only shot is retaken in the same commit (see the `site-screenshots` skill).

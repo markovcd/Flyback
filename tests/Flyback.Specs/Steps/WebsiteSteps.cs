@@ -68,6 +68,12 @@ public sealed partial class WebsiteSteps : IDisposable
     [Then("none of them is missing")]
     public void ThenNoneIsMissing() => missing.ShouldBeEmpty(string.Join(Environment.NewLine, missing));
 
+    [When("someone opens the preset site's presets page")]
+    public async Task WhenThePresetsPageIsOpened() => page = await client.GetStringAsync(new Uri("/presets.html", UriKind.Relative));
+
+    [Then("they can submit a preset there")]
+    public void ThenAPresetCanBeSubmitted() => page.ShouldContain("href=\"submit.html\"");
+
     [When("someone opens the web viewer on the preset site")]
     public async Task WhenTheViewerIsOpened() => page = await client.GetStringAsync(new Uri("/viewer/", UriKind.Relative));
 

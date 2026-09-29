@@ -37,7 +37,7 @@ Feature: The web viewer
   Scenario: The web viewer offers the presets the editor does
     Given every preset the shipped plugins add as well
     When the web viewer lists its presets
-    Then they are the editor's, in its order and under its headings, less the blank canvas
+    Then they are the editor's, in its order, under its headings and with their descriptions, less the blank canvas
 
   Scenario: The preset site serves the web viewer
     When someone opens the web viewer on the preset site

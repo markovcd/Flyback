@@ -9,3 +9,7 @@ Feature: The preset site serves the whole website
   Scenario: Every link between the website's pages leads somewhere on the preset site
     When someone follows every link between the preset site's pages
     Then none of them is missing
+
+  Scenario: The preset site's presets page is its own shelf, not the GitHub Pages one
+    When someone opens the preset site's presets page
+    Then they can submit a preset there
