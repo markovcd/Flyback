@@ -63,6 +63,16 @@ jobs:
           cp -r out/editor/wwwroot site/editor
           cp -r out/stills site/stills
 
+      # What only the preset site can do is left out: a link marked data-preset-site
+      # goes, and the toolbar's Plugins leads to the plugin guide rather than to the
+      # shared plugins, which are listed on the preset site alone.
+      - name: Leave out what only the preset site has
+        run: |
+          find site -name '*.html' -exec sed -i -E \
+            -e 's#<a [^>]*data-preset-site[^>]*>[^<]*</a>##g' \
+            -e 's#href="(\.\./)?shared-plugins\.html">Plugins</a>#href="\1plugins.html">Plugins</a>#g' {} +
+          sed -i 's#href="plugins.html">Plugins</a>#href="plugins.html" aria-current="page">Plugins</a>#' site/plugins.html
+
       # The site links the preset site's pages as neighbors, which they are on
       # the preset site itself. Here they are elsewhere, at vars.PRESETS_URL.
       - name: Point the preset site's pages at its address
