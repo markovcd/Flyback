@@ -50,6 +50,9 @@ internal sealed class ThemePreset : PresetBench
     /// <summary>Between a minor third and a major one: the scale picks which.</summary>
     private const float Third = 3.5f;
 
+    /// <summary>Twelve sections of 32 beats at 128 a minute: three minutes exactly, where the arrangement comes round.</summary>
+    private const double Length = 12 * 32 * 60.0 / 128;
+
     private const int Kick = 0, Hats = 1, Bass = 2, Arp = 3, Chords = 4, Lead = 5, Swell = 6, Pops = 7;
 
     public static Patch Build(ModuleCatalog modules)
@@ -96,6 +99,8 @@ internal sealed class ThemePreset : PresetBench
 
             Levels(0, 0.7f, 1, 1, 1, 1, 0.6f, 1, 1, 1, 1, 0.8f),
         ]);
+
+        b.Patch.Length = Length;
 
         // Filters sweep open over four seconds and close over two.
         var swell = b.Add(SlewType, (1, 0.60206f), (2, 0.30103f));
