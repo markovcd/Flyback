@@ -258,10 +258,10 @@ internal sealed class ThemePreset : PresetBench
 
         // --- the pops --------------------------------------------------------
 
-        // The hook: seven eighths up A minor pentatonic, A C D E G A C, on the last bar
-        // of every four, climbing into the next phrase. Two voices take the eighths in
-        // turn, each a sine with its octave and twelfth, ringing over the next note and
-        // starting half again as high for its first few milliseconds.
+        // The hook: seven eighths up A minor pentatonic, A C D E G A C, once a section,
+        // on its fourth bar. Two voices take the eighths in turn, each a sine with its
+        // octave and twelfth, ringing over the next note and starting half again as high
+        // for its first few milliseconds.
         float[][] runs = [[69f, 74f, 79f, 84f], [72f, 76f, 81f]];
         var pops = new NodeInstance[2];
 
@@ -269,9 +269,11 @@ internal sealed class ThemePreset : PresetBench
         {
             var turn = voice / 2f;
             var line = b.Add("seq.notes", (1, 1f), (2, 1f), (3, 0.02f));
+
+            // Three bars' rest, the run, and rest to the end of the section's 32 beats.
             var run = new List<Step> { new(runs[voice][0], 12f, 0f) };
             run.AddRange(runs[voice].Select(note => new Step(note)));
-            if (run.Count < 5) run.Add(new Step(runs[voice][^1], 1f, 0f));
+            run.Add(new Step(runs[voice][^1], 20f - runs[voice].Length, 0f));
             StepsExtra.Set(line, run);
 
             var level = Product(Product(Stroke(beats, 1f, 2.9f, turn), line, 1), parts, Pops);
