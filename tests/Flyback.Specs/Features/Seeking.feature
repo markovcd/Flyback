@@ -28,6 +28,13 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     Then the seek bar reaches 150.25 seconds
     And the patch plays for 150.25 seconds
 
+  Scenario: Emptying the length beside the seek bar takes the patch's length away
+    Given the patch is open in the editor
+    When the seek bar's length is set to "2:30.25"
+    And the seek bar's length is set to ""
+    Then the patch says nothing about its length
+    And the seek bar reaches 180 seconds
+
   Scenario: An unlooped patch stops at the end of its length
     Given a rainbow across the screen
     And the patch is open in the editor

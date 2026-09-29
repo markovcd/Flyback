@@ -108,6 +108,9 @@ public sealed class EditingSteps(PatchContext context, Session session, Editor e
     [Then("the patch plays for {float} seconds")]
     public void ThenLasts(double seconds) => (context.Patch.Length ?? Patch.DefaultLength).ShouldBe(seconds, 0.001);
 
+    [Then("the patch says nothing about its length")]
+    public void ThenNoLength() => context.Patch.Length.ShouldBeNull();
+
     [Then("the patch is tagged {string}")]
     public void ThenTagged(string tags) => context.Patch.Tags.ShouldBe(tags.Split(", "));
 

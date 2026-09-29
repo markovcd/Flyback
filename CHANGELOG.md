@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Emptying the length box beside the seek bar takes the patch's length away.
 - The viewer and the web viewer show no seek bar for a patch that does not say its length, and play it on past three minutes.
 - The editor starts again with a library folder set under Settings → Files.
 

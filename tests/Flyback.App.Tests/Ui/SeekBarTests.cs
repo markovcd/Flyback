@@ -110,7 +110,8 @@ public sealed class SeekBarTests : UiTest
         var window = Open();
 
         Track(window).Maximum.ShouldBe(Patch.DefaultLength);
-        Length(window).Text.ShouldBe("3:00.00");
+        Length(window).Text.ShouldBeEmpty();
+        Length(window).PlaceholderText.ShouldBe("3:00.00");
     }
 
     [AvaloniaFact]
@@ -141,7 +142,47 @@ public sealed class SeekBarTests : UiTest
 
         Editor(window).History.Patch.Length.ShouldBeNull();
         Track(window).Maximum.ShouldBe(Patch.DefaultLength);
-        Length(window).Text.ShouldBe("3:00.00");
+        Length(window).Text.ShouldBeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void Emptying_the_box_takes_the_length_away_and_is_taken_back_like_any_edit()
+    {
+        var window = Open();
+        Lasting(window, 150.5);
+
+        TypeLength(window, "");
+
+        Editor(window).History.Patch.Length.ShouldBeNull();
+        Track(window).Maximum.ShouldBe(Patch.DefaultLength);
+        Length(window).Text.ShouldBeEmpty();
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
+        Settle(window);
+
+        Editor(window).History.Patch.Length.ShouldBe(150.5);
+        Length(window).Text.ShouldBe("2:30.50");
+    }
+
+    /// <summary>On a canvas the text owns, emptying the box takes the length's line out of the text.</summary>
+    [AvaloniaFact]
+    public void Emptying_the_box_for_a_patch_the_text_owns_takes_its_line_out()
+    {
+        var window = Open();
+
+        All<ToggleButton>(window).Single(b => b.Name == "code").IsChecked = true;
+        Settle(window);
+
+        var text = All<AvaloniaEdit.TextEditor>(window).Single(e => e.Name == "source");
+        text.Text = "description \"A hum.\"\nlength 0:45.50\n\nt |> sine(freq: 220) |> out.left\n";
+        All<Button>(window).Single(b => b.Name == "apply")
+            .RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        TypeLength(window, "");
+
+        text.Text.ShouldNotContain("length");
+        Editor(window).History.Patch.Length.ShouldBeNull();
     }
 
     /// <summary>On a canvas the text owns, the length typed is written into the text as its line.</summary>
@@ -173,7 +214,7 @@ public sealed class SeekBarTests : UiTest
         TypeLength(window, "soon");
 
         Track(window).Maximum.ShouldBe(Patch.DefaultLength);
-        Length(window).Text.ShouldBe("3:00.00");
+        Length(window).Text.ShouldBeEmpty();
         Editor(window).History.IsModified.ShouldBeFalse();
     }
 

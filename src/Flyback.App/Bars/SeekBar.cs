@@ -14,7 +14,8 @@ namespace Flyback.App.Bars;
 /// <summary>
 /// The patch's clock as a strip on the toolbar: where it is, and a thumb to drag it
 /// anywhere from zero to the patch's length, typed in the box beside it. At the end
-/// the patch stops, or comes round to zero where the loop switch is on.
+/// the patch stops, or comes round to zero where the loop switch is on. An empty box
+/// is no length, which the editor plays as <see cref="Patch.DefaultLength"/>.
 /// </summary>
 /// <remarks>
 /// The length is the patch's, an edit like any other; the switch is the editor's, kept
@@ -57,13 +58,14 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         Length = new TextBox
         {
             Name = "seekLength",
-            Text = PatchLength.Say(playback.Length),
+            Text = Said(),
+            PlaceholderText = PatchLength.Say(Patch.DefaultLength),
             Width = 76,
             FontSize = Text.Body,
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        ToolTip.SetTip(Length, "How long the patch plays for: seconds, or minutes:seconds, to a hundredth.");
+        ToolTip.SetTip(Length, "How long the patch plays for: seconds, or minutes:seconds, to a hundredth. Empty for no length, which plays three minutes here and plays on in the viewer.");
 
         Loop = ToolbarButtons.Marked(new ToggleButton(), "seekLoop", Glyphs.Loop(), "Play the patch's length round and round, from zero again at its end.");
         Loop.IsChecked = settings.SeekLoop;
@@ -184,22 +186,28 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     private void Measure()
     {
         Track.Maximum = playback.Length;
-        if (!Length.IsFocused) Length.Text = PatchLength.Say(playback.Length);
+        if (!Length.IsFocused) Length.Text = Said();
     }
+
+    /// <summary>The patch's length as the box shows it, and empty where it has none.</summary>
+    private string Said() => editor.History.Patch.Length is { } seconds ? PatchLength.Say(seconds) : string.Empty;
 
     /// <summary>Gives the patch what was typed as its length, as an edit, or puts the one it had back.</summary>
     private void TakeLength()
     {
-        // ReSharper disable once CompareOfFloatsByEqualityOperator
-        if (PatchLength.Read(Length.Text) is { } seconds && seconds != playback.Length)
+        var patch = editor.History.Patch;
+        var cleared = string.IsNullOrWhiteSpace(Length.Text);
+        var typed = cleared ? null : PatchLength.Read(Length.Text);
+
+        if ((cleared || typed is not null) && typed != patch.Length)
         {
-            editor.History.Patch.Length = seconds;
+            patch.Length = typed;
             document.Relaid();
             editor.History.Record();
             document.HandCameOff();
         }
 
-        Length.Text = PatchLength.Say(playback.Length);
+        Length.Text = Said();
         Track.Maximum = playback.Length;
         Update();
     }
