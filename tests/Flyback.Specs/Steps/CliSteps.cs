@@ -10,6 +10,7 @@ using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 
+using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using PluginRegistry = Flyback.Cli.Plugins;
 
@@ -131,8 +132,37 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     public void WhenPackageDescribed() => Run("plugin", "describe", Path(PackageName));
 
     [When("flyback-cli shoots {string} at {int} second(s)")]
-    public void WhenShot(string name, int seconds) =>
-        Run("shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName));
+    public void WhenShot(string name, int seconds)
+    {
+        var before = ShotCommand.Beside;
+        ShotCommand.Beside = BuiltEditor;
+
+        try
+        {
+            Run("shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName));
+        }
+        finally
+        {
+            ShotCommand.Beside = before;
+        }
+    }
+
+    /// <summary>
+    /// The editor in its own build output, which is laid out as it ships. This folder holds a
+    /// copy of it too, but beside the site's framework, which is not the editor's.
+    /// </summary>
+    private static string BuiltEditor()
+    {
+        var output = new DirectoryInfo(AppContext.BaseDirectory);
+        var (framework, configuration) = (output.Name, output.Parent!.Name);
+        var root = output;
+
+        while (!File.Exists(System.IO.Path.Combine(root.FullName, "Flyback.slnx"))) root = root.Parent!;
+
+        return System.IO.Path.Combine(
+            root.FullName, "src", "Flyback.App", "bin", configuration, framework,
+            OperatingSystem.IsWindows() ? "Flyback.exe" : "Flyback");
+    }
 
     [Then("the shot is {int} by {int} with a black picture in it")]
     public void ThenShotBlack(int width, int height)
