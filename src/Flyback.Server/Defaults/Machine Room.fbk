@@ -23,7 +23,7 @@
       "Id": "9382e0b3-755f-421a-9f5c-4705c1397000",
       "TypeId": "osc.saw",
       "X": -1314,
-      "Y": 60.65209171075844,
+      "Y": -94.61985537918872,
       "InputValues": [
         0,
         0.06666666,
@@ -45,7 +45,7 @@
       "Id": "e37fdf6b-9f58-4c83-ad68-ac83c811a0e4",
       "TypeId": "midi.clock",
       "X": -1314,
-      "Y": 254.65209171075844,
+      "Y": 99.38014462081128,
       "InputValues": [
         0
       ],
@@ -57,7 +57,7 @@
       "Id": "3f6dafac-ab19-4cf8-8937-8f43635488a6",
       "TypeId": "math.expression",
       "X": -1010,
-      "Y": 163.3187583774251,
+      "Y": 8.046811287477937,
       "InputValues": [
         0,
         1,
@@ -74,7 +74,7 @@
       "Id": "08e7c857-765a-44b0-b4de-6f2d86230012",
       "TypeId": "audio.slew",
       "X": -1314,
-      "Y": 428.65209171075844,
+      "Y": 293.3801446208113,
       "InputValues": [
         0.15,
         -1.5,
@@ -94,7 +94,7 @@
       "Id": "af110af5-798a-4c05-b3b3-5a7bab52f0da",
       "TypeId": "math.expression",
       "X": -1010,
-      "Y": 408.65209171075844,
+      "Y": 273.3801446208113,
       "InputValues": [
         0,
         1,
@@ -111,7 +111,7 @@
       "Id": "14c9e1de-5e4f-4092-91ed-d2c42f78c5b3",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 286.65209171075844,
+      "Y": 136.38014462081128,
       "InputValues": [
         0,
         1,
@@ -128,7 +128,7 @@
       "Id": "90fffdea-3b31-4234-9761-363c1a2f9ddb",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 112.65209171075843,
+      "Y": -37.61985537918872,
       "InputValues": [
         0,
         1,
@@ -142,22 +142,10 @@
       }
     },
     {
-      "Id": "b7ffeb41-41be-4f59-9a4b-d3e2843f9966",
-      "TypeId": "midi.in",
-      "X": -1010,
-      "Y": 235.31875837742513,
-      "InputValues": [],
-      "State": {
-        "midi": {
-          "index": 1
-        }
-      }
-    },
-    {
       "Id": "b543e890-f854-4635-94ca-90f29578f4e2",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": -152.68124162257487,
+      "Y": -53.953188712522035,
       "InputValues": [
         0,
         1,
@@ -174,7 +162,7 @@
       "Id": "729c1cbd-dc1a-46b9-9a6c-4c7d5125c007",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 543.3187583774252,
+      "Y": 642.046811287478,
       "InputValues": [
         0,
         1,
@@ -188,22 +176,10 @@
       }
     },
     {
-      "Id": "d983a75b-7d43-4558-95dd-87dbd403e15e",
-      "TypeId": "midi.in",
-      "X": -1010,
-      "Y": 389.3187583774251,
-      "InputValues": [],
-      "State": {
-        "midi": {
-          "index": 2
-        }
-      }
-    },
-    {
       "Id": "fa0ab1b5-37a1-4df7-9689-b89a2bdb8bc6",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 21.318758377425127,
+      "Y": 120.04681128747796,
       "InputValues": [
         0,
         1,
@@ -220,7 +196,7 @@
       "Id": "b2ee43a8-c0ee-4273-bc67-d17e349a5006",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 717.3187583774252,
+      "Y": 816.046811287478,
       "InputValues": [
         0,
         1,
@@ -234,22 +210,10 @@
       }
     },
     {
-      "Id": "133e68b6-249a-4ced-a141-e56cf0be2c55",
-      "TypeId": "midi.in",
-      "X": -1010,
-      "Y": 543.3187583774252,
-      "InputValues": [],
-      "State": {
-        "midi": {
-          "index": 3
-        }
-      }
-    },
-    {
       "Id": "b8f984b7-af76-4e36-bac4-abd17a30ae66",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 195.31875837742513,
+      "Y": 294.04681128747796,
       "InputValues": [
         0,
         1,
@@ -266,7 +230,7 @@
       "Id": "2a2aa812-a374-4b09-a970-5acba5e95294",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 891.3187583774252,
+      "Y": 990.046811287478,
       "InputValues": [
         0,
         1,
@@ -280,22 +244,10 @@
       }
     },
     {
-      "Id": "132d459d-da9f-41ee-9b6c-2125f8009b01",
-      "TypeId": "midi.in",
-      "X": -1010,
-      "Y": 697.3187583774252,
-      "InputValues": [],
-      "State": {
-        "midi": {
-          "index": 4
-        }
-      }
-    },
-    {
       "Id": "6b9a0af1-2886-44a8-8913-48d53a814206",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 369.3187583774251,
+      "Y": 468.04681128747796,
       "InputValues": [
         0,
         1,
@@ -312,7 +264,7 @@
       "Id": "da4b816a-d2ce-40e7-8578-abade9eba37e",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 1065.3187583774252,
+      "Y": 1164.046811287478,
       "InputValues": [
         0,
         1,
@@ -329,7 +281,7 @@
       "Id": "669101f9-d9fb-48af-85b3-e2ac4a0a32aa",
       "TypeId": "math.expression",
       "X": -402,
-      "Y": 641.6520917107584,
+      "Y": 740.3801446208113,
       "InputValues": [
         0,
         1,
@@ -346,7 +298,7 @@
       "Id": "768cffe4-fd33-4f13-aebf-8541bec99fe8",
       "TypeId": "math.expression",
       "X": -402,
-      "Y": 815.6520917107584,
+      "Y": 914.3801446208113,
       "InputValues": [
         0,
         1,
@@ -363,7 +315,7 @@
       "Id": "8d480d7c-c8d7-436f-801d-53a0fc50546d",
       "TypeId": "math.expression",
       "X": -98,
-      "Y": 698.6520917107584,
+      "Y": 797.3801446208113,
       "InputValues": [
         0,
         1,
@@ -380,7 +332,7 @@
       "Id": "691a7b2e-0547-444a-ac46-f0602ff15dfe",
       "TypeId": "math.expression",
       "X": -402,
-      "Y": 467.6520917107585,
+      "Y": 566.3801446208113,
       "InputValues": [
         0,
         1,
@@ -397,7 +349,7 @@
       "Id": "10ebb8a4-4f27-4160-8ab4-201cc3ae48b1",
       "TypeId": "seq.hold",
       "X": 206,
-      "Y": 553.1520917107584,
+      "Y": 651.8801446208113,
       "InputValues": [
         0,
         0
@@ -407,7 +359,7 @@
       "Id": "b8956835-cd33-4905-b04e-6ff81c610b75",
       "TypeId": "seq.hold",
       "X": -98,
-      "Y": 437.6520917107585,
+      "Y": 536.3801446208113,
       "InputValues": [
         0,
         0
@@ -417,7 +369,7 @@
       "Id": "31f77354-6736-4fab-b83e-4e841f7ab563",
       "TypeId": "math.expression",
       "X": 510,
-      "Y": 465.4020917107584,
+      "Y": 564.1301446208113,
       "InputValues": [
         0,
         1,
@@ -434,7 +386,7 @@
       "Id": "dfae7a6f-62f4-47c6-9d16-888668dc3ac2",
       "TypeId": "seq.hold",
       "X": 814,
-      "Y": 445.4020917107584,
+      "Y": 544.1301446208113,
       "InputValues": [
         0,
         0
@@ -444,7 +396,7 @@
       "Id": "11110c3c-066b-4841-954f-b1471632f437",
       "TypeId": "math.expression",
       "X": -402,
-      "Y": 58.31875837742513,
+      "Y": 157.04681128747796,
       "InputValues": [
         0,
         1,
@@ -461,7 +413,7 @@
       "Id": "6e478344-2298-4649-b97a-7cb1b21c361c",
       "TypeId": "audio.slew",
       "X": -98,
-      "Y": 38.31875837742513,
+      "Y": 137.04681128747796,
       "InputValues": [
         0,
         0.9,
@@ -472,7 +424,7 @@
       "Id": "c799ae15-d0cc-4c4e-b75b-636f7d27600c",
       "TypeId": "flyback.voice.decay",
       "X": 510,
-      "Y": 85.31875837742513,
+      "Y": 184.04681128747796,
       "InputValues": [
         0,
         -3,
@@ -484,7 +436,7 @@
       "Id": "cfb57c71-eaea-4b4e-96e3-0a1512033d01",
       "TypeId": "math.expression",
       "X": 206,
-      "Y": -68.68124162257487,
+      "Y": 30.046811287477965,
       "InputValues": [
         0,
         1,
@@ -501,7 +453,7 @@
       "Id": "e73f7582-4422-4edc-93fb-9d7dc7a5f89e",
       "TypeId": "math.expression",
       "X": 206,
-      "Y": 105.31875837742513,
+      "Y": 204.04681128747796,
       "InputValues": [
         0,
         1,
@@ -518,7 +470,7 @@
       "Id": "ac0a8aa0-8cd0-4186-b6d5-a500301a3422",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 293.50394356261035,
+      "Y": 293.4542186948854,
       "InputValues": [
         0,
         1,
@@ -535,7 +487,7 @@
       "Id": "b24fd8e5-e6b9-439c-ab09-2a2e5bf6a90b",
       "TypeId": "flyback.voice.drum",
       "X": -402,
-      "Y": 116.50394356261035,
+      "Y": 116.45421869488538,
       "InputValues": [
         0,
         1,
@@ -563,7 +515,7 @@
       "Id": "3378f8ac-da09-4f83-93ac-96f9bb18cc1f",
       "TypeId": "audio.duck",
       "X": -402,
-      "Y": 330.50394356261035,
+      "Y": 330.4542186948854,
       "InputValues": [
         0,
         0,
@@ -657,7 +609,7 @@
       "Id": "9daba230-a2df-4fa6-94ad-f7b38dbfd381",
       "TypeId": "audio.slew",
       "X": -1010,
-      "Y": 371.3187583774251,
+      "Y": -117.95318871252204,
       "InputValues": [
         0.7,
         -1.5,
@@ -677,7 +629,7 @@
       "Id": "310b3d6d-e1ad-403c-a97e-572cab255d89",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 321.3187583774251,
+      "Y": -167.95318871252204,
       "InputValues": [
         0,
         1,
@@ -694,7 +646,7 @@
       "Id": "e8de3900-c2a1-4407-a8f3-10ab5e19a940",
       "TypeId": "audio.slew",
       "X": -1010,
-      "Y": 525.3187583774252,
+      "Y": 36.046811287477965,
       "InputValues": [
         0.4,
         -1.5,
@@ -714,7 +666,7 @@
       "Id": "46bbde43-305c-410f-8a8d-987f32af7f3d",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 495.3187583774251,
+      "Y": 6.046811287477965,
       "InputValues": [
         0,
         1,
@@ -731,7 +683,7 @@
       "Id": "e4ffb3c4-61cf-499f-9473-8336356091c8",
       "TypeId": "flyback.voice.hiss",
       "X": -402,
-      "Y": 261.3187583774251,
+      "Y": -227.95318871252204,
       "InputValues": [
         0,
         1,
@@ -751,7 +703,7 @@
       "Id": "f4aabbf1-88f0-4fe1-8af7-db85022d7140",
       "TypeId": "flyback.voice.hiss",
       "X": -402,
-      "Y": 475.3187583774251,
+      "Y": -13.953188712522035,
       "InputValues": [
         0,
         1,
@@ -771,7 +723,7 @@
       "Id": "a40c003d-2d55-4473-bc8d-9e5f520699a7",
       "TypeId": "math.expression",
       "X": -98,
-      "Y": 338.3187583774251,
+      "Y": -150.95318871252204,
       "InputValues": [
         0,
         1,
@@ -788,7 +740,7 @@
       "Id": "5c2d4204-3ac5-4566-9727-212badfebe73",
       "TypeId": "math.expression",
       "X": -1010,
-      "Y": -286.6812416225749,
+      "Y": -361.95318871252204,
       "InputValues": [
         0,
         1,
@@ -805,7 +757,7 @@
       "Id": "5dfa2be5-db4d-4253-8557-f19312e5a6c4",
       "TypeId": "audio.slew",
       "X": -1010,
-      "Y": -112.68124162257487,
+      "Y": -187.95318871252204,
       "InputValues": [
         0.6,
         -1.5,
@@ -825,7 +777,7 @@
       "Id": "0cec4d5c-a623-47d9-ad19-2195bce8a2ff",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": -229.68124162257487,
+      "Y": -304.95318871252204,
       "InputValues": [
         0,
         1,
@@ -842,7 +794,7 @@
       "Id": "4eaa84ff-5790-4225-a911-58f07fea5000",
       "TypeId": "flyback.voice.hiss",
       "X": -402,
-      "Y": -269.6812416225749,
+      "Y": -344.95318871252204,
       "InputValues": [
         0,
         1,
@@ -862,7 +814,7 @@
       "Id": "3f020f3d-e408-4012-9edf-a92ceec4776e",
       "TypeId": "flyback.voice.euclid",
       "X": -706,
-      "Y": -251.49605643738965,
+      "Y": -251.54578130511462,
       "InputValues": [
         0,
         4,
@@ -886,7 +838,7 @@
       "Id": "2260561d-c218-4d75-9701-02268c535e82",
       "TypeId": "math.expression",
       "X": -706,
-      "Y": 42.503943562610345,
+      "Y": 42.454218694885384,
       "InputValues": [
         0,
         1,
@@ -903,7 +855,7 @@
       "Id": "515226a2-722c-4657-89e8-0d45d85e4b47",
       "TypeId": "flyback.voice.drum",
       "X": -402,
-      "Y": -124.49605643738965,
+      "Y": -124.54578130511462,
       "InputValues": [
         0,
         1,
@@ -917,7 +869,7 @@
       "Id": "c3c1bda2-4004-4a23-aa75-f217fccc5be7",
       "TypeId": "math.expression",
       "X": -98,
-      "Y": -144.49605643738965,
+      "Y": -144.54578130511462,
       "InputValues": [
         0,
         1,
@@ -1942,6 +1894,2090 @@
       "State": {
         "expression": {
           "formula": "a * b"
+        }
+      }
+    },
+    {
+      "Id": "5aef08fb-64f4-4835-8f28-bae4f739ebb3",
+      "TypeId": "math.expression",
+      "X": -706,
+      "Y": 290.4542186948854,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * a * 0.5"
+        }
+      }
+    },
+    {
+      "Id": "76805dfd-3afe-478a-af48-7823d9a85312",
+      "TypeId": "flyback.voice.hiss",
+      "X": -402,
+      "Y": 374.12088536155204,
+      "InputValues": [
+        0,
+        1,
+        300,
+        0.5,
+        1.2,
+        7
+      ],
+      "State": {
+        "hiss": {
+          "noise": "white",
+          "band": "band"
+        }
+      }
+    },
+    {
+      "Id": "e06b8980-0ec3-4076-bf7e-d31ddd317d65",
+      "TypeId": "math.expression",
+      "X": -706,
+      "Y": 116.45421869488538,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "pow(1 - fract(a * exp(floor(b * 3.99) * 0.6931)), 10) * pow(b, 1.5)"
+        }
+      }
+    },
+    {
+      "Id": "3216c450-f289-4403-8fb8-b5014902c0f8",
+      "TypeId": "flyback.voice.hiss",
+      "X": -402,
+      "Y": -53.87911463844793,
+      "InputValues": [
+        0,
+        1,
+        1900,
+        0.4,
+        1.8,
+        9
+      ],
+      "State": {
+        "hiss": {
+          "noise": "white",
+          "band": "band"
+        }
+      }
+    },
+    {
+      "Id": "23f25b3f-d382-43e1-9552-f874e9e5e95f",
+      "TypeId": "flyback.voice.drum",
+      "X": -402,
+      "Y": 160.12088536155207,
+      "InputValues": [
+        0,
+        1,
+        190,
+        60,
+        4,
+        1
+      ]
+    },
+    {
+      "Id": "4f498181-6400-4d18-9fce-356e3b984d84",
+      "TypeId": "math.expression",
+      "X": -98,
+      "Y": 23.12088536155207,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b * 0.4"
+        }
+      }
+    },
+    {
+      "Id": "7a06d129-28db-4b68-80c0-7eb0a0ca2e22",
+      "TypeId": "flyback.voice.drum",
+      "X": -706,
+      "Y": -97.54578130511462,
+      "InputValues": [
+        0,
+        1,
+        38,
+        200,
+        2,
+        3
+      ]
+    },
+    {
+      "Id": "79076d4d-41e5-475b-961f-42e9ddcacfc2",
+      "TypeId": "math.expression",
+      "X": -706,
+      "Y": 638.4542186948854,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "pow(a, 1.5)"
+        }
+      }
+    },
+    {
+      "Id": "087acb39-2c90-4832-98ab-0fb1bce29f45",
+      "TypeId": "flyback.voice.hiss",
+      "X": -402,
+      "Y": 598.4542186948854,
+      "InputValues": [
+        0,
+        1,
+        6500,
+        0.1,
+        1.5,
+        11
+      ],
+      "State": {
+        "hiss": {
+          "noise": "white",
+          "band": "high"
+        }
+      }
+    },
+    {
+      "Id": "57591275-4e74-4304-a150-eced2f180ec1",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 174.53755202821876,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b \u002B c * 0.8 \u002B d * 0.7"
+        }
+      }
+    },
+    {
+      "Id": "2171235c-f65d-4922-b9b0-807f4a8722b3",
+      "TypeId": "math.expression",
+      "X": -706,
+      "Y": 464.4542186948854,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "300 \u002B a * a * 9000"
+        }
+      }
+    },
+    {
+      "Id": "7416493a-4d87-4e1d-9084-f70f9d326590",
+      "TypeId": "math.expression",
+      "X": -98,
+      "Y": -334.61027054673724,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b * 0.15 \u002B c * 0.5 \u002B d * 0.2"
+        }
+      }
+    },
+    {
+      "Id": "a09ee9b6-73dd-45d8-b775-a44882f58428",
+      "TypeId": "flyback.effects.echo",
+      "X": 510,
+      "Y": -307.61027054673724,
+      "InputValues": [
+        0,
+        2.1333,
+        3,
+        3,
+        0.5,
+        1
+      ],
+      "State": {
+        "echo": {
+          "taps": "row",
+          "division": 4
+        },
+        "controls": {
+          "4": {
+            "control": "139f215e-9631-40c2-89de-289ffca08c90",
+            "min": 0.15,
+            "max": 0.85
+          }
+        }
+      }
+    },
+    {
+      "Id": "61a08a86-7061-4699-9a6e-42b338bad8d6",
+      "TypeId": "audio.slew",
+      "X": -98,
+      "Y": -160.61027054673724,
+      "InputValues": [
+        0.4,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "9b952400-fe44-473f-b653-129f1093c17a",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "75406644-75cf-42be-a1bf-dd0156cf6bbe",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": -180.61027054673724,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "mix(2 \u002B a / 3, b / 60, c)"
+        }
+      }
+    },
+    {
+      "Id": "0c649bf7-ef7c-4086-b0b0-77e1b565e43b",
+      "TypeId": "audio.filter",
+      "X": 814,
+      "Y": -454.61027054673724,
+      "InputValues": [
+        0,
+        3200,
+        0.1
+      ]
+    },
+    {
+      "Id": "2541fff3-a132-4b3c-9350-52e1d8287e92",
+      "TypeId": "audio.filter",
+      "X": 814,
+      "Y": -260.61027054673724,
+      "InputValues": [
+        0,
+        3200,
+        0.1
+      ]
+    },
+    {
+      "Id": "b19ba761-022c-4c98-99e4-5adeb25a6518",
+      "TypeId": "audio.reverb",
+      "X": 1726,
+      "Y": -467.61027054673724,
+      "InputValues": [
+        0,
+        0.8,
+        0.6385,
+        1
+      ],
+      "State": {
+        "controls": {
+          "2": {
+            "control": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
+            "min": 0.4,
+            "max": 0.93
+          }
+        }
+      }
+    },
+    {
+      "Id": "c29f6feb-28e0-4072-83fb-941e9df1a296",
+      "TypeId": "math.expression",
+      "X": 1118,
+      "Y": -387.61027054673724,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b"
+        }
+      }
+    },
+    {
+      "Id": "c3141355-2f9d-415c-ab99-e44b9793dbff",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": -427.61027054673724,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * 0.5 \u002B b \u002B c * 0.4 \u002B d * 0.3"
+        }
+      }
+    },
+    {
+      "Id": "e3cd180a-7d7e-4c2e-80a9-fdc9f0cbc993",
+      "TypeId": "audio.slew",
+      "X": 510,
+      "Y": -172.99883104056437,
+      "InputValues": [
+        0,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "1bdaad61-5ff9-4079-b266-d6f254fbc0ee",
+      "TypeId": "flyback.voice.crush",
+      "X": 510,
+      "Y": -326.99883104056437,
+      "InputValues": [
+        0,
+        16,
+        48000
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 16,
+            "max": 3
+          },
+          "2": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 48000,
+            "max": 2500
+          }
+        }
+      }
+    },
+    {
+      "Id": "e5bea232-f00d-494a-8be1-296a8fc9e02e",
+      "TypeId": "flyback.voice.crush",
+      "X": 510,
+      "Y": -18.99883104056437,
+      "InputValues": [
+        0,
+        16,
+        48000
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 16,
+            "max": 3
+          },
+          "2": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 48000,
+            "max": 2500
+          }
+        }
+      }
+    },
+    {
+      "Id": "8ba01058-feae-4a2a-8b14-d9a325885db4",
+      "TypeId": "flyback.mastering.eq",
+      "X": 1118,
+      "Y": -272.99883104056437,
+      "InputValues": [
+        0,
+        0,
+        28,
+        70,
+        1,
+        280,
+        -2.5,
+        0.8,
+        10000,
+        2
+      ]
+    },
+    {
+      "Id": "b8b34ed3-200d-4fe8-af3c-39fee1e4c87b",
+      "TypeId": "flyback.mastering.compressor",
+      "X": 1422,
+      "Y": -332.99883104056437,
+      "InputValues": [
+        0,
+        0,
+        0,
+        -16,
+        2,
+        -1.69897,
+        -0.82390875,
+        6,
+        2
+      ]
+    },
+    {
+      "Id": "3ca5abab-15c9-4782-9151-13570a58d15c",
+      "TypeId": "flyback.mastering.width",
+      "X": 1726,
+      "Y": -412.99883104056437,
+      "InputValues": [
+        0,
+        0,
+        1.2,
+        150
+      ]
+    },
+    {
+      "Id": "0d595ba4-3e4a-4254-af30-25c6734b1c80",
+      "TypeId": "flyback.mastering.limiter",
+      "X": 2030,
+      "Y": -472.99883104056437,
+      "InputValues": [
+        0,
+        0,
+        -1,
+        -1.09691,
+        1.5
+      ]
+    },
+    {
+      "Id": "140a36c5-3f5d-4d39-9d75-d5809e375e19",
+      "TypeId": "output",
+      "X": 1118,
+      "Y": -384.9536829823873,
+      "InputValues": [
+        0,
+        0,
+        0,
+        0.9
+      ]
+    },
+    {
+      "Id": "8f81b61e-8237-44a0-995f-2ff4ad530354",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": -309.99883104056437,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "mix(a, b, smoothstep(0, 0.05, c))"
+        }
+      }
+    },
+    {
+      "Id": "ed3d06d4-66fb-4c58-908b-91fcba1707f3",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": -135.99883104056437,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "mix(a, b, smoothstep(0, 0.05, c))"
+        }
+      }
+    },
+    {
+      "Id": "4c7f5752-40e2-4844-9315-c905249ffa5a",
+      "TypeId": "meter",
+      "X": -98,
+      "Y": -133.61027054673724,
+      "InputValues": [
+        0,
+        -1.5,
+        1
+      ]
+    },
+    {
+      "Id": "b76a88e2-a1c8-4436-a9f0-994ca0e40dd8",
+      "TypeId": "meter",
+      "X": -98,
+      "Y": 40.38972945326276,
+      "InputValues": [
+        0,
+        -1.5,
+        1
+      ]
+    },
+    {
+      "Id": "cb8fbafa-0346-49d0-bf75-5a6bb0fd5c69",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 67.38972945326276,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "(a \u002B 6) / 12"
+        }
+      }
+    },
+    {
+      "Id": "575e0e27-a57b-4910-b5e9-7631bb14be33",
+      "TypeId": "meter",
+      "X": 510,
+      "Y": 27.38972945326276,
+      "InputValues": [
+        0,
+        -1.5,
+        1
+      ]
+    },
+    {
+      "Id": "b4123700-0637-4163-bf03-2b947a082406",
+      "TypeId": "meter",
+      "X": -98,
+      "Y": 214.38972945326276,
+      "InputValues": [
+        0,
+        -1.5,
+        0.3
+      ]
+    },
+    {
+      "Id": "5ad6e6c1-e8bb-4972-a690-34ecc983897d",
+      "TypeId": "meter",
+      "X": -98,
+      "Y": 388.38972945326276,
+      "InputValues": [
+        0,
+        -1.5,
+        0.2
+      ]
+    },
+    {
+      "Id": "7b3039ed-8531-413f-991c-1cc1b888ef4e",
+      "TypeId": "coord",
+      "X": -402,
+      "Y": 705,
+      "InputValues": []
+    },
+    {
+      "Id": "93a79b5f-d0ec-45d1-a391-30eeec5f230c",
+      "TypeId": "audio.slew",
+      "X": -402,
+      "Y": 551,
+      "InputValues": [
+        0,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "4f6840dd-b0b5-4f13-b79a-cb56d96c6fac",
+      "TypeId": "math.expression",
+      "X": -98,
+      "Y": 531,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "mix(600, 16, sqrt(a))"
+        }
+      }
+    },
+    {
+      "Id": "ff428312-54df-401f-880b-2257858dc01f",
+      "TypeId": "audio.slew",
+      "X": -402,
+      "Y": 879,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "e9167e81-3435-4b04-b937-dfd6ba2a780c",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "c12ec935-ed25-4eae-aa40-2592a2ec2ac5",
+      "TypeId": "math.expression",
+      "X": -98,
+      "Y": 849,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "1 \u002B a * b * 0.25"
+        }
+      }
+    },
+    {
+      "Id": "a25ec2f2-a97a-4c2b-b39c-f860e01293d4",
+      "TypeId": "audio.slew",
+      "X": -402,
+      "Y": 1033,
+      "InputValues": [
+        0.15,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "75a6aab4-9815-4f6a-a4a7-7cb39b66ab63",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "9bb606d4-cdf0-418c-87d9-152d8a14ff98",
+      "TypeId": "math.expression",
+      "X": -98,
+      "Y": 1023,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * 0.15 * sin(b * pi)"
+        }
+      }
+    },
+    {
+      "Id": "10d2dfc1-9ffb-49e3-86b7-cf46f26e6625",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 781.3333333333334,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "floor((a \u002B b) * c) / c * d"
+        }
+      }
+    },
+    {
+      "Id": "15588fa5-fea8-4875-8522-118e404fa6e9",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 607.3333333333334,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "floor(a * b) / b * c"
+        }
+      }
+    },
+    {
+      "Id": "8fe15e98-44da-4ec8-bf6b-ebb4cad2573c",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 577.3333333333334,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "atan2(a, b)"
+        }
+      }
+    },
+    {
+      "Id": "93033197-c61c-4153-bdd7-21c54cdc3232",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 751.3333333333334,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "max(abs(a), abs(b))"
+        }
+      }
+    },
+    {
+      "Id": "f0e9dfb1-1db0-43bd-bdea-9a5e986b9edc",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1717.2923894340229,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "03234b5a-eb9e-47e9-bf81-05dc74ddbbfd",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "ccfaa4a0-3882-40f9-9a66-7845c54ad78c",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1707.2923894340229,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "0.9 / (a \u002B 0.04) \u002B b \u002B c * d * 0.6"
+        }
+      }
+    },
+    {
+      "Id": "0d8157cc-01fb-4de8-9e26-e1ba44358615",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1871.2923894340229,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "6b84af57-033b-4852-88e2-077039a555af",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "af34fb21-4f45-4d57-a860-1898d11e667f",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1881.2923894340229,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * (0.1 \u002B b * 0.6)"
+        }
+      }
+    },
+    {
+      "Id": "24c24509-ce42-4b4e-86ab-45194ad9cef8",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 927.2923894340228,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * (3 \u002B b * 2)"
+        }
+      }
+    },
+    {
+      "Id": "99c2bafb-062f-405b-b74b-63a606b8ca60",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": 1569.625722767356,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * (1 \u002B b * 2) \u002B c * sin(d)"
+        }
+      }
+    },
+    {
+      "Id": "dd059d71-edcc-4a51-9d6f-c611ec0cdd13",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": -36.707610565977234,
+      "InputValues": [
+        0.35,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "effcdc2d-d466-4c2e-99d4-92019cfb158b",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "42ba49d5-9f97-41a9-a310-f5130b94180a",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 117.29238943402277,
+      "InputValues": [
+        0.6,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "59b8221f-2285-4371-b998-03f1a6c6283c",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "b20b4b68-764d-412f-aa9f-8bc63e568842",
+      "TypeId": "math.expression",
+      "X": 1118,
+      "Y": 510.0701672118005,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "(smoothstep(mix(0.45, 0.9, b), 0.97, fract(a)) \u002B c * smoothstep(0.9, 0.97, fract(a * 3)) * 0.6 \u002B 0.06) * smoothstep(0.02, 0.35, d)"
+        }
+      }
+    },
+    {
+      "Id": "53b7753d-fe7c-46f5-8f42-1427e1b22959",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 271.29238943402277,
+      "InputValues": [
+        0.8,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "9f408b4c-c2c9-4302-b913-46768c0b9dbe",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "b342dba1-326b-4795-ae17-10027853886a",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": 350.6812783229116,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * (0.2 \u002B b * 0.8 * c \u002B d * 0.6)"
+        }
+      }
+    },
+    {
+      "Id": "6bfb2b88-21e5-44ad-91a7-ed48c8082426",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 425.29238943402277,
+      "InputValues": [
+        0.4,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "7d653834-af8b-43f6-ad4d-7035cea346b5",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "7f09a147-3bb9-4e62-918d-9e9f8d3943f7",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 579.2923894340228,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * 0.8 \u002B b * 0.9"
+        }
+      }
+    },
+    {
+      "Id": "a3573fb9-d2e9-4394-a49e-9dc3e170651e",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 432.29238943402277,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "smoothstep(mix(0.97, 0.75, c), 1, abs(sin(a * 4))) * smoothstep(0.1, 0.8, b) * d"
+        }
+      }
+    },
+    {
+      "Id": "2a084066-0397-4dd2-8b1c-5e88cc7125a7",
+      "TypeId": "math.expression",
+      "X": 206,
+      "Y": 753.2923894340228,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "(1 - smoothstep(0, 0.015, abs(abs(a) - abs(b)))) * c * 0.9"
+        }
+      }
+    },
+    {
+      "Id": "4ae7e01b-3ee0-498b-bbc3-c9b90f646b00",
+      "TypeId": "flyback.voice.fold",
+      "X": 2030,
+      "Y": 452.08868573031907,
+      "InputValues": [
+        0,
+        2.2,
+        0
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "3387e0ce-1a41-46c6-bcdc-ef5d2cf1ced7",
+            "min": 1,
+            "max": 4
+          }
+        }
+      }
+    },
+    {
+      "Id": "f63038a3-7738-49fc-be7c-18e94182fa82",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1409.2923894340229,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "592b3da7-130c-451d-84d7-573d92e89886",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1359.2923894340229,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "1 - smoothstep(0.35, 0.47, a)"
+        }
+      }
+    },
+    {
+      "Id": "b7f83863-768e-4f22-895e-bb54baa2d042",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1563.2923894340229,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "3c541e45-120e-412e-9145-377cccbfcfac",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1533.2923894340229,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "smoothstep(0.53, 0.65, a)"
+        }
+      }
+    },
+    {
+      "Id": "afc77e17-ad7d-4ac0-abf0-10969974ba0c",
+      "TypeId": "color.hsv",
+      "X": 2638,
+      "Y": 1192.906586964887,
+      "InputValues": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "Id": "39b3bbb6-96da-47d0-97c0-6263787459cb",
+      "TypeId": "math.expression",
+      "X": 1726,
+      "Y": 472.08868573031907,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b \u002B c"
+        }
+      }
+    },
+    {
+      "Id": "739f822a-64f2-42fa-9328-b1d2118ef432",
+      "TypeId": "math.expression",
+      "X": 1118,
+      "Y": 1427.4035005451337,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B 0.55 \u002B fract(b * 0.05) * 0.08 - c * 0.12 \u002B d * 0.1"
+        }
+      }
+    },
+    {
+      "Id": "0e61fc35-b284-48c6-b7d5-328e4c1ef95b",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": 1395.625722767356,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "0.8 - a * 0.5"
+        }
+      }
+    },
+    {
+      "Id": "fc44ef7a-d6f0-47bb-9767-15eb562695e9",
+      "TypeId": "math.expression",
+      "X": 2334,
+      "Y": 875.6905375821709,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * (1 - b * 0.5)"
+        }
+      }
+    },
+    {
+      "Id": "7d074fd6-0eda-4068-9629-c60fb5b69045",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1101.2923894340229,
+      "InputValues": [
+        0.6,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "8f1fcab2-ea09-4740-b55a-d864eb4a973a",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "3753cd5b-2f7b-49f1-878f-2efa1b06cb48",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1011.2923894340228,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "(1 - smoothstep(-1, -0.2, a)) * b * c * 0.7"
+        }
+      }
+    },
+    {
+      "Id": "0c6521e8-9590-44a6-aff8-52b71444ceb4",
+      "TypeId": "audio.slew",
+      "X": 206,
+      "Y": 1255.2923894340229,
+      "InputValues": [
+        0.5,
+        -1.5,
+        -1.5
+      ],
+      "State": {
+        "controls": {
+          "0": {
+            "control": "af7b8ae5-9495-4e75-b104-fabe3f28aaf5",
+            "min": 0,
+            "max": 1
+          }
+        }
+      }
+    },
+    {
+      "Id": "b5451d17-9db0-401e-8764-8698af650b91",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1185.2923894340229,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "(1 - smoothstep(0, 0.5, a)) * b * (0.3 \u002B 0.7 * pow(1 - fract(c), 2)) * 0.5"
+        }
+      }
+    },
+    {
+      "Id": "b9944fab-57e3-4d4e-83d3-fdd06fa58b38",
+      "TypeId": "color.ink",
+      "X": 2942,
+      "Y": 1072.0994881994548,
+      "InputValues": [
+        0,
+        1,
+        0.9,
+        0.35,
+        0.1
+      ],
+      "State": {
+        "ink": {
+          "mode": "add"
+        }
+      }
+    },
+    {
+      "Id": "afc1defb-5550-46b8-bd3e-5500cd175430",
+      "TypeId": "color.ink",
+      "X": 3246,
+      "Y": 1098.6959388167388,
+      "InputValues": [
+        0,
+        1,
+        0.55,
+        0.12,
+        0.05
+      ],
+      "State": {
+        "ink": {
+          "mode": "add"
+        }
+      }
+    },
+    {
+      "Id": "cffc5bb5-af02-4211-b462-4c567198bf86",
+      "TypeId": "flyback.picture.polygon",
+      "X": 814,
+      "Y": 10.124147856783452,
+      "InputValues": [
+        0,
+        0,
+        0.5,
+        6.4
+      ],
+      "State": {
+        "controls": {
+          "3": {
+            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
+            "min": 4,
+            "max": 8
+          }
+        }
+      }
+    },
+    {
+      "Id": "0b709901-c0b3-448e-8650-96514931d3e8",
+      "TypeId": "flyback.picture.fill",
+      "X": 1118,
+      "Y": -29.875852143216548,
+      "InputValues": [
+        0,
+        0.01,
+        0.0214
+      ],
+      "State": {
+        "controls": {
+          "2": {
+            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
+            "min": 0.006,
+            "max": 0.05
+          }
+        }
+      }
+    },
+    {
+      "Id": "8187d401-922e-4d37-b552-089ecdcf9125",
+      "TypeId": "color.hsv",
+      "X": 814,
+      "Y": 234.12414785678345,
+      "InputValues": [
+        0,
+        0.59999996,
+        1
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
+            "min": 0.9,
+            "max": 0.15
+          }
+        }
+      }
+    },
+    {
+      "Id": "70f4b661-5240-41bb-9a76-2a5a36b21bf4",
+      "TypeId": "color.gain",
+      "X": 1726,
+      "Y": 42.12414785678345,
+      "InputValues": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "Id": "93a82fb0-c715-4ef5-9702-f2453a08c23e",
+      "TypeId": "math.remap",
+      "X": 510,
+      "Y": 70.12414785678345,
+      "InputValues": [
+        0,
+        48,
+        96,
+        0.1,
+        0.9
+      ]
+    },
+    {
+      "Id": "315bc6ff-26a6-400a-a965-30fb4ef708d8",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 264.12414785678345,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "fract(a * 0.083333336)"
+        }
+      }
+    },
+    {
+      "Id": "97404197-5fdb-496f-8ece-2bca8b9ec1a7",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": -89.87585214321655,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
+        }
+      }
+    },
+    {
+      "Id": "ddb9fcf8-441a-4c0a-a6b6-9244603e94b7",
+      "TypeId": "flyback.picture.polygon",
+      "X": 814,
+      "Y": 388.12414785678345,
+      "InputValues": [
+        0,
+        0,
+        0.5,
+        6.4
+      ],
+      "State": {
+        "controls": {
+          "3": {
+            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
+            "min": 4,
+            "max": 8
+          }
+        }
+      }
+    },
+    {
+      "Id": "fdc6ce0f-1918-4283-832c-f9af147bcb9b",
+      "TypeId": "flyback.picture.fill",
+      "X": 1118,
+      "Y": 348.12414785678345,
+      "InputValues": [
+        0,
+        0.01,
+        0.0214
+      ],
+      "State": {
+        "controls": {
+          "2": {
+            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
+            "min": 0.006,
+            "max": 0.05
+          }
+        }
+      }
+    },
+    {
+      "Id": "09ad2fff-eb55-47bc-849a-df15e3e006d8",
+      "TypeId": "color.hsv",
+      "X": 814,
+      "Y": 602.1241478567835,
+      "InputValues": [
+        0,
+        0.59999996,
+        1
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
+            "min": 0.9,
+            "max": 0.15
+          }
+        }
+      }
+    },
+    {
+      "Id": "5aca349e-5103-43a0-b2f5-b8066d1b37ce",
+      "TypeId": "color.gain",
+      "X": 1726,
+      "Y": 415.12414785678345,
+      "InputValues": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "Id": "412f685a-252d-47b7-a9f6-31728dc65ea1",
+      "TypeId": "math.remap",
+      "X": 510,
+      "Y": 438.12414785678345,
+      "InputValues": [
+        0,
+        48,
+        96,
+        0.1,
+        0.9
+      ]
+    },
+    {
+      "Id": "4c2f5d3e-6c18-446a-bbda-b3128e23430e",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 632.1241478567835,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "fract(a * 0.083333336)"
+        }
+      }
+    },
+    {
+      "Id": "62b8d4cc-c5f8-47b2-bbdf-60a6625863f4",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": 288.12414785678345,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
+        }
+      }
+    },
+    {
+      "Id": "7e3b9cfe-8a54-4d16-9ce3-47549d1a7f22",
+      "TypeId": "flyback.picture.polygon",
+      "X": 814,
+      "Y": 756.1241478567835,
+      "InputValues": [
+        0,
+        0,
+        0.5,
+        6.4
+      ],
+      "State": {
+        "controls": {
+          "3": {
+            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
+            "min": 4,
+            "max": 8
+          }
+        }
+      }
+    },
+    {
+      "Id": "d37c5107-035f-499f-aa00-5e067afa983f",
+      "TypeId": "flyback.picture.fill",
+      "X": 1118,
+      "Y": 716.1241478567835,
+      "InputValues": [
+        0,
+        0.01,
+        0.0214
+      ],
+      "State": {
+        "controls": {
+          "2": {
+            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
+            "min": 0.006,
+            "max": 0.05
+          }
+        }
+      }
+    },
+    {
+      "Id": "7898f931-eeb8-4046-bc48-5b179d370d4f",
+      "TypeId": "color.hsv",
+      "X": 814,
+      "Y": 970.1241478567835,
+      "InputValues": [
+        0,
+        0.59999996,
+        1
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
+            "min": 0.9,
+            "max": 0.15
+          }
+        }
+      }
+    },
+    {
+      "Id": "90799b05-d369-4535-b2a2-49935b409bf8",
+      "TypeId": "color.gain",
+      "X": 1726,
+      "Y": 783.1241478567835,
+      "InputValues": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "Id": "9a9e9c7a-c224-4ae4-81a8-fbb85a24e836",
+      "TypeId": "math.remap",
+      "X": 510,
+      "Y": 806.1241478567835,
+      "InputValues": [
+        0,
+        48,
+        96,
+        0.1,
+        0.9
+      ]
+    },
+    {
+      "Id": "c9aa6770-aca7-4c48-94c9-21456ccd412c",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1000.1241478567835,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "fract(a * 0.083333336)"
+        }
+      }
+    },
+    {
+      "Id": "639edd3c-6e42-4d63-be8f-b337490aa41d",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": 656.1241478567835,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
+        }
+      }
+    },
+    {
+      "Id": "a373a277-19de-4ea7-a26b-5bd1e79b0226",
+      "TypeId": "math.expression",
+      "X": 2030,
+      "Y": 353.4574811901168,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b \u002B c \u002B d"
+        }
+      }
+    },
+    {
+      "Id": "8c58c990-39db-4ff3-8f17-0ff6f354ec8c",
+      "TypeId": "flyback.picture.polygon",
+      "X": 814,
+      "Y": 1124.1241478567836,
+      "InputValues": [
+        0,
+        0,
+        0.5,
+        6.4
+      ],
+      "State": {
+        "controls": {
+          "3": {
+            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
+            "min": 4,
+            "max": 8
+          }
+        }
+      }
+    },
+    {
+      "Id": "554b0258-f532-43ac-b4b1-f71462d8c05c",
+      "TypeId": "flyback.picture.fill",
+      "X": 1118,
+      "Y": 1084.1241478567836,
+      "InputValues": [
+        0,
+        0.01,
+        0.0214
+      ],
+      "State": {
+        "controls": {
+          "2": {
+            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
+            "min": 0.006,
+            "max": 0.05
+          }
+        }
+      }
+    },
+    {
+      "Id": "32c6f809-b18f-4306-9562-e63ec42b2bcb",
+      "TypeId": "color.hsv",
+      "X": 814,
+      "Y": 1348.1241478567836,
+      "InputValues": [
+        0,
+        0.59999996,
+        1
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
+            "min": 0.9,
+            "max": 0.15
+          }
+        }
+      }
+    },
+    {
+      "Id": "2b975212-995f-4031-8f2d-0c47e64512cd",
+      "TypeId": "color.gain",
+      "X": 1726,
+      "Y": 1156.1241478567836,
+      "InputValues": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "Id": "e1a15f69-079a-48bb-bf8f-1cdaea4eb35e",
+      "TypeId": "math.remap",
+      "X": 510,
+      "Y": 1174.1241478567836,
+      "InputValues": [
+        0,
+        48,
+        96,
+        0.1,
+        0.9
+      ]
+    },
+    {
+      "Id": "38ce4202-b473-494e-b096-f09eb51db8f8",
+      "TypeId": "math.expression",
+      "X": 510,
+      "Y": 1368.1241478567836,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "fract(a * 0.083333336)"
+        }
+      }
+    },
+    {
+      "Id": "4aa125f5-4348-428c-bd0e-f18543a9a1ac",
+      "TypeId": "math.expression",
+      "X": 1422,
+      "Y": 1024.1241478567836,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
+        }
+      }
+    },
+    {
+      "Id": "a5043876-f833-473a-a52b-ba28b2e58f08",
+      "TypeId": "math.expression",
+      "X": 2334,
+      "Y": 724.7908145234502,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a \u002B b"
+        }
+      }
+    },
+    {
+      "Id": "08347ba3-016b-4cbc-8d30-148155439d1c",
+      "TypeId": "flyback.picture.text",
+      "X": 1118,
+      "Y": 48.136613133966904,
+      "InputValues": [
+        0,
+        0,
+        0.22,
+        0,
+        1
+      ],
+      "State": {
+        "text": {
+          "lines": "FLYBACK",
+          "font": "pixel"
+        }
+      }
+    },
+    {
+      "Id": "ab8d765b-ec07-4399-ade1-ffd0eff9e8eb",
+      "TypeId": "flyback.picture.fill",
+      "X": 1422,
+      "Y": 8.136613133966904,
+      "InputValues": [
+        0,
+        0.004,
+        0.02
+      ]
+    },
+    {
+      "Id": "426d2d8a-a046-4f4b-b2ee-179a4d082618",
+      "TypeId": "math.expression",
+      "X": 1726,
+      "Y": -11.863386866033096,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * max(b, c)"
+        }
+      }
+    },
+    {
+      "Id": "06d055ca-0002-4def-8d9b-4a833e9c489e",
+      "TypeId": "color.ink",
+      "X": 2030,
+      "Y": -51.863386866033096,
+      "InputValues": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "State": {
+        "ink": {
+          "mode": "add"
+        }
+      }
+    },
+    {
+      "Id": "421e88bd-2c5c-4d83-b5bf-f6ca560d52eb",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": -25.863386866033096,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "a * 0.6"
+        }
+      }
+    },
+    {
+      "Id": "4d5a85a4-f472-4010-8e09-ca257bed5b3b",
+      "TypeId": "color.ink",
+      "X": 2334,
+      "Y": -68.8633868660331,
+      "InputValues": [
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "State": {
+        "ink": {
+          "mode": "add"
+        }
+      }
+    },
+    {
+      "Id": "0fb52397-f722-4b27-a593-55fcf3ce6aae",
+      "TypeId": "math.expression",
+      "X": 814,
+      "Y": 148.1366131339669,
+      "InputValues": [
+        0,
+        1,
+        0,
+        0
+      ],
+      "State": {
+        "expression": {
+          "formula": "min(a * 1.25, 1)"
+        }
+      }
+    },
+    {
+      "Id": "864f21c9-3003-4938-85b9-710b8e405893",
+      "TypeId": "flyback.picture.posterise",
+      "X": 2638,
+      "Y": -88.8633868660331,
+      "InputValues": [
+        0,
+        32
+      ],
+      "State": {
+        "controls": {
+          "1": {
+            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+            "min": 32,
+            "max": 3
+          }
+        }
+      }
+    },
+    {
+      "Id": "8fa65b92-86e5-4c07-ac5e-e1a231a28425",
+      "TypeId": "feedback.trails",
+      "X": 3246,
+      "Y": -168.8633868660331,
+      "InputValues": [
+        0,
+        0,
+        0,
+        0.98875004,
+        0.002,
+        0,
+        0,
+        0.85
+      ],
+      "State": {
+        "controls": {
+          "7": {
+            "control": "139f215e-9631-40c2-89de-289ffca08c90",
+            "min": 0.75,
+            "max": 0.95
+          },
+          "3": {
+            "control": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
+            "min": 1,
+            "max": 0.975
+          }
+        }
+      }
+    },
+    {
+      "Id": "2d9ef6cf-8d26-496d-b3b4-7f68ed7b5392",
+      "TypeId": "color.vignette",
+      "X": 2942,
+      "Y": -128.8633868660331,
+      "InputValues": [
+        0,
+        0,
+        0,
+        0.6,
+        1.8,
+        0.5
+      ]
+    },
+    {
+      "Id": "b7ffeb41-41be-4f59-9a4b-d3e2843f9966",
+      "TypeId": "midi.in",
+      "X": -1010,
+      "Y": 334.04681128747796,
+      "InputValues": [],
+      "State": {
+        "midi": {
+          "device": "midi:elektron-syntakt",
+          "index": 1,
+          "channel": 0
+        }
+      }
+    },
+    {
+      "Id": "d983a75b-7d43-4558-95dd-87dbd403e15e",
+      "TypeId": "midi.in",
+      "X": -1010,
+      "Y": 488.04681128747796,
+      "InputValues": [],
+      "State": {
+        "midi": {
+          "device": "midi:elektron-syntakt",
+          "index": 2,
+          "channel": 0
+        }
+      }
+    },
+    {
+      "Id": "133e68b6-249a-4ced-a141-e56cf0be2c55",
+      "TypeId": "midi.in",
+      "X": -1010,
+      "Y": 642.046811287478,
+      "InputValues": [],
+      "State": {
+        "midi": {
+          "device": "midi:elektron-syntakt",
+          "index": 3,
+          "channel": 0
+        }
+      }
+    },
+    {
+      "Id": "132d459d-da9f-41ee-9b6c-2125f8009b01",
+      "TypeId": "midi.in",
+      "X": -1010,
+      "Y": 796.046811287478,
+      "InputValues": [],
+      "State": {
+        "midi": {
+          "device": "midi:elektron-syntakt",
+          "index": 4,
+          "channel": 0
         }
       }
     },
@@ -3153,358 +5189,10 @@
       }
     },
     {
-      "Id": "5aef08fb-64f4-4835-8f28-bae4f739ebb3",
-      "TypeId": "math.expression",
-      "X": -706,
-      "Y": 290.50394356261035,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * a * 0.5"
-        }
-      }
-    },
-    {
-      "Id": "76805dfd-3afe-478a-af48-7823d9a85312",
-      "TypeId": "flyback.voice.hiss",
-      "X": -402,
-      "Y": 374.17061022927703,
-      "InputValues": [
-        0,
-        1,
-        300,
-        0.5,
-        1.2,
-        7
-      ],
-      "State": {
-        "hiss": {
-          "noise": "white",
-          "band": "band"
-        }
-      }
-    },
-    {
-      "Id": "e06b8980-0ec3-4076-bf7e-d31ddd317d65",
-      "TypeId": "math.expression",
-      "X": -706,
-      "Y": 116.50394356261035,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "pow(1 - fract(a * exp(floor(b * 3.99) * 0.6931)), 10) * pow(b, 1.5)"
-        }
-      }
-    },
-    {
-      "Id": "3216c450-f289-4403-8fb8-b5014902c0f8",
-      "TypeId": "flyback.voice.hiss",
-      "X": -402,
-      "Y": -53.82938977072297,
-      "InputValues": [
-        0,
-        1,
-        1900,
-        0.4,
-        1.8,
-        9
-      ],
-      "State": {
-        "hiss": {
-          "noise": "white",
-          "band": "band"
-        }
-      }
-    },
-    {
-      "Id": "23f25b3f-d382-43e1-9552-f874e9e5e95f",
-      "TypeId": "flyback.voice.drum",
-      "X": -402,
-      "Y": 160.17061022927703,
-      "InputValues": [
-        0,
-        1,
-        190,
-        60,
-        4,
-        1
-      ]
-    },
-    {
-      "Id": "4f498181-6400-4d18-9fce-356e3b984d84",
-      "TypeId": "math.expression",
-      "X": -98,
-      "Y": 23.17061022927703,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b * 0.4"
-        }
-      }
-    },
-    {
-      "Id": "7a06d129-28db-4b68-80c0-7eb0a0ca2e22",
-      "TypeId": "flyback.voice.drum",
-      "X": -706,
-      "Y": -97.49605643738965,
-      "InputValues": [
-        0,
-        1,
-        38,
-        200,
-        2,
-        3
-      ]
-    },
-    {
-      "Id": "79076d4d-41e5-475b-961f-42e9ddcacfc2",
-      "TypeId": "math.expression",
-      "X": -706,
-      "Y": 638.5039435626104,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "pow(a, 1.5)"
-        }
-      }
-    },
-    {
-      "Id": "087acb39-2c90-4832-98ab-0fb1bce29f45",
-      "TypeId": "flyback.voice.hiss",
-      "X": -402,
-      "Y": 598.5039435626104,
-      "InputValues": [
-        0,
-        1,
-        6500,
-        0.1,
-        1.5,
-        11
-      ],
-      "State": {
-        "hiss": {
-          "noise": "white",
-          "band": "high"
-        }
-      }
-    },
-    {
-      "Id": "57591275-4e74-4304-a150-eced2f180ec1",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 174.58727689594372,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b \u002B c * 0.8 \u002B d * 0.7"
-        }
-      }
-    },
-    {
-      "Id": "2171235c-f65d-4922-b9b0-807f4a8722b3",
-      "TypeId": "math.expression",
-      "X": -706,
-      "Y": 464.50394356261035,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "300 \u002B a * a * 9000"
-        }
-      }
-    },
-    {
-      "Id": "7416493a-4d87-4e1d-9084-f70f9d326590",
-      "TypeId": "math.expression",
-      "X": -98,
-      "Y": -338.60717319223977,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b * 0.15 \u002B c * 0.5 \u002B d * 0.2"
-        }
-      }
-    },
-    {
-      "Id": "a09ee9b6-73dd-45d8-b775-a44882f58428",
-      "TypeId": "flyback.effects.echo",
-      "X": 510,
-      "Y": -311.60717319223977,
-      "InputValues": [
-        0,
-        2.1333,
-        3,
-        3,
-        0.5,
-        1
-      ],
-      "State": {
-        "echo": {
-          "taps": "row",
-          "division": 4
-        },
-        "controls": {
-          "4": {
-            "control": "139f215e-9631-40c2-89de-289ffca08c90",
-            "min": 0.15,
-            "max": 0.85
-          }
-        }
-      }
-    },
-    {
-      "Id": "61a08a86-7061-4699-9a6e-42b338bad8d6",
-      "TypeId": "audio.slew",
-      "X": -98,
-      "Y": -164.60717319223977,
-      "InputValues": [
-        0.4,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "9b952400-fe44-473f-b653-129f1093c17a",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "75406644-75cf-42be-a1bf-dd0156cf6bbe",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": -184.60717319223977,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "mix(2 \u002B a / 3, b / 60, c)"
-        }
-      }
-    },
-    {
-      "Id": "0c649bf7-ef7c-4086-b0b0-77e1b565e43b",
-      "TypeId": "audio.filter",
-      "X": 814,
-      "Y": -458.60717319223977,
-      "InputValues": [
-        0,
-        3200,
-        0.1
-      ]
-    },
-    {
-      "Id": "2541fff3-a132-4b3c-9350-52e1d8287e92",
-      "TypeId": "audio.filter",
-      "X": 814,
-      "Y": -264.60717319223977,
-      "InputValues": [
-        0,
-        3200,
-        0.1
-      ]
-    },
-    {
-      "Id": "b19ba761-022c-4c98-99e4-5adeb25a6518",
-      "TypeId": "audio.reverb",
-      "X": 1726,
-      "Y": -471.60717319223977,
-      "InputValues": [
-        0,
-        0.8,
-        0.6385,
-        1
-      ],
-      "State": {
-        "controls": {
-          "2": {
-            "control": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
-            "min": 0.4,
-            "max": 0.93
-          }
-        }
-      }
-    },
-    {
-      "Id": "c29f6feb-28e0-4072-83fb-941e9df1a296",
-      "TypeId": "math.expression",
-      "X": 1118,
-      "Y": -391.60717319223977,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b"
-        }
-      }
-    },
-    {
-      "Id": "c3141355-2f9d-415c-ab99-e44b9793dbff",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": -431.60717319223977,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * 0.5 \u002B b \u002B c * 0.4 \u002B d * 0.3"
-        }
-      }
-    },
-    {
       "Id": "f7224849-c202-465a-ace8-5fbd3bbf2fe2",
       "TypeId": "audio.slew",
       "X": 206,
-      "Y": -330.7907188712521,
+      "Y": -372.99883104056437,
       "InputValues": [
         0.8,
         -1.5,
@@ -3524,7 +5212,7 @@
       "Id": "f7c42470-6995-48f0-8f95-14804f2c74c3",
       "TypeId": "math.expression",
       "X": 510,
-      "Y": -370.7907188712521,
+      "Y": -412.99883104056437,
       "InputValues": [
         0,
         1,
@@ -3541,7 +5229,7 @@
       "Id": "f82fd913-24be-4e6f-b522-f3634bb8faf7",
       "TypeId": "math.expression",
       "X": 206,
-      "Y": -176.79071887125212,
+      "Y": -218.99883104056437,
       "InputValues": [
         0,
         1,
@@ -3558,7 +5246,7 @@
       "Id": "766c7bca-31c8-4019-a800-fbb46a88300a",
       "TypeId": "math.expression",
       "X": 814,
-      "Y": -323.7907188712521,
+      "Y": -365.99883104056437,
       "InputValues": [
         0,
         1,
@@ -3575,7 +5263,7 @@
       "Id": "53d6639f-0293-424b-a8f6-ae4adda64dff",
       "TypeId": "audio.slew",
       "X": 206,
-      "Y": 451.2092811287479,
+      "Y": 409.00116895943563,
       "InputValues": [
         0.5,
         -1.5,
@@ -3595,7 +5283,7 @@
       "Id": "e8a930db-52a0-42d4-afd3-9080cb0917c6",
       "TypeId": "audio.filter",
       "X": 1118,
-      "Y": -16.290718871252125,
+      "Y": -58.49883104056437,
       "InputValues": [
         0,
         800,
@@ -3606,7 +5294,7 @@
       "Id": "48c7c0b7-8f9b-4c97-88b8-0c52e35b0c29",
       "TypeId": "math.expression",
       "X": 1422,
-      "Y": -16.290718871252125,
+      "Y": -58.49883104056437,
       "InputValues": [
         0,
         1,
@@ -3623,7 +5311,7 @@
       "Id": "ed41cd1c-d1b0-41be-a14a-a20ce937447e",
       "TypeId": "math.expression",
       "X": 510,
-      "Y": 431.2092811287479,
+      "Y": 389.00116895943563,
       "InputValues": [
         0,
         1,
@@ -3637,17 +5325,40 @@
       }
     },
     {
+      "Id": "d0854042-a2c0-4421-b7e2-3447070bf84d",
+      "TypeId": "math.desk",
+      "X": 206,
+      "Y": -44.99883104056437,
+      "InputValues": [
+        0,
+        0,
+        0.7,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    {
       "Id": "3c5e5cf4-f47f-491e-a13f-08d97b55ceef",
       "TypeId": "math.desk",
       "X": 1726,
-      "Y": -220.62405220458547,
+      "Y": -262.83216437389774,
       "InputValues": [
         0,
         0,
         0.8,
         0,
         0,
-        0.9,
+        0.000924789,
         0,
         0,
         0.7,
@@ -3667,1709 +5378,6 @@
           }
         }
       }
-    },
-    {
-      "Id": "d0854042-a2c0-4421-b7e2-3447070bf84d",
-      "TypeId": "math.desk",
-      "X": 206,
-      "Y": -2.7907188712521247,
-      "InputValues": [
-        0,
-        0,
-        0.7,
-        0,
-        0,
-        1,
-        0,
-        0,
-        1,
-        0,
-        0,
-        1,
-        0,
-        0,
-        1
-      ]
-    },
-    {
-      "Id": "e3cd180a-7d7e-4c2e-80a9-fdc9f0cbc993",
-      "TypeId": "audio.slew",
-      "X": 510,
-      "Y": -130.79071887125212,
-      "InputValues": [
-        0,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "1bdaad61-5ff9-4079-b266-d6f254fbc0ee",
-      "TypeId": "flyback.voice.crush",
-      "X": 510,
-      "Y": -284.7907188712521,
-      "InputValues": [
-        0,
-        16,
-        48000
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 16,
-            "max": 3
-          },
-          "2": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 48000,
-            "max": 2500
-          }
-        }
-      }
-    },
-    {
-      "Id": "e5bea232-f00d-494a-8be1-296a8fc9e02e",
-      "TypeId": "flyback.voice.crush",
-      "X": 510,
-      "Y": 23.209281128747875,
-      "InputValues": [
-        0,
-        16,
-        48000
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 16,
-            "max": 3
-          },
-          "2": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 48000,
-            "max": 2500
-          }
-        }
-      }
-    },
-    {
-      "Id": "8ba01058-feae-4a2a-8b14-d9a325885db4",
-      "TypeId": "flyback.mastering.eq",
-      "X": 1118,
-      "Y": -230.79071887125212,
-      "InputValues": [
-        0,
-        0,
-        28,
-        70,
-        1,
-        280,
-        -2.5,
-        0.8,
-        10000,
-        2
-      ]
-    },
-    {
-      "Id": "b8b34ed3-200d-4fe8-af3c-39fee1e4c87b",
-      "TypeId": "flyback.mastering.compressor",
-      "X": 1422,
-      "Y": -290.7907188712521,
-      "InputValues": [
-        0,
-        0,
-        0,
-        -16,
-        2,
-        -1.69897,
-        -0.82390875,
-        6,
-        2
-      ]
-    },
-    {
-      "Id": "3ca5abab-15c9-4782-9151-13570a58d15c",
-      "TypeId": "flyback.mastering.width",
-      "X": 1726,
-      "Y": -370.7907188712521,
-      "InputValues": [
-        0,
-        0,
-        1.2,
-        150
-      ]
-    },
-    {
-      "Id": "0d595ba4-3e4a-4254-af30-25c6734b1c80",
-      "TypeId": "flyback.mastering.limiter",
-      "X": 2030,
-      "Y": -430.7907188712521,
-      "InputValues": [
-        0,
-        0,
-        -1,
-        -1.09691,
-        1.5
-      ]
-    },
-    {
-      "Id": "140a36c5-3f5d-4d39-9d75-d5809e375e19",
-      "TypeId": "output",
-      "X": 1118,
-      "Y": -361.40758306244334,
-      "InputValues": [
-        0,
-        0,
-        0,
-        0.9
-      ]
-    },
-    {
-      "Id": "8f81b61e-8237-44a0-995f-2ff4ad530354",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": -267.7907188712521,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "mix(a, b, smoothstep(0, 0.05, c))"
-        }
-      }
-    },
-    {
-      "Id": "ed3d06d4-66fb-4c58-908b-91fcba1707f3",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": -93.79071887125212,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "mix(a, b, smoothstep(0, 0.05, c))"
-        }
-      }
-    },
-    {
-      "Id": "4c7f5752-40e2-4844-9315-c905249ffa5a",
-      "TypeId": "meter",
-      "X": -98,
-      "Y": -137.60717319223977,
-      "InputValues": [
-        0,
-        -1.5,
-        1
-      ]
-    },
-    {
-      "Id": "b76a88e2-a1c8-4436-a9f0-994ca0e40dd8",
-      "TypeId": "meter",
-      "X": -98,
-      "Y": 36.39282680776023,
-      "InputValues": [
-        0,
-        -1.5,
-        1
-      ]
-    },
-    {
-      "Id": "cb8fbafa-0346-49d0-bf75-5a6bb0fd5c69",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 63.39282680776023,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "(a \u002B 6) / 12"
-        }
-      }
-    },
-    {
-      "Id": "575e0e27-a57b-4910-b5e9-7631bb14be33",
-      "TypeId": "meter",
-      "X": 510,
-      "Y": 23.39282680776023,
-      "InputValues": [
-        0,
-        -1.5,
-        1
-      ]
-    },
-    {
-      "Id": "b4123700-0637-4163-bf03-2b947a082406",
-      "TypeId": "meter",
-      "X": -98,
-      "Y": 210.39282680776023,
-      "InputValues": [
-        0,
-        -1.5,
-        0.3
-      ]
-    },
-    {
-      "Id": "5ad6e6c1-e8bb-4972-a690-34ecc983897d",
-      "TypeId": "meter",
-      "X": -98,
-      "Y": 384.39282680776023,
-      "InputValues": [
-        0,
-        -1.5,
-        0.2
-      ]
-    },
-    {
-      "Id": "7b3039ed-8531-413f-991c-1cc1b888ef4e",
-      "TypeId": "coord",
-      "X": -402,
-      "Y": 705,
-      "InputValues": []
-    },
-    {
-      "Id": "93a79b5f-d0ec-45d1-a391-30eeec5f230c",
-      "TypeId": "audio.slew",
-      "X": -402,
-      "Y": 551,
-      "InputValues": [
-        0,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "4f6840dd-b0b5-4f13-b79a-cb56d96c6fac",
-      "TypeId": "math.expression",
-      "X": -98,
-      "Y": 531,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "mix(600, 16, sqrt(a))"
-        }
-      }
-    },
-    {
-      "Id": "ff428312-54df-401f-880b-2257858dc01f",
-      "TypeId": "audio.slew",
-      "X": -402,
-      "Y": 879,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "e9167e81-3435-4b04-b937-dfd6ba2a780c",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "c12ec935-ed25-4eae-aa40-2592a2ec2ac5",
-      "TypeId": "math.expression",
-      "X": -98,
-      "Y": 849,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "1 \u002B a * b * 0.25"
-        }
-      }
-    },
-    {
-      "Id": "a25ec2f2-a97a-4c2b-b39c-f860e01293d4",
-      "TypeId": "audio.slew",
-      "X": -402,
-      "Y": 1033,
-      "InputValues": [
-        0.15,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "75a6aab4-9815-4f6a-a4a7-7cb39b66ab63",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "9bb606d4-cdf0-418c-87d9-152d8a14ff98",
-      "TypeId": "math.expression",
-      "X": -98,
-      "Y": 1023,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * 0.15 * sin(b * pi)"
-        }
-      }
-    },
-    {
-      "Id": "10d2dfc1-9ffb-49e3-86b7-cf46f26e6625",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 781.3333333333334,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "floor((a \u002B b) * c) / c * d"
-        }
-      }
-    },
-    {
-      "Id": "15588fa5-fea8-4875-8522-118e404fa6e9",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 607.3333333333334,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "floor(a * b) / b * c"
-        }
-      }
-    },
-    {
-      "Id": "8fe15e98-44da-4ec8-bf6b-ebb4cad2573c",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 577.3333333333334,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "atan2(a, b)"
-        }
-      }
-    },
-    {
-      "Id": "93033197-c61c-4153-bdd7-21c54cdc3232",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 751.3333333333334,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "max(abs(a), abs(b))"
-        }
-      }
-    },
-    {
-      "Id": "f0e9dfb1-1db0-43bd-bdea-9a5e986b9edc",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1778.770489530223,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "03234b5a-eb9e-47e9-bf81-05dc74ddbbfd",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "ccfaa4a0-3882-40f9-9a66-7845c54ad78c",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1768.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "0.9 / (a \u002B 0.04) \u002B b \u002B c * d * 0.6"
-        }
-      }
-    },
-    {
-      "Id": "0d8157cc-01fb-4de8-9e26-e1ba44358615",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1932.770489530223,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "6b84af57-033b-4852-88e2-077039a555af",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "af34fb21-4f45-4d57-a860-1898d11e667f",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1942.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * (0.1 \u002B b * 0.6)"
-        }
-      }
-    },
-    {
-      "Id": "24c24509-ce42-4b4e-86ab-45194ad9cef8",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 988.7704895302229,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * (3 \u002B b * 2)"
-        }
-      }
-    },
-    {
-      "Id": "99c2bafb-062f-405b-b74b-63a606b8ca60",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": 1631.1038228635562,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * (1 \u002B b * 2) \u002B c * sin(d)"
-        }
-      }
-    },
-    {
-      "Id": "dd059d71-edcc-4a51-9d6f-c611ec0cdd13",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 24.770489530222903,
-      "InputValues": [
-        0.35,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "effcdc2d-d466-4c2e-99d4-92019cfb158b",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "42ba49d5-9f97-41a9-a310-f5130b94180a",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 178.7704895302229,
-      "InputValues": [
-        0.6,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "59b8221f-2285-4371-b998-03f1a6c6283c",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "b20b4b68-764d-412f-aa9f-8bc63e568842",
-      "TypeId": "math.expression",
-      "X": 1118,
-      "Y": 571.5482673080006,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "(smoothstep(mix(0.45, 0.9, b), 0.97, fract(a)) \u002B c * smoothstep(0.9, 0.97, fract(a * 3)) * 0.6 \u002B 0.06) * smoothstep(0.02, 0.35, d)"
-        }
-      }
-    },
-    {
-      "Id": "53b7753d-fe7c-46f5-8f42-1427e1b22959",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 332.7704895302229,
-      "InputValues": [
-        0.8,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "9f408b4c-c2c9-4302-b913-46768c0b9dbe",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "b342dba1-326b-4795-ae17-10027853886a",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": 412.15937841911176,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * (0.2 \u002B b * 0.8 * c \u002B d * 0.6)"
-        }
-      }
-    },
-    {
-      "Id": "6bfb2b88-21e5-44ad-91a7-ed48c8082426",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 486.7704895302229,
-      "InputValues": [
-        0.4,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "7d653834-af8b-43f6-ad4d-7035cea346b5",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "7f09a147-3bb9-4e62-918d-9e9f8d3943f7",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 640.7704895302229,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * 0.8 \u002B b * 0.9"
-        }
-      }
-    },
-    {
-      "Id": "a3573fb9-d2e9-4394-a49e-9dc3e170651e",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 493.7704895302229,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "smoothstep(mix(0.97, 0.75, c), 1, abs(sin(a * 4))) * smoothstep(0.1, 0.8, b) * d"
-        }
-      }
-    },
-    {
-      "Id": "2a084066-0397-4dd2-8b1c-5e88cc7125a7",
-      "TypeId": "math.expression",
-      "X": 206,
-      "Y": 814.7704895302229,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "(1 - smoothstep(0, 0.015, abs(abs(a) - abs(b)))) * c * 0.9"
-        }
-      }
-    },
-    {
-      "Id": "4ae7e01b-3ee0-498b-bbc3-c9b90f646b00",
-      "TypeId": "flyback.voice.fold",
-      "X": 2030,
-      "Y": 513.5667858265192,
-      "InputValues": [
-        0,
-        2.2,
-        0
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "3387e0ce-1a41-46c6-bcdc-ef5d2cf1ced7",
-            "min": 1,
-            "max": 4
-          }
-        }
-      }
-    },
-    {
-      "Id": "f63038a3-7738-49fc-be7c-18e94182fa82",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1470.770489530223,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "592b3da7-130c-451d-84d7-573d92e89886",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1420.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "1 - smoothstep(0.35, 0.47, a)"
-        }
-      }
-    },
-    {
-      "Id": "b7f83863-768e-4f22-895e-bb54baa2d042",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1624.770489530223,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "3c541e45-120e-412e-9145-377cccbfcfac",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1594.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "smoothstep(0.53, 0.65, a)"
-        }
-      }
-    },
-    {
-      "Id": "afc77e17-ad7d-4ac0-abf0-10969974ba0c",
-      "TypeId": "color.hsv",
-      "X": 2638,
-      "Y": 1254.384687061087,
-      "InputValues": [
-        0,
-        1,
-        1
-      ]
-    },
-    {
-      "Id": "39b3bbb6-96da-47d0-97c0-6263787459cb",
-      "TypeId": "math.expression",
-      "X": 1726,
-      "Y": 533.5667858265192,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b \u002B c"
-        }
-      }
-    },
-    {
-      "Id": "739f822a-64f2-42fa-9328-b1d2118ef432",
-      "TypeId": "math.expression",
-      "X": 1118,
-      "Y": 1488.881600641334,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B 0.55 \u002B fract(b * 0.05) * 0.08 - c * 0.12 \u002B d * 0.1"
-        }
-      }
-    },
-    {
-      "Id": "0e61fc35-b284-48c6-b7d5-328e4c1ef95b",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": 1457.1038228635562,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "0.8 - a * 0.5"
-        }
-      }
-    },
-    {
-      "Id": "fc44ef7a-d6f0-47bb-9767-15eb562695e9",
-      "TypeId": "math.expression",
-      "X": 2334,
-      "Y": 937.168637678371,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * (1 - b * 0.5)"
-        }
-      }
-    },
-    {
-      "Id": "7d074fd6-0eda-4068-9629-c60fb5b69045",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1162.770489530223,
-      "InputValues": [
-        0.6,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "8f1fcab2-ea09-4740-b55a-d864eb4a973a",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "3753cd5b-2f7b-49f1-878f-2efa1b06cb48",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1072.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "(1 - smoothstep(-1, -0.2, a)) * b * c * 0.7"
-        }
-      }
-    },
-    {
-      "Id": "0c6521e8-9590-44a6-aff8-52b71444ceb4",
-      "TypeId": "audio.slew",
-      "X": 206,
-      "Y": 1316.770489530223,
-      "InputValues": [
-        0.5,
-        -1.5,
-        -1.5
-      ],
-      "State": {
-        "controls": {
-          "0": {
-            "control": "af7b8ae5-9495-4e75-b104-fabe3f28aaf5",
-            "min": 0,
-            "max": 1
-          }
-        }
-      }
-    },
-    {
-      "Id": "b5451d17-9db0-401e-8764-8698af650b91",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1246.770489530223,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "(1 - smoothstep(0, 0.5, a)) * b * (0.3 \u002B 0.7 * pow(1 - fract(c), 2)) * 0.5"
-        }
-      }
-    },
-    {
-      "Id": "b9944fab-57e3-4d4e-83d3-fdd06fa58b38",
-      "TypeId": "color.ink",
-      "X": 2942,
-      "Y": 1133.577588295655,
-      "InputValues": [
-        0,
-        1,
-        0.9,
-        0.35,
-        0.1
-      ],
-      "State": {
-        "ink": {
-          "mode": "add"
-        }
-      }
-    },
-    {
-      "Id": "afc1defb-5550-46b8-bd3e-5500cd175430",
-      "TypeId": "color.ink",
-      "X": 3246,
-      "Y": 1160.1740389129388,
-      "InputValues": [
-        0,
-        1,
-        0.55,
-        0.12,
-        0.05
-      ],
-      "State": {
-        "ink": {
-          "mode": "add"
-        }
-      }
-    },
-    {
-      "Id": "cffc5bb5-af02-4211-b462-4c567198bf86",
-      "TypeId": "flyback.picture.polygon",
-      "X": 814,
-      "Y": -42.777864455170175,
-      "InputValues": [
-        0,
-        0,
-        0.5,
-        6.4
-      ],
-      "State": {
-        "controls": {
-          "3": {
-            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
-            "min": 4,
-            "max": 8
-          }
-        }
-      }
-    },
-    {
-      "Id": "0b709901-c0b3-448e-8650-96514931d3e8",
-      "TypeId": "flyback.picture.fill",
-      "X": 1118,
-      "Y": -82.77786445517017,
-      "InputValues": [
-        0,
-        0.01,
-        0.0214
-      ],
-      "State": {
-        "controls": {
-          "2": {
-            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
-            "min": 0.006,
-            "max": 0.05
-          }
-        }
-      }
-    },
-    {
-      "Id": "8187d401-922e-4d37-b552-089ecdcf9125",
-      "TypeId": "color.hsv",
-      "X": 814,
-      "Y": 181.22213554482983,
-      "InputValues": [
-        0,
-        0.59999996,
-        1
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
-            "min": 0.9,
-            "max": 0.15
-          }
-        }
-      }
-    },
-    {
-      "Id": "70f4b661-5240-41bb-9a76-2a5a36b21bf4",
-      "TypeId": "color.gain",
-      "X": 1726,
-      "Y": -10.777864455170175,
-      "InputValues": [
-        0,
-        1,
-        0
-      ]
-    },
-    {
-      "Id": "93a82fb0-c715-4ef5-9702-f2453a08c23e",
-      "TypeId": "math.remap",
-      "X": 510,
-      "Y": 17.222135544829825,
-      "InputValues": [
-        0,
-        48,
-        96,
-        0.1,
-        0.9
-      ]
-    },
-    {
-      "Id": "315bc6ff-26a6-400a-a965-30fb4ef708d8",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 211.22213554482983,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "fract(a * 0.083333336)"
-        }
-      }
-    },
-    {
-      "Id": "97404197-5fdb-496f-8ece-2bca8b9ec1a7",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": -142.77786445517017,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
-        }
-      }
-    },
-    {
-      "Id": "ddb9fcf8-441a-4c0a-a6b6-9244603e94b7",
-      "TypeId": "flyback.picture.polygon",
-      "X": 814,
-      "Y": 335.2221355448298,
-      "InputValues": [
-        0,
-        0,
-        0.5,
-        6.4
-      ],
-      "State": {
-        "controls": {
-          "3": {
-            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
-            "min": 4,
-            "max": 8
-          }
-        }
-      }
-    },
-    {
-      "Id": "fdc6ce0f-1918-4283-832c-f9af147bcb9b",
-      "TypeId": "flyback.picture.fill",
-      "X": 1118,
-      "Y": 295.2221355448298,
-      "InputValues": [
-        0,
-        0.01,
-        0.0214
-      ],
-      "State": {
-        "controls": {
-          "2": {
-            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
-            "min": 0.006,
-            "max": 0.05
-          }
-        }
-      }
-    },
-    {
-      "Id": "09ad2fff-eb55-47bc-849a-df15e3e006d8",
-      "TypeId": "color.hsv",
-      "X": 814,
-      "Y": 549.2221355448298,
-      "InputValues": [
-        0,
-        0.59999996,
-        1
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
-            "min": 0.9,
-            "max": 0.15
-          }
-        }
-      }
-    },
-    {
-      "Id": "5aca349e-5103-43a0-b2f5-b8066d1b37ce",
-      "TypeId": "color.gain",
-      "X": 1726,
-      "Y": 362.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0
-      ]
-    },
-    {
-      "Id": "412f685a-252d-47b7-a9f6-31728dc65ea1",
-      "TypeId": "math.remap",
-      "X": 510,
-      "Y": 385.2221355448298,
-      "InputValues": [
-        0,
-        48,
-        96,
-        0.1,
-        0.9
-      ]
-    },
-    {
-      "Id": "4c2f5d3e-6c18-446a-bbda-b3128e23430e",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 579.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "fract(a * 0.083333336)"
-        }
-      }
-    },
-    {
-      "Id": "62b8d4cc-c5f8-47b2-bbdf-60a6625863f4",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": 235.22213554482983,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
-        }
-      }
-    },
-    {
-      "Id": "7e3b9cfe-8a54-4d16-9ce3-47549d1a7f22",
-      "TypeId": "flyback.picture.polygon",
-      "X": 814,
-      "Y": 703.2221355448298,
-      "InputValues": [
-        0,
-        0,
-        0.5,
-        6.4
-      ],
-      "State": {
-        "controls": {
-          "3": {
-            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
-            "min": 4,
-            "max": 8
-          }
-        }
-      }
-    },
-    {
-      "Id": "d37c5107-035f-499f-aa00-5e067afa983f",
-      "TypeId": "flyback.picture.fill",
-      "X": 1118,
-      "Y": 663.2221355448298,
-      "InputValues": [
-        0,
-        0.01,
-        0.0214
-      ],
-      "State": {
-        "controls": {
-          "2": {
-            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
-            "min": 0.006,
-            "max": 0.05
-          }
-        }
-      }
-    },
-    {
-      "Id": "7898f931-eeb8-4046-bc48-5b179d370d4f",
-      "TypeId": "color.hsv",
-      "X": 814,
-      "Y": 917.2221355448298,
-      "InputValues": [
-        0,
-        0.59999996,
-        1
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
-            "min": 0.9,
-            "max": 0.15
-          }
-        }
-      }
-    },
-    {
-      "Id": "90799b05-d369-4535-b2a2-49935b409bf8",
-      "TypeId": "color.gain",
-      "X": 1726,
-      "Y": 730.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0
-      ]
-    },
-    {
-      "Id": "9a9e9c7a-c224-4ae4-81a8-fbb85a24e836",
-      "TypeId": "math.remap",
-      "X": 510,
-      "Y": 753.2221355448298,
-      "InputValues": [
-        0,
-        48,
-        96,
-        0.1,
-        0.9
-      ]
-    },
-    {
-      "Id": "c9aa6770-aca7-4c48-94c9-21456ccd412c",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 947.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "fract(a * 0.083333336)"
-        }
-      }
-    },
-    {
-      "Id": "639edd3c-6e42-4d63-be8f-b337490aa41d",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": 603.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
-        }
-      }
-    },
-    {
-      "Id": "a373a277-19de-4ea7-a26b-5bd1e79b0226",
-      "TypeId": "math.expression",
-      "X": 2030,
-      "Y": 300.5554688781632,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b \u002B c \u002B d"
-        }
-      }
-    },
-    {
-      "Id": "8c58c990-39db-4ff3-8f17-0ff6f354ec8c",
-      "TypeId": "flyback.picture.polygon",
-      "X": 814,
-      "Y": 1071.2221355448298,
-      "InputValues": [
-        0,
-        0,
-        0.5,
-        6.4
-      ],
-      "State": {
-        "controls": {
-          "3": {
-            "control": "42d091e0-4337-43ee-92fa-8efc8aa63354",
-            "min": 4,
-            "max": 8
-          }
-        }
-      }
-    },
-    {
-      "Id": "554b0258-f532-43ac-b4b1-f71462d8c05c",
-      "TypeId": "flyback.picture.fill",
-      "X": 1118,
-      "Y": 1031.2221355448298,
-      "InputValues": [
-        0,
-        0.01,
-        0.0214
-      ],
-      "State": {
-        "controls": {
-          "2": {
-            "control": "f5db622b-6948-4465-b6c8-b2032fd1f433",
-            "min": 0.006,
-            "max": 0.05
-          }
-        }
-      }
-    },
-    {
-      "Id": "32c6f809-b18f-4306-9562-e63ec42b2bcb",
-      "TypeId": "color.hsv",
-      "X": 814,
-      "Y": 1295.2221355448298,
-      "InputValues": [
-        0,
-        0.59999996,
-        1
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "201df851-3bb7-4b52-b1cc-5b480465fd18",
-            "min": 0.9,
-            "max": 0.15
-          }
-        }
-      }
-    },
-    {
-      "Id": "2b975212-995f-4031-8f2d-0c47e64512cd",
-      "TypeId": "color.gain",
-      "X": 1726,
-      "Y": 1103.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0
-      ]
-    },
-    {
-      "Id": "e1a15f69-079a-48bb-bf8f-1cdaea4eb35e",
-      "TypeId": "math.remap",
-      "X": 510,
-      "Y": 1121.2221355448298,
-      "InputValues": [
-        0,
-        48,
-        96,
-        0.1,
-        0.9
-      ]
-    },
-    {
-      "Id": "38ce4202-b473-494e-b096-f09eb51db8f8",
-      "TypeId": "math.expression",
-      "X": 510,
-      "Y": 1315.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "fract(a * 0.083333336)"
-        }
-      }
-    },
-    {
-      "Id": "4aa125f5-4348-428c-bd0e-f18543a9a1ac",
-      "TypeId": "math.expression",
-      "X": 1422,
-      "Y": 971.2221355448298,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "max(min(a, 1.5), b * 0.3) * step(48, c) * b * d"
-        }
-      }
-    },
-    {
-      "Id": "a5043876-f833-473a-a52b-ba28b2e58f08",
-      "TypeId": "math.expression",
-      "X": 2334,
-      "Y": 671.8888022114966,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a \u002B b"
-        }
-      }
-    },
-    {
-      "Id": "08347ba3-016b-4cbc-8d30-148155439d1c",
-      "TypeId": "flyback.picture.text",
-      "X": 1118,
-      "Y": 34.358688555174155,
-      "InputValues": [
-        0,
-        0,
-        0.22,
-        0,
-        1
-      ],
-      "State": {
-        "text": {
-          "lines": "FLYBACK",
-          "font": "pixel"
-        }
-      }
-    },
-    {
-      "Id": "ab8d765b-ec07-4399-ade1-ffd0eff9e8eb",
-      "TypeId": "flyback.picture.fill",
-      "X": 1422,
-      "Y": -5.6413114448258455,
-      "InputValues": [
-        0,
-        0.004,
-        0.02
-      ]
-    },
-    {
-      "Id": "426d2d8a-a046-4f4b-b2ee-179a4d082618",
-      "TypeId": "math.expression",
-      "X": 1726,
-      "Y": -25.641311444825845,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * max(b, c)"
-        }
-      }
-    },
-    {
-      "Id": "06d055ca-0002-4def-8d9b-4a833e9c489e",
-      "TypeId": "color.ink",
-      "X": 2030,
-      "Y": -65.64131144482585,
-      "InputValues": [
-        0,
-        1,
-        1,
-        1,
-        1
-      ],
-      "State": {
-        "ink": {
-          "mode": "add"
-        }
-      }
-    },
-    {
-      "Id": "421e88bd-2c5c-4d83-b5bf-f6ca560d52eb",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": -39.641311444825845,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "a * 0.6"
-        }
-      }
-    },
-    {
-      "Id": "4d5a85a4-f472-4010-8e09-ca257bed5b3b",
-      "TypeId": "color.ink",
-      "X": 2334,
-      "Y": -82.64131144482585,
-      "InputValues": [
-        0,
-        1,
-        1,
-        1,
-        1
-      ],
-      "State": {
-        "ink": {
-          "mode": "add"
-        }
-      }
-    },
-    {
-      "Id": "0fb52397-f722-4b27-a593-55fcf3ce6aae",
-      "TypeId": "math.expression",
-      "X": 814,
-      "Y": 134.35868855517415,
-      "InputValues": [
-        0,
-        1,
-        0,
-        0
-      ],
-      "State": {
-        "expression": {
-          "formula": "min(a * 1.25, 1)"
-        }
-      }
-    },
-    {
-      "Id": "864f21c9-3003-4938-85b9-710b8e405893",
-      "TypeId": "flyback.picture.posterise",
-      "X": 2638,
-      "Y": -102.64131144482585,
-      "InputValues": [
-        0,
-        32
-      ],
-      "State": {
-        "controls": {
-          "1": {
-            "control": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-            "min": 32,
-            "max": 3
-          }
-        }
-      }
-    },
-    {
-      "Id": "8fa65b92-86e5-4c07-ac5e-e1a231a28425",
-      "TypeId": "feedback.trails",
-      "X": 3246,
-      "Y": -182.64131144482585,
-      "InputValues": [
-        0,
-        0,
-        0,
-        0.98875004,
-        0.002,
-        0,
-        0,
-        0.85
-      ],
-      "State": {
-        "controls": {
-          "7": {
-            "control": "139f215e-9631-40c2-89de-289ffca08c90",
-            "min": 0.75,
-            "max": 0.95
-          },
-          "3": {
-            "control": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
-            "min": 1,
-            "max": 0.975
-          }
-        }
-      }
-    },
-    {
-      "Id": "2d9ef6cf-8d26-496d-b3b4-7f68ed7b5392",
-      "TypeId": "color.vignette",
-      "X": 2942,
-      "Y": -142.64131144482585,
-      "InputValues": [
-        0,
-        0,
-        0,
-        0.6,
-        1.8,
-        0.5
-      ]
     }
   ],
   "Connections": [
@@ -10008,148 +10016,324 @@
   ],
   "Controls": [
     {
-      "Id": "9b952400-fe44-473f-b653-129f1093c17a",
-      "Name": "Tempo",
-      "Value": 0.4,
-      "Key": "control/9b952400fe44473fb653129f1093c17a"
-    },
-    {
-      "Id": "75a6aab4-9815-4f6a-a4a7-7cb39b66ab63",
-      "Name": "Swing",
-      "Value": 0.15,
-      "Key": "control/75a6aab498154f6aa4a77cb39b66ab63"
-    },
-    {
       "Id": "9f408b4c-c2c9-4302-b913-46768c0b9dbe",
       "Name": "Kick",
-      "Value": 0.8,
+      "Value": 0.7637795,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 70,
+        "Label": "CC70\u00B71",
+        "What": "CC70"
+      },
+      "Held": true,
       "Key": "control/9f408b4cc2c94302b91346768c0b9dbe"
     },
     {
-      "Id": "03234b5a-eb9e-47e9-bf81-05dc74ddbbfd",
-      "Name": "Punch",
-      "Value": 0.5,
-      "Key": "control/03234b5aeb9e47e9bf8105dc74ddbbfd"
+      "Id": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
+      "Name": "Crush",
+      "Value": 0.44094488,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 71,
+        "Label": "CC71\u00B71",
+        "What": "CC71"
+      },
+      "Held": true,
+      "Key": "control/02f331a0206d454ca3b0bbea9a1c9da9"
     },
     {
-      "Id": "af7b8ae5-9495-4e75-b104-fabe3f28aaf5",
-      "Name": "Rumble",
-      "Value": 0.5,
-      "Key": "control/af7b8ae594954e75b104fabe3f28aaf5"
-    },
-    {
-      "Id": "e9167e81-3435-4b04-b937-dfd6ba2a780c",
-      "Name": "Pump",
-      "Value": 0.5,
-      "Key": "control/e9167e8134354b04b937dfd6ba2a780c"
-    },
-    {
-      "Id": "15b3d8ef-0f1e-4b4d-bb98-f9a9e7b63e90",
-      "Name": "Hats",
-      "Value": 0.7,
-      "Key": "control/15b3d8ef0f1e4b4dbb98f9a9e7b63e90"
-    },
-    {
-      "Id": "7d653834-af8b-43f6-ad4d-7035cea346b5",
-      "Name": "Open",
-      "Value": 0.4,
-      "Key": "control/7d653834af8b43f6ad4d7035cea346b5"
-    },
-    {
-      "Id": "2ec99d5f-3366-4e3d-bf16-7a2805d98915",
-      "Name": "Clap",
-      "Value": 0.6,
-      "Key": "control/2ec99d5f33664e3dbf167a2805d98915"
-    },
-    {
-      "Id": "f9a9b051-17da-4ab5-8a01-7dfae36b443c",
-      "Name": "Perc",
-      "Value": 0.4,
-      "Key": "control/f9a9b05117da4ab58a017dfae36b443c"
-    },
-    {
-      "Id": "8f1fcab2-ea09-4740-b55a-d864eb4a973a",
-      "Name": "Bass",
-      "Value": 0.6,
-      "Key": "control/8f1fcab2ea094740b55ad864eb4a973a"
+      "Id": "139f215e-9631-40c2-89de-289ffca08c90",
+      "Name": "Echo",
+      "Value": 0.2519685,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 72,
+        "Label": "CC72\u00B71",
+        "What": "CC72"
+      },
+      "Key": "control/139f215e963140c289de289ffca08c90"
     },
     {
       "Id": "2de8f6c1-708b-49eb-b12f-9679607e1d02",
       "Name": "Acid",
-      "Value": 0.6,
+      "Value": 0.496063,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 73,
+        "Label": "CC73\u00B71",
+        "What": "CC73"
+      },
       "Key": "control/2de8f6c1708b49ebb12f9679607e1d02"
     },
     {
-      "Id": "56fcea77-04a4-4e03-9984-222121e1461e",
-      "Name": "Pattern",
+      "Id": "7d653834-af8b-43f6-ad4d-7035cea346b5",
+      "Name": "Open",
       "Value": 0,
-      "Key": "control/56fcea7704a44e039984222121e1461e"
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 70,
+        "Label": "CC70\u00B72",
+        "What": "CC70"
+      },
+      "Key": "control/7d653834af8b43f6ad4d7035cea346b5"
+    },
+    {
+      "Id": "15b3d8ef-0f1e-4b4d-bb98-f9a9e7b63e90",
+      "Name": "Hats",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 71,
+        "Label": "CC71\u00B72",
+        "What": "CC71"
+      },
+      "Key": "control/15b3d8ef0f1e4b4dbb98f9a9e7b63e90"
     },
     {
       "Id": "effcdc2d-d466-4c2e-99d4-92019cfb158b",
       "Name": "Cutoff",
-      "Value": 0.35,
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 72,
+        "Label": "CC72\u00B72",
+        "What": "CC72"
+      },
       "Key": "control/effcdc2dd4664c2e99d492019cfb158b"
+    },
+    {
+      "Id": "af7b8ae5-9495-4e75-b104-fabe3f28aaf5",
+      "Name": "Rumble",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 73,
+        "Label": "CC73\u00B72",
+        "What": "CC73"
+      },
+      "Held": true,
+      "Key": "control/af7b8ae594954e75b104fabe3f28aaf5"
+    },
+    {
+      "Id": "03234b5a-eb9e-47e9-bf81-05dc74ddbbfd",
+      "Name": "Punch",
+      "Value": 0.37795275,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 70,
+        "Label": "CC70\u00B73",
+        "What": "CC70"
+      },
+      "Key": "control/03234b5aeb9e47e9bf8105dc74ddbbfd"
+    },
+    {
+      "Id": "e9167e81-3435-4b04-b937-dfd6ba2a780c",
+      "Name": "Pump",
+      "Value": 1,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 71,
+        "Label": "CC71\u00B73",
+        "What": "CC71"
+      },
+      "Key": "control/e9167e8134354b04b937dfd6ba2a780c"
     },
     {
       "Id": "59b8221f-2285-4371-b998-03f1a6c6283c",
       "Name": "Resonance",
-      "Value": 0.6,
+      "Value": 0.4566929,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 76,
+        "Label": "CC76\u00B73",
+        "What": "CC76"
+      },
       "Key": "control/59b8221f22854371b99803f1a6c6283c"
-    },
-    {
-      "Id": "6b84af57-033b-4852-88e2-077039a555af",
-      "Name": "Env",
-      "Value": 0.5,
-      "Key": "control/6b84af57033b485288e2077039a555af"
     },
     {
       "Id": "3387e0ce-1a41-46c6-bcdc-ef5d2cf1ced7",
       "Name": "Squelch",
-      "Value": 0.4,
+      "Value": 1,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 73,
+        "Label": "CC73\u00B73",
+        "What": "CC73"
+      },
       "Key": "control/3387e0ce1a4146c6bcdcef5d2cf1ced7"
     },
     {
-      "Id": "42d091e0-4337-43ee-92fa-8efc8aa63354",
-      "Name": "Stack",
-      "Value": 0.6,
-      "Key": "control/42d091e0433743ee92fa8efc8aa63354"
+      "Id": "8f1fcab2-ea09-4740-b55a-d864eb4a973a",
+      "Name": "Bass",
+      "Value": 0.48818898,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 74,
+        "Label": "CC74\u00B71",
+        "What": "CC74"
+      },
+      "Held": true,
+      "Key": "control/8f1fcab2ea094740b55ad864eb4a973a"
+    },
+    {
+      "Id": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
+      "Name": "Filter",
+      "Value": 0.44094488,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 75,
+        "Label": "CC75\u00B71",
+        "What": "CC75"
+      },
+      "Held": true,
+      "Key": "control/0aa6b80d02364d4a94da7679531cdb7d"
+    },
+    {
+      "Id": "56fcea77-04a4-4e03-9984-222121e1461e",
+      "Name": "Pattern",
+      "Value": 0.27559054,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 76,
+        "Label": "CC76\u00B71",
+        "What": "CC76"
+      },
+      "Key": "control/56fcea7704a44e039984222121e1461e"
+    },
+    {
+      "Id": "2ec99d5f-3366-4e3d-bf16-7a2805d98915",
+      "Name": "Clap",
+      "Value": 0.4015748,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 1,
+        "Controller": 77,
+        "Label": "CC77\u00B71",
+        "What": "CC77"
+      },
+      "Key": "control/2ec99d5f33664e3dbf167a2805d98915"
+    },
+    {
+      "Id": "75a6aab4-9815-4f6a-a4a7-7cb39b66ab63",
+      "Name": "Swing",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 74,
+        "Label": "CC74\u00B72",
+        "What": "CC74"
+      },
+      "Held": true,
+      "Key": "control/75a6aab498154f6aa4a77cb39b66ab63"
+    },
+    {
+      "Id": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
+      "Name": "Space",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 75,
+        "Label": "CC75\u00B72",
+        "What": "CC75"
+      },
+      "Key": "control/c4c49dcae0f74d12a65f758d4c53d49d"
+    },
+    {
+      "Id": "f9a9b051-17da-4ab5-8a01-7dfae36b443c",
+      "Name": "Perc",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 76,
+        "Label": "CC76\u00B72",
+        "What": "CC76"
+      },
+      "Key": "control/f9a9b05117da4ab58a017dfae36b443c"
+    },
+    {
+      "Id": "6b84af57-033b-4852-88e2-077039a555af",
+      "Name": "Env",
+      "Value": 0,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 2,
+        "Controller": 77,
+        "Label": "CC77\u00B72",
+        "What": "CC77"
+      },
+      "Key": "control/6b84af57033b485288e2077039a555af"
     },
     {
       "Id": "f5db622b-6948-4465-b6c8-b2032fd1f433",
       "Name": "Stab",
-      "Value": 0.35,
+      "Value": 0.81889766,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 74,
+        "Label": "CC74\u00B73",
+        "What": "CC74"
+      },
       "Key": "control/f5db622b69484465b6c8b2032fd1f433"
     },
     {
       "Id": "201df851-3bb7-4b52-b1cc-5b480465fd18",
       "Name": "Tone",
-      "Value": 0.4,
+      "Value": 0.63779527,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 75,
+        "Label": "CC75\u00B73",
+        "What": "CC75"
+      },
+      "Held": true,
       "Key": "control/201df8513bb74b52b1cc5b480465fd18"
     },
     {
-      "Id": "139f215e-9631-40c2-89de-289ffca08c90",
-      "Name": "Echo",
-      "Value": 0.5,
-      "Key": "control/139f215e963140c289de289ffca08c90"
+      "Id": "42d091e0-4337-43ee-92fa-8efc8aa63354",
+      "Name": "Stack",
+      "Value": 1,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 72,
+        "Label": "CC72\u00B73",
+        "What": "CC72"
+      },
+      "Key": "control/42d091e0433743ee92fa8efc8aa63354"
     },
     {
-      "Id": "c4c49dca-e0f7-4d12-a65f-758d4c53d49d",
-      "Name": "Space",
-      "Value": 0.45,
-      "Key": "control/c4c49dcae0f74d12a65f758d4c53d49d"
-    },
-    {
-      "Id": "0aa6b80d-0236-4d4a-94da-7679531cdb7d",
-      "Name": "Filter",
-      "Value": 0.5,
-      "Key": "control/0aa6b80d02364d4a94da7679531cdb7d"
-    },
-    {
-      "Id": "02f331a0-206d-454c-a3b0-bbea9a1c9da9",
-      "Name": "Crush",
-      "Value": 0,
-      "Key": "control/02f331a0206d454ca3b0bbea9a1c9da9"
+      "Id": "9b952400-fe44-473f-b653-129f1093c17a",
+      "Name": "Tempo",
+      "Value": 0.4015748,
+      "Midi": {
+        "Device": "midi:elektron-syntakt",
+        "Channel": 3,
+        "Controller": 77,
+        "Label": "CC77\u00B73",
+        "What": "CC77"
+      },
+      "Held": true,
+      "Key": "control/9b952400fe44473fb653129f1093c17a"
     }
   ],
   "Keyboard": {
@@ -10181,7 +10365,7 @@
     "Name": "A Aeolian (minor)"
   },
   "Length": 10800,
-  "Description": "Techno to jam on, at a hundred and twenty-eight: a groove that runs on its own and twenty-four panel knobs that arrange it \u2014 kick, rumble, hats, clap, a rolling bass and an acid line in four patterns, a DJ filter, echo, room and crush. Under C3 a key moves the groove to its key at the next bar, and held it builds to a drop on release; from C3 up four voices play chord stabs that bloom into pads wh",
+  "Description": "Techno to jam on a groove that runs on its own and twenty-four panel knobs that arrange it \u2014 kick, rumble, hats, clap, a rolling bass and an acid line in four patterns, a DJ filter, echo, room and crush. It\u0027s also pre-integrated with syntakt - just add 3 midi instruments channels 1-3, enable CC knobs on FLTR",
   "Author": "Flyback",
   "Tags": [
     "techno",
@@ -10189,6 +10373,8 @@
     "playable",
     "knobs",
     "live",
-    "drums"
+    "drums",
+    "elektron",
+    "syntakt"
   ]
 }
