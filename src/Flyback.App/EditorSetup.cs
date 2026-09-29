@@ -130,6 +130,6 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
         FileTypes = FileTypes.ForThisCopy(),
         Usage = usage,
         Relaunch = Restart.Launch,
-        PresetSite = Site.PresetSite.Local,
+        PresetSite = Site.PresetSite.Live,
     };
 }

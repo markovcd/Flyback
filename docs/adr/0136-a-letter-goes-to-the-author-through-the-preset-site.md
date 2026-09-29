@@ -70,3 +70,7 @@ its emoji face, which is a full-color picture in a bar of thin gray strokes.
 - Anything a person types could be anything, including something about
   themselves. The letter says what is added to it; it cannot say what not to
   write.
+
+## Amendment, 2026-09-29: the public address
+
+From 0.5.1 the shipped build points at `PresetSite.Live`, `https://flyback.nasik2137.uk/`, so a letter and a shared preset reach the site.

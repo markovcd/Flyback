@@ -66,3 +66,7 @@ request limit.
   one package replacing another.
 - The specs project cannot host the site, so the requirement lives in the
   server tests.
+
+## Amendment, 2026-09-29: the public address
+
+The editor asks the public site, `https://flyback.nasik2137.uk/`, from 0.5.1 on.

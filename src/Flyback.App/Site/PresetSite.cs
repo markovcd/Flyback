@@ -7,8 +7,8 @@ namespace Flyback.App.Site;
 /// <summary>The presets shared on the preset site, as <c>/api/v1/presets</c> lists them.</summary>
 internal sealed class PresetSite(HttpClient http, Uri root)
 {
-    /// <summary>The preset site as it runs locally.</summary>
-    public static readonly Uri Local = new("http://localhost:8790/");
+    /// <summary>The public preset site.</summary>
+    public static readonly Uri Live = new("https://flyback.nasik2137.uk/");
 
     public Uri Root { get; } = root;
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixes
+- Shared presets, shared plugins and letters to the author reach the preset site at flyback.nasik2137.uk.
+
 - The web viewer plays a patch on the computer keyboard as the editor does, piano or scale, with PageUp and PageDown moving the octave.
 - The web viewer plays the sound on a thread of its own, and has a volume slider, a line saying what the patch is for, and a slider for each of its panel knobs.
 - The web viewer has a seek bar, a resolution list up to 720p, full screen and the editor's preset groups; a preset site preset plays there alone, and the site's presets page opens it on the shipped ones.
