@@ -21,23 +21,19 @@ internal static class ToolbarButtons
     };
 
     /// <summary>
-    /// A toolbar button that is a symbol rather than a word.
+    /// A toolbar button that is a drawn symbol rather than a word.
     /// </summary>
     /// <remarks>
     /// With the labels gone the tip is the only place the button says what it does,
     /// so every one has one and it is a sentence rather than a repeat of the icon's
     /// name. Named as well, so a test can find the button without reading a glyph.
     /// </remarks>
-    internal static Button Glyph(string name, string glyph, string tip) =>
-        Marked(new Button(), name, glyph, tip);
-
-    /// <summary>The same, for the two icons that are drawn rather than typed.</summary>
     internal static Button Drawn(string name, Control icon, string tip) =>
         Marked(new Button(), name, icon, tip);
 
     /// <summary>The same, for a button that stays down.</summary>
-    internal static ToggleButton Toggle(string name, string glyph, string tip) =>
-        Marked(new ToggleButton(), name, glyph, tip);
+    internal static ToggleButton Toggle(string name, Control icon, string tip) =>
+        Marked(new ToggleButton(), name, icon, tip);
 
     internal static T Marked<T>(T button, string name, object content, string tip)
         where T : ContentControl

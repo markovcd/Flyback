@@ -269,6 +269,14 @@ public sealed class AssistantPanelTests : UiTest
 
     private static Button Fold(Window window) => All<Button>(window).Single(b => b.Name == "fold");
 
+    /// <summary>What a fold says of its block, without the arrow. Read off its content, which a hidden fold never lays out.</summary>
+    private static string Gist(Button fold) => Parts(fold).OfType<TextBlock>().Single(t => t.Name == "gist").Text ?? string.Empty;
+
+    /// <summary>Whether a fold's arrow points down, at an open block.</summary>
+    private static bool Opened(Button fold) => Parts(fold).Any(c => c.Name == "open");
+
+    private static IEnumerable<Control> Parts(Button fold) => (fold.Content as Panel)?.Children ?? [];
+
     private static SelectableTextBlock Block(Window window, string text) =>
         All<SelectableTextBlock>(window).Single(block => block.Text == text);
 
@@ -282,7 +290,8 @@ public sealed class AssistantPanelTests : UiTest
         Settle(window);
 
         Block(window, machinery).IsVisible.ShouldBeFalse();
-        (Fold(window).Content as string).ShouldBe("▸ Outrun: a whole synthwave track. · 41 lines");
+        Gist(Fold(window)).ShouldBe("Outrun: a whole synthwave track. · 41 lines");
+        Opened(Fold(window)).ShouldBeFalse();
     }
 
     [AvaloniaFact]
@@ -298,7 +307,7 @@ public sealed class AssistantPanelTests : UiTest
         Settle(window);
 
         Block(window, machinery).IsVisible.ShouldBeTrue();
-        (Fold(window).Content as string).ShouldStartWith("▾ ");
+        Opened(Fold(window)).ShouldBeTrue();
 
         Fold(window).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Settle(window);
@@ -555,7 +564,7 @@ public sealed class AssistantPanelTests : UiTest
     /// <summary>The folded block the briefing arrives as.</summary>
     private static Control Briefing(Window window) =>
         (Control)All<Button>(window)
-            .Single(b => b.Name == "fold" && (b.Content as string ?? string.Empty).Contains("The briefing it was handed"))
+            .Single(b => b.Name == "fold" && Gist(b).Contains("The briefing it was handed"))
             .Parent!;
 
     [AvaloniaFact]

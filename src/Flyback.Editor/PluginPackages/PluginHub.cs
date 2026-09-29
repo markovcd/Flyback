@@ -213,7 +213,7 @@ internal sealed class PluginHub : IDisposable
 
         if (tag is not null)
         {
-            var chip = Chip($"{tag}  ✕", "Show every tag");
+            var chip = Chip(Glyphs.Line(new TextBlock { Text = tag }, Glyphs.Cross(10)), "Show every tag");
 
             chip.Name = "tagFilter";
             chip.Click += (_, _) => Narrow(null);
@@ -466,8 +466,8 @@ internal sealed class PluginHub : IDisposable
     {
         List<Control> marks = [];
 
-        if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", "⚠", Colors.Sink, trouble));
-        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", "✦", Colors.Feedback, said));
+        if (plugin.Trouble is { } trouble) marks.Add(Mark("pluginTrouble", ink => Glyphs.Warning(16, ink), Colors.Sink, trouble));
+        if (plugin.Assisting is { } said) marks.Add(Mark("pluginAssisting", ink => Glyphs.Spark(16, ink), Colors.Feedback, said));
 
         var row = Row(plugin.Plugin, Picture(plugin.Picture), Installed(plugin), marks: marks);
 
@@ -593,14 +593,12 @@ internal sealed class PluginHub : IDisposable
     }
 
     /// <summary>A glyph that says <paramref name="tip"/> when hovered.</summary>
-    private static TextBlock Mark(string name, string glyph, Color color, string tip)
+    private static Border Mark(string name, Func<IBrush, Control> glyph, Color color, string tip)
     {
-        var mark = new TextBlock
+        var mark = new Border
         {
             Name = name,
-            Text = glyph,
-            FontSize = Text.Emphasis,
-            Foreground = new SolidColorBrush(color),
+            Child = glyph(new SolidColorBrush(color)),
             Margin = new Thickness(6, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center,
             Background = Brushes.Transparent,
@@ -651,11 +649,11 @@ internal sealed class PluginHub : IDisposable
         }
     }
 
-    private static Button Chip(string text, string tip)
+    private static Button Chip(object content, string tip)
     {
         var chip = new Button
         {
-            Content = text,
+            Content = content,
             FontSize = Text.Small,
             Padding = new Thickness(7, 1),
             MinHeight = 0,

@@ -263,15 +263,10 @@ internal sealed class StepList
             Tag = RowTag,
         };
 
-        var handle = new TextBlock
+        var handle = new Border
         {
-            // Three bars, chosen because the shipped font actually has them.
-            // The six braille dots conventional for a grip do not: on a machine
-            // with nothing to fall back to, any bare Linux one, that glyph draws
-            // nothing at all. This one is visible everywhere the program runs.
-            Text = "≡",
-            FontSize = Text.Emphasis,
-            Foreground = Faint,
+            Name = "grip",
+            Child = Glyphs.Grip(14, Faint),
             VerticalAlignment = VerticalAlignment.Center,
             Cursor = new Cursor(StandardCursorType.SizeAll),
 
@@ -307,7 +302,8 @@ internal sealed class StepList
 
         var remove = new Button
         {
-            Content = "✕",
+            Name = "remove",
+            Content = Glyphs.Cross(12),
             FontSize = Text.Caption,
             Padding = new Thickness(0),
             Width = 18,

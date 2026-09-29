@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -15,6 +16,9 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
     private const double MarkReach = 9;
 
     private const double MarkRadius = 7.5;
+
+    /// <summary>The arrows inside a mark, as a share of the glyph's sixteen-unit box.</summary>
+    private const double MarkArrows = 0.62;
 
     /// <summary>Where along a wire its mark may sit, nearest the middle first.</summary>
     private static readonly double[] MarkStops = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9];
@@ -57,8 +61,10 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
 
             context.DrawEllipse(MarkFill, new Pen(ink, 1.2), at, MarkRadius, MarkRadius);
 
-            var arrows = CanvasText.Text("⇄", 11, ink, 20, false);
-            context.DrawText(arrows, new Point(at.X - arrows.Width / 2, at.Y - arrows.Height / 2));
+            var arrows = Geometry.Parse(Glyphs.SwapPath);
+            arrows.Transform = new MatrixTransform(
+                Matrix.CreateTranslation(-8, -8) * Matrix.CreateScale(MarkArrows, MarkArrows) * Matrix.CreateTranslation(at.X, at.Y));
+            context.DrawGeometry(null, new Pen(ink, 1.1, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round), arrows);
         }
     }
 

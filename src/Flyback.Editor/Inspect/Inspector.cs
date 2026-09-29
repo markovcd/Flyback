@@ -703,7 +703,8 @@ internal sealed class Inspector
             {
                 var remove = new Button
                 {
-                    Content = "✕",
+                    Name = "hideSocket",
+                    Content = Glyphs.Cross(12),
                     FontSize = Text.Caption,
                     Padding = new Thickness(5, 0, 5, 0),
                     Background = Brushes.Transparent,
@@ -1603,14 +1604,21 @@ internal sealed class Inspector
         Grid.SetColumn(label, 0);
         row.Children.Add(label);
 
-        var name = new TextBlock
+        var attention = new SolidColorBrush(Colors.Attention);
+
+        var name = new DockPanel { VerticalAlignment = VerticalAlignment.Center };
+        var ring = Glyphs.Linked(12, attention);
+        ring.Margin = new Thickness(0, 0, 4, 0);
+        DockPanel.SetDock(ring, Dock.Left);
+        name.Children.Add(ring);
+        name.Children.Add(new TextBlock
         {
-            Text = $"◉ {knob.Name}",
+            Text = knob.Name,
             FontSize = Text.Body,
-            Foreground = new SolidColorBrush(Colors.Attention),
+            Foreground = attention,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
-        };
+        });
 
         ToolTip.SetTip(name, $"Follows the knob '{knob.Name}' on the knob panel, over this range.");
 
@@ -1628,7 +1636,7 @@ internal sealed class Inspector
         var unlink = new Button
         {
             Name = "unlink",
-            Content = "✕",
+            Content = Glyphs.Cross(12),
             Padding = new Thickness(0),
             Width = 22,
             HorizontalContentAlignment = HorizontalAlignment.Center,

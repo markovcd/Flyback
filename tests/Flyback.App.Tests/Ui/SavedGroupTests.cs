@@ -105,7 +105,7 @@ public class SavedGroupTests : UiTest
     /// By caption, or — for a button that is a glyph rather than a word — by name.
     /// </summary>
     private static Button Button(Visual root, string by) =>
-        All<Button>(root).First(b => b.Content as string == by || b.Name == by);
+        All<Button>(root).First(b => b.Name == by || b.Content as string == by);
 
     private static void Press(MainWindow window, Visual root, string by)
     {
@@ -246,7 +246,7 @@ public class SavedGroupTests : UiTest
     // --- taking one off -----------------------------------------------------
 
     /// <summary>
-    /// The ✕ asks first. A kept group is a file and there is no undo out here to
+    /// The cross asks first. A kept group is a file and there is no undo out here to
     /// take one back with, so the row turns into its own question rather than
     /// the entry simply going.
     /// </summary>
@@ -260,19 +260,19 @@ public class SavedGroupTests : UiTest
 
         var palette = Palette(window);
 
-        Press(window, palette, "✕");
+        Press(window, palette, "forget");
 
         Lines(palette).ShouldContain("Remove “Voice”?");
-        Captions(palette).ShouldContain("✔", "the tick removes it");
-        Captions(palette).ShouldContain("✕", "and the cross puts it back");
+        Buttons(palette).ShouldContain("yes", "the tick removes it");
+        Buttons(palette).ShouldContain("no", "and the cross puts it back");
         Captions(palette).ShouldNotContain("Voice", "the row is the question while it is being asked");
 
         // One row and not two: the question and its answers sit at the same
         // height, so the list does not jump under the hand that reached for it.
         Middle(palette, Line(palette, "Remove “Voice”?"))
-            .ShouldBe(Middle(palette, Button(palette, "✔")), tolerance: 2);
+            .ShouldBe(Middle(palette, Button(palette, "yes")), tolerance: 2);
 
-        Press(window, palette, "✕");
+        Press(window, palette, "no");
 
         Captions(palette).ShouldContain("Voice", "canceling leaves it exactly where it was");
         Directory.GetFiles(folder).Length.ShouldBe(1);
@@ -288,8 +288,8 @@ public class SavedGroupTests : UiTest
 
         var palette = Palette(window);
 
-        Press(window, palette, "✕");
-        Press(window, palette, "✔");
+        Press(window, palette, "forget");
+        Press(window, palette, "yes");
 
         Captions(palette).ShouldNotContain("Voice");
         Directory.GetFiles(folder).ShouldBeEmpty("the entry was the file");
@@ -315,8 +315,8 @@ public class SavedGroupTests : UiTest
 
         var palette = Palette(window);
 
-        Press(window, palette, "✕");
-        Captions(palette).ShouldContain("✔", "a question is standing");
+        Press(window, palette, "forget");
+        Buttons(palette).ShouldContain("yes", "a question is standing");
 
         Escape(window);
 
@@ -334,7 +334,7 @@ public class SavedGroupTests : UiTest
         var again = Palette(window);
 
         Captions(again).ShouldContain("Voice");
-        Captions(again).ShouldNotContain("✔", "the question did not survive the way out");
+        Buttons(again).ShouldNotContain("yes", "the question did not survive the way out");
     }
 
     /// <summary>
@@ -355,14 +355,14 @@ public class SavedGroupTests : UiTest
         filter.Text = "Voi";
         Settle(window);
 
-        Press(window, palette, "✕");
-        Captions(palette).ShouldContain("✔");
+        Press(window, palette, "forget");
+        Buttons(palette).ShouldContain("yes");
 
         filter.Focus();
         Escape(window);
 
         filter.Text.ShouldBeNullOrEmpty("the box empties, as it always did");
-        Captions(palette).ShouldNotContain("✔", "and the question goes with it");
+        Buttons(palette).ShouldNotContain("yes", "and the question goes with it");
         Captions(palette).ShouldContain("Voice", "the row is back");
     }
 
@@ -383,13 +383,13 @@ public class SavedGroupTests : UiTest
         Press(window, window, Keep);
 
         Lines(window).ShouldContain("Replace “Voice”?");
-        Captions(window).ShouldContain("✔");
+        Buttons(window).ShouldContain("yes");
         Buttons(window).ShouldNotContain(Keep, "the button is the question while it is asked");
 
         // One row, at the height the button was: the panel does not move under
         // the hand that has just pressed it.
         Middle(window, Line(window, "Replace “Voice”?"))
-            .ShouldBe(Middle(window, Button(window, "✔")), tolerance: 2);
+            .ShouldBe(Middle(window, Button(window, "yes")), tolerance: 2);
     }
 
     /// <summary>
@@ -420,7 +420,7 @@ public class SavedGroupTests : UiTest
         SelectBox(window, editor.History.Patch, second);
 
         Press(window, window, Keep);
-        Press(window, window, "✕");
+        Press(window, window, "no");
 
         Directory.GetFiles(folder).Length.ShouldBe(1);
         File.ReadAllText(Directory.GetFiles(folder).Single()).ShouldBe(before, "nothing was written");
@@ -451,7 +451,7 @@ public class SavedGroupTests : UiTest
         SelectBox(window, editor.History.Patch, second);
 
         Press(window, window, Keep);
-        Press(window, window, "✔");
+        Press(window, window, "yes");
 
         var files = Directory.GetFiles(folder);
 

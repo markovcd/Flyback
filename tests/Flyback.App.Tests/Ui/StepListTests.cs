@@ -258,7 +258,7 @@ public class StepListTests : UiTest
 
     private static void DragBy(Window window, int from, double dy)
     {
-        var handle = Rows(window)[from].Children.OfType<TextBlock>().First();
+        var handle = Rows(window)[from].Children.OfType<Control>().Single(c => c.Name == "grip");
         var start = Center(handle, window);
         var end = start + new Vector(0, dy);
 

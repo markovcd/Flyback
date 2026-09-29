@@ -164,8 +164,8 @@ public class SavedPresetTests : UiTest
         Click(All<Button>(window).Single(b => b.Name == "save-preset"), window);
     }
 
-    private static Button ReplaceAnswer(MainWindow window, string glyph) =>
-        All<Button>(All<Border>(window).Single(b => b.Name == "keep-card")).Single(b => b.Content as string == glyph);
+    private static Button ReplaceAnswer(MainWindow window, string name) =>
+        All<Button>(All<Border>(window).Single(b => b.Name == "keep-card")).Single(b => b.Name == name);
 
     [AvaloniaFact]
     public void Saving_over_a_preset_asks_before_replacing_it()
@@ -177,7 +177,7 @@ public class SavedPresetTests : UiTest
         var kept = Path.Combine(folder, "Mine" + PatchBundle.Extension);
         var before = File.GetLastWriteTimeUtc(kept);
 
-        ReplaceAnswer(window, "✔").ShouldNotBeNull();
+        ReplaceAnswer(window, "yes").ShouldNotBeNull();
         File.GetLastWriteTimeUtc(kept).ShouldBe(before, "nothing is replaced until the question is answered yes");
     }
 
@@ -187,7 +187,7 @@ public class SavedPresetTests : UiTest
         var window = Open();
 
         AskToReplace(window);
-        Click(ReplaceAnswer(window, "✕"), window);
+        Click(ReplaceAnswer(window, "no"), window);
 
         All<TextBox>(window).Single(b => b.Name == "preset-name").Text.ShouldBe("Mine");
         SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"]);
@@ -199,7 +199,7 @@ public class SavedPresetTests : UiTest
         var window = Open();
 
         AskToReplace(window);
-        Click(ReplaceAnswer(window, "✔"), window);
+        Click(ReplaceAnswer(window, "yes"), window);
 
         SavedTiles(window).Select(p => p.Name).ShouldBe(["Mine"], "one name, one tile");
         All<Button>(window).ShouldContain(b => b.Name == "keep-preset", "the card is the offer again");
@@ -226,8 +226,8 @@ public class SavedPresetTests : UiTest
         return tile;
     }
 
-    private static Button Answer(Button tile, string glyph) =>
-        All<Button>(tile).Single(b => b.Content as string == glyph);
+    private static Button Answer(Button tile, string name) =>
+        All<Button>(tile).Single(b => b.Name == name);
 
     [AvaloniaFact]
     public void A_tile_being_asked_about_deleting_does_not_open()
@@ -249,7 +249,7 @@ public class SavedPresetTests : UiTest
         var tile = AskToDelete(window);
         var showing = Presets(window).SelectedItem;
 
-        Click(Answer(tile, "✕"), window);
+        Click(Answer(tile, "no"), window);
 
         All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
         Presets(window).SelectedItem.ShouldBeSameAs(showing);
@@ -269,7 +269,7 @@ public class SavedPresetTests : UiTest
         var tile = AskToDelete(window);
         var showing = Presets(window).SelectedItem;
 
-        Click(Answer(tile, "✔"), window);
+        Click(Answer(tile, "yes"), window);
 
         All<ModalOverlay>(window).ShouldNotBeEmpty("the gallery is still up");
         Presets(window).SelectedItem.ShouldBeSameAs(showing);

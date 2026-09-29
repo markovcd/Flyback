@@ -860,6 +860,12 @@ its preview, timers and engine on that thread for every test after it; `UiTest`
 closes what it opened, newest first, and closes a `MainWindow` without asking
 about unsaved work.
 
+A control a test drives or reads has a `Name`, and the test finds it by that:
+`All<Button>(window).Single(b => b.Name == "dismiss")`. Never by its caption or
+the glyph it draws: those are the look, and they change without the behavior
+changing. A symbol is drawn by `Glyphs` rather than typed, so it looks the same
+on every platform and in a page, and a drawn one has no text to find it by anyway.
+
 Prefer asserting on the smallest thing that holds the behavior. Much of the
 editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 `NodeEditor.Text`), and a test of one needs no window at all.

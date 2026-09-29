@@ -273,7 +273,7 @@ internal sealed class TranscriptView : ScrollViewer
     /// The one line a folded block shows: which way it opens, what it was about,
     /// and how much of it there is.
     /// </summary>
-    private static string Gist(string text, bool open)
+    private static Control Gist(string text, bool open)
     {
         var first = text
             .Split('\n')
@@ -284,7 +284,10 @@ internal sealed class TranscriptView : ScrollViewer
         // is cut here rather than drawn past the edge of the panel.
         var gist = first.Length > Widest ? string.Concat(first.AsSpan(0, Widest - 1).TrimEnd(), "…") : first;
 
-        return $"{(open ? "▾" : "▸")} {gist} · {Tally(Rows(text), "line")}";
+        var arrow = open ? Glyphs.Down(10) : Glyphs.Right(10);
+        arrow.Name = open ? "open" : "folded";
+
+        return Glyphs.Line(arrow, new TextBlock { Name = "gist", Text = $"{gist} · {Tally(Rows(text), "line")}" });
     }
 
     private static int Rows(string text) => text.AsSpan().Count('\n') + 1;

@@ -313,7 +313,7 @@ internal sealed class ControlsPanel : Border
             var more = new Button
             {
                 Name = "knob-menu",
-                Content = "⋯",
+                Content = Glyphs.Dots(12),
                 Padding = new Thickness(4, 0),
                 MinHeight = 0,
                 Height = 16,

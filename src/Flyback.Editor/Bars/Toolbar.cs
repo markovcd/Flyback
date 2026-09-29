@@ -48,9 +48,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
 
     public Button Save { get; } = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
 
-    public Button Undo { get; } = ToolbarButtons.Glyph("undo", "↶", "Take back the last edit  (Ctrl+Z)");
+    public Button Undo { get; } = ToolbarButtons.Drawn("undo", Glyphs.Undo(), "Take back the last edit  (Ctrl+Z)");
 
-    public Button Redo { get; } = ToolbarButtons.Glyph("redo", "↷", "Put it back  (Ctrl+Shift+Z)");
+    public Button Redo { get; } = ToolbarButtons.Drawn("redo", Glyphs.Redo(), "Put it back  (Ctrl+Shift+Z)");
 
     /// <summary>
     /// What laying out means, and whether it is worth doing at all, depends on
@@ -58,16 +58,16 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     /// </summary>
     public Button Tidy { get; } = ToolbarButtons.Drawn("tidy", Glyphs.Tidy(), TidyTip);
 
-    public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", "{ }", "Show the patch as text  (F2)");
+    public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", Glyphs.Code(), "Show the patch as text  (F2)");
 
     public ToggleButton Knobs { get; } =
-        ToolbarButtons.Toggle("controls", "◎", "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
+        ToolbarButtons.Toggle("controls", Glyphs.Knob(), "Show the knob panel, for turning the patch by hand or from a MIDI controller  (Ctrl+K)");
 
     /// <summary>
     /// Puts the picture in the wide column and the canvas where the picture was.
     /// Enabled only while there is a picture to put there.
     /// </summary>
-    public ToggleButton Swap { get; } = ToolbarButtons.Toggle("swap", "⇄", NoPictureToSwapTip);
+    public ToggleButton Swap { get; } = ToolbarButtons.Toggle("swap", Glyphs.Swap(), NoPictureToSwapTip);
 
     public Button Pause { get; } = new();
 
@@ -88,13 +88,13 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     public Button Record { get; } = new();
 
     public ToggleButton Assistant { get; } =
-        ToolbarButtons.Toggle("assistant", "✦", "Describe a patch and have one built.");
+        ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
 
-    public Button Settings { get; } = ToolbarButtons.Glyph("settings", "⚙", "Open the settings.");
+    public Button Settings { get; } = ToolbarButtons.Drawn("settings", Glyphs.Settings(), "Open the settings.");
 
     public Button Plugins { get; } = ToolbarButtons.Drawn("plugins", Glyphs.Plug(), "Find, install and update plugins.");
 
-    public Button About { get; } = ToolbarButtons.Glyph("about", "ⓘ", "What this is, who wrote it, and what it may be done with.");
+    public Button About { get; } = ToolbarButtons.Drawn("about", Glyphs.About(), "What this is, who wrote it, and what it may be done with.");
 
     /// <summary>The bar itself.</summary>
     public Control View { get; }

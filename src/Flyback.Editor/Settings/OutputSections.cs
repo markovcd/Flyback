@@ -503,7 +503,7 @@ internal sealed class OutputSections
 
         // Drawn as the pickers above it are, so the row reads as a value to change
         // rather than a button to press, with the mark of a row that opens a window.
-        var opens = new TextBlock { Text = "⋯", Foreground = Text.Muted, VerticalAlignment = VerticalAlignment.Center };
+        var opens = Glyphs.Dots(12, Text.Muted);
 
         Grid.SetColumn(opens, 1);
 

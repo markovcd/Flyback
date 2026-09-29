@@ -141,7 +141,7 @@ internal sealed class ModalOverlay : Border
         var dismiss = new Button
         {
             Name = "dismiss",
-            Content = "✕",
+            Content = Glyphs.Cross(14),
             Width = 28,
             Height = 24,
             Padding = new Thickness(0),

@@ -43,8 +43,8 @@ internal static class Question
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        answers.Children.Add(Answer("✔", yesTip, 1, () => answered(true)));
-        answers.Children.Add(Answer("✕", noTip, 0.55, () => answered(false)));
+        answers.Children.Add(Answer("yes", Glyphs.Tick(12), yesTip, 1, () => answered(true)));
+        answers.Children.Add(Answer("no", Glyphs.Cross(12), noTip, 0.55, () => answered(false)));
 
         DockPanel.SetDock(answers, Dock.Right);
         row.Children.Add(answers);
@@ -60,10 +60,11 @@ internal static class Question
 
         return row;
 
-        static Button Answer(string glyph, string tip, double strength, Action taken)
+        static Button Answer(string name, Control glyph, string tip, double strength, Action taken)
         {
             var button = new Button
             {
+                Name = name,
                 Content = glyph,
                 FontSize = Text.Small,
                 Padding = new Thickness(6, 2),

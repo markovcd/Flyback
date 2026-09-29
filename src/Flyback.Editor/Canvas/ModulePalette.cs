@@ -463,13 +463,15 @@ public sealed class ModulePalette : UserControl
         var providers = catalog.Providers;
         var showing = providers.Count - hidden.Count;
 
-        sources.Content = showing switch
+        var said = showing switch
         {
-            _ when hidden.Count == 0 => "All modules  ▾",
-            0 => "No plugins  ▾",
-            1 => $"{providers.First(p => !hidden.Contains(p.Id)).Name}  ▾",
-            _ => $"{showing} of {providers.Count} plugins  ▾",
+            _ when hidden.Count == 0 => "All modules",
+            0 => "No plugins",
+            1 => providers.First(p => !hidden.Contains(p.Id)).Name,
+            _ => $"{showing} of {providers.Count} plugins",
         };
+
+        sources.Content = Glyphs.Line(new TextBlock { Text = said }, Glyphs.Down(10));
     }
 
     /// <summary>
@@ -534,7 +536,8 @@ public sealed class ModulePalette : UserControl
 
         var forget = new Button
         {
-            Content = "✕",
+            Name = "forget",
+            Content = Glyphs.Cross(12),
             FontSize = Text.Caption,
             Padding = new Thickness(5, 0, 5, 0),
             Background = Brushes.Transparent,

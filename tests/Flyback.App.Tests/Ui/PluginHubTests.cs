@@ -157,10 +157,10 @@ public sealed class PluginHubTests : UiTest
         var (hub, _) = Open(site, installed: [Echoes with { Assisting = said }, Grain]);
 
         var rows = All<StackPanel>(hub.View).Single(p => p.Name == "installedPlugins").Children;
-        var glyph = All<TextBlock>(rows[0]).Single(t => t.Name == "pluginAssisting");
+        var glyph = All<Border>(rows[0]).Single(t => t.Name == "pluginAssisting");
 
         ToolTip.GetTip(glyph).ShouldBe(said);
-        All<TextBlock>(rows[1]).ShouldNotContain(t => t.Name == "pluginAssisting");
+        All<Border>(rows[1]).ShouldNotContain(t => t.Name == "pluginAssisting");
         Names(hub.View, "installedPlugins").ShouldBe(["Echoes", "Grain"]);
     }
 
@@ -184,8 +184,8 @@ public sealed class PluginHubTests : UiTest
 
         var rows = All<StackPanel>(hub.View).Single(p => p.Name == "installedPlugins").Children;
 
-        All<TextBlock>(rows[0]).ShouldNotContain(t => t.Name == "pluginTrouble");
-        ToolTip.GetTip(All<TextBlock>(rows[1]).Single(t => t.Name == "pluginTrouble")).ShouldBe(wrong);
+        All<Border>(rows[0]).ShouldNotContain(t => t.Name == "pluginTrouble");
+        ToolTip.GetTip(All<Border>(rows[1]).Single(t => t.Name == "pluginTrouble")).ShouldBe(wrong);
         All<TextBlock>(rows[1]).Single(t => t.Name == "pluginState").Text.ShouldBe("Not loaded");
     }
 

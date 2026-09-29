@@ -159,7 +159,7 @@ internal sealed class PartGrid
             };
 
             var index = p;
-            var remove = Small("✕", "Remove this part");
+            var remove = Small(Glyphs.Cross(12), "Remove this part");
             remove.Tag = RemoveTag;
             remove.HorizontalAlignment = HorizontalAlignment.Right;
             remove.Click += (_, _) =>
@@ -396,11 +396,11 @@ internal sealed class PartGrid
         return button;
     }
 
-    private static Button Small(string text, string tip)
+    private static Button Small(Control icon, string tip)
     {
         var button = new Button
         {
-            Content = text,
+            Content = icon,
             FontSize = Text.Caption,
             Padding = new Thickness(0),
             Width = 18,
