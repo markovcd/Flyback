@@ -28,5 +28,8 @@ public sealed class PageSteps(Editor editor)
     [Then("the picture does not have the whole window")]
     public void ThenNotFullScreen() => editor.PictureFullScreen.ShouldBeFalse();
 
+    [Then("the picture is drawn at {int} x {int}")]
+    public void ThenDrawnAt(int width, int height) => editor.PictureSize.ShouldBe(new Avalonia.PixelSize(width, height));
+
     private static string[] Names(string names) => names.Split(", ");
 }

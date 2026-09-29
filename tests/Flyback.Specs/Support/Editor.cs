@@ -369,6 +369,9 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>
         Service<Toolbar>().View.GetVisualDescendants().OfType<Button>().Select(b => b.Name).ToList());
 
+    /// <summary>The size the picture is drawn at, before it is scaled to its box.</summary>
+    public PixelSize PictureSize => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Resolution);
+
     /// <summary>Whether the picture has the whole window.</summary>
     public bool PictureFullScreen => ReadWindow(_ => Service<FullScreenPreview>().IsFullScreen);
 

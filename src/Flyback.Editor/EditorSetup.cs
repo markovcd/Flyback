@@ -100,7 +100,7 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
 
     /// <summary>
     /// The editor is in a browser page (ADR-0162): nothing is opened, saved or recorded,
-    /// there is no assistant, settings, plugins or About, and the picture stays put.
+    /// there is no assistant, settings, plugins or About, and the picture stays put, drawn at 480 x 270.
     /// </summary>
     public bool InPage { get; init; }
 
