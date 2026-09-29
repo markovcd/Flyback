@@ -3,6 +3,7 @@
 # Flyback
 
 [![Build](https://github.com/markovcd/Flyback/actions/workflows/ci.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/ci.yml)
+[![Site](https://github.com/markovcd/Flyback/actions/workflows/site.yml/badge.svg)](https://github.com/markovcd/Flyback/actions/workflows/site.yml)
 
 Flyback is a patchable synthesiser for .NET 10. One graph can generate both a picture and a sound. The visual path and the audio path share the same module graph and are compiled down to the same flat instruction stream.
 
