@@ -164,6 +164,16 @@ app.UseDefaultFiles();
 // A Debug build of the web viewer loads its symbols, and a type this does not know is a 404.
 var types = new FileExtensionContentTypeProvider();
 types.Mappings[".pdb"] = "application/octet-stream";
+types.Mappings[".br"] = "application/octet-stream";
+
+// The web editor, which every build but -p:WebEditor=false publishes beside the site.
+var editor = Setting("Site:Editor", Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot"));
+var editorFiles = Directory.Exists(editor) ? new PhysicalFileProvider(editor) : null;
+
+app.UsePrecompressed(StaticCache.ViewerRoute, app.Environment.WebRootFileProvider, PathString.Empty, types);
+
+if (editorFiles is not null)
+    app.UsePrecompressed(StaticCache.EditorRoute, editorFiles, StaticCache.EditorRoute, types);
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -171,14 +181,11 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = Kept,
 });
 
-// The web editor, which every build but -p:WebEditor=false publishes beside the site.
-var editor = Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot");
-
-if (Directory.Exists(editor))
+if (editorFiles is not null)
 {
     app.UseFileServer(new FileServerOptions
     {
-        FileProvider = new PhysicalFileProvider(editor),
+        FileProvider = editorFiles,
         RequestPath = StaticCache.EditorRoute,
         StaticFileOptions = { ContentTypeProvider = types, OnPrepareResponse = Kept },
     });
@@ -194,7 +201,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 
 static void Kept(StaticFileResponseContext served) =>
-    served.Context.Response.Headers.CacheControl = StaticCache.For(served.Context.Request.Path);
+    served.Context.Response.Headers.CacheControl = StaticCache.For(Precompressed.Requested(served.Context));
 
 bool Signed(HttpContext http) => admin.Enabled && http.User.Identity?.IsAuthenticated == true;
 

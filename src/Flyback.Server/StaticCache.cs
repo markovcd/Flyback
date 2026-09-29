@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace Flyback.Server;
 
 /// <summary>
-/// How long a cache may keep a file the site serves as it lies: a web viewer file named
-/// with its fingerprint for good, and everything else only once it has asked whether it changed.
+/// How long a cache may keep a file the site serves as it lies: a web viewer or web editor
+/// file named with its fingerprint for good, and everything else only once it has asked whether it changed.
 /// </summary>
 /// <remarks>
 /// A page, a script or a render keeps its name across releases and renders, so a copy kept
@@ -19,7 +19,7 @@ internal static partial class StaticCache
 
     /// <summary>The Cache-Control a file at <paramref name="path"/> is served with.</summary>
     public static string For(PathString path) =>
-        path.StartsWithSegments(ViewerRoute) && Fingerprinted().IsMatch(path.Value ?? "")
+        (path.StartsWithSegments(ViewerRoute) || path.StartsWithSegments(EditorRoute)) && Fingerprinted().IsMatch(path.Value ?? "")
             ? "public, max-age=31536000, immutable"
             : "no-cache";
 

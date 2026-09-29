@@ -26,7 +26,7 @@ Cloudflare's own HSTS setting is off, since it would cover the whole zone too. T
 
 **nasik2137.uk → Caching → Configuration → Browser Cache TTL: Respect Existing Headers.** Left at its default, Cloudflare turns the site's `no-cache` into four hours, and a browser keeps an old `dotnet.js` asking for files the new build no longer has.
 
-The site sends `no-cache` on every file whose name outlives a release or a render, so Cloudflare checks each with the NAS, a 304 when nothing changed, and a release needs no purge. The web viewer's fingerprinted files are the exception, kept for good; the worker below makes Cloudflare hold them.
+The site sends `no-cache` on every file whose name outlives a release or a render, so Cloudflare checks each with the NAS, a 304 when nothing changed, and a release needs no purge. The web viewer's and the web editor's fingerprinted files are the exception, kept for good; the worker below makes Cloudflare hold them. Both are sent as the brotli copies their publish wrote, to any browser that takes brotli.
 
 ## Access on the admin sign-in
 
@@ -49,7 +49,7 @@ Its policy is **Only Me**: action Allow, include Emails, the admin's own address
 
 - sends a browser to the GitHub Pages site when the tunnel or the container is down, to the same page where Pages has it and to its front page otherwise;
 - lets `/api/` and anything but GET and HEAD fail plainly, since the editor expects JSON from those;
-- caches the web viewer's fingerprinted files at Cloudflare, which caches no `.wasm` on its own: 8.6 MB per new visitor that would otherwise come from the NAS.
+- caches the web viewer's and the web editor's fingerprinted files at Cloudflare, which caches no `.wasm` on its own; otherwise every new visitor would fetch them from the NAS.
 
 Under **Settings → Domains & Routes** it has the route `flyback.nasik2137.uk/*` on the zone `nasik2137.uk`, set to fail open, and its `workers.dev` URL is off. It is a route, never **Add Domain**: a custom domain would take the hostname from the tunnel.
 
@@ -85,6 +85,6 @@ curl -sI https://flyback.nasik2137.uk/admin.html
 curl -sI https://flyback.nasik2137.uk/viewer/_framework/dotnet.js
 ```
 
-Then the same for one of the fingerprinted `.wasm` files `dotnet.js` names, twice: `CF-Cache-Status: HIT` the second time.
+Then the same for one of the fingerprinted `.wasm` files `dotnet.js` names, twice: `CF-Cache-Status: HIT` the second time. The same holds under `/editor/`.
 
 Stopping the container (`docker stop flyback`) sends a browser at `https://flyback.nasik2137.uk/` to the GitHub Pages site; `docker start flyback` brings it back.

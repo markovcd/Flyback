@@ -9,8 +9,8 @@ const ON_PAGES = /^\/(index\.html|plugins\.html|tutorials\.html|tutorials\/.*|as
 // 502-504 is the container down; 520-530 is the tunnel down.
 const DOWN = new Set([502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 530]);
 
-// The viewer's files named with their fingerprint never change, and Cloudflare caches no .wasm on its own.
-const FINGERPRINTED = /^\/viewer\/_framework\/.+\.[a-z0-9]{10}\.[a-z]+$/;
+// The viewer's and the editor's files named with their fingerprint never change, and Cloudflare caches no .wasm on its own.
+const FINGERPRINTED = /^\/(viewer|editor)\/_framework\/.+\.[a-z0-9]{10}\.[a-z]+$/;
 
 export default {
   async fetch(request) {
