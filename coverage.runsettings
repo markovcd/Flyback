@@ -1,23 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <!--
-  What the coverage run measures, and what it must not touch.
+  What the coverage run measures, and how.
 
-  Coverage instruments an assembly by rewriting it, which several tests here can
-  see: PluginPackageTests and PluginInstallTests read a real built plugin's bytes
-  off disk and assert on what its metadata says it reaches, and instrumentation
-  adds a P/Invoke to every assembly it rewrites. An instrumented plugin therefore
-  "reaches native code" and the assertion is about the instrumentation rather
-  than about the plugin.
+  Instrumentation is dynamic only: the assemblies are rewritten in memory as they
+  load, never on disk. Static instrumentation rewrites the files, and a shipped
+  plugin whose files differ from plugins.sha256 is refused, which leaves the
+  plugin tests with no plugins.
 
-  The three named below are the assemblies those tests read. They are the plugin
-  under test and two fixtures, so what is given up is the Picture plugin's
-  figure; nothing is given up in the engine or the shell, which is where the
-  number is worth having.
-
-  This is also why coverage is not measured in the gate: it doubles the time the
-  tests take, it is never judged, and the list here has to keep pace with which
-  assemblies the tests read.
+  The two excluded assemblies are test fixtures, not part of Flyback.
 -->
 
 <RunSettings>
@@ -26,9 +17,10 @@
       <DataCollector friendlyName="Code Coverage">
         <Configuration>
           <CodeCoverage>
+            <EnableStaticManagedInstrumentation>False</EnableStaticManagedInstrumentation>
+            <EnableDynamicManagedInstrumentation>True</EnableDynamicManagedInstrumentation>
             <ModulePaths>
               <Exclude>
-                <ModulePath>.*Flyback\.Plugins\.Picture\.dll$</ModulePath>
                 <ModulePath>.*Flyback\.Plugins\.Sample\.dll$</ModulePath>
                 <ModulePath>.*Flyback\.Plugins\.FakeAssistant\.dll$</ModulePath>
               </Exclude>

@@ -1,11 +1,8 @@
 # How much of the code the tests run, measured weekly and never judged.
 #
-# Not part of the gate, on purpose. Instrumentation rewrites the assemblies, and
-# several tests read a built assembly's bytes and assert on what its metadata
-# says — coverage.runsettings names the three it has to leave alone and says
-# what that costs. It also roughly doubles what the tests take. A number nothing
-# is allowed to fail on should not be charged to every push, so it is charged to
-# Monday instead.
+# Not part of the gate, on purpose. Measuring roughly doubles what the tests
+# take, and a number nothing is allowed to fail on should not be charged to
+# every push, so it is charged to Monday instead.
 #
 # The report is an artifact and a table in the run summary, both written by
 # coverage.sh, which runs the same locally. There is no

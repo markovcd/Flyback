@@ -129,11 +129,8 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet test --solution Flyback.slnx -c ${CONFIGURATION} --no-build
 
 # The same tests again, measured. A second run rather than a flag on the one
-# above, because instrumentation rewrites the assemblies and several tests read
-# a built assembly's bytes and assert on its metadata — coverage.runsettings
-# says which ones and what it costs them. It also roughly doubles what the tests
-# take, which is not a price the gate should pay for a number nothing is allowed
-# to fail on.
+# above, because measuring roughly doubles what the tests take, which is not a
+# price the gate should pay for a number nothing is allowed to fail on.
 #
 # Its own stage, so nothing above waits for it: the gate is the first stage and
 # the publishes build on the gate, not on this.
