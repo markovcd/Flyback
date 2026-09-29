@@ -359,6 +359,23 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>How many seconds the seek bar spans.</summary>
     public double SeekLength => ReadWindow(open => SeekBar(open).Maximum);
 
+    /// <summary>Clicks the toolbar's Volume at <paramref name="share"/> of the way along it.</summary>
+    public void ClickVolume(double share) =>
+        DoWindow((open, _) =>
+        {
+            var slider = Volume(open);
+            var at = slider.TranslatePoint(new Point(slider.Bounds.Width * share, slider.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
+    /// <summary>Whether the toolbar's Volume can be turned.</summary>
+    public bool CanTurnVolume => ReadWindow(open => Volume(open).IsEffectivelyEnabled);
+
+    private static Slider Volume(MainWindow window) =>
+        window.GetVisualDescendants().OfType<Slider>().Single(s => s.Name == "volume");
+
     /// <summary>Where the patch's clock is, in seconds: what the status bar says after "t =".</summary>
     public double Clock => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Time);
 

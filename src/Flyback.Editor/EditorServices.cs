@@ -151,6 +151,7 @@ internal static class EditorServices
         services.AddPart<PresetAudition>();
         services.AddPart<PresetSlot>();
         services.AddPart<SeekBar>();
+        services.AddPart<VolumeSlider>();
         services.AddPart<Toolbar>();
         services.AddPart<StatusBar>();
         services.AddPart<TakeRecording>();

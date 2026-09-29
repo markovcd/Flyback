@@ -81,6 +81,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     /// <summary>The patch's clock, to drag anywhere along a length the user sets.</summary>
     public SeekBar Seek { get; }
 
+    /// <summary>The Output's Volume, where it can be reached with nothing selected.</summary>
+    public VolumeSlider Volume { get; }
+
     /// <summary>
     /// Starts and stops a take (ADR-0080). Its glyph swaps between the dot and the
     /// square rather than its label, since a toolbar button here carries no text.
@@ -103,11 +106,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
     /// <param name="setup">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, Reactions reactions, IDialog dialog, RecordingState recording, EditorSetup setup)
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, VolumeSlider volume, Reactions reactions, IDialog dialog, RecordingState recording, EditorSetup setup)
     {
         var full = !setup.InPage;
 
         Seek = seek;
+        Volume = volume;
         this.recording = recording;
 
         Open.Click += (_, _) => reactions.Raise(new OpenAsked());
@@ -188,11 +192,13 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>
 
         // On its own, between what is done to the patch and what is done to
         // the program: pausing, rewinding, seeking and recording are neither — all are
-        // facts about the performance, not an edit Ctrl+Z takes back.
+        // facts about the performance, not an edit Ctrl+Z takes back. Volume is an
+        // edit, and sits here because this is where the sound is looked for.
         var transport = ToolbarButtons.Group();
         transport.Children.Add(Pause);
         transport.Children.Add(Rewind);
         transport.Children.Add(Seek.View);
+        transport.Children.Add(Volume.View);
         if (full) transport.Children.Add(Record);
 
         // The other end of the bar, because none of these is about the patch:
