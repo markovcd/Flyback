@@ -192,8 +192,14 @@ public class ShippedPluginList : Task
       <PluginBuildRoot>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutDir)', 'plugins'))))</PluginBuildRoot>
     </PropertyGroup>
 
+    <!--
+      Restored here, not assumed: a plugin for another platform is never a
+      ProjectReference of the host, so nothing else restores it, and the
+      All plugins configuration builds every platform's at once regardless of
+      which one this machine is.
+    -->
     <MSBuild Projects="%(ShippedPlugin.Identity)"
-             Targets="Build"
+             Targets="Restore;Build"
              Properties="Configuration=$(Configuration);OutDir=$(PluginBuildRoot)%(ShippedPlugin.FolderName)/"
              RemoveProperties="$(PluginBuildProperties)" />
 
@@ -214,9 +220,10 @@ public class ShippedPluginList : Task
     -->
     <RemoveDir Directories="$(PluginPublishRoot)" />
 
+    <!-- Restored here for the same reason as BuildPlugins above. -->
     <MSBuild Projects="%(ShippedPlugin.Identity)"
              Condition="'%(ShippedPlugin.Publish)' != 'false'"
-             Targets="Build"
+             Targets="Restore;Build"
              Properties="Configuration=$(Configuration);OutDir=$(PluginPublishRoot)%(ShippedPlugin.FolderName)/"
              RemoveProperties="$(PluginBuildProperties)" />
 
