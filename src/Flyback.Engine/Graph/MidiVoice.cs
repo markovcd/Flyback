@@ -1,7 +1,6 @@
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
 
-namespace Flyback.App.Midi;
+namespace Flyback.Core.Graph;
 
 /// <summary>
 /// One instrument's worth of what a MIDI In reads: the note being held, whether
@@ -9,7 +8,7 @@ namespace Flyback.App.Midi;
 /// struck since the program started.
 /// </summary>
 /// <remarks>
-/// One indexed voice; polyphony is <see cref="MidiHub"/>'s, which owns a fixed set
+/// One indexed voice; polyphony is <see cref="VoicePool"/>'s, which owns a fixed set
 /// of these. Written on the thread the keys arrive on and read on the thread that
 /// plays, which is what <see cref="LiveValues"/> is built for.
 /// </remarks>

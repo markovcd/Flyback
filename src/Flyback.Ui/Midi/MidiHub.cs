@@ -33,9 +33,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     /// asks. Keyed by the same id a patch stores, so a device that comes back
     /// finds its own voices rather than fresh ones.
     /// </summary>
-    private readonly Dictionary<string, List<MidiVoice>> voices = new(StringComparer.Ordinal);
-
-    private const int VoiceCount = 8;
+    private readonly Dictionary<string, VoicePool> voices = new(StringComparer.Ordinal);
 
     /// <summary>
     /// One clock per instrument, keyed the same way and made the first time one
@@ -196,7 +194,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
 
         lock (gate)
         {
-            foreach (var voice in Voices(MidiSources.Keyboard)) voice.Silence();
+            Voices(MidiSources.Keyboard).Silence();
             Keyboard.Octave += moved;
         }
 
@@ -221,7 +219,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
 
         lock (gate)
         {
-            foreach (var voice in Voices(MidiSources.Keyboard)) voice.Silence();
+            Voices(MidiSources.Keyboard).Silence();
             Keyboard.Scale = scale;
         }
 
@@ -246,9 +244,9 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
 
         lock (gate)
         {
-            var voices = Voices(MidiSources.Keyboard);
-            sounding = voices.Any(voice => voice.Playing);
-            foreach (var voice in voices) voice.Silence();
+            var keyboard = Voices(MidiSources.Keyboard);
+            sounding = keyboard.Playing;
+            keyboard.Silence();
         }
 
         if (sounding) Publish();
@@ -380,7 +378,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         {
             var sounding = voices
                 .Where(entry => MidiSignal.SourceOf(entry.Key) == port.Id)
-                .SelectMany(entry => entry.Value)
+                .SelectMany(entry => entry.Value.Voices)
                 .Where(voice => voice.Playing)
                 .ToList();
             var ticking = clocks.TryGetValue(port.Id, out var clock) && clock.Running;
@@ -431,8 +429,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
                     break;
 
                 case MidiAction.AllOff:
-                    foreach (var pool in Pools(source, message.Channel))
-                        foreach (var voice in Voices(pool)) voice.Silence();
+                    foreach (var pool in Pools(source, message.Channel)) Voices(pool).Silence();
                     break;
 
                 case MidiAction.Start:
@@ -497,85 +494,20 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         Ports().FirstOrDefault(port => port.Id == id).Name is { Length: > 0 } name ? name : id;
 
     /// <summary>
-    /// The voice of one instrument, made if this is the first anyone has heard of
+    /// The voices of one instrument, made if this is the first anyone has heard of
     /// it. Call it holding <see cref="gate"/> — it writes the dictionary that
     /// every thread here reads.
     /// </summary>
-    private List<MidiVoice> Voices(string source)
+    private VoicePool Voices(string source)
     {
         if (voices.TryGetValue(source, out var existing)) return existing;
 
-        return voices[source] = Enumerable.Range(0, VoiceCount).Select(_ => new MidiVoice()).ToList();
+        return voices[source] = new VoicePool(source);
     }
 
-    private void Down(string source, int note, float velocity)
-    {
-        var voices = Voices(source);
-        var indexes = ReadIndexes(source).Select(index => index.Voice).ToList();
-        var voice = indexes
-            .Select(index => voices[index - 1])
-            .FirstOrDefault(candidate => candidate.Holds(note));
+    private void Down(string source, int note, float velocity) => Voices(source).Down(note, velocity, following);
 
-        if (voice is null)
-        {
-            voice = indexes
-                .Select(index => voices[index - 1])
-                .FirstOrDefault(candidate => !candidate.Playing);
-        }
-
-        if (voice is null)
-        {
-            // No configured voice is free: the first module plays it, over what it
-            // held, and goes back to that when this one is let go.
-            voice = voices[indexes[0] - 1];
-        }
-
-        voice.Down(note, velocity);
-    }
-
-    private IReadOnlyList<(int Voice, Guid? Auto)> ReadIndexes(string source)
-    {
-        var explicitIndexes = Enumerable.Range(1, VoiceCount)
-            .Where(index => following.Any(block => Reads(block, source, index)))
-            .Select(index => (Voice: index, Auto: (Guid?)null));
-        var automatic = following
-            .SelectMany(block => block.Keys)
-            .Select(key => key.Split('/'))
-            .Where(parts => parts.Length == 4 && parts[0] == source && parts[1] == "auto")
-            .Select(parts => Guid.TryParse(parts[2], out var node) ? (Guid?)node : null)
-            .Where(node => node is not null)
-            .Distinct()
-            .Select((node, offset) => (Voice: Enumerable.Range(1, VoiceCount)
-                .Except(explicitIndexes.Select(index => index.Item1))
-                .ElementAtOrDefault(offset), Auto: node));
-
-        var indexes = explicitIndexes.Concat(automatic).Where(index => index.Voice > 0).ToList();
-        return indexes.Count > 0 ? indexes : Enumerable.Range(1, VoiceCount).Select(index => (index, (Guid?)null)).ToArray();
-    }
-
-    private static bool Reads(LiveValues block, string source, int index) =>
-        (index == 1 && (
-            block.Reads(MidiSignal.Key(source, MidiSignal.Pitch))
-            || block.Reads(MidiSignal.Key(source, MidiSignal.Gate))
-            || block.Reads(MidiSignal.Key(source, MidiSignal.Velocity))
-            || block.Reads(MidiSignal.Key(source, MidiSignal.Strikes))))
-        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Pitch))
-        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Gate))
-        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Velocity))
-        || block.Reads(MidiSignal.Key(source, index, MidiSignal.Strikes));
-
-    private void Up(string source, int note)
-    {
-        // Wherever it is held, sounding or under a note that took its voice.
-        foreach (var voice in Voices(source))
-        {
-            if (voice.Holds(note))
-            {
-                voice.Up(note);
-                return;
-            }
-        }
-    }
+    private void Up(string source, int note) => Voices(source).Up(note);
 
     /// <summary>
     /// Writes every voice into every running program's block, and asks for a
@@ -590,19 +522,7 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
         lock (gate)
             foreach (var block in following)
             {
-                foreach (var (source, sourceVoices) in voices)
-                    foreach (var indexed in ReadIndexes(source))
-                    {
-                        if (indexed.Auto is { } node)
-                        {
-                            sourceVoices[indexed.Voice - 1].WriteTo(
-                                block, signal => MidiSignal.AutoKey(source, node, signal));
-                            if (indexed.Voice == 1)
-                                sourceVoices[indexed.Voice - 1].WriteTo(block, source, indexed.Voice);
-                        }
-                        else
-                            sourceVoices[indexed.Voice - 1].WriteTo(block, source, indexed.Voice);
-                    }
+                foreach (var pool in voices.Values) pool.WriteTo(block, following);
 
                 foreach (var (source, clock) in clocks) clock.WriteTo(block, source);
             }

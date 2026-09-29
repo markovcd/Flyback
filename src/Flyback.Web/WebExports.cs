@@ -38,6 +38,9 @@ public static partial class WebExports
     private static string? description;
     private static IReadOnlyList<PatchControl> knobs = [];
 
+    /// <summary>The keys under the page's hands, laid out as the open patch asks.</summary>
+    private static readonly ComputerKeyboard Typing = new();
+
     /// <summary>Where <see cref="Hear"/> leaves its samples, pinned so the page can read them in place.</summary>
     private static readonly Pinned<float> Samples = new();
 
@@ -153,6 +156,7 @@ public static partial class WebExports
 
             description = opened.Patch.Description;
             knobs = [.. opened.Patch.Controls ?? []];
+            Typing.Scale = opened.Patch.Keyboard;
 
             return null;
         }
@@ -280,6 +284,27 @@ public static partial class WebExports
         picture?.Turn(key, turned);
     }
 
+    /// <summary>The note the key named <paramref name="key"/> plays, as a browser names it (<c>KeyZ</c>), or -1 for none.</summary>
+    [JSExport]
+    public static int KeyNote(string key) => Typing.Note(key) ?? -1;
+
+    /// <summary>Moves the computer keyboard <paramref name="octaves"/> up or down, and says where it is now.</summary>
+    [JSExport]
+    public static string Shift(int octaves)
+    {
+        Typing.Octave += octaves;
+
+        return Typing.Described;
+    }
+
+    /// <summary>A note on the computer keyboard pressed or let go, for the sound's half.</summary>
+    [JSExport]
+    public static void Strike(int note, bool down) => sound?.Strike(note, down);
+
+    /// <summary>Every computer keyboard note let go.</summary>
+    [JSExport]
+    public static void Release() => sound?.Release();
+
     /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
     [JSExport]
     public static string Status()
@@ -296,6 +321,8 @@ public static partial class WebExports
             status["soundBackend"] = sound.Interpreted is null ? "javascript" : "interpreter";
             status["interpreted"] = sound.Interpreted;
             status["stateLength"] = sound.StateLength;
+            status["played"] = sound.Played;
+            status["sounding"] = new JsonArray([.. sound.Sounding.Select(note => JsonValue.Create(note))]);
         }
 
         if (picture is not null)
@@ -307,6 +334,7 @@ public static partial class WebExports
             status["linking"] = picture.Linking;
             status["eightBitFeedback"] = picture.EightBitFeedback;
             status["stateLength"] = picture.StateLength;
+            status["keyboard"] = Typing.Described;
         }
 
         if (status["open"]!.GetValue<bool>()) status["description"] = description;

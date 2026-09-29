@@ -49,9 +49,11 @@ an evaluation, a sixth of the interpreter's.
 **The sound renders in a worker, in a second runtime, and feeds an `AudioWorklet`
 straight**, which keeps a quarter of a second queued. The page's runtime compiles
 and draws the picture alone. Nothing is shared: the worker posts the samples down
-a channel to the worklet, and the Meters' readings to the page, which is all the
-picture knows of the sound (the shader reads a Scope's table as silence). A panel
-knob is turned in both runtimes. The picture follows the samples the worklet has
+a channel to the worklet, and the Meters' readings and the computer keyboard's
+voices to the page, which is all the picture knows of the sound (the shader reads a
+Scope's table as silence). A panel knob is turned in both runtimes. A key is laid out
+by the page and played by the worker, through the editor's own `ComputerKeyboard` and
+`VoicePool`, and a patch played on it keeps a tenth of a second queued, not a quarter. The picture follows the samples the worklet has
 played, not the ones rendered, and shows a turned knob once the sound has caught up.
 
 **A patch whose sound cannot keep up plays its picture alone and says so.** While
@@ -82,8 +84,10 @@ what an agent checks sound with.
   page.
 - The page loads the runtime twice, which costs memory and a second start. It needs
   no cross-origin isolation, so any static host serves it.
-- A knob turned while playing is heard a quarter of a second later, the queue's
-  length.
+- A knob turned or a key struck is heard as late as the queue is long: a quarter of
+  a second, or a tenth for a patch played on the computer keyboard, which stutters
+  sooner on a heavy patch. A MIDI keyboard would come through Web MIDI into the
+  same `VoicePool`, and is not wired yet.
 - An opcode added to the interpreter needs a line in `JsEmitter`, or the web viewer
   plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move

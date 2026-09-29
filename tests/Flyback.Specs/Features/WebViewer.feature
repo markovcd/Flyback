@@ -18,6 +18,12 @@ Feature: The web viewer
     Then its sound is the desktop's with the same knob turned, to within one step of 16 bits
     And it is not the sound with the knob where it rests
 
+  Scenario: A note played on the computer keyboard sounds in the browser as it does on the desktop
+    Given the shipped preset "Played"
+    When it plays in the web viewer for 1 second with note 60 held from 0.1 to 0.6 seconds
+    Then its sound is the desktop's with the same note played, to within one step of 16 bits
+    And it is not the sound with nothing played
+
   Scenario: The web viewer says what a preset is for
     Given the shipped preset "Sidebands"
     When it plays in the web viewer for 0.1 seconds

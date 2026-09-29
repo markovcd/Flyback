@@ -3,11 +3,14 @@
 //   node hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 //   node hear.mjs patch.fbkb --seconds 5
 //   node hear.mjs --preset "Vigil" --knob hall=0.9 --knob fog=0
+//   node hear.mjs --preset "Played" --note 60:0.1:0.6 --note 64:0.3:0.6
 //   node hear.mjs --presets
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
 // panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
 // when --out names a file. --knob turns a knob, by name, 0 to 1, before anything plays.
+// --note holds a note on the computer keyboard from one second to another, struck at the
+// first buffer of 1,024 frames that starts at or after each.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
 
 import { existsSync } from 'node:fs';
@@ -31,6 +34,7 @@ const { values, positionals } = parseArgs({
     out: { type: 'string' },
     presets: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
+    note: { type: 'string', multiple: true, default: [] },
   },
 });
 
@@ -84,7 +88,26 @@ const status = JSON.parse(web.Status());
 const frames = Math.round(Number(values.seconds) * status.sampleRate);
 const sound = new Float32Array(frames * 2);
 
+const strikes = values.note.flatMap(held => {
+  const [note, from, to] = held.split(':').map(Number);
+
+  if (![note, from, to].every(Number.isFinite)) {
+    console.error(`hear: --note ${held}: write it note:from:to, as 60:0.1:0.6`);
+    process.exit(1);
+  }
+
+  return [
+    { at: Math.round(from * status.sampleRate), note, down: true },
+    { at: Math.round(to * status.sampleRate), note, down: false },
+  ];
+}).sort((a, b) => a.at - b.at);
+
 for (let at = 0; at < frames; at += chunk) {
+  while (strikes.length > 0 && strikes[0].at <= at) {
+    const { note, down } = strikes.shift();
+    web.Strike(note, down);
+  }
+
   const count = Math.min(chunk, frames - at);
   const pointer = web.Hear(count) / 4;
   sound.set(runtime.localHeapViewF32().subarray(pointer, pointer + count * 2), at * 2);

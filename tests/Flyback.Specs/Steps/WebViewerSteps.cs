@@ -31,6 +31,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private double seconds;
     private JsonNode? said;
     private (string Name, float Value)? turned;
+    private (int Note, float From, float To)? struck;
 
     private List<(string Name, string Heading)> listed = [];
 
@@ -42,6 +43,17 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     {
         turned = (knob, value);
         Play(length, "--knob", $"{knob}={value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+    }
+
+    [When("it plays in the web viewer for {float} second(s) with note {int} held from {float} to {float} seconds")]
+    public void WhenPlayedWithANote(float length, int note, float from, float to)
+    {
+        struck = (note, from, to);
+
+        var invariant = System.Globalization.CultureInfo.InvariantCulture;
+        Play(length, "--note", $"{note}:{from.ToString(invariant)}:{to.ToString(invariant)}");
+
+        ((bool?)said!["played"]).ShouldBe(true, "the preset reads no computer keyboard, so a note proves nothing");
     }
 
     private void Play(float length, params string[] more)
@@ -71,9 +83,10 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     /// </summary>
     [Then("its sound is the desktop's to within one step of 16 bits")]
     [Then("its sound is the desktop's with the same knob turned, to within one step of 16 bits")]
+    [Then("its sound is the desktop's with the same note played, to within one step of 16 bits")]
     public void ThenTheDesktopsSound()
     {
-        var desktop = Desktop(turned);
+        var desktop = Desktop(turned, struck);
 
         heard.Length.ShouldBe(desktop.Length);
         desktop.ShouldContain(sample => sample != 0f, "the desktop heard silence, so agreeing with it proves nothing");
@@ -83,12 +96,13 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     }
 
     [Then("it is not the sound with the knob where it rests")]
-    public void ThenTheKnobWasHeard()
+    [Then("it is not the sound with nothing played")]
+    public void ThenItWasHeard()
     {
-        var resting = Desktop(null);
+        var resting = Desktop(null, null);
 
         var furthest = resting.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
-        furthest.ShouldBeGreaterThan(16f / 32768f, "turning the knob changed nothing a listener could hear");
+        furthest.ShouldBeGreaterThan(16f / 32768f, "what was done to it changed nothing a listener could hear");
     }
 
     [Then("the web viewer says what the preset is for")]
@@ -100,15 +114,23 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         ((string?)said!["description"]).ShouldBe(preset.Description);
     }
 
-    /// <summary>The preset rendered the way the desktop renders it, with <paramref name="knob"/> turned where there is one.</summary>
-    private float[] Desktop((string Name, float Value)? knob)
+    /// <summary>
+    /// The preset rendered the way the desktop renders it, with <paramref name="knob"/>
+    /// turned and <paramref name="note"/> held on the computer keyboard where there are.
+    /// </summary>
+    private float[] Desktop((string Name, float Value)? knob, (int Note, float From, float To)? note)
     {
         var modules = Installed.Value.Modules;
         var (patch, samples, pictures) = PresetLibrary.Open(session.Presets.Single(), null, modules);
 
         var program = patch.CompileForAudio(modules, samples: samples, pictures: pictures, played: true).Program;
+        var picture = patch.CompileForVideo(modules, samples: samples, pictures: pictures, played: true).Program;
         var live = new LiveValues(program.LiveInputs);
+        var shown = new LiveValues(picture.LiveInputs);
+        LiveValues[] blocks = [shown, live];
         patch.Seed(live);
+
+        var keys = new VoicePool(MidiSources.Keyboard);
 
         if (knob is var (name, value))
         {
@@ -121,9 +143,30 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         var memory = speakers.DelayMemoryFor(program);
         var desktop = new float[(int)Math.Round(seconds * speakers.SampleRate) * 2];
 
+        var down = note is var (_, from, _) ? (int)Math.Round(from * speakers.SampleRate) : int.MaxValue;
+        var up = note is var (_, _, to) ? (int)Math.Round(to * speakers.SampleRate) : int.MaxValue;
+
         // In the viewer's buffers, since the knobs and keys are read once a buffer.
         for (var at = 0; at < desktop.Length; at += 2048)
+        {
+            var frame = at / 2;
+
+            if (down <= frame)
+            {
+                keys.Down(note!.Value.Note, ComputerKeyboard.Velocity, blocks);
+                foreach (var block in blocks) keys.WriteTo(block, blocks);
+                down = int.MaxValue;
+            }
+
+            if (up <= frame)
+            {
+                keys.Up(note!.Value.Note);
+                foreach (var block in blocks) keys.WriteTo(block, blocks);
+                up = int.MaxValue;
+            }
+
             speakers.Render(program, desktop.AsSpan(at, Math.Min(2048, desktop.Length - at)), memory, live);
+        }
 
         return desktop;
     }

@@ -1,7 +1,4 @@
-using Avalonia.Input;
-using Flyback.Core.Graph;
-
-namespace Flyback.App.Midi;
+﻿namespace Flyback.Core.Graph;
 
 /// <summary>
 /// The keys under your hands, read as two octaves of a piano or as three octaves
@@ -15,7 +12,8 @@ namespace Flyback.App.Midi;
 /// the left and the rest of the row silent, so each key is always the same degree.
 /// </para>
 /// <para>
-/// Keyed by physical <see cref="Key"/>, so the layout holds on any keyboard language.
+/// Keyed by the physical key's name as a browser gives it (<c>KeyZ</c>, <c>Digit2</c>,
+/// <c>Comma</c>), so the layout holds on any keyboard language and in any shell.
 /// </para>
 /// </remarks>
 internal sealed class ComputerKeyboard
@@ -26,56 +24,56 @@ internal sealed class ComputerKeyboard
     /// that carry the run on past the top of each row — the way a tracker lets
     /// you reach the next C without leaving the row.
     /// </summary>
-    private static readonly Dictionary<Key, int> Layout = new()
+    private static readonly Dictionary<string, int> Layout = new(StringComparer.Ordinal)
     {
         // Lower octave: the bottom two rows.
-        [Key.Z] = 0,
-        [Key.S] = 1,
-        [Key.X] = 2,
-        [Key.D] = 3,
-        [Key.C] = 4,
-        [Key.V] = 5,
-        [Key.G] = 6,
-        [Key.B] = 7,
-        [Key.H] = 8,
-        [Key.N] = 9,
-        [Key.J] = 10,
-        [Key.M] = 11,
-        [Key.OemComma] = 12,
-        [Key.L] = 13,
-        [Key.OemPeriod] = 14,
-        [Key.OemSemicolon] = 15,
-        [Key.OemQuestion] = 16,
+        ["KeyZ"] = 0,
+        ["KeyS"] = 1,
+        ["KeyX"] = 2,
+        ["KeyD"] = 3,
+        ["KeyC"] = 4,
+        ["KeyV"] = 5,
+        ["KeyG"] = 6,
+        ["KeyB"] = 7,
+        ["KeyH"] = 8,
+        ["KeyN"] = 9,
+        ["KeyJ"] = 10,
+        ["KeyM"] = 11,
+        ["Comma"] = 12,
+        ["KeyL"] = 13,
+        ["Period"] = 14,
+        ["Semicolon"] = 15,
+        ["Slash"] = 16,
 
         // Upper octave: the two rows above, starting an octave up.
-        [Key.Q] = 12,
-        [Key.D2] = 13,
-        [Key.W] = 14,
-        [Key.D3] = 15,
-        [Key.E] = 16,
-        [Key.R] = 17,
-        [Key.D5] = 18,
-        [Key.T] = 19,
-        [Key.D6] = 20,
-        [Key.Y] = 21,
-        [Key.D7] = 22,
-        [Key.U] = 23,
-        [Key.I] = 24,
-        [Key.D9] = 25,
-        [Key.O] = 26,
-        [Key.D0] = 27,
-        [Key.P] = 28,
+        ["KeyQ"] = 12,
+        ["Digit2"] = 13,
+        ["KeyW"] = 14,
+        ["Digit3"] = 15,
+        ["KeyE"] = 16,
+        ["KeyR"] = 17,
+        ["Digit5"] = 18,
+        ["KeyT"] = 19,
+        ["Digit6"] = 20,
+        ["KeyY"] = 21,
+        ["Digit7"] = 22,
+        ["KeyU"] = 23,
+        ["KeyI"] = 24,
+        ["Digit9"] = 25,
+        ["KeyO"] = 26,
+        ["Digit0"] = 27,
+        ["KeyP"] = 28,
     };
 
     /// <summary>
     /// The rows a scale is laid along, from the octave below to the octave above,
     /// each as far across as the keyboard goes.
     /// </summary>
-    private static readonly Key[][] Rows =
+    private static readonly string[][] Rows =
     [
-        [Key.Z, Key.X, Key.C, Key.V, Key.B, Key.N, Key.M, Key.OemComma, Key.OemPeriod, Key.OemQuestion],
-        [Key.A, Key.S, Key.D, Key.F, Key.G, Key.H, Key.J, Key.K, Key.L, Key.OemSemicolon, Key.OemQuotes, Key.OemPipe],
-        [Key.Q, Key.W, Key.E, Key.R, Key.T, Key.Y, Key.U, Key.I, Key.O, Key.P, Key.OemOpenBrackets, Key.OemCloseBrackets],
+        ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash"],
+        ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote", "Backslash"],
+        ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight"],
     ];
 
     /// <summary>Which row is <see cref="Bottom"/>'s octave: the home row.</summary>
@@ -138,8 +136,8 @@ internal sealed class ComputerKeyboard
     /// </summary>
     public const float Velocity = 0.8f;
 
-    /// <summary>What note <paramref name="key"/> plays, or null where it plays none.</summary>
-    public int? Note(Key key)
+    /// <summary>What note the key named <paramref name="key"/> plays, or null where it plays none.</summary>
+    public int? Note(string key)
     {
         if (Scale is not { } scale)
             return Layout.TryGetValue(key, out var semitones) ? Bottom + Octave * 12 + semitones : null;

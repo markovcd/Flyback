@@ -26,6 +26,8 @@ internal sealed class WebSound : IDisposable
     private readonly LiveValues shown;
     private readonly JsSound? script;
     private readonly Stopwatch rendering = new();
+    private readonly VoicePool typed = new(MidiSources.Keyboard);
+    private readonly LiveValues[] blocks;
 
     private double rendered;
 
@@ -44,6 +46,7 @@ internal sealed class WebSound : IDisposable
 
         heard = new LiveValues(sound.LiveInputs);
         shown = new LiveValues(picture.LiveInputs);
+        blocks = [shown, heard];
 
         // Where the panel's knobs rest until somebody turns them.
         patch.Seed(heard);
@@ -101,6 +104,33 @@ internal sealed class WebSound : IDisposable
     {
         heard.Set(key, value);
         shown.Set(key, value);
+    }
+
+    /// <summary>Whether either program reads the computer keyboard.</summary>
+    public bool Played => blocks.Any(block => block.Keys.Any(key => MidiSignal.SourceOf(key) == MidiSources.Keyboard));
+
+    /// <summary>A note on the computer keyboard pressed or let go, given to a voice as the editor gives it.</summary>
+    public void Strike(int note, bool down)
+    {
+        if (down) typed.Down(note, ComputerKeyboard.Velocity, blocks);
+        else typed.Up(note);
+
+        Publish();
+    }
+
+    /// <summary>The computer keyboard notes sounding, one a voice.</summary>
+    public IEnumerable<int> Sounding => typed.Voices.Where(voice => voice.Playing).Select(voice => (int)voice.Pitch);
+
+    /// <summary>Every computer keyboard note let go.</summary>
+    public void Release()
+    {
+        typed.Silence();
+        Publish();
+    }
+
+    private void Publish()
+    {
+        foreach (var block in blocks) typed.WriteTo(block, blocks);
     }
 
     /// <summary>Where the knob called <paramref name="key"/> is turned to, or null where neither program reads it.</summary>

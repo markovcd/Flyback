@@ -168,7 +168,7 @@ function status() {
 /** Starts the speaker, and says whether the browser let it: it holds sound back until the page is clicked. */
 async function startSound() {
   if (context === null) {
-    context = new AudioContext({ sampleRate: info.sampleRate, latencyHint: 'playback' });
+    context = new AudioContext({ sampleRate: info.sampleRate, latencyHint: 'interactive' });
     await context.audioWorklet.addModule('sound.js');
 
     queue = new AudioWorkletNode(context, 'flyback-queue', { numberOfInputs: 0, outputChannelCount: [2] });
@@ -316,6 +316,62 @@ function setVolume(level) {
   paint();
 }
 
+/** The computer keyboard's keys held down, by the browser's name for each, with the note it struck. */
+const pressed = new Map();
+
+/** Whether the open patch is played on the computer keyboard, which is when its keys are notes. */
+const playable = () => info?.played === true && speakerFailure === null;
+
+/** A note on the computer keyboard, <down> or up, for the sound's worker, which hands the picture its voice. */
+function strike(note, down = true) {
+  speaker.postMessage({ strike: note, down });
+}
+
+/** Every computer keyboard note let go: when the page loses the keys, or before they move. */
+function release() {
+  if (pressed.size === 0) return;
+
+  pressed.clear();
+  speaker.postMessage({ release: true });
+}
+
+/** Where the computer keyboard's notes are, as it was last said. */
+let keyboardSaid = null;
+
+/** A key the computer keyboard plays taken as a note, and true; false for any other key. */
+function typed(event, down) {
+  if (!playable() || event.ctrlKey || event.metaKey || event.altKey) return false;
+  if (event.target instanceof HTMLSelectElement) return false;
+
+  if (down && (event.code === 'PageUp' || event.code === 'PageDown')) {
+    event.preventDefault();
+    release();
+    keyboardSaid = flyback.Shift(event.code === 'PageUp' ? 1 : -1);
+    paint();
+    return true;
+  }
+
+  if (!down) {
+    if (!pressed.has(event.code)) return false;
+
+    strike(pressed.get(event.code), false);
+    pressed.delete(event.code);
+    return true;
+  }
+
+  const note = flyback.KeyNote(event.code);
+  if (note < 0) return false;
+
+  event.preventDefault();
+
+  if (!event.repeat && !pressed.has(event.code)) {
+    pressed.set(event.code, note);
+    strike(note);
+  }
+
+  return true;
+}
+
 /** The panel's knobs: each one's key, name, where it rests and where it is turned to. */
 let knobs = [];
 
@@ -401,6 +457,9 @@ async function open(opening, label, at = 0, keepKnobs = false) {
   soundStatus = {};
 
   const shown = preview ? params.get('title') ?? label : label;
+
+  pressed.clear();
+  keyboardSaid = null;
 
   error = opening.picture(width, height);
   const sound = error === null ? await openSound(opening.sound, id) : null;
@@ -532,6 +591,7 @@ function paint() {
     if (said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (starved > 0) parts.push(`${starved} dropouts`);
     if (said.linking) parts.push('building the shader…');
+    if (playable()) parts.push(`${keyboardSaid ?? said.keyboard} PageUp and PageDown move it`);
   }
 
   ui.status.replaceChildren(parts.join(' · '));
@@ -615,7 +675,13 @@ document.addEventListener('drop', async event => {
   if (file) await openBytes(file.name, new Uint8Array(await file.arrayBuffer()));
 });
 
+document.addEventListener('keyup', event => typed(event, false));
+window.addEventListener('blur', release);
+document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+
 document.addEventListener('keydown', event => {
+  if (typed(event, true)) return;
+
   const target = event.target;
 
   // What already answers the key itself: a list, a focused button, the seek bar's arrows.
@@ -651,6 +717,11 @@ window.flyback = {
     queued: soundStatus.queued ?? 0, starved, warning, error, speakerFailure,
   }),
   volume: setVolume,
+  strike,
+  release: () => {
+    pressed.clear();
+    speaker.postMessage({ release: true });
+  },
   knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
   turn: (knob, value) => {
     const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());

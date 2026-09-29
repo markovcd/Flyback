@@ -3,7 +3,7 @@
 // picture needs to know of the sound.
 //
 // From the page: { open, width, height, opened }, { speaker: port }, { seek, generation },
-// { run }, { turn, value }. To the page: { ready }, { opened, error, status, speed },
+// { run }, { turn, value }, { strike, down } and { release }. To the page: { ready }, { opened, error, status, speed },
 // { opened, state, status } and { failure }. To the speaker: { clear } and { generation, samples }.
 
 import { dotnet } from './_framework/dotnet.js';
@@ -12,6 +12,9 @@ import * as program from './program.js';
 /** Frames rendered per call, and how far ahead of the speaker the queue is kept. */
 const CHUNK = 1024;
 const AHEAD = 0.25;
+
+/** The queue for a patch played on the computer keyboard: short, so a key is heard as it goes down. */
+const PLAYED_AHEAD = 0.1;
 
 /**
  * Seconds of sound rendered and thrown away while the page waits to play, so the engine
@@ -49,6 +52,7 @@ let sent = 0;
 let played = 0;
 let running = false;
 let warm = 0;
+let ahead = AHEAD;
 let toldAt = 0;
 let statusAt = 0;
 
@@ -62,7 +66,7 @@ function pump() {
   let rendered = false;
 
   // A few chunks a call at most, so a message from the page is never kept waiting long.
-  for (let i = 0; i < 8 && (sent - played) / rate < AHEAD; i++) {
+  for (let i = 0; i < 8 && (sent - played) / rate < ahead; i++) {
     const at = flyback.Hear(CHUNK) / 4;
     const samples = runtime.localHeapViewF32().slice(at, at + CHUNK * 2);
     speaker.postMessage({ generation, samples }, [samples.buffer]);
@@ -126,6 +130,7 @@ function open({ open: what, width, height, opened: id }) {
   const opening = status();
   rate = opening.sampleRate;
   stateLength = opening.stateLength;
+  ahead = opening.played ? PLAYED_AHEAD : AHEAD;
   warm = opening.soundBackend === 'javascript' ? WARM_UP : 0;
 
   // The interpreter is as fast on opening as it will ever be, so it can be judged at once.
@@ -157,6 +162,12 @@ function handle(data) {
   } else if (data.turn !== undefined) {
     flyback.Turn(data.turn, data.value);
     if (!running) tell(true);
+  } else if (data.strike !== undefined) {
+    flyback.Strike(data.strike, data.down);
+    tell(true);
+  } else if (data.release !== undefined) {
+    flyback.Release();
+    tell(true);
   }
 }
 
