@@ -7,7 +7,7 @@ Feature: The editor in a page offers only what a page can do
     And the editor is in a page
     And the patch is open in the editor
     Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
-    And the toolbar still has "undo, redo, tidy, code, controls, swap, pause, rewind"
+    And the toolbar still has "undo, redo, tidy, code, controls, swap, side, pause, rewind"
 
   Scenario: A double-click on a page's picture leaves it where it is
     Given a rainbow across the screen

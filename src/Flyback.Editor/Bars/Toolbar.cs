@@ -44,6 +44,14 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public const string NoPictureToSwapTip =
         "Nothing is wired into the Output's 'color', so there is no picture to swap in.";
 
+    /// <summary>What the side button does while it can be pressed.</summary>
+    public const string SideTip =
+        "Show the preview and the inspector beside the canvas, or give the canvas their width.";
+
+    /// <summary>What it says while the canvas is in that column.</summary>
+    public const string SideSwappedTip =
+        "The canvas is in this column while it is swapped with the preview, so the column stays.";
+
     public Button Open { get; } = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
 
     public Button Save { get; } = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
@@ -74,6 +82,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// Enabled only while there is a picture to put there.
     /// </summary>
     public ToggleButton Swap { get; } = ToolbarButtons.Toggle("swap", Glyphs.Swap(), NoPictureToSwapTip);
+
+    /// <summary>Puts the column beside the canvas away and gives the canvas its width. Disabled while swapped.</summary>
+    public ToggleButton Side { get; } = ToolbarButtons.Toggle("side", Glyphs.Side(), SideTip);
 
     public Button Pause { get; } = new();
 
@@ -128,6 +139,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
+        Side.IsChecked = true;
+        Side.IsCheckedChanged += (_, _) => reactions.Raise(new SideAsked(Side.IsChecked == true));
         Swap.IsCheckedChanged += (_, _) => reactions.Raise(new SwapAsked(Swap.IsChecked == true));
         Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
         Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
@@ -141,9 +154,11 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it. The same for a patch with
-        // no picture to swap in, and for Record grayed out during a take.
+        // no picture to swap in, for a side column the canvas is standing in, and
+        // for Record grayed out during a take.
         ToolTip.SetShowOnDisabled(Tidy, true);
         ToolTip.SetShowOnDisabled(Swap, true);
+        ToolTip.SetShowOnDisabled(Side, true);
         ToolTip.SetShowOnDisabled(Record, true);
 
         // A Click says which button was pressed and nothing about what was held
@@ -202,6 +217,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         patchwork.Children.Add(Code);
         patchwork.Children.Add(Knobs);
         patchwork.Children.Add(Swap);
+        patchwork.Children.Add(Side);
 
         // On its own, between what is done to the patch and what is done to
         // the program: pausing, rewinding, seeking and recording are neither — all are

@@ -114,6 +114,34 @@ public sealed class WindowLayoutTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_side_column_put_away_stays_away_and_keeps_its_width()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(layoutPath)!);
+        File.WriteAllText(layoutPath, """{ "canvasWeight": 1, "sideWeight": 1 }""");
+
+        var window = Open();
+
+        Button(window, "side").IsChecked = false;
+        Settle(window);
+
+        var left = Left(window, layoutPath);
+
+        left.SideOpen.ShouldBeFalse();
+        left.SideWeight.ShouldBe(left.CanvasWeight, 0.001, "the width it had, not the nothing it has");
+
+        var again = Open();
+
+        Button(again, "side").IsChecked.ShouldBe(false);
+        All<Grid>(again).Single(g => g.Name == "columns").ColumnDefinitions[4].Width.Value.ShouldBe(0);
+
+        Button(again, "side").IsChecked = true;
+        Settle(again);
+
+        var grid = All<Grid>(again).Single(g => g.Name == "columns");
+        grid.ColumnDefinitions[4].Width.Value.ShouldBe(grid.ColumnDefinitions[2].Width.Value, 0.001);
+    }
+
+    [AvaloniaFact]
     public void The_dragged_column_weights_come_back()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(layoutPath)!);

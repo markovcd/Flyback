@@ -40,7 +40,8 @@ internal sealed class ShellLayout(
         IReactTo<KnobsWanted>,
         IReactTo<KnobsAsked>,
         IReactTo<SwapAsked>,
-        IReactTo<AssistantAsked>
+        IReactTo<AssistantAsked>,
+        IReactTo<SideAsked>
 {
     private Grid? columns;
     private Border? previewBox;
@@ -52,6 +53,10 @@ internal sealed class ShellLayout(
     private const int WideColumn = 2;
     private const int SideColumn = 4;
     private bool previewHideWaiting;
+    private bool swapped;
+    private GridSplitter? sideSplitter;
+    private GridLength sideShare = new(WindowLayout.DefaultSideWeight, GridUnitType.Star);
+    private bool sideShown = true;
     private ColumnDefinition? assistantColumn;
     private GridSplitter? assistantSplitter;
     private GridLength assistantShare = new(WindowLayout.DefaultAssistantWidth, GridUnitType.Pixel);
@@ -102,6 +107,12 @@ internal sealed class ShellLayout(
     public Task On(AssistantAsked notice)
     {
         ShowAssistant(notice.Shown);
+        return Task.CompletedTask;
+    }
+
+    public Task On(SideAsked notice)
+    {
+        ShowSide(notice.Shown);
         return Task.CompletedTask;
     }
 
@@ -160,7 +171,7 @@ internal sealed class ShellLayout(
                      (assistant, 0),
                      (assistantSplitter, 1),
                      (patchPane, WideColumn),
-                     (new GridSplitter { Width = 5, Background = Brushes.Transparent }, 3),
+                     (sideSplitter = new GridSplitter { Width = 5, Background = Brushes.Transparent }, 3),
                  })
         {
             Grid.SetColumn(child, column);
@@ -188,6 +199,26 @@ internal sealed class ShellLayout(
         assistantColumn.Width = shown ? assistantShare : new GridLength(0);
     }
 
+    /// <summary>
+    /// Takes the column beside the canvas away, or brings it back at the width it left with.
+    /// It holds the canvas while the two are swapped, and then it stays.
+    /// </summary>
+    public void ShowSide(bool shown)
+    {
+        if (columns is null || sideSplitter is null) return;
+        if (swapped) shown = true;
+        if (shown != sideShown && !fullScreen.IsFullScreen)
+        {
+            var column = columns.ColumnDefinitions[SideColumn];
+            if (!shown) sideShare = column.Width;
+            sideShown = shown;
+            sideSplitter.IsVisible = shown;
+            column.MinWidth = shown ? 300d : 0d;
+            column.Width = shown ? sideShare : new GridLength(0);
+        }
+        if (toolbar.Side.IsChecked != sideShown) toolbar.Side.IsChecked = sideShown;
+    }
+
     public void ShowPreview(bool shown)
     {
         previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
@@ -208,6 +239,11 @@ internal sealed class ShellLayout(
     {
         if (columns is null || previewBox is null || patchPane is null || inspectorBox is null || previewSplitter is null) return;
         if (swapped == (Grid.GetColumn(previewBox) == WideColumn)) return;
+
+        this.swapped = swapped;
+        if (swapped) ShowSide(true);
+        toolbar.Side.IsEnabled = !swapped;
+        ToolTip.SetTip(toolbar.Side, swapped ? Toolbar.SideSwappedTip : Toolbar.SideTip);
 
         var (pictureColumn, patchColumn) = swapped ? (WideColumn, SideColumn) : (SideColumn, WideColumn);
         Grid.SetColumn(previewBox, pictureColumn);
@@ -310,7 +346,8 @@ internal sealed class ShellLayout(
     {
         if (layoutKeeper.Saved is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
         columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
-        columns.ColumnDefinitions[SideColumn].Width = new GridLength(saved.SideWeight, GridUnitType.Star);
+        sideShare = new GridLength(saved.SideWeight, GridUnitType.Star);
+        if (sideShown) columns.ColumnDefinitions[SideColumn].Width = sideShare;
         previewShare = new GridLength(saved.PreviewWeight, GridUnitType.Star);
         if (previewBox is { IsVisible: true }) previewRow.Height = previewShare;
         columns.RowDefinitions[2].Height = new GridLength(saved.InspectorWeight, GridUnitType.Star);
@@ -320,6 +357,7 @@ internal sealed class ShellLayout(
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
         if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
+        ShowSide(saved.SideOpen);
         toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
         if (saved.Code) document.ShowCode(true);
     }
@@ -338,7 +376,7 @@ internal sealed class ShellLayout(
 
         var state = away ? fullScreen.StateBefore : window.WindowState;
         var size = window.WindowState == WindowState.Normal ? window.ClientSize : layoutKeeper.NormalSize;
-        var (canvas, side) = Share(Column(WideColumn), Column(SideColumn), WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
+        var (canvas, side) = Share(Column(WideColumn), sideShown ? Column(SideColumn) : Weight(sideShare), WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
         var (previewWeight, inspectorWeight) = Share(
             previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
             Under(inspectorBox, Weight), WindowLayout.DefaultPreviewWeight + WindowLayout.DefaultInspectorWeight);
@@ -359,6 +397,7 @@ internal sealed class ShellLayout(
             ControlsOpen = knobs.View.IsVisible,
             Code = document.ShowingCode,
             Swapped = toolbar.Swap.IsChecked == true,
+            SideOpen = sideShown,
         };
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;

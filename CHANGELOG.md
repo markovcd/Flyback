@@ -17,6 +17,7 @@
 - `flyback-cli pack` and `check` take `--preset`, and a preset name nobody shipped is answered with the ones there are.
 - The editor works on a touch screen: two fingers pan and zoom, a finger held still is a right-click, and the toolbar and panel gain buttons for adding a module, framing the patch and duplicating.
 - Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
+- The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
 
 ## 0.5.1 — 2026-09-29
 

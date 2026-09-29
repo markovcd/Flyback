@@ -419,6 +419,26 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>
         Service<Toolbar>().View.GetVisualDescendants().OfType<Button>().Select(b => b.Name).ToList());
 
+    /// <summary>Presses a toolbar toggle into <paramref name="on"/>, as a click does.</summary>
+    public void Toggle(string name, bool on) => DoWindow((open, _) => Toggler(open, name).IsChecked = on);
+
+    /// <summary>Whether a toolbar toggle is pressed in, and whether it can be pressed at all.</summary>
+    public (bool On, bool Enabled) Toggled(string name) => ReadWindow(open =>
+    {
+        var toggle = Toggler(open, name);
+
+        return (toggle.IsChecked == true, toggle.IsEnabled);
+    });
+
+    /// <summary>How wide the canvas is laid out.</summary>
+    public double CanvasWidth => Read(canvas => canvas.Bounds.Width);
+
+    /// <summary>How wide the preview is laid out.</summary>
+    public double PreviewWidth => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().Single().Bounds.Width);
+
+    private static ToggleButton Toggler(MainWindow open, string name) =>
+        open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == name);
+
     /// <summary>The size the picture is drawn at, before it is scaled to its box.</summary>
     public PixelSize PictureSize => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Resolution);
 
