@@ -21,22 +21,29 @@
 
   <!--
     The web editor (ADR-0162), published under editor\ beside the site and served at
-    /editor/. It links Skia into the runtime, which needs the wasm-tools workload, so
-    the gate, whose image has none, builds with -p:WebEditor=false.
+    /editor/. It links Skia into the runtime, which needs the wasm-tools workload;
+    -p:WebEditor=false builds the site without it where that is missing.
   -->
   <PropertyGroup>
     <WebEditor Condition="'$(WebEditor)' == ''">true</WebEditor>
   </PropertyGroup>
 
-  <Target Name="PublishWebEditor" AfterTargets="Build" Condition="'$(WebEditor)' == 'true'">
+  <!-- A restore of its own: a publish evaluated before the restore wrote its assets fails on a clean checkout. -->
+  <Target Name="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
     <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
-             Targets="Restore;Publish"
+             Targets="Restore"
+             Properties="Configuration=$(Configuration);WebEditorRestore=true" />
+  </Target>
+
+  <Target Name="PublishWebEditor" AfterTargets="Build" DependsOnTargets="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
+    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+             Targets="Publish"
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(OutDir)editor'))\" />
   </Target>
 
-  <Target Name="PublishWebEditorBeside" AfterTargets="Publish" Condition="'$(WebEditor)' == 'true'">
+  <Target Name="PublishWebEditorBeside" AfterTargets="Publish" DependsOnTargets="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
     <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
-             Targets="Restore;Publish"
+             Targets="Publish"
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(PublishDir)editor'))\" />
   </Target>
 

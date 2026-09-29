@@ -66,10 +66,14 @@ ARG CONFIGURATION
 #
 # Node runs the sound the web viewer plays, so the tests can hold it to the
 # desktop's. Without it they skip themselves.
+#
+# The wasm-tools workload links Skia into the web editor the preset site builds
+# beside itself (ADR-0162), and its Emscripten runs on Python.
 RUN apt-get update \
  && apt-get install --yes --no-install-recommends libfontconfig1 libx11-6 ffmpeg \
-      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs \
- && rm -rf /var/lib/apt/lists/*
+      libegl1 libegl-mesa0 libgl1-mesa-dri libopengl0 nodejs python3 \
+ && rm -rf /var/lib/apt/lists/* \
+ && dotnet workload install wasm-tools
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1
@@ -113,7 +117,7 @@ RUN if [ -n "${RELEASE_PUBLIC_KEY}" ]; then \
     fi
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore -p:WebEditor=false
+    dotnet build Flyback.slnx -c ${CONFIGURATION} --no-restore
 
 # The gate. Every test in the solution — the engine's, the shell's headless UI
 # ones, the plugins' — and the build stops here if any of them does.

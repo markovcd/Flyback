@@ -53,7 +53,7 @@ public sealed partial class WebsiteSteps : IDisposable
 
                 if (to.Host != root.Host || !seen.Add(path)) continue;
 
-                // Built without the web editor, as the gate is, the site has no /editor/ and shows no link to it.
+                // A site with no web editor beside it, as a test host is, has no /editor/ and shows no link to it.
                 if (path.StartsWith("/editor/", StringComparison.Ordinal) && !EditorBuilt) continue;
 
                 using var response = await client.GetAsync(new Uri(path, UriKind.Relative));
