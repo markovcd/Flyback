@@ -4,7 +4,7 @@
 //
 // From the page: { open, width, height, opened }, { speaker: port }, { seek, generation },
 // { run }, { turn, value }, { strike, down } and { release }. To the page: { ready }, { opened, error, status, speed },
-// { opened, state, status } and { failure }. To the speaker: { clear }, { generation, samples } and { trim, generation }.
+// { opened, state, status } and { failure }. To the speaker: { clear } and { generation, samples }.
 //
 // From the editor instead of { open }: { edit, aspect }, of which only the latest is kept,
 // { keep, bytes }, { forget }, { play, values }, { watch, meters } and { aspect }. To the
@@ -17,20 +17,14 @@ import * as program from './program.js';
 const CHUNK = 1024;
 const AHEAD = 0.25;
 
-/** The queue for a patch played on the computer keyboard: short, so a key is heard as it goes down. */
-const PLAYED_AHEAD = 0.1;
+/** The queue for a patch played on the computer keyboard or edited: short, so a key or an edit is heard as it is made. */
+const SHORT_AHEAD = 0.1;
 
 /**
  * Seconds of sound rendered and thrown away while the page waits to play, so the engine
  * has optimized the script before anybody hears it. The first play seeks, which forgets them.
  */
 const WARM_UP = 3;
-
-/** How much of the old program's sound an edit lets play while the new one starts, in seconds. */
-const KEPT_THROUGH_EDIT = 0.1;
-
-/** How long a trim waits on the speaker's answer before the sound carries on without it, in milliseconds. */
-const TRIM_PATIENCE = 500;
 
 /** The least time between two states sent to the page, and between two statuses. */
 const STATE_EVERY = 15;
@@ -75,10 +69,8 @@ let origin = 0;
 /** Whether the editor drives this worker, by edits and Meters named, rather than a viewer by opens. */
 let editing = false;
 
-/** The latest edit not yet taken, when the trim of the sound before it started, and whether one waits on the next run. */
+/** The latest edit not yet taken. */
 let edit = null;
-let trimmedAt = 0;
-let stale = false;
 
 /** Every value the editor has played, played again into each program an edit makes. */
 const written = new Map();
@@ -91,11 +83,6 @@ function pump() {
   if (edit !== null && flyback !== null) takeEdit();
   if (!running) warmUp();
   if (!running || speaker === null || flyback === null) return;
-
-  if (trimmedAt > 0) {
-    if (performance.now() - trimmedAt < TRIM_PATIENCE) return;
-    trimmedAt = 0;
-  }
 
   let rendered = false;
 
@@ -158,7 +145,10 @@ function tellReadings(now, at) {
   postMessage(message, [readings.buffer]);
 }
 
-/** Takes the latest edit, and lets what the old program queued play only while the new one starts. */
+/**
+ * Takes the latest edit, which plays on from where the old program stopped rendering:
+ * what the program remembers is its memory at that instant, so nothing queued is dropped.
+ */
 function takeEdit() {
   const { edit: text, aspect } = edit;
   edit = null;
@@ -168,23 +158,9 @@ function takeEdit() {
   if (!error) {
     for (const [key, value] of written) flyback.Play(key, value);
     rate = JSON.parse(flyback.Status()).sampleRate;
-    cut();
   }
 
   postMessage({ edited: true, error, status: JSON.parse(flyback.Status()) });
-}
-
-/** Asks the speaker to keep only a moment of what is queued; the answer says where the new program starts. */
-function cut() {
-  if (speaker === null || sent === 0) return;
-
-  if (!running) {
-    stale = true;
-    return;
-  }
-
-  trimmedAt = performance.now();
-  speaker.postMessage({ trim: Math.round(KEPT_THROUGH_EDIT * rate), generation });
 }
 
 function status() {
@@ -194,14 +170,7 @@ function status() {
 function report({ data }) {
   if (data.generation !== generation) return;
 
-  if (data.trimmed !== undefined) {
-    trimmedAt = 0;
-    sent = data.trimmed;
-    flyback.Carry(origin + sent / rate);
-  } else {
-    played = data.played;
-  }
-
+  played = data.played;
   pump();
 }
 
@@ -219,7 +188,7 @@ function open({ open: what, width, height, opened: id }) {
   const opening = status();
   rate = opening.sampleRate;
   stateLength = opening.stateLength;
-  ahead = opening.played ? PLAYED_AHEAD : AHEAD;
+  ahead = opening.played ? SHORT_AHEAD : AHEAD;
   warm = opening.soundBackend === 'javascript' ? WARM_UP : 0;
 
   // The interpreter is as fast on opening as it will ever be, so it can be judged at once.
@@ -233,8 +202,6 @@ function seek({ seek: seconds, generation: next }) {
   generation = next;
   origin = seconds;
   sent = played = 0;
-  trimmedAt = 0;
-  stale = false;
   speaker?.postMessage({ clear: generation });
   tell(true);
   pump();
@@ -250,16 +217,11 @@ function handle(data) {
   else if (data.run !== undefined) {
     running = data.run;
     if (running) warm = 0;
-
-    if (running && stale) {
-      stale = false;
-      cut();
-    }
-
     pump();
   } else if (data.edit !== undefined) {
     editing = true;
     warm = 0;
+    ahead = SHORT_AHEAD;
     edit = data;
   } else if (data.keep !== undefined) flyback.Keep(data.keep, data.bytes);
   else if (data.forget !== undefined) flyback.Forget();

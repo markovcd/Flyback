@@ -136,9 +136,6 @@ internal sealed class WebSound : IDisposable
     /// <summary>Plays <paramref name="value"/> on <paramref name="key"/>, as it was written into the editor's block.</summary>
     public void Play(string key, float value) => heard.Set(key, value);
 
-    /// <summary>Carries on from <paramref name="seconds"/> with what the patch remembers kept, as after an edit.</summary>
-    public void Carry(double seconds) => speakers.SeekTo(Math.Max(0, seconds));
-
     /// <summary>Turns a panel knob, 0 to 1.</summary>
     public void Turn(string key, float value)
     {

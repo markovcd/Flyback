@@ -222,10 +222,6 @@ public static partial class WebExports
     [JSExport]
     public static void Play(string key, double value) => sound?.Play(key, (float)value);
 
-    /// <summary>Carries on from <paramref name="seconds"/> with what the patch remembers kept, where the speaker has got to.</summary>
-    [JSExport]
-    public static void Carry(double seconds) => sound?.Carry(seconds);
-
     /// <summary>The width over the height of the picture the sound belongs to, which Coordinates' <c>aspect</c> reads.</summary>
     [JSExport]
     public static void Aspect(double aspect)

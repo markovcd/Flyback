@@ -58,10 +58,11 @@ The editor's sound is an `IAudioEngine`: `AudioEngine` on a desktop, and in a pa
 `PageSound`, which posts each edit as the patch's text, and the files it names
 when they change. The worker keeps only the latest edit, so a value dragged through
 fifty steps compiles as often as it can keep up, and carries the clock and the
-memory into the new program as the desktop's engine does. The speaker then keeps a
-tenth of a second of the old program's queue and says exactly where it ends, which
-is where the new program starts: the edit is heard in about a tenth of a second
-rather than after a quarter second of the old one, and the clock never slips.
+memory into the new program as the desktop's engine does. The new program plays on
+from where the old one stopped rendering, never from a point already rendered past:
+the memory it inherits is from that instant, and starting it earlier splices it in
+with a click. While a page edits, the worker keeps a tenth of a second queued rather
+than a quarter, so an edit is heard in about a tenth of a second.
 
 **The speaker is the clock, once it may play.** A browser holds sound back until the
 page is used, so until then, and until the worker is up, the picture runs on the
