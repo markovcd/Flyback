@@ -1,3 +1,1 @@
 #nullable enable
-Flyback.Core.Graph.PresetKinds
-static Flyback.Core.Graph.PresetKinds.Heading(Flyback.Core.Graph.PresetKind kind) -> string!

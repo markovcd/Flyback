@@ -699,6 +699,7 @@ Flyback.Core.Graph.PresetKind.Blank = 0 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Idea = 1 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Interplay = 2 -> Flyback.Core.Graph.PresetKind
 Flyback.Core.Graph.PresetKind.Showcase = 3 -> Flyback.Core.Graph.PresetKind
+Flyback.Core.Graph.PresetKinds
 Flyback.Core.Graph.ScaleMode
 Flyback.Core.Graph.ScaleMode.<Clone>$() -> Flyback.Core.Graph.ScaleMode!
 Flyback.Core.Graph.ScaleMode.Classes.get -> int[]!
@@ -1244,6 +1245,7 @@ static Flyback.Core.Graph.PortNormal.operator ==(Flyback.Core.Graph.PortNormal l
 static Flyback.Core.Graph.PortSpec.operator !=(Flyback.Core.Graph.PortSpec left, Flyback.Core.Graph.PortSpec right) -> bool
 static Flyback.Core.Graph.PortSpec.operator ==(Flyback.Core.Graph.PortSpec left, Flyback.Core.Graph.PortSpec right) -> bool
 static Flyback.Core.Graph.PresetFiles.Embedded(System.Reflection.Assembly! assembly, string! folder) -> System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, byte[]!>!>!
+static Flyback.Core.Graph.PresetKinds.Heading(Flyback.Core.Graph.PresetKind kind) -> string!
 static Flyback.Core.Graph.ScaleMode.operator !=(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.ScaleMode.operator ==(Flyback.Core.Graph.ScaleMode? left, Flyback.Core.Graph.ScaleMode? right) -> bool
 static Flyback.Core.Graph.SocketHelp.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!

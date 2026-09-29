@@ -2,12 +2,12 @@
 
 ## Unreleased
 
-### Fixes
-- Shared presets, shared plugins and letters to the author reach the preset site at flyback.nasik2137.uk.
+## 0.5.1 — 2026-09-29
 
-- The web viewer plays a patch on the computer keyboard as the editor does, piano or scale, with PageUp and PageDown moving the octave.
-- The web viewer plays the sound on a thread of its own, and has a volume slider, a line saying what the patch is for, and a slider for each of its panel knobs.
-- The web viewer has a seek bar, a resolution list up to 720p, full screen and the editor's preset groups; a preset site preset plays there alone, and the site's presets page opens it on the shipped ones.
+10 commits since 0.5.0.
+
+- The editor finds shared presets and plugins, and sends letters, on the preset site at flyback.nasik2137.uk.
+- The web viewer plays on the computer keyboard, with a seek bar, a volume slider, a slider per panel knob, a line saying what the patch is for, resolutions up to 720p, full screen and the editor's preset groups; a preset site preset plays there alone.
 - The preset site refuses a bundle that unpacks past 128 MB, keeps its admin cookie to HTTPS, counts an IPv6 visitor by its /64, and `render-presets` reads only the files a preset carries.
 
 ## 0.5.0 — 2026-09-29
