@@ -23,6 +23,25 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command succeeds
     And it says what the picture costs
 
+  Scenario: Describing a patch says how long it plays
+    Given the text saved as "piece.fbks":
+      """
+      length 1:30.50
+      sine(freq: 220) |> out.left
+      """
+    When flyback-cli describes "piece.fbks"
+    Then the command succeeds
+    And it says the patch plays for 1:30.50
+
+  Scenario: Describing a patch that sets no length says so
+    Given the text saved as "drone.fbks":
+      """
+      sine(freq: 220) |> out.left
+      """
+    When flyback-cli describes "drone.fbks"
+    Then the command succeeds
+    And it says the patch sets no length
+
   Scenario: A shipped preset packs into a bundle with the files it carries
     When flyback-cli packs the preset "Mycelium"
     Then the command succeeds

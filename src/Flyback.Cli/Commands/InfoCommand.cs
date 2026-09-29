@@ -46,6 +46,7 @@ internal static class InfoCommand
                     modules = patch.Nodes.Count,
                     wires = patch.Connections.Count,
                     requires,
+                    length = new { seconds = patch.Lasts, set = patch.Length is not null },
                     wired = new { picture = reaches.Picture, sound = reaches.Sound },
                     picture,
                     sound,
@@ -59,6 +60,7 @@ internal static class InfoCommand
         Line("modules", patch.Nodes.Count.ToString(CultureInfo.InvariantCulture));
         Line("wires", patch.Connections.Count.ToString(CultureInfo.InvariantCulture));
         Line("requires", string.Join(", ", requires));
+        Line("length", Length(patch));
         Line("picture", Describe(picture, reaches.Picture));
         Line("sound", Describe(sound, reaches.Sound));
 
@@ -66,6 +68,11 @@ internal static class InfoCommand
 
         void Line(string label, string value) => output.WriteLine($"  {label,-9} {value}");
     }
+
+    /// <summary>A length the patch sets, or the default and what the viewers make of a patch with none.</summary>
+    private static string Length(Patch patch) => patch.Length is { } seconds
+        ? PatchLength.Say(seconds)
+        : $"not set: {PatchLength.Say(Patch.DefaultLength)} in the editor, no end in the viewers";
 
     private static Cost Costed(CompiledPatch program) => new(
         program.Ops.Length,

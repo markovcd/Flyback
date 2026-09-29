@@ -10,6 +10,7 @@
 - `flyback-cli plugin describe` says what a `.fbkp` package is and what its code reaches, as the install dialog would, without running it.
 - The preset gallery shows the shipped presets by stills the release drew, rather than drawing each one; `flyback-cli stills` draws them.
 - The presets page lists the presets Flyback ships with, marked as built in, beside the shared ones, and on GitHub Pages alone; a search and the tags narrow both; Play opens one in the web viewer, which leaves picking a preset to the page, and Edit in the web editor.
+- `flyback-cli info` says how long a patch plays, and whether it sets its length.
 - `flyback-cli pack` and `check` take `--preset`, and a preset name nobody shipped is answered with the ones there are.
 
 ## 0.5.1 — 2026-09-29

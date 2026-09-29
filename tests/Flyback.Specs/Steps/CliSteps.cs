@@ -1,6 +1,7 @@
 using System.CommandLine;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
@@ -67,6 +68,9 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [When("flyback-cli describes the preset {string}")]
     public void WhenDescribed(string name) => Run("info", "--preset", name);
+
+    [When("flyback-cli describes {string}")]
+    public void WhenFileDescribed(string name) => Run("info", Path(name));
 
     [When("flyback-cli packs the preset {string}")]
     public void WhenPresetPacked(string name)
@@ -140,6 +144,13 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [Then("it says what the picture costs")]
     public void ThenPictureCost() => said.ShouldMatch(@"picture\s+\d+ ops");
+
+    [Then("it says the patch plays for {word}")]
+    public void ThenPlaysFor(string length) =>
+        Regex.IsMatch(said, $@"length\s+{Regex.Escape(length)}\r?$", RegexOptions.Multiline).ShouldBeTrue(said);
+
+    [Then("it says the patch sets no length")]
+    public void ThenNoLength() => said.ShouldMatch(@"length\s+not set");
 
     [Then("it names the modules the package declares")]
     public void ThenNamesModules() => said.ShouldContain("Plate (flyback.figures.plate)");

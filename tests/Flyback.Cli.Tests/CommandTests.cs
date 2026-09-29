@@ -203,6 +203,23 @@ public class CommandTests
         bare.Out.ShouldNotContain("phase accumulator");
     }
 
+    /// <summary>A patch that sets no length still has one, the default, and says it is not its own.</summary>
+    [Fact]
+    public void The_length_is_reported_with_whether_the_patch_sets_it()
+    {
+        var unset = Preset("Nebula");
+        var set = Preset("Nebula");
+        set.Length = 90.5;
+
+        using var none = JsonDocument.Parse(Run((o, e) => InfoCommand.Run(unset, "nebula.fbk", true, o, e)).Out);
+        using var some = JsonDocument.Parse(Run((o, e) => InfoCommand.Run(set, "nebula.fbk", true, o, e)).Out);
+
+        none.RootElement.GetProperty("length").GetProperty("seconds").GetDouble().ShouldBe(Patch.DefaultLength);
+        none.RootElement.GetProperty("length").GetProperty("set").GetBoolean().ShouldBeFalse();
+        some.RootElement.GetProperty("length").GetProperty("seconds").GetDouble().ShouldBe(90.5);
+        some.RootElement.GetProperty("length").GetProperty("set").GetBoolean().ShouldBeTrue();
+    }
+
     /// <summary>One of anything is not "1 things".</summary>
     [Fact]
     public void Counts_are_written_in_the_number_they_are()
