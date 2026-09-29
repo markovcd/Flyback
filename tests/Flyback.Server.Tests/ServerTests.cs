@@ -478,6 +478,20 @@ public sealed class ServerTests : IDisposable
             using var another = await server.Post(PatchFile(), "Fourth.fbk", forwardedFor: "198.51.100.2");
             another.StatusCode.ShouldBe(HttpStatusCode.Created);
         }
+
+        /// <summary>An IPv6 household holds a whole /64, so each of its addresses would otherwise be a fresh allowance.</summary>
+        [Fact]
+        public async Task An_ipv6_household_has_one_allowance_however_many_addresses_it_takes()
+        {
+            await server.Submit(PatchFile(), forwardedFor: "2001:db8:1:2::1");
+            await server.Submit(PatchFile(), forwardedFor: "2001:db8:1:2::2");
+
+            using var third = await server.Post(PatchFile(), "Third.fbk", forwardedFor: "2001:db8:1:2:aaaa:bbbb:cccc:dddd");
+            third.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+
+            using var neighbor = await server.Post(PatchFile(), "Fourth.fbk", forwardedFor: "2001:db8:1:3::1");
+            neighbor.StatusCode.ShouldBe(HttpStatusCode.Created);
+        }
     }
 
     public sealed class TooManyLetters : IDisposable
@@ -593,6 +607,18 @@ public sealed class ServerTests : IDisposable
         listed.GetProperty("average").GetDouble().ShouldBe(4.5);
         listed.GetProperty("count").GetInt32().ShouldBe(2);
         (await Get("/api/v1/presets/" + id)).GetProperty("rating").GetProperty("count").GetInt32().ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task An_ipv6_household_rates_once_however_many_addresses_it_takes()
+    {
+        var id = (await Submit(PatchFile())).GetProperty("id").GetString()!;
+
+        (await Rate(id, new { stars = 2 }, "2001:db8:1:2::1")).Status.ShouldBe(HttpStatusCode.OK);
+        var (_, again) = await Rate(id, new { stars = 5 }, "2001:db8:1:2::ffff");
+
+        again.GetProperty("count").GetInt32().ShouldBe(1);
+        again.GetProperty("mine").GetInt32().ShouldBe(5);
     }
 
     [Fact]

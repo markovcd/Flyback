@@ -81,31 +81,31 @@ builder.Services.AddRateLimiter(limits =>
 {
     limits.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     limits.AddPolicy("submit", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        Visitor.Of(http.Connection.RemoteIpAddress),
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:PostsPerHour", 20),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("sign-in", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        Visitor.Of(http.Connection.RemoteIpAddress),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(15) }));
     limits.AddPolicy("report", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        Visitor.Of(http.Connection.RemoteIpAddress),
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:ReportsPerHour", 10),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("letter", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        Visitor.Of(http.Connection.RemoteIpAddress),
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:LettersPerHour", 5),
             Window = TimeSpan.FromHours(1),
         }));
     limits.AddPolicy("rate", http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        Visitor.Of(http.Connection.RemoteIpAddress),
         _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = http.RequestServices.GetRequiredService<IConfiguration>().GetValue("Site:RatingsPerHour", 60),

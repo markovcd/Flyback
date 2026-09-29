@@ -4,7 +4,7 @@
 
 - The web viewer plays the sound on a thread of its own, and has a volume slider, a line saying what the patch is for, and a slider for each of its panel knobs.
 - The web viewer has a seek bar, a resolution list up to 720p, full screen and the editor's preset groups; a preset site preset plays there alone, and the site's presets page opens it on the shipped ones.
-- The preset site refuses a bundle that unpacks past 128 MB, keeps its admin cookie to HTTPS, and `render-presets` reads only the files a preset carries.
+- The preset site refuses a bundle that unpacks past 128 MB, keeps its admin cookie to HTTPS, counts an IPv6 visitor by its /64, and `render-presets` reads only the files a preset carries.
 
 ## 0.5.0 — 2026-09-29
 

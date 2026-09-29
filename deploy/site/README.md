@@ -23,7 +23,7 @@ The site is an image on GitHub's registry, `ghcr.io/markovcd/flyback-site`, for 
 
 The Site workflow is separate from the app's Release, and signs the plugins at the version of the latest `vX.Y.Z` tag.
 
-The NAS runs one Docker project per channel, each a folder holding `compose.yaml` and its own `data/` and `media/`. The dev project's `compose.yaml` names `:dev` and another host port, say `"8081:8080"`; the host port comes first, and the second is always 8080. The container runs as user 1654, so `data/` has to be writable by that user:
+The NAS runs one Docker project per channel, each a folder holding `compose.yaml` and its own `data/` and `media/`. The dev project's `compose.yaml` names `:dev` and another container name, `flyback-dev`, since two containers cannot share one. The container runs as user 1654, so `data/` has to be writable by that user:
 
 ```bash
 sudo mkdir -p data media && sudo chown -R 1654 data
@@ -55,7 +55,18 @@ To build the image here without pushing it:
 docker build --secret id=release-key,env=RELEASE_SIGNING_KEY -f src/Flyback.Server/Dockerfile -t flyback-site .
 ```
 
-It listens on port 8080. Put the NAS reverse proxy in front of it for HTTPS. The site reads the client's address from `X-Forwarded-For`, which is what the per-address rate limits count by, and believes that header only from the private ranges a proxy reaches a container over — so nothing but the proxy may be able to reach port 8080. Set `Site__KnownProxies` if the proxy is somewhere else; anything reaching the port from an address that is not on the list is counted by the address it actually connected from.
+It listens on port 8080, published to nothing: put a Cloudflare Tunnel or the NAS reverse proxy on a Docker network with it, and point that at `http://flyback:8080`. Joining the tunnel's network is a few lines in `compose.yaml`:
+
+```yaml
+services:
+  flyback:
+    networks: [tunnel]
+networks:
+  tunnel:
+    external: true
+```
+
+where `tunnel` is the network `cloudflared` is on (`docker network ls`). The site reads the client's address from `X-Forwarded-For`, which is what the per-address rate limits count by, and believes that header only from the private ranges a proxy reaches a container over — so nothing but the proxy may be able to reach port 8080. Set `Site__KnownProxies` if the proxy is somewhere else; anything reaching the port from an address that is not on the list is counted by the address it actually connected from. An IPv6 address is counted as its /64, since one household holds a whole one.
 
 Settings, all optional, as environment variables:
 
