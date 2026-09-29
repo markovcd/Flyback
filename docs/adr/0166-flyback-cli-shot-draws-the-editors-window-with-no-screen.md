@@ -19,7 +19,8 @@ the canvas alone a headless test (`PatchShotTests`). The window was neither.
 
 **`flyback-cli shot` writes a PNG of the editor's window with a patch open.** A file
 or `--preset`, `--at` for the second the picture is of, `--size` for the window and
-`--select` for a box or module the inspector shows.
+`--select` for a box or module the inspector shows. `--canvas` shows the canvas where
+the text is the document, and `--crop` keeps only the canvas around the modules.
 
 **The CLI checks the request and `Flyback --shot` draws it.** The CLI keeps carrying
 no Avalonia ([0157](0157-flyback-cli-render-draws-on-the-gpu.md)), so it opens the

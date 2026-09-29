@@ -59,9 +59,19 @@ internal static class ShotCommand
             Description = "A box or module to select, by name, so the inspector shows it.",
         };
 
+        var canvas = new Option<bool>("--canvas")
+        {
+            Description = "Show the canvas, even for a patch whose text is the document.",
+        };
+
+        var crop = new Option<bool>("--crop")
+        {
+            Description = "Write only the canvas around the modules. Shows the canvas.",
+        };
+
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            patch, preset, output, at, size, select,
+            patch, preset, output, at, size, select, canvas, crop,
         };
 
         command.SetAction(result =>
@@ -98,6 +108,8 @@ internal static class ShotCommand
             ];
 
             if (result.GetValue(select) is { } selected) arguments.AddRange(["--select", selected]);
+            if (result.GetValue(canvas)) arguments.Add("--canvas");
+            if (result.GetValue(crop)) arguments.Add("--crop");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

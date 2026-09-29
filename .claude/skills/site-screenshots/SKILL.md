@@ -37,7 +37,7 @@ flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --size 1440x900
 
 Run it from a folder holding the CLI, the editor and the plugins together (a publish, or the editor's build output with `flyback-cli`'s build copied in). A shot has no title bar, says CPU on the status bar, and shows no popup, dropdown or dialog; a picture that needs any of those comes from the real window, by the recipe below.
 
-flyback-theme.webp and plasma.webp (1440x900) are that command as it stands, Plasma at `--at 55.7` with nothing selected. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`, packed with `flyback-cli pack t5.fbks -o t5.fbkb` so it opens on the canvas rather than the text, shot at `--at 8`, and cropped to the modules with about 20 px of canvas around them.
+flyback-theme.webp and plasma.webp (1440x900) are that command as it stands, Plasma at `--at 55.7` with nothing selected. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks` and shot with `--at 8 --crop`, which shows the canvas rather than the text and keeps only the modules with 24 px around them.
 
 The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, the other plasma-*.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. A stale one goes on the list above rather than being retaken in the UI change's commit.
 

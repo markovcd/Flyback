@@ -132,14 +132,19 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     public void WhenPackageDescribed() => Run("plugin", "describe", Path(PackageName));
 
     [When("flyback-cli shoots {string} at {int} second(s)")]
-    public void WhenShot(string name, int seconds)
+    public void WhenShot(string name, int seconds) => Shoot(name, seconds);
+
+    [When("flyback-cli shoots {string} at {int} second(s), cropped to the modules")]
+    public void WhenShotCropped(string name, int seconds) => Shoot(name, seconds, "--crop");
+
+    private void Shoot(string name, int seconds, params string[] more)
     {
         var before = ShotCommand.Beside;
         ShotCommand.Beside = BuiltEditor;
 
         try
         {
-            Run("shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName));
+            Run(["shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName), .. more]);
         }
         finally
         {
@@ -171,6 +176,17 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
         (shot.Width, shot.Height).ShouldBe((width, height));
         White(shot).ShouldBeLessThan(0.01);
+    }
+
+    /// <summary>A Sine and the Output beside it, with nothing of the toolbar or the preview around them.</summary>
+    [Then("the shot is two modules side by side, smaller than the window")]
+    public void ThenShotCropped()
+    {
+        var shot = Shot();
+
+        shot.Width.ShouldBeLessThan(1440 * 2 / 3);
+        shot.Height.ShouldBeLessThan(900 / 2);
+        shot.Width.ShouldBeGreaterThan(shot.Height * 2);
     }
 
     /// <summary>The preview is a tenth of the window or more, and nothing else in it is pure white in bulk.</summary>

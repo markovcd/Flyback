@@ -62,6 +62,15 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli shoots "dawn.fbks" at 3 seconds
     Then the shot has a white picture in it
 
+  Scenario: A cropped shot is the canvas around the modules, for a text patch too
+    Given the text saved as "tone.fbks":
+      """
+      sine(freq: 110) |> out.left
+      """
+    When flyback-cli shoots "tone.fbks" at 1 second, cropped to the modules
+    Then the command succeeds
+    And the shot is two modules side by side, smaller than the window
+
   Scenario: A patch saved twice is the same instrument
     Given a 220 Hz sine is playing
     And the patch is saved as "first.fbk"

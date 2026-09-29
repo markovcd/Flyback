@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -6,6 +7,7 @@ using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Files;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
@@ -30,6 +32,9 @@ internal static class Shot
 
     /// <summary>How long the picture runs up to the moment, and how far apart its frames are.</summary>
     private const double RunUp = 1.5, Step = 1d / 20;
+
+    /// <summary>The canvas a crop keeps around the modules, in pixels, so a wire leaving one is not cut off.</summary>
+    private const double Margin = 24;
 
     /// <summary>How long any one wait may take before the shot gives up.</summary>
     private static readonly TimeSpan Patience = TimeSpan.FromMinutes(1);
@@ -85,6 +90,8 @@ internal static class Shot
 
             if (request.Patch is { } path && !await OpenAsync(provider, path, error)) return Failed;
 
+            if (request.Canvas) await provider.GetRequiredService<Reactions>().RaiseAsync(new CodeAsked(false));
+
             var playback = provider.GetRequiredService<Playback>();
             await Until(() => !playback.Starting, "the patch to compile", window);
 
@@ -100,10 +107,14 @@ internal static class Shot
             provider.GetRequiredService<StatusBar>().Update();
             Settle(window);
 
+            // Read before the capture: a window that settles again fits the view again.
+            var around = request.Crop ? Around(canvas, window) : (Rect?)null;
+
             using var frame = window.CaptureRenderedFrame()
                 ?? throw new InvalidOperationException("The window drew nothing to capture.");
 
-            frame.Save(request.Out, new PngBitmapEncoderOptions());
+            if (around is { } to) Crop(frame, to, request.Out);
+            else frame.Save(request.Out, new PngBitmapEncoderOptions());
 
             return Ok;
         }
@@ -167,6 +178,33 @@ internal static class Shot
         return false;
 
         static bool Named(string title, string name) => string.Equals(title, name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>The modules with <see cref="Margin"/> around them, in the window's pixels, kept inside the canvas.</summary>
+    private static Rect Around(NodeEditor canvas, MainWindow window)
+    {
+        var modules = canvas.Selection.Scene.OnCanvas().Aggregate(default(Rect?), (all, one) => all?.Union(one) ?? one)
+            ?? throw new InvalidOperationException("the patch has no modules to crop to.");
+
+        var origin = canvas.TranslatePoint(default, window)
+            ?? throw new InvalidOperationException("the canvas is not showing.");
+
+        var shown = new Rect(origin, canvas.Bounds.Size);
+
+        return canvas.View.OnScreen(modules).Inflate(Margin).Translate(origin).Intersect(shown);
+    }
+
+    private static void Crop(Bitmap whole, Rect to, string path)
+    {
+        var size = new PixelSize((int)Math.Round(to.Width), (int)Math.Round(to.Height));
+
+        using var target = new RenderTargetBitmap(size);
+        using (var context = target.CreateDrawingContext())
+        {
+            context.DrawImage(whole, to, new Rect(size.ToSize(1)));
+        }
+
+        target.Save(path, new PngBitmapEncoderOptions());
     }
 
     /// <summary>
