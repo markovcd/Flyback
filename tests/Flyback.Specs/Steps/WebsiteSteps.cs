@@ -93,6 +93,13 @@ public sealed partial class WebsiteSteps : IDisposable
         script.ShouldContain("api + \"presets?\"");
     }
 
+    [Then("it lists the built-in showcases first, then sound and picture, then one idea")]
+    public async Task ThenShippedPresetsAreListedShowcaseFirst()
+    {
+        var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
+        script.ShouldContain("[\"SHOWCASE\", \"SOUND AND PICTURE\", \"ONE IDEA\"]");
+    }
+
     [When("someone opens the web viewer on the preset site")]
     public async Task WhenTheViewerIsOpened() => page = await client.GetStringAsync(new Uri("/viewer/", UriKind.Relative));
 

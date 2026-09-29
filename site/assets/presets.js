@@ -243,14 +243,22 @@
         && (!state.tag || (entry.tags || []).indexOf(state.tag) >= 0);
     }
 
+    /** The headings in the order the page lists them: the showcases first, the single ideas last. */
+    var headings = ["SHOWCASE", "SOUND AND PICTURE", "ONE IDEA"];
+
     /** The shipped presets that match, a run under each of the editor's headings. */
     function showShipped() {
       var found = [];
 
       shipped.filter(matches).forEach(function (entry) {
-        var run = found[found.length - 1];
-        if (!run || run.heading !== entry.heading) found.push(run = { heading: entry.heading, entries: [] });
+        var run = found.filter(function (r) { return r.heading === entry.heading; })[0];
+        if (!run) found.push(run = { heading: entry.heading, entries: [] });
         run.entries.push(entry);
+      });
+
+      found.sort(function (a, b) {
+        var rank = function (run) { var at = headings.indexOf(run.heading); return at < 0 ? headings.length : at; };
+        return rank(a) - rank(b);
       });
 
       runs.replaceChildren.apply(runs, found.map(function (run) {

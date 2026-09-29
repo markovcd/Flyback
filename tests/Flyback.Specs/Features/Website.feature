@@ -14,3 +14,4 @@ Feature: The preset site serves the whole website
     When someone opens the preset site's presets page
     Then they can submit a preset there
     And it lists the presets Flyback ships with, marked as built in, beside the shared ones
+    And it lists the built-in showcases first, then sound and picture, then one idea
