@@ -14,8 +14,8 @@ Measured on the user's machine: the audio path runs at 4x oversampling on one th
 ## Building and checking a big preset
 
 - Write the preset directly in C#: a `PresetBench` subclass in `Flyback.Plugins.Effects`, like Bronze, Outrun and Phase. The user does not want an `.fbks` prototype as a step.
-- To measure, name the preset: `flyback-cli info/check/render --preset <name>`, and `flyback-cli pack --preset <name> -o <file>.fbkb` where a file is wanted. The CLI's bin folder needs `Effects`, `Picture` and `Voice` copied into its `plugins/` from the test project's output.
-- **Render with the Release CLI** (`dotnet build src/Flyback.Cli -c Release`, plugins copied from the Release test output). The Debug CLI is several times slower: a 170 s track had not finished after 11 minutes, while Release rendered it in about 2.5 minutes.
+- To measure, name the preset: `flyback-cli info/check/render --preset <name>`, and `flyback-cli pack --preset <name> -o <file>.fbkb` where a file is wanted. A Release CLI loads only the plugin folders a `plugins.sha256` beside them vouches for, and reports a refusal only to a terminal: build `src/Flyback.App -c Release` and copy its `bin/Release/net10.0/plugins/` and `plugins.sha256` beside the CLI.
+- **Render with the Release CLI** (`dotnet build src/Flyback.Cli -c Release`, plugins laid beside it as above). The Debug CLI is several times slower: a 170 s track had not finished after 11 minutes, while Release rendered it in about 2.5 minutes.
 - CLI render timings are noisy (0.74x to 1.34x for the same patch while the app is running), so never cut features from a preset on the strength of one slow render. The user objected when that was tried on Outrun ("the patch runs fine"). Compare a new preset against a shipped one in the same run.
 - Check levels from the WAV. Struck music sums to far over unity, so set the desk trim so peaks stay under the Clamp.
 - `ShippedPresetTests` requires the patch to fit the 15000x10000 canvas with its groups off; 311 modules (Bronze) fits.
