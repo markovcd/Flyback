@@ -64,6 +64,8 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     public double FramesPerSecond => meter.PerSecond;
 
+    public long Frames => meter.Drawn;
+
     public double FrameMilliseconds { get; private set; }
 
     public double FrameRate

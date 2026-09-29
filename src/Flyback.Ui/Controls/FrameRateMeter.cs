@@ -27,6 +27,10 @@ internal sealed class FrameRateMeter
     private TimeSpan windowStart;
     private int frames;
     private double rate;
+    private long drawn;
+
+    /// <summary>Every frame marked since the meter was made.</summary>
+    public long Drawn => Interlocked.Read(ref drawn);
 
     /// <summary>Frames a second over the last complete window.</summary>
     /// <remarks>
@@ -49,6 +53,8 @@ internal sealed class FrameRateMeter
     /// <summary>One frame has reached the screen.</summary>
     public void Mark()
     {
+        Interlocked.Increment(ref drawn);
+
         lock (gate)
         {
             frames++;

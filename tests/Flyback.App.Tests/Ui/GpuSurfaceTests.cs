@@ -55,6 +55,8 @@ public class GpuSurfaceTests : UiTest
 
         public double FrameMilliseconds => 0;
 
+        public long Frames => 0;
+
         public double FrameRate { get; set; }
 
         public PixelSize Resolution { get; set; }

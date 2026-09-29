@@ -25,6 +25,7 @@ context, decision, consequences.
 | [0160](0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md) | A patch plays in a browser on the engine compiled to WebAssembly *(user-directed)* |
 | [0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md) | The editor runs in a browser, with the picture on a canvas of its own *(user-directed)* |
 | [0163](0163-a-build-draws-every-presets-still-once.md) | A build draws every preset's still once, for every program to show *(user-directed)* |
+| [0166](0166-flyback-cli-shot-draws-the-editors-window-with-no-screen.md) | flyback-cli shot draws the editor's window with no screen *(user-directed)* |
 
 ### The engine
 

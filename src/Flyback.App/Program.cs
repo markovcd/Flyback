@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia;
+using Flyback.App.Shots;
 using Flyback.App.Updates;
 
 namespace Flyback.App;
@@ -7,7 +8,7 @@ namespace Flyback.App;
 internal static class Program
 {
     [STAThread]
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
         // Only a console somebody is looking at is worth keeping or writing to.
         // Started from a shell, this is where the shell's own window is and
@@ -28,6 +29,9 @@ internal static class Program
             Terminal.Release();
         }
 
+        // Drawn with no screen and no window of the machine's, so nothing below applies.
+        if (ShotRequest.Claims(args)) return Shot.Run(args);
+
         // A launch that restarts one closing now waits for it first, before the
         // plugins it has open are looked at.
         args = Restart.Awaited(args);
@@ -38,7 +42,7 @@ internal static class Program
         if (Updater.Applying(args))
         {
             Updater.Apply(args);
-            return;
+            return 0;
         }
 
         // Before anything is loaded, because a version waiting to be installed
@@ -46,7 +50,7 @@ internal static class Program
         // version's, opened once it is in.
         var updates = UpdateSettings.Load(UpdateSettings.File);
 
-        if (Updater.HandOff(args, updates)) return;
+        if (Updater.HandOff(args, updates)) return 0;
 
         // The one plain argument a launch can be given: a file dropped onto the
         // program's icon, or opened with it, arrives as the whole of args and
@@ -62,7 +66,7 @@ internal static class Program
             updates: updates,
             shared: shared);
 
-        BuildAvaloniaApp()
+        return BuildAvaloniaApp()
             .UseDriver(OutputSettings.Load(OutputSettings.File).Driver)
             .StartWithClassicDesktopLifetime(args);
     }

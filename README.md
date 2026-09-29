@@ -161,13 +161,14 @@ flyback-cli print nebula.fbk --check
 flyback-cli print --preset "Whole band"
 flyback-cli render nebula.fbks -o nebula.png
 flyback-cli probe --keys
+flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --select "Picture: Scope"
 flyback-cli probe --provider all
 flyback-cli viewer nebula.fbk
 ```
 
 ### Commands
 
-`render`, `check`, `info`, `print` and `pack` read a patch file, or a shipped or plugin preset named with `--preset` in its place; `--presets` lists the names, as a JSON array under `--json`, and a name nobody shipped is refused with the list.
+`render`, `check`, `info`, `print`, `pack` and `shot` read a patch file, or a shipped or plugin preset named with `--preset` in its place; `--presets` lists the names, as a JSON array under `--json`, and a name nobody shipped is refused with the list.
 
 - `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does. The picture is drawn on the GPU through a headless OpenGL context (EGL on Linux, WGL on Windows) where there is one, and on the processor where there is not; `--processor` asks for the processor, whose picture is exact to the bit, and `--gpu` fails rather than fall back. On the processor the patch runs compiled; `--interpreted` keeps it on the interpreter, which writes the same bytes more slowly.
 - `check`: compiles the patch and reports issues; for a text patch, `--json` gives each complaint's line, column and a stable `code`
@@ -175,6 +176,7 @@ flyback-cli viewer nebula.fbk
 - `pack`: packs a patch together with the files it references; `--preset` packs a shipped preset with the files it carries
 - `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
+- `shot`: draws the editor's window with the patch open into a PNG, with no screen and no sound: `--at` is the second the picture is of, run up to from a second and a half before; `--size` is the window's, 1440x900 unless given; `--select` selects a box or module by name, so the inspector shows it. `Flyback --shot`, beside it, does the drawing (ADR-0166)
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
 - `print`: writes the patch out as text in the language, and can check that the text builds back to the same program; `--preset` prints a shipped preset by name, and `--presets` lists them
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ

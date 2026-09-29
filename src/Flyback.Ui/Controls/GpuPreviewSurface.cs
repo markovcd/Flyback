@@ -103,6 +103,8 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
     /// <summary>Frames reaching the screen each second, for the status readout.</summary>
     public double FramesPerSecond => meter.PerSecond;
 
+    public long Frames => meter.Drawn;
+
     /// <summary>What the processor spent handing the last frame to the graphics card, which is not the card's own time.</summary>
     public double FrameMilliseconds { get; private set; }
 

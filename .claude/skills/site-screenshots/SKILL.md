@@ -29,6 +29,14 @@ The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/previ
 
 ## The full-window shots
 
+The window with a patch open, framed, a box selected and the picture at a chosen second is one command, with no window opened and nothing heard (ADR-0166):
+
+```bash
+flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --size 1440x900 --select "Picture: Scope"
+```
+
+Run it from a folder holding the CLI, the editor and the plugins together (a publish, or the editor's build output with `flyback-cli`'s build copied in). A shot has no title bar, says CPU on the status bar, and shows no popup, dropdown or dialog; a picture that needs any of those comes from the real window, by the recipe below.
+
 The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. A stale one goes on the list above rather than being retaken in the UI change's commit.
 
 A preset with sound plays through the user's speakers while it is captured, for the few seconds the recipe takes. Capture it anyway; muting the system is a system setting and off limits.

@@ -554,7 +554,9 @@ player with no preview at all. The CLI declares each command's options in
 `Program.cs` and runs each in its own file (`RenderCommand`, `CheckCommand`…).
 Commands take two `TextWriter`s and return an exit code, which is what makes them
 testable without a process. `flyback-cli viewer` parses nothing and starts
-`flyback-viewer` beside it.
+`flyback-viewer` beside it. `flyback-cli shot` checks its request and hands it to
+`Flyback --shot` beside it, which builds the editor's window on the headless
+platform and writes what it draws (ADR-0166).
 
 ---
 
@@ -668,7 +670,7 @@ that only a person watching the screen can check is not finished.
 
 - **A command before a window.** Whatever a patch does can be asked of
   `flyback-cli` or `flyback-viewer`: `check`, `info`, `print --check`,
-  `render --at` for a still, `compare` for "is this still the same instrument",
+  `render --at` for a still, `shot` for the editor's window, `compare` for "is this still the same instrument",
   `flyback-viewer --hidden --for` to hear it. A new question an agent keeps
   answering with a throwaway test gets a command or a flag instead.
 - **Answers a script can read.** Exit codes mean one thing each (`Exit`), a
@@ -1038,8 +1040,9 @@ inside what the speakers carry; `ShippedPresetTests` checks the first two.
 ([0119](adr/0119-the-website-shows-a-module-by-photographing-one.md)).
 
 **Look at a patch.** `flyback-viewer`, with `--mute` unless the sound is the
-point. A still is `flyback-cli render -o shot.png --at <seconds>`. The editor is
-only for questions about the editor.
+point. A still is `flyback-cli render -o still.png --at <seconds>`, and the editor's
+window with the patch open is `flyback-cli shot`. The window itself is only for
+questions a shot cannot answer.
 
 ---
 

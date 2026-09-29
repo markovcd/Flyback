@@ -85,6 +85,8 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// <summary>Frames reaching the screen each second, for the status readout.</summary>
     public double FramesPerSecond => meter.PerSecond;
 
+    public long Frames => meter.Drawn;
+
     /// <summary>Cost of the last frame, which sets how long the next tick rests.</summary>
     public double FrameMilliseconds { get; private set; }
 

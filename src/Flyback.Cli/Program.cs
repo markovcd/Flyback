@@ -78,6 +78,7 @@ internal static class Program
             Compare(plugins, json),
             Probe(plugins, json),
             ViewerCommand.Build(),
+            ShotCommand.Build(plugins),
             RenderPresetsCommand.Build(plugins),
             StillsCommand.Build(plugins),
         };

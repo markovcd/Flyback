@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Reqnroll;
 using Shouldly;
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
@@ -26,6 +27,8 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     private const string PackageName = "figures.fbkp";
 
     private const string Bundle = "preset.fbkb";
+
+    private const string ShotName = "shot.png";
 
     private static readonly Lazy<PluginCatalog> Shipped =
         new(() => PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)));
@@ -127,6 +130,23 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     [When("flyback-cli describes the package")]
     public void WhenPackageDescribed() => Run("plugin", "describe", Path(PackageName));
 
+    [When("flyback-cli shoots {string} at {int} second(s)")]
+    public void WhenShot(string name, int seconds) =>
+        Run("shot", Path(name), "--at", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture), "-o", Path(ShotName));
+
+    [Then("the shot is {int} by {int} with a black picture in it")]
+    public void ThenShotBlack(int width, int height)
+    {
+        var shot = Shot();
+
+        (shot.Width, shot.Height).ShouldBe((width, height));
+        White(shot).ShouldBeLessThan(0.01);
+    }
+
+    /// <summary>The preview is a tenth of the window or more, and nothing else in it is pure white in bulk.</summary>
+    [Then("the shot has a white picture in it")]
+    public void ThenShotWhite() => White(Shot()).ShouldBeGreaterThan(0.05);
+
     [Then("the command succeeds")]
     public void ThenSucceeds() => code.ShouldBe(Exit.Ok, said);
 
@@ -177,6 +197,19 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     }
 
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
+
+    private LoadedImage Shot() => PngReader.Read(Path(ShotName), out _).ShouldNotBeNull();
+
+    /// <summary>The share of the picture's pixels that are white.</summary>
+    private static double White(LoadedImage image)
+    {
+        var white = 0;
+
+        for (var i = 0; i < image.Pixels.Length; i += 3)
+            if (image.Pixels[i] > 0.98f && image.Pixels[i + 1] > 0.98f && image.Pixels[i + 2] > 0.98f) white++;
+
+        return white / (image.Pixels.Length / 3d);
+    }
 
     private void Run(params string[] arguments) => Run(() => PluginCatalog.Empty, arguments);
 

@@ -51,6 +51,17 @@ Feature: The command line says whether a patch works, and whether two are the sa
     When flyback-cli prints the preset "Plasm"
     Then the command fails, listing the presets there are
 
+  Scenario: A shot is the editor's window, with the picture at the second asked for
+    Given the text saved as "dawn.fbks":
+      """
+      t |> smoothstep(1.9, 2) |> out.color
+      """
+    When flyback-cli shoots "dawn.fbks" at 1 second
+    Then the command succeeds
+    And the shot is 1440 by 900 with a black picture in it
+    When flyback-cli shoots "dawn.fbks" at 3 seconds
+    Then the shot has a white picture in it
+
   Scenario: A patch saved twice is the same instrument
     Given a 220 Hz sine is playing
     And the patch is saved as "first.fbk"
