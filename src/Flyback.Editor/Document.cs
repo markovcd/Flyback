@@ -131,6 +131,33 @@ internal sealed class Document
     /// <summary>What the text view holds.</summary>
     public string Text => source.Source;
 
+    /// <summary>The patch in the language: the document's own text where the text owns it, else a printing of the canvas.</summary>
+    public string AsText() => sourceOwned ? source.Source : PatchPrinter.Print(editor.History.Patch);
+
+    /// <summary>
+    /// Writes <paramref name="text"/> into the text view and applies it, as its Apply
+    /// button does: one edit, taken back by one undo.
+    /// </summary>
+    /// <returns>Null once it is applied, or what is wrong with the text, which then leaves the text view and the patch as they were.</returns>
+    public string? Apply(string text)
+    {
+        LanguageLoad load;
+
+        using (source.Together())
+        {
+            source.Rewrite(text);
+            load = Evaluate();
+        }
+
+        if (load.Ok) return null;
+
+        // The complaints are about text that is no longer in the view.
+        source.Undo();
+        source.Clear();
+
+        return load.Report;
+    }
+
     /// <summary>Whether the caret stands on a module or a group the canvas has moved on from.</summary>
     public bool IsAdrift => adrift;
 
@@ -1121,8 +1148,8 @@ internal sealed class Document
     /// changes nothing at all, so there is no half-applied state to be left in.
     /// </remarks>
     /// <param name="applied">What to say under the text once it is built, where the usual count would not do.</param>
-    /// <returns>Whether the text read, and so whether anything changed.</returns>
-    private bool Evaluate(string? applied = null)
+    /// <returns>What the text built, which changed something only where it is <see cref="LanguageLoad.Ok"/>.</returns>
+    private LanguageLoad Evaluate(string? applied = null)
     {
         var load = PatchLanguage.Build(source.Source);
 
@@ -1133,7 +1160,7 @@ internal sealed class Document
                 $"The text does not read — {load.Errors} thing(s) to fix. Nothing has changed.",
                 load.Report);
 
-            return false;
+            return load;
         }
 
         // Before the patch is replaced, so what is counted is how much of the
@@ -1192,7 +1219,7 @@ internal sealed class Document
             ? $"Applied. The text is the document from here on — {total} modules."
             : $"Applied — {total} modules, {kept} carried over.");
 
-        return true;
+        return load;
     }
 
     /// <summary>
@@ -1227,7 +1254,7 @@ internal sealed class Document
             source.Rewrite(PatchPrinter.Print(patch));
 
             read = Evaluate("The assistant's patch, written as text. Ctrl+Z puts back the text "
-                + "as it was, and the patch with it.");
+                + "as it was, and the patch with it.").Ok;
         }
 
         // A printing that will not read is this program's fault, and the text it

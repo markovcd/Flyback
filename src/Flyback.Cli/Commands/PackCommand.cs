@@ -34,13 +34,25 @@ internal static class PackCommand
         // thing this has to know that the patch does not say.
         var beside = file.DirectoryName ?? ".";
 
+        return Run(patch, path => Bytes(beside, path), output, error, writer, json);
+    }
+
+    /// <summary>Packs a patch whose files are handed over by <paramref name="open"/>, as a preset's are.</summary>
+    public static int Run(
+        Patch patch,
+        Func<string, byte[]?> open,
+        FileInfo output,
+        TextWriter error,
+        TextWriter writer,
+        bool json = false)
+    {
         BundleReport report;
 
         try
         {
             using var archive = File.Create(output.FullName);
 
-            report = PatchBundle.Write(archive, patch, path => Bytes(beside, path));
+            report = PatchBundle.Write(archive, patch, open);
         }
         catch (Exception ex)
         {

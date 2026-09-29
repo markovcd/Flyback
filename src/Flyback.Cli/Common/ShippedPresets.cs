@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -8,9 +9,16 @@ namespace Flyback.Cli.Common;
 /// <summary>What <c>--preset</c> opens: a shipped preset by name, and saying why when that does not work.</summary>
 internal static class ShippedPresets
 {
-    /// <summary>Writes every name <c>--preset</c> accepts, one a line.</summary>
-    public static void List(PluginCatalog catalog, TextWriter output)
+    /// <summary>Writes every name <c>--preset</c> accepts, one a line, or as a JSON array.</summary>
+    public static void List(PluginCatalog catalog, TextWriter output, bool json = false)
     {
+        if (json)
+        {
+            output.WriteLine(JsonSerializer.Serialize(catalog.Presets.Select(p => p.Name), Writing.Json));
+
+            return;
+        }
+
         foreach (var shipped in catalog.Presets) output.WriteLine(shipped.Name);
     }
 
@@ -22,7 +30,9 @@ internal static class ShippedPresets
     {
         if (catalog.Presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)) is not { } wanted)
         {
-            error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{name}'. --presets lists them.");
+            error.WriteLine($"{GlobalConstants.ApplicationName}: no preset is called '{name}'. The presets are:");
+
+            foreach (var shipped in catalog.Presets) error.WriteLine($"    {shipped.Name}");
 
             return null;
         }

@@ -60,12 +60,6 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        var patch = new Argument<FileInfo>("patch")
-        {
-            Description = "The patch to read: a document, a bundle, or one written as text. "
-                + $"The extension decides which — .{PatchIO.FileExtension}, "
-                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}.",
-        };
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
         var exports = ExportDefaults.Load(ExportDefaults.PathIn(args) ?? ExportDefaults.File);
@@ -73,10 +67,10 @@ internal static class Program
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
             Render(plugins, exports),
-            Check(plugins, patch, json),
+            Check(plugins, json),
             Info(plugins, json),
             Print(plugins),
-            Pack(plugins, patch, json),
+            Pack(plugins, json),
             PackPlugin(),
             PluginKey(),
             Plugin(plugins, json),
@@ -575,30 +569,81 @@ internal static class Program
     /// answering for one, so it takes an output path as well as the <c>--json</c> the
     /// reports below take.
     /// </summary>
-    private static Command Pack(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Pack(PluginRegistry plugins, Option<bool> json)
     {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file. The bundle carries the files it ships with.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
         var output = new Option<FileInfo>("--out", "-o")
         {
             Description = $"Where to write the bundle. {PatchBundle.Extension} by convention.",
-            Required = true,
         };
 
         var command = new Command(
             "pack",
             "Put a patch and every file it names into one bundle.")
         {
-            patch, output, json,
+            patch, preset, presets, output, json,
         };
 
         command.SetAction(result =>
         {
+            var error = result.InvocationConfiguration.Error;
+            var writer = result.InvocationConfiguration.Output;
+
             plugins.Ready();
 
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, writer, result.GetValue(json));
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to pack: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (result.GetValue(output) is not { } into)
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: --out says where to write the bundle.");
+
+                return Exit.Failed;
+            }
+
+            if (file is not null) return PackCommand.Run(file, into, error, writer, result.GetValue(json));
+
+            if (ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped) return Exit.Failed;
+
+            var carried = (shipped.Opened.Samples as BundleFiles)?.Bytes;
+
             return PackCommand.Run(
-                result.GetRequiredValue(patch),
-                result.GetRequiredValue(output),
-                result.InvocationConfiguration.Error,
-                result.InvocationConfiguration.Output,
+                shipped.Opened.Patch,
+                path => carried?.GetValueOrDefault(path),
+                into,
+                error,
+                writer,
                 result.GetValue(json));
         });
 
@@ -734,8 +779,26 @@ internal static class Program
         return command;
     }
 
-    private static Command Check(PluginRegistry plugins, Argument<FileInfo> patch, Option<bool> json)
+    private static Command Check(PluginRegistry plugins, Option<bool> json)
     {
+        var patch = new Argument<FileInfo?>("patch")
+        {
+            Description = "The patch to read: a document, a bundle, or one written as text. "
+                + $"The extension decides which — .{PatchIO.FileExtension}, "
+                + $"{PatchBundle.Extension} or .{PatchLanguage.FileExtension}. Left out, give --preset instead.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var presets = new Option<bool>("--presets")
+        {
+            Description = "List what --preset would accept, and stop.",
+        };
+
         var strict = new Option<bool>("--strict")
         {
             Description = "Fail on warnings as well as on errors.",
@@ -743,14 +806,46 @@ internal static class Program
 
         var command = new Command("check", "Compile a patch and report what is wrong with it.")
         {
-            patch, json, strict,
+            patch, preset, presets, json, strict,
         };
 
         command.SetAction(result =>
         {
+            var error = result.InvocationConfiguration.Error;
+
             plugins.Ready();
 
-            var file = result.GetRequiredValue(patch);
+            if (result.GetValue(presets))
+            {
+                ShippedPresets.List(plugins.Catalog, result.InvocationConfiguration.Output, result.GetValue(json));
+
+                return Exit.Ok;
+            }
+
+            var file = result.GetValue(patch);
+            var named = result.GetValue(preset);
+
+            if ((file is null) == (named is null))
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to check: a patch, or --preset and its name.");
+
+                return Exit.Failed;
+            }
+
+            if (file is null)
+            {
+                return ShippedPresets.Open(plugins.Catalog, named!, error) is not { } shipped
+                    ? Exit.Failed
+                    : CheckCommand.Run(
+                        shipped.Opened.Patch,
+                        shipped.Name,
+                        result.GetValue(json),
+                        result.InvocationConfiguration.Output,
+                        error,
+                        shipped.Opened.Samples,
+                        shipped.Opened.Pictures,
+                        result.GetValue(strict));
+            }
 
             var read = Patches.Sourced(file) && file.Exists ? PatchLanguage.Build(File.ReadAllText(file.FullName)) : null;
 
@@ -818,7 +913,7 @@ internal static class Program
 
             if (result.GetValue(presets))
             {
-                ShippedPresets.List(plugins.Catalog, output);
+                ShippedPresets.List(plugins.Catalog, output, result.GetValue(json));
 
                 return Exit.Ok;
             }

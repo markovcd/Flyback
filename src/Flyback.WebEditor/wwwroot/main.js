@@ -35,6 +35,8 @@ const exports = (await runtime.getAssemblyExports(name)).Flyback.WebEditor.PageE
 globalThis.flyback = {
   state: () => JSON.parse(exports.State()),
   preset: preset => exports.Preset(preset),
+  text: () => exports.Text(),
+  apply: text => exports.Apply(text),
   sound: () => speakers.status(),
 };
 

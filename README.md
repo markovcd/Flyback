@@ -146,12 +146,14 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30 --loudness
 flyback-cli render drone.fbk -o drone.mkv --seconds 30 --format mp4 --ffmpeg /opt/bin/ffmpeg
 flyback-cli check nebula.fbk
 flyback-cli check nebula.fbk --strict
+flyback-cli check --preset "Mycelium" --json
 flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
 flyback-cli info --preset "Plasma"
 flyback-cli modules
 flyback-cli modules adsr
 flyback-cli pack nebula.fbk -o nebula.fbkb
+flyback-cli pack --preset "Mycelium" -o mycelium.fbkb
 flyback-cli pack-plugin Flyback.Plugins.Ripple.csproj -o ripple.fbkp --key ripple.key
 flyback-cli plugin-key -o ripple.key
 flyback-cli print nebula.fbk -o nebula.fbks
@@ -165,10 +167,12 @@ flyback-cli viewer nebula.fbk
 
 ### Commands
 
+`render`, `check`, `info`, `print` and `pack` read a patch file, or a shipped or plugin preset named with `--preset` in its place; `--presets` lists the names, as a JSON array under `--json`, and a name nobody shipped is refused with the list.
+
 - `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does. The picture is drawn on the GPU through a headless OpenGL context (EGL on Linux, WGL on Windows) where there is one, and on the processor where there is not; `--processor` asks for the processor, whose picture is exact to the bit, and `--gpu` fails rather than fall back. On the processor the patch runs compiled; `--interpreted` keeps it on the interpreter, which writes the same bytes more slowly.
 - `check`: compiles the patch and reports issues; for a text patch, `--json` gives each complaint's line, column and a stable `code`
 - `info`: shows module and wire counts and compile cost; `--preset` describes a shipped preset by name, and `--presets` lists them
-- `pack`: packs a patch together with the files it references
+- `pack`: packs a patch together with the files it references; `--preset` packs a shipped preset with the files it carries
 - `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
 - `viewer`: starts `flyback-viewer` with everything after the word, so `flyback-cli viewer --help` is the viewer's own help
@@ -267,7 +271,7 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 
 ## Web editor
 
-`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits and plays no sound yet. The preset site serves it at `/editor/`; `-p:WebEditor=false` builds the site without it:
+`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits, and plays its sound in the web viewer's worker. The preset site serves it at `/editor/`; `-p:WebEditor=false` builds the site without it:
 
 ```bash
 dotnet run --project src/Flyback.Server
@@ -275,7 +279,7 @@ dotnet run --project src/Flyback.Server
 
 The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `./stills.sh src/Flyback.Server/wwwroot/stills` gives a local run of the site the stills.
 
-`window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load.
+`window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load; `text()` reads the open patch in the language; `apply(text)` applies text as the text view's Apply does, one edit that one undo takes back, and answers null or what is wrong with it; `sound()` says how the sound is going.
 
 ## How it works
 

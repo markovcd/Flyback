@@ -24,6 +24,13 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     private const string PackageName = "figures.fbkp";
 
+    private const string Bundle = "preset.fbkb";
+
+    private static readonly Lazy<PluginCatalog> Shipped =
+        new(() => PluginHost.Load(PluginHost.DefaultDirectory, PluginTrust.Shipped(PluginHost.DefaultDirectory)));
+
+    private string? packed;
+
     private int code;
     private string said = string.Empty;
     private PackageSigner? signer;
@@ -60,6 +67,38 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [When("flyback-cli describes the preset {string}")]
     public void WhenDescribed(string name) => Run("info", "--preset", name);
+
+    [When("flyback-cli packs the preset {string}")]
+    public void WhenPresetPacked(string name)
+    {
+        packed = name;
+        RunShipped("pack", "--preset", name, "--out", Path(Bundle));
+    }
+
+    [When("flyback-cli prints the preset {string}")]
+    public void WhenPresetPrinted(string name) => Run("print", "--preset", name);
+
+    [Then("the bundle holds the preset and every file it carries")]
+    public void ThenBundleHoldsPreset()
+    {
+        var preset = Shipped.Value.Presets.Single(p => p.Name == packed);
+
+        using var archive = File.OpenRead(Path(Bundle));
+        var bundle = PatchBundle.Read(archive, Shipped.Value.Modules);
+
+        bundle.Patch.Nodes.Count.ShouldBe(preset.Build(Shipped.Value.Modules).Nodes.Count);
+        preset.Files.ShouldNotBeNull();
+        bundle.Files.Values.Select(Convert.ToBase64String).Order()
+            .ShouldBe(preset.Files().Values.Select(Convert.ToBase64String).Order());
+    }
+
+    [Then("the command fails, listing the presets there are")]
+    public void ThenFailsListingPresets()
+    {
+        code.ShouldBe(Exit.Failed, said);
+
+        foreach (var preset in PluginCatalog.Empty.Presets) said.ShouldContain($"    {preset.Name}");
+    }
 
     [When("flyback-cli draws the stills")]
     public void WhenStillsDrawn() => Run("stills", "--out", Path("stills"));
@@ -124,14 +163,19 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
 
-    private void Run(params string[] arguments)
+    private void Run(params string[] arguments) => Run(() => PluginCatalog.Empty, arguments);
+
+    /// <summary>Runs with the plugins that ship, as the installed program loads them.</summary>
+    private void RunShipped(params string[] arguments) => Run(() => Shipped.Value, arguments);
+
+    private void Run(Func<PluginCatalog> catalog, string[] arguments)
     {
         var output = new StringWriter();
         var error = new StringWriter();
 
         code = Cli.Program.Run(
             arguments,
-            new PluginRegistry(() => PluginCatalog.Empty, folder.FullName, null),
+            new PluginRegistry(catalog, folder.FullName, null),
             new InvocationConfiguration { Output = output, Error = error });
 
         said = output + Environment.NewLine + error;

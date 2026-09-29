@@ -24,6 +24,6 @@ ADR-0095 (Stroke, Fade, Wander, Drum in Voice; Desk, Trails in the engine) and A
 
 ## How a port is verified
 
-Dump every preset with `PatchIO.ToJson` first, and save each one built now beside its dump. `flyback-cli compare old.fbk new.fbk --seconds 60` plays both and says whether every sample and every pixel agrees, and where they first part when not; `--json` for a script over all of them. To show everything but a changed noise is exact, compare against a dump with the old noise spliced back in.
+Pack every preset first (`flyback-cli pack --preset <name> -o old.fbkb`, `--presets` for the names), and pack each one built now beside it. `flyback-cli compare old.fbkb new.fbkb --seconds 60` plays both and says whether every sample and every pixel agrees, and where they first part when not; `--json` for a script over all of them. To show everything but a changed noise is exact, compare against a dump with the old noise spliced back in.
 
 See `authoring-presets`.

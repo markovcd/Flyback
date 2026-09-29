@@ -46,4 +46,12 @@ internal static partial class PageExports
     /// <summary>Opens the preset called <paramref name="name"/>, or the first on the list where none is.</summary>
     [JSExport]
     public static void Preset(string name) => Get<PresetSlot>().StartOn(name);
+
+    /// <summary>The open patch as text in the language.</summary>
+    [JSExport]
+    public static string Text() => Get<Document>().AsText();
+
+    /// <summary>Applies <paramref name="text"/> as the text view's Apply does; null once applied, or what is wrong with it.</summary>
+    [JSExport]
+    public static string? Apply(string text) => Get<Document>().Apply(text);
 }

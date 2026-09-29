@@ -29,7 +29,7 @@ The shipped module plugins' embedded previews (`src/Flyback.Plugins.<Name>/previ
 
 ## The full-window shots
 
-The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. A preset dumped with `PatchIO.ToJson` from a scratch test is the `.fbk`; set every `Group.Collapsed` in the dump for the shots that show shut boxes (whole-band, euclid-kit). tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. A stale one goes on the list above rather than being retaken in the UI change's commit.
+The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, plasma*.webp, tutorial-canvas.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks`. A stale one goes on the list above rather than being retaken in the UI change's commit.
 
 A preset with sound plays through the user's speakers while it is captured, for the few seconds the recipe takes. Capture it anyway; muting the system is a system setting and off limits.
 

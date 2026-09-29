@@ -466,6 +466,19 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>What the text view holds.</summary>
     public string Text => ReadWindow(open => Source(open).Text);
 
+    /// <summary>The open patch as text, as a page's <c>flyback.text()</c> reads it.</summary>
+    public string ScriptedText => ReadWindow(_ => Service<Document>().AsText());
+
+    /// <summary>Applies text as a page's <c>flyback.apply</c> does: null once applied, or what is wrong with it.</summary>
+    public string? ApplyScripted(string source)
+    {
+        string? answer = null;
+
+        DoWindow((_, _) => answer = Service<Document>().Apply(source));
+
+        return answer;
+    }
+
     /// <summary>Presses Ctrl+V in the text view, with the caret at the end of the text.</summary>
     public void PasteIntoText() =>
         DoWindow((open, _) =>

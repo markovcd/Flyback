@@ -6,7 +6,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor as a browser page holds it: <see cref="App.EditorSetup.InPage"/>.</summary>
 [Binding]
-public sealed class PageSteps(Editor editor)
+public sealed class PageSteps(Editor editor, PatchContext context)
 {
     [Given("the editor is in a page")]
     public void GivenInAPage() => editor.Setup = editor.Setup with { InPage = true };
@@ -30,6 +30,37 @@ public sealed class PageSteps(Editor editor)
 
     [Then("the picture is drawn at {int} x {int}")]
     public void ThenDrawnAt(int width, int height) => editor.PictureSize.ShouldBe(new Avalonia.PixelSize(width, height));
+
+    private string? answer;
+
+    [When("a script applies the page's text with {string} changed to {string}")]
+    public void WhenScriptEdits(string from, string to)
+    {
+        var text = editor.ScriptedText;
+
+        text.ShouldContain(from);
+        answer = editor.ApplyScripted(text.Replace(from, to));
+    }
+
+    [When("a script applies the text {string}")]
+    public void WhenScriptApplies(string text) => answer = editor.ApplyScripted(text);
+
+    [Then("the script is told nothing is wrong")]
+    public void ThenNothingWrong() => answer.ShouldBeNull();
+
+    [Then("the script is told what is wrong on line {int}")]
+    public void ThenToldWhatIsWrong(int line) => answer.ShouldNotBeNull().ShouldStartWith($"{line}:");
+
+    [Then("the page's text has {string}")]
+    public void ThenTextHas(string text) => editor.ScriptedText.ShouldContain(text);
+
+    [Then("the sine is at {float} Hz")]
+    public void ThenSineAt(float frequency)
+    {
+        // Found by its type, since text names a module afresh.
+        context.Name("sine", context.Patch.Nodes.Single(node => node.TypeId == "osc.sine"));
+        context.StoredInput("sine", "freq").ShouldBe(frequency);
+    }
 
     private static string[] Names(string names) => names.Split(", ");
 }

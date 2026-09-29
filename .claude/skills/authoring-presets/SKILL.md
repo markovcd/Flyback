@@ -14,7 +14,7 @@ Measured on the user's machine: the audio path runs at 4x oversampling on one th
 ## Building and checking a big preset
 
 - Write the preset directly in C#: a `PresetBench` subclass in `Flyback.Plugins.Effects`, like Bronze, Outrun and Phase. The user does not want an `.fbks` prototype as a step.
-- To measure, add a throwaway xunit test that writes `PatchIO.ToJson(preset.Build(...))` to the scratchpad, then use `flyback-cli info/check/render` on the `.fbk`. The CLI's bin folder needs `Effects`, `Picture` and `Voice` copied into its `plugins/` from the test project's output. Delete the scratch test before committing.
+- To measure, name the preset: `flyback-cli info/check/render --preset <name>`, and `flyback-cli pack --preset <name> -o <file>.fbkb` where a file is wanted. The CLI's bin folder needs `Effects`, `Picture` and `Voice` copied into its `plugins/` from the test project's output.
 - **Render with the Release CLI** (`dotnet build src/Flyback.Cli -c Release`, plugins copied from the Release test output). The Debug CLI is several times slower: a 170 s track had not finished after 11 minutes, while Release rendered it in about 2.5 minutes.
 - CLI render timings are noisy (0.74x to 1.34x for the same patch while the app is running), so never cut features from a preset on the strength of one slow render. The user objected when that was tried on Outrun ("the patch runs fine"). Compare a new preset against a shipped one in the same run.
 - Check levels from the WAV. Struck music sums to far over unity, so set the desk trim so peaks stay under the Clamp.

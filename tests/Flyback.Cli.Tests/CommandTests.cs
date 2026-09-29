@@ -956,6 +956,35 @@ public class CommandTests
 
     // --- pack ----------------------------------------------------------------
 
+    /// <summary>A shipped preset is packed and checked by its name, with no file to have saved first.</summary>
+    [Theory]
+    [InlineData(new[] { "pack", "--preset", "plasma", "--out", "{0}" }, Exit.Ok, "carried  0 files")]
+    [InlineData(new[] { "pack", "--preset", "plasma", "--out", "{0}", "--json" }, Exit.Ok, "\"whole\": true")]
+    [InlineData(new[] { "pack", "--presets", "--json" }, Exit.Ok, "\"Whole band\"")]
+    [InlineData(new[] { "pack", "--preset", "Nonesuch", "--out", "{0}" }, Exit.Failed, "    Whole band")]
+    [InlineData(new[] { "pack", "--out", "{0}" }, Exit.Failed, "say what to pack")]
+    [InlineData(new[] { "pack", "--preset", "Plasma" }, Exit.Failed, "--out says where to write the bundle")]
+    [InlineData(new[] { "check", "--preset", "plasma" }, Exit.Ok, "Plasma")]
+    [InlineData(new[] { "check", "--preset", "plasma", "--json" }, Exit.Ok, "Plasma")]
+    [InlineData(new[] { "check", "--presets" }, Exit.Ok, "Whole band")]
+    [InlineData(new[] { "check", "--preset", "Nonesuch" }, Exit.Failed, "no preset is called 'Nonesuch'")]
+    [InlineData(new[] { "check" }, Exit.Failed, "say what to check")]
+    public void A_preset_is_packed_and_checked_by_its_name(string[] args, int exit, string said)
+    {
+        using var scratch = new Scratch();
+
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var code = Program.Run(
+            [.. args.Select(arg => string.Format(System.Globalization.CultureInfo.InvariantCulture, arg, scratch.File("preset.fbkb").FullName))],
+            new PluginRegistry(() => PluginCatalog.Empty, "nowhere", null),
+            new InvocationConfiguration { Output = output, Error = error });
+
+        code.ShouldBe(exit, error.ToString());
+        (output.ToString() + error).ShouldContain(said);
+    }
+
     /// <summary>
     /// The whole case for a bundle, end to end: a patch and its picture packed
     /// into one file, and that file rendered somewhere the picture has never
