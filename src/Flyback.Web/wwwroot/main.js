@@ -1,10 +1,9 @@
-// The page around WebExports: opens a patch, keeps the speaker's queue topped up,
-// draws each frame at the time the speaker has reached, and answers window.flyback
-// for anything that wants to drive it without looking.
+// The page around WebExports: opens a patch's picture here and its sound in speaker.js,
+// a worker of its own, draws each frame at the time the speaker has reached, and answers
+// window.flyback for anything that wants to drive it without looking.
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
-import * as program from './program.js';
 
 const params = new URLSearchParams(location.search);
 const looped = params.has('loop');
@@ -18,10 +17,6 @@ const SIZES = [[320, 180], [480, 270], [640, 360], [960, 540], [1280, 720], [102
 let [width, height] = (params.get('size') ?? '960x540').split('x').map(Number);
 if (!(width > 0 && height > 0)) [width, height] = [960, 540];
 
-/** Frames rendered per call, and how far ahead of the speaker the queue is kept. */
-const CHUNK = 1024;
-const AHEAD = 0.25;
-
 /** Below this many seconds rendered per second spent, the sound would stutter, so the picture plays alone. */
 const FAST_ENOUGH = 1.2;
 
@@ -33,22 +28,46 @@ const SETTLING = 3000;
 const JUDGED_OVER = 2000;
 const DROPOUTS_ALLOWED = 20;
 
+/** Where the browser keeps the volume between visits. */
+const VOLUME_KEPT = 'flyback-viewer-volume';
+
 const $ = id => document.getElementById(id);
 const ui = {
   presets: $('presets'), file: $('file'), size: $('size'), back: $('back'),
-  play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), fullscreen: $('fullscreen'),
+  play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
+  panel: $('panel'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
 };
 
+/** The sound's thread, what it last said of the sound, and why it stopped where it did. */
+const speaker = new Worker('speaker.js', { type: 'module' });
+let soundStatus = {};
+let speakerFailure = null;
+
+/** Which open is the latest, and the opens still waiting on the worker's answer. */
+let opens = 0;
+const replies = new Map();
+
+const speakerReady = new Promise(resolve => {
+  const failed = text => {
+    speakerFailure = text;
+    resolve(false);
+
+    for (const reply of replies.values()) reply({ error: null, status: null, speed: null });
+  };
+
+  speaker.onmessage = ({ data }) => {
+    if (data.ready) resolve(true);
+    else if (data.failure !== undefined) failed(data.failure);
+    else if (data.state !== undefined) hearState(data);
+    else if (data.opened !== undefined) replies.get(data.opened)?.(data);
+  };
+
+  speaker.onerror = event => failed(event.message || "The sound's worker would not start.");
+});
+
 const runtime = await dotnet.create();
 runtime.setModuleImports('gl', gl);
-runtime.setModuleImports('program', program);
-program.attach({
-  f32: () => runtime.localHeapViewF32(),
-  f64: () => runtime.localHeapViewF64(),
-  i32: () => runtime.localHeapViewI32(),
-  u8: () => runtime.localHeapViewU8(),
-});
 const flyback = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
 
 let info = null;
@@ -72,11 +91,20 @@ let drawnSize = '';
 
 let soundAllowed = true;
 let muted = params.has('mute');
+
+/** How loud, 0 to 1, as it was left on the last visit where the browser keeps it. */
+let loudness = (() => {
+  try {
+    const kept = localStorage.getItem(VOLUME_KEPT);
+    return kept === null ? 1 : Math.min(Math.max(Number(kept) || 0, 0), 1);
+  } catch {
+    return 1;
+  }
+})();
 let context = null;
 let queue = null;
 let volume = null;
 let generation = 0;
-let sent = 0;
 let played = 0;
 let starved = 0;
 let reportedAt = 0;
@@ -96,27 +124,45 @@ function now() {
   return origin + (performance.now() - wallStart) / 1000;
 }
 
-function pump() {
-  if (!playing || !heard) return;
-
-  const rate = info.sampleRate;
-
-  // A few chunks a call at most, so a patch too heavy to keep up stutters rather than freezing the page.
-  for (let i = 0; i < 8 && (sent - played) / rate < AHEAD; i++) {
-    const at = flyback.Hear(CHUNK) / 4;
-    const chunk = runtime.localHeapViewF32().slice(at, at + CHUNK * 2);
-    queue.port.postMessage(chunk, [chunk.buffer]);
-    sent += CHUNK;
-  }
-}
-
+/** The speaker's count of what it has played, which is the clock while the sound is heard. */
 function report({ data }) {
   if (data.generation !== generation) return;
 
   played = data.played;
   starved = data.starved;
   reportedAt = data.at;
-  pump();
+}
+
+/** Hands the picture the Meters' readings the worker packed, when they are of the patch open now. */
+function hearState({ opened, state, status }) {
+  if (opened !== opens) return;
+  if (status) soundStatus = status;
+  if (info === null || state.length === 0 || state.length !== info.stateLength) return;
+
+  const at = flyback.Heard() / 4;
+  if (at === 0) return;
+
+  runtime.localHeapViewF32().set(state, at);
+  flyback.Apply();
+}
+
+/** The worker's answer to opening the sound, or none where it has failed. */
+async function openSound(what, id) {
+  if (!(await speakerReady)) return { error: null, status: null, speed: null };
+
+  return new Promise(resolve => {
+    replies.set(id, reply => {
+      replies.delete(id);
+      resolve(reply);
+    });
+
+    speaker.postMessage({ open: what, width, height, opened: id });
+  });
+}
+
+/** Both halves' status: the worker's last word on the sound, and the picture's now. */
+function status() {
+  return { ...soundStatus, ...JSON.parse(flyback.Status()) };
 }
 
 /** Starts the speaker, and says whether the browser let it: it holds sound back until the page is clicked. */
@@ -126,9 +172,14 @@ async function startSound() {
     await context.audioWorklet.addModule('sound.js');
 
     queue = new AudioWorkletNode(context, 'flyback-queue', { numberOfInputs: 0, outputChannelCount: [2] });
-    volume = new GainNode(context, { gain: muted ? 0 : 1 });
+    volume = new GainNode(context, { gain: muted ? 0 : loudness });
     queue.connect(volume).connect(context.destination);
     queue.port.onmessage = report;
+
+    // The worker feeds the speaker straight, so a busy page never keeps the sound waiting.
+    const channel = new MessageChannel();
+    queue.port.postMessage({ feed: channel.port1 }, [channel.port1]);
+    speaker.postMessage({ speaker: channel.port2 }, [channel.port2]);
   }
 
   await Promise.race([context.resume(), new Promise(resolve => setTimeout(resolve, 250))]);
@@ -136,20 +187,16 @@ async function startSound() {
   return context.state === 'running';
 }
 
-/** Empties the speaker's queue and starts counting from <seconds>. */
-function restartQueue() {
-  generation++;
-  sent = played = 0;
-  queue?.port.postMessage({ clear: generation });
-}
-
+/** Both halves to <seconds>, the speaker's queue emptied and counted again from there. */
 function seek(seconds) {
   flyback.Seek(seconds);
   origin = pausedAt = seconds;
   wallStart = performance.now();
   drawnAt = NaN;
-  restartQueue();
-  pump();
+
+  generation++;
+  played = 0;
+  speaker.postMessage({ seek: seconds, generation });
 }
 
 /** Why the sound is not playing along, when it is not and could. */
@@ -176,7 +223,7 @@ async function play() {
 
   playing = true;
   ui.cover.hidden = true;
-  pump();
+  speaker.postMessage({ run: heard });
   paint();
 }
 
@@ -187,6 +234,7 @@ function pause() {
   playing = false;
 
   // The queue stays where it is, so play carries on from the very next sample.
+  speaker.postMessage({ run: false });
   if (heard) context.suspend();
   paint();
 }
@@ -231,7 +279,7 @@ function judge() {
   if (dropped <= DROPOUTS_ALLOWED) return;
 
   stop();
-  tooSlow(JSON.parse(flyback.Status()).speed);
+  tooSlow(soundStatus.speed ?? 0);
   play();
 }
 
@@ -247,39 +295,137 @@ function toggleMute() {
     if (was) play();
   } else {
     muted = !muted;
-    if (volume) volume.gain.value = muted ? 0 : 1;
+    if (volume) volume.gain.value = muted ? 0 : loudness;
   }
 
   paint();
 }
 
-/** Opens a patch with <opening>, at the page's size, and starts it at <at> seconds. */
-async function open(opening, label, at = 0) {
+/** Sets how loud, 0 to 1; turning it up takes the mute off. */
+function setVolume(level) {
+  loudness = Math.round(Math.min(Math.max(Number(level) || 0, 0), 1) * 100) / 100;
+  if (loudness > 0) muted = false;
+  if (volume) volume.gain.value = muted ? 0 : loudness;
+
+  try {
+    localStorage.setItem(VOLUME_KEPT, String(loudness));
+  } catch {
+    // Kept for this visit only.
+  }
+
+  paint();
+}
+
+/** The panel's knobs: each one's key, name, where it rests and where it is turned to. */
+let knobs = [];
+
+/**
+ * Lays out a slider for each of the open patch's knobs. Knobs of the same patch opened
+ * again keep where they were turned to, and the worker is told.
+ */
+function buildPanel(open, keep) {
+  const before = new Map(knobs.map(knob => [knob.key, knob.value]));
+
+  knobs = open ? JSON.parse(flyback.Knobs()).map(knob => ({ ...knob, value: knob.rest, turns: 0, shown: 0 })) : [];
+  ui.panel.replaceChildren(...knobs.map(slider));
+  ui.panel.hidden = knobs.length === 0;
+
+  for (const knob of knobs)
+    if (keep && before.has(knob.key) && before.get(knob.key) !== knob.value) turn(knob, before.get(knob.key), true);
+}
+
+function slider(knob) {
+  const label = document.createElement('label');
+  const called = document.createElement('span');
+  const reading = document.createElement('output');
+  const input = document.createElement('input');
+
+  called.textContent = knob.name;
+  input.type = 'range';
+  input.min = '0';
+  input.max = '1';
+  input.step = '0.001';
+  input.value = knob.value;
+  input.title = 'Double-click to put it back';
+  input.oninput = () => turn(knob, Number(input.value));
+  input.ondblclick = () => turn(knob, knob.rest);
+
+  knob.input = input;
+  knob.reading = reading;
+  reading.textContent = Math.round(knob.value * 100);
+  label.append(called, reading, input);
+
+  return label;
+}
+
+/**
+ * Turns <knob> to <value>, 0 to 1. The sound hears it once what is queued has played, so
+ * the picture waits as long, unless <atOnce>.
+ */
+function turn(knob, value, atOnce = false) {
+  knob.value = Math.min(Math.max(Number(value) || 0, 0), 1);
+  knob.input.value = knob.value;
+  knob.reading.textContent = Math.round(knob.value * 100);
+
+  speaker.postMessage({ turn: knob.key, value: knob.value });
+
+  const turned = ++knob.turns;
+  const to = knob.value;
+  const show = () => {
+    // A later turn already shown wins over this one arriving late.
+    if (turned < knob.shown) return;
+
+    knob.shown = turned;
+    flyback.Turn(knob.key, to);
+    if (!playing) drawnAt = NaN;
+  };
+
+  const wait = !atOnce && playing && heard ? (soundStatus.queued ?? 0) * 1000 : 0;
+  if (wait > 0) setTimeout(show, wait);
+  else show();
+}
+
+/**
+ * Opens a patch at the page's size, its picture here with <opening.picture> and its sound
+ * in the worker with <opening.sound>, and starts it at <at> seconds.
+ */
+async function open(opening, label, at = 0, keepKnobs = false) {
   const was = playing;
+  const id = ++opens;
 
   stop();
   opener = opening;
-  error = opening(width, height);
   warning = null;
   name = label;
+  info = null;
+  soundStatus = {};
 
   const shown = preview ? params.get('title') ?? label : label;
-  info = null;
+
+  error = opening.picture(width, height);
+  const sound = error === null ? await openSound(opening.sound, id) : null;
+
+  // Another open started while this one waited on the worker, and is the one wanted.
+  if (id !== opens) return;
+
+  error ??= sound.error;
 
   if (error === null) {
-    info = JSON.parse(flyback.Status());
+    soundStatus = sound.status ?? {};
+    info = status();
     insisted = false;
-    soundAllowed = true;
+    soundAllowed = sound.status !== null;
 
-    // The interpreter is as fast on opening as it will ever be, so it can be judged at once.
-    if (info.soundBackend === 'interpreter') {
-      const speed = flyback.Measure(0.2);
-      if (speed < FAST_ENOUGH) tooSlow(speed);
-    }
+    if (!soundAllowed) warning = `The sound could not start here, so the picture plays alone: ${speakerFailure}`;
+    else if (sound.speed !== null && sound.speed < FAST_ENOUGH) tooSlow(sound.speed);
 
     document.title = `${shown} · Flyback Viewer`;
     ui.seek.max = info.length;
   }
+
+  ui.about.textContent = ui.about.title = info?.description ?? '';
+  ui.about.hidden = !info?.description;
+  buildPanel(error === null, keepKnobs);
 
   if (preview) ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
 
@@ -294,11 +440,20 @@ async function open(opening, label, at = 0) {
 async function openPreset(preset) {
   ui.presets.value = preset;
   if (!preview) remember({ preset });
-  await open((w, h) => flyback.OpenPreset(preset, w, h), preset);
+  const bytes = flyback.Pack(preset);
+  const file = `${preset}.fbkb`;
+
+  if (bytes.length === 0) {
+    error = `No preset is called '${preset}'.`;
+    paint();
+    return;
+  }
+
+  await open({ picture: (w, h) => flyback.OpenFile(file, bytes, w, h, 'picture'), sound: { file, bytes } }, preset);
 }
 
 async function openBytes(file, bytes) {
-  return open((w, h) => flyback.OpenFile(file, bytes, w, h), file);
+  return open({ picture: (w, h) => flyback.OpenFile(file, bytes, w, h, 'picture'), sound: { file, bytes } }, file);
 }
 
 async function openUrl(url, name) {
@@ -323,7 +478,7 @@ async function resize(w, h) {
   offerSize(w, h);
   remember({ size: `${w}x${h}` });
 
-  if (changed && opener !== null) await open(opener, name, now());
+  if (changed && opener !== null) await open(opener, name, now(), true);
 }
 
 /** Picks <w>×<h> in the size list, adding it where the address asked for one the list does not offer. */
@@ -365,17 +520,18 @@ function paint() {
   if (ready && !dragging) ui.seek.value = now();
   ui.play.textContent = playing ? '⏸' : '▶';
   ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-  ui.mute.textContent = !soundAllowed || muted ? '🔇' : '🔊';
+  ui.mute.textContent = !soundAllowed || muted || loudness === 0 ? '🔇' : '🔊';
+  ui.volume.value = loudness;
   ui.clock.textContent = ready ? `${clockText(now())} / ${clockText(info.length)}` : '';
 
   const parts = [];
 
   if (ready) {
-    const status = JSON.parse(flyback.Status());
-    parts.push(`${status.soundOps} sound ops · ${status.pictureOps} picture ops · ${status.width}×${status.height}`);
-    if (status.speed > 0) parts.push(`sound renders at ${status.speed.toFixed(2)}×`);
+    const said = status();
+    parts.push(`${said.soundOps ?? 0} sound ops · ${said.pictureOps} picture ops · ${said.width}×${said.height}`);
+    if (said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (starved > 0) parts.push(`${starved} dropouts`);
-    if (status.linking) parts.push('building the shader…');
+    if (said.linking) parts.push('building the shader…');
   }
 
   ui.status.replaceChildren(parts.join(' · '));
@@ -437,6 +593,7 @@ ui.play.onclick = () => (playing ? pause() : play());
 ui.cover.onclick = () => { if (info !== null) play(); };
 ui.rewind.onclick = () => { seek(0); paint(); };
 ui.mute.onclick = toggleMute;
+ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.canvas.ondblclick = toggleFullscreen;
 ui.presets.onchange = () => openPreset(ui.presets.value);
@@ -464,7 +621,7 @@ document.addEventListener('keydown', event => {
   // What already answers the key itself: a list, a focused button, the seek bar's arrows.
   if (target instanceof HTMLSelectElement) return;
   if (target instanceof HTMLButtonElement && (event.code === 'Space' || event.code === 'Enter')) return;
-  if (target === ui.seek && event.code.startsWith('Arrow')) return;
+  if (target instanceof HTMLInputElement && target.type === 'range' && event.code.startsWith('Arrow')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
 
   switch (event.code) {
@@ -472,6 +629,8 @@ document.addEventListener('keydown', event => {
     case 'Home': seek(0); paint(); break;
     case 'ArrowLeft': seekBy(-5); break;
     case 'ArrowRight': seekBy(5); break;
+    case 'ArrowUp': event.preventDefault(); setVolume(loudness + 0.1); break;
+    case 'ArrowDown': event.preventDefault(); setVolume(loudness - 0.1); break;
     case 'KeyM': if (info !== null) toggleMute(); break;
     case 'KeyF': toggleFullscreen(); break;
   }
@@ -487,10 +646,17 @@ window.flyback = {
   seek: seconds => { seek(seconds); paint(); },
   size: resize,
   status: () => ({
-    ...JSON.parse(flyback.Status()),
-    name, preview, playing, time: now(), sound: heard, soundAllowed, held, muted,
-    queued: info ? (sent - played) / info.sampleRate : 0, starved, warning, error,
+    ...status(),
+    name, preview, playing, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
+    queued: soundStatus.queued ?? 0, starved, warning, error, speakerFailure,
   }),
+  volume: setVolume,
+  knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
+  turn: (knob, value) => {
+    const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());
+    if (found) turn(found, value);
+    return found !== undefined;
+  },
   snapshot: () => ui.canvas.toDataURL('image/png'),
   still,
 };
@@ -549,7 +715,6 @@ if (preview) {
   ui.presets.disabled = false;
 }
 
-setInterval(pump, 10);
 setInterval(() => { judge(); paint(); }, 250);
 requestAnimationFrame(frame);
 

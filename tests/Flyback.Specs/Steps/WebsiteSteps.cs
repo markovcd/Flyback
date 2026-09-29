@@ -82,7 +82,7 @@ public sealed partial class WebsiteSteps : IDisposable
 
         var loader = await client.GetStringAsync(new Uri("/viewer/_framework/dotnet.js", UriKind.Relative));
         var files = Framework().Matches(loader).Select(m => "_framework/" + m.Groups["name"].Value)
-            .Concat(["main.js", "gl.js", "program.js", "sound.js", "viewer.css"])
+            .Concat(["main.js", "gl.js", "program.js", "sound.js", "speaker.js", "viewer.css"])
             .Distinct()
             .ToList();
 

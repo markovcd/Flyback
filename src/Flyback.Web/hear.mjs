@@ -2,10 +2,12 @@
 //
 //   node hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 //   node hear.mjs patch.fbkb --seconds 5
+//   node hear.mjs --preset "Vigil" --knob hall=0.9 --knob fog=0
 //   node hear.mjs --presets
 //
-// Prints what the viewer's status says as JSON, with how fast the sound rendered, and
-// writes the samples as raw 32-bit floats, left and right interleaved, when --out names a file.
+// Prints what the viewer's status says as JSON, with how fast the sound rendered and the
+// panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
+// when --out names a file. --knob turns a knob, by name, 0 to 1, before anything plays.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
 
 import { existsSync } from 'node:fs';
@@ -28,6 +30,7 @@ const { values, positionals } = parseArgs({
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
     presets: { type: 'boolean' },
+    knob: { type: 'string', multiple: true, default: [] },
   },
 });
 
@@ -47,16 +50,33 @@ if (values.presets) {
   process.exit(0);
 }
 
+// A preset is packed and opened as its bundle, as the page does.
+const packed = values.preset !== undefined ? web.Pack(values.preset) : null;
 const file = positionals[0];
-const failure = values.preset !== undefined
-  ? web.OpenPreset(values.preset, width, height)
+const failure = packed !== null
+  ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, 'sound') : `No preset is called '${values.preset}'.`
   : file !== undefined
-    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height)
+    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, 'sound')
     : 'Name a patch file or a --preset.';
 
 if (failure) {
   console.error(`hear: ${failure}`);
   process.exit(1);
+}
+
+const knobs = JSON.parse(web.Knobs());
+
+for (const turned of values.knob) {
+  const [called, value] = turned.split('=');
+  const knob = knobs.find(k => k.name.toLowerCase() === called.trim().toLowerCase() || k.key === called.trim());
+
+  if (knob === undefined || value === undefined || !Number.isFinite(Number(value))) {
+    console.error(`hear: --knob ${turned}: name one of ${knobs.map(k => k.name).join(', ') || 'no knobs'}, as name=0.5`);
+    process.exit(1);
+  }
+
+  web.Turn(knob.key, Number(value));
+  knob.value = Math.min(Math.max(Number(value), 0), 1);
 }
 
 const chunk = 1024;
@@ -72,5 +92,5 @@ for (let at = 0; at < frames; at += chunk) {
 
 if (values.out) await writeFile(values.out, new Uint8Array(sound.buffer));
 
-console.log(web.Status());
+console.log(JSON.stringify({ ...JSON.parse(web.Status()), knobs }));
 process.exit(0);

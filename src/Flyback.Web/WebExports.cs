@@ -12,26 +12,40 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.Web;
 
 /// <summary>
-/// What <c>main.js</c> calls: open a patch, fill the sound queue, draw a frame, say
-/// how it is going. Every call answers with a string a script can read, and a failure
-/// is that string rather than an exception thrown across the boundary.
+/// What the page and its sound worker call: open a patch, fill the sound queue, draw a
+/// frame, say how it is going. Every call answers with a string a script can read, and
+/// a failure is that string rather than an exception thrown across the boundary.
 /// </summary>
+/// <remarks>
+/// The page opens the picture and the worker opens the sound, each in a runtime of its
+/// own; <c>hear.mjs</c> opens the sound alone. A call about the half that is not open
+/// here does nothing.
+/// </remarks>
 [SupportedOSPlatform("browser")]
 public static partial class WebExports
 {
+    private const string SoundPart = "sound";
+    private const string PicturePart = "picture";
+
     private static readonly PluginCatalog Plugins = Load();
 
     private static readonly WebGl Gl = new();
 
-    private static WebPlayer? player;
+    private static WebSound? sound;
+    private static WebPicture? picture;
+
+    /// <summary>What the open patch says it is for, and its panel's knobs.</summary>
+    private static string? description;
+    private static IReadOnlyList<PatchControl> knobs = [];
 
     /// <summary>Where <see cref="Hear"/> leaves its samples, pinned so the page can read them in place.</summary>
-    private static float[] samples = [];
-    private static GCHandle pinned;
+    private static readonly Pinned<float> Samples = new();
 
-    /// <summary>Where <see cref="Still"/> leaves a frame, pinned for the same reason.</summary>
-    private static byte[] still = [];
-    private static GCHandle stillPinned;
+    /// <summary>Where <see cref="Listen"/> packs what the picture knows of the sound, and <see cref="Apply"/> reads it.</summary>
+    private static readonly Pinned<float> State = new();
+
+    /// <summary>Where <see cref="Still"/> leaves a frame.</summary>
+    private static readonly Pinned<byte> Frame = new();
 
     private static PluginCatalog Load()
     {
@@ -61,26 +75,37 @@ public static partial class WebExports
             .Select(p => new JsonObject { ["name"] = p.Name, ["heading"] = PresetKinds.Heading(p.Kind) }),
     ]).ToJsonString();
 
-    /// <summary>Opens a shipped preset. Null on success, or why not.</summary>
+    /// <summary>
+    /// A shipped preset built once and packed as a bundle, with the files it plays, for
+    /// <see cref="OpenFile"/>; empty for a name no preset has.
+    /// </summary>
+    /// <remarks>
+    /// Building a preset gives its modules and knobs new ids every time, so the page and
+    /// its sound worker open these same bytes, and agree on every name the two share.
+    /// </remarks>
     [JSExport]
-    public static string? OpenPreset(string name, int width, int height)
+    public static byte[] Pack(string name)
     {
         var wanted = Plugins.Presets.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (wanted is null) return $"No preset is called '{name}'.";
+        if (wanted is null) return [];
 
-        return Open(() =>
-        {
-            var built = wanted.Build(Plugins.Modules);
-            if (wanted.Files is not { } files) return new Opened(built, new SampleLibrary(), new ImageLibrary());
+        var built = wanted.Build(Plugins.Modules);
+        built.Description ??= wanted.Description.Length > 0 ? wanted.Description : null;
 
-            var within = new BundleFiles(files());
-            return new Opened(built, within, within);
-        }, width, height);
+        var files = wanted.Files?.Invoke();
+
+        using var packed = new MemoryStream();
+        PatchBundle.Write(packed, built, path => files?.GetValueOrDefault(path), Plugins.Modules);
+
+        return packed.ToArray();
     }
 
-    /// <summary>Opens a patch file's bytes: a bundle, a document or a patch written as text. Null on success, or why not.</summary>
+    /// <summary>
+    /// Opens <paramref name="part"/>, sound or picture, of a patch file's bytes: a bundle,
+    /// a document or a patch written as text. Null on success, or why not.
+    /// </summary>
     [JSExport]
-    public static string? OpenFile(string name, byte[] bytes, int width, int height) => Open(() =>
+    public static string? OpenFile(string name, byte[] bytes, int width, int height, string part) => Open(() =>
     {
         var extension = Path.GetExtension(name);
 
@@ -107,16 +132,28 @@ public static partial class WebExports
         if (load.TooNew) throw new InvalidDataException(load.Detail);
 
         return new Opened(load.Patch, new SampleLibrary(), new ImageLibrary());
-    }, width, height);
+    }, width, height, part);
 
-    private static string? Open(Func<Opened> open, int width, int height)
+    private static string? Open(Func<Opened> open, int width, int height, string part)
     {
-        player?.Dispose();
-        player = null;
+        if (part is not (SoundPart or PicturePart)) return $"There is no part called '{part}': ask for '{SoundPart}' or '{PicturePart}'.";
+
+        sound?.Dispose();
+        sound = null;
+        picture = null;
+        description = null;
+        knobs = [];
 
         try
         {
-            player = new WebPlayer(open(), width, height);
+            var opened = open();
+
+            if (part == SoundPart) sound = new WebSound(opened, width, height);
+            else picture = new WebPicture(opened, width, height);
+
+            description = opened.Patch.Description;
+            knobs = [.. opened.Patch.Controls ?? []];
+
             return null;
         }
         catch (Exception ex)
@@ -132,31 +169,55 @@ public static partial class WebExports
     [JSExport]
     public static int Hear(int frames)
     {
-        if (samples.Length < frames * 2)
-        {
-            if (pinned.IsAllocated) pinned.Free();
+        var span = Samples.Take(frames * 2);
 
-            samples = new float[frames * 2];
-            pinned = GCHandle.Alloc(samples, GCHandleType.Pinned);
-        }
+        if (sound is null) span.Clear();
+        else sound.Hear(span);
 
-        var span = samples.AsSpan(0, frames * 2);
-
-        if (player is null) span.Clear();
-        else player.Hear(span);
-
-        return (int)pinned.AddrOfPinnedObject();
+        return Samples.Address;
     }
+
+    /// <summary>
+    /// Packs what the picture knows of the sound, its Meters' readings, and answers
+    /// the address it starts at; <c>stateLength</c> in <see cref="Status"/> says how long it is.
+    /// </summary>
+    [JSExport]
+    public static int Listen()
+    {
+        if (sound is null) return 0;
+
+        sound.Listen(State.Take(sound.StateLength));
+
+        return State.Address;
+    }
+
+    /// <summary>
+    /// Where to write what the sound's worker packed with <see cref="Listen"/>, before
+    /// calling <see cref="Apply"/>.
+    /// </summary>
+    [JSExport]
+    public static int Heard()
+    {
+        if (picture is null) return 0;
+
+        State.Take(picture.StateLength);
+
+        return State.Address;
+    }
+
+    /// <summary>Hands the picture what was written where <see cref="Heard"/> said.</summary>
+    [JSExport]
+    public static void Apply() => picture?.Apply(State.Take(picture.StateLength));
 
     /// <summary>Draws the frame at <paramref name="time"/> into a canvas of that size. Null on success, or why not.</summary>
     [JSExport]
     public static string? Draw(double time, int width, int height)
     {
-        if (player is null) return null;
+        if (picture is null) return null;
 
         try
         {
-            return player.Draw(Gl, time, new SurfaceSize(width, height));
+            return picture.Draw(Gl, time, new SurfaceSize(width, height));
         }
         catch (Exception ex)
         {
@@ -171,54 +232,107 @@ public static partial class WebExports
     [JSExport]
     public static int Still(double time)
     {
-        if (player is null) return 0;
+        if (picture is null) return 0;
 
-        var bytes = player.Resolution.Width * player.Resolution.Height * 4;
+        var rgba = Frame.Take(picture.Resolution.Width * picture.Resolution.Height * 4);
 
-        if (still.Length != bytes)
-        {
-            if (stillPinned.IsAllocated) stillPinned.Free();
-
-            still = new byte[bytes];
-            stillPinned = GCHandle.Alloc(still, GCHandleType.Pinned);
-        }
-
-        return player.Still(Gl, time, still) is null ? (int)stillPinned.AddrOfPinnedObject() : 0;
+        return picture.Still(Gl, time, rgba) is null ? Frame.Address : 0;
     }
 
     /// <summary>Whether the picture's shader is still being built, which is when every frame has to be drawn.</summary>
     [JSExport]
-    public static bool Linking() => player?.Linking ?? false;
+    public static bool Linking() => picture?.Linking ?? false;
 
-    /// <summary>Back to <paramref name="seconds"/>, sound and picture both.</summary>
+    /// <summary>Back to <paramref name="seconds"/>: the sound from there, the picture from what it remembers emptied.</summary>
     [JSExport]
-    public static void Seek(double seconds) => player?.SeekTo(seconds);
+    public static void Seek(double seconds)
+    {
+        sound?.SeekTo(seconds);
+        picture?.Rewind();
+    }
 
     /// <summary>Seconds of sound rendered for each second spent, over <paramref name="seconds"/> of the open patch.</summary>
     [JSExport]
-    public static double Measure(double seconds) => player?.Measure(seconds) ?? 0;
+    public static double Measure(double seconds) => sound?.Measure(seconds) ?? 0;
 
-    /// <summary>The open patch as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
+    /// <summary>
+    /// The panel's knobs as JSON: each one's key, name, where it rests and where the open
+    /// half has it turned to, 0 to 1.
+    /// </summary>
+    [JSExport]
+    public static string Knobs() => new JsonArray([
+        .. knobs.Select(k => new JsonObject
+        {
+            ["key"] = k.Key,
+            ["name"] = k.Name,
+            ["rest"] = k.Value,
+            ["value"] = sound?.Reading(k.Key) ?? picture?.Reading(k.Key) ?? k.Value,
+        }),
+    ]).ToJsonString();
+
+    /// <summary>Turns the knob called <paramref name="key"/> to <paramref name="value"/>, 0 to 1.</summary>
+    [JSExport]
+    public static void Turn(string key, double value)
+    {
+        var turned = (float)Math.Clamp(value, 0, 1);
+
+        sound?.Turn(key, turned);
+        picture?.Turn(key, turned);
+    }
+
+    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
     [JSExport]
     public static string Status()
     {
-        if (player is null) return "{\"open\":false}";
+        var status = new JsonObject { ["open"] = sound is not null || picture is not null };
 
-        return new JsonObject
+        if (sound is not null)
         {
-            ["open"] = true,
-            ["length"] = player.Length,
-            ["soundOps"] = player.SoundOps,
-            ["pictureOps"] = player.PictureOps,
-            ["sampleRate"] = player.SampleRate,
-            ["rendered"] = player.Time,
-            ["speed"] = Math.Round(player.Speed, 3),
-            ["soundBackend"] = player.Interpreted is null ? "javascript" : "interpreter",
-            ["interpreted"] = player.Interpreted,
-            ["width"] = player.Resolution.Width,
-            ["height"] = player.Resolution.Height,
-            ["linking"] = player.Linking,
-            ["eightBitFeedback"] = player.EightBitFeedback,
-        }.ToJsonString();
+            status["length"] = sound.Length;
+            status["soundOps"] = sound.SoundOps;
+            status["sampleRate"] = sound.SampleRate;
+            status["rendered"] = sound.Time;
+            status["speed"] = Math.Round(sound.Speed, 3);
+            status["soundBackend"] = sound.Interpreted is null ? "javascript" : "interpreter";
+            status["interpreted"] = sound.Interpreted;
+            status["stateLength"] = sound.StateLength;
+        }
+
+        if (picture is not null)
+        {
+            status["length"] = picture.Length;
+            status["pictureOps"] = picture.PictureOps;
+            status["width"] = picture.Resolution.Width;
+            status["height"] = picture.Resolution.Height;
+            status["linking"] = picture.Linking;
+            status["eightBitFeedback"] = picture.EightBitFeedback;
+            status["stateLength"] = picture.StateLength;
+        }
+
+        if (status["open"]!.GetValue<bool>()) status["description"] = description;
+
+        return status.ToJsonString();
+    }
+
+    /// <summary>An array pinned where it is, so the page reads and writes it in place, grown as asked.</summary>
+    private sealed class Pinned<T> where T : unmanaged
+    {
+        private T[] array = [];
+        private GCHandle handle;
+
+        public int Address => (int)handle.AddrOfPinnedObject();
+
+        public Span<T> Take(int length)
+        {
+            if (array.Length < length || !handle.IsAllocated)
+            {
+                if (handle.IsAllocated) handle.Free();
+
+                array = new T[Math.Max(length, 1)];
+                handle = GCHandle.Alloc(array, GCHandleType.Pinned);
+            }
+
+            return array.AsSpan(0, length);
+        }
     }
 }

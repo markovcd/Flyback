@@ -62,6 +62,9 @@ internal sealed class LiveValues
     /// <summary>Whether this program reads <paramref name="key"/> at all.</summary>
     public bool Reads(string key) => Array.IndexOf(keys, key) >= 0;
 
+    /// <summary>What <paramref name="key"/> is played at, or null where this program does not read it.</summary>
+    public float? Find(string key) => Array.IndexOf(keys, key) is var at and >= 0 ? values[at] : null;
+
     /// <summary>
     /// Plays <paramref name="key"/>, and does nothing at all where the program does
     /// not read it.

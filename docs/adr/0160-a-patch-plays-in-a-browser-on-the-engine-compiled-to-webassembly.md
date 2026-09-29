@@ -46,13 +46,19 @@ otherwise, which the tests allow a hair for. Under Node, Whole band renders at 2
 times real time and Warehouse, the heaviest at 4,346 ops, at 1.2: about 1 ns an op
 an evaluation, a sixth of the interpreter's.
 
-**The page renders the sound on its own thread and posts it to an `AudioWorklet`**,
-which keeps a quarter of a second queued. The picture follows the samples the
-worklet has played, not the ones rendered.
+**The sound renders in a worker, in a second runtime, and feeds an `AudioWorklet`
+straight**, which keeps a quarter of a second queued. The page's runtime compiles
+and draws the picture alone. Nothing is shared: the worker posts the samples down
+a channel to the worklet, and the Meters' readings to the page, which is all the
+picture knows of the sound (the shader reads a Scope's table as silence). A panel
+knob is turned in both runtimes. The picture follows the samples the worklet has
+played, not the ones rendered, and shows a turned knob once the sound has caught up.
 
-**A patch whose sound cannot keep up plays its picture alone and says so.** The
-script is judged by the dropouts it makes once three seconds have let the engine
-optimize it: more than twenty in two seconds and the picture takes the wall clock.
+**A patch whose sound cannot keep up plays its picture alone and says so.** While
+the page waits to play, the worker renders three seconds nobody hears, so the
+engine has optimized the script before the first play seeks back to the start. The
+script is then judged by the dropouts it makes once three seconds have let it
+settle: more than twenty in two seconds and the picture takes the wall clock.
 The interpreter is judged on opening, by a fifth of a second timed on a copy, below
 1.2 times real time. Either way a click on the speaker plays the sound anyway.
 
@@ -70,9 +76,14 @@ what an agent checks sound with.
 
 ## Consequences
 
-- The heaviest presets have a fifth of real time to spare, and the page's one
-  thread draws the picture too, so on a slower machine they may fall back to the
-  picture. Moving the script into a worker, with the memory shared, is the next lead.
+- The heaviest presets have little to spare: in a browser, Whole band renders at
+  about 1.6 times real time and Warehouse at 1.3 to 1.5, so on a slower machine
+  they may fall back to the picture. The engine's speed is the limit now, not the
+  page.
+- The page loads the runtime twice, which costs memory and a second start. It needs
+  no cross-origin isolation, so any static host serves it.
+- A knob turned while playing is heard a quarter of a second later, the queue's
+  length.
 - An opcode added to the interpreter needs a line in `JsEmitter`, or the web viewer
   plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move

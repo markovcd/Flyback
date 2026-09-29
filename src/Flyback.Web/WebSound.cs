@@ -3,41 +3,36 @@ using System.Runtime.Versioning;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
-using Flyback.Gpu;
 
 namespace Flyback.Web;
 
 /// <summary>
-/// One patch, playing in a page: its sound rendered a buffer at a time for the
-/// page to queue, and its picture drawn by the desktop's GPU renderer.
+/// One patch's sound, playing in the viewer's worker: rendered a buffer at a time for
+/// the speaker's queue, with what the picture needs to know of it packed on request.
 /// </summary>
 /// <remarks>
-/// The page's one thread does everything, so nothing here is guarded. The picture
-/// is compiled and drawn only once a context asks for it, which leaves the sound
-/// runnable where there is no canvas at all. The sound runs as JavaScript where
-/// <see cref="JsSound"/> can make it, and on the interpreter where it cannot.
+/// The sound runs as JavaScript where <see cref="JsSound"/> can make it, and on the
+/// interpreter where it cannot. The picture's program is compiled here too, for the
+/// Meters it reads, and is never drawn.
 /// </remarks>
 [SupportedOSPlatform("browser")]
-internal sealed class WebPlayer : IDisposable
+internal sealed class WebSound : IDisposable
 {
     private readonly CompiledPatch sound;
     private readonly CompiledPatch picture;
     private readonly AudioRenderer speakers;
     private readonly DelayState? memory;
     private readonly LiveValues heard;
-    private readonly LiveValues watching;
+    private readonly LiveValues shown;
     private readonly JsSound? script;
     private readonly Stopwatch rendering = new();
 
-    private GpuFrameRenderer? screen;
-    private bool settled;
     private double rendered;
 
-    public WebPlayer(Opened opened, int width, int height)
+    public WebSound(Opened opened, int width, int height)
     {
         var (patch, samples, pictures) = opened;
 
-        Resolution = new SurfaceSize(width, height);
         Length = patch.Lasts;
 
         sound = patch.CompileForAudio(samples: samples, pictures: pictures, played: true).Program;
@@ -48,11 +43,11 @@ internal sealed class WebPlayer : IDisposable
         memory = speakers.DelayMemoryFor(sound);
 
         heard = new LiveValues(sound.LiveInputs);
-        watching = new LiveValues(picture.LiveInputs);
+        shown = new LiveValues(picture.LiveInputs);
 
-        // Where the panel's knobs rest, since nothing here turns them.
+        // Where the panel's knobs rest until somebody turns them.
         patch.Seed(heard);
-        patch.Seed(watching);
+        patch.Seed(shown);
 
         script = JsSound.Create(sound, memory, heard, speakers, out var why);
         Interpreted = why;
@@ -61,14 +56,10 @@ internal sealed class WebPlayer : IDisposable
     /// <summary>Why the sound runs on the interpreter rather than as JavaScript, or null when it does not.</summary>
     public string? Interpreted { get; }
 
-    public SurfaceSize Resolution { get; }
-
     /// <summary>How long the patch plays for, in seconds.</summary>
     public double Length { get; }
 
     public int SoundOps => sound.Ops.Length;
-
-    public int PictureOps => picture.Ops.Length;
 
     public int SampleRate => speakers.SampleRate;
 
@@ -78,8 +69,8 @@ internal sealed class WebPlayer : IDisposable
     /// <summary>Seconds of sound rendered for each second spent rendering it, or zero before any.</summary>
     public double Speed => rendering.Elapsed.TotalSeconds > 0 ? rendered / rendering.Elapsed.TotalSeconds : 0;
 
-    /// <summary>True when feedback fell back to eight bits a channel on this GPU.</summary>
-    public bool EightBitFeedback => screen?.EightBitFeedback ?? false;
+    /// <summary>How many floats <see cref="Listen"/> packs.</summary>
+    public int StateLength => SoundState.Length(picture);
 
     /// <summary>Fills <paramref name="interleavedStereo"/> with the next stretch of sound.</summary>
     public void Hear(Span<float> interleavedStereo)
@@ -93,6 +84,27 @@ internal sealed class WebPlayer : IDisposable
 
         rendered += interleavedStereo.Length / 2.0 / speakers.SampleRate;
     }
+
+    /// <summary>
+    /// Measures every Meter from what has been rendered, playing the readings into the
+    /// sound too, and packs what the picture needs into <paramref name="state"/>.
+    /// </summary>
+    public void Listen(Span<float> state)
+    {
+        Meters.Refresh(sound, memory, shown, heard);
+
+        SoundState.Write(picture, shown, state);
+    }
+
+    /// <summary>Turns a panel knob, 0 to 1.</summary>
+    public void Turn(string key, float value)
+    {
+        heard.Set(key, value);
+        shown.Set(key, value);
+    }
+
+    /// <summary>Where the knob called <paramref name="key"/> is turned to, or null where neither program reads it.</summary>
+    public float? Reading(string key) => heard.Find(key) ?? shown.Find(key);
 
     /// <summary>
     /// How fast the sound renders here, measured on a copy so what is playing is
@@ -118,55 +130,14 @@ internal sealed class WebPlayer : IDisposable
         return buffers * 512.0 / copy.SampleRate / clock.Elapsed.TotalSeconds;
     }
 
-    /// <summary>Lets the script and the memory it pinned go.</summary>
-    public void Dispose() => script?.Dispose();
-
     /// <summary>Back to <paramref name="seconds"/>, with everything the patch remembers emptied.</summary>
     public void SeekTo(double seconds)
     {
         speakers.Reset();
         memory?.Clear();
         speakers.SeekTo(Math.Max(0, seconds));
-        screen?.Rewind();
     }
 
-    /// <summary>
-    /// Draws the frame at <paramref name="time"/> into the canvas, letterboxed into
-    /// <paramref name="canvas"/>, after handing it what the speakers played. Null on success.
-    /// </summary>
-    public string? Draw(IGl gl, double time, SurfaceSize canvas)
-    {
-        if (screen is null)
-        {
-            screen = new GpuFrameRenderer(GlslDialect.GlslEs300, backgroundLinks: true);
-
-            if (screen.Initialise(gl) is { } refused) return refused;
-        }
-
-        if (!settled)
-        {
-            if (screen.SetPatch(gl, picture) is { } failure) return failure;
-
-            settled = !screen.Linking;
-        }
-
-        Traces.Refresh(picture, sound, memory);
-        Meters.Refresh(sound, memory, watching, heard);
-
-        return screen.Render(gl, 0, canvas, Resolution, time, watching);
-    }
-
-    /// <summary>
-    /// Draws the frame at <paramref name="time"/> at the patch's own resolution and reads
-    /// it into <paramref name="rgba"/>, bottom row first. Null on success.
-    /// </summary>
-    public string? Still(IGl gl, double time, Span<byte> rgba)
-    {
-        if (screen is null || !settled) return "The picture is not ready yet.";
-
-        return screen.Frame(gl, Resolution, time, watching, rgba);
-    }
-
-    /// <summary>Whether the picture's shader is still being built.</summary>
-    public bool Linking => screen is not null && !settled;
+    /// <summary>Lets the script and the memory it pinned go.</summary>
+    public void Dispose() => script?.Dispose();
 }

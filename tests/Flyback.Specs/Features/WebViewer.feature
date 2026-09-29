@@ -12,6 +12,17 @@ Feature: The web viewer
       | Sidebands        |
       | Beat you can see |
 
+  Scenario: A panel knob turns the sound in the browser as it does on the desktop
+    Given the shipped preset "Vigil"
+    When it plays in the web viewer for 1 second with its "fog" knob at 0
+    Then its sound is the desktop's with the same knob turned, to within one step of 16 bits
+    And it is not the sound with the knob where it rests
+
+  Scenario: The web viewer says what a preset is for
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 0.1 seconds
+    Then the web viewer says what the preset is for
+
   Scenario: The web viewer offers the presets the editor does
     Given every preset the shipped plugins add as well
     When the web viewer lists its presets

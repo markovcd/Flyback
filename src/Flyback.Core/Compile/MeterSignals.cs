@@ -31,4 +31,7 @@ public static class MeterSignals
     /// they do share.
     /// </summary>
     public static string Key(Guid node, string signal) => $"{Prefix}/{node:N}/{signal}";
+
+    /// <summary>Whether <paramref name="key"/> is one a Meter's reading is played on.</summary>
+    internal static bool Is(string key) => key.StartsWith($"{Prefix}/", StringComparison.Ordinal);
 }

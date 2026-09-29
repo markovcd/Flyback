@@ -29,21 +29,36 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-web-");
     private float[] heard = [];
     private double seconds;
+    private JsonNode? said;
+    private (string Name, float Value)? turned;
 
     private List<(string Name, string Heading)> listed = [];
 
     [When("it plays in the web viewer for {float} second(s)")]
-    public void WhenPlayedInTheBrowser(float length)
+    public void WhenPlayedInTheBrowser(float length) => Play(length);
+
+    [When("it plays in the web viewer for {float} second(s) with its {string} knob at {float}")]
+    public void WhenPlayedWithAKnobTurned(float length, string knob, float value)
+    {
+        turned = (knob, value);
+        Play(length, "--knob", $"{knob}={value.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+    }
+
+    private void Play(float length, params string[] more)
     {
         var output = Path.Combine(folder.FullName, "heard.f32");
-        var status = Hear(
+        var status = Hear([
             "--preset", session.Presets.Single().Name,
             "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture),
             "--size", $"{Width}x{Height}",
-            "--out", output);
+            "--out", output,
+            .. more,
+        ]);
+
+        said = JsonNode.Parse(status);
 
         // The interpreter plays the same samples, so without this a script that failed to build would pass unseen.
-        status.ShouldContain("\"soundBackend\":\"javascript\"");
+        ((string?)said!["soundBackend"]).ShouldBe("javascript");
 
         heard = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(output)).ToArray();
         seconds = length;
@@ -55,7 +70,38 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     /// cannot hear a difference smaller than that.
     /// </summary>
     [Then("its sound is the desktop's to within one step of 16 bits")]
+    [Then("its sound is the desktop's with the same knob turned, to within one step of 16 bits")]
     public void ThenTheDesktopsSound()
+    {
+        var desktop = Desktop(turned);
+
+        heard.Length.ShouldBe(desktop.Length);
+        desktop.ShouldContain(sample => sample != 0f, "the desktop heard silence, so agreeing with it proves nothing");
+
+        var worst = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
+        worst.ShouldBeLessThanOrEqualTo(1f / 32768f);
+    }
+
+    [Then("it is not the sound with the knob where it rests")]
+    public void ThenTheKnobWasHeard()
+    {
+        var resting = Desktop(null);
+
+        var furthest = resting.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
+        furthest.ShouldBeGreaterThan(16f / 32768f, "turning the knob changed nothing a listener could hear");
+    }
+
+    [Then("the web viewer says what the preset is for")]
+    public void ThenItIsDescribed()
+    {
+        var preset = session.Presets.Single();
+
+        preset.Description.ShouldNotBeNullOrWhiteSpace();
+        ((string?)said!["description"]).ShouldBe(preset.Description);
+    }
+
+    /// <summary>The preset rendered the way the desktop renders it, with <paramref name="knob"/> turned where there is one.</summary>
+    private float[] Desktop((string Name, float Value)? knob)
     {
         var modules = Installed.Value.Modules;
         var (patch, samples, pictures) = PresetLibrary.Open(session.Presets.Single(), null, modules);
@@ -64,19 +110,22 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         var live = new LiveValues(program.LiveInputs);
         patch.Seed(live);
 
+        if (knob is var (name, value))
+        {
+            var control = patch.Controls?.SingleOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+            control.ShouldNotBeNull($"the preset has no knob called {name}");
+            live.Set(control.Key, value);
+        }
+
         var speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(Width, Height) };
         var memory = speakers.DelayMemoryFor(program);
-        var desktop = new float[heard.Length];
+        var desktop = new float[(int)Math.Round(seconds * speakers.SampleRate) * 2];
 
         // In the viewer's buffers, since the knobs and keys are read once a buffer.
         for (var at = 0; at < desktop.Length; at += 2048)
             speakers.Render(program, desktop.AsSpan(at, Math.Min(2048, desktop.Length - at)), memory, live);
 
-        heard.Length.ShouldBe((int)Math.Round(seconds * speakers.SampleRate) * 2);
-        desktop.ShouldContain(sample => sample != 0f, "the desktop heard silence, so agreeing with it proves nothing");
-
-        var worst = desktop.Zip(heard, (a, b) => Math.Abs(a - b)).Max();
-        worst.ShouldBeLessThanOrEqualTo(1f / 32768f);
+        return desktop;
     }
 
     [When("the web viewer lists its presets")]

@@ -41,7 +41,7 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 
 `JsEmitter`'s script, AOT build, under Node 18 (ADR-0160): Whole band 2.0x real time, Acid and Mycelium about 1.6x, Warehouse (4,346 ops) and No Sense Dub about 1.2x, Slow weather 1.1x; about 1 ns an op an evaluation. Chrome is faster than Node's older V8. The AOT interpreter it replaced was 23 ns an op a sample, a quarter of real time for Whole band. After remembering each power's last operands, no function takes more than 7%: `advance`, `readLine`, `noise3` and `hash` lead.
 
-- **Likely fix:** render the sound in a worker, so the page's thread draws the picture and nothing else. The memory would have to be shared with the page, where Meters and Scopes read it, which means `SharedArrayBuffer` and cross-origin isolation headers on whatever serves the page.
+- **Done:** the sound renders in a worker of its own (`speaker.js`), with nothing shared; the page gets the Meters' readings by message. In Chrome, AOT, on a busy machine, Whole band held 1.6x with no dropouts and Warehouse 1.3 to 1.5x with some. A cold script runs Warehouse at 0.6x, so the worker warms it up for three seconds before the first play. What is left is the script's own speed: `advance`, `readLine`, `noise3` and `hash`.
 - **Measure:** `node artifacts/web/hear.mjs --preset X --seconds 8` prints `speed`; `--cpu-prof` on the same line gives a profile. A 0.2 s timing on a freshly made script is before V8 has optimized it and reads low.
 
 ## Ruled out, with numbers
