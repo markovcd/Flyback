@@ -95,7 +95,7 @@ internal sealed class OverworldPreset : PresetBench
 
     /// <summary>
     /// The first melody, for the verses: a note and how many eighths it lasts. It climbs the
-    /// Em chord, falls through C, reaches for the high B over G, and ends on the D sharp that
+    /// Em chord, falls through Am, reaches for the high B over G, and ends on the D sharp that
     /// the B major under it needs to pull home.
     /// </summary>
     private static readonly (float Note, float Eighths)[] Verse =
@@ -314,7 +314,7 @@ internal sealed class OverworldPreset : PresetBench
 
         // --- the harmony -----------------------------------------------------
 
-        // Three progressions of eight bars on one list: the verse's Em C G D Em C D B,
+        // Three progressions of eight bars on one list: the verse's Em Am G Bm Em C D B,
         // the chorus's C D Em G C D B B, and the bridge's Am Em C B Am Em F B. The list
         // is read at the bar, and a progression over the first starts it thirty-two
         // beats further along: the chorus's under the choruses and the bridge's under
@@ -324,7 +324,7 @@ internal sealed class OverworldPreset : PresetBench
         var roots = b.Add("seq.notes", (1, 0.25f));
         StepsExtra.Set(roots,
         [
-            new Step(40f), new Step(36f), new Step(43f), new Step(38f),
+            new Step(40f), new Step(45f), new Step(43f), new Step(35f),
             new Step(40f), new Step(36f), new Step(38f), new Step(35f),
             new Step(36f), new Step(38f), new Step(40f), new Step(43f),
             new Step(36f), new Step(38f), new Step(35f), new Step(35f),
@@ -337,7 +337,7 @@ internal sealed class OverworldPreset : PresetBench
         var thirds = b.Add("seq.values", (1, 0.25f));
         StepsExtra.Set(thirds,
         [
-            new Step(3f), new Step(4f), new Step(4f), new Step(4f),
+            new Step(3f), new Step(3f), new Step(4f), new Step(3f),
             new Step(3f), new Step(4f), new Step(4f), new Step(4f),
             new Step(4f), new Step(4f), new Step(3f), new Step(4f),
             new Step(4f), new Step(4f), new Step(4f), new Step(4f),
