@@ -222,7 +222,8 @@ public class IlCompilerTests
 
         var start = Open(compiler, program);
 
-        // Read in this order: the part is given back only after the IL is attached.
+        // Read in this order: the part is given back only after the IL is attached,
+        // and the cue's patience outlasts any build.
         (start.Waiting || program.Il is not null).ShouldBeTrue();
 
         await compiler.Settled();
@@ -307,10 +308,16 @@ public class IlCompilerTests
         Open(compiler, Plasma(0.5f)).Waiting.ShouldBeFalse();
     }
 
+    /// <summary>
+    /// A cue's patience, long enough that these tests read its parts and never its clock:
+    /// on a loaded machine the compiler's below-normal thread can starve past <see cref="Cue.Patience"/>.
+    /// </summary>
+    private static readonly TimeSpan Unhurried = TimeSpan.FromHours(1);
+
     /// <summary>What <c>Playback</c> does with a patch just opened: a cue it holds until the program has taken its part.</summary>
     private static Cue Open(IlCompiler compiler, CompiledPatch program)
     {
-        var start = new Cue();
+        var start = new Cue(Unhurried);
         program.WaitFor(start);
         compiler.Submit(program, IlLane.Picture);
         start.Give();
