@@ -26,13 +26,13 @@ internal sealed class EditorStart(
     ShellLayout shell,
     ReportLine report)
 {
-    public void Start(Window window)
+    public void Start(TopLevel host)
     {
         keeper.Start();
         layout.Load();
-        layout.Apply(window);
+        if (host is Window window) layout.Apply(window);
         MidiSources.Install(() => [.. midi.Sources.Select(source => source with { Conducts = knobs.Instruments.For(source)?.Conducts == true })]);
-        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights(window));
+        usage.Started(plugins.Plugins.Select(plugin => plugin.Info.Id), playback.Sound.Output?.Id, ScreenHeights(host));
         presets.StartOn(outputSettings.Current.DefaultPreset);
 
         if (playback.Sound.Output is null)
@@ -43,9 +43,9 @@ internal sealed class EditorStart(
         shell.ApplyPanelLayout();
     }
 
-    private static IReadOnlyList<int> ScreenHeights(Window window)
+    private static IReadOnlyList<int> ScreenHeights(TopLevel host)
     {
-        try { return window.Screens.All.Select(screen => screen.Bounds.Height).ToList(); }
+        try { return host.Screens?.All.Select(screen => screen.Bounds.Height).ToList() ?? []; }
         catch (Exception) { return []; }
     }
 }

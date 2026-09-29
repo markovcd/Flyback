@@ -65,7 +65,7 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Gpu` | `GpuFrameRenderer`, `GpuReadback`, `IGl`, `Gl`, `HeadlessContext` (WGL and EGL), `HeadlessRenderer` | OpenGL through `IGl`: native function pointers the caller's context hands over, or WebGL 2 in the web viewer, so every picture on a GPU comes from one renderer ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md), [0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
-| `Flyback.Editor` | `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, the container they are composed in, usage counts, the running version and release notes | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). A library, so a browser page can host the editor as well as the desktop ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
+| `Flyback.Editor` | `EditorView`, `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, the container they are composed in, usage counts, the running version and release notes | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). A library, so a browser page can host the editor as well as the desktop ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.App` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Web` | `WebSound`, `WebPicture`, `WebExports`, `WebGl`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
@@ -462,9 +462,10 @@ report line, a dialog, a file picker) and owns its own fields: `Inspector`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
 `EditorServices` registers each with `AddPart<T>`, a constructor says what it
-depends on. `MainWindow` is handed them, lays them out, and keeps its layout,
-its keys, full screen and its close in one file. There are no view models, and
-that has been decided twice.
+depends on. `EditorView` is handed them, lays them out, and answers the keys
+and dropped files of whichever window or page holds it; `MainWindow` is the
+desktop's window around it, keeping its size, its place and its close. There are
+no view models, and that has been decided twice.
 
 **Notices** ([0148](adr/0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
 A hub says what happened by raising a notice, a record in `Flyback.App.Notices`

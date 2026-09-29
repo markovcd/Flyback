@@ -118,7 +118,7 @@ internal sealed class ModalOverlay : Border
         // ordinary key press handled, and Windows delivers the character only for
         // a key press nobody handled, so swallowing it here would leave the box
         // unable to be typed into. The window ignores keys while a dialog is up
-        // (see MainWindow.OnKeyDown), which is what the swallowing is for.
+        // (see EditorView.OnKeyDown), which is what the swallowing is for.
         if (e.Source is TextBox) return;
 
         // Anything still unhandled here was on its way to a window that is

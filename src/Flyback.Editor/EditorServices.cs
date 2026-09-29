@@ -36,15 +36,18 @@ namespace Flyback.App;
 /// </remarks>
 internal static class EditorServices
 {
-    /// <summary>Builds the window <paramref name="setup"/> describes, with any registration <paramref name="replace"/> swaps.</summary>
+    /// <summary>Builds the desktop window around the editor the container composes.</summary>
     public static MainWindow Window(this ServiceProvider provider)
     {
         // Every reactor is built here, so no notice raised later builds one mid-chain.
         var window = provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<MainWindow>);
-        provider.GetRequiredService<WindowHolder>().Attach(window);
         window.Closed += (_, _) => provider.Dispose();
         return window;
     }
+
+    /// <summary>Builds the editor the container composes, for a host that is not a desktop window: a page.</summary>
+    public static EditorView View(this ServiceProvider provider) =>
+        provider.GetRequiredService<Reactions>().Building(provider.GetRequiredService<EditorView>);
 
     /// <summary>The container a window is composed in, with any registration <paramref name="replace"/> swaps. Nothing is resolved from it.</summary>
     /// <param name="validate">Whether every registration is checked to be buildable, which costs a walk of the whole graph.</param>
@@ -154,6 +157,7 @@ internal static class EditorServices
         services.AddPart<FullScreenPreview>();
         services.AddPart<ShellLayout>();
 
+        services.AddPart<EditorView>();
         services.AddPart<MainWindow>();
         services.AddPart<WindowHolder>();
 

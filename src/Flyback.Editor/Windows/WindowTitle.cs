@@ -2,5 +2,5 @@ namespace Flyback.App.Windows;
 
 internal sealed class WindowTitle(WindowHolder holder) : ITitle
 {
-    public void Set(string title) => holder.Instance.Title = title;
+    public void Set(string title) => holder.Window.Title = title;
 }

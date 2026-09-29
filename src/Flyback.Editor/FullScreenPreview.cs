@@ -93,7 +93,8 @@ internal sealed class FullScreenPreview(
             return;
         }
 
-        if (MonitorPlacement.FullScreenTarget(holder.Instance, settings.Current.FullScreen, settings.Current.FullScreenMonitor) is { } screen)
+        if (holder.Instance is Window window
+            && MonitorPlacement.FullScreenTarget(window, settings.Current.FullScreen, settings.Current.FullScreenMonitor) is { } screen)
             ShowPictureOn(screen);
         else
             Show(true);
@@ -113,7 +114,7 @@ internal sealed class FullScreenPreview(
     {
         if (PreviewBox is not { } previewBox || transport.PictureWindow is not null || IsFullScreen) return;
 
-        var owner = holder.Instance;
+        var owner = holder.Window;
 
         usage.Count(Used.FullScreen);
 
@@ -177,7 +178,8 @@ internal sealed class FullScreenPreview(
         // question rather than four. Before that there is nothing to show.
         if (Columns is not { } columns || PreviewBox is not { } previewBox) return;
 
-        var owner = holder.Instance;
+        // A page has no window state to change: the preview takes the page.
+        var owner = holder.Instance as Window;
 
         IsFullScreen = full;
         knobs.OverPicture = full;
@@ -235,7 +237,7 @@ internal sealed class FullScreenPreview(
 
         void Collapse()
         {
-            StateBefore = owner.WindowState;
+            StateBefore = owner?.WindowState ?? WindowState.Normal;
 
             ColumnsBefore = [.. columns.ColumnDefinitions.Select(c => (c.Width, c.MinWidth))];
             RowsBefore = [.. columns.RowDefinitions.Select(r => (r.Height, r.MinHeight))];
@@ -265,7 +267,7 @@ internal sealed class FullScreenPreview(
                 row.Height = i == keepRow ? Everything : None;
             }
 
-            owner.WindowState = WindowState.FullScreen;
+            if (owner is not null) owner.WindowState = WindowState.FullScreen;
         }
 
         void Restore()
@@ -288,7 +290,7 @@ internal sealed class FullScreenPreview(
                 }
             }
 
-            owner.WindowState = StateBefore;
+            if (owner is not null) owner.WindowState = StateBefore;
         }
     }
 }
