@@ -3,9 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -203,6 +207,32 @@ public class AboutTests : UiTest
         All<LogoMark>(window).Single().IsVisible.ShouldBeFalse();
 
         Until(() => Playing(window)).ShouldBeTrue("no frame was ever drawn");
+    }
+
+    /// <summary>
+    /// Coming alive puts the mark's patch on the clipboard as text, which builds
+    /// the very picture it plays, and the window says so.
+    /// </summary>
+    [AvaloniaFact]
+    public async Task Coming_alive_puts_its_code_on_the_clipboard()
+    {
+        var window = Showing();
+        var clipboard = TopLevel.GetTopLevel(window)?.Clipboard ?? throw new InvalidOperationException("no clipboard");
+
+        await clipboard.SetTextAsync("something else");
+
+        Click(window, Middle(window), 6);
+        (await clipboard.TryGetTextAsync()).ShouldBe("something else", "six clicks are not seven");
+
+        Click(window, Middle(window), 1);
+
+        var built = PatchLanguage.Build((await clipboard.TryGetTextAsync()).ShouldNotBeNull(), NodeCatalog.BuiltIn);
+
+        built.Ok.ShouldBeTrue(built.Report);
+        built.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops
+            .ShouldBe(LogoBeam.Patch().CompileForVideo(NodeCatalog.BuiltIn).Program.Ops);
+
+        Words(window).ShouldContain(t => t.Contains("clipboard"));
     }
 
     /// <summary>

@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Flyback.App.Gallery;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 
 namespace Flyback.App.Controls;
@@ -71,9 +72,9 @@ internal static class About
     {
         var heading = new Grid { ColumnDefinitions = new ColumnDefinitions("64,*") };
 
-        var mark = Mark();
-
         var titles = new StackPanel { Spacing = 2, Margin = new Thickness(12, 0, 0, 0) };
+
+        var mark = Mark(said => titles.Children.Add(Quiet(said)));
 
         titles.Children.Add(new TextBlock
         {
@@ -108,13 +109,15 @@ internal static class About
     /// <summary>
     /// The mark, and what it does for somebody who keeps clicking it: on the
     /// seventh it stops being a drawing and becomes the patch it is a picture
-    /// of, for as long as the window is open.
+    /// of, for as long as the window is open, and that patch's text goes on the
+    /// clipboard.
     /// </summary>
     /// <remarks>
     /// Drawn at twice its size and scaled down, so the beam has an edge on a
     /// display that would otherwise show it one pixel wide.
     /// </remarks>
-    private static Control Mark()
+    /// <param name="say">Puts a line under the titles.</param>
+    private static Control Mark(Action<string> say)
     {
         const int side = 56;
         const int clicks = 7;
@@ -137,14 +140,21 @@ internal static class About
         var counted = 0;
         PresetMotion? motion = null;
 
-        mark.PointerPressed += (_, _) =>
+        mark.PointerPressed += async (_, _) =>
         {
             if (motion is not null || ++counted < clicks) return;
+
+            var patch = LogoBeam.Patch();
 
             drawn.IsVisible = false;
             played.IsVisible = true;
             motion = PresetMotion.Play(
-                new Opened(LogoBeam.Patch(), new SampleLibrary(), new ImageLibrary()), played, clock: null, side * 2, side * 2);
+                new Opened(patch, new SampleLibrary(), new ImageLibrary()), played, clock: null, side * 2, side * 2);
+
+            if (TopLevel.GetTopLevel(mark)?.Clipboard is not { } clipboard) return;
+
+            await clipboard.SetTextAsync(PatchPrinter.Print(patch));
+            say("Its code is on the clipboard, to paste into the text view or onto the canvas.");
         };
 
         // The frames are drawn on a thread of their own, which nothing else here
