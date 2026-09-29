@@ -9,22 +9,22 @@ The gallery drew each preset's still from its patch the first time its tile came
 sight, and kept it on disk under the build that drew it. A file of stills was ruled out
 because it would have to be re-shot every time a patch changed.
 
-In a page that drawing shares the one thread with the editor, and the web viewer, which
-has no gallery, would need a second way to draw one. The preset site's shared presets
+In a page that drawing shares the one thread with the editor, and the presets page,
+which is static on GitHub Pages, has no way to draw one. The preset site's shared presets
 already arrive with a still drawn elsewhere.
 
 ## Decision
 
 **`flyback-cli stills --out <folder>` draws every preset the build offers**, the way the
 gallery does (`PresetStill`, a second and a half in), as a JPEG each, with `index.json`
-listing every preset's name, kind, description, author, tags and still, and the build
-that drew them.
+listing every preset in the editor's order with its name, kind, heading, description,
+author, tags and still, and the build that drew them.
 
 **The pipeline runs it once per build**, through `stills.sh`, which lays the editor and
 the command line out side by side so the shipped plugins load: the release lays the
 stills beside each platform's programs, and the preset site's image and the Pages
 workflow publish them at `/stills/`, with the preset site's plugins as well, since the
-web viewer carries them.
+web viewer carries them. The index is the presets page's list of shipped presets.
 
 **A program shows a still only when the index is its own build's.** The desktop reads
 `stills/` beside itself and the web editor fetches `../stills/`; a saved preset, a

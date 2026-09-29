@@ -82,12 +82,11 @@
 
   <!--
     The whole Pages site, served beside the pages that need the server. The files
-    that name the github.io address stay behind, and so does the Pages presets
-    page, which the server's own shelf replaces.
+    that name the github.io address stay behind.
   -->
   <ItemGroup>
     <Content Include="..\..\site\**"
-             Exclude="..\..\site\sitemap.xml;..\..\site\google*.html;..\..\site\presets.html"
+             Exclude="..\..\site\sitemap.xml;..\..\site\google*.html"
              Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />

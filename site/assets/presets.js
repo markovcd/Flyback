@@ -1,9 +1,12 @@
-// The preset site: a shelf of presets, one preset, the form that submits one, and admin sign-in, reports and letters.
+// The presets page, which GitHub Pages serves too with no API behind it: the shelf of shipped and shared presets,
+// one shared preset, the form that submits one, and admin sign-in, reports and letters.
 (function () {
   var api = "api/v1/";
 
+  // No API answers on GitHub Pages, which serves the shelf too.
   var admin = fetch(api + "admin").then(function (r) { return r.json(); })
-    .catch(function () { return { enabled: false, signedIn: false }; });
+    .then(function (state) { state.served = true; return state; })
+    .catch(function () { return { enabled: false, signedIn: false, served: false }; });
 
   function make(tag, attrs, text) {
     var node = document.createElement(tag);
@@ -28,6 +31,13 @@
       + "&name=" + encodeURIComponent(preset.fileName)
       + "&title=" + encodeURIComponent(preset.name)
       + "&back=" + encodeURIComponent("preset.html?id=" + preset.id);
+  }
+
+  /** The web editor opened on the preset's file, which does not count as a download either. */
+  function inEditor(preset) {
+    return "editor/?file=" + encodeURIComponent(preset.file + "?count=false")
+      + "&name=" + encodeURIComponent(preset.fileName)
+      + "&title=" + encodeURIComponent(preset.name);
   }
 
   /** The still, with the loop playing over it while pointed at. */
@@ -65,7 +75,7 @@
   function chips(tags, into, link) {
     var row = make("div", { class: "chips" });
     tags.forEach(function (tag) {
-      row.appendChild(link ? make("a", { class: "chip", href: "./?tag=" + encodeURIComponent(tag) }, tag)
+      row.appendChild(link ? make("a", { class: "chip", href: "presets.html?tag=" + encodeURIComponent(tag) }, tag)
                            : make("span", { class: "chip" }, tag));
     });
     into.appendChild(row);
@@ -114,14 +124,69 @@
 
   // ---- the shelf ----------------------------------------------------------
 
+  /** The web viewer playing a shipped preset, and back to the shelf as it was left. */
+  function played(entry) {
+    return "viewer/?preset=" + encodeURIComponent(entry.name)
+      + "&back=" + encodeURIComponent("presets.html" + location.search);
+  }
+
+  /** A shipped preset, drawn as a shared one is, and marked as built in. */
+  function shippedCard(entry) {
+    var href = played(entry);
+    var article = make("article", { class: "card preset" });
+
+    var box = make("a", { class: "frame", href: href, tabindex: "-1" });
+    if (entry.file) box.appendChild(make("img", { src: "stills/" + encodeURIComponent(entry.file), alt: "", loading: "lazy" }));
+    else box.appendChild(make("span", { class: "waiting" }, entry.still === "soundOnly" ? "Sound only" : "No picture"));
+    article.appendChild(box);
+
+    var header = make("header");
+    header.appendChild(make("a", { href: href }, entry.name));
+    header.appendChild(make("span", { class: "badge built-in" }, "Built in"));
+    article.appendChild(header);
+
+    var body = make("div", { class: "body" });
+    if (entry.author) body.appendChild(make("span", { class: "by" }, "by " + entry.author));
+    if (entry.description) body.appendChild(make("p", null, entry.description));
+    if (entry.tags && entry.tags.length) chips(entry.tags, body, true);
+
+    var buttons = make("span", { class: "buttons" });
+    buttons.appendChild(make("a", { class: "button small", href: "editor/?preset=" + encodeURIComponent(entry.name) }, "Edit"));
+    buttons.appendChild(make("a", { class: "button small", href: href }, "Play"));
+
+    var foot = make("div", { class: "foot" });
+    foot.appendChild(make("span", null, "Ships with Flyback"));
+    foot.appendChild(buttons);
+    body.appendChild(foot);
+
+    article.appendChild(body);
+    return article;
+  }
+
+  /** The presets this build ships, from the index its stills were drawn with; none where it has no stills. */
+  function shippedPresets() {
+    return fetch("stills/index.json").then(function (r) {
+      if (!r.ok) throw new Error();
+      return r.json();
+    }).then(function (index) {
+      return index.presets.filter(function (entry) { return entry.kind !== "blank"; });
+    }).catch(function () { return []; });
+  }
+
   function shelf() {
     var params = new URLSearchParams(location.search);
     var state = { q: params.get("q") || "", tag: params.get("tag") || "", page: +params.get("page") || 1 };
     var search = document.getElementById("search");
+    var shared = document.getElementById("shared");
     var grid = document.getElementById("shelf");
     var pager = document.getElementById("pager");
+    var runs = document.getElementById("shipped");
     var timer = 0;
     var signed = false;
+    var shipped = [];
+    var sharedShown = 0;
+    var shippedShown = 0;
+    var served = false;
 
     search.value = state.q;
 
@@ -132,6 +197,10 @@
       if (state.page > 1) query.set("page", state.page);
       var text = query.toString();
       history.replaceState(null, "", text ? "?" + text : "presets.html");
+    }
+
+    function settle() {
+      document.getElementById("empty").hidden = sharedShown + shippedShown > 0;
     }
 
     function card(preset) {
@@ -151,8 +220,12 @@
       if (preset.tags.length) chips(preset.tags, body, true);
 
       var foot = make("div", { class: "foot" });
+      var buttons = make("span", { class: "buttons" });
+      buttons.appendChild(make("a", { class: "button small", href: inEditor(preset) }, "Edit"));
+      buttons.appendChild(make("a", { class: "button small", href: preset.file, download: preset.fileName }, "Download"));
+
       foot.appendChild(make("span", null, day(preset.submitted)));
-      foot.appendChild(make("a", { class: "button small", href: preset.file, download: preset.fileName }, "Download"));
+      foot.appendChild(buttons);
       body.appendChild(foot);
 
       if (signed) body.appendChild(tools(preset, function () { tags(); load(); }));
@@ -161,38 +234,104 @@
       return article;
     }
 
+    /** Whether a shipped preset has every word searched for and the tag picked, as the API matches a shared one. */
+    function matches(entry) {
+      var text = [entry.name, entry.author || "", entry.description || ""].join("\n").toLowerCase();
+      var words = state.q.toLowerCase().split(/\s+/).filter(Boolean);
+
+      return words.every(function (word) { return text.indexOf(word) >= 0; })
+        && (!state.tag || (entry.tags || []).indexOf(state.tag) >= 0);
+    }
+
+    /** The shipped presets that match, a run under each of the editor's headings. */
+    function showShipped() {
+      var found = [];
+
+      shipped.filter(matches).forEach(function (entry) {
+        var run = found[found.length - 1];
+        if (!run || run.heading !== entry.heading) found.push(run = { heading: entry.heading, entries: [] });
+        run.entries.push(entry);
+      });
+
+      runs.replaceChildren.apply(runs, found.map(function (run) {
+        var section = make("section", { class: "run" });
+        var title = make("h2", null, "BUILT IN · " + run.heading);
+        title.appendChild(make("small", null, String(run.entries.length)));
+
+        var cards = make("div", { class: "shelf" });
+        run.entries.forEach(function (entry) { cards.appendChild(shippedCard(entry)); });
+
+        section.appendChild(title);
+        section.appendChild(cards);
+        return section;
+      }));
+
+      shippedShown = found.length;
+      settle();
+    }
+
+    /** The shared presets that match, a page at a time; none where there is no API, as on GitHub Pages. */
     function load() {
       remember();
       var query = new URLSearchParams({ page: state.page });
       if (state.q) query.set("q", state.q);
       if (state.tag) query.set("tag", state.tag);
 
-      fetch(api + "presets?" + query).then(function (r) { return r.json(); }).then(function (found) {
+      (served ? fetch(api + "presets?" + query) : Promise.reject()).then(function (r) {
+        if (!r.ok) throw new Error();
+        return r.json();
+      }).then(function (found) {
         grid.replaceChildren.apply(grid, found.items.map(card));
-        document.getElementById("empty").hidden = found.items.length > 0;
+        document.getElementById("shared-count").textContent = String(found.total);
 
         var pages = Math.max(1, Math.ceil(found.total / found.pageSize));
         pager.hidden = pages < 2;
         document.getElementById("where").textContent = "Page " + state.page + " of " + pages;
         document.getElementById("previous").disabled = state.page <= 1;
         document.getElementById("next").disabled = state.page >= pages;
+
+        sharedShown = found.items.length;
+      }).catch(function () {
+        sharedShown = 0;
+      }).then(function () {
+        shared.hidden = sharedShown === 0;
+        settle();
       });
     }
 
+    function refresh() {
+      load();
+      showShipped();
+    }
+
+    /** The tags the shared presets and the shipped ones carry, the most used first. */
     function tags() {
-      fetch(api + "tags").then(function (r) { return r.json(); }).then(function (all) {
+      (served ? fetch(api + "tags") : Promise.reject()).then(function (r) {
+        if (!r.ok) throw new Error();
+        return r.json();
+      }).catch(function () { return []; }).then(function (all) {
+        var counts = {};
+        all.forEach(function (t) { counts[t.tag] = t.count; });
+        shipped.forEach(function (entry) {
+          (entry.tags || []).forEach(function (tag) { counts[tag] = (counts[tag] || 0) + 1; });
+        });
+
+        var ranked = Object.keys(counts).sort(function (a, b) {
+          return counts[b] - counts[a] || (a < b ? -1 : a > b ? 1 : 0);
+        }).slice(0, 60);
+
         var row = document.getElementById("tags");
         row.replaceChildren();
-        all.forEach(function (t) {
-          var chip = make("button", { type: "button", class: "chip", "aria-pressed": String(t.tag === state.tag) }, t.tag);
-          chip.appendChild(make("small", null, String(t.count)));
+        ranked.forEach(function (tag) {
+          var chip = make("button", { type: "button", class: "chip", "aria-pressed": String(tag === state.tag) }, tag);
+          chip.appendChild(make("small", null, String(counts[tag])));
           chip.addEventListener("click", function () {
-            state.tag = state.tag === t.tag ? "" : t.tag;
+            state.tag = state.tag === tag ? "" : tag;
             state.page = 1;
             row.querySelectorAll(".chip").forEach(function (c) {
               c.setAttribute("aria-pressed", String(c.firstChild.textContent === state.tag));
             });
-            load();
+            refresh();
           });
           row.appendChild(chip);
         });
@@ -201,15 +340,17 @@
 
     search.addEventListener("input", function () {
       clearTimeout(timer);
-      timer = setTimeout(function () { state.q = search.value.trim(); state.page = 1; load(); }, 250);
+      timer = setTimeout(function () { state.q = search.value.trim(); state.page = 1; refresh(); }, 250);
     });
     document.getElementById("previous").addEventListener("click", function () { state.page--; load(); scrollTo(0, 0); });
     document.getElementById("next").addEventListener("click", function () { state.page++; load(); scrollTo(0, 0); });
 
-    admin.then(function (state) {
-      signed = state.signedIn;
+    Promise.all([admin, shippedPresets()]).then(function (ready) {
+      signed = ready[0].signedIn;
+      served = ready[0].served;
+      shipped = ready[1];
       tags();
-      load();
+      refresh();
     });
   }
 
@@ -255,6 +396,7 @@
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: preset.file, download: preset.fileName }, "Download"));
       actions.appendChild(make("a", { class: "button", href: inBrowser(preset) }, "Play in your browser"));
+      actions.appendChild(make("a", { class: "button", href: inEditor(preset) }, "Edit in your browser"));
       actions.appendChild(make("a", { class: "button", href: "presets.html" }, "All presets"));
       text.appendChild(actions);
 

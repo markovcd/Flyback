@@ -103,13 +103,17 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     [When("flyback-cli draws the stills")]
     public void WhenStillsDrawn() => Run("stills", "--out", Path("stills"));
 
-    [Then("the index lists every preset, each picture with its still")]
+    [Then("the index lists every preset in the editor's order, under its heading, each picture with its still")]
     public void ThenEveryPresetIsIndexed()
     {
-        var index = StillIndex.Read(File.ReadAllText(Path(System.IO.Path.Combine("stills", StillIndex.FileName)))).ShouldNotBeNull();
+        var json = File.ReadAllText(Path(System.IO.Path.Combine("stills", StillIndex.FileName)));
+        var index = StillIndex.Read(json).ShouldNotBeNull();
+        var ordered = PluginCatalog.Empty.Presets.OrderBy(preset => preset.Kind).ToList();
 
         index.Current.ShouldBeTrue();
-        index.Presets.Select(entry => entry.Name).ShouldBe(PluginCatalog.Empty.Presets.Select(preset => preset.Name));
+        index.Presets.Select(entry => entry.Name).ShouldBe(ordered.Select(preset => preset.Name));
+        System.Text.Json.Nodes.JsonNode.Parse(json)!["presets"]!.AsArray().Select(entry => (string)entry!["heading"]!)
+            .ShouldBe(ordered.Select(preset => PresetKinds.Heading(preset.Kind)));
         index.Presets.ShouldContain(entry => entry.Still == StillKind.Picture);
 
         foreach (var entry in index.Presets.Where(entry => entry.Still == StillKind.Picture))

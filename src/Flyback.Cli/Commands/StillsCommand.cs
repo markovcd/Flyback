@@ -51,7 +51,7 @@ internal static class StillsCommand
         var entries = new List<StillEntry>();
         var taken = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var preset in plugins.Catalog.Presets)
+        foreach (var preset in plugins.Catalog.Presets.OrderBy(p => p.Kind))
         {
             var entry = Draw(preset, plugins.Catalog.Modules, folder, taken);
 

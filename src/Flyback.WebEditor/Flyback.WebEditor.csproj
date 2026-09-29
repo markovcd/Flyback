@@ -36,16 +36,16 @@
     <ProjectReference Include="..\Flyback.Gpu\Flyback.Gpu.csproj" />
   </ItemGroup>
 
-  <!-- As the desktop editor: the plugins that ship and make modules, and none that talks to a device, a keychain or a model. -->
+  <!--
+    As the web viewer: every plugin that makes modules, the ones the preset site hosts
+    among them, since a page installs none and the presets page offers their presets.
+    None that talks to a device, a keychain or a model.
+  -->
   <ItemGroup>
     <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
-  </ItemGroup>
-
-  <!-- As the desktop editor: the plugins the preset site hosts, only in All plugins (ADR-0141). -->
-  <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
     <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />

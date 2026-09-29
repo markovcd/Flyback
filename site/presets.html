@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flyback Presets — play them in your browser</title>
-<meta name="description" content="Every preset Flyback ships with, sound and picture, playing in your browser with nothing to install.">
+<meta name="description" content="Every preset Flyback ships with, and the ones people shared, sound and picture, playing in your browser with nothing to install.">
 <link rel="canonical" href="https://markovcd.github.io/Flyback/presets.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Flyback">
 <meta property="og:url" content="https://markovcd.github.io/Flyback/presets.html">
 <meta property="og:title" content="Flyback Presets — play them in your browser">
-<meta property="og:description" content="Every preset Flyback ships with, sound and picture, playing in your browser with nothing to install.">
+<meta property="og:description" content="Every preset Flyback ships with, and the ones people shared, sound and picture, playing in your browser with nothing to install.">
 <meta property="og:image" content="https://markovcd.github.io/Flyback/assets/share.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,18 +22,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750&display=swap">
 <link rel="stylesheet" href="assets/site.css">
-<style>
-  .doc-head { border-bottom: 1px solid var(--edge); }
-  .doc-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
-  .shelf { padding-top: 16px; padding-bottom: 96px; }
-  .shelf section { margin-top: 40px; }
-  .shelf h2 { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
-  .shelf h2 small { font-size: inherit; font-weight: 500; margin-left: 8px; }
-  .shelf .tutorials { margin-top: 16px; }
-  .shelf .empty { padding: 48px 0; color: var(--muted); }
-</style>
+<link rel="stylesheet" href="assets/presets.css">
 </head>
-<body>
+<body data-page="shelf">
 
 <header class="toolbar">
   <div class="wrap">
@@ -52,21 +43,38 @@
 
 <div class="canvas">
   <div class="wrap">
-    <header class="doc-head" style="border: 0">
-      <p class="eyebrow">Presets</p>
+    <header class="doc-head shelf-head">
+      <span class="eyebrow">Presets</span>
       <h1>Patches that play in your browser.</h1>
-      <p class="lede">Every preset Flyback ships with, sound and picture, on the same engine compiled to
-        WebAssembly, with nothing to install. Pick one to play it here. In Flyback, every wire in it is yours to change.</p>
+      <p class="lede">The presets Flyback ships with, and the ones people shared, sound and picture on the same
+        engine compiled to WebAssembly, with nothing to install. In Flyback, every wire in them is yours to change.</p>
       <div class="actions">
-        <a class="button primary" href="viewer/">Open the web viewer</a>
+        <a class="button primary" href="submit.html">Submit a preset</a>
         <a class="button" href="https://github.com/markovcd/Flyback/releases/latest">Download Flyback</a>
       </div>
     </header>
   </div>
 </div>
 
-<main class="wrap shelf" id="shelf" aria-live="polite">
-  <p class="empty">Loading…</p>
+<main class="wrap">
+  <div class="filters">
+    <input type="search" id="search" placeholder="Search names, authors and descriptions" aria-label="Search presets">
+    <div class="chips" id="tags" aria-label="Tags"></div>
+  </div>
+
+  <section class="run" id="shared" aria-labelledby="shared-title" hidden>
+    <h2 id="shared-title">SHARED BY PEOPLE <small id="shared-count"></small></h2>
+    <div class="shelf" id="shelf" aria-live="polite"></div>
+    <nav class="pager" id="pager" aria-label="Pages" hidden>
+      <button type="button" class="button small" id="previous">Newer</button>
+      <span id="where"></span>
+      <button type="button" class="button small" id="next">Older</button>
+    </nav>
+  </section>
+
+  <div id="shipped" aria-live="polite"></div>
+
+  <p class="empty" id="empty" hidden>No presets match. <a href="submit.html">Submit one?</a></p>
 </main>
 
 <footer class="site-foot">
@@ -81,53 +89,7 @@
   </div>
 </footer>
 
-<script>
-  // The viewer's own list, written beside it when the site is published.
-  (function () {
-    var shelf = document.getElementById("shelf");
-
-    function make(tag, attrs, text) {
-      var node = document.createElement(tag);
-      for (var key in attrs || {}) node.setAttribute(key, attrs[key]);
-      if (text != null) node.textContent = text;
-      return node;
-    }
-
-    fetch("viewer/presets.json").then(function (r) {
-      if (!r.ok) throw new Error();
-      return r.json();
-    }).then(function (presets) {
-      var runs = [];
-      presets.forEach(function (preset) {
-        var run = runs[runs.length - 1];
-        if (!run || run.heading !== preset.heading) runs.push(run = { heading: preset.heading, presets: [] });
-        run.presets.push(preset);
-      });
-
-      shelf.replaceChildren.apply(shelf, runs.map(function (run) {
-        var section = make("section");
-        var heading = make("h2", null, run.heading);
-        heading.appendChild(make("small", null, String(run.presets.length)));
-        section.appendChild(heading);
-
-        var grid = make("div", { class: "tutorials" });
-        run.presets.forEach(function (preset) {
-          var card = make("a", { class: "card", href: "viewer/?preset=" + encodeURIComponent(preset.name) });
-          card.appendChild(make("header", null, preset.name));
-          if (preset.description) {
-            var body = make("div", { class: "body" });
-            body.appendChild(make("p", null, preset.description));
-            card.appendChild(body);
-          }
-          grid.appendChild(card);
-        });
-        section.appendChild(grid);
-        return section;
-      }));
-    }).catch(function () {
-      shelf.replaceChildren(make("p", { class: "empty" }, "The list of presets is written when the site is published. The web viewer has them all."));
-    });
-  })();
-</script>
+<script src="assets/ratings.js"></script>
+<script src="assets/presets.js"></script>
 </body>
 </html>

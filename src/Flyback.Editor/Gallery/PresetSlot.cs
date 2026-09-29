@@ -533,6 +533,22 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             return;
         }
 
+        await OpenSharedAsync(shared.Name, shared.FileName, bytes, new Reopen(Shared: shared.Id));
+    }
+
+    /// <summary>
+    /// Opens a shared preset's file already fetched from the preset site, as a page that
+    /// was sent one does, asking first where there is unsaved work.
+    /// </summary>
+    public async Task OpenSharedAsync(string name, string fileName, byte[] bytes)
+    {
+        if (RefuseWhileRecording() || !await unsaved.MayReplaceThePatchAsync()) return;
+
+        await OpenSharedAsync(name, fileName, bytes, new Reopen());
+    }
+
+    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen)
+    {
         if (RefuseWhileRecording()) return;
 
         try
@@ -540,18 +556,18 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             Patch patch;
             string? conversation = null;
 
-            if (PatchFileKinds.Bundled(shared.FileName))
+            if (PatchFileKinds.Bundled(fileName))
             {
                 var bundle = PatchBundle.Read(new MemoryStream(bytes, writable: false), plugins.Modules);
 
                 if (bundle.Load is { IsComplete: false } lacking)
                 {
                     report.Say($"Not opened. {lacking.Summary}", lacking.Detail);
-                    await installs.OfferMissingAsync(lacking, new Reopen(Shared: shared.Id));
+                    await installs.OfferMissingAsync(lacking, reopen);
                     return;
                 }
 
-                files.Became(shared.Name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder));
+                files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder));
                 patch = bundle.Patch;
                 conversation = bundle.Conversation;
             }
@@ -562,11 +578,11 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
                 if (!loaded.IsComplete)
                 {
                     report.Say($"Not opened. {loaded.Summary}", loaded.Detail);
-                    await installs.OfferMissingAsync(loaded, new Reopen(Shared: shared.Id));
+                    await installs.OfferMissingAsync(loaded, reopen);
                     return;
                 }
 
-                files.Became(shared.Name, beside: null);
+                files.Became(name, beside: null);
                 patch = loaded.Patch;
             }
 
@@ -580,11 +596,11 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();
 
-            report.Say($"Opened “{shared.Name}” from the preset site.");
+            report.Say($"Opened “{name}” from the preset site.");
         }
         catch (Exception ex)
         {
-            report.Say($"Could not open “{shared.Name}”: {ex.Message}");
+            report.Say($"Could not open “{name}”: {ex.Message}");
         }
     }
 }

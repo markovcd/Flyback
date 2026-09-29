@@ -10,19 +10,10 @@
 <body>
   <header>
     <a class="brand" href="../">Flyback</a>
-    <a id="back" class="back" hidden></a>
-    <button id="presets" class="picker" aria-haspopup="dialog" disabled>Presets</button>
+    <a id="back" class="back"></a>
     <label class="file" hidden>Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
     <select id="size" aria-label="Resolution"></select>
   </header>
-  <dialog id="gallery" aria-label="Presets">
-    <div class="gallery-head">
-      <strong>Start from a preset</strong>
-      <button id="gallery-close" aria-label="Close">✕</button>
-    </div>
-    <input id="gallery-filter" type="search" placeholder="Filter presets" aria-label="Filter presets">
-    <div id="gallery-tiles"></div>
-  </dialog>
   <main>
     <canvas id="screen"></canvas>
     <div id="cover">Loading…</div>

@@ -54,6 +54,16 @@ public sealed class PageSteps(Editor editor, PatchContext context)
     [Then("the page's text has {string}")]
     public void ThenTextHas(string text) => editor.ScriptedText.ShouldContain(text);
 
+    [When("the page hands the editor the shared preset {string} as {string}")]
+    public void WhenHandedShared(string name, string fileName) =>
+        editor.OpenShared(name, fileName, System.Text.Encoding.UTF8.GetBytes(Flyback.Core.Graph.PatchIO.ToJson(context.Patch)));
+
+    [Then("the editor says it opened {string} from the preset site")]
+    public void ThenOpenedShared(string name) => editor.Reported.ShouldContain($"Opened “{name}” from the preset site.");
+
+    [Then("the editor is titled {string}")]
+    public void ThenTitled(string name) => editor.Title.ShouldStartWith(name);
+
     [Then("the sine is at {float} Hz")]
     public void ThenSineAt(float frequency)
     {

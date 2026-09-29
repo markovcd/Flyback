@@ -88,9 +88,11 @@ meets CORS, and a key has nowhere safe to live), export, MIDI and installing plu
 About off the toolbar and their keys, leaves the picture in place on a double-click,
 tries no preset the gallery's pointer rests on, and the page hides its canvas while
 a dialog is up, since nothing can draw over it.
-The plugins that ship and make modules are referenced, as in the desktop editor;
-the ones the preset site hosts are added only in the All plugins configuration
-([0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)).
+Every plugin that makes modules is referenced, as in the web viewer: the ones that
+ship and the ones the preset site hosts
+([0141](0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)),
+since a page installs none and the presets page offers their presets. It opens a
+shipped preset by `?preset=` and a shared one by `?file=`, as the viewer does.
 
 ## Alternatives considered
 

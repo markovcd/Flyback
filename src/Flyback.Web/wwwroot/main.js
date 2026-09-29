@@ -8,7 +8,7 @@ import * as gl from './gl.js';
 const params = new URLSearchParams(location.search);
 const looped = params.has('loop');
 
-/** Playing one file from the preset site, with nothing to pick. */
+/** Playing a file rather than a shipped preset. */
 const preview = params.has('file');
 
 /** The sizes offered: the editor's own, up to 720p. */
@@ -33,8 +33,7 @@ const VOLUME_KEPT = 'flyback-viewer-volume';
 
 const $ = id => document.getElementById(id);
 const ui = {
-  presets: $('presets'), file: $('file'), size: $('size'), back: $('back'),
-  gallery: $('gallery'), galleryClose: $('gallery-close'), filter: $('gallery-filter'), tiles: $('gallery-tiles'),
+  file: $('file'), size: $('size'), back: $('back'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
@@ -491,7 +490,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
   ui.about.hidden = !info?.description;
   buildPanel(error === null, keepKnobs);
 
-  if (preview) ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
+  ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
 
   seek(info === null ? 0 : Math.min(at, end()));
   ui.cover.hidden = error === null && (was || at > 0);
@@ -502,8 +501,6 @@ async function open(opening, label, at = 0, keepKnobs = false) {
 }
 
 async function openPreset(preset) {
-  showing = preset;
-  ui.presets.textContent = `${preset} ▾`;
   if (!preview) remember({ preset });
   const bytes = flyback.Pack(preset);
   const file = `${preset}.fbkb`;
@@ -662,9 +659,6 @@ ui.mute.onclick = toggleMute;
 ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.canvas.ondblclick = toggleFullscreen;
-ui.presets.onclick = () => openGallery();
-ui.galleryClose.onclick = () => ui.gallery.close();
-ui.filter.oninput = () => filterGallery(ui.filter.value);
 ui.size.onchange = () => resize(...ui.size.value.split('x').map(Number));
 
 ui.seek.onpointerdown = () => { dragging = true; };
@@ -688,9 +682,6 @@ window.addEventListener('blur', release);
 document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
 
 document.addEventListener('keydown', event => {
-  // The gallery's filter is typed into, not played.
-  if (ui.gallery.open) return;
-
   if (typed(event, true)) return;
 
   const target = event.target;
@@ -733,7 +724,6 @@ window.flyback = {
     pressed.clear();
     speaker.postMessage({ release: true });
   },
-  stills: () => [...stills.keys()],
   knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
   turn: (knob, value) => {
     const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());
@@ -743,102 +733,6 @@ window.flyback = {
   snapshot: () => ui.canvas.toDataURL('image/png'),
   still,
 };
-
-/** The preset open now, or null for a file. */
-let showing = null;
-
-/** Each preset's entry in the build's stills (ADR-0163), by name; empty where the site has none of this build's. */
-const stills = new Map();
-
-async function readStills() {
-  try {
-    const response = await fetch('../stills/index.json');
-    if (!response.ok) return;
-
-    const index = await response.json();
-    if (index.version !== flyback.Build()) return;
-
-    for (const entry of index.presets) stills.set(entry.name, entry);
-  } catch {
-    // No stills: the gallery shows names and descriptions alone.
-  }
-}
-
-/** What a tile says in place of a picture. */
-const STILL_WORDS = { soundOnly: 'Sound only', unavailable: 'No preview', nothing: '' };
-
-/** The editor's gallery, in the page: a run of tiles under each heading, each opening its preset. */
-function buildGallery() {
-  let tiles = null;
-
-  for (const { name: preset, heading, description } of listed) {
-    if (tiles?.dataset.heading !== heading) {
-      const run = document.createElement('section');
-      const title = document.createElement('h3');
-      title.textContent = heading;
-      tiles = document.createElement('div');
-      tiles.className = 'tiles';
-      tiles.dataset.heading = heading;
-      run.append(title, tiles);
-      ui.tiles.append(run);
-    }
-
-    const tile = document.createElement('button');
-    tile.className = 'tile';
-    tile.dataset.find = `${preset} ${description ?? ''}`.toLowerCase();
-
-    const frame = document.createElement('div');
-    frame.className = 'frame';
-    const entry = stills.get(preset);
-
-    if (entry?.file) {
-      const image = document.createElement('img');
-      image.src = `../stills/${encodeURIComponent(entry.file)}`;
-      image.alt = '';
-      image.loading = 'lazy';
-      frame.append(image);
-    } else if (entry) {
-      frame.textContent = STILL_WORDS[entry.still] ?? '';
-    }
-
-    const name = document.createElement('strong');
-    name.textContent = preset;
-    const said = document.createElement('span');
-    said.textContent = entry?.description ?? description ?? '';
-
-    tile.append(frame, name, said);
-    tile.onclick = () => {
-      ui.gallery.close();
-      openPreset(preset);
-    };
-    tiles.append(tile);
-  }
-}
-
-function openGallery() {
-  ui.filter.value = '';
-  filterGallery('');
-  ui.gallery.showModal();
-  ui.filter.focus();
-  ui.tiles.querySelector('.tile.showing')?.classList.remove('showing');
-  [...ui.tiles.querySelectorAll('.tile')].find(t => t.querySelector('strong').textContent === showing)?.classList.add('showing');
-}
-
-/** Hides the tiles the words do not find, and a heading with none left under it. */
-function filterGallery(words) {
-  const wanted = words.trim().toLowerCase();
-
-  for (const run of ui.tiles.children) {
-    let any = false;
-
-    for (const tile of run.querySelectorAll('.tile')) {
-      tile.hidden = wanted.length > 0 && !tile.dataset.find.includes(wanted);
-      any ||= !tile.hidden;
-    }
-
-    run.hidden = !any;
-  }
-}
 
 /** The frame at <seconds> as a PNG data URL at the patch's own size, or null where there is none. */
 function still(seconds) {
@@ -867,22 +761,11 @@ function still(seconds) {
 for (const [w, h] of SIZES) ui.size.add(new Option(`${w} × ${h}${w * 9 === h * 16 ? '' : ' (4:3)'}`, `${w}x${h}`));
 offerSize(width, height);
 
-const listed = window.flyback.presets();
-const presets = listed.map(preset => preset.name);
+const presets = window.flyback.presets().map(preset => preset.name);
 
-if (preview) {
-  ui.presets.hidden = true;
-
-  // Back to the preset's own page, and never anywhere off this site.
-  const back = params.get('back');
-  const to = back === null ? null : new URL(back, new URL('../', location.href));
-  if (to !== null && to.origin === location.origin) ui.back.href = to.href;
-  ui.back.hidden = false;
-} else {
-  await readStills();
-  buildGallery();
-  ui.presets.disabled = false;
-}
+// Back to the page that sent it here, the presets page by default, and never anywhere off this site.
+const back = new URL(params.get('back') ?? 'presets.html', new URL('../', location.href));
+if (back.origin === location.origin) ui.back.href = back.href;
 
 setInterval(() => { judge(); paint(); }, 250);
 requestAnimationFrame(frame);

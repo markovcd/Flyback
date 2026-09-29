@@ -4,11 +4,8 @@
 
 /* The page head sits on the canvas band, as the Pages site's do. */
 .canvas + main { padding-top: 32px; }
+[data-page="shelf"] main { padding-bottom: 80px; }
 .shelf-head .actions { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
-
-.built-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 24px; }
-.built-in h2 { margin: 0 0 4px; font-size: 17px; color: var(--bright); }
-.built-in p { margin: 0; color: var(--label); }
 
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0 24px; }
 
@@ -40,6 +37,12 @@ input[type="file"]::file-selector-button {
 .chip small { color: var(--muted); margin-left: 4px; }
 .chip[aria-pressed="true"] small { color: #3A2A10; }
 
+/* A run of cards under a heading: the shared presets, then the shipped ones under the editor's headings. */
+.run { margin-bottom: 40px; }
+.run h2 { margin: 0 0 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
+.run h2 small { font-size: inherit; font-weight: 500; margin-left: 8px; }
+.run .pager { padding: 24px 0 0; }
+
 .shelf { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); }
 
 .card.preset { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
@@ -51,6 +54,7 @@ input[type="file"]::file-selector-button {
 .card.preset p { margin: 0; color: var(--label); }
 .card.preset .by { font-size: 13px; color: var(--muted); }
 .card.preset .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+.card.preset .foot .buttons { display: flex; gap: 6px; }
 
 /* The still, and the loop over it while pointed at. */
 .frame { position: relative; aspect-ratio: 16 / 9; display: block; background: var(--canvas); border-bottom: 1px solid var(--edge); overflow: hidden; }
@@ -95,6 +99,7 @@ button.button { cursor: pointer; }
   color: #16181B; background: var(--attention); border-radius: 3px; padding: 4px 6px;
 }
 .preset-page .badge { margin: 12px 0 0; }
+.badge.built-in { color: var(--label); background: var(--node); box-shadow: inset 0 0 0 1px var(--edge); }
 .card.preset.unpublished .frame { opacity: 0.45; }
 .admin-tools { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--edge); }
 .preset-page .admin-tools { margin-top: 20px; padding-top: 16px; }

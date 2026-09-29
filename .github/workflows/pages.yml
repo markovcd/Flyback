@@ -47,8 +47,8 @@ jobs:
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
       # The workload and the Python its Emscripten runs on, as in the site's
-      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/, and both
-      # show the presets by the stills at ../stills/ (ADR-0163).
+      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/, and the
+      # editor and the presets page show the presets by the stills at stills/ (ADR-0163).
       - name: Build the web viewer and editor, and draw the stills
         run: |
           docker run --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
@@ -62,10 +62,6 @@ jobs:
           cp -r out/web/wwwroot/viewer site/viewer
           cp -r out/editor/wwwroot site/editor
           cp -r out/stills site/stills
-
-      # The presets page lists what the viewer offers, as the viewer itself says it.
-      - name: List the viewer's presets
-        run: node out/web/hear.mjs --presets > site/viewer/presets.json
 
       # The site links the preset site's pages as neighbors, which they are on
       # the preset site itself. Here they are elsewhere, at vars.PRESETS_URL.

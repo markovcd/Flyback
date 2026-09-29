@@ -11,4 +11,8 @@ public sealed record StillEntry(
     string? File,
     string? Description = null,
     string? Author = null,
-    IReadOnlyList<string>? Tags = null);
+    IReadOnlyList<string>? Tags = null)
+{
+    /// <summary>The heading the editor lists the preset under.</summary>
+    public string Heading => PresetKinds.Heading(Kind);
+}

@@ -29,11 +29,9 @@ internal sealed class PageApp : Application
             typeof(Flyback.Plugins.Effects.EffectsPlugin),
             typeof(Flyback.Plugins.Mastering.MasteringPlugin),
             typeof(Flyback.Plugins.Picture.PicturePlugin),
-#if ALL_PLUGINS
             typeof(Flyback.Plugins.Easy.EasyPlugin),
             typeof(Flyback.Plugins.Figures.FiguresPlugin),
             typeof(Flyback.Plugins.Fractals.FractalsPlugin),
-#endif
             typeof(Flyback.Plugins.Voice.VoicePlugin));
 
         NodeCatalog.Install(plugins.Modules);

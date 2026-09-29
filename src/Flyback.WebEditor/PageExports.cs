@@ -47,6 +47,11 @@ internal static partial class PageExports
     [JSExport]
     public static void Preset(string name) => Get<PresetSlot>().StartOn(name);
 
+    /// <summary>Opens a shared preset's file, fetched from the preset site, under <paramref name="name"/>.</summary>
+    [JSExport]
+    public static Task Shared(string name, string fileName, byte[] bytes) =>
+        Get<PresetSlot>().OpenSharedAsync(name, fileName, bytes);
+
     /// <summary>The open patch as text in the language.</summary>
     [JSExport]
     public static string Text() => Get<Document>().AsText();

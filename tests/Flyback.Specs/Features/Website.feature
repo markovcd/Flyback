@@ -10,6 +10,7 @@ Feature: The preset site serves the whole website
     When someone follows every link between the preset site's pages
     Then none of them is missing
 
-  Scenario: The preset site's presets page is its own shelf, not the GitHub Pages one
+  Scenario: The preset site's presets page is the GitHub Pages one, with the shared presets too
     When someone opens the preset site's presets page
     Then they can submit a preset there
+    And it lists the presets Flyback ships with, marked as built in, beside the shared ones

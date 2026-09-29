@@ -43,7 +43,7 @@ Feature: The web viewer
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
 
-  Scenario: The web viewer picks a preset from the editor's gallery
+  Scenario: The web viewer leaves picking a preset to the presets page
     When someone opens the web viewer on the preset site
-    Then its presets are picked from a gallery that a box narrows
+    Then it offers no presets of its own, only a way back to the presets page
     And a browser that kept an earlier build of it asks for this one

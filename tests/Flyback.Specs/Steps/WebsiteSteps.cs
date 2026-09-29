@@ -80,15 +80,31 @@ public sealed partial class WebsiteSteps : IDisposable
     [Then("they can submit a preset there")]
     public void ThenAPresetCanBeSubmitted() => page.ShouldContain("href=\"submit.html\"");
 
+    /// <summary>The shipped presets come from the build's stills, which GitHub Pages has too, and the shared ones from the API.</summary>
+    [Then("it lists the presets Flyback ships with, marked as built in, beside the shared ones")]
+    public async Task ThenShippedPresetsAreListed()
+    {
+        page.ShouldContain("id=\"shipped\"");
+        page.ShouldContain("id=\"shared\"");
+
+        var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
+        script.ShouldContain("\"stills/index.json\"");
+        script.ShouldContain("\"Built in\"");
+        script.ShouldContain("api + \"presets?\"");
+    }
+
     [When("someone opens the web viewer on the preset site")]
     public async Task WhenTheViewerIsOpened() => page = await client.GetStringAsync(new Uri("/viewer/", UriKind.Relative));
 
-    [Then("its presets are picked from a gallery that a box narrows")]
-    public void ThenAGallery()
+    [Then("it offers no presets of its own, only a way back to the presets page")]
+    public async Task ThenNoPresetsOfItsOwn()
     {
-        page.ShouldContain("<dialog id=\"gallery\"");
-        page.ShouldContain("id=\"gallery-filter\"");
-        page.ShouldNotContain("<select id=\"presets\"");
+        page.ShouldNotContain("id=\"gallery\"");
+        page.ShouldNotContain("id=\"presets\"");
+        page.ShouldContain("<a id=\"back\" class=\"back\">");
+
+        var script = await client.GetStringAsync(new Uri("/viewer/main.js", UriKind.Relative));
+        script.ShouldContain("params.get('back') ?? 'presets.html'");
     }
 
     /// <summary>

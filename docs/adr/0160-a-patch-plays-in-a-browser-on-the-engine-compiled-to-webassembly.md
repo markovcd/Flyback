@@ -26,7 +26,8 @@ Sense Dub and Slow weather do not.
 **`Flyback.Web` is the engine, the compiler and the module plugins built for
 `browser-wasm`, behind a page.** The page opens a shipped preset or a patch file,
 plays it, and does nothing else: no editing and no panel, as with `flyback-viewer`
-([0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md)). The seven
+([0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md)). It offers no
+presets of its own: the presets page sends it one, and it leads back there. The seven
 plugins that make modules are project references, loaded with
 `PluginHost.LoadTypes`; none that talks to a device, a keychain or a model comes.
 
@@ -92,4 +93,5 @@ what an agent checks sound with.
   plays every program using it on the interpreter; `JsProgramTests` fails for it first.
 - The web build carries no lock file: its only packages are the SDK's own and move
   with it.
-- The preset site serves it at `/viewer/`, and each preset's page opens its file there; the site's image installs the workload to compile it ahead of time, which adds minutes to its build. GitHub Pages carries it at `viewer/` too, compiled the same way in the SDK image by the Pages workflow rather than committed, and its presets page lists the shipped presets from the viewer's own `hear.mjs --presets`.
+- The preset site serves it at `/viewer/`; the site's image installs the workload to compile it ahead of time, which adds minutes to its build. GitHub Pages carries it at `viewer/` too, compiled the same way in the SDK image by the Pages workflow rather than committed.
+- Both serve one presets page, `site/presets.html`. It lists the shipped presets from the build's stills index ([0163](0163-a-build-draws-every-presets-still-once.md)), marked as built in and filtered in the page, and on the preset site the shared presets beside them from its API, which GitHub Pages does not have. A shipped preset plays in the viewer by `?preset=`, a shared one by `?file=`.

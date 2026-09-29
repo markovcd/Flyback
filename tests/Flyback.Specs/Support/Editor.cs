@@ -479,6 +479,14 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         return answer;
     }
 
+    /// <summary>Opens a shared preset's file as a page sent one by <c>?file=</c> does.</summary>
+    public void OpenShared(string name, string fileName, byte[] bytes) =>
+        Run(async () =>
+        {
+            await Service<Flyback.App.Gallery.PresetSlot>().OpenSharedAsync(name, fileName, bytes);
+            return true;
+        });
+
     /// <summary>Presses Ctrl+V in the text view, with the caret at the end of the text.</summary>
     public void PasteIntoText() =>
         DoWindow((open, _) =>
