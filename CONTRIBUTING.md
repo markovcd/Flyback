@@ -1,16 +1,16 @@
 # Contributing to Flyback
 
-Flyback is built strictly with AI. The code, the tests, the documents and the commit messages are written by an agent; a human directs the work, reviews it and decides what ships, but does not hand-write the source. Everything below follows from that, and none of it lowers the bar the codebase is held to.
+Flyback is mostly written by a large language model (LLM). A human directs the work, reviews it, decides what ships and writes some of it by hand. That is how the project happens to be made, not a requirement on a contribution, and none of it lowers the bar the codebase is held to.
 
-## Contribute by directing an agent
+## Working with an LLM
 
-Point one at the repository and let it read the ground rules first:
+If you use one, point it at the repository and let it read the ground rules first:
 
 - [CLAUDE.md](CLAUDE.md) is the entry point and names everything else.
 - `.claude/rules/` holds the standing rules — git workflow, prose style, ADRs, tests, the changelog, the website, Windows shell pitfalls.
 - `.claude/skills/` holds task-specific know-how: authoring presets, the convenience modules, retaking screenshots, rebuilding the site's audio.
 
-A hand-written patch is accepted as it stands. The premise is how the project is written, not a bar put in front of somebody who turned up with a fix — say in the pull request that you wrote it by hand, and it lands as written once the gate is green.
+The same rules hold for a change written by hand, and it lands the same way: once the gate is green.
 
 ## Read the decisions before proposing a change of shape
 

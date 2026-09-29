@@ -10,9 +10,9 @@ The [website](https://markovcd.github.io/Flyback/) has screenshots, tutorials an
 
 ## The premise
 
-Flyback is built strictly with AI. Every line of code, test, document and commit here is written by an agent; a human directs the work and decides what ships, but does not hand-write the source.
+Flyback is mostly written by a large language model (LLM). A human directs the work, decides what ships and writes some of it by hand. That is how the project happens to be made, not a requirement on anyone who works on it.
 
-That is a constraint on authorship, not on engineering. The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push and pull request, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. Nothing merges that the gate has not passed.
+The project holds to the same standards any modern codebase would: a CI gate that restores, compiles and runs the whole test suite on every push and pull request, signed releases built from the same image the gate stops inside, architecture decisions recorded in `docs/adr/`, and a changelog per release. Nothing merges that the gate has not passed.
 
 Tokens are the one thing the project spends money on, and a donation goes on that budget. Flyback is strictly non-profit: nothing in it is sold, nothing is behind a payment, and nobody is paid out of it. The address is in About and in the site's footer.
 
