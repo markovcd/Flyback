@@ -55,7 +55,7 @@ Bullets for actual lists of parallel things. Never bullet a single thought.
 ## The same voice in the repo
 
 Comments, commit subjects, changelog bullets and site prose get the same
-treatment, under the rules that already cover them in `.claude/rules/`:
+treatment, under the rules that already cover them in `docs/agents/rules/`:
 one line that carries the non-obvious part, no history narrated, no clause
 starting "which" or "so that".
 

@@ -2,7 +2,7 @@
 
 ## Drivability comes first
 
-When a feature, a command or a fix can be shaped more than one way, pick the one an agent can drive: run it, check it and debug it with no eyes on the window. It outranks convenience of implementation and polish of the window. The engineering guide's [Drivable by an agent](../../docs/engineering-guide.md#drivable-by-an-agent) says what that means in practice: a command before a window, answers a script can read, the editor headless, failures that say where.
+When a feature, a command or a fix can be shaped more than one way, pick the one an agent can drive: run it, check it and debug it with no eyes on the window. It outranks convenience of implementation and polish of the window. The engineering guide's [Drivable by an agent](../../engineering-guide.md#drivable-by-an-agent) says what that means in practice: a command before a window, answers a script can read, the editor headless, failures that say where.
 
 **Why:** the user stated it as the project's priority. Nearly every feature here is built, tested and debugged by an agent, so whatever an agent cannot reach is work nobody can check.
 

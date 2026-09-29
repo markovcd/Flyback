@@ -6,8 +6,8 @@ Flyback is mostly written by a large language model (LLM). A human directs the w
 
 If you use one, point it at the repository and let it read the ground rules first:
 
-- [CLAUDE.md](CLAUDE.md) is the entry point and names everything else.
-- `.claude/rules/` holds the standing rules — git workflow, prose style, ADRs, tests, the changelog, the website, Windows shell pitfalls.
+- [AGENTS.md](AGENTS.md) is the entry point and names everything else.
+- `docs/agents/rules/` holds the standing rules — git workflow, one type per file, prose style, terminology, drivability by an agent.
 - `.claude/skills/` holds task-specific know-how: authoring presets, the convenience modules, retaking screenshots, rebuilding the site's audio.
 
 The same rules hold for a change written by hand, and it lands the same way: once the gate is green.

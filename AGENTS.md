@@ -1,0 +1,40 @@
+# Flyback
+
+Flyback is a patchable synthesiser for .NET 10: one module graph generates both a picture and a sound. See [README.md](README.md) for the build and run commands, [docs/engineering-guide.md](docs/engineering-guide.md) for the architecture, the code style and how tests are written, [docs/glossary.md](docs/glossary.md) for the one word each thing is called by, and `docs/adr/` for the decisions behind the design. [TODO.md](TODO.md) lists work asked for and not yet started; add to it when the user says "add to the todo", and take an item off in the commit that lands it.
+
+Standing rules for working in this repo are in `docs/agents/rules/`. They apply to nearly every task, not one kind of it, so read all of them before starting; Claude Code imports them through the paths below:
+
+- @docs/agents/rules/git-workflow.md — commit straight to `main`, and isolate from other sessions' uncommitted work.
+- @docs/agents/rules/one-type-per-file.md — one top-level type per file, named for it; split a file that holds several whenever a change touches it.
+- @docs/agents/rules/prose-style.md — American spelling; succinct comments that never narrate history.
+- @docs/agents/rules/terminology.md — when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
+- @docs/agents/rules/agent-drivability.md — drivability by an agent comes first; a hack needed to get something done is a feature to propose.
+
+Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill's full content when its description matches the task (the name and one-line description below are visible every session regardless):
+
+- `nuget-packages`: check the packages and the SDK before starting anything big; take cheap upgrades, hand off expensive ones.
+- `adrs`: check `docs/adr/` before proposing a refactor; rewrite a day-old ADR in place; number a new ADR from `main` at commit time.
+- `changelog`: what CHANGELOG.md may contain.
+- `tests`: rank a run by duration, treat an unexplained slow test as a defect, and ship every feature with a Gherkin scenario written as a requirement.
+- `website`: a change to anything `site/` describes updates the site in the same commit.
+- `preset-site-defaults`: the preset site's default presets are files, migrated by the change that breaks them.
+- `windows-shell`: PowerShell and Bash-heredoc pitfalls that corrupt files.
+- `looking-at-a-patch`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.
+- `running-the-app`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.
+- `release-key`: every key is `RELEASE_SIGNING_KEY`, a local test key here, made anew whenever it is missing; `./release.sh` tries a release.
+- `authoring-presets`: building and measuring a showcase or teaching preset.
+- `played-presets`: presets with MIDI voices and panel knobs.
+- `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.
+- `site-screenshots`: retaking `site/assets/shots` from the real app.
+- `site-audio-tracks`: rebuilding the website's listening-row MP3s.
+- `build-artifacts`: running `release.sh` after a feature lands on `main`, only ever on `main` in the main worktree, so the build is under `dist/`.
+- `performance`: where a heavy patch's time goes, the open leads for making it run or export faster, what has been ruled out, and how to measure it.
+
+`vibe-check`, which finds what the catalog is missing by reading what an unchecked agent reaches for, lives in the [vibe-mode kit](https://github.com/markovcd/vibe-mode) and is installed under `~/.claude/skills/` on this machine.
+
+Commands in `.claude/commands/` are run by name rather than matched:
+
+- `/bughunt`: hunt for bugs, confirm each as a failing test, fix it, and file the test where it belongs.
+- `/release`: check the changelog and the plugin contract, land the release commit on main, and fire the Release workflow.
+
+`.claude/settings.json` turns on the `Flyback Vibe` output style (`.claude/output-styles/vibe.md`) for every session in this repo. It governs wording only: what gets checked, weighed and recommended is unchanged.
