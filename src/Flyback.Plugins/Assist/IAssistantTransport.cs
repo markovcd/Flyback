@@ -1,8 +1,9 @@
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
-/// What an assistant sends its requests over. The host holds the key and puts it on
-/// each request to the one origin it is bound to; the assistant never sees it.
+/// What an assistant sends its requests over. The host builds each request, puts the
+/// key on it where it goes to the one origin the key is bound to, and hands back only
+/// what came back; the assistant never holds the key or a request that carries it.
 /// </summary>
 /// <remarks>
 /// A key is bound to where the assistant said it would send it (<see cref="IPatchAssistant.Endpoint"/>)
@@ -17,9 +18,10 @@ public interface IAssistantTransport
     string? Origin { get; }
 
     /// <summary>
-    /// Sends over the network, adding the key to each request to <see cref="Origin"/> and
-    /// to no other. Owned by the host: build an <see cref="HttpClient"/> over it with
-    /// <c>disposeHandler: false</c>.
+    /// Sends one request, once: a POST of <paramref name="json"/>, or a GET where it is
+    /// null. The key goes on it where <paramref name="address"/> is on <see cref="Origin"/>.
     /// </summary>
-    HttpMessageHandler Handler { get; }
+    /// <returns>What came back, whatever its status.</returns>
+    /// <exception cref="HttpRequestException">Nothing came back.</exception>
+    Task<AssistantResponse> Send(Uri address, string? json, CancellationToken cancel);
 }

@@ -136,7 +136,7 @@ public sealed partial class GeminiAssistant : IPatchAssistant
             workbench,
             chosen,
             Schema.DefaultBaseUrl!,
-            config.Transport.Handler,
+            config.Transport,
             Thinking(config.Values, chosen),
             ownEars: schema.Known(chosen.Model)?.Hearing == true);
     }

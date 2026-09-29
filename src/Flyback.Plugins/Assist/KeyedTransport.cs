@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Flyback.Plugins.Assist;
 
 /// <summary>The host's <see cref="IAssistantTransport"/>: a key bound to one origin, put on requests there and nowhere else.</summary>
@@ -16,20 +18,52 @@ internal sealed class KeyedTransport : IAssistantTransport
     public static KeyedTransport None { get; } = new(null, null, new AssistantCredential("", ""));
 
     private readonly string? secret;
+    private readonly AssistantCredential credential;
+    private readonly HttpMessageHandler network;
 
     /// <param name="inner">Where requests go once signed; the network unless a test says otherwise.</param>
     public KeyedTransport(string? secret, string? origin, AssistantCredential credential, HttpMessageHandler? inner = null)
     {
         this.secret = string.IsNullOrWhiteSpace(secret) || origin is null ? null : secret;
+        this.credential = credential;
         Origin = this.secret is null ? null : origin;
-        Handler = new Signer(this, credential, inner ?? Network);
+        network = inner ?? Network;
     }
 
     public bool HasKey => secret is not null;
 
     public string? Origin { get; }
 
-    public HttpMessageHandler Handler { get; }
+    public async Task<AssistantResponse> Send(Uri address, string? json, CancellationToken cancel)
+    {
+        ArgumentNullException.ThrowIfNull(address);
+
+        using var request = new HttpRequestMessage(json is null ? HttpMethod.Get : HttpMethod.Post, address);
+
+        if (json is not null) request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        if (secret is { } key
+            && address.IsAbsoluteUri
+            && string.Equals(OriginOf(address), Origin, StringComparison.Ordinal))
+        {
+            request.Headers.TryAddWithoutValidation(credential.Header, credential.Scheme is null ? key : $"{credential.Scheme} {key}");
+        }
+
+        // A turn at high effort is minutes, and a survey asks a list of models several
+        // questions each. Cancellation is what stops either; the timeout is a backstop
+        // for a connection that has died without saying so.
+        using var client = new HttpClient(network, disposeHandler: false) { Timeout = TimeSpan.FromMinutes(10) };
+        using var response = await client.SendAsync(request, cancel).ConfigureAwait(false);
+
+        var body = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+
+        // Copied onto a message of their own: the response leads back to the request the key is on.
+        var headers = new HttpResponseMessage().Headers;
+
+        foreach (var (name, values) in response.Headers) headers.TryAddWithoutValidation(name, values);
+
+        return new AssistantResponse((int)response.StatusCode, body, headers);
+    }
 
     /// <summary><c>scheme://host[:port]</c>, the port only where it is not the scheme's own.</summary>
     public static string OriginOf(Uri address) => address.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
@@ -48,31 +82,4 @@ internal sealed class KeyedTransport : IAssistantTransport
     }
 
     public override string ToString() => HasKey ? $"a key for {Origin}" : "no key";
-
-    /// <summary>Never disposes the network under it: an assistant that disposes its client must not take every other one's with it.</summary>
-    private sealed class Signer(KeyedTransport transport, AssistantCredential credential, HttpMessageHandler inner) : HttpMessageHandler
-    {
-        private readonly HttpMessageInvoker network = new(inner, disposeHandler: false);
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            request.Headers.Remove(credential.Header);
-
-            if (transport.secret is { } key
-                && request.RequestUri is { IsAbsoluteUri: true } address
-                && string.Equals(OriginOf(address), transport.Origin, StringComparison.Ordinal))
-            {
-                request.Headers.TryAddWithoutValidation(credential.Header, credential.Scheme is null ? key : $"{credential.Scheme} {key}");
-            }
-
-            return network.SendAsync(request, cancellationToken);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing) network.Dispose();
-
-            base.Dispose(disposing);
-        }
-    }
 }

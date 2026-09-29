@@ -317,7 +317,7 @@ public class WireTests
     {
         using var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
 
-        var wait = Wire.RetryAfter(response, """
+        var wait = Wire.RetryAfter(response.Headers, """
             {
               "error": {
                 "code": 429,
@@ -341,7 +341,7 @@ public class WireTests
 
         response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(2));
 
-        Wire.RetryAfter(response, """{"error":{"details":[{"retryDelay":"24s"}]}}""")
+        Wire.RetryAfter(response.Headers, """{"error":{"details":[{"retryDelay":"24s"}]}}""")
             .ShouldBe(TimeSpan.FromSeconds(2));
     }
 
@@ -350,8 +350,8 @@ public class WireTests
     {
         using var response = new HttpResponseMessage(HttpStatusCode.BadRequest);
 
-        Wire.RetryAfter(response, """{"error":{"message":"bad request"}}""").ShouldBeNull();
-        Wire.RetryAfter(response, "<html>no</html>").ShouldBeNull();
+        Wire.RetryAfter(response.Headers, """{"error":{"message":"bad request"}}""").ShouldBeNull();
+        Wire.RetryAfter(response.Headers, "<html>no</html>").ShouldBeNull();
     }
 
     [Fact]

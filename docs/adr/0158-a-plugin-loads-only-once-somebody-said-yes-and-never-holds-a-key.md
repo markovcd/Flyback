@@ -47,10 +47,13 @@ why and what to run.
 The check follows `PackageSigner.Checked`: a Debug build and the All plugins build
 load every folder, as they install unsigned packages.
 
-**An assistant is handed an `IAssistantTransport`, never the key.** The host puts
-the key on requests to one origin (`scheme://host[:port]`) and on no other, in the
-header the assistant's credential names; redirects are not followed, since a header
-of a provider's own naming would follow one to another host. A key entered is bound
+**An assistant is handed an `IAssistantTransport`, never the key or a request that
+carries it.** The assistant asks it to send a body to an address; the host builds the
+request, puts the key on it where it goes to one origin (`scheme://host[:port]`) and
+on no other, in the header the assistant's credential names, and hands back the
+status, the body and a copy of the headers. A handler would not do: whoever holds a
+request the key was put on can read it back off it. Redirects are not followed, since
+a header of a provider's own naming would follow one to another host. A key entered is bound
 to the origin the assistant said it would send to (`IPatchAssistant.Endpoint`) and
 kept in the store with it, so an endpoint pointed elsewhere afterwards sends it
 nowhere new: the panel says so and asks for the key again. A key kept before keys
@@ -68,9 +71,9 @@ for a plugin it shares an id with. A plugin's own id stays first-wins.
 
 Extracting a zip into `plugins/` is no longer code execution. Somebody building a
 plugin runs `flyback-cli plugin allow` once per build in a Release build of Flyback,
-or runs a Debug one. A plugin the user allowed and should not have can still spend
-the user's quota against the host a key is bound to, which is bounded, visible and
-revocable; it cannot learn the key. The assistant panel asks for a key made for
+or runs a Debug one. A plugin the user allowed and should not have is never handed
+the key and cannot take it off a request, but it runs as the user and can read a stored
+key off the store itself; the yes it needed is what stands in the way. The assistant panel asks for a key made for
 Flyback alone, with a spending limit.
 
 The preset site changes nothing: its install dialog click is the yes. Review decides
@@ -79,12 +82,15 @@ otherwise the site's admin login would be the key to every machine.
 
 ## What is left: the key leaves the process
 
-Only a key the process never holds is safe from code already running in it. The
-shape, for a later decision: a `flyback-keys` helper owns the store and the HTTP
-send, and the editor asks it over a pipe to send a body to the bound origin for an
-account. On macOS the Keychain's access list binds to the helper's signature; on
-Windows an MSIX-packaged helper gets the same from `PasswordVault`; on Linux the
-process boundary alone holds.
+An allowed plugin still runs as the user, and DPAPI and the Secret Service open for
+any process of that user: it reads the stored key itself, as `ProtectedData.Unprotect`
+over the store's file. A helper process that keeps the key the same way protects
+nothing. One helps only where the key is kept under another identity: on macOS a
+Keychain item whose access list names the helper's signature, so anything else asking
+gets a prompt; on Windows and Linux a service running as an account of its own. Every
+request already goes out through the host's `Send`, so such a helper replaces that one
+method and no provider changes. Even then a plugin can spend through it, since the
+helper cannot tell a plugin's request from the editor's.
 
 ## Ruled out
 

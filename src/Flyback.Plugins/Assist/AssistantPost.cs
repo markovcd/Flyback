@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Flyback.Plugins.Assist;
 
 /// <summary>
@@ -30,40 +28,34 @@ public static class AssistantPost
     public static bool Retryable(int status) =>
         status is 408 or 429 or 500 or 502 or 503 or 504 or 529;
 
-    /// <summary>Sends <paramref name="body"/> as JSON, and gives back what came back.</summary>
+    /// <summary>Sends <paramref name="body"/> as JSON over <paramref name="transport"/>, and gives back what came back.</summary>
     /// <param name="waitAsked">How long the refusal asked to be left alone, or null where it did not say.</param>
     /// <param name="complaint">The refusal as a sentence, from its status and body.</param>
     /// <exception cref="HttpRequestException">Refused, and not worth waiting out.</exception>
     public static async Task<string> Send(
-        HttpClient http,
+        IAssistantTransport transport,
         Uri endpoint,
         string body,
-        Func<HttpResponseMessage, string, TimeSpan?> waitAsked,
+        Func<AssistantResponse, TimeSpan?> waitAsked,
         Func<int, string, string> complaint,
         CancellationToken cancel)
     {
-        ArgumentNullException.ThrowIfNull(http);
+        ArgumentNullException.ThrowIfNull(transport);
         ArgumentNullException.ThrowIfNull(waitAsked);
         ArgumentNullException.ThrowIfNull(complaint);
 
         for (var attempt = 1; ; attempt++)
         {
-            // Built inside the loop: an HttpContent that has been sent once
-            // cannot be sent again, and this is the one thing being retried.
-            using var content = new StringContent(body, Encoding.UTF8, "application/json");
-            using var response = await http.PostAsync(endpoint, content, cancel).ConfigureAwait(false);
+            var response = await transport.Send(endpoint, body, cancel).ConfigureAwait(false);
 
-            var said = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+            if (response.Succeeded) return response.Body;
 
-            if (response.IsSuccessStatusCode) return said;
-
-            var status = (int)response.StatusCode;
-            var wait = waitAsked(response, said) ?? Backoff(attempt);
+            var wait = waitAsked(response) ?? Backoff(attempt);
 
             // Waiting is silent: a hiccup of under a second is not worth a line in
             // the transcript, and a quota is told at once rather than sat on.
-            if (attempt >= MaxAttempts || !Retryable(status) || wait > LongestWait)
-                throw new HttpRequestException(complaint(status, said));
+            if (attempt >= MaxAttempts || !Retryable(response.Status) || wait > LongestWait)
+                throw new HttpRequestException(complaint(response.Status, response.Body));
 
             await Task.Delay(wait < TimeSpan.Zero ? TimeSpan.Zero : wait, cancel).ConfigureAwait(false);
         }

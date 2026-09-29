@@ -21,7 +21,7 @@ public sealed partial class GeminiAssistant : IModelSurvey
     {
         var chosen = Schema.Read(config.Values);
 
-        using var probe = new GeminiProbe(config.Transport.Handler, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
+        var probe = new GeminiProbe(config.Transport, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
         return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }
@@ -37,7 +37,7 @@ public sealed partial class GeminiAssistant : IModelSurvey
 /// </remarks>
 /// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
 /// <param name="address">The endpoint, without a trailing slash.</param>
-internal sealed class GeminiProbe(HttpMessageHandler transport, string address) : IDisposable
+internal sealed class GeminiProbe(IAssistantTransport transport, string address)
 {
     /// <summary>
     /// The largest budget worth searching for. Above any published ceiling, so
@@ -58,10 +58,6 @@ internal sealed class GeminiProbe(HttpMessageHandler transport, string address) 
         "native-audio", "live", "transcribe", "robotics", "computer-use",
         "deep-research", "antigravity",
     ];
-
-    private readonly HttpClient http = Probe.Client(transport);
-
-    public void Dispose() => http.Dispose();
 
     public async Task<IReadOnlyList<ModelReport>> Run(
         SurveyOptions options,
@@ -130,13 +126,12 @@ internal sealed class GeminiProbe(HttpMessageHandler transport, string address) 
             var url = $"{address}/models?pageSize=1000"
                 + (page is null ? string.Empty : $"&pageToken={Uri.EscapeDataString(page)}");
 
-            using var response = await http.GetAsync(new Uri(url), cancel).ConfigureAwait(false);
-            var body = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+            var response = await transport.Send(new Uri(url), null, cancel).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
-                throw new HttpRequestException($"models.list: {(int)response.StatusCode} {Probe.Detail(body)}");
+            if (!response.Succeeded)
+                throw new HttpRequestException($"models.list: {response.Status} {Probe.Detail(response.Body)}");
 
-            var parsed = JsonNode.Parse(body)?.AsObject();
+            var parsed = JsonNode.Parse(response.Body)?.AsObject();
 
             foreach (var model in parsed?["models"]?.AsArray() ?? [])
             {
@@ -254,15 +249,14 @@ internal sealed class GeminiProbe(HttpMessageHandler transport, string address) 
 
         try
         {
-            using var content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
-            using var response = await http.PostAsync(endpoint, content, cancel).ConfigureAwait(false);
+            var response = await transport.Send(endpoint, body.ToJsonString(), cancel).ConfigureAwait(false);
 
-            if (response.IsSuccessStatusCode) return Verdict.Took;
+            if (response.Succeeded) return Verdict.Took;
 
             // A refusal of the request is an answer about the model; anything
             // else — a limit, an outage, a proxy — is an answer about the
             // moment, and recording it as a capability would outlive the moment.
-            return response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound
+            return response.Status is (int)HttpStatusCode.BadRequest or (int)HttpStatusCode.NotFound
                 ? Verdict.Refused
                 : Verdict.Unclear;
         }

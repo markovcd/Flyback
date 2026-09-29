@@ -13,7 +13,25 @@ Flyback.Plugins.Assist.AssistantCredential.Scheme.get -> string?
 Flyback.Plugins.Assist.AssistantCredential.Scheme.init -> void
 Flyback.Plugins.Assist.AssistantSchema.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?
 Flyback.Plugins.Assist.IAssistantTransport
-Flyback.Plugins.Assist.IAssistantTransport.Handler.get -> System.Net.Http.HttpMessageHandler!
+Flyback.Plugins.Assist.IAssistantTransport.Send(System.Uri! address, string? json, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<Flyback.Plugins.Assist.AssistantResponse!>!
+Flyback.Plugins.Assist.AssistantResponse
+Flyback.Plugins.Assist.AssistantResponse.<Clone>$() -> Flyback.Plugins.Assist.AssistantResponse!
+Flyback.Plugins.Assist.AssistantResponse.AssistantResponse(int Status, string! Body, System.Net.Http.Headers.HttpResponseHeaders! Headers) -> void
+Flyback.Plugins.Assist.AssistantResponse.Body.get -> string!
+Flyback.Plugins.Assist.AssistantResponse.Body.init -> void
+Flyback.Plugins.Assist.AssistantResponse.Deconstruct(out int Status, out string! Body, out System.Net.Http.Headers.HttpResponseHeaders! Headers) -> void
+Flyback.Plugins.Assist.AssistantResponse.Equals(Flyback.Plugins.Assist.AssistantResponse? other) -> bool
+Flyback.Plugins.Assist.AssistantResponse.Headers.get -> System.Net.Http.Headers.HttpResponseHeaders!
+Flyback.Plugins.Assist.AssistantResponse.Headers.init -> void
+Flyback.Plugins.Assist.AssistantResponse.Status.get -> int
+Flyback.Plugins.Assist.AssistantResponse.Status.init -> void
+Flyback.Plugins.Assist.AssistantResponse.Succeeded.get -> bool
+override Flyback.Plugins.Assist.AssistantResponse.Equals(object? obj) -> bool
+override Flyback.Plugins.Assist.AssistantResponse.GetHashCode() -> int
+override Flyback.Plugins.Assist.AssistantResponse.ToString() -> string!
+static Flyback.Plugins.Assist.AssistantResponse.operator !=(Flyback.Plugins.Assist.AssistantResponse? left, Flyback.Plugins.Assist.AssistantResponse? right) -> bool
+static Flyback.Plugins.Assist.AssistantResponse.operator ==(Flyback.Plugins.Assist.AssistantResponse? left, Flyback.Plugins.Assist.AssistantResponse? right) -> bool
+*REMOVED*static Flyback.Plugins.Assist.Probe.Client(System.Net.Http.HttpMessageHandler? transport) -> System.Net.Http.HttpClient!
 Flyback.Plugins.Assist.IAssistantTransport.HasKey.get -> bool
 Flyback.Plugins.Assist.IAssistantTransport.Origin.get -> string?
 Flyback.Plugins.Assist.IPatchAssistant.Endpoint(Flyback.Plugins.Settings.SettingValues! values) -> System.Uri?
@@ -70,7 +88,7 @@ override Flyback.Plugins.Assist.ToolCall.Equals(object? obj) -> bool
 override Flyback.Plugins.Assist.ToolCall.GetHashCode() -> int
 override Flyback.Plugins.Assist.ToolCall.ToString() -> string!
 static Flyback.Plugins.Assist.AssistantPost.Retryable(int status) -> bool
-static Flyback.Plugins.Assist.AssistantPost.Send(System.Net.Http.HttpClient! http, System.Uri! endpoint, string! body, System.Func<System.Net.Http.HttpResponseMessage!, string!, System.TimeSpan?>! waitAsked, System.Func<int, string!, string!>! complaint, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<string!>!
+static Flyback.Plugins.Assist.AssistantPost.Send(Flyback.Plugins.Assist.IAssistantTransport! transport, System.Uri! endpoint, string! body, System.Func<Flyback.Plugins.Assist.AssistantResponse!, System.TimeSpan?>! waitAsked, System.Func<int, string!, string!>! complaint, System.Threading.CancellationToken cancel) -> System.Threading.Tasks.Task<string!>!
 static Flyback.Plugins.Assist.ModelReply.operator !=(Flyback.Plugins.Assist.ModelReply? left, Flyback.Plugins.Assist.ModelReply? right) -> bool
 static Flyback.Plugins.Assist.ModelReply.operator ==(Flyback.Plugins.Assist.ModelReply? left, Flyback.Plugins.Assist.ModelReply? right) -> bool
 static Flyback.Plugins.Assist.ToolAnswer.operator !=(Flyback.Plugins.Assist.ToolAnswer? left, Flyback.Plugins.Assist.ToolAnswer? right) -> bool

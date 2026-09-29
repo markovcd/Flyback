@@ -154,7 +154,7 @@ public class SurveyTests
         SurveyOptions? options = null,
         IProgress<string>? said = null)
     {
-        using var probe = new OpenAiProbe(endpoint, "https://example.test/v1");
+        var probe = new OpenAiProbe(new KeyedTransport(null, null, new AssistantCredential("", ""), endpoint), "https://example.test/v1");
 
         return await probe.Run(options ?? new SurveyOptions(), said, CancellationToken.None);
     }

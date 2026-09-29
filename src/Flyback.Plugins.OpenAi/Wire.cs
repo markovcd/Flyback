@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -273,9 +274,8 @@ internal static class Wire
     /// being routinely under the second the standard header rounds to. The reset
     /// headers are the fallback, and the longer of the two wins.
     /// </remarks>
-    public static TimeSpan? RetryAfter(HttpResponseMessage response)
+    public static TimeSpan? RetryAfter(HttpResponseHeaders headers)
     {
-        var headers = response.Headers;
 
         if (headers.TryGetValues("retry-after-ms", out var precise)
             && double.TryParse(

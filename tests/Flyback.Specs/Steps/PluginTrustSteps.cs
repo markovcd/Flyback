@@ -118,10 +118,10 @@ public sealed class PluginTrustSteps : IDisposable
 
         credentials.Accept(assistant.Id, "sk-secret", Entered!, keep: false);
 
-        using var client = new HttpClient(credentials.Transport(assistant, SettingValues.None, new Recorder(carried)).Handler, disposeHandler: false);
+        var transport = credentials.Transport(assistant, SettingValues.None, new Recorder(carried));
 
-        await client.GetAsync(new Uri(Entered + "/v1/models"));
-        await client.GetAsync(new Uri(elsewhere + "/v1/models"));
+        await transport.Send(new Uri(Entered + "/v1/models"), null, CancellationToken.None);
+        await transport.Send(new Uri(elsewhere + "/v1/models"), null, CancellationToken.None);
     }
 
     [Then("only the request to {word} carries the key")]

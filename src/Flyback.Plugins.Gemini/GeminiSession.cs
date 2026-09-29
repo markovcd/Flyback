@@ -21,7 +21,7 @@ internal sealed class GeminiSession : IModelConversation
 {
     private readonly PatchWorkbench workbench;
     private readonly AssistantChoices chosen;
-    private readonly HttpClient http;
+    private readonly IAssistantTransport transport;
     private readonly string address;
     private readonly JsonObject? thinking;
     private readonly bool ownEars;
@@ -42,7 +42,7 @@ internal sealed class GeminiSession : IModelConversation
         PatchWorkbench workbench,
         AssistantChoices chosen,
         string fallbackBaseUrl,
-        HttpMessageHandler transport,
+        IAssistantTransport transport,
         JsonObject? thinking = null,
         bool ownEars = false)
     {
@@ -50,16 +50,9 @@ internal sealed class GeminiSession : IModelConversation
         this.chosen = chosen;
         this.thinking = thinking;
         this.ownEars = ownEars;
+        this.transport = transport;
 
         address = (chosen.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
-
-        // The handler is the host's.
-        http = new HttpClient(transport, disposeHandler: false);
-
-        // A single turn at high effort is minutes, not seconds. Cancellation is
-        // what actually stops this; the timeout is only a backstop for a
-        // connection that has died without saying so.
-        http.Timeout = TimeSpan.FromMinutes(10);
     }
 
     PatchWorkbench IModelConversation.Workbench => workbench;
@@ -145,14 +138,14 @@ internal sealed class GeminiSession : IModelConversation
 
     /// <summary>
     /// One request. The model is in the path rather than the body, which is what lets
-    /// the ear be a different model over the same client.
+    /// the ear be a different model over the same transport.
     /// </summary>
     private async Task<JsonNode?> Post(string model, string body, CancellationToken cancel)
     {
         var endpoint = new Uri($"{address}/models/{Uri.EscapeDataString(model)}:generateContent");
 
         return JsonNode.Parse(await AssistantPost
-            .Send(http, endpoint, body, Wire.RetryAfter, Wire.Complaint, cancel)
+            .Send(transport, endpoint, body, response => Wire.RetryAfter(response.Headers, response.Body), Wire.Complaint, cancel)
             .ConfigureAwait(false));
     }
 
@@ -188,5 +181,7 @@ internal sealed class GeminiSession : IModelConversation
         return true;
     }
 
-    public void Dispose() => http.Dispose();
+    public void Dispose()
+    {
+    }
 }

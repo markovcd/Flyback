@@ -75,27 +75,4 @@ public static class Probe
             return body;
         }
     }
-
-    /// <summary>
-    /// The client a survey asks over, less whatever says who is asking.
-    /// </summary>
-    /// <param name="transport">
-    /// A handler to send over instead of the network, which is how the surveys are
-    /// tested. Not disposed with the client, because the caller is using it for more
-    /// than one.
-    /// </param>
-    /// <remarks>
-    /// The timeout is why this is shared: a survey walks a list of models asking each
-    /// several questions, and the default hundred seconds cuts that off in the middle
-    /// and reports a working endpoint as broken. Authentication is left to the caller,
-    /// being the one part no two providers spell the same way.
-    /// </remarks>
-    public static HttpClient Client(HttpMessageHandler? transport)
-    {
-        var client = transport is null ? new HttpClient() : new HttpClient(transport, disposeHandler: false);
-
-        client.Timeout = TimeSpan.FromMinutes(5);
-
-        return client;
-    }
 }

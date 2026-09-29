@@ -548,7 +548,7 @@ public class SessionTests
                 Hearing: hearing is not Listener.None,
                 EarModel: ear),
             "https://nowhere.invalid/v1beta",
-            canned,
+            new KeyedTransport(null, null, new AssistantCredential("", ""), canned),
             thinking: null,
             ownEars);
     }

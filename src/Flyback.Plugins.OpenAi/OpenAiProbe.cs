@@ -18,7 +18,7 @@ namespace Flyback.Plugins.OpenAi;
 /// </remarks>
 /// <param name="transport">What to send over, which adds the key (<see cref="IAssistantTransport"/>).</param>
 /// <param name="baseUrl">The endpoint, which may be anybody's.</param>
-internal sealed class OpenAiProbe(HttpMessageHandler transport, string baseUrl) : IDisposable
+internal sealed class OpenAiProbe(IAssistantTransport transport, string baseUrl)
 {
     private const string Ping = "Reply with the single word: ok";
 
@@ -47,9 +47,6 @@ internal sealed class OpenAiProbe(HttpMessageHandler transport, string baseUrl) 
     ];
 
     private readonly string address = baseUrl.TrimEnd('/');
-    private readonly HttpClient http = Probe.Client(transport);
-
-    public void Dispose() => http.Dispose();
 
     public async Task<IReadOnlyList<ModelReport>> Run(
         SurveyOptions options,
@@ -142,19 +139,18 @@ internal sealed class OpenAiProbe(HttpMessageHandler transport, string baseUrl) 
     {
         var found = new List<string>();
 
-        using var response = await http.GetAsync(new Uri($"{address}/models"), cancel).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+        var response = await transport.Send(new Uri($"{address}/models"), null, cancel).ConfigureAwait(false);
 
-        if (!response.IsSuccessStatusCode)
+        if (!response.Succeeded)
         {
             said?.Report(
-                $"{address}/models answered {(int)response.StatusCode}, so there is no list to read. "
+                $"{address}/models answered {response.Status}, so there is no list to read. "
                 + "Name the models to ask about instead.");
 
             return found;
         }
 
-        foreach (var model in JsonNode.Parse(body)?["data"]?.AsArray() ?? [])
+        foreach (var model in JsonNode.Parse(response.Body)?["data"]?.AsArray() ?? [])
             if (model?["id"]?.GetValue<string>() is { } id && !string.IsNullOrWhiteSpace(id))
                 found.Add(id);
 
@@ -185,22 +181,18 @@ internal sealed class OpenAiProbe(HttpMessageHandler transport, string baseUrl) 
 
         try
         {
-            using var content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
-
-            using var response = await http
-                .PostAsync(new Uri($"{address}/chat/completions"), content, cancel)
+            var response = await transport
+                .Send(new Uri($"{address}/chat/completions"), body.ToJsonString(), cancel)
                 .ConfigureAwait(false);
 
-            if (response.IsSuccessStatusCode) return new Answer(Verdict.Took, string.Empty);
-
-            var said = await response.Content.ReadAsStringAsync(cancel).ConfigureAwait(false);
+            if (response.Succeeded) return new Answer(Verdict.Took, string.Empty);
 
             // A refusal of the request is an answer about the model; anything
             // else — a limit, an outage, a proxy — is an answer about the
             // moment, and recording it as a capability would outlive the moment.
-            return response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound
-                ? new Answer(Verdict.Refused, Probe.Detail(said))
-                : new Answer(Verdict.Unclear, Probe.Detail(said));
+            return response.Status is (int)HttpStatusCode.BadRequest or (int)HttpStatusCode.NotFound
+                ? new Answer(Verdict.Refused, Probe.Detail(response.Body))
+                : new Answer(Verdict.Unclear, Probe.Detail(response.Body));
         }
         catch (HttpRequestException)
         {

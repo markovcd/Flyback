@@ -101,7 +101,7 @@ public sealed class OpenAiAssistant : IPatchAssistant
             workbench,
             Schema.Surveyed(config.Values).Read(config.Values),
             Schema.DefaultBaseUrl!,
-            config.Transport.Handler);
+            config.Transport);
     
     public async Task<IReadOnlyList<ModelReport>> Survey(
         AssistantConfig config,
@@ -111,7 +111,7 @@ public sealed class OpenAiAssistant : IPatchAssistant
     {
         var chosen = Schema.Read(config.Values);
 
-        using var probe = new OpenAiProbe(config.Transport.Handler, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
+        var probe = new OpenAiProbe(config.Transport, chosen.BaseUrl ?? Schema.DefaultBaseUrl!);
 
         return await probe.Run(Schema.Asking(options, config.Values), said, cancel).ConfigureAwait(false);
     }

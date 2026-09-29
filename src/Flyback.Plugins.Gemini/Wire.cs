@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Plugins.Assist;
@@ -308,9 +309,9 @@ internal static class Wire
     /// is still read first, because a gateway in front of this may add one and the
     /// nearer answer wins.
     /// </remarks>
-    public static TimeSpan? RetryAfter(HttpResponseMessage response, string body)
+    public static TimeSpan? RetryAfter(HttpResponseHeaders headers, string body)
     {
-        if (response.Headers.RetryAfter is { } asked)
+        if (headers.RetryAfter is { } asked)
         {
             if (asked.Delta is { } delta) return delta;
             if (asked.Date is { } when) return when - DateTimeOffset.UtcNow;

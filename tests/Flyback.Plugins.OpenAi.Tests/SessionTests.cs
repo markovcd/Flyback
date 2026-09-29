@@ -123,7 +123,7 @@ public class SessionTests
             workbench,
             new AssistantChoices("some-model"),
             "https://nowhere.invalid/v1",
-            canned);
+            new KeyedTransport(null, null, new AssistantCredential("", ""), canned));
 
         await Drain(session, "make a gray field");
         var second = await Drain(session, "yes, propose it");
@@ -160,7 +160,7 @@ public class SessionTests
             workbench,
             new AssistantChoices("some-model"),
             "https://nowhere.invalid/v1",
-            canned);
+            new KeyedTransport(null, null, new AssistantCredential("", ""), canned));
 
         (await Drain(session, "make a gray field")).OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
 
@@ -613,7 +613,7 @@ public class SessionTests
         new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false),
         new AssistantChoices("some-model"),
         "https://nowhere.invalid/v1",
-        canned);
+        new KeyedTransport(null, null, new AssistantCredential("", ""), canned));
 
     // --- driving it ---------------------------------------------------------
 
@@ -661,7 +661,7 @@ public class SessionTests
                 Hearing: hearing,
                 EarModel: hearing ? Ears : null),
             "https://nowhere.invalid/v1",
-            canned);
+            new KeyedTransport(null, null, new AssistantCredential("", ""), canned));
 
         var events = new List<PatchEvent>();
 

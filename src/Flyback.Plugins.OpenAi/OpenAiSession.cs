@@ -18,7 +18,7 @@ internal sealed class OpenAiSession : IModelConversation
 {
     private readonly PatchWorkbench workbench;
     private readonly AssistantChoices chosen;
-    private readonly HttpClient http;
+    private readonly IAssistantTransport transport;
     private readonly Uri endpoint;
     private readonly JsonArray messages = [];
 
@@ -30,7 +30,7 @@ internal sealed class OpenAiSession : IModelConversation
         PatchWorkbench workbench,
         AssistantChoices chosen,
         string fallbackBaseUrl,
-        HttpMessageHandler transport)
+        IAssistantTransport transport)
     {
         this.workbench = workbench;
         this.chosen = chosen;
@@ -38,13 +38,7 @@ internal sealed class OpenAiSession : IModelConversation
         var address = (chosen.BaseUrl ?? fallbackBaseUrl).TrimEnd('/');
         endpoint = new Uri(address + "/chat/completions");
 
-        // The handler is the host's.
-        http = new HttpClient(transport, disposeHandler: false);
-
-        // A single turn at high effort is minutes, not seconds. Cancellation is
-        // what actually stops this; the timeout is only a backstop for a
-        // connection that has died without saying so.
-        http.Timeout = TimeSpan.FromMinutes(10);
+        this.transport = transport;
 
         messages.Add(Wire.System(workbench.Briefing));
     }
@@ -149,8 +143,10 @@ internal sealed class OpenAiSession : IModelConversation
 
     private async Task<JsonNode?> Post(string body, CancellationToken cancel) =>
         JsonNode.Parse(await AssistantPost
-            .Send(http, endpoint, body, (response, _) => Wire.RetryAfter(response), Wire.Complaint, cancel)
+            .Send(transport, endpoint, body, response => Wire.RetryAfter(response.Headers), Wire.Complaint, cancel)
             .ConfigureAwait(false));
 
-    public void Dispose() => http.Dispose();
+    public void Dispose()
+    {
+    }
 }

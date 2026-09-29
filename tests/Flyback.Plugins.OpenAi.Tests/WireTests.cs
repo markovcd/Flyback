@@ -279,7 +279,7 @@ public class WireTests
     {
         using var response = Refused([("retry-after-ms", "916"), ("Retry-After", "1")]);
 
-        Wire.RetryAfter(response).ShouldBe(TimeSpan.FromMilliseconds(916));
+        Wire.RetryAfter(response.Headers).ShouldBe(TimeSpan.FromMilliseconds(916));
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class WireTests
     {
         using var response = Refused([("Retry-After", "2")]);
 
-        Wire.RetryAfter(response).ShouldBe(TimeSpan.FromSeconds(2));
+        Wire.RetryAfter(response.Headers).ShouldBe(TimeSpan.FromSeconds(2));
     }
 
     /// <summary>
@@ -303,7 +303,7 @@ public class WireTests
             ("x-ratelimit-reset-requests", "1m30s"),
         ]);
 
-        Wire.RetryAfter(response).ShouldBe(TimeSpan.FromSeconds(90));
+        Wire.RetryAfter(response.Headers).ShouldBe(TimeSpan.FromSeconds(90));
     }
 
     [Theory]
@@ -316,7 +316,7 @@ public class WireTests
     {
         using var response = Refused([("x-ratelimit-reset-tokens", written)]);
 
-        Wire.RetryAfter(response)!.Value.TotalSeconds.ShouldBe(seconds, 0.001);
+        Wire.RetryAfter(response.Headers)!.Value.TotalSeconds.ShouldBe(seconds, 0.001);
     }
 
     /// <summary>
@@ -331,12 +331,12 @@ public class WireTests
     {
         using var response = Refused([("x-ratelimit-reset-tokens", written)]);
 
-        Wire.RetryAfter(response).ShouldBeNull();
+        Wire.RetryAfter(response.Headers).ShouldBeNull();
     }
 
     [Fact]
     public void An_endpoint_that_does_not_say_how_long_is_not_guessed_at() =>
-        Wire.RetryAfter(Refused([])).ShouldBeNull();
+        Wire.RetryAfter(Refused([]).Headers).ShouldBeNull();
 
     private static HttpResponseMessage Refused((string Name, string Value)[] headers)
     {

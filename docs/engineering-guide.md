@@ -375,7 +375,9 @@ ExcludeAssets="runtime"`.
 `allowed-plugins.json` in the data folder allows, and only while every file in it
 hashes as it did; a Debug build loads everything. A secret store registers only
 from a shipped plugin or one allowed with `--secrets`. An assistant gets an
-`IAssistantTransport` that signs requests to one origin, never the key.
+`IAssistantTransport` that sends a body for it and hands back what came back; the
+host builds each request and puts the key on it for one origin, so the assistant
+never holds the key or a request that carries it.
 
 **Nothing throws.** A bad folder, a folder nobody allowed, a duplicate id or a
 refused module becomes a `PluginProblem` in the catalog. A backend, assistant or
@@ -870,7 +872,8 @@ and no shared fakes project.
 
 - A sound card is `LoopbackDevice : IAudioDevice`, which keeps the callback and
   lets the test be the audio thread (`Pump(frames)`).
-- An HTTP endpoint is `Canned : HttpMessageHandler`, handing back scripted answers.
+- An HTTP endpoint is `Canned : HttpMessageHandler`, handing back scripted answers
+  under a keyless `KeyedTransport`.
 - A CLI command is a function of two `StringWriter`s returning an exit code.
 - A whole assistant is `Flyback.Plugins.FakeAssistant`, a real plugin that replays
   a script of tool calls through `PatchWorkbench`.
