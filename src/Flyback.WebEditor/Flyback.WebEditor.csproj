@@ -3,7 +3,7 @@
   <!--
     The editor in a browser (ADR-0162): Flyback.Editor under Avalonia.Browser, with
     the picture on a canvas of its own. Needs the wasm-tools workload, which links
-    Skia and HarfBuzz into the runtime, so Flyback.slnx does not build it: the preset
+    Skia and HarfBuzz into the runtime, as the whole solution does. The preset
     site publishes it beside itself and serves it at /editor/,
     beside the web viewer whose GL calls it makes, unless built with -p:WebEditor=false.
   -->

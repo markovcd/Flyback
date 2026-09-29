@@ -48,6 +48,12 @@ dotnet run --project src/Flyback.App -c Release
 
 ## Build and publish
 
+The solution builds the web editor, which needs the wasm-tools workload:
+
+```bash
+dotnet workload install wasm-tools
+```
+
 ```bash
 dotnet publish src/Flyback.App -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
@@ -261,7 +267,7 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 
 ## Web editor
 
-`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits and plays no sound yet. The preset site serves it at `/editor/`, which needs `dotnet workload install wasm-tools`; `-p:WebEditor=false` builds the site without it:
+`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits and plays no sound yet. The preset site serves it at `/editor/`; `-p:WebEditor=false` builds the site without it:
 
 ```bash
 dotnet run --project src/Flyback.Server

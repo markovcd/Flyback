@@ -26,7 +26,7 @@ docker build --target gate .
 
 It restores, compiles and runs every test in the solution. The Build workflow runs exactly this on every push and pull request, and a release is built from the same image with the publishes stacked on top, so there is one description of what a change has to pass ([ADR-0120](docs/adr/0120-every-change-passes-the-gate-a-release-passes.md)). Run it before opening a pull request. Nothing merges red.
 
-For a faster loop while working:
+For a faster loop while working, with the wasm-tools workload the web editor needs (`dotnet workload install wasm-tools`):
 
 ```bash
 dotnet test --solution Flyback.slnx -c Release

@@ -101,8 +101,8 @@ paid on every frame, to keep overlays that can sit beside the preview instead.
 - The window, the editing and the picture share the page's one thread. The sound
   does not.
 - Avalonia.Browser links Skia and HarfBuzz into the runtime, which needs the
-  wasm-tools workload, so `Flyback.slnx` lists the page without building it, and a
-  machine without the workload builds the site with `-p:WebEditor=false`. The gate's image installs it.
+  wasm-tools workload, so building `Flyback.slnx` needs it too. The gate's image
+  installs it.
 - A browser build of the editor pins the WebAssembly Skia and HarfBuzz natives to
   the managed SkiaSharp the editor resolves; Avalonia.Browser's own are older.
 - The release key's public half is `src/Flyback.Editor/Updates/release-key.pem`,

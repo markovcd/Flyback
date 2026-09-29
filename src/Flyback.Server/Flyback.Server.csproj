@@ -36,6 +36,10 @@
   </Target>
 
   <Target Name="PublishWebEditor" AfterTargets="Build" DependsOnTargets="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
+    <!-- The solution's own build of it, waited for rather than raced: two builds at once share its obj. -->
+    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)" />
     <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
              Targets="Publish"
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(OutDir)editor'))\" />
