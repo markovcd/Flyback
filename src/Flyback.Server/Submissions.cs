@@ -8,6 +8,9 @@ internal static class Submissions
 {
     public const int NameLimit = 60;
 
+    /// <summary>The most a submitted bundle may unpack to: a few times the upload limit, where a sound or a picture barely compresses.</summary>
+    public const long BundleLimit = 128L << 20;
+
     /// <summary>
     /// The preset in <paramref name="file"/>, or null where it is not a patch at all.
     /// </summary>
@@ -65,7 +68,7 @@ internal static class Submissions
         try
         {
             using var archive = new MemoryStream(file, writable: false);
-            var bundle = PatchBundle.Read(archive);
+            var bundle = PatchBundle.Read(archive, limit: BundleLimit);
 
             return bundle.Patch.Nodes.Count > 0 ? bundle.Patch : null;
         }

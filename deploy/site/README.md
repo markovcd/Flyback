@@ -85,7 +85,7 @@ Letters written from inside Flyback are listed at `/admin.html` too, newest firs
 
 A published preset or plugin is rated with one to five stars on its page, one rating per address, and rating again replaces it. Every card and the editor show the average. Only the site's own pages can rate: the endpoint takes a rating only where the browser marks the request same-origin, which the editor never does. Addresses are kept as an HMAC under a key in the database, and deleting a preset or plugin clears its ratings.
 
-Sign-in is a cookie, kept for two weeks. Its keys live in `data/keys/`, so restarting the container does not sign the admin out. Serve the site over HTTPS, since the password crosses the wire at sign-in. Ten wrong tries from one address lock that address out for a quarter of an hour.
+Sign-in is a cookie, kept for two weeks. Its keys live in `data/keys/`, so restarting the container does not sign the admin out. The cookie is sent only over HTTPS, and the site tells a browser that reached it over HTTPS to keep to it, so serve it over HTTPS and redirect plain HTTP at the proxy; the password crosses the wire at sign-in. Ten wrong tries from one address lock that address out for a quarter of an hour.
 
 ## Sharing the media folder
 
@@ -110,7 +110,7 @@ It renders every preset still waiting, then checks again every 5 minutes. `--onc
 | `{id}.done` | written last, once the rest are in place |
 | `{id}.failed` | written instead, holding what went wrong |
 
-A patch that wires only a picture gets no track, one that wires only a sound gets no still or loop, and a silent one gets no track. A patch using a plugin the render PC does not have is marked failed.
+A patch that wires only a picture gets no track, one that wires only a sound gets no still or loop, and a silent one gets no track. A patch using a plugin the render PC does not have is marked failed. A preset reads only the files its own bundle carries, never one off the render PC's disk, so a loose `.fbk` naming a sound or a picture renders without it.
 
 ## Looking after it
 

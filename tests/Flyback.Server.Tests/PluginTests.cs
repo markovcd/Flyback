@@ -102,7 +102,7 @@ public sealed class PluginTests : IDisposable
     /// <summary>A client of its own, signed in as the admin.</summary>
     private async Task<HttpClient> Admin()
     {
-        var admin = host.CreateClient();
+        var admin = host.CreateClient(ServerTests.Https);
         using var response = await admin.PostAsJsonAsync(
             new Uri("/api/v1/admin/session", UriKind.Relative), new { user = "admin", password = "hunter2" }, TestContext.Current.CancellationToken);
         response.StatusCode.ShouldBe(HttpStatusCode.NoContent);

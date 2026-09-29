@@ -274,6 +274,26 @@ public class PatchBundleTests
         Should.Throw<InvalidDataException>(() => PatchBundle.Read(archive));
     }
 
+    /// <summary>Counted across every entry, so a zip bomb split into many small files is refused too.</summary>
+    [Fact]
+    public void A_bundle_that_unpacks_past_its_limit_is_refused()
+    {
+        var archive = new MemoryStream();
+
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            using (var writing = new StreamWriter(zip.CreateEntry(PatchBundle.PatchEntry).Open()))
+                writing.Write(PatchIO.ToJson(new Patch()));
+
+            for (var i = 0; i < 4; i++)
+                using (var writing = zip.CreateEntry($"files/{i}.wav").Open())
+                    writing.Write(new byte[1000]);
+        }
+
+        Should.Throw<InvalidDataException>(() => PatchBundle.Read(new MemoryStream(archive.ToArray()), limit: 3500));
+        PatchBundle.Read(new MemoryStream(archive.ToArray()), limit: 5000).Files.Count.ShouldBe(4);
+    }
+
     /// <summary>
     /// A bundle whose patch does not read whole says so, the way a loose patch
     /// does, and leaves refusing it to whoever asked.

@@ -46,6 +46,9 @@ public static class PatchBundle
     /// </summary>
     public const string ConversationEntry = "conversation.json";
 
+    /// <summary>The most a bundle may unpack to, counted as it inflates, so a zip bomb is refused before it fills memory.</summary>
+    public const long UnpackedLimit = 1L << 30;
+
     /// <summary>
     /// Writes <paramref name="patch"/> and everything it names into
     /// <paramref name="archive"/>.
@@ -137,10 +140,11 @@ public static class PatchBundle
     /// serves the files from memory and never touches the disk.
     /// </remarks>
     /// <exception cref="InvalidDataException">
-    /// The archive is not one, or holds no patch. Thrown rather than answered,
-    /// because unlike a missing sound file there is nothing to go on with.
+    /// The archive is not one, holds no patch, or unpacks to more than
+    /// <paramref name="limit"/> bytes. Thrown rather than answered, because unlike
+    /// a missing sound file there is nothing to go on with.
     /// </exception>
-    public static LoadedBundle Read(Stream archive, ModuleCatalog? against = null)
+    public static LoadedBundle Read(Stream archive, ModuleCatalog? against = null, long limit = UnpackedLimit)
     {
         ArgumentNullException.ThrowIfNull(archive);
 
@@ -149,8 +153,9 @@ public static class PatchBundle
         var patch = zip.GetEntry(PatchEntry)
             ?? throw new InvalidDataException($"There is no {PatchEntry} in this bundle.");
 
-        string json;
-        using (var reading = new StreamReader(patch.Open())) json = reading.ReadToEnd();
+        var left = limit;
+
+        var json = Text(patch, ref left);
 
         var files = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
 
@@ -160,26 +165,46 @@ public static class PatchBundle
             if (entry.FullName.EndsWith('/')) continue;
             if (!Flat(entry.FullName[FilesFolder.Length..])) continue;
 
-            using var reading = entry.Open();
-            using var bytes = new MemoryStream();
-
-            reading.CopyTo(bytes);
-            files[entry.FullName] = bytes.ToArray();
+            files[entry.FullName] = Unpacked(entry, ref left);
         }
 
-        string? conversation = null;
-
-        if (zip.GetEntry(ConversationEntry) is { } kept)
-        {
-            using var reading = new StreamReader(kept.Open());
-
-            conversation = reading.ReadToEnd();
-        }
+        var conversation = zip.GetEntry(ConversationEntry) is { } kept ? Text(kept, ref left) : null;
 
         var load = PatchIO.Read(json, against);
 
         return new LoadedBundle(load.Patch, files, conversation, load);
     }
+
+    private static string Text(ZipArchiveEntry entry, ref long left)
+    {
+        using var reading = new StreamReader(new MemoryStream(Unpacked(entry, ref left), writable: false));
+
+        return reading.ReadToEnd();
+    }
+
+    /// <summary>An entry's bytes, taken from <paramref name="left"/> as they inflate rather than as the entry claims.</summary>
+    private static byte[] Unpacked(ZipArchiveEntry entry, ref long left)
+    {
+        if (entry.Length > left) throw TooLarge();
+
+        using var reading = entry.Open();
+        using var bytes = new MemoryStream();
+
+        var buffer = new byte[81920];
+
+        for (int read; (read = reading.Read(buffer)) > 0;)
+        {
+            left -= read;
+
+            if (left < 0) throw TooLarge();
+
+            bytes.Write(buffer, 0, read);
+        }
+
+        return bytes.ToArray();
+    }
+
+    private static InvalidDataException TooLarge() => new("This bundle unpacks to more than a bundle may hold.");
 
     /// <summary>
     /// Every file a patch names, once each and in the order it names them. What

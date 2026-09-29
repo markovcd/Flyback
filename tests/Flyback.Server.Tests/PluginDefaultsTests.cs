@@ -159,7 +159,7 @@ public sealed class PluginDefaultsTests : IDisposable
         {
             var id = (await Shelf(first))[0].GetProperty("id").GetString();
 
-            using var admin = first.CreateClient();
+            using var admin = first.CreateClient(ServerTests.Https);
             using (var signIn = await admin.PostAsJsonAsync(
                        new Uri("/api/v1/admin/session", UriKind.Relative),
                        new { user = "admin", password = "hunter2" },

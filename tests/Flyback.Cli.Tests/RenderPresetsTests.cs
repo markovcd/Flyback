@@ -2,6 +2,8 @@ using System.Net;
 using System.Text;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
+using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
 using Flyback.Cli.Commands;
@@ -23,9 +25,12 @@ internal sealed class FakeTools : IPresetTools
 
     public List<string> Ran { get; } = [];
 
+    public List<Opened> Rendered { get; } = [];
+
     public int Render(Opened patch, RenderOptions options, TextWriter error, CancellationToken cancellation)
     {
         Ran.Add("render " + options.Out.Name);
+        Rendered.Add(patch);
 
         if (FailOn is not null && options.Out.Name.Contains(FailOn, StringComparison.Ordinal))
         {
@@ -150,6 +155,34 @@ public sealed class RenderPresetsTests : IDisposable
         (await Render(new FakeTools { Loudness = "-inf" }, Patch(Sound))).ShouldBeNull();
 
         Written().ShouldBe(["abc.done"]);
+    }
+
+    /// <summary>
+    /// A shared preset is somebody else's file. Naming a picture on this machine would
+    /// publish it as the preset's still, so a loose one reads nothing off the disk.
+    /// </summary>
+    [Fact]
+    public async Task A_preset_cannot_show_a_picture_off_the_render_machines_disk()
+    {
+        var picture = Path.Combine(work, "private.png");
+        PngWriter.WriteBgra(picture, new byte[4 * 4 * 4], 4, 4, 16);
+
+        var patch = new Patch();
+        patch.EnsureOutput(NodeCatalog.Current);
+
+        var shown = NodeInstance.Create(NodeCatalog.BuiltIn.Require(NodeCatalog.PictureTypeId), 0, 0);
+        PictureExtra.Set(shown, picture);
+        patch.Nodes.Add(shown);
+        patch.Connect(shown.Id, 0, patch.Output.Id, NodeCatalog.OutputColorPort);
+
+        var file = new FileInfo(Path.Combine(work, "shown.fbk"));
+        File.WriteAllText(file.FullName, PatchIO.ToJson(patch));
+
+        var tools = new FakeTools();
+        await Render(tools, file);
+
+        tools.Rendered.ShouldNotBeEmpty();
+        tools.Rendered.ShouldAllBe(opened => opened.Pictures.Find(picture) == null);
     }
 
     [Fact]

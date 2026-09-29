@@ -3,6 +3,7 @@ using System.Text.Json;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.Cli.Rendering;
 
@@ -64,6 +65,13 @@ internal sealed class PresetRender(IPresetTools tools, MediaWriter media)
 
         if (open.Problems.Count > 0 || open.Patch is not { } patch)
             throw new Failure("The patch did not open whole.\n" + string.Join('\n', open.Problems));
+
+        // Somebody else's file: it gets what a bundle carries and never a file off this machine's disk.
+        if (!PatchFile.Bundled(file))
+        {
+            var nothing = new BundleFiles(new Dictionary<string, byte[]>());
+            patch = patch with { Samples = nothing, Pictures = nothing };
+        }
 
         var reaches = patch.Patch.Reaches();
         var made = new List<(string Suffix, string File)>();

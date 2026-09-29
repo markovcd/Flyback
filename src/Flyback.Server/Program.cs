@@ -122,6 +122,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     cookie.Cookie.Name = "flyback-admin";
     cookie.Cookie.HttpOnly = true;
     cookie.Cookie.SameSite = SameSiteMode.Strict;
+
+    // Secure even where the proxy reaches the site over plain HTTP: the browser never should.
+    cookie.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
     cookie.ExpireTimeSpan = TimeSpan.FromDays(14);
     cookie.SlidingExpiration = true;
 });
@@ -151,6 +155,10 @@ var ratings = new RatingStore(database);
 var letters = new LetterStore(database);
 
 app.UseForwardedHeaders();
+
+// Only answered over HTTPS, which the proxy says through X-Forwarded-Proto, and never to localhost.
+app.UseHsts();
+
 app.UseDefaultFiles();
 
 // A Debug build of the web viewer loads its symbols, and a type this does not know is a 404.

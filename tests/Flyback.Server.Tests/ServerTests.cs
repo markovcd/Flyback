@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -58,6 +59,9 @@ public sealed class ServerTests : IDisposable
         };
     }
 
+    /// <summary>A client the admin cookie is sent back from, being marked Secure.</summary>
+    internal static WebApplicationFactoryClientOptions Https { get; } = new() { BaseAddress = new Uri("https://localhost") };
+
     private string Media => Path.Combine(folder, "media");
 
     public void Dispose()
@@ -116,7 +120,7 @@ public sealed class ServerTests : IDisposable
     /// <summary>A client of its own, signed in as the admin.</summary>
     private async Task<HttpClient> Admin()
     {
-        var admin = host.CreateClient();
+        var admin = host.CreateClient(Https);
         (await SignIn(admin, "hunter2")).ShouldBe(HttpStatusCode.NoContent);
 
         return admin;
@@ -191,6 +195,52 @@ public sealed class ServerTests : IDisposable
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
+    /// <summary>A few megabytes of zeros that inflate past what the site will hold in memory for one upload.</summary>
+    [Fact]
+    public async Task A_bundle_that_unpacks_past_the_limit_is_refused()
+    {
+        using var archive = new MemoryStream();
+
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            using (var patch = zip.CreateEntry(PatchBundle.PatchEntry).Open())
+                patch.Write(PatchFile());
+
+            using var bomb = zip.CreateEntry(PatchBundle.FilesFolder + "silence.wav", CompressionLevel.Fastest).Open();
+            var zeros = new byte[1 << 20];
+
+            // Past Submissions.BundleLimit, which is internal to the site.
+            for (long written = 0; written <= 128L << 20; written += zeros.Length) bomb.Write(zeros);
+        }
+
+        using var response = await Post(archive.ToArray(), "Silence.fbkb");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task The_admin_cookie_is_only_ever_sent_over_https()
+    {
+        using var plain = host.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = false });
+
+        using var response = await plain.PostAsJsonAsync(
+            new Uri("/api/v1/admin/session", UriKind.Relative), new { user = "admin", password = "hunter2" }, TestContext.Current.CancellationToken);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        response.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("flyback-admin=", StringComparison.Ordinal))
+            .ShouldContain("secure", Case.Insensitive);
+    }
+
+    [Fact]
+    public async Task A_browser_that_came_over_https_is_told_to_keep_to_it()
+    {
+        using var secure = host.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://presets.example.org") });
+        using var response = await secure.GetAsync(new Uri("/presets.html", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        response.Headers.Contains("Strict-Transport-Security").ShouldBeTrue();
     }
 
     [Fact]
