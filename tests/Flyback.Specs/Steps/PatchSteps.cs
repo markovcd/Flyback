@@ -438,6 +438,17 @@ public sealed class PatchSteps(PatchContext context)
     public void GivenAClockSignal(string signal) =>
         Written($"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}c.{signal} |> out.left");
 
+    [Given("the beats of a clock left to follow whatever is plugged in, on the speakers")]
+    public void GivenAnUnsetClock()
+    {
+        Written($"let c = midi.clock(){(char)10}c.beats |> out.left");
+        context.Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ClockTypeId).SetState(MidiClockExtra.StateKey, new JsonObject());
+    }
+
+    [Given("the beats of a clock following the computer keyboard, on the speakers")]
+    public void GivenAKeyboardClock() =>
+        Written($"let c = midi.clock(device: \"{MidiSources.Keyboard}\"){(char)10}c.beats |> out.left");
+
     [Given(@"^a pitch of ([\d.]+) kept to (C major|all twelve notes)$")]
     public void GivenAPitchInKey(float pitch, string scale) =>
         Written($"value({Number(pitch)}) |> quantiser() [ {(scale == "C major" ? "C D E F G A B" : "C C# D D# E F F# G G# A A# B")} ] |> out.left");

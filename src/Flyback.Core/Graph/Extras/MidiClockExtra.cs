@@ -43,15 +43,17 @@ public sealed record MidiClockExtra : NodeExtra
     /// <summary>
     /// The ordinary fold, and a word where the chosen instrument is gone or is the
     /// computer's keyboard, which keeps no clock. Reported rather than repaired,
-    /// for the reason <see cref="MidiExtra"/> gives.
+    /// for the reason <see cref="MidiExtra"/> gives. One left unset says nothing:
+    /// it follows whatever is plugged in, and nothing plugged in is not a mistake.
     /// </summary>
     public override EmitContext Fold(EmitContext ctx, NodeInstance node, ExtraEnv env)
     {
+        var picked = node.StateOf(Key)?[DeviceField];
         var chosen = Fields[0] is ExtraField.Choice field
-            ? field.Value(node.StateOf(Key)?[DeviceField])
+            ? field.Value(picked)
             : MidiSources.Keyboard;
 
-        if (chosen == MidiSources.Keyboard)
+        if (chosen == MidiSources.Keyboard && picked is not null)
         {
             env.Report(new CompileIssue(
                 node.Id,

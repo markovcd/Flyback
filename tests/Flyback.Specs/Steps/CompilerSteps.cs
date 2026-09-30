@@ -21,6 +21,9 @@ public sealed class CompilerSteps(PatchContext context)
     [Then("Flyback says the patch has no Output")]
     public void ThenNoOutput() => ShouldMention(context.Picture, "no Output");
 
+    [Then("Flyback says the computer keyboard keeps no clock")]
+    public void ThenNoClock() => ShouldMention(context.Sound, "keeps no clock");
+
     [Then("Flyback reports an unknown module")]
     public void ThenUnknownModule() => ShouldMention(context.Picture, "Unknown module");
 

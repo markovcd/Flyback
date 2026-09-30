@@ -332,6 +332,25 @@ public class MidiClockTests
         heard[2 * TickSamples + 2].ShouldBe(2d / MidiSignal.TicksPerBeat, 1e-6);
     }
 
+    /// <summary>One left unset follows whatever is plugged in, and nothing plugged in is not a mistake.</summary>
+    [Fact]
+    public void A_clock_left_unset_says_nothing_with_nothing_plugged_in()
+    {
+        Followed(null).Issues.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void A_clock_set_to_the_computer_keyboard_says_it_keeps_no_clock()
+    {
+        Followed(MidiSources.Keyboard).Issues.ShouldContain(issue => issue.Message.Contains("keeps no clock"));
+    }
+
+    [Fact]
+    public void A_clock_following_an_instrument_that_is_not_here_says_so()
+    {
+        Followed(Box).Issues.ShouldContain(issue => issue.Message.Contains(Box));
+    }
+
     // ---- helpers --------------------------------------------------------------
 
     /// <summary>A patch of one Clock In following the box, wired to the ear through the given output.</summary>
@@ -348,6 +367,21 @@ public class MidiClockTests
         builder.Wire(clock, port, sink, NodeCatalog.OutputLeftPort);
 
         return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program;
+    }
+
+    /// <summary>A Clock In following <paramref name="device"/>, or left unset, compiled for the ear.</summary>
+    private static CompileResult Followed(string? device)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var clock = builder.Add(NodeCatalog.ClockTypeId, 0, 0);
+        clock.SetState(MidiClockExtra.StateKey, device is null
+            ? new System.Text.Json.Nodes.JsonObject()
+            : new System.Text.Json.Nodes.JsonObject { [MidiClockExtra.DeviceField] = device });
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+
+        builder.Wire(clock, Beats, sink, NodeCatalog.OutputLeftPort);
+
+        return builder.Patch.CompileForAudio(NodeCatalog.BuiltIn);
     }
 
     private static DelayState Memory(CompiledPatch program) =>

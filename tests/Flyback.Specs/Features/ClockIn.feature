@@ -27,3 +27,11 @@ Feature: A patch keeps time with a drum machine
     Given the bpm of a drum machine's clock on the speakers
     When the drum machine starts and plays 2 beats at 140 bpm
     Then the sound is about 140 at 0.8 seconds
+
+  Scenario: A clock left to follow whatever is plugged in has nothing to say when nothing is
+    Given the beats of a clock left to follow whatever is plugged in, on the speakers
+    Then the patch is accepted without complaint
+
+  Scenario: A clock set to follow the computer keyboard is told it keeps no clock
+    Given the beats of a clock following the computer keyboard, on the speakers
+    Then Flyback says the computer keyboard keeps no clock
