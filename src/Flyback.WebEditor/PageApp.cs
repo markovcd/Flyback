@@ -27,11 +27,11 @@ internal sealed class PageApp : Application
 
         // In the desktop's order, by folder name, so the presets list in the editor's order.
         var plugins = PluginHost.LoadTypes(
-#if SITE_PLUGINS
+#if ALL_PLUGINS
             typeof(Flyback.Plugins.Easy.EasyPlugin),
 #endif
             typeof(Flyback.Plugins.Effects.EffectsPlugin),
-#if SITE_PLUGINS
+#if ALL_PLUGINS
             typeof(Flyback.Plugins.Figures.FiguresPlugin),
             typeof(Flyback.Plugins.Fractals.FractalsPlugin),
 #endif

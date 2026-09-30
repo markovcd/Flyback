@@ -47,13 +47,8 @@
     <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
   </ItemGroup>
 
-  <!-- The preset site's plugins too, unless -p:SitePlugins=false, as the web viewer. -->
-  <PropertyGroup>
-    <SitePlugins Condition="'$(SitePlugins)' == ''">true</SitePlugins>
-    <DefineConstants Condition="'$(SitePlugins)' == 'true'">$(DefineConstants);SITE_PLUGINS</DefineConstants>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(SitePlugins)' == 'true'">
+  <!-- The preset site's plugins only in All plugins: every visit downloads what is linked in. -->
+  <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
     <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
     <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
