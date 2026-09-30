@@ -631,6 +631,8 @@ Flyback.Core.Graph.PatchPreset.Kind.init -> void
 Flyback.Core.Graph.PatchPreset.Name.get -> string!
 Flyback.Core.Graph.PatchPreset.Name.init -> void
 Flyback.Core.Graph.PatchPreset.PatchPreset(string! Name, System.Func<Flyback.Core.Graph.ModuleCatalog!, Flyback.Core.Graph.Patch!>! Build, string! Description = "", Flyback.Core.Graph.PresetKind Kind = Flyback.Core.Graph.PresetKind.Idea) -> void
+Flyback.Core.Graph.PatchPreset.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Flyback.Core.Graph.PatchPreset.Tags.init -> void
 Flyback.Core.Graph.Pitch
 Flyback.Core.Graph.PortDisplay
 Flyback.Core.Graph.PortDisplay.Chord = 4 -> Flyback.Core.Graph.PortDisplay
@@ -747,6 +749,7 @@ Flyback.Core.Graph.Swatch.Red.get -> byte
 Flyback.Core.Graph.Swatch.Red.init -> void
 Flyback.Core.Graph.Swatch.Swatch() -> void
 Flyback.Core.Graph.Swatch.Swatch(byte Red, byte Green, byte Blue) -> void
+Flyback.Core.Graph.TextLimit
 abstract Flyback.Core.Graph.ExtraField.<Clone>$() -> Flyback.Core.Graph.ExtraField!
 abstract Flyback.Core.Graph.ExtraField.Format(System.Text.Json.Nodes.JsonNode? stored) -> string!
 abstract Flyback.Core.Graph.ExtraField.Sane(System.Text.Json.Nodes.JsonNode? stored) -> System.Text.Json.Nodes.JsonNode!
@@ -1256,6 +1259,7 @@ static Flyback.Core.Graph.StepSpec.operator !=(Flyback.Core.Graph.StepSpec? left
 static Flyback.Core.Graph.StepSpec.operator ==(Flyback.Core.Graph.StepSpec? left, Flyback.Core.Graph.StepSpec? right) -> bool
 static Flyback.Core.Graph.Swatch.operator !=(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
 static Flyback.Core.Graph.Swatch.operator ==(Flyback.Core.Graph.Swatch left, Flyback.Core.Graph.Swatch right) -> bool
+static Flyback.Core.Graph.TextLimit.Clip(string! text, int limit) -> string!
 virtual Flyback.Core.Graph.EmitFn.Invoke(Flyback.Core.Compile.Emitter! emitter, Flyback.Core.Graph.EmitContext node) -> Flyback.Core.Compile.Slot[]!
 virtual Flyback.Core.Graph.ExtraField.EqualityContract.get -> System.Type!
 virtual Flyback.Core.Graph.ExtraField.Equals(Flyback.Core.Graph.ExtraField? other) -> bool

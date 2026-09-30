@@ -1,5 +1,1 @@
 #nullable enable
-Flyback.Core.Graph.TextLimit
-static Flyback.Core.Graph.TextLimit.Clip(string! text, int limit) -> string!
-Flyback.Core.Graph.PatchPreset.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Flyback.Core.Graph.PatchPreset.Tags.init -> void

@@ -2,56 +2,64 @@
 
 ## Unreleased
 
+## 0.6.0 — 2026-10-01
+
+128 commits since 0.5.1.
+
+### Presets
 - Machine Room, on the preset site: techno to jam on, with twenty-four panel knobs that move the picture as well as the sound, a keyboard split into the groove's key and chord stabs, a held low key that builds to a drop, and a drum machine's MIDI clock followed while it runs.
-- A Clock In left to follow whatever is plugged in says nothing when no instrument is.
-- The editor's status bar says how many times real time the sound renders at, and no longer counts modules and wires; a patch with no sound has no Volume on the toolbar and no sound button over a full-screen picture, and the web viewer offers no volume and no render speed for one.
-- `flyback-cli save` saves a patch or a shipped preset as `.fbk`, `.fbks` or `.fbkb`, by the extension it is saved to.
-- A shared preset's card on the presets page has Play, opening it in the web viewer, beside Edit and Download.
-- The web editor's toolbar leads with the Flyback mark, back to the site, and the browser asks before leaving an edited patch; the web viewer's header shows the mark in place of its name.
-- With no startup preset chosen, or one this run does not offer, the editor and the viewer open on Plasma.
-- Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.
-- The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks none, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
-- The editor's status bar, the full-screen stats line and the web viewer say what oversampling a patch's sound runs at, and nothing of it for a patch with no sound; only the editor counts ops, the picture's and the sound's apart.
-- The web editor on the preset site sends a letter to Flyback's author, and its gallery opens presets shared there; the copy on GitHub Pages offers neither. A shared preset needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
-- Dragging a knob in the web editor keeps the sound's script warm and recompiles at a pace the page keeps up with, rather than stuttering the sound.
-- The web viewer offers 1920 × 1080 and Picture off, which plays the sound alone, and turns a phone sideways when it goes full screen; the web editor's View it sits beside the presets button.
-- The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.
-- A Scope, an Analyzer or a Sample in the picture is drawn on the GPU rather than the processor, and in the web viewer and web editor rather than as a flat line; the web editor never draws on the processor.
-- Every shipped preset carries tags, shown and searched on the presets page and in the gallery.
-- A phone's screen stays on while the web viewer plays full screen.
-- A shared preset needing a plugin Flyback in a browser lacks is offered only as a download, the presets page naming the plugin, and the web viewer refuses one rather than playing it in part.
-- A shared preset opened once is kept with its still, its stars and everything the preset site said of it, so the gallery lists it and it opens while the site does not answer, and opens from what was kept rather than being downloaded again; one the site answers it has taken down is forgotten.
-- `flyback-cli shot` draws the editor's window with a patch open into a PNG, its picture at the second `--at` names, with no screen and no sound; `--crop` keeps only the canvas around the modules.
 - Flyback Theme is a showcase preset: Flyback's own song, three minutes of synthwave in A minor on a two-channel scope.
-- The Output's Volume is on the toolbar, beside the seek bar.
-- Emptying the length box beside the seek bar takes the patch's length away.
-- The viewer and the web viewer show no seek bar for a patch that does not say its length, and play it on past three minutes.
-- The editor starts again with a library folder set under Settings → Files.
-- `flyback-cli plugin describe` says what a `.fbkp` package is and what its code reaches, as the install dialog would, without running it.
-- The preset gallery shows the shipped presets by stills the release drew, rather than drawing each one; `flyback-cli stills` draws them.
-- The presets page lists the presets Flyback ships with, marked as built in, beside the shared ones, and on GitHub Pages alone; a search and the tags narrow both; Play opens one in the web viewer, which leaves picking a preset to the page, and Edit in the web editor.
 - Overworld's verse is on Em Am G Bm, rather than the chords Flyback Theme opens with.
 - Whole band, Acid, Mycelium, Bronze, Outrun, Phase, Fracture, Overworld and Vigil last one pass of their arrangement, so they loop where they come round, and Phase goes through its canons again the second time.
+- Every shipped preset carries tags, shown and searched on the presets page and in the gallery.
+- The preset gallery shows the shipped presets by stills the release drew, rather than drawing each one.
+- Presets are listed by name under each heading, the same on the desktop and the web.
+- With no startup preset chosen, or one this run does not offer, the editor and the viewer open on Plasma.
+
+### Sound
+- The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks none, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
+- Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.
+- A Clock In left to follow whatever is plugged in says nothing when no instrument is.
+- Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
+
+### Interface
+- The status bar and the full-screen stats line name what draws the picture (OpenGL, Direct3D, WebGL or CPU) and what oversampling the sound runs at, and say how many times real time the sound renders at; the op count reads as picture/sound, and modules and wires are no longer counted. Settings → Graphics picks the renderer in one Renderer box.
+- A patch with no sound has no Volume on the toolbar, no sound button over a full-screen picture, and nothing of oversampling or render speed anywhere.
+- The Output's Volume is on the toolbar, beside the seek bar.
+- Emptying the length box beside the seek bar takes the patch's length away; the viewer and the web viewer show no seek bar for a patch that does not say its length, and play it on past three minutes.
+- The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
+- The editor works on a touch screen: two fingers pan and zoom, a finger held still is a right-click, and the toolbar and panel gain buttons for adding a module, framing the patch and duplicating; the module list and the preset gallery wait for their box to be tapped before bringing up the on-screen keyboard.
+- A window too narrow for the canvas beside the preview and the inspector, a tablet or a phone held upright, shows one at a time by the side button, and its toolbar wraps onto more rows.
+- The editor starts again with a library folder set under Settings → Files.
+
+### Web
+- The presets page lists the presets Flyback ships with, marked as built in, beside the shared ones, and on GitHub Pages alone; a search and the tags narrow both; Play opens one in the web viewer and Edit in the web editor. A shared preset's card has Play as well.
+- A shared preset needing a plugin Flyback in a browser lacks is offered only as a download, the presets page naming the plugin; the web viewer refuses one rather than playing it in part, and the gallery lists it with the plugin it needs.
+- A shared preset opened once is kept with its still, its stars and everything the preset site said of it, so the gallery lists it and it opens while the site does not answer; one the site has taken down is forgotten.
+- The web editor on the preset site sends a letter to Flyback's author, and its gallery opens presets shared there; the copy on GitHub Pages offers neither.
+- The web editor's toolbar leads with the Flyback mark, back to the site, and the browser asks before leaving an edited patch; the web viewer's header shows the mark in place of its name.
+- Dragging a knob in the web editor recompiles at a pace the page keeps up with, rather than stuttering the sound.
+- The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.
+- The web viewer offers 1920 × 1080 and Picture off, which plays the sound alone; it turns a phone sideways when it goes full screen and keeps the screen on while it plays.
+- A Scope, an Analyzer or a Sample in the picture is drawn on the GPU rather than the processor, and in the web viewer and web editor rather than as a flat line.
+
+### Command line
+- `flyback-cli save` saves a patch or a shipped preset as `.fbk`, `.fbks` or `.fbkb`, by the extension it is saved to.
+- `flyback-cli shot` draws the editor's window with a patch open into a PNG, its picture at the second `--at` names, with no screen and no sound; `--crop` keeps only the canvas around the modules.
+- `flyback-cli stills` draws the shipped presets' stills.
 - `flyback-cli info` says how long a patch plays, and whether it sets its length.
 - `flyback-cli pack` and `check` take `--preset`, and a preset name nobody shipped is answered with the ones there are.
-- The editor works on a touch screen: two fingers pan and zoom, a finger held still is a right-click, and the toolbar and panel gain buttons for adding a module, framing the patch and duplicating.
-- A window too narrow for the canvas beside the preview and the inspector, a tablet or a phone held upright, shows one at a time by the side button, and its toolbar wraps onto more rows.
-- The module list and the preset gallery a finger opens wait for their box to be tapped before bringing up the on-screen keyboard.
-- Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
-- The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
-- The status bar and the stats line name what draws the picture (OpenGL, Direct3D, WebGL or CPU), Settings → Graphics picks it in one Renderer box, and the op count reads as picture/sound.
-- Presets are listed by name under each heading, the same on the desktop and the web, and the presets page lists the headings showcases first; the web viewer and editor carry the preset site's plugins only when built in the All plugins configuration.
+- `flyback-cli plugin describe` says what a `.fbkp` package is and what its code reaches, as the install dialog would, without running it.
 
 ### Fixes
 - A patch file with a null where a module or a wire belongs is refused on opening; one saved with a byte order mark opens on the preset site and in the web viewer and editor.
 - A name, author or description cut to length no longer splits an emoji in two.
-- The preset site starts when somebody has already submitted one of its default plugins, its search ignores case beyond ASCII, and a file it could send compressed says it varies by encoding either way.
+- The preset site's search ignores case beyond ASCII.
 - Printed as text, a patch keeps its very small numbers, fractional counts, very low notes and quoted descriptions exactly, and names a plugin's module in full where a built-in shares its short name.
 - A knob, `off` or back-wire statement inside a def's braces is read as one.
 - Turning a knob on the canvas no longer rewrites a number the text shares with other knobs.
-- The assistant cannot remove the Output, set a knob past what a float holds, or take a handle the text cannot print.
+- The assistant cannot remove the Output, set a knob past what a float holds, or take a handle the text cannot print; it reads an endpoint's refusal however it is shaped and a token count written with a fraction, and a saved conversation with a field written twice opens as none.
 - A key pasted with a trailing space is still kept out of messages, and one pasted into a message stays out of the conversation log.
-- The assistant reads an endpoint's refusal however it is shaped and a token count written with a fraction, and a saved conversation with a field written twice opens as none.
 
 ## 0.5.1 — 2026-09-29
 
