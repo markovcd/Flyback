@@ -104,13 +104,10 @@ public sealed class CompiledPatch
     /// <summary>
     /// The clips <see cref="OpCode.Table"/> reads, indexed by its K. Carried by
     /// the program rather than handed to it per evaluation, unlike a delay line:
-    /// a clip is the same for every evaluation and every renderer. Empty on the
-    /// video path whatever the patch asked for — see OpCode.Table.
+    /// a clip is the same for every evaluation and every renderer, and the shader
+    /// is handed each as a float texture.
     /// </summary>
     public IReadOnlyList<LoadedSample> Tables => tableArray;
-
-    /// <summary>Whether a shader can draw this program: it has no clip to read a table from.</summary>
-    public bool ShaderCanDraw => tableArray.Length == 0;
 
     /// <summary>
     /// The pictures <see cref="OpCode.SamplePicture"/> reads, indexed by its K.

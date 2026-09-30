@@ -6,7 +6,7 @@ namespace Flyback.Core.Compile;
 /// </summary>
 /// <remarks>
 /// <see cref="Traces"/>'s opposite. That carries a stretch of the past across as a
-/// buffer, read with <see cref="OpCode.Table"/>, which the shader cannot draw;
+/// buffer, read with <see cref="OpCode.Table"/>, which the shader reads as a texture;
 /// this carries the same stretch across as its loudness, which is played in the
 /// way a key is — through <see cref="LiveValues"/> and out as
 /// <see cref="OpCode.LoadLive"/>, a uniform on the shader and free.

@@ -217,8 +217,8 @@ public enum OpCode : byte
     /// is carried by the program — see <c>CompiledPatch.Tables</c> —
     /// because it is the same for every evaluation and every renderer. Not
     /// stateful: a clip is a function of the position asked for. A program
-    /// compiled with no clips reads silence, which is what the shader does and
-    /// what the screen gets.
+    /// compiled with no clips reads silence. The shader reads each clip as a
+    /// float texture.
     /// </remarks>
     Table = 42,
 

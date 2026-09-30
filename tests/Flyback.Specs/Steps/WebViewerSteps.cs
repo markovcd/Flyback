@@ -29,6 +29,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
 
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-web-");
     private float[] heard = [];
+    private float[] handed = [];
     private double seconds;
     private JsonNode? said;
     private (string Name, float Value)? turned;
@@ -42,6 +43,47 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
 
     [When("it plays in the web viewer for {float} second(s)")]
     public void WhenPlayedInTheBrowser(float length) => Play(length);
+
+    [When("it plays in the web viewer for {float} second(s), keeping what its sound hands the picture")]
+    public void WhenPlayedKeepingTheState(float length)
+    {
+        var state = Path.Combine(folder.FullName, "handed.f32");
+        Play(length, "--state", state);
+        handed = MemoryMarshal.Cast<byte, float>(File.ReadAllBytes(state)).ToArray();
+    }
+
+    /// <summary>
+    /// The Scope's buffer, last in what the worker packs, against the one the desktop's
+    /// engine fills from the same second of sound.
+    /// </summary>
+    [Then("the picture is handed the Scope's chart the desktop draws, to within one step of 16 bits")]
+    public void ThenTheDesktopsChart()
+    {
+        var modules = Installed.Value.Modules;
+        var (patch, samples, pictures) = PresetLibrary.Open(session.Presets.Single(), null, modules);
+
+        var program = patch.CompileForAudio(modules, samples: samples, pictures: pictures, played: true).Program;
+        var picture = patch.CompileForVideo(modules, samples: samples, pictures: pictures, played: true).Program;
+        var live = new LiveValues(program.LiveInputs);
+        patch.Seed(live);
+
+        var speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(Width, Height) };
+        var memory = speakers.DelayMemoryFor(program);
+        var sound = new float[(int)Math.Round(seconds * speakers.SampleRate) * 2];
+
+        for (var at = 0; at < sound.Length; at += 2048)
+            speakers.Render(program, sound.AsSpan(at, Math.Min(2048, sound.Length - at)), memory, live);
+
+        Traces.Refresh(picture, program, memory);
+
+        var chart = picture.Taps.ShouldHaveSingleItem().Trace.Samples;
+        chart.ShouldContain(value => value != 0f, "the desktop's Scope charted silence, so agreeing with it proves nothing");
+
+        handed.Length.ShouldBeGreaterThanOrEqualTo(chart.Length);
+        var web = handed[^chart.Length..];
+
+        chart.Zip(web, (a, b) => Math.Abs(a - b)).Max().ShouldBeLessThanOrEqualTo(1f / 32768f);
+    }
 
     [When("it plays in the web viewer for {float} second(s) with its {string} knob at {float}")]
     public void WhenPlayedWithAKnobTurned(float length, string knob, float value)
@@ -210,23 +252,6 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         refused.Value.Said.ShouldContain("Not opened.");
         refused.Value.Said.ShouldContain(plugin);
     }
-
-    [When("its picture is opened in the web viewer")]
-    public void WhenThePictureIsOpened() =>
-        said = JsonNode.Parse(Hear("--preset", session.Presets.Single().Name, "--size", $"{Width}x{Height}", "--picture"));
-
-    [Then("the web viewer leaves the picture out, saying it cannot draw a Scope")]
-    public void ThenThePictureIsLeftOut()
-    {
-        var why = (string?)said!["undrawn"];
-
-        why.ShouldNotBeNull("the picture is drawn, a Scope reading as a flat line");
-        why.ShouldContain("cannot draw a Scope");
-        why.ShouldContain("the sound plays alone");
-    }
-
-    [Then("the web viewer draws the picture")]
-    public void ThenThePictureIsDrawn() => ((string?)said!["undrawn"]).ShouldBeNull();
 
     [Then("the web viewer says what the preset is for")]
     public void ThenItIsDescribed()

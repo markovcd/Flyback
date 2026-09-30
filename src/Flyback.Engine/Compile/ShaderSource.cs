@@ -8,6 +8,7 @@
 /// <param name="UsesFeedback">Whether the fragment shader reads <c>uPrevious</c>.</param>
 /// <param name="LiveCount">Length of the <c>uLive</c> array, uploaded every frame.</param>
 /// <param name="PictureCount">How many textures to bind, from <see cref="CompiledPatch.Pictures"/> in order.</param>
+/// <param name="TableCount">How many float textures to bind, from <see cref="CompiledPatch.Tables"/> in order.</param>
 /// <param name="PlaneTargets">
 /// Extra render targets, one per four planes (<see cref="OpCode.PlaneRead"/>):
 /// written as <c>outPlane0</c> up at locations 1 up, read back next frame as
@@ -23,4 +24,5 @@ public sealed record ShaderSource(
     int OpCount,
     int LiveCount = 0,
     int PictureCount = 0,
-    int PlaneTargets = 0);
+    int PlaneTargets = 0,
+    int TableCount = 0);

@@ -148,6 +148,9 @@ public static partial class WebExports
     /// <summary>The Meters the editor's picture reads, measured by <see cref="Readings"/>.</summary>
     private static LiveValues watched = LiveValues.None;
 
+    /// <summary>The Scopes and Analyzers the editor's picture draws, refilled by <see cref="Readings"/>.</summary>
+    private static TapSpec[] charted = [];
+
     /// <summary>Keeps a file the editor's patch names, for every <see cref="Edit"/> after.</summary>
     [JSExport]
     public static void Keep(string path, byte[] bytes)
@@ -193,21 +196,47 @@ public static partial class WebExports
         }
     }
 
-    /// <summary>Says which Meters <see cref="Readings"/> measures, by the names the editor's picture reads them on.</summary>
+    /// <summary>
+    /// Says which Meters <see cref="Readings"/> measures, by the names the editor's picture
+    /// reads them on, and which charts it refills, by module, window and whether each is a
+    /// spectrum (1) or a trace (0). Answers how many floats the readings take.
+    /// </summary>
     [JSExport]
-    public static void Watch(string[] keys) => watched = new LiveValues(keys);
+    public static int Watch(string[] keys, string[] charts, double[] windows, int[] spectra)
+    {
+        watched = new LiveValues(keys);
+        charted =
+        [
+            .. charts
+                .Select((node, i) => (Ok: Guid.TryParse(node, out var id), Id: id, At: i))
+                .Where(chart => chart.Ok && chart.At < windows.Length && chart.At < spectra.Length)
+                .Select(chart => new TapSpec(chart.Id, (float)windows[chart.At], Traces.Buffer(), spectra[chart.At] != 0)),
+        ];
+
+        return watched.Count + charted.Sum(chart => chart.Trace.Samples.Length);
+    }
 
     /// <summary>
-    /// Measures the Meters <see cref="Watch"/> named, in its order, and answers the
-    /// address the readings start at; zero where there are none.
+    /// Measures the Meters <see cref="Watch"/> named and refills its charts, in its order,
+    /// and answers the address the readings start at; zero where there are none.
     /// </summary>
     [JSExport]
     public static int Readings()
     {
-        if (sound is null || watched.Count == 0) return 0;
+        if (sound is null || (watched.Count == 0 && charted.Length == 0)) return 0;
 
-        sound.Readings(watched);
-        watched.CopyTo(State.Take(watched.Count));
+        sound.Readings(watched, charted);
+
+        var readings = State.Take(watched.Count + charted.Sum(chart => chart.Trace.Samples.Length));
+        watched.CopyTo(readings);
+
+        var at = watched.Count;
+
+        foreach (var chart in charted)
+        {
+            chart.Trace.Samples.CopyTo(readings[at..]);
+            at += chart.Trace.Samples.Length;
+        }
 
         return State.Address;
     }
@@ -391,7 +420,7 @@ public static partial class WebExports
     [JSExport]
     public static void Release() => sound?.Release();
 
-    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders, and why a picture is left out.</summary>
+    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
     [JSExport]
     public static string Status()
     {
@@ -419,7 +448,6 @@ public static partial class WebExports
             status["height"] = picture.Resolution.Height;
             status["linking"] = picture.Linking;
             status["eightBitFeedback"] = picture.EightBitFeedback;
-            status["undrawn"] = picture.Undrawn;
             status["stateLength"] = picture.StateLength;
             status["keyboard"] = Typing.Described;
         }

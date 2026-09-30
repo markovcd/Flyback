@@ -193,6 +193,29 @@ vec3 hsv(float h, float s, float v)
     return vec3(v, p, q);
 }
 
+uniform sampler2D uTable0;
+uniform float uTableLength0;
+uniform float uTableRate0;
+
+float tab0(float seconds)
+{
+    if (!fin(seconds)) return 0.0;
+
+    float at = seconds * uTableRate0;
+    if (at < 0.0 || at >= uTableLength0) return 0.0;
+
+    float whole = floor(at);
+    int first = int(whole);
+    int second = first + 1;
+
+    float a = texelFetch(uTable0, ivec2(first % 4096, first / 4096), 0).r;
+    float b = whole + 1.0 < uTableLength0
+        ? texelFetch(uTable0, ivec2(second % 4096, second / 4096), 0).r
+        : 0.0;
+
+    return a + (b - a) * (at - whole);
+}
+
 void main()
 {
     float px = (vUv.x * 2.0 - 1.0) * uAspect;
@@ -210,7 +233,7 @@ void main()
     float r10 = dv(r7, r9);
     float r11 = uK[4];
     float r12 = r10 * r11;
-    float r13 = 0.0;
+    float r13 = tab0(r12);
     float r14 = uK[5];
     float r15 = max(r3, r14);
     float r16 = dv(r13, r15);

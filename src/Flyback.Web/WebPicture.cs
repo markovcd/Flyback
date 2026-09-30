@@ -11,7 +11,7 @@ namespace Flyback.Web;
 /// worker playing the sound last said of it.
 /// </summary>
 /// <remarks>
-/// Compiled and drawn only once a context asks for it. Meters hold what
+/// Compiled and drawn only once a context asks for it. Meters and charts hold what
 /// <see cref="Apply"/> last handed them, which is silence until the sound plays.
 /// </remarks>
 [SupportedOSPlatform("browser")]
@@ -34,12 +34,7 @@ internal sealed class WebPicture
 
         watching = new LiveValues(picture.LiveInputs);
         patch.Seed(watching);
-
-        Undrawn = UndrawnPicture.Why(picture);
     }
-
-    /// <summary>Why the picture is left out, or null where it is drawn.</summary>
-    public string? Undrawn { get; }
 
     public SurfaceSize Resolution { get; }
 
@@ -57,7 +52,7 @@ internal sealed class WebPicture
     /// <summary>Whether the picture's shader is still being built.</summary>
     public bool Linking => screen is not null && !settled;
 
-    /// <summary>Takes the Meters' readings the sound's worker packed.</summary>
+    /// <summary>Takes the Meters' readings and the charts' buffers the sound's worker packed.</summary>
     public void Apply(ReadOnlySpan<float> state) => SoundState.Read(state, picture, watching);
 
     /// <summary>Turns a panel knob, 0 to 1.</summary>
@@ -75,8 +70,6 @@ internal sealed class WebPicture
     /// </summary>
     public string? Draw(IGl gl, double time, SurfaceSize canvas)
     {
-        if (Undrawn is not null) return null;
-
         if (screen is null)
         {
             screen = new GpuFrameRenderer(GlslDialect.GlslEs300, backgroundLinks: true);
@@ -100,8 +93,6 @@ internal sealed class WebPicture
     /// </summary>
     public string? Still(IGl gl, double time, Span<byte> rgba)
     {
-        if (Undrawn is not null) return Undrawn;
-
         if (screen is null || !settled) return "The picture is not ready yet.";
 
         return screen.Frame(gl, Resolution, time, watching, rgba);

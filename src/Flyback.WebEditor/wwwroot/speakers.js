@@ -28,8 +28,9 @@ let reportedAt = 0;
 let wallStart = 0;
 let held = 0;
 
-/** The Meters last named, and the latest readings of them the worker sent. */
+/** The Meters last named, how many of them there are, and the latest readings of them the worker sent. */
 let meters = 0;
+let metered = 0;
 let readings = { meters: 0, values: new Float32Array(0) };
 let soundStatus = {};
 
@@ -180,13 +181,17 @@ export function play(keys, values) {
   worker.postMessage({ play: keys, values: Array.from(values) });
 }
 
-/** Names the Meters the picture reads, and answers the number their readings will come back under. */
-export function watch(keys) {
-  worker.postMessage({ watch: keys, meters: ++meters });
+/**
+ * Names the Meters the picture reads and the charts it draws, by module, window and
+ * whether each is a spectrum, and answers the number their readings will come back under.
+ */
+export function watch(keys, charts, windows, spectra) {
+  metered = keys.length;
+  worker.postMessage({ watch: keys, charts, windows: Array.from(windows), spectra: Array.from(spectra), meters: ++meters });
   return meters;
 }
 
-/** The latest readings of the Meters named under <number>, or none where they are of other Meters. */
+/** The latest readings named under <number>, the Meters' and then each chart's buffer, or none where they are of others. */
 export function read(number) {
   return readings.meters === number ? Array.from(readings.values) : [];
 }
@@ -204,6 +209,6 @@ export function status() {
     interpreted: soundStatus.interpreted ?? null,
     volume: loudness,
     handed,
-    meters: Array.from(readings.values),
+    meters: Array.from(readings.values.subarray(0, metered)),
   };
 }

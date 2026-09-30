@@ -68,9 +68,9 @@ than a quarter, so an edit is heard in about a tenth of a second.
 page is used, so until then, and until the worker is up, the picture runs on the
 wall clock; the first press lets the sound in, and it joins where the picture is.
 Knobs and keys write into a block on the page, as on the desktop, and what changed
-in it is posted once a frame. The Meters the picture reads are named to the worker,
-which measures them and posts the readings back; a Scope's chart is not carried,
-since the shader reads every table as silence.
+in it is posted once a frame. The Meters the picture reads and the charts it draws
+are named to the worker, which measures and refills them and posts them back; the
+shader reads a chart as a texture ([0167](0167-the-shader-reads-a-table-as-a-float-texture.md)).
 
 **The editor is a library, `Flyback.Editor`.** Its window, canvas, regions, the
 container that composes them, and what they read (usage, release notes, the running

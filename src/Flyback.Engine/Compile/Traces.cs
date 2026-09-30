@@ -51,15 +51,22 @@ public static class Traces
     /// in that case: a chart holds its last sweep, which is what a scope with the
     /// beam stopped looks like.
     /// </param>
-    public static void Refresh(CompiledPatch drawn, CompiledPatch heard, DelayState? memory)
+    public static void Refresh(CompiledPatch drawn, CompiledPatch heard, DelayState? memory) =>
+        Refill(drawn.Taps, heard, memory);
+
+    /// <summary>
+    /// Refills <paramref name="charts"/>, named by module rather than read off the
+    /// screen's program: the web editor's page draws, and its worker holds the rings.
+    /// </summary>
+    public static void Refill(IReadOnlyList<TapSpec> charts, CompiledPatch heard, DelayState? memory)
     {
-        if (memory is null || drawn.Taps.Count == 0 || heard.Taps.Count == 0) return;
+        if (memory is null || charts.Count == 0 || heard.Taps.Count == 0) return;
 
         for (var slot = 0; slot < heard.Taps.Count; slot++)
         {
             var played = heard.Taps[slot];
 
-            foreach (var shown in drawn.Taps)
+            foreach (var shown in charts)
             {
                 if (shown.Node != played.Node) continue;
 

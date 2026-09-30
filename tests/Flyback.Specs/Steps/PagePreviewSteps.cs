@@ -1,14 +1,13 @@
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Gpu;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The preview host with a page's WebGL surface or the desktop's, and what it falls back to.</summary>
+/// <summary>The preview host with a page's WebGL surface or the desktop's, and when it hands the picture to the processor.</summary>
 [Binding]
 public sealed class PagePreviewSteps
 {
@@ -30,19 +29,12 @@ public sealed class PagePreviewSteps
     [When("the processor is chosen to draw the picture")]
     public void WhenProcessorChosen() => Headless.Run(() => host!.Use(PreviewBackend.Cpu));
 
-    [Then("the preview stays on WebGL")]
-    public void ThenOnWebGl() => Headless.Run(() =>
+    [Then("the preview stays on the GPU")]
+    public void ThenOnTheGpu() => Headless.Run(() =>
     {
         host!.Backend.ShouldBe(PreviewBackend.Gpu);
         host.Child.ShouldBeSameAs(surface);
     });
-
-    [Then("the preview draws on the processor")]
-    public void ThenOnTheProcessor() => Headless.Run(() => host!.Backend.ShouldBe(PreviewBackend.Cpu));
-
-    [Then("it says it cannot draw a Scope")]
-    public void ThenItSaysWhy() => Headless.Run(() =>
-        UndrawnPicture.Why(host!.Program).ShouldNotBeNull().ShouldContain("cannot draw a Scope"));
 
     private void Build(bool processorStandsIn) => Headless.Run(() =>
     {
@@ -50,7 +42,7 @@ public sealed class PagePreviewSteps
         host = new PreviewHost(() => surface);
     });
 
-    /// <summary>A picture that is a Scope's chart of a sine, which a shader cannot read.</summary>
+    /// <summary>A picture that is a Scope's chart of a sine, a table the shader reads as a texture.</summary>
     private static CompiledPatch Charted()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
@@ -63,7 +55,7 @@ public sealed class PagePreviewSteps
         b.Wire(scope, 0, output, NodeCatalog.OutputColorPort);
 
         var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, played: true).Program;
-        program.ShaderCanDraw.ShouldBeFalse("a Scope's chart is a table the shader cannot read");
+        program.Tables.ShouldNotBeEmpty("the chart is a table, and a picture without one proves nothing");
 
         return program;
     }

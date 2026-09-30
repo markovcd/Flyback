@@ -101,11 +101,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public CompiledPatch Program
     {
         get => active.Program;
-        set
-        {
-            Reconsider(value);
-            active.Program = value;
-        }
+        set => active.Program = value;
     }
 
     internal LiveValues Live
@@ -120,8 +116,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
 
     /// <summary>
     /// Which renderer was asked for, as against <see cref="Backend"/>, which is the
-    /// one running. The two differ while a patch is drawn on the processor because
-    /// the shader cannot draw it.
+    /// one running. The two differ once the GPU has failed.
     /// </summary>
     /// <remarks>
     /// Kept apart so the toolbar can show the choice while the status bar shows the
@@ -129,42 +124,6 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// turn the GPU off for good on the strength of one patch.
     /// </remarks>
     public PreviewBackend Wanted { get; private set; } = PreviewBackend.Gpu;
-
-    /// <summary>
-    /// Puts the right renderer in place for a program about to be shown.
-    /// </summary>
-    /// <remarks>
-    /// A shader has no clip to read, so a program that plays a sample is drawn on
-    /// the processor whatever was asked for, and goes back to the shader when the
-    /// sample stops reaching the screen. Only a Probe pointed at one asks for this:
-    /// dead code is eliminated per sink (ADR-0022), so a Sample wired to the
-    /// speakers alone puts no table in the video program. Not
-    /// <see cref="OnGpuFailed"/>, which withdraws the offer for the session — this
-    /// is a property of one program.
-    /// </remarks>
-    private void Reconsider(CompiledPatch program)
-    {
-        var target = (program.ShaderCanDraw || !processorStandsIn) && Wanted == PreviewBackend.Gpu && GpuAvailable
-            ? PreviewBackend.Gpu
-            : PreviewBackend.Cpu;
-
-        if (target == Backend) return;
-
-        Switch(target);
-
-        // Said only when the shader was wanted and could not be had. Going back
-        // to it is what anybody would expect and needs no announcement.
-        if (target == PreviewBackend.Cpu && Wanted == PreviewBackend.Gpu)
-        {
-            BackendChanged?.Invoke(
-                "Drawing on the processor: this patch plays a sample, and a shader has no "
-                + "recording to read.");
-        }
-        else
-        {
-            BackendChanged?.Invoke(string.Empty);
-        }
-    }
 
     public void Rewind() => active.Rewind();
 
@@ -215,10 +174,10 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
 
         Wanted = backend;
 
-        // Asked again through the program, because the program may be one the
-        // shader cannot draw — in which case the choice is remembered and not
-        // acted on until a patch comes along that it can.
-        Reconsider(active.Program);
+        if (backend == Backend) return;
+
+        Switch(backend);
+        BackendChanged?.Invoke(string.Empty);
     }
 
     /// <summary>

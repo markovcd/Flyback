@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
 using Flyback.Gpu;
 using Shouldly;
@@ -46,13 +47,66 @@ public class GpuRenderTests
         Agrees(patch);
     }
 
+    /// <summary>A Scope's chart, its buffer filled as the sound would fill it, which the shader reads as a texture.</summary>
+    [Fact]
+    public void The_GPU_draws_a_Scope_as_the_processor_does()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var sine = b.Add("osc.sine", 0, 0);
+        var scope = b.Add(NodeCatalog.ScopeTypeId, 100, 0);
+        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+
+        b.Wire(sine, 0, scope, 0);
+        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
+        b.Wire(scope, 0, output, NodeCatalog.OutputColorPort);
+
+        var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
+        var buffer = program.Taps.ShouldHaveSingleItem().Trace.Samples;
+
+        for (var i = 0; i < buffer.Length; i++) buffer[i] = MathF.Sin(i * 0.037f) * 0.8f;
+
+        Agrees(program);
+    }
+
+    /// <summary>A clip played into the picture, longer than a row of its texture, so the read wraps onto the next.</summary>
+    [Fact]
+    public void The_GPU_draws_a_Sample_as_the_processor_does()
+    {
+        var folder = Directory.CreateTempSubdirectory("flyback-gpu-sample").FullName;
+
+        try
+        {
+            var samples = new float[GlslEmitter.TableRow * 3 + 17];
+            for (var i = 0; i < samples.Length; i++) samples[i] = MathF.Sin(i * 0.013f);
+
+            var path = Path.Combine(folder, "clip.wav");
+            WavWriter.Write(path, samples, 8000, 1);
+
+            var b = new PatchBuilder(NodeCatalog.BuiltIn);
+            var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
+            SampleExtra.Set(player, path);
+            var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
+            b.Wire(player, 0, output, NodeCatalog.OutputColorPort);
+
+            var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, new SampleLibrary { Beside = folder }).Program;
+            program.Tables.ShouldHaveSingleItem();
+
+            Agrees(program);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    private static void Agrees(Patch patch) => Agrees(patch.CompileForVideo(NodeCatalog.BuiltIn).Program);
+
     /// <summary>Four frames a thirtieth apart on each, so a loop has three frames behind it to disagree about.</summary>
-    private static void Agrees(Patch patch)
+    private static void Agrees(CompiledPatch program)
     {
         using var gpu = HeadlessRenderer.Open(out var why);
         Assert.SkipWhen(gpu is null, $"No GPU here. {why}");
 
-        var program = patch.CompileForVideo(NodeCatalog.BuiltIn).Program;
         IlCompiler.CompileOnce(program, IlParts.Staged);
 
         gpu.Prepare(program).ShouldBeNull();

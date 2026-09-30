@@ -109,6 +109,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
     private int[] patchPictures = [];
     private int[] patchPictureAspects = [];
 
+    /// <summary>The patch's clips and charts, as float textures.</summary>
+    private readonly TableTextures tables = new();
+
     /// <summary>
     /// What is on the GPU now. Comparing sources rather than patches is what
     /// keeps a knob drag from recompiling: ADR-0021 rebuilds the whole program on
@@ -331,6 +334,8 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
             patchPictureAspects[i] = gl.GetUniformLocation(compiled, $"uPictureAspect{i}");
         }
 
+        tables.Locate(gl, compiled, shaders.TableCount);
+
         // And one sampler per plane target, holding what the frame before left in
         // it. What is bound to them is chosen per frame, since which of the pair
         // is being read alternates.
@@ -372,6 +377,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         constants = GlslEmitter.Constants(patch);
         liveInputs = patch.LiveInputs;
         Upload(gl, patch.Pictures);
+        tables.Adopt(gl, patch);
     }
 
     /// <summary>
@@ -628,6 +634,9 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
 
             if (patchPlanes[i] >= 0) gl.Uniform1i(patchPlanes[i], 1 + pictures.Length + i);
         }
+
+        // And the tables above the planes.
+        tables.Bind(gl, 1 + pictures.Length + patchPlanes.Length);
 
         gl.DrawArrays(GL_TRIANGLE_STRIP, 0, Quad);
     }
@@ -1044,6 +1053,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
             // reading a name that had been handed back the moment somebody
             // dragged the window.
             foreach (var texture in pictures) gl.DeleteTexture(texture);
+            tables.Delete(gl);
 
             if (building is { } dropped) Drop(gl, dropped);
             foreach (var set in parked) Drop(gl, set);
@@ -1062,6 +1072,7 @@ internal sealed class GpuFrameRenderer(GlslDialect dialect, bool backgroundLinks
         // already done this would bind whatever those numbers now belong to.
         pictures = [];
         shown = [];
+        tables.Forget();
         linked.Clear();
         parked.Clear();
         building = null;

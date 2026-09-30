@@ -6,6 +6,7 @@ const PIXEL_PACK_BUFFER = 0x88EB;
 const UNSIGNED_BYTE = 0x1401;
 const HALF_FLOAT = 0x140B;
 const FLOAT = 0x1406;
+const RED = 0x1903;
 
 let gl = null;
 let heap = null;
@@ -69,7 +70,7 @@ export function deleteTexture(name) { gl.deleteTexture(get(name)); drop(name); }
 export const bindTexture = (target, name) => gl.bindTexture(target, get(name));
 
 export function texImage2D(target, level, internalFormat, width, height, format, type, pointer) {
-  const data = pointer === 0 ? null : pixels(type, pointer, width * height * 4);
+  const data = pointer === 0 ? null : pixels(type, pointer, width * height * (format === RED ? 1 : 4));
   gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, data);
 }
 

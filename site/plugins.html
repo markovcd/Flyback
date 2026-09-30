@@ -664,10 +664,8 @@ em.UnitWrite(cell, smoothed);           <span class="c">// what it holds next ti
 
     <div class="note">
       <span class="tag">A module for the eye has one more gate</span>
-      <p>The preview draws on the GPU wherever it can, and the one thing the shader cannot draw at all is a
-      table read — <code>em.Table</code>, which is a clip or a trace. A video program containing one takes the
-      preview back to the CPU for as long as that patch is loaded, and nothing anywhere says so. Cells and
-      delay lines are milder: they lower to the same no-state fallback the interpreter uses on the video path,
+      <p>The preview draws on the GPU, and a table read — <code>em.Table</code>, which is a clip or a trace — is a
+      float texture there, read as the interpreter reads it. Cells and delay lines are milder: they lower to the same no-state fallback the interpreter uses on the video path,
       so the two backends still agree. Planes are kept by the shader as well, as channels of a float render
       target; a graphics context that cannot provide one draws the frame on the CPU instead. If your module is for the picture, keep it to arithmetic and pin it
       with a test that <code>GlslEmitter.Emit</code> is happy in every dialect — that test is the complaint

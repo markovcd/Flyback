@@ -20,8 +20,8 @@ namespace Flyback.WebEditor;
 /// rather than handed to a render thread. The canvas is the browser's, drawn above
 /// Avalonia's own, so nothing of Avalonia's can overlay it: while a dialog is up it
 /// is hidden, and the black box it sits in shows instead, and wherever a popup lies
-/// over it a hole is cut for the popup to show through. What it cannot draw it says
-/// why it cannot, over the black box, rather than handing it to the processor.
+/// over it a hole is cut for the popup to show through. A shader that will not build
+/// or a context that fails is said over the black box, never handed to the processor.
 /// </remarks>
 internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 {
@@ -231,14 +231,6 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     private void Draw()
     {
-        if (UndrawnPicture.Why(program) is { } undrawn)
-        {
-            Say(undrawn);
-            linking = false;
-            GivePart();
-            return;
-        }
-
         if (ReferenceEquals(program, refused)) return;
 
         if (renderer is null)

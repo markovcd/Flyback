@@ -115,23 +115,29 @@ internal sealed class WebSound : IDisposable
     }
 
     /// <summary>
-    /// Measures every Meter from what has been rendered, playing the readings into the
-    /// sound too, and packs what the picture needs into <paramref name="state"/>.
+    /// Measures every Meter and refills every chart from what has been rendered, playing
+    /// the readings into the sound too, and packs what the picture needs into <paramref name="state"/>.
     /// </summary>
     public void Listen(Span<float> state)
     {
         if (picture is null) return;
 
         Meters.Refresh(sound, memory, shown, heard);
+        Traces.Refresh(picture, sound, memory);
 
         SoundState.Write(picture, shown, state);
     }
 
     /// <summary>
     /// Measures the Meters <paramref name="watched"/> is keyed by, playing the readings
-    /// into the sound too, and leaves them in its storage in the order of its keys.
+    /// into the sound too, and leaves them in its storage in the order of its keys; and
+    /// refills <paramref name="charts"/>.
     /// </summary>
-    public void Readings(LiveValues watched) => Meters.Refresh(sound, memory, watched, heard);
+    public void Readings(LiveValues watched, IReadOnlyList<TapSpec> charts)
+    {
+        Meters.Refresh(sound, memory, watched, heard);
+        Traces.Refill(charts, sound, memory);
+    }
 
     /// <summary>Plays <paramref name="value"/> on <paramref name="key"/>, as it was written into the editor's block.</summary>
     public void Play(string key, float value) => heard.Set(key, value);

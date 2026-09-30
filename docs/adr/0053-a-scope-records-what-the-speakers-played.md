@@ -193,3 +193,8 @@ The tests had pinned the bottom of the window's travel and not the top, which
 is the whole reason a ceiling could sit up there unnoticed. Both ends are
 pinned now, against the port's own range rather than against a number copied
 into the test.
+
+## Amendment, 2026-09-30: the shader reads tables
+
+A program carrying a table is no longer drawn on the processor: the shader reads each
+table as a float texture; see [0167](0167-the-shader-reads-a-table-as-a-float-texture.md).

@@ -340,10 +340,21 @@ public sealed class DelayState
             if (to <= from) to = from + 1;
 
             var peak = 0f;
-            for (var j = from; j < to; j++)
+            var loudest = 0f;
+            var at = Index(from, ring.Length);
+
+            for (var left = to - from; left > 0; left--)
             {
-                var value = ring[Index(j, ring.Length)];
-                if (MathF.Abs(value) > MathF.Abs(peak)) peak = value;
+                var value = ring[at];
+                var loud = MathF.Abs(value);
+
+                if (loud > loudest)
+                {
+                    peak = value;
+                    loudest = loud;
+                }
+
+                if (++at == ring.Length) at = 0;
             }
 
             into[i] = peak;

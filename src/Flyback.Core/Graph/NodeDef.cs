@@ -109,8 +109,8 @@ public sealed record NodeDef(
     /// <remarks>
     /// The second half of <see cref="TapsSignal"/>, separate because the two are
     /// not the same size. A chart wants the whole window: a buffer per instance,
-    /// refilled every frame and read as a table, which the shader cannot draw, so
-    /// a patch charting one draws on the CPU. A measurement wants a number filled
+    /// refilled every frame and read as a table, which the shader takes as a texture.
+    /// A measurement wants a number filled
     /// in from outside, and costs the picture nothing. Both still tap.
     /// </remarks>
     public bool ChartsSignal { get; init; }

@@ -6,7 +6,7 @@
 //   node hear.mjs --preset "Played" --note 60:0.1:0.6 --note 64:0.3:0.6
 //   node hear.mjs --edit 0:before.fbk --edit 0.5:after.fbk
 //   node hear.mjs --presets
-//   node hear.mjs --preset "Duck" --picture
+//   node hear.mjs --preset "Duck" --seconds 1 --state duck.state
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
 // panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
@@ -15,9 +15,9 @@
 // first buffer of 1,024 frames that starts at or after each. --edit hands over a patch
 // file written as JSON as the web editor does, at the first such buffer at or after its
 // second; one at 0 stands for a preset or a file.
+// --state writes what the sound hands the picture once it has played, as the page's worker
+// packs it: the Meters' readings, then each Scope's and Analyzer's buffer, as raw floats.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
-// With --picture it opens the picture's half instead and prints its status, drawing nothing,
-// which says why a picture a browser cannot draw is left out.
 
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -38,8 +38,8 @@ const { values, positionals } = parseArgs({
     seconds: { type: 'string', default: '1' },
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
+    state: { type: 'string' },
     presets: { type: 'boolean' },
-    picture: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
     note: { type: 'string', multiple: true, default: [] },
     edit: { type: 'string', multiple: true, default: [] },
@@ -92,22 +92,15 @@ const file = positionals[0];
 const opening = edits.length > 0 && edits[0].seconds <= 0;
 if (opening) edit();
 
-const part = values.picture ? 'picture' : 'sound';
-
 const failure = opening ? null : packed !== null
-  ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, part) : `No preset is called '${values.preset}'.`
+  ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, 'sound') : `No preset is called '${values.preset}'.`
   : file !== undefined
-    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, part)
+    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, 'sound')
     : 'Name a patch file or a --preset.';
 
 if (failure) {
   console.error(`hear: ${failure}`);
   process.exit(1);
-}
-
-if (values.picture) {
-  console.log(web.Status());
-  process.exit(0);
 }
 
 const knobs = JSON.parse(web.Knobs());
@@ -160,6 +153,13 @@ for (let at = 0; at < frames; at += chunk) {
 }
 
 if (values.out) await writeFile(values.out, new Uint8Array(sound.buffer));
+
+if (values.state) {
+  const at = web.Listen() / 4;
+  const length = JSON.parse(web.Status()).stateLength;
+  const state = at === 0 ? new Float32Array(0) : runtime.localHeapViewF32().slice(at, at + length);
+  await writeFile(values.state, new Uint8Array(state.buffer));
+}
 
 console.log(JSON.stringify({ ...JSON.parse(web.Status()), knobs }));
 process.exit(0);

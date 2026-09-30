@@ -27,6 +27,8 @@ internal static class GlConstants
     public const int GL_RGBA8 = 0x8058;
     public const int GL_RGBA32F = 0x8814;
     public const int GL_RGBA16F = 0x881A;
+    public const int GL_RED = 0x1903;
+    public const int GL_R32F = 0x822E;
 
     public const int GL_NEAREST = 0x2600;
     public const int GL_LINEAR = 0x2601;

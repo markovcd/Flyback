@@ -30,9 +30,7 @@ namespace Flyback.Plugins.Picture;
 /// Every module here is arithmetic over ops the engine already has — none
 /// reaches for a table, a cell or a delay line, and the picture Text reads is a
 /// texture there — so all cost the same at either sink and all survive to the
-/// shader. That last is the gate that matters for a
-/// video plugin: a program the shader cannot draw takes the preview back to the
-/// CPU for as long as the patch is loaded.
+/// shader.
 /// <para>
 /// The three gaps are three different kinds of missing. There was nothing to draw
 /// — every field in the catalog is infinite, so a patch could make a texture of

@@ -119,3 +119,8 @@ arithmetic. The last is an opcode, and
 [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) already
 argues it: a clip uploaded as a texture would work on both backends, since
 `SampleFeedback` proves a texture read lowers to GLSL.
+
+## Amendment, 2026-09-30: the shader reads tables
+
+A program carrying a table is no longer drawn on the processor: the shader reads each
+table as a float texture; see [0167](0167-the-shader-reads-a-table-as-a-float-texture.md).

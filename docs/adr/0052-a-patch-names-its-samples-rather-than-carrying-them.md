@@ -128,3 +128,8 @@ permanent. A program the shader cannot draw is neither permanent nor a failure,
 so the button shows the choice and the status bar shows what is actually
 drawing — and a button that unticked itself would have been read as the setting
 changing, and would have changed it.
+
+## Amendment, 2026-09-30: the shader reads tables
+
+A program carrying a table is no longer drawn on the processor: the shader reads each
+table as a float texture; see [0167](0167-the-shader-reads-a-table-as-a-float-texture.md).

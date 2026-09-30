@@ -62,7 +62,8 @@ public static class GlslEmitter
             OpCount: patch.Ops.Length,
             LiveCount: patch.LiveCount,
             PictureCount: Textures(patch),
-            PlaneTargets: PlaneTargets(patch));
+            PlaneTargets: PlaneTargets(patch),
+            TableCount: Tables(patch));
     }
 
     // --- headers -----------------------------------------------------------------
@@ -449,6 +450,53 @@ public static class GlslEmitter
 
         """;
 
+    /// <summary>How many tables the shader declares, counted off the ops as <see cref="Textures"/> counts pictures.</summary>
+    private static int Tables(CompiledPatch patch)
+    {
+        var most = patch.Tables.Count;
+
+        foreach (var op in patch.Ops)
+            if (op.Code == OpCode.Table)
+                most = Math.Max(most, (int)op.K + 1);
+
+        return most;
+    }
+
+    /// <summary>How many floats a row of a table's texture holds; a longer table wraps onto more rows.</summary>
+    public const int TableRow = 4096;
+
+    /// <summary>
+    /// One table, a clip or a chart's buffer, in rows of <see cref="TableRow"/>
+    /// floats, and the read that has to agree with <see cref="LoadedSample.At"/>:
+    /// silence off either end, and the last sample leaning towards nothing.
+    /// </summary>
+    private static string TableHelper(int index) =>
+        $$"""
+        uniform sampler2D uTable{{index}};
+        uniform float uTableLength{{index}};
+        uniform float uTableRate{{index}};
+
+        float tab{{index}}(float seconds)
+        {
+            if (!fin(seconds)) return 0.0;
+
+            float at = seconds * uTableRate{{index}};
+            if (at < 0.0 || at >= uTableLength{{index}}) return 0.0;
+
+            float whole = floor(at);
+            int first = int(whole);
+            int second = first + 1;
+
+            float a = texelFetch(uTable{{index}}, ivec2(first % {{TableRow}}, first / {{TableRow}}), 0).r;
+            float b = whole + 1.0 < uTableLength{{index}}
+                ? texelFetch(uTable{{index}}, ivec2(second % {{TableRow}}, second / {{TableRow}}), 0).r
+                : 0.0;
+
+            return a + (b - a) * (at - whole);
+        }
+
+        """;
+
     private static string PatchFragment(CompiledPatch patch, GlslDialect dialect, int constants, bool feedback)
     {
         var text = new StringBuilder(Header(dialect, fragment: true));
@@ -521,6 +569,12 @@ public static class GlslEmitter
         {
             text.AppendLine();
             text.Append(PictureHelper(picture));
+        }
+
+        for (var table = 0; table < Tables(patch); table++)
+        {
+            text.AppendLine();
+            text.Append(TableHelper(table));
         }
 
         text.AppendLine();
@@ -750,11 +804,7 @@ public static class GlslEmitter
                 // the interpreter takes on the video path — not a simplification.
                 OpCode.Delay => a,
 
-                // A shader has no clip to read: the tables travel with the
-                // interpreter's program and there is no texture for one here.
-                // Silence, which is what the video program the interpreter runs
-                // says too — see OpCode.Table.
-                OpCode.Table => "0.0",
+                OpCode.Table => $"tab{(int)op.K}({a})",
                 OpCode.Allpass => a,
                 OpCode.Phase => $"{a} * {b} + {c}",
 

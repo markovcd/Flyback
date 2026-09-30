@@ -30,8 +30,9 @@ internal sealed partial class PageSound : IAudioEngine
     /// <summary>The files last handed over, so an edit hands them again only when the patch names others.</summary>
     private ISampleLibrary? handed;
 
-    /// <summary>The Meters the picture reads, as the worker was last told, and the number their readings come back under.</summary>
+    /// <summary>The Meters the picture reads and the charts it draws, as the worker was last told, and the number their readings come back under.</summary>
     private string[] watched = [];
+    private (Guid Node, float Window, bool Spectrum)[] charted = [];
     private int watching;
 
     public bool IsRunning { get; private set; }
@@ -114,11 +115,22 @@ internal sealed partial class PageSound : IAudioEngine
     public void Listen(CompiledPatch drawn, LiveValues watching)
     {
         Tell();
-        Watch(watching);
+        Watch(watching, drawn.Taps);
 
         var readings = JsRead(this.watching);
 
         for (var i = 0; i < readings.Length && i < watched.Length; i++) watching.Set(watched[i], (float)readings[i]);
+
+        var at = watched.Length;
+
+        foreach (var tap in drawn.Taps)
+        {
+            var buffer = tap.Trace.Samples;
+            if (at + buffer.Length > readings.Length) break;
+
+            for (var i = 0; i < buffer.Length; i++) buffer[i] = (float)readings[at + i];
+            at += buffer.Length;
+        }
     }
 
     public void Deafen(LiveValues watching)
@@ -154,14 +166,24 @@ internal sealed partial class PageSound : IAudioEngine
         if (changed is not null) JsPlay([.. changed], [.. to!]);
     }
 
-    /// <summary>Names the Meters <paramref name="watching"/> reads to the worker, when they are not the ones it was last told.</summary>
-    private void Watch(LiveValues watching)
+    /// <summary>
+    /// Names the Meters <paramref name="watching"/> reads and the charts <paramref name="taps"/>
+    /// draws to the worker, when they are not the ones it was last told.
+    /// </summary>
+    private void Watch(LiveValues watching, IReadOnlyList<TapSpec> taps)
     {
         var keys = watching.Keys.Where(MeterSignals.Is).ToArray();
-        if (keys.AsSpan().SequenceEqual(watched)) return;
+        (Guid Node, float Window, bool Spectrum)[] charts = [.. taps.Select(tap => (tap.Node, tap.Window, tap.Spectrum))];
+
+        if (keys.AsSpan().SequenceEqual(watched) && charts.AsSpan().SequenceEqual(charted)) return;
 
         watched = keys;
-        this.watching = JsWatch(keys);
+        charted = charts;
+        this.watching = JsWatch(
+            keys,
+            [.. charts.Select(chart => chart.Node.ToString())],
+            [.. charts.Select(chart => (double)chart.Window)],
+            [.. charts.Select(chart => chart.Spectrum ? 1 : 0)]);
     }
 
     [JSImport("time", Module)] private static partial double JsTime();
@@ -180,7 +202,11 @@ internal sealed partial class PageSound : IAudioEngine
         [JSMarshalAs<JSType.Array<JSType.Number>>] double[] values);
 
     [JSImport("watch", Module)]
-    private static partial int JsWatch([JSMarshalAs<JSType.Array<JSType.String>>] string[] keys);
+    private static partial int JsWatch(
+        [JSMarshalAs<JSType.Array<JSType.String>>] string[] keys,
+        [JSMarshalAs<JSType.Array<JSType.String>>] string[] charts,
+        [JSMarshalAs<JSType.Array<JSType.Number>>] double[] windows,
+        [JSMarshalAs<JSType.Array<JSType.Number>>] int[] spectra);
 
     [JSImport("read", Module)]
     [return: JSMarshalAs<JSType.Array<JSType.Number>>]

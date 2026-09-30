@@ -6,17 +6,17 @@ namespace Flyback.Web;
 /// <summary>
 /// What the picture knows of the sound, carried from the worker that plays it to the
 /// page that draws: every Meter's reading and every computer keyboard voice, in the
-/// order the picture's program reads them.
+/// order the picture's program reads them, then every Scope's and Analyzer's buffer.
 /// </summary>
 /// <remarks>
 /// Both ends compile the same picture program from the same patch, so its live inputs
-/// come in the same order on each. A Scope's chart is not carried: the shader reads
-/// every table as silence.
+/// and its charts come in the same order on each.
 /// </remarks>
 internal static class SoundState
 {
     /// <summary>How many floats the state of <paramref name="picture"/> takes.</summary>
-    public static int Length(CompiledPatch picture) => Carried(picture).Length;
+    public static int Length(CompiledPatch picture) =>
+        Carried(picture).Length + picture.Taps.Sum(tap => tap.Trace.Samples.Length);
 
     /// <summary>Packs what <paramref name="shown"/>, the picture's block on the sound's side, is played.</summary>
     public static void Write(CompiledPatch picture, LiveValues shown, Span<float> state)
@@ -24,6 +24,12 @@ internal static class SoundState
         var at = 0;
 
         foreach (var index in Carried(picture)) state[at++] = shown.Storage[index];
+
+        foreach (var tap in picture.Taps)
+        {
+            tap.Trace.Samples.CopyTo(state[at..]);
+            at += tap.Trace.Samples.Length;
+        }
     }
 
     /// <summary>Unpacks <paramref name="state"/> into <paramref name="watching"/>.</summary>
@@ -32,6 +38,12 @@ internal static class SoundState
         var at = 0;
 
         foreach (var index in Carried(picture)) watching.Storage[index] = state[at++];
+
+        foreach (var tap in picture.Taps)
+        {
+            state.Slice(at, tap.Trace.Samples.Length).CopyTo(tap.Trace.Samples);
+            at += tap.Trace.Samples.Length;
+        }
     }
 
     /// <summary>The live inputs of <paramref name="picture"/> a Meter or the computer keyboard plays into, by index.</summary>

@@ -9,15 +9,12 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// Which renderer draws the picture, and the one case where the choice is not the
-/// person's: a program that reads a sound file cannot be drawn by a shader.
+/// Which renderer draws the picture: the one asked for, whatever the patch reads,
+/// a sound file included, since the shader reads a clip as a texture.
 /// </summary>
 /// <remarks>
-/// The tables travel with the interpreter's program and there is no texture for one,
-/// so the shader would draw silence where the interpreter draws a waveform — and two
-/// backends showing different pictures is what ADR-0035 does not allow. A headless
-/// test never has a working GPU, so what is checked is which backend the host was
-/// asked for against which it settles on.
+/// A headless test never has a working GPU, so what is checked is which backend the
+/// host was asked for against which it settles on.
 /// </remarks>
 public class PreviewBackendTests : UiTest
 {
@@ -48,59 +45,18 @@ public class PreviewBackendTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_program_that_reads_a_clip_is_drawn_on_the_processor()
+    public void A_program_that_reads_a_clip_stays_on_the_shader()
     {
         var host = new PreviewHost();
         var (plain, playing) = Programs();
 
         // Only meaningful where the shader was on offer in the first place; a
-        // headless run may have refused it outright, and then there is nothing
-        // to stand down.
+        // headless run may have refused it outright.
         if (!host.GpuAvailable) return;
 
         host.Program = plain;
-        host.Backend.ShouldBe(PreviewBackend.Gpu);
-
-        host.Program = playing;
-        host.Backend.ShouldBe(PreviewBackend.Cpu);
-    }
-
-    /// <summary>
-    /// And it is the program's doing rather than a setting, so the shader comes
-    /// back when the patch stops needing the processor.
-    /// </summary>
-    [AvaloniaFact]
-    public void The_shader_comes_back_when_the_clip_leaves_the_picture()
-    {
-        var host = new PreviewHost();
-        var (plain, playing) = Programs();
-
-        if (!host.GpuAvailable) return;
-
-        host.Program = playing;
-        host.Program = plain;
-
-        host.Backend.ShouldBe(PreviewBackend.Gpu);
-    }
-
-    /// <summary>
-    /// The choice is remembered while it cannot be acted on, so the button goes
-    /// on saying what was asked for — and does not quietly become the setting.
-    /// </summary>
-    [AvaloniaFact]
-    public void What_was_asked_for_survives_being_stood_down()
-    {
-        var host = new PreviewHost();
-        var (plain, playing) = Programs();
-
-        if (!host.GpuAvailable) return;
-
         host.Program = playing;
 
-        host.Wanted.ShouldBe(PreviewBackend.Gpu);
-        host.Backend.ShouldBe(PreviewBackend.Cpu);
-
-        host.Program = plain;
         host.Backend.ShouldBe(PreviewBackend.Gpu);
     }
 

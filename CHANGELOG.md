@@ -3,7 +3,7 @@
 ## Unreleased
 
 - The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.
-- The web viewer and the web editor play the sound of a patch whose picture is a Scope, an Analyzer or a Sample and say they cannot draw the picture, rather than showing a flat line or drawing it on the processor; the web editor never draws on the processor.
+- A Scope, an Analyzer or a Sample in the picture is drawn on the GPU rather than the processor, and in the web viewer and web editor rather than as a flat line; the web editor never draws on the processor.
 - Every shipped preset carries tags, shown and searched on the presets page and in the gallery.
 - A phone's screen stays on while the web viewer plays full screen.
 - A shared preset needing a plugin Flyback in a browser lacks is offered only as a download, the presets page naming the plugin, and the web viewer refuses one rather than playing it in part.

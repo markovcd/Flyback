@@ -13,8 +13,8 @@ public interface IGpuPreview : IPreviewSurface
     string? Api { get; }
 
     /// <summary>
-    /// Whether the processor may draw what this surface cannot. False in a page, where
-    /// it is too slow to keep up and the surface says why it draws nothing instead.
+    /// Whether the processor may take over when this surface fails or is turned off.
+    /// False in a page, where it is too slow to keep up and the surface says what went wrong instead.
     /// </summary>
     bool ProcessorStandsIn { get; }
 }

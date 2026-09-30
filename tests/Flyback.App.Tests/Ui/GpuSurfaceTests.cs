@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Flyback.App.Controls;
 using Flyback.Core.Compile;
-using Flyback.Core.Graph;
-using Flyback.Gpu;
 using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
@@ -58,19 +56,6 @@ public class GpuSurfaceTests : UiTest
     }
 
     [AvaloniaFact]
-    public void In_a_page_a_picture_the_shader_cannot_draw_stays_off_the_processor()
-    {
-        var surface = new Surface(processorStandsIn: false);
-        var host = new PreviewHost(() => surface);
-
-        host.Program = Charted();
-
-        host.Backend.ShouldBe(PreviewBackend.Gpu);
-        host.Child.ShouldBeSameAs(surface);
-        UndrawnPicture.Why(host.Program).ShouldNotBeNull().ShouldContain("cannot draw a Scope");
-    }
-
-    [AvaloniaFact]
     public void In_a_page_a_surface_that_fails_is_not_replaced_by_the_processor()
     {
         var surface = new Surface(processorStandsIn: false);
@@ -95,28 +80,6 @@ public class GpuSurfaceTests : UiTest
 
         host.Backend.ShouldBe(PreviewBackend.Gpu);
         host.Child.ShouldBeSameAs(surface);
-    }
-
-    [AvaloniaFact]
-    public void A_picture_the_shader_draws_has_nothing_said_in_its_place() =>
-        UndrawnPicture.Why(CompiledPatch.Black).ShouldBeNull();
-
-    /// <summary>A picture that is a Scope's chart of a sine, which the shader cannot read.</summary>
-    private static CompiledPatch Charted()
-    {
-        var b = new PatchBuilder(NodeCatalog.BuiltIn);
-        var sine = b.Add("osc.sine", 0, 0);
-        var scope = b.Add(NodeCatalog.ScopeTypeId, 100, 0);
-        var output = b.Add(NodeCatalog.OutputTypeId, 200, 0);
-
-        b.Wire(sine, 0, scope, 0);
-        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
-        b.Wire(scope, 0, output, NodeCatalog.OutputColorPort);
-
-        var program = b.Patch.CompileForVideo(NodeCatalog.BuiltIn, played: true).Program;
-        program.ShaderCanDraw.ShouldBeFalse("a Scope's chart is a table the shader cannot read");
-
-        return program;
     }
 
     /// <summary>A GPU surface that draws nothing and fails when told to.</summary>

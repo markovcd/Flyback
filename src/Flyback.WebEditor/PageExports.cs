@@ -20,7 +20,7 @@ internal static partial class PageExports
     private static T Get<T>() where T : notnull =>
         (Provider ?? throw new InvalidOperationException("The editor has not started.")).GetRequiredService<T>();
 
-    /// <summary>The patch on the canvas, the preview drawing it or why it draws nothing, and the last thing the editor said, as JSON.</summary>
+    /// <summary>The patch on the canvas, the preview drawing it or what went wrong with it, and the last thing the editor said, as JSON.</summary>
     [JSExport]
     public static string State()
     {
@@ -38,7 +38,7 @@ internal static partial class PageExports
             ["wires"] = patch.Connections.Count,
             ["backend"] = preview.Backend.ToString(),
             ["renderer"] = preview.Renderer,
-            ["undrawn"] = (preview.Child as CanvasPreview)?.Said,
+            ["canvasSays"] = (preview.Child as CanvasPreview)?.Said,
             ["framesPerSecond"] = Math.Round(preview.FramesPerSecond, 1),
             ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),
             ["time"] = Math.Round(preview.Time, 2),

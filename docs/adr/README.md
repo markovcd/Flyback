@@ -48,13 +48,14 @@ context, decision, consequences.
 | [0137](0137-the-clock-reaches-the-gpu-in-two-floats.md) | The clock reaches the GPU in two floats *(user-directed)* |
 | [0155](0155-windows-draws-through-native-opengl.md) | Windows draws through native OpenGL *(user-directed)* |
 | [0157](0157-flyback-cli-render-draws-on-the-gpu.md) | flyback-cli render draws on the GPU *(user-directed)* |
+| [0167](0167-the-shader-reads-a-table-as-a-float-texture.md) | The shader reads a table as a float texture *(user-directed)* |
 | [0040](0040-a-probe-is-a-second-compile-root.md) | A probe is a second compile root, not a second machine *(user-directed; what a sweep shares amended by [0143](0143-a-module-a-sweep-reads-is-lowered-once-wherever-it-reads-the-same.md))* |
 | [0043](0043-a-scan-is-a-probe-read-backwards.md) | A Scan is a Probe read backwards *(user-directed; its Output knob superseded by [0077](0077-the-picture-is-heard-only-through-a-scan.md))* |
 | [0056](0056-a-patch-can-be-played-and-what-plays-it-is-one-opcode.md) | A patch can be played, and what plays it is one opcode *(user-directed)* |
 | [0048](0048-time-is-seconds-and-nothing-else.md) | Time is seconds, and nothing else *(user-directed)* |
 | [0050](0050-normalled-sockets-carry-a-signal-with-no-wire.md) | Normalled sockets carry a signal with no wire *(user-directed)* |
 | [0051](0051-a-quantisers-scale-is-a-set-on-the-node.md) | A quantiser's scale is a set on the node *(user-directed)* |
-| [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed; a built preset carries its own by [0151](0151-a-built-preset-carries-its-files-in-its-assembly.md))* |
+| [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) | A patch names its samples rather than carrying them *(user-directed; a built preset carries its own by [0151](0151-a-built-preset-carries-its-files-in-its-assembly.md); drawn on the GPU by [0167](0167-the-shader-reads-a-table-as-a-float-texture.md))* |
 | [0059](0059-a-picture-comes-in-as-a-texture.md) | A picture comes in as a texture *(user-directed)* |
 | [0053](0053-a-scope-records-what-the-speakers-played.md) | A Scope records what the speakers played *(user-directed)* |
 | [0058](0058-the-picture-is-told-how-loud-the-sound-is.md) | The picture is told how loud the sound is *(user-directed)* |

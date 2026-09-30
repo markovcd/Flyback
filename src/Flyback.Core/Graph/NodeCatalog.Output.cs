@@ -619,7 +619,7 @@ public partial class NodeCatalog
     /// never lowered into the picture, and the buffer is refilled once a frame —
     /// with <c>Spectra.Chart</c> rather than a resampling, which is the
     /// whole of <see cref="NodeDef.ChartsSpectrum"/>. So it inherits all three of
-    /// the Scope's cliffs, and the table read that keeps it off the shader.
+    /// the Scope's cliffs, and the table read the shader takes as a texture.
     /// <para>
     /// The buffer holds linear amplitude and the decibels are taken here, so
     /// 'range' and 'scale' are sockets and a chart can be swept without the refill
