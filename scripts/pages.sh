@@ -36,12 +36,13 @@ cp -r "$build/web/wwwroot/viewer" "$out/viewer"
 cp -r "$build/editor/wwwroot" "$out/editor"
 ./scripts/stills.sh "$out/stills"
 
-# What only the preset site can do is left out: a link marked data-preset-site goes, and
-# the toolbar's Plugins leads to the plugin guide, since the shared plugins are listed on
-# the preset site alone.
+# What only the preset site can do is left out: a link marked data-preset-site goes, the
+# toolbar's Plugins leads to the plugin guide, since the shared plugins are listed on the
+# preset site alone, and the editor is told it has no site, so offers no letter and no shared presets.
 find "$out" -name '*.html' -exec sed -i -E \
   -e 's#<a [^>]*data-preset-site[^>]*>[^<]*</a>##g' \
-  -e 's#href="(\.\./)?shared-plugins\.html">Plugins</a>#href="\1plugins.html">Plugins</a>#g' {} +
+  -e 's#href="(\.\./)?shared-plugins\.html">Plugins</a>#href="\1plugins.html">Plugins</a>#g' \
+  -e 's# data-preset-site="[^"]*"##' {} +
 sed -i 's#href="plugins.html">Plugins</a>#href="plugins.html" aria-current="page">Plugins</a>#' "$out/plugins.html"
 
 # The site links the preset site's pages as neighbors, which they are on the preset site

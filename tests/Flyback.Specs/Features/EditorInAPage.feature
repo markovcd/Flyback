@@ -1,7 +1,8 @@
 Feature: The editor in a page offers only what a page can do
   In a browser page the editor opens, saves and records nothing, and has no assistant,
   settings, plugins or About. Its picture stays where the layout puts it, drawn small.
-  It reaches the preset site it is served from, for shared presets and letters.
+  It reaches the preset site it is served from, for shared presets and letters; served
+  from anywhere else, it offers neither.
 
   Scenario: A page's toolbar keeps the patch's buttons and drops the program's
     Given a rainbow across the screen
@@ -93,6 +94,21 @@ Feature: The editor in a page offers only what a page can do
     And the editor is in a page
     When a letter saying "The web editor is lovely" is sent from the status bar
     Then the preset site has a letter saying "The web editor is lovely"
+
+  Scenario: A page no preset site serves offers no letter and no shared presets
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the status bar offers no letter, and no rule before one
+    When the preset gallery is opened
+    Then the gallery has no preset site section
+
+  Scenario: A page the preset site serves offers a letter
+    Given the editor reaches the preset site
+    And a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the status bar offers a letter, set apart by a rule
 
   Scenario: A page's picture is drawn small, since it never has the whole window
     Given a rainbow across the screen

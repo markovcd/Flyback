@@ -127,15 +127,30 @@ public sealed class LetterTests : UiTest
         status.Text!.ShouldContain("the site is not answering");
     }
 
+    /// <summary>A desktop window reaching a preset site, which is where a letter goes.</summary>
+    private static readonly EditorSetup Sited = new() { Host = new() { PresetSite = new Uri("http://site.test/") } };
+
     [AvaloniaFact]
     public void The_status_bar_offers_the_letter_last_of_all()
+    {
+        var window = NewMainWindow(Sited);
+
+        window.Show();
+        Settle(window);
+
+        All<Button>(window).Single(b => b.Name == "letter").IsVisible.ShouldBeTrue();
+    }
+
+    [AvaloniaFact]
+    public void A_copy_with_no_site_offers_no_letter_and_no_rule_before_one()
     {
         var window = NewMainWindow();
 
         window.Show();
         Settle(window);
 
-        All<Button>(window).ShouldContain(b => b.Name == "letter");
+        All<Button>(window).Single(b => b.Name == "letter").IsVisible.ShouldBeFalse();
+        All<TextBlock>(window).Single(b => b.Name == "statusRule").IsVisible.ShouldBeFalse();
     }
 
     /// <summary>
@@ -145,7 +160,7 @@ public sealed class LetterTests : UiTest
     [AvaloniaFact]
     public void A_rule_sets_the_letter_apart_from_the_count()
     {
-        var window = NewMainWindow();
+        var window = NewMainWindow(Sited);
 
         window.Show();
         Settle(window);
@@ -177,7 +192,7 @@ public sealed class LetterTests : UiTest
     [AvaloniaFact]
     public void The_letter_is_drawn_rather_than_left_to_a_font()
     {
-        var window = NewMainWindow();
+        var window = NewMainWindow(Sited);
 
         window.Show();
         Settle(window);

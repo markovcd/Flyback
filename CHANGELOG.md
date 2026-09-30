@@ -8,7 +8,7 @@
 - Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.
 - The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks none, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
 - The editor's status bar, the full-screen stats line and the web viewer say what oversampling the sound runs at; only the editor counts ops, the picture's and the sound's apart.
-- The web editor sends a letter to Flyback's author, and its gallery opens presets shared on the preset site; one needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
+- The web editor on the preset site sends a letter to Flyback's author, and its gallery opens presets shared there; the copy on GitHub Pages offers neither. A shared preset needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
 - Dragging a knob in the web editor keeps the sound's script warm and recompiles at a pace the page keeps up with, rather than stuttering the sound.
 - The web viewer offers 1920 × 1080 and Picture off, which plays the sound alone, and turns a phone sideways when it goes full screen; the web editor's View it sits beside the presets button.
 - The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.

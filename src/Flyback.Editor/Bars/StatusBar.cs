@@ -84,8 +84,6 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         var letter = Glyph("letter", Glyphs.Letter(), "Write to Flyback's author. Anything you like, good or bad.");
 
-        letter.Click += async (_, _) => await WriteToTheAuthorAsync(site, playback);
-
         // The same bar the count divides itself with, at the same size and color:
         // a drawn rule here would be a second kind of separator on one line.
         var rule = new TextBlock
@@ -96,6 +94,12 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(10, 0, 0, 0),
         };
+
+        // A letter goes through the site, so a copy with none offers no letter.
+        if (site.Root is { } root)
+            letter.Click += async (_, _) => await WriteToTheAuthorAsync(site.Http, root, playback);
+        else
+            letter.IsVisible = rule.IsVisible = false;
 
         // In the report's place while it shows: what is said meanwhile is about a
         // patch that has not started, and is read once it has.
@@ -181,14 +185,8 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
     }
 
     /// <summary>Writing to the author, which the bar's last glyph opens (ADR-0136).</summary>
-    private async Task WriteToTheAuthorAsync(SiteAccess site, Playback playback)
+    private async Task WriteToTheAuthorAsync(HttpClient http, Uri root, Playback playback)
     {
-        if (site.Root is not { } root)
-        {
-            report.Say("There is nowhere to send a letter: this copy has no site.");
-            return;
-        }
-
         usage.Count(Used.Letter);
 
         // Built once and both shown and sent, so what was read is what goes.
@@ -199,7 +197,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
             a => LetterView.View(
                 a,
                 about, 
-                (mood, message, contact, cancel) => SiteLetters.SendAsync(site.Http, root, mood, message, contact, about, cancel)));
+                (mood, message, contact, cancel) => SiteLetters.SendAsync(http, root, mood, message, contact, about, cancel)));
 
         if (said is not null) report.Say(said);
     }

@@ -62,6 +62,15 @@ public sealed class PageSteps(Editor editor, PatchContext context)
     [Then("the page leaves for the site's front page")]
     public void ThenHomed() => homed.ShouldBe(1);
 
+    [Then("the status bar offers no letter, and no rule before one")]
+    public void ThenNoLetter() => editor.StatusBarLetter.ShouldBe((false, false));
+
+    [Then("the status bar offers a letter, set apart by a rule")]
+    public void ThenLetter() => editor.StatusBarLetter.ShouldBe((true, true));
+
+    [Then("the gallery has no preset site section")]
+    public void ThenNoSiteSection() => editor.GalleryListsSite.ShouldBeFalse();
+
     [Then("the page may be left without asking")]
     public void ThenLeavesQuietly() => editor.SomethingToLose.ShouldBeFalse();
 

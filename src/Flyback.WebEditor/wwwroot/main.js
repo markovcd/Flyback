@@ -49,7 +49,11 @@ runtime.setModuleImports('page', {
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
   stillsUrl: () => new URL('../stills/', location.href).href,
-  siteUrl: () => new URL('../', location.href).href,
+  // The preset site behind the page, which its <html> names; GitHub Pages has none.
+  siteUrl: () => {
+    const at = document.documentElement.dataset.presetSite;
+    return at === undefined ? null : new URL(at, location.href).href;
+  },
   goHome: () => { location.href = new URL('../', location.href).href; },
   openViewerTab: () => {
     viewerTab = window.open('', VIEWER_TAB);

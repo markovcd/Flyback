@@ -275,6 +275,15 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             Named<Button>(open, "presets-glyph")
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
 
+    /// <summary>Whether the open preset gallery has a section for the preset site.</summary>
+    public bool GalleryListsSite => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<Control>().Any(c => c.Name == "site-presets"));
+
+    /// <summary>Whether the status bar shows the letter and the rule before it.</summary>
+    public (bool Letter, bool Rule) StatusBarLetter => ReadWindow(open => (
+        Named<Button>(open, "letter").IsVisible,
+        Named<TextBlock>(open, "statusRule").IsVisible));
+
     /// <summary>Whether the open preset gallery's filter box holds the keyboard.</summary>
     public bool GalleryTakesKeys => ReadWindow(open =>
         Named<TextBox>(open, "preset-filter").IsFocused);
