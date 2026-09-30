@@ -4,6 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
+import { Dropouts } from './dropouts.js';
 
 const params = new URLSearchParams(location.search);
 const looped = params.has('loop');
@@ -26,13 +27,6 @@ if (!(width > 0 && height > 0)) [width, height] = [960, 540];
 /** Below this many seconds rendered per second spent, the sound would stutter, so the picture plays alone. */
 const FAST_ENOUGH = 1.2;
 
-/**
- * How the JavaScript sound is judged instead: by the dropouts it makes once the
- * engine has optimized it, which a timing taken on opening is too early to see.
- */
-const SETTLING = 3000;
-const JUDGED_OVER = 2000;
-const DROPOUTS_ALLOWED = 20;
 
 /** Where the browser keeps the volume between visits. */
 const VOLUME_KEPT = 'flyback-viewer-volume';
@@ -224,7 +218,7 @@ async function play() {
   heard = soundAllowed && (await startSound());
 
   if (heard && !carryOn) seek(pausedAt);
-  if (heard) soundSince = performance.now();
+  if (heard) dropouts.settle(performance.now(), starved);
 
   held = soundAllowed && !heard ? 'The browser holds the sound back until the page is clicked, so the picture plays alone.' : null;
 
@@ -262,51 +256,35 @@ function stop() {
 /** Whether the sound was asked for after it was found too slow, which is never taken back. */
 let insisted = false;
 
-/** When the sound started this run, and the dropouts counted when it was last judged. */
-let soundSince = 0;
-let judgedAt = 0;
-let judgedStarved = 0;
+/**
+ * How the JavaScript sound is judged once it plays: by the dropouts it makes once the
+ * engine has optimized it, which a timing taken on opening is too early to see.
+ */
+const dropouts = new Dropouts();
 
 function tooSlow(speed) {
   soundAllowed = false;
   warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
 }
 
-/** Hands the picture the clock when the sound keeps running dry once it has had time to settle. */
+/** Works the sound out a step lower when it keeps running dry, and hands the picture the clock when 1× does too. */
 function judge() {
   if (!playing || !heard || insisted) return;
 
-  const at = performance.now();
-
-  if (at - soundSince < SETTLING) {
-    judgedAt = at;
-    judgedStarved = starved;
-    return;
-  }
-
-  if (at - judgedAt < JUDGED_OVER) return;
-
-  const dropped = starved - judgedStarved;
-  judgedAt = at;
-  judgedStarved = starved;
-
-  if (dropped <= DROPOUTS_ALLOWED) return;
-
-  // A step lower first, then settled again; only a sound that falls behind at 1× gives way to the picture.
   const factor = soundStatus.oversample ?? 1;
+  const verdict = dropouts.judge(performance.now(), starved, factor);
 
-  if (factor > 1) {
+  // A step lower first; only a sound that keeps dropping out at 1× gives way to the picture.
+  if (verdict === 'lower') {
     speaker.postMessage({ oversample: factor / 2 });
     soundStatus.oversample = factor / 2;
-    soundSince = at;
     warning = `The sound kept falling behind at ${factor}×, so it is worked out at ${factor / 2}× now.`;
     paint();
-    return;
+  } else if (verdict === 'lowest') {
+    stop();
+    tooSlow(soundStatus.speed ?? 0);
+    play();
   }
-
-  stop();
-  tooSlow(soundStatus.speed ?? 0);
-  play();
 }
 
 function toggleMute() {

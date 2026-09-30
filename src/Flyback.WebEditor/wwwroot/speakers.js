@@ -3,6 +3,8 @@
 // browser lets the page make a sound and the worker is up, the wall clock stands in, and
 // the sound joins where the picture is.
 
+import { Dropouts } from '../viewer/dropouts.js';
+
 const worker = new Worker('../viewer/speaker.js', { type: 'module' });
 
 let rate = 48000;
@@ -26,16 +28,8 @@ let played = 0;
 let starved = 0;
 let reportedAt = 0;
 
-/**
- * How the sound is judged, as the web viewer judges it: left three seconds to settle,
- * then over two at a time, and past twenty dropouts worked out a step lower.
- */
-const SETTLING = 3000;
-const JUDGED_OVER = 2000;
-const DROPOUTS_ALLOWED = 20;
-let heardSince = 0;
-let judgedAt = 0;
-let judgedStarved = 0;
+/** How the sound is judged, as the web viewer judges it; the editor never gives the sound up. */
+const dropouts = new Dropouts();
 let wallStart = 0;
 let held = 0;
 
@@ -106,26 +100,11 @@ function open() {
 
 /** Works the sound out a step lower when it keeps running dry, 2× to 1×; never back up. */
 function judge() {
-  const at = performance.now();
-
-  if (at - heardSince < SETTLING) {
-    judgedAt = at;
-    judgedStarved = starved;
-    return;
-  }
-
-  if (at - judgedAt < JUDGED_OVER) return;
-
-  const dropped = starved - judgedStarved;
-  judgedAt = at;
-  judgedStarved = starved;
-
   const factor = soundStatus.oversample ?? 1;
-  if (dropped <= DROPOUTS_ALLOWED || factor <= 1) return;
+  if (dropouts.judge(performance.now(), starved, factor) !== 'lower') return;
 
   worker.postMessage({ oversample: factor / 2 });
   soundStatus.oversample = factor / 2;
-  heardSince = at;
 }
 
 /** Hands the clock to the speaker once everything it needs is there, starting it where the picture is. */
@@ -134,7 +113,7 @@ function join() {
 
   const at = time();
   heard = true;
-  heardSince = performance.now();
+  dropouts.settle(performance.now(), starved);
   seek(at);
   worker.postMessage({ run: true });
 }
@@ -194,6 +173,17 @@ export function seekTo(seconds) {
 export function gain(level) {
   loudness = level;
   if (volume !== null) volume.gain.value = level;
+}
+
+/** Works the sound out at <factor> times the output rate from here on. */
+export function oversample(factor) {
+  worker.postMessage({ oversample: factor });
+  soundStatus.oversample = factor;
+}
+
+/** The factor the worker last said it plays at, or 0 before it has said. */
+export function oversampleNow() {
+  return soundStatus.oversample ?? 0;
 }
 
 export function aspect(value) {

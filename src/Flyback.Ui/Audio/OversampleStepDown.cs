@@ -24,8 +24,12 @@ public sealed class OversampleStepDown
     /// <summary>The share of a window's buffers that, late, count as falling behind.</summary>
     public const double LateShare = 0.25;
 
+    /// <summary>The counts the buffers being judged are counted from, and whether there are any yet.</summary>
     private SoundTiming seen;
-    private TimeSpan since = TimeSpan.MinValue;
+    private bool counting;
+
+    /// <summary>When those buffers are judged: a window on, or after a step, once the new factor has settled.</summary>
+    private TimeSpan due;
 
     /// <summary>
     /// Looks at the buffers timed since the last look, and answers the factor to play at
@@ -35,29 +39,33 @@ public sealed class OversampleStepDown
     /// <param name="playing">Whether the sound is running; a stopped sound is not judged, and its buffers start a new window.</param>
     public int? Check(TimeSpan now, bool playing, SoundTiming timing, int oversample)
     {
-        if (!playing || since == TimeSpan.MinValue)
+        if (!playing || !counting)
         {
-            Start(now, timing);
+            Start(now, timing, Window);
             return null;
         }
 
-        if (now - since < Window) return null;
+        if (now < due) return null;
 
         var timed = timing.Timed - seen.Timed;
         var late = timing.Late - seen.Late;
 
-        Start(now, timing);
+        if (late < FewestLate || late < timed * LateShare || oversample <= 1)
+        {
+            Start(now, timing, Window);
+            return null;
+        }
 
-        if (late < FewestLate || late < timed * LateShare || oversample <= 1) return null;
-
-        since = now + Settle - Window;
+        Start(now, timing, Settle);
 
         return oversample / 2;
     }
 
-    private void Start(TimeSpan now, SoundTiming timing)
+    /// <summary>Counts from <paramref name="now"/> on, judged once <paramref name="wait"/> has passed.</summary>
+    private void Start(TimeSpan now, SoundTiming timing, TimeSpan wait)
     {
-        since = now;
+        counting = true;
         seen = timing;
+        due = now + wait;
     }
 }

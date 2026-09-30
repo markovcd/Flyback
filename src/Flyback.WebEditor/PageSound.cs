@@ -70,11 +70,14 @@ internal sealed partial class PageSound : IAudioEngine
 
     public LiveValues Live { get; private set; } = LiveValues.None;
 
-    /// <summary>The page's worker plays at the default and lowers it itself when the sound falls behind, so there is nothing to set.</summary>
+    /// <summary>What the worker plays at, which it also lowers itself when the sound keeps dropping out.</summary>
     public int Oversample
     {
-        get => AudioRenderer.DefaultOversample;
-        set { }
+        get => JsOversampleNow() is > 0 and var factor ? factor : AudioRenderer.DefaultOversample;
+        set
+        {
+            if (value != Oversample) JsOversample(value);
+        }
     }
 
     /// <summary>The worker times its own sound and lowers it itself.</summary>
@@ -202,6 +205,8 @@ internal sealed partial class PageSound : IAudioEngine
     [JSImport("seekTo", Module)] private static partial void JsSeek(double seconds);
     [JSImport("gain", Module)] private static partial void JsGain(double level);
     [JSImport("aspect", Module)] private static partial void JsAspect(double aspect);
+    [JSImport("oversample", Module)] private static partial void JsOversample(int factor);
+    [JSImport("oversampleNow", Module)] private static partial int JsOversampleNow();
     [JSImport("edit", Module)] private static partial void JsEdit(string text, double aspect);
     [JSImport("keep", Module)] private static partial void JsKeep(string path, byte[] bytes);
     [JSImport("forget", Module)] private static partial void JsForget();
