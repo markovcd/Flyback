@@ -9,7 +9,7 @@ Standing rules for working in this repo are in `docs/agents/rules/`. They apply 
 - @docs/agents/rules/prose-style.md — American spelling; succinct comments that never narrate history.
 - @docs/agents/rules/terminology.md — when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
 - @docs/agents/rules/agent-drivability.md — drivability by an agent comes first; a hack needed to get something done is a feature to propose.
-- @docs/agents/rules/propose-refactors.md — code that has gone untidy or ballooned is a refactor to propose, after the task and outside its commit.
+- @docs/agents/rules/propose-refactors.md — code that has gone untidy or ballooned, or one feature's logic written twice, is a refactor to propose, after the task and outside its commit.
 - @docs/agents/rules/honest-tests.md — a failing test is fixed by fixing the code, never by weakening, skipping or special-casing the test.
 - @docs/agents/rules/security.md — keys stay out of everything; outside input is checked where it enters; a check is never loosened to make something work.
 - @docs/agents/rules/ci-cd.md — land small and often, a red `main` is fixed before anything else, and `main` is always releasable.
