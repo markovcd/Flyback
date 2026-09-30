@@ -24,7 +24,7 @@ namespace Flyback.App.Gallery;
 /// past. A tile is a button, so the keyboard walks them and Enter picks one; what it
 /// answers with is the preset, and the caller decides what picking it means.
 /// </remarks>
-internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog)
+internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog, LastPress lastPress)
 {
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
     private const string Asking = "asking";
@@ -71,7 +71,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         PresetSite? site = null,
         KeptSharedPresets? kept = null)
     {
-        var search = new Search { Elsewhere = site is not null };
+        var search = new Search { Elsewhere = site is not null, Typing = !lastPress.ByFinger };
 
         return new GalleryParts(search.Box, BuildTiles);
 
@@ -608,6 +608,9 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
         /// <summary>Whether presets from elsewhere follow, so the hint says it means the ones here.</summary>
         public bool Elsewhere { get; init; }
 
+        /// <summary>Whether the box takes the keyboard on opening; not under a finger, where it waits to be tapped.</summary>
+        public bool Typing { get; init; } = true;
+
         public TextBlock Hint { get; } = new()
         {
             TextWrapping = TextWrapping.Wrap,
@@ -653,7 +656,10 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             // Posted, because the dialog gives its sheet the focus as it goes up,
             // which is after this is put in it.
-            Box.AttachedToVisualTree += (_, _) => Dispatcher.UIThread.Post(() => Box.Focus());
+            Box.AttachedToVisualTree += (_, _) =>
+            {
+                if (Typing) Dispatcher.UIThread.Post(() => Box.Focus());
+            };
         }
 
         public void Add(TextBlock heading, Panel tiles) => runs.Add((heading, tiles));

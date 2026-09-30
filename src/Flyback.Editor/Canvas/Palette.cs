@@ -27,6 +27,7 @@ internal sealed class Palette
     private readonly Lazy<ModulePalette> list;
     private readonly ReportLine report;
     private readonly Usage usage;
+    private readonly LastPress lastPress;
 
     /// <summary>Where the palette is shown, at the pointer.</summary>
     public Flyout Flyout { get; } = new()
@@ -65,7 +66,8 @@ internal sealed class Palette
         Usage usage,
         PanelKnobs knobs,
         OutputSettingRepository repository,
-        EditorSetup setup)
+        EditorSetup setup,
+        LastPress lastPress)
     {
         var groupFolder = setup.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
@@ -74,6 +76,7 @@ internal sealed class Palette
         keyboard = () => repository.Current.Keyboard;
         this.report = report;
         this.usage = usage;
+        this.lastPress = lastPress;
 
         Groups = new GroupLibrary(plugins.Modules, groupFolder);
 
@@ -223,6 +226,6 @@ internal sealed class Palette
 
         // After showing, because a control that is not yet in a visual tree
         // cannot take the keyboard.
-        list.Value.Reset(typing: !editor.Gestures.ByFinger);
+        list.Value.Reset(typing: !lastPress.ByFinger);
     }
 }

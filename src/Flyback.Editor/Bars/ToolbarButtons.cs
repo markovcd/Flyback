@@ -12,10 +12,11 @@ namespace Flyback.App.Bars;
 internal static class ToolbarButtons
 {
     /// <summary>One group of toolbar controls, laid out along it.</summary>
-    internal static StackPanel Group() => new()
+    internal static WrapPanel Group() => new()
     {
         Orientation = Orientation.Horizontal,
-        Spacing = 8,
+        ItemSpacing = 8,
+        LineSpacing = 8,
         Margin = new Thickness(12, 8),
         VerticalAlignment = VerticalAlignment.Center,
     };

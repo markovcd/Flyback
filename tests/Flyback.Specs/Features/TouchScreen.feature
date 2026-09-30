@@ -35,6 +35,20 @@ Feature: A hand on a touch screen patches without a mouse or keys
     When bare canvas is right-clicked
     Then the list's filter box takes what is typed
 
+  Scenario: The empty panel says what a finger does, and still where the files and settings are
+    Given the patch is open in the editor
+    When a finger taps bare canvas
+    Then the module panel says "Hold a finger on bare canvas"
+    And the module panel says "Open and Save are on the toolbar."
+    And the module panel does not say "Ctrl+O"
+
+  Scenario: A finger picks a module out from between its sockets with the view all the way out
+    Given a sine beside the clock
+    And the patch is open in the editor
+    When the view is zoomed all the way out
+    And a finger taps the sine a third of the way in, level with its first input
+    Then the sine is selected
+
   Scenario: A wire drawn by a finger lands on the socket it ends beside
     Given a sine beside the clock
     And the patch is open in the editor

@@ -72,6 +72,9 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Whether the window opens on the scenario's patch, rather than on whatever it starts with itself.</summary>
     public bool OnThePatch { get; set; } = true;
 
+    /// <summary>The size the window opens at, where it is not the one it starts at itself.</summary>
+    public Size? Screen { get; set; }
+
     /// <summary>Opens the window, if it is not open already.</summary>
     public void Open() => Do(_ => { });
 
@@ -217,6 +220,71 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         (open.GetVisualDescendants().OfType<ModulePalette>().FirstOrDefault()
             ?? throw new InvalidOperationException("no list of modules is open"))
         .GetVisualDescendants().OfType<TextBox>().First().IsFocused);
+
+    /// <summary>Taps a finger on a point of the patch.</summary>
+    public void TapFinger(Point graph) =>
+        DoWindow((_, canvas) =>
+        {
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+            var at = canvas.GraphToScreen.Transform(graph);
+
+            canvas.Fingers.Down(canvas, finger, at, 1_000);
+            canvas.Fingers.Up(canvas, finger, at, 1_050);
+        });
+
+    /// <summary>Zooms the view as far out as it goes, about the middle of the canvas.</summary>
+    public void ZoomAllTheWayOut() =>
+        Do(canvas => canvas.View.ZoomAt(new Point(canvas.Bounds.Width / 2, canvas.Bounds.Height / 2), -100));
+
+    /// <summary>The names of the toolbar's shown buttons that are not wholly inside the window.</summary>
+    public IReadOnlyList<string?> ToolbarButtonsOffScreen => ReadWindow(open =>
+        Service<Toolbar>().View.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.IsEffectivelyVisible && !Inside(open, b))
+            .Select(b => b.Name)
+            .ToList());
+
+    /// <summary>Whether the button the module panel names <paramref name="name"/> is shown and wholly inside the window.</summary>
+    public bool PanelButtonOnScreen(string name) => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name) is { IsEffectivelyVisible: true } button
+        && Inside(open, button));
+
+    /// <summary>Presses the button the module panel names <paramref name="name"/>.</summary>
+    public void PressPanelButton(string name) =>
+        DoWindow((open, _) =>
+            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == name)
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+
+    /// <summary>What the module panel says, all its words together.</summary>
+    public string PanelText => ReadWindow(open =>
+        string.Join(" ", open.GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "inspector")
+            .GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
+
+    /// <summary>How wide the report line at the foot of the window is laid out, beside the counts as they stand now.</summary>
+    public double ReportWidth => ReadWindow(open =>
+    {
+        Service<StatusBar>().Update();
+        open.UpdateLayout();
+
+        return open.GetVisualDescendants().OfType<ReportLine>().Single().Bounds.Width;
+    });
+
+    /// <summary>Opens the preset gallery from the toolbar.</summary>
+    public void OpenGallery() =>
+        DoWindow((open, _) =>
+            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "presets-glyph")
+                .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
+
+    /// <summary>Whether the open preset gallery's filter box holds the keyboard.</summary>
+    public bool GalleryTakesKeys => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "preset-filter").IsFocused);
+
+    /// <summary>The answers the question up over the window offers, and whether each is wholly inside the window.</summary>
+    public IReadOnlyList<(string Label, bool OnScreen)> Answers => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<ModalOverlay>().Single()
+            .GetVisualDescendants().OfType<Button>()
+            .Where(b => b.Content is string)
+            .Select(b => ((string)b.Content!, Inside(open, b)))
+            .ToList());
 
     /// <summary>Picks a module by name from the list that is open.</summary>
     public void PickFromList(string name) =>
@@ -679,6 +747,13 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
         provider = EditorServices.Provider(Setup, Services);
         window = provider.Window();
+
+        if (Screen is { } screen)
+        {
+            window.Width = screen.Width;
+            window.Height = screen.Height;
+        }
+
         window.Start();
 
         window.Show();
@@ -729,6 +804,17 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     private static ComboBox Presets(MainWindow window) =>
         window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");
+
+    /// <summary>Whether <paramref name="control"/> is laid out wholly inside the window.</summary>
+    private static bool Inside(MainWindow window, Control control)
+    {
+        var bounds = control.Bounds;
+
+        return control.TranslatePoint(default, window) is { } at
+            && at.X >= -0.5 && at.Y >= -0.5
+            && at.X + bounds.Width <= window.Bounds.Width + 0.5
+            && at.Y + bounds.Height <= window.Bounds.Height + 0.5;
+    }
 
     private static NodeEditor CanvasIn(MainWindow window) =>
         window.GetVisualDescendants().OfType<NodeEditor>().Single();

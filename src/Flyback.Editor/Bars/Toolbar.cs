@@ -52,6 +52,14 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public const string SideSwappedTip =
         "The canvas is in this column while it is swapped with the preview, so the column stays.";
 
+    /// <summary>What it does in a window too narrow for the canvas and the column side by side.</summary>
+    public const string SideNarrowTip =
+        "Show the preview and the inspector in the canvas's place, or the canvas again.";
+
+    /// <summary>What the swap button says in such a window.</summary>
+    public const string NarrowSwapTip =
+        "The window is too narrow to swap the preview and the canvas; the side button shows one or the other.";
+
     public Button Open { get; } = ToolbarButtons.Drawn("open", Glyphs.Open(), "Open a patch (CTRL+O)…");
 
     public Button Save { get; } = ToolbarButtons.Drawn("save", Glyphs.Save(), "Save this patch (CTRL+S)…");
@@ -135,6 +143,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Save.Click += (_, _) => reactions.Raise(new SaveAsked());
         Undo.Click += (_, _) => reactions.Raise(new UndoAsked());
         Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
+        Add.Click += (_, _) => reactions.Raise(new ModuleAsked());
         Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
@@ -175,21 +184,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         {
             reactions.Raise(new TidyAsked(OnlySelected: (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0));
             modifiers = KeyModifiers.None;
-        };
-
-        // Likewise whether a finger tapped it, which leaves the palette's filter box
-        // to be tapped rather than throwing up the on-screen keyboard.
-        var byFinger = false;
-
-        Add.AddHandler(
-            InputElement.PointerPressedEvent,
-            (_, e) => byFinger = e.Pointer.Type == PointerType.Touch,
-            RoutingStrategies.Tunnel);
-
-        Add.Click += (_, _) =>
-        {
-            reactions.Raise(new ModuleAsked(byFinger));
-            byFinger = false;
         };
 
         // What the record tip actually says is decided per patch by
@@ -253,12 +247,13 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         program.Children.Add(Plugins);
         program.Children.Add(About);
 
-        // One row, left to right, rather than the program group docked to the
-        // far edge — everything reached from the toolbar sits together at the
-        // near side instead of one end chasing the window's width. Unmargined
+        // Left to right, rather than the program group docked to the far edge —
+        // everything reached from the toolbar sits together at the near side instead
+        // of one end chasing the window's width. Wrapped onto more rows where the
+        // window is too narrow for one, as a phone held upright is. Unmargined
         // itself: each group carries its own margin already, from
         // ToolbarButtons.Group(), and a second one here would double the gaps.
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        var bar = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 
         bar.Children.Add(patchwork);
         bar.Children.Add(ToolbarButtons.Separator());

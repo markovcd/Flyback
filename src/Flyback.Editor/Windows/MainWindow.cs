@@ -62,7 +62,8 @@ internal sealed class MainWindow : Window
         Title = GlobalConstants.ApplicationName;
         Width = 1280;
         Height = 800;
-        MinWidth = 860;
+        // A tablet held upright, whose screen is narrower than two columns need; the layout goes to one.
+        MinWidth = 360;
         MinHeight = 560;
         WindowStartupLocation = WindowStartupLocation.Manual;
         Background = new SolidColorBrush(Colors.Window);

@@ -34,7 +34,8 @@ internal sealed class ShellLayout(
     Document document,
     Usage usage,
     WindowLayoutKeeper layoutKeeper,
-    EditorSetup setup)
+    EditorSetup setup,
+    LastPress lastPress)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
         IReactTo<KnobsWanted>,
@@ -56,7 +57,19 @@ internal sealed class ShellLayout(
     private bool swapped;
     private GridSplitter? sideSplitter;
     private GridLength sideShare = new(WindowLayout.DefaultSideWeight, GridUnitType.Star);
+    private GridLength canvasShare = new(3, GridUnitType.Star);
     private bool sideShown = true;
+    private const double CanvasMinWidth = 280;
+    private const double SideMinWidth = 300;
+
+    /// <summary>
+    /// Whether the window is too narrow for the canvas and the side column side by side, as a
+    /// phone held upright is, so the side column is shown in the canvas's place or not at all.
+    /// </summary>
+    private bool narrow;
+
+    /// <summary>Whether the side column was shown when the window went narrow, to be put back when it widens.</summary>
+    private bool sideBeforeNarrow = true;
     private ColumnDefinition? assistantColumn;
     private GridSplitter? assistantSplitter;
     private GridLength assistantShare = new(WindowLayout.DefaultAssistantWidth, GridUnitType.Pixel);
@@ -121,6 +134,7 @@ internal sealed class ShellLayout(
         editor.Tags.Types = assistant.Undescribed;
 
         var root = new DockPanel();
+        lastPress.Watch(root);
         DockPanel.SetDock(toolbar.View, Dock.Top);
         DockPanel.SetDock(statusBar.View, Dock.Bottom);
 
@@ -131,9 +145,9 @@ internal sealed class ShellLayout(
             [
                 new ColumnDefinition(assistantShare),
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(new GridLength(3, GridUnitType.Star)) { MinWidth = 280 },
+                new ColumnDefinition(canvasShare) { MinWidth = CanvasMinWidth },
                 new ColumnDefinition(GridLength.Auto),
-                new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = 300 },
+                new ColumnDefinition(new GridLength(1.6, GridUnitType.Star)) { MinWidth = SideMinWidth },
             ],
             RowDefinitions =
             [
@@ -182,6 +196,8 @@ internal sealed class ShellLayout(
         BuildRightPanel(columns, SideColumn);
         ShowAssistant(false);
 
+        columns.SizeChanged += (_, e) => Narrow(e.NewSize.Width < CanvasMinWidth + SideMinWidth);
+
         root.Children.Add(toolbar.View);
         root.Children.Add(statusBar.View);
         root.Children.Add(columns);
@@ -209,14 +225,54 @@ internal sealed class ShellLayout(
         if (swapped) shown = true;
         if (shown != sideShown && !fullScreen.IsFullScreen)
         {
-            var column = columns.ColumnDefinitions[SideColumn];
-            if (!shown) sideShare = column.Width;
+            if (!shown) sideShare = columns.ColumnDefinitions[SideColumn].Width;
             sideShown = shown;
-            sideSplitter.IsVisible = shown;
-            column.MinWidth = shown ? 300d : 0d;
-            column.Width = shown ? sideShare : new GridLength(0);
+            LaySide();
         }
         if (toolbar.Side.IsChecked != sideShown) toolbar.Side.IsChecked = sideShown;
+    }
+
+    /// <summary>Sizes the canvas's column and the side column for whether the side is shown, and whether the window is narrow.</summary>
+    private void LaySide()
+    {
+        if (columns is null || sideSplitter is null) return;
+
+        var canvas = columns.ColumnDefinitions[WideColumn];
+        var side = columns.ColumnDefinitions[SideColumn];
+        var canvasGone = narrow && sideShown;
+
+        if (canvasGone && canvas.Width.Value > 0) canvasShare = canvas.Width;
+
+        canvas.MinWidth = canvasGone ? 0d : CanvasMinWidth;
+        canvas.Width = canvasGone ? new GridLength(0) : canvasShare;
+        sideSplitter.IsVisible = sideShown && !narrow;
+        side.MinWidth = sideShown && !narrow ? SideMinWidth : 0d;
+        side.Width = sideShown ? sideShare : new GridLength(0);
+    }
+
+    /// <summary>
+    /// Goes to one column or back to two as the window crosses the width the two need. One
+    /// column opens on the canvas, and the side button trades it for the preview and the
+    /// inspector; swapping those two needs both columns, so it waits for a wider window.
+    /// </summary>
+    private void Narrow(bool value)
+    {
+        if (value == narrow || columns is null || fullScreen.IsFullScreen) return;
+
+        if (value)
+        {
+            sideBeforeNarrow = sideShown;
+            if (sideShown) sideShare = columns.ColumnDefinitions[SideColumn].Width;
+            toolbar.Swap.IsChecked = false;
+        }
+
+        narrow = value;
+        sideShown = !value && sideBeforeNarrow;
+        LaySide();
+
+        if (toolbar.Side.IsChecked != sideShown) toolbar.Side.IsChecked = sideShown;
+        ToolTip.SetTip(toolbar.Side, narrow ? Toolbar.SideNarrowTip : Toolbar.SideTip);
+        ShowPreview(playback.HasPicture);
     }
 
     public void ShowPreview(bool shown)
@@ -224,8 +280,8 @@ internal sealed class ShellLayout(
         previewHideWaiting = !shown && toolbar.Swap.IsChecked == true && editor.Gestures.Gesturing;
         if (previewHideWaiting) return;
 
-        toolbar.Swap.IsEnabled = shown;
-        ToolTip.SetTip(toolbar.Swap, shown ? Toolbar.SwapTip : Toolbar.NoPictureToSwapTip);
+        toolbar.Swap.IsEnabled = shown && !narrow;
+        ToolTip.SetTip(toolbar.Swap, !shown ? Toolbar.NoPictureToSwapTip : narrow ? Toolbar.NarrowSwapTip : Toolbar.SwapTip);
         if (fullScreen.IsFullScreen || previewBox is null || previewRow is null || previewSplitter is null) return;
         if (!shown) toolbar.Swap.IsChecked = false;
         if (!shown && previewBox.IsVisible) previewShare = previewRow.Height;
@@ -345,7 +401,8 @@ internal sealed class ShellLayout(
     public void ApplyPanelLayout()
     {
         if (layoutKeeper.Saved is not { } saved || columns is null || previewRow is null || assistantColumn is null) return;
-        columns.ColumnDefinitions[WideColumn].Width = new GridLength(saved.CanvasWeight, GridUnitType.Star);
+        canvasShare = new GridLength(saved.CanvasWeight, GridUnitType.Star);
+        if (!(narrow && sideShown)) columns.ColumnDefinitions[WideColumn].Width = canvasShare;
         sideShare = new GridLength(saved.SideWeight, GridUnitType.Star);
         if (sideShown) columns.ColumnDefinitions[SideColumn].Width = sideShare;
         previewShare = new GridLength(saved.PreviewWeight, GridUnitType.Star);
@@ -357,7 +414,8 @@ internal sealed class ShellLayout(
         controlsShare = new GridLength(saved.ControlsHeight, GridUnitType.Pixel);
         if (ControlsRow is { } row && knobs.View.IsVisible) row.Height = controlsShare;
         ShowControls(saved.ControlsOpen);
-        ShowSide(saved.SideOpen);
+        if (narrow) sideBeforeNarrow = saved.SideOpen;
+        else ShowSide(saved.SideOpen);
         toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
         if (saved.Code) document.ShowCode(true);
     }
@@ -376,7 +434,7 @@ internal sealed class ShellLayout(
 
         var state = away ? fullScreen.StateBefore : window.WindowState;
         var size = window.WindowState == WindowState.Normal ? window.ClientSize : layoutKeeper.NormalSize;
-        var (canvas, side) = Share(Column(WideColumn), sideShown ? Column(SideColumn) : Weight(sideShare), WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
+        var (canvas, side) = Share(narrow && sideShown ? Weight(canvasShare) : Column(WideColumn), sideShown ? Column(SideColumn) : Weight(sideShare), WindowLayout.DefaultCanvasWeight + WindowLayout.DefaultSideWeight);
         var (previewWeight, inspectorWeight) = Share(
             previewBox is { IsVisible: true } || away ? Row(0) : Weight(previewShare),
             Under(inspectorBox, Weight), WindowLayout.DefaultPreviewWeight + WindowLayout.DefaultInspectorWeight);
@@ -397,7 +455,7 @@ internal sealed class ShellLayout(
             ControlsOpen = knobs.View.IsVisible,
             Code = document.ShowingCode,
             Swapped = toolbar.Swap.IsChecked == true,
-            SideOpen = sideShown,
+            SideOpen = narrow ? sideBeforeNarrow : sideShown,
         };
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;

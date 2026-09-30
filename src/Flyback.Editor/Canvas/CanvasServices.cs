@@ -20,6 +20,7 @@ internal static class CanvasServices
 
         // One for the whole window, since the editor's container adds the canvas to its own.
         services.TryAddSingleton<Reactions>();
+        services.TryAddSingleton<LastPress>();
 
         // A canvas on its own counts nothing; the editor's container brings the run's.
         services.TryAddSingleton(Usage.Off);

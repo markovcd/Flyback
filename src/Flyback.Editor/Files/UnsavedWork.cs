@@ -201,7 +201,8 @@ internal sealed class UnsavedWork(
 
         try
         {
-            return await AskAsync(about, question) switch
+            // Not in a page, which has nowhere to save to.
+            return await AskAsync(about, question, offerSave: !setup.InPage) switch
             {
                 // A canceled save picker is a canceled close: somebody who thought
                 // better of where has not agreed to lose the patch.
@@ -230,10 +231,12 @@ internal sealed class UnsavedWork(
         string discard,
         bool offerSave)
     {
-        var buttons = new StackPanel
+        // Wrapped, since a phone held upright is narrower than the three of them.
+        var buttons = new WrapPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
+            ItemSpacing = 8,
+            LineSpacing = 8,
             HorizontalAlignment = HorizontalAlignment.Right,
         };
 

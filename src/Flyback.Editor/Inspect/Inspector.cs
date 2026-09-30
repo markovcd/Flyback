@@ -34,7 +34,8 @@ internal sealed class Inspector
         IReactTo<SelectionChanged>,
         IReactTo<InputLetGo>,
         IReactTo<PanelStale>,
-        IReactTo<UndescribedChanged>
+        IReactTo<UndescribedChanged>,
+        IReactTo<Touched>
 {
     private readonly IFilePickers pickers;
     /// <summary>
@@ -79,8 +80,15 @@ internal sealed class Inspector
     /// <param name="knobs">The instruments a MIDI In can be played from.</param>
     /// <param name="files">The folders the patch reads its sound files and pictures from.</param>
     /// <param name="palette">The kept groups, and keeping one under its name.</param>
-    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers)
+    /// <summary>Whether the editor is in a page, which has no files, settings or recording for the help to name.</summary>
+    private readonly bool inPage;
+
+    /// <summary>Whether a finger has touched the canvas, so the help names what a finger does.</summary>
+    private bool fingers;
+
+    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorSetup setup)
     {
+        inPage = setup.InPage;
         this.pickers = pickers;
         this.editor = editor;
         this.document = document;
@@ -119,6 +127,13 @@ internal sealed class Inspector
     public Task On(UndescribedChanged notice)
     {
         Build();
+        return Task.CompletedTask;
+    }
+
+    public Task On(Touched notice)
+    {
+        fingers = true;
+        if (editor.Selection.Focused is null) Build();
         return Task.CompletedTask;
     }
 
@@ -191,7 +206,7 @@ internal sealed class Inspector
             {
                 Text = document.IsAdrift
                     ? document.IsAdriftBox ? InspectorHelp.AdriftingGroup : InspectorHelp.Adrifting
-                    : editor.History.Locked ? InspectorHelp.Locked : InspectorHelp.Canvas,
+                    : editor.History.Locked ? InspectorHelp.Locked(fingers) : InspectorHelp.Canvas(inPage, fingers),
                 TextWrapping = TextWrapping.Wrap,
                 Foreground = Text.Muted,
                 FontSize = Text.Body,

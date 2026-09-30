@@ -26,6 +26,12 @@ internal sealed class Fingers
     /// <summary>How far from a socket, in screen pixels, a fingertip still lands on it.</summary>
     public const double Reach = 16;
 
+    /// <summary>
+    /// The most <see cref="Reach"/> may cover of the patch, however far out the view is,
+    /// so a zoomed-out module keeps a body to tap and drag between its two rows of sockets.
+    /// </summary>
+    public const double MostReach = NodeGeometry.Width / 5;
+
     /// <summary>How close in time and place, in milliseconds and screen pixels, a second tap is to count as a double.</summary>
     private const ulong DoubleTapTime = 400;
     private const double DoubleTapDistance = 24;
@@ -50,6 +56,7 @@ internal sealed class Fingers
     private readonly Viewport view;
     private readonly CanvasSelection selection;
     private readonly Reactions reactions;
+    private readonly LastPress lastPress;
     private readonly DispatcherTimer holdTimer;
 
     private readonly Dictionary<int, Point> down = [];
@@ -68,12 +75,13 @@ internal sealed class Fingers
 
     private bool seen;
 
-    public Fingers(CanvasGestures gestures, Viewport view, CanvasSelection selection, Reactions reactions)
+    public Fingers(CanvasGestures gestures, Viewport view, CanvasSelection selection, Reactions reactions, LastPress lastPress)
     {
         this.gestures = gestures;
         this.view = view;
         this.selection = selection;
         this.reactions = reactions;
+        this.lastPress = lastPress;
 
         holdTimer = new DispatcherTimer { Interval = HoldTime };
         holdTimer.Tick += (_, _) => Held();
@@ -86,6 +94,7 @@ internal sealed class Fingers
     {
         canvas = on;
         down[pointer.Id] = screen;
+        lastPress.Finger();
 
         if (!seen)
         {
@@ -255,7 +264,7 @@ internal sealed class Fingers
 
         if (scene.HitPort(graph, out _, out _, out _)) return screen;
 
-        return scene.NearestSocket(graph, Reach / view.Zoom) is { } at ? view.GraphToScreen.Transform(at) : screen;
+        return scene.NearestSocket(graph, Math.Min(Reach / view.Zoom, MostReach)) is { } at ? view.GraphToScreen.Transform(at) : screen;
     }
 
     /// <summary>The same, only while a wire is being drawn, so a wire lands on the socket its end is beside.</summary>

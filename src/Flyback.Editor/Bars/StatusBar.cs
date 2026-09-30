@@ -110,6 +110,10 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
         Grid.SetColumn(rule, 2);
         Grid.SetColumn(letter, 3);
 
+        // An Auto column never trims, so the counts are held to half the bar by hand,
+        // or a narrow window gives them the report's whole width.
+        bar.SizeChanged += (_, e) => status.MaxWidth = e.NewSize.Width / 2;
+
         bar.Children.Add(report);
         bar.Children.Add(Compiling);
         bar.Children.Add(status);

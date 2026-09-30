@@ -59,6 +59,22 @@ public sealed class TouchSteps(PatchContext context, Editor editor)
         editor.HoldFinger(heldAt);
     }
 
+    [When("the view is zoomed all the way out")]
+    public void WhenZoomedOut() => editor.ZoomAllTheWayOut();
+
+    [When("a finger taps the sine a third of the way in, level with its first input")]
+    public void WhenTheSineIsTappedNearItsInputs()
+    {
+        var sine = context.Node("sine");
+
+        var input = editor.Read(canvas => canvas.Geometry.InputPort(sine, NodeCatalog.Require(NodeCatalog.SineTypeId), 0));
+
+        editor.TapFinger(new Point(sine.X + NodeGeometry.Width / 3, input.Y));
+    }
+
+    [Then("the sine is selected")]
+    public void ThenTheSineIsSelected() => editor.Selected.ShouldHaveSingleItem().Id.ShouldBe(context.Node("sine").Id);
+
     [When("bare canvas is right-clicked")]
     public void WhenRightClicked()
     {
