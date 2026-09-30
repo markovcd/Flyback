@@ -86,9 +86,9 @@ internal sealed class Inspector
     /// <summary>Whether a finger has touched the canvas, so the help names what a finger does.</summary>
     private bool fingers;
 
-    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorSetup setup)
+    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorHost host)
     {
-        inPage = setup.InPage;
+        inPage = host.InPage;
         this.pickers = pickers;
         this.editor = editor;
         this.document = document;

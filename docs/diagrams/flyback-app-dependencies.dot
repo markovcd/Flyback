@@ -72,7 +72,7 @@ digraph FlybackAppOverview {
   WindowLayoutKeeper [fillcolor="#d9d2e9"]; WindowHolder [fillcolor="#d9d2e9"];
   PatchOpening [fillcolor="#d0e8d0"]; WorkRecovery [fillcolor="#d0e8d0"];
   SettingsSession [fillcolor="#fce5cd"];
-  EditorSetup [fillcolor="#eeeeee"];
+  EditorFolders [fillcolor="#eeeeee"]; EditorLaunch [fillcolor="#eeeeee"];
 
   // external (Flyback.Ui/Engine) leaves
   node [style="filled,dashed", color=gray40];
@@ -128,12 +128,12 @@ digraph FlybackAppOverview {
   PatchFiles -> Reactions; TakeRecording -> Reactions; PanelKnobs -> Reactions;
   AssistantPanel -> Reactions; PluginInstalls -> Reactions; Toolbar -> Reactions;
 
-  EditorStart -> EditorSetup; EditorStart -> WorkKeeper; EditorStart -> WindowLayoutKeeper;
+  EditorStart -> EditorLaunch; EditorStart -> WorkKeeper; EditorStart -> WindowLayoutKeeper;
   EditorStart -> MidiHub; EditorStart -> PanelKnobs; EditorStart -> PluginCatalog;
   EditorStart -> Playback; EditorStart -> PresetSlot; EditorStart -> OutputSettingRepository;
   EditorStart -> ShellLayout;
 
-  EditorOpened -> EditorSetup; EditorOpened -> IDialogs; EditorOpened -> WorkKeeper;
+  EditorOpened -> EditorLaunch; EditorOpened -> IDialogs; EditorOpened -> WorkKeeper;
   EditorOpened -> WorkRecovery; EditorOpened -> PatchOpening; EditorOpened -> PresetSlot;
 
   ShellLayout -> Toolbar; ShellLayout -> StatusBar; ShellLayout -> NodeEditor;
@@ -150,7 +150,7 @@ digraph FlybackAppOverview {
   TransportControls -> Playback; TransportControls -> Toolbar; TransportControls -> TakeRecording;
 
   OutputSettingsUse -> OutputSections; OutputSettingsUse -> OutputSettingRepository;
-  OutputSettingsUse -> EditorSetup; OutputSettingsUse -> PreviewHost; OutputSettingsUse -> AudioEngine;
+  OutputSettingsUse -> EditorFolders; OutputSettingsUse -> PreviewHost; OutputSettingsUse -> AudioEngine;
   OutputSettingsUse -> PanelKnobs; OutputSettingsUse -> TransportControls;
   OutputSettingsUse -> TakeRecording; OutputSettingsUse -> Playback;
 

@@ -1,79 +1,26 @@
-using Flyback.App.Canvas;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Midi;
-using Flyback.App.Site;
 using Flyback.App.Statistics;
-using Flyback.App.Updates;
-using Flyback.App.Windows;
-using Flyback.Core.Compile;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
 
 /// <summary>
-/// What the editor's window is opened into: where this machine keeps what it
-/// saves, what it reaches outside itself, and what this launch was asked to do.
+/// What the editor's window is opened into, handed to its container in pieces: each
+/// part takes only the piece it reads.
 /// </summary>
 /// <remarks>
 /// Everything left unset keeps nothing, reads nothing and reaches no network, which
-/// is what a test gets by default: none of them has any business with the folders
-/// or the settings of the machine running it. The program itself starts from
-/// <see cref="ThisMachine"/>.
+/// is what a test gets by default. The program itself starts from <see cref="ThisMachine"/>.
 /// </remarks>
-public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
+public sealed record EditorSetup
 {
-    /// <summary>Where the kept groups live. Null keeps them nowhere that outlasts the test.</summary>
-    public string? GroupFolder { get; init; }
+    /// <summary>Where this machine keeps what the editor reads and saves.</summary>
+    public EditorFolders Folders { get; init; } = new();
 
-    /// <summary>Where the instrument profiles of the user's own are read from. Null knows only the shipped ones.</summary>
-    public string? InstrumentFolder { get; init; }
+    /// <summary>What this launch was asked to do.</summary>
+    public EditorLaunch Launch { get; init; } = new();
 
-    /// <summary>Where the presets somebody saved live. Null keeps none and offers no way to save one.</summary>
-    public string? PresetFolder { get; init; }
-
-    /// <summary>Where the gallery's thumbnails are kept between runs. Null draws them afresh each run.</summary>
-    public string? ThumbnailFolder { get; init; }
-
-    /// <summary>Where the Graphics, Recording and Sound settings are read from and saved to.</summary>
-    public string? OutputSettingsPath { get; init; }
-
-    /// <summary>Where the Updates section is read from and saved to.</summary>
-    public string? UpdateSettingsPath { get; init; }
-
-    /// <summary>Where the Usage section is read from and saved to.</summary>
-    public string? UsageSettingsPath { get; init; }
-
-    /// <summary>Where the Canvas section is read from and saved to.</summary>
-    public string? CanvasSettingsPath { get; init; }
-
-    /// <summary>Where the Files section is read from and saved to.</summary>
-    public string? FileTypeSettingsPath { get; init; }
-
-    /// <summary>Where the assistant's settings are read from and saved to, with its priority list beside them.</summary>
-    public string? AssistantSettingsPath { get; init; }
-
-    /// <summary>Where conversation logs are written when logging is on. Null writes them to the user's data folder.</summary>
-    public string? ConversationLogFolder { get; init; }
-
-    /// <summary>Where the window's size, place and panels are kept (ADR-0121).</summary>
-    public string? LayoutPath { get; init; }
-
-    /// <summary>
-    /// Where unsaved work is kept against a crash, and where what a crash left is
-    /// looked for (ADR-0103).
-    /// </summary>
-    public string? RecoveryFolder { get; init; }
-
-    /// <summary>Where a plugin package opened in the window is installed.</summary>
-    public string? PluginFolder { get; init; }
-
-    /// <summary>Where installing a plugin records the yes that lets it load, or null to record nothing.</summary>
-    public string? AllowedPluginsPath { get; init; }
-
-    /// <summary>What the Files section tells the operating system.</summary>
-    public FileTypes? FileTypes { get; init; }
+    /// <summary>What the editor is running in, and what it reaches.</summary>
+    public EditorHost Host { get; init; } = new();
 
     /// <summary>What this run says about itself (ADR-0094).</summary>
     public Usage Usage { get; init; } = Usage.Off;
@@ -81,66 +28,11 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>The plugins loaded before any window existed, already installed in the module catalog.</summary>
     internal PluginCatalog Plugins { get; init; } = PluginCatalog.Empty;
 
-    /// <summary>
-    /// Starts Flyback again once this window has closed, which is what loads a plugin
-    /// just installed. Null offers no restart.
-    /// </summary>
-    public Action<Reopen?>? Relaunch { get; init; }
-
-    /// <summary>The site the gallery lists shared presets from and the plugins window shared plugins.</summary>
-    public Uri? PresetSite { get; init; }
-
-    /// <summary>Where each shared preset opened is kept, to open again while the site does not answer. Null keeps none.</summary>
-    public string? SharedPresetFolder { get; init; }
-
-    /// <summary>A file to open once there is a window for it, or null for the usual start on the default preset.</summary>
-    public string? OpenPath { get; init; }
-
-    /// <summary>The shared preset a restart was carrying, by its id on the preset site.</summary>
-    public string? OpenShared { get; init; }
-
-    /// <summary>What <see cref="Interpreted"/> is asked for with on the command line.</summary>
-    public const string InterpretedFlag = "--interpreted";
-
-    /// <summary>Keep the CPU's programs on the interpreter for the whole run.</summary>
-    public bool Interpreted { get; init; }
-
-    /// <summary>
-    /// The editor is in a browser page (ADR-0162): nothing is opened, saved or recorded,
-    /// there is no assistant, settings, plugins or About, and the picture stays put, drawn at 480 x 270.
-    /// </summary>
-    public bool InPage { get; init; }
-
-    /// <summary>What the last update and any plugin just installed did, said once on the status bar.</summary>
-    public string? OpeningNote { get; init; }
-
-    /// <summary>
-    /// What the release just installed changed, shown once in a dialog when the
-    /// window opens in place of <see cref="OpeningNote"/>.
-    /// </summary>
-    public ReleaseNotes? WhatsNew { get; init; }
-
     /// <summary>Where this machine keeps everything, and what it reaches: the program's own start.</summary>
     public static EditorSetup ThisMachine(Usage usage) => new()
     {
-        GroupFolder = GroupLibrary.DefaultFolder,
-        InstrumentFolder = InstrumentLibrary.UserFolder,
-        PresetFolder = PresetLibrary.DefaultFolder,
-        ThumbnailFolder = ThumbnailStore.DefaultFolder,
-        OutputSettingsPath = OutputSettings.File,
-        UpdateSettingsPath = UpdateSettings.File,
-        UsageSettingsPath = UsageSettings.File,
-        CanvasSettingsPath = CanvasSettings.File,
-        FileTypeSettingsPath = FileTypeSettings.File,
-        AssistantSettingsPath = AssistantSettings.File,
-        LayoutPath = WindowLayout.File,
-        RecoveryFolder = Recovery.Folder,
-        PluginFolder = PluginHost.DefaultDirectory,
-        AllowedPluginsPath = PluginAllowances.DefaultFile,
-        FileTypes = FileTypes.ForThisCopy(),
+        Folders = EditorFolders.ThisMachine(),
+        Host = EditorHost.ThisMachine(),
         Usage = usage,
-        Relaunch = Restart.Launch,
-        PresetSite = Site.PresetSite.Built,
-        SharedPresetFolder = KeptSharedPresets.DefaultFolder,
     };
 }

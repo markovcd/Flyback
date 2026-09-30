@@ -13,7 +13,7 @@ namespace Flyback.App;
 
 /// <summary>Starts the editor run once its window is ready to be shown.</summary>
 internal sealed class EditorStart(
-    EditorSetup setup,
+    EditorLaunch launch,
     WorkKeeper keeper,
     WindowLayoutKeeper layout,
     MidiHub midi,
@@ -37,9 +37,9 @@ internal sealed class EditorStart(
 
         if (playback.Sound.Output is null)
             report.Say("No sound backend is installed, so Volume will do nothing. See About for where plugins are looked for.");
-        if (setup.Interpreted)
-            report.Say($"Running interpreted ({EditorSetup.InterpretedFlag}): the CPU's programs are not compiled this run.");
-        if (setup.WhatsNew is null && setup.OpeningNote is not null) report.Say(setup.OpeningNote);
+        if (launch.Interpreted)
+            report.Say($"Running interpreted ({EditorLaunch.InterpretedFlag}): the CPU's programs are not compiled this run.");
+        if (launch.WhatsNew is null && launch.OpeningNote is not null) report.Say(launch.OpeningNote);
         shell.ApplyPanelLayout();
     }
 

@@ -7,7 +7,7 @@ namespace Flyback.App;
 
 /// <summary>Runs the editor's launch sequence once its window can show dialogs and resolve files.</summary>
 internal sealed class EditorOpened(
-    EditorSetup setup,
+    EditorLaunch launch,
     IDialog dialog,
     WorkKeeper keeper,
     WorkRecovery recovery,
@@ -16,13 +16,13 @@ internal sealed class EditorOpened(
 {
     public async Task RunAsync()
     {
-        if (setup.WhatsNew is not null)
-            await dialog.Show(WhatsNew.Title(setup.WhatsNew), WhatsNew.View(setup.WhatsNew));
+        if (launch.WhatsNew is not null)
+            await dialog.Show(WhatsNew.Title(launch.WhatsNew), WhatsNew.View(launch.WhatsNew));
 
         keeper.Restore(recovery.Restore);
 
-        if (setup.OpenPath is { } path) await opening.OpenPathAsync(path);
+        if (launch.OpenPath is { } path) await opening.OpenPathAsync(path);
 
-        if (setup.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
+        if (launch.OpenShared is { Length: > 0 } id) await presets.OpenSharedAgainAsync(id);
     }
 }

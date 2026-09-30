@@ -42,7 +42,7 @@ public sealed class UsageSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, Usage? usage = null)
     {
-        var window = NewMainWindow(new EditorSetup { UsageSettingsPath = settingsPath, Usage = usage ?? Usage.Off });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { UsageSettingsPath = settingsPath }, Usage = usage ?? Usage.Off });
 
         window.Show();
         Settle(window);

@@ -69,8 +69,10 @@ internal static class EditorServices
 
     private static IServiceCollection AddEditor(this IServiceCollection services, EditorSetup setup)
     {
-        services.AddSingleton(setup);
-        services.AddSingleton<IIlCompilerSetup>(setup);
+        services.AddSingleton(setup.Folders);
+        services.AddSingleton(setup.Launch);
+        services.AddSingleton(setup.Host);
+        services.AddSingleton<IIlCompilerSetup>(setup.Launch);
         services.AddSingleton(setup.Usage);
         services.AddSingleton(setup.Plugins);
 
@@ -79,7 +81,7 @@ internal static class EditorServices
 
         services.AddSingleton<IlCompiler>();
 
-        services.AddSingleton<IPresetFolder>(setup);
+        services.AddSingleton<IPresetFolder>(setup.Folders);
         services.AddSingleton<PresetLibrary>();
         services.AddPart<OutputSettingRepository>();
         services.AddPart<OutputSettingsUse>();

@@ -130,10 +130,10 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// <param name="presets">The preset slot, first on the bar.</param>
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
-    /// <param name="setup">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, VolumeSlider volume, Reactions reactions, IDialog dialog, RecordingState recording, EditorSetup setup)
+    /// <param name="host">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, VolumeSlider volume, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
     {
-        var full = !setup.InPage;
+        var full = !host.InPage;
 
         Seek = seek;
         Volume = volume;

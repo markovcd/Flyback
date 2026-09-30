@@ -140,7 +140,7 @@ public sealed class SitePresetTests : UiTest
     {
         using var site = new FakePresetSite(new Posted("n1", "Nebula", "Ann", File: PatchFile()));
 
-        var window = NewMainWindow(new EditorSetup { PresetSite = FakePresetSite.Root }, Site(site));
+        var window = NewMainWindow(new EditorSetup { Host = new() { PresetSite = FakePresetSite.Root } }, Site(site));
 
         window.Show();
         Settle(window);

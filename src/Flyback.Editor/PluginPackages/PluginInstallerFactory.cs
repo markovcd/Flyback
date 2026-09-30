@@ -3,10 +3,10 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App.PluginPackages;
 
 /// <summary>Creates installers for the plugins folder and plugins loaded this run.</summary>
-internal sealed class PluginInstallerFactory(EditorSetup setup, PluginCatalog plugins)
+internal sealed class PluginInstallerFactory(EditorFolders folders, PluginCatalog plugins)
 {
     public PluginInstaller? Create() =>
-        setup.PluginFolder is { } folder
-            ? new PluginInstaller(folder, plugins.Plugins, allowances: setup.AllowedPluginsPath is { } allowed ? new PluginAllowances(allowed) : null)
+        folders.PluginFolder is { } folder
+            ? new PluginInstaller(folder, plugins.Plugins, allowances: folders.AllowedPluginsPath is { } allowed ? new PluginAllowances(allowed) : null)
             : null;
 }

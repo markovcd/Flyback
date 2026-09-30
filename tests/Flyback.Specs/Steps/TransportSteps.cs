@@ -50,7 +50,7 @@ public sealed class TransportSteps(Editor editor) : IDisposable
         var path = Path.Combine(settings.FullName, "output.json");
 
         new OutputSettings { Transport = TransportEdge.Bottom }.Save(path);
-        editor.Setup = editor.Setup with { OutputSettingsPath = path };
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { OutputSettingsPath = path } };
     }
 
     [Then("the transport waits at the top of the picture")]

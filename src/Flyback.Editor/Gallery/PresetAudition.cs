@@ -54,9 +54,9 @@ internal sealed class PresetAudition
         PluginCatalog plugins,
         PresetLibrary saved,
         Playback playback,
-        EditorSetup setup)
+        EditorHost host)
     {
-        off = setup.InPage;
+        off = host.InPage;
         this.audio = audio;
         this.compiler = compiler;
         modules = plugins.Modules;

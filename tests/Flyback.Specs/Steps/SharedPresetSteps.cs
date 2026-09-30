@@ -32,7 +32,11 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
     {
         site.Shared.Add((name, average, count));
 
-        editor.Setup = editor.Setup with { PresetSite = Root, SharedPresetFolder = kept };
+        editor.Setup = editor.Setup with
+        {
+            Host = editor.Setup.Host with { PresetSite = Root },
+            Folders = editor.Setup.Folders with { SharedPresetFolder = kept },
+        };
         editor.Services = services => services.AddHttpClient(SiteAccess.Client)
             .ConfigurePrimaryHttpMessageHandler(() => site)
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan);

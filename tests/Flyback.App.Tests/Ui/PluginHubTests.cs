@@ -261,7 +261,7 @@ public sealed class PluginHubTests : UiTest
     {
         using var site = new FakePluginSite([.. Enumerable.Range(0, 200).Select(i => new Shared($"p{i}", $"Plugin {i:000}"))]) { PageSize = 200 };
 
-        var window = NewMainWindow(new EditorSetup { PluginFolder = Plugins, PresetSite = FakePluginSite.Root }, Site(site));
+        var window = NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins }, Host = new() { PresetSite = FakePluginSite.Root } }, Site(site));
 
         window.Show();
         Settle(window);
@@ -332,7 +332,7 @@ public sealed class PluginHubTests : UiTest
 
         using var site = new FakePluginSite(new Shared("p1", "Picture", Assembly: Packages.Folder, Version: version, Package: package));
 
-        var window = NewMainWindow(new EditorSetup { PluginFolder = Plugins, PresetSite = FakePluginSite.Root }, Site(site));
+        var window = NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins }, Host = new() { PresetSite = FakePluginSite.Root } }, Site(site));
 
         window.Show();
         Settle(window);
@@ -406,8 +406,8 @@ public sealed class PluginHubTests : UiTest
     private MainWindow OpenPlugins(FakePluginSite? site = null)
     {
         var window = site is null
-            ? NewMainWindow(new EditorSetup { PluginFolder = Plugins })
-            : NewMainWindow(new EditorSetup { PluginFolder = Plugins, PresetSite = FakePluginSite.Root }, Site(site));
+            ? NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins } })
+            : NewMainWindow(new EditorSetup { Folders = new() { PluginFolder = Plugins }, Host = new() { PresetSite = FakePluginSite.Root } }, Site(site));
 
         window.Show();
         Settle(window);

@@ -132,12 +132,12 @@ public class PresetLibraryTests : IDisposable
         var kept = Path.Combine(folder, "thumbnails");
         var first = library.Save("Shown", patch, name => name == "white.png" ? White() : null, NodeCatalog.BuiltIn);
 
-        var before = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = kept }, saved: library).Of(first.Preset, TestContext.Current.CancellationToken);
+        var before = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = kept }, saved: library).Of(first.Preset, TestContext.Current.CancellationToken);
 
         before.Pixels.ShouldNotBeNull();
 
         var second = library.Save("Shown", Tone(), Nothing, NodeCatalog.BuiltIn);
-        var after = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = kept }, saved: library).Of(second.Preset, TestContext.Current.CancellationToken);
+        var after = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = kept }, saved: library).Of(second.Preset, TestContext.Current.CancellationToken);
 
         after.Pixels.ShouldBeNull("the preset is a tone now, with nothing to see");
     }

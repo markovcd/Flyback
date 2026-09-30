@@ -20,5 +20,5 @@ public sealed class BuiltPresetSiteTests
 
     [Fact]
     public void The_editor_starts_on_the_site_it_was_built_for() =>
-        EditorSetup.ThisMachine(Usage.Off).PresetSite.ShouldBe(PresetSite.Built);
+        EditorSetup.ThisMachine(Usage.Off).Host.PresetSite.ShouldBe(PresetSite.Built);
 }

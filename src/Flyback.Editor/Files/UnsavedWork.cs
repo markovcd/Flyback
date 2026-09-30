@@ -27,7 +27,7 @@ internal sealed class UnsavedWork(
     Document document,
     AssistantConversation conversation,
     PatchFiles files,
-    EditorSetup setup,
+    EditorHost host,
     IDialog dialog,
     IClose close,
     RecordingState recording)
@@ -142,7 +142,7 @@ internal sealed class UnsavedWork(
     /// </summary>
     public async Task<bool> RelaunchAsync(Reopen? reopen)
     {
-        if (setup.Relaunch is not { } relaunch) return false;
+        if (host.Relaunch is not { } relaunch) return false;
 
         if (recording.InHand || !await MayReplaceThePatchAsync()) return false;
 
@@ -202,7 +202,7 @@ internal sealed class UnsavedWork(
         try
         {
             // Not in a page, which has nowhere to save to.
-            return await AskAsync(about, question, offerSave: !setup.InPage) switch
+            return await AskAsync(about, question, offerSave: !host.InPage) switch
             {
                 // A canceled save picker is a canceled close: somebody who thought
                 // better of where has not agreed to lose the patch.

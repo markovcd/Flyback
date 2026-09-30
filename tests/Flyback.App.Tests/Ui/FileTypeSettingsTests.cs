@@ -46,9 +46,8 @@ public sealed class FileTypeSettingsTests : UiTest
     {
         var window = NewMainWindow(new EditorSetup
         {
-            FileTypeSettingsPath = settingsPath,
-            OutputSettingsPath = OutputPath,
-            FileTypes = system,
+            Folders = new() { FileTypeSettingsPath = settingsPath, OutputSettingsPath = OutputPath },
+            Host = new() { FileTypes = system },
         });
 
         window.Show();

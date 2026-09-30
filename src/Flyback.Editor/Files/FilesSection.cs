@@ -33,10 +33,10 @@ internal sealed class FilesSection
     private readonly Action<string, string?> report;
 
     /// <param name="output">Holds the library folder's row, which is saved with the output settings.</param>
-    public FilesSection(EditorSetup setup, ReportLine report, OutputSections output)
+    public FilesSection(EditorFolders folders, EditorHost host, ReportLine report, OutputSections output)
     {
-        path = setup.FileTypeSettingsPath;
-        system = setup.FileTypes;
+        path = folders.FileTypeSettingsPath;
+        system = host.FileTypes;
         this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = FileTypeSettings.Load(path);

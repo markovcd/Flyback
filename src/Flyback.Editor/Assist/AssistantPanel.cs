@@ -355,7 +355,7 @@ internal sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
-    /// <param name="setup">Its <see cref="EditorSetup.AssistantSettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
+    /// <param name="folders">Its <see cref="EditorFolders.AssistantSettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
     /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
         ChosenAssistant chosenAssistant,
@@ -365,7 +365,7 @@ internal sealed class AssistantPanel : UserControl
         AssistantRunFactory runs,
         Credentials credentials,
         AssistantSettingRepository settingsRepository,
-        EditorSetup? setup = null,
+        EditorFolders? folders = null,
         Usage? usage = null,
         Reactions? reactions = null)
     {
@@ -377,8 +377,8 @@ internal sealed class AssistantPanel : UserControl
         this.runs = runs;
         this.credentials = credentials;
         this.usage = usage;
-        settingsPath = setup?.AssistantSettingsPath;
-        logFolder = setup?.ConversationLogFolder;
+        settingsPath = folders?.AssistantSettingsPath;
+        logFolder = folders?.ConversationLogFolder;
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());

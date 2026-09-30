@@ -34,7 +34,7 @@ internal sealed class ShellLayout(
     Document document,
     Usage usage,
     WindowLayoutKeeper layoutKeeper,
-    EditorSetup setup,
+    EditorHost host,
     LastPress lastPress)
     : IReactTo<PatchCompiled>,
         IReactTo<GestureFinished>,
@@ -333,7 +333,7 @@ internal sealed class ShellLayout(
         KeyboardNavigation.SetIsTabStop(previewBox, false);
         previewBox.DoubleTapped += (_, e) =>
         {
-            if (!setup.InPage) fullScreen.Toggle();
+            if (!host.InPage) fullScreen.Toggle();
             e.Handled = true;
         };
         Grid.SetColumn(previewBox, column);

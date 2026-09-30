@@ -10,7 +10,7 @@ namespace Flyback.App.Settings;
 internal sealed class OutputSettingsUse(
     OutputSections sections,
     OutputSettingRepository repository,
-    EditorSetup setup,
+    EditorFolders folders,
     PreviewHost preview,
     IAudioEngine audio,
     PanelKnobs knobs,
@@ -37,7 +37,7 @@ internal sealed class OutputSettingsUse(
         if (saved.Driver != before.Driver)
             report.Say($"{(saved.Driver == GraphicsDriver.Direct3D ? "Direct3D" : "OpenGL")} draws from the next time Flyback starts.");
 
-        if (setup.OutputSettingsPath is not { } path) return;
+        if (folders.OutputSettingsPath is not { } path) return;
 
         try
         {

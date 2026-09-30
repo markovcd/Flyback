@@ -127,3 +127,18 @@ What the parts say to each other is a notice, and a part reacts by declaring
 `AddPart<T>` registers the part once and forwards each `IReactTo<>` it implements
 to that same singleton, and `Reactions` asks the container for the reactors at
 raise time. The window's constructor no longer wires anything.
+
+## Amendment, 2026-09-30: a part takes the piece of the setup it reads
+
+`EditorSetup` is what the program, the page and the tests hand the container, and
+nothing takes it whole. `AddEditor` registers its pieces: `EditorFolders` (where
+this machine keeps things, and the `IPresetFolder`), `EditorLaunch` (what this
+launch was asked to do, and the `IIlCompilerSetup`), `EditorHost` (whether the
+editor is in a page, the site it reaches, the file types and the restart), and
+`Usage` and `PluginCatalog` as before. A part takes only the pieces it reads, and a
+test that builds one by hand hands it the piece rather than the whole setup.
+
+The pieces are plain records, not `IOptions<T>`: nothing is bound from
+configuration or reloaded, half of what they hold is launch state rather than
+configuration, and the engine's `IIlCompilerSetup` could not take the package
+(ADR-0019).

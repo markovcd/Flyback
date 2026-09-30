@@ -41,7 +41,7 @@ public sealed class UnsavedWorkSteps(PatchContext context, Editor editor) : IDis
     [When("the editor starts again")]
     public void WhenStartedAgain()
     {
-        editor.Setup = new EditorSetup { RecoveryFolder = recovery.FullName };
+        editor.Setup = new EditorSetup { Folders = new() { RecoveryFolder = recovery.FullName } };
         editor.OnThePatch = false;
         editor.Open();
     }

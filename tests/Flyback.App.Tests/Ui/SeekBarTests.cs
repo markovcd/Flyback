@@ -279,7 +279,7 @@ public sealed class SeekBarTests : UiTest
     [AvaloniaFact]
     public void Looping_is_kept_for_the_next_window()
     {
-        var setup = new EditorSetup { CanvasSettingsPath = settingsPath };
+        var setup = new EditorSetup { Folders = new() { CanvasSettingsPath = settingsPath } };
         var (_, bar) = WithBar(setup);
 
         bar.Loop.IsChecked.ShouldBe(false);
@@ -480,7 +480,7 @@ public sealed class FullScreenTransportTests : UiTest
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
         new OutputSettings { Transport = TransportEdge.Bottom }.Save(settingsPath);
 
-        var window = Open(setup: new EditorSetup { OutputSettingsPath = settingsPath });
+        var window = Open(setup: new EditorSetup { Folders = new() { OutputSettingsPath = settingsPath } });
 
         Overlay(window).VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
         All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);

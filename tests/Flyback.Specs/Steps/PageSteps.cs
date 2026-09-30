@@ -4,12 +4,12 @@ using Shouldly;
 
 namespace Flyback.Specs.Steps;
 
-/// <summary>The editor as a browser page holds it: <see cref="App.EditorSetup.InPage"/>.</summary>
+/// <summary>The editor as a browser page holds it: <see cref="App.EditorHost.InPage"/>.</summary>
 [Binding]
 public sealed class PageSteps(Editor editor, PatchContext context)
 {
     [Given("the editor is in a page")]
-    public void GivenInAPage() => editor.Setup = editor.Setup with { InPage = true };
+    public void GivenInAPage() => editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true } };
 
     [Then("the toolbar has none of {string}")]
     public void ThenHasNone(string names) => editor.ToolbarButtons.ShouldNotContain(name => Names(names).Contains(name));

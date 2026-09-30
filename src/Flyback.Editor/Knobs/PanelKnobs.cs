@@ -68,11 +68,11 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private readonly Reactions reactions;
     private readonly Usage usage;
 
-    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, IAudioEngine audio, MidiHub midi, EditorSetup setup, Reactions reactions, Usage usage)
+    public PanelKnobs(NodeEditor editor, Document document, ReportLine report, PreviewHost preview, IAudioEngine audio, MidiHub midi, EditorFolders folders, Reactions reactions, Usage usage)
     {
         this.reactions = reactions;
         this.usage = usage;
-        Instruments = setup.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
+        Instruments = folders.InstrumentFolder is { } folder ? InstrumentLibrary.Load(folder) : InstrumentLibrary.Shipped();
         this.editor = editor;
         this.document = document;
         this.preview = preview;

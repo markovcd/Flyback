@@ -33,7 +33,7 @@ public sealed class UpdateSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
     {
-        var window = NewMainWindow(new EditorSetup { UpdateSettingsPath = settingsPath, OpeningNote = note, WhatsNew = whatsNew });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { UpdateSettingsPath = settingsPath }, Launch = new() { OpeningNote = note, WhatsNew = whatsNew } });
 
         window.Show();
         Settle(window);

@@ -46,7 +46,7 @@ public sealed class KeptSharedPresetTests : UiTest
 
     private MainWindow Window(FakePresetSite site)
     {
-        var window = NewMainWindow(new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder }, Site(site));
+        var window = NewMainWindow(new EditorSetup { Host = new() { PresetSite = FakePresetSite.Root }, Folders = new() { SharedPresetFolder = folder } }, Site(site));
 
         window.Show();
         Settle(window);
@@ -163,7 +163,7 @@ public sealed class KeptSharedPresetTests : UiTest
 
         using var down = new FakePresetSite { Down = true };
         var window = NewMainWindow(
-            new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder, OpenShared = "n1" },
+            new EditorSetup { Host = new() { PresetSite = FakePresetSite.Root }, Folders = new() { SharedPresetFolder = folder }, Launch = new() { OpenShared = "n1" } },
             Site(down));
 
         window.Show();
@@ -207,7 +207,7 @@ public sealed class KeptSharedPresetTests : UiTest
         taken.TakenDown.Add("n1");
 
         var window = NewMainWindow(
-            new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder, OpenShared = "n1" },
+            new EditorSetup { Host = new() { PresetSite = FakePresetSite.Root }, Folders = new() { SharedPresetFolder = folder }, Launch = new() { OpenShared = "n1" } },
             Site(taken));
 
         window.Show();
@@ -254,7 +254,7 @@ public sealed class KeptSharedPresetTests : UiTest
 
         using var again = Nebula();
         var window = NewMainWindow(
-            new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder, OpenShared = "n1" },
+            new EditorSetup { Host = new() { PresetSite = FakePresetSite.Root }, Folders = new() { SharedPresetFolder = folder }, Launch = new() { OpenShared = "n1" } },
             Site(again));
 
         window.Show();

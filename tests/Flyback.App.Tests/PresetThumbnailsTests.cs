@@ -93,8 +93,8 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
-        var found = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var found = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(1);
         found.Pixels.ShouldNotBeNull().ShouldBe(drawn.Pixels);
@@ -107,8 +107,8 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
-        var said = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Said(preset);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var said = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Said(preset);
 
         builds.ShouldBe(1);
         said.Description.ShouldBe(drawn.Description);
@@ -158,7 +158,7 @@ public sealed class PresetThumbnailsTests : IDisposable
             return patch;
         }, "");
 
-        var drawn = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
+        var drawn = await new PresetThumbnails(PluginCatalog.Empty, folders: new() { ThumbnailFolder = folder }).Of(preset, TestContext.Current.CancellationToken);
 
         drawn.Words.ShouldBe(Thumbnail.Unavailable.Words);
         (Directory.Exists(folder) ? Directory.GetFiles(folder, "*.thumb") : []).ShouldBeEmpty();
@@ -170,7 +170,7 @@ public sealed class PresetThumbnailsTests : IDisposable
     {
         var preset = Counted();
 
-        var tile = await new PresetThumbnails(PluginCatalog.Empty, setup: new() { InPage = true }).Of(preset, TestContext.Current.CancellationToken);
+        var tile = await new PresetThumbnails(PluginCatalog.Empty, host: new() { InPage = true }).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(0);
         tile.Words.ShouldBe(Thumbnail.Unavailable.Words);
@@ -185,7 +185,7 @@ public sealed class PresetThumbnailsTests : IDisposable
 
         var tile = await new PresetThumbnails(
             PluginCatalog.Empty,
-            setup: new() { InPage = true },
+            host: new() { InPage = true },
             shelf: Stilled(preset, StillIndex.ThisBuild, still)).Of(preset, TestContext.Current.CancellationToken);
 
         builds.ShouldBe(0);

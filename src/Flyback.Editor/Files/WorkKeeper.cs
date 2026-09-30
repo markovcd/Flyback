@@ -36,9 +36,9 @@ internal sealed class WorkKeeper
 
     private DispatcherTimer? ticker;
 
-    public WorkKeeper(EditorSetup setup, UnsavedWork unsaved)
+    public WorkKeeper(EditorFolders folders, UnsavedWork unsaved)
     {
-        folder = setup.RecoveryFolder;
+        folder = folders.RecoveryFolder;
         work = unsaved.Work;
     }
 

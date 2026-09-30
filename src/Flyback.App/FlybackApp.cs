@@ -48,12 +48,15 @@ public sealed class FlybackApp : Application
 
         var setup = EditorSetup.ThisMachine(usage) with
         {
-            OpenPath = Startup.OpenPath,
-            OpenShared = Startup.OpenShared,
-            Interpreted = Startup.Interpreted,
+            Launch = new EditorLaunch
+            {
+                OpenPath = Startup.OpenPath,
+                OpenShared = Startup.OpenShared,
+                Interpreted = Startup.Interpreted,
+                OpeningNote = Startup.OpeningNote,
+                WhatsNew = Startup.WhatsNew,
+            },
             Plugins = Startup.Plugins,
-            OpeningNote = Startup.OpeningNote,
-            WhatsNew = Startup.WhatsNew,
         };
         var provider = EditorServices.Provider(setup);
         var window = provider.Window();

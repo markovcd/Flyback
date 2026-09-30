@@ -147,7 +147,7 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   means `Decisions.None` for the session and a line in the section. Never silent
   (ADR-0132's spirit).
 - Registration in `EditorServices.AddEditor` beside `:104-110`; a named `HttpClient`
-  for downloads next to `SiteAccess.Client` at `:80`; `EditorSetup.DecisionSettingsPath`
+  for downloads next to `SiteAccess.Client` at `:80`; `EditorFolders.DecisionSettingsPath`
   and `ThisMachine` (`:54, :118-124`).
 - `flyback-cli decide` (`Commands/DecideCommand.cs`, `Models/DecideOptions.cs`, factory
   in `Program.cs:76-89` on the `Probe` template `:198-263`): `decide [<state>|-] --ask
@@ -294,7 +294,7 @@ A. Contract: `src/Flyback.Plugins/Decide/*` (the types above), `IPluginRegistry.
    `Hosting/PluginHost.cs`, `Hosting/PluginCatalog.cs`, `PublicAPI.Unshipped.txt`,
    `Flyback.Plugins.csproj` `InternalsVisibleTo` for the two new test projects.
 B. Host: `src/Flyback.App/Decide/*` (`ModelStore` lives in Plugins, the rest here),
-   `EditorSetup.cs`, `EditorServices.cs`, `Settings/SettingsSession.cs`.
+   `EditorFolders.cs`, `EditorServices.cs`, `Settings/SettingsSession.cs`.
 C. Uses: `Assist/AssistantPanel.cs` (+ one sentence in `Handbook.cs`),
    `Canvas/ModuleFinder.cs` + `ModulePalette.cs` + `Palette.cs` + `CatalogReference.cs`
    + `ModulesCommand.cs`, `IssueTriage` + `CheckCommand.cs` + `Program.Check` +

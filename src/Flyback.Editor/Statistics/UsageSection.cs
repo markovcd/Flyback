@@ -32,9 +32,9 @@ internal sealed class UsageSection
     private readonly Action<string, string?> report;
 
     /// <param name="usage">What this run says about itself, stopped the moment the box is cleared and saved.</param>
-    public UsageSection(EditorSetup setup, Usage usage, ReportLine report)
+    public UsageSection(EditorFolders folders, Usage usage, ReportLine report)
     {
-        path = setup.UsageSettingsPath;
+        path = folders.UsageSettingsPath;
         this.usage = usage;
         this.report = (message, detail) => report.Say(message, detail);
 

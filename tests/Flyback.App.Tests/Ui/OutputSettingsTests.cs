@@ -55,7 +55,7 @@ public class OutputSettingsTests : UiTest
     /// </summary>
     private MainWindow Open(string? settingsPath = null)
     {
-        var window = NewMainWindow(new EditorSetup { OutputSettingsPath = settingsPath });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { OutputSettingsPath = settingsPath } });
 
         window.Show();
         window.UpdateLayout();
@@ -971,7 +971,7 @@ public class OutputSettingsTests : UiTest
     [AvaloniaFact]
     public void A_run_started_interpreted_stays_interpreted_and_says_so()
     {
-        var window = NewMainWindow(new EditorSetup { Interpreted = true });
+        var window = NewMainWindow(new EditorSetup { Launch = new() { Interpreted = true } });
 
         window.Show();
         Settle(window);

@@ -9,7 +9,7 @@ namespace Flyback.App.Windows;
 /// and written back to it (ADR-0121). What the panels are set to is the window's own
 /// to apply and to capture.
 /// </summary>
-internal sealed class WindowLayoutKeeper(EditorSetup setup)
+internal sealed class WindowLayoutKeeper(EditorFolders folders)
 {
     /// <summary>The layout read by <see cref="Load"/>, then the one last written. Null where none has been kept.</summary>
     public WindowLayout? Saved { get; private set; }
@@ -20,7 +20,7 @@ internal sealed class WindowLayoutKeeper(EditorSetup setup)
     /// <summary>Reads the file, if there is one to read.</summary>
     public void Load()
     {
-        if (setup.LayoutPath is not null) Saved = WindowLayout.Load(setup.LayoutPath);
+        if (folders.LayoutPath is not null) Saved = WindowLayout.Load(folders.LayoutPath);
     }
 
     /// <summary>Follows the size <paramref name="window"/> is dragged to.</summary>
@@ -55,7 +55,7 @@ internal sealed class WindowLayoutKeeper(EditorSetup setup)
     /// <summary>Writes down what <paramref name="capture"/> says. A settings file is not worth a failure to close.</summary>
     public void Remember(Func<WindowLayout> capture)
     {
-        if (setup.LayoutPath is not { } path) return;
+        if (folders.LayoutPath is not { } path) return;
 
         try
         {

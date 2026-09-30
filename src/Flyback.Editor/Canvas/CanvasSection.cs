@@ -49,9 +49,9 @@ internal sealed class CanvasSection
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
     /// <param name="source">The text view, whose font size is this section's setting.</param>
-    public CanvasSection(EditorSetup setup, NodeEditor canvas, ReportLine report, SourceView source)
+    public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, SourceView source)
     {
-        path = setup.CanvasSettingsPath;
+        path = folders.CanvasSettingsPath;
         this.canvas = canvas;
         this.source = source;
         this.report = (message, detail) => report.Say(message, detail);

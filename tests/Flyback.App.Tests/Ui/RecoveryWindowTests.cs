@@ -35,7 +35,7 @@ public class RecoveryWindowTests : UiTest
 
     private (MainWindow Window, WorkRecovery Recovery) Open(string? recoveryFolder = null)
     {
-        var provider = Container(new EditorSetup { RecoveryFolder = recoveryFolder });
+        var provider = Container(new EditorSetup { Folders = new() { RecoveryFolder = recoveryFolder } });
         var window = Owned(provider.GetRequiredService<MainWindow>());
         Attach(provider, window);
         window.Start();

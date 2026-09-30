@@ -57,7 +57,7 @@ internal sealed class Palette
 
     /// <param name="knobs">The instruments the list offers.</param>
     /// <param name="repository">How the MIDI section lays out a first keyboard.</param>
-    /// <param name="setup">Where kept groups are read from and written to, or the usual place.</param>
+    /// <param name="folders">Where kept groups are read from and written to, or the usual place.</param>
     public Palette(
         NodeEditor editor,
         Document document,
@@ -66,10 +66,10 @@ internal sealed class Palette
         Usage usage,
         PanelKnobs knobs,
         OutputSettingRepository repository,
-        EditorSetup setup,
+        EditorFolders folders,
         LastPress lastPress)
     {
-        var groupFolder = setup.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
+        var groupFolder = folders.GroupFolder ?? Path.Combine(Path.GetTempPath(), "flyback-no-groups", Guid.NewGuid().ToString("N"));
 
         this.editor = editor;
         this.document = document;

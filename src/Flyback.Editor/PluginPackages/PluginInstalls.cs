@@ -38,13 +38,15 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
     /// </summary>
     private Reopen? refused;
 
-    /// <param name="setup">Where a package's plugin is installed, and whether a restart is offered.</param>
+    /// <param name="folders">Where a package's plugin is installed.</param>
+    /// <param name="host">Whether a restart is offered.</param>
     /// <param name="site">Where the plugins window lists shared plugins from.</param>
     /// <param name="playback">The sound device the plugins window says what opened.</param>
     public PluginInstalls(
         PluginCatalog plugins,
         ReportLine report,
-        EditorSetup setup,
+        EditorFolders folders,
+        EditorHost host,
         SiteAccess site,
         Playback playback,
         IDialog dialog,
@@ -61,8 +63,8 @@ internal sealed class PluginInstalls : IReactTo<PluginsAsked>
         this.installers = installers;
         this.plugins = plugins;
         this.report = report;
-        pluginFolder = setup.PluginFolder;
-        canRestart = setup.Relaunch is not null;
+        pluginFolder = folders.PluginFolder;
+        canRestart = host.Relaunch is not null;
         this.site = site;
         this.playback = playback;
         this.chosenAssistant = chosenAssistant;

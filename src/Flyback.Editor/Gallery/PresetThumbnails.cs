@@ -46,13 +46,15 @@ internal sealed class PresetThumbnails
     /// <summary>The build's index, read the first time a thumbnail is asked for; null where there is none or it is another build's.</summary>
     private Task<StillIndex?>? index;
 
-    /// <param name="setup">Its <see cref="EditorSetup.ThumbnailFolder"/> keeps thumbnails between runs. Null keeps them for this run only.</param>
+    /// <param name="folders">Its <see cref="EditorFolders.ThumbnailFolder"/> keeps thumbnails between runs. Null keeps them for this run only.</param>
+    /// <param name="host">Whether the gallery is in a page.</param>
     /// <param name="saved">Where saved presets are kept, so one is drawn with the files in its bundle. Null where none are.</param>
     /// <param name="shelf">Where the build's stills are. Null draws every preset here.</param>
     public PresetThumbnails(
         PluginCatalog plugins,
         IlCompiler? compiler = null,
-        EditorSetup? setup = null,
+        EditorFolders? folders = null,
+        EditorHost? host = null,
         PresetLibrary? saved = null,
         IStillShelf? shelf = null)
     {
@@ -60,9 +62,9 @@ internal sealed class PresetThumbnails
         this.compiler = compiler;
         this.saved = saved;
         this.shelf = shelf;
-        inPage = setup?.InPage ?? false;
+        inPage = host?.InPage ?? false;
 
-        if (setup?.ThumbnailFolder is not { } folder) return;
+        if (folders?.ThumbnailFolder is not { } folder) return;
 
         // Opened, and pruned in the background, by the first thumbnail asked for.
         store = new Lazy<ThumbnailStore>(() =>

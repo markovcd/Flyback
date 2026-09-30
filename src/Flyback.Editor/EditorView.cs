@@ -42,7 +42,7 @@ internal sealed class EditorView : Border
     private readonly EditState editState;
     private readonly Reactions reactions;
     private readonly WindowHolder holder;
-    private readonly EditorSetup setup;
+    private readonly bool inPage;
 
     private TopLevel? host;
     private bool started;
@@ -66,9 +66,9 @@ internal sealed class EditorView : Border
         OutputSettingsUse outputSettingsUse,
         IDialog dialog,
         WindowHolder holder,
-        EditorSetup setup)
+        EditorHost editorHost)
     {
-        this.setup = setup;
+        inPage = editorHost.InPage;
         this.document = document;
         this.patchOpening = patchOpening;
         this.report = report;
@@ -247,7 +247,7 @@ internal sealed class EditorView : Border
             // shortcuts, and guarded the same way a click on a disabled
             // button already is: see TakeRecording.ToggleAsync.
             case Key.R:
-                if (!setup.InPage) reactions.Raise(new RecordAsked());
+                if (!inPage) reactions.Raise(new RecordAsked());
                 e.Handled = true;
                 break;
 
@@ -270,12 +270,12 @@ internal sealed class EditorView : Border
             // Saving is one gesture here — the picker is where a name is
             // chosen — so there is no second key for saving under another one.
             case Key.O:
-                if (!setup.InPage) reactions.Raise(new OpenAsked());
+                if (!inPage) reactions.Raise(new OpenAsked());
                 e.Handled = true;
                 break;
 
             case Key.S:
-                if (!setup.InPage) reactions.Raise(new SaveAsked());
+                if (!inPage) reactions.Raise(new SaveAsked());
                 e.Handled = true;
                 break;
         }
