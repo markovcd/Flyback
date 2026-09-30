@@ -12,7 +12,8 @@ Standing rules for working in this repo are in `docs/agents/rules/`. They apply 
 - @docs/agents/rules/propose-refactors.md — code that has gone untidy or ballooned is a refactor to propose, after the task and outside its commit.
 - @docs/agents/rules/honest-tests.md — a failing test is fixed by fixing the code, never by weakening, skipping or special-casing the test.
 - @docs/agents/rules/security.md — keys stay out of everything; outside input is checked where it enters; a check is never loosened to make something work.
-- @docs/agents/rules/ci-cd.md — CI runs the gate itself; workflows pinned, least-permission and timed out; a release is `release.sh`, refuses before moving anything, and ships signed.
+- @docs/agents/rules/ci-cd.md — land small and often, a red `main` is fixed before anything else, and `main` is always releasable.
+- @docs/agents/rules/pipeline.md — CI runs the gate itself; workflows pinned, least-permission and timed out; a release is `release.sh`, refuses before moving anything, and ships signed.
 - @docs/agents/rules/saved-data.md — from 1.0.0, what was written stays readable: socket order never changes, and a format change carries its upgrade step and a test that opens the old shape.
 
 Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill's full content when its description matches the task (the name and one-line description below are visible every session regardless):
