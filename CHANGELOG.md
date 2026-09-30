@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Machine Room, on the preset site: techno to jam on, with twenty-four panel knobs that move the picture as well as the sound, a keyboard split into the groove's key and chord stabs, a held low key that builds to a drop, and a drum machine's MIDI clock followed while it runs.
 - A Clock In left to follow whatever is plugged in says nothing when no instrument is.
 - The editor's status bar says how many times real time the sound renders at, and no longer counts modules and wires; a patch with no sound has no Volume on the toolbar and no sound button over a full-screen picture, and the web viewer offers no volume and no render speed for one.
 - `flyback-cli save` saves a patch or a shipped preset as `.fbk`, `.fbks` or `.fbkb`, by the extension it is saved to.
