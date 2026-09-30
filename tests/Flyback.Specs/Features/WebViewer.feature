@@ -47,6 +47,10 @@ Feature: The web viewer
     When someone opens the web viewer on the preset site
     Then its page and everything it loads to start are there
 
+  Scenario: A phone's screen stays on while the web viewer plays full screen
+    When someone opens the web viewer on the preset site
+    Then it keeps the screen on while its picture has the whole screen and plays
+
   Scenario: The web viewer leaves picking a preset to the presets page
     When someone opens the web viewer on the preset site
     Then it offers no presets of its own, only a way back to the presets page

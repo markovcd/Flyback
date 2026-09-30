@@ -227,6 +227,7 @@ async function play() {
   playing = true;
   ui.cover.hidden = true;
   speaker.postMessage({ run: heard });
+  keepAwake();
   paint();
 }
 
@@ -239,6 +240,7 @@ function pause() {
   // The queue stays where it is, so play carries on from the very next sample.
   speaker.postMessage({ run: false });
   if (heard) context.suspend();
+  keepAwake();
   paint();
 }
 
@@ -569,6 +571,29 @@ function toggleFullscreen() {
   else ui.main.requestFullscreen?.().catch(() => {});
 }
 
+/** The screen's wake lock, or the request for one, while it is held. */
+let awake = null;
+
+/** Keeps a phone's screen on while the picture has all of it and plays. */
+function keepAwake() {
+  const wanted = playing && document.fullscreenElement != null && !document.hidden;
+
+  if (wanted && awake === null && navigator.wakeLock) {
+    const asked = awake = navigator.wakeLock.request('screen').then(lock => {
+      // The browser lets go by itself when the page is hidden.
+      lock.onrelease = () => { if (awake === asked) awake = null; };
+      return lock;
+    }, () => {
+      if (awake === asked) awake = null;
+      return null;
+    });
+  } else if (!wanted && awake !== null) {
+    const held = awake;
+    awake = null;
+    held.then(lock => lock?.release());
+  }
+}
+
 const clockText = seconds => {
   const whole = Math.max(0, Math.floor(seconds));
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
@@ -679,7 +704,11 @@ document.addEventListener('drop', async event => {
 
 document.addEventListener('keyup', event => typed(event, false));
 window.addEventListener('blur', release);
-document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) release();
+  keepAwake();
+});
+document.addEventListener('fullscreenchange', keepAwake);
 
 document.addEventListener('keydown', event => {
   if (typed(event, true)) return;
@@ -715,7 +744,7 @@ window.flyback = {
   size: resize,
   status: () => ({
     ...status(),
-    name, preview, playing, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
+    name, preview, playing, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
     queued: soundStatus.queued ?? 0, starved, warning, error, speakerFailure,
   }),
   volume: setVolume,

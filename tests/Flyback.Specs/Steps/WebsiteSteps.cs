@@ -147,6 +147,19 @@ public sealed partial class WebsiteSteps : IDisposable
         script.ShouldContain("params.get('back') ?? 'presets.html'");
     }
 
+    /// <summary>A screen wake lock, asked for and let go as playing and full screen come and go.</summary>
+    [Then("it keeps the screen on while its picture has the whole screen and plays")]
+    public async Task ThenTheScreenStaysOn()
+    {
+        var script = await client.GetStringAsync(new Uri("/viewer/main.js", UriKind.Relative));
+
+        script.ShouldContain("const wanted = playing && document.fullscreenElement != null && !document.hidden;");
+        script.ShouldContain("navigator.wakeLock.request('screen')");
+        script.ShouldContain("document.addEventListener('fullscreenchange', keepAwake);");
+        script.ShouldMatch("""playing = true;(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
+        script.ShouldMatch("""playing = false;(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
+    }
+
     /// <summary>
     /// The page's own script and style, and every file of the runtime its loader names,
     /// each there and a WebAssembly module served as one, which a browser insists on.
