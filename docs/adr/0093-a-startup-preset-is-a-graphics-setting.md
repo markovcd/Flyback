@@ -75,3 +75,9 @@ With none saved the run is not shown at all.
 Save writes back, which is what listing it at the end of the picker was for. It
 is built fresh at every click, so a preset saved or deleted since is there or
 gone.
+
+## Amendment, 2026-09-30: the fallback is Plasma by name
+
+A name that is missing, empty or not offered opens Plasma, looked up by name
+(`PresetLibrary.Fallback`), not whichever patch sorts first. Plugins add presets
+that sort ahead of it, and a viewer run without them opened Feedback tunnel.

@@ -31,11 +31,14 @@ public sealed class PresetLibrary
     public static List<PatchPreset> Ordered(IEnumerable<PatchPreset> shipped, PresetLibrary? saved) =>
         [.. PresetOrder.Of(shipped), .. saved?.All.Select(entry => entry.Preset) ?? []];
 
+    /// <summary>What opens when nothing is chosen, or what was chosen is not offered.</summary>
+    public const string Fallback = "Plasma";
+
     /// <summary>
     /// The row of <paramref name="presets"/> holding the preset called
-    /// <paramref name="name"/>, or the row holding the first patch in the list
-    /// for one it does not offer — a plugin taken away, or a settings file nobody
-    /// has written to yet.
+    /// <paramref name="name"/>, or the row holding <see cref="Fallback"/> for one
+    /// it does not offer — a plugin taken away, or a settings file nobody has
+    /// written to yet.
     /// </summary>
     public static int Opening(IReadOnlyList<PatchPreset> presets, string? name)
     {
@@ -43,11 +46,7 @@ public sealed class PresetLibrary
 
         if (row >= 0) return row;
 
-        // Nothing chosen yet, or a name this build no longer offers: the first
-        // preset that is a patch, which is not the first preset. The blank canvas
-        // heads the list, and a program that shipped thirty patches and opened on
-        // none of them would be one whose presets nobody found.
-        return Math.Max(presets.ToList().FindIndex(preset => preset.Kind != PresetKind.Blank), 0);
+        return Math.Max(presets.ToList().FindIndex(preset => preset.Name == Fallback), 0);
     }
 
     private List<SavedPreset> kept = [];

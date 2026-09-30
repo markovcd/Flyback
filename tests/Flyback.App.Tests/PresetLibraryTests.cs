@@ -254,6 +254,25 @@ public class PresetLibraryTests : IDisposable
         Should.Throw<ArgumentException>(() => Library().Save(name, Tone(), Nothing, NodeCatalog.BuiltIn));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("Mycelium")]
+    public void A_startup_preset_not_offered_opens_Plasma(string? chosen)
+    {
+        var offered = PresetLibrary.Ordered(Presets.All, saved: null);
+
+        offered[PresetLibrary.Opening(offered, chosen)].Name.ShouldBe("Plasma");
+    }
+
+    [Fact]
+    public void A_startup_preset_offered_opens_itself()
+    {
+        var offered = PresetLibrary.Ordered(Presets.All, saved: null);
+
+        offered[PresetLibrary.Opening(offered, "Feedback tunnel")].Name.ShouldBe("Feedback tunnel");
+    }
+
     /// <summary>A patch dropped into the folder by hand is a preset too.</summary>
     [Fact]
     public void A_plain_patch_in_the_folder_is_listed()

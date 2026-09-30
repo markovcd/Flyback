@@ -209,8 +209,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     }
 
     /// <summary>
-    /// Opens the window on <paramref name="chosen"/>, or on the first of the list
-    /// for a name it no longer offers — so the title and the list agree with the
+    /// Opens the window on <paramref name="chosen"/>, or on
+    /// <see cref="PresetLibrary.Fallback"/> for a name it no longer offers — so the title and the list agree with the
     /// canvas from the first frame (ADR-0093).
     /// </summary>
     public void StartOn(string chosen)

@@ -46,11 +46,10 @@ public sealed class WindowTitleTests : UiTest
     {
         var window = Open();
 
-        // Whatever the list opens on, which is the patch that was built — the
-        // first of them that is a patch, the blank canvas heading the list.
+        // Whatever the list opens on, which is the patch that was built.
         var opening = (PresetList(window).SelectedItem as PatchPreset)?.Name;
 
-        opening.ShouldBe(PresetOrder.Of(Presets.All).First(p => p.Kind is not PresetKind.Blank).Name);
+        opening.ShouldBe(PresetLibrary.Fallback);
         window.Title.ShouldBe($"{opening} — {Program}");
     }
 

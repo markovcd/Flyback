@@ -276,16 +276,13 @@ public class OutputSettingsTests : UiTest
         Settle(window);
     }
 
-    /// <summary>
-    /// A machine with no settings file names the first preset that is a patch —
-    /// which is not the first preset, the blank canvas heading the list.
-    /// </summary>
+    /// <summary>A machine with no settings file names Plasma.</summary>
     [AvaloniaFact]
-    public void The_startup_preset_starts_on_the_first_patch()
+    public void The_startup_preset_starts_on_Plasma()
     {
         var window = Open();
 
-        StartupName(OpenSettings(window)).ShouldBe(Patches[0]);
+        StartupName(OpenSettings(window)).ShouldBe(PresetLibrary.Fallback);
     }
 
     [AvaloniaFact]
