@@ -528,16 +528,22 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     }
 
     /// <summary>
-    /// Downloads a shared preset, keeps it, and opens it as a document named after it,
-    /// with no folder of its own, as a preset is. Opens the kept copy where the site does
-    /// not answer, and forgets it where the site answers it has taken it down. Asks about
-    /// unsaved work first.
+    /// Opens a shared preset as a document named after it, with no folder of its own, as a
+    /// preset is: the kept copy where it is the file the site lists, and otherwise downloaded
+    /// and kept. Opens the kept copy where the site does not answer, and forgets it where the
+    /// site answers it has taken it down. Asks about unsaved work first.
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
         if (RefuseWhileRecording()) return;
 
         if (site.Presets() is not { } at || !await unsaved.MayReplaceThePatchAsync()) return;
+
+        if (await Task.Run(() => KeptAsListed(at, shared)) is { } same)
+        {
+            await OpenSharedAsync(shared.Name, shared.FileName, same, new Reopen(Shared: shared.Id), $"Opened “{shared.Name}” from the preset site, as kept on this machine.");
+            return;
+        }
 
         report.Say($"Downloading “{shared.Name}” from the preset site…");
 
@@ -572,6 +578,22 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         await OpenSharedAsync(shared.Name, shared.FileName, bytes, new Reopen(Shared: shared.Id));
     }
 
+    /// <summary>
+    /// The kept copy's file where it is the size the site lists the preset at, which the
+    /// site changes only by replacing the file; null where there is none, or the site gives
+    /// no size to check it by. The kept copy takes what the site says of it now.
+    /// </summary>
+    private byte[]? KeptAsListed(PresetSite at, SitePreset shared)
+    {
+        if (shared.Size is not { } size || site.Kept.Find(at.Root, shared.Id) is not { } kept) return null;
+
+        if (site.Kept.File(kept) is not { } bytes || bytes.LongLength != size) return null;
+
+        site.Kept.Refresh(at.Root, shared);
+
+        return bytes;
+    }
+
     private static async Task<byte[]?> StillAsync(PresetSite at, SitePreset shared)
     {
         try
@@ -593,7 +615,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             return;
         }
 
-        await OpenSharedAsync(kept.Name, kept.Preset.FileName, bytes, new Reopen(Shared: kept.Preset.Id), kept: true);
+        await OpenSharedAsync(kept.Name, kept.Preset.FileName, bytes, new Reopen(Shared: kept.Preset.Id), $"Opened “{kept.Name}” as it was kept, the preset site not answering.");
     }
 
     /// <summary>
@@ -607,8 +629,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         await OpenSharedAsync(name, fileName, bytes, new Reopen());
     }
 
-    /// <param name="kept">Opened as it was kept, the site not answering.</param>
-    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, bool kept = false)
+    /// <param name="opened">What the status bar says once it is open, where it is not the usual.</param>
+    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, string? opened = null)
     {
         if (RefuseWhileRecording()) return;
 
@@ -657,9 +679,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();
 
-            report.Say(kept
-                ? $"Opened “{name}” as it was kept, the preset site not answering."
-                : $"Opened “{name}” from the preset site.");
+            report.Say(opened ?? $"Opened “{name}” from the preset site.");
         }
         catch (Exception ex)
         {

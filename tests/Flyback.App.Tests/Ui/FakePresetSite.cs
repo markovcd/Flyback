@@ -46,6 +46,9 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
     /// <summary>The ids taken off the site: listed nowhere, and not found by id or file.</summary>
     public HashSet<string> TakenDown { get; } = [];
 
+    /// <summary>Files the site has replaced under the same id, as it does in reseeding a default.</summary>
+    public Dictionary<string, byte[]> Replaced { get; } = [];
+
     /// <summary>What the site says it was downloaded, which the editor has no use for but keeps.</summary>
     public const long Downloads = 42;
 
@@ -75,7 +78,7 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
         var posted = shared.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}/file");
 
-        return Task.FromResult(posted?.File is { } bytes
+        return Task.FromResult(posted is not null && FileOf(posted) is { } bytes
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) }
             : new HttpResponseMessage(HttpStatusCode.NotFound));
     }
@@ -108,8 +111,10 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
         };
     }
 
+    private byte[]? FileOf(Posted p) => Replaced.TryGetValue(p.Id, out var replaced) ? replaced : p.File;
+
     /// <summary>One preset as the site lists it, which is the same shape asked for by id.</summary>
-    private static object Item(Posted p) => new
+    private object Item(Posted p) => new
     {
         id = p.Id,
         name = p.Name,
@@ -117,6 +122,7 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
         description = p.Description,
         tags = p.Tags ?? [],
         fileName = p.FileName.Length > 0 ? p.FileName : p.Name + ".fbk",
+        size = FileOf(p)?.LongLength ?? 0,
         downloads = Downloads,
         file = $"/api/v1/presets/{p.Id}/file",
         media = new { still = p.Still is null ? null : $"/media/{p.Id}.webp", state = p.Still is null ? "pending" : "ready" },

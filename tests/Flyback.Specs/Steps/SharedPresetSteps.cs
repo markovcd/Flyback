@@ -48,6 +48,9 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
     [Given("the gallery lists {string} under the preset site")]
     public void GivenListed(string name) => editor.SharedInGallery().ShouldContain(tile => tile.Name == name);
 
+    [Given("the preset site has since replaced the file of {string}")]
+    public void GivenReplaced(string name) => site.Replaced.Add(name);
+
     [When("{string} is taken off the preset site")]
     public void WhenTakenDown(string name) => site.TakenDown.Add(name);
 
@@ -64,6 +67,12 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
         editor.SharedInGallery().ShouldBeEmpty();
     }
+
+    [When("{string} is opened from the gallery again")]
+    public void WhenOpenedAgain(string name) => GivenOpened(name);
+
+    [Then("{string} was downloaded once")]
+    public void ThenDownloadedOnce(string name) => site.Downloads.GetValueOrDefault(name).ShouldBe(1);
 
     [When("the preset site stops answering")]
     public void WhenDown() => site.Down = true;
@@ -90,6 +99,12 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
         public bool Down { get; set; }
 
+        /// <summary>The names whose file the site has replaced since it was first shared.</summary>
+        public HashSet<string> Replaced { get; } = [];
+
+        /// <summary>How many times each preset's file has been sent.</summary>
+        public Dictionary<string, int> Downloads { get; } = [];
+
         /// <summary>The names taken off the site, which it answers it does not have.</summary>
         public HashSet<string> TakenDown { get; } = [];
 
@@ -108,23 +123,36 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
             if (Shared.FirstOrDefault(s => path == $"/api/v1/presets/{Id(s.Name)}/file") is { Name: not null } file && !TakenDown.Contains(file.Name))
             {
-                var patch = new Patch();
-                patch.EnsureOutput();
+                Downloads[file.Name] = Downloads.GetValueOrDefault(file.Name) + 1;
 
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(PatchIO.ToJson(patch)) });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(FileOf(file.Name)) });
             }
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
         }
 
+        private static readonly byte[] File = Encoding.UTF8.GetBytes(Empty());
+
+        private static string Empty()
+        {
+            var patch = new Patch();
+            patch.EnsureOutput();
+
+            return PatchIO.ToJson(patch);
+        }
+
+        /// <summary>The file as shared, or a byte longer where the site has replaced it.</summary>
+        private byte[] FileOf(string name) => Replaced.Contains(name) ? [.. File, (byte)' '] : File;
+
         private static string Id(string name) => name.ToLowerInvariant();
 
-        private static object Item((string Name, double Average, int Count) shared) => new
+        private object Item((string Name, double Average, int Count) shared) => new
         {
             id = Id(shared.Name),
             name = shared.Name,
             author = "Ann",
             fileName = shared.Name + ".fbk",
+            size = FileOf(shared.Name).LongLength,
             file = $"/api/v1/presets/{Id(shared.Name)}/file",
             rating = new { average = shared.Average, count = shared.Count },
         };

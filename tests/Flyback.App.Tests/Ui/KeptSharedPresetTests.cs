@@ -128,7 +128,7 @@ public sealed class KeptSharedPresetTests : UiTest
     }
 
     [AvaloniaFact]
-    public void A_kept_preset_whose_download_fails_opens_as_it_was_kept()
+    public void A_kept_preset_the_site_has_replaced_opens_as_it_was_kept_where_the_download_fails()
     {
         using var site = Nebula();
         var window = Window(site);
@@ -136,6 +136,7 @@ public sealed class KeptSharedPresetTests : UiTest
         ShowGallery(window);
         Pick(window, "Nebula");
 
+        site.Replaced["n1"] = [.. PatchFile(), (byte)' '];
         ShowGallery(window);
         site.Down = true;
         Pick(window, "Nebula");
@@ -193,13 +194,15 @@ public sealed class KeptSharedPresetTests : UiTest
     private KeptPreset? Kept(string id) => new KeptSharedPresets(folder).Find(FakePresetSite.Root, id);
 
     [AvaloniaFact]
-    public void Picking_a_preset_taken_off_the_site_since_it_was_listed_forgets_it_and_opens_nothing()
+    public void A_replaced_preset_taken_off_the_site_since_it_was_listed_is_forgotten_and_not_opened()
     {
         using var site = Nebula();
         var window = Window(site);
 
         ShowGallery(window);
         Pick(window, "Nebula");
+
+        site.Replaced["n1"] = [.. PatchFile(), (byte)' '];
         ShowGallery(window);
 
         site.TakenDown.Add("n1");
@@ -251,6 +254,74 @@ public sealed class KeptSharedPresetTests : UiTest
 
         window.Title.ShouldNotStartWith("Nebula");
         Kept("n1").ShouldBeNull();
+    }
+
+    private static int Asked(FakePresetSite site, string path) => site.Asked.Count(uri => uri.AbsolutePath == path);
+
+    [AvaloniaFact]
+    public void A_kept_preset_the_site_lists_unchanged_opens_without_downloading_it_again()
+    {
+        using var site = Nebula();
+        var window = Window(site);
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        var files = Asked(site, "/api/v1/presets/n1/file");
+        var stills = Asked(site, "/media/n1.webp");
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        Opened(window, "Nebula");
+        Reported(window).ShouldContain("Opened “Nebula” from the preset site, as kept on this machine.");
+        Asked(site, "/api/v1/presets/n1/file").ShouldBe(files);
+        Asked(site, "/media/n1.webp").ShouldBe(stills, "the tile shows the still kept with it");
+    }
+
+    [AvaloniaFact]
+    public void A_kept_preset_whose_file_the_site_replaced_is_downloaded_again_and_kept_anew()
+    {
+        using var site = Nebula();
+        var window = Window(site);
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        var replaced = PatchFile().Concat(" "u8.ToArray()).ToArray();
+        site.Replaced["n1"] = replaced;
+        var files = Asked(site, "/api/v1/presets/n1/file");
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        Asked(site, "/api/v1/presets/n1/file").ShouldBe(files + 1);
+        Reported(window).ShouldContain("Opened “Nebula” from the preset site.");
+        new KeptSharedPresets(folder).File(Kept("n1").ShouldNotBeNull()).ShouldBe(replaced);
+    }
+
+    [AvaloniaFact]
+    public void A_preset_a_restart_was_carrying_opens_as_kept_where_the_site_lists_it_unchanged()
+    {
+        using (var site = Nebula())
+        {
+            var first = Window(site);
+
+            ShowGallery(first);
+            Pick(first, "Nebula");
+        }
+
+        using var again = Nebula();
+        var window = NewMainWindow(
+            new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder, OpenShared = "n1" },
+            Site(again));
+
+        window.Show();
+        Pump(() => window.Title == $"Nebula — {Program}");
+        Settle(window);
+
+        Opened(window, "Nebula");
+        again.Asked.ShouldNotContain(uri => uri.AbsolutePath.EndsWith("/file", StringComparison.Ordinal));
     }
 
     private static IReadOnlyList<string> Reported(MainWindow window) => All<ReportLine>(window).Single().History;

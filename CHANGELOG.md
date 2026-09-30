@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- A shared preset opened once is kept with its still, its stars and everything the preset site said of it, so the gallery lists it and it opens while the site does not answer; one the site answers it has taken down is forgotten.
+- A shared preset opened once is kept with its still, its stars and everything the preset site said of it, so the gallery lists it and it opens while the site does not answer, and is not downloaded again while the site has it unchanged; one the site answers it has taken down is forgotten.
 - `flyback-cli shot` draws the editor's window with a patch open into a PNG, its picture at the second `--at` names, with no screen and no sound; `--crop` keeps only the canvas around the modules.
 - Flyback Theme is a showcase preset: Flyback's own song, three minutes of synthwave in A minor on a two-channel scope.
 - The Output's Volume is on the toolbar, beside the seek bar.

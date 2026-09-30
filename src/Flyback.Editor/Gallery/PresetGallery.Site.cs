@@ -139,7 +139,7 @@ internal sealed partial class PresetGallery
             foreach (var preset in found.Items)
             {
                 kept.Refresh(site.Root, preset);
-                tiles.Children.Add(SiteTile(preset, () => open(preset), token => site.StillAsync(preset, token), reportable: true, cancel));
+                tiles.Children.Add(SiteTile(preset, () => open(preset), token => StillAsync(preset, token), reportable: true, cancel));
             }
 
             status.Text = box.Text is { Length: > 0 } typed ? $"Nothing on the preset site matches “{typed.Trim()}”." : "Nothing is shared on the preset site yet.";
@@ -147,6 +147,11 @@ internal sealed partial class PresetGallery
             more.IsVisible = found.More;
             more.IsEnabled = true;
         }
+
+        /// <summary>A listed preset's still: the one kept with it where it was opened before, and otherwise the site's.</summary>
+        private async Task<byte[]?> StillAsync(SitePreset preset, CancellationToken cancel) =>
+            await Task.Run(() => kept.Find(site.Root, preset.Id) is { } one ? kept.Still(one) : null, cancel)
+            ?? await site.StillAsync(preset, cancel);
 
         /// <summary>The presets opened from the site before that match the filter box, as the site would match them.</summary>
         private void ShowKept(Action<IPreset> open, CancellationToken cancel)
