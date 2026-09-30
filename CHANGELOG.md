@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The web viewer plays the sound of a patch whose picture is a Scope or an Analyzer, and says it cannot draw the picture, rather than showing a flat line.
 - Every shipped preset carries tags, shown and searched on the presets page and in the gallery.
 - A phone's screen stays on while the web viewer plays full screen.
 - A shared preset needing a plugin Flyback in a browser lacks is offered only as a download, the presets page naming the plugin, and the web viewer refuses one rather than playing it in part.

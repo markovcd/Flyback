@@ -391,7 +391,7 @@ public static partial class WebExports
     [JSExport]
     public static void Release() => sound?.Release();
 
-    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
+    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders, and why a picture is left out.</summary>
     [JSExport]
     public static string Status()
     {
@@ -419,6 +419,7 @@ public static partial class WebExports
             status["height"] = picture.Resolution.Height;
             status["linking"] = picture.Linking;
             status["eightBitFeedback"] = picture.EightBitFeedback;
+            status["undrawn"] = picture.Undrawn;
             status["stateLength"] = picture.StateLength;
             status["keyboard"] = Typing.Described;
         }

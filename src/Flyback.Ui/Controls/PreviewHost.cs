@@ -140,8 +140,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </remarks>
     private void Reconsider(CompiledPatch program)
     {
-        var shaderCanDraw = program.Tables.Count == 0;
-        var target = shaderCanDraw && Wanted == PreviewBackend.Gpu && GpuAvailable
+        var target = program.ShaderCanDraw &&Wanted == PreviewBackend.Gpu && GpuAvailable
             ? PreviewBackend.Gpu
             : PreviewBackend.Cpu;
 

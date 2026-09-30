@@ -6,6 +6,7 @@
 //   node hear.mjs --preset "Played" --note 60:0.1:0.6 --note 64:0.3:0.6
 //   node hear.mjs --edit 0:before.fbk --edit 0.5:after.fbk
 //   node hear.mjs --presets
+//   node hear.mjs --preset "Duck" --picture
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
 // panel's knobs, and writes the samples as raw 32-bit floats, left and right interleaved,
@@ -15,6 +16,8 @@
 // file written as JSON as the web editor does, at the first such buffer at or after its
 // second; one at 0 stands for a preset or a file.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
+// With --picture it opens the picture's half instead and prints its status, drawing nothing,
+// which says why a picture a browser cannot draw is left out.
 
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -36,6 +39,7 @@ const { values, positionals } = parseArgs({
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
     presets: { type: 'boolean' },
+    picture: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
     note: { type: 'string', multiple: true, default: [] },
     edit: { type: 'string', multiple: true, default: [] },
@@ -88,15 +92,22 @@ const file = positionals[0];
 const opening = edits.length > 0 && edits[0].seconds <= 0;
 if (opening) edit();
 
+const part = values.picture ? 'picture' : 'sound';
+
 const failure = opening ? null : packed !== null
-  ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, 'sound') : `No preset is called '${values.preset}'.`
+  ? packed.length > 0 ? web.OpenFile(`${values.preset}.fbkb`, packed, width, height, part) : `No preset is called '${values.preset}'.`
   : file !== undefined
-    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, 'sound')
+    ? web.OpenFile(file, new Uint8Array(await readFile(file)), width, height, part)
     : 'Name a patch file or a --preset.';
 
 if (failure) {
   console.error(`hear: ${failure}`);
   process.exit(1);
+}
+
+if (values.picture) {
+  console.log(web.Status());
+  process.exit(0);
 }
 
 const knobs = JSON.parse(web.Knobs());

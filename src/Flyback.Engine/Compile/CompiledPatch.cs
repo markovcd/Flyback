@@ -109,6 +109,9 @@ public sealed class CompiledPatch
     /// </summary>
     public IReadOnlyList<LoadedSample> Tables => tableArray;
 
+    /// <summary>Whether a shader can draw this program: it has no clip to read a table from.</summary>
+    public bool ShaderCanDraw => tableArray.Length == 0;
+
     /// <summary>
     /// The pictures <see cref="OpCode.SamplePicture"/> reads, indexed by its K.
     /// </summary>

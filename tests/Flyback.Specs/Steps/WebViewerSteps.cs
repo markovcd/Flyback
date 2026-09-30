@@ -211,6 +211,23 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         refused.Value.Said.ShouldContain(plugin);
     }
 
+    [When("its picture is opened in the web viewer")]
+    public void WhenThePictureIsOpened() =>
+        said = JsonNode.Parse(Hear("--preset", session.Presets.Single().Name, "--size", $"{Width}x{Height}", "--picture"));
+
+    [Then("the web viewer leaves the picture out, saying it cannot draw a Scope")]
+    public void ThenThePictureIsLeftOut()
+    {
+        var why = (string?)said!["undrawn"];
+
+        why.ShouldNotBeNull("the picture is drawn, a Scope reading as a flat line");
+        why.ShouldContain("cannot draw a Scope");
+        why.ShouldContain("the sound plays alone");
+    }
+
+    [Then("the web viewer draws the picture")]
+    public void ThenThePictureIsDrawn() => ((string?)said!["undrawn"]).ShouldBeNull();
+
     [Then("the web viewer says what the preset is for")]
     public void ThenItIsDescribed()
     {

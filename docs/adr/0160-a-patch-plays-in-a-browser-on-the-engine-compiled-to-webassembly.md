@@ -51,8 +51,10 @@ an evaluation, a sixth of the interpreter's.
 straight**, which keeps a quarter of a second queued. The page's runtime compiles
 and draws the picture alone. Nothing is shared: the worker posts the samples down
 a channel to the worklet, and the Meters' readings and the computer keyboard's
-voices to the page, which is all the picture knows of the sound (the shader reads a
-Scope's table as silence). A panel knob is turned in both runtimes. A key is laid out
+voices to the page, which is all the picture knows of the sound. A picture that reads a
+table, a Scope's or an Analyzer's, is left out with the reason said and the sound plays
+alone: the shader has no table to read, and the processor that draws it on the desktop
+is too slow here. A panel knob is turned in both runtimes. A key is laid out
 by the page and played by the worker, through the editor's own `ComputerKeyboard` and
 `VoicePool`, and a patch played on it keeps a tenth of a second queued, not a quarter. The picture follows the samples the worklet has
 played, not the ones rendered, and shows a turned knob once the sound has caught up.

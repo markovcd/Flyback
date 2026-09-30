@@ -36,7 +36,7 @@ const ui = {
   file: $('file'), size: $('size'), back: $('back'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), about: $('about'),
-  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
+  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), undrawn: $('undrawn'), cover: $('cover'), status: $('status'),
 };
 
 /** The sound's thread, what it last said of the sound, and why it stopped where it did. */
@@ -488,6 +488,11 @@ async function open(opening, label, at = 0, keepKnobs = false) {
     if (!ui.seek.hidden) ui.seek.max = end();
   }
 
+  // A picture the shader cannot draw is left out, and the sound plays on its own.
+  ui.undrawn.textContent = info?.undrawn ?? '';
+  ui.undrawn.hidden = !info?.undrawn;
+  ui.canvas.style.visibility = info?.undrawn ? 'hidden' : '';
+
   ui.about.textContent = ui.about.title = info?.description ?? '';
   ui.about.hidden = !info?.description;
   buildPanel(error === null, keepKnobs);
@@ -497,6 +502,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
   seek(info === null ? 0 : Math.min(at, end()));
   ui.cover.hidden = error === null && (was || at > 0);
   ui.cover.textContent = error ?? '▶  Click to play';
+  if (error === null && info?.undrawn) ui.cover.append(Object.assign(document.createElement('small'), { textContent: info.undrawn }));
 
   if (was && error === null) await play();
   paint();

@@ -11,6 +11,7 @@ Feature: The web viewer
       | preset           |
       | Sidebands        |
       | Beat you can see |
+      | Duck             |
 
   Scenario: A panel knob turns the sound in the browser as it does on the desktop
     Given the shipped preset "Vigil"
@@ -32,6 +33,16 @@ Feature: The web viewer
   Scenario: A patch needing a plugin the web viewer lacks is refused, naming the plugin
     When a patch needing the "Lantern" plugin is opened in the web viewer
     Then the web viewer refuses it, naming "Lantern"
+
+  Scenario: A picture only the processor can draw is left out in the web viewer, saying why
+    Given the shipped preset "Duck"
+    When its picture is opened in the web viewer
+    Then the web viewer leaves the picture out, saying it cannot draw a Scope
+
+  Scenario: A picture the shader draws is drawn in the web viewer
+    Given the shipped preset "Beat you can see"
+    When its picture is opened in the web viewer
+    Then the web viewer draws the picture
 
   Scenario: The web viewer says what a preset is for
     Given the shipped preset "Sidebands"
