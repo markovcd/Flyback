@@ -194,9 +194,9 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// For a patch just opened: silent, with the clock stopped, until the cue goes,
     /// which is once the sound runs compiled and the picture is ready too.
     /// </param>
-    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null)
+    public void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null)
     {
-        var program = patch.CompileForAudio(samples: samples, played: true).Program;
+        var program = sound ?? patch.CompileForAudio(samples: samples, played: true).Program;
         if (start is not null) program.WaitFor(start);
 
         // Interpreted from the first buffer unless waiting; the compiler attaches IL to

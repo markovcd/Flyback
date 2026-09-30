@@ -52,7 +52,8 @@ internal interface IAudioEngine
     void SeekTo(double seconds);
 
     /// <summary>Swaps in <paramref name="patch"/>'s sound, silent until <paramref name="start"/> goes.</summary>
-    void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null);
+    /// <param name="sound">The patch's sound compiled with <c>played: true</c> already, or null to compile it here.</param>
+    void Update(Patch patch, ISampleLibrary? samples = null, Cue? start = null, CompiledPatch? sound = null);
 
     /// <summary>Hands the picture what has been played: every Scope in <paramref name="drawn"/> and every Meter in <paramref name="watching"/>.</summary>
     void Listen(CompiledPatch drawn, LiveValues watching);

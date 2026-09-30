@@ -262,7 +262,10 @@ internal sealed class Playback
         // Not a picture that is never drawn: a hidden preview would hold the cue until it gave up.
         if (start is not null && HasPicture) result.Program.WaitFor(start);
 
-        var relaid = transport.Load(editor.History.Patch, result.Program, samples, start);
+        // Once, for the engine and for what is said of it: playing only changes whether a knob is read live.
+        var heard = editor.History.Patch.CompileForAudio(samples: samples, played: true);
+
+        var relaid = transport.Load(editor.History.Patch, result.Program, samples, start, heard.Program);
 
         reactions.Raise(new PatchCompiled());
 
@@ -271,7 +274,7 @@ internal sealed class Playback
         // and stops at the first line when there is no screen at all — so a
         // patch built for sound had nothing said about it, however wrong it was.
         var said = result.Issues
-            .Concat(editor.History.Patch.CompileForAudio(samples: samples).Issues)
+            .Concat(heard.Issues)
             .Select(i => i.Message)
             .Distinct();
 

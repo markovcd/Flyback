@@ -63,7 +63,8 @@ internal sealed class Transport
     /// whatever is held playing in the new blocks.
     /// </summary>
     /// <returns>Whether the keyboard was laid out anew for the patch's scale.</returns>
-    public bool Load(Patch patch, CompiledPatch? picture, ISampleLibrary? samples, Cue? start)
+    /// <param name="sound">The patch's sound compiled with <c>played: true</c> already, or null for the engine to compile it.</param>
+    public bool Load(Patch patch, CompiledPatch? picture, ISampleLibrary? samples, Cue? start, CompiledPatch? sound = null)
     {
         if (preview is not null && picture is not null)
         {
@@ -71,7 +72,7 @@ internal sealed class Transport
             Submit();
         }
 
-        audio.Update(patch, samples, start);
+        audio.Update(patch, samples, start, sound);
         start?.Give();
 
         // A note held through an edit is written into the new blocks before the next
