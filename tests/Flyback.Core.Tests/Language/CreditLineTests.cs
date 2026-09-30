@@ -210,4 +210,25 @@ public class CreditLineTests
         Patch.TidiedTags(["", " "]).ShouldBeNull();
         Patch.TidiedTags(null).ShouldBeNull();
     }
+
+    [Fact]
+    public void A_preset_builds_carrying_its_tags()
+    {
+        var preset = new PatchPreset("Tagged", _ => new Patch()) { Tags = ["drone", "Slow Build"] };
+
+        preset.Build(NodeCatalog.BuiltIn).Tags.ShouldBe(["drone", "slow-build"]);
+    }
+
+    [Fact]
+    public void A_patch_that_tags_itself_keeps_its_own()
+    {
+        var preset = new PatchPreset("Own", _ =>
+        {
+            var patch = new Patch();
+            patch.Tag(["mine"]);
+            return patch;
+        }) { Tags = ["the-presets"] };
+
+        preset.Build(NodeCatalog.BuiltIn).Tags.ShouldBe(["mine"]);
+    }
 }

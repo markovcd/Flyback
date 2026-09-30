@@ -47,14 +47,20 @@ public sealed class FractalsPlugin : IFlybackPlugin
             new PatchPreset(
                 DivePreset.Name,
                 DivePreset.Build,
-                "A dive into the Mandelbrot set and back out, its colors cycling as it goes."),
+                "A dive into the Mandelbrot set and back out, its colors cycling as it goes.")
+            {
+                Tags = ["fractal", "color"],
+            },
             new PatchPreset(
                 JuliaWalkPreset.Name,
                 JuliaWalkPreset.Build,
                 "One c going slowly round a circle: its Julia set on the screen, and the orbit of one "
                 + "of its pixels drawn over it and heard, a tone where the orbit settles and a hiss "
                 + "where it never does.",
-                PresetKind.Interplay),
+                PresetKind.Interplay)
+            {
+                Tags = ["fractal", "scan", "synthesis"],
+            },
         ]);
     }
 }

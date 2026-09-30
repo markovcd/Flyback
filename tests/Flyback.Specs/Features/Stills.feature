@@ -7,3 +7,4 @@ Feature: A build draws every preset's still once, for every program to show
     When flyback-cli draws the stills
     Then the command succeeds
     And the index lists every preset in the editor's order, under its heading, each picture with its still
+    And the index gives every preset the tags the presets page filters by

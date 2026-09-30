@@ -21,7 +21,10 @@ public sealed record PatchPreset(
     /// </summary>
     public Func<IReadOnlyDictionary<string, byte[]>>? Files { get; init; }
 
-    /// <summary>Builds the patch, carrying <see cref="Description"/> unless it has one of its own.</summary>
+    /// <summary>Words to find the preset by, written into the patch it builds where that patch has none.</summary>
+    public IReadOnlyList<string>? Tags { get; init; }
+
+    /// <summary>Builds the patch, carrying <see cref="Description"/> and <see cref="Tags"/> unless it has its own.</summary>
     public Func<ModuleCatalog, Patch> Build
     {
         get => modules =>
@@ -29,6 +32,7 @@ public sealed record PatchPreset(
             var patch = field(modules);
 
             if (patch.Description is null) patch.Describe(Description);
+            if (patch.Tags is null) patch.Tag(Tags);
             return patch;
         };
         init;

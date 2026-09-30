@@ -32,77 +32,88 @@ internal static partial class Presets
 
         new("Empty", Empty,
             "The Output, with everything still to plug into it.",
-            PresetKind.Blank),
+            PresetKind.Blank) { Tags = ["starter"] },
         new("Picture in", PictureIn,
             "A photograph put through the same geometry a generated field goes through, once you choose one.",
-            PresetKind.Blank),
+            PresetKind.Blank) { Tags = ["starter", "photo"] },
         new("Clip", Clip,
             "A sound file played and retriggered every two seconds, once you choose one.",
-            PresetKind.Blank),
+            PresetKind.Blank) { Tags = ["starter", "sound-file"] },
 
         // --- one idea, one sink ------------------------------------------------
 
         new("Plasma", Plasma,
-            "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths."),
+            "Three drifting sine fields summed and read through a cosine palette — the hello world of video synths.")
+            { Tags = ["basics", "pattern", "color"] },
         new("Kaleidoscope", Kaleidoscope,
-            "Rotating wedges filled with clouds that boil over time."),
+            "Rotating wedges filled with clouds that boil over time.")
+            { Tags = ["pattern", "symmetry", "color"] },
         new("Grid", Grid,
-            "Tile, mirror and polar in a row, so what each one does to the plane is separable."),
+            "Tile, mirror and polar in a row, so what each one does to the plane is separable.")
+            { Tags = ["basics", "pattern", "symmetry"] },
         new("Three channels", ThreeChannels,
-            "One field read three times, a little apart: a color is three signals, and here they disagree."),
+            "One field read three times, a little apart: a color is three signals, and here they disagree.")
+            { Tags = ["basics", "color"] },
         new("Feedback tunnel", FeedbackTunnel,
-            "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top."),
+            "Each frame re-read slightly rotated, scaled and dimmed, with fresh rings on top.")
+            { Tags = ["feedback", "pattern"] },
         new("Trails", Trails,
-            "A dot on a looping path and a Trails keeping where it has been, so a point draws a ribbon."),
+            "A dot on a looping path and a Trails keeping where it has been, so a point draws a ribbon.")
+            { Tags = ["basics", "feedback", "shapes"] },
         new("Loop", Loop,
-            "A wire running backwards: a lowpass built from an add and a multiply, with its one number swept."),
+            "A wire running backwards: a lowpass built from an add and a multiply, with its one number swept.")
+            { Tags = ["basics", "feedback", "filter"] },
         new("Two channels", TwoChannels,
-            "Stereo from one voice: left and right fed differently rather than panned."),
+            "Stereo from one voice: left and right fed differently rather than panned.")
+            { Tags = ["basics", "stereo"] },
         new("Staircase", Staircase,
-            "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune."),
+            "A slope caught six times a second by a Sample & Hold, which makes steps, and steps are a tune.")
+            { Tags = ["basics", "melody", "sequencer"] },
         new("Heads or tails", HeadsOrTails,
-            "One riff and a coin for every note: heads plays it on the left, tails an octave down on the right, and the odds drift."),
+            "One riff and a coin for every note: heads plays it on the left, tails an octave down on the right, and the odds drift.")
+            { Tags = ["melody", "random", "stereo"] },
         new("Nebula", Nebula,
-            "Everything the video side can do, folded, warped and trailing its own frames."),
+            "Everything the video side can do, folded, warped and trailing its own frames.")
+            { Tags = ["feedback", "pattern", "color"] },
 
         // --- the two sinks meeting ---------------------------------------------
 
         new("Drone", Drone,
             "One slow oscillator setting both the hue of the image and the tremolo on the tone.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["basics", "drone", "color"] },
         new("Sequence", Sequence,
             "One sequencer heard and seen at once: the steps are the tune and the color.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["basics", "sequencer", "melody", "color"] },
         new("Four voices", FourVoices,
             "Four faders that are one signal each, opening a voice and a band together.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["chords", "synthesis", "visualizer"] },
         new("Heard", Heard,
             "A drum the picture listens to rather than being told about, through a Meter.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["drums", "visualizer"] },
         new("Duck", Duck,
             "A pad that gets out of the way each time the kick hits, on a Scope drawing how far.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["drums", "mixing", "scope"] },
         new("Waveform", Waveform,
             "Sine, triangle, square and saw faded one into the next, on a Scope drawing the shape being heard.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["basics", "synthesis", "scope"] },
         new("Sidebands", Sidebands,
             "One sine bending another's phase at audio rate, on an Analyzer showing the partials that grows.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["synthesis", "fm", "spectrum"] },
         new("Ahead and behind", AheadAndBehind,
             "A Probe and a Scope on one signal, which is the only way to see how they differ.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["basics", "scope", "scan"] },
         new("In key", InKey,
             "One cloud field snapped to a pentatonic: heard as a melody, seen as the terraces it was cut into.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["melody", "scales", "generative"] },
         new("Ring scan", RingScan,
             "A loop swept round a field at audio rate, so the picture is the waveform.",
-            PresetKind.Interplay),
+            PresetKind.Interplay) { Tags = ["scan", "synthesis", "pattern"] },
 
         // --- what one patch can be ---------------------------------------------
 
         new("Whole band", WholeBand,
             "A whole song from the engine's own modules: seven parts in a room, twelve phrases, one picture.",
-            PresetKind.Showcase),
+            PresetKind.Showcase) { Tags = ["song", "drums", "bass", "chords"] },
     ];
 
     /// <summary>

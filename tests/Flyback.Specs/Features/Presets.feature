@@ -22,3 +22,8 @@ Feature: Every shipped preset works
   Scenario: No two presets share a name, the plugins' included
     Given every preset the shipped plugins add as well
     Then no two of them have the same name
+
+  # Tags are what the presets page and the gallery filter by.
+  Scenario: Every preset, the plugins' included, has tags to be found by
+    Given every preset the shipped plugins add as well
+    Then each one opens tagged

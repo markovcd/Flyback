@@ -39,6 +39,17 @@ public sealed class PresetSteps(Session session)
         twice.ShouldBeEmpty(string.Join(", ", twice));
     }
 
+    [Then("each one opens tagged")]
+    public void ThenTagged()
+    {
+        var untagged = session.Presets
+            .Where(preset => preset.Build(modules).Tags is not { Count: > 0 })
+            .Select(preset => preset.Name)
+            .ToList();
+
+        untagged.ShouldBeEmpty(string.Join(", ", untagged));
+    }
+
     [Given("the shipped preset {string}")]
     public void GivenAPreset(string name)
     {

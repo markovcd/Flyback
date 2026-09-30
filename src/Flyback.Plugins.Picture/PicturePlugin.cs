@@ -83,38 +83,62 @@ public sealed class PicturePlugin : IFlybackPlugin
             new PatchPreset(
                 FourFormsPreset.Name,
                 FourFormsPreset.Build,
-                "Four forms on a turning ring round a slowly filling arc, with the seam between them opening and closing."),
+                "Four forms on a turning ring round a slowly filling arc, with the seam between them opening and closing.")
+            {
+                Tags = ["shapes", "color"],
+            },
             new PatchPreset(
                 ShapesPreset.Name,
                 ShapesPreset.Build,
                 "A star's points heard as bumps in a waveform, by sweeping a loop through its field.",
-                PresetKind.Interplay),
+                PresetKind.Interplay)
+            {
+                Tags = ["shapes", "scan", "synthesis"],
+            },
             new PatchPreset(
                 CaptionsPreset.Name,
                 CaptionsPreset.Build,
-                "Lines of text, chosen by the clock and typed out as each one arrives."),
+                "Lines of text, chosen by the clock and typed out as each one arrives.")
+            {
+                Tags = ["text"],
+            },
             new PatchPreset(
                 SpectrumPreset.Name,
                 SpectrumPreset.Build,
-                "Two crossed sine fields colored out of a palette, then graded."),
+                "Two crossed sine fields colored out of a palette, then graded.")
+            {
+                Tags = ["pattern", "color"],
+            },
             new PatchPreset(
                 MarblePreset.Name,
                 MarblePreset.Build,
-                "A fractal bent by a fractal, which is stone."),
+                "A fractal bent by a fractal, which is stone.")
+            {
+                Tags = ["fractal", "pattern"],
+            },
             new PatchPreset(
                 StainedGlassPreset.Name,
                 StainedGlassPreset.Build,
-                "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter."),
+                "Cells as panes: the cell picks a color, the edge is the lead, and jitter slides grid to scatter.")
+            {
+                Tags = ["pattern", "color"],
+            },
             new PatchPreset(
                 LayersPreset.Name,
                 LayersPreset.Build,
-                "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top."),
+                "A sunset composed back to front: a sky, a sun screened over it, a sea multiplied in, a line inked on top.")
+            {
+                Tags = ["layers", "shapes", "color"],
+            },
             new PatchPreset(
                 DodgePreset.Name,
                 DodgePreset.Build,
                 "A game to play on the keys: walls fall down seven lanes, Z to M, and the key under "
                 + "each gap is where you have to be when it arrives.",
-                PresetKind.Showcase),
+                PresetKind.Showcase)
+            {
+                Tags = ["game", "playable", "shapes"],
+            },
         ]);
     }
 }

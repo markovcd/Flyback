@@ -128,6 +128,16 @@ public sealed class CliSteps(PatchContext context) : IDisposable
             File.Exists(Path(System.IO.Path.Combine("stills", entry.File.ShouldNotBeNull()))).ShouldBeTrue(entry.Name);
     }
 
+    [Then("the index gives every preset the tags the presets page filters by")]
+    public void ThenEveryPresetIsTaggedInTheIndex()
+    {
+        var index = StillIndex.Read(File.ReadAllText(Path(System.IO.Path.Combine("stills", StillIndex.FileName)))).ShouldNotBeNull();
+        var tagged = PluginCatalog.Empty.Presets.ToDictionary(preset => preset.Name, preset => preset.Tags);
+
+        foreach (var entry in index.Presets)
+            entry.Tags.ShouldNotBeNull(entry.Name).ShouldBe(tagged[entry.Name].ShouldNotBeNull(entry.Name), entry.Name);
+    }
+
     [When("flyback-cli describes the package")]
     public void WhenPackageDescribed() => Run("plugin", "describe", Path(PackageName));
 

@@ -51,7 +51,10 @@ public sealed class FiguresPlugin : IFlybackPlugin
                 VigilPreset.Build,
                 "Dark ambient in D phrygian dominant: a drone of four voices that is the fog heard "
                 + "through Overtones, a harmonograph drawing the chords as they swell, and a far bell, rarely.",
-                PresetKind.Interplay),
+                PresetKind.Interplay)
+            {
+                Tags = ["dark-ambient", "ambient", "drone", "shapes", "knobs"],
+            },
         ]);
     }
 }
