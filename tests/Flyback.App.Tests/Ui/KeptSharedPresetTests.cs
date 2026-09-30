@@ -66,12 +66,25 @@ public sealed class KeptSharedPresetTests : UiTest
     }
 
     /// <summary>Picks the tile and waits for the report line to say it opened, which it says even of the preset already open.</summary>
+    /// <remarks>Heard as it is said: the report line's log keeps only its last few lines, so a count of them is no mark to wait past.</remarks>
     private static void Pick(MainWindow window, string name)
     {
-        var said = Reported(window).Count;
+        var line = All<ReportLine>(window).Single();
+        var opened = false;
+        EventHandler<string> heard = (_, message) => opened |= message.StartsWith($"Opened “{name}”", StringComparison.Ordinal);
 
-        Press(SiteTiles(window).Single(b => ((SitePreset)b.Tag!).Name == name));
-        Pump(() => Reported(window).Skip(said).Any(line => line.StartsWith($"Opened “{name}”", StringComparison.Ordinal)));
+        line.Said += heard;
+
+        try
+        {
+            Press(SiteTiles(window).Single(b => ((SitePreset)b.Tag!).Name == name));
+            Pump(() => opened);
+        }
+        finally
+        {
+            line.Said -= heard;
+        }
+
         Settle(window);
     }
 
