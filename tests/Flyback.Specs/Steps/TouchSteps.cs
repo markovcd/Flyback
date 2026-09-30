@@ -59,6 +59,14 @@ public sealed class TouchSteps(PatchContext context, Editor editor)
         editor.HoldFinger(heldAt);
     }
 
+    [When("bare canvas is right-clicked")]
+    public void WhenRightClicked()
+    {
+        var clock = context.Node("clock");
+
+        editor.RightClick(new Point(clock.X + 400, clock.Y + 250));
+    }
+
     [When("a finger draws a wire from the clock to just short of the sine's first input")]
     public void WhenAFingerDrawsAWire()
     {
@@ -75,6 +83,12 @@ public sealed class TouchSteps(PatchContext context, Editor editor)
 
         editor.Touch((from, to));
     }
+
+    [Then("the list's filter box waits to be tapped")]
+    public void ThenTheFilterWaits() => editor.ListTakesKeys.ShouldBeFalse();
+
+    [Then("the list's filter box takes what is typed")]
+    public void ThenTheFilterTakesKeys() => editor.ListTakesKeys.ShouldBeTrue();
 
     [Then("the canvas is drawn larger")]
     public void ThenLarger() => editor.Read(canvas => canvas.View.Zoom).ShouldBeGreaterThan(zoomWas);

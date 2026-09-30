@@ -208,6 +208,12 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     private static Point OnWindow(MainWindow open, NodeEditor canvas, Point graph) =>
         canvas.TranslatePoint(canvas.GraphToScreen.Transform(graph), open)!.Value;
 
+    /// <summary>Whether the open list of modules has its filter box holding the keyboard.</summary>
+    public bool ListTakesKeys => ReadWindow(open =>
+        (open.GetVisualDescendants().OfType<ModulePalette>().FirstOrDefault()
+            ?? throw new InvalidOperationException("no list of modules is open"))
+        .GetVisualDescendants().OfType<TextBox>().First().IsFocused);
+
     /// <summary>Picks a module by name from the list that is open.</summary>
     public void PickFromList(string name) =>
         DoWindow((open, _) =>

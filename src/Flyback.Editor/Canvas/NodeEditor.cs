@@ -77,7 +77,7 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<Mod
 
     public Task On(ModuleAsked notice)
     {
-        if (Gestures.Editable) Gestures.RequestMenuInMiddle();
+        if (Gestures.Editable) Gestures.RequestMenuInMiddle(notice.ByFinger);
         return Task.CompletedTask;
     }
 

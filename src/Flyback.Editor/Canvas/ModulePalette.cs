@@ -115,6 +115,12 @@ public sealed class ModulePalette : UserControl
     /// </summary>
     private int highlighted = -1;
 
+    /// <summary>
+    /// Whether the filter box holds the keyboard. Not when opened by a finger until
+    /// the box is tapped, since focusing it throws up the on-screen keyboard.
+    /// </summary>
+    private bool typing;
+
     /// <param name="catalog">Every module that may be added, and which plugin each came from.</param>
     /// <param name="chosen">Called with the type id of whatever is picked.</param>
     /// <param name="groups">The groups somebody kept, which are listed above the catalog.</param>
@@ -144,6 +150,12 @@ public sealed class ModulePalette : UserControl
         // on its background, because a solid list of text over a translucent
         // panel reads as a mistake rather than as a decision.
         Opacity = Translucency;
+
+        filter.GotFocus += (_, _) =>
+        {
+            typing = true;
+            Focusable = false;
+        };
 
         filter.PropertyChanged += (_, e) =>
         {
@@ -293,7 +305,8 @@ public sealed class ModulePalette : UserControl
     /// opening it and typing narrows it — which is the fast way to reach a
     /// module and the only reason the filter is the first thing in it.
     /// </summary>
-    public void Reset()
+    /// <param name="typing">False on a touch screen, where the filter box waits to be tapped.</param>
+    public void Reset(bool typing = true)
     {
         // Read off the disk again on the way open, which is the only moment
         // anybody could notice it happening. So a group kept a minute ago is on
@@ -310,8 +323,17 @@ public sealed class ModulePalette : UserControl
         // filtered, or with a row still asking whether to remove itself.
         Fill();
 
-        filter.Focus();
-        filter.SelectAll();
+        this.typing = typing;
+        Focusable = !typing;
+
+        // Held by the list itself otherwise, since the flyout hands its first
+        // focusable control the focus on the way open.
+        if (typing)
+        {
+            filter.Focus();
+            filter.SelectAll();
+        }
+        else Focus();
 
         Highlight(0);
     }
@@ -331,7 +353,9 @@ public sealed class ModulePalette : UserControl
         removing = entry;
 
         Fill();
-        filter.Focus();
+
+        if (typing) filter.Focus();
+        else Focus();
     }
 
     /// <summary>

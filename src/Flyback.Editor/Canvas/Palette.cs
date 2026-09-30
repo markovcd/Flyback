@@ -223,6 +223,6 @@ internal sealed class Palette
 
         // After showing, because a control that is not yet in a visual tree
         // cannot take the keyboard.
-        list.Value.Reset();
+        list.Value.Reset(typing: !editor.Gestures.ByFinger);
     }
 }

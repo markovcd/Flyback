@@ -25,6 +25,16 @@ Feature: A hand on a touch screen patches without a mouse or keys
     And "Sine" is picked from the list that opens
     Then a sine stands where the finger was held
 
+  Scenario: The list a finger opens leaves the on-screen keyboard down until its filter is tapped
+    Given the patch is open in the editor
+    When a finger is held on bare canvas
+    Then the list's filter box waits to be tapped
+
+  Scenario: The list a mouse opens is ready to type into
+    Given the patch is open in the editor
+    When bare canvas is right-clicked
+    Then the list's filter box takes what is typed
+
   Scenario: A wire drawn by a finger lands on the socket it ends beside
     Given a sine beside the clock
     And the patch is open in the editor

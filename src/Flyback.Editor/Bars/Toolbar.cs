@@ -135,7 +135,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Save.Click += (_, _) => reactions.Raise(new SaveAsked());
         Undo.Click += (_, _) => reactions.Raise(new UndoAsked());
         Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
-        Add.Click += (_, _) => reactions.Raise(new ModuleAsked());
         Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
@@ -176,6 +175,21 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         {
             reactions.Raise(new TidyAsked(OnlySelected: (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0));
             modifiers = KeyModifiers.None;
+        };
+
+        // Likewise whether a finger tapped it, which leaves the palette's filter box
+        // to be tapped rather than throwing up the on-screen keyboard.
+        var byFinger = false;
+
+        Add.AddHandler(
+            InputElement.PointerPressedEvent,
+            (_, e) => byFinger = e.Pointer.Type == PointerType.Touch,
+            RoutingStrategies.Tunnel);
+
+        Add.Click += (_, _) =>
+        {
+            reactions.Raise(new ModuleAsked(byFinger));
+            byFinger = false;
         };
 
         // What the record tip actually says is decided per patch by

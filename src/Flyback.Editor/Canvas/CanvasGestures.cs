@@ -231,11 +231,25 @@ internal sealed class CanvasGestures
 
     private string WireGesture => $"wire {wireGesture}";
 
-    /// <summary>Opens the palette where the pointer last was, or in the middle of the view.</summary>
-    public void RequestMenu() => MenuRequested?.Invoke(this, LastPointer ?? view.Middle);
+    /// <summary>
+    /// Whether the palette is being asked for by a finger, whose only keyboard is the
+    /// on-screen one, so the palette's filter box waits to be tapped.
+    /// </summary>
+    public bool ByFinger { get; private set; }
+
+    /// <summary>Opens the palette where the pointer last was, or in the middle of the view, from a key.</summary>
+    public void RequestMenu()
+    {
+        ByFinger = false;
+        MenuRequested?.Invoke(this, LastPointer ?? view.Middle);
+    }
 
     /// <summary>Opens the palette in the middle of the view, for a button with no point of its own.</summary>
-    public void RequestMenuInMiddle() => MenuRequested?.Invoke(this, view.Middle);
+    public void RequestMenuInMiddle(bool byFinger = false)
+    {
+        ByFinger = byFinger;
+        MenuRequested?.Invoke(this, view.Middle);
+    }
 
     public void Pressed(Control canvas, PointerPressedEventArgs e)
     {
@@ -258,6 +272,8 @@ internal sealed class CanvasGestures
     {
         var graph = view.ToGraph(screen);
         var scene = selection.Scene;
+
+        if (pointer is not null) ByFinger = pointer.Type == PointerType.Touch;
 
         // Panning is the middle button and nothing else (ADR-0046). It pans
         // mid-gesture too: whatever was under way is put on hold and picks back up
