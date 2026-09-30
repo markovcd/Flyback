@@ -47,6 +47,15 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command succeeds
     And the bundle holds the preset and every file it carries
 
+  Scenario: A shipped preset is saved as a patch file that opens as the preset
+    When flyback-cli saves the preset "Acid" as "acid.fbk"
+    Then the command succeeds
+    And "acid.fbk" opens as the preset "Acid"
+
+  Scenario: A preset that plays recordings it carries is saved as a bundle to keep them
+    When flyback-cli saves the preset "Mycelium" as "mycelium.fbk"
+    Then the command says to save it as a bundle to take its recordings along
+
   Scenario: A preset nobody shipped is refused with the names of the ones there are
     When flyback-cli prints the preset "Plasm"
     Then the command fails, listing the presets there are

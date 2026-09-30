@@ -127,6 +127,26 @@ public sealed class CliSteps(PatchContext context) : IDisposable
         RunShipped("pack", "--preset", name, "--out", Path(Bundle));
     }
 
+    [When("flyback-cli saves the preset {string} as {string}")]
+    public void WhenPresetSaved(string name, string into) => RunShipped("save", "--preset", name, "--out", Path(into));
+
+    [Then("{string} opens as the preset {string}")]
+    public void ThenOpensAsPreset(string saved, string name)
+    {
+        var preset = Shipped.Value.Presets.Single(p => p.Name == name).Build(Shipped.Value.Modules);
+        var opened = PatchFile.Open(new FileInfo(Path(saved)), null).Patch.ShouldNotBeNull().Patch;
+
+        opened.CompileForAudio(Shipped.Value.Modules).Program.Ops
+            .ShouldBe(preset.CompileForAudio(Shipped.Value.Modules).Program.Ops);
+    }
+
+    [Then("the command says to save it as a bundle to take its recordings along")]
+    public void ThenSaysBundle()
+    {
+        code.ShouldBe(Exit.Problems, said);
+        said.ShouldContain($"save it as {PatchBundle.Extension}");
+    }
+
     [When("flyback-cli prints the preset {string}")]
     public void WhenPresetPrinted(string name) => Run("print", "--preset", name);
 
