@@ -49,6 +49,7 @@ runtime.setModuleImports('page', {
   attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
   stillsUrl: () => new URL('../stills/', location.href).href,
+  siteUrl: () => new URL('../', location.href).href,
   openViewerTab: () => {
     viewerTab = window.open('', VIEWER_TAB);
     return viewerTab !== null;

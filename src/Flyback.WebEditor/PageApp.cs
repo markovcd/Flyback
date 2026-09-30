@@ -14,7 +14,7 @@ namespace Flyback.WebEditor;
 
 /// <summary>
 /// The editor in a page (ADR-0162): the shipped plugins that make modules, nothing kept
-/// between visits, and the picture on a canvas of its own.
+/// between visits, the picture on a canvas of its own, and the site it is served from.
 /// </summary>
 internal sealed class PageApp : Application
 {
@@ -29,7 +29,7 @@ internal sealed class PageApp : Application
 
         NodeCatalog.Install(plugins.Modules);
 
-        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true } }, services =>
+        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root } }, services =>
         {
             services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(sp.GetRequiredService<IDialog>()));
             services.AddSingleton<ITitle, PageTitle>();

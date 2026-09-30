@@ -280,7 +280,20 @@ public sealed class SiteAnswerTests
         PresetSite.Read(document.RootElement, FakePresetSite.Root).Items.ShouldBeEmpty();
     }
 
-    [Fact]
+    /// <summary>Said as the site's presets page says it.</summary>
+    [Theory]
+    [InlineData("""{"plugins":[{"id":"lantern","name":"Lantern"}],"modules":2}""", "Needs the Lantern plugin")]
+    [InlineData("""{"plugins":[{"name":"A"},{"name":"B"},{"name":"C"}],"modules":3}""", "Needs the A, B and C plugins")]
+    [InlineData("""{"plugins":[],"modules":1}""", "Needs modules a browser lacks")]
+    [InlineData("""null""", null)]
+    public void What_a_page_lacks_to_open_a_preset_is_read_from_the_listing(string lacks, string? said)
+    {
+        using var document = JsonDocument.Parse($$"""{"id":"a","name":"Aurora","file":"/api/v1/presets/a/file","lacks":{{lacks}}}""");
+
+        PresetSite.One(document.RootElement, FakePresetSite.Root).ShouldNotBeNull().PageLacks.ShouldBe(said);
+    }
+
+        [Fact]
     public void A_rating_of_another_shape_is_no_rating()
     {
         using var document = JsonDocument.Parse("""{"rating":{"count":"3","average":4}}""");

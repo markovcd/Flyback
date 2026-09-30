@@ -24,6 +24,6 @@ internal sealed class SiteAccess(EditorHost host, EditorFolders folders, IHttpCl
     /// <summary>What the gallery asks for shared presets, or null where there is no site.</summary>
     public PresetSite? Presets() => Root is null ? null : new PresetSite(Http, Root);
 
-    /// <summary>What the plugins window asks for shared plugins, or null where there is no site.</summary>
-    public PluginSite? Plugins() => Root is null ? null : new PluginSite(Http, Root);
+    /// <summary>What the plugins window asks for shared plugins, or null where there is no site or a page, which installs none.</summary>
+    public PluginSite? Plugins() => Root is null || host.InPage ? null : new PluginSite(Http, Root);
 }

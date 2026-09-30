@@ -7,6 +7,7 @@ namespace Flyback.App.Site;
 /// <param name="Still">A frame of it, once the site has rendered one.</param>
 /// <param name="Rating">Its stars on the site, which only the site gives.</param>
 /// <param name="Listed">Everything the site said of it, as the JSON it said it in.</param>
+/// <param name="PageLacks">What the editor in a page lacks to open it, in a few words, or null where a page opens it.</param>
 internal sealed record SitePreset(
     string Id,
     string Name,
@@ -17,4 +18,5 @@ internal sealed record SitePreset(
     Uri File,
     Uri? Still,
     SiteRating Rating,
-    string Listed) : IPreset;
+    string Listed,
+    string? PageLacks = null) : IPreset;

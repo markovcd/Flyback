@@ -657,6 +657,45 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             return true;
         });
 
+    /// <summary>Whether the gallery's tile for a shared preset can be picked, and what it says the page lacks to open it.</summary>
+    public (bool Pickable, string? Lacks) SharedTile(string name)
+    {
+        var listed = SharedInGallery();
+
+        return ReadWindow(open =>
+        {
+            var tile = SharedTiles(open).SingleOrDefault(tile => ((SitePreset)tile.Tag!).Name == name)
+                ?? throw new InvalidOperationException(
+                    $"The gallery lists no “{name}” from the preset site; it lists: {string.Join(", ", listed.Select(t => t.Name))}. {Situation(open)}");
+
+            return (tile.IsEnabled, tile.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "site-lacks")?.Text);
+        });
+    }
+
+    /// <summary>Writes a letter from the status bar's glyph and sends it, then waits for the editor to say what came of it.</summary>
+    public void SendLetter(string mood, string message) =>
+        Run(async () =>
+        {
+            var open = Window();
+
+            Named<Button>(open, "letter").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Settle();
+
+            var letter = Named<StackPanel>(open, "letter");
+
+            letter.GetVisualDescendants().OfType<RadioButton>().Single(choice => (string?)choice.Tag == mood).IsChecked = true;
+            Named<TextBox>(letter, "message").Text = message;
+            Settle();
+
+            Named<Button>(letter, "send").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(
+                () => !open.GetVisualDescendants().OfType<ModalOverlay>().Any() || Named<TextBlock>(letter, "letterStatus").IsVisible,
+                () => $"the letter to be sent or refused. {Situation(open)}");
+
+            return true;
+        });
+
     /// <summary>What a failure says of the window: everything the report line has said, and any question up over it.</summary>
     private static string Situation(MainWindow open)
     {

@@ -24,7 +24,7 @@ namespace Flyback.App.Gallery;
 /// past. A tile is a button, so the keyboard walks them and Enter picks one; what it
 /// answers with is the preset, and the caller decides what picking it means.
 /// </remarks>
-internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog, LastPress lastPress)
+internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog dialog, LastPress lastPress, EditorHost host)
 {
     /// <summary>The style class of a tile whose preset is being asked about deleting.</summary>
     private const string Asking = "asking";
@@ -106,7 +106,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             search.Apply();
 
-            if (site is not null) gallery.Children.Add(new SiteRun(site, kept ?? KeptSharedPresets.None, search.Box, dialog, open).View);
+            if (site is not null) gallery.Children.Add(new SiteRun(site, kept ?? KeptSharedPresets.None, search.Box, dialog, open, host.InPage).View);
 
             // The hint beside the runs rather than among them, so the gallery stays
             // what it has always been: a heading, then its tiles, and again.

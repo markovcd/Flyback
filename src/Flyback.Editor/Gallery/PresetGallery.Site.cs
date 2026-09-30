@@ -24,7 +24,8 @@ internal sealed partial class PresetGallery
     /// Its tiles answer the dialog with the <see cref="SitePreset"/> itself, so nothing
     /// is downloaded until somebody has picked one and said the patch on the canvas may go.
     /// While the site does not answer, the presets opened from it before are listed
-    /// instead, and answer with their <see cref="KeptPreset"/>.
+    /// instead, and answer with their <see cref="KeptPreset"/>. In a page, a preset
+    /// needing a plugin the page lacks is listed with why, and cannot be picked.
     /// </remarks>
     private sealed class SiteRun : IDisposable
     {
@@ -34,6 +35,7 @@ internal sealed partial class PresetGallery
         private readonly KeptSharedPresets kept;
         private readonly TextBox box;
         private readonly IDialog dialog;
+        private readonly bool inPage;
         private readonly WrapPanel tiles = new() { Name = "site-presets", ItemSpacing = 8, LineSpacing = 8 };
         private readonly TextBlock status = new() { Name = "site-status", FontSize = Text.Body, Foreground = Text.Muted, TextWrapping = TextWrapping.Wrap };
         private readonly Button more = new() { Name = "more-presets", Content = "More", FontSize = Text.Body, IsVisible = false, Margin = new Thickness(0, 8, 0, 0) };
@@ -41,12 +43,13 @@ internal sealed partial class PresetGallery
         private int page;
         private CancellationTokenSource? asking;
 
-        public SiteRun(PresetSite site, KeptSharedPresets kept, TextBox box, IDialog dialog, Action<IPreset> open)
+        public SiteRun(PresetSite site, KeptSharedPresets kept, TextBox box, IDialog dialog, Action<IPreset> open, bool inPage)
         {
             this.site = site;
             this.kept = kept;
             this.box = box;
             this.dialog = dialog;
+            this.inPage = inPage;
 
             View = new StackPanel
             {
@@ -232,6 +235,24 @@ internal sealed partial class PresetGallery
             tile.Click += (_, _) => pick();
 
             _ = ShowStillAsync(still, picture, cancel);
+
+            if (inPage && preset.PageLacks is { } lacks)
+            {
+                words.Children.Add(new TextBlock
+                {
+                    Name = "site-lacks",
+                    Text = lacks + ", which Flyback in a browser does not have.",
+                    FontSize = Text.Caption,
+                    Foreground = new SolidColorBrush(Colors.Attention),
+                    TextWrapping = TextWrapping.Wrap,
+                });
+
+                tile.IsEnabled = false;
+                ToolTip.SetShowOnDisabled(tile, true);
+                ToolTip.SetTip(tile, $"{lacks}: download “{preset.Name}” from the preset site to open it in Flyback.");
+
+                return tile;
+            }
 
             if (!reportable)
             {

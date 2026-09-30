@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The web editor sends a letter to Flyback's author, and its gallery opens presets shared on the preset site; one needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
 - Dragging a knob in the web editor keeps the sound's script warm and recompiles at a pace the page keeps up with, rather than stuttering the sound.
 - The web viewer offers 1920 × 1080 and Picture off, which plays the sound alone, and turns a phone sideways when it goes full screen; the web editor's View it sits beside the presets button.
 - The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.

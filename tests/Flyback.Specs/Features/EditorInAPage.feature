@@ -1,6 +1,7 @@
 Feature: The editor in a page offers only what a page can do
   In a browser page the editor opens, saves and records nothing, and has no assistant,
   settings, plugins or About. Its picture stays where the layout puts it, drawn small.
+  It reaches the preset site it is served from, for shared presets and letters.
 
   Scenario: A page's toolbar keeps the patch's buttons and drops the program's
     Given a rainbow across the screen
@@ -58,6 +59,19 @@ Feature: The editor in a page offers only what a page can do
     And the patch is open in the editor
     When the page hands the editor a shared preset needing the "Lantern" plugin
     Then the editor does not open it, and says it needs "Lantern"
+
+  Scenario: A page opens shared presets from the gallery, but not one needing a plugin it lacks
+    Given the preset site shares "Nebula", rated 4.5 by 2 people
+    And the preset site shares "Lanterns", which needs the "Lantern" plugin
+    And the editor is in a page
+    Then the gallery lists "Lanterns" as needing the "Lantern" plugin, and it cannot be picked
+    And picking "Nebula" from the gallery opens it
+
+  Scenario: A letter written in a page reaches the preset site
+    Given the editor reaches the preset site
+    And the editor is in a page
+    When a letter saying "The web editor is lovely" is sent from the status bar
+    Then the preset site has a letter saying "The web editor is lovely"
 
   Scenario: A page's picture is drawn small, since it never has the whole window
     Given a rainbow across the screen

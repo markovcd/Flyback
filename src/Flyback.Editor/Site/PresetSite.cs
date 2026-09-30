@@ -125,7 +125,26 @@ internal sealed class PresetSite(HttpClient http, Uri root)
             fileUri,
             still,
             SiteRating.Read(item),
-            item.GetRawText());
+            item.GetRawText(),
+            Lacking(item));
+    }
+
+    /// <summary>What the site says a page lacks to open a preset, as its presets page says it, or null where it lacks nothing.</summary>
+    private static string? Lacking(JsonElement item)
+    {
+        if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("lacks", out var lacks) || lacks.ValueKind != JsonValueKind.Object)
+            return null;
+
+        string[] names = lacks.TryGetProperty("plugins", out var plugins) && plugins.ValueKind == JsonValueKind.Array
+            ? [.. plugins.EnumerateArray().Select(plugin => Text(plugin, "name")).OfType<string>()]
+            : [];
+
+        return names switch
+        {
+            [] => "Needs modules a browser lacks",
+            [var one] => $"Needs the {one} plugin",
+            _ => $"Needs the {string.Join(", ", names[..^1])} and {names[^1]} plugins",
+        };
     }
 
     /// <summary>An address the site lists, resolved against it; only http and https, which is all it serves.</summary>
