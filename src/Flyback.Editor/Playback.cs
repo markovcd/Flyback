@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Flyback.App.Assist;
 using Flyback.App.Audio;
 using Flyback.App.Canvas;
@@ -47,6 +48,9 @@ internal sealed class Playback
     private readonly Reactions reactions;
     private readonly Usage usage;
 
+    /// <summary>How a page's edits reach <see cref="Recompile"/>, or null on the desktop, where each edit compiles at once.</summary>
+    private readonly RecompilePacing? pacing;
+
     /// <summary>Where the patch's sound files are read from, as the document last said.</summary>
     private ISampleLibrary sounds = new SampleLibrary();
 
@@ -66,7 +70,8 @@ internal sealed class Playback
         ChosenAssistant chosenAssistant,
         RecordingState recording,
         Reactions reactions,
-        Usage usage)
+        Usage usage,
+        EditorHost host)
     {
         this.editor = editor;
         this.audio = audio;
@@ -78,6 +83,12 @@ internal sealed class Playback
         this.recording = recording;
         this.reactions = reactions;
         this.usage = usage;
+
+        if (host.InPage)
+        {
+            var clock = Stopwatch.StartNew();
+            pacing = new RecompilePacing(() => Recompile(), () => clock.Elapsed, (delay, act) => DispatcherTimer.RunOnce(act, delay));
+        }
 
         Sound = sound;
 
@@ -93,7 +104,9 @@ internal sealed class Playback
 
     public Task On(PatchChanged notice)
     {
-        Recompile(opened: notice.Opened);
+        if (pacing is not null && !notice.Opened) pacing.Ask();
+        else Recompile(opened: notice.Opened);
+
         return Task.CompletedTask;
     }
 
@@ -240,6 +253,7 @@ internal sealed class Playback
     /// </param>
     public void Recompile(bool opened = false)
     {
+        var took = Stopwatch.StartNew();
         var (samples, images) = (sounds, pictures);
         var probe = Probed;
         showingProbe = probe?.Id;
@@ -306,6 +320,8 @@ internal sealed class Playback
         report.Say(said.ToList());
 
         SyncAudioToVolume();
+
+        pacing?.Ran(took.Elapsed);
     }
 
     public void Pause()
