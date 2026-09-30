@@ -41,7 +41,7 @@ public sealed class PluginTests : IDisposable
     {
         client.Dispose();
         host.Dispose();
-        SqliteConnection.ClearAllPools();
+        Databases.Release(folder);
         Directory.Delete(folder, recursive: true);
     }
 

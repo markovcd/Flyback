@@ -31,7 +31,7 @@ public sealed class PluginDefaultsTests : IDisposable
 
     public void Dispose()
     {
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Databases.Release(folder);
         Directory.Delete(folder, recursive: true);
     }
 

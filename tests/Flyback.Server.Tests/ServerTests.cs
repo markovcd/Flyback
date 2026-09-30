@@ -68,7 +68,7 @@ public sealed class ServerTests : IDisposable
     {
         client.Dispose();
         host.Dispose();
-        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        Databases.Release(folder);
         Directory.Delete(folder, recursive: true);
     }
 
@@ -806,7 +806,7 @@ public sealed class ServerTests : IDisposable
         using var admin = await Admin();
         (await Delete(admin, "/api/v1/presets/" + id)).ShouldBe(HttpStatusCode.NoContent);
 
-        using var db = new Microsoft.Data.Sqlite.SqliteConnection("Data Source=" + Path.Combine(folder, "presets.db"));
+        using var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={Path.Combine(folder, "presets.db")};Pooling=false");
         db.Open();
         using var count = db.CreateCommand();
         count.CommandText = "SELECT COUNT(*) FROM ratings";
