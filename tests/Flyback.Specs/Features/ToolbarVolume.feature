@@ -16,3 +16,13 @@ Feature: The toolbar carries the Output's Volume
     And a level of 0.3 is wired into the Output's Volume
     And the patch is open in the editor
     Then the toolbar's Volume cannot be turned
+
+  Scenario: A patch with no sound has no Volume on the toolbar
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    Then the toolbar shows no Volume
+
+  Scenario: A patch with sound has its Volume on the toolbar
+    Given a 220 Hz sine is playing
+    And the patch is open in the editor
+    Then the toolbar shows the Output's Volume

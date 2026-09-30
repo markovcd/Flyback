@@ -39,6 +39,9 @@ public static partial class WebExports
     private static string? description;
     private static IReadOnlyList<PatchControl> knobs = [];
 
+    /// <summary>Whether anything is wired into the open patch's sound.</summary>
+    private static bool hasSound;
+
     /// <summary>The keys under the page's hands, laid out as the open patch asks.</summary>
     private static readonly ComputerKeyboard Typing = new();
 
@@ -187,6 +190,7 @@ public static partial class WebExports
             picture = null;
             description = load.Patch.Description;
             knobs = [.. load.Patch.Controls ?? []];
+            hasSound = load.Patch.Reaches().Sound;
 
             return null;
         }
@@ -268,6 +272,7 @@ public static partial class WebExports
         picture = null;
         description = null;
         knobs = [];
+        hasSound = false;
 
         try
         {
@@ -278,6 +283,7 @@ public static partial class WebExports
 
             description = opened.Patch.Description;
             knobs = [.. opened.Patch.Controls ?? []];
+            hasSound = opened.Patch.Reaches().Sound;
             Typing.Scale = opened.Patch.Keyboard;
 
             return null;
@@ -485,7 +491,11 @@ public static partial class WebExports
             status["keyboard"] = Typing.Described;
         }
 
-        if (status["open"]!.GetValue<bool>()) status["description"] = description;
+        if (status["open"]!.GetValue<bool>())
+        {
+            status["description"] = description;
+            status["hasSound"] = hasSound;
+        }
 
         return status.ToJsonString();
     }

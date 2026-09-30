@@ -60,6 +60,16 @@ Feature: The web viewer
     When it plays in the web viewer for 0.1 seconds
     Then the web viewer says what the preset is for
 
+  Scenario: The web viewer knows a preset has sound
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 0.1 seconds
+    Then the web viewer says it has sound
+
+  Scenario: The web viewer knows a patch has no sound
+    Given a rainbow across the screen
+    When the patch plays in the web viewer for 0.1 seconds
+    Then the web viewer says it has no sound
+
   Scenario: The web viewer offers the presets the editor does
     Given every preset the shipped plugins add as well
     When the web viewer lists its presets

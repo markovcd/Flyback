@@ -493,6 +493,19 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Whether the toolbar's Volume can be turned.</summary>
     public bool CanTurnVolume => ReadWindow(open => Volume(open).IsEffectivelyEnabled);
 
+    /// <summary>Whether the toolbar shows the Output's Volume at all.</summary>
+    public bool ShowsVolume => ReadWindow(open => Volume(open).IsEffectivelyVisible);
+
+    /// <summary>How many times real time the editor says the sound renders at, or 0 while it has not measured it.</summary>
+    public double SoundSpeed => ReadWindow(_ => Service<Playback>().SoundSpeed);
+
+    /// <summary>What the status bar says the patch costs, written afresh.</summary>
+    public string StatusCount => ReadWindow(open =>
+    {
+        Service<StatusBar>().Update();
+        return Named<TextBlock>(open, "statusCount").Text ?? string.Empty;
+    });
+
     private static Slider Volume(MainWindow window) =>
         Named<Slider>(window, "volume");
 

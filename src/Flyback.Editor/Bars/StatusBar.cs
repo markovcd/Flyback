@@ -141,8 +141,6 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
     /// <summary>Says what the patch costs and where its clock is.</summary>
     internal void Update()
     {
-        var nodes = editor.History.Patch.Nodes.Count;
-        var wires = editor.History.Patch.Connections.Count;
         var pictureOps = preview.Program.Ops.Length;
         var soundOps = playback.SoundOps;
 
@@ -150,13 +148,17 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
         // said alongside — what is actually drawing, not what was asked for.
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
 
+        var speed = editor.History.Patch.Reaches().Sound && playback.SoundSpeed > 0
+            ? string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×")
+            : "";
+
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
         if (focus.IsActive) usage.Drew(preview.FramesPerSecond, preview.Backend == PreviewBackend.Gpu);
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {pictureOps}/{soundOps} picture/sound ops · {OversamplingText.Of(playback.Oversample)}   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
+            $"{pictureOps}/{soundOps} picture/sound ops · {OversamplingText.Of(playback.Oversample)}{speed}   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

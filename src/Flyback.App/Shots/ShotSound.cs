@@ -31,6 +31,8 @@ internal sealed class ShotSound : IAudioEngine
 
     public SoundTiming Timing => default;
 
+    public double Speed => 0;
+
     public float Gain { get; set; } = 1f;
 
     public LiveValues Live { get; private set; } = LiveValues.None;

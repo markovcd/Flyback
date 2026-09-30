@@ -159,6 +159,9 @@ internal sealed class Playback
     /// <summary>How many times the output rate the sound is evaluated at.</summary>
     public int Oversample => audio.Oversample;
 
+    /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
+    public double SoundSpeed => audio.Speed;
+
     /// <summary>How long the open patch plays for, in seconds.</summary>
     public double Length => editor.History.Patch.Lasts;
 

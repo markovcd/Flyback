@@ -52,7 +52,10 @@ public sealed class VolumeSliderTests : UiTest
     [AvaloniaFact]
     public void A_drag_along_it_is_one_edit_to_take_back()
     {
-        var window = Open();
+        var builder = new PatchBuilder();
+        builder.Wire(builder.Add("value"), 0, builder.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputLeftPort);
+
+        var window = Open(builder.Build());
         var was = Volume(window);
 
         window.MouseDown(At(window, 0.9), MouseButton.Left);
@@ -68,6 +71,25 @@ public sealed class VolumeSliderTests : UiTest
 
         Volume(window).ShouldBe(was);
         Slider(window).Value.ShouldBe(was, 0.0001);
+    }
+
+    [AvaloniaFact]
+    public void A_patch_with_no_sound_has_no_Volume_and_one_wired_to_sound_has()
+    {
+        var builder = new PatchBuilder();
+        var level = builder.Add("value");
+        var output = builder.Add(NodeCatalog.OutputTypeId);
+        builder.Wire(level, 0, output, NodeCatalog.OutputColorPort);
+
+        var window = Open(builder.Build());
+
+        Slider(window).IsEffectivelyVisible.ShouldBeFalse();
+
+        Editor(window).History.Patch.Connect(level.Id, 0, output.Id, NodeCatalog.OutputLeftPort);
+        Editor(window).History.Record();
+        Settle(window);
+
+        Slider(window).IsEffectivelyVisible.ShouldBeTrue();
     }
 
     [AvaloniaFact]

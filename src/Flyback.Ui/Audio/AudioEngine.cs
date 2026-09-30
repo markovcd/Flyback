@@ -64,6 +64,15 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public SoundTiming Timing => new(Interlocked.Read(ref timed), Interlocked.Read(ref late));
 
+    /// <summary>Seconds of sound and of rendering timed, each buffer weighing a little less than the one after. The callback's alone.</summary>
+    private double soundSeconds;
+    private double renderSeconds;
+    private const double Keep = 0.98;
+
+    private double speed;
+
+    public double Speed => current.IsRunning ? Volatile.Read(ref speed) : 0;
+
     /// <summary>
     /// How loud the speakers are turned down to, from 0 to 1, against what the patch
     /// made. Applied after the capture sink is written, so a recording keeps what the
@@ -413,8 +422,14 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
             {
                 Interlocked.Increment(ref timed);
 
-                if (Stopwatch.GetElapsedTime(started).TotalSeconds > buffer.Length / 2d / current.SampleRate)
-                    Interlocked.Increment(ref late);
+                var took = Stopwatch.GetElapsedTime(started).TotalSeconds;
+                var lasts = buffer.Length / 2d / current.SampleRate;
+
+                if (took > lasts) Interlocked.Increment(ref late);
+
+                soundSeconds = soundSeconds * Keep + lasts;
+                renderSeconds = renderSeconds * Keep + took;
+                if (renderSeconds > 0) Volatile.Write(ref speed, soundSeconds / renderSeconds);
             }
         }
 

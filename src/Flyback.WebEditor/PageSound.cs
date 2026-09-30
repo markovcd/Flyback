@@ -83,6 +83,8 @@ internal sealed partial class PageSound : IAudioEngine
     /// <summary>The worker times its own sound and lowers it itself.</summary>
     public SoundTiming Timing => default;
 
+    public double Speed => IsRunning ? JsSpeed() : 0;
+
     public bool IsAuditioning => false;
 
     public void Start()
@@ -207,6 +209,7 @@ internal sealed partial class PageSound : IAudioEngine
     [JSImport("aspect", Module)] private static partial void JsAspect(double aspect);
     [JSImport("oversample", Module)] private static partial void JsOversample(int factor);
     [JSImport("oversampleNow", Module)] private static partial int JsOversampleNow();
+    [JSImport("speed", Module)] private static partial double JsSpeed();
     [JSImport("edit", Module)] private static partial void JsEdit(string text, double aspect);
     [JSImport("keep", Module)] private static partial void JsKeep(string path, byte[] bytes);
     [JSImport("forget", Module)] private static partial void JsForget();

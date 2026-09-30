@@ -20,7 +20,7 @@ namespace Flyback.Specs.Steps;
 /// same preset rendered here the way the desktop renders it.
 /// </summary>
 [Binding]
-public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider runtime) : IDisposable
+public sealed class WebViewerSteps(Session session, PatchContext context, IUnitTestRuntimeProvider runtime) : IDisposable
 {
     private static readonly Lazy<PluginCatalog> Installed = new(PluginHost.Load);
 
@@ -292,6 +292,21 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         refused.Value.Said.ShouldContain("Not opened.");
         refused.Value.Said.ShouldContain(plugin);
     }
+
+    [When("the patch plays in the web viewer for {float} second(s)")]
+    public void WhenThePatchPlays(float length)
+    {
+        var file = Path.Combine(folder.FullName, "patch.fbk");
+        File.WriteAllText(file, PatchIO.ToJson(context.Patch, Installed.Value.Modules));
+
+        said = JsonNode.Parse(Hear(file, "--seconds", length.ToString(System.Globalization.CultureInfo.InvariantCulture), "--size", $"{Width}x{Height}"));
+    }
+
+    [Then("the web viewer says it has sound")]
+    public void ThenItHasSound() => ((bool?)said!["hasSound"]).ShouldBe(true);
+
+    [Then("the web viewer says it has no sound")]
+    public void ThenItHasNoSound() => ((bool?)said!["hasSound"]).ShouldBe(false);
 
     [Then("the web viewer says what the preset is for")]
     public void ThenItIsDescribed()

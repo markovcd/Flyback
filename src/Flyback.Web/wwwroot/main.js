@@ -478,7 +478,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
     soundAllowed = sound.status !== null;
 
     if (!soundAllowed) warning = `The sound could not start here, so the picture plays alone: ${speakerFailure}`;
-    else if (sound.speed !== null && sound.speed < FAST_ENOUGH) tooSlow(sound.speed);
+    else if (info.hasSound && sound.speed !== null && sound.speed < FAST_ENOUGH) tooSlow(sound.speed);
 
     document.title = `${shown} · Flyback Viewer`;
     ui.seek.hidden = !Number.isFinite(end());
@@ -681,12 +681,16 @@ function paint() {
   ui.volume.value = loudness;
   ui.clock.textContent = !ready ? '' : Number.isFinite(end()) ? `${clockText(now())} / ${clockText(end())}` : clockText(now());
 
+  const said = ready ? status() : null;
+
+  // A patch with nothing wired into its sound has nothing to turn up.
+  ui.mute.hidden = ui.volume.hidden = ready && !said.hasSound;
+
   const parts = [];
 
   if (ready) {
-    const said = status();
     if (said.oversample) parts.push(oversampling(said.oversample));
-    if (said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
+    if (said.hasSound && said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (said.linking) parts.push('building the shader…');
     if (playable()) parts.push(`${keyboardSaid ?? said.keyboard} PageUp and PageDown move it`);
   }

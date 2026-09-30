@@ -89,6 +89,9 @@ internal sealed class VolumeSlider : IReactTo<PatchChanged>
         // Before the first patch is opened, the canvas holds an empty one.
         if (patch.FirstOf(NodeCatalog.OutputTypeId) is not { } output) return;
 
+        // Nothing wired into the sound has nothing to turn up.
+        View.IsVisible = patch.Reaches().Sound;
+
         following = true;
         Slider.Value = output.InputValues[Port];
         following = false;

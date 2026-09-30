@@ -138,6 +138,26 @@ public class AudioEngineTests
         engine.Time.ShouldBe(at + BufferFrames / (double)GlobalConstants.SampleRate, 1e-9);
     }
 
+    /// <summary>A sound that has played says how many times real time it renders at, and one stopped says nothing.</summary>
+    [Fact]
+    public void Its_speed_is_measured_while_it_plays()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(new AudioSetup(device));
+        engine.Update(Tone(220f));
+
+        engine.Speed.ShouldBe(0);
+
+        engine.Start();
+        for (var i = 0; i < 20; i++) device.Pump();
+
+        engine.Speed.ShouldBeGreaterThan(1, "a lone sine renders far faster than it plays");
+
+        engine.Stop();
+
+        engine.Speed.ShouldBe(0);
+    }
+
     /// <summary>
     /// The same claim as a listener would put it, and the one that survives a
     /// change to how the memory is carried: an edit during playback bends the

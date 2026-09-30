@@ -170,6 +170,11 @@ export function oversampleNow() {
   return soundStatus.oversample ?? 0;
 }
 
+/** How many times real time the worker last said the sound renders at, or 0 before it has said. */
+export function speed() {
+  return soundStatus.speed ?? 0;
+}
+
 export function aspect(value) {
   worker.postMessage({ aspect: value });
 }

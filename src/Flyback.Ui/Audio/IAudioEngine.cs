@@ -39,6 +39,9 @@ internal interface IAudioEngine
     /// <summary>How many buffers of compiled sound have been timed, and how many of them took longer to make than they play for.</summary>
     SoundTiming Timing { get; }
 
+    /// <summary>How many times real time the sound renders at lately, or 0 while nothing is measured.</summary>
+    double Speed { get; }
+
     /// <summary>The block whoever is playing writes into, made anew by every <see cref="Update"/>.</summary>
     LiveValues Live { get; }
 
