@@ -33,6 +33,10 @@ internal sealed class OutputSettingsUse(
         if (saved.LatencyMilliseconds != before.LatencyMilliseconds || sections.SoundChanged(before, saved))
             playback.ReopenAudio(saved);
 
+        // One box picks both, and only the CPU takes effect at once.
+        if (saved.Driver != before.Driver)
+            report.Say($"{(saved.Driver == GraphicsDriver.Direct3D ? "Direct3D" : "OpenGL")} draws from the next time Flyback starts.");
+
         if (setup.OutputSettingsPath is not { } path) return;
 
         try

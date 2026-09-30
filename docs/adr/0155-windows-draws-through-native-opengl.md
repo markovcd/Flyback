@@ -53,3 +53,17 @@ AMD OpenGL driver that starts but draws wrongly is not caught by the fallback, a
 the setting is the way out; that it exists is said in its tooltip.
 
 Nothing on screen says which driver a run ended up on.
+
+## Amendment, 2026-09-30: one Renderer box, and the driver named on screen
+
+Settings → Graphics has one Renderer box where it had Render (GPU or CPU) and
+Driver: OpenGL, Direct3D on Windows, then CPU. `output.json` keeps `gpu` and
+`driver` as they were; the CPU row leaves `driver` alone, because the window is
+drawn through it whatever draws the picture. The box stays enabled after the
+graphics card fails, since the other driver at the next start is the way out, and
+saving a new driver says that it takes over from the next start.
+
+The status bar, the stats line and the web editor's `status()` name what drew the
+last frame, read from the context rather than the setting: `GL_RENDERER` naming
+ANGLE is Direct3D (or Vulkan or Metal), any other context is OpenGL or OpenGL ES,
+a page is WebGL. A Direct3D fallback on a machine set to OpenGL is visible now.

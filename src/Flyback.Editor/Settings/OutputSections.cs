@@ -50,9 +50,19 @@ internal sealed class OutputSections
     /// </summary>
     private static readonly int[] CountIns = [0, 1, 2, 3, 5, 10];
 
-    public const string GpuTip =
-        "Draw the picture with a shader on the GPU, or on the CPU. Switch to the CPU to " +
-        "compare the two, or if a long session starts to look stepped.";
+    public const string RendererTip =
+        "What draws the picture: a shader on the graphics card, or the CPU. Switch to the CPU to "
+        + "compare the two, or if a long session starts to look stepped. On Windows, OpenGL builds "
+        + "a large patch's shader in a second where Direct3D can take several and hold the window "
+        + "while it does; Direct3D is for a machine whose OpenGL misbehaves, is used anyway where "
+        + "OpenGL will not start, and either takes over from the next time Flyback starts.";
+
+    /// <summary>What <see cref="Renderer"/> offers: the graphics card's APIs in the order of <see cref="GraphicsDriver"/>, then the CPU.</summary>
+    private static readonly string[] Renderers = OperatingSystem.IsWindows()
+        ? ["OpenGL", "Direct3D", GraphicsApi.Processor]
+        : ["OpenGL", GraphicsApi.Processor];
+
+    private static int ProcessorRow => Renderers.Length - 1;
 
     private readonly PluginCatalog plugins;
     private readonly OutputSettingRepository settings;
@@ -76,13 +86,13 @@ internal sealed class OutputSections
     };
 
     /// <summary>
-    /// GPU or CPU. On by default, because it is the one that keeps up with a large
-    /// patch, and grayed out by a GPU that turns out to be unusable.
+    /// What draws the picture: OpenGL by default, because the graphics card is what
+    /// keeps up with a large patch, Direct3D on Windows, or the CPU.
     /// </summary>
-    public ComboBox Gpu { get; } = new Picker
+    public ComboBox Renderer { get; } = new Picker
     {
         Name = "render",
-        ItemsSource = new[] { "GPU", "CPU" },
+        ItemsSource = Renderers,
         SelectedIndex = 0,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
@@ -153,15 +163,6 @@ internal sealed class OutputSections
     {
         Name = "transportEdge",
         ItemsSource = new[] { "Transport on top, knobs below", "Knobs on top, transport below" },
-        SelectedIndex = 0,
-        HorizontalAlignment = HorizontalAlignment.Stretch,
-    };
-
-    /// <summary>What draws on Windows, in the order of <see cref="GraphicsDriver"/>.</summary>
-    private readonly ComboBox driver = new Picker
-    {
-        Name = "driver",
-        ItemsSource = new[] { "OpenGL", "Direct3D" },
         SelectedIndex = 0,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
@@ -295,10 +296,10 @@ internal sealed class OutputSections
 
         preview.BackendChanged += message =>
         {
-            // Keep the selected request visible when the renderer falls back.
-            Gpu.SelectedIndex = preview.Wanted == PreviewBackend.Gpu ? 0 : 1;
-            Gpu.IsEnabled = preview.GpuAvailable;
-            ToolTip.SetTip(Gpu, preview.GpuAvailable ? GpuTip : message);
+            // Keeps showing what was asked for when the renderer falls back, and stays
+            // enabled: the other driver, from the next start, is the way out.
+            Renderer.SelectedIndex = RendererRow(preview.Wanted == PreviewBackend.Gpu, settings.Current.Driver);
+            ToolTip.SetTip(Renderer, preview.GpuAvailable ? RendererTip : message);
             report.Say(message);
         };
     }
@@ -315,6 +316,10 @@ internal sealed class OutputSections
     internal static string Attributed(string what, PluginInfo? plugin) =>
         plugin is null ? $"{what}." : $"{what}, from the {plugin.Name} plugin ({plugin.Id}).";
 
+    /// <summary>The row of <see cref="Renderer"/> that says <paramref name="gpu"/> and <paramref name="driver"/>.</summary>
+    private static int RendererRow(bool gpu, GraphicsDriver driver) =>
+        !gpu ? ProcessorRow : driver == GraphicsDriver.Direct3D && OperatingSystem.IsWindows() ? 1 : 0;
+
     /// <summary>What size <paramref name="settings"/> draws the picture at, or the default for one the list no longer offers.</summary>
     public static PixelSize SizeOf(OutputSettings settings) => Resolutions.All[SizeRow(settings)].Size;
 
@@ -324,14 +329,11 @@ internal sealed class OutputSections
         var current = settings.Current;
         Resolution.SelectedIndex = SizeRow(current);
 
-        // A box grayed out by a GPU that failed shows what is running, which
-        // the window's BackendChanged handler already set.
-        if (Gpu.IsEnabled) Gpu.SelectedIndex = current.Gpu ? 0 : 1;
+        Renderer.SelectedIndex = RendererRow(current.Gpu, current.Driver);
 
         ShowStartupPatch(current.DefaultPreset);
 
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
-        driver.SelectedIndex = (int)current.Driver;
 
         frameRate.SelectedIndex = Nearest(FrameRates, current.FrameRate);
         previewFrameRate.SelectedIndex = Nearest(PreviewFrameRates, current.PreviewFrameRate);
@@ -364,21 +366,23 @@ internal sealed class OutputSections
 
         var size = Resolutions.All[Math.Max(Resolution.SelectedIndex, 0)].Size;
         var fullScreen = ReadFullScreen(before);
+        var renderer = Math.Max(Renderer.SelectedIndex, 0);
 
         var read = new OutputSettings
         {
             Width = size.Width,
             Height = size.Height,
-            // A box grayed out by a GPU that failed says nothing about what
-            // was wanted, so the last answer is kept for a launch that has one.
-            Gpu = Gpu.IsEnabled ? Gpu.SelectedIndex == 0 : before.Gpu,
+            // The CPU says nothing about which driver draws the window, so that is kept.
+            Gpu = renderer != ProcessorRow,
 
             DefaultPreset = startupPatch,
 
             FullScreen = fullScreen.On,
             FullScreenMonitor = fullScreen.Monitor,
             Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top,
-            Driver = driver.SelectedIndex == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl,
+            Driver = renderer == ProcessorRow || !OperatingSystem.IsWindows()
+                ? before.Driver
+                : renderer == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl,
 
             FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)],
             PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)],
@@ -530,16 +534,9 @@ internal sealed class OutputSections
 
         Graphics.Children.Add(InspectorRows.Field("Size", Resolution));
         Graphics.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
-        Graphics.Children.Add(InspectorRows.Field("Render", Gpu));
+        ToolTip.SetTip(Renderer, RendererTip);
+        Graphics.Children.Add(InspectorRows.Field("Renderer", Renderer));
 
-        ToolTip.SetTip(driver,
-            "What draws the window and the picture, from the next time Flyback starts. OpenGL "
-            + "builds a large patch's shader in a second where Direct3D can take several and hold "
-            + "the window while it does; Direct3D is for a machine whose OpenGL misbehaves, and "
-            + "is used anyway where OpenGL will not start.");
-
-        // Only Windows has a second driver to offer.
-        if (OperatingSystem.IsWindows()) Graphics.Children.Add(InspectorRows.Field("Driver", driver));
         ToolTip.SetTip(transportEdge,
             "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "
             + "the knobs take the other edge.");

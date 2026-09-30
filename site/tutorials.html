@@ -133,7 +133,7 @@
         </a>
       </div>
       <figcaption>The Plasma preset. The status bar counts modules, wires and the compiled instructions the picture and the sound each run, and shows
-      the time, the frame rate and whether the preview is drawn on the GPU or the CPU. The envelope at its right
+      the time, the frame rate and what draws the preview: OpenGL, Direct3D or the CPU. The envelope at its right
       end writes to Flyback&rsquo;s author &mdash; anything you like, good or bad.</figcaption>
     </figure>
 
@@ -169,9 +169,9 @@
     with knobs keeps them behind the dots at the bottom middle, to be played;
     <strong>Settings → Graphics → Controls</strong> swaps the two, knobs on top and the transport below.
     <strong>Settings → Graphics → Full screen</strong> can send the picture to another monitor instead, or to one
-    you pick, and the editor stays where it is. On Windows, <strong>Settings → Graphics → Driver</strong> draws
-    through the graphics card&rsquo;s own OpenGL, or through Direct3D for a card whose OpenGL misbehaves, from the
-    next start. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
+    you pick, and the editor stays where it is. <strong>Settings → Graphics → Renderer</strong> draws
+    the picture through the graphics card&rsquo;s own OpenGL, on the CPU, or on Windows through Direct3D for a card
+    whose OpenGL misbehaves, from the next start. On the canvas, drag the background to select, drag with the middle button to pan, and use the wheel
     to zoom. <kbd>Ctrl</kbd>+<kbd>F</kbd> frames the whole patch. <kbd>Esc</kbd> backs out of a drag part way
     through it — a module goes back where it was, a wire back onto the socket it was lifted off.</p>
     <p>On a touch screen, one finger does what the left button does. Two fingers drag the view and spread or pinch

@@ -136,6 +136,11 @@ public class StatsLineTests
 {
     [Fact]
     public void The_line_reads_rate_cost_ops_size_renderer_and_clock() =>
-        StatsOverlay.Line(59.6, 4.26, 29, new PixelSize(960, 540), PreviewBackend.Gpu, 65.25)
-            .ShouldBe("60 fps · 4.3 ms · 29 ops · 960×540 · GPU · t 1:05.25");
+        StatsOverlay.Line(59.6, 4.26, 29, new PixelSize(960, 540), "Direct3D", 65.25)
+            .ShouldBe("60 fps · 4.3 ms · 29 ops · 960×540 · Direct3D · t 1:05.25");
+
+    [Fact]
+    public void A_context_still_coming_up_names_no_renderer() =>
+        StatsOverlay.Line(59.6, 4.26, 29, new PixelSize(960, 540), null, 65.25)
+            .ShouldBe("60 fps · 4.3 ms · 29 ops · 960×540 · t 1:05.25");
 }

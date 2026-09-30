@@ -58,6 +58,8 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     public event Action<string>? Failed;
 
+    public string? Api => "WebGL";
+
     public double Time { get; set; }
 
     public Func<double>? Clock { get; set; }

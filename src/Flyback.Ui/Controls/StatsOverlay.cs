@@ -78,12 +78,13 @@ public sealed class StatsOverlay : Border
             preview.FrameMilliseconds,
             preview.Program.Ops.Length,
             preview.Resolution,
-            preview.Backend,
+            preview.Renderer,
             preview.Time);
 
     /// <summary>The line, from what was measured.</summary>
-    public static string Line(double fps, double milliseconds, int ops, PixelSize size, PreviewBackend backend, double seconds) =>
+    /// <param name="renderer">What draws the picture, or null while a graphics context is still coming up.</param>
+    public static string Line(double fps, double milliseconds, int ops, PixelSize size, string? renderer, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {ops} ops · {size.Width}×{size.Height} · {(backend == PreviewBackend.Gpu ? "GPU" : "CPU")} · t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {ops} ops · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
 }

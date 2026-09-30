@@ -105,6 +105,11 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
 
     public long Frames => meter.Drawn;
 
+    /// <summary>What the context draws through, named once it is up, on the render thread.</summary>
+    public string? Api => Volatile.Read(ref api);
+
+    private string? api;
+
     /// <summary>What the processor spent handing the last frame to the graphics card, which is not the card's own time.</summary>
     public double FrameMilliseconds { get; private set; }
 
@@ -313,6 +318,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
         }
 
         var bound = new Gl(gl.GetProcAddress);
+        Volatile.Write(ref api, GraphicsApi.Name(version.Es, bound.GetString(GlConstants.GL_RENDERER)));
         var built = new GpuFrameRenderer(GpuFrameRenderer.DialectFor(version));
 
         if (built.Initialise(bound) is { } error)

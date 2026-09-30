@@ -303,29 +303,49 @@ public class OutputSettingsTests : UiTest
     }
 
     [AvaloniaFact]
-    public void Picking_Direct3D_is_kept_for_the_next_launch()
+    public void Picking_Direct3D_is_kept_for_the_next_launch_and_said()
     {
         Assert.SkipUnless(OperatingSystem.IsWindows(), "only Windows has a second driver");
 
         var window = Open(settingsPath);
         var dialog = OpenSettings(window);
-        var driver = All<ComboBox>(dialog).Single(c => c.Name == "driver");
+        var render = All<ComboBox>(dialog).Single(c => c.Name == "render");
 
-        driver.SelectedIndex.ShouldBe(0);
+        render.SelectedItem.ShouldBe("OpenGL");
 
-        driver.SelectedIndex = 1;
+        render.SelectedItem = "Direct3D";
         CloseSettings(window, dialog, save: true);
 
         OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
-        All<ComboBox>(OpenSettings(Open(settingsPath))).Single(c => c.Name == "driver").SelectedIndex.ShouldBe(1);
+        OutputSettings.Load(settingsPath).Gpu.ShouldBeTrue();
+        All<ReportLine>(window).Single().History.ShouldContain("Direct3D draws from the next time Flyback starts.");
+        All<ComboBox>(OpenSettings(Open(settingsPath))).Single(c => c.Name == "render").SelectedItem.ShouldBe("Direct3D");
+    }
+
+    /// <summary>The CPU draws the picture whatever draws the window, so picking it keeps the driver.</summary>
+    [AvaloniaFact]
+    public void Picking_the_cpu_keeps_the_driver()
+    {
+        new OutputSettings { Driver = GraphicsDriver.Direct3D }.Save(settingsPath);
+
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window);
+
+        All<ComboBox>(dialog).Single(c => c.Name == "render").SelectedItem = "CPU";
+        CloseSettings(window, dialog, save: true);
+
+        OutputSettings.Load(settingsPath).Gpu.ShouldBeFalse();
+        OutputSettings.Load(settingsPath).Driver.ShouldBe(GraphicsDriver.Direct3D);
     }
 
     [AvaloniaFact]
-    public void Only_Windows_offers_a_driver()
+    public void Only_Windows_offers_Direct3D()
     {
         var dialog = OpenSettings(Open());
 
-        All<ComboBox>(dialog).Any(c => c.Name == "driver").ShouldBe(OperatingSystem.IsWindows());
+        All<ComboBox>(dialog).Any(c => c.Name == "driver").ShouldBeFalse();
+        ((IEnumerable<string>)All<ComboBox>(dialog).Single(c => c.Name == "render").ItemsSource!)
+            .Contains("Direct3D").ShouldBe(OperatingSystem.IsWindows());
     }
 
     /// <summary>What is picked here is a launch's business, not this one's.</summary>
@@ -918,16 +938,16 @@ public class OutputSettingsTests : UiTest
 
     // --- the render switch and the interpreter -----------------------------------
 
-    /// <summary>
-    /// A choice between the two, named for what it would draw with either way.
-    /// </summary>
+    /// <summary>One box, named for what would draw: the graphics card's APIs, then the CPU.</summary>
     [AvaloniaFact]
-    public void The_render_box_offers_the_gpu_and_the_cpu()
+    public void The_render_box_names_what_would_draw()
     {
         var window = Open();
         var render = All<ComboBox>(OpenSettings(window)).Single(b => b.Name == "render");
 
-        render.ItemsSource.ShouldBe(new[] { "GPU", "CPU" });
+        render.ItemsSource.ShouldBe(OperatingSystem.IsWindows()
+            ? new[] { "OpenGL", "Direct3D", "CPU" }
+            : new[] { "OpenGL", "CPU" });
     }
 
     /// <summary>
@@ -979,9 +999,7 @@ public class OutputSettingsTests : UiTest
         var dialog = OpenSettings(window);
         var gpu = All<ComboBox>(dialog).Single(b => b.Name == "render");
 
-        if (!gpu.IsEnabled) return;
-
-        gpu.SelectedIndex = 1;
+        gpu.SelectedItem = "CPU";
         Dispatcher.UIThread.RunJobs();
 
         preview.Wanted.ShouldBe(wanted);

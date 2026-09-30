@@ -49,6 +49,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <summary>Which renderer is drawing now.</summary>
     public PreviewBackend Backend { get; private set; }
 
+    /// <summary>What is drawing now: the CPU, or the graphics API once its context is up.</summary>
+    public string? Renderer => Backend == PreviewBackend.Cpu ? GraphicsApi.Processor : (active as IGpuPreview)?.Api;
+
     /// <summary>False once the GPU has refused, after which it is not offered again.</summary>
     public bool GpuAvailable { get; private set; } = true;
 

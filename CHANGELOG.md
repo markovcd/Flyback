@@ -18,6 +18,7 @@
 - The editor works on a touch screen: two fingers pan and zoom, a finger held still is a right-click, and the toolbar and panel gain buttons for adding a module, framing the patch and duplicating.
 - Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
 - The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
+- The status bar and the stats line name what draws the picture (OpenGL, Direct3D, WebGL or CPU), Settings → Graphics picks it in one Renderer box, and the op count reads as picture/sound.
 
 ### Fixes
 - A patch file with a null where a module or a wire belongs is refused on opening; one saved with a byte order mark opens on the preset site and in the web viewer and editor.

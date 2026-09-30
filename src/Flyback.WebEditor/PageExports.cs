@@ -36,6 +36,7 @@ internal static partial class PageExports
             ["modules"] = patch.Nodes.Count,
             ["wires"] = patch.Connections.Count,
             ["backend"] = preview.Backend.ToString(),
+            ["renderer"] = preview.Renderer,
             ["framesPerSecond"] = Math.Round(preview.FramesPerSecond, 1),
             ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),
             ["time"] = Math.Round(preview.Time, 2),

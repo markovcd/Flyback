@@ -28,6 +28,19 @@ public class GpuSurfaceTests : UiTest
     }
 
     [AvaloniaFact]
+    public void The_renderer_is_named_for_the_api_drawing_and_then_the_cpu()
+    {
+        var surface = new Surface();
+        var host = new PreviewHost(() => surface);
+
+        host.Renderer.ShouldBe("WebGL");
+
+        surface.Fail("This browser has no WebGL 2.");
+
+        host.Renderer.ShouldBe("CPU");
+    }
+
+    [AvaloniaFact]
     public void A_given_surface_that_fails_gives_way_to_the_processor_for_good()
     {
         var surface = new Surface();
@@ -46,6 +59,8 @@ public class GpuSurfaceTests : UiTest
     private sealed class Surface : Border, IGpuPreview
     {
         public event Action<string>? Failed;
+
+        public string? Api => "WebGL";
 
         public double Time { get; set; }
 

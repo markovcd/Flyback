@@ -8,4 +8,7 @@ public interface IGpuPreview : IPreviewSurface
     /// for the status bar; the host puts the processor's renderer in its place.
     /// </summary>
     event Action<string>? Failed;
+
+    /// <summary>What draws the picture (OpenGL, Direct3D, WebGL), or null until the context is up.</summary>
+    string? Api { get; }
 }

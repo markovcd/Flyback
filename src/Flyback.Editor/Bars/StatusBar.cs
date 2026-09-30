@@ -140,7 +140,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         // Which renderer produced the rate is part of what it means, so it is
         // said alongside — what is actually drawing, not what was asked for.
-        var backend = preview.Backend == PreviewBackend.Gpu ? "GPU" : "CPU";
+        var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
 
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
@@ -148,7 +148,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {pictureOps} picture ops · {soundOps} sound ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps   |   {backend}");
+            $"{nodes} modules · {wires} wires · {pictureOps}/{soundOps} picture/sound ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

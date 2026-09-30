@@ -44,6 +44,6 @@ public sealed class StatusCountTests : UiTest
     }
 
     private static string Counted(Patch patch) =>
-        $"{patch.CompileForVideo(played: true).Program.Ops.Length} picture ops · "
-        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} sound ops";
+        $"{patch.CompileForVideo(played: true).Program.Ops.Length}/"
+        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops";
 }
