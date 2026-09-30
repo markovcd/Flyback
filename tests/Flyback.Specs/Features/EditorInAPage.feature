@@ -9,6 +9,19 @@ Feature: The editor in a page offers only what a page can do
     Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
     And the toolbar still has "undo, redo, tidy, code, controls, swap, side, pause, rewind"
 
+  Scenario: A page's empty panel names no files, settings or recording, for a mouse or a finger
+    Given the clock on its own
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the module panel does not say "Open and Save"
+    And the module panel does not say "Settings"
+    And the module panel does not say "Record"
+    When a finger taps bare canvas
+    Then the module panel says "Hold a finger on bare canvas"
+    And the module panel does not say "Open and Save"
+    And the module panel does not say "Settings"
+    And the module panel does not say "Record"
+
   Scenario: A double-click on a page's picture leaves it where it is
     Given a rainbow across the screen
     And the editor is in a page
