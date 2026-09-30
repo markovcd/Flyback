@@ -73,6 +73,12 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
             ? transport.VerticalAlignment
             : (Avalonia.Layout.VerticalAlignment?)null);
 
+    /// <summary>Whether the transport has a sound button, or null where there is no transport showing.</summary>
+    public bool? TransportHasSound => Run(() =>
+        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+            ? transport.HasSound
+            : (bool?)null);
+
     public void Dispose()
     {
         try

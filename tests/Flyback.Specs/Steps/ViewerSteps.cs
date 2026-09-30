@@ -36,6 +36,12 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [Then("the viewer's transport waits at the top of its picture")]
     public void ThenTheTransportAtTheTop() => viewer.TransportEdge.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
 
+    [Then("the viewer's transport has no sound button")]
+    public void ThenNoSoundButton() => viewer.TransportHasSound.ShouldBe(false);
+
+    [Then("the viewer's transport has a sound button")]
+    public void ThenASoundButton() => viewer.TransportHasSound.ShouldBe(true);
+
     [Then("the viewer's transport waits at the bottom of its picture")]
     public void ThenTheTransportAtTheBottom() => viewer.TransportEdge.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
 

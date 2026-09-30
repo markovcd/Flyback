@@ -83,6 +83,7 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
             overlay.Paused = paused;
             overlay.Muted = playback.Muted;
             overlay.Sounding = playback.Audible;
+            overlay.HasSound = playback.HasSound;
         }
     }
 

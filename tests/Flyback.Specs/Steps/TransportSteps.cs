@@ -56,6 +56,12 @@ public sealed class TransportSteps(Editor editor) : IDisposable
     [Then("the transport waits at the top of the picture")]
     public void ThenTheTransportAtTheTop() => editor.TransportEdge.ShouldBe(VerticalAlignment.Top);
 
+    [Then("the full-screen transport has no sound button")]
+    public void ThenNoSoundButton() => editor.TransportHasSound.ShouldBe(false);
+
+    [Then("the full-screen transport has a sound button")]
+    public void ThenASoundButton() => editor.TransportHasSound.ShouldBe(true);
+
     [Then("the transport waits at the bottom of the picture and the knobs at the top")]
     public void ThenSwapped()
     {

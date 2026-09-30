@@ -26,3 +26,27 @@ Feature: A full-screen picture keeps its transport behind one set of dots
     Given a rainbow across the screen
     When the viewer plays it with "--transport bottom"
     Then the viewer's transport waits at the bottom of its picture
+
+  Scenario: A full-screen picture of a patch with no sound has no sound button
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    When the picture is given the whole window
+    Then the full-screen transport has no sound button
+
+  Scenario: A full-screen picture of a patch with sound has its sound button
+    Given a rainbow across the screen
+    And a 220 Hz sine is heard with it
+    And the patch is open in the editor
+    When the picture is given the whole window
+    Then the full-screen transport has a sound button
+
+  Scenario: The viewer offers no sound button for a patch with no sound
+    Given a rainbow across the screen
+    When the viewer plays it
+    Then the viewer's transport has no sound button
+
+  Scenario: The viewer offers its sound button for a patch with sound
+    Given a rainbow across the screen
+    And a 220 Hz sine is heard with it
+    When the viewer plays it
+    Then the viewer's transport has a sound button

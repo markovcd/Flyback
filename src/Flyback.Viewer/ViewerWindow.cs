@@ -211,6 +211,7 @@ internal sealed class ViewerWindow : Window
             Muted = player.Muted,
             Paused = player.Paused,
             Sounding = player.Sounding,
+            HasSound = player.Patch.Reaches().Sound,
         };
 
         overlay.MuteClicked += () =>

@@ -146,6 +146,13 @@ public sealed class TransportOverlay : TuckedAway
         }
     }
 
+    /// <summary>Whether the patch has sound at all, without which there is no sound button.</summary>
+    public bool HasSound
+    {
+        get => muteButton.IsVisible;
+        set => muteButton.IsVisible = value;
+    }
+
     /// <summary>Whether there is sound to turn off.</summary>
     public bool Sounding
     {

@@ -460,6 +460,12 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             ? transport.VerticalAlignment
             : (Avalonia.Layout.VerticalAlignment?)null);
 
+    /// <summary>Whether the full-screen transport has a sound button, or null while it is not showing.</summary>
+    public bool? TransportHasSound => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+            ? transport.HasSound
+            : (bool?)null);
+
     /// <summary>Which edge of the full-screen picture the knobs wait at.</summary>
     public Avalonia.Layout.VerticalAlignment KnobsEdge => ReadWindow(open =>
         open.GetVisualDescendants().OfType<StageKnobs>().Single().VerticalAlignment);

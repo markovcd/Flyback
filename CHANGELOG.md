@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- The editor's status bar says how many times real time the sound renders at, and no longer counts modules and wires; a patch with no sound has no Volume on the toolbar, and the web viewer offers no volume and no render speed for one.
+- The editor's status bar says how many times real time the sound renders at, and no longer counts modules and wires; a patch with no sound has no Volume on the toolbar and no sound button over a full-screen picture, and the web viewer offers no volume and no render speed for one.
 - `flyback-cli save` saves a patch or a shipped preset as `.fbk`, `.fbks` or `.fbkb`, by the extension it is saved to.
 - A shared preset's card on the presets page has Play, opening it in the web viewer, beside Edit and Download.
 - The web editor's toolbar leads with the Flyback mark, back to the site, and the browser asks before leaving an edited patch; the web viewer's header shows the mark in place of its name.
