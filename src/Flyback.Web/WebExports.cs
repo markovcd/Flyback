@@ -293,15 +293,33 @@ public static partial class WebExports
     /// and answers the address they start at in the runtime's memory.
     /// </summary>
     [JSExport]
-    public static int Hear(int frames)
+    public static int Hear(int frames) => Render(frames, judged: true);
+
+    /// <summary>
+    /// Renders the next <paramref name="frames"/> frames of sound as <see cref="Hear"/> does,
+    /// for nobody to hear: a warm-up, which says nothing of how the sound keeps pace.
+    /// </summary>
+    [JSExport]
+    public static int Warm(int frames) => Render(frames, judged: false);
+
+    private static int Render(int frames, bool judged)
     {
         var span = Samples.Take(frames * 2);
 
         if (sound is null) span.Clear();
-        else sound.Hear(span);
+        else sound.Hear(span, judged);
 
         return Samples.Address;
     }
+
+    /// <summary>
+    /// Judges the chunks heard since the last look, at <paramref name="seconds"/> on the
+    /// worker's clock, and works the sound out a step lower when they keep falling behind;
+    /// <c>oversample</c> and <c>behind</c> in <see cref="Status"/> say what came of it.
+    /// </summary>
+    /// <param name="playing">Whether the sound is running; a stopped sound is not judged.</param>
+    [JSExport]
+    public static void Judge(double seconds, bool playing) => sound?.Judge(TimeSpan.FromSeconds(seconds), playing);
 
     /// <summary>
     /// Packs what the picture knows of the sound, its Meters' readings, and answers
@@ -427,7 +445,10 @@ public static partial class WebExports
     [JSExport]
     public static void Release() => sound?.Release();
 
-    /// <summary>The open half as JSON: its size, cost, how far the sound has got and how fast it renders.</summary>
+    /// <summary>
+    /// The open half as JSON: its size, cost, how far the sound has got, how fast it
+    /// renders, and how many chunks heard were timed and came late.
+    /// </summary>
     [JSExport]
     public static string Status()
     {
@@ -442,6 +463,9 @@ public static partial class WebExports
             status["speed"] = Math.Round(sound.Speed, 3);
             status["soundBackend"] = sound.Interpreted is null ? "javascript" : "interpreter";
             status["oversample"] = sound.Oversample;
+            status["behind"] = sound.Behind;
+            status["timed"] = sound.Timing.Timed;
+            status["late"] = sound.Timing.Late;
             status["interpreted"] = sound.Interpreted;
             status["stateLength"] = sound.StateLength;
             status["played"] = sound.Played;

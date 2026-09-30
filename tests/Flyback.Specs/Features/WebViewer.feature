@@ -18,6 +18,17 @@ Feature: The web viewer
     When it plays in the web viewer for 1 second worked out at 1 times the output rate
     Then its sound is the desktop's at that rate, to within one step of 16 bits
 
+  Scenario: The web viewer judges how its sound keeps pace by the chunks it plays, not its warm-up
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 1 second after a warm-up of 1 second
+    Then every chunk it played was timed, and none of the warm-up
+    And its sound is the desktop's to within one step of 16 bits
+
+  Scenario: A sound the web viewer keeps up with is left where it is
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 6 seconds worked out at 4 times the output rate, judging itself as it plays
+    Then it is still worked out at 4 times the output rate, and not said to be behind
+
   Scenario: A panel knob turns the sound in the browser as it does on the desktop
     Given the shipped preset "Vigil"
     When it plays in the web viewer for 1 second with its "fog" knob at 0

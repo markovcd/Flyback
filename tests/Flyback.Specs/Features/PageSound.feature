@@ -7,3 +7,4 @@ Feature: The editor in a page plays its sound
     When it plays in the web editor for 1 second, its Output's volume set to 0.2 by an edit at 0.5 seconds
     Then its sound is the desktop's through the same edit, to within one step of 16 bits
     And it is not the sound with nothing edited
+    And every chunk heard, before the edit and after, was timed

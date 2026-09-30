@@ -95,6 +95,35 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         ((int?)said!["oversample"]).ShouldBe(factor);
     }
 
+    [When("it plays in the web viewer for {float} second(s) after a warm-up of {float} second(s)")]
+    public void WhenPlayedAfterAWarmUp(float length, float warm) =>
+        Play(length, "--warm", warm.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+    [When("it plays in the web viewer for {float} second(s) worked out at {int} times the output rate, judging itself as it plays")]
+    public void WhenPlayedJudged(float length, int factor)
+    {
+        oversample = factor;
+        Play(length, "--oversample", factor.ToString(System.Globalization.CultureInfo.InvariantCulture), "--judge");
+    }
+
+    /// <summary>Every chunk of 1,024 frames the worker rendered to be heard, and only those, counted to how it keeps pace.</summary>
+    [Then("every chunk it played was timed, and none of the warm-up")]
+    [Then("every chunk heard, before the edit and after, was timed")]
+    public void ThenEveryChunkTimed()
+    {
+        var chunks = (long)Math.Ceiling(Math.Round(seconds * GlobalConstants.SampleRate) / 1024);
+
+        ((long?)said!["timed"]).ShouldBe(chunks);
+        ((long?)said["late"]).ShouldNotBeNull().ShouldBeLessThanOrEqualTo(chunks);
+    }
+
+    [Then("it is still worked out at {int} times the output rate, and not said to be behind")]
+    public void ThenKeptWhereItWas(int factor)
+    {
+        ((int?)said!["oversample"]).ShouldBe(factor, $"{said["late"]} of {said["timed"]} chunks came late");
+        ((bool?)said["behind"]).ShouldBe(false);
+    }
+
     [When("it plays in the web viewer for {float} second(s) with its {string} knob at {float}")]
     public void WhenPlayedWithAKnobTurned(float length, string knob, float value)
     {

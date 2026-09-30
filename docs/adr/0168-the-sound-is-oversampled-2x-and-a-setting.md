@@ -31,8 +31,13 @@ and never back up in a run: a quarter of two seconds' buffers late, and at least
 is one step, and a new factor plays three seconds before it is judged. The engine times
 each buffer of compiled sound against how long it plays for. A checkbox under the
 factor, on by default, allows it. Not while a take is recorded: a take is written whole
-whatever the speakers do, so it keeps the factor set, as a render does. The page always
-steps down, before it gives the sound up.
+whatever the speakers do, so it keeps the factor set, as a render does. The page's
+worker times its chunks and judges them by the same `OversampleStepDown`, always on;
+at 1× the rule says the sound is behind, which the web viewer answers by giving the
+sound up and the desktop ignores. A new factor in the page is a new script, which runs
+slow until the browser has warmed to it, so its chunks count only once it has played
+three seconds. An edit's script is not held back: repeated edits to Acid at 4× came
+with no late chunks, since a changed value leaves the script as it was.
 
 **A change of factor starts what the patch remembers anew.** Delay lines and rings are
 sized for the rate, so the engine swaps in a renderer at the new rate with the clock

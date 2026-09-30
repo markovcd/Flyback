@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Avalonia.Threading;
+using Flyback.Core.Render;
 
 namespace Flyback.App.Audio;
 
@@ -30,7 +31,7 @@ internal sealed class LiveOversample(IAudioEngine audio, Func<bool> enabled, Act
         // A take is written whole whatever the speakers do, so it keeps the factor it started at.
         var judged = audio.IsRunning && audio.Capture is null && enabled();
 
-        if (judge.Check(clock.Elapsed, judged, audio.Timing, from) is not { } lower) return;
+        if (judge.Check(clock.Elapsed, judged, audio.Timing, from).Lower is not { } lower) return;
 
         audio.Oversample = lower;
         say($"The sound kept falling behind at {from}×, so it is worked out at {lower}× now. Settings → Sound sets it back.");

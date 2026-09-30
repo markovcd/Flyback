@@ -7,6 +7,8 @@
 //   node hear.mjs --edit 0:before.fbk --edit 0.5:after.fbk
 //   node hear.mjs --presets
 //   node hear.mjs --preset "Sidebands" --oversample 1
+//   node hear.mjs --preset "Sidebands" --warm 3
+//   node hear.mjs --preset "Acid" --oversample 4 --judge --seconds 10
 //   node hear.mjs --preset "Duck" --seconds 1 --state duck.state
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
@@ -18,6 +20,10 @@
 // second; one at 0 stands for a preset or a file.
 // --oversample works the sound out at 1, 2 or 4 times the output rate, as the page does
 // once it has stepped down; left out, the default.
+// --warm renders that many seconds nobody hears before anything plays, as the page's worker
+// warms a script up before the first play, and starts again from the top as that play does.
+// --judge lets the sound judge whether it keeps pace every half second of it, as the page's
+// worker does every half second while it plays, stepping itself down or saying it is behind.
 // --state writes what the sound hands the picture once it has played, as the page's worker
 // packs it: the Meters' readings, then each Scope's and Analyzer's buffer, as raw floats.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
@@ -43,6 +49,8 @@ const { values, positionals } = parseArgs({
     out: { type: 'string' },
     state: { type: 'string' },
     oversample: { type: 'string' },
+    warm: { type: 'string' },
+    judge: { type: 'boolean' },
     presets: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
     note: { type: 'string', multiple: true, default: [] },
@@ -126,6 +134,12 @@ for (const turned of values.knob) {
 
 const chunk = 1024;
 const status = JSON.parse(web.Status());
+
+if (values.warm !== undefined) {
+  for (let at = 0; at < Number(values.warm) * status.sampleRate; at += chunk) web.Warm(chunk);
+  web.Seek(0);
+}
+
 const frames = Math.round(Number(values.seconds) * status.sampleRate);
 const sound = new Float32Array(frames * 2);
 
@@ -145,8 +159,16 @@ const strikes = values.note.flatMap(held => {
 
 for (const later of edits) later.at = Math.round(later.seconds * status.sampleRate);
 
+const judgeEvery = status.sampleRate / 2;
+let judgedAt = -Infinity;
+
 for (let at = 0; at < frames; at += chunk) {
   while (edits.length > 0 && edits[0].at <= at) edit();
+
+  if (values.judge && at - judgedAt >= judgeEvery) {
+    web.Judge(at / status.sampleRate, true);
+    judgedAt = at;
+  }
 
   while (strikes.length > 0 && strikes[0].at <= at) {
     const { note, down } = strikes.shift();

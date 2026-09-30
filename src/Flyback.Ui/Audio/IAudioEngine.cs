@@ -1,6 +1,7 @@
 using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.App.Audio;

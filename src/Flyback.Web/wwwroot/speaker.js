@@ -1,6 +1,7 @@
 // The sound half of the viewer, on a thread of its own: opens the patch's sound in a
-// runtime of its own, keeps the speaker's queue topped up, and tells the page what the
-// picture needs to know of the sound.
+// runtime of its own, keeps the speaker's queue topped up, works the sound out a step
+// lower when it keeps falling behind, and tells the page what the picture needs to know
+// of the sound.
 //
 // From the page: { open, width, height, opened }, { speaker: port }, { seek, generation },
 // { run }, { turn, value }, { strike, down } and { release }. To the page: { ready }, { opened, error, status, speed },
@@ -29,6 +30,9 @@ const WARM_UP = 3;
 /** The least time between two states sent to the page, and between two statuses. */
 const STATE_EVERY = 15;
 const STATUS_EVERY = 200;
+
+/** How often the sound judges whether it keeps pace, as the desktop's does: twice a second. */
+const JUDGE_EVERY = 500;
 
 const starting = (async () => {
   const runtime = await dotnet.create();
@@ -59,6 +63,7 @@ let warm = 0;
 let ahead = AHEAD;
 let toldAt = 0;
 let statusAt = 0;
+let judgedAt = -Infinity;
 
 /** How long the last packing of the picture's state took, in milliseconds. */
 let listening = 0;
@@ -80,9 +85,11 @@ let meters = 0;
 let watched = 0;
 
 function pump() {
-  if (edit !== null && flyback !== null) takeEdit();
+  if (flyback === null) return;
+  if (edit !== null) takeEdit();
+  judge();
   if (!running) warmUp();
-  if (!running || speaker === null || flyback === null) return;
+  if (!running || speaker === null) return;
 
   let rendered = false;
 
@@ -100,10 +107,19 @@ function pump() {
 
 /** Renders a chunk nobody hears, a chunk a call, until the script has had its warm-up. */
 function warmUp() {
-  if (flyback === null || warm <= 0) return;
+  if (warm <= 0) return;
 
-  flyback.Hear(CHUNK);
+  flyback.Warm(CHUNK);
   warm -= CHUNK / rate;
+}
+
+/** Lets the sound judge the chunks it rendered for the speaker, and step itself down; the page reads what came of it in the status. */
+function judge() {
+  const at = performance.now();
+  if (at - judgedAt < JUDGE_EVERY) return;
+
+  judgedAt = at;
+  flyback.Judge(at / 1000, running && speaker !== null);
 }
 
 /** Sends the page the Meters' readings, and now and then how the sound is doing. */

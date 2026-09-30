@@ -1,9 +1,8 @@
 // The editor's sound, for PageSound.cs: the web viewer's worker plays each edit, the web
 // viewer's worklet is the speaker, and how far the speaker has got is the clock. Until the
 // browser lets the page make a sound and the worker is up, the wall clock stands in, and
-// the sound joins where the picture is.
-
-import { Dropouts } from '../viewer/dropouts.js';
+// the sound joins where the picture is. The worker works the sound out a step lower
+// itself when it keeps falling behind; the editor never gives the sound up.
 
 const worker = new Worker('../viewer/speaker.js', { type: 'module' });
 
@@ -28,8 +27,6 @@ let played = 0;
 let starved = 0;
 let reportedAt = 0;
 
-/** How the sound is judged, as the web viewer judges it; the editor never gives the sound up. */
-const dropouts = new Dropouts();
 let wallStart = 0;
 let held = 0;
 
@@ -73,7 +70,6 @@ function report({ data }) {
   played = data.played;
   starved = data.starved;
   reportedAt = data.at;
-  judge();
 }
 
 function open() {
@@ -98,22 +94,12 @@ function open() {
   }).catch(reason => { failure = String(reason?.message ?? reason); });
 }
 
-/** Works the sound out a step lower when it keeps running dry, 2× to 1×; never back up. */
-function judge() {
-  const factor = soundStatus.oversample ?? 1;
-  if (dropouts.judge(performance.now(), starved, factor) !== 'lower') return;
-
-  worker.postMessage({ oversample: factor / 2 });
-  soundStatus.oversample = factor / 2;
-}
-
 /** Hands the clock to the speaker once everything it needs is there, starting it where the picture is. */
 function join() {
   if (heard || !running || !ready || !attached || failure !== null || context.state !== 'running') return;
 
   const at = time();
   heard = true;
-  dropouts.settle(performance.now(), starved);
   seek(at);
   worker.postMessage({ run: true });
 }
@@ -181,7 +167,7 @@ export function oversample(factor) {
   soundStatus.oversample = factor;
 }
 
-/** The factor the worker last said it plays at, or 0 before it has said. */
+/** The factor the worker last said it plays at, lowered by it or not, or 0 before it has said. */
 export function oversampleNow() {
   return soundStatus.oversample ?? 0;
 }
@@ -235,6 +221,8 @@ export function status() {
     backend: soundStatus.soundBackend ?? null,
     interpreted: soundStatus.interpreted ?? null,
     oversample: soundStatus.oversample ?? null,
+    timed: soundStatus.timed ?? 0,
+    late: soundStatus.late ?? 0,
     volume: loudness,
     handed,
     meters: Array.from(readings.values.subarray(0, metered)),

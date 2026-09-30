@@ -1,4 +1,4 @@
-using Flyback.App.Audio;
+using Flyback.Core.Render;
 using Reqnroll;
 using Shouldly;
 
@@ -17,6 +17,7 @@ public sealed class OversampleStepDownSteps
     private long late;
     private long played;
     private int factor;
+    private bool behind;
 
     [Given("live sound worked out at {int} times the output rate")]
     public void GivenLive(int at)
@@ -39,8 +40,17 @@ public sealed class OversampleStepDownSteps
         Play(seconds, lateEvery: 0);
     }
 
+    [When("it is made anew")]
+    public void WhenMadeAnew() => judge.Renewed(now);
+
     [Then("it is worked out at {int} times the output rate")]
     public void ThenAt(int at) => factor.ShouldBe(at);
+
+    [Then("it is said to be behind, with no lower rate to go to")]
+    public void ThenBehind() => behind.ShouldBeTrue();
+
+    [Then("it is not said to be behind")]
+    public void ThenNotBehind() => behind.ShouldBeFalse();
 
     /// <summary>A buffer a tick, looked at twice a second as the editor looks.</summary>
     private void Play(int seconds, int lateEvery)
@@ -58,6 +68,9 @@ public sealed class OversampleStepDownSteps
 
     private void Look()
     {
-        if (judge.Check(now, playing: true, new SoundTiming(timed, late), factor) is { } lower) factor = lower;
+        var verdict = judge.Check(now, playing: true, new SoundTiming(timed, late), factor);
+
+        if (verdict.Lower is { } lower) factor = lower;
+        behind |= verdict.Behind;
     }
 }

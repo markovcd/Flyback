@@ -1,4 +1,4 @@
-namespace Flyback.App.Audio;
+namespace Flyback.Core.Render;
 
 /// <summary>
 /// Whether the live sound should be worked out at a lower oversampling because it keeps
@@ -6,9 +6,10 @@ namespace Flyback.App.Audio;
 /// </summary>
 /// <remarks>
 /// Judged over <see cref="Window"/> of buffers: a quarter of them late, and at least
-/// <see cref="FewestLate"/>, lowers the factor a step. After a step it waits
-/// <see cref="Settle"/> before judging again, since a new rate starts with a new renderer.
-/// Only a person raises it again, through Settings → Sound.
+/// <see cref="FewestLate"/>, lowers the factor a step, or at 1× says the sound is behind.
+/// After a step it waits <see cref="Settle"/> before judging again, since a new rate starts
+/// with a new renderer. A sound made anew by <see cref="Renewed"/> has nothing counted until
+/// it has settled. Only a person raises the factor again, through Settings → Sound.
 /// </remarks>
 public sealed class OversampleStepDown
 {
@@ -31,35 +32,50 @@ public sealed class OversampleStepDown
     /// <summary>When those buffers are judged: a window on, or after a step, once the new factor has settled.</summary>
     private TimeSpan due;
 
+    /// <summary>Until when the buffers of a sound made anew count for nothing.</summary>
+    private TimeSpan settled;
+
     /// <summary>
     /// Looks at the buffers timed since the last look, and answers the factor to play at
-    /// now, or null to leave it where it is.
+    /// now, or that the sound is behind with none lower to go to.
     /// </summary>
     /// <param name="now">Time since some fixed moment.</param>
     /// <param name="playing">Whether the sound is running; a stopped sound is not judged, and its buffers start a new window.</param>
-    public int? Check(TimeSpan now, bool playing, SoundTiming timing, int oversample)
+    public StepDownVerdict Check(TimeSpan now, bool playing, SoundTiming timing, int oversample)
     {
-        if (!playing || !counting)
+        if (!playing || !counting || now < settled)
         {
             Start(now, timing, Window);
-            return null;
+            return StepDownVerdict.Keep;
         }
 
-        if (now < due) return null;
+        if (now < due) return StepDownVerdict.Keep;
 
         var timed = timing.Timed - seen.Timed;
         var late = timing.Late - seen.Late;
 
-        if (late < FewestLate || late < timed * LateShare || oversample <= 1)
+        if (late < FewestLate || late < timed * LateShare)
         {
             Start(now, timing, Window);
-            return null;
+            return StepDownVerdict.Keep;
+        }
+
+        if (oversample <= 1)
+        {
+            Start(now, timing, Window);
+            return new StepDownVerdict(null, Behind: true);
         }
 
         Start(now, timing, Settle);
 
-        return oversample / 2;
+        return new StepDownVerdict(oversample / 2, Behind: false);
     }
+
+    /// <summary>
+    /// The sound was made anew at <paramref name="now"/>, as a new script that runs slow
+    /// until the engine has warmed to it: its buffers count once <see cref="Settle"/> has passed.
+    /// </summary>
+    public void Renewed(TimeSpan now) => settled = now + Settle;
 
     /// <summary>Counts from <paramref name="now"/> on, judged once <paramref name="wait"/> has passed.</summary>
     private void Start(TimeSpan now, SoundTiming timing, TimeSpan wait)

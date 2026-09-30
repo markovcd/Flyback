@@ -63,10 +63,13 @@ played, not the ones rendered, and shows a turned knob once the sound has caught
 **A patch whose sound cannot keep up plays its picture alone and says so.** While
 the page waits to play, the worker renders three seconds nobody hears, so the
 engine has optimized the script before the first play seeks back to the start. The
-script is then judged by the dropouts it makes once three seconds have let it
-settle: more than twenty in two seconds and the sound is worked out a step lower
-([0168](0168-the-sound-is-oversampled-2x-and-a-setting.md)), and at 1× the picture takes the
-wall clock. The web editor steps down the same way and never gives the sound up.
+worker then judges its own sound by the desktop's rule, on the chunks it renders for
+the speaker that take longer than they play for: a step lower when they keep coming
+late ([0168](0168-the-sound-is-oversampled-2x-and-a-setting.md)), and when they still do at 1×
+the page hands the picture the wall clock. Dropouts, the speaker's queue running dry,
+are counted and shown but never judged, since a busy tab or a late message runs it dry
+too and a lower factor mends neither. The web editor's worker steps down the same way,
+and the editor never gives the sound up.
 The interpreter is judged on opening, by a fifth of a second timed on a copy, below
 1.2 times real time. Either way a click on the speaker plays the sound anyway.
 

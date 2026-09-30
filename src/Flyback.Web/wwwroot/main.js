@@ -4,7 +4,6 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
-import { Dropouts } from './dropouts.js';
 
 const params = new URLSearchParams(location.search);
 const looped = params.has('loop');
@@ -139,7 +138,13 @@ function report({ data }) {
 /** Hands the picture the Meters' readings the worker packed, when they are of the patch open now. */
 function hearState({ opened, state, status }) {
   if (opened !== opens) return;
-  if (status) soundStatus = status;
+
+  if (status) {
+    const was = soundStatus;
+    soundStatus = status;
+    follow(was);
+  }
+
   if (info === null || state.length === 0 || state.length !== info.stateLength) return;
 
   const at = flyback.Heard() / 4;
@@ -218,7 +223,6 @@ async function play() {
   heard = soundAllowed && (await startSound());
 
   if (heard && !carryOn) seek(pausedAt);
-  if (heard) dropouts.settle(performance.now(), starved);
 
   held = soundAllowed && !heard ? 'The browser holds the sound back until the page is clicked, so the picture plays alone.' : null;
 
@@ -256,34 +260,25 @@ function stop() {
 /** Whether the sound was asked for after it was found too slow, which is never taken back. */
 let insisted = false;
 
-/**
- * How the JavaScript sound is judged once it plays: by the dropouts it makes once the
- * engine has optimized it, which a timing taken on opening is too early to see.
- */
-const dropouts = new Dropouts();
-
 function tooSlow(speed) {
   soundAllowed = false;
   warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
 }
 
-/** Works the sound out a step lower when it keeps running dry, and hands the picture the clock when 1× does too. */
-function judge() {
+/**
+ * Says so when the worker, which judges its own sound once it plays, has worked it out a
+ * step lower since <was>, and hands the picture the clock when it falls behind at 1× too.
+ */
+function follow(was) {
   if (!playing || !heard || insisted) return;
 
-  const factor = soundStatus.oversample ?? 1;
-  const verdict = dropouts.judge(performance.now(), starved, factor);
-
-  // A step lower first; only a sound that keeps dropping out at 1× gives way to the picture.
-  if (verdict === 'lower') {
-    speaker.postMessage({ oversample: factor / 2 });
-    soundStatus.oversample = factor / 2;
-    warning = `The sound kept falling behind at ${factor}×, so it is worked out at ${factor / 2}× now.`;
-    paint();
-  } else if (verdict === 'lowest') {
+  if (soundStatus.behind) {
     stop();
     tooSlow(soundStatus.speed ?? 0);
     play();
+  } else if (soundStatus.oversample < was.oversample) {
+    warning = `The sound kept falling behind at ${was.oversample}×, so it is worked out at ${soundStatus.oversample}× now.`;
+    paint();
   }
 }
 
@@ -877,7 +872,7 @@ if (back.origin === location.origin) ui.back.href = back.href;
 // Offered only where the site was built with the editor beside the viewer.
 fetch(editorUrl(), { method: 'HEAD' }).then(response => { ui.edit.hidden = !response.ok; }, () => {});
 
-setInterval(() => { judge(); paint(); }, 250);
+setInterval(paint, 250);
 requestAnimationFrame(frame);
 
 if (params.has('file')) {

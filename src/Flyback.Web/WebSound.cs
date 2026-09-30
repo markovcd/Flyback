@@ -28,6 +28,7 @@ internal sealed class WebSound : IDisposable
     private readonly Stopwatch rendering = new();
     private readonly VoicePool typed = new(MidiSources.Keyboard);
     private readonly LiveValues[] blocks;
+    private readonly SoundPace pace;
 
     private double rendered;
 
@@ -38,7 +39,8 @@ internal sealed class WebSound : IDisposable
 
     /// <summary>
     /// The sound of an edited patch, playing on from <paramref name="after"/> with its
-    /// clock and what it remembers, as the editor's engine carries them through an edit.
+    /// clock, what it remembers and how it has kept pace, as the editor's engine carries
+    /// them through an edit.
     /// </summary>
     public WebSound(Opened opened, float aspect, WebSound? after)
         : this(opened, aspect, withPicture: false, after)
@@ -62,6 +64,7 @@ internal sealed class WebSound : IDisposable
         speakers.Aspect = aspect;
         speakers.Prepare(sound);
         memory = speakers.DelayMemoryFor(sound, after?.memory);
+        pace = after?.pace ?? new SoundPace();
 
         heard = new LiveValues(sound.LiveInputs);
         shown = picture is null ? LiveValues.None : new LiveValues(picture.LiveInputs);
@@ -87,20 +90,41 @@ internal sealed class WebSound : IDisposable
         get => speakers.Oversample;
         set
         {
-            if (value == speakers.Oversample) return;
-
-            var at = speakers.Time;
-
-            script?.Dispose();
-
-            speakers = new AudioRenderer(speakers.SampleRate, value) { Aspect = speakers.Aspect };
-            speakers.Prepare(sound);
-            speakers.SeekTo(at);
-            memory = speakers.DelayMemoryFor(sound);
-
-            script = JsSound.Create(sound, memory, heard, speakers, out var why);
-            Interpreted = why;
+            if (value != speakers.Oversample) WorkOutAt(value);
         }
+    }
+
+    /// <inheritdoc cref="SoundPace.Timing"/>
+    public SoundTiming Timing => pace.Timing;
+
+    /// <inheritdoc cref="SoundPace.Behind"/>
+    public bool Behind => pace.Behind;
+
+    /// <summary>
+    /// Judges the chunks heard since the last look, and works the sound out a step lower
+    /// when they keep falling behind.
+    /// </summary>
+    /// <inheritdoc cref="OversampleStepDown.Check" path="/param"/>
+    public void Judge(TimeSpan now, bool playing)
+    {
+        if (pace.Judge(now, playing, Oversample) is { } lower) WorkOutAt(lower);
+    }
+
+    /// <summary>Plays on at <paramref name="factor"/>, on a new script that is left to settle before it is judged.</summary>
+    private void WorkOutAt(int factor)
+    {
+        var at = speakers.Time;
+
+        script?.Dispose();
+
+        speakers = new AudioRenderer(speakers.SampleRate, factor) { Aspect = speakers.Aspect };
+        speakers.Prepare(sound);
+        speakers.SeekTo(at);
+        memory = speakers.DelayMemoryFor(sound);
+
+        script = JsSound.Create(sound, memory, heard, speakers, out var why);
+        Interpreted = why;
+        pace.Renew();
     }
 
     /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
@@ -127,8 +151,10 @@ internal sealed class WebSound : IDisposable
     public int StateLength => picture is null ? 0 : SoundState.Length(picture);
 
     /// <summary>Fills <paramref name="interleavedStereo"/> with the next stretch of sound.</summary>
-    public void Hear(Span<float> interleavedStereo)
+    /// <param name="judged">Whether the chunk is heard, and so counts to how the sound keeps pace; a warm-up's is not.</param>
+    public void Hear(Span<float> interleavedStereo, bool judged)
     {
+        var started = rendering.Elapsed;
         rendering.Start();
 
         if (script is not null) script.Render(interleavedStereo);
@@ -136,7 +162,10 @@ internal sealed class WebSound : IDisposable
 
         rendering.Stop();
 
-        rendered += interleavedStereo.Length / 2.0 / speakers.SampleRate;
+        var plays = interleavedStereo.Length / 2.0 / speakers.SampleRate;
+        rendered += plays;
+
+        if (judged) pace.Count(rendering.Elapsed - started, TimeSpan.FromSeconds(plays));
     }
 
     /// <summary>
