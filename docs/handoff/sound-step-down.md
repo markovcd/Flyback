@@ -84,3 +84,72 @@ Each step lands whole on its own.
 - The threshold: speed below some margin over 1× for some seconds, or a dropout count,
   or both. Step 3's numbers from a slow machine should decide it.
 - Whether the step down needs an ADR amendment to 0023, which states 4× as the rate.
+
+## Spike, 2026-09-30: is 4× needed at all?
+
+Measured on `main` at `c7f0c9d6` with `flyback-cli render --oversample 1|2|4` (on the
+`claude/sound-step-down` branch, not landed), every shipped preset rendered for 8 s at
+each rate, and test tones analyzed in numpy. Not listened to by a person.
+
+**Cost is linear in the rate.** 60 s of sound on this machine (i5-14600KF), start-up
+subtracted:
+
+| Preset | 4× | 2× | 1× |
+|---|---|---|---|
+| Whole band | 3.3× real time | 6.5× | 13.1× |
+| Acid | 3.2× | 6.2× | 12.8× |
+| Beat you can see | 25× | 44× | 102× |
+
+In a page, where Whole band has about 2.0× at 4×, 2× would give it about 4×.
+
+**The decimator is better at 2× than at 4×.** Its 64 taps are fixed, so at 4× the
+transition band is twice as wide in hertz:
+
+| | 2× | 4× |
+|---|---|---|
+| Response at 18 kHz | −0.02 dB | −0.9 dB |
+| Response at 20 kHz | −1.2 dB | −3.0 dB |
+| 26 kHz image, folds to 22 kHz | −78 dB | −25 dB |
+| 28 kHz image, folds to 20 kHz | −77 dB | −43 dB |
+
+At 4× the top octave is dulled and 24–30 kHz leaks back down; at 2× neither happens.
+
+**Aliasing from inside the patch rises as the theory says.** Inharmonic energy below
+20 kHz, in dB under the signal:
+
+| Signal | 4× | 2× | 1× |
+|---|---|---|---|
+| saw 110 Hz | −39 | −33 | −27 |
+| saw 1,234 Hz | −29 | −23 | −16 |
+| saw 3,322 Hz | −24 | −18 | −12 |
+| square 1,234 Hz | −31 | −24 | −18 |
+| hard clip, sine 1,234 Hz | −61 | −48 | −36 |
+| Drive 8, sine 1,234 Hz | −76 | −58 | −38 |
+| Drive 8, sine 3,322 Hz | −49 | −38 | −24 |
+
+A naive saw or square loses about 6 dB per halving and is not clean even at 4×: a high
+saw sits at −24 dB. Saturation loses 10–18 dB per halving but stays at −48 to −58 dB at
+mid pitches, under the note itself.
+
+**What the presets do at 2×.** Overall level moves under 0.3 dB for all but Phase
+(+1.7 dB), Loop (−0.7) and Echo chamber (−0.6). By band:
+
+- Most presets, pure tones and filtered voices, move under 1 dB in every band.
+- Noise is louder: Acid, Beat you can see, Euclid kit, Struck, Warehouse, First beat,
+  No Sense Dub, Vigil and Whole band gain about 3 dB where their hats and hiss are
+  (6 dB at 1×). Noise is made once an evaluation, so its power spreads over the whole
+  internal band and less of it is filtered away at a lower rate.
+- Hand-built loops change color: Loop loses 1–5.6 dB above 1 kHz, Echo chamber moves
+  0.6 dB in one band, Mycelium gains 5 dB below 125 Hz, Phase about 2.8 dB across it.
+
+**What 2× would cost, then:** 6 dB more aliasing on raw saws and squares, audible on
+an exposed bright lead and masked in a mix; hats and hiss 3 dB louder unless Noise is
+scaled by the rate; a few presets built on per-evaluation loops sounding different.
+**What it would buy:** half the sound's cost everywhere, and a cleaner top octave.
+
+**Recommendation.** One rate everywhere, so what is heard is what is exported: 2×,
+with Noise's level scaled so it holds (`sqrt(4 / oversample)`), and the few presets
+that change checked by ear rather than made rate-independent. 4× stays available as
+`render --oversample 4` for a cleaner export when someone asks for it. The step down
+in the plan above then starts at 2× and has one step, to 1×, which is the one that
+changes presets audibly. This replaces ADR-0023's 4× and needs an ADR of its own.
