@@ -1,6 +1,6 @@
 ---
 name: performance
-description: Use when a Flyback patch chokes, an export or a take is slow, or before proposing any work to make the engine faster (sound, picture, compile, IL, export) - the open leads, what has been measured and ruled out, and how to measure without fooling yourself.
+description: Use when a Flyback patch chokes, an export or a take is slow, before proposing any work to make the engine faster (sound, picture, compile, IL, export), or to tell whether a change made anything faster or slower - the open leads, what has been measured and ruled out, comparing two builds with scripts/bench-compare.sh, and how to measure without fooling yourself.
 ---
 
 # Performance
@@ -39,7 +39,7 @@ About 10 ms a 1080p frame for Whole band in `flyback-cli render`, readback, swiz
 
 ### 3. The web viewer's sound
 
-`JsEmitter`'s script, AOT build, under Node 18 (ADR-0160): Whole band 2.0x real time, Acid and Mycelium about 1.6x, Warehouse (4,346 ops) and No Sense Dub about 1.2x, Slow weather 1.1x; about 1 ns an op an evaluation. Chrome is faster than Node's older V8. The AOT interpreter it replaced was 23 ns an op a sample, a quarter of real time for Whole band. After remembering each power's last operands, no function takes more than 7%: `advance`, `readLine`, `noise3` and `hash` lead.
+`JsEmitter`'s script, AOT build, under Node 18 (ADR-0160), at 4x oversampling (the default 2x is twice these): Whole band 2.0x real time, Acid and Mycelium about 1.6x, Warehouse (4,346 ops) and No Sense Dub about 1.2x, Slow weather 1.1x; about 1 ns an op an evaluation. Chrome is faster than Node's older V8. The AOT interpreter it replaced was 23 ns an op a sample, a quarter of real time for Whole band. After remembering each power's last operands, no function takes more than 7%: `advance`, `readLine`, `noise3` and `hash` lead.
 
 - **Done:** the sound renders in a worker of its own (`speaker.js`), with nothing shared; the page gets the Meters' readings by message. In Chrome, AOT, on a busy machine, Whole band held 1.6x with no dropouts and Warehouse 1.3 to 1.5x with some. A cold script runs Warehouse at 0.6x, so the worker warms it up for three seconds before the first play. What is left is the script's own speed: `advance`, `readLine`, `noise3` and `hash`.
 - **Measure:** `node artifacts/web/hear.mjs --preset X --seconds 8` prints `speed`; `--cpu-prof` on the same line gives a profile. A 0.2 s timing on a freshly made script is before V8 has optimized it and reads low.
@@ -58,10 +58,20 @@ Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of
 - **Baking the knobs in for the web viewer:** Warehouse is 4,337 ops baked against 4,346 played. Not what makes a patch heavy.
 - **A faster DCT or bit writer in `JpegWriter`:** micro. The frame is already spread across cores, and what stays sequential is the Huffman pass, which a faster DCT does not touch.
 
+## Comparing two builds
+
+`./scripts/bench-compare.sh BASE [HEAD]` answers whether a change made anything faster or slower. It builds each side in a worktree of its own under `$TMPDIR/flyback-bench` (kept, so the same base builds once), runs `Flyback.Core.Benchmarks` on both, alternating round by round, and with `--web "Whole band,Acid"` plays those presets through each side's AOT web viewer under Node. A change is called only when it passes `--threshold` (5%) and a Mann-Whitney test says the two sets of timings differ; allocations per operation are compared exactly. HEAD `.` is the working tree, uncommitted edits included, so a change can be checked before it is committed. `--json` for a script, `--clean` to drop the kept worktrees, `--help` for the rest.
+
+- **Filter it.** All 65 cases take about nine minutes a side a round; `--filter '*AudioBenchmarks*'` is a minute. A web build is ten minutes a side the first time.
+- **Rounds are samples.** The benchmarks give BenchmarkDotNet's iterations for every round; the web viewer gives one number a run, so `--web-rounds` below 4 can never call a change.
+- **In process only.** BenchmarkDotNet's default toolchain looks for the project across the whole clone, finds a copy in each of `.claude/worktrees`, and refuses to run. The script passes `--inProcess`; run the exe by hand the same way.
+- **A number that moves between runs is the machine first.** A leftover `node` from a stopped run once made the old build read 1.27x where it measures 1.96x. The alternating rounds and the test are what keep that from reading as a change.
+- **Timings never gate.** The gate takes what is exact: a method the JIT gave up on, an allocation on the sound's thread, a script made where one was retuned, an op count over its budget. A slowdown found here earns a test of its cause, not a threshold on its time.
+
 ## Measuring without fooling yourself
 
 - **Say which backend a number came from.** `flyback-cli render` draws on the GPU unless given `--processor`, and on the processor it runs IL unless given `--interpreted`; a build from before a0445d9 is always interpreted. ADR-0076's tables were read as "IL gains less on big patches" for a week when the JIT had in fact given up on them.
-- **Time both arms in one process**, interpreted and IL, old and new, over the same patch. Across processes the machine's clocks move the numbers by more than most changes do. For a rewrite of a class, `git show HEAD:<file>` into a scratch copy under another name and run both side by side; the same harness checks the bytes.
+- **Time both arms in one process** where they can share one, interpreted and IL, old and new, over the same patch. Across processes the machine's clocks move the numbers by more than most changes do, which is why `bench-compare.sh` alternates its rounds and tests the difference rather than reading two numbers. For a rewrite of a class, `git show HEAD:<file>` into a scratch copy under another name and run both side by side; the same harness checks the bytes.
 - **Split before you guess.** Stopwatches around each stage of one frame found the JPEG costing as much as the picture, which the encoder's own comment said it never would.
 - **Ask the JIT what it did:** `DOTNET_JitStdOutFile=jit.txt DOTNET_JitDisasmSummary=1` works on a Release runtime and lists every method with its tier. `switched MinOpts` next to `CompiledPatch:Whole` means the method was too large to optimize.
 - **Real patches need plugins.** `Flyback.Core.Benchmarks` references no plugins, so a user's patch will not open there. The quickest harness is a throwaway test in `Flyback.Plugins.Tests`, which loads the shipped plugins and carries the preset site's defaults (Tranquility among them): see `PresetSiteDefaultsTests.Open`. Run it with the test exe's `-method` and `-showliveoutput`. `src/Flyback.Cli/bin` has no plugins folder, so time the CLI from `dist/<rid>` after `release.sh`. Internal types (`IlEmitter`, `OpShape`) are reached by reflection.

@@ -109,6 +109,12 @@ To measure how much of the code the tests run, into `coverage/` with a table per
 ./scripts/coverage.sh
 ```
 
+To find out whether a change made anything faster or slower, measured against the commit before it on this machine, benchmarks and the web viewer's sound alike, with a change called only where the difference is real:
+
+```bash
+./scripts/bench-compare.sh HEAD~1 HEAD --filter '*AudioBenchmarks*' --web "Whole band"
+```
+
 ## Releases and updates
 
 The Release workflow (`.github/workflows/release.yml`) builds every platform, zips each one, and publishes them with a `SHA256SUMS` file and its signature, `SHA256SUMS.sig`. The app only installs an update when that signature checks out against the public key in `src/Flyback.Editor/Updates/release-key.pem`. The private key is kept in the repository secret `RELEASE_SIGNING_KEY`, and the workflow fails before it builds anything if the secret is missing or doesn't match the committed public key. It also fails before building if `CHANGELOG.md` has no `## X.Y.Z` heading for the version being released, since that heading is what the "What's new" window reads. [ADR-0088](docs/adr/0088-a-release-installs-itself-at-the-next-start.md) explains the design. The same key signs the packages of the plugins the preset site starts with and hands out, Figures, Fractals and Easy among them, which no release carries ([ADR-0141](docs/adr/0141-the-preset-site-starts-with-a-plugin-its-build-packs-and-the-release-key-signs.md)).
