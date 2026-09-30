@@ -129,11 +129,13 @@ internal static class EditorServices
         services.AddSingleton<IFocus, WindowFocus>();
         services.AddSingleton<IClose, WindowClose>();
         services.AddSingleton<ITitle, WindowTitle>();
+        services.AddSingleton<IViewer, NoViewer>();
         services.AddPart<EditState>();
         services.AddPart<SiteAccess>();
         services.AddPart<Playback>();
         services.AddPart<RecordingState>();
         services.AddPart<PatchFiles>();
+        services.AddPart<PatchViewing>();
         services.AddPart<UnsavedWork>();
         services.AddPart<PatchOpening>();
         services.AddPart<WorkRecovery>();

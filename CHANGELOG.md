@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.
 - The web viewer plays the sound of a patch whose picture is a Scope or an Analyzer, and says it cannot draw the picture, rather than showing a flat line.
 - Every shipped preset carries tags, shown and searched on the presets page and in the gallery.
 - A phone's screen stays on while the web viewer plays full screen.

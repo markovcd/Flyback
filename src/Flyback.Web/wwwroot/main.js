@@ -33,7 +33,7 @@ const VOLUME_KEPT = 'flyback-viewer-volume';
 
 const $ = id => document.getElementById(id);
 const ui = {
-  file: $('file'), size: $('size'), back: $('back'),
+  file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), undrawn: $('undrawn'), cover: $('cover'), status: $('status'),
@@ -78,6 +78,9 @@ let name = '';
 
 /** Opens the patch on screen again at a size, which is how a new resolution takes. */
 let opener = null;
+
+/** What the open patch came from, for the editor: a preset's name, an address, or a file's bytes. */
+let source = null;
 
 /** Whether the seek bar is held, which is when the playhead leaves it alone. */
 let dragging = false;
@@ -519,6 +522,8 @@ async function openPreset(preset) {
     return;
   }
 
+  source = { preset };
+
   await open({ picture: (w, h) => flyback.OpenFile(file, bytes, w, h, 'picture'), sound: { file, bytes } }, preset);
 }
 
@@ -536,7 +541,55 @@ async function openUrl(url, name) {
     return;
   }
 
-  await openBytes(name ?? url.split('/').pop().split('?')[0], new Uint8Array(await response.arrayBuffer()));
+  const file = name ?? url.split('/').pop().split('?')[0];
+  const bytes = new Uint8Array(await response.arrayBuffer());
+
+  source = { url: new URL(url, location.href).href, file, bytes };
+  await openBytes(file, bytes);
+}
+
+/** Opens a file dropped or picked here, which only this page has. */
+async function openLocal(file) {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  source = { file: file.name, bytes };
+  await openBytes(file.name, bytes);
+}
+
+/** The editor's address, beside this page's folder. */
+const editorUrl = () => new URL('../editor/', location.href);
+
+/**
+ * Opens the patch in the editor. Back to the editor that sent it where that is still open,
+ * as it was left; here for a preset or an address; in a tab of its own for bytes only this page has.
+ */
+function edit() {
+  if (source === null) return null;
+
+  if (params.get('from') === 'editor' && window.opener && !window.opener.closed) {
+    window.opener.focus();
+    window.close();
+    return 'editor';
+  }
+
+  const url = editorUrl();
+
+  if (source.preset !== undefined) {
+    url.search = new URLSearchParams({ preset: source.preset });
+    location.href = url.href;
+    return url.href;
+  }
+
+  // A blob is its page's, so bytes only this page has go to a tab that leaves this one open.
+  const here = source.url !== undefined && !source.url.startsWith('blob:');
+  const asked = new URLSearchParams({ file: here ? source.url : URL.createObjectURL(new Blob([source.bytes])), name: source.file });
+  if (params.has('title')) asked.set('title', params.get('title'));
+  url.search = asked;
+
+  if (here) location.href = url.href;
+  else window.open(url.href, '_blank');
+
+  return url.href;
 }
 
 /** Draws and plays at <w>×<h> from here on, carrying on from where the patch is. */
@@ -610,6 +663,7 @@ function paint() {
   const ready = info !== null;
 
   ui.play.disabled = ui.rewind.disabled = ui.mute.disabled = ui.seek.disabled = !ready;
+  ui.edit.disabled = source === null;
   if (ready && !dragging) ui.seek.value = now();
   ui.play.textContent = playing ? '⏸' : '▶';
   ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
@@ -689,6 +743,7 @@ ui.rewind.onclick = () => { seek(0); paint(); };
 ui.mute.onclick = toggleMute;
 ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
+ui.edit.onclick = edit;
 ui.canvas.ondblclick = toggleFullscreen;
 ui.size.onchange = () => resize(...ui.size.value.split('x').map(Number));
 
@@ -698,14 +753,14 @@ ui.seek.oninput = () => { seek(Number(ui.seek.value)); paint(); };
 
 ui.file.onchange = async () => {
   const file = ui.file.files[0];
-  if (file) await openBytes(file.name, new Uint8Array(await file.arrayBuffer()));
+  if (file) await openLocal(file);
 };
 
 document.addEventListener('dragover', event => event.preventDefault());
 document.addEventListener('drop', async event => {
   event.preventDefault();
   const file = event.dataTransfer.files[0];
-  if (file) await openBytes(file.name, new Uint8Array(await file.arrayBuffer()));
+  if (file) await openLocal(file);
 });
 
 document.addEventListener('keyup', event => typed(event, false));
@@ -766,6 +821,7 @@ window.flyback = {
     return found !== undefined;
   },
   snapshot: () => ui.canvas.toDataURL('image/png'),
+  edit,
   still,
 };
 
@@ -801,6 +857,9 @@ const presets = window.flyback.presets().map(preset => preset.name);
 // Back to the page that sent it here, the presets page by default, and never anywhere off this site.
 const back = new URL(params.get('back') ?? 'presets.html', new URL('../', location.href));
 if (back.origin === location.origin) ui.back.href = back.href;
+
+// Offered only where the site was built with the editor beside the viewer.
+fetch(editorUrl(), { method: 'HEAD' }).then(response => { ui.edit.hidden = !response.ok; }, () => {});
 
 setInterval(() => { judge(); paint(); }, 250);
 requestAnimationFrame(frame);

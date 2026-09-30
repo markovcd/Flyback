@@ -318,8 +318,7 @@ internal sealed class PatchFiles
 
             // The conversation goes inside, since a bundle is the whole of the
             // document wherever it is taken — ADR-0072.
-            packing = PatchBundle.Write(
-                packed, editor.History.Patch, Bytes, plugins.Modules, conversation.ConversationToSave());
+            packing = Pack(packed);
 
             packed.Position = 0;
 
@@ -345,6 +344,10 @@ internal sealed class PatchFiles
             return false;
         }
     }
+
+    /// <summary>Writes the patch as it stands, with everything it names, into <paramref name="archive"/> as a bundle.</summary>
+    public BundleReport Pack(Stream archive) =>
+        PatchBundle.Write(archive, editor.History.Patch, Bytes, plugins.Modules, conversation.ConversationToSave());
 
     /// <summary>
     /// Writes what an open bundle is carrying into <paramref name="folder"/>, under

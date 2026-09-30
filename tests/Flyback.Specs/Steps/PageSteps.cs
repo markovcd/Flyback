@@ -1,4 +1,8 @@
+using Flyback.App;
+using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Specs.Support;
+using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
 
@@ -8,8 +12,26 @@ namespace Flyback.Specs.Steps;
 [Binding]
 public sealed class PageSteps(Editor editor, PatchContext context)
 {
+    private readonly HandedViewer viewer = new();
+
     [Given("the editor is in a page")]
-    public void GivenInAPage() => editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true } };
+    public void GivenInAPage()
+    {
+        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true } };
+        editor.Services += services => services.AddSingleton<IViewer>(viewer);
+    }
+
+    [When("View it is pressed")]
+    public void WhenViewItPressed() => editor.PressPanelButton("view-it");
+
+    [Then("the viewer is handed the patch under the editor's title, as a bundle whose text has {string}")]
+    public void ThenViewerHanded(string text)
+    {
+        var (handed, bundle) = viewer.Handed.ShouldNotBeNull();
+
+        editor.Title.ShouldStartWith(handed);
+        PatchPrinter.Print(PatchBundle.Read(new MemoryStream(bundle)).Patch).ShouldContain(text);
+    }
 
     [Then("the toolbar has none of {string}")]
     public void ThenHasNone(string names) => editor.ToolbarButtons.ShouldNotContain(name => Names(names).Contains(name));

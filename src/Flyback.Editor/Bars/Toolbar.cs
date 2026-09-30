@@ -80,6 +80,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// <summary>Framing the whole patch, the other thing a hand has no key for. Shown with <see cref="Add"/>.</summary>
     public Button Frame { get; } = ToolbarButtons.Drawn("frame", Glyphs.Frame(), "Bring the whole patch into view  (Ctrl+F)");
 
+    /// <summary>Plays the patch as it stands in the viewer, in a tab of its own. Only in a page.</summary>
+    public Button Viewer { get; } = ToolbarButtons.Drawn("view-it", Glyphs.Viewer(), "View it: play this patch in the viewer, in a tab of its own. The editor pauses behind it.");
+
     public ToggleButton Code { get; } = ToolbarButtons.Toggle("code", Glyphs.Code(), "Show the patch as text  (F2)");
 
     public ToggleButton Knobs { get; } =
@@ -145,6 +148,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
         Add.Click += (_, _) => reactions.Raise(new ModuleAsked());
         Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
+        Viewer.Click += (_, _) => reactions.Raise(new ViewAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
         Side.IsChecked = true;
@@ -237,6 +241,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         transport.Children.Add(Seek.View);
         transport.Children.Add(Volume.View);
         if (full) transport.Children.Add(Record);
+        else transport.Children.Add(Viewer);
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session

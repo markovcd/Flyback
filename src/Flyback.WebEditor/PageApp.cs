@@ -36,6 +36,8 @@ internal sealed class PageApp : Application
             services.AddSingleton<IFocus, PageFocus>();
             services.AddSingleton<IClose, PageClose>();
             services.AddSingleton<IStillShelf, PageStills>();
+            services.AddSingleton<PageViewer>();
+            services.AddSingleton<IViewer>(sp => sp.GetRequiredService<PageViewer>());
             services.AddSingleton<IAudioEngine, PageSound>();
             services.AddSingleton(new AudioSetup(new SilentAudioDevice(), new PageSpeakers()));
         });

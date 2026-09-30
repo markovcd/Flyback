@@ -8,6 +8,13 @@ import * as speakers from './speakers.js';
 
 const runtime = await dotnet.create();
 
+/** The viewer's tab, by name, so View it again replaces what it shows rather than opening another. */
+const VIEWER_TAB = 'flyback-viewer';
+
+/** The viewer's tab while it is open, and the blob it was last handed, which lives as long as this page. */
+let viewerTab = null;
+let viewed = null;
+
 runtime.setModuleImports('gl', gl);
 runtime.setModuleImports('speakers', speakers);
 runtime.setModuleImports('page', {
@@ -27,6 +34,21 @@ runtime.setModuleImports('page', {
   attachGl: canvas => gl.attach(canvas, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
   stillsUrl: () => new URL('../stills/', location.href).href,
+  openViewerTab: () => {
+    viewerTab = window.open('', VIEWER_TAB);
+    return viewerTab !== null;
+  },
+  view: (bytes, title) => {
+    if (viewed !== null) URL.revokeObjectURL(viewed);
+    viewed = URL.createObjectURL(new Blob([bytes]));
+
+    const url = new URL('../viewer/', location.href);
+    url.search = new URLSearchParams({ file: viewed, name: `${title}.fbkb`, title, from: 'editor' });
+    viewerTab.location.href = url.href;
+    viewerTab.focus();
+
+    return url.href;
+  },
 });
 
 const name = runtime.getConfig().mainAssemblyName;
@@ -48,6 +70,7 @@ globalThis.flyback = {
   text: () => exports.Text(),
   apply: text => exports.Apply(text),
   sound: () => speakers.status(),
+  view: () => exports.View(),
 };
 
 await runtime.runMain(name, []);

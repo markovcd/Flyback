@@ -4,6 +4,7 @@ using Flyback.App;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Gallery;
+using Flyback.App.Notices;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.WebEditor;
@@ -60,6 +61,15 @@ internal static partial class PageExports
         var said = Get<ReportLine>().History;
 
         return said.Count > 0 ? said[^1] : "Not opened.";
+    }
+
+    /// <summary>Presses View it; the viewer's address it opened, or null where the browser refused the tab.</summary>
+    [JSExport]
+    public static string? View()
+    {
+        Get<Reactions>().Raise(new ViewAsked());
+
+        return Get<PageViewer>().Opened;
     }
 
     /// <summary>The open patch as text in the language.</summary>
