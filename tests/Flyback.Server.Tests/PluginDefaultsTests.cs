@@ -86,6 +86,48 @@ public sealed class PluginDefaultsTests : IDisposable
         return [.. list.GetProperty("items").EnumerateArray()];
     }
 
+    private static async Task Submit(WebApplicationFactory<Program> site, byte[] package)
+    {
+        using var client = site.CreateClient();
+        using var form = new MultipartFormDataContent();
+        form.Add(new ByteArrayContent(package), "file", "Figures.fbkp");
+
+        using var posted = await client.PostAsync(
+            new Uri("/api/v1/plugins", UriKind.Relative), form, TestContext.Current.CancellationToken);
+
+        posted.StatusCode.ShouldBe(HttpStatusCode.Accepted);
+    }
+
+    [Fact]
+    public async Task A_default_plugin_somebody_already_submitted_is_shelved_once()
+    {
+        var package = Package();
+
+        using (var first = Start()) await Submit(first, package);
+
+        File.WriteAllBytes(Path.Combine(Shipped, "Figures.fbkp"), package);
+
+        using var again = Start();
+
+        (await Shelf(again)).Length.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_rebuilt_default_plugin_somebody_already_submitted_is_shelved_once()
+    {
+        Ship("Figures.fbkp");
+
+        var rebuilt = Package();
+
+        using (var first = Start()) await Submit(first, rebuilt);
+
+        File.WriteAllBytes(Path.Combine(Shipped, "Figures.fbkp"), rebuilt);
+
+        using var again = Start();
+
+        (await Shelf(again)).Length.ShouldBe(1);
+    }
+
     [Fact]
     public async Task A_default_plugin_is_published_when_the_site_starts()
     {

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -244,6 +245,49 @@ public class PatchIoTests
         RoundTrip(patch).Nodes
             .Single(n => n.TypeId == "osc.sine")
             .InputValues.ShouldBe([0.25f, 1f]);
+    }
+
+    /// <summary>A file with a null where a list, an item or a name belongs is refused, or opens as a patch that works.</summary>
+    [Theory]
+    [InlineData("""{"Nodes":[null]}""")]
+    [InlineData("""{"Nodes":null}""")]
+    [InlineData("""{"Connections":[null]}""")]
+    [InlineData("""{"Connections":null}""")]
+    [InlineData("""{"Groups":[null]}""")]
+    [InlineData("""{"Controls":[null]}""")]
+    [InlineData("""{"Tags":[null]}""")]
+    [InlineData("""{"Requires":[null]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","InputValues":null}]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Name":"g","Members":null}]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001"}],"Groups":[{"Name":null,"Members":[]}]}""")]
+    [InlineData("""{"Nodes":[{"TypeId":"output","Id":"00000000-0000-0000-0000-000000000001","Name":null,"State":{"a":null}}]}""")]
+    public void A_file_with_a_null_hole_is_refused_or_opens_as_a_working_patch(string json)
+    {
+        Patch patch;
+
+        try
+        {
+            patch = PatchIO.Read(json, NodeCatalog.BuiltIn).Patch;
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+
+        Should.NotThrow(() => patch.CompileForVideo(NodeCatalog.BuiltIn));
+        Should.NotThrow(() => patch.CompileForAudio(NodeCatalog.BuiltIn));
+        Should.NotThrow(() => PatchIO.ToJson(patch));
+    }
+
+    [Fact]
+    public void A_file_that_starts_with_a_byte_order_mark_reads()
+    {
+        var json = (char)0xFEFF + PatchIO.ToJson(Assorted(), NodeCatalog.BuiltIn);
+
+        var loaded = PatchIO.Read(json, NodeCatalog.BuiltIn);
+
+        loaded.IsComplete.ShouldBeTrue(loaded.Summary);
+        loaded.Patch.Nodes.Count.ShouldBe(Assorted().Nodes.Count);
     }
 
     /// <summary>

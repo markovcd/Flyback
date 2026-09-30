@@ -81,6 +81,17 @@ public class CreditLineTests
     }
 
     [Fact]
+    public void An_author_with_quotes_typed_in_reads_back()
+    {
+        var patch = Built("sine() |> out.left").Patch;
+        patch.Credit("Ada \"the Countess\" Lovelace");
+
+        var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+
+        Built(source).Patch.Author.ShouldBe(patch.Author);
+    }
+
+    [Fact]
     public void A_printing_with_no_description_starts_with_what_it_does_say()
     {
         var patch = Built("sine() |> out.left").Patch;

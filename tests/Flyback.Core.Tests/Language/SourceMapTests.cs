@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
 using Shouldly;
 
@@ -134,6 +135,72 @@ public class SourceMapTests
             .ShouldBe("let hum = sine()\nhum.freq = 440\nhum |> out.left");
     }
 
+    [Fact]
+    public void A_number_only_one_knob_reads_through_a_name_is_changed_where_it_is_bound()
+    {
+        const string source = "let v = 0.5\nsine(amp: v) |> out.left";
+
+        var load = Built(source);
+        var sine = load.Patch.Nodes.Single(n => n.TypeId == "osc.sine");
+
+        var change = load.Map.Knob(sine.Id, "amp", "0.25");
+
+        change.ShouldNotBeNull();
+        Knob(Built(Applied(source, change.Value)).Patch, "osc.sine", "amp").ShouldBe(0.25f);
+    }
+
+    /// <summary>
+    /// A number several things read through one name is not any one knob's to
+    /// change: the edit is declined, or made somewhere only the turned knob reads.
+    /// </summary>
+    [Fact]
+    public void Turning_one_knob_does_not_turn_another_that_reads_the_same_let()
+    {
+        const string source = "let v = 0.5\nsine(amp: v) + saw(amp: v) |> out.left";
+
+        var load = Built(source);
+        var sine = load.Patch.Nodes.Single(n => n.TypeId == "osc.sine");
+
+        var edited = Turned(source, load.Map.Knob(sine.Id, "amp", "0.25"));
+
+        Knob(Built(edited).Patch, "osc.saw", "amp").ShouldBe(0.5f, edited);
+    }
+
+    [Fact]
+    public void Turning_one_knob_does_not_change_a_sum_that_reads_the_same_let()
+    {
+        const string source = "let v = 0.5\nsine(amp: v) * v |> out.left";
+
+        var load = Built(source);
+        var sine = load.Patch.Nodes.Single(n => n.TypeId == "osc.sine");
+
+        var edited = Turned(source, load.Map.Knob(sine.Id, "amp", "0.25"));
+        var sum = Built(edited).Patch.Nodes.Single(n => n.TypeId == NodeCatalog.ExpressionTypeId);
+
+        FormulaExtra.Of(sum).ShouldBe("a * 0.5", edited);
+    }
+
+    [Fact]
+    public void Turning_one_knob_does_not_turn_another_that_reads_the_same_default()
+    {
+        const string source = """
+            def pair(level = 0.5) = {
+              let a = sine(amp: level)
+              let b = saw(amp: level)
+              (a, b)
+            }
+            let (p, q) = pair()
+            p + q |> out.left
+            """;
+
+        var load = Built(source);
+        var sine = load.Patch.Nodes.Single(n => n.TypeId == "osc.sine");
+
+        var edited = Turned(source, load.Map.Knob(sine.Id, "amp", "0.25"));
+
+        Knob(Built(edited).Patch, "osc.saw", "amp").ShouldBe(0.5f, edited);
+    }
+
     /// <summary>
     /// The caret inside an argument is in the module that argument is, not in
     /// the one it is being handed to.
@@ -253,6 +320,18 @@ public class SourceMapTests
 
     private static string Applied(string source, Change change) =>
         source[..change.Offset] + change.Text + source[(change.Offset + change.Length)..];
+
+    /// <summary>The source with a knob's change made, or as it was where the map declined the edit.</summary>
+    private static string Turned(string source, Change? change) =>
+        change is { } made ? Applied(source, made) : source;
+
+    private static float Knob(Patch patch, string typeId, string socket)
+    {
+        var def = NodeCatalog.BuiltIn.Require(typeId);
+        var port = def.Inputs.ToList().FindIndex(p => p.Name == socket);
+
+        return patch.Nodes.Single(n => n.TypeId == typeId).InputValues[port];
+    }
 
     /// <summary>The source with every change made, or null where two of them touch.</summary>
     private static string? Applied(string source, IEnumerable<Change> changes)

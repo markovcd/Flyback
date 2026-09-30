@@ -19,6 +19,17 @@
 - Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
 - The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
 
+### Fixes
+- A patch file with a null where a module or a wire belongs is refused on opening; one saved with a byte order mark opens on the preset site and in the web viewer and editor.
+- A name, author or description cut to length no longer splits an emoji in two.
+- The preset site starts when somebody has already submitted one of its default plugins, its search ignores case beyond ASCII, and a file it could send compressed says it varies by encoding either way.
+- Printed as text, a patch keeps its very small numbers, fractional counts, very low notes and quoted descriptions exactly, and names a plugin's module in full where a built-in shares its short name.
+- A knob, `off` or back-wire statement inside a def's braces is read as one.
+- Turning a knob on the canvas no longer rewrites a number the text shares with other knobs.
+- The assistant cannot remove the Output, set a knob past what a float holds, or take a handle the text cannot print.
+- A key pasted with a trailing space is still kept out of messages, and one pasted into a message stays out of the conversation log.
+- The assistant reads an endpoint's refusal however it is shaped and a token count written with a fraction, and a saved conversation with a field written twice opens as none.
+
 ## 0.5.1 — 2026-09-29
 
 10 commits since 0.5.0.

@@ -319,7 +319,7 @@ internal static class Wire
 
         try
         {
-            if (JsonNode.Parse(body)?["error"]?["details"] is not JsonArray details) return null;
+            if ((Error(JsonNode.Parse(body)) as JsonObject)?["details"] is not JsonArray details) return null;
 
             foreach (var detail in details)
             {
@@ -343,6 +343,7 @@ internal static class Wire
         var digits = text.AsSpan().TrimEnd('s');
 
         return double.TryParse(digits, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+            && value is >= 0 and < int.MaxValue
             ? TimeSpan.FromSeconds(value)
             : null;
     }
@@ -352,9 +353,9 @@ internal static class Wire
     {
         try
         {
-            if (JsonNode.Parse(body)?["error"] is { } error)
+            if (Error(JsonNode.Parse(body)) is { } error)
             {
-                var message = error["message"]?.GetValue<string>() ?? error.ToString();
+                var message = (error is JsonObject said ? Blank(said["message"]) : Blank(error)) ?? error.ToString();
                 return $"{status}: {message}";
             }
         }
@@ -373,15 +374,15 @@ internal static class Wire
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
-    private static int Count(JsonNode? node)
-    {
-        try
-        {
-            return node?.GetValueKind() == JsonValueKind.Number ? node.GetValue<int>() : 0;
-        }
-        catch (FormatException)
-        {
-            return 0;
-        }
-    }
+    private static int Count(JsonNode? node) =>
+        node is JsonValue value && value.TryGetValue<double>(out var count) && double.IsFinite(count)
+            ? (int)Math.Clamp(count, 0, int.MaxValue)
+            : 0;
+
+    /// <summary>
+    /// The <c>error</c> a refusal carries, whether the body is the object, a list of
+    /// one as Google sends, or anything else a gateway makes up.
+    /// </summary>
+    private static JsonNode? Error(JsonNode? body) =>
+        (body is JsonArray { Count: > 0 } several ? several[0] : body) is JsonObject whole ? whole["error"] : null;
 }

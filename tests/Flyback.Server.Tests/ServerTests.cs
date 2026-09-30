@@ -189,12 +189,75 @@ public sealed class ServerTests : IDisposable
     [InlineData("notes.fbk", "not json at all")]
     [InlineData("notes.txt", "{\"Nodes\": [{}]}")]
     [InlineData("broken.fbkb", "not a zip")]
+    [InlineData("broken.fbk", """{"Nodes":[null]}""")]
+    [InlineData("broken.fbk", """{"Nodes":[{"TypeId":null}]}""")]
     public async Task A_file_that_is_not_a_patch_is_refused(string fileName, string text)
     {
         using var response = await Post(Encoding.UTF8.GetBytes(text), fileName);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_bundle_whose_patch_has_a_broken_module_is_refused()
+    {
+        using var archive = new MemoryStream();
+
+        using (var zip = new ZipArchive(archive, ZipArchiveMode.Create, leaveOpen: true))
+        using (var writer = new StreamWriter(zip.CreateEntry(PatchBundle.PatchEntry).Open()))
+            writer.Write("""{"Nodes":[null]}""");
+
+        using var response = await Post(archive.ToArray(), "Broken.fbkb");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_patch_saved_with_a_byte_order_mark_is_taken()
+    {
+        using var response = await Post([0xEF, 0xBB, 0xBF, .. PatchFile()], "Drone.fbk");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task A_long_name_is_not_cut_in_the_middle_of_a_character()
+    {
+        var stored = await Submit(PatchFile(), name: new string('a', 59) + "\U0001F3B9");
+
+        var name = stored.GetProperty("name").GetString()!;
+
+        name.ShouldNotContain('\uFFFD');
+        name.Any(char.IsSurrogate).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_long_author_is_not_cut_in_the_middle_of_a_character()
+    {
+        var patch = new Patch();
+        patch.EnsureOutput(NodeCatalog.Current);
+        patch.Author = new string('a', 79) + "\U0001F3B9";
+
+        var stored = await Submit(Encoding.UTF8.GetBytes(PatchIO.ToJson(patch)));
+
+        stored.GetProperty("author").GetString()!.ShouldNotContain('\uFFFD');
+    }
+
+    [Fact]
+    public async Task Uploads_at_once_are_all_taken()
+    {
+        var file = PatchFile();
+
+        var statuses = await Task.WhenAll(Enumerable.Range(0, 16).Select(async i =>
+        {
+            using var response = await Post(file, $"Drone{i}.fbk");
+            return response.StatusCode;
+        }));
+
+        statuses.ShouldAllBe(s => s == HttpStatusCode.Created);
+        (await Get("/api/v1/presets")).GetProperty("total").GetInt32().ShouldBe(16);
     }
 
     /// <summary>A few megabytes of zeros that inflate past what the site will hold in memory for one upload.</summary>
@@ -257,6 +320,16 @@ public sealed class ServerTests : IDisposable
 
         var tags = await Get("/api/v1/tags");
         tags.EnumerateArray().Select(t => t.GetProperty("tag").GetString()).ShouldBe(["ambient", "techno"]);
+    }
+
+    [Fact]
+    public async Task A_search_finds_a_name_whatever_its_case_beyond_ascii()
+    {
+        await Submit(PatchFile(), name: "\u0141\u00F3d\u017A nights");
+
+        var found = await Get("/api/v1/presets?q=" + Uri.EscapeDataString("\u0142\u00F3d\u017A"));
+
+        found.GetProperty("total").GetInt32().ShouldBe(1);
     }
 
     [Fact]
@@ -329,6 +402,34 @@ public sealed class ServerTests : IDisposable
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         (response.Headers.CacheControl?.NoCache ?? false).ShouldBeTrue();
+    }
+
+    /// <summary>A cache in front of the site keys a file with a compressed copy by encoding, whichever copy it was handed.</summary>
+    [Fact]
+    public async Task A_file_with_a_compressed_copy_says_it_varies_whichever_is_served()
+    {
+        var editor = Path.Combine(folder, "editor");
+        Directory.CreateDirectory(editor);
+        await File.WriteAllTextAsync(Path.Combine(editor, "app.js"), "console.log('plain');", TestContext.Current.CancellationToken);
+
+        using (var gz = new GZipStream(File.Create(Path.Combine(editor, "app.js.gz")), CompressionLevel.Optimal))
+            gz.Write(Encoding.UTF8.GetBytes("console.log('plain');"));
+
+        using var site = host.WithWebHostBuilder(web => web.UseSetting("Site:Editor", editor));
+        using var browser = site.CreateClient();
+
+        using var compressed = new HttpRequestMessage(HttpMethod.Get, new Uri("/editor/app.js", UriKind.Relative));
+        compressed.Headers.AcceptEncoding.ParseAdd("gzip");
+        using var zipped = await browser.SendAsync(compressed, TestContext.Current.CancellationToken);
+
+        zipped.Content.Headers.ContentEncoding.ShouldBe(["gzip"]);
+        zipped.Content.Headers.ContentType!.MediaType.ShouldBe("text/javascript");
+        zipped.Headers.Vary.ShouldContain("Accept-Encoding");
+
+        using var plain = await browser.GetAsync(new Uri("/editor/app.js", UriKind.Relative), TestContext.Current.CancellationToken);
+
+        plain.Content.Headers.ContentEncoding.ShouldBeEmpty();
+        plain.Headers.Vary.ShouldContain("Accept-Encoding");
     }
 
     [Fact]

@@ -243,6 +243,12 @@ public sealed partial class PatchWorkbench
             if (byHandle.ContainsKey(wanted))
                 return ToolOutcome.Refused($"'{wanted}' is already the handle of another module.");
 
+            // describe_patch prints a handle as the name itself only where the language can read it back.
+            if (!PatchPrinter.Usable(wanted))
+                return ToolOutcome.Refused(
+                    $"'{wanted}' cannot be a handle: use letters, digits and _, starting with a letter, "
+                    + "and not a note name or a word the language keeps (out, in, let, x, y, t…).");
+
             handle = wanted;
         }
         else
@@ -763,7 +769,9 @@ public sealed partial class PatchWorkbench
         var handle = Handle(node);
         var lost = working.Connections.Count(c => c.SourceNode == node.Id || c.TargetNode == node.Id);
 
-        working.Remove(node.Id);
+        if (!working.Remove(node.Id))
+            return ToolOutcome.Refused($"{handle} is the patch's Output and stays. Disconnect what feeds it instead.");
+
         byHandle.Remove(handle);
         handleOf.Remove(node.Id);
         Edits++;
@@ -1583,7 +1591,10 @@ public sealed partial class PatchWorkbench
                     + "Value module if what you want there really is a constant.";
             }
 
-            settings.Add((port, (float)value.GetDouble()));
+            if (value.GetDouble() is var number && !float.IsFinite((float)number))
+                return $"{handle}'s '{portName}' needs a 'value' a float can hold, and {number} is not one.";
+
+            settings.Add((port, (float)number));
         }
 
         return null;

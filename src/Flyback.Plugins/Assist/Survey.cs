@@ -35,7 +35,7 @@ public static class Survey
 
             return found is null
                 ? []
-                : found.Where(m => !string.IsNullOrWhiteSpace(m.Id)).ToArray();
+                : found.Where(m => m is not null && !string.IsNullOrWhiteSpace(m.Id)).ToArray();
         }
         catch (JsonException)
         {

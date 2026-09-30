@@ -203,8 +203,8 @@ internal sealed class PresetStore
 
         for (var i = 0; i < words.Length && i < 8; i++)
         {
-            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\')");
-            query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i]) + "%");
+            where.Add($"(fold(p.name) LIKE $w{i} ESCAPE '\\' OR fold(p.author) LIKE $w{i} ESCAPE '\\' OR fold(p.description) LIKE $w{i} ESCAPE '\\')");
+            query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i].ToLowerInvariant()) + "%");
         }
 
         if (!string.IsNullOrWhiteSpace(tag))
@@ -319,6 +319,8 @@ internal sealed class PresetStore
         var db = new SqliteConnection(connection);
         db.Open();
         Run(db, "PRAGMA foreign_keys = ON;");
+        // LIKE folds case for ASCII alone; search matches on fold(column) against a lowercased word.
+        db.CreateFunction<string?, string?>("fold", text => text?.ToLowerInvariant(), isDeterministic: true);
 
         return db;
     }

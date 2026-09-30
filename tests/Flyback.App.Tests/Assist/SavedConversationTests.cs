@@ -107,6 +107,12 @@ public class SavedConversationTests
         Should.NotThrow(() => SavedConversation.Read(damaged));
     }
 
+    [Theory]
+    [InlineData("""{"shape":1,"shape":1,"provider":"gemini","settings":"x","start":{"Nodes":[]},"working":{"Nodes":[]}}""")]
+    [InlineData("""{"shape":1,"provider":"gemini","settings":"x","start":{"Nodes":[]},"working":{"Nodes":[]},"transcript":[{"voice":"You","voice":"Said","text":"hi"}]}""")]
+    public void A_file_with_a_field_written_twice_reads_without_throwing(string json) =>
+        Should.NotThrow(() => SavedConversation.Read(json));
+
     [Fact]
     public void Settings_are_the_same_however_they_were_built_up() =>
         SavedConversation.SettingsOf(Values(("model", "a"), ("effort", "high")))

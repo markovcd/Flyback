@@ -55,6 +55,7 @@ internal sealed class AssistantPanel : UserControl
     /// list beside it. Null keeps them in memory only.
     /// </summary>
     private readonly string? settingsPath;
+    private readonly string? logFolder;
 
     private readonly Credentials credentials;
 
@@ -377,6 +378,7 @@ internal sealed class AssistantPanel : UserControl
         this.credentials = credentials;
         this.usage = usage;
         settingsPath = setup?.AssistantSettingsPath;
+        logFolder = setup?.ConversationLogFolder;
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());
@@ -1215,7 +1217,7 @@ internal sealed class AssistantPanel : UserControl
         runAssistant = with;
 
         log.Dispose();
-        log = ConversationLog.Start(settingsRepository.Current.LogConversations, with.Id);
+        log = ConversationLog.Start(settingsRepository.Current.LogConversations, with.Id, logFolder);
 
         if (resuming is not null)
         {
@@ -1264,7 +1266,7 @@ internal sealed class AssistantPanel : UserControl
         usage?.Assistant(chosenAssistant.Value.Id);
 
         transcript.Put(Voice.You, wanted);
-        log.Write("you", wanted);
+        log.Write("you", config.Transport is KeyedTransport keyed ? keyed.Scrubbed(wanted)! : wanted);
 
         if (conversation.Unsaid is { } told)
         {

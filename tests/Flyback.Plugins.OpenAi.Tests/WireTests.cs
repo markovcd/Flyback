@@ -250,6 +250,28 @@ public class WireTests
         reply.Calls.ShouldBeEmpty();
     }
 
+    [Fact]
+    public void A_token_count_written_with_a_fraction_is_read()
+    {
+        var reply = Wire.Parse(JsonNode.Parse("""
+            {"choices":[{"message":{"role":"assistant","content":"hi"}}],"usage":{"prompt_tokens":12.0,"completion_tokens":3}}
+            """));
+
+        reply.Text.ShouldBe("hi");
+        reply.Input.ShouldBe(12);
+    }
+
+    /// <summary>The API sends arguments as a string of JSON; some endpoints that copy it send the object.</summary>
+    [Fact]
+    public void A_tool_call_whose_arguments_are_an_object_is_read()
+    {
+        var reply = Wire.Parse(JsonNode.Parse("""
+            {"choices":[{"message":{"role":"assistant","tool_calls":[{"id":"c1","type":"function","function":{"name":"describe_patch","arguments":{}}}]}}]}
+            """));
+
+        reply.Calls.ShouldHaveSingleItem().Name.ShouldBe("describe_patch");
+    }
+
     // --- when it goes wrong -------------------------------------------------
 
     [Fact]
@@ -267,6 +289,14 @@ public class WireTests
         Wire.Complaint(502, "<html>Bad Gateway</html>").ShouldContain("502");
         Wire.Complaint(500, new string('x', 4000)).ShouldContain("500");
     }
+
+    [Fact]
+    public void A_complaint_whose_error_is_a_bare_string_is_repeated() =>
+        Wire.Complaint(401, """{"error":"Invalid API key"}""").ShouldBe("401: Invalid API key");
+
+    [Fact]
+    public void A_complaint_in_a_list_of_one_is_repeated() =>
+        Wire.Complaint(400, """[{"error":{"message":"bad"}}]""").ShouldBe("400: bad");
 
     // --- being told to wait -------------------------------------------------
 
@@ -330,6 +360,17 @@ public class WireTests
     public void A_reset_that_says_nothing_useful_is_no_answer(string written)
     {
         using var response = Refused([("x-ratelimit-reset-tokens", written)]);
+
+        Wire.RetryAfter(response.Headers).ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("NaN")]
+    [InlineData("-5")]
+    [InlineData("1e300")]
+    public void A_millisecond_header_that_is_no_length_of_time_is_no_answer(string written)
+    {
+        using var response = Refused([("retry-after-ms", written)]);
 
         Wire.RetryAfter(response.Headers).ShouldBeNull();
     }

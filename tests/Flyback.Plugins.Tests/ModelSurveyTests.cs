@@ -61,6 +61,12 @@ public class ModelSurveyTests
         Survey.Read(stored).ShouldBeEmpty();
 
     [Fact]
+    public void A_null_in_the_list_is_not_a_model() =>
+        Survey.Read("[null,{\"Id\":\"gemini-3.6-flash\"}]")
+            .ShouldHaveSingleItem()
+            .Id.ShouldBe("gemini-3.6-flash");
+
+    [Fact]
     public void A_model_with_no_name_is_not_a_model() =>
         Survey.Read("[{\"Id\":\"\"},{\"Id\":\"gemini-3.6-flash\"}]")
             .ShouldHaveSingleItem()
@@ -174,6 +180,12 @@ public class ModelSurveyTests
         asked.Only.ShouldBe(["written-flash"]);
         asked.All.ShouldBeFalse();
     }
+
+    // --- what a refusal says ----------------------------------------------------
+
+    [Fact]
+    public void A_refusal_whose_error_is_a_string_says_that_string() =>
+        Probe.Detail("""{"error":"model not found"}""").ShouldBe("model not found");
 
     private static AssistantSchema Written() => new(
         "written-flash",

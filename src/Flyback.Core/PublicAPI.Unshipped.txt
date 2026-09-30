@@ -1,1 +1,3 @@
 #nullable enable
+Flyback.Core.Graph.TextLimit
+static Flyback.Core.Graph.TextLimit.Clip(string! text, int limit) -> string!

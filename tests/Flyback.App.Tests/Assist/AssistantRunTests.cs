@@ -654,6 +654,24 @@ public class AssistantRunTests
         carried.Reshaped(opened).ShouldBeFalse();
     }
 
+    [Fact]
+    public void A_saved_workbench_whose_patch_has_no_module_list_still_opens()
+    {
+        var saved = new SavedConversation(
+            "scripted",
+            string.Empty,
+            1,
+            new WorkbenchState("""{"Nodes":null}""", """{"Nodes":null}""", new Dictionary<string, Guid>(), 0, 0),
+            ScriptedAssistant.Remembered,
+            []);
+
+        var carried = Should.NotThrow(() =>
+            new AssistantRun(new ScriptedAssistant(), AssistantConfig.Unset, NodeCatalog.BuiltIn, new Patch(), resuming: saved));
+
+        using (carried)
+            carried.Workbench.Snapshot().Output.ShouldNotBeNull();
+    }
+
     // --- the fake -----------------------------------------------------------
 
     /// <summary>

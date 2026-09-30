@@ -53,6 +53,9 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>Where the assistant's settings are read from and saved to, with its priority list beside them.</summary>
     public string? AssistantSettingsPath { get; init; }
 
+    /// <summary>Where conversation logs are written when logging is on. Null writes them to the user's data folder.</summary>
+    public string? ConversationLogFolder { get; init; }
+
     /// <summary>Where the window's size, place and panels are kept (ADR-0121).</summary>
     public string? LayoutPath { get; init; }
 

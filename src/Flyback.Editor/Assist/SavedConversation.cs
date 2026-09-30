@@ -147,8 +147,9 @@ internal sealed record SavedConversation(
                 transcript,
                 Raw(body["canvas"]));
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException or ArgumentException or InvalidOperationException)
         {
+            // A key written twice is an ArgumentException the moment the object is indexed.
             return null;
         }
     }

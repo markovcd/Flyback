@@ -43,6 +43,9 @@ public sealed class Binder
     /// </summary>
     private readonly Dictionary<(Guid Node, string Name), Site?> written = [];
 
+    /// <summary>How often each number the file writes is read through a name.</summary>
+    private readonly Dictionary<Site, int> readThrough = [];
+
     /// <summary>Modules a statement is about, rather than mentions inside one.</summary>
     private readonly HashSet<Guid> bound = [];
 
@@ -109,7 +112,15 @@ public sealed class Binder
     /// name a module and a knob that has to be written back. Only the binder can
     /// say this: a patch carries nothing about the file it came from.
     /// </summary>
-    public SourceMap Map(string source) => new(source, mentions, calls, written, named, bound, blocks);
+    public SourceMap Map(string source) => new(source, mentions, calls, Writable(), named, bound, blocks);
+
+    /// <summary>
+    /// <see cref="written"/>, less the numbers read through a name more than once:
+    /// rewriting one of those would turn every knob and sum that reads it.
+    /// </summary>
+    private Dictionary<(Guid Node, string Name), Site?> Writable() => written.ToDictionary(
+        pair => pair.Key,
+        pair => pair.Value is { } site && readThrough.GetValueOrDefault(site) > 1 ? null : pair.Value);
 
     /// <summary>The patch these statements describe, laid out and ready to compile.</summary>
     public Patch Build(IReadOnlyList<Statement> statements)
@@ -507,9 +518,11 @@ public sealed class Binder
         else if (value is Socket socket) bound.Add(socket.Id);
     }
 
-    /// <summary>Notes that <paramref name="expr"/> is a word naming a module.</summary>
+    /// <summary>Notes that <paramref name="expr"/> is a word naming a module, or counts a number read through a name.</summary>
     private void Mention(Expr expr, Value value)
     {
+        if (value is Figure { Where: { } where }) readThrough[where] = readThrough.GetValueOrDefault(where) + 1;
+
         var id = value switch
         {
             Placed placed => placed.Id,

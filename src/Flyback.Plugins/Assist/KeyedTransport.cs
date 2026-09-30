@@ -25,7 +25,7 @@ internal sealed class KeyedTransport : IAssistantTransport
     /// <remarks>An admin key is never sent, wherever it came from (<see cref="KeySafety.Refused"/>).</remarks>
     public KeyedTransport(string? secret, string? origin, AssistantCredential credential, HttpMessageHandler? inner = null)
     {
-        this.secret = string.IsNullOrWhiteSpace(secret) || origin is null || KeySafety.Refused(secret) is not null ? null : secret;
+        this.secret = string.IsNullOrWhiteSpace(secret) || origin is null || KeySafety.Refused(secret) is not null ? null : secret.Trim();
         this.credential = credential;
         Origin = this.secret is null ? null : origin;
         network = inner ?? Network;

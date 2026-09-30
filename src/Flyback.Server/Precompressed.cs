@@ -31,18 +31,27 @@ internal static class Precompressed
                 && path.StartsWithSegments(route)
                 && path.StartsWithSegments(filesAt, out var within)
                 && types.TryGetContentType(path.Value!, out var type)
-                && Pick(http, files, within) is var (coding, suffix))
+                && Copies.Any(c => files.GetFileInfo(within.Value + c.Suffix).Exists))
             {
-                http.Items[Asked] = path;
-                http.Request.Path = new PathString(path.Value + suffix);
+                // The plain answer varies on Accept-Encoding as much as a compressed one does.
                 http.Response.OnStarting(() =>
                 {
-                    var headers = http.Response.Headers;
-                    headers.ContentEncoding = coding;
-                    headers.ContentType = type;
-                    headers.Append(HeaderNames.Vary, HeaderNames.AcceptEncoding);
+                    http.Response.Headers.Append(HeaderNames.Vary, HeaderNames.AcceptEncoding);
                     return Task.CompletedTask;
                 });
+
+                if (Pick(http, files, within) is var (coding, suffix))
+                {
+                    http.Items[Asked] = path;
+                    http.Request.Path = new PathString(path.Value + suffix);
+                    http.Response.OnStarting(() =>
+                    {
+                        var headers = http.Response.Headers;
+                        headers.ContentEncoding = coding;
+                        headers.ContentType = type;
+                        return Task.CompletedTask;
+                    });
+                }
             }
 
             return next(http);

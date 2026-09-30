@@ -317,6 +317,8 @@ public static class PatchPrinter
     /// </summary>
     private sealed class Writer(Patch patch, ModuleCatalog modules, PatchPrintPlan plan)
     {
+        private readonly ModuleNames names = new(modules);
+
         private readonly List<Part> statements = [];
         private readonly HashSet<Guid> done = [];
         private readonly Dictionary<Guid, int> where = [];
@@ -1206,14 +1208,14 @@ public static class PatchPrinter
             return string.IsNullOrEmpty(path) || path.Contains('"') ? null : path;
         }
 
-        private static string Short(NodeDef def)
+        private string Short(NodeDef def)
         {
             var dot = def.TypeId.LastIndexOf('.');
             var stem = dot < 0 ? def.TypeId : def.TypeId[(dot + 1)..];
 
-            // Two of the ninety collide, and one more shortens to a word the
-            // language uses for a socket. Written in full, all three are plain.
-            return stem is "hsv" or "mix" or "in" ? def.TypeId : stem;
+            // Written in full where the short name means another module too. Of the
+            // built-ins, 'hsv' and 'mix' collide, and 'in' is the word for a socket.
+            return stem is not ("hsv" or "mix" or "in") && names.Find(stem, out _, out _) == def ? stem : def.TypeId;
         }
 
         private static int Port(IReadOnlyList<PortSpec> ports, string name)

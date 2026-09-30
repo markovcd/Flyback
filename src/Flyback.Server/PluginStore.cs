@@ -206,6 +206,15 @@ internal sealed class PluginStore
 
         if (was == submission.Sha256) return;
 
+        // Somebody may already have submitted this very package; the default is the copy kept.
+        using (var clash = db.CreateCommand())
+        {
+            clash.CommandText = "DELETE FROM plugins WHERE sha256 = $sha256 AND id <> $id";
+            clash.Parameters.AddWithValue("$sha256", submission.Sha256);
+            clash.Parameters.AddWithValue("$id", seeded ?? "");
+            clash.ExecuteNonQuery();
+        }
+
         if (seeded is null)
         {
             seeded = Guid.CreateVersion7().ToString("N");
@@ -310,8 +319,8 @@ internal sealed class PluginStore
 
         for (var i = 0; i < words.Length && i < 8; i++)
         {
-            where.Add($"(p.name LIKE $w{i} ESCAPE '\\' OR p.author LIKE $w{i} ESCAPE '\\' OR p.description LIKE $w{i} ESCAPE '\\' OR p.assembly LIKE $w{i} ESCAPE '\\' OR p.tags LIKE $w{i} ESCAPE '\\' OR p.modules LIKE $w{i} ESCAPE '\\')");
-            query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i]) + "%");
+            where.Add($"(fold(p.name) LIKE $w{i} ESCAPE '\\' OR fold(p.author) LIKE $w{i} ESCAPE '\\' OR fold(p.description) LIKE $w{i} ESCAPE '\\' OR fold(p.assembly) LIKE $w{i} ESCAPE '\\' OR fold(p.tags) LIKE $w{i} ESCAPE '\\' OR fold(p.modules) LIKE $w{i} ESCAPE '\\')");
+            query.Parameters.AddWithValue($"$w{i}", "%" + Escaped(words[i].ToLowerInvariant()) + "%");
         }
 
         if (!string.IsNullOrWhiteSpace(tag))
@@ -435,6 +444,8 @@ internal sealed class PluginStore
     {
         var db = new SqliteConnection(connection);
         db.Open();
+        // LIKE folds case for ASCII alone; search matches on fold(column) against a lowercased word.
+        db.CreateFunction<string?, string?>("fold", text => text?.ToLowerInvariant(), isDeterministic: true);
 
         return db;
     }

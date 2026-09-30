@@ -108,6 +108,19 @@ public sealed class KeyedTransportTests
         transport.Scrubbed("nothing here").ShouldBe("nothing here");
     }
 
+    [Fact]
+    public async Task A_key_pasted_with_a_trailing_space_is_found_in_text_and_sent_without_it()
+    {
+        var network = new Recorder();
+        var transport = new KeyedTransport("sk-proj-abcdefghijklmnopqrstuvwx ", "https://api.example.test", Bearer, network);
+
+        transport.Holds("my key is sk-proj-abcdefghijklmnopqrstuvwx, make something").ShouldBeTrue();
+
+        await transport.Send(new Uri("https://api.example.test/v1/models"), null, TestContext.Current.CancellationToken);
+
+        network.Authorizations.ShouldBe(["Bearer sk-proj-abcdefghijklmnopqrstuvwx"]);
+    }
+
     /// <summary>A local runtime takes any value as a key, and a short one is in every sentence.</summary>
     [Fact]
     public void A_key_too_short_to_be_a_secret_is_never_found()

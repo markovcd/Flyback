@@ -383,6 +383,33 @@ public class PatchWorkbenchTests
         second.Text.ShouldContain("already");
     }
 
+    /// <summary>A handle is the name describe_patch prints, so one the language could not read back is refused.</summary>
+    [Theory]
+    [InlineData("knob-1")]
+    [InlineData("out")]
+    [InlineData("in")]
+    [InlineData("A3")]
+    public async Task A_handle_the_language_cannot_print_is_refused(string handle)
+    {
+        var bench = Bench();
+
+        var added = await Call(bench, "add_module", $$"""{"type_id":"value","handle":"{{handle}}"}""");
+
+        added.Ok.ShouldBeFalse();
+        bench.Snapshot().Nodes.ShouldHaveSingleItem().TypeId.ShouldBe(NodeCatalog.OutputTypeId);
+    }
+
+    [Fact]
+    public async Task A_handle_the_model_chose_is_the_name_describe_patch_prints()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"value","handle":"glow"}""");
+        await Call(bench, "connect", """{"from":"glow","to":"output1","to_port":"color"}""");
+
+        (await Call(bench, "describe_patch")).Text.ShouldContain("let glow = ");
+    }
+
     // --- ports by name ------------------------------------------------------
 
     /// <summary>
@@ -606,6 +633,18 @@ public class PatchWorkbenchTests
         var patch = bench.Snapshot();
         patch.Nodes.Count.ShouldBe(1);
         patch.Connections.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Removing_the_output_is_refused()
+    {
+        var bench = await Lit();
+
+        var removed = await Call(bench, "remove_module", """{"handle":"output1"}""");
+
+        removed.Ok.ShouldBeFalse(removed.Text);
+        bench.Snapshot().Connections.Count.ShouldBe(1);
+        (await Call(bench, "connect", """{"from":"knob1","to":"output1","to_port":"left"}""")).Ok.ShouldBeTrue();
     }
 
     [Fact]
@@ -1961,6 +2000,17 @@ public class PatchWorkbenchTests
         var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":"loud"}]}""");
 
         set.Ok.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_knob_a_float_cannot_hold_is_refused()
+    {
+        var bench = await Lit();
+
+        var set = await Call(bench, "set_knobs", """{"handle":"knob1","knobs":[{"port":"value","value":1e39}]}""");
+
+        set.Ok.ShouldBeFalse();
+        Should.NotThrow(() => bench.Save());
     }
 
     // --- caps ---------------------------------------------------------------

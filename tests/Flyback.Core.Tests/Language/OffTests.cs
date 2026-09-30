@@ -34,6 +34,23 @@ public class OffTests
     }
 
     [Fact]
+    public void A_module_a_def_body_switches_off_is_switched_off()
+    {
+        var load = Build(
+            """
+            def tone(hz) = {
+              let s = sine(freq: hz)
+              off s
+              s
+            }
+            tone(110) |> out.left
+            """);
+
+        load.Issues.ShouldBeEmpty(load.Report);
+        Only(load.Patch, "osc.sine").Off.ShouldBeTrue();
+    }
+
+    [Fact]
     public void The_Output_cannot_be_switched_off()
     {
         var load = Build("off out");

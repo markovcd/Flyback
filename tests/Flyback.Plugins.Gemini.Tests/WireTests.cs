@@ -308,6 +308,17 @@ public class WireTests
         Should.NotThrow(() => Wire.Parse(JsonNode.Parse("{}")));
     }
 
+    [Fact]
+    public void A_token_count_written_with_a_fraction_is_read()
+    {
+        var reply = Wire.Parse(JsonNode.Parse("""
+            {"candidates":[{"content":{"role":"model","parts":[{"text":"hi"}]}}],"usageMetadata":{"promptTokenCount":12.0}}
+            """));
+
+        reply.Text.ShouldBe("hi");
+        reply.Input.ShouldBe(12);
+    }
+
     /// <summary>
     /// How long to wait is in the body here, not in a header. A 429 carries a
     /// RetryInfo among the error details and usually nothing else.
@@ -331,6 +342,15 @@ public class WireTests
             """);
 
         wait.ShouldBe(TimeSpan.FromSeconds(24));
+    }
+
+    [Fact]
+    public void A_rate_limit_sent_as_a_list_of_one_says_how_long_it_wants()
+    {
+        using var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+
+        Wire.RetryAfter(response.Headers, """[{"error":{"code":429,"details":[{"retryDelay":"24s"}]}}]""")
+            .ShouldBe(TimeSpan.FromSeconds(24));
     }
 
     /// <summary>A header still wins where a gateway in front of this adds one.</summary>
@@ -362,4 +382,13 @@ public class WireTests
 
         Wire.Complaint(500, new string('x', 4000)).ShouldBe("the endpoint answered 500.");
     }
+
+    [Fact]
+    public void A_complaint_whose_error_is_a_bare_string_is_repeated() =>
+        Wire.Complaint(401, """{"error":"Invalid API key"}""").ShouldBe("401: Invalid API key");
+
+    [Fact]
+    public void A_complaint_in_a_list_of_one_is_repeated() =>
+        Wire.Complaint(429, """[{"error":{"code":429,"message":"Resource exhausted","status":"RESOURCE_EXHAUSTED"}}]""")
+            .ShouldBe("429: Resource exhausted");
 }

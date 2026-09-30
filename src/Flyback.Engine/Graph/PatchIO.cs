@@ -28,6 +28,8 @@ public static class PatchIO
     /// </summary>
     public const int FirstVersion = 1;
 
+    private const char ByteOrderMark = (char)0xFEFF;
+
     private static readonly JsonSerializerOptions Options = new()
     {
         WriteIndented = true,
@@ -55,6 +57,8 @@ public static class PatchIO
     public static PatchLoad Read(string json, ModuleCatalog? against = null)
     {
         var catalog = against ?? NodeCatalog.Current;
+        if (json.StartsWith(ByteOrderMark)) json = json[1..];
+
         var version = VersionOf(json);
 
         // Read out of the raw text and answered first, because a layout this build
@@ -70,7 +74,7 @@ public static class PatchIO
         }
 
         var patch = Upgrade(
-            JsonSerializer.Deserialize<Patch>(json, Options) ?? new Patch(),
+            Whole(JsonSerializer.Deserialize<Patch>(json, Options) ?? new Patch()),
             version);
 
         if (Realias(patch)) patch.Requires = RequirementsOf(patch, catalog);
@@ -135,6 +139,19 @@ public static class PatchIO
     private static Patch Upgrade(Patch patch, int from)
     {
         _ = from;
+        return patch;
+    }
+
+    /// <summary>A patch whose lists hold no null where a file said <c>null</c>, or a <see cref="JsonException"/>.</summary>
+    private static Patch Whole(Patch patch)
+    {
+        if (patch.Nodes is null || patch.Connections is null
+            || patch.Nodes.Contains(null!) || patch.Connections.Contains(null!)
+            || patch.Groups?.Any(g => g is null || g.Members is null || g.Exposed is null) == true
+            || patch.Controls?.Contains(null!) == true
+            || patch.Requires?.Contains(null!) == true)
+            throw new JsonException("The file has a null where a module, a wire, a group or a knob belongs.");
+
         return patch;
     }
 

@@ -82,7 +82,11 @@ public static class Lexer
                 // has, and on Windows one is full of backslashes that mean
                 // themselves — treating them as escapes would break every path
                 // to buy a quote nobody puts in a filename.
-                while (at < source.Length && source[at] != '"' && !CurlyQuote(source[at]) && source[at] != '\n') text.Append(source[at++]);
+                // Curly quotes inside straight ones are text: Patch.Tidied writes them there.
+                var lineEnd = source.IndexOf('\n', at) is var end and >= 0 ? end : source.Length;
+                var straight = c == '"' && source.IndexOf('"', at, lineEnd - at) >= 0;
+
+                while (at < source.Length && source[at] != '"' && (straight || !CurlyQuote(source[at])) && source[at] != '\n') text.Append(source[at++]);
 
                 if (at >= source.Length || !(source[at] == '"' || CurlyQuote(source[at])))
                 {
@@ -410,7 +414,8 @@ public static class Lexer
     /// </remarks>
     public static double? Note(string word)
     {
-        const int MaxOctave = 1_000 / (int)Graph.Pitch.Semitones;
+        // Pitch.Name names notes out to ±1000, which is octave -85 at the bottom.
+        const int MaxOctave = 1_000 / (int)Graph.Pitch.Semitones + 2;
 
         if (word.Length < 2) return null;
         if (word[0] is < 'A' or > 'G') return null;

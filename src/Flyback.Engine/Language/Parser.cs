@@ -243,6 +243,22 @@ public sealed class Parser
         return expressions.Pipeline() is { } pipeline ? new PipelineStatement(pipeline, line, column) : null;
     }
 
+    /// <summary>Whether what comes next is one of <see cref="Statement"/>'s own forms rather than a pipeline.</summary>
+    private bool AtStatement() =>
+        AtWord("let") || AtWord("def") || AtWord("group")
+        || (AtWord("keyboard") && Ahead().Kind == TokenKind.Identifier)
+        || (AtWord("length") && Ahead().Kind == TokenKind.Number)
+        || (AtWord("description") && Ahead().Kind == TokenKind.Text)
+        || (AtWord("author") && Ahead().Kind == TokenKind.Text)
+        || (AtWord("tags") && Ahead().Kind == TokenKind.Text)
+        || (AtWord("off") && Ahead().Kind == TokenKind.Identifier)
+        || (AtWord("requires") && Ahead().Kind is TokenKind.Identifier or TokenKind.Text)
+        || (AtWord("panel") && Ahead().Kind == TokenKind.Identifier && Ahead(2).Kind == TokenKind.Assign)
+        || (Current.Kind == TokenKind.Identifier
+            && Ahead().Kind == TokenKind.Dot
+            && Ahead(2).Kind == TokenKind.Identifier
+            && Ahead(3).Kind is TokenKind.Assign or TokenKind.BackWire);
+
     private Statement? Let(int line, int column)
     {
         at++;
@@ -387,7 +403,7 @@ public sealed class Parser
         several = null;
         one = null;
 
-        if (AtWord("let") || AtWord("def") || AtWord("group") || AtWord("panel")) return false;
+        if (AtWord("panel") || AtStatement()) return false;
 
         if (Current.Kind == TokenKind.OpenParen)
         {

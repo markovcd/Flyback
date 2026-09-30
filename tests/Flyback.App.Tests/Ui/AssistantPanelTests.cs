@@ -72,10 +72,15 @@ public sealed class AssistantPanelTests : UiTest
     /// <summary>What the panel built by <see cref="Showing"/> raises, for a test to react to.</summary>
     private readonly Reactions reactions = new();
 
-    private Window Showing(PluginCatalog? plugins = null, AssistantSettings? saved = null, Action<string, string?>? report = null)
+    private Window Showing(
+        PluginCatalog? plugins = null,
+        AssistantSettings? saved = null,
+        Action<string, string?>? report = null,
+        string? logs = null)
     {
         var catalog = plugins ?? PluginCatalog.Empty;
-        var repository = new AssistantSettingRepository(Kept, saved ?? new AssistantSettings());
+        var setup = Kept with { ConversationLogFolder = logs };
+        var repository = new AssistantSettingRepository(setup, saved ?? new AssistantSettings());
         var patch = Presets.Plasma(NodeCatalog.BuiltIn);
         var editor = new Holding(() => patch, report);
         var panel = new AssistantPanel(
@@ -86,7 +91,7 @@ public sealed class AssistantPanelTests : UiTest
             new AssistantRunFactory(catalog, editor, repository),
             new Credentials(catalog.PreferredSecretStore),
             repository,
-            Kept,
+            setup,
             reactions: reactions);
 
         var window = Show(panel, 760);
@@ -1168,6 +1173,65 @@ public sealed class AssistantPanelTests : UiTest
         Settle(host);
 
         saved.LogConversations.ShouldBeTrue();
+    }
+
+    private const string KeyVariable = "FLYBACK_PANEL_TEST_KEY";
+
+    private const string Key = "sk-proj-paneltestpaneltestpanel42";
+
+    /// <summary>One whose key is read from <see cref="KeyVariable"/>, and which answers once it has one.</summary>
+    private sealed class Keyed() : Provider(new AssistantSchema(
+        "keyed",
+        [new AssistantModel("keyed")],
+        KeyVariable,
+        "none needed"))
+    {
+        public override string Id => "keyed";
+
+        public override string Name => "Needs a key";
+
+        public override string? Unavailable(AssistantConfig config) => config.Transport.HasKey ? null : "no key";
+
+        public override IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) =>
+            new Turn(Task.CompletedTask);
+    }
+
+    [AvaloniaFact]
+    public void A_message_holding_the_key_is_logged_without_it()
+    {
+        var logs = Directory.CreateTempSubdirectory("flyback-panel-logs-").FullName;
+        Environment.SetEnvironmentVariable(KeyVariable, Key);
+
+        try
+        {
+            var settings = Configured("keyed");
+            settings.LogConversations = true;
+
+            var window = Showing(With(new Keyed()), settings, logs: logs);
+
+            Instruction(window).Text = $"my key is {Key}, make something";
+            Settle(window);
+
+            Click(SendButton(window));
+            Settle(window);
+            Settle(window);
+
+            // Setting the conversation aside closes its log, so the file can be read and deleted.
+            All<AssistantPanel>(window).Single().Open(null);
+            window.Close();
+
+            var written = Directory.GetFiles(logs, "*.log");
+
+            written.ShouldNotBeEmpty("logging is on, so the conversation has a file");
+
+            foreach (var file in written)
+                File.ReadAllText(file).ShouldNotContain(Key);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(KeyVariable, null);
+            Directory.Delete(logs, recursive: true);
+        }
     }
 
     [AvaloniaFact]

@@ -244,14 +244,23 @@ internal static class Wire
 
         if (message?["tool_calls"] is JsonArray asked)
         {
-            foreach (var call in asked)
+            foreach (var call in asked.OfType<JsonObject>())
             {
-                var id = call?["id"]?.GetValue<string>();
-                var name = call?["function"]?["name"]?.GetValue<string>();
+                var id = Blank(call["id"]);
+                var function = call["function"] as JsonObject;
+                var name = Blank(function?["name"]);
 
                 if (id is null || name is null) continue;
 
-                calls.Add(new Call(id, name, call?["function"]?["arguments"]?.GetValue<string>() ?? "{}"));
+                // A string of JSON by the API's own account; an object from some that copy it.
+                var arguments = function!["arguments"] switch
+                {
+                    JsonValue text when text.GetValueKind() == JsonValueKind.String => text.GetValue<string>(),
+                    { } other => other.ToJsonString(),
+                    null => "{}",
+                };
+
+                calls.Add(new Call(id, name, arguments));
             }
         }
 
@@ -282,7 +291,8 @@ internal static class Wire
                 precise.FirstOrDefault(),
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
-                out var milliseconds))
+                out var milliseconds)
+            && milliseconds is >= 0 and < int.MaxValue)
         {
             return TimeSpan.FromMilliseconds(milliseconds);
         }
@@ -359,9 +369,9 @@ internal static class Wire
     {
         try
         {
-            if (JsonNode.Parse(body)?["error"] is { } error)
+            if (Error(JsonNode.Parse(body)) is { } error)
             {
-                var message = error["message"]?.GetValue<string>() ?? error.ToString();
+                var message = (error is JsonObject said ? Blank(said["message"]) : Blank(error)) ?? error.ToString();
                 return $"{status}: {message}";
             }
         }
@@ -380,15 +390,15 @@ internal static class Wire
         return string.IsNullOrWhiteSpace(text) ? null : text;
     }
 
-    private static int Count(JsonNode? node)
-    {
-        try
-        {
-            return node?.GetValueKind() == JsonValueKind.Number ? node.GetValue<int>() : 0;
-        }
-        catch (FormatException)
-        {
-            return 0;
-        }
-    }
+    private static int Count(JsonNode? node) =>
+        node is JsonValue value && value.TryGetValue<double>(out var count) && double.IsFinite(count)
+            ? (int)Math.Clamp(count, 0, int.MaxValue)
+            : 0;
+
+    /// <summary>
+    /// The <c>error</c> a refusal carries, whether the body is the object, a list of
+    /// one as Google sends, or anything else a gateway makes up.
+    /// </summary>
+    private static JsonNode? Error(JsonNode? body) =>
+        (body is JsonArray { Count: > 0 } several ? several[0] : body) is JsonObject whole ? whole["error"] : null;
 }

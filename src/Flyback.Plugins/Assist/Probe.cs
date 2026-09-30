@@ -68,7 +68,13 @@ public static class Probe
     {
         try
         {
-            return JsonNode.Parse(body)?["error"]?["message"]?.GetValue<string>() ?? body;
+            var root = JsonNode.Parse(body);
+            var error = (root is JsonArray { Count: > 0 } several ? several[0] : root) is JsonObject whole ? whole["error"] : null;
+            var message = error is JsonObject said ? said["message"] : error;
+
+            return message is JsonValue text && text.GetValueKind() == System.Text.Json.JsonValueKind.String
+                ? text.GetValue<string>()
+                : body;
         }
         catch (System.Text.Json.JsonException)
         {

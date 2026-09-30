@@ -12,6 +12,7 @@ namespace Flyback.Core.Tests.Language;
 public class DefArgumentTests
 {
     private const int Freq = 1;
+    private const int Amp = 3;
 
     private static LanguageLoad Build(string source) => PatchLanguage.Build(source, NodeCatalog.BuiltIn);
 
@@ -190,4 +191,42 @@ public class DefArgumentTests
             def tone(pitch) = sine(freq: pitch)
             value(220) |> tone(pitch: 330) |> out.left
             """).Code.ShouldBe(IssueCode.NoSocketFree);
+
+    [Fact]
+    public void A_knob_statement_in_a_def_body_sets_the_knob()
+    {
+        var patch = Built("""
+            def tone(hz) = {
+              let s = sine(freq: hz)
+              s.amp = 0.25
+              s
+            }
+            tone(110) |> out.left
+            """);
+
+        Only(patch, "osc.sine").InputValues[Amp].ShouldBe(0.25f);
+    }
+
+    [Fact]
+    public void A_back_wire_in_a_def_body_is_wired()
+    {
+        var with = Built("""
+            def acc(v) = {
+              let sum = v |> add(a: _)
+              sum.b <- sum * 0.9
+              sum
+            }
+            acc(square(freq: 110)) |> out.left
+            """);
+
+        var without = Built("""
+            def acc(v) = {
+              let sum = v |> add(a: _)
+              sum
+            }
+            acc(square(freq: 110)) |> out.left
+            """);
+
+        with.Connections.Count.ShouldBeGreaterThan(without.Connections.Count);
+    }
 }

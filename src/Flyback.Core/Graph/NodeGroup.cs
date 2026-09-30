@@ -89,7 +89,7 @@ public sealed class NodeGroup
     {
         var trimmed = to?.Trim();
 
-        if (trimmed is { Length: > NameLimit }) trimmed = trimmed[..NameLimit].TrimEnd();
+        if (trimmed is { Length: > NameLimit }) trimmed = TextLimit.Clip(trimmed, NameLimit).TrimEnd();
 
         Name = string.IsNullOrEmpty(trimmed) || trimmed == Counted ? null : trimmed;
     }

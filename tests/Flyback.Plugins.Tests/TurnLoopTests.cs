@@ -125,6 +125,21 @@ public class TurnLoopTests
     }
 
     [Fact]
+    public async Task A_knob_a_float_cannot_hold_is_refused_rather_than_thrown()
+    {
+        var conversation = new Scripted(new ModelReply(null,
+        [
+            new ToolCall("a", "add_module", """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":1e39}]}"""),
+            Building[1],
+            Proposing,
+        ]));
+
+        await Turn(Bench(), conversation);
+
+        conversation.Answered[0][0].Text.ShouldContain("float");
+    }
+
+    [Fact]
     public async Task A_refused_request_is_the_turn_failing_not_an_exception()
     {
         var events = await Turn(Bench(), new Scripted());

@@ -141,7 +141,7 @@ public sealed class Patch
                 .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             var tidy = string.Join('-', words).ToLowerInvariant();
 
-            if (tidy.Length > TagLimit) tidy = tidy[..TagLimit].TrimEnd('-');
+            if (tidy.Length > TagLimit) tidy = TextLimit.Clip(tidy, TagLimit).TrimEnd('-');
             if (tidy.Length == 0 || kept.Contains(tidy)) continue;
 
             kept.Add(tidy);
@@ -178,7 +178,7 @@ public sealed class Patch
 
         var kept = tidy.ToString();
 
-        return kept.Length > limit ? kept[..limit].TrimEnd() : kept;
+        return kept.Length > limit ? TextLimit.Clip(kept, limit).TrimEnd() : kept;
     }
 
     public NodeInstance? Find(Guid id) => Nodes.FirstOrDefault(n => n.Id == id);

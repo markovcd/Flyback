@@ -38,6 +38,18 @@ public class PrinterTests
     private static IEnumerable<(OpCode, int, int, int, int, float)> Fingerprint(CompiledPatch program) =>
         program.Ops.Select(o => (o.Code, o.Out, o.A, o.B, o.C, o.K));
 
+    /// <summary>Builds the source, prints what it built, and holds the printing to the same sound.</summary>
+    private static void ReadsBackAsTheSameInstrument(string source)
+    {
+        var load = PatchLanguage.Build(source, NodeCatalog.BuiltIn);
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var again = Reread(load.Patch, out var printed);
+
+        Fingerprint(again.CompileForAudio(NodeCatalog.BuiltIn).Program)
+            .ShouldBe(Fingerprint(load.Patch.CompileForAudio(NodeCatalog.BuiltIn).Program), printed);
+    }
+
     [Theory]
     [MemberData(nameof(Names))]
     public void A_printed_preset_reads_back_as_the_same_instrument(string name)
@@ -285,6 +297,57 @@ public class PrinterTests
         var again = Reread(patch, out _);
 
         again.Nodes.Single(n => n.TypeId == "osc.sine").InputValues[3].ShouldBe(sine.InputValues[3]);
+    }
+
+    [Theory]
+    [InlineData(3.3333333e-6f)]
+    [InlineData(1.2345678e-7f)]
+    [InlineData(1e-20f)]
+    public void A_small_knob_is_written_to_a_precision_that_reads_back(float value)
+    {
+        var written = PatchPrinter.Knob(value, PortDisplay.Number);
+        var load = PatchLanguage.Build($"sine(freq: {written}) |> out.left", NodeCatalog.BuiltIn);
+
+        load.Issues.ShouldBeEmpty(load.Report);
+        load.Patch.Nodes.Single(n => n.TypeId == "osc.sine").InputValues[1].ShouldBe(value, $"written as {written}");
+    }
+
+    [Fact]
+    public void A_small_number_in_a_sum_reads_back_as_the_same_instrument() =>
+        ReadsBackAsTheSameInstrument("t * 0.00000012345678 |> out.left");
+
+    /// <summary>An Integer knob holds whatever it was set to, so it is written unrounded.</summary>
+    [Fact]
+    public void A_fractional_integer_knob_reads_back_as_the_same_instrument() =>
+        ReadsBackAsTheSameInstrument("noise(seed: 2.5).white |> out.left");
+
+    /// <summary>A note below the lowest octave the lexer reads is written as a number.</summary>
+    [Fact]
+    public void A_note_knob_below_the_named_octaves_reads_back_as_the_same_instrument() =>
+        ReadsBackAsTheSameInstrument("audio.note(note: -990) |> out.left");
+
+    [Fact]
+    public void A_step_below_the_named_octaves_reads_back_as_the_same_instrument() =>
+        ReadsBackAsTheSameInstrument("let n = notes() [ -990 ]\nn |> out.left");
+
+    [Fact]
+    public void A_short_name_a_plugin_shares_is_written_in_full()
+    {
+        var catalog = NodeCatalog.BuiltIn.With(new ModuleProvider("acme.synth", "Acme"),
+        [
+            new NodeDef("acme.synth.sine", "Acme sine", "Test",
+                [new PortSpec("in")],
+                [new PortSpec("out")],
+                (em, i) => [em.Mul(i[0], 2f)]),
+        ]).Catalog;
+
+        var load = PatchLanguage.Build("t |> acme.synth.sine() |> out.left\nosc.sine(freq: 3) |> out.right", catalog);
+        load.Issues.ShouldBeEmpty(load.Report);
+
+        var printed = PatchPrinter.Print(load.Patch, catalog);
+        var again = PatchLanguage.Build(printed, catalog);
+
+        again.Issues.ShouldBeEmpty(printed + "\n" + again.Report);
     }
 
     [Fact]

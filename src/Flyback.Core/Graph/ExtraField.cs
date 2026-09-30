@@ -183,7 +183,7 @@ public abstract record ExtraField(string Key, string Label)
 
             if (Multiline) typed = typed.Replace("\r\n", "\n");
 
-            return typed.Length > Limit ? typed[..Limit] : typed;
+            return TextLimit.Clip(typed, Limit);
         }
     }
 

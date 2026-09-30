@@ -53,7 +53,7 @@ public sealed class PatchControl
     {
         var trimmed = name?.Trim() ?? string.Empty;
 
-        if (trimmed.Length > NameLimit) trimmed = trimmed[..NameLimit].TrimEnd();
+        if (trimmed.Length > NameLimit) trimmed = TextLimit.Clip(trimmed, NameLimit).TrimEnd();
 
         return trimmed.Length == 0 ? "Knob" : trimmed;
     }

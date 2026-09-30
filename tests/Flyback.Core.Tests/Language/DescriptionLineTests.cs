@@ -78,6 +78,17 @@ public class DescriptionLineTests
     }
 
     [Fact]
+    public void One_with_quotes_typed_in_reads_back()
+    {
+        var patch = Built("sine() |> out.left").Patch;
+        patch.Describe("The \"Amen\" break, slowed down.");
+
+        var source = PatchPrinter.Print(patch, NodeCatalog.BuiltIn);
+
+        Built(source).Patch.Description.ShouldBe(patch.Description);
+    }
+
+    [Fact]
     public void The_panel_replaces_every_line_of_one_that_runs_on()
     {
         const string source = "description \"a slow\"\n  \"hum\"\nsine() |> out.left\n";

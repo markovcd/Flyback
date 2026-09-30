@@ -51,7 +51,7 @@ internal static class PatchValueWriter
     {
         PortDisplay.Note => Whole(value) ? Pitch.Name(value) : Number(value),
         PortDisplay.Duration => Seconds(value),
-        PortDisplay.Integer or PortDisplay.Chord => value.ToString("0", CultureInfo.InvariantCulture),
+        PortDisplay.Integer or PortDisplay.Chord when value == MathF.Round(value) => value.ToString("0", CultureInfo.InvariantCulture),
         _ => Number(value),
     };
 
@@ -61,7 +61,8 @@ internal static class PatchValueWriter
 
         var exact = (double)value;
 
-        for (var digits = 0; digits <= 12; digits++)
+        // Enough places for the smallest float: 45 zeros, then its nine digits.
+        for (var digits = 0; digits <= 54; digits++)
         {
             var written = exact.ToString(
                 digits == 0 ? "0" : "0." + new string('#', digits), CultureInfo.InvariantCulture);

@@ -8,6 +8,8 @@ internal static class Submissions
 {
     public const int NameLimit = 60;
 
+    private const char ByteOrderMark = (char)0xFEFF;
+
     /// <summary>The most a submitted bundle may unpack to: a few times the upload limit, where a sound or a picture barely compresses.</summary>
     public const long BundleLimit = 128L << 20;
 
@@ -43,7 +45,7 @@ internal static class Submissions
     /// <summary>A preset name held to one line and <see cref="NameLimit"/>, or null where it is blank.</summary>
     public static string? Named(string? name) => Patch.Tidied(name) switch
     {
-        { Length: > NameLimit } called => called[..NameLimit].TrimEnd(),
+        { Length: > NameLimit } called => TextLimit.Clip(called, NameLimit).TrimEnd(),
         var called => called,
     };
 
@@ -53,7 +55,7 @@ internal static class Submissions
 
         try
         {
-            json = new UTF8Encoding(false, true).GetString(file);
+            json = new UTF8Encoding(false, true).GetString(file).TrimStart(ByteOrderMark);
         }
         catch (DecoderFallbackException)
         {
