@@ -108,6 +108,13 @@ public sealed class OutputSettings
     public int LatencyMilliseconds { get; set; } = AudioFormat.Default.LatencyMilliseconds;
 
     /// <summary>
+    /// How many times the output rate the sound is evaluated at, one of
+    /// <see cref="AudioRenderer.Oversamples"/> — the Sound section. A take, a
+    /// <c>flyback-cli render</c> and the viewer follow it too, so what is heard is what is written.
+    /// </summary>
+    public int Oversample { get; set; } = AudioRenderer.DefaultOversample;
+
+    /// <summary>
     /// The preset the window opens on at the next launch, by name — the Graphics
     /// section. Empty for the one written here, which is the first of the list
     /// (ADR-0093).
@@ -248,6 +255,7 @@ public sealed class OutputSettings
             settings.FfmpegPath ??= string.Empty;
             settings.Library ??= string.Empty;
             settings.LatencyMilliseconds = Math.Clamp(settings.LatencyMilliseconds, ShortestLatency, LongestLatency);
+            if (!AudioRenderer.Oversamples.Contains(settings.Oversample)) settings.Oversample = AudioRenderer.DefaultOversample;
 
             // A "defaultPreset": null typed by hand is the one written here, not a fault.
             settings.DefaultPreset ??= string.Empty;

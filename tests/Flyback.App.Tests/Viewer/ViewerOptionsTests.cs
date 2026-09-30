@@ -22,6 +22,7 @@ public class ViewerOptionsTests
         PreviewFrameRate = 30,
         LatencyMilliseconds = 60,
         Transport = TransportEdge.Bottom,
+        Oversample = 4,
     };
 
     private sealed record Ran(int Code, ViewerOptions? Options, string Error, int ParseErrors);
@@ -92,6 +93,7 @@ public class ViewerOptionsTests
         options.Gpu.ShouldBeFalse();
         options.FrameRate.ShouldBe(30);
         options.LatencyMilliseconds.ShouldBe(60);
+        options.Oversample.ShouldBe(4);
         options.Volume.ShouldBe(1f);
         options.Mute.ShouldBeFalse();
         options.From.ShouldBe(0);
@@ -119,6 +121,7 @@ public class ViewerOptionsTests
             "--volume", "0.25",
             "--mute",
             "--latency", "20",
+            "--oversample", "1",
             "--from", "12.5",
             "--paused",
             "--for", "8",
@@ -138,6 +141,7 @@ public class ViewerOptionsTests
         options.NoVideo.ShouldBeTrue();
         options.Window.ShouldBe(new PixelSize(800, 450));
         options.Maximized.ShouldBeTrue();
+        options.Oversample.ShouldBe(1);
         options.NoAudio.ShouldBeTrue();
         options.Volume.ShouldBe(0.25f);
         options.Mute.ShouldBeTrue();

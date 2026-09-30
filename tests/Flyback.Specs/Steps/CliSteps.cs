@@ -6,6 +6,7 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Language;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
@@ -45,6 +46,49 @@ public sealed class CliSteps(PatchContext context) : IDisposable
 
     [Given("the text saved as {string}:")]
     public void GivenTextSaved(string name, string text) => File.WriteAllText(Path(name), text);
+
+    [Given("the editor's settings oversample the sound as they please")]
+    public void GivenNoOversampleSetting() => File.WriteAllText(Path("output.json"), "{}");
+
+    [Given("the editor's settings oversample the sound {int} times")]
+    public void GivenOversampleSetting(int factor) => File.WriteAllText(Path("output.json"), $$"""{ "oversample": {{factor}} }""");
+
+    [When("flyback-cli renders {string} as {string} for {float} seconds")]
+    public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");
+
+    [When("flyback-cli renders {string} as {string} for {float} seconds, {}")]
+    public void WhenRenderedWith(string patch, string into, float seconds, string flags)
+    {
+        Run([
+            "render", Path(patch), "-o", Path(into),
+            "--seconds", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            "--settings", Path("output.json"),
+            .. flags.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+        ]);
+
+        code.ShouldBe(0, said);
+    }
+
+    /// <summary>The file against the patch rendered here at <paramref name="factor"/>, and unlike it at every other factor.</summary>
+    [Then("{string} is the patch's sound worked out at {int} times the output rate")]
+    public void ThenWorkedOutAt(string written, int factor)
+    {
+        var heard = WavReader.Read(Path(written), out var fault).ShouldNotBeNull(fault.ToString()).Samples;
+        var program = PatchLanguage.Build(File.ReadAllText(Path("saw.fbks")), NodeCatalog.BuiltIn).Patch.CompileForAudio().Program;
+
+        float Furthest(int at)
+        {
+            var stereo = new float[heard.Length * 2];
+            new AudioRenderer(oversample: at).Render(program, stereo);
+
+            return heard.Select((sample, i) => MathF.Abs(sample - (stereo[i * 2] + stereo[i * 2 + 1]) / 2)).Max();
+        }
+
+        Furthest(factor).ShouldBeLessThanOrEqualTo(2f / 32768f, "a step of 16 bits either way");
+
+        foreach (var other in AudioRenderer.Oversamples.Where(other => other != factor))
+            Furthest(other).ShouldBeGreaterThan(8f / 32768f, $"{other}× would have written the same file, so this proves nothing");
+    }
 
     [When("flyback-cli checks {string}")]
     public void WhenChecked(string name) => Run("check", Path(name));

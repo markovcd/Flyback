@@ -123,6 +123,15 @@ internal static class ViewerArguments
             DefaultValueFactory = _ => settings.LatencyMilliseconds,
         };
 
+        var oversample = new Option<int>("--oversample")
+        {
+            Description = "Evaluate the sound at this many times the output rate: "
+                + string.Join(", ", AudioRenderer.Oversamples) + ". Left out, the editor's Settings → Sound.",
+            DefaultValueFactory = _ => settings.Oversample,
+        };
+
+        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+
         latency.Validators.Add(result =>
         {
             if (Typed<int>(result) is { } value
@@ -211,7 +220,7 @@ internal static class ViewerArguments
         {
             patch, preset, presets,
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
-            noAudio, volume, mute, latency,
+            noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
             background, hidden, noOverlay, transport, stats, title, top, interpreted, file,
         };
@@ -243,6 +252,7 @@ internal static class ViewerArguments
                 Volume = result.GetValue(volume),
                 Mute = result.GetValue(mute),
                 LatencyMilliseconds = result.GetValue(latency),
+                Oversample = result.GetValue(oversample),
                 From = result.GetValue(from),
                 Paused = result.GetValue(paused),
                 For = result.GetResult(duration) is not null ? result.GetValue(duration) : null,

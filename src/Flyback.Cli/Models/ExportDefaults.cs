@@ -5,8 +5,8 @@ using Flyback.Core.Render;
 namespace Flyback.Cli.Models;
 
 /// <summary>
-/// What <c>render</c> writes when a flag is left out: the editor's preview size and
-/// its Settings → Recording, read from the <c>output.json</c> the editor saves.
+/// What <c>render</c> writes when a flag is left out: the editor's preview size, its
+/// Settings → Recording and its oversampling, read from the <c>output.json</c> the editor saves.
 /// </summary>
 /// <remarks>
 /// Read here rather than through the editor's own settings class, which would bring
@@ -20,7 +20,8 @@ internal sealed record ExportDefaults(
     int Quality = JpegWriter.DefaultQuality,
     ClipFormat? Video = null,
     ClipFormat? Sound = null,
-    string? Ffmpeg = null)
+    string? Ffmpeg = null,
+    int Oversample = AudioRenderer.DefaultOversample)
 {
     public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
 
@@ -47,7 +48,10 @@ internal sealed record ExportDefaults(
                 Math.Clamp(Int(root, "jpegQuality", defaults.Quality), 1, 100),
                 Format(root, "videoFormat", picture: true),
                 Format(root, "soundFormat", picture: false),
-                Text(root, "ffmpegPath") is { Length: > 0 } ffmpeg ? ffmpeg : null);
+                Text(root, "ffmpegPath") is { Length: > 0 } ffmpeg ? ffmpeg : null,
+                AudioRenderer.Oversamples.Contains(Int(root, "oversample", defaults.Oversample))
+                    ? Int(root, "oversample", defaults.Oversample)
+                    : defaults.Oversample);
         }
         catch
         {

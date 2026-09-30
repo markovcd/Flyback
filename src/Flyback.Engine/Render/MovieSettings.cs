@@ -15,6 +15,7 @@
 /// program writes itself, which is what a machine with no ffmpeg has.
 /// </param>
 /// <param name="Ffmpeg">Where ffmpeg is, for a format that needs one.</param>
+/// <param name="Oversample">How many times the output rate the sound is evaluated at.</param>
 public readonly record struct MovieSettings(
     int Width,
     int Height,
@@ -22,7 +23,8 @@ public readonly record struct MovieSettings(
     double FramesPerSecond = MovieRenderer.DefaultFrameRate,
     int Quality = JpegWriter.DefaultQuality,
     ClipFormat? Format = null,
-    string? Ffmpeg = null)
+    string? Ffmpeg = null,
+    int Oversample = AudioRenderer.DefaultOversample)
 {
     /// <summary>Always at least one, so the shortest export is still a picture.</summary>
     public int FrameCount => Math.Max(1, (int)Math.Round(Seconds * FramesPerSecond));

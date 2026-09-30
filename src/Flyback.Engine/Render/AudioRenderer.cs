@@ -34,7 +34,13 @@ public sealed class AudioRenderer
     /// </summary>
     private DelayState? delays;
 
-    public AudioRenderer(int sampleRate = DefaultSampleRate, int oversample = 4)
+    /// <summary>The oversampling the sound is played and written at unless something says otherwise (ADR-0023).</summary>
+    public const int DefaultOversample = 2;
+
+    /// <summary>The factors on offer: a factor between these filters no better and costs more than the one above it.</summary>
+    public static IReadOnlyList<int> Oversamples { get; } = [1, 2, 4];
+
+    public AudioRenderer(int sampleRate = DefaultSampleRate, int oversample = DefaultOversample)
     {
         SampleRate = sampleRate;
         Oversample = Math.Max(1, oversample);

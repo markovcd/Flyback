@@ -133,7 +133,8 @@ context, decision, consequences.
 | # | Decision |
 |---|---|
 | [0022](0022-audio-and-video-are-two-sinks-over-one-patch.md) | Audio and video are two sinks over one patch |
-| [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules |
+| [0023](0023-oversample-the-audio-path.md) | Oversample the audio path rather than band-limiting modules *(2× and a setting by [0168](0168-the-sound-is-oversampled-2x-and-a-setting.md))* |
+| [0168](0168-the-sound-is-oversampled-2x-and-a-setting.md) | The sound is oversampled 2× by default, and the factor is a setting *(user-directed)* |
 | [0024](0024-audio-device-in-the-shell.md) | Sample generation in the engine, the audio device in the shell |
 | [0027](0027-delay-lines-give-the-audio-path-a-memory.md) | Delay lines give the audio path a memory *(user-directed)* |
 | [0029](0029-linux-sound-through-alsa.md) | Linux sound through ALSA, on a thread of our own |

@@ -70,6 +70,13 @@ internal sealed partial class PageSound : IAudioEngine
 
     public LiveValues Live { get; private set; } = LiveValues.None;
 
+    /// <summary>The page's worker plays at the default and lowers it itself when the sound falls behind, so there is nothing to set.</summary>
+    public int Oversample
+    {
+        get => AudioRenderer.DefaultOversample;
+        set { }
+    }
+
     public bool IsAuditioning => false;
 
     public void Start()

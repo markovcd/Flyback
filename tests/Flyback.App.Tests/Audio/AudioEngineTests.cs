@@ -116,6 +116,28 @@ public class AudioEngineTests
         }
     }
 
+    /// <summary>A change of oversampling plays on from where the clock was, at the new rate.</summary>
+    [Fact]
+    public void A_change_of_oversampling_plays_on_at_the_new_rate()
+    {
+        using var device = new LoopbackDevice();
+        using var engine = new AudioEngine(new AudioSetup(device));
+        engine.Update(Tone(220f));
+        engine.Start();
+
+        engine.Oversample.ShouldBe(AudioRenderer.DefaultOversample);
+        device.Pump();
+        var at = engine.Time;
+
+        engine.Oversample = 4;
+        engine.Oversample.ShouldBe(4);
+        engine.Time.ShouldBe(at, 1e-9);
+
+        var heard = device.Pump();
+        heard.ShouldContain(sample => sample != 0f, "the sound stopped at the change");
+        engine.Time.ShouldBe(at + BufferFrames / (double)GlobalConstants.SampleRate, 1e-9);
+    }
+
     /// <summary>
     /// The same claim as a listener would put it, and the one that survives a
     /// change to how the memory is carried: an edit during playback bends the
@@ -214,6 +236,8 @@ public class AudioEngineTests
 
         engine.Aspect = 16f / 9f;
 
+        // After the buffer the jump lands in: the decimating filter rings on a jump in level for a few dozen samples.
+        device.Pump(4_096);
         device.Pump(4_096).Max(MathF.Abs).ShouldBe(0.5f * 16f / 9f, 0.02f, "and hears whatever shape it is given next");
     }
 

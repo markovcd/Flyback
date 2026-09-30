@@ -72,6 +72,7 @@ internal sealed class ViewerPlayer : IDisposable
         this.patch = patch;
 
         audio.Aspect = SynthRenderer.AspectOf(options.Size.Width, options.Size.Height);
+        audio.Oversample = options.Oversample;
 
         transport = new Transport(audio, this.preview, compiler, midi) { Volume = options.Volume };
 

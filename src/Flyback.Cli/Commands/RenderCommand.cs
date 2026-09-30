@@ -243,7 +243,7 @@ internal static class RenderCommand
     {
         // Nothing is drawn, but a patch reading Coordinates' aspect is still told
         // the frame it would have been drawn at.
-        var renderer = new AudioRenderer { Aspect = SynthRenderer.AspectOf(options.Width, options.Height) };
+        var renderer = new AudioRenderer(oversample: options.Oversample) { Aspect = SynthRenderer.AspectOf(options.Width, options.Height) };
         var frames = (int)Math.Round(renderer.SampleRate * options.Seconds);
         var samples = new float[frames * NodeCatalog.AudioChannels];
 
@@ -276,7 +276,7 @@ internal static class RenderCommand
         CancellationToken cancellation)
     {
         var settings = new MovieSettings(
-            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg);
+            options.Width, options.Height, options.Seconds, options.Fps, options.Quality, format, ffmpeg, options.Oversample);
 
         // Silence is not worth a track. A patch with nothing in its 'left' is
         // compiled for the eye only above, and gets a clip with no audio stream

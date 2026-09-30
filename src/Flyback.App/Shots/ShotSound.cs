@@ -3,6 +3,7 @@ using Flyback.App.Capture;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 
 namespace Flyback.App.Shots;
@@ -25,6 +26,8 @@ internal sealed class ShotSound : IAudioEngine
     public double Time { get; set; }
 
     public float Aspect { get; set; } = 1f;
+
+    public int Oversample { get; set; } = AudioRenderer.DefaultOversample;
 
     public float Gain { get; set; } = 1f;
 

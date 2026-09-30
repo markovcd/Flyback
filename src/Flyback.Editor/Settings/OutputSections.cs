@@ -254,6 +254,14 @@ internal sealed class OutputSections
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>How many times the output rate the sound is evaluated at, one row a factor of <see cref="AudioRenderer.Oversamples"/>.</summary>
+    private readonly ComboBox oversample = new Picker
+    {
+        Name = "oversample",
+        ItemsSource = AudioRenderer.Oversamples.Select(factor => $"{factor}×").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     /// <summary>
     /// The sound backend's own settings — which device plays, for one — drawn from
     /// what it declares (ADR-0085). Empty where no backend is installed or it has
@@ -291,7 +299,7 @@ internal sealed class OutputSections
 
         BuildGraphics(host.InPage);
         BuildRecording();
-        BuildSound();
+        BuildSound(host.InPage);
 
         Library = BuildLibrary();
 
@@ -348,6 +356,7 @@ internal sealed class OutputSections
         ffmpegBox.Text = current.FfmpegPath;
         libraryBox.Text = current.Library;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
+        oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
         Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
         KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
 
@@ -394,6 +403,7 @@ internal sealed class OutputSections
                 : before.JpegQuality,
 
             LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
+            Oversample = AudioRenderer.Oversamples[Math.Max(oversample.SelectedIndex, 0)],
 
             CountInSeconds = CountIns[Math.Max(countIn.SelectedIndex, 0)],
             RewindBeforeTake = rewindBeforeTake.IsChecked == true,
@@ -638,7 +648,8 @@ internal sealed class OutputSections
         Recording.Children.Add(ffmpegNote);
     }
 
-    private void BuildSound()
+    /// <param name="inPage">A page lowers its oversampling itself as the sound needs, so it has none to pick.</param>
+    private void BuildSound(bool inPage)
     {
         ToolTip.SetTip(latency,
             "How far behind the patch the speakers may run. Lower answers a key sooner; "
@@ -658,6 +669,15 @@ internal sealed class OutputSections
         if (plugins.PreferredAudioOutput is not null) Sound.Children.Add(soundForm);
 
         Sound.Children.Add(InspectorRows.Field("Latency", latency));
+
+        if (inPage) return;
+
+        ToolTip.SetTip(oversample,
+            "How many times the output rate the sound is worked out at before it is filtered down. "
+            + "Higher is cleaner on bright raw saws and costs more; 2× is clean enough for nearly "
+            + "every patch. A take, flyback-cli render and the viewer use it too.");
+
+        Sound.Children.Add(InspectorRows.Field("Oversampling", oversample));
     }
 
     /// <summary>A caption, the folder typed or picked, and a button that picks one.</summary>

@@ -23,8 +23,8 @@ namespace Flyback.Core.Compile;
 public static class Spectra
 {
     /// <summary>
-    /// The longest segment the window is cut into, in evaluations: about 85 ms at
-    /// the oversampled rate, which puts a bin every 12 Hz.
+    /// The longest segment the window is cut into: about 85 ms, which puts a bin every
+    /// 12 Hz, as the evaluations at the rate the sound is oversampled to.
     /// </summary>
     /// <remarks>
     /// The resolution, fixed rather than grown with the window, because a longer
@@ -33,10 +33,10 @@ public static class Spectra
     /// Coarse at the bottom of a log axis, where the first octave is two bins
     /// wide, and that is the honest price of a picture that moves at frame rate.
     /// </remarks>
-    public const int Segment = 16_384;
+    public const double SegmentSeconds = 0.085;
 
     /// <summary>
-    /// The shortest segment, for a window shorter than <see cref="Segment"/>.
+    /// The shortest segment, for a window shorter than <see cref="SegmentSeconds"/>.
     /// Below this the bins are wider than the chart's first two decades together.
     /// </summary>
     private const int ShortestSegment = 256;
@@ -65,8 +65,9 @@ public static class Spectra
 
         if (into.Length == 0) return;
 
+        var longest = 1 << BitOperations.Log2((uint)Math.Max(memory.SampleRate * SegmentSeconds * 1.5, ShortestSegment));
         var length = Math.Clamp(
-            1 << BitOperations.Log2((uint)Math.Max(span, 1)), ShortestSegment, Segment);
+            1 << BitOperations.Log2((uint)Math.Max(span, 1)), ShortestSegment, longest);
         var bins = length / 2 + 1;
 
         // Half-overlapping, which a Hann window is flat under, up to the most a

@@ -45,8 +45,28 @@ public class OutputSettingsFileTests : IDisposable
 
         using var saved = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(File));
 
-        foreach (var name in new[] { "width", "height", "frameRate", "jpegQuality", "videoFormat", "soundFormat", "ffmpegPath" })
+        foreach (var name in new[] { "width", "height", "frameRate", "jpegQuality", "videoFormat", "soundFormat", "ffmpegPath", "oversample" })
             saved.RootElement.TryGetProperty(name, out _).ShouldBeTrue(name);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    [InlineData(8)]
+    public void An_oversampling_not_on_offer_is_the_default(int typed)
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, $$"""{ "oversample": {{typed}} }""");
+
+        OutputSettings.Load(File).Oversample.ShouldBe(AudioRenderer.DefaultOversample);
+    }
+
+    [Fact]
+    public void The_oversampling_comes_back()
+    {
+        new OutputSettings { Oversample = 4 }.Save(File);
+
+        OutputSettings.Load(File).Oversample.ShouldBe(4);
     }
 
     [Fact]

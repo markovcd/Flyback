@@ -353,13 +353,22 @@ internal static class Program
                 + "Left out, the GPU draws it where there is one.",
         };
 
+        var oversample = new Option<int>("--oversample")
+        {
+            Description = "Evaluate the sound at this many times the output rate before filtering it down: "
+                + string.Join(", ", AudioRenderer.Oversamples) + ". Left out, the editor's Settings → Sound.",
+            DefaultValueFactory = _ => defaults.Oversample,
+        };
+
+        oversample.AcceptOnlyFromAmong([.. AudioRenderer.Oversamples.Select(factor => factor.ToString(System.Globalization.CultureInfo.InvariantCulture))]);
+
         var command = new Command(
             "render",
             "Write a patch to a picture, a sound, or a clip of both. The size, rate, quality, format "
             + "and ffmpeg left out are the editor's: its preview size and Settings → Recording.")
         {
             patch, preset, presets, output, size, at, seconds, fps, quality, format, ffmpeg, loudness, interpreted, gpu,
-            processor, settings,
+            processor, settings, oversample,
         };
 
         command.SetAction((result, cancellation) =>
@@ -437,7 +446,8 @@ internal static class Program
                 result.GetValue(interpreted),
                 result.GetValue(gpu) ? PictureBackend.Gpu
                 : result.GetValue(processor) ? PictureBackend.Processor
-                : PictureBackend.Any);
+                : PictureBackend.Any,
+                result.GetValue(oversample));
 
             return Task.FromResult(
                 RenderCommand.Run(

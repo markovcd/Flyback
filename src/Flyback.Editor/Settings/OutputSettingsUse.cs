@@ -60,6 +60,7 @@ internal sealed class OutputSettingsUse(
         // A live Scan uses Coordinates' aspect (ADR-0077), so keep it in step
         // with the preview now that sizes are not all the same shape.
         audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
+        audio.Oversample = settings.Oversample;
 
         knobs.Hub.Takeover = settings.Takeover;
 

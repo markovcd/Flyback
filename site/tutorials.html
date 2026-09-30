@@ -577,7 +577,8 @@ out.volume = 0.5</code></pre>
     <code>--settings</code> reads them from another <code>output.json</code>. The picture is drawn on the GPU
     where there is one, with no window, and on the processor where there is not; the two can differ by a shade.
     <code>--processor</code> asks for the processor's picture, exact to the bit, and <code>--gpu</code> fails
-    rather than fall back.</p>
+    rather than fall back. The sound is worked out at the oversampling set in <strong>Settings → Sound</strong>,
+    2× unless changed, and <code>--oversample</code> picks 1×, 2× or 4× for one render.</p>
 
 <pre><code># a still frame, 2.5 seconds in
 flyback-cli render drone.fbk -o drone.png --size 1920x1080 --at 2.5
@@ -592,6 +593,9 @@ flyback-cli render drone.fbk -o drone.wav --seconds 30
 
 # an ffmpeg that is not on PATH, and a format the extension does not name
 flyback-cli render drone.fbk -o drone.mkv --format mp4 --ffmpeg /opt/bin/ffmpeg
+
+# the sound worked out at 4 times the output rate, cleaner on bright raw saws
+flyback-cli render drone.fbk -o drone.wav --seconds 30 --oversample 4
 
 # the processor's picture, exact to the bit, or the GPU and nothing else
 flyback-cli render drone.fbk -o drone.mp4 --seconds 30 --processor

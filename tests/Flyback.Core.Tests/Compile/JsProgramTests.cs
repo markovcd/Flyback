@@ -123,7 +123,7 @@ public class JsProgramTests
     /// <summary>What the interpreter makes of <paramref name="frames"/> frames, at the times the script makes them.</summary>
     private static float[] Interpret(CompiledPatch program, int frames)
     {
-        var memory = new AudioRenderer().DelayMemoryFor(program);
+        var memory = new AudioRenderer(oversample: Oversample).DelayMemoryFor(program);
         var registers = program.AllocateRegisters();
         var live = new LiveValues(program.LiveInputs);
         var left = program.OutputBase;
@@ -160,7 +160,7 @@ public class JsProgramTests
         try
         {
             var heap = new ScriptHeap();
-            var memory = new AudioRenderer().DelayMemoryFor(program);
+            var memory = new AudioRenderer(oversample: Oversample).DelayMemoryFor(program);
             var live = new LiveValues(program.LiveInputs);
             var layout = JsLayout.Of(program, memory, live, SampleRate, Oversample, heap.Place);
             var count = frames * Oversample * 2;

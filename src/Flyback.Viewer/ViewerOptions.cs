@@ -1,6 +1,7 @@
 using Avalonia;
 using Flyback.App;
 using Flyback.Core.Compile;
+using Flyback.Core.Render;
 
 namespace Flyback.Viewer;
 
@@ -48,6 +49,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     public bool Mute { get; init; }
 
     public int LatencyMilliseconds { get; init; } = 30;
+
+    /// <summary>How many times the output rate the sound is evaluated at, the editor's Settings → Sound unless <c>--oversample</c> says.</summary>
+    public int Oversample { get; init; } = AudioRenderer.DefaultOversample;
 
     /// <summary>Where to start, in seconds.</summary>
     public double From { get; init; }

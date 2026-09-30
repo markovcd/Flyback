@@ -55,3 +55,8 @@ The aliasing test is a real measurement rather than a proxy: point-sampling a
 30 kHz sine at 48 kHz aliases to 18 kHz, and the assertion is that oversampling
 attenuates it below a quarter of the naive RMS. Setting `Oversample = 1` is what
 that test compares against, so the option to disable it stays exercised.
+
+## Amendment, 2026-09-30: 2× and a setting
+
+The default factor is 2×, and 1×, 2× or 4× is a setting; see
+[0168](0168-the-sound-is-oversampled-2x-and-a-setting.md).

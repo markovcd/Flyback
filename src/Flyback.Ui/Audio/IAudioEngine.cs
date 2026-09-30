@@ -32,6 +32,9 @@ internal interface IAudioEngine
     /// <summary>How loud the speakers are turned down to, from 0 to 1.</summary>
     float Gain { get; set; }
 
+    /// <summary>How many times the output rate the sound is evaluated at. Changing it starts what the patch remembers anew.</summary>
+    int Oversample { get; set; }
+
     /// <summary>The block whoever is playing writes into, made anew by every <see cref="Update"/>.</summary>
     LiveValues Live { get; }
 

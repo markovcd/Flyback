@@ -30,16 +30,22 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// What the patch is being played with. Here for the same reason the memory is:
     /// it is sized from one program's live inputs.
     /// </param>
+    /// <param name="Renderer">
+    /// The clock, the oversampling and the filter. Here because the memory is sized
+    /// for its rate, so a change of rate swaps both in one write.
+    /// </param>
     private sealed record State(
         CompiledPatch Program,
         DelayState? Memory,
-        LiveValues Live);
+        LiveValues Live,
+        AudioRenderer Renderer);
 
-    private readonly AudioRenderer renderer = new(sound.Device.SampleRate);
+    /// <summary>The shape a renderer made for a change of rate is told, the last <see cref="Aspect"/> set.</summary>
+    private float aspect = 1f;
 
     /// <summary>What plays, which <see cref="Use"/> may replace while nothing is playing.</summary>
     private IAudioDevice current = sound.Device;
-    private State activeState = new(CompiledPatch.Silent, null, LiveValues.None);
+    private State activeState = new(CompiledPatch.Silent, null, LiveValues.None, new AudioRenderer(sound.Device.SampleRate));
     private IAudioSink? capture;
 
     // One while a rewind is waiting for the callback to carry it out.
@@ -92,7 +98,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     }
 
     /// <summary>Sample-accurate position, and the master timeline while sound is on.</summary>
-    public double Time => renderer.Time;
+    public double Time => Volatile.Read(ref activeState).Renderer.Time;
 
     /// <summary>
     /// The shape Coordinates' <c>aspect</c> reads while playing live. Follows the
@@ -102,8 +108,33 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     /// </summary>
     public float Aspect
     {
-        get => renderer.Aspect;
-        set => renderer.Aspect = value;
+        get => Volatile.Read(ref aspect);
+        set
+        {
+            Volatile.Write(ref aspect, value);
+            Volatile.Read(ref activeState).Renderer.Aspect = value;
+        }
+    }
+
+    /// <summary>
+    /// How many times the output rate the sound is evaluated at. Changing it swaps in a
+    /// renderer at the new rate with the clock where it was and the patch's memory
+    /// empty, since delay lines and rings are sized for the rate.
+    /// </summary>
+    public int Oversample
+    {
+        get => Volatile.Read(ref activeState).Renderer.Oversample;
+        set
+        {
+            var state = Volatile.Read(ref activeState);
+            if (value == state.Renderer.Oversample) return;
+
+            var renderer = new AudioRenderer(state.Renderer.SampleRate, value) { Aspect = Volatile.Read(ref aspect) };
+            renderer.SeekTo(state.Renderer.Time);
+            renderer.Prepare(state.Program);
+
+            Volatile.Write(ref activeState, state with { Renderer = renderer, Memory = renderer.DelayMemoryFor(state.Program) });
+        }
     }
 
     public void Start()
@@ -174,13 +205,15 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
         if (current.IsRunning) return;
 
-        Restart(Volatile.Read(ref activeState));
-        renderer.SeekTo(seconds);
+        var state = Volatile.Read(ref activeState);
+
+        Restart(state);
+        state.Renderer.SeekTo(seconds);
     }
 
-    private void Restart(State state)
+    private static void Restart(State state)
     {
-        renderer.Reset();
+        state.Renderer.Reset();
         state.Memory?.Clear();
     }
 
@@ -203,6 +236,8 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         // this same program when it has some, and the callback picks it up on the next buffer.
         compiler?.Submit(program, IlLane.Sound);
 
+        var renderer = Volatile.Read(ref activeState).Renderer;
+
         renderer.Prepare(program);
 
         // Reusing it when the shape has not changed is what keeps a delay ringing
@@ -217,7 +252,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         // resized under it.
         var live = new LiveValues(program.LiveInputs);
 
-        Volatile.Write(ref activeState, new State(program, memory, live));
+        Volatile.Write(ref activeState, new State(program, memory, live, renderer));
     }
 
     /// <summary>
@@ -314,7 +349,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         var program = patch.CompileForAudio(samples: samples, played: true).Program;
         compiler?.Submit(program, IlLane.AuditionSound);
 
-        var own = new AudioRenderer(renderer.SampleRate) { Aspect = renderer.Aspect };
+        var own = new AudioRenderer(SampleRate, Oversample) { Aspect = Aspect };
 
         own.Prepare(program);
 
@@ -353,11 +388,11 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
             var seek = Interlocked.Exchange(ref seekPending, NoSeek);
 
-            if (seek != NoSeek) renderer.SeekTo(BitConverter.Int64BitsToDouble(seek));
+            if (seek != NoSeek) state.Renderer.SeekTo(BitConverter.Int64BitsToDouble(seek));
         }
 
         if (state.Program.Waiting) buffer.Clear();
-        else renderer.Render(state.Program, buffer, state.Memory, state.Live);
+        else state.Renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
         Mix(buffer);
 
@@ -392,7 +427,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         var patchTarget = wanted is null ? 1f : 0f;
         var auditionTarget = heard is not null && heard == wanted ? 1f : 0f;
 
-        var rate = (float)renderer.SampleRate;
+        var rate = (float)current.SampleRate;
         var quick = 1f / (float)(AuditionFadeOut.TotalSeconds * rate);
         var swell = 1f / (float)(AuditionFadeIn.TotalSeconds * rate);
         var auditionStep = auditionTarget > auditionFade ? swell : quick;
