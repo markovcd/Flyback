@@ -3,7 +3,7 @@
 # their code, and writes what needs no judgment: the facts, and the floor a verdict
 # may not go under.
 #
-#   ./review-plugin.sh <package.fbkp | folder of them> [work folder]
+#   ./scripts/review-plugin.sh <package.fbkp | folder of them> [work folder]
 #
 # Prints one line per package: its name, its floor and the folder holding its facts.md.
 
@@ -25,7 +25,7 @@ ilspy() { dotnet tool exec "ilspycmd@$ILSPY_VERSION" --yes -- "$@"; }
 
 source=${1:?usage: review-plugin.sh <package.fbkp | folder of them> [work folder]}
 work=${2:-$(mktemp -d)}
-repo=$(cd "$(dirname "$0")" && pwd)
+repo=$(cd "$(dirname "$0")/.." && pwd)
 
 if [ -d "$source" ]; then
   mapfile -t packages < <(find "$source" -maxdepth 1 -type f -iname '*.fbkp' | sort)

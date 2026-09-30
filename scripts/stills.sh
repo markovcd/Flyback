@@ -3,7 +3,7 @@
 # folder given (ADR-0163). The editor and the command line are published side by side
 # first, as a release lays them out, so the plugins the build ships load.
 #
-#   ./stills.sh <folder>
+#   ./scripts/stills.sh <folder>
 #
 # CONFIGURATION picks the plugins: Release is what the desktop ships, and "All plugins"
 # adds the preset site's, which the web viewer carries. Version, where it is set, is

@@ -5,7 +5,7 @@
 # zip, the packages of the plugins the preset site hands out land beside it, and
 # nothing is published.
 #
-#   ./release.sh [version]
+#   ./scripts/release.sh [version]
 #
 # version is X.Y.Z. Blank bumps the minor version of the latest vX.Y.Z tag, or
 # starts at 0.1.0 with none.
@@ -16,7 +16,7 @@
 # heading is said but does not stop the build.
 set -euo pipefail
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 # One build at a time per clone, worktrees included: a build starts by emptying
 # dist/, so a second would delete the first one's output from under it.
@@ -37,7 +37,7 @@ trap 'rm -rf "$lock"' EXIT
 github=false
 [ "${GITHUB_ACTIONS:-}" = true ] && github=true
 
-. ./release-key.sh
+. ./scripts/release-key.sh
 
 temp="$(mktemp -d)"
 trap 'rm -rf "$temp" "$lock"' EXIT

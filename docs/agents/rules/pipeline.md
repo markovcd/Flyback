@@ -18,7 +18,7 @@
 
 ## A release is one script
 
-`release.sh` is the release: the gate, the publishes, the pack and the signing. The Release workflow runs it and adds only the publishing. Run here, it signs with the local test key (the `release-key` skill) and publishes nowhere, so trying a release is `./release.sh`, never a dispatch (the `build-artifacts` skill). It holds `release.lock` while it runs, and a second build refuses rather than emptying `dist/` under the first.
+`release.sh` is the release: the gate, the publishes, the pack and the signing. The Release workflow runs it and adds only the publishing. Run here, it signs with the local test key (the `release-key` skill) and publishes nowhere, so trying a release is `./scripts/release.sh`, never a dispatch (the `build-artifacts` skill). It holds `release.lock` while it runs, and a second build refuses rather than emptying `dist/` under the first.
 
 ## A release refuses before moving anything
 

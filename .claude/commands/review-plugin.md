@@ -46,7 +46,7 @@ think of is judged by reading what it does.
 2. **Unpack and decompile** into the scratchpad:
 
    ```bash
-   ./review-plugin.sh "<package or folder>" "<scratchpad>/plugin-review"
+   ./scripts/review-plugin.sh "<package or folder>" "<scratchpad>/plugin-review"
    ```
 
    It builds `flyback-cli`, whose `plugin describe --json` is the editor's own

@@ -37,7 +37,7 @@ jobs:
       # Measures into coverage/ and writes the table into the run summary.
       # coverage.sh is the whole of it, and runs the same on a developer's machine.
       - name: Measure
-        run: bash coverage.sh
+        run: bash scripts/coverage.sh
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

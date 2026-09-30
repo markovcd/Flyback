@@ -4,7 +4,7 @@
 # WebAssembly (ADR-0160, ADR-0162), and the presets' stills at stills/ (ADR-0163).
 # pages.yml runs it and uploads the folder; run here, it is what Pages would serve.
 #
-#   ./pages.sh <folder>
+#   ./scripts/pages.sh <folder>
 #
 # Needs the wasm-tools workload and Python, which its Emscripten runs on. AOT=false
 # skips the ahead-of-time compile, most of the build, for a quicker look. PRESETS_URL,
@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-out="${1:?usage: ./pages.sh <folder>}"
+out="${1:?usage: ./scripts/pages.sh <folder>}"
 aot="${AOT:-true}"
 
 # Emptied first only where it is empty or an earlier build, never a folder somebody else filled.
@@ -34,7 +34,7 @@ dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation="$aot" -p:Compres
 dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation="$aot" -p:CompressionEnabled=false -o "$build/editor" -nologo -v:q
 cp -r "$build/web/wwwroot/viewer" "$out/viewer"
 cp -r "$build/editor/wwwroot" "$out/editor"
-./stills.sh "$out/stills"
+./scripts/stills.sh "$out/stills"
 
 # What only the preset site can do is left out: a link marked data-preset-site goes, and
 # the toolbar's Plugins leads to the plugin guide, since the shared plugins are listed on

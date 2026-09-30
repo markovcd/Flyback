@@ -235,7 +235,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 # gallery shows the presets the release ships without drawing them (ADR-0163).
 RUN --mount=type=cache,target=/root/.nuget/packages \
     set -eu; \
-    CONFIGURATION=${CONFIGURATION} Version=${VERSION} ./stills.sh /tmp/stills; \
+    CONFIGURATION=${CONFIGURATION} Version=${VERSION} ./scripts/stills.sh /tmp/stills; \
     for rid in ${RIDS}; do \
       case ${rid} in \
         osx-*) out=/out/${rid}/Flyback.app/Contents/MacOS ;; \

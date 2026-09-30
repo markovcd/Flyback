@@ -60,7 +60,7 @@ public class LocalReleaseKey : Task
         {
             if (!windows)
             {
-                Log.LogWarning("RELEASE_SIGNING_KEY is not set, so this build trusts the committed release key. Run . ./release-key.sh to make a local one.");
+                Log.LogWarning("RELEASE_SIGNING_KEY is not set, so this build trusts the committed release key. Run . ./scripts/release-key.sh to make a local one.");
                 return true;
             }
 

@@ -106,7 +106,7 @@ docker build --target gate .
 To measure how much of the code the tests run, into `coverage/` with a table per assembly in `coverage/summary.md` and the specs' figure beside it rather than in the sum, the same way the weekly Coverage workflow does:
 
 ```bash
-./coverage.sh
+./scripts/coverage.sh
 ```
 
 ## Releases and updates
@@ -116,7 +116,7 @@ The Release workflow (`.github/workflows/release.yml`) builds every platform, zi
 Everything but the publishing is `release.sh`, which runs the same here:
 
 ```bash
-./release.sh 1.4.0
+./scripts/release.sh 1.4.0
 ```
 
 It builds, tests, packs and signs into `dist/`, with each platform as a folder to run rather than a zip, and publishes nothing. Off GitHub, `RELEASE_SIGNING_KEY` holds a local test key rather than the release key: `release-key.sh` takes it from the environment, or makes one and keeps it in the user environment, and only GitHub stops at a key that does not pair with the committed public key or at a missing changelog heading. The preset site's build and a Release run of the site sign with the same variable, and a Debug build checks no keys at all. A build on this machine, `release.sh` included, embeds the public half of the local key in place of `release-key.pem`, so a local release installs over local builds, and its runs count as debug in the usage statistics; on GitHub the committed key is embedded.
@@ -183,7 +183,7 @@ flyback-cli viewer nebula.fbk
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
 - `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
-- `stills`: draws a still of every preset into `--out`, with the `index.json` the galleries show them by in place of drawing them (ADR-0163); `./stills.sh <folder>` lays out the plugins a build ships first, and every release and site build runs it
+- `stills`: draws a still of every preset into `--out`, with the `index.json` the galleries show them by in place of drawing them (ADR-0163); `./scripts/stills.sh <folder>` lays out the plugins a build ships first, and every release and site build runs it
 
 `check` exits with:
 
@@ -280,11 +280,11 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 dotnet run --project src/Flyback.Server
 ```
 
-The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `./stills.sh src/Flyback.Server/wwwroot/stills` gives a local run of the site the stills.
+The gallery shows the build's stills from `/stills/` where the site has them (ADR-0163), and draws each preset on the page's one thread where it does not; `./scripts/stills.sh src/Flyback.Server/wwwroot/stills` gives a local run of the site the stills.
 
 `window.flyback` drives the page from a script: `state()` says which preset is open, how many modules and wires it has, which renderer draws the picture and at what rate, and the last thing the editor said; `preset(name)` opens a shipped preset, as `/editor/?preset=<name>` does on load; `openUrl(url, fileName, title)` fetches a shared one and opens it, as `?file=` does, answering null or why it could not; `text()` reads the open patch in the language; `apply(text)` applies text as the text view's Apply does, one edit that one undo takes back, and answers null or what is wrong with it; `sound()` says how the sound is going; `view()` presses View it, which opens the patch as it stands in the web viewer in a tab of its own, and answers the viewer's address, or null where the browser refused the tab.
 
-`./pages.sh artifacts/pages` builds the site as GitHub Pages serves it, the viewer, the editor and the stills built in, and the `pages` entry in `.claude/launch.json` serves that folder; `AOT=false` makes it quicker.
+`./scripts/pages.sh artifacts/pages` builds the site as GitHub Pages serves it, the viewer, the editor and the stills built in, and the `pages` entry in `.claude/launch.json` serves that folder; `AOT=false` makes it quicker.
 
 ## How it works
 

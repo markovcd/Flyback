@@ -2,7 +2,7 @@
 # workflow reads from the secret of that name. Off GitHub it is a local test key, taken
 # from the user's environment or made and kept there where there is none.
 #
-#   . ./release-key.sh
+#   . ./scripts/release-key.sh
 
 if [ -z "${RELEASE_SIGNING_KEY:-}" ] && [ "${GITHUB_ACTIONS:-}" != true ]; then
   # Windows keeps it in the user's environment, which a shell opened before it was set does not see.

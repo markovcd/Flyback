@@ -27,7 +27,7 @@ Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill
 - `windows-shell`: PowerShell and Bash-heredoc pitfalls that corrupt files.
 - `looking-at-a-patch`: if only the picture or the sound needs looking at, use `flyback-viewer`, not the editor and not a render.
 - `running-the-app`: before launching the real window, wait for any other Flyback to close, and drive only the process you started.
-- `release-key`: every key is `RELEASE_SIGNING_KEY`, a local test key here, made anew whenever it is missing; `./release.sh` tries a release.
+- `release-key`: every key is `RELEASE_SIGNING_KEY`, a local test key here, made anew whenever it is missing; `./scripts/release.sh` tries a release.
 - `authoring-presets`: building and measuring a showcase or teaching preset.
 - `played-presets`: presets with MIDI voices and panel knobs.
 - `convenience-modules`: the wrapper modules (Stroke, Fade, Desk, Echo, Hiss and the rest) and porting presets onto them exactly.

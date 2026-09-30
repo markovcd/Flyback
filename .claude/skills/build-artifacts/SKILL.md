@@ -26,7 +26,7 @@ that has not landed, and `dist/` ends up in a folder the user does not look in. 
 ```bash
 MAIN="$(git rev-parse --path-format=absolute --git-common-dir)/.."
 cd "$MAIN" && [ "$(git branch --show-current)" = main ] \
-  && ./release.sh > /tmp/release.log 2>&1; echo "exit $?"
+  && ./scripts/release.sh > /tmp/release.log 2>&1; echo "exit $?"
 ```
 
 If the main worktree is on another branch, it is someone's work in progress: do not switch it.

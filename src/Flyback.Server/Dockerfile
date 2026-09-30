@@ -21,7 +21,8 @@ ARG VERSION=""
 
 # Directory.Packages.props among them: it carries every package version, so a
 # restore without it has none.
-COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json stills.sh ./
+COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
+COPY scripts/stills.sh scripts/
 # What Flyback.App takes from the root, since stills.sh publishes it.
 COPY CHANGELOG.md flyback.ico flyback.icns ./
 COPY site site
@@ -52,7 +53,7 @@ RUN apt-get update \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi; \
     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app \
- && ./stills.sh /app/wwwroot/stills
+ && ./scripts/stills.sh /app/wwwroot/stills
 
 FROM ${RUNTIME}
 LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback

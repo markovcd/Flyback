@@ -20,8 +20,8 @@ on:
       - "Directory.Build.targets"
       - "Directory.Packages.props"
       - "global.json"
-      - "stills.sh"
-      - "pages.sh"
+      - "scripts/stills.sh"
+      - "scripts/pages.sh"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -55,7 +55,7 @@ jobs:
             apt-get update
             apt-get install --yes --no-install-recommends python3
             dotnet workload install wasm-tools
-            ./pages.sh artifacts/pages
+            ./scripts/pages.sh artifacts/pages
           '
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

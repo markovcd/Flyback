@@ -51,5 +51,5 @@ TestResults/
 Desktop.ini
 $RECYCLE.BIN/
 
-# Stills drawn for a local run of the preset site (./stills.sh src/Flyback.Server/wwwroot/stills).
+# Stills drawn for a local run of the preset site (./scripts/stills.sh src/Flyback.Server/wwwroot/stills).
 src/Flyback.Server/wwwroot/stills/

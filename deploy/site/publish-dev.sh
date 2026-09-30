@@ -11,7 +11,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 
-. ./release-key.sh
+. ./scripts/release-key.sh
 
 image=ghcr.io/markovcd/flyback-site
 commit="$(git rev-parse --short HEAD)"

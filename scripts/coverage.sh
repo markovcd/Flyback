@@ -5,13 +5,13 @@
 # Coverage workflow runs this and keeps coverage/; run here, it is the same
 # measurement.
 #
-#   ./coverage.sh
+#   ./scripts/coverage.sh
 #
 # Nothing fails on the figure. The Dockerfile's measured stage says why it is not
 # part of the gate.
 set -euo pipefail
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 
 build=(docker buildx build --target coverage --output type=local,dest=coverage)
 
@@ -21,7 +21,7 @@ if [ "${GITHUB_ACTIONS:-}" = true ]; then
   build+=(--cache-from type=gha)
 else
   # Built as release.sh builds here, so the gate's layers are shared with it.
-  . ./release-key.sh
+  . ./scripts/release-key.sh
   build+=(--build-arg RELEASE_PUBLIC_KEY)
 fi
 
