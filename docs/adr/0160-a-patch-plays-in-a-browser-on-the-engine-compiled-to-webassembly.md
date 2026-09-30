@@ -38,7 +38,9 @@ into methods. The script works in place on the program's memory, pinned in the
 runtime's heap (`JsLayout`, `JsSound`), and hands its evaluations to
 `AudioRenderer.Decimate`, so the filter, the clock, every Meter and Scope, a rewind
 and a seek are the interpreter's own. A power remembers its last operands and answers
-from them while they hold, which is exact and a third of Whole band's time. Where a
+from them while they hold, which is exact and a third of Whole band's time. Constants
+are read from the layout rather than written into the script, and scripts are kept by
+their text, so a knob turned runs the function the engine has already optimized. Where a
 program cannot be emitted, which is one reading a picture, the interpreter plays it.
 
 The script's samples are the interpreter's to the bit on this machine, preset for

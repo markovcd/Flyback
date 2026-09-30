@@ -15,6 +15,11 @@ namespace Flyback.Core.Compile;
 /// rest round their last bit differently. Arithmetic the interpreter does in
 /// <see cref="float"/> is rounded with <c>Math.fround</c> where it happens.
 /// <para>
+/// Every constant is read from the layout's <c>constants</c> rather than written in, as
+/// the shader reads its constants as uniforms: a knob turned leaves the text as it was, so
+/// the engine keeps the script it has already optimized.
+/// </para>
+/// <para>
 /// Ops are cut into functions of <see cref="ChunkSize"/>, as the IL is, since an
 /// engine stops optimizing a function past a size. A register lives in a local
 /// within its chunk and in a shared bank across them.
@@ -100,7 +105,10 @@ internal static class JsEmitter
         }
 
         for (var i = stretch.From; i < stretch.To; i++)
-            Op(text, program, ops[i], stretch.Lines[i - stretch.From], stretch.Cells[i - stretch.From], ref remembered);
+        {
+            var at = i - stretch.From;
+            Op(text, program, ops[i], stretch.Lines[at], stretch.Cells[at], stretch.Constants[at], ref remembered);
+        }
 
         foreach (var register in stretch.Stores)
             text.Append(CultureInfo.InvariantCulture, $"R[{register}] = r{register};\n");
@@ -108,7 +116,7 @@ internal static class JsEmitter
         text.Append("}\n");
     }
 
-    private static void Op(StringBuilder text, CompiledPatch program, Op op, int line, int cell, ref int remembered)
+    private static void Op(StringBuilder text, CompiledPatch program, Op op, int line, int cell, int constant, ref int remembered)
     {
         var o = $"r{op.Out}";
         var a = $"r{op.A}";
@@ -118,7 +126,7 @@ internal static class JsEmitter
 
         var statement = op.Code switch
         {
-            OpCode.Const => $"{o} = {Number(op.K)};",
+            OpCode.Const => $"{o} = K[{constant}];",
             OpCode.LoadX or OpCode.LoadY => $"{o} = 0;",
             OpCode.LoadT => $"{o} = t;",
             OpCode.LoadAspect => $"{o} = aspect;",
@@ -211,6 +219,10 @@ internal static class JsEmitter
             + $"else {{ M[{at}] = {a}; M[{at + 1}] = {b}; r{op.Out} = M[{at + 2}] = {expression}; }}";
     }
 
+    /// <summary>The values the script's constants read, in the order of the ops that load them.</summary>
+    public static IEnumerable<double> Constants(CompiledPatch program) =>
+        program.Ops.Where(op => op.Code == OpCode.Const).Select(op => (double)op.K);
+
     /// <summary>A number the way the script reads it back as the same double.</summary>
     private static string Number(float value) => double.IsNaN(value)
         ? "NaN"
@@ -231,7 +243,8 @@ internal static class JsEmitter
         HashSet<int> Loads,
         SortedSet<int> Stores,
         int[] Lines,
-        int[] Cells);
+        int[] Cells,
+        int[] Constants);
 
     /// <summary>
     /// Cuts the ops into stretches and works out, for each, which registers come in
@@ -264,6 +277,7 @@ internal static class JsEmitter
         var stretchesOut = new List<Stretch>();
         var line = 0;
         var cell = 0;
+        var constant = 0;
 
         for (var s = 0; s < bounds.Count; s++)
         {
@@ -274,6 +288,7 @@ internal static class JsEmitter
             var readEarly = new HashSet<int>();
             var lines = new int[to - from];
             var cells = new int[to - from];
+            var constants = new int[to - from];
 
             for (var i = from; i < to; i++)
             {
@@ -297,6 +312,7 @@ internal static class JsEmitter
 
                 lines[i - from] = op.Code is OpCode.Delay or OpCode.Allpass ? line++ : -1;
                 cells[i - from] = op.Code is OpCode.Phase ? cell++ : -1;
+                constants[i - from] = op.Code is OpCode.Const ? constant++ : -1;
             }
 
             var stores = new SortedSet<int>(written.Where(register =>
@@ -304,7 +320,7 @@ internal static class JsEmitter
                 || readEarly.Contains(register)
                 || (readBy.TryGetValue(register, out var by) && by.Any(other => other != s))));
 
-            stretchesOut.Add(new Stretch(from, to, locals, loads, stores, lines, cells));
+            stretchesOut.Add(new Stretch(from, to, locals, loads, stores, lines, cells, constants));
         }
 
         return stretchesOut;
@@ -339,6 +355,7 @@ internal static class JsEmitter
         const LIVE = m.live, LIVEN = m.liveCount;
         const POS = m.positions, PHASES = m.phases, PREVIOUS = m.previous, RUNNING = m.running;
         const UNITS = m.units, PLANES = m.planes, TH = m.traceHeads, TL = m.traceLength;
+        const K = Float64Array.from(m.constants, Number);
         const JUST_BELOW_ONE = 0.99999999999999989;
         const H = new Float64Array(3);
 

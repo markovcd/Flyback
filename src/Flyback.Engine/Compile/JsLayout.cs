@@ -4,7 +4,8 @@ namespace Flyback.Core.Compile;
 
 /// <summary>
 /// Where a program's memory is, as the script <see cref="JsEmitter"/> writes reads it:
-/// each array as an element index into the heap view of its type.
+/// each array as an element index into the heap view of its type, and the values of its
+/// constants.
 /// </summary>
 /// <remarks>
 /// The script works on the arrays themselves rather than on copies, so everything that
@@ -42,6 +43,11 @@ internal static class JsLayout
             ["traces"] = Indices(arrays?.Traces ?? [], sizeof(float), address),
             ["traceHeads"] = Index(arrays?.TraceHeads, sizeof(int), address),
             ["traceLength"] = DelayState.TraceSamples,
+
+            // JSON has no NaN or infinities, so those go as the text the script reads back with Number.
+            ["constants"] = new JsonArray([.. JsEmitter.Constants(program).Select(value => double.IsFinite(value)
+                ? (JsonNode)value
+                : double.IsNaN(value) ? "NaN" : value > 0 ? "Infinity" : "-Infinity")]),
             ["tables"] = new JsonArray([.. program.TableArray.Select(table => (JsonNode)new JsonArray(
                 Index(table.Samples, sizeof(float), address),
                 table.Samples.Length,

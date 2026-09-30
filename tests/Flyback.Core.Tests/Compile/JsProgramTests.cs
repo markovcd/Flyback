@@ -43,6 +43,24 @@ public class JsProgramTests
         ShouldMatch(Interpret(program, 3_000), Script(program, 3_000), name);
     }
 
+    /// <summary>A knob turned is a new value in the layout and the same script, so the engine keeps what it optimized.</summary>
+    [Fact]
+    public void A_knob_turned_leaves_the_script_as_it_was()
+    {
+        var b = new PatchBuilder(NodeCatalog.Current);
+        var sine = b.Add("osc.sine", (1, 220f));
+        var output = b.Add(NodeCatalog.OutputTypeId);
+        b.Wire(sine, 0, output, NodeCatalog.OutputLeftPort);
+
+        var before = b.Patch.CompileForAudio().Program;
+        sine.InputValues[1] = 331f;
+        var after = b.Patch.CompileForAudio().Program;
+
+        JsEmitter.Emit(after).ShouldBe(JsEmitter.Emit(before));
+        JsEmitter.Constants(after).ShouldNotBe(JsEmitter.Constants(before));
+        JsEmitter.Constants(after).ShouldContain(331d);
+    }
+
     /// <summary>Fails the day an opcode is added and the emitter is not told about it.</summary>
     [Theory]
     [MemberData(nameof(AllOpCodes))]
