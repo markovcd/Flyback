@@ -1,3 +1,4 @@
+using System.Globalization;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
@@ -47,6 +48,27 @@ public class JsProgramTests
     [Fact]
     public void A_knob_turned_leaves_the_script_as_it_was()
     {
+        var (before, after) = SineTurned();
+
+        JsEmitter.Emit(after).ShouldBe(JsEmitter.Emit(before));
+        JsEmitter.Constants(after).ShouldNotBe(JsEmitter.Constants(before));
+        JsEmitter.Constants(after).ShouldContain(331d);
+    }
+
+    /// <summary>A script handed a turned knob's constants as it plays sounds as the interpreter playing the turned program on.</summary>
+    [Fact]
+    public void A_script_retuned_as_it_plays_is_the_turned_program_played_on()
+    {
+        Assert.SkipWhen(NodeJs.Path is null, "no Node on this machine");
+
+        var (before, after) = SineTurned();
+
+        ShouldMatch(Interpret(before, 1_000, (after, 400)), Script(before, 1_000, (after, 400)), "retuned");
+    }
+
+    /// <summary>A sine heard on the left, before and after its frequency is turned from 220 to 331.</summary>
+    private static (CompiledPatch Before, CompiledPatch After) SineTurned()
+    {
         var b = new PatchBuilder(NodeCatalog.Current);
         var sine = b.Add("osc.sine", (1, 220f));
         var output = b.Add(NodeCatalog.OutputTypeId);
@@ -54,11 +76,8 @@ public class JsProgramTests
 
         var before = b.Patch.CompileForAudio().Program;
         sine.InputValues[1] = 331f;
-        var after = b.Patch.CompileForAudio().Program;
 
-        JsEmitter.Emit(after).ShouldBe(JsEmitter.Emit(before));
-        JsEmitter.Constants(after).ShouldNotBe(JsEmitter.Constants(before));
-        JsEmitter.Constants(after).ShouldContain(331d);
+        return (before, b.Patch.CompileForAudio().Program);
     }
 
     /// <summary>Fails the day an opcode is added and the emitter is not told about it.</summary>
@@ -120,8 +139,11 @@ public class JsProgramTests
         JsEmitter.Emit(program).ShouldBeNull();
     }
 
-    /// <summary>What the interpreter makes of <paramref name="frames"/> frames, at the times the script makes them.</summary>
-    private static float[] Interpret(CompiledPatch program, int frames)
+    /// <summary>
+    /// What the interpreter makes of <paramref name="frames"/> frames, at the times the script
+    /// makes them, playing <paramref name="turned"/>'s program on from its frame where given.
+    /// </summary>
+    private static float[] Interpret(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null)
     {
         var memory = new AudioRenderer(oversample: Oversample).DelayMemoryFor(program);
         var registers = program.AllocateRegisters();
@@ -136,9 +158,11 @@ public class JsProgramTests
 
         for (var frame = 0; frame < frames; frame++)
         {
+            var playing = turned is { } t && frame >= t.At ? t.Program : program;
+
             for (var k = 0; k < Oversample; k++)
             {
-                program.Evaluate(0d, 0d, clock + k * inner, registers, default, memory, 1d, live);
+                playing.Evaluate(0d, 0d, clock + k * inner, registers, default, memory, 1d, live);
                 heard[at++] = (float)registers[left];
                 heard[at++] = (float)registers[right];
             }
@@ -149,8 +173,11 @@ public class JsProgramTests
         return heard;
     }
 
-    /// <summary>What the emitted script makes of the same, under Node, on fresh memory of its own.</summary>
-    private static float[] Script(CompiledPatch program, int frames)
+    /// <summary>
+    /// What the emitted script makes of the same, under Node, on fresh memory of its own,
+    /// retuned to <paramref name="turned"/>'s constants at its frame where given.
+    /// </summary>
+    private static float[] Script(CompiledPatch program, int frames, (CompiledPatch Program, int At)? turned = null)
     {
         var source = JsEmitter.Emit(program);
         source.ShouldNotBeNull();
@@ -173,8 +200,12 @@ public class JsProgramTests
             File.WriteAllText(path("program.js"), source);
             File.WriteAllText(path("run.mjs"), Runner);
 
+            // The turned program's constants as JSON numbers, and the frame they are handed over at; none, and it is never retuned.
+            var constants = turned is { } t ? $"[{string.Join(',', JsEmitter.Constants(t.Program).Select(k => k.ToString("R", CultureInfo.InvariantCulture)))}]" : "[]";
+            File.WriteAllText(path("turned.json"), constants);
+
             NodeJs.Run(path("run.mjs"), path("heap.bin"), path("layout.json"), path("program.js"), path("out.bin"),
-                $"{frames}", $"{output}", $"{count}");
+                $"{frames}", $"{output}", $"{count}", path("turned.json"), $"{turned?.At ?? frames}");
 
             return ScriptHeap.ReadFloats(path("out.bin"), count);
         }
@@ -214,12 +245,15 @@ public class JsProgramTests
             3,
             2);
 
-    /// <summary>Loads the heap, makes the program, renders from time nought and writes the evaluations out.</summary>
+    /// <summary>
+    /// Loads the heap, makes the program, renders from time nought, retunes it at its frame
+    /// and renders the rest, and writes the evaluations out.
+    /// </summary>
     private const string Runner =
         """
         import { readFileSync, writeFileSync } from 'node:fs';
 
-        const [heapFile, layoutFile, programFile, outFile, frames, out, count] = process.argv.slice(2);
+        const [heapFile, layoutFile, programFile, outFile, frames, out, count, turnedFile, at] = process.argv.slice(2);
         const saved = readFileSync(heapFile);
         const buffer = new ArrayBuffer(Number(saved.readBigInt64LE(0)));
         const bytes = new Uint8Array(buffer);
@@ -238,7 +272,13 @@ public class JsProgramTests
         m.u8 = () => bytes;
 
         const render = new Function(`return ${readFileSync(programFile, 'utf8')}`)()(m);
-        render(0, Number(frames), 1, Number(out));
+        const split = Math.min(Number(at), Number(frames));
+        render(0, split, 1, Number(out));
+
+        if (split < Number(frames)) {
+          render.retune(JSON.parse(readFileSync(turnedFile, 'utf8')));
+          render(split / m.sampleRate, Number(frames) - split, 1, Number(out) + split * m.oversample * 2);
+        }
 
         writeFileSync(outFile, bytes.subarray(Number(out) * 4, (Number(out) + Number(count)) * 4));
         """;

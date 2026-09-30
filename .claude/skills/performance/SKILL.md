@@ -54,6 +54,7 @@ Measured on Tranquility's sound, once IL chunking landed (ADR-0076, amendment of
 - **What is left of the gap after an edit:** emit 3 ms, compile 4-6 ms, the check against the interpreter 1 ms; none is worth more code.
 - **The CPU picture's frame stage, redone per row:** `SynthRenderer` reruns it on every row because each worker has its own bank. 526 ops over 1,080 rows against 72 a pixel over two million pixels is under half a percent.
 - **The web viewer's chunk size:** 256 ops a function left No Sense Dub and Slow weather's larger functions unoptimized (0.5x and 0.6x); 64 moved too many registers through the bank (Warehouse 0.72x). 128 is best for all.
+- **Reusing a web script by its text:** a second function made from one text, by a cache of scripts or by V8's own for `new Function`, runs a third slower for good (Whole band at 2x: 3.9x fresh, 2.5x after a switch to 4x and back). Each script's text is unique, and an edit of constants alone retunes the playing script in place.
 - **Baking the knobs in for the web viewer:** Warehouse is 4,337 ops baked against 4,346 played. Not what makes a patch heavy.
 - **A faster DCT or bit writer in `JpegWriter`:** micro. The frame is already spread across cores, and what stays sequential is the Huffman pass, which a faster DCT does not touch.
 

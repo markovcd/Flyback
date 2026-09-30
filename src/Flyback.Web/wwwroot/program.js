@@ -3,13 +3,6 @@
 
 const programs = new Map();
 
-/**
- * The scripts made lately, by their text, so a program that differs only in its
- * constants, as a knob turned makes one, runs a function the engine has already optimized.
- */
-const made = new Map();
-const MADE_KEPT = 8;
-
 let views = null;
 let next = 1;
 let last = '';
@@ -23,8 +16,8 @@ export function attach(heap) {
 export function compile(source, layout) {
   try {
     const m = Object.assign(JSON.parse(layout), views);
-    const render = make(source)(m);
     const id = next++;
+    const render = make(source, id)(m);
 
     programs.set(id, render);
     return id;
@@ -34,22 +27,21 @@ export function compile(source, layout) {
   }
 }
 
-/** The script <source> is the text of, made once and kept among the last few. */
-function make(source) {
-  let script = made.get(source);
-
-  if (script === undefined) {
-    script = new Function(`return ${source}`)();
-    if (made.size >= MADE_KEPT) made.delete(made.keys().next().value);
-  } else {
-    made.delete(source);
-  }
-
-  made.set(source, script);
-  return script;
+/**
+ * The script <source> is the text of, as a function of its own. The engine optimizes a
+ * function made twice from one text for neither, which runs it a third slower, so the
+ * text is made unique by the program's number; a knob turned is a retune instead.
+ */
+function make(source, id) {
+  return new Function(`return ${source}\n// ${id}`)();
 }
 
 export const error = () => last;
+
+/** Hands program <id> new values for its constants, in place. */
+export function retune(id, constants) {
+  programs.get(id).retune(constants);
+}
 
 export function render(id, time, frames, aspect, out) {
   programs.get(id)(time, frames, aspect, out);

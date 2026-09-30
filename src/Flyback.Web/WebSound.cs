@@ -66,7 +66,7 @@ internal sealed class WebSound : IDisposable
         memory = speakers.DelayMemoryFor(sound, after?.memory);
         pace = after?.pace ?? new SoundPace();
 
-        heard = new LiveValues(sound.LiveInputs);
+        heard = Emptied(after?.heard, sound.LiveInputs) ?? new LiveValues(sound.LiveInputs);
         shown = picture is null ? LiveValues.None : new LiveValues(picture.LiveInputs);
         blocks = picture is null ? [heard] : [shown, heard];
 
@@ -74,8 +74,28 @@ internal sealed class WebSound : IDisposable
         patch.Seed(heard);
         patch.Seed(shown);
 
-        script = JsSound.Create(sound, memory, heard, speakers, out var why);
-        Interpreted = why;
+        if (after?.script is { } playing && playing.Retune(sound, memory, heard, speakers))
+        {
+            script = playing;
+            after.script = null;
+        }
+        else
+        {
+            script = JsSound.Create(sound, memory, heard, speakers, out var why);
+            Interpreted = why;
+        }
+    }
+
+    /// <summary>
+    /// <paramref name="kept"/> with every value back at nought, as a new block starts, where it
+    /// names the same live inputs; kept so a script retuned onto the edit reads where it did.
+    /// </summary>
+    private static LiveValues? Emptied(LiveValues? kept, IReadOnlyList<string> keys)
+    {
+        if (kept is null || !kept.Keys.SequenceEqual(keys)) return null;
+
+        Array.Clear(kept.Storage);
+        return kept;
     }
 
     /// <summary>Why the sound runs on the interpreter rather than as JavaScript, or null when it does not.</summary>

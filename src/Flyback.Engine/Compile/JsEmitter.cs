@@ -16,8 +16,8 @@ namespace Flyback.Core.Compile;
 /// <see cref="float"/> is rounded with <c>Math.fround</c> where it happens.
 /// <para>
 /// Every constant is read from the layout's <c>constants</c> rather than written in, as
-/// the shader reads its constants as uniforms: a knob turned leaves the text as it was, so
-/// the engine keeps the script it has already optimized.
+/// the shader reads its constants as uniforms, and <c>render.retune</c> writes new ones in
+/// place: a knob turned plays on the script the engine has already optimized.
 /// </para>
 /// <para>
 /// Ops are cut into functions of <see cref="ChunkSize"/>, as the IL is, since an
@@ -73,7 +73,7 @@ internal static class JsEmitter
         var left = program.OutputBase;
         var right = program.OutputWidth > 1 ? program.OutputBase + 1 : program.OutputBase;
 
-        text.Append("return function render(time, frames, aspect, out) {\n");
+        text.Append("const render = function render(time, frames, aspect, out) {\n");
         text.Append("F32 = m.f32(); F64 = m.f64(); I32 = m.i32(); U8 = m.u8();\n");
         text.Append("let clock = time, o = out;\n");
         text.Append("for (let f = 0; f < frames; f++) {\n");
@@ -84,7 +84,9 @@ internal static class JsEmitter
             text.Append(CultureInfo.InvariantCulture, $"c{c}(t, aspect);\n");
 
         text.Append(CultureInfo.InvariantCulture, $"F32[o++] = R[{left}]; F32[o++] = R[{right}];\n");
-        text.Append("}\nclock += OUTER;\n}\n};\n})");
+        text.Append("}\nclock += OUTER;\n}\n};\n");
+        text.Append("render.retune = values => K.set(values);\n");
+        text.Append("return render;\n})");
 
         return text.ToString();
     }

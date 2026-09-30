@@ -27,6 +27,15 @@ internal sealed partial class JsSound : IDisposable
     private float[] evaluated = [];
     private GCHandle evaluatedPin;
 
+    /// <summary>What the script was made of and made for, which a program must share to be played on it by <see cref="Retune"/>.</summary>
+    private string source = "";
+    private DelayState? memory;
+    private LiveValues? live;
+    private float[][] tables = [];
+
+    /// <summary>How many scripts this runtime has made, so a caller can tell a retuned script from a new one.</summary>
+    public static int Made { get; private set; }
+
     private JsSound(AudioRenderer renderer) => this.renderer = renderer;
 
     /// <summary>
@@ -55,7 +64,17 @@ internal sealed partial class JsSound : IDisposable
             var layout = JsLayout.Of(program, memory, live, renderer.SampleRate, renderer.Oversample, sound.Pin);
 
             sound.id = JsCompile(source, layout);
-            if (sound.id != 0) return sound;
+
+            if (sound.id != 0)
+            {
+                Made++;
+                sound.source = source;
+                sound.memory = memory;
+                sound.live = live;
+                sound.tables = [.. program.TableArray.Select(table => table.Samples)];
+
+                return sound;
+            }
 
             why = JsError();
         }
@@ -66,6 +85,26 @@ internal sealed partial class JsSound : IDisposable
 
         sound.Dispose();
         return null;
+    }
+
+    /// <summary>
+    /// Plays <paramref name="program"/> on this script when it differs from the script's own
+    /// only in its constants, on the same memory and live values, and says whether it could.
+    /// The engine keeps the script it has optimized, where a new one starts cold.
+    /// </summary>
+    public bool Retune(CompiledPatch program, DelayState? memory, LiveValues live, AudioRenderer renderer)
+    {
+        if (!ReferenceEquals(memory, this.memory)
+            || !ReferenceEquals(live, this.live)
+            || !ReferenceEquals(renderer, this.renderer)
+            || !program.TableArray.Select(table => table.Samples).SequenceEqual(tables, ReferenceEqualityComparer.Instance)
+            || JsEmitter.Emit(program) != source)
+        {
+            return false;
+        }
+
+        JsRetune(id, [.. JsEmitter.Constants(program)]);
+        return true;
     }
 
     private long Pin(Array array)
@@ -107,6 +146,10 @@ internal sealed partial class JsSound : IDisposable
 
     [JSImport("compile", Module)] private static partial int JsCompile(string source, string layout);
     [JSImport("error", Module)] private static partial string JsError();
+
+    [JSImport("retune", Module)]
+    private static partial void JsRetune(int id, [JSMarshalAs<JSType.Array<JSType.Number>>] double[] constants);
+
     [JSImport("render", Module)] private static partial void JsRender(int id, double time, int frames, double aspect, int output);
     [JSImport("release", Module)] private static partial void JsRelease(int id);
 }

@@ -462,6 +462,7 @@ public static partial class WebExports
             status["rendered"] = sound.Time;
             status["speed"] = Math.Round(sound.Speed, 3);
             status["soundBackend"] = sound.Interpreted is null ? "javascript" : "interpreter";
+            status["scriptsMade"] = JsSound.Made;
             status["oversample"] = sound.Oversample;
             status["behind"] = sound.Behind;
             status["timed"] = sound.Timing.Timed;
