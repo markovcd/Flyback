@@ -18,3 +18,17 @@ Feature: The sound's oversampling is a render setting
       | as they please |                   | 2      |
       | 1 times        |                   | 1      |
       | 1 times        | , --oversample 4  | 4      |
+
+  Scenario: A live sound that keeps falling behind is worked out a step lower, and never back up
+    Given live sound worked out at 4 times the output rate
+    When a third of its buffers come late for 2 seconds
+    Then it is worked out at 2 times the output rate
+    When a third of its buffers come late for 3 seconds more
+    Then it is worked out at 1 times the output rate
+    When every buffer is on time for 10 seconds
+    Then it is worked out at 1 times the output rate
+
+  Scenario: A live sound with a few late buffers is left where it is
+    Given live sound worked out at 2 times the output rate
+    When 3 of its buffers come late in 2 seconds
+    Then it is worked out at 2 times the output rate

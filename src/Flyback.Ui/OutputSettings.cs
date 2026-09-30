@@ -115,6 +115,12 @@ public sealed class OutputSettings
     public int Oversample { get; set; } = AudioRenderer.DefaultOversample;
 
     /// <summary>
+    /// Whether the live sound is worked out at a lower oversampling when it keeps falling
+    /// behind — the Sound section. Only what is played live, and not while a take is recorded.
+    /// </summary>
+    public bool StepDownOnDropouts { get; set; } = true;
+
+    /// <summary>
     /// The preset the window opens on at the next launch, by name — the Graphics
     /// section. Empty for the one written here, which is the first of the list
     /// (ADR-0093).

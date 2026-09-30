@@ -245,6 +245,13 @@ public static partial class WebExports
     [JSExport]
     public static void Play(string key, double value) => sound?.Play(key, (float)value);
 
+    /// <summary>Works the sound out at <paramref name="factor"/> times the output rate from here on; a factor not on offer is ignored.</summary>
+    [JSExport]
+    public static void Oversample(int factor)
+    {
+        if (sound is not null && AudioRenderer.Oversamples.Contains(factor)) sound.Oversample = factor;
+    }
+
     /// <summary>The width over the height of the picture the sound belongs to, which Coordinates' <c>aspect</c> reads.</summary>
     [JSExport]
     public static void Aspect(double aspect)
@@ -434,6 +441,7 @@ public static partial class WebExports
             status["rendered"] = sound.Time;
             status["speed"] = Math.Round(sound.Speed, 3);
             status["soundBackend"] = sound.Interpreted is null ? "javascript" : "interpreter";
+            status["oversample"] = sound.Oversample;
             status["interpreted"] = sound.Interpreted;
             status["stateLength"] = sound.StateLength;
             status["played"] = sound.Played;

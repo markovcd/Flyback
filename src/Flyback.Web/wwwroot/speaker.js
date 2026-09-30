@@ -7,7 +7,7 @@
 // { opened, state, status } and { failure }. To the speaker: { clear } and { generation, samples }.
 //
 // From the editor instead of { open }: { edit, aspect }, of which only the latest is kept,
-// { keep, bytes }, { forget }, { play, values }, { watch, charts, windows, spectra, meters } and { aspect }. To the
+// { keep, bytes }, { forget }, { play, values }, { watch, charts, windows, spectra, meters }, { oversample } and { aspect }. To the
 // editor: { edited, error, status } and { readings, meters, status }.
 
 import { dotnet } from './_framework/dotnet.js';
@@ -233,6 +233,9 @@ function handle(data) {
   } else if (data.watch !== undefined) {
     watched = flyback.Watch(data.watch, data.charts ?? [], data.windows ?? [], data.spectra ?? []);
     meters = data.meters;
+  } else if (data.oversample !== undefined) {
+    flyback.Oversample(data.oversample);
+    tell(true);
   } else if (data.aspect !== undefined) flyback.Aspect(data.aspect); else if (data.turn !== undefined) {
     flyback.Turn(data.turn, data.value);
     if (!running) tell(true);

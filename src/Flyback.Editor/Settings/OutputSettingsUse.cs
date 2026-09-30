@@ -19,8 +19,14 @@ internal sealed class OutputSettingsUse(
     PatchFiles files,
     ReportLine report)
 {
+    private readonly LiveOversample live = new(audio, () => repository.Current.StepDownOnDropouts, message => report.Say(message));
+
     /// <summary>Applies the settings already loaded for this run, while the editor is being built.</summary>
-    public void ApplyCurrent() => Apply(repository.Current, starting: true);
+    public void ApplyCurrent()
+    {
+        Apply(repository.Current, starting: true);
+        live.Start();
+    }
 
     /// <summary>Reads the settings controls, applies them and writes them to disk when configured.</summary>
     public void Save()

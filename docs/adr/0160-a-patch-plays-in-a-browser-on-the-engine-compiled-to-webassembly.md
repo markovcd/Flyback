@@ -64,7 +64,9 @@ played, not the ones rendered, and shows a turned knob once the sound has caught
 the page waits to play, the worker renders three seconds nobody hears, so the
 engine has optimized the script before the first play seeks back to the start. The
 script is then judged by the dropouts it makes once three seconds have let it
-settle: more than twenty in two seconds and the picture takes the wall clock.
+settle: more than twenty in two seconds and the sound is worked out a step lower
+([0168](0168-the-sound-is-oversampled-2x-and-a-setting.md)), and at 1× the picture takes the
+wall clock. The web editor steps down the same way and never gives the sound up.
 The interpreter is judged on opening, by a fifth of a second timed on a copy, below
 1.2 times real time. Either way a click on the speaker plays the sound anyway.
 

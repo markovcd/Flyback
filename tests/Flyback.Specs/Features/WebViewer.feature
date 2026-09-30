@@ -13,6 +13,11 @@ Feature: The web viewer
       | Beat you can see |
       | Duck             |
 
+  Scenario: A sound worked out a step lower in the browser is the desktop's at that rate
+    Given the shipped preset "Sidebands"
+    When it plays in the web viewer for 1 second worked out at 1 times the output rate
+    Then its sound is the desktop's at that rate, to within one step of 16 bits
+
   Scenario: A panel knob turns the sound in the browser as it does on the desktop
     Given the shipped preset "Vigil"
     When it plays in the web viewer for 1 second with its "fog" knob at 0

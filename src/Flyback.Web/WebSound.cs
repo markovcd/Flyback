@@ -20,11 +20,11 @@ internal sealed class WebSound : IDisposable
 {
     private readonly CompiledPatch sound;
     private readonly CompiledPatch? picture;
-    private readonly AudioRenderer speakers;
-    private readonly DelayState? memory;
+    private AudioRenderer speakers;
+    private DelayState? memory;
     private readonly LiveValues heard;
     private readonly LiveValues shown;
-    private readonly JsSound? script;
+    private JsSound? script;
     private readonly Stopwatch rendering = new();
     private readonly VoicePool typed = new(MidiSources.Keyboard);
     private readonly LiveValues[] blocks;
@@ -76,7 +76,32 @@ internal sealed class WebSound : IDisposable
     }
 
     /// <summary>Why the sound runs on the interpreter rather than as JavaScript, or null when it does not.</summary>
-    public string? Interpreted { get; }
+    public string? Interpreted { get; private set; }
+
+    /// <summary>
+    /// How many times the output rate the sound is worked out at. Changing it plays on from
+    /// where the sound was, at the new rate, with what the patch remembers emptied.
+    /// </summary>
+    public int Oversample
+    {
+        get => speakers.Oversample;
+        set
+        {
+            if (value == speakers.Oversample) return;
+
+            var at = speakers.Time;
+
+            script?.Dispose();
+
+            speakers = new AudioRenderer(speakers.SampleRate, value) { Aspect = speakers.Aspect };
+            speakers.Prepare(sound);
+            speakers.SeekTo(at);
+            memory = speakers.DelayMemoryFor(sound);
+
+            script = JsSound.Create(sound, memory, heard, speakers, out var why);
+            Interpreted = why;
+        }
+    }
 
     /// <summary>How long the patch plays for, in seconds, or null for one that has not said and plays on.</summary>
     public double? Length { get; }

@@ -29,6 +29,8 @@ internal sealed class ShotSound : IAudioEngine
 
     public int Oversample { get; set; } = AudioRenderer.DefaultOversample;
 
+    public SoundTiming Timing => default;
+
     public float Gain { get; set; } = 1f;
 
     public LiveValues Live { get; private set; } = LiveValues.None;

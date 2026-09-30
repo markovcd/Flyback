@@ -254,6 +254,12 @@ internal sealed class OutputSections
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    private readonly CheckBox stepDown = new()
+    {
+        Name = "stepDown",
+        Content = "Lower it when the sound drops out",
+    };
+
     /// <summary>How many times the output rate the sound is evaluated at, one row a factor of <see cref="AudioRenderer.Oversamples"/>.</summary>
     private readonly ComboBox oversample = new Picker
     {
@@ -357,6 +363,7 @@ internal sealed class OutputSections
         libraryBox.Text = current.Library;
         latency.SelectedIndex = Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
         oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
+        stepDown.IsChecked = current.StepDownOnDropouts;
         Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
         KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
 
@@ -404,6 +411,7 @@ internal sealed class OutputSections
 
             LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)],
             Oversample = AudioRenderer.Oversamples[Math.Max(oversample.SelectedIndex, 0)],
+            StepDownOnDropouts = stepDown.IsChecked == true,
 
             CountInSeconds = CountIns[Math.Max(countIn.SelectedIndex, 0)],
             RewindBeforeTake = rewindBeforeTake.IsChecked == true,
@@ -678,6 +686,13 @@ internal sealed class OutputSections
             + "every patch. A take, flyback-cli render and the viewer use it too.");
 
         Sound.Children.Add(InspectorRows.Field("Oversampling", oversample));
+
+        ToolTip.SetTip(stepDown,
+            "When the sound keeps falling behind while it plays, work it out a step lower, 4× to 2× to 1×, "
+            + "rather than let it stutter. Not while a take is recorded, which is written whole whatever the "
+            + "speakers do; a render keeps the setting above too.");
+
+        Sound.Children.Add(stepDown);
     }
 
     /// <summary>A caption, the folder typed or picked, and a button that picks one.</summary>

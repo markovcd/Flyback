@@ -53,6 +53,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     /// <summary>How many times the output rate the sound is evaluated at, the editor's Settings → Sound unless <c>--oversample</c> says.</summary>
     public int Oversample { get; init; } = AudioRenderer.DefaultOversample;
 
+    /// <summary>Whether the sound is worked out lower when it keeps falling behind, as the editor's Settings → Sound says.</summary>
+    public bool StepDown { get; init; } = true;
+
     /// <summary>Where to start, in seconds.</summary>
     public double From { get; init; }
 

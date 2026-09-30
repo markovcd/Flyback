@@ -25,6 +25,17 @@ let origin = 0;
 let played = 0;
 let starved = 0;
 let reportedAt = 0;
+
+/**
+ * How the sound is judged, as the web viewer judges it: left three seconds to settle,
+ * then over two at a time, and past twenty dropouts worked out a step lower.
+ */
+const SETTLING = 3000;
+const JUDGED_OVER = 2000;
+const DROPOUTS_ALLOWED = 20;
+let heardSince = 0;
+let judgedAt = 0;
+let judgedStarved = 0;
 let wallStart = 0;
 let held = 0;
 
@@ -68,6 +79,7 @@ function report({ data }) {
   played = data.played;
   starved = data.starved;
   reportedAt = data.at;
+  judge();
 }
 
 function open() {
@@ -92,12 +104,37 @@ function open() {
   }).catch(reason => { failure = String(reason?.message ?? reason); });
 }
 
+/** Works the sound out a step lower when it keeps running dry, 2× to 1×; never back up. */
+function judge() {
+  const at = performance.now();
+
+  if (at - heardSince < SETTLING) {
+    judgedAt = at;
+    judgedStarved = starved;
+    return;
+  }
+
+  if (at - judgedAt < JUDGED_OVER) return;
+
+  const dropped = starved - judgedStarved;
+  judgedAt = at;
+  judgedStarved = starved;
+
+  const factor = soundStatus.oversample ?? 1;
+  if (dropped <= DROPOUTS_ALLOWED || factor <= 1) return;
+
+  worker.postMessage({ oversample: factor / 2 });
+  soundStatus.oversample = factor / 2;
+  heardSince = at;
+}
+
 /** Hands the clock to the speaker once everything it needs is there, starting it where the picture is. */
 function join() {
   if (heard || !running || !ready || !attached || failure !== null || context.state !== 'running') return;
 
   const at = time();
   heard = true;
+  heardSince = performance.now();
   seek(at);
   worker.postMessage({ run: true });
 }
@@ -207,6 +244,7 @@ export function status() {
     queued: soundStatus.queued ?? 0,
     backend: soundStatus.soundBackend ?? null,
     interpreted: soundStatus.interpreted ?? null,
+    oversample: soundStatus.oversample ?? null,
     volume: loudness,
     handed,
     meters: Array.from(readings.values.subarray(0, metered)),

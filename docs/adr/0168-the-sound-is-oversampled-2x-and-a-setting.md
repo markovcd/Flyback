@@ -7,8 +7,8 @@
 
 ## Context
 
-ADR-0023 evaluates the sound at 4× the output rate. The spike in
-`docs/handoff/sound-step-down.md` measured what that buys. The cost is linear in the
+ADR-0023 evaluates the sound at 4× the output rate. A spike, written up in
+`docs/handoff/sound-step-down.md` at `8cf32ce0`, measured what that buys. The cost is linear in the
 factor: Whole band renders at 3.3× real time at 4× and 6.5× at 2× on the desktop, and a
 browser has about 2× to spare at 4×. The 64-tap decimator is cleaner at 2× than at 4×
 (flat to 18 kHz, images below −77 dB, where at 4× it is 3 dB down at 20 kHz and lets
@@ -25,6 +25,14 @@ overrides it for one run. The page has no row for it and plays at 2×.
 **Presets are not made to sound the same at every factor.** A patch built on a loop
 counted in evaluations, and Noise, whose level in the audible band rises about 3 dB for
 each halving, change a little with the factor; that is accepted.
+
+**Live sound that keeps falling behind is worked out a step lower**, 4× to 2× to 1×,
+and never back up in a run: a quarter of two seconds' buffers late, and at least four,
+is one step, and a new factor plays three seconds before it is judged. The engine times
+each buffer of compiled sound against how long it plays for. A checkbox under the
+factor, on by default, allows it. Not while a take is recorded: a take is written whole
+whatever the speakers do, so it keeps the factor set, as a render does. The page always
+steps down, before it gives the sound up.
 
 **A change of factor starts what the patch remembers anew.** Delay lines and rings are
 sized for the rate, so the engine swaps in a renderer at the new rate with the clock

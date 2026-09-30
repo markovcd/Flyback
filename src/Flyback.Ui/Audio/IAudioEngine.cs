@@ -35,6 +35,9 @@ internal interface IAudioEngine
     /// <summary>How many times the output rate the sound is evaluated at. Changing it starts what the patch remembers anew.</summary>
     int Oversample { get; set; }
 
+    /// <summary>How many buffers of compiled sound have been timed, and how many of them took longer to make than they play for.</summary>
+    SoundTiming Timing { get; }
+
     /// <summary>The block whoever is playing writes into, made anew by every <see cref="Update"/>.</summary>
     LiveValues Live { get; }
 

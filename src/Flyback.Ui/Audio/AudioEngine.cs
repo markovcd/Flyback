@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -56,6 +57,12 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     private static readonly long NoSeek = BitConverter.DoubleToInt64Bits(double.NaN);
 
     private float gain = 1f;
+
+    // Buffers timed and buffers late, counted by the callback.
+    private long timed;
+    private long late;
+
+    public SoundTiming Timing => new(Interlocked.Read(ref timed), Interlocked.Read(ref late));
 
     /// <summary>
     /// How loud the speakers are turned down to, from 0 to 1, against what the patch
@@ -391,8 +398,25 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
             if (seek != NoSeek) state.Renderer.SeekTo(BitConverter.Int64BitsToDouble(seek));
         }
 
-        if (state.Program.Waiting) buffer.Clear();
-        else state.Renderer.Render(state.Program, buffer, state.Memory, state.Live);
+        if (state.Program.Waiting)
+        {
+            buffer.Clear();
+        }
+        else
+        {
+            var started = Stopwatch.GetTimestamp();
+
+            state.Renderer.Render(state.Program, buffer, state.Memory, state.Live);
+
+            // The interpreter an edit plays on until its IL arrives is slow by design, and says nothing of the machine.
+            if (compiler is null || state.Program.Il is not null)
+            {
+                Interlocked.Increment(ref timed);
+
+                if (Stopwatch.GetElapsedTime(started).TotalSeconds > buffer.Length / 2d / current.SampleRate)
+                    Interlocked.Increment(ref late);
+            }
+        }
 
         Mix(buffer);
 

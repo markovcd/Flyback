@@ -77,6 +77,9 @@ internal sealed partial class PageSound : IAudioEngine
         set { }
     }
 
+    /// <summary>The worker times its own sound and lowers it itself.</summary>
+    public SoundTiming Timing => default;
+
     public bool IsAuditioning => false;
 
     public void Start()

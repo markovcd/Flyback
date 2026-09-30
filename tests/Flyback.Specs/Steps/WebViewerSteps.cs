@@ -29,6 +29,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
 
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-web-");
     private float[] heard = [];
+    private int oversample = AudioRenderer.DefaultOversample;
     private float[] handed = [];
     private double seconds;
     private JsonNode? said;
@@ -83,6 +84,15 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         var web = handed[^chart.Length..];
 
         chart.Zip(web, (a, b) => Math.Abs(a - b)).Max().ShouldBeLessThanOrEqualTo(1f / 32768f);
+    }
+
+    [When("it plays in the web viewer for {float} second(s) worked out at {int} times the output rate")]
+    public void WhenPlayedAt(float length, int factor)
+    {
+        oversample = factor;
+        Play(length, "--oversample", factor.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        ((int?)said!["oversample"]).ShouldBe(factor);
     }
 
     [When("it plays in the web viewer for {float} second(s) with its {string} knob at {float}")]
@@ -205,6 +215,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     [Then("its sound is the desktop's with the same knob turned, to within one step of 16 bits")]
     [Then("its sound is the desktop's with the same note played, to within one step of 16 bits")]
     [Then("its sound is the desktop's through the same edit, to within one step of 16 bits")]
+    [Then("its sound is the desktop's at that rate, to within one step of 16 bits")]
     public void ThenTheDesktopsSound()
     {
         var desktop = edited?.Invoke() ?? Desktop(turned, struck);
@@ -287,7 +298,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
             live.Set(control.Key, value);
         }
 
-        var speakers = new AudioRenderer { Aspect = SynthRenderer.AspectOf(Width, Height) };
+        var speakers = new AudioRenderer(oversample: oversample) { Aspect = SynthRenderer.AspectOf(Width, Height) };
         var memory = speakers.DelayMemoryFor(program);
         var desktop = new float[(int)Math.Round(seconds * speakers.SampleRate) * 2];
 

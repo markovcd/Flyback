@@ -253,6 +253,7 @@ internal static class ViewerArguments
                 Mute = result.GetValue(mute),
                 LatencyMilliseconds = result.GetValue(latency),
                 Oversample = result.GetValue(oversample),
+                StepDown = settings.StepDownOnDropouts,
                 From = result.GetValue(from),
                 Paused = result.GetValue(paused),
                 For = result.GetResult(duration) is not null ? result.GetValue(duration) : null,

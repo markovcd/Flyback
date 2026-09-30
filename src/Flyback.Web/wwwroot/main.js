@@ -292,6 +292,18 @@ function judge() {
 
   if (dropped <= DROPOUTS_ALLOWED) return;
 
+  // A step lower first, then settled again; only a sound that falls behind at 1× gives way to the picture.
+  const factor = soundStatus.oversample ?? 1;
+
+  if (factor > 1) {
+    speaker.postMessage({ oversample: factor / 2 });
+    soundStatus.oversample = factor / 2;
+    soundSince = at;
+    warning = `The sound kept falling behind at ${factor}×, so it is worked out at ${factor / 2}× now.`;
+    paint();
+    return;
+  }
+
   stop();
   tooSlow(soundStatus.speed ?? 0);
   play();

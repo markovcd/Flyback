@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.
 - The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks 1×, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
 - The web editor sends a letter to Flyback's author, and its gallery opens presets shared on the preset site; one needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
 - Dragging a knob in the web editor keeps the sound's script warm and recompiles at a pace the page keeps up with, rather than stuttering the sound.

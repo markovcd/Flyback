@@ -6,6 +6,7 @@
 //   node hear.mjs --preset "Played" --note 60:0.1:0.6 --note 64:0.3:0.6
 //   node hear.mjs --edit 0:before.fbk --edit 0.5:after.fbk
 //   node hear.mjs --presets
+//   node hear.mjs --preset "Sidebands" --oversample 1
 //   node hear.mjs --preset "Duck" --seconds 1 --state duck.state
 //
 // Prints what the viewer's status says as JSON, with how fast the sound rendered and the
@@ -15,6 +16,8 @@
 // first buffer of 1,024 frames that starts at or after each. --edit hands over a patch
 // file written as JSON as the web editor does, at the first such buffer at or after its
 // second; one at 0 stands for a preset or a file.
+// --oversample works the sound out at 1, 2 or 4 times the output rate, as the page does
+// once it has stepped down; left out, the default.
 // --state writes what the sound hands the picture once it has played, as the page's worker
 // packs it: the Meters' readings, then each Scope's and Analyzer's buffer, as raw floats.
 // With --presets it prints the viewer's preset list as JSON instead, and plays nothing.
@@ -39,6 +42,7 @@ const { values, positionals } = parseArgs({
     size: { type: 'string', default: '960x540' },
     out: { type: 'string' },
     state: { type: 'string' },
+    oversample: { type: 'string' },
     presets: { type: 'boolean' },
     knob: { type: 'string', multiple: true, default: [] },
     note: { type: 'string', multiple: true, default: [] },
@@ -102,6 +106,8 @@ if (failure) {
   console.error(`hear: ${failure}`);
   process.exit(1);
 }
+
+if (values.oversample !== undefined) web.Oversample(Number(values.oversample));
 
 const knobs = JSON.parse(web.Knobs());
 
