@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -238,7 +239,7 @@ internal sealed class ControlsPanel : Border
 
     private sealed class Cell
     {
-        private static readonly IBrush Heard = new SolidColorBrush(Colors.Attention);
+        private static readonly IBrush Heard = new ImmutableSolidColorBrush(Colors.Attention);
 
         /// <summary>How far the name has to travel before a press is a move rather than a click.</summary>
         private const double DragThreshold = 5;
@@ -589,4 +590,4 @@ internal sealed class ControlsPanel : Border
                 panel.Renamed?.Invoke(control.Id, text);
         }
     }
-}
+}

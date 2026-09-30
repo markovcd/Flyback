@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
 using Flyback.App.Controls;
 using Colors = Flyback.App.Controls.Colors;
@@ -11,7 +12,7 @@ namespace Flyback.App.Assist;
 /// <summary>The assistant's conversation as it is drawn, and as it is kept to be saved with the patch.</summary>
 internal sealed class TranscriptView : ScrollViewer
 {
-    private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
 
     /// <summary>How many lines a block may run to before it arrives folded.</summary>
     /// <remarks>

@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Styling;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -37,7 +38,7 @@ internal sealed class StepList
     /// <summary>Marks the grids that are rows of this list, for the UI tests.</summary>
     internal const string RowTag = "step-row";
 
-    private static readonly IBrush Faint = new SolidColorBrush(Colors.Muted);
+    private static readonly IBrush Faint = new ImmutableSolidColorBrush(Colors.Muted);
 
     private readonly NodeInstance node;
     private readonly StepSpec spec;
@@ -476,4 +477,4 @@ internal sealed class StepList
         Foreground = Text.Muted,
         VerticalAlignment = VerticalAlignment.Bottom,
     };
-}
+}

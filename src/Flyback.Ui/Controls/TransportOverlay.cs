@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Styling;
 
 namespace Flyback.App.Controls;
@@ -29,7 +30,7 @@ public sealed class TransportOverlay : TuckedAway
     private const double Beside = 4 * ToolSize + 4 * Gap + 12;
 
     /// <summary>A switch that is on, in the color the knobs' travel and the toolbar's strip are.</summary>
-    private static readonly IBrush On = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush On = new ImmutableSolidColorBrush(Colors.Attention);
 
     /// <summary>The class a switch that is on carries.</summary>
     private const string Engaged = "on";

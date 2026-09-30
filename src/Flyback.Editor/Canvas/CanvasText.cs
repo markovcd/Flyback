@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Canvas;
@@ -10,8 +11,8 @@ internal static class CanvasText
     /// <summary>The size every row of text on a module or a box is set at.</summary>
     internal const double RowSize = 11.5;
 
-    internal static readonly IBrush LabelBrush = new SolidColorBrush(Colors.Label);
-    internal static readonly IBrush ValueBrush = new SolidColorBrush(Colors.Value);
+    internal static readonly IBrush LabelBrush = new ImmutableSolidColorBrush(Colors.Label);
+    internal static readonly IBrush ValueBrush = new ImmutableSolidColorBrush(Colors.Value);
 
     internal static FormattedText Text(string text, double size, IBrush brush, double maxWidth, bool trim)
     {

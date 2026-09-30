@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
 using Flyback.App.Statistics;
@@ -31,7 +32,7 @@ internal sealed class SocketDial(
     /// <summary>How far a drag has to travel to turn the socket end to end, as on <see cref="Knob"/>.</summary>
     private const double DialTravel = 160;
 
-    private static readonly IBrush DialedBrush = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush DialedBrush = new ImmutableSolidColorBrush(Colors.Attention);
 
     private static readonly Cursor HiddenCursor = new(StandardCursorType.None);
     private static readonly Cursor DialCursor = new(StandardCursorType.SizeNorthSouth);

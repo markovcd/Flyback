@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -87,12 +88,12 @@ internal sealed class CanvasPainter(
         KeepMoving();
     }
 
-    private static readonly IBrush Background = new SolidColorBrush(Colors.Canvas);
-    private static readonly IBrush NormalBrush = new SolidColorBrush(Colors.Normalled);
-    private static readonly IBrush HeaderTextBrush = Brushes.White;
-    private static readonly IPen GridPen = new Pen(new SolidColorBrush(Colors.Grid));
-    private static readonly IPen GridPenMajor = new Pen(new SolidColorBrush(Colors.GridMajor));
-    private static readonly IPen SelectionPen = new Pen(new SolidColorBrush(Colors.Attention), 2);
+    private static readonly IBrush Background = new ImmutableSolidColorBrush(Colors.Canvas);
+    private static readonly IBrush NormalBrush = new ImmutableSolidColorBrush(Colors.Normalled);
+    private static readonly IImmutableBrush HeaderTextBrush = Brushes.White;
+    private static readonly IPen GridPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Grid));
+    private static readonly IPen GridPenMajor = new ImmutablePen(new ImmutableSolidColorBrush(Colors.GridMajor));
+    private static readonly IPen SelectionPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 2);
 
     /// <summary>
     /// Selected, but not the one the inspector is showing. The same color at
@@ -101,7 +102,7 @@ internal sealed class CanvasPainter(
     /// them the panel on the right is currently about.
     /// </summary>
     private static readonly IPen SelectionPenSecondary =
-        new Pen(new SolidColorBrush(Colors.Attention, 0.5), 2);
+        new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention, 0.5), 2);
 
     /// <summary>
     /// How strongly a module that is switched off is drawn, and its wires with
@@ -111,7 +112,7 @@ internal sealed class CanvasPainter(
     private const double OffOpacity = 0.38;
 
     /// <summary>The line through the name of a module that is switched off.</summary>
-    private static readonly IPen OffStrike = new Pen(HeaderTextBrush, 1.5);
+    private static readonly IPen OffStrike = new ImmutablePen(HeaderTextBrush, 1.5);
 
     /// <summary>
     /// The dashed ring round a group that is open — see OpenGroup.
@@ -123,10 +124,10 @@ internal sealed class CanvasPainter(
     /// dashed because an open group is furniture marking a region, and furniture
     /// that shouts is furniture in the way.
     /// </remarks>
-    private static readonly IPen OpenGroupPen = new Pen(
-        new SolidColorBrush(Colors.Separator, 0.5),
+    private static readonly IPen OpenGroupPen = new ImmutablePen(
+        new ImmutableSolidColorBrush(Colors.Separator, 0.5),
         1.5,
-        new DashStyle([6, 4], 0));
+        new ImmutableDashStyle([6, 4], 0));
 
     /// <summary>
     /// The same ring while everything inside it is selected.
@@ -138,10 +139,10 @@ internal sealed class CanvasPainter(
     /// <see cref="SelectionPen"/>: the modules inside are already ringed one by
     /// one, and this is the line round the lot of them.
     /// </remarks>
-    private static readonly IPen OpenGroupPenSelected = new Pen(
-        new SolidColorBrush(Colors.Attention, 0.55),
+    private static readonly IPen OpenGroupPenSelected = new ImmutablePen(
+        new ImmutableSolidColorBrush(Colors.Attention, 0.55),
         1.5,
-        new DashStyle([6, 4], 0));
+        new ImmutableDashStyle([6, 4], 0));
 
     /// <summary>
     /// The ground inside the ring. Faint to the edge of being nothing, on
@@ -166,21 +167,21 @@ internal sealed class CanvasPainter(
     /// region wears everywhere; it is still not a header, because it is only as
     /// wide as the name.
     /// </remarks>
-    private static readonly IBrush OpenGroupTab = new SolidColorBrush(Colors.Separator, 0.22);
+    private static readonly IBrush OpenGroupTab = new ImmutableSolidColorBrush(Colors.Separator, 0.22);
 
-    private static readonly IBrush OpenGroupTabSelected = new SolidColorBrush(Colors.Attention, 0.22);
+    private static readonly IBrush OpenGroupTabSelected = new ImmutableSolidColorBrush(Colors.Attention, 0.22);
 
     /// <summary>The header of the group a Shift-drag would drop into.</summary>
-    private static readonly IBrush DropHeader = new SolidColorBrush(Colors.Attention, 0.55);
+    private static readonly IBrush DropHeader = new ImmutableSolidColorBrush(Colors.Attention, 0.55);
 
     /// <summary>The ring round a box being looked into: solid, because it is over everything.</summary>
-    private static readonly IPen PeekPen = new Pen(new SolidColorBrush(Colors.Separator), 1.5);
+    private static readonly IPen PeekPen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 1.5);
 
     /// <summary>The ground inside a box being looked into: slightly transparent, so the canvas under it still shows.</summary>
-    private static readonly IBrush PeekGround = new SolidColorBrush(Colors.Canvas, 0.70);
+    private static readonly IBrush PeekGround = new ImmutableSolidColorBrush(Colors.Canvas, 0.70);
 
     /// <summary>What the canvas outside a box being looked into is dimmed under.</summary>
-    private static readonly IBrush PeekScrim = new SolidColorBrush(Colors.Edge, 0.78);
+    private static readonly IBrush PeekScrim = new ImmutableSolidColorBrush(Colors.Edge, 0.78);
 
     /// <summary>
     /// How strongly a wire leaving a box being looked into is drawn at its far end,
@@ -198,14 +199,14 @@ internal sealed class CanvasPainter(
     /// </summary>
     private const double GroupCornerRadius = 10;
 
-    private static readonly IBrush Beyond = new SolidColorBrush(Colors.Edge);
+    private static readonly IBrush Beyond = new ImmutableSolidColorBrush(Colors.Edge);
 
     /// <summary>
     /// The edge of the canvas. Brighter than any grid line and a little heavier,
     /// because it is the one line out there that means something other than
     /// "this is where another forty-eight units went".
     /// </summary>
-    private static readonly IPen EdgePen = new Pen(new SolidColorBrush(Colors.Separator), 2);
+    private static readonly IPen EdgePen = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 2);
 
     /// <summary>How thick a wire is drawn, and how far under full strength.</summary>
     private const double WireThickness = 2.2;
@@ -220,9 +221,9 @@ internal sealed class CanvasPainter(
     private const double LiftedWireThickness = 3.4;
 
 
-    private static readonly IBrush LinkedBrush = new SolidColorBrush(Colors.Attention, 0.85);
-    private static readonly IBrush LinkableWash = new SolidColorBrush(Colors.Attention, 0.07);
-    private static readonly IBrush LinkedWash = new SolidColorBrush(Colors.Attention, 0.24);
+    private static readonly IBrush LinkedBrush = new ImmutableSolidColorBrush(Colors.Attention, 0.85);
+    private static readonly IBrush LinkableWash = new ImmutableSolidColorBrush(Colors.Attention, 0.07);
+    private static readonly IBrush LinkedWash = new ImmutableSolidColorBrush(Colors.Attention, 0.24);
 
 
     /// <summary>
@@ -640,8 +641,8 @@ internal sealed class CanvasPainter(
         return true;
     }
 
-    private static readonly IBrush FlagBrush = new SolidColorBrush(Colors.Attention);
-    private static readonly Pen FlagPen = new(FlagBrush);
+    private static readonly IImmutableBrush FlagBrush = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IPen FlagPen = new ImmutablePen(FlagBrush);
 
     /// <summary>
     /// The ring, the ground inside it and the title above it, for every group that
@@ -865,10 +866,10 @@ internal sealed class CanvasPainter(
     internal static double BoxLabelRoom(Rect bounds, bool resting, bool compact) =>
         resting ? bounds.Width * 0.55 : compact ? HalfRow(bounds) : bounds.Width - SocketLabelRoom;
 
-    private static readonly IPen BusPen = new Pen(
-        new SolidColorBrush(Colors.Attention, 0.7),
+    private static readonly IPen BusPen = new ImmutablePen(
+        new ImmutableSolidColorBrush(Colors.Attention, 0.7),
         1.5,
-        new DashStyle([1, 3], 0));
+        new ImmutableDashStyle([1, 3], 0));
 
     /// <summary>
     /// What a module's header says: its title, and the bus where it is a Send or a

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.App.Controls;
 using Flyback.App.Settings;
@@ -16,7 +17,7 @@ namespace Flyback.App.Assist;
 /// </remarks>
 internal sealed class ProbeSection : StackPanel
 {
-    private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
 
     private readonly Func<IPatchAssistant?> assistant;
 

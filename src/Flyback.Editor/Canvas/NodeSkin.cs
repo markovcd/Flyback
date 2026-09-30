@@ -165,7 +165,9 @@ internal static class NodeSkin
     /// </remarks>
     public static IBrush Cut(GrainCut cut, Color over)
     {
-        if (CutBrushes.TryGetValue((cut, over), out var kept)) return kept;
+        var cutBrushes = CutBrushes ??= [];
+
+        if (cutBrushes.TryGetValue((cut, over), out var kept)) return kept;
 
         var ink = Colors.Contrast(over, !Colors.Light(over));
         var pen = new ImmutablePen(new ImmutableSolidColorBrush(ink, CutOpacity), CutWidth);
@@ -185,12 +187,14 @@ internal static class NodeSkin
             DestinationRect = new RelativeRect(0, 0, Tile, Tile, RelativeUnit.Absolute),
         };
 
-        CutBrushes[(cut, over)] = made;
+        cutBrushes[(cut, over)] = made;
 
         return made;
     }
 
-    private static readonly Dictionary<(GrainCut Cut, Color Over), IBrush> CutBrushes = [];
+    /// <summary>Kept per thread, because a drawing brush has no immutable form and belongs to the thread that made it.</summary>
+    [ThreadStatic]
+    private static Dictionary<(GrainCut Cut, Color Over), IBrush>? CutBrushes;
 
     /// <summary>
     /// The paths the tiling cuts are made of, on the tile's own square. The

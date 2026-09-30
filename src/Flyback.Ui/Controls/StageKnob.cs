@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 
 namespace Flyback.App.Controls;
 
@@ -12,15 +13,15 @@ internal sealed class StageKnob : Knob
     /// <summary>How much wider the dark stroke under each light one is, either side together.</summary>
     private const double Halo = 3;
 
-    private static readonly IBrush Light = new SolidColorBrush(Avalonia.Media.Colors.White);
-    private static readonly IBrush Dark = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.65);
-    private static readonly IBrush FaintLight = new SolidColorBrush(Avalonia.Media.Colors.White, 0.45);
-    private static readonly IBrush FaintDark = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.4);
+    private static readonly IImmutableBrush Light = new ImmutableSolidColorBrush(Avalonia.Media.Colors.White);
+    private static readonly IImmutableBrush Dark = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.65);
+    private static readonly IImmutableBrush FaintLight = new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.45);
+    private static readonly IImmutableBrush FaintDark = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.4);
 
-    private static readonly IPen Track = new Pen(FaintLight, 1.5, lineCap: PenLineCap.Round);
-    private static readonly IPen TrackUnder = new Pen(FaintDark, 1.5 + Halo, lineCap: PenLineCap.Round);
-    private static readonly IPen Arc = new Pen(Light, 2.5, lineCap: PenLineCap.Round);
-    private static readonly IPen ArcUnder = new Pen(Dark, 2.5 + Halo, lineCap: PenLineCap.Round);
+    private static readonly IPen Track = new ImmutablePen(FaintLight, 1.5, lineCap: PenLineCap.Round);
+    private static readonly IPen TrackUnder = new ImmutablePen(FaintDark, 1.5 + Halo, lineCap: PenLineCap.Round);
+    private static readonly IPen Arc = new ImmutablePen(Light, 2.5, lineCap: PenLineCap.Round);
+    private static readonly IPen ArcUnder = new ImmutablePen(Dark, 2.5 + Halo, lineCap: PenLineCap.Round);
 
     public StageKnob()
     {
@@ -52,4 +53,4 @@ internal sealed class StageKnob : Knob
         if (travel is not null) context.DrawGeometry(null, Arc, travel);
         context.DrawGeometry(null, Arc, pointer);
     }
-}
+}

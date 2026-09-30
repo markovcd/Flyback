@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.App.Notices;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
@@ -42,12 +43,12 @@ internal sealed class CanvasGestures
     /// The rubber band. Dashed, because it is a gesture in progress rather than anything
     /// in the patch, and drawn over the canvas so it keeps its size at any zoom.
     /// </summary>
-    private static readonly IPen MarqueePen = new Pen(
-        new SolidColorBrush(Colors.Attention),
+    private static readonly IPen MarqueePen = new ImmutablePen(
+        new ImmutableSolidColorBrush(Colors.Attention),
         1,
-        new DashStyle([4, 3], 0));
+        new ImmutableDashStyle([4, 3], 0));
 
-    private static readonly IBrush MarqueeFill = new SolidColorBrush(Colors.Attention, 0.08);
+    private static readonly IBrush MarqueeFill = new ImmutableSolidColorBrush(Colors.Attention, 0.08);
 
     private readonly CanvasHistory history;
     private readonly CanvasSelection selection;

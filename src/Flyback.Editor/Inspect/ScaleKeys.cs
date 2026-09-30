@@ -4,6 +4,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Styling;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
@@ -41,10 +42,10 @@ internal sealed class ScaleKeys
     /// </summary>
     private static readonly int[] Naturals = [0, 2, 4, 5, 7, 9, 11];
 
-    private static readonly IBrush Off = new SolidColorBrush(Colors.Node);
+    private static readonly IBrush Off = new ImmutableSolidColorBrush(Colors.Node);
     private static readonly IBrush OnText = Brushes.Black;
-    private static readonly IBrush OffText = new SolidColorBrush(Colors.Value);
-    private static readonly IPen Edge = new Pen(new SolidColorBrush(Colors.Outline));
+    private static readonly IBrush OffText = new ImmutableSolidColorBrush(Colors.Value);
+    private static readonly IPen Edge = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Outline));
     private static readonly IBrush Ring = Brushes.White;
 
     private const string LitClass = "lit";

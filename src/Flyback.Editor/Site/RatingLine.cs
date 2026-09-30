@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.App.Controls;
 using Colors = Flyback.App.Controls.Colors;
 
@@ -9,9 +10,9 @@ namespace Flyback.App.Site;
 /// <summary>A shared preset's or plugin's stars, to read: they are given on the site, never here.</summary>
 internal static class RatingLine
 {
-    private static readonly IBrush Lit = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush Lit = new ImmutableSolidColorBrush(Colors.Attention);
 
-    private static readonly IBrush Unlit = new SolidColorBrush(Colors.Separator);
+    private static readonly IBrush Unlit = new ImmutableSolidColorBrush(Colors.Separator);
 
     public static TextBlock Of(SiteRating rating)
     {

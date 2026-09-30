@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 
 namespace Flyback.App.Controls;
 
@@ -26,11 +27,11 @@ internal class Knob : Control
 
     protected const double Sweep = 270;
 
-    private static readonly IPen Track = new Pen(new SolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
-    private static readonly IPen Arc = new Pen(new SolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
-    private static readonly IPen Pointer = new Pen(new SolidColorBrush(Colors.Label), 2, lineCap: PenLineCap.Round);
-    private static readonly IBrush Face = new SolidColorBrush(Colors.Node);
-    private static readonly IBrush LitFace = new SolidColorBrush(Colors.Attention, 0.18);
+    private static readonly IPen Track = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
+    private static readonly IPen Arc = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
+    private static readonly IPen Pointer = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Label), 2, lineCap: PenLineCap.Round);
+    private static readonly IBrush Face = new ImmutableSolidColorBrush(Colors.Node);
+    private static readonly IBrush LitFace = new ImmutableSolidColorBrush(Colors.Attention, 0.18);
 
     private static readonly Cursor Upright = new(StandardCursorType.SizeNorthSouth);
     private static readonly Cursor Hidden = new(StandardCursorType.None);

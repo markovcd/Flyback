@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Styling;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -79,7 +80,7 @@ internal sealed class ModulePlate : Decorator
     /// on the body: one surface, one ink, one of them quieter.
     /// </summary>
     private static readonly IBrush Label =
-        new SolidColorBrush(Avalonia.Media.Colors.White, 0.7);
+        new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.7);
 
     /// <summary>
     /// The header band's contents: the name, and under it what kind of thing this

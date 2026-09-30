@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.App.Controls;
 using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
@@ -23,9 +24,9 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
     /// <summary>Where along a wire its mark may sit, nearest the middle first.</summary>
     private static readonly double[] MarkStops = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.1, 0.9];
 
-    private static readonly IBrush MarkFill = new SolidColorBrush(Colors.Canvas);
-    private static readonly IBrush MarkInk = new SolidColorBrush(Colors.Attention);
-    private static readonly IBrush MarkFaint = new SolidColorBrush(Colors.Attention, 0.45);
+    private static readonly IBrush MarkFill = new ImmutableSolidColorBrush(Colors.Canvas);
+    private static readonly IBrush MarkInk = new ImmutableSolidColorBrush(Colors.Attention);
+    private static readonly IBrush MarkFaint = new ImmutableSolidColorBrush(Colors.Attention, 0.45);
 
     /// <summary>The wire whose mark the pointer is over, null while it is over none.</summary>
     private Connection? hovered;

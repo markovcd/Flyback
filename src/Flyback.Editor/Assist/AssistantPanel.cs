@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -32,10 +33,10 @@ namespace Flyback.App.Assist;
 [SuppressMessage("Design", "CA1001", Justification = "The run ends with its conversation, in SetAside.")]
 internal sealed class AssistantPanel : UserControl
 {
-    private static readonly IBrush Amber = new SolidColorBrush(Colors.Attention);
+    private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
 
     /// <summary>The middle of <see cref="LogoMark"/>'s sweep, borrowed for the one thing here that is alive.</summary>
-    private static readonly IBrush Live = new SolidColorBrush(Colors.Feedback);
+    private static readonly IBrush Live = new ImmutableSolidColorBrush(Colors.Feedback);
 
     private readonly PluginCatalog plugins;
     private readonly ChosenAssistant chosenAssistant;

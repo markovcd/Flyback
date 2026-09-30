@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Inspect;
@@ -14,8 +15,8 @@ namespace Flyback.App.Inspect;
 /// </summary>
 internal sealed class LevelBar : Control
 {
-    private static readonly IBrush Track = new SolidColorBrush(Colors.GridMajor);
-    private static readonly IBrush Empty = new SolidColorBrush(Colors.Inactive);
+    private static readonly IBrush Track = new ImmutableSolidColorBrush(Colors.GridMajor);
+    private static readonly IBrush Empty = new ImmutableSolidColorBrush(Colors.Inactive);
 
     /// <summary>How full it is drawn, the module's own accent rather than a fixed color — see <see cref="StepList"/>.</summary>
     private readonly IBrush fill;
@@ -92,4 +93,4 @@ internal sealed class LevelBar : Control
         Value = x / Bounds.Width;
         ValueChanged?.Invoke(level);
     }
-}
+}

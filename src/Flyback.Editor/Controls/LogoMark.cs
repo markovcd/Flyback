@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 
 namespace Flyback.App.Controls;
 
@@ -19,9 +20,9 @@ public sealed class LogoMark : Control
     private const double Box = 256;
     private const double Thickness = 21;
 
-    private static readonly IBrush Retrace = new SolidColorBrush(Colors.Sink);
-    private static readonly IBrush Beam = new SolidColorBrush(Colors.Pattern);
-    private static readonly IBrush Core = new SolidColorBrush(Colors.BeamCore);
+    private static readonly IBrush Retrace = new ImmutableSolidColorBrush(Colors.Sink);
+    private static readonly IBrush Beam = new ImmutableSolidColorBrush(Colors.Pattern);
+    private static readonly IBrush Core = new ImmutableSolidColorBrush(Colors.BeamCore);
 
     /// <summary>
     /// Draws the largest square that fits, centered in whatever it is given. The

@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
 
 namespace Flyback.App.Controls;
@@ -24,15 +25,15 @@ internal sealed class SeekTrack : Control
 
     private const double Thumb = 5;
 
-    private static readonly IPen BarTrack = new Pen(new SolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
-    private static readonly IPen BarTravel = new Pen(new SolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
-    private static readonly IBrush BarThumb = new SolidColorBrush(Colors.Label);
+    private static readonly IPen BarTrack = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
+    private static readonly IPen BarTravel = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
+    private static readonly IBrush BarThumb = new ImmutableSolidColorBrush(Colors.Label);
 
-    private static readonly IPen StageTrack = new Pen(new SolidColorBrush(Avalonia.Media.Colors.White, 0.45), 2, lineCap: PenLineCap.Round);
-    private static readonly IPen StageTrackUnder = new Pen(new SolidColorBrush(Avalonia.Media.Colors.Black, 0.4), 5, lineCap: PenLineCap.Round);
-    private static readonly IPen StageTravel = new Pen(Brushes.White, 2.5, lineCap: PenLineCap.Round);
-    private static readonly IPen StageTravelUnder = new Pen(new SolidColorBrush(Avalonia.Media.Colors.Black, 0.65), 5.5, lineCap: PenLineCap.Round);
-    private static readonly IBrush StageThumbUnder = new SolidColorBrush(Avalonia.Media.Colors.Black, 0.65);
+    private static readonly IPen StageTrack = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.White, 0.45), 2, lineCap: PenLineCap.Round);
+    private static readonly IPen StageTrackUnder = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.4), 5, lineCap: PenLineCap.Round);
+    private static readonly IPen StageTravel = new ImmutablePen(Brushes.White, 2.5, lineCap: PenLineCap.Round);
+    private static readonly IPen StageTravelUnder = new ImmutablePen(new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.65), 5.5, lineCap: PenLineCap.Round);
+    private static readonly IBrush StageThumbUnder = new ImmutableSolidColorBrush(Avalonia.Media.Colors.Black, 0.65);
 
     private readonly bool stage;
 

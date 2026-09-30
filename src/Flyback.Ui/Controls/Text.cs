@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 
 namespace Flyback.App.Controls;
 
@@ -65,7 +66,7 @@ internal static class Text
     /// <see cref="Colors"/>, which keeps values, because it is always the same
     /// brush doing the same job.
     /// </remarks>
-    public static readonly IBrush Muted = new SolidColorBrush(Colors.Muted);
+    public static readonly IBrush Muted = new ImmutableSolidColorBrush(Colors.Muted);
 
     /// <summary>
     /// Text there to be read once and then ignored.
