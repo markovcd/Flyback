@@ -629,7 +629,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
                 tile.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "siteRating").Inlines!.Text ?? string.Empty))];
         });
 
-    /// <summary>Picks a tile the gallery lists under the site's heading, and waits for it to open.</summary>
+    /// <summary>Picks a tile the gallery lists under the site's heading, and waits for the editor to say what came of it.</summary>
     public void PickShared(string name) =>
         Run(async () =>
         {
@@ -637,15 +637,16 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             var report = open.GetVisualDescendants().OfType<ReportLine>().Single();
 
             // Counted rather than looked for after a position: a line said again moves to the end.
-            int Opened() => report.History.Count(line => line.StartsWith($"Opened “{name}”", StringComparison.Ordinal));
+            int Answered() => report.History.Count(line => line.Contains($"“{name}”", StringComparison.Ordinal)
+                && !line.StartsWith("Downloading", StringComparison.Ordinal));
 
-            var before = Opened();
+            var before = Answered();
 
             SharedTiles(open).Single(tile => ((SitePreset)tile.Tag!).Name == name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
             await Until(
-                () => Opened() > before,
-                () => $"“{name}” to open. The report line said: {string.Join(" | ", report.History)}. "
+                () => Answered() > before,
+                () => $"the editor to say what came of picking “{name}”. The report line said: {string.Join(" | ", report.History)}. "
                     + $"Up over the window: {open.GetVisualDescendants().OfType<ModalOverlay>().Count()} dialog(s).");
 
             context.Replace(Canvas().History.Patch);

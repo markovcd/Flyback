@@ -40,6 +40,12 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
     /// <summary>Answers nothing at all, as a site that is down does.</summary>
     public bool Down { get; set; }
 
+    /// <summary>Answers everything with this, as a proxy in front of a site that is down does.</summary>
+    public HttpStatusCode? Answering { get; set; }
+
+    /// <summary>The ids taken off the site: listed nowhere, and not found by id or file.</summary>
+    public HashSet<string> TakenDown { get; } = [];
+
     /// <summary>What the site says it was downloaded, which the editor has no use for but keeps.</summary>
     public const long Downloads = 42;
 
@@ -53,17 +59,21 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
 
         if (Down) throw new HttpRequestException("No connection could be made.");
 
+        if (Answering is { } status) return Task.FromResult(new HttpResponseMessage(status));
+
+        var shared = presets.Where(p => !TakenDown.Contains(p.Id)).ToList();
+
         if (request.Method == HttpMethod.Post && uri.AbsolutePath.EndsWith("/reports", StringComparison.Ordinal)) return Task.FromResult(Report(request));
 
-        if (uri.AbsolutePath == "/api/v1/presets") return Task.FromResult(Json(List(uri)));
+        if (uri.AbsolutePath == "/api/v1/presets") return Task.FromResult(Json(List(uri, shared)));
 
-        if (presets.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}") is { } one)
+        if (shared.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}") is { } one)
             return Task.FromResult(Json(Item(one)));
 
-        if (presets.FirstOrDefault(p => uri.AbsolutePath == $"/media/{p.Id}.webp") is { Still: { } still })
+        if (shared.FirstOrDefault(p => uri.AbsolutePath == $"/media/{p.Id}.webp") is { Still: { } still })
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(still) });
 
-        var posted = presets.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}/file");
+        var posted = shared.FirstOrDefault(p => uri.AbsolutePath == $"/api/v1/presets/{p.Id}/file");
 
         return Task.FromResult(posted?.File is { } bytes
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(bytes) }
@@ -79,13 +89,13 @@ internal sealed class FakePresetSite(params Posted[] presets) : HttpMessageHandl
         return new HttpResponseMessage(HttpStatusCode.NoContent);
     }
 
-    private object List(Uri uri)
+    private object List(Uri uri, List<Posted> shared)
     {
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var page = int.Parse(query["page"] ?? "1");
         var words = (query["q"] ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        var found = presets
+        var found = shared
             .Where(p => words.All(w => $"{p.Name} {p.Author} {p.Description}".Contains(w, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 

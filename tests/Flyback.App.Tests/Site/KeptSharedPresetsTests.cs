@@ -141,6 +141,20 @@ public sealed class KeptSharedPresetsTests : IDisposable
     }
 
     [Fact]
+    public void A_forgotten_preset_is_gone_and_the_rest_stay()
+    {
+        var kept = new KeptSharedPresets(folder);
+
+        kept.Keep(FakePresetSite.Root, Nebula(), [1], [9]);
+        kept.Keep(FakePresetSite.Root, Listed("""{ "id": "d1", "name": "Drift", "file": "/f" }"""), [2], null);
+
+        kept.Forget(FakePresetSite.Root, "n1");
+
+        kept.Find(FakePresetSite.Root, "n1").ShouldBeNull();
+        kept.All(FakePresetSite.Root).Select(k => k.Name).ShouldBe(["Drift"]);
+    }
+
+    [Fact]
     public void No_folder_keeps_nothing()
     {
         KeptSharedPresets.None.Keep(FakePresetSite.Root, Nebula(), [1], null);

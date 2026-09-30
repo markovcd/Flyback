@@ -272,22 +272,30 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         }
         catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
         {
-            shared = null;
-        }
+            if (site.Kept.Find(at.Root, id) is { } kept)
+            {
+                await OpenKeptAsync(kept);
+                return;
+            }
 
-        if (shared is not null)
-        {
-            await OpenSharedAsync(shared);
+            report.Say("The preset this was restarted for could not be fetched from the preset site again.");
             return;
         }
 
-        if (site.Kept.Find(at.Root, id) is { } kept)
+        if (shared is null)
         {
-            await OpenKeptAsync(kept);
+            TakenDown(at, id, site.Kept.Find(at.Root, id)?.Name);
             return;
         }
 
-        report.Say("The preset this was restarted for could not be fetched from the preset site again.");
+        await OpenSharedAsync(shared);
+    }
+
+    /// <summary>Forgets a preset the site answered it no longer has, and says so.</summary>
+    private void TakenDown(PresetSite at, string id, string? name)
+    {
+        site.Kept.Forget(at.Root, id);
+        report.Say(name is null ? "The preset this was restarted for has been taken off the preset site." : $"“{name}” has been taken off the preset site.");
     }
 
     private async Task ShowGalleryAsync()
@@ -521,8 +529,9 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
     /// <summary>
     /// Downloads a shared preset, keeps it, and opens it as a document named after it,
-    /// with no folder of its own, as a preset is. Opens the kept copy where the download
-    /// fails. Asks about unsaved work first.
+    /// with no folder of its own, as a preset is. Opens the kept copy where the site does
+    /// not answer, and forgets it where the site answers it has taken it down. Asks about
+    /// unsaved work first.
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
@@ -538,6 +547,11 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         try
         {
             bytes = await at.DownloadAsync(shared, CancellationToken.None);
+        }
+        catch (HttpRequestException ex) when (PresetSite.Gone(ex.StatusCode))
+        {
+            TakenDown(at, shared.Id, shared.Name);
+            return;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {

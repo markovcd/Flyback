@@ -190,5 +190,68 @@ public sealed class KeptSharedPresetTests : UiTest
         Opened(window, "Nebula");
     }
 
+    private KeptPreset? Kept(string id) => new KeptSharedPresets(folder).Find(FakePresetSite.Root, id);
+
+    [AvaloniaFact]
+    public void Picking_a_preset_taken_off_the_site_since_it_was_listed_forgets_it_and_opens_nothing()
+    {
+        using var site = Nebula();
+        var window = Window(site);
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+        ShowGallery(window);
+
+        site.TakenDown.Add("n1");
+        Press(SiteTiles(window).Single(b => ((SitePreset)b.Tag!).Name == "Nebula"));
+        Pump(() => Reported(window).Contains("“Nebula” has been taken off the preset site."));
+
+        Kept("n1").ShouldBeNull();
+        Reported(window).ShouldNotContain("Opened “Nebula” as it was kept, the preset site not answering.");
+    }
+
+    [AvaloniaFact]
+    public void A_site_answering_only_errors_is_a_site_that_does_not_answer()
+    {
+        using var site = Nebula();
+        var window = Window(site);
+
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        site.Answering = System.Net.HttpStatusCode.BadGateway;
+        ShowGallery(window);
+        Pick(window, "Nebula");
+
+        Opened(window, "Nebula");
+        Reported(window).ShouldContain("Opened “Nebula” as it was kept, the preset site not answering.");
+    }
+
+    [AvaloniaFact]
+    public void A_preset_a_restart_was_carrying_that_was_taken_off_the_site_is_forgotten_and_not_opened()
+    {
+        using (var site = Nebula())
+        {
+            var first = Window(site);
+
+            ShowGallery(first);
+            Pick(first, "Nebula");
+        }
+
+        using var taken = Nebula();
+        taken.TakenDown.Add("n1");
+
+        var window = NewMainWindow(
+            new EditorSetup { PresetSite = FakePresetSite.Root, SharedPresetFolder = folder, OpenShared = "n1" },
+            Site(taken));
+
+        window.Show();
+        Pump(() => Reported(window).Contains("“Nebula” has been taken off the preset site."));
+        Settle(window);
+
+        window.Title.ShouldNotStartWith("Nebula");
+        Kept("n1").ShouldBeNull();
+    }
+
     private static IReadOnlyList<string> Reported(MainWindow window) => All<ReportLine>(window).Single().History;
 }

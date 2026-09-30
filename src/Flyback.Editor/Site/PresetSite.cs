@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Net;
 using System.Reflection;
 using System.Text.Json;
 
@@ -36,20 +37,29 @@ internal sealed class PresetSite(HttpClient http, Uri root)
     }
 
     /// <summary>
-    /// The one preset that id names, or null where the site does not have it. This is how
-    /// a preset opened from the site is found again after a restart, which is what
+    /// The one preset that id names, or null where the site answers that it does not have
+    /// it. Throws where the site cannot be reached or answers with something else. This is
+    /// how a preset opened from the site is found again after a restart, which is what
     /// installing the plugin it needed costs.
     /// </summary>
     public async Task<SitePreset?> FindAsync(string id, CancellationToken cancel)
     {
         using var response = await http.GetAsync(new Uri(Root, "api/v1/presets/" + Uri.EscapeDataString(id)), cancel);
 
-        if (!response.IsSuccessStatusCode) return null;
+        if (Gone(response.StatusCode)) return null;
+
+        response.EnsureSuccessStatusCode();
 
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancel), cancellationToken: cancel);
 
         return One(document.RootElement, Root);
     }
+
+    /// <summary>
+    /// Whether the site answered that a preset is not there: taken down or never shared,
+    /// as the site itself says. A proxy in front of a site that is down answers otherwise.
+    /// </summary>
+    public static bool Gone(HttpStatusCode? status) => status is HttpStatusCode.NotFound or HttpStatusCode.Gone;
 
     /// <summary>The preset's file, as it was shared.</summary>
     public Task<byte[]> DownloadAsync(SitePreset preset, CancellationToken cancel) =>

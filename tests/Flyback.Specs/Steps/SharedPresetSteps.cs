@@ -45,6 +45,26 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
         editor.PickShared(name);
     }
 
+    [Given("the gallery lists {string} under the preset site")]
+    public void GivenListed(string name) => editor.SharedInGallery().ShouldContain(tile => tile.Name == name);
+
+    [When("{string} is taken off the preset site")]
+    public void WhenTakenDown(string name) => site.TakenDown.Add(name);
+
+    [When("{string} is picked there")]
+    public void WhenPicked(string name) => editor.PickShared(name);
+
+    [Then("the editor says {string}")]
+    public void ThenSays(string said) => editor.Reported[^1].ShouldBe(said);
+
+    [Then("while the preset site does not answer, the gallery lists nothing kept from it")]
+    public void ThenNothingKept()
+    {
+        site.Down = true;
+
+        editor.SharedInGallery().ShouldBeEmpty();
+    }
+
     [When("the preset site stops answering")]
     public void WhenDown() => site.Down = true;
 
@@ -70,6 +90,9 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
         public bool Down { get; set; }
 
+        /// <summary>The names taken off the site, which it answers it does not have.</summary>
+        public HashSet<string> TakenDown { get; } = [];
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (Down) throw new HttpRequestException("No connection could be made.");
@@ -77,9 +100,13 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
             var path = request.RequestUri!.AbsolutePath;
 
             if (path == "/api/v1/presets")
-                return Json(new { items = Shared.Select(Item), total = Shared.Count, page = 1, pageSize = 24 });
+            {
+                var listed = Shared.Where(s => !TakenDown.Contains(s.Name)).ToList();
 
-            if (Shared.FirstOrDefault(s => path == $"/api/v1/presets/{Id(s.Name)}/file") is { Name: not null })
+                return Json(new { items = listed.Select(Item), total = listed.Count, page = 1, pageSize = 24 });
+            }
+
+            if (Shared.FirstOrDefault(s => path == $"/api/v1/presets/{Id(s.Name)}/file") is { Name: not null } file && !TakenDown.Contains(file.Name))
             {
                 var patch = new Patch();
                 patch.EnsureOutput();

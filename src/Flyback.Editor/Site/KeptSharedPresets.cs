@@ -38,6 +38,12 @@ internal sealed class KeptSharedPresets(string? folder)
             Write(root, seen.Id, seen.Listed, whole.Opened, whole.Still, file);
     }
 
+    /// <summary>Deletes the kept preset: the site took it down, and nobody gets a copy of it from here.</summary>
+    public void Forget(Uri root, string id)
+    {
+        if (PathOf(root, id) is { } path) Forget(path);
+    }
+
     /// <summary>The preset kept from <paramref name="root"/> under that id, or null where none is.</summary>
     public KeptPreset? Find(Uri root, string id) => Preset(Read(PathOf(root, id), whole: false));
 
