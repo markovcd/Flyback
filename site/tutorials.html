@@ -165,7 +165,8 @@
     <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
     back. Hover the top middle of the full-screen picture for the transport, in the toolbar's order: pause, rewind,
     the seek bar, loop and sound. Press
-    <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws and what each costs. A patch
+    <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws, what each costs, what the picture and the sound each run and how
+    far the sound is oversampled. A patch
     with knobs keeps them behind the dots at the bottom middle, to be played;
     <strong>Settings → Graphics → Controls</strong> swaps the two, knobs on top and the transport below.
     <strong>Settings → Graphics → Full screen</strong> can send the picture to another monitor instead, or to one
@@ -622,7 +623,7 @@ flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
     A patch that does not say how long it plays has no seek bar and plays on; a run of one with no window closes
     after three minutes.
     <kbd>Space</kbd> pauses, and <kbd>F3</kbd>, or <code>--stats</code> from the start, says in the corner how the
-    picture is drawn: frames a second, a frame's cost, the ops. <code>--hidden</code> opens no window at all, which is how
+    picture is drawn: frames a second, a frame's cost, the picture's and the sound's ops, the oversampling. <code>--hidden</code> opens no window at all, which is how
     to hear a patch without anything landing on the screen.</p>
     <p>A patch made to be played is played here too: the computer's keys are notes, a MIDI In hears its
     device, and a knob bound to a MIDI controller follows it. The knobs wait behind the dots at the other edge of the
@@ -726,7 +727,7 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
           <tr><td>double-click a box</td><td>Look inside it, over the rest of the patch</td></tr>
           <tr><td><kbd>Shift</kbd>+drag modules</td><td>Put them into the group they are let go over, or take them out of theirs</td></tr>
           <tr><td>double-click the preview</td><td>Full-screen preview</td></tr>
-          <tr><td><kbd>F3</kbd> over the full-screen preview</td><td>Show or hide how the picture is drawn: frames a second, a frame's cost, the ops</td></tr>
+          <tr><td><kbd>F3</kbd> over the full-screen preview</td><td>Show or hide how the picture is drawn: frames a second, a frame's cost, the picture's and the sound's ops, the oversampling</td></tr>
         </tbody>
       </table>
     </div>

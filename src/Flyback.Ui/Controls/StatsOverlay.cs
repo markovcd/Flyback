@@ -4,12 +4,14 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.App.Audio;
 
 namespace Flyback.App.Controls;
 
 /// <summary>
 /// A line in the corner of a full-screen picture saying how it is being drawn: frames a
-/// second, what a frame costs, the patch's ops, the size, the renderer and the clock.
+/// second, what a frame costs, the picture's and the sound's ops, the oversampling, the size,
+/// the renderer and the clock.
 /// </summary>
 /// <remarks>
 /// Hidden until asked for, and read only while shown, so a picture nobody is measuring
@@ -22,12 +24,14 @@ public sealed class StatsOverlay : Border
     private static readonly TimeSpan Every = TimeSpan.FromMilliseconds(250);
 
     private readonly PreviewHost preview;
+    private readonly IAudioEngine sound;
     private readonly TextBlock line;
     private readonly DispatcherTimer ticker;
 
-    public StatsOverlay(PreviewHost preview)
+    internal StatsOverlay(PreviewHost preview, IAudioEngine sound)
     {
         this.preview = preview;
+        this.sound = sound;
 
         Name = "stats";
         IsVisible = false;
@@ -77,14 +81,16 @@ public sealed class StatsOverlay : Border
             preview.FramesPerSecond,
             preview.FrameMilliseconds,
             preview.Program.Ops.Length,
+            sound.Ops,
+            sound.Oversample,
             preview.Resolution,
             preview.Renderer,
             preview.Time);
 
     /// <summary>The line, from what was measured.</summary>
     /// <param name="renderer">What draws the picture, or null while a graphics context is still coming up.</param>
-    public static string Line(double fps, double milliseconds, int ops, PixelSize size, string? renderer, double seconds) =>
+    public static string Line(double fps, double milliseconds, int pictureOps, int soundOps, int oversample, PixelSize size, string? renderer, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {ops} ops · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {pictureOps}/{soundOps} picture/sound ops · {oversample}× oversampling · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
 }

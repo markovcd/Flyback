@@ -152,7 +152,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{nodes} modules · {wires} wires · {pictureOps}/{soundOps} picture/sound ops   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
+            $"{nodes} modules · {wires} wires · {pictureOps}/{soundOps} picture/sound ops · {playback.Oversample}× oversampling   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

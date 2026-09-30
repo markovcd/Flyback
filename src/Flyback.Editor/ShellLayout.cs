@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Assist;
+using Flyback.App.Audio;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -27,6 +28,7 @@ internal sealed class ShellLayout(
     AssistantPanel assistant,
     Inspector inspector,
     PreviewHost preview,
+    IAudioEngine audio,
     Playback playback,
     TransportControls transport,
     FullScreenPreview fullScreen,
@@ -369,7 +371,7 @@ internal sealed class ShellLayout(
         overlay.PauseClicked += transport.TogglePause;
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += playback.RewindPressed;
-        transport.Stats = new StatsOverlay(preview);
+        transport.Stats = new StatsOverlay(preview, audio);
         toolbar.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);

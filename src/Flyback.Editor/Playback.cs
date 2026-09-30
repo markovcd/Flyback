@@ -156,6 +156,9 @@ internal sealed class Playback
     /// <summary>How many ops the sound's program runs for each sample.</summary>
     public int SoundOps => transport.SoundOps;
 
+    /// <summary>How many times the output rate the sound is evaluated at.</summary>
+    public int Oversample => audio.Oversample;
+
     /// <summary>How long the open patch plays for, in seconds.</summary>
     public double Length => editor.History.Patch.Lasts;
 

@@ -8,7 +8,7 @@ using Shouldly;
 
 namespace Flyback.App.Tests.Ui;
 
-/// <summary>The status bar's count of what the patch costs, the picture and the sound each.</summary>
+/// <summary>The status bar's count of what the patch costs, the picture and the sound each, and the sound's oversampling.</summary>
 public sealed class StatusCountTests : UiTest
 {
     /// <summary>Written on a timer, which a headless run cannot be relied on to tick, so the test writes it.</summary>
@@ -45,5 +45,5 @@ public sealed class StatusCountTests : UiTest
 
     private static string Counted(Patch patch) =>
         $"{patch.CompileForVideo(played: true).Program.Ops.Length}/"
-        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops";
+        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops · 2× oversampling";
 }

@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Flyback.App.Audio;
 using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -27,6 +28,7 @@ namespace Flyback.App;
 internal sealed class FullScreenPreview(
     WindowHolder holder,
     PreviewHost preview,
+    IAudioEngine audio,
     PanelKnobs knobs,
     Toolbar toolbar,
     StatusBar statusBar,
@@ -133,7 +135,7 @@ internal sealed class FullScreenPreview(
 
         preview.Renew();
 
-        var window = transport.PictureWindow = new PictureWindow(screen, preview);
+        var window = transport.PictureWindow = new PictureWindow(screen, preview, audio);
 
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);

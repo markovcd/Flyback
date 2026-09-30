@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Flyback.App.Audio;
 using Flyback.App.Controls;
 
 namespace Flyback.App.Windows;
@@ -34,7 +35,7 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
     /// <summary>The line saying how the picture is drawn, which the editor shows or puts away.</summary>
     public StatsOverlay Stats { get; }
 
-    public PictureWindow(Screen screen, PreviewHost preview)
+    internal PictureWindow(Screen screen, PreviewHost preview, IAudioEngine sound)
     {
         Title = "Flyback picture";
         Background = Brushes.Black;
@@ -44,7 +45,7 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
         Width = 160;
         Height = 90;
 
-        Stats = new StatsOverlay(preview);
+        Stats = new StatsOverlay(preview, sound);
 
         picture.Children.Add(preview);
         picture.Children.Add(Stats);

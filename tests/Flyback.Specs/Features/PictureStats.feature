@@ -8,6 +8,12 @@ Feature: A full-screen picture can say how it is being drawn
     When the viewer plays it with "--stats"
     Then the viewer's picture says how many frames a second it draws
 
+  Scenario: The viewer's line counts the picture and the sound apart, and says the oversampling
+    Given a rainbow across the screen
+    When the viewer plays it with "--stats --oversample 4"
+    Then the viewer's picture counts the picture's ops and the sound's apart
+    And the viewer's picture says the sound is worked out at 4× the output rate
+
   Scenario: The viewer keeps the picture clean unless asked
     Given a rainbow across the screen
     When the viewer plays it
