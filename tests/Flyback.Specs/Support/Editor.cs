@@ -13,6 +13,7 @@ using Flyback.App.Bars;
 using Flyback.App.Canvas;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.App.Inspect;
 using Flyback.App.Site;
 using Flyback.App.Windows;
@@ -595,6 +596,9 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     /// <summary>What the text view holds.</summary>
     public string Text => ReadWindow(open => Source(open).Text);
+
+    /// <summary>Whether leaving would lose anything, which a page asks about before it is left.</summary>
+    public bool SomethingToLose => ReadWindow(_ => Service<UnsavedWork>().SomethingToLose);
 
     /// <summary>The open patch as text, as a page's <c>flyback.text()</c> reads it.</summary>
     public string ScriptedText => ReadWindow(_ => Service<Document>().AsText());

@@ -280,7 +280,7 @@ node artifacts/web/hear.mjs --preset "Sidebands" --seconds 2 --out sidebands.f32
 
 ## Web editor
 
-`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits, carries every plugin that makes modules, as the viewer does, and plays its sound in the web viewer's worker. The presets page's Edit opens a preset in it, a shipped one by `?preset=<name>` and a shared one by `?file=<url>` (with `&name=` and `&title=` as the viewer takes them). The preset site serves it at `/editor/`; `-p:WebEditor=false` builds the site without it:
+`src/Flyback.WebEditor` is the editor itself in a browser: the same window under Avalonia.Browser, the picture drawn on a canvas of its own by the desktop's GPU renderer (ADR-0162). It keeps nothing between visits, carries every plugin that makes modules, as the viewer does, and plays its sound in the web viewer's worker. The Flyback mark first on its toolbar goes back to the site, and the browser asks before the page is left with an edit on it. The presets page's Edit opens a preset in it, a shipped one by `?preset=<name>` and a shared one by `?file=<url>` (with `&name=` and `&title=` as the viewer takes them). The preset site serves it at `/editor/`; `-p:WebEditor=false` builds the site without it:
 
 ```bash
 dotnet run --project src/Flyback.Server

@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Flyback.App;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.App.Gallery;
 using Flyback.App.Notices;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,8 +44,13 @@ internal static partial class PageExports
             ["frameMilliseconds"] = Math.Round(preview.FrameMilliseconds, 2),
             ["time"] = Math.Round(preview.Time, 2),
             ["said"] = said.Count > 0 ? said[^1] : null,
+            ["unsaved"] = Unsaved(),
         }.ToJsonString();
     }
+
+    /// <summary>Whether leaving the page would lose an edit, which the page asks about before it goes.</summary>
+    [JSExport]
+    public static bool Unsaved() => Provider is not null && Get<UnsavedWork>().SomethingToLose;
 
     /// <summary>Opens the preset called <paramref name="name"/>, or the first on the list where none is.</summary>
     [JSExport]

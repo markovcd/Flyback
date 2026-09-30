@@ -10,6 +10,27 @@ Feature: The editor in a page offers only what a page can do
     Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
     And the toolbar still has "undo, redo, tidy, code, controls, swap, side, pause, rewind, view-it"
 
+  Scenario: A page's toolbar leads with the Flyback mark, which goes back to the site
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the toolbar has "presets-glyph" right after "home"
+    When the Flyback mark is pressed
+    Then the page leaves for the site's front page
+
+  Scenario: A desktop window's toolbar has no Flyback mark, having no site to go back to
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    Then the toolbar has none of "home"
+
+  Scenario: A page asks before it is left only once the patch is edited
+    Given a 220 Hz sine is playing
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the page may be left without asking
+    When a script applies the page's text with "freq: 220" changed to "freq: 330"
+    Then the page asks before it is left
+
   Scenario: A page's View it sits beside the presets, where a patch is picked
     Given a rainbow across the screen
     And the editor is in a page

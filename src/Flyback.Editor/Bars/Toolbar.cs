@@ -127,6 +127,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
     public Button About { get; } = ToolbarButtons.Drawn("about", Glyphs.About(), "What this is, who wrote it, and what it may be done with.");
 
+    /// <summary>The Flyback mark, first on the bar, back to the site's front page. Only where the host has one.</summary>
+    public Button Home { get; } = ToolbarButtons.Drawn("home", new LogoMark { Width = 30, Height = 30 }, "Back to the Flyback site.");
+
     /// <summary>The bar itself.</summary>
     public Control View { get; }
 
@@ -161,6 +164,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Settings.Click += (_, _) => reactions.Raise(new SettingsAsked());
         Plugins.Click += (_, _) => reactions.Raise(new PluginsAsked());
         About.Click += async (_, _) => await dialog.Show("About", Controls.About.View());
+        Home.Click += (_, _) => host.Home?.Invoke();
 
         var assistants = plugins.Assistants.Count > 0;
 
@@ -207,6 +211,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         // with the files, because it is an edit and is taken back like one.
         var patchwork = ToolbarButtons.Group();
 
+        if (host.Home is not null) patchwork.Children.Add(Home);
         patchwork.Children.Add(presets.View);
         if (!full) patchwork.Children.Add(Viewer);
 

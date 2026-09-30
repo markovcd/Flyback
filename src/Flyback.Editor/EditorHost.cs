@@ -24,6 +24,9 @@ public sealed record EditorHost
     /// </summary>
     public Action<Reopen?>? Relaunch { get; init; }
 
+    /// <summary>Leaves the editor for the front page of the site it is served from. Null puts no mark on the toolbar.</summary>
+    public Action? Home { get; init; }
+
     /// <summary>A desktop window on this machine, reaching the preset site this copy was built for.</summary>
     public static EditorHost ThisMachine() => new()
     {

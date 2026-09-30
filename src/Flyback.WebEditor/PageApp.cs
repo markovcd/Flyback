@@ -29,7 +29,7 @@ internal sealed class PageApp : Application
 
         NodeCatalog.Install(plugins.Modules);
 
-        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root } }, services =>
+        var provider = EditorServices.Provider(new EditorSetup { Plugins = plugins, Host = new() { InPage = true, PresetSite = PageSite.Root, Home = PageSite.Home } }, services =>
         {
             services.AddSingleton<Func<IGpuPreview>>(sp => () => new CanvasPreview(sp.GetRequiredService<IDialog>()));
             services.AddSingleton<ITitle, PageTitle>();

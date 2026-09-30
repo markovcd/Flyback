@@ -14,10 +14,12 @@ public sealed class PageSteps(Editor editor, PatchContext context)
 {
     private readonly HandedViewer viewer = new();
 
+    private int homed;
+
     [Given("the editor is in a page")]
     public void GivenInAPage()
     {
-        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true } };
+        editor.Setup = editor.Setup with { Host = editor.Setup.Host with { InPage = true, Home = () => homed++ } };
         editor.Services += services => services.AddSingleton<IViewer>(viewer);
     }
 
@@ -53,6 +55,18 @@ public sealed class PageSteps(Editor editor, PatchContext context)
         at.ShouldBeGreaterThanOrEqualTo(0, $"the toolbar has no {before}");
         offered.ElementAtOrDefault(at + 1).ShouldBe(name);
     }
+
+    [When("the Flyback mark is pressed")]
+    public void WhenMarkPressed() => editor.PressPanelButton("home");
+
+    [Then("the page leaves for the site's front page")]
+    public void ThenHomed() => homed.ShouldBe(1);
+
+    [Then("the page may be left without asking")]
+    public void ThenLeavesQuietly() => editor.SomethingToLose.ShouldBeFalse();
+
+    [Then("the page asks before it is left")]
+    public void ThenAsks() => editor.SomethingToLose.ShouldBeTrue();
 
     [When("the picture is double-clicked")]
     public void WhenDoubleClicked() => editor.FullScreen();

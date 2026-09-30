@@ -50,6 +50,7 @@ runtime.setModuleImports('page', {
   hasFocus: () => document.hasFocus(),
   stillsUrl: () => new URL('../stills/', location.href).href,
   siteUrl: () => new URL('../', location.href).href,
+  goHome: () => { location.href = new URL('../', location.href).href; },
   openViewerTab: () => {
     viewerTab = window.open('', VIEWER_TAB);
     return viewerTab !== null;
@@ -78,6 +79,11 @@ async function openUrl(url, fileName, title) {
   const file = fileName ?? url.split('/').pop().split('?')[0];
   return await exports.Shared(title ?? file.replace(/\.[^.]+$/, ''), file, new Uint8Array(await response.arrayBuffer()));
 }
+
+// The browser's own question, since nothing may wait on the editor's while the page unloads.
+addEventListener('beforeunload', event => {
+  if (exports.Unsaved()) event.preventDefault();
+});
 
 globalThis.flyback = {
   state: () => JSON.parse(exports.State()),
