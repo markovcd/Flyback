@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The web viewer offers 1920 × 1080 and Picture off, which plays the sound alone, and turns a phone sideways when it goes full screen; the web editor's View it sits beside the presets button.
 - The web editor's View it plays the patch as edited in the web viewer, in a tab of its own, and the web viewer's Edit it opens what it plays in the web editor.
 - A Scope, an Analyzer or a Sample in the picture is drawn on the GPU rather than the processor, and in the web viewer and web editor rather than as a flat line; the web editor never draws on the processor.
 - Every shipped preset carries tags, shown and searched on the presets page and in the gallery.

@@ -188,6 +188,22 @@ main:fullscreen { background: #000; }
 
 #cover[hidden] { display: none; }
 
+main:has(#cover:not([hidden])) #off { display: none; }
+
+#off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+#off[hidden] { display: none; }
+
 footer {
   padding: 6px 16px;
   background: var(--toolbar);

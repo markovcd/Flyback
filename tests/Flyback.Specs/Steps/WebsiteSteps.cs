@@ -160,6 +160,28 @@ public sealed partial class WebsiteSteps : IDisposable
         script.ShouldMatch("""playing = false;(?:[^\n]*\n){1,6}\s*keepAwake\(\);""");
     }
 
+    /// <summary>1080p among the sizes, and an Off that stops drawing without touching the sound.</summary>
+    [Then("it offers 1920 x 1080 and a picture turned off, which draws nothing and leaves the sound playing")]
+    public async Task ThenOffersFullHdAndOff()
+    {
+        var script = await client.GetStringAsync(new Uri("/viewer/main.js", UriKind.Relative));
+
+        script.ShouldContain("[1920, 1080]");
+        script.ShouldContain("ui.size.add(new Option('Picture off', OFF));");
+        script.ShouldContain("if (noPicture !== null || !pictureOn) return;");
+        script.ShouldContain("ui.size.value === OFF ? setPicture(false)");
+    }
+
+    /// <summary>The orientation locked to landscape once full screen is granted, which a browser allows only then.</summary>
+    [Then("it asks for landscape once its picture has the whole screen")]
+    public async Task ThenTurnsSideways()
+    {
+        var script = await client.GetStringAsync(new Uri("/viewer/main.js", UriKind.Relative));
+
+        script.ShouldContain("requestFullscreen?.().then(turnSideways");
+        script.ShouldContain("screen.orientation?.lock?.('landscape')");
+    }
+
     /// <summary>
     /// The page's own script and style, and every file of the runtime its loader names,
     /// each there and a WebAssembly module served as one, which a browser insists on.

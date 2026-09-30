@@ -11,10 +11,16 @@ const looped = params.has('loop');
 /** Playing a file rather than a shipped preset. */
 const preview = params.has('file');
 
-/** The sizes offered: the editor's own, up to 720p. */
-const SIZES = [[320, 180], [480, 270], [640, 360], [960, 540], [1280, 720], [1024, 768]];
+/** The sizes offered: the editor's own, up to 1080p. */
+const SIZES = [[320, 180], [480, 270], [640, 360], [960, 540], [1280, 720], [1920, 1080], [1024, 768]];
 
-let [width, height] = (params.get('size') ?? '960x540').split('x').map(Number);
+/** The size list's choice that draws no picture, leaving the sound to play alone. */
+const OFF = 'off';
+
+/** Whether the picture is drawn; the sound plays either way. */
+let pictureOn = params.get('size') !== OFF;
+
+let [width, height] = (pictureOn ? params.get('size') ?? '960x540' : '960x540').split('x').map(Number);
 if (!(width > 0 && height > 0)) [width, height] = [960, 540];
 
 /** Below this many seconds rendered per second spent, the sound would stutter, so the picture plays alone. */
@@ -36,7 +42,7 @@ const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), about: $('about'),
-  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), cover: $('cover'), status: $('status'),
+  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
 };
 
 /** The sound's thread, what it last said of the sound, and why it stopped where it did. */
@@ -592,10 +598,27 @@ async function resize(w, h) {
 
   const changed = w !== width || h !== height;
   [width, height] = [w, h];
-  offerSize(w, h);
-  remember({ size: `${w}x${h}` });
+  setPicture(true);
 
   if (changed && opener !== null) await open(opener, name, now(), true);
+}
+
+/** Draws the picture at the page's size, or turns it off and lets the sound play alone. */
+function setPicture(on) {
+  pictureOn = on;
+  drawnAt = NaN;
+
+  if (on) offerSize(width, height);
+  else ui.size.value = OFF;
+
+  remember({ size: on ? `${width}x${height}` : OFF });
+  showPicture();
+}
+
+/** The canvas, or in its place a line saying the picture is off. */
+function showPicture() {
+  ui.off.hidden = pictureOn;
+  ui.canvas.style.visibility = pictureOn ? '' : 'hidden';
 }
 
 /** Picks <w>×<h> in the size list, adding it where the address asked for one the list does not offer. */
@@ -621,7 +644,12 @@ function seekBy(seconds) {
 
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
-  else ui.main.requestFullscreen?.().catch(() => {});
+  else ui.main.requestFullscreen?.().then(turnSideways, () => {});
+}
+
+/** Turns a phone sideways for the full-screen picture; a desktop refuses, and stays as it is. */
+function turnSideways() {
+  screen.orientation?.lock?.('landscape').catch(() => {});
 }
 
 /** The screen's wake lock, or the request for one, while it is held. */
@@ -705,7 +733,7 @@ function frame() {
   }
 
   if (!dragging) ui.seek.value = t;
-  if (noPicture !== null) return;
+  if (noPicture !== null || !pictureOn) return;
 
   const dpr = window.devicePixelRatio || 1;
   const w = Math.max(1, Math.round(ui.canvas.clientWidth * dpr));
@@ -739,7 +767,7 @@ ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.edit.onclick = edit;
 ui.canvas.ondblclick = toggleFullscreen;
-ui.size.onchange = () => resize(...ui.size.value.split('x').map(Number));
+ui.size.onchange = () => (ui.size.value === OFF ? setPicture(false) : resize(...ui.size.value.split('x').map(Number)));
 
 ui.seek.onpointerdown = () => { dragging = true; };
 ui.seek.onpointerup = ui.seek.onpointercancel = () => { dragging = false; };
@@ -797,9 +825,10 @@ window.flyback = {
   pause,
   seek: seconds => { seek(seconds); paint(); },
   size: resize,
+  picture: setPicture,
   status: () => ({
     ...status(),
-    name, preview, playing, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
+    name, preview, playing, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
     queued: soundStatus.queued ?? 0, starved, warning, error, speakerFailure,
   }),
   volume: setVolume,
@@ -844,7 +873,10 @@ function still(seconds) {
 }
 
 for (const [w, h] of SIZES) ui.size.add(new Option(`${w} × ${h}${w * 9 === h * 16 ? '' : ' (4:3)'}`, `${w}x${h}`));
-offerSize(width, height);
+ui.size.add(new Option('Picture off', OFF));
+if (pictureOn) offerSize(width, height);
+else ui.size.value = OFF;
+showPicture();
 
 const presets = window.flyback.presets().map(preset => preset.name);
 

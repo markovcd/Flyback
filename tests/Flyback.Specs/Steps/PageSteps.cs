@@ -44,6 +44,16 @@ public sealed class PageSteps(Editor editor, PatchContext context)
         foreach (var name in Names(names)) offered.ShouldContain(name);
     }
 
+    [Then("the toolbar has {string} right after {string}")]
+    public void ThenRightAfter(string name, string before)
+    {
+        var offered = editor.ToolbarButtons.ToList();
+        var at = offered.IndexOf(before);
+
+        at.ShouldBeGreaterThanOrEqualTo(0, $"the toolbar has no {before}");
+        offered.ElementAtOrDefault(at + 1).ShouldBe(name);
+    }
+
     [When("the picture is double-clicked")]
     public void WhenDoubleClicked() => editor.FullScreen();
 

@@ -9,6 +9,12 @@ Feature: The editor in a page offers only what a page can do
     Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
     And the toolbar still has "undo, redo, tidy, code, controls, swap, side, pause, rewind, view-it"
 
+  Scenario: A page's View it sits beside the presets, where a patch is picked
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    Then the toolbar has "view-it" right after "presets-glyph"
+
   Scenario: A page's empty panel names no files, settings or recording, for a mouse or a finger
     Given the clock on its own
     And the editor is in a page

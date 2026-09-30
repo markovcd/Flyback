@@ -208,6 +208,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         var patchwork = ToolbarButtons.Group();
 
         patchwork.Children.Add(presets.View);
+        if (!full) patchwork.Children.Add(Viewer);
 
         if (full)
         {
@@ -241,7 +242,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         transport.Children.Add(Seek.View);
         transport.Children.Add(Volume.View);
         if (full) transport.Children.Add(Record);
-        else transport.Children.Add(Viewer);
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
