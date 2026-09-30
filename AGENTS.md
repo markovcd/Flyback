@@ -9,6 +9,7 @@ Standing rules for working in this repo are in `docs/agents/rules/`. They apply 
 - @docs/agents/rules/prose-style.md — American spelling; succinct comments that never narrate history.
 - @docs/agents/rules/terminology.md — when the user says a word the glossary rules out (*agent* for the assistant), correct it in one line at the top of the reply.
 - @docs/agents/rules/agent-drivability.md — drivability by an agent comes first; a hack needed to get something done is a feature to propose.
+- @docs/agents/rules/propose-refactors.md — code that has gone untidy or ballooned is a refactor to propose, after the task and outside its commit.
 
 Task-specific know-how is in `.claude/skills/`, and Claude Code loads each skill's full content when its description matches the task (the name and one-line description below are visible every session regardless):
 
