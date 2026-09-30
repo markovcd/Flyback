@@ -20,7 +20,8 @@ namespace Flyback.WebEditor;
 /// rather than handed to a render thread. The canvas is the browser's, drawn above
 /// Avalonia's own, so nothing of Avalonia's can overlay it: while a dialog is up it
 /// is hidden, and the black box it sits in shows instead, and wherever a popup lies
-/// over it a hole is cut for the popup to show through.
+/// over it a hole is cut for the popup to show through. What it cannot draw it says
+/// why it cannot, over the black box, rather than handing it to the processor.
 /// </remarks>
 internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 {
@@ -49,6 +50,9 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     /// <summary>The cue this surface holds a part of until the program's shader is built.</summary>
     private Cue? part;
 
+    /// <summary>The program whose shader would not build, left alone until another comes.</summary>
+    private CompiledPatch? refused;
+
     public CanvasPreview(IDialog dialog)
     {
         this.dialog = dialog;
@@ -59,6 +63,11 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     public event Action<string>? Failed;
 
     public string? Api => "WebGL";
+
+    public bool ProcessorStandsIn => false;
+
+    /// <summary>What the canvas says in place of the picture, or null while it draws one.</summary>
+    public string? Said { get; private set; }
 
     public double Time { get; set; }
 
@@ -136,6 +145,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     {
         canvas = CreateCanvas();
         drawn = default;
+        Said = null;
 
         return new JSObjectControlHandle(canvas);
     }
@@ -221,6 +231,16 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     private void Draw()
     {
+        if (UndrawnPicture.Why(program) is { } undrawn)
+        {
+            Say(undrawn);
+            linking = false;
+            GivePart();
+            return;
+        }
+
+        if (ReferenceEquals(program, refused)) return;
+
         if (renderer is null)
         {
             if (AttachGl(canvas!) is { Length: > 0 } refused)
@@ -247,9 +267,13 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
             renderer.Rewind();
         }
 
+        // One patch's shader not building says nothing of the next one's.
         if (renderer.SetPatch(gl, program) is { } compileError)
         {
-            Fail(compileError);
+            refused = program;
+            linking = false;
+            Say(compileError);
+            GivePart();
             return;
         }
 
@@ -273,6 +297,17 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
         meter.Mark();
+
+        Say(null);
+    }
+
+    /// <summary>Puts <paramref name="text"/> where the picture was, or the picture back for null.</summary>
+    private void Say(string? text)
+    {
+        if (text == Said || canvas is null) return;
+
+        Said = text;
+        SayOverCanvas(canvas, text);
     }
 
     private void GivePart()
@@ -289,8 +324,9 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
         finished = true;
         timer.Stop();
         GivePart();
+        Say(message);
 
-        Dispatcher.UIThread.Post(() => Failed?.Invoke($"{message} Falling back to the processor."));
+        Dispatcher.UIThread.Post(() => Failed?.Invoke(message));
     }
 
     [JSImport("createCanvas", PageModule.Name)]
@@ -302,6 +338,10 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
     /// <summary>Cuts the even-odd SVG <paramref name="path"/> out of the canvas, or nothing where it is null.</summary>
     [JSImport("clipCanvas", PageModule.Name)]
     private static partial void ClipCanvas(JSObject canvas, string? path);
+
+    /// <summary>Hides the picture behind <paramref name="text"/>, or shows it again for null.</summary>
+    [JSImport("sayOverCanvas", PageModule.Name)]
+    private static partial void SayOverCanvas(JSObject canvas, string? text);
 
     [JSImport("sizeCanvas", PageModule.Name)]
     private static partial void SizeCanvas(JSObject canvas, int width, int height);

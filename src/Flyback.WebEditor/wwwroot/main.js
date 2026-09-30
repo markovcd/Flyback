@@ -17,21 +17,36 @@ let viewed = null;
 
 runtime.setModuleImports('gl', gl);
 runtime.setModuleImports('speakers', speakers);
+// The preview is a box holding the canvas and what is said in place of a picture it cannot draw.
 runtime.setModuleImports('page', {
   createCanvas: () => {
+    const box = document.createElement('div');
+    box.style.cssText = 'position: relative; width: 100%; height: 100%;';
+
     const canvas = document.createElement('canvas');
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.display = 'block';
-    return canvas;
+    canvas.style.cssText = 'display: block; width: 100%; height: 100%;';
+
+    const said = document.createElement('div');
+    said.style.cssText = 'position: absolute; inset: 0; display: none; align-items: center; justify-content: center; '
+      + 'padding: 16px; text-align: center; font: 13px/1.5 Inter, system-ui, sans-serif; color: #9a9ca3;';
+
+    box.append(canvas, said);
+    return box;
   },
-  showCanvas: (canvas, shown) => { canvas.style.visibility = shown ? 'visible' : 'hidden'; },
-  clipCanvas: (canvas, path) => { canvas.style.clipPath = path ? `path(evenodd, "${path}")` : ''; },
-  sizeCanvas: (canvas, width, height) => {
+  showCanvas: (box, shown) => { box.style.visibility = shown ? 'visible' : 'hidden'; },
+  clipCanvas: (box, path) => { box.style.clipPath = path ? `path(evenodd, "${path}")` : ''; },
+  sizeCanvas: (box, width, height) => {
+    const canvas = box.firstChild;
     if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
   },
-  attachGl: canvas => gl.attach(canvas, () => runtime.localHeapViewU8()),
+  sayOverCanvas: (box, text) => {
+    const [canvas, said] = box.children;
+    said.textContent = text ?? '';
+    said.style.display = text ? 'flex' : 'none';
+    canvas.style.visibility = text ? 'hidden' : '';
+  },
+  attachGl: box => gl.attach(box.firstChild, () => runtime.localHeapViewU8()),
   hasFocus: () => document.hasFocus(),
   stillsUrl: () => new URL('../stills/', location.href).href,
   openViewerTab: () => {

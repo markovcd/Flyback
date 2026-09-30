@@ -280,7 +280,8 @@ internal sealed class OutputSections
         IFilePickers pickers,
         IMonitors monitors,
         PreviewHost preview,
-        ReportLine report)
+        ReportLine report,
+        EditorHost host)
     {
         this.pickers = pickers;
         this.monitors = monitors;
@@ -288,7 +289,7 @@ internal sealed class OutputSections
         this.settings = settings;
         this.presets = presets;
 
-        BuildGraphics();
+        BuildGraphics(host.InPage);
         BuildRecording();
         BuildSound();
 
@@ -494,7 +495,8 @@ internal sealed class OutputSections
         };
     }
 
-    private void BuildGraphics()
+    /// <param name="inPage">A page draws on WebGL alone, so it has no renderer to pick.</param>
+    private void BuildGraphics(bool inPage)
     {
         ToolTip.SetTip(previewFrameRate,
             "How often the preview redraws itself. Lower to see it near what a recording will "
@@ -534,8 +536,11 @@ internal sealed class OutputSections
 
         Graphics.Children.Add(InspectorRows.Field("Size", Resolution));
         Graphics.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
-        ToolTip.SetTip(Renderer, RendererTip);
-        Graphics.Children.Add(InspectorRows.Field("Renderer", Renderer));
+        if (!inPage)
+        {
+            ToolTip.SetTip(Renderer, RendererTip);
+            Graphics.Children.Add(InspectorRows.Field("Renderer", Renderer));
+        }
 
         ToolTip.SetTip(transportEdge,
             "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "

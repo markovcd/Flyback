@@ -35,6 +35,9 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// <summary>Builds the GPU's surface, which must be a control.</summary>
     private readonly Func<IGpuPreview> gpu;
 
+    /// <inheritdoc cref="IGpuPreview.ProcessorStandsIn"/>
+    private readonly bool processorStandsIn;
+
     public PreviewHost() : this(() => new GpuPreviewSurface())
     {
     }
@@ -44,6 +47,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     {
         this.gpu = gpu;
         Switch(PreviewBackend.Gpu);
+        processorStandsIn = ((IGpuPreview)active).ProcessorStandsIn;
     }
 
     /// <summary>Which renderer is drawing now.</summary>
@@ -140,7 +144,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     /// </remarks>
     private void Reconsider(CompiledPatch program)
     {
-        var target = program.ShaderCanDraw &&Wanted == PreviewBackend.Gpu && GpuAvailable
+        var target = (program.ShaderCanDraw || !processorStandsIn) && Wanted == PreviewBackend.Gpu && GpuAvailable
             ? PreviewBackend.Gpu
             : PreviewBackend.Cpu;
 
@@ -207,6 +211,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     public void Use(PreviewBackend backend)
     {
         if (backend == PreviewBackend.Gpu && !GpuAvailable) return;
+        if (backend == PreviewBackend.Cpu && !processorStandsIn) return;
 
         Wanted = backend;
 
@@ -251,6 +256,13 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     private void OnGpuFailed(string message)
     {
         GpuAvailable = false;
+
+        // The surface says what went wrong where the picture was.
+        if (!processorStandsIn)
+        {
+            BackendChanged?.Invoke(message);
+            return;
+        }
 
         // Already on the CPU if the person had switched over in the meantime;
         // the offer is still withdrawn, because the reason has not gone away.

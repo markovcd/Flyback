@@ -35,11 +35,10 @@ internal sealed class WebPicture
         watching = new LiveValues(picture.LiveInputs);
         patch.Seed(watching);
 
-        Undrawn = picture.ShaderCanDraw ? null : UndrawnBecause(picture);
+        Undrawn = UndrawnPicture.Why(picture);
     }
 
     /// <summary>Why the picture is left out, or null where it is drawn.</summary>
-    /// <remarks>A page draws on the GPU alone: the processor is too slow to be the fallback it is on the desktop.</remarks>
     public string? Undrawn { get; }
 
     public SurfaceSize Resolution { get; }
@@ -106,15 +105,5 @@ internal sealed class WebPicture
         if (screen is null || !settled) return "The picture is not ready yet.";
 
         return screen.Frame(gl, Resolution, time, watching, rgba);
-    }
-
-    /// <summary>The charts that keep <paramref name="picture"/> off the shader, named for someone watching.</summary>
-    private static string UndrawnBecause(CompiledPatch picture)
-    {
-        var charts = picture.Taps.Select(tap => tap.Spectrum ? "an Analyzer" : "a Scope").Distinct().ToList();
-        var what = charts.Count == 0 ? "a chart of the sound" : string.Join(" or ", charts);
-
-        return $"Flyback in a browser cannot draw {what}, so this picture is left out and the sound plays alone. "
-            + "Open the patch in Flyback to see it.";
     }
 }

@@ -11,4 +11,10 @@ public interface IGpuPreview : IPreviewSurface
 
     /// <summary>What draws the picture (OpenGL, Direct3D, WebGL), or null until the context is up.</summary>
     string? Api { get; }
+
+    /// <summary>
+    /// Whether the processor may draw what this surface cannot. False in a page, where
+    /// it is too slow to keep up and the surface says why it draws nothing instead.
+    /// </summary>
+    bool ProcessorStandsIn { get; }
 }

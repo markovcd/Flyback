@@ -108,6 +108,8 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
     /// <summary>What the context draws through, named once it is up, on the render thread.</summary>
     public string? Api => Volatile.Read(ref api);
 
+    public bool ProcessorStandsIn => true;
+
     private string? api;
 
     /// <summary>What the processor spent handing the last frame to the graphics card, which is not the card's own time.</summary>
