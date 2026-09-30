@@ -125,7 +125,6 @@ internal sealed class PresetSite(HttpClient http, Uri root)
             fileUri,
             still,
             SiteRating.Read(item),
-            item.TryGetProperty("size", out var size) && size.ValueKind == JsonValueKind.Number && size.TryGetInt64(out var bytes) ? bytes : null,
             item.GetRawText());
     }
 

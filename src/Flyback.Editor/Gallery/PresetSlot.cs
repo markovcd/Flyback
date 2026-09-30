@@ -529,9 +529,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
     /// <summary>
     /// Opens a shared preset as a document named after it, with no folder of its own, as a
-    /// preset is: the kept copy where it is the file the site lists, and otherwise downloaded
-    /// and kept. Opens the kept copy where the site does not answer, and forgets it where the
-    /// site answers it has taken it down. Asks about unsaved work first.
+    /// preset is: the kept copy where there is one, a shared file never changing, and
+    /// otherwise downloaded and kept. Asks about unsaved work first.
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
@@ -539,7 +538,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
         if (site.Presets() is not { } at || !await unsaved.MayReplaceThePatchAsync()) return;
 
-        if (await Task.Run(() => KeptAsListed(at, shared)) is { } same)
+        if (await Task.Run(() => KeptFile(at, shared)) is { } same)
         {
             await OpenSharedAsync(shared.Name, shared.FileName, same, new Reopen(Shared: shared.Id), $"Opened “{shared.Name}” from the preset site, as kept on this machine.");
             return;
@@ -561,12 +560,6 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            if (site.Kept.Find(at.Root, shared.Id) is { } kept)
-            {
-                await OpenKeptAsync(kept);
-                return;
-            }
-
             report.Say($"Could not download “{shared.Name}”: {ex.Message}", at.Root.ToString());
             return;
         }
@@ -578,16 +571,10 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         await OpenSharedAsync(shared.Name, shared.FileName, bytes, new Reopen(Shared: shared.Id));
     }
 
-    /// <summary>
-    /// The kept copy's file where it is the size the site lists the preset at, which the
-    /// site changes only by replacing the file; null where there is none, or the site gives
-    /// no size to check it by. The kept copy takes what the site says of it now.
-    /// </summary>
-    private byte[]? KeptAsListed(PresetSite at, SitePreset shared)
+    /// <summary>The kept copy's file, or null where there is none. The kept copy takes what the site says of it now.</summary>
+    private byte[]? KeptFile(PresetSite at, SitePreset shared)
     {
-        if (shared.Size is not { } size || site.Kept.Find(at.Root, shared.Id) is not { } kept) return null;
-
-        if (site.Kept.File(kept) is not { } bytes || bytes.LongLength != size) return null;
+        if (site.Kept.Find(at.Root, shared.Id) is not { } kept || site.Kept.File(kept) is not { } bytes) return null;
 
         site.Kept.Refresh(at.Root, shared);
 

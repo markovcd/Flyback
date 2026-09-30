@@ -45,29 +45,6 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
         editor.PickShared(name);
     }
 
-    [Given("the gallery lists {string} under the preset site")]
-    public void GivenListed(string name) => editor.SharedInGallery().ShouldContain(tile => tile.Name == name);
-
-    [Given("the preset site has since replaced the file of {string}")]
-    public void GivenReplaced(string name) => site.Replaced.Add(name);
-
-    [When("{string} is taken off the preset site")]
-    public void WhenTakenDown(string name) => site.TakenDown.Add(name);
-
-    [When("{string} is picked there")]
-    public void WhenPicked(string name) => editor.PickShared(name);
-
-    [Then("the editor says {string}")]
-    public void ThenSays(string said) => editor.Reported[^1].ShouldBe(said);
-
-    [Then("while the preset site does not answer, the gallery lists nothing kept from it")]
-    public void ThenNothingKept()
-    {
-        site.Down = true;
-
-        editor.SharedInGallery().ShouldBeEmpty();
-    }
-
     [When("{string} is opened from the gallery again")]
     public void WhenOpenedAgain(string name) => GivenOpened(name);
 
@@ -99,14 +76,8 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
         public bool Down { get; set; }
 
-        /// <summary>The names whose file the site has replaced since it was first shared.</summary>
-        public HashSet<string> Replaced { get; } = [];
-
         /// <summary>How many times each preset's file has been sent.</summary>
         public Dictionary<string, int> Downloads { get; } = [];
-
-        /// <summary>The names taken off the site, which it answers it does not have.</summary>
-        public HashSet<string> TakenDown { get; } = [];
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -116,16 +87,14 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
 
             if (path == "/api/v1/presets")
             {
-                var listed = Shared.Where(s => !TakenDown.Contains(s.Name)).ToList();
-
-                return Json(new { items = listed.Select(Item), total = listed.Count, page = 1, pageSize = 24 });
+                return Json(new { items = Shared.Select(Item), total = Shared.Count, page = 1, pageSize = 24 });
             }
 
-            if (Shared.FirstOrDefault(s => path == $"/api/v1/presets/{Id(s.Name)}/file") is { Name: not null } file && !TakenDown.Contains(file.Name))
+            if (Shared.FirstOrDefault(s => path == $"/api/v1/presets/{Id(s.Name)}/file") is { Name: not null } file)
             {
                 Downloads[file.Name] = Downloads.GetValueOrDefault(file.Name) + 1;
 
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(FileOf(file.Name)) });
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(File) });
             }
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound));
@@ -141,18 +110,14 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
             return PatchIO.ToJson(patch);
         }
 
-        /// <summary>The file as shared, or a byte longer where the site has replaced it.</summary>
-        private byte[] FileOf(string name) => Replaced.Contains(name) ? [.. File, (byte)' '] : File;
-
         private static string Id(string name) => name.ToLowerInvariant();
 
-        private object Item((string Name, double Average, int Count) shared) => new
+        private static object Item((string Name, double Average, int Count) shared) => new
         {
             id = Id(shared.Name),
             name = shared.Name,
             author = "Ann",
             fileName = shared.Name + ".fbk",
-            size = FileOf(shared.Name).LongLength,
             file = $"/api/v1/presets/{Id(shared.Name)}/file",
             rating = new { average = shared.Average, count = shared.Count },
         };
