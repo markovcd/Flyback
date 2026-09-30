@@ -114,7 +114,10 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
         editor.PickShared(name);
 
         editor.Title.ShouldStartWith(name + " — ");
-        editor.Reported[^1].ShouldBe($"Opened “{name}” as it was kept, the preset site not answering.");
+
+        // Among the last few lines said, not only the last: a headless preview with no OpenGL
+        // says so whenever its patience runs out, which a slow machine reaches mid-scenario.
+        editor.Reported.ShouldContain($"Opened “{name}” as it was kept, the preset site not answering.");
     }
 
     /// <summary>The preset site's API as far as the gallery asks it, until it is down.</summary>
