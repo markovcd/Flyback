@@ -5,6 +5,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | File | What | Kind | Status |
 |---|---|---|---|
 | [decision-model.md](decision-model.md) | A decision model behind the plugin boundary | Plan | Open |
+| [direct3d-fallback.md](direct3d-fallback.md) | OpenGL failing after start drops to the processor, not Direct3D | Issue | Open |
 | [formulas-into-modules.md](formulas-into-modules.md) | What the presets still write as formulas, and which modules would replace it | Audit | Open |
 | [sync-to-async.md](sync-to-async.md) | Blocking work on the UI thread, and what to do about each | Audit | Open |
 | [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
