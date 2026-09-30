@@ -593,9 +593,11 @@ from the sum of the rest, for the Coverage workflow and locally alike, as
 restore is locked to the committed lock files, so a version that moved fails
 there rather than building.
 
-`pages.yml` publishes `site/` unbuilt on every push to `main` that touches it.
-There is no build step to catch a stale sentence, which is why a site edit goes
-in the same commit as the change it describes.
+`pages.yml` publishes what `pages.sh` builds on every push to `main` that
+touches the site: `site/` as it stands, with the web viewer, the web editor and
+the stills built in. Nothing in that build reads the prose, so nothing catches a
+stale sentence, which is why a site edit goes in the same commit as the change
+it describes.
 
 A release passes `-p:Version=`; every other build reports a suffixed version,
 which is what keeps it from updating itself or being counted. What the Release

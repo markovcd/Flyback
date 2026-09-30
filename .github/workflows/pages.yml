@@ -1,11 +1,10 @@
 # Publishes the website in site/ to GitHub Pages, as it stands on main, with the
-# web viewer (ADR-0160) built into it at viewer/.
+# web viewer (ADR-0160) and the web editor built into it.
 #
-# The site itself is plain HTML, CSS and a little script, uploaded as it is. The
-# viewer is compiled ahead of time to WebAssembly here, in the SDK image, as the
-# preset site's image compiles it, so no build of it is ever committed. Pages
-# must be set to deploy from GitHub Actions (Settings -> Pages -> Source) before
-# the first run can publish.
+# pages.sh does the building, so a run here and a run on a desk give the same folder.
+# It runs in the SDK image, as the preset site's image builds the viewer, so no build
+# of it is ever committed. Pages must be set to deploy from GitHub Actions
+# (Settings -> Pages -> Source) before the first run can publish.
 #
 # The actions are pinned to commits rather than tags, as in every workflow here.
 
@@ -22,6 +21,7 @@ on:
       - "Directory.Packages.props"
       - "global.json"
       - "stills.sh"
+      - "pages.sh"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -46,50 +46,21 @@ jobs:
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
 
-      # Only the plugins the desktop ships, as Release links; the preset site's stay on
-      # the preset site. The workload and the Python its Emscripten runs on, as in the site's
-      # Dockerfile. The editor imports the viewer's gl.js from ../viewer/, and the
-      # editor and the presets page show the presets by the stills at stills/ (ADR-0163).
-      - name: Build the web viewer and editor, and draw the stills
-        run: |
-          docker run --rm -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
-            apt-get update
-            apt-get install --yes --no-install-recommends python3
-            dotnet workload install wasm-tools
-            dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/web
-            dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation=true -p:CompressionEnabled=false -o out/editor
-            ./stills.sh out/stills
-          '
-          cp -r out/web/wwwroot/viewer site/viewer
-          cp -r out/editor/wwwroot site/editor
-          cp -r out/stills site/stills
-
-      # What only the preset site can do is left out: a link marked data-preset-site
-      # goes, and the toolbar's Plugins leads to the plugin guide rather than to the
-      # shared plugins, which are listed on the preset site alone.
-      - name: Leave out what only the preset site has
-        run: |
-          find site -name '*.html' -exec sed -i -E \
-            -e 's#<a [^>]*data-preset-site[^>]*>[^<]*</a>##g' \
-            -e 's#href="(\.\./)?shared-plugins\.html">Plugins</a>#href="\1plugins.html">Plugins</a>#g' {} +
-          sed -i 's#href="plugins.html">Plugins</a>#href="plugins.html" aria-current="page">Plugins</a>#' site/plugins.html
-
-      # The site links the preset site's pages as neighbors, which they are on
-      # the preset site itself. Here they are elsewhere, at vars.PRESETS_URL.
-      - name: Point the preset site's pages at its address
-        if: vars.PRESETS_URL != ''
+      # The workload and the Python its Emscripten runs on, as in the site's Dockerfile.
+      - name: Build the site as Pages serves it
         env:
           PRESETS_URL: ${{ vars.PRESETS_URL }}
         run: |
-          base="${PRESETS_URL%/}"
-          for page in src/Flyback.Server/wwwroot/*.html; do
-            name="$(basename "$page")"
-            find site -name '*.html' -exec sed -i -E "s#href=\"(\.\./)?$name#href=\"$base/$name#g" {} +
-          done
+          docker run --rm -e PRESETS_URL -v "$PWD:/repo" -w /repo mcr.microsoft.com/dotnet/sdk:10.0 bash -euc '
+            apt-get update
+            apt-get install --yes --no-install-recommends python3
+            dotnet workload install wasm-tools
+            ./pages.sh artifacts/pages
+          '
 
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: site
+          path: artifacts/pages
 
       - id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
