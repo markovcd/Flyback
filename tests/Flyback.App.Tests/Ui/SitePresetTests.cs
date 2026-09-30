@@ -280,11 +280,10 @@ public sealed class SiteAnswerTests
         PresetSite.Read(document.RootElement, FakePresetSite.Root).Items.ShouldBeEmpty();
     }
 
-    /// <summary>Said as the site's presets page says it.</summary>
+    /// <summary>Said as the site says it, and something rather than nothing from a site that says no more than that it lacks.</summary>
     [Theory]
-    [InlineData("""{"plugins":[{"id":"lantern","name":"Lantern"}],"modules":2}""", "Needs the Lantern plugin")]
-    [InlineData("""{"plugins":[{"name":"A"},{"name":"B"},{"name":"C"}],"modules":3}""", "Needs the A, B and C plugins")]
-    [InlineData("""{"plugins":[],"modules":1}""", "Needs modules a browser lacks")]
+    [InlineData("""{"plugins":[{"id":"lantern","name":"Lantern"}],"modules":2,"said":"Needs the Lantern plugin"}""", "Needs the Lantern plugin")]
+    [InlineData("""{"plugins":[{"name":"A"}],"modules":1}""", "Needs modules a browser lacks")]
     [InlineData("""null""", null)]
     public void What_a_page_lacks_to_open_a_preset_is_read_from_the_listing(string lacks, string? said)
     {

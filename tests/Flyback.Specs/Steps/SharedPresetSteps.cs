@@ -182,7 +182,7 @@ public sealed class SharedPresetSteps(Editor editor) : IDisposable
             fileName = shared.Name + ".fbk",
             file = $"/api/v1/presets/{Id(shared.Name)}/file",
             rating = new { average = shared.Average, count = shared.Count },
-            lacks = needs is null ? null : new { plugins = new[] { new { id = needs.ToLowerInvariant(), name = needs } }, modules = 1 },
+            lacks = needs is null ? null : new { plugins = new[] { new { id = needs.ToLowerInvariant(), name = needs } }, modules = 1, said = $"Needs the {needs} plugin" },
         };
 
         private static Task<HttpResponseMessage> Json(object body) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)

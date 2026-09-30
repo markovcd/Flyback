@@ -116,10 +116,13 @@ public sealed partial class WebsiteSteps : IDisposable
     }
 
     [Then("the preset site says Flyback in a browser lacks the {string} plugin for it")]
-    public void ThenTheBrowserLacksIt(string plugin) =>
-        shared.GetProperty("lacks").GetProperty("plugins").EnumerateArray()
-            .Select(p => p.GetProperty("name").GetString())
-            .ShouldBe([plugin]);
+    public void ThenTheBrowserLacksIt(string plugin)
+    {
+        var lacks = shared.GetProperty("lacks");
+
+        lacks.GetProperty("plugins").EnumerateArray().Select(p => p.GetProperty("name").GetString()).ShouldBe([plugin]);
+        lacks.GetProperty("said").GetString().ShouldBe($"Needs the {plugin} plugin");
+    }
 
     /// <summary>The card's Edit and the preset page's Play and Edit give way to a line saying why.</summary>
     [Then("the presets page offers it to download rather than to play or edit in the browser")]

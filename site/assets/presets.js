@@ -45,11 +45,7 @@
     var lacks = preset.lacks;
     if (!lacks) return null;
 
-    var names = lacks.plugins.map(function (plugin) { return plugin.name; });
-    if (!names.length) return "Needs modules a browser lacks";
-
-    var listed = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-    return "Needs the " + listed + (names.length === 1 ? " plugin" : " plugins");
+    return lacks.said || "Needs modules a browser lacks";
   }
 
   /** The still, with the loop playing over it while pointed at. */

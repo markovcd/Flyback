@@ -181,6 +181,31 @@ public sealed class ServerTests : IDisposable
 
         lacks.GetProperty("plugins").EnumerateArray().Select(p => p.GetProperty("name").GetString()).ShouldBe(["Lantern"]);
         lacks.GetProperty("modules").GetInt32().ShouldBe(1);
+        lacks.GetProperty("said").GetString().ShouldBe("Needs the Lantern plugin");
+    }
+
+    [Fact]
+    public async Task A_preset_needing_several_plugins_the_web_pages_lack_names_them_all()
+    {
+        var file = Encoding.UTF8.GetBytes("""
+            {
+              "Requires": [
+                { "Id": "example.lantern", "Name": "Lantern" },
+                { "Id": "example.kite", "Name": "Kite" },
+                { "Id": "example.moth", "Name": "Moth" }
+              ],
+              "Nodes": [
+                { "Id": "8f9d1d3e-0000-4000-8000-000000000021", "TypeId": "example.lantern.glow" },
+                { "Id": "8f9d1d3e-0000-4000-8000-000000000022", "TypeId": "example.kite.string" },
+                { "Id": "8f9d1d3e-0000-4000-8000-000000000023", "TypeId": "example.moth.wing" }
+              ],
+              "Connections": []
+            }
+            """);
+        var id = (await Submit(file, "Night.fbk")).GetProperty("id").GetString()!;
+
+        (await Get("/api/v1/presets/" + id)).GetProperty("lacks").GetProperty("said").GetString()
+            .ShouldBe("Needs the Lantern, Kite and Moth plugins");
     }
 
     [Fact]
