@@ -17,6 +17,9 @@ internal sealed class SiteAccess(EditorSetup setup, IHttpClientFactory clients)
 
     public HttpClient Http => clients.CreateClient(Client);
 
+    /// <summary>The shared presets opened before, for when the site does not answer.</summary>
+    public KeptSharedPresets Kept { get; } = new(setup.SharedPresetFolder);
+
     /// <summary>What the gallery asks for shared presets, or null where there is no site.</summary>
     public PresetSite? Presets() => Root is null ? null : new PresetSite(Http, Root);
 

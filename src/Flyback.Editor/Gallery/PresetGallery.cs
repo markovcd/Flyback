@@ -59,12 +59,17 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
     /// Where shared presets are listed from, headed last, or null for a gallery without
     /// them. A tile of theirs answers with its <see cref="SitePreset"/>.
     /// </param>
+    /// <param name="kept">
+    /// The shared presets opened before, listed in their place while the site does not
+    /// answer. A tile of theirs answers with its <see cref="KeptPreset"/>.
+    /// </param>
     public GalleryParts Build(
         IReadOnlyList<PatchPreset> ordered,
         PatchPreset? showing,
         Action<PointedTile?>? pointedAt = null,
         YourPresets? yours = null,
-        PresetSite? site = null)
+        PresetSite? site = null,
+        KeptSharedPresets? kept = null)
     {
         var search = new Search { Elsewhere = site is not null };
 
@@ -101,7 +106,7 @@ internal sealed partial class PresetGallery(PresetThumbnails thumbnails, IDialog
 
             search.Apply();
 
-            if (site is not null) gallery.Children.Add(new SiteRun(site, search.Box, dialog, open).View);
+            if (site is not null) gallery.Children.Add(new SiteRun(site, kept ?? KeptSharedPresets.None, search.Box, dialog, open).View);
 
             // The hint beside the runs rather than among them, so the gallery stays
             // what it has always been: a heading, then its tiles, and again.

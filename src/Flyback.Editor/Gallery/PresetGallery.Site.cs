@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Flyback.App.Controls;
 using Flyback.App.Site;
+using Flyback.Core.Graph;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Gallery;
@@ -22,12 +23,15 @@ internal sealed partial class PresetGallery
     /// <remarks>
     /// Its tiles answer the dialog with the <see cref="SitePreset"/> itself, so nothing
     /// is downloaded until somebody has picked one and said the patch on the canvas may go.
+    /// While the site does not answer, the presets opened from it before are listed
+    /// instead, and answer with their <see cref="KeptPreset"/>.
     /// </remarks>
     private sealed class SiteRun : IDisposable
     {
         private static readonly TimeSpan Typing = TimeSpan.FromMilliseconds(250);
 
         private readonly PresetSite site;
+        private readonly KeptSharedPresets kept;
         private readonly TextBox box;
         private readonly IDialog dialog;
         private readonly WrapPanel tiles = new() { Name = "site-presets", ItemSpacing = 8, LineSpacing = 8 };
@@ -37,9 +41,10 @@ internal sealed partial class PresetGallery
         private int page;
         private CancellationTokenSource? asking;
 
-        public SiteRun(PresetSite site, TextBox box, IDialog dialog, Action<SitePreset> open)
+        public SiteRun(PresetSite site, KeptSharedPresets kept, TextBox box, IDialog dialog, Action<IPreset> open)
         {
             this.site = site;
+            this.kept = kept;
             this.box = box;
             this.dialog = dialog;
 
@@ -90,7 +95,7 @@ internal sealed partial class PresetGallery
             asking = null;
         }
 
-        private async Task AskAsync(bool fresh, Action<SitePreset> open, TimeSpan after = default)
+        private async Task AskAsync(bool fresh, Action<IPreset> open, TimeSpan after = default)
         {
             Stop();
 
@@ -116,11 +121,12 @@ internal sealed partial class PresetGallery
             }
             catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException or System.Text.Json.JsonException)
             {
-                if (fresh) tiles.Children.Clear();
-
                 status.Text = $"The preset site at {site.Root} did not answer.";
                 status.IsVisible = true;
                 more.IsEnabled = true;
+
+                if (fresh) ShowKept(open, cancel);
+
                 return;
             }
 
@@ -130,7 +136,11 @@ internal sealed partial class PresetGallery
 
             if (fresh) tiles.Children.Clear();
 
-            foreach (var preset in found.Items) tiles.Children.Add(SiteTile(preset, open, cancel));
+            foreach (var preset in found.Items)
+            {
+                kept.Refresh(site.Root, preset);
+                tiles.Children.Add(SiteTile(preset, () => open(preset), token => site.StillAsync(preset, token), reportable: true, cancel));
+            }
 
             status.Text = box.Text is { Length: > 0 } typed ? $"Nothing on the preset site matches “{typed.Trim()}”." : "Nothing is shared on the preset site yet.";
             status.IsVisible = tiles.Children.Count == 0;
@@ -138,7 +148,24 @@ internal sealed partial class PresetGallery
             more.IsEnabled = true;
         }
 
-        private Button SiteTile(SitePreset preset, Action<SitePreset> open, CancellationToken cancel)
+        /// <summary>The presets opened from the site before that match the filter box, as the site would match them.</summary>
+        private void ShowKept(Action<IPreset> open, CancellationToken cancel)
+        {
+            tiles.Children.Clear();
+            more.IsVisible = false;
+
+            var words = (box.Text ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var matching = kept.All(site.Root).Where(k => words.All(word =>
+                $"{k.Preset.Name} {k.Preset.Author} {k.Preset.Description} {string.Join(' ', k.Preset.Tags)}".Contains(word, StringComparison.OrdinalIgnoreCase)));
+
+            foreach (var one in matching)
+                tiles.Children.Add(SiteTile(one.Preset, () => open(one), _ => Task.FromResult(kept.Still(one)), reportable: false, cancel));
+
+            if (tiles.Children.Count > 0) status.Text += " These were kept when they were last opened from it.";
+        }
+
+        /// <param name="reportable">Offers a report to the site's admin, which a site that does not answer cannot take.</param>
+        private Button SiteTile(SitePreset preset, Action pick, Func<CancellationToken, Task<byte[]?>> still, bool reportable, CancellationToken cancel)
         {
             var picture = new Border
             {
@@ -197,9 +224,17 @@ internal sealed partial class PresetGallery
                 Content = words,
             };
 
-            ToolTip.SetTip(tile, $"Download “{preset.Name}” from the preset site and open it. Right-click to report it.");
+            tile.Click += (_, _) => pick();
 
-            tile.Click += (_, _) => open(preset);
+            _ = ShowStillAsync(still, picture, cancel);
+
+            if (!reportable)
+            {
+                ToolTip.SetTip(tile, $"Open “{preset.Name}” as it was kept when it was last opened from the preset site.");
+                return tile;
+            }
+
+            ToolTip.SetTip(tile, $"Download “{preset.Name}” from the preset site and open it. Right-click to report it.");
 
             var report = new MenuItem { Name = "report-preset", Header = "Report…" };
 
@@ -213,16 +248,14 @@ internal sealed partial class PresetGallery
 
             tile.ContextFlyout = new MenuFlyout { Items = { report } };
 
-            _ = ShowStillAsync(preset, picture, cancel);
-
             return tile;
         }
 
-        private async Task ShowStillAsync(SitePreset preset, Border into, CancellationToken cancel)
+        private static async Task ShowStillAsync(Func<CancellationToken, Task<byte[]?>> still, Border into, CancellationToken cancel)
         {
             try
             {
-                if (await site.StillAsync(preset, cancel) is not { } bytes) return;
+                if (await still(cancel) is not { } bytes) return;
 
                 using var stream = new MemoryStream(bytes, writable: false);
 

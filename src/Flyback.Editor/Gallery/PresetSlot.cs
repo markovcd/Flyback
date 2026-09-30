@@ -255,9 +255,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             Remove);
 
     /// <summary>
-    /// Opens the shared preset a restart was carrying, found on the site again by its id.
-    /// Silent where the site no longer has it or cannot be reached: nothing was lost that
-    /// the gallery cannot be asked for again.
+    /// Opens the shared preset a restart was carrying, found on the site again by its id,
+    /// or as it was kept where the site does not answer.
     /// </summary>
     public async Task OpenSharedAgainAsync(string id)
     {
@@ -276,13 +275,19 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             shared = null;
         }
 
-        if (shared is null)
+        if (shared is not null)
         {
-            report.Say("The preset this was restarted for could not be fetched from the preset site again.");
+            await OpenSharedAsync(shared);
             return;
         }
 
-        await OpenSharedAsync(shared);
+        if (site.Kept.Find(at.Root, id) is { } kept)
+        {
+            await OpenKeptAsync(kept);
+            return;
+        }
+
+        report.Say("The preset this was restarted for could not be fetched from the preset site again.");
     }
 
     private async Task ShowGalleryAsync()
@@ -297,7 +302,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             current,
             pointedAt: audition.PointedAt,
             yours: Yours(),
-            site: site.Presets());
+            site: site.Presets(),
+            kept: site.Kept);
         var chosen = await dialog.Show("Start from a preset", parts.Tiles, parts.Filter, fill: true);
 
         audition.PointedAt(null);
@@ -313,6 +319,10 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
             case SitePreset shared:
                 await OpenSharedAsync(shared);
+                break;
+
+            case KeptPreset kept:
+                if (await unsaved.MayReplaceThePatchAsync()) await OpenKeptAsync(kept);
                 break;
         }
     }
@@ -510,8 +520,9 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
     }
 
     /// <summary>
-    /// Downloads a shared preset and opens it as a document named after it, with no
-    /// folder of its own, as a preset is. Asks about unsaved work first.
+    /// Downloads a shared preset, keeps it, and opens it as a document named after it,
+    /// with no folder of its own, as a preset is. Opens the kept copy where the download
+    /// fails. Asks about unsaved work first.
     /// </summary>
     private async Task OpenSharedAsync(SitePreset shared)
     {
@@ -522,6 +533,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         report.Say($"Downloading “{shared.Name}” from the preset site…");
 
         byte[] bytes;
+        var still = StillAsync(at, shared);
 
         try
         {
@@ -529,11 +541,45 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
+            if (site.Kept.Find(at.Root, shared.Id) is { } kept)
+            {
+                await OpenKeptAsync(kept);
+                return;
+            }
+
             report.Say($"Could not download “{shared.Name}”: {ex.Message}", at.Root.ToString());
             return;
         }
 
+        var stillBytes = await still;
+
+        await Task.Run(() => site.Kept.Keep(at.Root, shared, bytes, stillBytes));
+
         await OpenSharedAsync(shared.Name, shared.FileName, bytes, new Reopen(Shared: shared.Id));
+    }
+
+    private static async Task<byte[]?> StillAsync(PresetSite at, SitePreset shared)
+    {
+        try
+        {
+            return await at.StillAsync(shared, CancellationToken.None);
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Opens a shared preset as it was kept when it was last opened from the site.</summary>
+    private async Task OpenKeptAsync(KeptPreset kept)
+    {
+        if (await Task.Run(() => site.Kept.File(kept)) is not { } bytes)
+        {
+            report.Say($"Could not open “{kept.Name}”: what was kept of it cannot be read.");
+            return;
+        }
+
+        await OpenSharedAsync(kept.Name, kept.Preset.FileName, bytes, new Reopen(Shared: kept.Preset.Id), kept: true);
     }
 
     /// <summary>
@@ -547,7 +593,8 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         await OpenSharedAsync(name, fileName, bytes, new Reopen());
     }
 
-    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen)
+    /// <param name="kept">Opened as it was kept, the site not answering.</param>
+    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, bool kept = false)
     {
         if (RefuseWhileRecording()) return;
 
@@ -596,7 +643,9 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             // Read into text where it was picked from the text view, as a preset is.
             if (document.ShowingCode) document.ReadIntoText();
 
-            report.Say($"Opened “{name}” from the preset site.");
+            report.Say(kept
+                ? $"Opened “{name}” as it was kept, the preset site not answering."
+                : $"Opened “{name}” from the preset site.");
         }
         catch (Exception ex)
         {

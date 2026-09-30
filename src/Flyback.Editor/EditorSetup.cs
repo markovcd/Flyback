@@ -2,6 +2,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Files;
 using Flyback.App.Gallery;
 using Flyback.App.Midi;
+using Flyback.App.Site;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.App.Windows;
@@ -89,6 +90,9 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
     /// <summary>The site the gallery lists shared presets from and the plugins window shared plugins.</summary>
     public Uri? PresetSite { get; init; }
 
+    /// <summary>Where each shared preset opened is kept, to open again while the site does not answer. Null keeps none.</summary>
+    public string? SharedPresetFolder { get; init; }
+
     /// <summary>A file to open once there is a window for it, or null for the usual start on the default preset.</summary>
     public string? OpenPath { get; init; }
 
@@ -137,5 +141,6 @@ public sealed record EditorSetup : IIlCompilerSetup, IPresetFolder
         Usage = usage,
         Relaunch = Restart.Launch,
         PresetSite = Site.PresetSite.Built,
+        SharedPresetFolder = KeptSharedPresets.DefaultFolder,
     };
 }

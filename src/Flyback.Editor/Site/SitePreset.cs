@@ -6,6 +6,7 @@ namespace Flyback.App.Site;
 /// <param name="FileName">What it was shared as, whose extension says whether it is a bundle.</param>
 /// <param name="Still">A frame of it, once the site has rendered one.</param>
 /// <param name="Rating">Its stars on the site, which only the site gives.</param>
+/// <param name="Listed">Everything the site said of it, as the JSON it said it in.</param>
 internal sealed record SitePreset(
     string Id,
     string Name,
@@ -15,4 +16,5 @@ internal sealed record SitePreset(
     string FileName,
     Uri File,
     Uri? Still,
-    SiteRating Rating) : IPreset;
+    SiteRating Rating,
+    string Listed) : IPreset;

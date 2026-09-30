@@ -54,6 +54,7 @@ has patched a hardware synthesizer should already know most of them.
 | **field** | One thing a plugin's module carries, edited in the inspector. | `ExtraField` | property, attribute |
 | **preset** | A patch that ships with Flyback or with a plugin, picked from the gallery. | `PatchPreset`, `Presets` | example, template, demo |
 | **shared preset** | A preset from the preset site rather than from Flyback. | `PresetSite` | community preset, online preset |
+| **kept** shared preset | A shared preset opened before, kept on this machine with its file, its still and everything the site said of it, to list and open while the site does not answer. | `KeptSharedPresets`, `KeptPreset` | cached, offline copy |
 
 ## Picture and sound
 

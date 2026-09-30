@@ -114,7 +114,8 @@ internal sealed class PresetSite(HttpClient http, Uri root)
             Text(item, "fileName") ?? string.Empty,
             fileUri,
             still,
-            SiteRating.Read(item));
+            SiteRating.Read(item),
+            item.GetRawText());
     }
 
     /// <summary>An address the site lists, resolved against it; only http and https, which is all it serves.</summary>

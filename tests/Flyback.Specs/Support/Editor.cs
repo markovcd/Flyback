@@ -14,6 +14,7 @@ using Flyback.App.Canvas;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
+using Flyback.App.Site;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,6 +65,9 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// scenario's patch. Said before anything opens it.
     /// </summary>
     public EditorSetup Setup { get; set; } = new();
+
+    /// <summary>Swaps any of the editor's services for the scenario's own. Said before anything opens it.</summary>
+    public Action<IServiceCollection>? Services { get; set; }
 
     /// <summary>Whether the window opens on the scenario's patch, rather than on whatever it starts with itself.</summary>
     public bool OnThePatch { get; set; } = true;
@@ -538,6 +542,66 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         return answer;
     }
 
+    /// <summary>
+    /// Opens the gallery and waits for the preset site to answer or not, then says each
+    /// tile it lists under the site's heading: its name and its stars as the tile reads them.
+    /// </summary>
+    public IReadOnlyList<(string Name, string Stars)> SharedInGallery() =>
+        Run(async () =>
+        {
+            var open = Window();
+
+            if (!open.GetVisualDescendants().OfType<ModalOverlay>().Any())
+                open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "presets-glyph").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => open.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "site-status") is { Text: not "Looking…" });
+
+            return (IReadOnlyList<(string, string)>)[.. SharedTiles(open).Select(tile => (
+                ((SitePreset)tile.Tag!).Name,
+                tile.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "siteRating").Inlines!.Text ?? string.Empty))];
+        });
+
+    /// <summary>Picks a tile the gallery lists under the site's heading, and waits for it to open.</summary>
+    public void PickShared(string name) =>
+        Run(async () =>
+        {
+            var open = Window();
+            var report = open.GetVisualDescendants().OfType<ReportLine>().Single();
+
+            // Counted rather than looked for after a position: a line said again moves to the end.
+            int Opened() => report.History.Count(line => line.StartsWith($"Opened “{name}”", StringComparison.Ordinal));
+
+            var before = Opened();
+
+            SharedTiles(open).Single(tile => ((SitePreset)tile.Tag!).Name == name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(
+                () => Opened() > before,
+                () => $"“{name}” to open. The report line said: {string.Join(" | ", report.History)}. "
+                    + $"Up over the window: {open.GetVisualDescendants().OfType<ModalOverlay>().Count()} dialog(s).");
+
+            context.Replace(Canvas().History.Patch);
+            return true;
+        });
+
+    private static IEnumerable<Button> SharedTiles(MainWindow open) =>
+        open.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "site-tile");
+
+    /// <summary>Gives the UI thread turns until <paramref name="done"/>, for at most thirty seconds.</summary>
+    /// <param name="waitingFor">What is said on giving up, read then.</param>
+    private async Task Until(Func<bool> done, Func<string>? waitingFor = null)
+    {
+        var until = DateTime.UtcNow + TimeSpan.FromSeconds(30);
+
+        while (!done())
+        {
+            if (DateTime.UtcNow > until) throw new TimeoutException($"Waited thirty seconds for {waitingFor?.Invoke() ?? "the editor"}");
+
+            Settle();
+            await Task.Delay(5);
+        }
+    }
+
     /// <summary>Opens a shared preset's file as a page sent one by <c>?file=</c> does.</summary>
     public void OpenShared(string name, string fileName, byte[] bytes) =>
         Run(async () =>
@@ -613,7 +677,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     {
         if (window is not null) return window;
 
-        provider = EditorServices.Provider(Setup);
+        provider = EditorServices.Provider(Setup, Services);
         window = provider.Window();
         window.Start();
 
