@@ -41,17 +41,17 @@
     None that talks to a device, a keychain or a model.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" LinkedPlugin="true" />
+    <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" LinkedPlugin="true" />
+    <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" LinkedPlugin="true" />
+    <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" LinkedPlugin="true" />
   </ItemGroup>
 
   <!-- The preset site's plugins only in All plugins: every visit downloads what is linked in. -->
   <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
-    <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" LinkedPlugin="true" />
+    <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" LinkedPlugin="true" />
+    <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" LinkedPlugin="true" />
   </ItemGroup>
 
 </Project>

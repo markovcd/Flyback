@@ -21,16 +21,15 @@ public sealed class PresetLibrary
 
     /// <summary>
     /// Every preset there is to start from, in the order the editor and the viewer
-    /// list them: the blank canvas, then ideas, then interplay, then the big ones. A
-    /// stable sort, so within a kind the engine's own still come before any plugin's —
-    /// the list is the same wherever the program is installed.
+    /// list them: <see cref="PresetOrder"/>, so the blank canvas, then ideas, then
+    /// interplay, then the big ones, each by name.
     /// </summary>
     /// <remarks>
     /// The presets somebody saved come after all of those, so a save never moves
     /// the row any other preset is on.
     /// </remarks>
     public static List<PatchPreset> Ordered(IEnumerable<PatchPreset> shipped, PresetLibrary? saved) =>
-        [.. shipped.OrderBy(p => p.Kind), .. saved?.All.Select(entry => entry.Preset) ?? []];
+        [.. PresetOrder.Of(shipped), .. saved?.All.Select(entry => entry.Preset) ?? []];
 
     /// <summary>
     /// The row of <paramref name="presets"/> holding the preset called

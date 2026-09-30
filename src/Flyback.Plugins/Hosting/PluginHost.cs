@@ -73,6 +73,43 @@ internal static class PluginHost
         return (problems, plugins.Count);
     }
 
+    /// <summary>
+    /// Loads the plugins <paramref name="host"/> was built with, as a page links them in:
+    /// each named by an <c>AssemblyMetadata("Plugin", name)</c> the build writes for a
+    /// <c>ProjectReference</c> marked <c>LinkedPlugin="true"</c>.
+    /// </summary>
+    internal static PluginCatalog LoadLinked(Assembly host)
+    {
+        var plugins = new List<LoadedPlugin>();
+        var problems = new List<PluginProblem>();
+        var registry = new Registry(problems);
+
+        var names = host.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .Where(a => a.Key == "Plugin" && a.Value is not null)
+            .Select(a => a.Value!)
+            .Order(StringComparer.Ordinal);
+
+        foreach (var name in names)
+        {
+            Assembly assembly;
+
+            try
+            {
+                assembly = Assembly.Load(name);
+            }
+            catch (Exception ex)
+            {
+                problems.Add(new PluginProblem(name, ex.Message));
+                continue;
+            }
+
+            foreach (var type in PluginTypes(assembly, problems))
+                Instantiate(type, assembly.Location, plugins, registry, problems);
+        }
+
+        return Catalog(plugins, registry, problems);
+    }
+
     /// <summary>Loads plugin types already in this process, for the tests.</summary>
     internal static PluginCatalog LoadTypes(params Type[] types)
     {

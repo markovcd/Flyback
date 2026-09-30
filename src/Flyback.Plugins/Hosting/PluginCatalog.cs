@@ -21,7 +21,7 @@ internal sealed class PluginCatalog
     /// <param name="plugins">Everything that loaded, whether or not it registered anything.</param>
     /// <param name="audioOutputs">The sound backends offered, in no particular order — priority is asked for later.</param>
     /// <param name="modules">The engine's catalog with every plugin's modules added to it.</param>
-    /// <param name="presets">Patches to start from: the engine's own first, then each plugin's.</param>
+    /// <param name="presets">Patches to start from, the engine's and each plugin's, in any order.</param>
     /// <param name="secretStores">The places a key may be kept, or none where nothing can keep one.</param>
     /// <param name="midiInputs">The ways of hearing what is plugged in, or none where there is no such way.</param>
     /// <param name="providers">Who registered each of the above, for <see cref="Provider"/>.</param>
@@ -45,7 +45,7 @@ internal sealed class PluginCatalog
         Plugins = plugins;
         AudioOutputs = audioOutputs;
         Modules = modules;
-        Presets = presets;
+        Presets = [.. PresetOrder.Of(presets)];
         Problems = problems;
         Assistants = assistants ?? [];
         SecretStores = secretStores ?? [];
@@ -75,7 +75,7 @@ internal sealed class PluginCatalog
     public ModuleCatalog Modules { get; }
 
     /// <summary>
-    /// Patches to start from: the engine's own, then any a plugin offered. A
+    /// Patches to start from, the engine's and any a plugin offered, in <see cref="PresetOrder"/>. A
     /// preset builds when it is picked, so one that uses a plugin's modules can
     /// still throw if that plugin registered its presets but not its modules —
     /// the caller is expected to survive that.

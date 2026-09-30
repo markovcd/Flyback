@@ -42,8 +42,16 @@ public class PresetListTests : UiTest
     private static List<Button> Tiles(MainWindow window) =>
         All<Button>(window).Where(b => b.Name == "tile").ToList();
 
-    private static Button Tile(MainWindow window, string name) =>
-        Tiles(window).Single(t => ((PatchPreset)t.Tag!).Name == name);
+    /// <summary>The tile of the preset called <paramref name="name"/>, scrolled into view, since a tile draws once seen.</summary>
+    private static Button Tile(MainWindow window, string name)
+    {
+        var tile = Tiles(window).Single(t => ((PatchPreset)t.Tag!).Name == name);
+
+        tile.BringIntoView();
+        Settle(window);
+
+        return tile;
+    }
 
     /// <summary>
     /// A tile's picture is drawn off the UI thread, so it arrives a moment after the

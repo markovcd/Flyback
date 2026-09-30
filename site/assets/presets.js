@@ -243,10 +243,10 @@
         && (!state.tag || (entry.tags || []).indexOf(state.tag) >= 0);
     }
 
-    /** The headings in the order the page lists them: the showcases first, the single ideas last. */
-    var headings = ["SHOWCASE", "SOUND AND PICTURE", "ONE IDEA"];
-
-    /** The shipped presets that match, a run under each of the editor's headings. */
+    /**
+     * The shipped presets that match, a run under each of the editor's headings, the
+     * editor's runs reversed so the showcases lead; each run keeps the index's name order.
+     */
     function showShipped() {
       var found = [];
 
@@ -256,10 +256,7 @@
         run.entries.push(entry);
       });
 
-      found.sort(function (a, b) {
-        var rank = function (run) { var at = headings.indexOf(run.heading); return at < 0 ? headings.length : at; };
-        return rank(a) - rank(b);
-      });
+      found.reverse();
 
       runs.replaceChildren.apply(runs, found.map(function (run) {
         var section = make("section", { class: "run" });

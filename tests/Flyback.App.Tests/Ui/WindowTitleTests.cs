@@ -50,7 +50,7 @@ public sealed class WindowTitleTests : UiTest
         // first of them that is a patch, the blank canvas heading the list.
         var opening = (PresetList(window).SelectedItem as PatchPreset)?.Name;
 
-        opening.ShouldBe(Presets.All.First(p => p.Kind is not PresetKind.Blank).Name);
+        opening.ShouldBe(PresetOrder.Of(Presets.All).First(p => p.Kind is not PresetKind.Blank).Name);
         window.Title.ShouldBe($"{opening} — {Program}");
     }
 

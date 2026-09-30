@@ -255,7 +255,7 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>The patches among the engine's presets, by name, in the order the gallery shows them.</summary>
     private static List<string> Patches =>
-        [.. Presets.All.Where(p => p.Kind is not PresetKind.Blank).Select(p => p.Name)];
+        [.. PresetOrder.Of(Presets.All).Where(p => p.Kind is not PresetKind.Blank).Select(p => p.Name)];
 
     /// <summary>Picks the startup patch the way a person would: the row's button, then a tile of the gallery it opens.</summary>
     private static void PickStartupPreset(MainWindow window, ModalOverlay dialog, string name)

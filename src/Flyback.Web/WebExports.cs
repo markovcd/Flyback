@@ -53,19 +53,7 @@ public static partial class WebExports
 
     private static PluginCatalog Load()
     {
-        // In the desktop's order, by folder name, so the presets list in the editor's order.
-        var catalog = PluginHost.LoadTypes(
-#if SITE_PLUGINS
-            typeof(Flyback.Plugins.Easy.EasyPlugin),
-#endif
-            typeof(Flyback.Plugins.Effects.EffectsPlugin),
-#if SITE_PLUGINS
-            typeof(Flyback.Plugins.Figures.FiguresPlugin),
-            typeof(Flyback.Plugins.Fractals.FractalsPlugin),
-#endif
-            typeof(Flyback.Plugins.Mastering.MasteringPlugin),
-            typeof(Flyback.Plugins.Picture.PicturePlugin),
-            typeof(Flyback.Plugins.Voice.VoicePlugin));
+        var catalog = PluginHost.LoadLinked(typeof(WebExports).Assembly);
 
         NodeCatalog.Install(catalog.Modules);
 
@@ -80,7 +68,6 @@ public static partial class WebExports
     public static string Presets() => new JsonArray([
         .. Plugins.Presets
             .Where(p => p.Kind != PresetKind.Blank)
-            .OrderBy(p => p.Kind)
             .Select(p => new JsonObject
             {
                 ["name"] = p.Name,

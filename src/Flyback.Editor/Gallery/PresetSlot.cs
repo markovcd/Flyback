@@ -186,7 +186,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
         var named = Ordered().FirstOrDefault(preset => preset.Name == current);
 
         var gallery = this.gallery.Build(
-            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            [.. plugins.Presets],
             named,
             pointedAt: audition.PointedAt,
             yours: Yours()?.ToPickFrom());
@@ -306,7 +306,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
         var current = picker.SelectedItem as PatchPreset;
         var parts = gallery.Build(
-            [.. plugins.Presets.OrderBy(p => p.Kind)],
+            [.. plugins.Presets],
             current,
             pointedAt: audition.PointedAt,
             yours: Yours(),

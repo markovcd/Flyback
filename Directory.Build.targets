@@ -32,6 +32,17 @@
   </ItemGroup>
 
   <!--
+    A page cannot load plugins from a folder, so it links them in: a ProjectReference
+    marked LinkedPlugin="true" is named to the program as AssemblyMetadata("Plugin",
+    name), which PluginHost.LoadLinked loads. The references are the only list.
+  -->
+  <Target Name="NameLinkedPlugins" BeforeTargets="GetAssemblyAttributes">
+    <ItemGroup>
+      <AssemblyMetadata Include="Plugin" Value="%(ProjectReference.Filename)" Condition="'%(ProjectReference.LinkedPlugin)' == 'true'" />
+    </ItemGroup>
+  </Target>
+
+  <!--
     Plugins are loaded from disk at run time, not referenced, so nothing in the
     build graph would otherwise put them where the host looks. A project that
     wants a plugin present declares it:

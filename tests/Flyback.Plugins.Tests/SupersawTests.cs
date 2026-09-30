@@ -128,13 +128,12 @@ public class SupersawTests
     }
 
     [Fact]
-    public void The_plugin_offers_a_preset_after_the_engines_own()
+    public void The_plugin_offers_a_preset_listed_by_kind_and_then_name()
     {
-        var presets = ShippedPlugins.Loaded.Presets;
+        var presets = ShippedPlugins.Loaded.Presets.Select(p => (p.Kind, p.Name)).ToList();
 
         presets.Select(p => p.Name).ShouldContain("Supersaw");
-        presets.Take(Presets.All.Count).Select(p => p.Name)
-            .ShouldBe(Presets.All.Select(p => p.Name));
+        presets.ShouldBe(presets.OrderBy(p => p.Kind).ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase));
     }
 
     /// <summary>

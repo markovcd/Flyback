@@ -933,7 +933,7 @@ public class SourceViewTests : UiTest
     [AvaloniaFact]
     public void Taking_back_a_knob_turned_over_a_printing_takes_back_the_knob()
     {
-        var window = Open();
+        var window = Open(Plasma());
         var text = ShowCode(window);
 
         text.CaretOffset = text.Text.IndexOf('(');
@@ -1449,6 +1449,9 @@ public class SourceViewTests : UiTest
 
     // --- and a knob turned in it reaches the text ---------------------------
 
+    /// <summary>A patch whose first module has knobs to turn.</summary>
+    private static Patch Plasma() => Flyback.Core.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+
     /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
     private static void Turn(MainWindow window, double to)
     {
@@ -1635,7 +1638,7 @@ public class SourceViewTests : UiTest
     [AvaloniaFact]
     public void A_knob_turned_over_a_printing_keeps_the_printing_true()
     {
-        var window = Open();
+        var window = Open(Plasma());
         var text = ShowCode(window);
 
         text.CaretOffset = text.Text.IndexOf('(');
@@ -1669,7 +1672,7 @@ public class SourceViewTests : UiTest
     [AvaloniaFact]
     public void A_knob_written_back_under_the_caret_leaves_the_panel_alone()
     {
-        var window = Open();
+        var window = Open(Plasma());
         var text = ShowCode(window);
 
         // After the value that is about to change, so replacing it shifts the

@@ -97,7 +97,7 @@ public sealed partial class WebsiteSteps : IDisposable
     public async Task ThenShippedPresetsAreListedShowcaseFirst()
     {
         var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
-        script.ShouldContain("[\"SHOWCASE\", \"SOUND AND PICTURE\", \"ONE IDEA\"]");
+        script.ShouldContain("found.reverse();");
     }
 
     [When("someone opens the web viewer on the preset site")]

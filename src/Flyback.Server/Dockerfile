@@ -52,7 +52,7 @@ RUN apt-get update \
 RUN --mount=type=cache,target=/root/.nuget/packages \
     if [ -n "${VERSION}" ]; then export Version="${VERSION}"; fi; \
     dotnet publish src/Flyback.Server -c Release -p:RunAOTCompilation=true -o /app \
- && CONFIGURATION="All plugins" ./stills.sh /app/wwwroot/stills
+ && ./stills.sh /app/wwwroot/stills
 
 FROM ${RUNTIME}
 LABEL org.opencontainers.image.source=https://github.com/markovcd/Flyback

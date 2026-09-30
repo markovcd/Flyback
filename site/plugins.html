@@ -743,8 +743,8 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
     button and the text language use, so the patch reaches the canvas already reading left to right. Taking
     <code>b.Patch</code> instead hands over a pile at the origin — the trade is recorded in ADR-0070.</p>
 
-    <p>Presets from plugins appear after the engine's own, so what the app opens on never depends on what is
-    installed. Because a patch is keyed by type id, one that uses your modules records what it needs, and
+    <p>Presets are listed under their heading by name, a plugin's among the engine's own, in the same order on
+    the desktop and on the web. Because a patch is keyed by type id, one that uses your modules records what it needs, and
     opening it somewhere your plugin is absent refuses cleanly rather than loading a broken graph.</p>
 
     <p>A preset that reaches for <em>another</em> plugin's modules is allowed and worth a moment's care: it is

@@ -22,6 +22,7 @@
 - Time says how long the patch plays for and how far through it the patch is, as `length` and `progress`; the text reads them as `t.length` and `t.progress`.
 - The toolbar's side button puts the preview and the inspector away, giving the canvas their width.
 - The status bar and the stats line name what draws the picture (OpenGL, Direct3D, WebGL or CPU), Settings → Graphics picks it in one Renderer box, and the op count reads as picture/sound.
+- Presets are listed by name under each heading, the same on the desktop and the web, and the presets page lists the headings showcases first; the web viewer and editor carry the preset site's plugins only when built in the All plugins configuration.
 
 ### Fixes
 - A patch file with a null where a module or a wire belongs is refused on opening; one saved with a byte order mark opens on the preset site and in the web viewer and editor.
