@@ -276,7 +276,36 @@ public class ShippedPluginList : Task
 
   </Target>
 
-  <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != ''">
+  <!--
+    All plugins only, which never reaches dist/: a program setting EditorPlugins
+    gets the editor's plugins folder and plugins.sha256 copied beside its build,
+    so a development viewer or CLI loads what the editor does. Copied rather than
+    declared as PluginProject items, so each plugin is built once and not three
+    times into one obj folder.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'All plugins' and '$(EditorPlugins)' == 'true'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)src\Flyback.App\Flyback.App.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="EditorProgram" />
+  </ItemGroup>
+
+  <Target Name="CopyEditorPlugins" AfterTargets="Build" Condition="'@(EditorProgram)' != ''">
+    <PropertyGroup>
+      <EditorOutDir>@(EditorProgram->'%(RootDir)%(Directory)')</EditorOutDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <EditorPluginFile Include="$(EditorOutDir)plugins\**\*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(EditorPluginFile)"
+          DestinationFiles="@(EditorPluginFile->'$(OutDir)plugins\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(EditorOutDir)plugins.sha256" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CleanPlugins" AfterTargets="Clean" Condition="'@(PluginProject)' != '' or '$(EditorPlugins)' == 'true'">
     <RemoveDir Directories="$(MSBuildProjectDirectory)\$(OutDir)plugins" />
     <Delete Files="$(MSBuildProjectDirectory)\$(OutDir)plugins.sha256" />
   </Target>

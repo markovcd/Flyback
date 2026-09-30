@@ -36,10 +36,13 @@
     would take away the first one's sound backends on its way past.
 
     What this program actually needs from there is the module providers, and the
-    shell ships those. Run out of its own build output rather than a publish and
-    there are no plugins beside it, which costs a patch that names a plugin's
-    module and nothing else.
+    shell ships those. Run out of a Debug or Release build output there are no
+    plugins beside it; in All plugins the editor's folder is copied beside it
+    (Directory.Build.targets).
   -->
+  <PropertyGroup>
+    <EditorPlugins>true</EditorPlugins>
+  </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />

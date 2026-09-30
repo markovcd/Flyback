@@ -42,8 +42,12 @@
     No PluginProject items, for the CLI's reason exactly: the target that lays the
     plugin folder out clears it first, so a third program declaring them would
     take the shell's sound backends away on its way past. The shell ships them,
-    and this program reads the folder beside it.
+    and this program reads the folder beside it. In All plugins the editor's
+    folder is copied beside this build (Directory.Build.targets).
   -->
+  <PropertyGroup>
+    <EditorPlugins>true</EditorPlugins>
+  </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.App.Tests" />
