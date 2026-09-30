@@ -38,6 +38,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     private Func<float[]>? edited;
 
     private List<(string Name, string Heading, string Description)> listed = [];
+    private (int Exit, string Printed, string Said)? refused;
 
     [When("it plays in the web viewer for {float} second(s)")]
     public void WhenPlayedInTheBrowser(float length) => Play(length);
@@ -192,6 +193,24 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         said!["length"].ShouldBeNull();
     }
 
+    [When("a patch needing the {string} plugin is opened in the web viewer")]
+    public void WhenAPatchNeedingAPluginIsOpened(string plugin)
+    {
+        var file = Path.Combine(folder.FullName, plugin + ".fbk");
+        File.WriteAllBytes(file, PluginPatch.Needing(plugin));
+
+        refused = Run(file, "--seconds", "0.1");
+    }
+
+    [Then("the web viewer refuses it, naming {string}")]
+    public void ThenRefused(string plugin)
+    {
+        refused.ShouldNotBeNull();
+        refused.Value.Exit.ShouldNotBe(0, "the patch played, its missing module as silence");
+        refused.Value.Said.ShouldContain("Not opened.");
+        refused.Value.Said.ShouldContain(plugin);
+    }
+
     [Then("the web viewer says what the preset is for")]
     public void ThenItIsDescribed()
     {
@@ -280,6 +299,15 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
     /// <summary>Runs the web viewer's build under Node with <paramref name="arguments"/>, and answers what it printed.</summary>
     private string Hear(params string[] arguments)
     {
+        var (exit, printed, said) = Run(arguments);
+        exit.ShouldBe(0, said);
+
+        return printed;
+    }
+
+    /// <summary>Runs the web viewer's build under Node, and answers how it ended and what it printed and said.</summary>
+    private (int Exit, string Printed, string Said) Run(params string[] arguments)
+    {
         var node = Node();
         if (node is null) runtime.TestIgnore("no Node on this machine to run the web viewer with.");
 
@@ -298,9 +326,7 @@ public sealed class WebViewerSteps(Session session, IUnitTestRuntimeProvider run
         var printed = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
 
-        process.ExitCode.ShouldBe(0, said.Result);
-
-        return printed;
+        return (process.ExitCode, printed, said.Result);
     }
 
     /// <summary>Node on the path, or the one the WebAssembly workload brings with it.</summary>

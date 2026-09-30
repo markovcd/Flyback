@@ -48,10 +48,19 @@ internal static partial class PageExports
     [JSExport]
     public static void Preset(string name) => Get<PresetSlot>().StartOn(name);
 
-    /// <summary>Opens a shared preset's file, fetched from the preset site, under <paramref name="name"/>.</summary>
+    /// <summary>
+    /// Opens a shared preset's file, fetched from the preset site, under <paramref name="name"/>.
+    /// Null once open, or what the editor said instead.
+    /// </summary>
     [JSExport]
-    public static Task Shared(string name, string fileName, byte[] bytes) =>
-        Get<PresetSlot>().OpenSharedAsync(name, fileName, bytes);
+    public static async Task<string?> Shared(string name, string fileName, byte[] bytes)
+    {
+        if (await Get<PresetSlot>().OpenSharedAsync(name, fileName, bytes)) return null;
+
+        var said = Get<ReportLine>().History;
+
+        return said.Count > 0 ? said[^1] : "Not opened.";
+    }
 
     /// <summary>The open patch as text in the language.</summary>
     [JSExport]

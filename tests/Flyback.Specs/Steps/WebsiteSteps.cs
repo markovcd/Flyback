@@ -1,5 +1,8 @@
 using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using Flyback.Specs.Support;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Reqnroll;
 using Shouldly;
@@ -16,6 +19,7 @@ public sealed partial class WebsiteSteps : IDisposable
 
     private string page = string.Empty;
     private readonly List<string> missing = [];
+    private JsonElement shared;
 
     public WebsiteSteps()
     {
@@ -98,6 +102,35 @@ public sealed partial class WebsiteSteps : IDisposable
     {
         var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
         script.ShouldContain("found.reverse();");
+    }
+
+    [When("a preset needing the {string} plugin is shared on the preset site")]
+    public async Task WhenAPresetNeedingAPluginIsShared(string plugin)
+    {
+        using var form = new MultipartFormDataContent { { new ByteArrayContent(PluginPatch.Needing(plugin)), "file", plugin + ".fbk" } };
+        using var posted = await client.PostAsync(new Uri("/api/v1/presets", UriKind.Relative), form);
+        posted.StatusCode.ShouldBe(HttpStatusCode.Created);
+
+        var id = (await posted.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetString();
+        shared = await client.GetFromJsonAsync<JsonElement>(new Uri("/api/v1/presets/" + id, UriKind.Relative));
+    }
+
+    [Then("the preset site says Flyback in a browser lacks the {string} plugin for it")]
+    public void ThenTheBrowserLacksIt(string plugin) =>
+        shared.GetProperty("lacks").GetProperty("plugins").EnumerateArray()
+            .Select(p => p.GetProperty("name").GetString())
+            .ShouldBe([plugin]);
+
+    /// <summary>The card's Edit and the preset page's Play and Edit give way to a line saying why.</summary>
+    [Then("the presets page offers it to download rather than to play or edit in the browser")]
+    public async Task ThenOnlyADownload()
+    {
+        var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
+
+        script.ShouldContain("var lacks = preset.lacks;");
+        script.ShouldMatch("""if \(!lacks\) buttons\.appendChild\([^\n]*inEditor\(preset\)""");
+        script.ShouldMatch("""if \(!lacks\) \{\s*actions\.appendChild\([^\n]*inBrowser\(preset\)[^\n]*\n\s*actions\.appendChild\([^\n]*inEditor\(preset\)""");
+        script.ShouldContain("download it to open it in Flyback.");
     }
 
     [When("someone opens the web viewer on the preset site")]

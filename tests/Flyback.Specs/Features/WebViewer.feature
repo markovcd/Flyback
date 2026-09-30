@@ -29,6 +29,10 @@ Feature: The web viewer
     When it plays in the web viewer for 0.1 seconds
     Then the web viewer gives it no length, so no end and no seek bar
 
+  Scenario: A patch needing a plugin the web viewer lacks is refused, naming the plugin
+    When a patch needing the "Lantern" plugin is opened in the web viewer
+    Then the web viewer refuses it, naming "Lantern"
+
   Scenario: The web viewer says what a preset is for
     Given the shipped preset "Sidebands"
     When it plays in the web viewer for 0.1 seconds

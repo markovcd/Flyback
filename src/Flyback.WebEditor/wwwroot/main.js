@@ -32,14 +32,13 @@ runtime.setModuleImports('page', {
 const name = runtime.getConfig().mainAssemblyName;
 const exports = (await runtime.getAssemblyExports(name)).Flyback.WebEditor.PageExports;
 
-/** Fetches a shared preset's file and opens it; the error where it could not be fetched. */
+/** Fetches a shared preset's file and opens it; null once open, or why it was not. */
 async function openUrl(url, fileName, title) {
   const response = await fetch(url).catch(failure => ({ ok: false, status: 0, statusText: failure.message }));
   if (!response.ok) return `${url}: ${response.status} ${response.statusText}`;
 
   const file = fileName ?? url.split('/').pop().split('?')[0];
-  await exports.Shared(title ?? file.replace(/\.[^.]+$/, ''), file, new Uint8Array(await response.arrayBuffer()));
-  return null;
+  return await exports.Shared(title ?? file.replace(/\.[^.]+$/, ''), file, new Uint8Array(await response.arrayBuffer()));
 }
 
 globalThis.flyback = {

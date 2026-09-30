@@ -40,6 +40,18 @@
       + "&title=" + encodeURIComponent(preset.name);
   }
 
+  /** What a shared preset needs that the web viewer and editor lack, in a few words, or null where they open it. */
+  function lacking(preset) {
+    var lacks = preset.lacks;
+    if (!lacks) return null;
+
+    var names = lacks.plugins.map(function (plugin) { return plugin.name; });
+    if (!names.length) return "Needs modules a browser lacks";
+
+    var listed = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+    return "Needs the " + listed + (names.length === 1 ? " plugin" : " plugins");
+  }
+
   /** The still, with the loop playing over it while pointed at. */
   function frame(preset, href) {
     var box = make(href ? "a" : "div", href ? { class: "frame", href: href, tabindex: "-1" } : { class: "frame" });
@@ -219,9 +231,12 @@
       if (preset.description) body.appendChild(make("p", null, preset.description));
       if (preset.tags.length) chips(preset.tags, body, true);
 
+      var lacks = lacking(preset);
+      if (lacks) body.appendChild(make("span", { class: "lacks", title: lacks + ": download it to open it in Flyback." }, lacks));
+
       var foot = make("div", { class: "foot" });
       var buttons = make("span", { class: "buttons" });
-      buttons.appendChild(make("a", { class: "button small", href: inEditor(preset) }, "Edit"));
+      if (!lacks) buttons.appendChild(make("a", { class: "button small", href: inEditor(preset) }, "Edit"));
       buttons.appendChild(make("a", { class: "button small", href: preset.file, download: preset.fileName }, "Download"));
 
       foot.appendChild(make("span", null, day(preset.submitted)));
@@ -400,10 +415,14 @@
 
       var actions = make("div", { class: "actions" });
       actions.appendChild(make("a", { class: "button primary", href: preset.file, download: preset.fileName }, "Download"));
-      actions.appendChild(make("a", { class: "button", href: inBrowser(preset) }, "Play in your browser"));
-      actions.appendChild(make("a", { class: "button", href: inEditor(preset) }, "Edit in your browser"));
+      var lacks = lacking(preset);
+      if (!lacks) {
+        actions.appendChild(make("a", { class: "button", href: inBrowser(preset) }, "Play in your browser"));
+        actions.appendChild(make("a", { class: "button", href: inEditor(preset) }, "Edit in your browser"));
+      }
       actions.appendChild(make("a", { class: "button", href: "presets.html" }, "All presets"));
       text.appendChild(actions);
+      if (lacks) text.appendChild(make("p", { class: "lacks" }, lacks + ", which Flyback in a browser does not have: download it to open it in Flyback."));
 
       if (signed) text.appendChild(tools(preset, function (what) {
         if (what === "deleted") location.href = "presets.html";

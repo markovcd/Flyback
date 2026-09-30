@@ -61,6 +61,19 @@ public sealed class PageSteps(Editor editor, PatchContext context)
     [Then("the editor says it opened {string} from the preset site")]
     public void ThenOpenedShared(string name) => editor.Reported.ShouldContain($"Opened “{name}” from the preset site.");
 
+    private bool? opened;
+
+    [When("the page hands the editor a shared preset needing the {string} plugin")]
+    public void WhenHandedNeeding(string plugin) => opened = editor.OpenShared(plugin, plugin + ".fbk", PluginPatch.Needing(plugin));
+
+    [Then("the editor does not open it, and says it needs {string}")]
+    public void ThenNotOpened(string plugin)
+    {
+        opened.ShouldBe(false);
+        editor.Reported[^1].ShouldStartWith("Not opened.");
+        editor.Reported[^1].ShouldContain(plugin);
+    }
+
     [Then("the editor is titled {string}")]
     public void ThenTitled(string name) => editor.Title.ShouldStartWith(name);
 

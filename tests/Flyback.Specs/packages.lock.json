@@ -874,11 +874,67 @@
           "Flyback.Core": "[0.1.0-dev, )"
         }
       },
+      "flyback.plugins.easy": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.effects": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.figures": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.fractals": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.mastering": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.picture": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
+      "flyback.plugins.voice": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.server": {
         "type": "Project",
         "dependencies": {
           "Flyback.Engine": "[0.1.0-dev, )",
           "Flyback.Plugins": "[0.1.0-dev, )",
+          "Flyback.Plugins.Easy": "[0.1.0-dev, )",
+          "Flyback.Plugins.Effects": "[0.1.0-dev, )",
+          "Flyback.Plugins.Figures": "[0.1.0-dev, )",
+          "Flyback.Plugins.Fractals": "[0.1.0-dev, )",
+          "Flyback.Plugins.Mastering": "[0.1.0-dev, )",
+          "Flyback.Plugins.Picture": "[0.1.0-dev, )",
+          "Flyback.Plugins.Voice": "[0.1.0-dev, )",
           "Microsoft.Data.Sqlite": "[10.0.12, )"
         }
       },

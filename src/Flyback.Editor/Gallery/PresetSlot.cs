@@ -607,19 +607,19 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
 
     /// <summary>
     /// Opens a shared preset's file already fetched from the preset site, as a page that
-    /// was sent one does, asking first where there is unsaved work.
+    /// was sent one does, asking first where there is unsaved work. Answers whether it opened.
     /// </summary>
-    public async Task OpenSharedAsync(string name, string fileName, byte[] bytes)
+    public async Task<bool> OpenSharedAsync(string name, string fileName, byte[] bytes)
     {
-        if (RefuseWhileRecording() || !await unsaved.MayReplaceThePatchAsync()) return;
+        if (RefuseWhileRecording() || !await unsaved.MayReplaceThePatchAsync()) return false;
 
-        await OpenSharedAsync(name, fileName, bytes, new Reopen());
+        return await OpenSharedAsync(name, fileName, bytes, new Reopen());
     }
 
     /// <param name="opened">What the status bar says once it is open, where it is not the usual.</param>
-    private async Task OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, string? opened = null)
+    private async Task<bool> OpenSharedAsync(string name, string fileName, byte[] bytes, Reopen reopen, string? opened = null)
     {
-        if (RefuseWhileRecording()) return;
+        if (RefuseWhileRecording()) return false;
 
         try
         {
@@ -634,7 +634,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
                 {
                     report.Say($"Not opened. {lacking.Summary}", lacking.Detail);
                     await installs.OfferMissingAsync(lacking, reopen);
-                    return;
+                    return false;
                 }
 
                 files.Became(name, beside: null, new BundleFiles(bundle.Files, files.SoundFolder, files.PictureFolder));
@@ -649,7 +649,7 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
                 {
                     report.Say($"Not opened. {loaded.Summary}", loaded.Detail);
                     await installs.OfferMissingAsync(loaded, reopen);
-                    return;
+                    return false;
                 }
 
                 files.Became(name, beside: null);
@@ -667,10 +667,12 @@ internal sealed class PresetSlot : IReactTo<DocumentSaved>, IReactTo<TakeMarked>
             if (document.ShowingCode) document.ReadIntoText();
 
             report.Say(opened ?? $"Opened “{name}” from the preset site.");
+            return true;
         }
         catch (Exception ex)
         {
             report.Say($"Could not open “{name}”: {ex.Message}");
+            return false;
         }
     }
 }

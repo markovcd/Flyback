@@ -37,6 +37,13 @@ Feature: The editor in a page offers only what a page can do
     Then the editor says it opened "Rain" from the preset site
     And the editor is titled "Rain"
 
+  Scenario: A shared preset needing a plugin the page lacks is not opened, and the page is told why
+    Given a rainbow across the screen
+    And the editor is in a page
+    And the patch is open in the editor
+    When the page hands the editor a shared preset needing the "Lantern" plugin
+    Then the editor does not open it, and says it needs "Lantern"
+
   Scenario: A page's picture is drawn small, since it never has the whole window
     Given a rainbow across the screen
     And the editor is in a page

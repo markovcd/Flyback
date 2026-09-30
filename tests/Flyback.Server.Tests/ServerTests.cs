@@ -163,6 +163,37 @@ public sealed class ServerTests : IDisposable
         list.GetProperty("total").GetInt32().ShouldBe(1);
     }
 
+    /// <summary>A patch of one module from <paramref name="typeId"/>'s plugin, stamped as needing it.</summary>
+    private static byte[] Using(string providerId, string providerName, string typeId) => Encoding.UTF8.GetBytes($$"""
+        {
+          "Requires": [ { "Id": "{{providerId}}", "Name": "{{providerName}}" } ],
+          "Nodes": [ { "Id": "8f9d1d3e-0000-4000-8000-000000000012", "TypeId": "{{typeId}}" } ],
+          "Connections": []
+        }
+        """);
+
+    [Fact]
+    public async Task A_preset_needing_a_plugin_the_web_pages_lack_says_which()
+    {
+        var id = (await Submit(Using("example.lantern", "Lantern", "example.lantern.glow"), "Lantern.fbk")).GetProperty("id").GetString()!;
+
+        var lacks = (await Get("/api/v1/presets/" + id)).GetProperty("lacks");
+
+        lacks.GetProperty("plugins").EnumerateArray().Select(p => p.GetProperty("name").GetString()).ShouldBe(["Lantern"]);
+        lacks.GetProperty("modules").GetInt32().ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_preset_of_modules_the_web_pages_link_lacks_nothing()
+    {
+        await Submit(PatchFile(), "Drone.fbk");
+        await Submit(Using("flyback.voice", "Voice", "flyback.voice.bell"), "Bell.fbk");
+
+        (await Get("/api/v1/presets")).GetProperty("items").EnumerateArray()
+            .Select(p => p.GetProperty("lacks").ValueKind)
+            .ShouldBe([JsonValueKind.Null, JsonValueKind.Null]);
+    }
+
     [Fact]
     public async Task A_name_given_with_the_file_is_the_one_listed()
     {

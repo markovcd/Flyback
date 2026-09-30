@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A shared preset needing a plugin Flyback in a browser lacks is offered only as a download, the presets page naming the plugin, and the web viewer refuses one rather than playing it in part.
 - A shared preset opened once is kept with its still, its stars and everything the preset site said of it, so the gallery lists it and it opens while the site does not answer, and opens from what was kept rather than being downloaded again; one the site answers it has taken down is forgotten.
 - `flyback-cli shot` draws the editor's window with a patch open into a PNG, its picture at the second `--at` names, with no screen and no sound; `--crop` keeps only the canvas around the modules.
 - Flyback Theme is a showcase preset: Flyback's own song, three minutes of synthwave in A minor on a two-channel scope.

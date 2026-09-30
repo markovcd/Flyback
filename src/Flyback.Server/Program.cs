@@ -150,6 +150,7 @@ var media = new MediaFolder(Setting("Site:Media", "/media"));
 
 Directory.CreateDirectory(media.Root);
 
+var browser = BrowserPlugins.Linked();
 var reports = new ReportStore(database);
 var ratings = new RatingStore(database);
 var letters = new LetterStore(database);
@@ -220,6 +221,9 @@ object View(StoredPreset preset, Rating rating) => new
     File = $"/api/v1/presets/{preset.Id}/file",
     Media = media.Of(preset.Id),
     Rating = new { rating.Average, rating.Count },
+    Lacks = browser.Lacking(preset.Id, () => store.Download(preset.Id, counted: false, unpublished: true) is { } kept
+        ? (kept.Preset.FileName, kept.File)
+        : null),
 };
 
 IEnumerable<object> Views(IEnumerable<StoredPreset> presets)

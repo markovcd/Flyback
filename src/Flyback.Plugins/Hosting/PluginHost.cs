@@ -76,16 +76,17 @@ internal static class PluginHost
     /// <summary>
     /// Loads the plugins <paramref name="host"/> was built with, as a page links them in:
     /// each named by an <c>AssemblyMetadata("Plugin", name)</c> the build writes for a
-    /// <c>ProjectReference</c> marked <c>LinkedPlugin="true"</c>.
+    /// <c>ProjectReference</c> marked <c>LinkedPlugin="true"</c>, or under another
+    /// <paramref name="key"/> by a program that checks against them rather than runs them.
     /// </summary>
-    internal static PluginCatalog LoadLinked(Assembly host)
+    internal static PluginCatalog LoadLinked(Assembly host, string key = "Plugin")
     {
         var plugins = new List<LoadedPlugin>();
         var problems = new List<PluginProblem>();
         var registry = new Registry(problems);
 
         var names = host.GetCustomAttributes<AssemblyMetadataAttribute>()
-            .Where(a => a.Key == "Plugin" && a.Value is not null)
+            .Where(a => a.Key == key && a.Value is not null)
             .Select(a => a.Value!)
             .Order(StringComparer.Ordinal);
 

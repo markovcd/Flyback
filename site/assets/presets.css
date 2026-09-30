@@ -55,6 +55,7 @@ input[type="file"]::file-selector-button {
 .card.preset .by { font-size: 13px; color: var(--muted); }
 .card.preset .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
 .card.preset .foot .buttons { display: flex; gap: 6px; }
+.card.preset .lacks { font-size: 13px; color: var(--muted); }
 
 /* The still, and the loop over it while pointed at. */
 .frame { position: relative; aspect-ratio: 16 / 9; display: block; background: var(--canvas); border-bottom: 1px solid var(--edge); overflow: hidden; }
@@ -79,6 +80,7 @@ button.button { cursor: pointer; }
 .preset-page h1 { font-size: clamp(30px, 4.4vw, 44px); }
 .preset-page .facts { margin: 18px 0 0; font-size: 14px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .preset-page .actions { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
+.preset-page .lacks { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
 .preset-page .card.track { margin-top: 20px; }
 
 /* Submitting. */

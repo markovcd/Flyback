@@ -15,3 +15,8 @@ Feature: The preset site serves the whole website
     Then they can submit a preset there
     And it lists the presets Flyback ships with, marked as built in, beside the shared ones
     And it lists the built-in showcases first, then sound and picture, then one idea
+
+  Scenario: A shared preset needing a plugin the browser lacks is offered to download, not to play
+    When a preset needing the "Lantern" plugin is shared on the preset site
+    Then the preset site says Flyback in a browser lacks the "Lantern" plugin for it
+    And the presets page offers it to download rather than to play or edit in the browser

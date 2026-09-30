@@ -114,6 +114,8 @@ public static partial class WebExports
         {
             using var stream = new MemoryStream(bytes);
             var bundle = PatchBundle.Read(stream, Plugins.Modules);
+            if (bundle.Load is { IsComplete: false } lacking) throw Refused(lacking);
+
             var files = BundleFiles.Of(bundle);
 
             return new Opened(bundle.Patch, files, files);
@@ -130,10 +132,14 @@ public static partial class WebExports
         }
 
         var load = PatchIO.Read(text, Plugins.Modules);
-        if (load.TooNew) throw new InvalidDataException(load.Detail);
+        if (!load.IsComplete) throw Refused(load);
 
         return new Opened(load.Patch, new SampleLibrary(), new ImageLibrary());
     }, width, height, part);
+
+    /// <summary>A patch this page cannot build all of is not played in part, as the editor opens none of it.</summary>
+    private static InvalidDataException Refused(PatchLoad load) =>
+        new(load.TooNew ? load.Detail : $"Not opened. {load.Summary}");
 
     /// <summary>The files the editor's patch names, as it handed them over with <see cref="Keep"/>.</summary>
     private static readonly Dictionary<string, byte[]> Kept = new(StringComparer.OrdinalIgnoreCase);
