@@ -31,14 +31,14 @@ public sealed class TransportSteps(Editor editor) : IDisposable
     public void WhenPastTheEnd()
     {
         editor.Seek(editor.SeekLength);
-        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2)).ShouldBeTrue("the clock never came round");
+        editor.WaitForClock(seconds => seconds < Slack, TimeSpan.FromSeconds(2));
     }
 
     [When("the patch plays to the end of the seek bar")]
     public void WhenToTheEnd()
     {
         editor.Seek(editor.SeekLength);
-        editor.WaitForStop(TimeSpan.FromSeconds(2)).ShouldBeTrue("the patch never stopped");
+        editor.WaitForStop(TimeSpan.FromSeconds(2));
     }
 
     [Then("the patch has stopped")]

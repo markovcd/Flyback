@@ -89,8 +89,8 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     /// <summary>Whether the file and preset controls can replace the patch.</summary>
     public bool CanOpenPatch => ReadWindow(open =>
-        open.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "open").IsEnabled
-        && open.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "presets-glyph").IsEnabled
+        Named<Button>(open, "open").IsEnabled
+        && Named<Button>(open, "presets-glyph").IsEnabled
         && !Presets(open).IsEnabled);
 
     /// <summary>Starts the recording state the editor's toolbar and close guard respond to.</summary>
@@ -251,12 +251,12 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Presses the button the module panel names <paramref name="name"/>.</summary>
     public void PressPanelButton(string name) =>
         DoWindow((open, _) =>
-            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == name)
+            Named<Button>(open, name)
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
 
     /// <summary>What the module panel says, all its words together.</summary>
     public string PanelText => ReadWindow(open =>
-        string.Join(" ", open.GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "inspector")
+        string.Join(" ", Named<StackPanel>(open, "inspector")
             .GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)));
 
     /// <summary>How wide the report line at the foot of the window is laid out, beside the counts as they stand now.</summary>
@@ -271,12 +271,12 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// <summary>Opens the preset gallery from the toolbar.</summary>
     public void OpenGallery() =>
         DoWindow((open, _) =>
-            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "presets-glyph")
+            Named<Button>(open, "presets-glyph")
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
 
     /// <summary>Whether the open preset gallery's filter box holds the keyboard.</summary>
     public bool GalleryTakesKeys => ReadWindow(open =>
-        open.GetVisualDescendants().OfType<TextBox>().Single(t => t.Name == "preset-filter").IsFocused);
+        Named<TextBox>(open, "preset-filter").IsFocused);
 
     /// <summary>The answers the question up over the window offers, and whether each is wholly inside the window.</summary>
     public IReadOnlyList<(string Label, bool OnScreen)> Answers => ReadWindow(open =>
@@ -327,7 +327,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public void Rename(string name) =>
         DoWindow((open, _) =>
         {
-            var title = open.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "moduleName");
+            var title = Named<TextBlock>(open, "moduleName");
             var at = title.TranslatePoint(new Point(title.Bounds.Width / 2, title.Bounds.Height / 2), open)!.Value;
 
             open.MouseDown(at, MouseButton.Left);
@@ -349,7 +349,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public void OpenSettings(string tab) =>
         DoWindow((open, _) =>
         {
-            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "settings")
+            Named<Button>(open, "settings")
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
             // The dialog is put up on a later turn than the click.
@@ -358,7 +358,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
             Settle();
 
-            var tabs = open.GetVisualDescendants().OfType<TabControl>().Single(t => t.Name == "settingsTabs");
+            var tabs = Named<TabControl>(open, "settingsTabs");
 
             tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == tab);
         });
@@ -393,7 +393,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public void LoopSeekBar() =>
         DoWindow((open, _) =>
         {
-            var loop = open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == "seekLoop");
+            var loop = Named<ToggleButton>(open, "seekLoop");
             var at = loop.TranslatePoint(new Point(loop.Bounds.Width / 2, loop.Bounds.Height / 2), open)!.Value;
 
             open.MouseDown(at, MouseButton.Left);
@@ -402,19 +402,20 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
     /// <summary>
     /// Waits for the patch's clock to come to <paramref name="arrived"/>, for at most
-    /// <paramref name="cap"/>, and says whether it did.
+    /// <paramref name="cap"/>, and throws saying where it got to where it did not.
     /// </summary>
     /// <remarks>
     /// The clock moves on the UI thread's timers, and headless fires those only while a
     /// dispatch is waiting on the thread, so each look waits there rather than beside it.
     /// </remarks>
-    public bool WaitForClock(Func<double, bool> arrived, TimeSpan cap)
+    public void WaitForClock(Func<double, bool> arrived, TimeSpan cap)
     {
         var until = DateTime.UtcNow + cap;
 
         while (!arrived(Clock))
         {
-            if (DateTime.UtcNow > until) return false;
+            if (DateTime.UtcNow > until)
+                throw new TimeoutException($"Waited {cap.TotalSeconds:0.#} s for the clock, which reads {Clock:0.000} s, {(Paused ? "paused" : "playing")}. {ReadWindow(Situation)}");
 
             Run(async () =>
             {
@@ -423,17 +424,17 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             });
         }
 
-        return true;
     }
 
-    /// <summary>Waits for the patch to stop by itself, for at most <paramref name="cap"/>, and says whether it did.</summary>
-    public bool WaitForStop(TimeSpan cap)
+    /// <summary>Waits for the patch to stop by itself, for at most <paramref name="cap"/>, and throws saying where it got to where it did not.</summary>
+    public void WaitForStop(TimeSpan cap)
     {
         var until = DateTime.UtcNow + cap;
 
         while (!Paused)
         {
-            if (DateTime.UtcNow > until) return false;
+            if (DateTime.UtcNow > until)
+                throw new TimeoutException($"Waited {cap.TotalSeconds:0.#} s for the patch to stop by itself; its clock reads {Clock:0.000} s. {ReadWindow(Situation)}");
 
             Run(async () =>
             {
@@ -441,8 +442,6 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
                 return true;
             });
         }
-
-        return true;
     }
 
     /// <summary>Which edge of the full-screen picture the transport waits at, or null while it is not showing.</summary>
@@ -459,7 +458,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public void SetSeekLength(string typed) =>
         DoWindow((open, _) =>
         {
-            var box = open.GetVisualDescendants().OfType<TextBox>().Single(b => b.Name == "seekLength");
+            var box = Named<TextBox>(open, "seekLength");
 
             box.Focus();
             box.Text = typed;
@@ -485,13 +484,13 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public bool CanTurnVolume => ReadWindow(open => Volume(open).IsEffectivelyEnabled);
 
     private static Slider Volume(MainWindow window) =>
-        window.GetVisualDescendants().OfType<Slider>().Single(s => s.Name == "volume");
+        Named<Slider>(window, "volume");
 
     /// <summary>Where the patch's clock is, in seconds: what the status bar says after "t =".</summary>
     public double Clock => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Time);
 
     /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
-    public bool Paused => ReadWindow(open => ToolTip.GetTip(open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "pause")) as string == Toolbar.PlayTip);
+    public bool Paused => ReadWindow(open => ToolTip.GetTip(Named<Button>(open, "pause")) as string == Toolbar.PlayTip);
 
     /// <summary>The names of the buttons on the toolbar, left to right.</summary>
     public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>
@@ -515,7 +514,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public double PreviewWidth => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().Single().Bounds.Width);
 
     private static ToggleButton Toggler(MainWindow open, string name) =>
-        open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == name);
+        Named<ToggleButton>(open, name);
 
     /// <summary>The size the picture is drawn at, before it is scaled to its box.</summary>
     public PixelSize PictureSize => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Resolution);
@@ -585,12 +584,12 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public void ApplyText(string source)
     {
         // Its own turn, since the text view is laid out only once it is showing.
-        DoWindow((open, _) => open.GetVisualDescendants().OfType<ToggleButton>().Single(b => b.Name == "code").IsChecked = true);
+        DoWindow((open, _) => Named<ToggleButton>(open, "code").IsChecked = true);
 
         DoWindow((open, _) =>
         {
             Source(open).Text = source;
-            open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Named<Button>(open, "apply").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         });
     }
 
@@ -620,13 +619,17 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             var open = Window();
 
             if (!open.GetVisualDescendants().OfType<ModalOverlay>().Any())
-                open.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "presets-glyph").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Named<Button>(open, "presets-glyph").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
-            await Until(() => open.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "site-status") is { Text: not "Looking…" });
+            TextBlock? Status() => open.GetVisualDescendants().OfType<TextBlock>().SingleOrDefault(t => t.Name == "site-status");
+
+            await Until(
+                () => Status() is { Text: not "Looking…" },
+                () => $"the gallery to hear from the preset site. Its line on the site says: {Status()?.Text ?? "nothing, having no site section"}. {Situation(open)}");
 
             return (IReadOnlyList<(string, string)>)[.. SharedTiles(open).Select(tile => (
                 ((SitePreset)tile.Tag!).Name,
-                tile.GetVisualDescendants().OfType<TextBlock>().Single(t => t.Name == "siteRating").Inlines!.Text ?? string.Empty))];
+                Named<TextBlock>(tile, "siteRating").Inlines!.Text ?? string.Empty))];
         });
 
     /// <summary>Picks a tile the gallery lists under the site's heading, and waits for the editor to say what came of it.</summary>
@@ -642,16 +645,52 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
 
             var before = Answered();
 
-            SharedTiles(open).Single(tile => ((SitePreset)tile.Tag!).Name == name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            var tile = SharedTiles(open).SingleOrDefault(tile => ((SitePreset)tile.Tag!).Name == name)
+                ?? throw new InvalidOperationException(
+                    $"The gallery lists no “{name}” from the preset site; it lists: {string.Join(", ", SharedTiles(open).Select(t => ((SitePreset)t.Tag!).Name))}. {Situation(open)}");
 
-            await Until(
-                () => Answered() > before,
-                () => $"the editor to say what came of picking “{name}”. The report line said: {string.Join(" | ", report.History)}. "
-                    + $"Up over the window: {open.GetVisualDescendants().OfType<ModalOverlay>().Count()} dialog(s).");
+            tile.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+
+            await Until(() => Answered() > before, () => $"the editor to say what came of picking “{name}”. {Situation(open)}");
 
             context.Replace(Canvas().History.Patch);
             return true;
         });
+
+    /// <summary>What a failure says of the window: everything the report line has said, and any question up over it.</summary>
+    private static string Situation(MainWindow open)
+    {
+        var said = open.GetVisualDescendants().OfType<ReportLine>().SingleOrDefault()?.History ?? [];
+        var asking = open.GetVisualDescendants().OfType<ModalOverlay>()
+            .Select(dialog => string.Join(" ", dialog.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text)))
+            .ToList();
+
+        return $"The report line said: {(said.Count == 0 ? "nothing" : string.Join(" | ", said).TrimEnd('.'))}. "
+            + (asking.Count == 0 ? "Nothing is up over the window." : $"Up over the window: {string.Join(" / ", asking)}");
+    }
+
+    /// <summary>
+    /// The one <typeparamref name="T"/> named <paramref name="name"/> under <paramref name="within"/>,
+    /// or a failure naming the ones there are.
+    /// </summary>
+    private static T Named<T>(Visual within, string name) where T : Control
+    {
+        var all = within.GetVisualDescendants().OfType<T>().ToList();
+        var named = all.Where(control => control.Name == name).ToList();
+
+        if (named.Count == 1) return named[0];
+
+        // Less the parts of a control's own template, which no step looks for.
+        var others = all.Select(control => control.Name).OfType<string>()
+            .Where(other => !other.StartsWith("PART_", StringComparison.Ordinal))
+            .Distinct()
+            .Order(StringComparer.Ordinal);
+        var where = within is MainWindow open ? " " + Situation(open) : string.Empty;
+
+        throw new InvalidOperationException(named.Count == 0
+            ? $"No {typeof(T).Name} named “{name}”; the named ones are: {string.Join(", ", others)}.{where}"
+            : $"{named.Count} of {typeof(T).Name} are named “{name}”, where one was looked for.{where}");
+    }
 
     private static IEnumerable<Button> SharedTiles(MainWindow open) =>
         open.GetVisualDescendants().OfType<Button>().Where(b => b.Name == "site-tile");
@@ -693,7 +732,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         });
 
     private static AvaloniaEdit.TextEditor Source(MainWindow open) =>
-        open.GetVisualDescendants().OfType<AvaloniaEdit.TextEditor>().Single(t => t.Name == "source");
+        Named<AvaloniaEdit.TextEditor>(open, "source");
 
     /// <summary>Runs what a step does to the canvas, where no key does it: a panel's button, say.</summary>
     internal void Do(Action<NodeEditor> act) => DoWindow((_, canvas) => act(canvas));
@@ -786,7 +825,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     /// </summary>
     private static (TextBlock Caption, Control Row)? Row(MainWindow window, string caption)
     {
-        var panel = window.GetVisualDescendants().OfType<StackPanel>().Single(p => p.Name == "inspector");
+        var panel = Named<StackPanel>(window, "inspector");
 
         if (panel.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => t.Text == caption) is not { } label)
             return null;
@@ -801,10 +840,10 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
         row.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name);
 
     private static SeekTrack SeekBar(MainWindow window) =>
-        window.GetVisualDescendants().OfType<SeekTrack>().Single(track => track.Name == "seek");
+        Named<SeekTrack>(window, "seek");
 
     private static ComboBox Presets(MainWindow window) =>
-        window.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "presets");
+        Named<ComboBox>(window, "presets");
 
     /// <summary>Whether <paramref name="control"/> is laid out wholly inside the window.</summary>
     private static bool Inside(MainWindow window, Control control)
