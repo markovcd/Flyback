@@ -682,7 +682,7 @@ function paint() {
 
   if (ready) {
     const said = status();
-    parts.push(`${said.pictureOps}/${said.soundOps ?? 0} picture/sound ops${said.oversample ? ` · ${said.oversample}× oversampling` : ''} · ${said.width}×${said.height}`);
+    parts.push(`${said.oversample ? `${said.oversample}× oversampling · ` : ''}${said.width}×${said.height}`);
     if (said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (starved > 0) parts.push(`${starved} dropouts`);
     if (said.linking) parts.push('building the shader…');

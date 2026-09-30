@@ -10,7 +10,7 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// A line in the corner of a full-screen picture saying how it is being drawn: frames a
-/// second, what a frame costs, the picture's and the sound's ops, the oversampling, the size,
+/// second, what a frame costs, the editor's picture and sound ops, the oversampling, the size,
 /// the renderer and the clock.
 /// </summary>
 /// <remarks>
@@ -25,13 +25,16 @@ public sealed class StatsOverlay : Border
 
     private readonly PreviewHost preview;
     private readonly IAudioEngine sound;
+    private readonly bool counted;
     private readonly TextBlock line;
     private readonly DispatcherTimer ticker;
 
-    internal StatsOverlay(PreviewHost preview, IAudioEngine sound)
+    /// <param name="counted">Whether the line counts the picture's and the sound's ops, which only the editor's does.</param>
+    internal StatsOverlay(PreviewHost preview, IAudioEngine sound, bool counted)
     {
         this.preview = preview;
         this.sound = sound;
+        this.counted = counted;
 
         Name = "stats";
         IsVisible = false;
@@ -80,17 +83,17 @@ public sealed class StatsOverlay : Border
         line.Text = Line(
             preview.FramesPerSecond,
             preview.FrameMilliseconds,
-            preview.Program.Ops.Length,
-            sound.Ops,
+            counted ? (preview.Program.Ops.Length, sound.Ops) : null,
             sound.Oversample,
             preview.Resolution,
             preview.Renderer,
             preview.Time);
 
     /// <summary>The line, from what was measured.</summary>
+    /// <param name="ops">The picture's and the sound's ops, or null to leave them unsaid.</param>
     /// <param name="renderer">What draws the picture, or null while a graphics context is still coming up.</param>
-    public static string Line(double fps, double milliseconds, int pictureOps, int soundOps, int oversample, PixelSize size, string? renderer, double seconds) =>
+    public static string Line(double fps, double milliseconds, (int Picture, int Sound)? ops, int oversample, PixelSize size, string? renderer, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {pictureOps}/{soundOps} picture/sound ops · {oversample}× oversampling · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {(ops is (var picture, var sound) ? $"{picture}/{sound} picture/sound ops · " : "")}{oversample}× oversampling · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
 }

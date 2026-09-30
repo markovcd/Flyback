@@ -191,7 +191,7 @@ internal static class ViewerArguments
 
         var stats = new Option<bool>("--stats")
         {
-            Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the picture's and the sound's ops, the oversampling. F3 shows it and puts it away.",
+            Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the oversampling. F3 shows it and puts it away.",
         };
 
         var title = new Option<string>("--title")

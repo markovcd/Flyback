@@ -21,8 +21,8 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [Then("the viewer's picture says how many frames a second it draws")]
     public void ThenItSays() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
-    [Then("the viewer's picture counts the picture's ops and the sound's apart")]
-    public void ThenItCountsBoth() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldMatch(@"\d+/\d+ picture/sound ops");
+    [Then("the viewer's picture counts no ops")]
+    public void ThenItCountsNoOps() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldNotContain("ops");
 
     [Then("the viewer's picture says the sound is worked out at {int}× the output rate")]
     public void ThenItSaysTheOversampling(int factor) => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain($"{factor}× oversampling");

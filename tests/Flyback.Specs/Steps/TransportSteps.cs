@@ -81,6 +81,9 @@ public sealed class TransportSteps(Editor editor) : IDisposable
     [Then("the editor's picture says how many frames a second it draws")]
     public void ThenTheEditorSays() => editor.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("fps");
 
+    [Then("the editor's picture counts the picture's ops and the sound's apart")]
+    public void ThenTheEditorCountsBoth() => editor.Stats.ShouldNotBeNull("nothing is showing").ShouldMatch(@"\d+/\d+ picture/sound ops");
+
     [Then("the seek bar reaches {float} seconds")]
     public void ThenTheBarReaches(double seconds) => editor.SeekLength.ShouldBe(seconds, 0.001);
 
