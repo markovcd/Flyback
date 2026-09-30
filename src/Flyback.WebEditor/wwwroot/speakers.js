@@ -24,7 +24,6 @@ let heard = false;
 let generation = 0;
 let origin = 0;
 let played = 0;
-let starved = 0;
 let reportedAt = 0;
 
 let wallStart = 0;
@@ -68,7 +67,6 @@ function report({ data }) {
   if (data.generation !== generation) return;
 
   played = data.played;
-  starved = data.starved;
   reportedAt = data.at;
 }
 
@@ -214,7 +212,7 @@ export function status() {
   return {
     running, heard, ready, failure, error,
     context: context?.state ?? null,
-    time: time(), played, starved, generation,
+    time: time(), played, generation,
     soundOps: soundStatus.soundOps ?? 0,
     speed: soundStatus.speed ?? 0,
     queued: soundStatus.queued ?? 0,

@@ -1,6 +1,6 @@
 Feature: The sound's oversampling is a render setting
   The sound is worked out at a multiple of the output rate before it is filtered down:
-  2× unless Settings → Sound says 1× or 4×. A render and the viewer take it from the
+  2× unless Settings → Sound says none or 4×. A render and the viewer take it from the
   editor's settings as they take the rest, and --oversample overrides it for one run.
 
   Scenario Outline: A render oversamples as the settings say, unless told otherwise
@@ -35,7 +35,7 @@ Feature: The sound's oversampling is a render setting
     Then it is worked out at 2 times the output rate
     And it is not said to be behind
 
-  Scenario: A live sound that keeps falling behind at 1× is said to be behind, which the web viewer gives up
+  Scenario: A live sound that keeps falling behind with no oversampling is said to be behind, which the web viewer gives up
     Given live sound worked out at 1 times the output rate
     When a third of its buffers come late for 2 seconds
     Then it is worked out at 1 times the output rate

@@ -6,7 +6,7 @@
 - The web editor's toolbar leads with the Flyback mark, back to the site, and the browser asks before leaving an edited patch; the web viewer's header shows the mark in place of its name.
 - With no startup preset chosen, or one this run does not offer, the editor and the viewer open on Plasma.
 - Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.
-- The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks 1×, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
+- The sound is oversampled 2× by default, at half the cost, and Settings → Sound picks none, 2× or 4×; a take, `flyback-cli render` and `flyback-viewer` follow it, and `--oversample` overrides it for one run.
 - The editor's status bar, the full-screen stats line and the web viewer say what oversampling the sound runs at; only the editor counts ops, the picture's and the sound's apart.
 - The web editor sends a letter to Flyback's author, and its gallery opens presets shared on the preset site; one needing a plugin a browser lacks is listed with the plugin it needs, and cannot be opened.
 - Dragging a knob in the web editor keeps the sound's script warm and recompiles at a pace the page keeps up with, rather than stuttering the sound.

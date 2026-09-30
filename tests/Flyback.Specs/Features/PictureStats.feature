@@ -14,6 +14,11 @@ Feature: A full-screen picture can say how it is being drawn
     Then the viewer's picture says the sound is worked out at 4× the output rate
     And the viewer's picture counts no ops
 
+  Scenario: The viewer's line says when the sound is not oversampled
+    Given a rainbow across the screen
+    When the viewer plays it with "--stats --oversample 1"
+    Then the viewer's picture says the sound is not oversampled
+
   Scenario: The viewer keeps the picture clean unless asked
     Given a rainbow across the screen
     When the viewer plays it

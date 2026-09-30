@@ -264,7 +264,7 @@ internal sealed class OutputSections
     private readonly ComboBox oversample = new Picker
     {
         Name = "oversample",
-        ItemsSource = AudioRenderer.Oversamples.Select(factor => $"{factor}×").ToList(),
+        ItemsSource = AudioRenderer.Oversamples.Select(OversamplingText.Choice).ToList(),
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 

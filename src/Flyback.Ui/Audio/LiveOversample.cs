@@ -34,6 +34,6 @@ internal sealed class LiveOversample(IAudioEngine audio, Func<bool> enabled, Act
         if (judge.Check(clock.Elapsed, judged, audio.Timing, from).Lower is not { } lower) return;
 
         audio.Oversample = lower;
-        say($"The sound kept falling behind at {from}×, so it is worked out at {lower}× now. Settings → Sound sets it back.");
+        say($"The sound kept falling behind at {OversamplingText.Of(from)}, so it is worked out with {OversamplingText.Of(lower)} now. Settings → Sound sets it back.");
     }
 }

@@ -27,6 +27,9 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [Then("the viewer's picture says the sound is worked out at {int}× the output rate")]
     public void ThenItSaysTheOversampling(int factor) => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain($"{factor}× oversampling");
 
+    [Then("the viewer's picture says the sound is not oversampled")]
+    public void ThenItSaysNoOversampling() => viewer.Stats.ShouldNotBeNull("nothing is showing").ShouldContain("no oversampling");
+
     [Then("the viewer's transport waits at the top of its picture")]
     public void ThenTheTransportAtTheTop() => viewer.TransportEdge.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
 

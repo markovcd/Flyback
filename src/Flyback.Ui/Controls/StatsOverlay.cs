@@ -95,5 +95,5 @@ public sealed class StatsOverlay : Border
     public static string Line(double fps, double milliseconds, (int Picture, int Sound)? ops, int oversample, PixelSize size, string? renderer, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {(ops is (var picture, var sound) ? $"{picture}/{sound} picture/sound ops · " : "")}{oversample}× oversampling · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {(ops is (var picture, var sound) ? $"{picture}/{sound} picture/sound ops · " : "")}{OversamplingText.Of(oversample)} · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
 }

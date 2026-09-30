@@ -108,7 +108,6 @@ let queue = null;
 let volume = null;
 let generation = 0;
 let played = 0;
-let starved = 0;
 let reportedAt = 0;
 
 /** Whether the speaker is the clock: only while the queue it plays starts where the picture is. */
@@ -131,7 +130,6 @@ function report({ data }) {
   if (data.generation !== generation) return;
 
   played = data.played;
-  starved = data.starved;
   reportedAt = data.at;
 }
 
@@ -265,9 +263,14 @@ function tooSlow(speed) {
   warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
 }
 
+/** An oversampling factor as the status line says it; 1× is none. */
+function oversampling(factor) {
+  return factor > 1 ? `${factor}× oversampling` : 'no oversampling';
+}
+
 /**
  * Says so when the worker, which judges its own sound once it plays, has worked it out a
- * step lower since <was>, and hands the picture the clock when it falls behind at 1× too.
+ * step lower since <was>, and hands the picture the clock when it falls behind with none too.
  */
 function follow(was) {
   if (!playing || !heard || insisted) return;
@@ -277,7 +280,7 @@ function follow(was) {
     tooSlow(soundStatus.speed ?? 0);
     play();
   } else if (soundStatus.oversample < was.oversample) {
-    warning = `The sound kept falling behind at ${was.oversample}×, so it is worked out at ${soundStatus.oversample}× now.`;
+    warning = `The sound kept falling behind at ${oversampling(was.oversample)}, so it is worked out with ${oversampling(soundStatus.oversample)} now.`;
     paint();
   }
 }
@@ -682,9 +685,8 @@ function paint() {
 
   if (ready) {
     const said = status();
-    if (said.oversample) parts.push(`${said.oversample}× oversampling`);
+    if (said.oversample) parts.push(oversampling(said.oversample));
     if (said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
-    if (starved > 0) parts.push(`${starved} dropouts`);
     if (said.linking) parts.push('building the shader…');
     if (playable()) parts.push(`${keyboardSaid ?? said.keyboard} PageUp and PageDown move it`);
   }
@@ -814,7 +816,7 @@ window.flyback = {
   status: () => ({
     ...status(),
     name, preview, playing, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
-    queued: soundStatus.queued ?? 0, starved, warning, error, speakerFailure,
+    queued: soundStatus.queued ?? 0, warning, error, speakerFailure,
   }),
   volume: setVolume,
   strike,

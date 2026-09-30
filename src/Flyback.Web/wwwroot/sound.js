@@ -11,7 +11,6 @@ class Queue extends AudioWorkletProcessor {
     this.chunks = [];
     this.offset = 0;
     this.played = 0;
-    this.starved = 0;
     this.generation = 0;
     this.quanta = 0;
     this.feed = null;
@@ -57,15 +56,12 @@ class Queue extends AudioWorkletProcessor {
       }
     }
 
-    // A dry spell before the first chunk is the queue filling, not the sound falling behind.
-    if (i < frames && this.played > 0) this.starved++;
-
     this.played += i;
     left.fill(0, i);
     right.fill(0, i);
 
     if (++this.quanta % 8 === 0) {
-      const report = { played: this.played, starved: this.starved, generation: this.generation, at: currentTime };
+      const report = { played: this.played, generation: this.generation, at: currentTime };
       this.port.postMessage(report);
       this.feed?.postMessage(report);
     }
