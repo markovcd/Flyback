@@ -583,6 +583,11 @@ stack to rasterize with, the recording tests want ffmpeg on `PATH` — so a loca
 run can be green about code it never ran. The Dockerfile carries both, which is
 why CI builds it rather than installing an SDK.
 
+A test host that dies under `dotnet test` leaves a minidump and a sequence log
+of the tests it was in under `TestResults/`, since a crash that comes once in
+hundreds of runs is not there when asked for again. `-p:CrashDumpType=Heap` asks
+for a heap dump instead. Running a test assembly directly leaves none.
+
 The stages stack, and that is what stops a release skipping anything. `publish`
 builds on `gate`, so per-platform artifacts cannot exist without every test
 having passed. `measured` builds on `gate` too and runs the tests again under

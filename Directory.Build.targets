@@ -25,9 +25,22 @@
 
     The hang dump lets a run that stops making progress name the tests it was in
     the middle of and end, rather than sit silent until the job's own limit.
+
+    The crash dump is on for every run, because a test host that dies does so
+    once in hundreds of runs and not again when asked: it leaves a dump and a
+    sequence log of the tests it was in, beside the results. Mini, since a heap
+    dump of a test host is most of a gigabyte; `-p:CrashDumpType=Heap` asks for
+    one. Naming the dump type on the command line as well is refused as a
+    duplicate option.
   -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+    <CrashDumpType Condition="'$(CrashDumpType)' == ''">Mini</CrashDumpType>
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --crashdump --crashdump-type $(CrashDumpType)</TestingPlatformCommandLineArguments>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CrashDump" />
     <PackageReference Include="Microsoft.Testing.Extensions.HangDump" />
   </ItemGroup>
 
