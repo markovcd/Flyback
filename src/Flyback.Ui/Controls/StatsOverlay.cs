@@ -10,7 +10,7 @@ namespace Flyback.App.Controls;
 
 /// <summary>
 /// A line in the corner of a full-screen picture saying how it is being drawn: frames a
-/// second, what a frame costs, the editor's picture and sound ops, the oversampling, the size,
+/// second, what a frame costs, the editor's picture and sound ops, the sound's oversampling, the size,
 /// the renderer and the clock.
 /// </summary>
 /// <remarks>
@@ -26,15 +26,18 @@ public sealed class StatsOverlay : Border
     private readonly PreviewHost preview;
     private readonly IAudioEngine sound;
     private readonly bool counted;
+    private readonly Func<bool> heard;
     private readonly TextBlock line;
     private readonly DispatcherTimer ticker;
 
     /// <param name="counted">Whether the line counts the picture's and the sound's ops, which only the editor's does.</param>
-    internal StatsOverlay(PreviewHost preview, IAudioEngine sound, bool counted)
+    /// <param name="heard">Whether the patch has sound, without which the oversampling is left unsaid.</param>
+    internal StatsOverlay(PreviewHost preview, IAudioEngine sound, bool counted, Func<bool> heard)
     {
         this.preview = preview;
         this.sound = sound;
         this.counted = counted;
+        this.heard = heard;
 
         Name = "stats";
         IsVisible = false;
@@ -84,16 +87,17 @@ public sealed class StatsOverlay : Border
             preview.FramesPerSecond,
             preview.FrameMilliseconds,
             counted ? (preview.Program.Ops.Length, sound.Ops) : null,
-            sound.Oversample,
+            heard() ? sound.Oversample : null,
             preview.Resolution,
             preview.Renderer,
             preview.Time);
 
     /// <summary>The line, from what was measured.</summary>
     /// <param name="ops">The picture's and the sound's ops, or null to leave them unsaid.</param>
+    /// <param name="oversample">The sound's oversampling, or null for a patch with no sound.</param>
     /// <param name="renderer">What draws the picture, or null while a graphics context is still coming up.</param>
-    public static string Line(double fps, double milliseconds, (int Picture, int Sound)? ops, int oversample, PixelSize size, string? renderer, double seconds) =>
+    public static string Line(double fps, double milliseconds, (int Picture, int Sound)? ops, int? oversample, PixelSize size, string? renderer, double seconds) =>
         string.Create(
             CultureInfo.InvariantCulture,
-            $"{fps:0} fps · {milliseconds:0.0} ms · {(ops is (var picture, var sound) ? $"{picture}/{sound} picture/sound ops · " : "")}{OversamplingText.Of(oversample)} · {size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
+            $"{fps:0} fps · {milliseconds:0.0} ms · {(ops is (var picture, var sound) ? $"{picture}/{sound} picture/sound ops · " : "")}{(oversample is { } factor ? OversamplingText.Of(factor) + " · " : "")}{size.Width}×{size.Height} · {(renderer is null ? "" : renderer + " · ")}t {StatusClock.Text(seconds)}");
 }

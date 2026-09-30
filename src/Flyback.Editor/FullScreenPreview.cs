@@ -135,7 +135,7 @@ internal sealed class FullScreenPreview(
 
         preview.Renew();
 
-        var window = transport.PictureWindow = new PictureWindow(screen, preview, audio);
+        var window = transport.PictureWindow = new PictureWindow(screen, preview, audio, () => playback.HasSound);
 
         knobs.Away = window.Knobs;
         window.Knobs.Show(editor.History.Patch);

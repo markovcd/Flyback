@@ -10,14 +10,21 @@ Feature: A full-screen picture can say how it is being drawn
 
   Scenario: The viewer's line says the oversampling and leaves the ops to the editor
     Given a rainbow across the screen
+    And a 220 Hz sine is heard with it
     When the viewer plays it with "--stats --oversample 4"
     Then the viewer's picture says the sound is worked out at 4× the output rate
     And the viewer's picture counts no ops
 
   Scenario: The viewer's line says when the sound is not oversampled
     Given a rainbow across the screen
+    And a 220 Hz sine is heard with it
     When the viewer plays it with "--stats --oversample 1"
     Then the viewer's picture says the sound is not oversampled
+
+  Scenario: The viewer's line says nothing of the oversampling of a patch with no sound
+    Given a rainbow across the screen
+    When the viewer plays it with "--stats --oversample 4"
+    Then the viewer's picture says nothing of oversampling
 
   Scenario: The viewer keeps the picture clean unless asked
     Given a rainbow across the screen

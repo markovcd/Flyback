@@ -65,12 +65,14 @@ public sealed class StatusCountTests : UiTest
         })
             .ShouldBeTrue(count.Text);
 
+        (count.Text ?? "").ShouldContain("picture/sound ops · 2× oversampling · sound renders at ");
+
         (count.Text ?? "").ShouldNotContain("modules");
         (count.Text ?? "").ShouldNotContain("wires");
     }
 
     [AvaloniaFact]
-    public void It_says_nothing_of_how_fast_the_sound_renders_for_a_patch_with_no_sound()
+    public void It_says_nothing_of_the_sound_of_a_patch_with_no_sound()
     {
         var speakers = new Loopback();
         var window = Open(Tone(sound: false), replace: services => services.AddSingleton(new AudioSetup(speakers, new Plug(speakers))));
@@ -86,6 +88,7 @@ public sealed class StatusCountTests : UiTest
         }
 
         (count.Text ?? "").ShouldNotContain("sound renders at");
+        (count.Text ?? "").ShouldNotContain("oversampling");
     }
 
     /// <summary>
@@ -121,7 +124,7 @@ public sealed class StatusCountTests : UiTest
 
     private static string Counted(Patch patch) =>
         $"{patch.CompileForVideo(played: true).Program.Ops.Length}/"
-        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops · 2× oversampling";
+        + $"{patch.CompileForAudio(played: true).Program.Ops.Length} picture/sound ops";
 
     /// <summary>The output the loopback came from, which is what lets the editor start it.</summary>
     private sealed class Plug(IAudioDevice device) : IAudioOutput

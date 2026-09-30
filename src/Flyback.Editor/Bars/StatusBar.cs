@@ -148,9 +148,11 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
         // said alongside — what is actually drawing, not what was asked for.
         var renderer = preview.Renderer is { } name ? $"   |   {name}" : "";
 
-        var speed = editor.History.Patch.Reaches().Sound && playback.SoundSpeed > 0
-            ? string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×")
-            : "";
+        // Nothing is said of the sound of a patch that has none.
+        var sound = playback.HasSound ? $" · {OversamplingText.Of(playback.Oversample)}" : "";
+
+        if (playback.HasSound && playback.SoundSpeed > 0)
+            sound += string.Create(CultureInfo.InvariantCulture, $" · sound renders at {playback.SoundSpeed:0.00}×");
 
         // Only while the window is somebody's: a window behind others is drawn
         // at whatever rate the system leaves it, which says nothing about Flyback.
@@ -158,7 +160,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{pictureOps}/{soundOps} picture/sound ops · {OversamplingText.Of(playback.Oversample)}{speed}   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
+            $"{pictureOps}/{soundOps} picture/sound ops{sound}   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

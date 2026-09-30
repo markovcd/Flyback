@@ -44,6 +44,9 @@ public sealed class StatusBarSteps(Editor editor) : IDisposable
     [Then("the status bar says nothing of how fast the sound renders")]
     public void ThenItSaysNothingOfTheSpeed() => editor.StatusCount.ShouldNotContain("sound renders at");
 
+    [Then("the status bar says nothing of oversampling")]
+    public void ThenItSaysNothingOfOversampling() => editor.StatusCount.ShouldNotContain("oversampl");
+
     [Then("the status bar counts no modules or wires")]
     public void ThenNoCounts()
     {

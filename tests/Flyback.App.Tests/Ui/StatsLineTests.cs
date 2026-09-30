@@ -24,6 +24,11 @@ public class StatsLineTests
             .ShouldBe("60 fps · 4.3 ms · 4× oversampling · 960×540 · Direct3D · t 1:05.25");
 
     [Fact]
+    public void A_patch_with_no_sound_leaves_the_oversampling_out() =>
+        StatsOverlay.Line(59.6, 4.26, null, null, new PixelSize(960, 540), "Direct3D", 65.25)
+            .ShouldBe("60 fps · 4.3 ms · 960×540 · Direct3D · t 1:05.25");
+
+    [Fact]
     public void One_times_is_no_oversampling() =>
         StatsOverlay.Line(59.6, 4.26, null, 1, new PixelSize(960, 540), "Direct3D", 65.25)
             .ShouldBe("60 fps · 4.3 ms · no oversampling · 960×540 · Direct3D · t 1:05.25");

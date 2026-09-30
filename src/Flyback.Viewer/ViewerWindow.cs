@@ -113,7 +113,7 @@ internal sealed class ViewerWindow : Window
 
             if (preview is not null)
             {
-                Stats = new StatsOverlay(preview, player.Audio, counted: false) { IsVisible = options.Stats };
+                Stats = new StatsOverlay(preview, player.Audio, counted: false, () => player.Patch.Reaches().Sound) { IsVisible = options.Stats };
                 layout.Children.Add(Stats);
             }
 

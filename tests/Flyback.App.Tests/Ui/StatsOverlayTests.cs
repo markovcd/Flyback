@@ -69,7 +69,7 @@ public class StatsOverlayTests : UiTest
 
         stats.IsVisible.ShouldBeTrue();
         stats.Said.ShouldContain("fps");
-        stats.Said.ShouldContain(" ms · 2× oversampling · 320×180 · CPU");
+        stats.Said.ShouldContain(" ms · 320×180 · CPU", Case.Sensitive, "Plasma has no sound, so no oversampling is said");
         stats.Said.ShouldNotContain("ops", Case.Insensitive, "only the editor counts ops");
     }
 

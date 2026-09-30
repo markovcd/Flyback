@@ -689,7 +689,7 @@ function paint() {
   const parts = [];
 
   if (ready) {
-    if (said.oversample) parts.push(oversampling(said.oversample));
+    if (said.hasSound && said.oversample) parts.push(oversampling(said.oversample));
     if (said.hasSound && said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (said.linking) parts.push('building the shader…');
     if (playable()) parts.push(`${keyboardSaid ?? said.keyboard} PageUp and PageDown move it`);

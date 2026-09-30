@@ -240,6 +240,15 @@ public sealed class PatchSteps(PatchContext context)
         context.HighestFrequency = frequency;
     }
 
+    [Given("a {float} Hz sine is heard with it")]
+    public void GivenASineWithIt(float frequency)
+    {
+        context.Add("tone", "osc.sine");
+        context.SetInput("tone", "freq", frequency);
+        context.Wire("tone", "out", "screen", "left");
+        context.SetInput("screen", "volume", 1f);
+    }
+
     [Given("the module called {string} is playing")]
     public void GivenAModuleIsPlaying(string name) => Hear("it", Called(name));
 

@@ -35,7 +35,8 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
     /// <summary>The line saying how the picture is drawn, which the editor shows or puts away.</summary>
     public StatsOverlay Stats { get; }
 
-    internal PictureWindow(Screen screen, PreviewHost preview, IAudioEngine sound)
+    /// <param name="heard">Whether the patch has sound, for the stats line.</param>
+    internal PictureWindow(Screen screen, PreviewHost preview, IAudioEngine sound, Func<bool> heard)
     {
         Title = "Flyback picture";
         Background = Brushes.Black;
@@ -45,7 +46,7 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
         Width = 160;
         Height = 90;
 
-        Stats = new StatsOverlay(preview, sound, counted: true);
+        Stats = new StatsOverlay(preview, sound, counted: true, heard);
 
         picture.Children.Add(preview);
         picture.Children.Add(Stats);

@@ -229,6 +229,9 @@ internal sealed class Playback
     /// </summary>
     public bool HasPicture => Probed is not null || editor.History.Patch.Reaches().Picture;
 
+    /// <summary>Whether anything is wired into the Output's sound.</summary>
+    public bool HasSound => editor.History.Patch.Reaches().Sound;
+
     /// <summary>Which probe the picture was last compiled for, or null for the patch itself.</summary>
     private Guid? showingProbe;
 
