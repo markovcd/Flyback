@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A shared preset's card on the presets page has Play, opening it in the web viewer, beside Edit and Download.
 - The web editor's toolbar leads with the Flyback mark, back to the site, and the browser asks before leaving an edited patch; the web viewer's header shows the mark in place of its name.
 - With no startup preset chosen, or one this run does not offer, the editor and the viewer open on Plasma.
 - Sound that keeps falling behind while it plays is worked out a step lower, 4× to 2× to 1×, rather than stuttering; Settings → Sound turns it off, and the web viewer and web editor always do it.

@@ -25,12 +25,12 @@
     return new Date(when).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
   }
 
-  /** The web viewer playing the preset's file, which a play does not count as a download. */
-  function inBrowser(preset) {
+  /** The web viewer playing the preset's file, which a play does not count as a download; back is the preset's page unless given. */
+  function inBrowser(preset, back) {
     return "viewer/?file=" + encodeURIComponent(preset.file + "?count=false")
       + "&name=" + encodeURIComponent(preset.fileName)
       + "&title=" + encodeURIComponent(preset.name)
-      + "&back=" + encodeURIComponent("preset.html?id=" + preset.id);
+      + "&back=" + encodeURIComponent(back || "preset.html?id=" + preset.id);
   }
 
   /** The web editor opened on the preset's file, which does not count as a download either. */
@@ -232,7 +232,10 @@
 
       var foot = make("div", { class: "foot" });
       var buttons = make("span", { class: "buttons" });
-      if (!lacks) buttons.appendChild(make("a", { class: "button small", href: inEditor(preset) }, "Edit"));
+      if (!lacks) {
+        buttons.appendChild(make("a", { class: "button small", href: inEditor(preset) }, "Edit"));
+        buttons.appendChild(make("a", { class: "button small", href: inBrowser(preset, "presets.html" + location.search) }, "Play"));
+      }
       buttons.appendChild(make("a", { class: "button small", href: preset.file, download: preset.fileName }, "Download"));
 
       foot.appendChild(make("span", null, day(preset.submitted)));

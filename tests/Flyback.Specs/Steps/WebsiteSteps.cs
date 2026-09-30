@@ -124,14 +124,14 @@ public sealed partial class WebsiteSteps : IDisposable
         lacks.GetProperty("said").GetString().ShouldBe($"Needs the {plugin} plugin");
     }
 
-    /// <summary>The card's Edit and the preset page's Play and Edit give way to a line saying why.</summary>
+    /// <summary>The card's and the preset page's Play and Edit give way to a line saying why.</summary>
     [Then("the presets page offers it to download rather than to play or edit in the browser")]
     public async Task ThenOnlyADownload()
     {
         var script = await client.GetStringAsync(new Uri("/assets/presets.js", UriKind.Relative));
 
         script.ShouldContain("var lacks = preset.lacks;");
-        script.ShouldMatch("""if \(!lacks\) buttons\.appendChild\([^\n]*inEditor\(preset\)""");
+        script.ShouldMatch("""if \(!lacks\) \{\s*buttons\.appendChild\([^\n]*inEditor\(preset\)[^\n]*\n\s*buttons\.appendChild\([^\n]*inBrowser\(preset""");
         script.ShouldMatch("""if \(!lacks\) \{\s*actions\.appendChild\([^\n]*inBrowser\(preset\)[^\n]*\n\s*actions\.appendChild\([^\n]*inEditor\(preset\)""");
         script.ShouldContain("download it to open it in Flyback.");
     }
