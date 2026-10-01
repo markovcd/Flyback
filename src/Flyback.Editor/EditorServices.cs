@@ -1,3 +1,4 @@
+using System.Net;
 using Flyback.App.Assist;
 using Flyback.App.Audio;
 using Flyback.App.Bars;
@@ -76,8 +77,14 @@ internal static class EditorServices
         services.AddSingleton(setup.Usage);
         services.AddSingleton(setup.Plugins);
 
-        // Long enough for a plugin to download.
-        services.AddHttpClient(SiteAccess.Client, http => http.Timeout = TimeSpan.FromMinutes(5));
+        // Long enough for a plugin to download. The site packs a preset with brotli; a page's browser unpacks for itself.
+        var site = services.AddHttpClient(SiteAccess.Client, http => http.Timeout = TimeSpan.FromMinutes(5));
+
+        if (!OperatingSystem.IsBrowser())
+            site.ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                AutomaticDecompression = DecompressionMethods.Brotli | DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            });
 
         services.AddSingleton<IlCompiler>();
 
