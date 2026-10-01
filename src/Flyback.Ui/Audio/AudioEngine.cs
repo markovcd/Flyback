@@ -155,10 +155,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public void Start()
     {
-        if (current.IsRunning) return;
-
-        current.Start(Fill);
-        Lead(Live);
+        if (!current.IsRunning) current.Start(Fill);
     }
 
     public void Stop() => current.Stop();
@@ -276,7 +273,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
     }
 
     /// <summary>How far ahead of the speakers the program runs, for a Clock In to make up.</summary>
-    /// <remarks>Read again at each start, because a device knows its buffer only once it is open.</remarks>
+    /// <remarks>Read again for every buffer, because a device knows what it queues only once it plays.</remarks>
     private void Lead(LiveValues live) => live.Set(MidiSignal.LeadKey, (float)current.Latency.TotalSeconds);
 
     /// <summary>
@@ -423,6 +420,7 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         {
             var started = Stopwatch.GetTimestamp();
 
+            Lead(state.Live);
             state.Renderer.Render(state.Program, buffer, state.Memory, state.Live);
 
             // The interpreter an edit plays on until its IL arrives is slow by design, and says nothing of the machine.

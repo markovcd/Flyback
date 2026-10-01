@@ -360,7 +360,7 @@ public class AudioEngineTests
 
     /// <summary>
     /// A Clock In runs ahead by the speakers' latency, which a device can only
-    /// say for certain once it is open.
+    /// say for certain once it plays, and which can move while it does.
     /// </summary>
     [Fact]
     public void AClockInIsToldHowFarBehindTheSpeakersRun()
@@ -376,9 +376,10 @@ public class AudioEngineTests
         engine.Update(builder.Patch);
         engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.02f);
 
-        device.Latency = TimeSpan.FromMilliseconds(30);
         engine.Start();
-        engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.03f);
+        device.Latency = TimeSpan.FromMilliseconds(12);
+        device.Pump();
+        engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.012f);
     }
 
     /// <summary>

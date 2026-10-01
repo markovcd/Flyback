@@ -23,8 +23,20 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
 
     public bool IsRunning => activeOutput?.PlaybackState == PlaybackState.Playing;
 
-    /// <summary>The buffer WASAPI granted while playing, and the one asked for until then.</summary>
-    public TimeSpan Latency => activeOutput?.AverageLatency ?? TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
+    /// <summary>
+    /// What was still queued the last time WASAPI asked for more, which is how long
+    /// the first sample of a fill waits; the latency asked for until it has asked.
+    /// </summary>
+    /// <remarks>
+    /// Measured rather than taken from the player: shared mode grants a buffer of its
+    /// own choosing whatever is asked for, and reports no stream latency to add to it.
+    /// </remarks>
+    public TimeSpan Latency => Volatile.Read(ref queued) is >= 0 and var ticks
+        ? TimeSpan.FromTicks(ticks)
+        : TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
+
+    /// <summary>In ticks, or below nought before the first fill. Written by the playback thread.</summary>
+    private long queued = -1;
 
     /// <summary>
     /// Every output that could play right now, as the id Windows files it under and
@@ -122,10 +134,13 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
             .WithLatency(format.LatencyMilliseconds)
             .Build();
 
+        Volatile.Write(ref queued, -1);
+
         output.Init(new CallbackSampleProvider(
             WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, format.Channels),
             format.Channels,
-            playing!));
+            playing!,
+            () => Volatile.Write(ref queued, output.CurrentLatency.Ticks)));
 
         output.Play();
 
@@ -253,12 +268,15 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
     /// Hands NAudio's pull-model read straight to the callback. The buffer NAudio
     /// already owns is written in place, so this is allocation-free.
     /// </summary>
-    private sealed class CallbackSampleProvider(WaveFormat format, int channels, AudioCallback fill) : ISampleProvider
+    /// <param name="filling">Told before each fill, while what is queued is still what the fill will wait behind.</param>
+    private sealed class CallbackSampleProvider(WaveFormat format, int channels, AudioCallback fill, Action filling) : ISampleProvider
     {
         public WaveFormat WaveFormat => format;
 
         public int Read(Span<float> buffer)
         {
+            filling();
+
             // Whole frames only; a frame must never be split across calls.
             var count = buffer.Length - buffer.Length % channels;
             fill(buffer[..count]);
