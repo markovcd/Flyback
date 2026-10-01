@@ -106,7 +106,6 @@ public class DialogTests : UiTest
         var frame = All<Border>(Show(window, named)).Single(b => b.Name == "dialog");
         var scroller = All<ScrollViewer>(frame).First();
 
-        if (width > 0) Assert.Fail($"window {window.Bounds.Width} client {window.ClientSize} frame {frame.Bounds} min {frame.MinWidth} margin {frame.Margin}");
         frame.Bounds.Width.ShouldBeGreaterThanOrEqualTo(frame.MinWidth);
         frame.Bounds.Width.ShouldBeLessThanOrEqualTo(width);
         frame.Margin.Left.ShouldBeLessThan(40, "the margin should have given way");

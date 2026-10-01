@@ -85,6 +85,7 @@ internal static class SettingsDialog
         return new StackPanel
         {
             Spacing = 12,
+            MinWidth = Width,
             Margin = new Thickness(18, 4, 18, 18),
             Children = { tabs, divider, buttons },
         };
