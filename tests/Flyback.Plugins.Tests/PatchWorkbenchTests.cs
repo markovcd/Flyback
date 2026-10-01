@@ -1255,6 +1255,24 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
+    /// A model told only that a knob was refused goes on wiring the module it
+    /// thinks it has, so the refusal says the module never arrived.
+    /// </summary>
+    [Fact]
+    public async Task Adding_a_module_with_a_refused_knob_says_it_was_not_added()
+    {
+        var bench = Bench();
+
+        var added = await Call(bench, "add_module", """
+            {"type_id":"osc.sine","handle":"tone1","knobs":[{"port":"in","value":0.25}]}
+            """);
+
+        added.Ok.ShouldBeFalse();
+        added.Text.ShouldContain("tone1 was not added");
+        (await Call(bench, "connect", """{"from":"tone1","to":"output1","to_port":"left"}""")).Ok.ShouldBeFalse();
+    }
+
+    /// <summary>
     /// The bug this exists for. Compiling backwards from the screen means the video
     /// pass stops at the first line when there is no screen, so every edit on a patch
     /// built for the speakers came back "No issues." — however broken it was, and an

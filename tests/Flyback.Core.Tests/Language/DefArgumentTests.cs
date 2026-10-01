@@ -193,6 +193,12 @@ public class DefArgumentTests
             """).Code.ShouldBe(IssueCode.NoSocketFree);
 
     [Fact]
+    public void A_pipe_with_every_socket_given_is_told_to_write_an_underscore_for_one() =>
+        Refused("""
+            rings() |> color.hsv(hue: 0.6, saturation: 1, value: 0.1) |> out.color
+            """).Message.ShouldContain("'color.hsv(value: _)'");
+
+    [Fact]
     public void A_knob_statement_in_a_def_body_sets_the_knob()
     {
         var patch = Built("""

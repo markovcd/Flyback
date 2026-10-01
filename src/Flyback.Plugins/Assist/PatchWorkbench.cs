@@ -274,7 +274,7 @@ public sealed partial class PatchWorkbench
         List<(int Port, float Value)> settings = [];
 
         if (arguments.TryGetProperty("knobs", out var knobs) && Knobs(handle, def, knobs, settings) is { } refused)
-            return ToolOutcome.Refused(refused);
+            return ToolOutcome.Refused($"{refused} So {handle} was not added; add it again without that knob.");
 
         working.Nodes.Add(node);
         byHandle[handle] = node;

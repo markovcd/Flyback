@@ -140,6 +140,14 @@ public sealed class AskCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task It_says_up_front_what_the_assistant_can_take_in()
+    {
+        var (_, said, _) = await Ask("field.fbk", "a gray field");
+
+        said.ShouldContain("It cannot see the picture, and cannot hear the sound.");
+    }
+
+    [Fact]
     public async Task Every_tool_call_is_shown_with_its_arguments()
     {
         var (_, said, _) = await Ask("field.fbk", "a gray field");

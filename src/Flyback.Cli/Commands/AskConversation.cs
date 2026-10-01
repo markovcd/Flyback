@@ -100,6 +100,8 @@ internal sealed class AskConversation : IDisposable
 
         transcript.Clear();
 
+        var senses = assistant.Senses(config.Values);
+
         Emit("started", new
         {
             provider = assistant.Id,
@@ -107,9 +109,12 @@ internal sealed class AskConversation : IDisposable
             turn = started.Turns,
             turnLimit = limit,
             file = about.Into.FullName,
-        }, resuming is null
+            sees = senses.Vision,
+            hears = senses.Hearing.ToString().ToLowerInvariant(),
+        }, (resuming is null
             ? $"A new conversation with {assistant.Name} about {about.Name}."
-            : $"Carrying on the conversation with {assistant.Name} about {about.Name}, after {Writing.Count(started.Turns, "turn")}.");
+            : $"Carrying on the conversation with {assistant.Name} about {about.Name}, after {Writing.Count(started.Turns, "turn")}.")
+            + " " + Senses(senses));
 
         if (resuming is not null)
         {
@@ -131,6 +136,20 @@ internal sealed class AskConversation : IDisposable
         if (options.Briefing) Emit("briefing", new { text = started.Workbench.Briefing }, briefing);
 
         return (started, logging);
+    }
+
+    /// <summary>What it can take in, said before anything is asked, with the setting that would let it hear.</summary>
+    private string Senses(AssistantSenses senses)
+    {
+        var sees = senses.Vision ? "It sees the picture" : "It cannot see the picture";
+
+        if (senses.Hearing != Listener.None) return $"{sees} and hears the sound.";
+
+        var switchable = assistant.Form(config.Values).Any(field => field.Key == AssistantSchema.HearingKey);
+
+        return switchable
+            ? $"{sees}, and cannot hear the sound: --set {AssistantSchema.HearingKey}=true lets it."
+            : $"{sees}, and cannot hear the sound.";
     }
 
     /// <summary>One turn: asked, shown, and written back with the conversation where it was answered.</summary>

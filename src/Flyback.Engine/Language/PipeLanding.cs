@@ -38,8 +38,17 @@ internal sealed class PipeLanding
 
         var free = Enumerable.Range(0, def.Inputs.Count).Where(i => !taken.Contains(i)).ToList();
 
+        if (def.Inputs.Count == 0)
+            return Refused(IssueCode.NoSocketFree, $"'{def.Name}' takes nothing in, so nothing can be piped into it.");
+
         if (free.Count == 0)
-            return Refused(IssueCode.NoSocketFree, $"'{def.Name}' has no socket free for what is arriving.");
+        {
+            var last = def.Inputs[^1].Name.Replace(' ', '_');
+
+            return Refused(IssueCode.NoSocketFree,
+                $"'{def.Name}' has no socket free for what is arriving: every one is given ({list(def.Inputs)}). "
+                + $"Write '_' for the one the pipe fills, such as '{expr.Target}({last}: _)', or drop the pipe.");
+        }
 
         var position = def.Inputs.Count >= 2
             && Binder.Same(def.Inputs[0].Name, "x")
