@@ -10,8 +10,12 @@ namespace Flyback.App.Controls;
 /// <summary>
 /// A strip from nought to <see cref="Maximum"/> seconds with a thumb at <see cref="Value"/>,
 /// pressed or dragged anywhere along it to say where the clock should be. Drawn the way
-/// the knobs are: in the toolbar's colors, or over a picture as light strokes on dark ones.
+/// the knobs are: in the transport row's colors, or over a picture as light strokes on dark ones.
 /// </summary>
+/// <remarks>
+/// Off the picture it also takes the keys: the arrows step it, Home and End go to either
+/// end. A mouse over it is told the time under the pointer; a finger is not, having no hover.
+/// </remarks>
 internal sealed class SeekTrack : Control
 {
     public static readonly StyledProperty<double> ValueProperty =
@@ -24,6 +28,9 @@ internal sealed class SeekTrack : Control
     private const double Inset = 7;
 
     private const double Thumb = 5;
+
+    /// <summary>How far an arrow key moves the thumb, in seconds.</summary>
+    public const double Step = 5;
 
     private static readonly IPen BarTrack = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator), 3.5, lineCap: PenLineCap.Round);
     private static readonly IPen BarTravel = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Attention), 3.5, lineCap: PenLineCap.Round);
@@ -42,13 +49,25 @@ internal sealed class SeekTrack : Control
         AffectsRender<SeekTrack>(ValueProperty, MaximumProperty);
     }
 
-    /// <param name="stage">Drawn to stand over a picture rather than on the toolbar.</param>
+    /// <param name="stage">Drawn to stand over a picture rather than on the transport row.</param>
     public SeekTrack(bool stage = false)
     {
         this.stage = stage;
 
         Height = stage ? 40 : 30;
         Cursor = new Cursor(StandardCursorType.Hand);
+        Focusable = !stage;
+    }
+
+    /// <summary>What the strip is for, said in its tip under the time a mouse points at.</summary>
+    public string? Explanation
+    {
+        get;
+        set
+        {
+            field = value;
+            ToolTip.SetTip(this, value);
+        }
     }
 
     /// <summary>Where the thumb is, in seconds. Setting it moves the thumb and says nothing.</summary>
@@ -127,6 +146,43 @@ internal sealed class SeekTrack : Control
         base.OnPointerMoved(e);
 
         if (Held) Seek(e.GetPosition(this));
+        else if (!stage && e.Pointer.Type == PointerType.Mouse)
+            ToolTip.SetTip(this, $"{StatusClock.Text(SecondsAt(e.GetPosition(this)))}{Environment.NewLine}{Explanation}");
+    }
+
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+
+        if (!stage) ToolTip.SetTip(this, Explanation);
+    }
+
+    /// <summary>A press hands the keys back to whatever had them; only Tab leaves them here.</summary>
+    protected override void OnGotFocus(FocusChangedEventArgs e)
+    {
+        base.OnGotFocus(e);
+
+        if (e.NavigationMethod == NavigationMethod.Pointer && e.OldFocusedElement is { } before) before.Focus();
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        double? to = e.Key switch
+        {
+            Key.Left or Key.Down => Value - Step,
+            Key.Right or Key.Up => Value + Step,
+            Key.Home => 0,
+            Key.End => Maximum,
+            _ => null,
+        };
+
+        if (to is not { } seconds) return;
+
+        Value = Math.Clamp(seconds, 0, Maximum);
+        Sought?.Invoke(Value);
+        e.Handled = true;
     }
 
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
@@ -147,10 +203,17 @@ internal sealed class SeekTrack : Control
         Held = false;
     }
 
-    private void Seek(Point to)
+    /// <summary>The seconds a point along the strip stands for.</summary>
+    private double SecondsAt(Point at)
     {
         var width = Bounds.Width - 2 * Inset;
-        var seconds = width > 0 ? Math.Clamp((to.X - Inset) / width, 0, 1) * Maximum : 0;
+
+        return width > 0 ? Math.Clamp((at.X - Inset) / width, 0, 1) * Maximum : 0;
+    }
+
+    private void Seek(Point to)
+    {
+        var seconds = SecondsAt(to);
 
         Value = seconds;
         Sought?.Invoke(seconds);

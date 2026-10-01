@@ -8,8 +8,8 @@ Feature: The editor in a page offers only what a page can do
     Given a rainbow across the screen
     And the editor is in a page
     And the patch is open in the editor
-    Then the toolbar has none of "open, save, record, assistant, settings, plugins, about"
-    And the toolbar still has "undo, redo, tidy, code, controls, swap, side, pause, rewind, view-it"
+    Then the toolbar has none of "open, save, assistant, settings, plugins, about"
+    And the toolbar still has "undo, redo, tidy, code, controls, swap, side, transport, view-it"
 
   Scenario: A page's toolbar leads with the Flyback mark, which goes back to the site
     Given a rainbow across the screen

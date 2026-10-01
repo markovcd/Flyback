@@ -244,6 +244,76 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             .Select(b => b.Name)
             .ToList());
 
+    /// <summary>How many rows the toolbar's shown buttons stand in.</summary>
+    public int ToolbarRows => ReadWindow(open =>
+    {
+        var bar = Service<Toolbar>().View;
+
+        return bar.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.IsEffectivelyVisible)
+            .Select(b => Math.Round(b.TranslatePoint(default, bar)!.Value.Y / 10))
+            .Distinct()
+            .Count();
+    });
+
+    /// <summary>The names of the transport row's shown buttons, left to right.</summary>
+    public IReadOnlyList<string?> TransportButtons => ReadWindow(_ =>
+        Service<TransportRow>().View.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.IsEffectivelyVisible)
+            .Select(b => b.Name)
+            .ToList());
+
+    /// <summary>The names of the transport row's shown buttons that are not wholly inside the window, or smaller than a finger.</summary>
+    public IReadOnlyList<string?> TransportButtonsOutOfReach => ReadWindow(open =>
+        Service<TransportRow>().View.GetVisualDescendants().OfType<Button>()
+            .Where(b => b.IsEffectivelyVisible
+                        && (!Inside(open, b) || b.Bounds.Width < TransportRow.Reach || b.Bounds.Height < TransportRow.Reach))
+            .Select(b => b.Name)
+            .ToList());
+
+    /// <summary>How wide the seek bar is laid out.</summary>
+    public double SeekBarWidth => ReadWindow(open => SeekBar(open).Bounds.Width);
+
+    /// <summary>Whether the transport row is shown, and whether the playhead line standing in for it is.</summary>
+    public (bool Row, bool Line) TransportShown => ReadWindow(open =>
+        (Named<Border>(open, "transport").IsEffectivelyVisible, Service<TransportRow>().Seek.Line.IsEffectivelyVisible));
+
+    /// <summary>Whether what the transport row folds away while narrow is on the screen, behind its button or in the row.</summary>
+    public bool LengthOnScreen => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TextBox>().FirstOrDefault(b => b.Name == "seekLength") is { IsEffectivelyVisible: true } box
+        && Inside(open, box));
+
+    /// <summary>Opens what the narrow transport row keeps behind its button.</summary>
+    public void OpenTransportMore() =>
+        DoWindow((open, _) =>
+        {
+            var more = Named<Button>(open, "transport-more");
+
+            (more.Flyout ?? throw new InvalidOperationException("the transport row's button opens nothing")).ShowAt(more);
+        });
+
+    /// <summary>How tall the canvas is laid out.</summary>
+    public double CanvasHeight => Read(canvas => canvas.Bounds.Height);
+
+    /// <summary>Presses a finger on the seek bar where <paramref name="from"/> falls, slides it to <paramref name="to"/>, and lifts it.</summary>
+    public void SlideFingerAlongSeekBar(double from, double to) =>
+        DoWindow((open, _) =>
+        {
+            var bar = SeekBar(open);
+            var finger = new Pointer(Pointer.GetNextFreeId(), PointerType.Touch, true);
+            var down = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+            var moving = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.Other);
+            var up = new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.LeftButtonReleased);
+            Point On(double seconds) => bar.TranslatePoint(bar.At(seconds), open)!.Value;
+
+            bar.RaiseEvent(new PointerPressedEventArgs(bar, finger, open, On(from), 1_000, down, KeyModifiers.None));
+
+            for (var step = 1; step <= 4; step++)
+                bar.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, bar, finger, open, On(from + (to - from) * step / 4), 1_000 + (ulong)step * 10, moving, KeyModifiers.None));
+
+            bar.RaiseEvent(new PointerReleasedEventArgs(bar, finger, open, On(to), 1_100, up, KeyModifiers.None, MouseButton.Left));
+        });
+
     /// <summary>Whether the button the module panel names <paramref name="name"/> is shown and wholly inside the window.</summary>
     public bool PanelButtonOnScreen(string name) => ReadWindow(open =>
         open.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Name == name) is { IsEffectivelyVisible: true } button
@@ -519,7 +589,7 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public double Clock => ReadWindow(open => open.GetVisualDescendants().OfType<PreviewHost>().First().Time);
 
     /// <summary>Whether the toolbar offers to play rather than to pause.</summary>
-    public bool Paused => ReadWindow(open => ToolTip.GetTip(Named<Button>(open, "pause")) as string == Toolbar.PlayTip);
+    public bool Paused => ReadWindow(open => ToolTip.GetTip(Named<Button>(open, "pause")) as string == TransportRow.PlayTip);
 
     /// <summary>The names of the buttons on the toolbar, left to right.</summary>
     public IReadOnlyList<string?> ToolbarButtons => ReadWindow(_ =>

@@ -236,4 +236,29 @@ public sealed class WindowLayoutTests : UiTest
 
         File.Exists(layoutPath).ShouldBeFalse();
     }
+
+    [AvaloniaFact]
+    public void A_transport_row_put_away_stays_away()
+    {
+        var window = Open();
+
+        Button(window, "transport").IsChecked = false;
+        Settle(window);
+
+        Left(window, layoutPath).TransportOpen.ShouldBeFalse();
+
+        var again = Open();
+
+        Button(again, "transport").IsChecked.ShouldBe(false);
+        All<Border>(again).Single(b => b.Name == "transport").IsVisible.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void A_layout_from_before_the_transport_row_shows_it()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(layoutPath)!);
+        File.WriteAllText(layoutPath, """{ "sideOpen": true, "controlsOpen": false }""");
+
+        WindowLayout.Load(layoutPath).ShouldNotBeNull().TransportOpen.ShouldBeTrue();
+    }
 }

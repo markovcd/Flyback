@@ -28,14 +28,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         "Lay the modules out so the patch reads left to right  (Ctrl+L). "
         + "Ctrl+click lays out only what is selected, leaving the rest where it is  (Ctrl+Shift+L)";
 
-    public const string PauseTip = "Pause the patch, in the picture and in the sound.  (Ctrl+P)";
-
-    public const string PlayTip = "Play the patch on from where it stopped.  (Ctrl+P)";
-
-    /// <summary>What the rewind button does.</summary>
-    public const string RewindTip =
-        "Take the patch back to zero seconds, in the picture and in the sound.";
-
     /// <summary>What the swap button says while it can be pressed.</summary>
     public const string SwapTip =
         "Swap the preview and the canvas, for a bigger picture while you patch.";
@@ -97,26 +89,9 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// <summary>Puts the column beside the canvas away and gives the canvas its width. Disabled while swapped.</summary>
     public ToggleButton Side { get; } = ToolbarButtons.Toggle("side", Glyphs.Side(), SideTip);
 
-    public Button Pause { get; } = new();
-
-    /// <summary>
-    /// Takes the patch back to zero seconds, in the picture and in the sound.
-    /// Beside Record rather than on the Output's panel — ADR-0081, the same move
-    /// ADR-0080 made for Record.
-    /// </summary>
-    public Button Rewind { get; } = new();
-
-    /// <summary>The patch's clock, to drag anywhere along a length the user sets.</summary>
-    public SeekBar Seek { get; }
-
-    /// <summary>The Output's Volume, where it can be reached with nothing selected.</summary>
-    public VolumeSlider Volume { get; }
-
-    /// <summary>
-    /// Starts and stops a take (ADR-0080). Its glyph swaps between the dot and the
-    /// square rather than its label, since a toolbar button here carries no text.
-    /// </summary>
-    public Button Record { get; } = new();
+    /// <summary>Shows the transport row along the foot of the window, or gives its height to the canvas.</summary>
+    public ToggleButton Transport { get; } =
+        ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop, Volume and record.");
 
     public ToggleButton Assistant { get; } =
         ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
@@ -137,12 +112,10 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// <param name="plugins">Whether any assistant plugin is installed.</param>
     /// <param name="recording">Whether a take is running, which no other patch may be opened under.</param>
     /// <param name="host">Whether the editor is in a page, whose bar has none of what a page cannot do.</param>
-    public Toolbar(PresetSlot presets, PluginCatalog plugins, SeekBar seek, VolumeSlider volume, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
+    public Toolbar(PresetSlot presets, PluginCatalog plugins, Reactions reactions, IDialog dialog, RecordingState recording, EditorHost host)
     {
         var full = !host.InPage;
 
-        Seek = seek;
-        Volume = volume;
         this.recording = recording;
 
         Open.Click += (_, _) => reactions.Raise(new OpenAsked());
@@ -157,9 +130,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Side.IsChecked = true;
         Side.IsCheckedChanged += (_, _) => reactions.Raise(new SideAsked(Side.IsChecked == true));
         Swap.IsCheckedChanged += (_, _) => reactions.Raise(new SwapAsked(Swap.IsChecked == true));
-        Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
-        Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
-        Record.Click += (_, _) => reactions.Raise(new RecordAsked());
+        Transport.IsChecked = true;
+        Transport.IsCheckedChanged += (_, _) => reactions.Raise(new TransportAsked(Transport.IsChecked == true));
         Assistant.IsCheckedChanged += (_, _) => reactions.Raise(new AssistantAsked(Assistant.IsChecked == true));
         Settings.Click += (_, _) => reactions.Raise(new SettingsAsked());
         Plugins.Click += (_, _) => reactions.Raise(new PluginsAsked());
@@ -170,12 +142,10 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
         // A locked canvas says why in its tip, and that is wasted unless a
         // disabled button is still allowed to show it. The same for a patch with
-        // no picture to swap in, for a side column the canvas is standing in, and
-        // for Record grayed out during a take.
+        // no picture to swap in, and for a side column the canvas is standing in.
         ToolTip.SetShowOnDisabled(Tidy, true);
         ToolTip.SetShowOnDisabled(Swap, true);
         ToolTip.SetShowOnDisabled(Side, true);
-        ToolTip.SetShowOnDisabled(Record, true);
 
         // A Click says which button was pressed and nothing about what was held
         // down while it was, so that is read on the way in. The key offers both
@@ -193,12 +163,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
             reactions.Raise(new TidyAsked(OnlySelected: (modifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0));
             modifiers = KeyModifiers.None;
         };
-
-        // What the record tip actually says is decided per patch by
-        // TakeRecording.Mark, which runs before this is ever shown.
-        ToolbarButtons.Marked(Record, "record", Glyphs.Record(), TakeRecording.RecordTip);
-        ToolbarButtons.Marked(Pause, "pause", Glyphs.Pause(), PauseTip);
-        ToolbarButtons.Marked(Rewind, "rewind", Glyphs.Rewind(), RewindTip);
 
         Assistant.IsEnabled = assistants;
         ToolTip.SetTip(Assistant, assistants
@@ -236,17 +200,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         patchwork.Children.Add(Knobs);
         patchwork.Children.Add(Swap);
         patchwork.Children.Add(Side);
-
-        // On its own, between what is done to the patch and what is done to
-        // the program: pausing, rewinding, seeking and recording are neither — all are
-        // facts about the performance, not an edit Ctrl+Z takes back. Volume is an
-        // edit, and sits here because this is where the sound is looked for.
-        var transport = ToolbarButtons.Group();
-        transport.Children.Add(Pause);
-        transport.Children.Add(Rewind);
-        transport.Children.Add(Seek.View);
-        transport.Children.Add(Volume.View);
-        if (full) transport.Children.Add(Record);
+        patchwork.Children.Add(Transport);
 
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
@@ -266,8 +220,6 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         var bar = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
 
         bar.Children.Add(patchwork);
-        bar.Children.Add(ToolbarButtons.Separator());
-        bar.Children.Add(transport);
 
         if (full)
         {

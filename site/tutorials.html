@@ -133,7 +133,7 @@
         </a>
       </div>
       <figcaption>The Plasma preset. The status bar counts the compiled instructions the picture and the sound each run, says how many times real
-      time the sound renders at, and shows the time, the frame rate and what draws the preview: OpenGL, Direct3D or the CPU. The envelope at its right
+      time the sound renders at, and shows the frame rate and what draws the preview: OpenGL, Direct3D or the CPU. The envelope at its right
       end writes to Flyback&rsquo;s author &mdash; anything you like, good or bad.</figcaption>
     </figure>
 
@@ -153,17 +153,28 @@
           <tr><td>Knobs</td><td>Shows the knob panel under the canvas. <kbd>Ctrl</kbd>+<kbd>K</kbd>.</td></tr>
           <tr><td>Swap</td><td>Trades the preview and the canvas, for a bigger picture while you patch.</td></tr>
           <tr><td>Side</td><td>Puts the preview and the inspector away and gives the canvas their width, or brings them back. It stays while the canvas is swapped into their column. On a screen too narrow for both, it shows them in the canvas&rsquo;s place, and the canvas again.</td></tr>
-          <tr><td>Pause, Rewind</td><td>Holds the picture and the sound where they are, or plays on (<kbd>Ctrl</kbd>+<kbd>P</kbd>); sets the clock back to zero.</td></tr>
-          <tr><td>Seek bar</td><td>Where the patch's clock is. Click or drag along it to move the picture and the sound there, paused or playing. The box beside it is how long the patch plays, in seconds or minutes:seconds to a hundredth, and is saved with it; empty it to take the length away. A patch that does not say plays three minutes here, and plays on in the viewer. The patch stops at the end, and ⟲ plays that length round and round instead.</td></tr>
-          <tr><td>Volume</td><td>The Output's Volume, turned from here with nothing selected, and taken back with <kbd>Ctrl</kbd>+<kbd>Z</kbd> like any edit. All the way down closes the speakers. Grayed out while a wire or a panel knob drives it.</td></tr>
-          <tr><td>Record</td><td>Starts or stops a live recording, counted in as the Recording settings say (<kbd>Ctrl</kbd>+<kbd>R</kbd>).</td></tr>
+          <tr><td>Transport</td><td>Puts the transport row away and gives its height to the canvas, leaving a thin line along the foot of the window that shows where the patch is; or brings the row back.</td></tr>
           <tr><td>Settings, Plugins, About</td><td>The settings window, what is installed and what failed to load, and the version and license.</td></tr>
         </tbody>
       </table>
     </div>
 
+    <div class="scroll">
+      <table>
+        <caption>The transport row along the foot of the window, left to right. Every button in it is big enough for a finger.</caption>
+        <thead><tr><th scope="col">Control</th><th scope="col">What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Pause, Rewind</td><td>Holds the picture and the sound where they are, or plays on (<kbd>Ctrl</kbd>+<kbd>P</kbd>); sets the clock back to zero.</td></tr>
+          <tr><td>Seek bar</td><td>Where the patch's clock is, with the time beside it. Click, drag or slide a finger along it to move the picture and the sound there, paused or playing; a mouse over it is told the time under the pointer, and once <kbd>Tab</kbd> reaches it the arrow keys step it five seconds and <kbd>Home</kbd> and <kbd>End</kbd> go to either end. The box beside it is how long the patch plays, in seconds or minutes:seconds to a hundredth, and is saved with it; empty it to take the length away. A patch that does not say plays three minutes here, and plays on in the viewer. The patch stops at the end, and ⟲ plays that length round and round instead.</td></tr>
+          <tr><td>Volume</td><td>The Output's Volume, turned from here or with the mouse wheel over it, with nothing selected, and taken back with <kbd>Ctrl</kbd>+<kbd>Z</kbd> like any edit. All the way down closes the speakers. Grayed out while a wire or a panel knob drives it.</td></tr>
+          <tr><td>Record</td><td>Starts or stops a live recording, counted in as the Recording settings say (<kbd>Ctrl</kbd>+<kbd>R</kbd>).</td></tr>
+          <tr><td>&middot;&middot;&middot;</td><td>On a screen narrower than 560 pixels, the length, the loop and Volume wait behind this button, so the seek bar keeps its room.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <p>Double-click the preview to give it the whole window; double-click again or press <kbd>Esc</kbd> to come
-    back. Hover the top middle of the full-screen picture for the transport, in the toolbar's order: pause, rewind,
+    back. Hover the top middle of the full-screen picture for the transport, in the transport row's order: pause, rewind,
     the seek bar, loop and, for a patch with sound, the sound. Press
     <kbd>F3</kbd> for a line in its top left corner saying how many frames a second it draws, what each costs, what the picture and the sound each run and, for a
     patch with sound, how far it is oversampled. A patch

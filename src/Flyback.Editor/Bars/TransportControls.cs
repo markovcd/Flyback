@@ -1,3 +1,4 @@
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Flyback.App.Capture;
 using Flyback.App.Controls;
@@ -8,10 +9,10 @@ using Flyback.App.Windows;
 namespace Flyback.App.Bars;
 
 /// <summary>
-/// Play and pause, and the mute that goes with them, on the toolbar and on the
+/// Play and pause, and the mute that goes with them, on the transport row and on the
 /// pictures that have a window of their own or all of this one.
 /// </summary>
-internal sealed class TransportControls(Playback playback, Toolbar toolbar, TakeRecording recording, Usage usage)
+internal sealed class TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage)
     : IReactTo<TakeMarked>, IReactTo<TransportChanged>, IReactTo<PauseAsked>
 {
     private bool pauseShowsPlay;
@@ -70,13 +71,14 @@ internal sealed class TransportControls(Playback playback, Toolbar toolbar, Take
         if (pauseShowsPlay != paused)
         {
             pauseShowsPlay = paused;
-            toolbar.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
+            row.Pause.Content = paused ? Glyphs.Play() : Glyphs.Pause();
+            AutomationProperties.SetName(row.Pause, paused ? "Play" : "Pause");
         }
 
-        toolbar.Pause.IsEnabled = recording is { InHand: false, Counting: false };
-        toolbar.Seek.IsEnabled = toolbar.Pause.IsEnabled;
+        row.Pause.IsEnabled = recording is { InHand: false, Counting: false };
+        row.Seek.IsEnabled = row.Pause.IsEnabled;
 
-        ToolTip.SetTip(toolbar.Pause, paused ? Toolbar.PlayTip : Toolbar.PauseTip);
+        ToolTip.SetTip(row.Pause, paused ? TransportRow.PlayTip : TransportRow.PauseTip);
 
         foreach (var overlay in Overlays)
         {

@@ -27,7 +27,7 @@ internal static class InspectorHelp
     private static string Program(bool keys) =>
         (keys ? "Open and Save are on the toolbar, and on Ctrl+O and Ctrl+S.\n\n" : "Open and Save are on the toolbar.\n\n")
         + "The preview size and the renderer are in Settings, on the toolbar.\n\n"
-        + "Record, on the toolbar, writes what the patch is doing to a file — "
+        + "Record, at the right of the row along the foot of the window, writes what the patch is doing to a file — "
         + (keys ? "knobs and all, as it happens. Ctrl+R starts and stops it.\n\n" : "knobs and all, as it happens.\n\n");
 
     /// <summary>How a finger adds and edits a module, once one has touched the canvas.</summary>

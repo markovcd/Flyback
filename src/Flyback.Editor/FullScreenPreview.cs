@@ -31,6 +31,7 @@ internal sealed class FullScreenPreview(
     IAudioEngine audio,
     PanelKnobs knobs,
     Toolbar toolbar,
+    TransportRow row,
     StatusBar statusBar,
     NodeEditor editor,
     Playback playback,
@@ -146,7 +147,7 @@ internal sealed class FullScreenPreview(
         window.Transport.MuteClicked += playback.ToggleMute;
         window.Transport.RewindClicked += playback.RewindPressed;
 
-        toolbar.Seek.Drive(window.Transport);
+        row.Seek.Drive(window.Transport);
         TransportOverlay.Lay(settings.Current.Transport, window.Transport, window.Knobs);
 
         window.PauseRequested += (_, _) => transport.TogglePause();
@@ -165,7 +166,7 @@ internal sealed class FullScreenPreview(
 
         transport.PictureWindow = null;
         knobs.Away = null;
-        toolbar.Seek.Drop(window.Transport);
+        row.Seek.Drop(window.Transport);
 
         preview.Renew();
         previewBox.Child = preview;
@@ -192,6 +193,7 @@ internal sealed class FullScreenPreview(
         else Restore();
 
         toolbar.View.IsVisible = !full;
+        row.View.IsVisible = !full;
         statusBar.View.IsVisible = !full;
 
         // Remembered, since the assistant and the knobs stand in this grid and

@@ -59,7 +59,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
     private const string StillFinishing = "The last take is still being written.";
 
-    /// <summary>The toolbar button that starts a take, calls off its count and ends it.</summary>
+    /// <summary>The transport row's button that starts a take, calls off its count and ends it.</summary>
     private readonly Button button;
 
     /// <summary>
@@ -111,7 +111,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     private bool gone;
 
     public TakeRecording(
-        Toolbar toolbar,
+        TransportRow row,
         OutputSections sections,
         PreviewHost preview,
         IAudioEngine audio,
@@ -125,7 +125,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         IFilePickers pickers,
         Reactions reactions)
     {
-        button = toolbar.Record;
+        button = row.Record;
         this.reactions = reactions;
 
         // A capture cannot continue after its picture disappears.

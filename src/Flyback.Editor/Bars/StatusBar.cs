@@ -138,7 +138,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
         View.DetachedFromVisualTree += (_, _) => ticker.Stop();
     }
 
-    /// <summary>Says what the patch costs and where its clock is.</summary>
+    /// <summary>Says what the patch costs.</summary>
     internal void Update()
     {
         var pictureOps = preview.Program.Ops.Length;
@@ -160,7 +160,7 @@ internal sealed class StatusBar : IReactTo<PatchStarting>
 
         status.Text = string.Create(
             CultureInfo.InvariantCulture,
-            $"{pictureOps}/{soundOps} picture/sound ops{sound}   |   t = {StatusClock.Text(preview.Time)}   |   {preview.FramesPerSecond:0} fps{renderer}");
+            $"{pictureOps}/{soundOps} picture/sound ops{sound}   |   {preview.FramesPerSecond:0} fps{renderer}");
     }
 
     private static Button Glyph(string name, Control glyph, string tip)

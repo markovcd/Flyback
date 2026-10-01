@@ -85,6 +85,9 @@ internal static class Glyphs
     /// <summary>A window with its right-hand column marked off: the column beside the canvas.</summary>
     public static Control Side() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M10,3 L10,13");
 
+    /// <summary>A window with a row marked off along its foot, and the playhead on it: the transport row.</summary>
+    public static Control Transport() => Stroked("M2,3 L14,3 L14,13 L2,13 Z M2,9.5 L14,9.5 M7,9.5 L7,13");
+
     /// <summary>Two arrows passing each other: the picture and the canvas trading places.</summary>
     public static Control Swap() => Stroked(SwapPath);
 

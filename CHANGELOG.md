@@ -9,6 +9,10 @@
 - A rate limit that resets within a minute is waited out rather than ending the turn.
 - A pipe into a module whose sockets are all given says to write `_` for the one it fills.
 
+### Editor
+
+- Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away; the toolbar keeps one row down to 730 pixels.
+
 ### Web
 
 - The web viewer's panel of knobs is capped at a third of the window and scrolls, and its top edge is dragged (or moved with the arrow keys) to make it taller or shorter, so a patch with many knobs no longer covers the picture; the height is kept.

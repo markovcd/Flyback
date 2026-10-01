@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -12,7 +13,7 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Bars;
 
 /// <summary>
-/// The patch's clock as a strip on the toolbar: where it is, and a thumb to drag it
+/// The patch's clock on the transport row: where it is, and a thumb to drag it
 /// anywhere from zero to the patch's length, typed in the box beside it. At the end
 /// the patch stops, or comes round to zero where the loop switch is on. An empty box
 /// is no length, which the editor plays as <see cref="Patch.DefaultLength"/>.
@@ -46,14 +47,27 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         Track = new SeekTrack
         {
             Name = "seek",
-            Width = 180,
+            Height = TransportRow.Reach,
+            MinWidth = 120,
             Maximum = playback.Length,
             VerticalAlignment = VerticalAlignment.Center,
+            Explanation = "Press or drag to move the patch's clock, in the picture and in the sound.",
         };
 
         Track.Sought += Seek;
 
-        ToolTip.SetTip(Track, "Drag to move the patch's clock, in the picture and in the sound.");
+        Position = new TextBlock
+        {
+            Name = "seekPosition",
+            Text = StatusClock.Text(0),
+            FontSize = Text.Body,
+            FontFeatures = [FontFeature.Parse("tnum")],
+            MinWidth = 52,
+            TextAlignment = TextAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        Line = new PlayheadLine { Maximum = playback.Length };
 
         Length = new TextBox
         {
@@ -88,22 +102,17 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
             editor.Focus();
         };
 
-        View = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 6,
-            VerticalAlignment = VerticalAlignment.Center,
-            Children = { Track, Length, Loop },
-        };
-
         var ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = Follow };
         ticker.Tick += (_, _) => Update();
-        View.AttachedToVisualTree += (_, _) => ticker.Start();
-        View.DetachedFromVisualTree += (_, _) => ticker.Stop();
+        Track.AttachedToVisualTree += (_, _) => ticker.Start();
+        Track.DetachedFromVisualTree += (_, _) => ticker.Stop();
     }
 
-    /// <summary>The bar and its length.</summary>
-    public StackPanel View { get; }
+    /// <summary>Where the clock is, in minutes and seconds.</summary>
+    public TextBlock Position { get; }
+
+    /// <summary>The clock as a drawn line, for when the row is hidden.</summary>
+    public PlayheadLine Line { get; }
 
     /// <summary>The strip the thumb runs along.</summary>
     public SeekTrack Track { get; }
@@ -117,10 +126,10 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     /// <summary>Whether the bar can be used: not during a take, which is paced by its own samples.</summary>
     public bool IsEnabled
     {
-        get => View.IsEnabled;
+        get => Track.IsEnabled;
         set
         {
-            View.IsEnabled = value;
+            Track.IsEnabled = Length.IsEnabled = Loop.IsEnabled = value;
             foreach (var overlay in overlays) overlay.CanSeek = value;
         }
     }
@@ -131,7 +140,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         if (overlays.Contains(overlay)) return;
 
         overlays.Add(overlay);
-        overlay.CanSeek = View.IsEnabled;
+        overlay.CanSeek = IsEnabled;
         overlay.Sought += Seek;
         overlay.LoopClicked += FlipLoop;
         Update();
@@ -155,13 +164,14 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
     {
         if (Held) return;
 
-        if (View.IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
+        if (IsEnabled && !playback.Paused && preview.Time >= Track.Maximum)
         {
             if (Loop.IsChecked == true) playback.Rewind();
             else playback.Pause();
         }
 
-        Track.Value = Math.Min(preview.Time, Track.Maximum);
+        Track.Value = Line.Value = Math.Min(preview.Time, Track.Maximum);
+        Position.Text = StatusClock.Text(preview.Time);
 
         foreach (var overlay in overlays) overlay.Follow(preview.Time, Track.Maximum, Loop.IsChecked == true);
     }
@@ -171,7 +181,11 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
 
     private void Seek(double seconds)
     {
-        if (View.IsEnabled) playback.SeekTo(seconds);
+        if (!IsEnabled) return;
+
+        playback.SeekTo(seconds);
+        Line.Value = seconds;
+        Position.Text = StatusClock.Text(seconds);
     }
 
     private void FlipLoop() => Loop.IsChecked = Loop.IsChecked != true;
@@ -185,7 +199,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
 
     private void Measure()
     {
-        Track.Maximum = playback.Length;
+        Track.Maximum = Line.Maximum = playback.Length;
         if (!Length.IsFocused) Length.Text = Said();
     }
 
@@ -208,7 +222,7 @@ internal sealed class SeekBar : IReactTo<PatchCompiled>
         }
 
         Length.Text = Said();
-        Track.Maximum = playback.Length;
+        Track.Maximum = Line.Maximum = playback.Length;
         Update();
     }
 }

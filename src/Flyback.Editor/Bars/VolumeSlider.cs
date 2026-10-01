@@ -3,6 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
@@ -11,8 +12,8 @@ using Flyback.Core.Graph;
 namespace Flyback.App.Bars;
 
 /// <summary>
-/// The Output's Volume on the toolbar, turned as its knob on the panel is: an edit,
-/// one step a drag. Grayed out while a wire or a panel knob drives it.
+/// The Output's Volume on the transport row, turned as its knob on the panel is: an edit,
+/// one step a drag or a notch of the wheel. Grayed out while a wire or a panel knob drives it.
 /// </summary>
 internal sealed class VolumeSlider : IReactTo<PatchChanged>
 {
@@ -65,9 +66,22 @@ internal sealed class VolumeSlider : IReactTo<PatchChanged>
             Orientation = Orientation.Horizontal,
             Spacing = 4,
             VerticalAlignment = VerticalAlignment.Center,
+            Background = Brushes.Transparent,
             Children = { speaker, Slider },
         };
+
+        View.PointerWheelChanged += (_, e) =>
+        {
+            if (!Slider.IsEffectivelyEnabled) return;
+
+            Slider.Value = Math.Clamp(Slider.Value + e.Delta.Y * WheelStep * (Slider.Maximum - Slider.Minimum), Slider.Minimum, Slider.Maximum);
+            LetGo();
+            e.Handled = true;
+        };
     }
+
+    /// <summary>How much of the slider's range one notch of a mouse wheel turns.</summary>
+    public const double WheelStep = 0.05;
 
     /// <summary>The speaker and the slider.</summary>
     public StackPanel View { get; }

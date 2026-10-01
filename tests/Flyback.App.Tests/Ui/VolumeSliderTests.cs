@@ -105,4 +105,24 @@ public sealed class VolumeSliderTests : UiTest
         Slider(window).IsEffectivelyEnabled.ShouldBeFalse();
         ToolTip.GetTip(Slider(window)).ShouldNotBe(VolumeSlider.Tip);
     }
+
+    [AvaloniaFact]
+    public void A_notch_of_the_wheel_over_it_turns_it_and_is_taken_back_like_any_edit()
+    {
+        var builder = new PatchBuilder();
+        builder.Wire(builder.Add("value"), 0, builder.Add(NodeCatalog.OutputTypeId), NodeCatalog.OutputLeftPort);
+
+        var window = Open(builder.Build());
+        var slider = Slider(window);
+        var was = Volume(window);
+
+        window.MouseWheel(At(window, 0.5), new Vector(0, -1));
+        Settle(window);
+
+        Volume(window).ShouldBe((float)(was - VolumeSlider.WheelStep * (slider.Maximum - slider.Minimum)), 0.0001f);
+
+        Undo(window);
+
+        Volume(window).ShouldBe(was);
+    }
 }

@@ -21,6 +21,7 @@ namespace Flyback.App;
 /// <summary>The editor's grid and the panels and views arranged in it.</summary>
 internal sealed class ShellLayout(
     Toolbar toolbar,
+    TransportRow row,
     StatusBar statusBar,
     NodeEditor editor,
     SourceView source,
@@ -44,7 +45,8 @@ internal sealed class ShellLayout(
         IReactTo<KnobsAsked>,
         IReactTo<SwapAsked>,
         IReactTo<AssistantAsked>,
-        IReactTo<SideAsked>
+        IReactTo<SideAsked>,
+        IReactTo<TransportAsked>
 {
     private Grid? columns;
     private Border? previewBox;
@@ -131,6 +133,12 @@ internal sealed class ShellLayout(
         return Task.CompletedTask;
     }
 
+    public Task On(TransportAsked notice)
+    {
+        row.Shown = notice.Shown;
+        return Task.CompletedTask;
+    }
+
     public Control Build()
     {
         editor.Tags.Types = assistant.Undescribed;
@@ -139,6 +147,7 @@ internal sealed class ShellLayout(
         lastPress.Watch(root);
         DockPanel.SetDock(toolbar.View, Dock.Top);
         DockPanel.SetDock(statusBar.View, Dock.Bottom);
+        DockPanel.SetDock(row.View, Dock.Bottom);
 
         columns = new Grid
         {
@@ -202,6 +211,7 @@ internal sealed class ShellLayout(
 
         root.Children.Add(toolbar.View);
         root.Children.Add(statusBar.View);
+        root.Children.Add(row.View);
         root.Children.Add(columns);
         fullScreen.ShowPreview = ShowPreview;
         return root;
@@ -372,7 +382,7 @@ internal sealed class ShellLayout(
         overlay.MuteClicked += playback.ToggleMute;
         overlay.RewindClicked += playback.RewindPressed;
         transport.Stats = new StatsOverlay(preview, audio, counted: true, () => playback.HasSound);
-        toolbar.Seek.Drive(overlay);
+        row.Seek.Drive(overlay);
         TransportOverlay.Lay(settings.Current.Transport, overlay, knobs.Stage);
         grid.Children.Add(previewBox);
         grid.Children.Add(transport.Stats);
@@ -419,6 +429,7 @@ internal sealed class ShellLayout(
         if (narrow) sideBeforeNarrow = saved.SideOpen;
         else ShowSide(saved.SideOpen);
         toolbar.Swap.IsChecked = saved.Swapped && toolbar.Swap.IsEnabled;
+        toolbar.Transport.IsChecked = saved.TransportOpen;
         if (saved.Code) document.ShowCode(true);
     }
 
@@ -458,6 +469,7 @@ internal sealed class ShellLayout(
             Code = document.ShowingCode,
             Swapped = toolbar.Swap.IsChecked == true,
             SideOpen = narrow ? sideBeforeNarrow : sideShown,
+            TransportOpen = row.Shown,
         };
 
         static double Weight(GridLength length) => length.IsStar ? length.Value : 1;

@@ -64,6 +64,9 @@ public sealed class WindowLayout
     /// <summary>The preview and the inspector have their column beside the canvas.</summary>
     public bool SideOpen { get; set; } = true;
 
+    /// <summary>The row that plays the patch is along the foot of the window.</summary>
+    public bool TransportOpen { get; set; } = true;
+
     public const double DefaultCanvasWeight = 3, DefaultSideWeight = 1.6;
 
     public const double DefaultPreviewWeight = 1, DefaultInspectorWeight = 1.1;
