@@ -9,7 +9,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [sync-to-async.md](sync-to-async.md) | Blocking work on the UI thread, and what to do about each | Audit | Open |
 | [viewer-sound-slower-than-editor.md](viewer-sound-slower-than-editor.md) | The web viewer renders a patch's sound slower than the web editor's worker | Issue | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |
-| [debug-mode.md](debug-mode.md) | A debug mode that shows every output's value, and `flyback-cli watch` | Plan | Open, parked |
+| [debug-mode.md](debug-mode.md) | A debug pass that reports every output's value, and `flyback-cli watch` | Plan | Open, parked |
 | [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
