@@ -29,6 +29,7 @@
 
 ### Fixes
 
+- A MIDI device Windows registers again under a number ("2 - Elektron Syntakt") is still the same device, so its learned knobs and MIDI Ins keep hearing it.
 - The assistant no longer offers a patch whose wired sound is silent, unless it says the patch starts silent.
 - Asked to listen or for a loudness while it cannot hear, the assistant says so rather than quoting a level it never measured.
 - An assistant that built a patch and stopped without offering it is asked once to offer it, so the work reaches the canvas.
