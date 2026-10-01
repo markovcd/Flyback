@@ -46,7 +46,8 @@ internal sealed class ToolbarOverflow
         More.Flyout = menu;
         AutomationProperties.SetName(More, "More");
 
-        menu.Opening += (_, _) => menu.ItemsSource = Items();
+        // The items are in place before the menu opens; opening only brings their state up to date.
+        menu.Opening += (_, _) => Refresh();
 
         foreach (var (control, label) in this.order) AutomationProperties.SetName(control, label);
     }
@@ -75,6 +76,8 @@ internal sealed class ToolbarOverflow
             folded.Add(control);
             Tidy();
         }
+
+        menu.ItemsSource = Items();
     }
 
     /// <summary>
@@ -114,12 +117,11 @@ internal sealed class ToolbarOverflow
         Folded.Select(control =>
         {
             var label = order.First(entry => entry.Control == control).Label;
-            var item = new MenuItem { Header = label, IsEnabled = control.IsEnabled };
+            var item = new MenuItem { Header = label, Tag = control };
 
             if (control is ToggleButton toggle)
             {
                 item.ToggleType = MenuItemToggleType.CheckBox;
-                item.IsChecked = toggle.IsChecked == true;
                 item.Click += (_, _) => toggle.IsChecked = toggle.IsChecked != true;
             }
             else
@@ -129,4 +131,16 @@ internal sealed class ToolbarOverflow
 
             return item;
         }).ToList();
+
+    /// <summary>Has each item say whether its button can be pressed, and whether a toggle is in.</summary>
+    private void Refresh()
+    {
+        foreach (var item in (menu.ItemsSource as IEnumerable<MenuItem>) ?? [])
+        {
+            var control = (Control)item.Tag!;
+
+            item.IsEnabled = control.IsEnabled;
+            if (control is ToggleButton toggle) item.IsChecked = toggle.IsChecked == true;
+        }
+    }
 }

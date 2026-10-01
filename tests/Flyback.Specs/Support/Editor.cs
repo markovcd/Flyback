@@ -286,12 +286,18 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
     public bool SettingsUp => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TabControl>().Any(tabs => tabs.Name == "settingsTabs"));
 
+    /// <summary>Opens the toolbar's menu and reads the items it shows, as drawn in its popup.</summary>
     private static List<MenuItem> OpenToolbarMenu(ToolbarOverflow overflow)
     {
         var menu = (MenuFlyout)overflow.More.Flyout!;
 
         menu.ShowAt(overflow.More);
-        return (menu.ItemsSource ?? throw new InvalidOperationException("the toolbar's menu has nothing in it")).OfType<MenuItem>().ToList();
+        Dispatcher.UIThread.RunJobs();
+
+        if (!menu.IsOpen) throw new InvalidOperationException("the toolbar's menu did not open");
+
+        // Only an item laid out in the open popup is one a finger can reach.
+        return (menu.ItemsSource ?? Array.Empty<object>()).OfType<MenuItem>().Where(item => TopLevel.GetTopLevel(item) is not null).ToList();
     }
 
     /// <summary>The names of the transport row's shown buttons, left to right.</summary>

@@ -39,10 +39,10 @@ internal sealed class TransportRow
 
     private readonly Grid row;
     private readonly Border bar;
-    private readonly StackPanel folded;
+    private readonly Grid folded;
 
     /// <summary>The columns the length, loop and Volume stand in while the row is wide.</summary>
-    private readonly (Control Control, int Column)[] foldable;
+    private readonly (Control Control, int Column, Thickness Margin)[] foldable;
 
     private bool narrow;
 
@@ -68,7 +68,20 @@ internal sealed class TransportRow
         Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
         Record.Click += (_, _) => reactions.Raise(new RecordAsked());
 
-        folded = new StackPanel { Spacing = 10, Margin = new Thickness(4), MinWidth = 200 };
+        // Named beside each, since the glyphs that say what they are stay in the row.
+        folded = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            RowDefinitions = new RowDefinitions("Auto,Auto,Auto"),
+            ColumnSpacing = 16,
+            RowSpacing = 8,
+            Margin = new Thickness(4),
+            MinWidth = 240,
+        };
+
+        Label("Length", 0);
+        Label("Loop", 1);
+        Label("Volume", 2).Bind(Visual.IsVisibleProperty, volume.View.GetObservable(Visual.IsVisibleProperty));
 
         More = Button("transport-more", "Length, loop and Volume", Glyphs.Dots(), MoreTip);
         More.IsVisible = false;
@@ -82,19 +95,21 @@ internal sealed class TransportRow
             Height = Reach,
         };
 
-        foldable = [(seek.Length, 4), (seek.Loop, 5), (volume.View, 6)];
+        foldable = [(seek.Length, 4, new Thickness(6, 0, 0, 0)), (seek.Loop, 5, default), (volume.View, 6, new Thickness(6, 0, 4, 0))];
 
         Place(Pause, 0);
         Place(Rewind, 1);
         Place(seek.Position, 2);
         Place(seek.Track, 3);
-        foreach (var (control, column) in foldable) Place(control, column);
+        foreach (var (control, column, margin) in foldable)
+        {
+            control.Margin = margin;
+            Place(control, column);
+        }
         Place(More, 7);
         if (!host.InPage) Place(Record, 8);
 
         seek.Position.Margin = new Thickness(4, 0, 6, 0);
-        seek.Length.Margin = new Thickness(6, 0, 0, 0);
-        volume.View.Margin = new Thickness(6, 0, 4, 0);
 
         row.SizeChanged += (_, e) => Fold(e.NewSize.Width < NarrowWidth);
 
@@ -158,21 +173,37 @@ internal sealed class TransportRow
         narrow = value;
         More.IsVisible = value;
 
-        foreach (var (control, column) in foldable)
+        for (var at = 0; at < foldable.Length; at++)
         {
+            var (control, column, margin) = foldable[at];
+
             (control.Parent as Panel)?.Children.Remove(control);
 
             if (value)
             {
                 control.HorizontalAlignment = HorizontalAlignment.Left;
+                control.Margin = default;
+                Grid.SetColumn(control, 1);
+                Grid.SetRow(control, at);
                 folded.Children.Add(control);
             }
             else
             {
                 control.HorizontalAlignment = HorizontalAlignment.Stretch;
+                control.Margin = margin;
                 Place(control, column);
             }
         }
+    }
+
+    /// <summary>Names a row of what is folded behind <see cref="More"/>.</summary>
+    private TextBlock Label(string text, int at)
+    {
+        var label = new TextBlock { Text = text, FontSize = Text.Body, Foreground = Text.Muted, VerticalAlignment = VerticalAlignment.Center };
+
+        Grid.SetRow(label, at);
+        folded.Children.Add(label);
+        return label;
     }
 
     private static Button Button(string name, string label, Control icon, string tip)
