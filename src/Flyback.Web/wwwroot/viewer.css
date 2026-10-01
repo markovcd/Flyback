@@ -97,7 +97,9 @@ h1 {
 .file { display: inline-flex; align-items: center; }
 .file input { display: none; }
 
-label.size { margin-left: auto; font-size: 12px; color: var(--muted); }
+.sizer { display: flex; align-items: center; gap: 12px; }
+header .sizer { margin-left: auto; }
+.sizer label { font-size: 12px; color: var(--muted); }
 
 #size { padding: 0 10px; font-family: var(--mono); font-size: 13px; font-weight: 400; }
 
@@ -453,7 +455,7 @@ input[type="range"] { accent-color: var(--attention); cursor: pointer; }
   body { grid-template-rows: 52px minmax(0, 1fr); }
 
   header { gap: 4px; padding: 0 8px; }
-  .brand, label.size, #size { display: none; }
+  .brand { display: none; }
   .back { width: 44px; height: 44px; }
   h1 { flex: 1 1 0; }
   #edit { height: 44px; border-radius: 12px; }
@@ -559,4 +561,7 @@ input[type="range"] { accent-color: var(--attention); cursor: pointer; }
   .knob { width: 80px; height: 80px; }
 
   #about-pane #about { font-size: 15px; }
+  #about-pane .sizer { margin-top: 18px; }
+  #about-pane .sizer label { font-size: 14px; }
+  #about-pane #size { height: 44px; border-radius: 12px; }
 }

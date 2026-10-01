@@ -36,7 +36,7 @@ const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), loop: $('loop'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), grip: $('grip'), about: $('about'), keyboard: $('keyboard'), notes: $('notes'), notesHome: $('notes-home'),
-  sheet: $('sheet'), find: $('find'), resetAll: $('reset-all'), none: $('none'),
+  sheet: $('sheet'), sizer: $('sizer'), find: $('find'), resetAll: $('reset-all'), none: $('none'),
   keybed: $('keybed'), keysSaid: $('keys-said'), octave: $('octave'), octaveDown: $('octave-down'), octaveUp: $('octave-up'),
   title: $('title'), clock: $('clock'), length: $('length'),
   main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
@@ -653,7 +653,8 @@ function buildSheet() {
   const has = {
     controls: knobs.length > 0,
     keys: playable(),
-    about: Boolean(info?.description) || playable(),
+    // Always: on a phone it holds the size list too.
+    about: true,
   };
 
   for (const { name, tab: button } of tabs) button.hidden = !has[name];
@@ -671,6 +672,9 @@ function placeSheet() {
 
   // What the patch says it is reads under the transport, or behind a phone's About tab.
   (phone ? tabs[2].pane : ui.notesHome).append(ui.notes);
+
+  // So does the size list, which a phone's header has no room for.
+  (phone ? tabs[2].pane : document.querySelector('header')).append(ui.sizer);
 
   ui.sheet.hidden = phone ? tab === null : knobs.length === 0;
 
