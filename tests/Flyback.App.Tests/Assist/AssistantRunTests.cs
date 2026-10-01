@@ -416,6 +416,44 @@ public class AssistantRunTests
     }
 
     /// <summary>
+    /// The first message opens with the patch, so the model does not spend a request
+    /// carrying the whole briefing to ask for it. The next one does not repeat it.
+    /// </summary>
+    [Fact]
+    public async Task The_first_message_opens_with_the_patch_and_the_next_does_not()
+    {
+        var (open, _, _) = TwoValues();
+        var assistant = new ScriptedAssistant(new PatchEvent.Said("ok"));
+
+        using var run = RunOf(assistant, open);
+
+        await Drain(run, "first");
+        await Drain(run, "second");
+
+        assistant.Heard[0].ShouldStartWith("[From Flyback, not the person: the patch on your workbench.");
+        assistant.Heard[0].ShouldContain("value1");
+        assistant.Heard[0].ShouldEndWith("first");
+        assistant.Heard[1].ShouldBe("second");
+    }
+
+    /// <summary>A first message nobody answered leaves the patch for the next one to carry.</summary>
+    [Fact]
+    public async Task A_first_message_that_failed_leaves_the_patch_to_the_next()
+    {
+        var assistant = ScriptedAssistant.Conversation(
+            [new PatchEvent.Failed("429: rate limited")],
+            [new PatchEvent.Said("ok")]);
+
+        using var run = RunOf(assistant);
+
+        await Drain(run, "first");
+        await Drain(run, "second");
+
+        assistant.Heard[1].ShouldStartWith("[From Flyback, not the person: the patch on your workbench.");
+        assistant.Heard[1].ShouldEndWith("second");
+    }
+
+    /// <summary>
     /// A knob turned while a turn ran survives the proposal, unless the assistant set
     /// the same knob itself: it was asked to change something, and its answer stands.
     /// </summary>

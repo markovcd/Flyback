@@ -332,6 +332,49 @@ public class SessionTests
     }
 
     /// <summary>
+    /// An account out of credit answers 429 as a rate limit does, and no wait clears it.
+    /// </summary>
+    [Fact]
+    public async Task An_account_out_of_credit_is_reported_at_once()
+    {
+        var canned = new Canned(new Answer(
+            """{"error":{"message":"You have no credits remaining.","type":"insufficient_quota","code":"insufficient_quota"}}""",
+            HttpStatusCode.TooManyRequests));
+
+        var events = await Drive(canned);
+
+        events.OfType<PatchEvent.Failed>().ShouldHaveSingleItem()
+            .Message.ShouldContain("no credits remaining");
+
+        canned.Sent.Count.ShouldBe(1);
+    }
+
+    /// <summary>
+    /// The frames ride back in a user message, which says whose it is: a model that
+    /// thinks the person sent them thanks them and waits instead of proposing.
+    /// </summary>
+    [Fact]
+    public async Task Rendered_frames_say_they_come_from_Flyback()
+    {
+        var canned = new Canned(
+            new Answer(Asking(Building)),
+            new Answer(Asking(("render", """{"times":[0.5]}"""))),
+            new Answer(Asking(("propose", """{"summary":"a flat gray field"}"""))));
+
+        using var session = new OpenAiSession(
+            new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: true),
+            new AssistantChoices("some-model"),
+            "https://nowhere.invalid/v1",
+            new KeyedTransport(null, null, new AssistantCredential("", ""), canned));
+
+        await Drain(session, "make a gray field");
+
+        canned.Sent[2]["messages"]!.AsArray()
+            .Last(message => message!["role"]!.GetValue<string>() == "user")!
+            .ToJsonString().ShouldContain(OpenAiSession.Shown);
+    }
+
+    /// <summary>
     /// A sound goes to a second model on its own, and never into the conversation.
     /// </summary>
     /// <remarks>

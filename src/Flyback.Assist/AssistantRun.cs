@@ -55,6 +55,9 @@ internal sealed class AssistantRun : IDisposable
     private CancellationTokenSource? working;
     private bool spent;
 
+    /// <summary>Whether the model has been shown the patch, which a conversation it remembers already has.</summary>
+    private bool introduced;
+
     /// <param name="assistant"></param>
     /// <param name="config"></param>
     /// <param name="modules"></param>
@@ -117,6 +120,7 @@ internal sealed class AssistantRun : IDisposable
             : Workbench.Follow(startingPoint));
 
         session = PickUp(assistant, config, resuming.History) ?? assistant.Start(Workbench, config);
+        introduced = PickedUp;
     }
 
     /// <summary>
@@ -347,9 +351,19 @@ internal sealed class AssistantRun : IDisposable
 
         List<Retuned> telling = [.. unsaid];
 
+        // The patch itself, the first time: asking describe_patch for it would
+        // cost a request carrying the whole briefing. It already holds whatever
+        // changed on the canvas.
+        if (!introduced)
+        {
+            instruction = $"[From Flyback, not the person: the patch on your workbench. {Workbench.Described}]"
+                + Environment.NewLine + Environment.NewLine + instruction;
+
+            unsaid.Clear();
+        }
         // One line ahead of the message rather than a new conversation: the
         // history and the provider's cache of it stay good.
-        if (Unsaid is { } told)
+        else if (Unsaid is { } told)
         {
             instruction = $"[Changed on the canvas since your last turn, and already on your workbench: {told}.]"
                 + Environment.NewLine + Environment.NewLine + instruction;
@@ -397,6 +411,10 @@ internal sealed class AssistantRun : IDisposable
                 Turns--;
 
                 foreach (var change in telling.Where(change => !unsaid.Any(change.SameSetting))) unsaid.Add(change);
+            }
+            else
+            {
+                introduced = true;
             }
         }
     }

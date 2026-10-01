@@ -298,9 +298,9 @@ internal static class Handbook
     private const string Working = """
         ## How to work
 
-        Call `describe_patch` at the start of a conversation to see what is
-        already there. A later message opens with whatever the person changed
-        on the canvas meanwhile, so there is no need to look again.
+        The first message opens with the patch as it stands, and a later one
+        with whatever the person changed on the canvas meanwhile, so there is
+        no need to call `describe_patch` to look.
 
         **Then write the patch with `write_patch`, in one call.** Placing a
         module or a wire is a call each, so building that way runs out of turn
@@ -308,8 +308,8 @@ internal static class Handbook
         that come back, and write it again with the fix.
 
         **Change what is there and leave the rest alone.** When the bench is
-        not empty and the person asked for a change, start from
-        `describe_patch`. A few modules is `add_module`, `connect`,
+        not empty and the person asked for a change, start from the patch
+        you were given. A few modules is `add_module`, `connect`,
         `set_knobs` and `remove_module`; many is `write_patch` with the
         description altered only where asked, which gives every module a new
         identity. If the change needs something else built, say so and stop:

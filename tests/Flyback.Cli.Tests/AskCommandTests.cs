@@ -174,7 +174,8 @@ public sealed class AskCommandTests : IDisposable
         var (code, _, _) = await Ask("field.fbk", null, input: "a gray field from a pipe");
 
         code.ShouldBe(Exit.Ok);
-        assistant.Heard.ShouldHaveSingleItem().ShouldBe("a gray field from a pipe");
+        // A conversation's first message opens with the patch; what was asked ends it.
+        assistant.Heard.ShouldHaveSingleItem().ShouldEndWith(Environment.NewLine + "a gray field from a pipe");
     }
 
     [Fact]
@@ -193,7 +194,9 @@ public sealed class AskCommandTests : IDisposable
         var (code, _, _) = await Ask("field.fbk", null, console: "a gray field\nnow brighter\n\nnever sent\n");
 
         code.ShouldBe(Exit.Ok);
-        assistant.Heard.ShouldBe(["a gray field", "now brighter"]);
+        assistant.Heard.Count.ShouldBe(2);
+        assistant.Heard[0].ShouldEndWith(Environment.NewLine + "a gray field");
+        assistant.Heard[1].ShouldBe("now brighter");
     }
 
     [Fact]

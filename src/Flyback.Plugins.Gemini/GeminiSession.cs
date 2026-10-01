@@ -126,14 +126,15 @@ internal sealed class GeminiSession : IModelConversation
     /// <summary>
     /// What to say over the media riding back with the tool answers, or null when
     /// there is none. One sentence for both, because a turn that rendered and
-    /// listened produced one set of observations about one patch.
+    /// listened produced one set of observations about one patch. Marked as Flyback's,
+    /// since a model that thinks the person sent them waits for them to say more.
     /// </summary>
-    private static string? Caption(int pictures, int sounds) => (pictures, sounds) switch
+    internal static string? Caption(int pictures, int sounds) => (pictures, sounds) switch
     {
         (0, 0) => null,
-        (> 0, 0) => "Here is what that looked like.",
-        (0, > 0) => "Here is what that sounded like.",
-        _ => "Here is what that looked and sounded like.",
+        (> 0, 0) => "[From Flyback, not the person: the frames you rendered.]",
+        (0, > 0) => "[From Flyback, not the person: the clip you listened to.]",
+        _ => "[From Flyback, not the person: the frames you rendered and the clip you listened to.]",
     };
 
     /// <summary>

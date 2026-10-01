@@ -8,6 +8,7 @@
 - The assistant's `listen` reports the clip's integrated loudness in LUFS and its true peak, so it can hit a loudness it is asked for.
 - A rate limit that resets within a minute is waited out rather than ending the turn, and the transcript says how long it is waiting.
 - A pipe into a module whose sockets are all given says to write `_` for the one it fills.
+- `flyback-cli ask` ends each turn with what it cost: requests, tokens in, cached and out, and time spent waiting out a rate limit.
 
 ### Editor
 
@@ -23,6 +24,10 @@
 - The assistant no longer offers a patch whose wired sound is silent, unless it says the patch starts silent.
 - Asked to listen or for a loudness while it cannot hear, the assistant says so rather than quoting a level it never measured.
 - An assistant that built a patch and stopped without offering it is asked once to offer it, so the work reaches the canvas.
+- A new conversation opens with the patch, so the assistant no longer spends a request asking for it.
+- Frames and clips sent back to the assistant say they come from Flyback, so a model no longer thanks the person for them and waits instead of offering the patch.
+- A warning the assistant is told names its module (`output1`), so it no longer tries to add a second Output.
+- An OpenAI account out of credit is reported at once rather than retried.
 - Dialogs fit a narrow window: the margin around one shrinks to nothing before its content is cut off, and a dialog wider than the window scrolls sideways.
 
 ## 0.6.0 — 2026-10-01

@@ -19,3 +19,8 @@ Feature: The assistant can be asked from the command line
     Given an assistant that builds a gray field when asked
     When flyback-cli asks it about "field.fbkb" for "a gray field"
     Then opening "field.fbkb" in the editor carries the conversation on
+
+  Scenario: Each turn ends by saying what it cost
+    Given an assistant that builds a gray field when asked
+    When flyback-cli asks it about "field.fbk" for "a gray field" as JSON
+    Then the turn's last line counts its requests and the tokens they took

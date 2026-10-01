@@ -1649,6 +1649,22 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
+    /// A warning names its module by handle, which the compiler's own wording cannot:
+    /// told only "the Output", a model tries to add one.
+    /// </summary>
+    [Fact]
+    public async Task A_warning_names_its_module_by_handle()
+    {
+        var bench = Bench();
+
+        var added = await Call(bench, "add_module", """{"type_id":"osc.sine","handle":"tone1"}""");
+        var proposed = await Call(bench, "propose", """{"summary":"a tone"}""");
+
+        added.Text.ShouldContain("output1: Nothing is wired into the Output");
+        proposed.Text.ShouldContain("into output1's 'color'");
+    }
+
+    /// <summary>
     /// A warning is something to know, not a reason to refuse: the frames come back
     /// with the warning in the caption.
     /// </summary>

@@ -27,6 +27,7 @@ public sealed class AskSteps : IDisposable
     private Remembering? assistant;
     private int code;
     private string said = string.Empty;
+    private string[] lines = [];
 
     private Remembering Assistant => assistant.ShouldNotBeNull();
 
@@ -46,7 +47,12 @@ public sealed class AskSteps : IDisposable
     }
 
     [When("flyback-cli asks it about {string} for {string}")]
-    public async Task WhenAsked(string patch, string message)
+    public Task WhenAsked(string patch, string message) => Ask(patch, message, json: false);
+
+    [When("flyback-cli asks it about {string} for {string} as JSON")]
+    public Task WhenAskedForJson(string patch, string message) => Ask(patch, message, json: true);
+
+    private async Task Ask(string patch, string message, bool json)
     {
         var output = new StringWriter();
         var error = new StringWriter();
@@ -56,7 +62,7 @@ public sealed class AskSteps : IDisposable
         code = await AskCommand.Run(
             Catalog,
             about,
-            new AskOptions(message, null, [], false, false, null, false, null),
+            new AskOptions(message, null, [], false, json, null, false, null),
             output,
             error,
             TextReader.Null,
@@ -67,6 +73,7 @@ public sealed class AskSteps : IDisposable
             Path("logs"));
 
         said = output + error.ToString();
+        lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
     }
 
     [Then("{string} shows a gray field")]
@@ -80,8 +87,24 @@ public sealed class AskSteps : IDisposable
         written.Connections.ShouldContain(wire => wire.SourceNode == knob.Id && wire.TargetNode == written.Output.Id);
     }
 
+    /// <summary>Asked for, at the end of what it was sent: a conversation's first message opens with the patch.</summary>
     [Then("the assistant remembers being asked for {string}")]
-    public void ThenItRemembers(string earlier) => Assistant.Remembered.ShouldContain(earlier);
+    public void ThenItRemembers(string earlier) => Assistant.Remembered.ShouldContain(asked => asked.EndsWith(earlier, StringComparison.Ordinal));
+
+    [Then("the turn's last line counts its requests and the tokens they took")]
+    public void ThenTheTurnIsCounted()
+    {
+        code.ShouldBe(Exit.Ok, said);
+
+        var turn = lines.Select(line => JsonDocument.Parse(line).RootElement)
+            .Last(line => line.GetProperty("kind").GetString() != "wrote");
+
+        turn.GetProperty("kind").GetString().ShouldBe("turn");
+        turn.GetProperty("requests").GetInt32().ShouldBe(1);
+        turn.GetProperty("input").GetInt32().ShouldBe(Remembering.Input);
+        turn.GetProperty("cacheRead").GetInt32().ShouldBe(Remembering.Cached);
+        turn.GetProperty("output").GetInt32().ShouldBe(Remembering.Output);
+    }
 
     /// <summary>What the editor does with a bundle it opens: finds the conversation, finds it resumable, and resumes it.</summary>
     [Then("opening {string} in the editor carries the conversation on")]
@@ -111,6 +134,9 @@ public sealed class AskSteps : IDisposable
     /// <summary>Builds a gray field through the workbench, and remembers what it was asked across a saved conversation.</summary>
     private sealed class Remembering : IPatchAssistant
     {
+        /// <summary>What its one request reports spending.</summary>
+        public const int Input = 1200, Cached = 1000, Output = 40;
+
         public List<string> Remembered { get; } = [];
 
         public string Id => "remembering";
@@ -145,6 +171,8 @@ public sealed class AskSteps : IDisposable
             public async IAsyncEnumerable<PatchEvent> Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
             {
                 history.Add(instruction);
+
+                yield return new PatchEvent.Cost(Input, Cached, Output);
 
                 string[] calls =
                 [

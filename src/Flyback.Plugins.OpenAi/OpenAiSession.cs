@@ -115,6 +115,13 @@ internal sealed class OpenAiSession : IModelConversation
     }
 
     /// <summary>
+    /// What rides over the pictures. A user message reads as the person speaking
+    /// unless it says otherwise, and a model that thinks it was shown them waits for
+    /// them to say more instead of proposing.
+    /// </summary>
+    internal const string Shown = "[From Flyback, not the person: the frames you rendered.]";
+
+    /// <summary>
     /// A tool message for each answer, then the pictures as a user message: a tool
     /// message in this format carries a string and nothing else.
     /// </summary>
@@ -124,7 +131,7 @@ internal sealed class OpenAiSession : IModelConversation
 
         List<byte[]> seen = [.. answers.Select(answer => answer.Png).OfType<byte[]>()];
 
-        if (seen.Count > 0) messages.Add(Wire.UserWithPictures("Here is what that looked like.", seen));
+        if (seen.Count > 0) messages.Add(Wire.UserWithPictures(Shown, seen));
     }
 
     /// <summary>
@@ -143,7 +150,7 @@ internal sealed class OpenAiSession : IModelConversation
 
     private async Task<JsonNode?> Post(string body, CancellationToken cancel) =>
         JsonNode.Parse(await AssistantPost
-            .Send(transport, endpoint, body, response => Wire.RetryAfter(response.Headers), Wire.Complaint, cancel)
+            .Send(transport, endpoint, body, Wire.Wait, Wire.Complaint, cancel)
             .ConfigureAwait(false));
 
     public void Dispose()

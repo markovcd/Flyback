@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Globalization;
 using Flyback.Assist;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
@@ -137,11 +139,29 @@ internal sealed class AskConversation : IDisposable
         Failed = false;
         var answered = false;
 
+        var clock = Stopwatch.StartNew();
+        int requests = 0, input = 0, cached = 0, written = 0;
+        var waited = TimeSpan.Zero;
+
         await foreach (var happened in session.Ask(message, cancel))
         {
             if (happened is PatchEvent.Failed) Failed = true;
             else answered = true;
+
+            if (happened is PatchEvent.Cost cost)
+            {
+                requests++;
+                input += cost.Input;
+                cached += cost.CacheRead;
+                written += cost.Output;
+            }
+            else if (TurnLoop.Waited(happened) is { } wait)
+            {
+                waited += wait;
+            }
         }
+
+        Spent(requests, input, cached, written, waited, clock.Elapsed);
 
         if (!answered) return;
 
@@ -173,6 +193,27 @@ internal sealed class AskConversation : IDisposable
         }, proposed is null
             ? $"Kept the conversation with {about.Into.Name} — turn {run.Turns} of {limit}."
             : $"Wrote {about.Into.Name} — turn {run.Turns} of {limit}.");
+    }
+
+    /// <summary>What the turn cost: the requests that reported their tokens, and the time spent, waiting included.</summary>
+    private void Spent(int requests, int input, int cached, int output, TimeSpan waited, TimeSpan took)
+    {
+        var prose = string.Create(
+            CultureInfo.InvariantCulture,
+            $"{ConsoleTranscript.Aside}{Writing.Count(requests, "request")}: {input} tokens in ({cached} cached), {output} out, in {took.TotalSeconds:0}s");
+
+        if (waited > TimeSpan.Zero)
+            prose += string.Create(CultureInfo.InvariantCulture, $", {waited.TotalSeconds:0}s of it waiting to be let back in");
+
+        transcript.Emit("turn", new
+        {
+            requests,
+            input,
+            cacheRead = cached,
+            output,
+            waited = Math.Round(waited.TotalSeconds, 1),
+            seconds = Math.Round(took.TotalSeconds, 1),
+        }, prose + ".");
     }
 
     public void Dispose() => session.Dispose();

@@ -16,7 +16,7 @@ internal sealed class ConsoleTranscript(AskOptions options, TextWriter output, T
     private static readonly JsonSerializerOptions Line = new(Writing.Json) { WriteIndented = false };
 
     /// <summary>How a step of the turn is marked, apart from what the assistant said.</summary>
-    private const string Aside = "  · ";
+    internal const string Aside = "  · ";
 
     private readonly List<TranscriptLine> lines = [];
 

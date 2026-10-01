@@ -274,6 +274,26 @@ internal static class Wire
     }
 
     /// <summary>
+    /// How long to leave <paramref name="response"/>'s endpoint alone: forever for an
+    /// account out of credit, which answers 429 like a rate limit and never clears.
+    /// </summary>
+    public static TimeSpan? Wait(AssistantResponse response) =>
+        OutOfCredit(response.Body) ? TimeSpan.MaxValue : RetryAfter(response.Headers);
+
+    private static bool OutOfCredit(string body)
+    {
+        try
+        {
+            return Error(JsonNode.Parse(body)) is JsonObject error
+                && Blank(error["code"]) == "insufficient_quota";
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// How long the endpoint asked to be left alone, or null when it did not say.
     /// </summary>
     /// <remarks>

@@ -699,7 +699,8 @@ flyback-cli pack my-patch.fbk -o my-patch.fbkb</code></pre>
     <p><code>flyback-cli ask drone.fbk "slower, and warmer"</code> has the same conversation from a terminal. The
     answer is written back into the file with the conversation, so the next <code>ask</code> carries it on, and
     so does the editor when it opens the file. With no message it keeps asking line by line; <code>--json</code>
-    writes one line per step, each tool call included, for a script to read.</p>
+    writes one line per step, each tool call included, for a script to read. Each turn ends with a line counting
+    its requests, the tokens they took and any time spent waiting out a rate limit.</p>
 
     <p>Every request tells the model what each module does, up to the <strong>Briefing budget</strong> in
     <strong>Settings → Assistant</strong>, 100,000 characters by default. With many plugins installed that can run

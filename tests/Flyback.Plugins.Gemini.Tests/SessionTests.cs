@@ -197,7 +197,7 @@ public class SessionTests
         Named(parts, "functionResponse", "name").ShouldContain("listen");
         Named(parts, "inlineData", "mimeType").ShouldContain("audio/wav");
         parts.Select(part => part?["text"]?.GetValue<string>())
-            .ShouldContain("Here is what that sounded like.");
+            .ShouldContain(GeminiSession.Caption(0, 1));
     }
 
     /// <summary>

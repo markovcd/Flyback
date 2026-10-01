@@ -917,7 +917,7 @@ public sealed partial class PatchWorkbench
         {
             return ToolOutcome.Refused(
                 "nothing is wired into the Output, so nothing this patch does comes out anywhere. "
-                + "Patch something into its 'color' or its 'left' before proposing.");
+                + $"Patch something into {Handle(working.Output)}'s 'color' or its 'left' before proposing.");
         }
 
         // A sound that is wired was meant to be heard, and a model with no ear
@@ -939,6 +939,9 @@ public sealed partial class PatchWorkbench
     }
 
     // --- looking ------------------------------------------------------------
+
+    /// <summary>What <c>describe_patch</c> answers, for the first message of a conversation to open with.</summary>
+    internal string Described => DescribePatch();
 
     private string DescribePatch()
     {
@@ -968,11 +971,11 @@ public sealed partial class PatchWorkbench
 
         text.Append("video: ").Append(video.Program.Ops.Length).Append(" ops");
         if (video.Issues.Count > 0)
-            text.Append(", ").Append(string.Join(" | ", video.Issues.Select(i => i.Message)));
+            text.Append(", ").Append(string.Join(" | ", video.Issues.Select(Named)));
 
         text.Append(". audio: ").Append(audio.Program.Ops.Length).Append(" ops");
         if (audio.Issues.Count > 0)
-            text.Append(", ").Append(string.Join(" | ", audio.Issues.Select(i => i.Message)));
+            text.Append(", ").Append(string.Join(" | ", audio.Issues.Select(Named)));
 
         return text.Append('.').ToString();
     }
@@ -1069,8 +1072,8 @@ public sealed partial class PatchWorkbench
         [
             Does("describe_patch", _ => Fine(DescribePatch()),
                 "Every module in the working patch with its handle, what each input is set to or "
-                + "wired from, where each output goes, and what the compiler currently says. Call "
-                + "this at the start of a conversation.",
+                + "wired from, where each output goes, and what the compiler currently says. The "
+                + "first message of a conversation already opens with it.",
                 "{}"),
 
             Does("write_patch", WritePatch,
@@ -1675,10 +1678,10 @@ public sealed partial class PatchWorkbench
         // Distinct, because a module both sinks reach is compiled twice and
         // would otherwise be complained about twice.
         var faults = issues.Where(i => i.Severity == IssueSeverity.Error)
-            .Select(i => i.Message).Distinct().ToArray();
+            .Select(Named).Distinct().ToArray();
 
         var notes = issues.Where(i => i.Severity != IssueSeverity.Error)
-            .Select(i => i.Message).Distinct().ToArray();
+            .Select(Named).Distinct().ToArray();
 
         var said = told.ToHashSet(StringComparer.Ordinal);
 
@@ -1723,6 +1726,10 @@ public sealed partial class PatchWorkbench
         static string Count(int count, string noun) =>
             count == 0 ? string.Empty : count == 1 ? $"1 {noun}" : $"{count} {noun}s";
     }
+
+    /// <summary>An issue under the handle of the module it is about, which the compiler's own wording cannot name.</summary>
+    private string Named(CompileIssue issue) =>
+        working.Find(issue.NodeId ?? Guid.Empty) is { } node ? $"{Handle(node)}: {issue.Message}" : issue.Message;
 
     private string Name(Connection wire, bool sourceOf)
     {
