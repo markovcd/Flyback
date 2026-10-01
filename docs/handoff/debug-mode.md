@@ -34,11 +34,13 @@ A pass runs the patch offline for N seconds from the playhead, with the knobs wh
 stops, and reports. It is not real time and nothing runs before or after it, so it costs only
 the wait.
 
-1. **`flyback-cli watch <patch> [<module>.<socket>] [--seconds N] [--from T] [--json]`.** Built
-   first, on a shared measurement (say `SocketWatch`), so its numbers are tested before any
-   window shows them. Every output when no socket is named.
+1. **`flyback-cli watch <patch> [<module>[.<socket>]...] [--seconds N] [--from T] [--json]`.**
+   Built first, on a shared measurement (say `SocketWatch`), so its numbers are tested before
+   any window shows them. Every output when nothing is named; a module alone means all its
+   outputs.
 2. **The editor, desktop only.** A button and a shortcut run the same pass, with a progress
-   bar, and pin a reading beside every output socket on the canvas: `0.25` when static,
+   bar: on the selected modules when any are selected, on every module otherwise. It pins a
+   reading beside each measured output socket on the canvas: `0.25` when static,
    `-1..1 · 2 Hz` when changing, a swatch and r, g, b for a color. Hovering one gives the full
    report, and the selected module's report sits under each output's row in the inspector
    (`Inspector.BuildOutputRow`). An edit dims the readings and marks them out of date until the
@@ -69,6 +71,15 @@ Then:
   interpreter over a coarse grid (about 32×18) at frames across the same window. Spread within a
   frame is variation across the picture; change per pixel between frames is change over time.
 - **A long window is fine.** 30 seconds catches a slow LFO; it only takes longer.
+
+## Speed
+
+A pass costs ops lowered times evaluations run; the statistics are noise beside that. Measuring
+a selection roots the compile at its outputs only, so only their upstream is lowered: a small
+branch (an LFO, an envelope) runs in a fraction of the time, and anything near the end of the
+patch (a Desk, a mixer) has nearly the whole patch upstream and saves little. The window's
+length scales the cost linearly. Which outputs to root at is already the pass's input, so the
+selection costs nothing to support.
 
 ## Limit
 
