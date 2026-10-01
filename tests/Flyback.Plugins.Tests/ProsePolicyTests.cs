@@ -70,7 +70,7 @@ public sealed class ProsePolicyTests : IDisposable
 
         bench.Briefing.Length.ShouldBeLessThanOrEqualTo(Tight.Budget);
         bench.Briefing.ShouldContain("Not every preset is named below");
-        bench.Briefing.ShouldContain(Environment.NewLine + "Saved patch 001" + Environment.NewLine);
+        bench.Briefing.ShouldContain("\nSaved patch 001\n");
         bench.Briefing.ShouldNotContain("Saved patch 600");
     }
 
@@ -148,13 +148,13 @@ public sealed class ProsePolicyTests : IDisposable
     {
         var names = Presets.All
             .Where(preset => preset.Kind != PresetKind.Blank)
-            .Sum(preset => preset.Name.Length + Environment.NewLine.Length);
+            .Sum(preset => preset.Name.Length + "\n".Length);
 
         var bench = Bench(new ProsePolicy(Floor + names, Listed));
 
         bench.Briefing.ShouldContain("Some presets below have no description line");
         bench.Briefing.ShouldNotContain("Not every preset is named below");
-        bench.Briefing.ShouldContain(Environment.NewLine + "Whole band" + Environment.NewLine);
+        bench.Briefing.ShouldContain("\nWhole band\n");
         bench.Briefing.ShouldNotContain(Presets.All.Single(preset => preset.Name == "Whole band").Description);
         bench.Tools.Select(t => t.Name).ShouldContain("describe_preset");
     }

@@ -262,7 +262,7 @@ public class PatchWorkbenchTests
         var mine = new PatchPreset("My tone", modules => PatchLanguage.Build("sine(freq: 220) |> out.left", modules).Patch);
         var bench = WithPresets(mine);
 
-        bench.Briefing.ShouldContain(Environment.NewLine + "My tone" + Environment.NewLine);
+        bench.Briefing.ShouldContain("\nMy tone\n");
 
         var described = await Call(bench, "describe_preset", """{"name":"My tone"}""");
         described.Ok.ShouldBeTrue(described.Text);

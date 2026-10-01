@@ -17,11 +17,14 @@ namespace Flyback.Plugins.Assist;
 /// </remarks>
 internal static class Handbook
 {
+    /// <summary>The briefing's one line ending, whatever the source file's is; text appended here uses <c>'\n'</c> to match.</summary>
+    private const string Newline = "\n";
+
     /// <summary>
     /// What the catalog cannot say about itself. Hand-written, and the place
     /// to state a convention that lives in an ADR rather than in a type.
     /// </summary>
-    private const string Conventions = """
+    private static readonly string Conventions = """
         # Flyback
 
         A patchable synthesizer for picture and sound. Nothing is drawn: every
@@ -224,7 +227,7 @@ internal static class Handbook
         the result, which is the only way to find out whether it is
         *anything* rather than merely legal.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
     /// <summary>
     /// What to say about the sound, which is the one thing the briefing cannot state
@@ -237,15 +240,15 @@ internal static class Handbook
     /// warning from one handed somebody else's account: a borrowed ear agrees with
     /// whoever asked it, and one's own ear agrees with whoever built the patch.
     /// </remarks>
-    private const string Deaf = """
+    private static readonly string Deaf = """
         You cannot hear the sound, and no tool of yours measures it. If the
         patch makes noise, reason about it from the modules and say plainly
         that you have not heard it. Asked to listen, or to reach a loudness,
         say you cannot rather than give a level you never measured.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
-    private const string Secondhand = """
+    private static readonly string Secondhand = """
         You have an ear, though it is not yours. `listen` renders a stretch of
         the sound, measures it, and plays it to a second model that can hear.
 
@@ -267,9 +270,9 @@ internal static class Handbook
         `color`. Silence comes back as a sentence, and usually means something
         on the way to the Output holds still.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
-    private const string FirstHand = """
+    private static readonly string FirstHand = """
         You can hear. `listen` renders a stretch of the sound, measures it, and
         plays you the clip, which arrives after the tool's reply the way a
         rendered frame does.
@@ -293,9 +296,9 @@ internal static class Handbook
         `color`. Silence is never played; it comes back as a sentence, and
         usually means something on the way to the Output holds still.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
-    private const string Working = """
+    private static readonly string Working = """
         ## How to work
 
         The first message opens with the patch as it stands, and a later one
@@ -397,7 +400,7 @@ internal static class Handbook
         something that is not a knob at all — a tune, a scale, a file — and it
         names the tool that writes it.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
     /// <summary>
     /// What the list of presets is given out of the budget before the modules divide
@@ -408,7 +411,7 @@ internal static class Handbook
     /// </summary>
     internal const int PresetsReserve = 4_000;
 
-    private const string PresetsPreamble = """
+    private static readonly string PresetsPreamble = """
         # Presets
 
         Whole patches that are already built, the ones this instrument ships and
@@ -417,19 +420,19 @@ internal static class Handbook
         is, how a picture is tied to a tune. Take the idea and build what was
         asked for; do not hand a preset back as the answer.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
-    private const string PresetsUnexplained = """
+    private static readonly string PresetsUnexplained = """
         Some presets below have no description line. They have one all the same,
         left out to keep this list short: `describe_preset` gives it.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
-    private const string PresetsUnnamed = """
+    private static readonly string PresetsUnnamed = """
         Not every preset is named below either: `describe_preset` asked for a
         name that is not one answers with all of them.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
     /// <summary>
     /// The presets a model may read, one line each, or nothing where there are none.
@@ -500,12 +503,12 @@ internal static class Handbook
 
             if (described[i]) text.Append(" | ").Append(presets[i].Description);
 
-            text.AppendLine();
+            text.Append('\n');
         }
 
         return text.ToString();
 
-        static int Named(PatchPreset preset) => preset.Name.Length + Environment.NewLine.Length;
+        static int Named(PatchPreset preset) => preset.Name.Length + Newline.Length;
 
         // What a line adds for a description: the separator and the text.
         static int Described(PatchPreset preset) =>
@@ -516,12 +519,12 @@ internal static class Handbook
     /// Said only when some module's description was left out, since otherwise
     /// a module with none would read as a module with nothing to say.
     /// </summary>
-    private const string Unexplained = """
+    private static readonly string Unexplained = """
         Some modules below have no description line. They have one all the
         same, left out to keep this list short: `describe_module` gives it, and
         `find_modules` searches every description.
 
-        """;
+        """.ReplaceLineEndings(Newline);
 
     /// <summary>The whole briefing, with every description but <paramref name="undescribed"/>'s.</summary>
     /// <param name="modules"></param>
@@ -555,7 +558,7 @@ internal static class Handbook
         foreach (var def in modules.All.Where(def => !ExpressionFusion.Retired(def)))
         {
             Describe(text, def, modules, prose: !undescribed.Contains(def.TypeId));
-            text.AppendLine();
+            text.Append('\n');
         }
 
         return text.ToString();
@@ -603,7 +606,7 @@ internal static class Handbook
         return left;
 
         // What Describe adds for a description: the indent, the text and the line end.
-        static int Cost(NodeDef def) => Prose(def).Sum(line => 2 + line.Length + Environment.NewLine.Length);
+        static int Cost(NodeDef def) => Prose(def).Sum(line => 2 + line.Length + Newline.Length);
     }
 
     /// <summary>
@@ -627,7 +630,7 @@ internal static class Handbook
         if (modules.ProviderOf(def.TypeId) is { } from && from.Id != NodeCatalog.BuiltInProvider.Id)
             text.Append(" | from the ").Append(from.Name).Append(" plugin");
 
-        text.AppendLine();
+        text.Append('\n');
 
         Sockets(text, "in ", def.Inputs, modules, knobs: true);
         Sockets(text, "out", def.Outputs, modules, knobs: false);
@@ -635,11 +638,11 @@ internal static class Handbook
         // Said per module rather than only in the preamble, because this is the
         // one place a model looks to find out what a module has — and a
         // sequencer's inputs say nothing about the tune it plays.
-        foreach (var extra in def.Extras) text.AppendLine(Vocabulary.Announce(extra));
+        foreach (var extra in def.Extras) text.Append(Vocabulary.Announce(extra)).Append('\n');
 
         if (prose)
             foreach (var line in Prose(def))
-                text.Append("  ").AppendLine(line);
+                text.Append("  ").Append(line).Append('\n');
     }
 
     private static void Sockets(
@@ -653,7 +656,7 @@ internal static class Handbook
 
         if (ports.Count == 0)
         {
-            text.AppendLine("  (none)");
+            text.Append("  (none)").Append('\n');
             return;
         }
 
@@ -691,7 +694,7 @@ internal static class Handbook
             if (port.Display == PortDisplay.Duration) text.Append(" log10-seconds");
         }
 
-        text.AppendLine();
+        text.Append('\n');
     }
 
     private static string Number(float value) => value.ToString("0.###", CultureInfo.InvariantCulture);
