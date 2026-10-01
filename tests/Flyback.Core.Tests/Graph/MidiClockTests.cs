@@ -150,6 +150,7 @@ public class MidiClockTests
                 MidiSignal.ClockKey(Box, MidiSignal.Bpm),
                 MidiSignal.ClockKey(Box, MidiSignal.Running),
                 MidiSignal.ClockKey(Box, MidiSignal.Starts),
+                MidiSignal.LeadKey,
             ],
             ignoreOrder: true);
     }

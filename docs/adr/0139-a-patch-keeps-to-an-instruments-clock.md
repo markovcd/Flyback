@@ -87,3 +87,17 @@ Sound from the box is not this decision. Overbridge is not open, so a patch that
 draws what the box plays needs an audio input contract across the three platform
 plugins, which is a piece of work of its own. Sending the box a clock or notes
 is not either: the box is the better sequencer.
+
+## Amendment, 2026-10-01: the beat heard, not the beat seen
+
+A tick is seen while the speakers' thread renders a buffer, and that buffer is
+heard a device's latency later, so a sequencer on `beats` ran that far behind the
+box: next to a Syntakt, two kicks a few tens of milliseconds apart.
+
+`IAudioDevice.Latency` says how long a sample takes from the fill to the speaker,
+the player writes it into the sound's block under `clock/lead`, and a Clock In
+anchors each tick that much earlier than it saw it. A `nudge` socket, in
+milliseconds, adds to it for what the device cannot report: an interface, a
+mixer, the box's own output. The picture's block carries no lead, so the picture
+keeps to the box by the nudge alone. A changed lead lands on the next tick and is
+eased like any other jump.

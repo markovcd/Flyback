@@ -92,4 +92,11 @@ public static class MidiSignal
     /// clock however many voices it has, so there is no index.
     /// </summary>
     public static string ClockKey(string source, string signal) => $"{source}/clock/{signal}";
+
+    /// <summary>
+    /// Seconds between a program evaluating a sample and the sample being heard,
+    /// which a Clock In runs ahead by. Written by whoever plays the program, not
+    /// by an instrument.
+    /// </summary>
+    internal const string LeadKey = "clock/lead";
 }

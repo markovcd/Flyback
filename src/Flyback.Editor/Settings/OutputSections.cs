@@ -41,7 +41,7 @@ internal sealed class OutputSections
     private static readonly double[] PreviewFrameRates = [0, 24, 25, 30, 50, 60];
 
     /// <summary>The latencies the speakers can be asked for, in milliseconds.</summary>
-    private static readonly int[] Latencies = [10, 20, 30, 50, 100, 200];
+    private static readonly int[] Latencies = [5, 10, 20, 30, 50, 100, 200];
 
     /// <summary>
     /// The counts a take can be counted in for, in seconds, 0 standing for none

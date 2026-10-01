@@ -67,6 +67,9 @@ public sealed unsafe class CoreAudioDevice(AudioFormat format, string? uid = nul
     /// </summary>
     public int SampleRate { get; } = format.SampleRate;
 
+    /// <summary>The buffer it asks the unit for.</summary>
+    public TimeSpan Latency => TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
+
     public bool IsRunning => running;
 
     public void Start(AudioCallback fill)

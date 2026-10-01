@@ -21,23 +21,31 @@ public sealed class SpeakerSteps(PatchContext context)
     public void WhenOneMoreSample() => context.Play(1);
 
     /// <summary>
+    /// The program evaluates each sample this long before it is heard, so whatever
+    /// the drum machine sends is seen that much later in the sound.
+    /// </summary>
+    [Given("the speakers run {int} ms behind")]
+    public void GivenTheSpeakersLag(int milliseconds) => context.Lead = milliseconds / 1000d;
+
+    /// <summary>
     /// Start, then a tick on every twenty-fourth of a beat up to and including the
     /// last, with the sound played on between them as it would be in the room.
     /// </summary>
     [When(@"^the drum machine starts and plays (\d+) beats? at (\d+) bpm$")]
     public void WhenTheMachinePlays(int beats, int bpm)
     {
-        context.Clock.Start();
-        context.Push();
-
         var tick = 60d / bpm / MidiSignal.TicksPerBeat;
         var from = context.Now;
+
+        context.PlayUntil(from + context.Lead);
+        context.Clock.Start();
+        context.Push();
 
         for (var k = 0; k <= beats * MidiSignal.TicksPerBeat; k++)
         {
             var at = from + k * tick;
 
-            context.PlayUntil(at);
+            context.PlayUntil(at + context.Lead);
             context.Clock.Tick(at);
             context.Push();
         }

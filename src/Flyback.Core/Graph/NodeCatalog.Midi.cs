@@ -45,7 +45,14 @@ public partial class NodeCatalog
 
         yield return new NodeDef(
             ClockTypeId, "Clock In", ModuleCategories.Timing,
-            [Domain("in", "The clock the beat is carried forward on between ticks: Time without a wire.")],
+            [
+                Domain("in", "The clock the beat is carried forward on between ticks: Time without a wire."),
+                Num("nudge", 0f, -100f, 100f) with
+                {
+                    Help = "Milliseconds to run ahead of the machine, or behind it below nought, on top of "
+                        + "the sound device's own latency. Turn it until the two kicks land as one.",
+                },
+            ],
             [
                 Num("beats") with
                 {
@@ -73,6 +80,13 @@ public partial class NodeCatalog
     /// beat last changed in a cell and runs the line <c>beat + rate × (in − at)</c>
     /// from there, against its own clock.
     /// <para>
+    /// A sample is evaluated a lead before it is heard: the device's latency,
+    /// which the player writes under <see cref="MidiSignal.LeadKey"/>, plus
+    /// 'nudge'. So a tick is anchored that much earlier than it was seen, and the
+    /// beat heard is the beat the instrument is on. A changed lead lands on the
+    /// next tick and is eased like any other jump.
+    /// </para>
+    /// <para>
     /// A tick lands early or late by the jitter of the cable and by wherever the
     /// speakers' buffer happened to be, so the line jumps a little each time it
     /// is re-anchored, and again when the tempo moves or a Stop takes the rate
@@ -96,6 +110,7 @@ public partial class NodeCatalog
         var starts = em.Live(MidiSignal.ClockKey(device, MidiSignal.Starts));
 
         var now = node[0];
+        var lead = em.Add(em.Live(MidiSignal.LeadKey), em.Mul(node[1], 0.001f));
         var memory = em.HasMemory();
 
         var beatCell = em.AllocateUnitSlot();
@@ -117,7 +132,7 @@ public partial class NodeCatalog
         var woke = em.Mul(wasStill, em.Binary(OpCode.Step, em.Constant(1e-6f), em.Unary(OpCode.Abs, rate)));
 
         var arrived = em.Binary(OpCode.Max, ticked, woke);
-        var at = em.Add(wasAt, em.Mul(arrived, em.Sub(now, wasAt)));
+        var at = em.Add(wasAt, em.Mul(arrived, em.Sub(em.Sub(now, lead), wasAt)));
         var expected = em.Add(beat, em.Mul(memory, em.Mul(rate, em.Sub(now, at))));
 
         // Where the line as it was says the beat is now, against where the line

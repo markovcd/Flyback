@@ -37,6 +37,8 @@ public class AudioEngineTests
 
         public bool IsRunning => fill is not null;
 
+        public TimeSpan Latency { get; set; }
+
         public void Start(AudioCallback callback) => fill = callback;
 
         public void Stop() => fill = null;
@@ -354,6 +356,29 @@ public class AudioEngineTests
         // place this differs from a Scope — a chart holds its last sweep.
         engine.Deafen(watching);
         watching.At(watching.Keys.ToList().IndexOf(level)).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// A Clock In runs ahead by the speakers' latency, which a device can only
+    /// say for certain once it is open.
+    /// </summary>
+    [Fact]
+    public void AClockInIsToldHowFarBehindTheSpeakersRun()
+    {
+        var device = new LoopbackDevice { Latency = TimeSpan.FromMilliseconds(20) };
+        using var engine = new AudioEngine(new AudioSetup(device));
+
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var clock = builder.Add(NodeCatalog.ClockTypeId, 0, 0);
+        var speaker = builder.Add(NodeCatalog.OutputTypeId, 0, 0, (NodeCatalog.OutputVolumePort, 1f));
+        builder.Wire(clock, 0, speaker, NodeCatalog.OutputLeftPort);
+
+        engine.Update(builder.Patch);
+        engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.02f);
+
+        device.Latency = TimeSpan.FromMilliseconds(30);
+        engine.Start();
+        engine.Live.Find(MidiSignal.LeadKey).ShouldBe(0.03f);
     }
 
     /// <summary>

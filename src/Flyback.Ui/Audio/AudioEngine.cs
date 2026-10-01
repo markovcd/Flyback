@@ -155,7 +155,10 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
 
     public void Start()
     {
-        if (!current.IsRunning) current.Start(Fill);
+        if (current.IsRunning) return;
+
+        current.Start(Fill);
+        Lead(Live);
     }
 
     public void Stop() => current.Stop();
@@ -267,9 +270,14 @@ internal sealed class AudioEngine(AudioSetup sound, IlCompiler? compiler = null)
         // sharing one across a swap would mean the callback reading a block being
         // resized under it.
         var live = new LiveValues(program.LiveInputs);
+        Lead(live);
 
         Volatile.Write(ref activeState, new State(program, memory, live, renderer));
     }
+
+    /// <summary>How far ahead of the speakers the program runs, for a Clock In to make up.</summary>
+    /// <remarks>Read again at each start, because a device knows its buffer only once it is open.</remarks>
+    private void Lead(LiveValues live) => live.Set(MidiSignal.LeadKey, (float)current.Latency.TotalSeconds);
 
     /// <summary>
     /// The block whoever is playing should be writing into — the one belonging to

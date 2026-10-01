@@ -794,7 +794,8 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
     <p><code>IAudioDevice.Start</code> is handed a callback that fills an interleaved stereo buffer on the
     audio thread. It <strong>must not block, allocate or throw</strong>. If you cannot honor the requested
     format exactly, open the nearest thing you can and report the truth through
-    <code>SampleRate</code>.</p>
+    <code>SampleRate</code>. Report how long a sample takes from the callback to the speaker through
+    <code>Latency</code>, which a Clock In runs ahead by; left out, it is nought.</p>
 
     <h3>MIDI inputs</h3>
 

@@ -63,6 +63,9 @@ public sealed class AlsaAudioDevice(AudioFormat format, string? device = null) :
     /// </summary>
     public int SampleRate { get; } = format.SampleRate;
 
+    /// <summary>The latency it asks libasound for.</summary>
+    public TimeSpan Latency => TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
+
     public bool IsRunning => running;
 
     public void Start(AudioCallback fill)

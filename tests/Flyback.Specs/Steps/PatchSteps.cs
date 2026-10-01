@@ -391,6 +391,12 @@ public sealed class PatchSteps(PatchContext context)
             $"let c = midi.clock(device: \"{PatchContext.Machine}\"){(char)10}"
             + $"values(in: c.beats, rate: 1) [ {string.Join(' ', values.Split(',', StringSplitOptions.TrimEntries))} ] |> out.left");
 
+    [Given(@"^a sequencer of ([\d., ]+) stepping once a beat of a drum machine, nudged (-?\d+) ms$")]
+    public void GivenASequencerOnANudgedClock(string values, int nudge) =>
+        Written(
+            $"let c = midi.clock(device: \"{PatchContext.Machine}\", nudge: {nudge}){(char)10}"
+            + $"values(in: c.beats, rate: 1) [ {string.Join(' ', values.Split(',', StringSplitOptions.TrimEntries))} ] |> out.left");
+
     [Given("the gate of a MIDI In hearing channel {int} of a drum machine")]
     public void GivenAMidiInOnAChannel(int channel) =>
         Written($"midi.in(device: \"{PatchContext.Machine}\", voice: 1, channel: {channel}).gate |> out.left");

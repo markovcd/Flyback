@@ -9,6 +9,19 @@ Feature: A patch keeps time with a drum machine
     Then the sound is about 0.2 at 0.25 seconds
     And the sound is about 0.4 at 0.75 seconds
 
+  Scenario: The beat heard is the machine's, however far behind the speakers run
+    Given a sequencer of 0.2, 0.4, 0.6, 0.8 stepping once a beat of a drum machine
+    And the speakers run 50 ms behind
+    When the drum machine starts and plays 4 beats at 120 bpm
+    Then the sound is about 0.6 at 1.49 seconds
+    And the sound is about 0.8 at 1.51 seconds
+
+  Scenario: A nudge runs the beat ahead of the machine by as many milliseconds
+    Given a sequencer of 0.2, 0.4, 0.6, 0.8 stepping once a beat of a drum machine, nudged 50 ms
+    When the drum machine starts and plays 4 beats at 120 bpm
+    Then the sound is about 0.6 at 1.44 seconds
+    And the sound is about 0.8 at 1.46 seconds
+
   Scenario: Stopping the machine holds the beat
     Given the beats of a drum machine's clock on the speakers
     When the drum machine starts and plays 1 beat at 120 bpm

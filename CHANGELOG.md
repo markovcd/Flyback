@@ -16,6 +16,11 @@
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
 - The knob panel randomizes: a die, Ctrl+Shift+K or a learned controller button or pad sends every knob not held somewhere new, within an amount and over a glide set on the panel, and an arrow goes back.
 
+### Sound
+
+- A Clock In runs ahead by the sound device's latency, so a patch's kick lands with the drum machine's rather than just after it, and its `nudge` takes up whatever latency the device cannot report.
+- Latency can be set as low as 5 ms.
+
 ### Web
 
 - The web viewer's panel of knobs is capped at a third of the window and scrolls, and its top edge is dragged (or moved with the arrow keys) to make it taller or shorter, so a patch with many knobs no longer covers the picture; the height is kept.

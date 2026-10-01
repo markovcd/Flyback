@@ -52,6 +52,9 @@ public sealed class PatchContext
     /// <summary>The drum machine's clock, as the shell would keep it.</summary>
     internal MidiClock Clock { get; } = new();
 
+    /// <summary>Seconds the speakers run behind the program, as the shell would write them for a Clock In.</summary>
+    public double Lead { get; set; }
+
     /// <summary>How many voices the scenario's patch has, named "voice 1" onward and read as "sounding 1" onward.</summary>
     public int Voices { get; set; }
 
@@ -217,7 +220,11 @@ public sealed class PatchContext
     public double Now => (double)heard.Count / SampleRate;
 
     /// <summary>Puts the drum machine's clock where the program will read it.</summary>
-    public void Push() => Clock.WriteTo(Live, Machine);
+    public void Push()
+    {
+        Clock.WriteTo(Live, Machine);
+        Live.Set(MidiSignal.LeadKey, (float)Lead);
+    }
 
     /// <summary>
     /// The drum machine strikes or lets go of a note on one of its channels,
@@ -250,6 +257,7 @@ public sealed class PatchContext
                 field = new LiveValues(program.LiveInputs);
                 liveFor = program;
                 Clock.WriteTo(field, Machine);
+                field.Set(MidiSignal.LeadKey, (float)Lead);
             }
 
             return field;

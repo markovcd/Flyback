@@ -524,7 +524,7 @@ public class OutputSettingsTests : UiTest
 
         kept.FrameRate.ShouldBe(60);
         kept.JpegQuality.ShouldBe(60);
-        kept.LatencyMilliseconds.ShouldBe(10);
+        kept.LatencyMilliseconds.ShouldBe(OutputSettings.ShortestLatency);
         kept.CountInSeconds.ShouldBe(OutputSettings.NoCountIn);
         kept.RewindBeforeTake.ShouldBeFalse();
 

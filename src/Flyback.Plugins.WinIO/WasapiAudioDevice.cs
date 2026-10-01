@@ -23,6 +23,9 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
 
     public bool IsRunning => activeOutput?.PlaybackState == PlaybackState.Playing;
 
+    /// <summary>The buffer WASAPI granted while playing, and the one asked for until then.</summary>
+    public TimeSpan Latency => activeOutput?.AverageLatency ?? TimeSpan.FromMilliseconds(format.LatencyMilliseconds);
+
     /// <summary>
     /// Every output that could play right now, as the id Windows files it under and
     /// the name it shows in its own sound settings.

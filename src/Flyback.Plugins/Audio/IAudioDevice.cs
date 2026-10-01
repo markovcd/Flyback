@@ -12,6 +12,12 @@ public interface IAudioDevice : IDisposable
 
     bool IsRunning { get; }
 
+    /// <summary>
+    /// How long a sample takes from the callback that fills it to the speaker, as
+    /// near as the device can tell. Nought where it cannot.
+    /// </summary>
+    TimeSpan Latency => TimeSpan.Zero;
+
     void Start(AudioCallback fill);
 
     void Stop();

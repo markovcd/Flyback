@@ -436,6 +436,10 @@ out.volume = 0.6</code></pre>
     <code>bpm</code> is the tempo, <code>running</code> is high between Start and Stop, and <code>reset</code>
     fires on Start. Pick the machine on the module's <strong>follows</strong> field.</p>
 
+    <p>The beats run ahead by the sound device's latency, so what you hear lands with the machine. If its kick and
+    the patch's still flam, turn <code>nudge</code>: milliseconds further ahead, or behind below nought, until the
+    two land as one.</p>
+
     <pre><code class="fbks"># Z to M plays C3 to B3, Q to U the octave above.
 let key   = midi.in()
 let pitch = key.pitch |> note(note: _)
