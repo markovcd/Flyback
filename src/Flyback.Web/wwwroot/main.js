@@ -34,7 +34,7 @@ const $ = id => document.getElementById(id);
 const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
-  panel: $('panel'), about: $('about'),
+  panel: $('panel'), grip: $('grip'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
 };
 
@@ -386,11 +386,56 @@ function buildPanel(open, keep) {
 
   knobs = open ? JSON.parse(flyback.Knobs()).map(knob => ({ ...knob, value: knob.rest, turns: 0, shown: 0 })) : [];
   ui.panel.replaceChildren(...knobs.map(slider));
-  ui.panel.hidden = knobs.length === 0;
+  ui.panel.hidden = ui.grip.hidden = knobs.length === 0;
 
   for (const knob of knobs)
     if (keep && before.has(knob.key) && before.get(knob.key) !== knob.value) turn(knob, before.get(knob.key), true);
 }
+
+/** Where the browser keeps the panel's height between visits. */
+const PANEL_KEPT = 'flyback-viewer-panel';
+
+/** Sets how tall the panel may grow, in pixels, or back to its default for null; the sliders scroll past it. */
+function sizePanel(pixels, keep = true) {
+  if (pixels === null) ui.panel.style.removeProperty('--panel-height');
+  else ui.panel.style.setProperty('--panel-height', `${Math.round(Math.min(Math.max(pixels, 0), innerHeight * 0.7))}px`);
+
+  if (!keep) return;
+
+  try {
+    if (pixels === null) localStorage.removeItem(PANEL_KEPT);
+    else localStorage.setItem(PANEL_KEPT, String(pixels));
+  } catch { /* Storage is off; the height just isn't kept. */ }
+}
+
+function panelResizing() {
+  try {
+    const kept = Number(localStorage.getItem(PANEL_KEPT));
+    if (kept > 0) sizePanel(kept, false);
+  } catch { /* Nothing kept. */ }
+
+  let from = null;
+  const height = () => ui.panel.getBoundingClientRect().height;
+
+  ui.grip.onpointerdown = event => {
+    from = { y: event.clientY, height: height() };
+    ui.grip.setPointerCapture(event.pointerId);
+  };
+  ui.grip.onpointermove = event => {
+    if (from !== null) sizePanel(from.height + from.y - event.clientY);
+  };
+  ui.grip.onpointerup = ui.grip.onpointercancel = () => { from = null; };
+  ui.grip.ondblclick = () => sizePanel(null);
+  ui.grip.onkeydown = event => {
+    const step = { ArrowUp: 24, ArrowDown: -24 }[event.key];
+    if (step !== undefined) sizePanel(height() + step);
+    else if (event.key === 'Home') sizePanel(null);
+    else return;
+    event.preventDefault();
+  };
+}
+
+panelResizing();
 
 function slider(knob) {
   const label = document.createElement('label');
@@ -828,6 +873,7 @@ window.flyback = {
     pressed.clear();
     speaker.postMessage({ release: true });
   },
+  panel: pixels => { sizePanel(pixels); return ui.panel.getBoundingClientRect().height; },
   knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
   turn: (knob, value) => {
     const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());

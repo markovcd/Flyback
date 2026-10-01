@@ -23,7 +23,7 @@ html, body {
 
 body {
   display: grid;
-  grid-template-rows: auto 1fr auto auto auto auto;
+  grid-template-rows: auto 1fr auto auto auto auto auto;
 }
 
 [hidden] { display: none !important; }
@@ -82,14 +82,30 @@ option { color: var(--bright); }
   cursor: pointer;
 }
 
+#grip {
+  height: 10px;
+  background: var(--window) linear-gradient(var(--separator), var(--separator)) center / 36px 3px no-repeat;
+  border-top: 1px solid var(--separator);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+/* A fingertip needs more than a pointer does. */
+@media (pointer: coarse) { #grip { height: 26px; background-size: 48px 4px; } }
+
+#grip:hover, #grip:focus-visible { background-color: var(--toolbar); outline: none; }
+
 #panel {
+  max-height: var(--panel-height, 30vh);
+  overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
   padding: 8px 16px;
   background: var(--window);
-  border-top: 1px solid var(--separator);
 }
+
+#panel[style*="--panel-height: 0px"] { padding-block: 0; }
 
 #panel label {
   display: grid;
