@@ -214,6 +214,19 @@ public sealed class Patch
         return true;
     }
 
+    /// <summary>Puts two knobs in each other's places on the panel.</summary>
+    public bool SwapControls(Guid first, Guid second)
+    {
+        if (first == second || Control(first) is not { } a || Control(second) is not { } b) return false;
+
+        var at = Controls!.IndexOf(a);
+        var other = Controls.IndexOf(b);
+
+        Controls[at] = b;
+        Controls[other] = a;
+        return true;
+    }
+
     /// <summary>
     /// Takes a knob off the panel, leaving every socket that followed it where the
     /// knob had put it.

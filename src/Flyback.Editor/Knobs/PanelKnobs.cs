@@ -242,6 +242,14 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             document.PanelEdited();
         };
 
+        View.SwapRequested += (first, second) =>
+        {
+            if (!editor.History.Patch.SwapControls(first, second)) return;
+
+            editor.History.Record();
+            document.PanelEdited();
+        };
+
         View.RemoveRequested += id =>
         {
             if (editor.Linking.Control == id) Link(null);

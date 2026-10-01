@@ -18,7 +18,8 @@ namespace Flyback.App.Knobs;
 /// <remarks>
 /// Draws what it is shown and reports what the hand does; the window decides what
 /// that does to the patch. Clicking a knob's name starts linking sockets to it, and
-/// dragging the name moves the knob.
+/// dragging the name moves the knob: between two knobs to slip it in there, onto
+/// one to swap the two.
 /// </remarks>
 internal sealed class ControlsPanel : Border
 {
@@ -123,6 +124,9 @@ internal sealed class ControlsPanel : Border
 
     /// <summary>A knob was moved: its id, and the place it should have once taken out of its old one.</summary>
     public event Action<Guid, int>? MoveRequested;
+
+    /// <summary>A knob was dropped onto another: the two ids, to trade places.</summary>
+    public event Action<Guid, Guid>? SwapRequested;
 
     /// <summary>
     /// What a knob's value reads as, given its id and position — the socket's own
@@ -283,11 +287,15 @@ internal sealed class ControlsPanel : Border
         Learning = learning;
     }
 
+    /// <summary>How much of a cell's width, around its middle, swaps rather than slips in beside.</summary>
+    private const double SwapShare = 0.6;
+
     /// <summary>
     /// Where a knob dragged to <paramref name="point"/> (in the strip's coordinates)
-    /// lands, as an index among all the knobs, and which cell edge marks it.
+    /// lands: onto the middle of a cell, which it swaps with, or else as an index among
+    /// all the knobs, with the cell edge that marks it.
     /// </summary>
-    private (int Index, Cell Beside, bool After)? DropAt(Point point)
+    private (int Index, Cell Beside, bool? After)? DropAt(Point point)
     {
         var ordered = cells.Values.OrderBy(c => c.Index).ToList();
 
@@ -296,7 +304,12 @@ internal sealed class ControlsPanel : Border
         // The nearest cell rather than the one under the pointer, so a drop in a gap
         // or past the end of a wrapped row still lands somewhere.
         var nearest = ordered.MinBy(c => Distance(c.Root.Bounds, point))!;
-        var after = point.X > nearest.Root.Bounds.Center.X;
+        var bounds = nearest.Root.Bounds;
+
+        if (bounds.Contains(point) && Math.Abs(point.X - bounds.Center.X) < bounds.Width * SwapShare / 2)
+            return (nearest.Index, nearest, null);
+
+        var after = point.X > bounds.Center.X;
 
         return (nearest.Index + (after ? 1 : 0), nearest, after);
 
@@ -310,12 +323,23 @@ internal sealed class ControlsPanel : Border
 
     private void ClearDropMarks()
     {
-        foreach (var cell in cells.Values) cell.Mark(null);
+        foreach (var cell in cells.Values) cell.Mark(DropMark.None);
+    }
+
+    /// <summary>What a cell shows while a dragged knob is over it.</summary>
+    private enum DropMark
+    {
+        None,
+        Before,
+        After,
+        Swap,
     }
 
     private sealed class Cell
     {
         private static readonly IBrush Heard = new ImmutableSolidColorBrush(Colors.Attention);
+
+        private static readonly IBrush SwapTint = new ImmutableSolidColorBrush(Colors.Attention, 0.18);
 
         /// <summary>How far the name has to travel before a press is a move rather than a click.</summary>
         private const double DragThreshold = 5;
@@ -353,8 +377,8 @@ internal sealed class ControlsPanel : Border
             };
 
             ToolTip.SetTip(name, control.Held
-                ? "Held: randomizing leaves this knob alone. Click to link sockets to it, drag to move it, double-click to rename it."
-                : "Click to link sockets to this knob, drag to move it, double-click to rename it.");
+                ? "Held: randomizing leaves this knob alone. Click to link sockets to it, drag it between knobs to move it or onto one to swap them, double-click to rename it."
+                : "Click to link sockets to this knob, drag it between knobs to move it or onto one to swap them, double-click to rename it.");
 
             if (control.Held) name.Foreground = Text.Muted;
 
@@ -478,7 +502,13 @@ internal sealed class ControlsPanel : Border
                 body.Opacity = 0.45;
 
                 panel.ClearDropMarks();
-                if (panel.DropAt(at) is { } drop) drop.Beside.Mark(drop.After);
+                if (panel.DropAt(at) is { } drop && (drop.After is not null || drop.Beside != this))
+                    drop.Beside.Mark(drop.After switch
+                    {
+                        true => DropMark.After,
+                        false => DropMark.Before,
+                        null => DropMark.Swap,
+                    });
             };
 
             name.PointerReleased += (_, e) =>
@@ -499,6 +529,12 @@ internal sealed class ControlsPanel : Border
                 }
 
                 if (panel.DropAt(e.GetPosition(panel.strip)) is not { } drop) return;
+
+                if (drop.After is null)
+                {
+                    if (drop.Beside != this) panel.SwapRequested?.Invoke(control.Id, drop.Beside.control.Id);
+                    return;
+                }
 
                 // Counted among the knobs as they stand, so one landing past its old
                 // place is one fewer along once it has been taken out.
@@ -534,15 +570,20 @@ internal sealed class ControlsPanel : Border
         /// <summary>Where this knob stands on the panel.</summary>
         public int Index { get; }
 
-        /// <summary>Lights the edge a dragged knob would land at: after, before, or neither.</summary>
-        public void Mark(bool? after)
+        /// <summary>
+        /// Lights where a dragged knob would land: an edge to slip in at, or the whole cell
+        /// to swap with, tinted and lit on both sides so the cell keeps its size.
+        /// </summary>
+        public void Mark(DropMark mark)
         {
-            Root.BorderBrush = after is null ? Brushes.Transparent : Heard;
-            Root.BorderThickness = after switch
+            Root.BorderBrush = mark == DropMark.None ? Brushes.Transparent : Heard;
+            Root.Background = mark == DropMark.Swap ? SwapTint : null;
+            Root.BorderThickness = mark switch
             {
-                true => new Thickness(0, 0, 2, 0),
-                false => new Thickness(2, 0, 0, 0),
-                null => new Thickness(2, 0),
+                DropMark.After => new Thickness(0, 0, 2, 0),
+                DropMark.Before => new Thickness(2, 0, 0, 0),
+                DropMark.Swap => new Thickness(2, 0),
+                _ => new Thickness(2, 0),
             };
         }
 

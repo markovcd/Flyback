@@ -413,6 +413,37 @@ public class KnobPanelTests : UiTest
     }
 
     [AvaloniaFact]
+    public void Dropping_a_knob_onto_another_swaps_them_and_lights_the_one_under_it()
+    {
+        var (patch, _) = Board();
+        for (var i = 0; i < 4; i++) patch.AddControl();
+        var window = Open(patch);
+
+        var cells = All<StackPanel>(Panel(window)).Where(p => p.Children.OfType<Knob>().Any()).ToList();
+        var name = All<TextBlock>(Panel(window)).First(t => t.Name == "knob-name");
+        var from = OnWindow(window, name, new Point(name.Bounds.Width / 2, name.Bounds.Height / 2));
+        var onto = cells[2];
+        var to = OnWindow(window, onto, new Point(onto.Bounds.Width / 2, onto.Bounds.Height / 2));
+
+        window.MouseDown(from, MouseButton.Left);
+        window.MouseMove(from + new Point(10, 0));
+        window.MouseMove(to);
+        Settle(window);
+
+        onto.Parent.ShouldBeOfType<Border>().Background.ShouldNotBeNull("the knob under the pointer is lit whole");
+
+        window.MouseUp(to, MouseButton.Left);
+        Settle(window);
+
+        Order(window).ShouldBe("Knob 3,Knob 2,Knob 1,Knob 4");
+
+        Editor(window).History.Undo().ShouldBeTrue();
+        Settle(window);
+
+        Order(window).ShouldBe("Knob 1,Knob 2,Knob 3,Knob 4");
+    }
+
+    [AvaloniaFact]
     public void The_knob_menu_moves_a_knob_one_place()
     {
         var (patch, _) = Board();

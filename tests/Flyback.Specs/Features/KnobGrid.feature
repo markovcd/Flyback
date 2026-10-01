@@ -28,3 +28,11 @@ Feature: The knob panel can stand in a fixed grid
       | width |
       | 1600  |
       | 500   |
+
+  Scenario: A knob dropped between two slips in there, and one dropped onto another swaps with it
+    Given the screen is 1600 pixels wide
+    When the knobs are kept in a grid of 4 columns and 2 rows
+    And the knob "a" is dropped onto the knob "f"
+    Then the knob panel's rows are "f b c d" and "e a"
+    When the knob "b" is dropped at the left edge of the knob "e"
+    Then the knob panel's rows are "f c d b" and "e a"

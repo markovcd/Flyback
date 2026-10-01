@@ -512,6 +512,27 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
                 .GetVisualDescendants().OfType<NumericUpDown>().Single(box => box.Name == name)
                 .Value = (decimal)value);
 
+    /// <summary>
+    /// Drags the panel knob called <paramref name="name"/> by its name and lets go over
+    /// the knob called <paramref name="onto"/>, at <paramref name="across"/> of its width.
+    /// </summary>
+    public void DropKnob(string name, string onto, double across) =>
+        DoWindow((open, _) =>
+        {
+            var names = open.GetVisualDescendants().OfType<TextBlock>()
+                .Where(text => text.Name == "knob-name" && text.FindAncestorOfType<Flyback.App.Knobs.ControlsPanel>() is not null)
+                .ToList();
+            var held = names.Single(text => text.Text == name);
+            var cell = names.Single(text => text.Text == onto).FindAncestorOfType<Border>()!;
+            var from = held.TranslatePoint(new Point(held.Bounds.Width / 2, held.Bounds.Height / 2), open)!.Value;
+            var to = cell.TranslatePoint(new Point(cell.Bounds.Width * across, cell.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(from, MouseButton.Left);
+            open.MouseMove(from + new Point(10, 0));
+            open.MouseMove(to);
+            open.MouseUp(to, MouseButton.Left);
+        });
+
     /// <summary>The knob panel's knobs by name, a row at a time from the top, each left to right.</summary>
     public IReadOnlyList<string> KnobRows => ReadWindow(open =>
         open.GetVisualDescendants().OfType<TextBlock>()
