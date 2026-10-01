@@ -26,13 +26,14 @@ public class TurnLoopTests
         PatchWorkbench bench,
         Scripted conversation,
         CancellationTokenSource? stop = null,
-        Func<PatchEvent, bool>? stopAt = null)
+        Func<PatchEvent, bool>? stopAt = null,
+        string instruction = "make something")
     {
         var events = new List<PatchEvent>();
 
         conversation.Workbench = bench;
 
-        await foreach (var happened in TurnLoop.Run(conversation, "make something", stop?.Token ?? TestContext.Current.CancellationToken))
+        await foreach (var happened in TurnLoop.Run(conversation, instruction, stop?.Token ?? TestContext.Current.CancellationToken))
         {
             events.Add(happened);
 
@@ -102,6 +103,47 @@ public class TurnLoopTests
         var second = await Turn(bench, new Scripted(new ModelReply("It is gray.", [])));
 
         second.OfType<PatchEvent.Did>().ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Asked to listen or to reach a loudness with no ear, the turn says it cannot
+    /// before the model says anything, and the model is told so with the message.
+    /// </summary>
+    [Theory]
+    [InlineData("listen to it and bring it to -16 LUFS")]
+    [InlineData("How does it sound? Can you hear the bass?")]
+    [InlineData("make the loudness about -14")]
+    public async Task Asked_to_listen_with_no_ear_the_turn_says_it_cannot(string asked)
+    {
+        var conversation = new Scripted(new ModelReply("done", []));
+
+        var events = await Turn(Bench(), conversation, instruction: asked);
+
+        events[0].ShouldBeOfType<PatchEvent.Did>().Summary.ShouldContain("cannot hear");
+        conversation.Log.ShouldContain(line => line.StartsWith("add: ") && line.Contains("cannot hear") && line.EndsWith(asked));
+    }
+
+    [Fact]
+    public async Task Asked_to_listen_with_an_ear_the_turn_says_nothing_about_it()
+    {
+        var conversation = new Scripted(new ModelReply("done", []));
+        var hearing = new PatchWorkbench(NodeCatalog.BuiltIn, new Patch(), vision: false, hearing: Listener.Another);
+
+        var events = await Turn(hearing, conversation, instruction: "listen to it and bring it to -16 LUFS");
+
+        events.ShouldBe([new PatchEvent.Said("done")]);
+        conversation.Log.ShouldContain("add: listen to it and bring it to -16 LUFS");
+    }
+
+    [Fact]
+    public async Task Asked_for_something_else_with_no_ear_the_turn_says_nothing_about_hearing()
+    {
+        var conversation = new Scripted(new ModelReply("done", []));
+
+        var events = await Turn(Bench(), conversation, instruction: "make it bluer and louder");
+
+        events.ShouldBe([new PatchEvent.Said("done")]);
+        conversation.Log.ShouldContain("add: make it bluer and louder");
     }
 
     [Fact]

@@ -49,6 +49,15 @@ to read.
 > A wait of under a second is not told, and a turn that only waited before it
 > failed is not counted.
 
+> **Amended.** *(2026-10-01.)* A turn with no ear says so when asked to hear.
+> Told in the briefing that it cannot hear, a model asked to "listen and bring
+> it to -16 LUFS" still proposed a patch "to reach -16 LUFS" it had never
+> measured. Where the workbench offers no `listen` and the message asks to
+> listen, hear, or for a loudness, the turn opens by telling the person, and
+> the message reaches the model with a note saying the same. The words are
+> matched, not understood, so a request that names none of them gets the
+> briefing alone.
+
 **The listening brief is the host's** (`TurnLoop.Ear`): what to ask about a synth's
 clip is knowledge of Flyback, not of a provider.
 

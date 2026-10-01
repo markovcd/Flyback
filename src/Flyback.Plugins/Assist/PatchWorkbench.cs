@@ -117,6 +117,9 @@ public sealed partial class PatchWorkbench
 
     public IReadOnlyList<PatchTool> Tools { get; }
 
+    /// <summary>Whether the model is offered <c>listen</c>, which is the only way it hears or measures the sound.</summary>
+    internal bool Hears => Tools.Any(tool => tool.Name == "listen");
+
     public bool HasProposal => proposal is not null;
 
     /// <summary>

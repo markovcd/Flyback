@@ -92,6 +92,13 @@ public static class TurnLoop
         // Pictures and clips from earlier turns go as a line each: every request of
         // this turn would otherwise carry them again, and the model can look again.
         conversation.Forget();
+
+        if (!workbench.Hears && Unheard.Asked(instruction))
+        {
+            yield return new PatchEvent.Did(Unheard.Told);
+            instruction = Unheard.Note + Environment.NewLine + Environment.NewLine + instruction;
+        }
+
         conversation.Add(instruction);
 
         for (var exchange = 0; exchange < MaxExchanges; exchange++)

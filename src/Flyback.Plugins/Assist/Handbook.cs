@@ -238,8 +238,10 @@ internal static class Handbook
     /// whoever asked it, and one's own ear agrees with whoever built the patch.
     /// </remarks>
     private const string Deaf = """
-        You cannot hear the sound. If the patch makes noise, reason about it
-        from the modules and say plainly that you have not heard it.
+        You cannot hear the sound, and no tool of yours measures it. If the
+        patch makes noise, reason about it from the modules and say plainly
+        that you have not heard it. Asked to listen, or to reach a loudness,
+        say you cannot rather than give a level you never measured.
 
         """;
 
