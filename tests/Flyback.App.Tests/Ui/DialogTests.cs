@@ -89,6 +89,44 @@ public class DialogTests : UiTest
     }
 
     /// <summary>
+    /// A narrow window gives the margin up before the content: the dialog keeps the
+    /// width its content needs, and the sides shrink to nothing if they must.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("settings", 450)]
+    [InlineData("about", 450)]
+    [InlineData("about", 380)]
+    public void A_narrow_window_takes_the_margin_and_not_the_content(string named, double width)
+    {
+        var window = Open();
+
+        window.Width = width;
+        Settle(window);
+
+        var frame = All<Border>(Show(window, named)).Single(b => b.Name == "dialog");
+        var scroller = All<ScrollViewer>(frame).First();
+
+        if (width > 0) Assert.Fail($"window {window.Bounds.Width} client {window.ClientSize} frame {frame.Bounds} min {frame.MinWidth} margin {frame.Margin}");
+        frame.Bounds.Width.ShouldBeGreaterThanOrEqualTo(frame.MinWidth);
+        frame.Bounds.Width.ShouldBeLessThanOrEqualTo(width);
+        frame.Margin.Left.ShouldBeLessThan(40, "the margin should have given way");
+
+        if (frame.MinWidth < width)
+            scroller.Extent.Width.ShouldBeLessThanOrEqualTo(scroller.Viewport.Width + 1, "the content should not be cut off");
+    }
+
+    [AvaloniaFact]
+    public void A_wide_window_keeps_the_full_margin()
+    {
+        var window = Open();
+
+        window.Width = 1200;
+        Settle(window);
+
+        All<Border>(Show(window, "about")).Single(b => b.Name == "dialog").Margin.Left.ShouldBe(40);
+    }
+
+    /// <summary>
     /// And again. The settings panel is the shell's, not the dialog's — it holds
     /// what was last typed into it — so the dialog it was shown in has to let go
     /// of it on the way out.

@@ -34,6 +34,12 @@ internal sealed class ModalOverlay : Border
     /// </summary>
     private Visual? layer;
 
+    private Border? frame;
+
+    private Control[] parts = [];
+
+    private ScrollViewer? scroller;
+
     public ModalOverlay(string title, Func<Action<object?>, Control> content, Control? header = null, bool fill = false)
     {
         Name = "modal";
@@ -106,6 +112,27 @@ internal sealed class ModalOverlay : Border
 
         Width = layer.Bounds.Width;
         Height = layer.Bounds.Height;
+
+        Fit(layer.Bounds.Width);
+    }
+
+    /// <summary>
+    /// Gives up margin before content: the sides shrink to nothing as the window
+    /// narrows to the dialog's minimum, and below that the dialog scrolls sideways.
+    /// </summary>
+    private void Fit(double window)
+    {
+        if (frame is null || scroller is null) return;
+
+        var narrowest = Math.Min(parts.Max(Needs) + 2, Widest);
+        var side = Math.Clamp((window - narrowest) / 2, 0, Inset);
+
+        frame.Margin = new Thickness(side, Inset, side, Inset);
+        frame.MinWidth = Math.Min(narrowest, window);
+
+        scroller.HorizontalScrollBarVisibility = narrowest > window
+            ? ScrollBarVisibility.Auto
+            : ScrollBarVisibility.Disabled;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -125,6 +152,15 @@ internal sealed class ModalOverlay : Border
         // listening for Ctrl+Z, Ctrl+L and Escape whatever has the focus.
         e.Handled = true;
     }
+
+    /// <summary>
+    /// The width <paramref name="part"/> cannot be drawn narrower than: what it asks
+    /// for through <see cref="Layoutable.MinWidth"/> or <see cref="Layoutable.Width"/>,
+    /// with its margin. Measuring would not say, because a measure is clamped to the room
+    /// it is offered.
+    /// </summary>
+    private static double Needs(Control part)
+        => Math.Max(part.MinWidth, double.IsNaN(part.Width) ? 0 : part.Width) + part.Margin.Left + part.Margin.Right;
 
     private Control Frame(string title, Control content, Control? header, bool fill)
     {
@@ -180,13 +216,17 @@ internal sealed class ModalOverlay : Border
         // any window this one is allowed to be, but a settings panel grows a row
         // every time a plugin adds a setting, and a dialog whose buttons are off
         // the bottom of the screen cannot be answered at all.
-        inside.Children.Add(new ScrollViewer
+        scroller = new ScrollViewer
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             Content = content,
-        });
+        };
 
-        return new Border
+        inside.Children.Add(scroller);
+
+        parts = header is null ? [bar, content] : [bar, header, content];
+
+        return frame = new Border
         {
             Name = "dialog",
             Background = new SolidColorBrush(Colors.Panel),
