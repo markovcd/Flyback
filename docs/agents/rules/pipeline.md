@@ -11,7 +11,7 @@
 - **Every action is pinned to a commit SHA**, with its version in a comment. A tag is the action author's to move. `.github/dependabot.yml` says when a pin should move.
 - **Least permission.** Each workflow declares `permissions:`, `contents: read` unless it publishes.
 - **Secrets only where needed.** `RELEASE_SIGNING_KEY` reaches the Release and Site workflows and nothing triggered by a pull request.
-- **The self-hosted runner is for `main` only**, never a pull request or another branch: the repo is public, so a fork's PR on that machine would be remote code execution. `ci.yml` waits for it; GitHub fails a job nothing picks up after 24 hours.
+- **The self-hosted runner is for `main` only**, never a pull request or another branch: the repo is public, so a fork's PR on that machine would be remote code execution. `ci.yml` waits for it; GitHub fails a job nothing picks up after 24 hours. It lives in `C:\Users\marko\repos\actions-runner`; when it is not running, start it with `C:\Users\marko\repos\actions-runner\run.cmd` (Docker Desktop must be up too).
 - **Superseded runs are cancelled.** `concurrency` with `cancel-in-progress` on anything a push triggers; never on Pages or a release, which must finish what they started.
 - **Every job sets `timeout-minutes`**, a few times its usual length. The default is six hours of a hang.
 - **Deploys filter on paths.** `site.yml` lists what the image is built from; a new reference or site plugin is added there in the same commit.
