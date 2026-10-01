@@ -122,6 +122,30 @@ internal sealed class OutputSections
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>Whether the panel knobs stand in a fixed grid — the MIDI section.</summary>
+    public CheckBox KnobGridOn { get; } = new()
+    {
+        Name = "knobGrid",
+        Content = "Keep the knobs in a fixed grid",
+    };
+
+    /// <summary>How many knobs across the grid is.</summary>
+    public NumericUpDown KnobColumns { get; } = GridSide("knobColumns");
+
+    /// <summary>How many rows the grid has before the next starts below it.</summary>
+    public NumericUpDown KnobRows { get; } = GridSide("knobRows");
+
+    private static NumericUpDown GridSide(string name) => new()
+    {
+        Name = name,
+        Minimum = KnobGrid.Fewest,
+        Maximum = KnobGrid.Most,
+        Increment = 1,
+        FormatString = "0",
+        FontSize = Text.Body,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     private readonly ComboBox frameRate = new Picker
     {
         Name = "frameRate",
@@ -374,6 +398,9 @@ internal sealed class OutputSections
         Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
         FollowTransport.IsChecked = current.FollowTransport;
         KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
+        KnobGridOn.IsChecked = current.KnobGrid.On;
+        KnobColumns.Value = current.KnobGrid.Columns;
+        KnobRows.Value = current.KnobGrid.Rows;
 
         if (plugins.PreferredAudioOutput is { } output)
             soundForm.Show(output.Form, current.SoundOf(output.Id));
@@ -444,7 +471,17 @@ internal sealed class OutputSections
 
             // Set on the knob panel, not here.
             Randomize = before.Randomize,
+
+            // An emptied box keeps what was saved.
+            KnobGrid = new KnobGrid
+            {
+                On = KnobGridOn.IsChecked == true,
+                Columns = KnobColumns.Value is { } across ? (int)Math.Round(across) : before.KnobGrid.Columns,
+                Rows = KnobRows.Value is { } down ? (int)Math.Round(down) : before.KnobGrid.Rows,
+            },
         };
+
+        read.KnobGrid.Clamp();
 
         // So an emptied box says what it kept, the next time it is looked at.
         jpegQuality.Value = read.JpegQuality;

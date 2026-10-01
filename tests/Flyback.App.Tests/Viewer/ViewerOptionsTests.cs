@@ -23,6 +23,7 @@ public class ViewerOptionsTests
         LatencyMilliseconds = 60,
         Transport = TransportEdge.Bottom,
         Oversample = 4,
+        KnobGrid = new KnobGrid { On = true, Columns = 4, Rows = 3 },
     };
 
     private sealed record Ran(int Code, ViewerOptions? Options, string Error, int ParseErrors);
@@ -103,6 +104,7 @@ public class ViewerOptionsTests
         options.Patch.ShouldBeNull();
         options.Preset.ShouldBeNull();
         options.Transport.ShouldBe(TransportEdge.Bottom);
+        options.KnobGrid.ToString().ShouldBe("4x3");
     }
 
     [Fact]
@@ -130,6 +132,7 @@ public class ViewerOptionsTests
             "--no-overlay",
             "--stats",
             "--transport", "top",
+            "--knob-grid", "off",
             "--title", "hello",
             "--top",
             "--interpreted");
@@ -154,6 +157,7 @@ public class ViewerOptionsTests
         options.NoOverlay.ShouldBeTrue();
         options.Stats.ShouldBeTrue();
         options.Transport.ShouldBe(TransportEdge.Top);
+        options.KnobGrid.On.ShouldBeFalse();
         options.Title.ShouldBe("hello");
         options.Top.ShouldBeTrue();
         options.Interpreted.ShouldBeTrue();
@@ -185,6 +189,27 @@ public class ViewerOptionsTests
     [Fact]
     public void The_transport_is_at_the_top_or_the_bottom_and_nowhere_else() =>
         Run(Machine, "--transport", "left").ParseErrors.ShouldBeGreaterThan(0);
+
+    [Theory]
+    [InlineData("8x2", 8, 2)]
+    [InlineData("16X1", 16, 1)]
+    public void A_knob_grid_is_columns_by_rows(string text, int columns, int rows)
+    {
+        var grid = Settled(Machine, "--knob-grid", text).KnobGrid;
+
+        grid.On.ShouldBeTrue();
+        grid.Columns.ShouldBe(columns);
+        grid.Rows.ShouldBe(rows);
+    }
+
+    [Theory]
+    [InlineData("8")]
+    [InlineData("0x2")]
+    [InlineData("8x33")]
+    [InlineData("-8x2")]
+    [InlineData("eightxtwo")]
+    public void A_knob_grid_that_is_not_one_is_refused(string text) =>
+        Run(Machine, "--knob-grid", text).ParseErrors.ShouldBeGreaterThan(0);
 
     [Fact]
     public void The_renderers_are_each_other_s_opposite_and_one_is_enough()

@@ -189,6 +189,21 @@ internal static class ViewerArguments
 
         transport.AcceptOnlyFromAmong("top", "bottom");
 
+        var knobGrid = new Option<string>("--knob-grid")
+        {
+            HelpName = "CxR|off",
+            Description = $"Stand the knobs in a fixed grid, COLUMNSxROWS from {KnobGrid.Fewest} to {KnobGrid.Most} each, so each keeps a controller's row and column; off wraps them to the window's width.",
+            DefaultValueFactory = _ => settings.KnobGrid.ToString(),
+        };
+
+        knobGrid.Validators.Add(result =>
+        {
+            var text = result.GetValueOrDefault<string>();
+
+            if (text is not null && KnobGrid.Read(text) is null)
+                result.AddError($"--knob-grid takes COLUMNSxROWS, each from {KnobGrid.Fewest} to {KnobGrid.Most}, or off; '{text}' is neither.");
+        });
+
         var stats = new Option<bool>("--stats")
         {
             Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the oversampling. F3 shows it and puts it away.",
@@ -222,7 +237,7 @@ internal static class ViewerArguments
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
-            background, hidden, noOverlay, transport, stats, title, top, interpreted, file,
+            background, hidden, noOverlay, transport, knobGrid, stats, title, top, interpreted, file,
         };
 
         root.SetAction(result =>
@@ -262,6 +277,7 @@ internal static class ViewerArguments
                 Hidden = result.GetValue(hidden),
                 NoOverlay = result.GetValue(noOverlay),
                 Transport = result.GetValue(transport) == "bottom" ? TransportEdge.Bottom : TransportEdge.Top,
+                KnobGrid = KnobGrid.Read(result.GetValue(knobGrid)!) ?? new KnobGrid(),
                 Stats = result.GetValue(stats),
                 Title = result.GetValue(title),
                 Top = result.GetValue(top),

@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Knobs;
 using Flyback.App.Settings;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
@@ -298,6 +299,35 @@ public class OutputSettingsTests : UiTest
         All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);
         OutputSettings.Load(settingsPath).Transport.ShouldBe(TransportEdge.Bottom);
     }
+
+    [AvaloniaFact]
+    public void A_knob_grid_set_in_the_settings_holds_the_panel_and_is_kept()
+    {
+        var window = Open(settingsPath);
+        var dialog = OpenSettings(window, MidiTab);
+
+        All<CheckBox>(dialog).Single(c => c.Name == "knobGrid").IsChecked = true;
+        All<NumericUpDown>(dialog).Single(c => c.Name == "knobColumns").Value = 3;
+        All<NumericUpDown>(dialog).Single(c => c.Name == "knobRows").Value = 2;
+        CloseSettings(window, dialog, save: true);
+
+        All<ControlsPanel>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
+        All<StageKnobs>(window).Single().KnobGrid.ShouldNotBeNull().ToString().ShouldBe("3x2");
+        OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("3x2");
+    }
+
+    [AvaloniaFact]
+    public void A_hand_edited_knob_grid_is_brought_into_range()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
+        File.WriteAllText(settingsPath, """{ "knobGrid": { "on": true, "columns": 0, "rows": 500 } }""");
+
+        OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("1x32");
+    }
+
+    [AvaloniaFact]
+    public void A_file_with_no_knob_grid_wraps_the_knobs() =>
+        OutputSettings.Load(settingsPath).KnobGrid.On.ShouldBeFalse();
 
     [AvaloniaFact]
     public void Picking_Direct3D_is_kept_for_the_next_launch_and_said()

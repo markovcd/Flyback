@@ -14,6 +14,7 @@
 
 - Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
+- Settings → MIDI keeps the panel knobs in a fixed grid of columns and rows, so each stays in its controller knob's row and column at any width, in the editor, over the picture and in the desktop viewer (`--knob-grid 8x2`).
 - The knob panel randomizes: a die, Ctrl+Shift+K or a learned controller button or pad sends every knob not held somewhere new, within an amount and over a glide set on the panel, and an arrow goes back.
 
 ### Sound

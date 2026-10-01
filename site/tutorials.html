@@ -497,6 +497,11 @@ out.volume = 0.5</code></pre>
 
     <p>Knobs are renamed, reordered and removed from the same menu, and are saved with the patch.</p>
 
+    <p>The panel wraps its knobs to the width of the window. To lay them out like a controller's instead, tick
+    <strong>Keep the knobs in a fixed grid</strong> under <strong>Settings → MIDI</strong> and give it the
+    controller's columns and rows: each knob then keeps its row and column at any width, in the panel, over the
+    picture and in the viewer, and knobs past the last row start the next grid below.</p>
+
     <p>To explore, press the die at the end of the panel, or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>, even
     full screen: every knob not held goes somewhere new. <strong>amount</strong> sets how far each may go from
     where it is, all the way round being anywhere, and <strong>glide</strong> how long they take to get there,
@@ -641,7 +646,9 @@ flyback-viewer --preset "No Sense Dub" --size 1080p --mute
 flyback-cli viewer drone.fbk --hidden --for 10</code></pre>
     <p>Hover the top middle of the window for the same transport as the editor's full screen, and double-click the
     picture or press <kbd>F11</kbd> for full screen. <code>--transport bottom</code> swaps it with the knobs, and
-    without the flag the viewer follows <strong>Settings → Graphics → Controls</strong>. A patch with no picture opens as
+    without the flag the viewer follows <strong>Settings → Graphics → Controls</strong>.
+    <code>--knob-grid 8x2</code> stands the knobs in eight columns and two rows, and <code>off</code> wraps them,
+    where Settings → MIDI says otherwise. A patch with no picture opens as
     just the transport and its knobs. The patch stops at the end of its length unless the seek bar's
     loop is on or <code>--loop</code> was given, and a run with no window, or with <code>--for</code>, closes there.
     A patch that does not say how long it plays has no seek bar and plays on; a run of one with no window closes

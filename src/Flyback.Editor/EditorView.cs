@@ -378,7 +378,8 @@ internal sealed class EditorView : Border
     /// </summary>
     private void InitializeOutputControls()
     {
-        knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.FollowTransport, outputSections.KeyboardLayout);
+        knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.FollowTransport, outputSections.KeyboardLayout,
+            outputSections.KnobGridOn, outputSections.KnobColumns, outputSections.KnobRows);
 
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.

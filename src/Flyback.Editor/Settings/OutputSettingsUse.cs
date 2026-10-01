@@ -74,6 +74,8 @@ internal sealed class OutputSettingsUse(
         files.UseLibrary(settings.Library, reread: !starting);
         files.SoundFolder.FfmpegPath = settings.FfmpegPath;
 
+        knobs.KnobGrid = settings.KnobGrid;
+
         if (transport.Overlay is { } overlay) TransportOverlay.Lay(settings.Transport, overlay, knobs.Stage);
         if (transport.PictureWindow is { } picture)
             TransportOverlay.Lay(settings.Transport, picture.Transport, picture.Knobs);

@@ -18,7 +18,7 @@ namespace Flyback.App.Controls;
 /// </remarks>
 public sealed class StageKnobs : TuckedAway
 {
-    private readonly WrapPanel row;
+    private readonly KnobArrangement row;
 
     private readonly Dictionary<Guid, StageKnob> knobs = [];
 
@@ -27,9 +27,8 @@ public sealed class StageKnobs : TuckedAway
     private string shape = string.Empty;
 
     public StageKnobs()
-        : this(new WrapPanel
+        : this(new KnobArrangement
         {
-            Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Center,
             ItemSpacing = 14,
             LineSpacing = 14,
@@ -37,7 +36,7 @@ public sealed class StageKnobs : TuckedAway
     {
     }
 
-    private StageKnobs(WrapPanel row)
+    private StageKnobs(KnobArrangement row)
         : base(row, HorizontalAlignment.Center)
     {
         this.row = row;
@@ -53,6 +52,13 @@ public sealed class StageKnobs : TuckedAway
 
     /// <summary>The hand came off a knob it had turned.</summary>
     public event Action<Guid>? TurnEnded;
+
+    /// <summary>The fixed grid the knobs stand in, or null to wrap them to the picture's width.</summary>
+    public KnobGrid? KnobGrid
+    {
+        get => row.Grid;
+        set => row.Grid = value;
+    }
 
     /// <summary>Whether there is a knob to show at all.</summary>
     public bool Any => knobs.Count > 0;

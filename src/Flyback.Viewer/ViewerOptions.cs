@@ -80,6 +80,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     /// <summary>Which edge of the picture the transport waits at; the knobs take the other.</summary>
     public TransportEdge Transport { get; init; }
 
+    /// <summary>The fixed grid the knobs stand in, the editor's Settings → MIDI unless <c>--knob-grid</c> says.</summary>
+    public KnobGrid KnobGrid { get; init; } = new();
+
     /// <summary>Open with the line saying how the picture is drawn in its corner, which F3 shows and puts away.</summary>
     public bool Stats { get; init; }
 

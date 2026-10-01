@@ -182,6 +182,9 @@ public sealed class OutputSettings
     /// <summary>How the knob panel randomizes, set on the panel itself.</summary>
     public RandomizeSettings Randomize { get; set; } = new();
 
+    /// <summary>Whether the panel knobs stand in a fixed grid — the MIDI section.</summary>
+    public KnobGrid KnobGrid { get; set; } = new();
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -283,6 +286,9 @@ public sealed class OutputSettings
 
             settings.Randomize ??= new();
             settings.Randomize.Clamp();
+
+            settings.KnobGrid ??= new();
+            settings.KnobGrid.Clamp();
 
             return settings;
         }

@@ -505,6 +505,23 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
                 .GetVisualDescendants().OfType<CheckBox>().Single(box => box.Content as string == label)
                 .IsChecked = on);
 
+    /// <summary>Types a number into the box so named on the question up over the window.</summary>
+    public void Type(string name, double value) =>
+        DoWindow((open, _) =>
+            open.GetVisualDescendants().OfType<ModalOverlay>().Single()
+                .GetVisualDescendants().OfType<NumericUpDown>().Single(box => box.Name == name)
+                .Value = (decimal)value);
+
+    /// <summary>The knob panel's knobs by name, a row at a time from the top, each left to right.</summary>
+    public IReadOnlyList<string> KnobRows => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TextBlock>()
+            .Where(name => name.Name == "knob-name" && name.FindAncestorOfType<Flyback.App.Knobs.ControlsPanel>() is not null)
+            .Select(name => (Name: name.Text ?? string.Empty, At: name.TranslatePoint(default, open)!.Value))
+            .GroupBy(knob => Math.Round(knob.At.Y))
+            .OrderBy(row => row.Key)
+            .Select(row => string.Join(" ", row.OrderBy(knob => knob.At.X).Select(knob => knob.Name)))
+            .ToList());
+
     /// <summary>Rests the pointer over a point on the canvas, in the patch's own coordinates.</summary>
     internal void Hover(Func<NodeEditor, Point> graph) =>
         DoWindow((open, canvas) =>

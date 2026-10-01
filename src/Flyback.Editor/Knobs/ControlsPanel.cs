@@ -13,7 +13,7 @@ namespace Flyback.App.Knobs;
 
 /// <summary>
 /// The patch's knobs under the canvas, wrapping onto more rows as they run out of
-/// width, with a button that adds another.
+/// width or standing in a fixed grid, with a button that adds another.
 /// </summary>
 /// <remarks>
 /// Draws what it is shown and reports what the hand does; the window decides what
@@ -24,7 +24,14 @@ internal sealed class ControlsPanel : Border
 {
     private const double CellWidth = 76;
 
-    private readonly WrapPanel strip = new() { Orientation = Orientation.Horizontal, ItemSpacing = 2, LineSpacing = 4 };
+    private readonly KnobArrangement strip = new() { ItemSpacing = 2, LineSpacing = 4 };
+
+    /// <summary>The add button and the randomize cell, beside a grid rather than in it.</summary>
+    private readonly StackPanel beside = new() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top };
+
+    private readonly Grid columns = new() { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
+
+    private readonly ScrollViewer scroller;
 
     private readonly Dictionary<Guid, Cell> cells = [];
 
@@ -42,11 +49,15 @@ internal sealed class ControlsPanel : Border
         BorderBrush = new SolidColorBrush(Colors.Edge);
         BorderThickness = new Thickness(0, 1, 0, 0);
 
-        Child = new ScrollViewer
+        Grid.SetColumn(beside, 1);
+        columns.Children.Add(strip);
+        columns.Children.Add(beside);
+
+        Child = scroller = new ScrollViewer
         {
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-            Content = strip,
+            Content = columns,
             Padding = new Thickness(8, 6),
         };
 
@@ -164,9 +175,37 @@ internal sealed class ControlsPanel : Border
         }
     }
 
+    /// <summary>The fixed grid the knobs stand in, or null to wrap them to the panel's width.</summary>
+    public KnobGrid? KnobGrid
+    {
+        get => strip.Grid;
+        set
+        {
+            strip.Grid = value;
+
+            var gridded = strip.Grid is not null;
+
+            // A grid wider than the panel scrolls rather than wraps, which would move a knob.
+            scroller.HorizontalScrollBarVisibility = gridded
+                ? Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
+                : Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled;
+            columns.ColumnDefinitions[0].Width = gridded ? GridLength.Auto : GridLength.Star;
+
+            if (shown is { } controls)
+            {
+                shape = null;
+                Show(controls);
+            }
+        }
+    }
+
+    private IReadOnlyList<PatchControl>? shown;
+
     /// <summary>Shows <paramref name="controls"/>, rebuilding only where a knob came, went or was renamed.</summary>
     public void Show(IReadOnlyList<PatchControl> controls)
     {
+        shown = controls;
+
         var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{c.Held}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
 
         if (now != shape)
@@ -198,7 +237,10 @@ internal sealed class ControlsPanel : Border
     private void Rebuild(IReadOnlyList<PatchControl> controls)
     {
         strip.Children.Clear();
+        beside.Children.Clear();
         cells.Clear();
+
+        var after = strip.Grid is null ? strip.Children : beside.Children;
 
         for (var i = 0; i < controls.Count; i++)
         {
@@ -224,12 +266,12 @@ internal sealed class ControlsPanel : Border
         ToolTip.SetTip(add, "Add a knob. Click a knob's name, then sockets on the canvas, to link them to it.");
         add.Click += (_, _) => AddRequested?.Invoke();
 
-        strip.Children.Add(add);
+        after.Add(add);
 
-        if (controls.Count > 0) strip.Children.Add(roll.Root);
+        if (controls.Count > 0) after.Add(roll.Root);
 
         if (controls.Count == 0)
-            strip.Children.Add(new TextBlock
+            after.Add(new TextBlock
             {
                 Text = "No knobs yet. Add one, then link sockets to it or learn a MIDI controller for it.",
                 Foreground = Text.Muted,

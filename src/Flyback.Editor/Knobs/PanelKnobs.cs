@@ -51,7 +51,31 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     public StageKnobs Stage { get; } = new() { IsVisible = false };
 
     /// <summary>The knobs over the picture on another monitor, while it is there.</summary>
-    public StageKnobs? Away { get; set; }
+    public StageKnobs? Away
+    {
+        get => away;
+        set
+        {
+            away = value;
+            if (away is not null) away.KnobGrid = knobGrid;
+        }
+    }
+
+    private StageKnobs? away;
+
+    /// <summary>The fixed grid every set of knobs stands in, or null where they wrap.</summary>
+    public KnobGrid? KnobGrid
+    {
+        get => knobGrid;
+        set
+        {
+            knobGrid = value;
+            View.KnobGrid = value;
+            foreach (var stage in Stages) stage.KnobGrid = value;
+        }
+    }
+
+    private KnobGrid? knobGrid;
 
     /// <summary>What turns the program's live values, from the panel and from hardware.</summary>
     public ControlHub Hub { get; }
@@ -262,7 +286,9 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>
     /// <param name="takeover">How a knob meets a controller that disagrees with it.</param>
     /// <param name="keyboardLayout">How a new patch lays out the computer's keyboard.</param>
-    public void BuildMidiSection(PluginCatalog plugins, ComboBox takeover, CheckBox followTransport, ComboBox keyboardLayout)
+    /// <param name="gridOn">Whether the knobs stand in a fixed grid, <paramref name="columns"/> across and <paramref name="rows"/> down.</param>
+    public void BuildMidiSection(PluginCatalog plugins, ComboBox takeover, CheckBox followTransport, ComboBox keyboardLayout,
+        CheckBox gridOn, NumericUpDown columns, NumericUpDown rows)
     {
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
@@ -293,6 +319,20 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         MidiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
         MidiSection.Children.Add(followTransport);
         MidiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
+
+        ToolTip.SetTip(gridOn,
+            "Stand the panel knobs in fixed columns and rows, so each keeps the row and column of the knob "
+            + "it follows on a controller however wide the window is. Past the last row the next grid starts "
+            + "below. In the editor's panel, over the picture and in the desktop viewer.");
+
+        void Follow() => columns.IsEnabled = rows.IsEnabled = gridOn.IsChecked == true;
+
+        gridOn.IsCheckedChanged += (_, _) => Follow();
+        Follow();
+
+        MidiSection.Children.Add(gridOn);
+        MidiSection.Children.Add(InspectorRows.Field("Columns", columns));
+        MidiSection.Children.Add(InspectorRows.Field("Rows", rows));
 
         var known = string.Join(", ", Instruments.Profiles.Select(profile => profile.Name));
         var instrumentsNote = new TextBlock

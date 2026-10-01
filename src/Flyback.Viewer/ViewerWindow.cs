@@ -95,7 +95,7 @@ internal sealed class ViewerWindow : Window
 
         if (toolbar)
         {
-            var knobs = BuildKnobs();
+            var knobs = BuildKnobs(options.KnobGrid);
             var overlay = BuildOverlay();
 
             knobs.Pin();
@@ -119,7 +119,7 @@ internal sealed class ViewerWindow : Window
 
             if (!options.NoOverlay)
             {
-                var knobs = BuildKnobs();
+                var knobs = BuildKnobs(options.KnobGrid);
                 var overlay = BuildOverlay();
 
                 TransportOverlay.Lay(options.Transport, overlay, knobs);
@@ -191,9 +191,9 @@ internal sealed class ViewerWindow : Window
     /// <summary>The knobs over the picture, or null for a run that asked for no overlay.</summary>
     internal StageKnobs? Knobs { get; private set; }
 
-    private StageKnobs BuildKnobs()
+    private StageKnobs BuildKnobs(KnobGrid grid)
     {
-        var knobs = Knobs = new StageKnobs();
+        var knobs = Knobs = new StageKnobs { KnobGrid = grid };
 
         knobs.Show(player.Patch);
         knobs.IsVisible = knobs.Any;
