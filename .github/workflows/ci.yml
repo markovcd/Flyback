@@ -28,34 +28,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A run on main goes to the self-hosted runner when it is
-  # online, else to GitHub's. Any other ref, a pull request included, never does: the repo is public, and
-  # a fork's workflow would run on that machine. The runners API needs a token
-  # with repo admin, which GITHUB_TOKEN is not, hence the secret; without it the
-  # job falls back to GitHub's runner.
-  pick-runner:
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      runs-on: ${{ steps.pick.outputs.runs-on }}
-    steps:
-      - id: pick
-        env:
-          GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
-          REF: ${{ github.ref }}
-        run: |
-          runs_on='"ubuntu-latest"'
-          if [ "$REF" = refs/heads/main ] && [ -n "$GH_TOKEN" ]; then
-            online=$(gh api repos/${{ github.repository }}/actions/runners/21               --jq '.status == "online" and (.busy | not)' || echo false)
-            if [ "$online" = true ]; then
-              runs_on='["self-hosted","Windows","X64"]'
-            fi
-          fi
-          echo "runs-on=$runs_on" >> "$GITHUB_OUTPUT"
-
+  # A run on main goes to the self-hosted runner and waits for it. Any other
+  # ref, a pull request included, stays on GitHub's: the repo is public, and a
+  # fork's workflow would run on that machine.
   build:
-    needs: pick-runner
-    runs-on: ${{ fromJSON(needs.pick-runner.outputs.runs-on) }}
+    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","Windows","X64"]') || 'ubuntu-latest' }}
     # A run is about seven minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
