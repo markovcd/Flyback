@@ -1126,7 +1126,7 @@ internal sealed class Document
     /// What a printing has to say for itself: where it came from, what it left
     /// behind, and what applying it would do.
     /// </summary>
-    private string Reading()
+    private static string Reading()
     {
         return "Printed from the canvas. The patch on the canvas is still the document — "
             + "applying this makes the text the document instead.";
