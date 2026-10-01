@@ -307,4 +307,29 @@ public class OutputSettingsFileTests : IDisposable
 
         OutputSettings.Load(File).Gpu.ShouldBeTrue();
     }
+
+    [Fact]
+    public void A_pad_learned_to_randomize_comes_back_a_pad()
+    {
+        var pad = new Flyback.Core.Graph.MidiBinding("midi:pads", 0, 36) { Note = true };
+        new OutputSettings { Randomize = { Amount = 0.3, GlideSeconds = 2, Trigger = pad } }.Save(File);
+
+        var back = OutputSettings.Load(File).Randomize;
+
+        back.Trigger.ShouldBe(pad);
+        back.Amount.ShouldBe(0.3);
+        back.GlideSeconds.ShouldBe(2);
+    }
+
+    [Fact]
+    public void A_randomize_typed_out_of_range_is_brought_into_it()
+    {
+        Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(File, """{"randomize": {"amount": 7, "glideSeconds": -3}}""");
+
+        var back = OutputSettings.Load(File).Randomize;
+
+        back.Amount.ShouldBe(1);
+        back.GlideSeconds.ShouldBe(0);
+    }
 }

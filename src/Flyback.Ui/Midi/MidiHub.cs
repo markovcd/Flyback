@@ -85,6 +85,12 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     public event Action<string, MidiMessage>? Controlled;
 
     /// <summary>
+    /// A note was struck on a device, with the device's id, as well as played. Raised
+    /// on the driver's thread, outside the lock.
+    /// </summary>
+    public event Action<string, MidiMessage>? Struck;
+
+    /// <summary>
     /// A note or a knob arrived from a device — never from the computer keyboard,
     /// and never a clock's tick, which is not somebody playing. Raised on the
     /// driver's thread, before the message is acted on.
@@ -412,6 +418,8 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
             Controlled?.Invoke(source, message);
             return;
         }
+
+        if (message.Action == MidiAction.Down) Struck?.Invoke(source, message);
 
         lock (gate)
         {

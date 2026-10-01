@@ -284,4 +284,24 @@ public class ControlTests
     {
         new MidiBinding("midi:a", bound, 21).Hears("midi:a", channel, controller).ShouldBe(hears);
     }
+
+    [Theory]
+    [InlineData(21, false, 0, "CC21")]
+    [InlineData(21, false, 2, "CC21·2")]
+    [InlineData(36, true, 0, "Note C2")]
+    [InlineData(38, true, 10, "Note D2·10")]
+    public void A_binding_is_labeled_as_a_controller_or_a_note(int number, bool note, int channel, string label) =>
+        new MidiBinding("midi:x", channel, number) { Note = note }.Label.ShouldBe(label);
+
+    [Fact]
+    public void A_note_binding_hears_no_controller_and_a_controller_binding_strikes_no_note()
+    {
+        var pad = new MidiBinding("midi:x", 0, 36) { Note = true };
+        var knob = new MidiBinding("midi:x", 0, 36);
+
+        pad.Strikes("midi:x", 3, 36).ShouldBeTrue();
+        pad.Hears("midi:x", 3, 36).ShouldBeFalse();
+        knob.Hears("midi:x", 3, 36).ShouldBeTrue();
+        knob.Strikes("midi:x", 3, 36).ShouldBeFalse();
+    }
 }

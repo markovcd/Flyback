@@ -209,13 +209,14 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
         using var cancel = learning = new CancellationTokenSource();
 
         Show();
-        report.Say("Press a button on your controller to randomize the knobs with. Esc to stop.");
+        report.Say("Press a button or a pad on your controller to randomize the knobs with. Esc to stop.");
 
         try
         {
-            if (await knobs.Hub.LearnAsync(devices, cancel.Token) is not { } pressed) return;
+            if (await knobs.Hub.LearnAsync(devices, cancel.Token, notes: true) is not { } pressed) return;
 
             // Any channel, so the button goes on randomizing whichever track the controller is on.
+            // A pad's note still plays whatever listens to it; the trigger only hears it too.
             var binding = pressed with { Channel = 0 };
 
             Wanted.Trigger = binding;

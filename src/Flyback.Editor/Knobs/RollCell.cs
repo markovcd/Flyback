@@ -36,7 +36,7 @@ internal sealed class RollCell
         this.explain = explain;
 
         var dice = ToolbarButtons.Drawn("roll-knobs", Glyphs.Dice(),
-            "Randomize every knob that is not held (Ctrl+Shift+K). Right-click to learn a controller button for it.");
+            "Randomize every knob that is not held (Ctrl+Shift+K). Right-click to learn a controller button or pad for it.");
         dice.Click += (_, _) => roll();
 
         back = ToolbarButtons.Drawn("unroll-knobs", Glyphs.Undo(), "Back to where the knobs were before the last randomize.");
@@ -83,7 +83,7 @@ internal sealed class RollCell
         glide.Value = Turn(seconds);
         back.IsEnabled = canGoBack;
 
-        learn.Header = learning ? "Press a button on your controller…" : trigger is null ? "Learn MIDI button" : "Learn another button";
+        learn.Header = learning ? "Press a button or a pad on your controller…" : trigger is null ? "Learn MIDI button or pad" : "Learn another button or pad";
         learn.IsEnabled = !learning;
         forget.Header = trigger is { } bound ? $"Forget {explain(bound)}" : "Forget";
         forget.IsVisible = trigger is not null;

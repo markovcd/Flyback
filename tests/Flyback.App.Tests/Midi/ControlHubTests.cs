@@ -305,6 +305,53 @@ public class ControlHubTests
         backend.Opened.Select(p => p.Id).ShouldBe([Device]);
     }
 
+    private static MidiMessage Struck(int note, int channel = 1) =>
+        new(MidiAction.Down, note, 0.8f) { Channel = channel };
+
+    [Fact]
+    public void A_pad_as_the_trigger_fires_on_every_strike()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 36) { Note = true } };
+        var fired = 0;
+        hub.Triggered += () => fired++;
+
+        var port = backend.Opened.ShouldHaveSingleItem();
+        port.Send(Struck(36));
+        port.Send(Struck(37));
+        port.Send(Cc(36, 127));
+        port.Send(Struck(36, channel: 10));
+
+        fired.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Learning_for_a_button_takes_a_pad_struck()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi);
+
+        var learning = hub.LearnAsync([Device], CancellationToken.None, notes: true);
+        backend.Opened.Single().Send(Struck(38, channel: 10));
+
+        (await learning).ShouldBe(new MidiBinding(Device, 10, 38) { Note = true });
+    }
+
+    [Fact]
+    public void Learning_for_a_knob_passes_over_a_note()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi);
+
+        var learning = hub.LearnAsync([Device], CancellationToken.None);
+        backend.Opened.Single().Send(Struck(38));
+
+        learning.IsCompleted.ShouldBeFalse();
+    }
+
     private sealed class FakeInput(params string[] names) : IMidiInput
     {
         public List<FakePort> Opened { get; } = [];

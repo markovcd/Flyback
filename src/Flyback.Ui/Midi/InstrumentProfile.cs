@@ -49,7 +49,7 @@ internal sealed record InstrumentProfile(
 
         var track = Track(binding.Channel);
         var where = track?.Name ?? (binding.Channel == 0 ? null : $"channel {binding.Channel}");
-        var what = Knob(track, binding.Controller);
+        var what = binding.Note ? binding.What : Knob(track, binding.Controller);
 
         return where is null ? $"{Name} · {what}" : $"{Name} · {where} · {what}";
     }
@@ -65,7 +65,7 @@ internal sealed record InstrumentProfile(
 
         var track = Track(binding.Channel);
         var where = track?.Short ?? track?.Name ?? (binding.Channel == 0 ? null : $"ch {binding.Channel}");
-        var what = Knob(track, binding.Controller);
+        var what = binding.Note ? binding.What : Knob(track, binding.Controller);
 
         return where is null ? what : $"{where} · {what}";
     }

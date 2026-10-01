@@ -55,6 +55,7 @@ internal sealed class ControlHub
     {
         this.midi = midi;
         midi.Controlled += Receive;
+        midi.Struck += Strike;
     }
 
     public Takeover Takeover { get; set; }
@@ -193,9 +194,10 @@ internal sealed class ControlHub
     /// A controller not to take: the one the knob before was just learned from,
     /// which is still moving under the same hand while the next knob waits.
     /// </param>
-    public async Task<MidiBinding?> LearnAsync(IEnumerable<string> devices, CancellationToken cancel, MidiBinding? except = null)
+    /// <param name="notes">Whether a note struck is taken as well, for a button that may be a pad.</param>
+    public async Task<MidiBinding?> LearnAsync(IEnumerable<string> devices, CancellationToken cancel, MidiBinding? except = null, bool notes = false)
     {
-        var waiting = new Pending(except);
+        var waiting = new Pending(except, notes);
 
         lock (gate)
         {
@@ -308,8 +310,32 @@ internal sealed class ControlHub
         if (fired) Triggered?.Invoke();
     }
 
-    private sealed class Pending(MidiBinding? except)
+    /// <summary>A note was struck. On the driver's thread.</summary>
+    private void Strike(string device, MidiMessage message)
     {
+        var fired = false;
+
+        lock (gate)
+        {
+            if (learning is { Notes: true } waiting)
+            {
+                if (waiting.Except is { } except && except.Strikes(device, message.Channel, message.Note)) return;
+
+                waiting.Done.TrySetResult(new MidiBinding(device, message.Channel, message.Note) { Note = true });
+                return;
+            }
+
+            fired = learning is null && trigger is { } pad && pad.Strikes(device, message.Channel, message.Note);
+        }
+
+        if (fired) Triggered?.Invoke();
+    }
+
+    private sealed class Pending(MidiBinding? except, bool notes)
+    {
+        /// <summary>Whether a note struck is taken as well as a controller moving.</summary>
+        public bool Notes { get; } = notes;
+
         public TaskCompletionSource<MidiBinding?> Done { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 

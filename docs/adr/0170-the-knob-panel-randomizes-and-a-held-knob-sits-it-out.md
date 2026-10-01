@@ -29,10 +29,12 @@ through.
 after a panel line's settings, since which knobs a patch can survive moving is about
 the patch. How far, how slowly and which controller button fires it are about the
 hands and the hardware, so they live in `OutputSettings.Randomize` and are set on the
-panel itself. The trigger is any CC learned as a knob's is, firing on the press.
+panel itself. The trigger is a CC, firing on the press, or a note struck on a
+pad, learned from whichever arrives first. A note is heard by the trigger as well
+as played, never instead, so it is not taken from a MIDI In listening to it.
 
 ## Consequences
 
 - `PatchControl.Held` moves the plugin contract to 1.1.0.
 - Ctrl+Shift+K randomizes even while the picture has the window.
-- A pad that sends notes rather than a CC cannot be the trigger.
+- `MidiBinding.Note` says a binding is a note; a knob still only learns a CC.
