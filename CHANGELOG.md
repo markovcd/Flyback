@@ -19,7 +19,7 @@
 ### Sound
 
 - A Clock In runs ahead by the sound device's latency, so a patch's kick lands with the drum machine's rather than just after it, and its `nudge` takes up whatever latency the device cannot report.
-- Latency can be set as low as 5 ms.
+- Latency can be set as low as 5 ms, and on Windows anything under 10 ms plays in the low-latency shared mode of a device that has one.
 
 ### Web
 

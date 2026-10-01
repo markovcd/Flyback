@@ -17,6 +17,9 @@ namespace Flyback.Plugins.WinIO;
 [SupportedOSPlatform("windows")]
 public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = null) : IAudioDevice
 {
+    /// <summary>Milliseconds under which a latency asks for the low-latency shared mode.</summary>
+    private const int LowLatencyBelow = 10;
+
     private WasapiPlayer? activeOutput;
 
     public int SampleRate { get; } = format.SampleRate;
@@ -127,12 +130,18 @@ public sealed class WasapiAudioDevice(AudioFormat format, string? endpoint = nul
             device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Console);
         }
 
-        var output = new WasapiPlayerBuilder()
+        // Plain shared mode grants about twice its 10 ms period whatever is asked
+        // for, so a latency under it asks for the engine's shortest period instead.
+        // A device or a mix rate that cannot have one plays in plain shared mode.
+        var builder = new WasapiPlayerBuilder()
             .WithDevice(device)
             .WithSharedMode()
             .WithEventSync()
-            .WithLatency(format.LatencyMilliseconds)
-            .Build();
+            .WithLatency(format.LatencyMilliseconds);
+
+        if (format.LatencyMilliseconds < LowLatencyBelow) builder.WithLowLatency();
+
+        var output = builder.Build();
 
         Volatile.Write(ref queued, -1);
 
