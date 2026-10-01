@@ -1,3 +1,4 @@
+using Flyback.App.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.App.Notices;
@@ -6,23 +7,24 @@ namespace Flyback.App.Notices;
 internal static class Parts
 {
     /// <summary>
-    /// One singleton of <typeparamref name="T"/>, reached as itself and as the reactor to
-    /// every notice it implements <see cref="IReactTo{T}"/> for.
+    /// The interfaces a part is also reached as whenever it implements them, so a
+    /// constructor can ask for all of them; an open generic stands for each of its closings.
     /// </summary>
-    public static IServiceCollection AddPart<T>(this IServiceCollection services) where T : class
+    private static readonly Type[] Collected = [typeof(IReactTo<>), typeof(IReactTo), typeof(ISettingsSection)];
+
+    /// <summary>
+    /// One singleton of <typeparamref name="T"/>, reached as itself and as every
+    /// <see cref="Collected"/> interface it implements.
+    /// </summary>
+    public static void AddPart<T>(this IServiceCollection services) where T : class
     {
         services.AddSingleton<T>();
 
-        foreach (var reaction in ReactionsOf(typeof(T)))
-        {
-            services.AddSingleton(reaction, provider => provider.GetRequiredService<T>());
-            services.AddSingleton(new DeclaredReaction(reaction));
-        }
-
-        return services;
+        foreach (var face in CollectedBy(typeof(T)))
+            services.AddSingleton(face, provider => provider.GetRequiredService<T>());
     }
 
-    /// <summary>Every <see cref="IReactTo{T}"/> a part implements.</summary>
-    public static IEnumerable<Type> ReactionsOf(Type part) =>
-        part.GetInterfaces().Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IReactTo<>));
+    /// <summary>Every <see cref="Collected"/> interface a part implements.</summary>
+    private static IEnumerable<Type> CollectedBy(Type part) =>
+        part.GetInterfaces().Where(i => Collected.Contains(i.IsGenericType ? i.GetGenericTypeDefinition() : i));
 }

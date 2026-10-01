@@ -44,8 +44,6 @@ internal sealed class CanvasSection : ISettingsSection
 
     private readonly NodeEditor canvas;
 
-    private readonly SourceView source;
-
     private readonly Action<string, string?> report;
 
     /// <param name="canvas">The canvas, redrawn whenever what it draws changes.</param>
@@ -54,7 +52,6 @@ internal sealed class CanvasSection : ISettingsSection
     {
         path = folders.CanvasSettingsPath;
         this.canvas = canvas;
-        this.source = source;
         this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = CanvasSettings.Load(path);

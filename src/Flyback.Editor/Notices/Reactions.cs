@@ -38,8 +38,7 @@ internal sealed class Reactions(IServiceProvider? provider = null) : IDisposable
 
         try
         {
-            foreach (var declared in provider?.GetServices<DeclaredReaction>() ?? [])
-                foreach (var _ in provider!.GetServices(declared.Reaction)) { }
+            foreach (var _ in provider?.GetServices<IReactTo>() ?? []) { }
 
             return build();
         }

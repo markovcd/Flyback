@@ -27,4 +27,5 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - **Measure: one pass that reports every output's value.** Run the patch offline for a few seconds, stop, and pin beside each output socket its value or its range and how fast it changes, for the sound and the picture separately, on the selected modules or on all of them. Desktop only; `flyback-cli measure` comes first, on the same measurement. The plan is in [docs/handoff/measure.md](docs/handoff/measure.md).
 - **Parked: grab the output and the knobs move.** Forward-mode derivatives through the instruction stream, so hovering the picture or the spectrogram shows which knobs own an area, and dragging a shape or brushing a quality turns them. `flyback-cli grad` first. The idea, the five gestures and the sequence are in [docs/handoff/grab-the-output.md](docs/handoff/grab-the-output.md).
 - **A live-patching mode.** A desktop-only editor mode where the picture fills the screen and the patch is edited over it, as either the canvas or the text view, for playing a patch live in front of people.
-- Setting pages re organization
+- Make rendering site presets better (cli command) - it shouldn't access directly via shared folder but some form of admin api
+- Make rendering stills for site and page cached, so pipeline takes shorter

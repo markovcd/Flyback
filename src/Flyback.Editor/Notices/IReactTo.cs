@@ -11,7 +11,7 @@ namespace Flyback.App.Notices;
 /// that finishes at once returns a completed task; one that waits is awaited before
 /// the next reactor runs.
 /// </remarks>
-internal interface IReactTo<in T> where T : notnull
+internal interface IReactTo<in T> : IReactTo where T : notnull
 {
     /// <summary>
     /// Where this runs among the notice's reactors: lowest first. Ties run in the order
@@ -21,3 +21,13 @@ internal interface IReactTo<in T> where T : notnull
 
     Task On(T notice);
 }
+
+/// <summary>
+/// A part that reacts to some notice, whichever: what lets every reactor be built
+/// with the window without knowing the notices.
+/// </summary>
+/// <remarks>
+/// Empty, and <see cref="IReactTo{T}.Priority"/> stays on the notice's own interface:
+/// a part reacting to two notices may want a different place in each.
+/// </remarks>
+internal interface IReactTo;
