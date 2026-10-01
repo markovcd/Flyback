@@ -1,4 +1,4 @@
-# A debug pass that reports every output's value
+# Measure: one pass that reports every output's value
 
 Planned on 2026-10-01, on `main` at `d79bd24f`. It is on TODO.md; take it off there, and
 delete this file, in the commit that lands the last of it.
@@ -30,22 +30,22 @@ gives both halves and flags where they differ rather than picking one.
 
 ## Shape: one pass, then a report
 
-A pass runs the patch offline for N seconds from the playhead, with the knobs where they are,
+Measure runs the patch offline for N seconds from the playhead, with the knobs where they are,
 stops, and reports. It is not real time and nothing runs before or after it, so it costs only
 the wait.
 
-1. **`flyback-cli watch <patch> [<module>[.<socket>]...] [--seconds N] [--from T] [--json]`.**
-   Built first, on a shared measurement (say `SocketWatch`), so its numbers are tested before
+1. **`flyback-cli measure <patch> [<module>[.<socket>]...] [--seconds N] [--from T] [--json]`.**
+   Built first, on a shared measurement (say `Measurements`), so its numbers are tested before
    any window shows them. Every output when nothing is named; a module alone means all its
    outputs.
-2. **The editor, desktop only.** A button and a shortcut run the same pass, with a progress
+2. **The editor, desktop only.** A Measure button and a shortcut run the same pass, with a progress
    bar: on the selected modules when any are selected, on every module otherwise. It pins a
-   reading beside each measured output socket on the canvas: `0.25` when static,
+   measurement beside each measured output socket on the canvas: `0.25` when static,
    `-1..1 · 2 Hz` when changing, a swatch and r, g, b for a color. Hovering one gives the full
    report, and the selected module's report sits under each output's row in the inspector
-   (`Inspector.BuildOutputRow`). An edit dims the readings and marks them out of date until the
+   (`Inspector.BuildOutputRow`). An edit dims the measurements and marks them out of date until the
    next pass; nothing is saved in the patch.
-3. **A workbench `watch` tool** for the assistant, on the same measurement.
+3. **A workbench `measure` tool** for the assistant, on the same measurement.
 
 ## How it runs
 
@@ -88,7 +88,9 @@ are not in it, so an envelope a key fires never fires. Drive the patch from insi
 Sequencer, a clock) to measure that. A later pass that records the next N seconds of live
 playing and reports after is possible; ship the offline one first.
 
-## Open
+## Names
 
-- A name for it. The glossary takes its words from the instrument; whatever is chosen goes
-  there in the commit that lands it.
+**Measure** is the button, the command and the workbench tool; each label is a **measurement**.
+Not *debug* (a programmer's word), *watch* (it watches nothing live), *reading* (a knob's
+display, `ShowsReading`) or *survey* (`IModelSurvey`); Probe, Scope and Meter are modules. The
+glossary entry lands with the commit that builds it.
