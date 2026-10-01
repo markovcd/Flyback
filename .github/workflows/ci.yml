@@ -53,10 +53,5 @@ jobs:
       # answer for such a commit, but it is the reason a green check here is
       # about the context, not about the run.
       - name: Build and test
-        shell: bash
-        run: |
-          docker buildx build \
-            --target gate \
-            --cache-from type=gha \
-            --cache-to type=gha,mode=max \
-            .
+        # One line: it has to parse in bash and in the Windows runner's PowerShell.
+        run: docker buildx build --target gate --cache-from type=gha --cache-to type=gha,mode=max .
