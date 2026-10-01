@@ -47,8 +47,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
+  # A run on main goes to the self-hosted runner and waits for it; any other
+  # ref stays on GitHub's (see ci.yml for why).
   image:
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","Windows","X64"]') || 'ubuntu-latest' }}
     # A run is about sixteen minutes; the default of six hours is what a hang costs.
     timeout-minutes: 60
     steps:
@@ -58,6 +60,8 @@ jobs:
 
       - name: Name the image
         id: tags
+        # A bare `bash` on the Windows runner is WSL's; Git's is the one wanted.
+        shell: ${{ runner.os == 'Windows' && 'C:/Program Files/Git/bin/bash.exe --noprofile --norc -e -o pipefail {0}' || 'bash' }}
         run: |
           image=ghcr.io/markovcd/flyback-site
           commit="$(git rev-parse --short HEAD)"
