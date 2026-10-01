@@ -58,8 +58,9 @@ public class PresetSiteDefaultsTests
     }
 
     /// <summary>
-    /// A knob follows through to something, keeps its sockets inside their ranges,
-    /// which a compile does not hold them to, and rests them where the knob rests.
+    /// A knob follows through to something and keeps its sockets inside their ranges,
+    /// which a compile does not hold them to. A knob's own value is not saved, so the
+    /// sockets are what a patch rests at.
     /// </summary>
     [Theory]
     [MemberData(nameof(Every))]
@@ -75,15 +76,17 @@ public class PresetSiteDefaultsTests
         foreach (var (port, link) in ControlMap.All(node))
         {
             var spec = modules.Require(node.TypeId).Inputs[port];
-            var knob = patch.Control(link.Control).ShouldNotBeNull($"{name} links a knob it does not have");
+            patch.Control(link.Control).ShouldNotBeNull($"{name} links a knob it does not have");
 
             foreach (var end in new[] { link.Min, link.Max })
                 end.ShouldBeInRange(spec.Min, spec.Max, $"{name}: {node.TypeId} '{spec.Name}'");
-
-            node.InputValues[port].ShouldBe(link.At(knob.Value), 1e-6f, $"{name}: {node.TypeId} '{spec.Name}'");
         }
     }
 
+    /// <summary>
+    /// A MIDI node may name an instrument this machine lacks: the preset is played on
+    /// the instrument it was made for.
+    /// </summary>
     [Theory]
     [MemberData(nameof(Every))]
     public void Each_compiles_with_nothing_to_say(string name)
@@ -91,12 +94,16 @@ public class PresetSiteDefaultsTests
         var modules = ShippedPlugins.Loaded.Modules;
         var bundle = Open(name);
         var files = BundleFiles.Of(bundle);
+        var midi = bundle.Patch.Nodes.Where(n => n.TypeId.StartsWith("midi.", StringComparison.Ordinal)).Select(n => n.Id).ToHashSet();
 
         foreach (var result in new[]
                  {
                      bundle.Patch.CompileForVideo(modules, files, files),
                      bundle.Patch.CompileForAudio(modules, files, files),
                  })
-            result.Issues.Select(i => i.Message).ShouldBeEmpty(name);
+            result.Issues
+                .Where(i => !(i.Severity == IssueSeverity.Warning && i.NodeId is { } id && midi.Contains(id)
+                              && i.Message.Contains("which is not here", StringComparison.Ordinal)))
+                .Select(i => i.Message).ShouldBeEmpty(name);
     }
 }
