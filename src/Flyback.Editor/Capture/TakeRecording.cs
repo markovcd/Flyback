@@ -112,7 +112,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
     public TakeRecording(
         TransportRow row,
-        OutputSections sections,
+        PictureSection picture,
         PreviewHost preview,
         IAudioEngine audio,
         Usage usage,
@@ -130,7 +130,7 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
         // A capture cannot continue after its picture disappears.
         preview.CaptureLost += Stop;
-        size = sections.Resolution;
+        size = picture.Resolution;
         this.preview = preview;
         this.audio = audio;
         this.usage = usage;

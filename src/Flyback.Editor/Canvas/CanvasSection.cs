@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.App.Controls;
+using Flyback.App.Settings;
 
 namespace Flyback.App.Canvas;
 
@@ -9,7 +10,7 @@ namespace Flyback.App.Canvas;
 /// The Canvas section of the settings window: how modules are laid out, and how
 /// much of a plugin's own module background the canvas draws (ADR-0118).
 /// </summary>
-internal sealed class CanvasSection
+internal sealed class CanvasSection : ISettingsSection
 {
     private readonly CheckBox compactModules = new()
     {
@@ -111,13 +112,17 @@ internal sealed class CanvasSection
         Show();
     }
 
+    public string Name => "Canvas";
+
     internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
+
+    Control ISettingsSection.View => View;
 
     /// <summary>
     /// Puts what was last saved on the controls and on the canvas both, since what
     /// the canvas draws is read from <see cref="ModuleSkins"/> and its <see cref="NodeGeometry"/> rather than from here.
     /// </summary>
-    internal void Show()
+    public void Show()
     {
         compactModules.IsChecked = saved.CompactModules;
         pluginSkins.IsChecked = saved.PluginSkins;
@@ -150,7 +155,7 @@ internal sealed class CanvasSection
         Write();
     }
 
-    internal void Save()
+    public void Save()
     {
         saved = new CanvasSettings
         {

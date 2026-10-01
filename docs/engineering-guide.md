@@ -463,7 +463,7 @@ mute and rewind through the `Transport` the viewer shares;
 `PatchFiles` owns which file the patch is, and opening and saving it. A region
 is a class that takes what it reads (the canvas, the document, the plugins, the
 report line, a dialog, a file picker) and owns its own fields: `Inspector`,
-`Palette`, `PanelKnobs`, `OutputSections`, `PluginInstalls`, `SettingsDialog`,
+`Palette`, `PanelKnobs`, the settings sections (`ISettingsSection`), `PluginInstalls`, `SettingsDialog`,
 `Toolbar`, `PresetSlot`, `StatusBar`, `PictureWindow`. They are composed in a
 container ([0150](adr/0150-the-editor-is-composed-in-a-container.md)):
 `EditorServices` registers each with `AddPart<T>`, a constructor says what it

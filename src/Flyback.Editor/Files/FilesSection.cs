@@ -1,7 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Flyback.App.Controls;
+using Flyback.App.Gallery;
 using Flyback.App.Inspect;
 using Flyback.App.Settings;
 
@@ -11,13 +15,47 @@ namespace Flyback.App.Files;
 /// The Files section of the settings window: which patch the window opens on, which
 /// program opens Flyback's files (ADR-0127), and the library folder.
 /// </summary>
-internal sealed class FilesSection
+/// <remarks>
+/// The startup patch and the library are kept in <c>output.json</c>; what opens
+/// the files is kept in a file of its own.
+/// </remarks>
+internal sealed class FilesSection : ISettingsSection, IOutputSlice
 {
     private readonly ComboBox opener = new Picker
     {
         Name = "fileOpener",
         ItemsSource = new[] { "Nothing", "The editor", "The viewer" },
         SelectedIndex = 0,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>
+    /// Which preset the window opens on at the next launch (ADR-0093). It reads
+    /// <see cref="startupPatch"/>, and a click picks another from the gallery.
+    /// </summary>
+    private readonly Button defaultPreset = new()
+    {
+        Name = "defaultPreset",
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+    };
+
+    /// <summary>The name on <see cref="defaultPreset"/>.</summary>
+    private readonly TextBlock defaultPresetName = new()
+    {
+        Name = "defaultPresetName",
+        TextTrimming = TextTrimming.CharacterEllipsis,
+        VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    /// <summary>The name <see cref="defaultPreset"/> shows, and what Save writes.</summary>
+    private string startupPatch = "";
+
+    private readonly TextBox libraryBox = new()
+    {
+        Name = "library",
+        PlaceholderText = "none",
+        FontSize = Text.Body,
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
@@ -30,13 +68,18 @@ internal sealed class FilesSection
     /// <summary>What tells the operating system, or null to tell it nothing.</summary>
     private readonly FileTypes? system;
 
+    private readonly PresetSlot presets;
+    private readonly IFilePickers pickers;
+
     private readonly Action<string, string?> report;
 
-    /// <param name="output">Holds the startup patch's and the library folder's rows, which are saved with the output settings.</param>
-    public FilesSection(EditorFolders folders, EditorHost host, ReportLine report, OutputSections output)
+    /// <param name="presets">The presets the startup patch is named and picked from.</param>
+    public FilesSection(EditorFolders folders, EditorHost host, ReportLine report, PresetSlot presets, IFilePickers pickers)
     {
         path = folders.FileTypeSettingsPath;
         system = host.FileTypes;
+        this.presets = presets;
+        this.pickers = pickers;
         this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = FileTypeSettings.Load(path);
@@ -46,7 +89,7 @@ internal sealed class FilesSection
             + "the editor with the patch open, or the viewer playing it. A .fbkp plugin always "
             + "reaches the editor, which asks before installing it.");
 
-        View.Children.Add(output.StartupPatch);
+        View.Children.Add(BuildStartupPatch());
         View.Children.Add(InspectorRows.Field("Open with", opener));
 
         View.Children.Add(new TextBlock
@@ -61,7 +104,7 @@ internal sealed class FilesSection
             TextWrapping = TextWrapping.Wrap,
         });
 
-        View.Children.Add(output.Library);
+        View.Children.Add(BuildLibrary());
 
         View.Children.Add(new TextBlock
         {
@@ -74,16 +117,32 @@ internal sealed class FilesSection
         Show();
     }
 
+    public string Name => "Files";
+
     internal StackPanel View { get; } = new() { Spacing = 10, Width = 280 };
-    
+
+    Control ISettingsSection.View => View;
+
     /// <summary>Puts what was last saved back on the controls.</summary>
-    internal void Show() => opener.SelectedIndex = (int)saved.Opener;
+    public void Show() => opener.SelectedIndex = (int)saved.Opener;
+
+    public void Show(OutputSettings current)
+    {
+        ShowStartupPatch(current.DefaultPreset);
+        libraryBox.Text = current.Library;
+    }
+
+    public void Read(OutputSettings into, OutputSettings before)
+    {
+        into.DefaultPreset = startupPatch;
+        into.Library = (libraryBox.Text ?? string.Empty).Trim();
+    }
 
     /// <summary>
     /// A program is registered again on every Save, so a copy that was moved points
     /// the files at where it is now. Nothing is taken back only once.
     /// </summary>
-    internal void Save()
+    public void Save()
     {
         var before = saved.Opener;
 
@@ -108,5 +167,101 @@ internal sealed class FilesSection
         {
             report($"Could not save the file settings: {ex.Message}", path);
         }
+    }
+
+    /// <summary>Which preset the window opens on, drawn as a picker that opens the gallery.</summary>
+    private Control BuildStartupPatch()
+    {
+        ToolTip.SetTip(defaultPreset,
+            "Which preset the window opens on the next time it starts. Picking one on the "
+            + "toolbar right now does not change this — it only changes what is on the canvas.");
+
+        // Drawn as the pickers are, so the row reads as a value to change rather
+        // than a button to press, with the mark of a row that opens a window.
+        var opens = Glyphs.Dots(12, Text.Muted);
+
+        Grid.SetColumn(opens, 1);
+
+        defaultPreset.Content = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+            Children = { defaultPresetName, opens },
+        };
+
+        defaultPreset.Padding = new Thickness(12, 5, 10, 7);
+        defaultPreset.MinHeight = 32;
+        defaultPreset.BorderThickness = new Thickness(1);
+        defaultPreset.Bind(TemplatedControl.BackgroundProperty, defaultPreset.GetResourceObservable("ComboBoxBackground"));
+        defaultPreset.Bind(TemplatedControl.BorderBrushProperty, defaultPreset.GetResourceObservable("ComboBoxBorderBrush"));
+
+        defaultPreset.Click += async (_, _) =>
+        {
+            if (await presets.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
+        };
+
+        return InspectorRows.Field("Startup patch", defaultPreset);
+    }
+
+    /// <summary>A caption, the folder typed or picked, and a button that picks one.</summary>
+    private Grid BuildLibrary()
+    {
+        ToolTip.SetTip(libraryBox,
+            "A folder of sounds and pictures. A file chosen from inside it is named from it, "
+            + "so the patch finds it on any machine with the same library.");
+
+        var browse = new Button
+        {
+            Content = "…",
+            Width = 32,
+            FontSize = Text.Body,
+            Margin = new Thickness(4, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+        };
+
+        ToolTip.SetTip(browse, "Choose the library folder.");
+
+        browse.Click += async (_, _) =>
+        {
+            var folders = await pickers.OpenFolder(new FolderPickerOpenOptions
+            {
+                Title = "Choose the library folder",
+                AllowMultiple = false,
+            });
+
+            if (folders is [{ } picked] && picked.TryGetLocalPath() is { } path) libraryBox.Text = path;
+        };
+
+        var row = InspectorRows.Row("*,Auto", InspectorRows.SettingsGutter);
+        var label = InspectorRows.Caption("Library", InspectorRows.SettingsGutter);
+
+        Grid.SetColumn(label, 0);
+        Grid.SetColumn(libraryBox, 1);
+        Grid.SetColumn(browse, 2);
+
+        row.Children.Add(label);
+        row.Children.Add(libraryBox);
+        row.Children.Add(browse);
+
+        return row;
+    }
+
+    /// <summary>
+    /// Shows which preset the window starts on, naming the one chosen even where
+    /// this launch does not offer it.
+    /// </summary>
+    /// <remarks>
+    /// A plugin's preset, on a launch the plugin is away from. The window opened
+    /// on the first patch instead, and naming that one here would have the next
+    /// Save — of anything at all — write it over the choice. Nothing chosen yet
+    /// names the patch the window opens on, which is what saving it then means.
+    /// </remarks>
+    private void ShowStartupPatch(string chosen)
+    {
+        var offered = presets.Ordered();
+
+        startupPatch = chosen.Length > 0 ? chosen : offered[PresetLibrary.Opening(offered, chosen)].Name;
+        defaultPresetName.Text = startupPatch;
     }
 }

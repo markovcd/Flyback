@@ -147,3 +147,8 @@ patch moved to Files (ADR-0093). Updates and Usage are one Privacy tab, both
 being what Flyback sends out. Recording lists the video's format before its
 rate and quality, which read differently per format. The Assistant tab puts
 its captions beside their controls, on the gutter every other tab uses.
+
+Each tab is a class of its own behind `ISettingsSection`, and the window lists
+them in one array. A tab whose rows are kept in `output.json` is also an
+`IOutputSlice`; `OutputSettingsUse` reads every slice into one `OutputSettings`
+and applies it whole.

@@ -149,11 +149,16 @@ internal static class EditorServices
         services.AddPart<EditorOpened>();
         services.AddPart<UsageCounter>();
 
-        services.AddPart<OutputSections>();
+        services.AddPart<PictureSection>();
+        services.AddPart<SoundSection>();
+        services.AddPart<MidiSection>();
+        services.AddPart<RecordingSection>();
         services.AddPart<CanvasSection>();
+        services.AddPart<FilesSection>();
+        services.AddPart<AssistantSection>();
         services.AddPart<UpdatesSection>();
         services.AddPart<UsageSection>();
-        services.AddPart<FilesSection>();
+        services.AddPart<PrivacySection>();
 
         services.AddPart<PanelKnobs>();
         services.AddPart<KnobRandomizer>();

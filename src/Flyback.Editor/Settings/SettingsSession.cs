@@ -1,31 +1,29 @@
-using Avalonia.Controls;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
 using Flyback.App.Files;
-using Flyback.App.Knobs;
 using Flyback.App.Notices;
 using Flyback.App.Statistics;
-using Flyback.App.Updates;
 
 namespace Flyback.App.Settings;
 
 /// <summary>Shows the settings sections together and commits or restores their drafts.</summary>
 internal sealed class SettingsSession(
-    AssistantPanel assistant,
-    OutputSections output,
+    PictureSection picture,
+    SoundSection sound,
+    MidiSection midi,
+    RecordingSection recording,
     CanvasSection canvas,
-    UpdatesSection updates,
-    UsageSection usageSection,
     FilesSection files,
-    PanelKnobs knobs,
+    AssistantSection assistant,
+    PrivacySection privacy,
     IDialog dialog,
     Usage usage,
     OutputSettingsUse outputSettings)
     : IReactTo<SettingsAsked>
 {
-    /// <summary>Updates and Usage together: both are what Flyback sends out.</summary>
-    private readonly StackPanel privacy = new() { Spacing = 24, Width = 280, Children = { updates.View, usageSection.View } };
+    /// <summary>The tabs, in the order the window lists them.</summary>
+    private readonly ISettingsSection[] sections = [picture, sound, midi, recording, canvas, files, assistant, privacy];
 
     /// <summary>Whether the settings sheet is waiting for an answer.</summary>
     public bool IsShowing { get; private set; }
@@ -35,8 +33,7 @@ internal sealed class SettingsSession(
     /// <summary>Shows all sections, then saves their drafts or restores the last saved values.</summary>
     public async Task ShowAsync()
     {
-        _ = output.ShowFfmpegAsync();
-        output.ShowMonitors();
+        foreach (var section in sections) section.Opening();
 
         IsShowing = true;
         usage.Count(Used.Settings);
@@ -45,17 +42,7 @@ internal sealed class SettingsSession(
 
         try
         {
-            saved = await SettingsDialog.ShowAsync(dialog,
-            [
-                ("Picture", output.Picture),
-                ("Sound", output.Sound),
-                ("MIDI", knobs.MidiSection),
-                ("Recording", output.Recording),
-                ("Canvas", canvas.View),
-                ("Files", files.View),
-                ("Assistant", assistant.SettingsSection()),
-                ("Privacy", privacy),
-            ]);
+            saved = await SettingsDialog.ShowAsync(dialog, [.. sections.Select(s => (s.Name, s.View))]);
         }
         finally
         {
@@ -64,20 +51,12 @@ internal sealed class SettingsSession(
 
         if (saved)
         {
-            assistant.SaveSettings();
             outputSettings.Save();
-            updates.Save();
-            usageSection.Save();
-            canvas.Save();
-            files.Save();
+            foreach (var section in sections) section.Save();
             return;
         }
 
-        assistant.DiscardSettings();
-        output.Show();
-        updates.Show();
-        usageSection.Show();
-        canvas.Show();
-        files.Show();
+        outputSettings.Show();
+        foreach (var section in sections) section.Show();
     }
 }

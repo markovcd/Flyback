@@ -13,7 +13,6 @@ using Flyback.App.Midi;
 using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Windows;
-using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App;
@@ -25,7 +24,6 @@ namespace Flyback.App;
 /// </summary>
 internal sealed class EditorView : Border
 {
-    private readonly OutputSections outputSections;
     private readonly OutputSettingsUse outputSettingsUse;
     private readonly IDialog dialog;
     private readonly Document document;
@@ -34,7 +32,6 @@ internal sealed class EditorView : Border
     private readonly PanelKnobs knobs;
     private readonly KnobRandomizer randomizer;
     private readonly ReportLine report;
-    private readonly PluginCatalog plugins;
     private readonly Playback playback;
     private readonly EditorStart editorStart;
     private readonly MidiHub midi;
@@ -52,10 +49,8 @@ internal sealed class EditorView : Border
         Document document,
         PatchOpening patchOpening,
         ReportLine report,
-        PluginCatalog plugins,
         MidiHub midi,
         Playback playback,
-        OutputSections outputSections,
         PanelKnobs knobs,
         KnobRandomizer randomizer,
         PresetSlot presets,
@@ -74,11 +69,9 @@ internal sealed class EditorView : Border
         this.document = document;
         this.patchOpening = patchOpening;
         this.report = report;
-        this.plugins = plugins;
         this.midi = midi;
         this.playback = playback;
         this.editorStart = editorStart;
-        this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.knobs = knobs;
         this.randomizer = randomizer;
@@ -378,12 +371,9 @@ internal sealed class EditorView : Border
     /// </summary>
     private void InitializeOutputControls()
     {
-        knobs.BuildMidiSection(plugins, outputSections.Takeover, outputSections.FollowTransport, outputSections.KeyboardLayout,
-            outputSections.KnobGridOn, outputSections.KnobColumns, outputSections.KnobRows);
-
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
-        outputSections.Show();
+        outputSettingsUse.Show();
         outputSettingsUse.ApplyCurrent();
     }
 }

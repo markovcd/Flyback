@@ -1,14 +1,19 @@
 using Flyback.App.Audio;
 using Flyback.App.Bars;
 using Flyback.App.Controls;
+using Flyback.App.Files;
 using Flyback.App.Knobs;
 using Flyback.Core.Render;
 
 namespace Flyback.App.Settings;
 
-/// <summary>Applies, saves and persists the output settings shown by <see cref="OutputSections"/>.</summary>
+/// <summary>Shows, reads, applies and persists the output settings, whichever section each row is in (ADR-0148).</summary>
 internal sealed class OutputSettingsUse(
-    OutputSections sections,
+    PictureSection picture,
+    SoundSection sound,
+    MidiSection midi,
+    RecordingSection recording,
+    FilesSection fileSection,
     OutputSettingRepository repository,
     EditorFolders folders,
     PreviewHost preview,
@@ -19,6 +24,8 @@ internal sealed class OutputSettingsUse(
     PatchFiles files,
     ReportLine report)
 {
+    private readonly IOutputSlice[] slices = [picture, sound, midi, recording, fileSection];
+
     private readonly LiveOversample live = new(audio, () => repository.Current.StepDownOnDropouts, message => report.Say(message));
 
     /// <summary>Applies the settings already loaded for this run, while the editor is being built.</summary>
@@ -28,15 +35,21 @@ internal sealed class OutputSettingsUse(
         live.Start();
     }
 
+    /// <summary>Puts every section's rows to what was last saved, and nothing else.</summary>
+    public void Show()
+    {
+        foreach (var slice in slices) slice.Show(repository.Current);
+    }
+
     /// <summary>Reads the settings controls, applies them and writes them to disk when configured.</summary>
     public void Save()
     {
         var before = repository.Current;
-        var saved = repository.Current = sections.Read(before);
+        var saved = repository.Current = Read(before);
 
         Apply(saved);
 
-        if (saved.LatencyMilliseconds != before.LatencyMilliseconds || sections.SoundChanged(before, saved))
+        if (saved.LatencyMilliseconds != before.LatencyMilliseconds || sound.SoundChanged(before, saved))
             playback.ReopenAudio(saved);
 
         // One box picks both, and only the CPU takes effect at once.
@@ -55,9 +68,20 @@ internal sealed class OutputSettingsUse(
         }
     }
 
+    /// <summary>What the controls hold, as settings to put in force.</summary>
+    private OutputSettings Read(OutputSettings before)
+    {
+        // Set on the knob panel, not in any section.
+        var read = new OutputSettings { Randomize = before.Randomize };
+
+        foreach (var slice in slices) slice.Read(read, before);
+
+        return read;
+    }
+
     private void Apply(OutputSettings settings, bool starting = false)
     {
-        var size = OutputSections.SizeOf(settings);
+        var size = PictureSection.SizeOf(settings);
 
         preview.Resolution = size;
         preview.Use(settings.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);

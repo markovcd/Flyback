@@ -108,7 +108,7 @@ returns a `Task` in all three platforms.
   `PluginInstaller.Finish`), the Viewer's open, the server's `Defaults`.
 - Already off the UI thread: `ThumbnailStore`, `PresetThumbnails`,
   `UpdateDownloader`, `WorkKeeper` ticks, `LiveRecorder`'s worker, `PresetAudition`,
-  the ffmpeg version probe in `OutputSections`, the engine's writers.
+  the ffmpeg version probe in `RecordingSection`, the engine's writers.
 - `Aptabase.Drain`: a bounded `WaitAll` on exit or crash (ADR-0103).
 - `AudioEngine`: the callback is lock-free; opening and closing the device are
   native calls with no async form.
