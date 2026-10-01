@@ -1,16 +1,17 @@
 ---
 name: build-artifacts
-description: Use after a feature has landed on main - run release.sh (the Docker gate, publish, pack and sign, into dist/) so the user gets the build without asking, how long it takes, and what to check before saying it is done.
+description: Use when the user asks for a local build of main - run release.sh (the Docker gate, publish, pack and sign, into dist/), how long it takes, and what to check before saying it is done. Never run it unasked after a feature lands.
 ---
 
-# Building the artifacts after a feature lands
+# Building the artifacts when asked
 
 `release.sh` run locally is the Release workflow's build, signed with the local test key and
 published nowhere: the gate (restore, compile, every test), the self-contained publishes for
 the default runtimes (`ARG RIDS` in the Dockerfile: win-x64, osx-arm64, linux-x64) as folders
-under `dist/<rid>/`, a signed `SHA256SUMS`, and beside them the `.fbkp` of each plugin the preset site starts with. The user wants this run
-unprompted whenever a feature lands on `main`, so the build of what landed is on disk under
-`dist/` when they come back. `dist/` is ignored by git and by the Docker context.
+under `dist/<rid>/`, a signed `SHA256SUMS`, and beside them the `.fbkp` of each plugin the preset site starts with. Run it only when
+the user asks for it. `main`'s CI runner is on their machine and builds every push, so a
+local build after landing is the same work done twice on one machine. `dist/` is ignored by
+git and by the Docker context.
 
 The version is the next minor after the latest tag, and a missing changelog heading for it is
 a warning here, not a failure. The build is marked a local one, so its runs count as debug
