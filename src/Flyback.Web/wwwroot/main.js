@@ -35,9 +35,18 @@ const $ = id => document.getElementById(id);
 const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), loop: $('loop'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
-  panel: $('panel'), grip: $('grip'), about: $('about'),
-  clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
+  panel: $('panel'), grip: $('grip'), about: $('about'), keyboard: $('keyboard'), notes: $('notes'), notesHome: $('notes-home'),
+  sheet: $('sheet'), find: $('find'), resetAll: $('reset-all'), none: $('none'),
+  keybed: $('keybed'), keysSaid: $('keys-said'), octave: $('octave'), octaveDown: $('octave-down'), octaveUp: $('octave-up'),
+  title: $('title'), clock: $('clock'), length: $('length'),
+  main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
 };
+
+/** The panel's tabs, which only a phone shows, each with the pane it opens. */
+const tabs = ['controls', 'keys', 'about'].map(name => ({ name, tab: $(`tab-${name}`), pane: $(name === 'about' ? 'about-pane' : name) }));
+
+/** A screen too narrow for the panel beside the picture, which puts it in a sheet under it. */
+const narrow = matchMedia('(max-width: 640px)');
 
 /** The sound's thread, what it last said of the sound, and why it stopped where it did. */
 const speaker = new Worker('speaker.js', { type: 'module' });
@@ -261,7 +270,7 @@ let insisted = false;
 
 function tooSlow(speed) {
   soundAllowed = false;
-  warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press 🔇 to hear it anyway.`;
+  warning = `This patch's sound renders at ${speed.toFixed(2)}× real time here, so the picture plays alone. Press the speaker to hear it anyway.`;
 }
 
 /** An oversampling factor as the status line says it; 1× is none. */
@@ -350,7 +359,7 @@ let keyboardSaid = null;
 /** A key the computer keyboard plays taken as a note, and true; false for any other key. */
 function typed(event, down) {
   if (!playable() || event.ctrlKey || event.metaKey || event.altKey) return false;
-  if (event.target instanceof HTMLSelectElement) return false;
+  if (event.target instanceof HTMLSelectElement || typing(event.target)) return false;
 
   if (down && (event.code === 'PageUp' || event.code === 'PageDown')) {
     event.preventDefault();
@@ -381,31 +390,53 @@ function typed(event, down) {
   return true;
 }
 
+/** Whether <target> takes typing, which is when a letter is a letter and not a note or a shortcut. */
+function typing(target) {
+  return target instanceof HTMLTextAreaElement || (target instanceof HTMLInputElement && target.type !== 'range');
+}
+
 /** The panel's knobs: each one's key, name, where it rests and where it is turned to. */
 let knobs = [];
 
 /**
- * Lays out a slider for each of the open patch's knobs. Knobs of the same patch opened
+ * Lays out a knob for each of the open patch's knobs. Knobs of the same patch opened
  * again keep where they were turned to, and the worker is told.
  */
 function buildPanel(open, keep) {
   const before = new Map(knobs.map(knob => [knob.key, knob.value]));
 
   knobs = open ? JSON.parse(flyback.Knobs()).map(knob => ({ ...knob, value: knob.rest, turns: 0, shown: 0 })) : [];
-  ui.panel.replaceChildren(...knobs.map(slider));
-  ui.panel.hidden = ui.grip.hidden = knobs.length === 0;
+  ui.panel.replaceChildren(...knobs.map(dial));
+  for (const count of document.querySelectorAll('.count')) count.textContent = knobs.length;
+  find();
 
   for (const knob of knobs)
     if (keep && before.has(knob.key) && before.get(knob.key) !== knob.value) turn(knob, before.get(knob.key), true);
 }
 
-/** Where the browser keeps the panel's height between visits. */
+/** Shows the knobs whose names hold what the search box does. */
+function find() {
+  const wanted = ui.find.value.trim().toLowerCase();
+  let shown = 0;
+
+  for (const knob of knobs) {
+    knob.cell.hidden = wanted !== '' && !knob.name.toLowerCase().includes(wanted);
+    if (!knob.cell.hidden) shown++;
+  }
+
+  ui.none.hidden = shown > 0 || knobs.length === 0;
+}
+
+/** Where the browser keeps the sheet's height between visits. */
 const PANEL_KEPT = 'flyback-viewer-panel';
 
-/** Sets how tall the panel may grow, in pixels, or back to its default for null; the sliders scroll past it. */
+/** The sheet's heights a tap on its grip steps through: closed to its tabs, half the screen, most of it. */
+const SHEET_STEPS = [88, 0.45, 0.7];
+
+/** Sets how tall the phone's sheet stands, in pixels, or back to its default for null. */
 function sizePanel(pixels, keep = true) {
-  if (pixels === null) ui.panel.style.removeProperty('--panel-height');
-  else ui.panel.style.setProperty('--panel-height', `${Math.round(Math.min(Math.max(pixels, 0), innerHeight * 0.7))}px`);
+  if (pixels === null) ui.sheet.style.removeProperty('--sheet-height');
+  else ui.sheet.style.setProperty('--sheet-height', `${Math.round(Math.min(Math.max(pixels, 0), innerHeight * 0.8))}px`);
 
   if (!keep) return;
 
@@ -415,6 +446,14 @@ function sizePanel(pixels, keep = true) {
   } catch { /* Storage is off; the height just isn't kept. */ }
 }
 
+/** The sheet's next height up, or closed again from the tallest. */
+function stepPanel() {
+  const height = ui.sheet.getBoundingClientRect().height;
+  const tallest = parseFloat(getComputedStyle(ui.sheet).maxHeight) || Infinity;
+  const steps = SHEET_STEPS.map(step => Math.min(step < 1 ? step * innerHeight : step, tallest));
+  sizePanel(steps.find(step => step > height + 8) ?? steps[0]);
+}
+
 function panelResizing() {
   try {
     const kept = Number(localStorage.getItem(PANEL_KEPT));
@@ -422,21 +461,29 @@ function panelResizing() {
   } catch { /* Nothing kept. */ }
 
   let from = null;
-  const height = () => ui.panel.getBoundingClientRect().height;
+  const height = () => ui.sheet.getBoundingClientRect().height;
 
   ui.grip.onpointerdown = event => {
-    from = { y: event.clientY, height: height() };
+    from = { y: event.clientY, height: height(), moved: false };
     ui.grip.setPointerCapture(event.pointerId);
   };
   ui.grip.onpointermove = event => {
-    if (from !== null) sizePanel(from.height + from.y - event.clientY);
+    if (from === null || (!from.moved && Math.abs(event.clientY - from.y) < 6)) return;
+
+    from.moved = true;
+    sizePanel(from.height + from.y - event.clientY);
   };
-  ui.grip.onpointerup = ui.grip.onpointercancel = () => { from = null; };
+  ui.grip.onpointerup = () => {
+    if (from !== null && !from.moved) stepPanel();
+    from = null;
+  };
+  ui.grip.onpointercancel = () => { from = null; };
   ui.grip.ondblclick = () => sizePanel(null);
   ui.grip.onkeydown = event => {
     const step = { ArrowUp: 24, ArrowDown: -24 }[event.key];
     if (step !== undefined) sizePanel(height() + step);
     else if (event.key === 'Home') sizePanel(null);
+    else if (event.key === 'Enter' || event.key === ' ') stepPanel();
     else return;
     event.preventDefault();
   };
@@ -444,29 +491,205 @@ function panelResizing() {
 
 panelResizing();
 
-function slider(knob) {
-  const label = document.createElement('label');
+/** A point on the knob's ring, <angle> degrees clockwise from three o'clock, <radius> from its middle. */
+const onRing = (angle, radius) => [32 + radius * Math.cos(angle * Math.PI / 180), 32 + radius * Math.sin(angle * Math.PI / 180)];
+
+/** Where a knob's travel starts, in degrees from three o'clock, and how far it goes. */
+const FROM = 135, SWEEP = 270;
+
+const SVG = 'http://www.w3.org/2000/svg';
+
+function dial(knob) {
+  const cell = document.createElement('div');
+  const face = document.createElement('div');
+  const svg = document.createElementNS(SVG, 'svg');
+  const track = document.createElementNS(SVG, 'path');
+  const arc = document.createElementNS(SVG, 'path');
+  const cap = document.createElementNS(SVG, 'circle');
+  const pointer = document.createElementNS(SVG, 'line');
+  const input = document.createElement('input');
   const called = document.createElement('span');
   const reading = document.createElement('output');
-  const input = document.createElement('input');
 
-  called.textContent = knob.name;
+  const [x0, y0] = onRing(FROM, 26), [x1, y1] = onRing(FROM + SWEEP, 26);
+  track.setAttribute('d', `M${x0} ${y0} A26 26 0 1 1 ${x1} ${y1}`);
+  track.classList.add('track');
+  arc.classList.add('arc');
+  cap.setAttribute('cx', '32');
+  cap.setAttribute('cy', '32');
+  cap.setAttribute('r', '19');
+  svg.setAttribute('viewBox', '0 0 64 64');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.append(track, arc, cap, pointer);
+
   input.type = 'range';
   input.min = '0';
   input.max = '1';
-  input.step = '0.001';
+  input.step = '0.01';
   input.value = knob.value;
-  input.title = 'Double-click to put it back';
+  input.setAttribute('aria-label', knob.name);
   input.oninput = () => turn(knob, Number(input.value));
-  input.ondblclick = () => turn(knob, knob.rest);
 
+  face.className = 'knob';
+  face.title = `${knob.name}: drag to turn, double-click to put it back`;
+  face.append(svg, input);
+
+  // Up or right turns it up, two hundred pixels end to end, a tenth as fast with Shift held.
+  let from = null;
+  face.onpointerdown = event => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    input.focus({ preventScroll: true });
+    face.setPointerCapture(event.pointerId);
+    from = { x: event.clientX, y: event.clientY, value: knob.value };
+  };
+  face.onpointermove = event => {
+    if (from === null) return;
+    const moved = (from.y - event.clientY) + (event.clientX - from.x);
+    turn(knob, from.value + moved / 200 * (event.shiftKey ? 0.1 : 1));
+  };
+  face.onpointerup = face.onpointercancel = () => { from = null; };
+  face.ondblclick = () => turn(knob, knob.rest);
+
+  called.className = 'name';
+  called.textContent = called.title = knob.name;
+  cell.className = 'cell';
+  cell.append(face, called, reading);
+
+  knob.cell = cell;
   knob.input = input;
   knob.reading = reading;
-  reading.textContent = Math.round(knob.value * 100);
-  label.append(called, reading, input);
+  knob.draw = () => {
+    const angle = FROM + SWEEP * knob.value;
+    const [ax, ay] = onRing(angle, 26), [px0, py0] = onRing(angle, 7), [px1, py1] = onRing(angle, 16);
+    arc.setAttribute('d', `M${x0} ${y0} A26 26 0 ${SWEEP * knob.value > 180 ? 1 : 0} 1 ${ax} ${ay}`);
+    pointer.setAttribute('x1', px0);
+    pointer.setAttribute('y1', py0);
+    pointer.setAttribute('x2', px1);
+    pointer.setAttribute('y2', py1);
+  };
 
-  return label;
+  reading.textContent = Math.round(knob.value * 100);
+  knob.draw();
+
+  return cell;
 }
+
+/** The note names a key is labeled with, from C. */
+const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+
+const noteName = note => `${NOTE_NAMES[note % 12]}${Math.floor(note / 12) - 1}`;
+
+/**
+ * The keys the screen offers, as the computer keyboard plays them: its home row in a
+ * patch's scale, or a piano's octave from Z to the comma.
+ */
+const SCALE_ROW = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote', 'Backslash'];
+const PIANO_ROW = ['KeyZ', 'KeyS', 'KeyX', 'KeyD', 'KeyC', 'KeyV', 'KeyG', 'KeyB', 'KeyH', 'KeyN', 'KeyJ', 'KeyM', 'Comma'];
+const KEY_LABELS = { Semicolon: ';', Quote: "'", Backslash: '\\', Comma: ',' };
+
+/** Lays out a button for each note the screen offers, which plays as its computer keyboard key does. */
+function buildKeys() {
+  release();
+
+  const scaled = flyback.KeyNote('KeyA') >= 0;
+  const row = (scaled ? SCALE_ROW : PIANO_ROW)
+    .map(code => ({ code, note: flyback.KeyNote(code) }))
+    .filter(key => key.note >= 0);
+
+  ui.keybed.replaceChildren(...row.map(({ code, note }) => {
+    const button = document.createElement('button');
+    const name = document.createElement('span');
+    const letter = document.createElement('span');
+    const id = `screen:${code}`;
+
+    name.className = 'note';
+    name.textContent = noteName(note);
+    letter.className = 'key';
+    letter.textContent = KEY_LABELS[code] ?? code.replace('Key', '');
+    button.append(name, letter);
+    button.setAttribute('aria-label', noteName(note));
+    if (!scaled && [1, 3, 6, 8, 10].includes(note % 12)) button.classList.add('sharp');
+
+    const up = () => {
+      if (!pressed.has(id)) return;
+      strike(note, false);
+      pressed.delete(id);
+      button.classList.remove('down');
+    };
+
+    button.onpointerdown = event => {
+      event.preventDefault();
+      button.releasePointerCapture?.(event.pointerId);
+      if (pressed.has(id)) return;
+      pressed.set(id, note);
+      strike(note);
+      button.classList.add('down');
+    };
+    button.onpointerup = button.onpointerleave = button.onpointercancel = up;
+    button.oncontextmenu = event => event.preventDefault();
+
+    return button;
+  }));
+
+  ui.octave.textContent = row.length > 0 ? noteName(row[0].note) : '';
+  // The scale's name only: "Keyboard: A Aeolian (minor) on A to J, …" says "A Aeolian (minor)".
+  ui.keysSaid.textContent = (keyboardSaid ?? info?.keyboard ?? '').replace(/^Keyboard: /, '').split(/ on |, /)[0];
+}
+
+/** Moves the computer keyboard and the screen's keys <octaves> up or down. */
+function shiftKeys(octaves) {
+  release();
+  keyboardSaid = flyback.Shift(octaves);
+  buildKeys();
+  paint();
+}
+
+/** The tab open on a phone's sheet, kept while the patch changes where it still has that tab. */
+let tab = null;
+
+/** Offers the tabs the open patch has a use for, and the sheet only where there is any. */
+function buildSheet() {
+  const has = {
+    controls: knobs.length > 0,
+    keys: playable(),
+    about: Boolean(info?.description) || playable(),
+  };
+
+  for (const { name, tab: button } of tabs) button.hidden = !has[name];
+  if (!has[tab]) tab = tabs.find(({ name }) => has[name])?.name ?? null;
+
+  if (has.keys) buildKeys();
+  else ui.keybed.replaceChildren();
+
+  placeSheet();
+}
+
+/** Shows the sheet as the screen's width has it: knobs beside the picture, or every tab under it. */
+function placeSheet() {
+  const phone = narrow.matches;
+
+  // What the patch says it is reads under the transport, or behind a phone's About tab.
+  (phone ? tabs[2].pane : ui.notesHome).append(ui.notes);
+
+  ui.sheet.hidden = phone ? tab === null : knobs.length === 0;
+
+  for (const { name, tab: button, pane } of tabs) {
+    button.setAttribute('aria-selected', String(name === tab));
+    pane.classList.toggle('open', name === tab);
+  }
+}
+
+function openTab(name) {
+  tab = name;
+  placeSheet();
+
+  // A tab opened on a sheet closed to its tabs opens it to half the screen.
+  if (ui.sheet.getBoundingClientRect().height < 120) sizePanel(SHEET_STEPS[1] * innerHeight);
+}
+
+for (const { name, tab: button } of tabs) button.onclick = () => openTab(name);
+narrow.addEventListener('change', placeSheet);
 
 /**
  * Turns <knob> to <value>, 0 to 1. The sound hears it once what is queued has played, so
@@ -476,6 +699,7 @@ function turn(knob, value, atOnce = false) {
   knob.value = Math.min(Math.max(Number(value) || 0, 0), 1);
   knob.input.value = knob.value;
   knob.reading.textContent = Math.round(knob.value * 100);
+  knob.draw();
 
   speaker.postMessage({ turn: knob.key, value: knob.value });
 
@@ -537,18 +761,34 @@ async function open(opening, label, at = 0, keepKnobs = false) {
     if (!ui.seek.hidden) ui.seek.max = end();
   }
 
-  ui.about.textContent = ui.about.title = info?.description ?? '';
+  ui.about.textContent = info?.description ?? '';
   ui.about.hidden = !info?.description;
   buildPanel(error === null, keepKnobs);
+  buildSheet();
 
-  ui.back.textContent = `${ui.back.href ? '← ' : ''}${shown}`;
+  ui.title.textContent = shown;
 
   seek(info === null ? 0 : Math.min(at, end()));
   ui.cover.hidden = error === null && (was || at > 0);
-  ui.cover.textContent = error ?? '▶  Click to play';
+  say(error);
 
   if (was && error === null) await play();
   paint();
+}
+
+/** The cover over the picture: what went wrong, or for null the invitation to play. */
+function say(text) {
+  if (text) {
+    ui.cover.textContent = text;
+    return;
+  }
+
+  const prompt = document.createElement('span');
+  const disc = document.createElement('span');
+  prompt.className = 'prompt';
+  disc.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" class="solid"><path d="M7 4.5v15l13-7.5z"/></svg>';
+  prompt.append(disc, matchMedia('(pointer: coarse)').matches ? 'Tap to play' : 'Click to play');
+  ui.cover.replaceChildren(prompt);
 }
 
 async function openPreset(preset) {
@@ -728,11 +968,12 @@ function paint() {
   ui.loop.setAttribute('aria-pressed', String(looped));
   ui.edit.disabled = source === null;
   if (ready && !dragging) ui.seek.value = now();
-  ui.play.textContent = playing ? '⏸' : '▶';
   ui.play.setAttribute('aria-label', playing ? 'Pause' : 'Play');
-  ui.mute.textContent = !soundAllowed || muted || loudness === 0 ? '🔇' : '🔊';
+  ui.mute.classList.toggle('silent', !soundAllowed || muted || loudness === 0);
+  ui.mute.setAttribute('aria-pressed', String(muted));
   ui.volume.value = loudness;
-  ui.clock.textContent = !ready ? '' : Number.isFinite(end()) ? `${clockText(now())} / ${clockText(end())}` : clockText(now());
+  ui.clock.textContent = ready ? clockText(now()) : '';
+  ui.length.textContent = ready && Number.isFinite(end()) ? clockText(end()) : '';
 
   const said = ready ? status() : null;
 
@@ -745,8 +986,11 @@ function paint() {
     if (said.hasSound && said.oversample) parts.push(oversampling(said.oversample));
     if (said.hasSound && said.speed > 0) parts.push(`sound renders at ${said.speed.toFixed(2)}×`);
     if (said.linking) parts.push('building the shader…');
-    if (playable()) parts.push(`${keyboardSaid ?? said.keyboard} PageUp and PageDown move it`);
   }
+
+  const keyboard = ready && playable() ? keyboardSaid ?? said.keyboard : '';
+  ui.keyboard.textContent = narrow.matches ? keyboard : `${keyboard} PageUp and PageDown move it`;
+  ui.keyboard.hidden = !keyboard;
 
   ui.status.replaceChildren(parts.join(' · '));
 
@@ -814,6 +1058,11 @@ ui.edit.onclick = edit;
 ui.canvas.ondblclick = toggleFullscreen;
 ui.size.onchange = () => (ui.size.value === OFF ? setPicture(false) : resize(...ui.size.value.split('x').map(Number)));
 
+ui.find.oninput = find;
+ui.resetAll.onclick = () => { for (const knob of knobs) turn(knob, knob.rest); };
+ui.octaveDown.onclick = () => shiftKeys(-1);
+ui.octaveUp.onclick = () => shiftKeys(1);
+
 ui.seek.onpointerdown = () => { dragging = true; };
 ui.seek.onpointerup = ui.seek.onpointercancel = () => { dragging = false; };
 ui.seek.oninput = () => { seek(Number(ui.seek.value)); paint(); };
@@ -844,7 +1093,7 @@ document.addEventListener('keydown', event => {
   const target = event.target;
 
   // What already answers the key itself: a list, a focused button, the seek bar's arrows.
-  if (target instanceof HTMLSelectElement) return;
+  if (target instanceof HTMLSelectElement || typing(target)) return;
   if (target instanceof HTMLButtonElement && (event.code === 'Space' || event.code === 'Enter')) return;
   if (target instanceof HTMLInputElement && target.type === 'range' && event.code.startsWith('Arrow')) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
@@ -883,7 +1132,8 @@ window.flyback = {
     pressed.clear();
     speaker.postMessage({ release: true });
   },
-  panel: pixels => { sizePanel(pixels); return ui.panel.getBoundingClientRect().height; },
+  panel: pixels => { sizePanel(pixels); return ui.sheet.getBoundingClientRect().height; },
+  tab: name => { if (tabs.some(t => t.name === name && !t.tab.hidden)) openTab(name); return tab; },
   knobs: () => knobs.map(({ key, name: called, value, rest }) => ({ key, name: called, value, rest })),
   turn: (knob, value) => {
     const found = knobs.find(k => k.key === knob || k.name.toLowerCase() === String(knob).toLowerCase());
@@ -930,6 +1180,8 @@ const presets = window.flyback.presets().map(preset => preset.name);
 // Back to the page that sent it here, the presets page by default, and never anywhere off this site.
 const back = new URL(params.get('back') ?? 'presets.html', new URL('../', location.href));
 if (back.origin === location.origin) ui.back.href = back.href;
+ui.back.setAttribute('aria-label', 'Back');
+ui.back.title = 'Back';
 
 // Offered only where the site was built with the editor beside the viewer.
 fetch(editorUrl(), { method: 'HEAD' }).then(response => { ui.edit.hidden = !response.ok; }, () => {});

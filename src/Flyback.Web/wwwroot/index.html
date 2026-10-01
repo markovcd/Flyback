@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Flyback Viewer</title>
   <link rel="icon" href="../assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="viewer.css">
@@ -10,30 +10,70 @@
 <body>
   <header>
     <a class="brand" href="../" title="Flyback"><img src="../assets/logo.svg" alt="Flyback"></a>
-    <a id="back" class="back"></a>
+    <a id="back" class="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></a>
+    <h1 id="title"></h1>
     <button id="edit" disabled hidden title="Open this patch in the editor">Edit it</button>
     <label class="file" hidden>Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
-    <select id="size" aria-label="Resolution"></select>
+    <label class="size" for="size">Size</label>
+    <select id="size"></select>
   </header>
-  <main>
-    <canvas id="screen"></canvas>
-    <div id="off" hidden>Picture off: the sound plays alone.</div>
-    <div id="cover">Loading…</div>
-  </main>
-  <nav class="transport" aria-label="Transport">
-    <button id="play" disabled aria-label="Play" title="Play (Space)">▶</button>
-    <button id="rewind" disabled aria-label="Rewind" title="Rewind (Home)">⏮</button>
-    <input id="seek" type="range" min="0" max="1" step="any" value="0" disabled aria-label="Position">
-    <span id="clock">0:00 / 0:00</span>
-    <button id="loop" disabled aria-label="Loop" aria-pressed="false" title="Play the patch's length round and round">🔁</button>
-    <button id="mute" disabled aria-label="Mute" title="Mute (M)">🔊</button>
-    <input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" title="Volume (Up and Down)">
-    <button id="fullscreen" aria-label="Full screen" title="Full screen (F)">⛶</button>
-  </nav>
-  <div id="grip" role="separator" aria-orientation="horizontal" aria-label="Resize the panel" tabindex="0" title="Drag to resize the panel; double-click to put it back" hidden></div>
-  <section id="panel" aria-label="Panel" hidden></section>
-  <p id="about" hidden></p>
-  <footer id="status"></footer>
+  <div class="body">
+    <section class="stage">
+      <main>
+        <canvas id="screen"></canvas>
+        <div id="off" hidden>Picture off: the sound plays alone.</div>
+        <div id="cover">Loading…</div>
+        <p id="status" role="status"></p>
+      </main>
+      <nav class="transport" aria-label="Transport">
+        <button id="rewind" disabled aria-label="Rewind" title="Rewind (Home)"><svg viewBox="0 0 24 24" aria-hidden="true" class="solid"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+        <button id="play" disabled aria-label="Play" title="Play (Space)"><svg viewBox="0 0 24 24" aria-hidden="true" class="solid when-paused"><path d="M7 4.5v15l13-7.5z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="solid when-playing"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
+        <span id="clock">0:00</span>
+        <input id="seek" type="range" min="0" max="1" step="any" value="0" disabled aria-label="Position">
+        <span id="length"></span>
+        <button id="loop" disabled aria-label="Loop" aria-pressed="false" title="Play the patch's length round and round"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></button>
+        <button id="mute" disabled aria-label="Mute" title="Mute (M)"><svg viewBox="0 0 24 24" aria-hidden="true" class="when-sounding"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="when-silent"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M22 9l-6 6"/><path d="M16 9l6 6"/></svg></button>
+        <input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume" title="Volume (Up and Down)">
+        <button id="fullscreen" aria-label="Full screen" title="Full screen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
+      </nav>
+      <div id="notes-home" class="notes-home">
+        <div id="notes">
+          <p id="about" hidden></p>
+          <p id="keyboard" hidden></p>
+        </div>
+      </div>
+    </section>
+    <aside id="sheet" aria-label="Panel" hidden>
+      <div id="grip" role="separator" aria-orientation="horizontal" aria-label="Resize the panel" tabindex="0" title="Drag to resize the panel; tap to open it further"></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tab-controls" aria-controls="controls" aria-selected="false">Controls <span class="count"></span></button>
+        <button role="tab" id="tab-keys" aria-controls="keys" aria-selected="false">Keys</button>
+        <button role="tab" id="tab-about" aria-controls="about-pane" aria-selected="false">About</button>
+      </div>
+      <div id="controls" class="pane" role="tabpanel" aria-labelledby="tab-controls">
+        <div class="controls-head">
+          <h2>Controls <span class="count"></span></h2>
+          <div class="find">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input id="find" type="search" placeholder="Find a control" aria-label="Find a control" autocomplete="off">
+          </div>
+          <button id="reset-all" title="Put every knob back where it rests">Reset all</button>
+        </div>
+        <section id="panel" aria-label="Panel knobs"></section>
+        <p id="none" hidden>No control matches that name.</p>
+      </div>
+      <div id="keys" class="pane" role="tabpanel" aria-labelledby="tab-keys">
+        <div class="keys-head">
+          <span id="keys-said"></span>
+          <button id="octave-down" aria-label="Octave down">−</button>
+          <span id="octave"></span>
+          <button id="octave-up" aria-label="Octave up">+</button>
+        </div>
+        <div id="keybed"></div>
+      </div>
+      <div id="about-pane" class="pane" role="tabpanel" aria-labelledby="tab-about"></div>
+    </aside>
+  </div>
   <script type="module" src="main.js"></script>
 </body>
 </html>

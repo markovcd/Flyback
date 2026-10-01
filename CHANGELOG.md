@@ -26,7 +26,7 @@
 
 ### Web
 
-- The web viewer's panel of knobs is capped at a third of the window and scrolls, and its top edge is dragged (or moved with the arrow keys) to make it taller or shorter, so a patch with many knobs no longer covers the picture; the height is kept.
+- The web viewer's panel knobs are rotary knobs in a column beside the picture, found by name and put back all at once; on a phone they sit in a sheet under the picture, beside keys to play the patch on and what it is for.
 - The web viewer has a Loop button beside the clock, as the desktop viewer does, to play a patch's length round and round; `flyback.loop(on)` sets it for a script.
 
 ### Fixes
