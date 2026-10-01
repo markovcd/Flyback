@@ -155,6 +155,9 @@ public sealed class OutputSettings
     /// <summary>What a MIDI controller does to a knob sitting somewhere else — the MIDI section.</summary>
     public Takeover Takeover { get; set; }
 
+    /// <summary>Whether an instrument's Start and Stop play and pause the patch — the MIDI section.</summary>
+    public bool FollowTransport { get; set; } = true;
+
     /// <summary>
     /// How the computer keyboard is laid out on a patch when its first MIDI In is
     /// added — the MIDI section. A patch that already has one, or has none, is not touched.

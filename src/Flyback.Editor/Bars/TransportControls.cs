@@ -1,10 +1,13 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using Flyback.App.Capture;
+using Flyback.App.Midi;
 using Flyback.App.Controls;
 using Flyback.App.Notices;
 using Flyback.App.Statistics;
 using Flyback.App.Windows;
+using Flyback.Plugins.Midi;
 
 namespace Flyback.App.Bars;
 
@@ -12,9 +15,26 @@ namespace Flyback.App.Bars;
 /// Play and pause, and the mute that goes with them, on the transport row and on the
 /// pictures that have a window of their own or all of this one.
 /// </summary>
-internal sealed class TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage)
-    : IReactTo<TakeMarked>, IReactTo<TransportChanged>, IReactTo<PauseAsked>
+internal sealed class TransportControls : IReactTo<TakeMarked>, IReactTo<TransportChanged>, IReactTo<PauseAsked>
 {
+    private readonly Playback playback;
+    private readonly TransportRow row;
+    private readonly TakeRecording recording;
+    private readonly Usage usage;
+
+    public TransportControls(Playback playback, TransportRow row, TakeRecording recording, Usage usage, MidiHub midi)
+    {
+        this.playback = playback;
+        this.row = row;
+        this.recording = recording;
+        this.usage = usage;
+
+        midi.Transported += (_, action) => Dispatcher.UIThread.Post(() => Follow(action));
+    }
+
+    /// <summary>Whether an instrument's Start, Continue and Stop play and pause the patch — the MIDI section.</summary>
+    public bool FollowsInstruments { get; set; } = true;
+
     private bool pauseShowsPlay;
 
     /// <summary>Whether the full-screen picture carries the stats line, wherever it is shown. F3 says.</summary>
@@ -60,6 +80,33 @@ internal sealed class TransportControls(Playback playback, TransportRow row, Tak
 
         if (playback.Paused) playback.Resume();
         else playback.Pause();
+    }
+
+    /// <summary>
+    /// An instrument pressed Start, Continue or Stop: from the top, on from where it
+    /// paused, or paused. Left alone under a take, for the reason <see cref="TogglePause"/> is.
+    /// </summary>
+    private void Follow(MidiAction action)
+    {
+        if (!FollowsInstruments || recording.InHand || recording.Counting) return;
+
+        switch (action)
+        {
+            case MidiAction.Start:
+                playback.Rewind();
+                playback.Resume();
+                break;
+
+            case MidiAction.Continue:
+                playback.Resume();
+                break;
+
+            case MidiAction.Stop:
+                playback.Pause();
+                break;
+        }
+
+        Sync();
     }
 
     /// <summary>Puts the toolbar button and the full-screen overlay in step with the transport.</summary>

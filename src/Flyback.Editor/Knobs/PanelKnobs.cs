@@ -262,12 +262,16 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     /// <summary>The settings window's MIDI section: what a controller does to a knob that sits elsewhere.</summary>
     /// <param name="takeover">How a knob meets a controller that disagrees with it.</param>
     /// <param name="keyboardLayout">How a new patch lays out the computer's keyboard.</param>
-    public void BuildMidiSection(PluginCatalog plugins, ComboBox takeover, ComboBox keyboardLayout)
+    public void BuildMidiSection(PluginCatalog plugins, ComboBox takeover, CheckBox followTransport, ComboBox keyboardLayout)
     {
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
             + "or leave the knob alone until the controller passes it. Flyback's own, whichever plugin "
             + "hears the controller.");
+
+        ToolTip.SetTip(followTransport,
+            "A drum machine or sequencer the patch listens to plays the patch from the top on Start, "
+            + "pauses it on Stop and plays on from there on Continue.");
 
         ToolTip.SetTip(keyboardLayout,
             "How the computer keyboard is laid out on a patch when its first MIDI In is added: as a piano, "
@@ -287,6 +291,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
 
         MidiSection.Children.Add(midiNote);
         MidiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
+        MidiSection.Children.Add(followTransport);
         MidiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
 
         var known = string.Join(", ", Instruments.Profiles.Select(profile => profile.Name));

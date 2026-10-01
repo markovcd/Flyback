@@ -91,6 +91,12 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
     public event Action<string, MidiMessage>? Struck;
 
     /// <summary>
+    /// A device pressed Start, Continue or Stop, with the device's id. Raised on the
+    /// driver's thread, outside the lock, after its clock has heard it.
+    /// </summary>
+    public event Action<string, MidiAction>? Transported;
+
+    /// <summary>
     /// A note or a knob arrived from a device — never from the computer keyboard,
     /// and never a clock's tick, which is not somebody playing. Raised on the
     /// driver's thread, before the message is acted on.
@@ -457,6 +463,9 @@ internal sealed class MidiHub(IMidiInput hardware) : IDisposable
                     break;
             }
         }
+
+        if (message.Action is MidiAction.Start or MidiAction.Continue or MidiAction.Stop)
+            Transported?.Invoke(source, message.Action);
 
         Publish();
     }

@@ -106,6 +106,13 @@ internal sealed class OutputSections
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    /// <summary>Whether an instrument's Start and Stop play and pause the patch — the MIDI section.</summary>
+    public CheckBox FollowTransport { get; } = new()
+    {
+        Name = "followTransport",
+        Content = "Play and pause with an instrument's Start and Stop",
+    };
+
     /// <summary>How a new patch lays out the computer's keyboard — the MIDI section.</summary>
     public ComboBox KeyboardLayout { get; } = new Picker
     {
@@ -365,6 +372,7 @@ internal sealed class OutputSections
         oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
         stepDown.IsChecked = current.StepDownOnDropouts;
         Takeover.SelectedIndex = current.Takeover == Midi.Takeover.PickUp ? 1 : 0;
+        FollowTransport.IsChecked = current.FollowTransport;
         KeyboardLayout.SelectedIndex = current.Keyboard == Midi.KeyboardLayout.Scale ? 1 : 0;
 
         if (plugins.PreferredAudioOutput is { } output)
@@ -431,6 +439,7 @@ internal sealed class OutputSections
             Sound = new(before.Sound, StringComparer.Ordinal),
 
             Takeover = Takeover.SelectedIndex == 1 ? Midi.Takeover.PickUp : Midi.Takeover.Jump,
+            FollowTransport = FollowTransport.IsChecked == true,
             Keyboard = KeyboardLayout.SelectedIndex == 1 ? Midi.KeyboardLayout.Scale : Midi.KeyboardLayout.Piano,
 
             // Set on the knob panel, not here.

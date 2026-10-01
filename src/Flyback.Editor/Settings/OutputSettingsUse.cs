@@ -69,6 +69,7 @@ internal sealed class OutputSettingsUse(
         audio.Oversample = settings.Oversample;
 
         knobs.Hub.Takeover = settings.Takeover;
+        transport.FollowsInstruments = settings.FollowTransport;
 
         files.UseLibrary(settings.Library, reread: !starting);
         files.SoundFolder.FfmpegPath = settings.FfmpegPath;
