@@ -1128,11 +1128,11 @@ internal sealed class Document
     /// </summary>
     private string Reading()
     {
-        var groups = editor.History.Patch.Groups?.Count ?? 0;
+        var shut = editor.History.Patch.Groups?.Count(group => group.Collapsed) ?? 0;
 
-        var lost = groups == 0
+        var lost = shut == 0
             ? string.Empty
-            : $" Text has no place to keep groups, so its {groups} of them are not here.";
+            : $" Text does not keep whether a group is collapsed, so its {shut} collapsed group(s) open.";
 
         return $"Printed from the canvas.{lost} The patch on the canvas is still the document — "
             + "applying this makes the text the document instead.";
