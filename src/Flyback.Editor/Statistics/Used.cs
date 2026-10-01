@@ -134,4 +134,7 @@ public enum Used
 
     /// <summary>The letter to the author was opened.</summary>
     Letter,
+
+    /// <summary>The knob panel was randomized.</summary>
+    Randomized,
 }

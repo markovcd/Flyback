@@ -32,6 +32,7 @@ internal sealed class EditorView : Border
     private readonly PatchOpening patchOpening;
     private readonly PresetSlot presets;
     private readonly PanelKnobs knobs;
+    private readonly KnobRandomizer randomizer;
     private readonly ReportLine report;
     private readonly PluginCatalog plugins;
     private readonly Playback playback;
@@ -56,6 +57,7 @@ internal sealed class EditorView : Border
         Playback playback,
         OutputSections outputSections,
         PanelKnobs knobs,
+        KnobRandomizer randomizer,
         PresetSlot presets,
         Reactions reactions,
         EditorStart editorStart,
@@ -79,6 +81,7 @@ internal sealed class EditorView : Border
         this.outputSections = outputSections;
         this.outputSettingsUse = outputSettingsUse;
         this.knobs = knobs;
+        this.randomizer = randomizer;
         this.presets = presets;
         this.fullScreen = fullScreen;
         this.transport = transport;
@@ -251,9 +254,10 @@ internal sealed class EditorView : Border
                 e.Handled = true;
                 break;
 
-            // The panel has no room while the picture has the window.
+            // The panel has no room while the picture has the window; randomizing needs none.
             case Key.K:
-                if (!fullScreen.IsFullScreen) reactions.Raise(new KnobsAsked(!knobs.View.IsVisible));
+                if (again) randomizer.Roll();
+                else if (!fullScreen.IsFullScreen) reactions.Raise(new KnobsAsked(!knobs.View.IsVisible));
 
                 e.Handled = true;
                 break;

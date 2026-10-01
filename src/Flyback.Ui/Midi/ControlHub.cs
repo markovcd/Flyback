@@ -44,6 +44,11 @@ internal sealed class ControlHub
 
     private string[] bound = [];
 
+    private MidiBinding? trigger;
+
+    /// <summary>Whether the trigger's button was last heard down, so a press fires once.</summary>
+    private bool triggerDown;
+
     private Pending? learning;
 
     public ControlHub(MidiHub midi)
@@ -59,6 +64,29 @@ internal sealed class ControlHub
     /// the driver's thread.
     /// </summary>
     public event Action<Guid, float>? Turned;
+
+    /// <summary>The <see cref="Trigger"/> button went down. Raised on the driver's thread.</summary>
+    public event Action? Triggered;
+
+    /// <summary>The controller button that fires <see cref="Triggered"/>, or null for none.</summary>
+    public MidiBinding? Trigger
+    {
+        get
+        {
+            lock (gate) return trigger;
+        }
+        set
+        {
+            lock (gate)
+            {
+                trigger = value;
+                triggerDown = false;
+                bound = Devices();
+            }
+
+            Hold();
+        }
+    }
 
     /// <summary>Whether a knob is waiting for a controller to move.</summary>
     public bool Learning
@@ -109,11 +137,15 @@ internal sealed class ControlHub
             caught.RemoveWhere(id => !values.ContainsKey(id));
 
             bindings = [.. controls.Where(c => c.Midi is not null).Select(c => (c.Midi!, c.Id))];
-            bound = [.. bindings.Select(b => b.Binding.Device).Distinct(StringComparer.Ordinal)];
+            bound = Devices();
         }
 
         Hold();
     }
+
+    /// <summary>Every device a knob or the trigger is bound to. Under <see cref="gate"/>.</summary>
+    private string[] Devices() =>
+        [.. bindings.Select(b => b.Binding.Device).Append(trigger?.Device).OfType<string>().Distinct(StringComparer.Ordinal)];
 
     /// <summary>
     /// Forgets where every knob was turned to, for a different document arriving.
@@ -219,6 +251,7 @@ internal sealed class ControlHub
     private void Receive(string device, MidiMessage message)
     {
         var turned = new List<(Guid, float)>();
+        var fired = false;
 
         lock (gate)
         {
@@ -234,6 +267,13 @@ internal sealed class ControlHub
                     waiting.Done.TrySetResult(new MidiBinding(device, message.Channel, message.Note));
 
                 return;
+            }
+
+            if (trigger is { } button && button.Hears(device, message.Channel, message.Note))
+            {
+                var down = message.Velocity >= 0.5f;
+                fired = down && !triggerDown;
+                triggerDown = down;
             }
 
             foreach (var (binding, control) in bindings)
@@ -264,6 +304,8 @@ internal sealed class ControlHub
         }
 
         foreach (var (control, reading) in turned) Turned?.Invoke(control, reading);
+
+        if (fired) Triggered?.Invoke();
     }
 
     private sealed class Pending(MidiBinding? except)

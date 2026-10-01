@@ -246,6 +246,11 @@ internal static class Glyphs
     /// <summary>A bookmark — a group put by, to be added again later.</summary>
     public static Control Keep() => Stroked("M4.5,2.5 L11.5,2.5 L11.5,13.5 L8,10.5 L4.5,13.5 Z");
 
+    /// <summary>A die showing three: the knob panel's randomize.</summary>
+    public static Control Dice() => Stroked(
+        "M3,2.5 L13,2.5 A0.5,0.5 0 0 1 13.5,3 L13.5,13 A0.5,0.5 0 0 1 13,13.5 L3,13.5 A0.5,0.5 0 0 1 2.5,13 L2.5,3 A0.5,0.5 0 0 1 3,2.5 Z "
+        + "M5.5,5.5 L5.5,5.6 M8,8 L8,8.1 M10.5,10.5 L10.5,10.6");
+
     /// <summary>A circle of <paramref name="radius"/> around the middle of the box, as path data.</summary>
     private static string Ring(double radius) => FormattableString.Invariant(
         $"M8,{8 - radius} A{radius},{radius} 0 1 1 8,{8 + radius} A{radius},{radius} 0 1 1 8,{8 - radius} Z");

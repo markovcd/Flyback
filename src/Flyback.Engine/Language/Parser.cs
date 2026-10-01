@@ -635,9 +635,10 @@ public sealed class Parser
 
         while (Take(TokenKind.Comma))
         {
-            if (Current.Kind != TokenKind.Identifier || Ahead().Kind != TokenKind.Colon)
+            // A setting, or a bare word such as 'held' that the binder reads as a flag.
+            if (Current.Kind != TokenKind.Identifier)
             {
-                Complain(IssueCode.Syntax, "expected a setting such as 'cc: 21' after the comma.");
+                Complain(IssueCode.Syntax, "expected a setting such as 'cc: 21' or 'held' after the comma.");
                 return null;
             }
 

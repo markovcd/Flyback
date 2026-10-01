@@ -688,11 +688,16 @@ public sealed class Binder
         string? device = null;
         int? controller = null;
         var channel = 0;
+        var held = false;
 
         foreach (var setting in statement.Settings)
         {
             switch (setting.Name, setting.Value)
             {
+                case (null, NameExpr { Name: "held", Port: null }):
+                    held = true;
+                    break;
+
                 case ("label", TextExpr text):
                     label = text.Value;
                     break;
@@ -711,7 +716,7 @@ public sealed class Binder
 
                 default:
                     Complain(IssueCode.UnknownSetting, setting.Line, setting.Column,
-                        "a panel knob takes 'label: \"…\"', 'cc: 0 to 127', 'channel: 1 to 16' and 'device: \"…\"'.");
+                        "a panel knob takes 'label: \"…\"', 'cc: 0 to 127', 'channel: 1 to 16', 'device: \"…\"' and 'held'.");
                     return;
             }
         }
@@ -737,6 +742,7 @@ public sealed class Binder
             Word = label is null || label == statement.Name ? null : statement.Name,
             Value = (float)resting.Amount,
             Midi = controller is { } cc ? new MidiBinding(device!, channel, cc) : null,
+            Held = held,
         };
 
         (patch.Controls ??= []).Add(control);

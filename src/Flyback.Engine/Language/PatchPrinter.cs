@@ -1159,6 +1159,8 @@ public static class PatchPrinter
                 line.Append($", device: {device}");
             }
 
+            if (control.Held) line.Append(", held");
+
             return line.ToString();
         }
 

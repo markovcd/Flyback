@@ -200,6 +200,16 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
             editor.History.Record();
         };
 
+        View.HoldRequested += (id, held) =>
+        {
+            if (editor.History.Patch.Control(id) is not { } control) return;
+
+            control.Held = held;
+            editor.History.Record();
+            document.PanelEdited();
+            report.Say(held ? $"'{control.Name}' stays where it is when the panel is randomized." : $"'{control.Name}' is randomized with the rest.");
+        };
+
         View.MoveRequested += (id, index) =>
         {
             if (!editor.History.Patch.MoveControl(id, index)) return;
@@ -469,13 +479,17 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
     private MidiSource? Source(string id) =>
         midi.Sources.FirstOrDefault(s => s.Id == id) is { Id: not null } source ? source : null;
 
+    /// <summary>Escape stopped linking and learning, for a learn this does not own.</summary>
+    public event Action? ModesStopped;
+
     /// <summary>Stops linking and learning, and says whether there was either to stop.</summary>
     public bool StopModes()
     {
-        var stopped = editor.Linking.Control is not null || learning is not null;
+        var stopped = editor.Linking.Control is not null || learning is not null || Hub.Learning;
 
         learning?.Cancel();
         Link(null);
+        ModesStopped?.Invoke();
 
         return stopped;
     }

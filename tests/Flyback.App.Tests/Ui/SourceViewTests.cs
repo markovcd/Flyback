@@ -1597,7 +1597,7 @@ public class SourceViewTests : UiTest
 
     private static void TurnPanelKnob(MainWindow window, double up)
     {
-        var knob = All<Knob>(All<ControlsPanel>(window).Single()).Single();
+        var knob = All<Knob>(All<ControlsPanel>(window).Single()).Single(k => k.Name == "panel-knob");
         var from = knob.TranslatePoint(new Point(knob.Bounds.Width / 2, knob.Bounds.Height / 2), window)!.Value;
 
         window.MouseDown(from, MouseButton.Left);

@@ -432,6 +432,9 @@ internal sealed class OutputSections
 
             Takeover = Takeover.SelectedIndex == 1 ? Midi.Takeover.PickUp : Midi.Takeover.Jump,
             Keyboard = KeyboardLayout.SelectedIndex == 1 ? Midi.KeyboardLayout.Scale : Midi.KeyboardLayout.Piano,
+
+            // Set on the knob panel, not here.
+            Randomize = before.Randomize,
         };
 
         // So an emptied box says what it kept, the next time it is looked at.

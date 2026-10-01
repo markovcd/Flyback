@@ -272,6 +272,39 @@ public class ControlHubTests
         (await second).ShouldBe(new MidiBinding(Device, 1, 21));
     }
 
+    [Fact]
+    public void The_trigger_fires_once_a_press_and_not_on_release()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 64) };
+        var fired = 0;
+        hub.Triggered += () => fired++;
+
+        var port = backend.Opened.ShouldHaveSingleItem();
+        port.Send(Cc(64, 127));
+        port.Send(Cc(64, 127));
+        port.Send(Cc(64, 0));
+
+        fired.ShouldBe(1);
+
+        port.Send(Cc(64, 127));
+
+        fired.ShouldBe(2);
+    }
+
+    [Fact]
+    public void The_trigger_stays_open_through_a_patch_with_no_bound_knobs()
+    {
+        var backend = new FakeInput("Test Controller");
+        using var midi = new MidiHub(backend);
+        var hub = new ControlHub(midi) { Trigger = new MidiBinding(Device, 0, 64) };
+
+        hub.Follow(new Patch(), new LiveValues([]));
+
+        backend.Opened.Select(p => p.Id).ShouldBe([Device]);
+    }
+
     private sealed class FakeInput(params string[] names) : IMidiInput
     {
         public List<FakePort> Opened { get; } = [];

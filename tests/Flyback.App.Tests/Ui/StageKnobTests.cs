@@ -170,7 +170,7 @@ public class StageKnobTests : UiTest
         TurnUp(window, Stage(window).Knobs[knob!.Id], 80);
 
         knob.Value.ShouldBeGreaterThan(0.5f);
-        All<Knob>(All<ControlsPanel>(window).Single()).Single().Value.ShouldBe(knob.Value, 1e-6);
+        All<Knob>(All<ControlsPanel>(window).Single()).Single(k => k.Name == "panel-knob").Value.ShouldBe(knob.Value, 1e-6);
         All<Grid>(window).First(g => g.Name == "columns").IsEffectivelyVisible.ShouldBeTrue();
         All<NodeEditor>(window).Single().IsEffectivelyVisible.ShouldBeFalse("turning a knob is not asking for the window back");
     }
@@ -184,7 +184,7 @@ public class StageKnobTests : UiTest
         window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, null);
         Settle(window);
 
-        TurnUp(window, All<Knob>(All<ControlsPanel>(window).Single()).Single(), 60);
+        TurnUp(window, All<Knob>(All<ControlsPanel>(window).Single()).Single(k => k.Name == "panel-knob"), 60);
 
         var preview = All<PreviewHost>(window).Single();
         var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 3), window)!.Value;
@@ -241,7 +241,7 @@ public class StageKnobTests : UiTest
         TurnUp(picture, Stage(picture).Knobs[knob!.Id], 80);
 
         knob.Value.ShouldBeGreaterThan(0.5f);
-        All<Knob>(All<ControlsPanel>(window).Single()).Single().Value.ShouldBe(knob.Value, 1e-6, "the editor's panel follows the picture's knob");
+        All<Knob>(All<ControlsPanel>(window).Single()).Single(k => k.Name == "panel-knob").Value.ShouldBe(knob.Value, 1e-6, "the editor's panel follows the picture's knob");
 
         picture.Close();
         Settle(window);

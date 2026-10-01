@@ -14,6 +14,7 @@
 
 - Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
+- The knob panel randomizes: a die, Ctrl+Shift+K or a learned controller button sends every knob not held somewhere new, within an amount and over a glide set on the panel, and an arrow goes back.
 
 ### Web
 

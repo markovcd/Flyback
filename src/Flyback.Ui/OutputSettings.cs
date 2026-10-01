@@ -176,6 +176,9 @@ public sealed class OutputSettings
     /// <summary>What draws on Windows — the Graphics section. Read once, as the program starts.</summary>
     public GraphicsDriver Driver { get; set; }
 
+    /// <summary>How the knob panel randomizes, set on the panel itself.</summary>
+    public RandomizeSettings Randomize { get; set; } = new();
+
     /// <summary>What is set for one backend, and nothing for one nobody has configured.</summary>
     public SettingValues SoundOf(string backend) =>
         Sound.TryGetValue(backend, out var held) ? new SettingValues(held) : SettingValues.None;
@@ -274,6 +277,9 @@ public sealed class OutputSettings
             if (!Enum.IsDefined(settings.FullScreen)) settings.FullScreen = FullScreenOn.SameMonitor;
             if (!Enum.IsDefined(settings.Transport)) settings.Transport = TransportEdge.Top;
             if (!Enum.IsDefined(settings.Driver)) settings.Driver = GraphicsDriver.OpenGl;
+
+            settings.Randomize ??= new();
+            settings.Randomize.Clamp();
 
             return settings;
         }

@@ -369,6 +369,17 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             Named<Button>(open, name)
                 .RaiseEvent(new RoutedEventArgs(Button.ClickEvent)));
 
+    /// <summary>Makes a randomize reach anywhere and land at once, on a seeded die.</summary>
+    public void RandomizeAtOnce() =>
+        DoWindow((_, _) =>
+        {
+            Service<Flyback.App.Settings.OutputSettingRepository>().Current.Randomize = new RandomizeSettings { Amount = 1, GlideSeconds = 0 };
+            Service<Flyback.App.Knobs.KnobRandomizer>().Random = new Random(1);
+        });
+
+    /// <summary>Where the editor's panel knob called <paramref name="name"/> rests.</summary>
+    public float KnobAt(string name) => Read(canvas => canvas.History.Patch.Controls!.Single(control => control.Name == name).Value);
+
     /// <summary>What the module panel says, all its words together.</summary>
     public string PanelText => ReadWindow(open =>
         string.Join(" ", Named<StackPanel>(open, "inspector")

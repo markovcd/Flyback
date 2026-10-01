@@ -263,4 +263,31 @@ public class PanelTests
 
         sine.InputValues[port].ShouldBe(link.At(0.6f), 1e-6f);
     }
+
+    /// <summary>A knob held out of randomizing says so last on its line, and keeps saying so through a printing.</summary>
+    [Fact]
+    public void A_held_knob_is_written_held_and_read_back_held()
+    {
+        const string line = "panel level = 0.8, cc: 7, device: \"midi:test\", held";
+
+        var patch = Built(line + "\nsine(amp: level) |> out.left");
+
+        patch.Controls.ShouldNotBeNull().Single().Held.ShouldBeTrue();
+        PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldStartWith(line + "\n");
+    }
+
+    [Fact]
+    public void A_knob_not_held_says_nothing_about_it()
+    {
+        var patch = Built("panel level = 0.8\nsine(amp: level) |> out.left");
+
+        patch.Controls.ShouldNotBeNull().Single().Held.ShouldBeFalse();
+        PatchPrinter.Print(patch, NodeCatalog.BuiltIn).ShouldStartWith("panel level = 0.8\n");
+    }
+
+    [Fact]
+    public void A_bare_word_that_is_not_held_is_refused()
+    {
+        Refused("panel level = 0.8, frozen\nsine(amp: level) |> out.left").Code.ShouldBe(IssueCode.UnknownSetting);
+    }
 }

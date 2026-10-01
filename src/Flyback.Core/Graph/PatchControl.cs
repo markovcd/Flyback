@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Flyback.Core.Graph;
 
 /// <summary>
@@ -41,13 +43,17 @@ public sealed class PatchControl
     /// </summary>
     public string? Word { get; set; }
 
+    /// <summary>Whether randomizing the panel leaves it where it is.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Held { get; set; }
+
     /// <summary>What a program reading this knob calls it in <c>CompiledPatch.LiveInputs</c>.</summary>
     public static string KeyOf(Guid control) => $"control/{control:N}";
 
     /// <inheritdoc cref="KeyOf(Guid)"/>
     public string Key => KeyOf(Id);
 
-    public PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word };
+    public PatchControl Clone() => new() { Id = Id, Name = Name, Value = Value, Midi = Midi, Word = Word, Held = Held };
 
     private static string Named(string? name)
     {

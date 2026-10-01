@@ -33,6 +33,8 @@ internal sealed class ControlsPanel : Border
     private Guid? linking;
     private Guid? learning;
 
+    private readonly RollCell roll;
+
     public ControlsPanel()
     {
         Name = "controls-panel";
@@ -47,7 +49,37 @@ internal sealed class ControlsPanel : Border
             Content = strip,
             Padding = new Thickness(8, 6),
         };
+
+        roll = new RollCell(
+            () => RollRequested?.Invoke(),
+            () => BackRequested?.Invoke(),
+            learn => RollLearnRequested?.Invoke(learn),
+            (amount, glide) => RollTuned?.Invoke(amount, glide),
+            () => RollTuneEnded?.Invoke(),
+            binding => ExplainOf(binding));
     }
+
+    /// <summary>The knobs not held were asked to go somewhere new.</summary>
+    public event Action? RollRequested;
+
+    /// <summary>The knobs were asked back to where they were before the last randomize.</summary>
+    public event Action? BackRequested;
+
+    /// <summary>A controller button was asked to be learned for randomizing, or with false, forgotten.</summary>
+    public event Action<bool>? RollLearnRequested;
+
+    /// <summary>How far a randomize reaches and how long it glides were turned: the amount, then seconds.</summary>
+    public event Action<double, double>? RollTuned;
+
+    /// <summary>The hand came off the amount or the glide.</summary>
+    public event Action? RollTuneEnded;
+
+    /// <summary>A knob was asked to sit out randomizing, or to take part again.</summary>
+    public event Action<Guid, bool>? HoldRequested;
+
+    /// <summary>Shows how a randomize is set: its reach, its glide, its controller and whether there is a back.</summary>
+    public void ShowRoll(double amount, double glide, MidiBinding? trigger, bool canGoBack, bool learning) =>
+        roll.Show(amount, glide, trigger, canGoBack, learning);
 
     /// <summary>Somebody asked for another knob.</summary>
     public event Action? AddRequested;
@@ -135,7 +167,7 @@ internal sealed class ControlsPanel : Border
     /// <summary>Shows <paramref name="controls"/>, rebuilding only where a knob came, went or was renamed.</summary>
     public void Show(IReadOnlyList<PatchControl> controls)
     {
-        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
+        var now = string.Join('|', controls.Select(c => $"{c.Id:N}{c.Name}{c.Held}{(c.Midi is { } bound ? LabelOf(bound) : null)}"));
 
         if (now != shape)
         {
@@ -193,6 +225,8 @@ internal sealed class ControlsPanel : Border
         add.Click += (_, _) => AddRequested?.Invoke();
 
         strip.Children.Add(add);
+
+        if (controls.Count > 0) strip.Children.Add(roll.Root);
 
         if (controls.Count == 0)
             strip.Children.Add(new TextBlock
@@ -276,11 +310,15 @@ internal sealed class ControlsPanel : Border
                 Background = Brushes.Transparent,
             };
 
-            ToolTip.SetTip(name, "Click to link sockets to this knob, drag to move it, double-click to rename it.");
+            ToolTip.SetTip(name, control.Held
+                ? "Held: randomizing leaves this knob alone. Click to link sockets to it, drag to move it, double-click to rename it."
+                : "Click to link sockets to this knob, drag to move it, double-click to rename it.");
+
+            if (control.Held) name.Foreground = Text.Muted;
 
             renaming = new TextBox { FontSize = Text.Small, IsVisible = false, MinHeight = 0, Padding = new Thickness(2, 0) };
 
-            Knob = new Knob { Value = control.Value, HorizontalAlignment = HorizontalAlignment.Center };
+            Knob = new Knob { Name = "panel-knob", Value = control.Value, HorizontalAlignment = HorizontalAlignment.Center };
 
             value = new TextBlock
             {
@@ -548,6 +586,10 @@ internal sealed class ControlsPanel : Border
                 log.IsChecked = sweeps == true;
             };
 
+            var hold = new MenuItem { Header = "Hold when randomizing", ToggleType = MenuItemToggleType.CheckBox, IsChecked = control.Held };
+            hold.Click += (_, _) => panel.HoldRequested?.Invoke(control.Id, !control.Held);
+            flyout.Items.Add(hold);
+
             flyout.Items.Add(new Separator());
 
             var left = Item("Move left", () => panel.MoveRequested?.Invoke(control.Id, Index - 1));
@@ -590,4 +632,4 @@ internal sealed class ControlsPanel : Border
                 panel.Renamed?.Invoke(control.Id, text);
         }
     }
-}
+}

@@ -613,7 +613,8 @@ Output's knobs are never in a call, so they follow one by a statement,
 
 `label` is what the panel shows, where that is not the knob's own name. `cc`,
 `channel` and `device` are the MIDI controller it follows; without `channel`
-it hears the controller on any channel.
+it hears the controller on any channel. `held`, a bare word, keeps the knob
+where it is when the panel is randomized: `panel level = 0.8, held`.
 
 A knob is a name like a `let`: bound once, never one of the words every patch
 already has, and never a module's name, since `cutoff(200..4000)` is written

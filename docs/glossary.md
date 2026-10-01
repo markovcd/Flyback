@@ -107,6 +107,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **knob panel** | The row of panel knobs, turned by hand or from a MIDI controller. | `ControlsPanel` | controls panel, mixer |
 | **panel knob** | A knob on the knob panel. It moves every socket linked to it, and a MIDI controller can be learned for it. | `PatchControl`, `Patch.Controls` | control, macro, fader |
 | **link** | A socket following a panel knob over a range. | `ControlLink` | binding, mapping |
+| **randomize** | Send every panel knob not held somewhere new, gliding there; **back** returns them. A **held** knob sits it out. | `KnobRandomizer`, `PatchControl.Held` | shuffle, dice, roll, locked |
 | **text view** | The patch as text, over the canvas. | `SourceView` | code view, source view, editor |
 | **the document** | Whichever of the canvas and the text owns the patch, decided by the file that was opened. | `Document` | — |
 | **notice** | A fact one part of the editor announces, which any part may react to by declaring it. | `Flyback.App.Notices`, `IReactTo<T>`, `Reactions` | event (that is a control talking to its owner), message, signal |

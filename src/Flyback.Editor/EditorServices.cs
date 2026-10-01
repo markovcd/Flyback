@@ -149,6 +149,7 @@ internal static class EditorServices
         services.AddPart<FilesSection>();
 
         services.AddPart<PanelKnobs>();
+        services.AddPart<KnobRandomizer>();
         services.AddPart<Palette>();
         services.AddPart<Inspector>();
         services.AddPart<PluginInstalls>();

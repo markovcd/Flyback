@@ -1,1 +1,3 @@
 #nullable enable
+Flyback.Core.Graph.PatchControl.Held.get -> bool
+Flyback.Core.Graph.PatchControl.Held.set -> void
