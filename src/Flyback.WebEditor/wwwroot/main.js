@@ -54,7 +54,16 @@ runtime.setModuleImports('page', {
     const at = document.documentElement.dataset.presetSite;
     return at === undefined ? null : new URL(at, location.href).href;
   },
-  goHome: () => { location.href = new URL('../', location.href).href; },
+  // Framed by the site's own page, the editor hands the frame back rather than loading the site inside itself.
+  goHome: () => {
+    if (framedBySite()) {
+      if (!exports.Unsaved() || confirm('Leave the editor? Your changes are not saved.')) {
+        parent.postMessage({ flyback: 'close-editor' }, location.origin);
+      }
+      return;
+    }
+    location.href = new URL('../', location.href).href;
+  },
   openViewerTab: () => {
     viewerTab = window.open('', VIEWER_TAB);
     return viewerTab !== null;
@@ -88,6 +97,14 @@ async function openUrl(url, fileName, title) {
 addEventListener('beforeunload', event => {
   if (exports.Unsaved()) event.preventDefault();
 });
+
+function framedBySite() {
+  try {
+    return window.parent !== window && window.parent.location.origin === location.origin;
+  } catch {
+    return false;
+  }
+}
 
 globalThis.flyback = {
   state: () => JSON.parse(exports.State()),

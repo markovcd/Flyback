@@ -192,8 +192,18 @@
       frame.addEventListener("load", function () { frame.focus(); });
 
       var holder = link.parentNode;
-      while (holder.firstChild) holder.removeChild(holder.firstChild);
+      var photograph = [].slice.call(holder.childNodes);
+      photograph.forEach(function (node) { holder.removeChild(node); });
       holder.appendChild(frame);
+
+      // The editor's logo asks for the photograph back.
+      function closed(message) {
+        if (message.source !== frame.contentWindow || !message.data || message.data.flyback !== "close-editor") return;
+        window.removeEventListener("message", closed);
+        holder.removeChild(frame);
+        photograph.forEach(function (node) { holder.appendChild(node); });
+      }
+      window.addEventListener("message", closed);
     });
   });
 })();
