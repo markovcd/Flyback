@@ -28,8 +28,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # A push to main or a manual run goes to the self-hosted runner when it is
+  # online, else to GitHub's. A pull request never does: the repo is public, and
+  # a fork's workflow would run on that machine. The runners API needs a token
+  # with repo admin, which GITHUB_TOKEN is not, hence the secret; without it the
+  # job falls back to GitHub's runner.
+  pick-runner:
     runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      runs-on: ${{ steps.pick.outputs.runs-on }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          runs_on='"ubuntu-latest"'
+          if [ "$EVENT" != pull_request ] && [ -n "$GH_TOKEN" ]; then
+            online=$(gh api repos/${{ github.repository }}/actions/runners/21               --jq '.status == "online" and (.busy | not)' || echo false)
+            if [ "$online" = true ]; then
+              runs_on='["self-hosted","Windows","X64"]'
+            fi
+          fi
+          echo "runs-on=$runs_on" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: pick-runner
+    runs-on: ${{ fromJSON(needs.pick-runner.outputs.runs-on) }}
     # A run is about seven minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
@@ -50,6 +76,7 @@ jobs:
       # answer for such a commit, but it is the reason a green check here is
       # about the context, not about the run.
       - name: Build and test
+        shell: bash
         run: |
           docker buildx build \
             --target gate \
