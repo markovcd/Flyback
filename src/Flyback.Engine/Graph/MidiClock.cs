@@ -26,10 +26,16 @@ internal sealed class MidiClock
 
     /// <summary>
     /// The weight of the newest gap between ticks in the measured tempo: about a
-    /// beat's worth of ticks settle a change, and the jitter of any one is
-    /// divided by as many.
+    /// quarter of a beat's ticks settle a change. Slower lets a tempo being turned
+    /// drift the beat off the box, most at slow tempos, where a beat is longest.
     /// </summary>
-    private const double Smoothing = 1d / MidiSignal.TicksPerBeat;
+    private const double Smoothing = 1d / 6d;
+
+    /// <summary>
+    /// The most one gap may move the tempo it is weighed into, either way: two
+    /// ticks the driver delivers together are not a tempo of thousands.
+    /// </summary>
+    private const double Steepest = 2d;
 
     /// <summary>
     /// A gap longer than this is the clock having stopped, not a slow tempo:
@@ -81,7 +87,9 @@ internal sealed class MidiClock
             {
                 var heard = 1d / (MidiSignal.TicksPerBeat * gap);
 
-                measured = measured == 0d ? heard : measured + (heard - measured) * Smoothing;
+                measured = measured == 0d
+                    ? heard
+                    : measured + (Math.Clamp(heard, measured / Steepest, measured * Steepest) - measured) * Smoothing;
             }
         }
 

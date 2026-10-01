@@ -43,7 +43,7 @@ public static class MidiPorts
 
         foreach (var name in names)
         {
-            var display = string.IsNullOrWhiteSpace(name) ? "MIDI device" : name.Trim();
+            var display = string.IsNullOrWhiteSpace(name) ? "MIDI device" : Unnumbered(name.Trim());
             var id = Prefix + Slug(display);
 
             if (seen.TryGetValue(id, out var already))
@@ -58,6 +58,28 @@ public static class MidiPorts
         }
 
         return ports;
+    }
+
+    /// <summary>
+    /// A name without the number Windows puts in front of a device it registers
+    /// again, "2 - Elektron Syntakt", which would otherwise make it another device.
+    /// </summary>
+    private static string Unnumbered(string name)
+    {
+        var digits = 0;
+
+        while (digits < name.Length && char.IsAsciiDigit(name[digits])) digits++;
+
+        if (digits == 0) return name;
+
+        var rest = name.AsSpan(digits).TrimStart(' ');
+
+        // A space after the dash, as Windows writes it, so "2-Channel Mixer" keeps its number.
+        if (rest.Length < 3 || rest[0] != '-' || rest[1] != ' ') return name;
+
+        var unnumbered = rest[1..].Trim().ToString();
+
+        return unnumbered.Length == 0 ? name : unnumbered;
     }
 
     /// <summary>

@@ -334,8 +334,10 @@ public class MidiInputTests
     [InlineData("Launchkey  Mini  MK3", "midi:launchkey-mini-mk3")]
     [InlineData("Launchkey Mini [MK3]", "midi:launchkey-mini-mk3")]
     [InlineData("  MPK mini  ", "midi:mpk-mini")]
-    [InlineData("2- USB MIDI Interface", "midi:2-usb-midi-interface")]
-    public void Punctuation_and_spacing_do_not_make_a_second_device(string name, string id)
+    [InlineData("2- USB MIDI Interface", "midi:usb-midi-interface")]
+    [InlineData("2 - Elektron Syntakt", "midi:elektron-syntakt")]
+    [InlineData("2-Channel Mixer", "midi:2-channel-mixer")]
+    public void Punctuation_spacing_and_the_number_windows_adds_do_not_make_a_second_device(string name, string id)
     {
         MidiPorts.Named([name]).Single().Id.ShouldBe(id);
     }
