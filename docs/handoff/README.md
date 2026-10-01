@@ -10,6 +10,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | [viewer-sound-slower-than-editor.md](viewer-sound-slower-than-editor.md) | The web viewer renders a patch's sound slower than the web editor's worker | Issue | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |
 | [measure.md](measure.md) | Measure: one pass that reports every output's value, and `flyback-cli measure` | Plan | Open, parked |
+| [grab-the-output.md](grab-the-output.md) | Grab the picture or the sound and the knobs move: derivatives through the patch | Plan | Open, parked |
 | [touch-bugs.md](touch-bugs.md) | What a finger still cannot do, on the desktop and in the page | Issue | Open: 7 of 20 fixed, the rest not yet checked on a phone |
 
 Severity, for an issue: **Critical**, act now; **High**, a security or data problem in a release; **Medium**, wrong behavior or real risk; **Low**, friction or latent risk.
