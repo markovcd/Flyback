@@ -8,8 +8,8 @@ using Flyback.App.Settings;
 namespace Flyback.App.Files;
 
 /// <summary>
-/// The Files section of the settings window: which program opens Flyback's files
-/// (ADR-0127), and the library folder.
+/// The Files section of the settings window: which patch the window opens on, which
+/// program opens Flyback's files (ADR-0127), and the library folder.
 /// </summary>
 internal sealed class FilesSection
 {
@@ -32,7 +32,7 @@ internal sealed class FilesSection
 
     private readonly Action<string, string?> report;
 
-    /// <param name="output">Holds the library folder's row, which is saved with the output settings.</param>
+    /// <param name="output">Holds the startup patch's and the library folder's rows, which are saved with the output settings.</param>
     public FilesSection(EditorFolders folders, EditorHost host, ReportLine report, OutputSections output)
     {
         path = folders.FileTypeSettingsPath;
@@ -46,6 +46,7 @@ internal sealed class FilesSection
             + "the editor with the patch open, or the viewer playing it. A .fbkp plugin always "
             + "reaches the editor, which asks before installing it.");
 
+        View.Children.Add(output.StartupPatch);
         View.Children.Add(InspectorRows.Field("Open with", opener));
 
         View.Children.Add(new TextBlock

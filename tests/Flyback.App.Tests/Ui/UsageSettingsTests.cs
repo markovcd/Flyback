@@ -10,7 +10,7 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Usage tab of the settings window: the switch, and that clearing it stops the
+/// The usage switch on the settings window's Privacy tab: the switch, and that clearing it stops the
 /// run it is cleared in rather than only the next one (ADR-0094).
 /// </summary>
 public sealed class UsageSettingsTests : UiTest
@@ -20,7 +20,7 @@ public sealed class UsageSettingsTests : UiTest
         "flyback-usage-settings-" + Guid.NewGuid().ToString("N"),
         "usage.json");
 
-    private const int UsageTab = 8;
+    private const string PrivacyTab = "Privacy";
 
     private sealed class Collected : IUsageSink
     {
@@ -62,7 +62,7 @@ public sealed class UsageSettingsTests : UiTest
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        All<TabControl>(dialog).Single(t => t.Name == "settingsTabs").SelectedIndex = UsageTab;
+        ShowSettingsTab(dialog, PrivacyTab);
         Settle(window);
 
         return dialog;

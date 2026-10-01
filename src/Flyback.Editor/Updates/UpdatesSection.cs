@@ -5,7 +5,7 @@ using Flyback.App.Controls;
 
 namespace Flyback.App.Updates;
 
-/// <summary>The Updates section of the settings window: whether Flyback keeps itself up to date (ADR-0088).</summary>
+/// <summary>The update half of the settings window's Privacy section: whether Flyback keeps itself up to date (ADR-0088).</summary>
 /// <remarks>
 /// Saving takes effect at the next start, which is the only time either half of
 /// an update happens — so switching it off never interrupts a download already

@@ -340,6 +340,15 @@ public class UiTest : IDisposable
 
         presets.SelectedIndex = row;
     }
+
+    /// <summary>Turns the settings window to the tab headed <paramref name="name"/>.</summary>
+    /// <remarks>By name rather than by row, because a row names one tab until the tabs are reordered.</remarks>
+    protected static void ShowSettingsTab(Visual dialog, string name)
+    {
+        var tabs = All<TabControl>(dialog).Single(t => t.Name == "settingsTabs");
+
+        tabs.SelectedItem = tabs.Items.OfType<TabItem>().Single(item => (item.Header as TextBlock)?.Text == name);
+    }
 }
 
 /// <summary>Nothing but the theme — the shell's own App does far more than a test wants.</summary>

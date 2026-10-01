@@ -326,7 +326,7 @@ internal sealed class PanelKnobs : IReactTo<PatchCompiled>, IReactTo<DocumentArr
         MidiSection.Children.Add(midiNote);
         MidiSection.Children.Add(InspectorRows.Field("Knobs", takeover));
         MidiSection.Children.Add(followTransport);
-        MidiSection.Children.Add(InspectorRows.Field("New keyboard", keyboardLayout));
+        MidiSection.Children.Add(InspectorRows.Field("Computer keys", keyboardLayout));
 
         ToolTip.SetTip(gridOn,
             "Stand the panel knobs in fixed columns and rows, so each keeps the row and column of the knob "

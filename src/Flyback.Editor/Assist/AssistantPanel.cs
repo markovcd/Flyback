@@ -10,6 +10,7 @@ using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
+using Flyback.App.Inspect;
 using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
@@ -177,8 +178,7 @@ internal sealed class AssistantPanel : UserControl
     {
         PasswordChar = '•',
         FontSize = Text.Body,
-        Width = 260,
-        HorizontalAlignment = HorizontalAlignment.Left,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
     /// <summary>
@@ -191,13 +191,10 @@ internal sealed class AssistantPanel : UserControl
     {
         FontSize = Text.Small,
         Foreground = Text.Muted,
-        Width = 260,
         TextWrapping = TextWrapping.Wrap,
 
-        // As the declared rows above it: a fixed width in a wider column is
-        // centered unless it says otherwise, and a key block indented past the
-        // form it sits under reads as a mistake.
-        HorizontalAlignment = HorizontalAlignment.Left,
+        // Under the box rather than under its caption, as a declared row's note is.
+        Margin = new Thickness(InspectorRows.SettingsGutter, 0, 0, 0),
     };
 
     private readonly Button forget = new() { Content = "Forget key", FontSize = Text.Body };
@@ -249,8 +246,7 @@ internal sealed class AssistantPanel : UserControl
         Increment = 1,
         FormatString = "0",
         FontSize = Text.Body,
-        Width = 260,
-        HorizontalAlignment = HorizontalAlignment.Left,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
     /// <summary>
@@ -266,8 +262,7 @@ internal sealed class AssistantPanel : UserControl
         Increment = 10_000,
         FormatString = "0",
         FontSize = Text.Body,
-        Width = 260,
-        HorizontalAlignment = HorizontalAlignment.Left,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
     /// <summary>
@@ -293,9 +288,9 @@ internal sealed class AssistantPanel : UserControl
     /// whether there is an ear at all are the provider's questions (ADR-0069), and
     /// what arrives here is a bag of strings to hand back.
     /// </summary>
-    private readonly SettingsForm form = new();
+    private readonly SettingsForm form = new() { Beside = true };
 
-    private readonly ComboBox providerBox = new() { FontSize = Text.Body, Width = 260, Name = "provider" };
+    private readonly ComboBox providerBox = new() { FontSize = Text.Body, HorizontalAlignment = HorizontalAlignment.Stretch, Name = "provider" };
 
     /// <summary>
     /// The row that means no provider at all. First in the box and first among
@@ -615,14 +610,12 @@ internal sealed class AssistantPanel : UserControl
         // pads the whole of it.
         var fields = new StackPanel { Spacing = 8, Width = 280 };
 
-        keySection.Children.Add(Text.Quiet("API key"));
-        keySection.Children.Add(keyBox);
+        keySection.Children.Add(InspectorRows.Field("API key", keyBox));
         keySection.Children.Add(keyNote);
         keySection.Children.Add(rememberBox);
         keySection.Children.Add(forget);
 
-        fields.Children.Add(Text.Quiet("Provider"));
-        fields.Children.Add(providerBox);
+        fields.Children.Add(InspectorRows.Field("Provider", providerBox));
 
         // The probe goes on what is on the form, so a key typed and not yet
         // saved is a key it can use — and the button has to notice it arrive.
@@ -634,15 +627,14 @@ internal sealed class AssistantPanel : UserControl
         fields.Children.Add(form);
         fields.Children.Add(keySection);
         fields.Children.Add(probeSection);
-        fields.Children.Add(Text.Quiet("Turns per conversation"));
-        fields.Children.Add(turnBox);
+        ToolTip.SetTip(turnBox, "How many turns a conversation may take before it stops.");
+        fields.Children.Add(InspectorRows.Field("Turns", turnBox));
         fields.Children.Add(logBox);
         fields.Children.Add(briefingBox);
         fields.Children.Add(lookupsBox);
-        fields.Children.Add(Text.Quiet("Briefing budget, in characters"));
-        fields.Children.Add(proseBox);
+        fields.Children.Add(InspectorRows.Field("Briefing", proseBox));
         fields.Children.Add(Note(
-            "Past this, the modules on the priority list keep their descriptions, the rest keep "
+            "How many characters the briefing may run to. Past this, the modules on the priority list keep their descriptions, the rest keep "
             + "theirs while there is room, and the ones left out are marked on the canvas. The "
             + "list is a file, one type id a line, read again whenever settings are saved:"));
 

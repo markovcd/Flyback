@@ -15,9 +15,10 @@ using Flyback.Plugins.Hosting;
 namespace Flyback.App.Settings;
 
 /// <summary>
-/// The Graphics, Recording and Sound sections of the settings window, and the MIDI
-/// section's two rows about knobs and keys: every control an
-/// <see cref="OutputSettings"/> is shown in and read back from (ADR-0148).
+/// The Picture, Recording and Sound sections of the settings window, the MIDI
+/// section's rows about knobs and keys, and the Files section's startup patch and
+/// library: every control an <see cref="OutputSettings"/> is shown in and read
+/// back from (ADR-0148).
 /// </summary>
 /// <remarks>
 /// Built once and kept, not rebuilt per opening: these controls hold live state
@@ -68,8 +69,8 @@ internal sealed class OutputSections
     private readonly OutputSettingRepository settings;
     private readonly PresetSlot presets;
 
-    /// <summary>Size, preview rate, renderer, full screen and the startup patch.</summary>
-    public StackPanel Graphics { get; } = new() { Spacing = 8, Width = 280 };
+    /// <summary>Size, preview rate, renderer and full screen.</summary>
+    public StackPanel Picture { get; } = new() { Spacing = 8, Width = 280 };
 
     /// <summary>How a take begins, and what it is written as.</summary>
     public StackPanel Recording { get; } = new() { Spacing = 8, Width = 280 };
@@ -278,6 +279,9 @@ internal sealed class OutputSections
     /// <summary>The library folder's row, which the Files section shows.</summary>
     public Grid Library { get; }
 
+    /// <summary>The startup patch's row, which the Files section shows.</summary>
+    public Control StartupPatch { get; }
+
     private readonly ComboBox latency = new Picker
     {
         Name = "latency",
@@ -334,11 +338,12 @@ internal sealed class OutputSections
         this.settings = settings;
         this.presets = presets;
 
-        BuildGraphics(host.InPage);
+        BuildPicture(host.InPage);
         BuildRecording();
         BuildSound(host.InPage);
 
         Library = BuildLibrary();
+        StartupPatch = BuildStartupPatch();
 
         preview.BackendChanged += message =>
         {
@@ -563,19 +568,42 @@ internal sealed class OutputSections
     }
 
     /// <param name="inPage">A page draws on WebGL alone, so it has no renderer to pick.</param>
-    private void BuildGraphics(bool inPage)
+    private void BuildPicture(bool inPage)
     {
         ToolTip.SetTip(previewFrameRate,
             "How often the preview redraws itself. Lower to see it near what a recording will "
             + "show, or to ease off a slow machine — the Recording section picks a take's own "
             + "rate, and reads whatever the preview last drew whatever this says.");
 
+        ToolTip.SetTip(fullScreenOn,
+            "Where double-clicking the preview puts the picture. On another monitor the editor "
+            + "stays where it is, and double-clicking the picture or pressing Esc brings it back.");
+
+        Picture.Children.Add(InspectorRows.Field("Size", Resolution));
+        Picture.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
+        if (!inPage)
+        {
+            ToolTip.SetTip(Renderer, RendererTip);
+            Picture.Children.Add(InspectorRows.Field("Renderer", Renderer));
+        }
+
+        ToolTip.SetTip(transportEdge,
+            "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "
+            + "the knobs take the other edge.");
+
+        Picture.Children.Add(InspectorRows.Field("Full screen", fullScreenOn));
+        Picture.Children.Add(InspectorRows.Field("Transport", transportEdge));
+    }
+
+    /// <summary>Which preset the window opens on, drawn as a picker that opens the gallery.</summary>
+    private Control BuildStartupPatch()
+    {
         ToolTip.SetTip(defaultPreset,
             "Which preset the window opens on the next time it starts. Picking one on the "
             + "toolbar right now does not change this — it only changes what is on the canvas.");
 
-        // Drawn as the pickers above it are, so the row reads as a value to change
-        // rather than a button to press, with the mark of a row that opens a window.
+        // Drawn as the pickers are, so the row reads as a value to change rather
+        // than a button to press, with the mark of a row that opens a window.
         var opens = Glyphs.Dots(12, Text.Muted);
 
         Grid.SetColumn(opens, 1);
@@ -597,31 +625,14 @@ internal sealed class OutputSections
             if (await presets.PickStartupPatchAsync(startupPatch) is { } chosen) ShowStartupPatch(chosen);
         };
 
-        ToolTip.SetTip(fullScreenOn,
-            "Where double-clicking the preview puts the picture. On another monitor the editor "
-            + "stays where it is, and double-clicking the picture or pressing Esc brings it back.");
-
-        Graphics.Children.Add(InspectorRows.Field("Size", Resolution));
-        Graphics.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
-        if (!inPage)
-        {
-            ToolTip.SetTip(Renderer, RendererTip);
-            Graphics.Children.Add(InspectorRows.Field("Renderer", Renderer));
-        }
-
-        ToolTip.SetTip(transportEdge,
-            "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "
-            + "the knobs take the other edge.");
-
-        Graphics.Children.Add(InspectorRows.Field("Full screen", fullScreenOn));
-        Graphics.Children.Add(InspectorRows.Field("Controls", transportEdge));
-        Graphics.Children.Add(InspectorRows.Field("Startup patch", defaultPreset));
+        return InspectorRows.Field("Startup patch", defaultPreset);
     }
 
     /// <remarks>
     /// In the order a take happens — counted in, put back to zero, then written —
     /// so the two rows about the moment Record is pressed are not read as
-    /// properties of the file (ADR-0091).
+    /// properties of the file (ADR-0091). The video's rate and quality follow its
+    /// format, since what quality means depends on the format.
     /// </remarks>
     private void BuildRecording()
     {
@@ -641,15 +652,13 @@ internal sealed class OutputSections
         Recording.Children.Add(InspectorRows.Field("Count-in", countIn));
         Recording.Children.Add(rewindBeforeTake);
 
-        Recording.Children.Add(InspectorRows.Field("Frame rate", frameRate));
-        Recording.Children.Add(InspectorRows.Field("Quality", jpegQuality));
-
         BuildEncodingRows();
     }
 
     /// <summary>
-    /// The rows the Recording section ends with: which formats, and which ffmpeg
-    /// (ADR-0089). A box left empty means whatever is on <c>PATH</c>.
+    /// The rows the Recording section ends with: the video's format, rate and
+    /// quality, the sound's format, and which ffmpeg (ADR-0089). A box left empty
+    /// means whatever is on <c>PATH</c>.
     /// </summary>
     private void BuildEncodingRows()
     {
@@ -699,8 +708,10 @@ internal sealed class OutputSections
         row.Children.Add(ffmpegBox);
         row.Children.Add(browse);
 
-        Recording.Children.Add(InspectorRows.Field("Video", videoFormat));
-        Recording.Children.Add(InspectorRows.Field("Sound", soundFormat));
+        Recording.Children.Add(InspectorRows.Field("Video format", videoFormat));
+        Recording.Children.Add(InspectorRows.Field("Frame rate", frameRate));
+        Recording.Children.Add(InspectorRows.Field("Quality", jpegQuality));
+        Recording.Children.Add(InspectorRows.Field("Sound format", soundFormat));
         Recording.Children.Add(row);
         Recording.Children.Add(ffmpegNote);
     }

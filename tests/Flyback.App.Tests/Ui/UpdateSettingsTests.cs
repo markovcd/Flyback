@@ -10,7 +10,7 @@ using Shouldly;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Updates tab of the settings window, and the line the window opens with after
+/// The update switch on the settings window's Privacy tab, and the line the window opens with after
 /// an update was installed (ADR-0088).
 /// </summary>
 public sealed class UpdateSettingsTests : UiTest
@@ -20,7 +20,7 @@ public sealed class UpdateSettingsTests : UiTest
         "flyback-update-settings-" + Guid.NewGuid().ToString("N"),
         "update.json");
 
-    private const int UpdatesTab = 7;
+    private const string PrivacyTab = "Privacy";
 
     public override void Dispose()
     {
@@ -53,7 +53,7 @@ public sealed class UpdateSettingsTests : UiTest
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        All<TabControl>(dialog).Single(t => t.Name == "settingsTabs").SelectedIndex = UpdatesTab;
+        ShowSettingsTab(dialog, PrivacyTab);
         Settle(window);
 
         return dialog;

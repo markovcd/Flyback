@@ -1,3 +1,4 @@
+using Avalonia.Controls;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
 using Flyback.App.Controls;
@@ -23,6 +24,9 @@ internal sealed class SettingsSession(
     OutputSettingsUse outputSettings)
     : IReactTo<SettingsAsked>
 {
+    /// <summary>Updates and Usage together: both are what Flyback sends out.</summary>
+    private readonly StackPanel privacy = new() { Spacing = 24, Width = 280, Children = { updates.View, usageSection.View } };
+
     /// <summary>Whether the settings sheet is waiting for an answer.</summary>
     public bool IsShowing { get; private set; }
 
@@ -43,15 +47,14 @@ internal sealed class SettingsSession(
         {
             saved = await SettingsDialog.ShowAsync(dialog,
             [
-                ("Graphics", output.Graphics),
-                ("Canvas", canvas.View),
-                ("Recording", output.Recording),
+                ("Picture", output.Picture),
                 ("Sound", output.Sound),
                 ("MIDI", knobs.MidiSection),
-                ("Assistant", assistant.SettingsSection()),
+                ("Recording", output.Recording),
+                ("Canvas", canvas.View),
                 ("Files", files.View),
-                ("Updates", updates.View),
-                ("Usage", usageSection.View),
+                ("Assistant", assistant.SettingsSection()),
+                ("Privacy", privacy),
             ]);
         }
         finally

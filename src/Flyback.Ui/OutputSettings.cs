@@ -9,7 +9,7 @@ namespace Flyback.App;
 
 /// <summary>
 /// What comes out of the program and how: the picture, a recorded take, and the
-/// speakers — the Graphics, Recording and Sound sections of the settings window.
+/// speakers — the Picture, Recording, Sound, MIDI and Files sections of the settings window.
 /// </summary>
 /// <remarks>
 /// Properties of the machine rather than of the instrument, which is why none of it
@@ -43,7 +43,7 @@ public sealed class OutputSettings
 
     /// <summary>
     /// Frames a second the preview redraws at, or 0 to draw as fast as the
-    /// renderer allows — the Graphics section. Independent of
+    /// renderer allows — the Picture section. Independent of
     /// <see cref="FrameRate"/>: what is on screen and what a take writes are
     /// two different things, and a take reads whatever the preview last drew
     /// regardless of this.
@@ -121,7 +121,7 @@ public sealed class OutputSettings
     public bool StepDownOnDropouts { get; set; } = true;
 
     /// <summary>
-    /// The preset the window opens on at the next launch, by name — the Graphics
+    /// The preset the window opens on at the next launch, by name — the Files
     /// section. Empty for the one written here, which is the first of the list
     /// (ADR-0093).
     /// </summary>
@@ -164,7 +164,7 @@ public sealed class OutputSettings
     /// </summary>
     public KeyboardLayout Keyboard { get; set; }
 
-    /// <summary>Which monitor double-clicking the preview fills — the Graphics section.</summary>
+    /// <summary>Which monitor double-clicking the preview fills — the Picture section.</summary>
     public FullScreenOn FullScreen { get; set; }
 
     /// <summary>
@@ -173,10 +173,10 @@ public sealed class OutputSettings
     /// </summary>
     public MonitorSpot? FullScreenMonitor { get; set; }
 
-    /// <summary>Which edge of a full-screen picture the transport waits at — the Graphics section.</summary>
+    /// <summary>Which edge of a full-screen picture the transport waits at — the Picture section.</summary>
     public TransportEdge Transport { get; set; }
 
-    /// <summary>What draws on Windows — the Graphics section. Read once, as the program starts.</summary>
+    /// <summary>What draws on Windows — the Picture section. Read once, as the program starts.</summary>
     public GraphicsDriver Driver { get; set; }
 
     /// <summary>How the knob panel randomizes, set on the panel itself.</summary>

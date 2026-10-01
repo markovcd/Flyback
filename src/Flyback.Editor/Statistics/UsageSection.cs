@@ -5,7 +5,7 @@ using Flyback.App.Controls;
 
 namespace Flyback.App.Statistics;
 
-/// <summary>The Usage section of the settings window: whether Flyback counts how it is used (ADR-0094).</summary>
+/// <summary>The usage half of the settings window's Privacy section: whether Flyback counts how it is used (ADR-0094).</summary>
 /// <remarks>
 /// The whole of what is counted is written out here rather than summarized,
 /// because a count nobody asked for is only fair while the person can read what

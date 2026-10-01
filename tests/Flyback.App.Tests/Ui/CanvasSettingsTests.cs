@@ -30,7 +30,7 @@ public sealed class CanvasSettingsTests : UiTest
         "flyback-canvas-settings-" + Guid.NewGuid().ToString("N"),
         "canvas.json");
 
-    private const int CanvasTab = 1;
+    private const string CanvasTab = "Canvas";
 
     public override void Dispose()
     {
@@ -67,7 +67,7 @@ public sealed class CanvasSettingsTests : UiTest
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        All<TabControl>(dialog).Single(t => t.Name == "settingsTabs").SelectedIndex = CanvasTab;
+        ShowSettingsTab(dialog, CanvasTab);
         Settle(window);
 
         return dialog;

@@ -114,7 +114,7 @@ context, decision, consequences.
 | [0091](0091-how-a-take-begins-is-two-settings.md) | How a take begins is two settings *(user-directed)* |
 | [0092](0092-a-drawing-too-wide-for-the-canvas-shuts-a-box.md) | A drawing too wide for the canvas shuts a box, and one that cannot fit moves nothing *(user-directed)* |
 | [0110](0110-the-layout-can-be-given-the-selection-instead-of-the-patch.md) | The layout can be given the selection instead of the patch *(user-directed)* |
-| [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed)* |
+| [0093](0093-a-startup-preset-is-a-graphics-setting.md) | A startup preset is a Graphics setting *(user-directed; its row moved to Files by an amendment)* |
 | [0103](0103-unsaved-work-outlives-a-crash.md) | Unsaved work outlives a crash *(user-directed)* |
 | [0111](0111-the-panels-actions-are-a-row-of-glyphs.md) | The panel's actions are a row of glyphs *(user-directed)* |
 | [0116](0116-a-module-is-drawn-as-its-category-and-a-standout-as-itself.md) | A module is drawn as its category, and a standout as itself *(user-directed)* |

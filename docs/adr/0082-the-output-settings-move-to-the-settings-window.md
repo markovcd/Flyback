@@ -137,3 +137,13 @@ box's own text needed no separate line to keep in step with `IsChecked`. The
 status bar lost the renderer's name when it stopped timing a frame
 (2026-09-17); it now says which one is actually drawing, not what was asked
 for, beside the rate.
+
+## Amendment, 2026-10-01: the sections are regrouped
+
+The tabs are Picture, Sound, MIDI, Recording, Canvas, Files, Assistant and
+Privacy. Graphics is called Picture, the glossary's word for what it sets; its
+Controls row is Transport, since "controls" names nothing there. The startup
+patch moved to Files (ADR-0093). Updates and Usage are one Privacy tab, both
+being what Flyback sends out. Recording lists the video's format before its
+rate and quality, which read differently per format. The Assistant tab puts
+its captions beside their controls, on the gutter every other tab uses.

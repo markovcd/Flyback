@@ -81,3 +81,10 @@ gone.
 A name that is missing, empty or not offered opens Plasma, looked up by name
 (`PresetLibrary.Fallback`), not whichever patch sorts first. Plugins add presets
 that sort ahead of it, and a viewer run without them opened Feedback tunnel.
+
+## Amendment, 2026-10-01: the row is under Files
+
+The Startup patch row sits in the Files section, beside what opens Flyback's
+files and the library folder: which patch the window opens on is a question
+about files, not about how the picture is drawn. It is still kept in
+`output.json` as `DefaultPreset`, so nothing saved moves.

@@ -4,7 +4,7 @@ using Flyback.Core;
 namespace Flyback.App.Statistics;
 
 /// <summary>
-/// Whether Flyback counts how it is used — the Usage section of the settings
+/// Whether Flyback counts how it is used — the Privacy section of the settings
 /// window.
 /// </summary>
 /// <remarks>

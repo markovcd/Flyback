@@ -114,7 +114,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **assistant** | The AI that edits a patch through the workbench, in a column beside it. | `IPatchAssistant`, `AssistantPanel` | agent (that is the one building Flyback), AI, copilot, bot |
 | **workbench** | Everything an assistant may do to a patch, and its limits. | `PatchWorkbench` | tools |
 | **conversation** | What was said to an assistant, saved with the patch it is about. | — | chat, thread, session |
-| **Settings** | The settings window and its sections: Graphics, Canvas, Recording, Sound, MIDI, Assistant, Files, Updates, Usage. | `MainWindow` builds it | preferences, options |
+| **Settings** | The settings window and its sections: Picture, Sound, MIDI, Recording, Canvas, Files, Assistant, Privacy. | `MainWindow` builds it | preferences, options |
 
 ## Playing and recording
 

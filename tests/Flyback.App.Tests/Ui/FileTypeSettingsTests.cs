@@ -24,7 +24,7 @@ public sealed class FileTypeSettingsTests : UiTest
 
     private string OutputPath => Path.Combine(Path.GetDirectoryName(settingsPath)!, "output.json");
 
-    private const int FilesTab = 6;
+    private const string FilesTab = "Files";
 
     public override void Dispose()
     {
@@ -68,7 +68,7 @@ public sealed class FileTypeSettingsTests : UiTest
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        All<TabControl>(dialog).Single(t => t.Name == "settingsTabs").SelectedIndex = FilesTab;
+        ShowSettingsTab(dialog, FilesTab);
         Settle(window);
 
         return dialog;

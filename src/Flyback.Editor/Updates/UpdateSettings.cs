@@ -4,7 +4,7 @@ using Flyback.Core;
 namespace Flyback.App.Updates;
 
 /// <summary>
-/// Whether Flyback looks for a new release when it starts — the Updates section of
+/// Whether Flyback looks for a new release when it starts — the Privacy section of
 /// the settings window.
 /// </summary>
 /// <remarks>

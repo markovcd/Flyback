@@ -21,7 +21,7 @@ using Xunit;
 namespace Flyback.App.Tests.Ui;
 
 /// <summary>
-/// The Graphics settings — size, preview rate, renderer — which live in the settings
+/// The Picture settings — size, preview rate, renderer — which live in the settings
 /// window and are kept between launches (ADR-0082), and the toolbar that opens it.
 /// </summary>
 /// <remarks>
@@ -109,9 +109,9 @@ public class OutputSettingsTests : UiTest
 
     /// <summary>
     /// Presses the settings button, waits for the window it puts up, and turns to
-    /// <paramref name="tab"/> — the Graphics tab unless told otherwise.
+    /// <paramref name="tab"/> — the Picture tab unless told otherwise.
     /// </summary>
-    private static ModalOverlay OpenSettings(MainWindow window, int tab = GraphicsTab)
+    private static ModalOverlay OpenSettings(MainWindow window, string tab = PictureTab)
     {
         Named<Button>(window, "settings").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 
@@ -122,9 +122,9 @@ public class OutputSettingsTests : UiTest
 
         var dialog = All<ModalOverlay>(window).Single();
 
-        if (tab != 0)
+        if (tab != PictureTab)
         {
-            Tabs(dialog).SelectedIndex = tab;
+            ShowSettingsTab(dialog, tab);
             Settle(window);
         }
 
@@ -133,7 +133,7 @@ public class OutputSettingsTests : UiTest
 
     private static TabControl Tabs(Visual within) => All<TabControl>(within).Single(t => t.Name == "settingsTabs");
 
-    private const int GraphicsTab = 0, RecordingTab = 2, SoundTab = 3, MidiTab = 4;
+    private const string PictureTab = "Picture", RecordingTab = "Recording", SoundTab = "Sound", MidiTab = "MIDI", FilesTab = "Files";
 
     /// <summary>Answers the settings window by its Save, or by its cross.</summary>
     private static void CloseSettings(MainWindow window, ModalOverlay dialog, bool save) =>
@@ -175,23 +175,23 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// A tab a section, opening on the Graphics tab, and one Save under them all —
+    /// A tab a section, opening on the Picture tab, and one Save under them all —
     /// switching tabs is not saving, and Save keeps the tabs not showing as well.
     /// </summary>
     [AvaloniaFact]
     public void The_settings_window_has_a_tab_for_each_section()
     {
         var window = Open();
-        var dialog = OpenSettings(window, tab: 0);
+        var dialog = OpenSettings(window, tab: PictureTab);
         var tabs = Tabs(dialog);
 
         tabs.Items.Cast<TabItem>().Select(t => (t.Header as TextBlock)?.Text)
-            .ShouldBe(["Graphics", "Canvas", "Recording", "Sound", "MIDI", "Assistant", "Files", "Updates", "Usage"]);
+            .ShouldBe(["Picture", "Sound", "MIDI", "Recording", "Canvas", "Files", "Assistant", "Privacy"]);
         tabs.SelectedIndex.ShouldBe(0);
         tabs.TabStripPlacement.ShouldBe(Dock.Left, "the sections are a list down the left");
         tabs.Items.Cast<TabItem>().Select(t => t.Bounds.X).Distinct().Count()
             .ShouldBe(1, "every tab fits in the one column");
-        ShowingSettings(dialog).ShouldBeTrue("the Graphics tab opens by default");
+        ShowingSettings(dialog).ShouldBeTrue("the Picture tab opens by default");
 
         var frame = All<Border>(dialog).Single(b => b.Name == "dialog");
         var size = frame.Bounds.Size;
@@ -283,7 +283,7 @@ public class OutputSettingsTests : UiTest
     {
         var window = Open();
 
-        StartupName(OpenSettings(window)).ShouldBe(PresetLibrary.Fallback);
+        StartupName(OpenSettings(window, FilesTab)).ShouldBe(PresetLibrary.Fallback);
     }
 
     [AvaloniaFact]
@@ -383,7 +383,7 @@ public class OutputSettingsTests : UiTest
         var editor = Editor(window);
         var before = editor.History.Patch;
 
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         PickStartupPreset(window, dialog, Patches[2]);
 
@@ -399,7 +399,7 @@ public class OutputSettingsTests : UiTest
     public void The_startup_preset_is_kept_and_opens_the_next_launch_on_it()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         var chosen = Patches[3];
 
@@ -411,15 +411,15 @@ public class OutputSettingsTests : UiTest
         var next = Open(settingsPath);
 
         next.Title.ShouldBe($"{chosen} — {Core.GlobalConstants.ApplicationName}");
-        StartupName(OpenSettings(next)).ShouldBe(chosen);
+        StartupName(OpenSettings(next, FilesTab)).ShouldBe(chosen);
     }
 
-    /// <summary>Changed and not saved is dropped, like every other Graphics row.</summary>
+    /// <summary>Changed and not saved is dropped, like every other Picture row.</summary>
     [AvaloniaFact]
     public void A_startup_preset_changed_and_not_saved_is_dropped()
     {
         var window = Open(settingsPath);
-        var dialog = OpenSettings(window);
+        var dialog = OpenSettings(window, FilesTab);
 
         var before = StartupName(dialog);
 
@@ -428,7 +428,7 @@ public class OutputSettingsTests : UiTest
 
         File.Exists(settingsPath).ShouldBeFalse();
 
-        StartupName(OpenSettings(window)).ShouldBe(before);
+        StartupName(OpenSettings(window, FilesTab)).ShouldBe(before);
     }
 
     /// <summary>
@@ -492,7 +492,7 @@ public class OutputSettingsTests : UiTest
         Named<TextBlock>(dialog, "soundNote").Text
             .ShouldBe("No sound plugin is installed, so nothing plays. See About for where plugins are looked for.");
 
-        Tabs(dialog).SelectedIndex = MidiTab;
+        ShowSettingsTab(dialog, MidiTab);
         Settle(window);
 
         Named<TextBlock>(dialog, "midiNote").Text
@@ -526,7 +526,7 @@ public class OutputSettingsTests : UiTest
         (CountIn(recording).SelectedItem as string).ShouldBe("3 s");
         RewindFirst(recording).IsChecked.ShouldBe(true);
 
-        Tabs(recording).SelectedIndex = SoundTab;
+        ShowSettingsTab(recording, SoundTab);
         Settle(window);
 
         (Latency(recording).SelectedItem as string).ShouldBe("30 ms");
@@ -543,7 +543,7 @@ public class OutputSettingsTests : UiTest
         CountIn(dialog).SelectedIndex = 0;
         RewindFirst(dialog).IsChecked = false;
 
-        Tabs(dialog).SelectedIndex = SoundTab;
+        ShowSettingsTab(dialog, SoundTab);
         Settle(window);
 
         Latency(dialog).SelectedIndex = 0;
@@ -925,7 +925,7 @@ public class OutputSettingsTests : UiTest
     }
 
     /// <summary>
-    /// A cap picked is a draft, like every other Graphics row: the preview
+    /// A cap picked is a draft, like every other Picture row: the preview
     /// keeps running uncapped until Save, and takes the new rate then.
     /// </summary>
     [AvaloniaFact]

@@ -30,10 +30,10 @@ public sealed record EditorFolders : IPresetFolder
     /// <summary>Where the Graphics, Recording and Sound settings are read from and saved to.</summary>
     public string? OutputSettingsPath { get; init; }
 
-    /// <summary>Where the Updates section is read from and saved to.</summary>
+    /// <summary>Where the update switch is read from and saved to.</summary>
     public string? UpdateSettingsPath { get; init; }
 
-    /// <summary>Where the Usage section is read from and saved to.</summary>
+    /// <summary>Where the usage switch is read from and saved to.</summary>
     public string? UsageSettingsPath { get; init; }
 
     /// <summary>Where the Canvas section is read from and saved to.</summary>

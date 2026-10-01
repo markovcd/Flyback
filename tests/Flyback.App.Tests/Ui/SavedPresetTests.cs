@@ -299,6 +299,9 @@ public class SavedPresetTests : UiTest
 
         Settle(window);
 
+        ShowSettingsTab(All<ModalOverlay>(window).Single(), "Files");
+        Settle(window);
+
         var row = All<Button>(window).Single(b => b.Name == "defaultPreset");
 
         Click(row, window);
