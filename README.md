@@ -172,6 +172,8 @@ flyback-cli save nebula.fbk -o nebula.fbks
 flyback-cli probe --keys
 flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --select "Picture: Scope"
 flyback-cli probe --provider all
+flyback-cli ask drone.fbk "slower, and warmer"
+flyback-cli ask --preset "Plasma" -o plasma.fbkb --model gpt-4.1 "make it blue"
 flyback-cli viewer nebula.fbk
 ```
 
@@ -192,6 +194,7 @@ flyback-cli viewer nebula.fbk
 - `compare`: plays two patches side by side for `--seconds` at `--size` and says whether they are the same instrument, sample for sample and pixel for pixel, and where they first part when they are not; it exits `1` when they differ
 - `modules`: lists the modules this build has, and which plugin defines each; given one by type id or name, it describes that module: each socket's default and range, where `|>` lands, what it carries besides its sockets and what it does
 - `probe`: asks an assistant which models it has and what each one accepts
+- `ask`: asks the assistant the editor is set to about a patch, and writes its answer back into the file with the conversation, where the next `ask` and the editor carry it on: inside a `.fbkb`, beside a `.fbk` or `.fbks`. A file that does not exist yet starts empty, and `--out` writes elsewhere. With no message it reads one from standard input, or asks line by line at a terminal. `--provider`, `--model` and `--set key=value` change the settings for one run, `--fresh` starts a new conversation, `--seen` keeps every picture it looked at and sound it heard, `--briefing` prints what it is handed, and `--json` writes one object a line, each tool call and its arguments included. It exits `2` when a turn fails
 - `stills`: draws a still of every preset into `--out`, with the `index.json` the galleries show them by in place of drawing them (ADR-0163); `./scripts/stills.sh <folder>` lays out the plugins a build ships first, and every release and site build runs it
 
 `check` exits with:
@@ -200,15 +203,15 @@ flyback-cli viewer nebula.fbk
 - `1`: patch errors
 - `2`: the job could not run
 
-`--strict` makes a warning fail as well. `check`, `compare`, `info`, `pack`, `modules` and
-`probe` each take `--json`, which writes the same answer as a document instead of
+`--strict` makes a warning fail as well. `check`, `compare`, `info`, `pack`, `modules`,
+`probe` and `ask` each take `--json`, which writes the same answer as a document instead of
 as prose.
 
 `info` says what a patch requires and `modules` says what is installed to meet
 it, which is the pair to reach for when a patch reports that it did not load
 completely.
 
-`probe` is the one command that reaches off the machine. It asks a provider's endpoint what it
+`probe` and `ask` are the commands that reach off the machine, and the provider bills both. `probe` asks a provider's endpoint what it
 offers and records the answer in the settings file both programs read, so the app's model box
 fills itself in without being told. It takes minutes and the provider bills for it, so it says
 what that means and waits for a yes; `--yes` answers for a script, which has nobody to ask.

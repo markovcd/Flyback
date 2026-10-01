@@ -108,6 +108,19 @@ internal sealed class AssistantSettings
 
     public static string File => Path.Combine(GlobalConstants.DataFolder, "assistant.json");
 
+    /// <summary>Where the priority list is read from for the settings at <paramref name="path"/>: beside them.</summary>
+    public static string PriorityFileBeside(string path) =>
+        Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, Path.GetFileName(PriorityModules.File));
+
+    /// <summary>
+    /// The budget and the priority list as they stand, for the settings at
+    /// <paramref name="path"/>; the shipped list where they are kept in memory.
+    /// The list is read from its file every time, so an edit counts from the next conversation.
+    /// </summary>
+    public ProsePolicy Prose(string? path) => new(
+        ProseBudget,
+        path is null ? PriorityModules.Parse(PriorityModules.Shipped) : PriorityModules.Load(PriorityFileBeside(path)));
+
     /// <summary>What is set for one provider, and nothing at all for one nobody has configured.</summary>
     public SettingValues Of(string provider) =>
         Choices.TryGetValue(provider, out var held) ? new SettingValues(held) : SettingValues.None;

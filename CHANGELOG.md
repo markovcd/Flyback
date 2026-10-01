@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Assistant
+
+- `flyback-cli ask` talks to the assistant from a terminal or a script, as the editor's column does, and writes the answer back into the patch file with the conversation, so the next `ask` or the editor carries it on.
+- The assistant's `listen` reports the clip's integrated loudness in LUFS and its true peak, so it can hit a loudness it is asked for.
+- A rate limit that resets within a minute is waited out rather than ending the turn.
+
 ### Web
 
 - The web viewer's panel of knobs is capped at a third of the window and scrolls, and its top edge is dragged (or moved with the arrow keys) to make it taller or shorter, so a patch with many knobs no longer covers the picture; the height is kept.

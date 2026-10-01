@@ -223,7 +223,7 @@ public sealed partial class PatchWorkbench
                     $"{Number(seconds)}s of sound from {Number(from)}s, in stereo at "
                     + $"{limits.ListenRate / 1000} kHz, rendered from zero.{warned}");
 
-                caption.Append("\n\n").Append(ClipLevels.Measured(samples, peak, rms));
+                caption.Append("\n\n").Append(ClipLevels.Measured(samples, peak, rms, renderer.SampleRate));
 
                 return ToolOutcome.Played(wav.ToArray(), caption.ToString());
             },

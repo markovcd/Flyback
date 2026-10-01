@@ -1,10 +1,11 @@
 using System.Globalization;
 using System.Text;
 using Flyback.Core.Graph;
+using Flyback.Core.Render;
 
 namespace Flyback.Plugins.Assist;
 
-/// <summary>What <c>listen</c> measures in a rendered clip: its peak, its rms, its crest and its level over time.</summary>
+/// <summary>What <c>listen</c> measures in a rendered clip: its peak, its rms, its crest, its loudness and its level over time.</summary>
 internal static class ClipLevels
 {
     /// <summary>Below this a buffer is called silence: -66 dBFS, and nothing a speaker would utter.</summary>
@@ -25,7 +26,7 @@ internal static class ClipLevels
     /// percussion has a great deal. The slices are the same question over time.
     /// Reported as numbers with the yardstick beside them rather than as a verdict.
     /// </remarks>
-    public static string Measured(ReadOnlySpan<float> samples, float peak, float rms)
+    public static string Measured(ReadOnlySpan<float> samples, float peak, float rms, int sampleRate)
     {
         var text = new StringBuilder("Measured from the samples, not heard: peak ")
             .Append(Decibels(peak))
@@ -51,9 +52,29 @@ internal static class ClipLevels
             text.Append(' ').Append(Decibels(Levels(samples.Slice(start, length)).Rms).Replace(" dBFS", ""));
         }
 
-        text.Append(". A row of near-identical figures is something continuous; a rhythm moves.");
+        text.Append(". A row of near-identical figures is something continuous; a rhythm moves. ")
+            .Append(Loudness(samples, sampleRate));
 
         return text.ToString();
+    }
+
+    /// <summary>
+    /// The clip's loudness as ITU-R BS.1770 gates it, and its true peak: the figures
+    /// a loudness target such as -14 LUFS is stated in, which rms is not.
+    /// </summary>
+    private static string Loudness(ReadOnlySpan<float> samples, int sampleRate)
+    {
+        var meter = new LoudnessMeter(sampleRate, NodeCatalog.AudioChannels);
+
+        meter.Add(samples);
+
+        var integrated = double.IsNegativeInfinity(meter.Integrated)
+            ? "too quiet to gate"
+            : meter.Integrated.ToString("0.0", CultureInfo.InvariantCulture) + " LUFS";
+
+        return $"Loudness over the clip, as ITU-R BS.1770 measures it: {integrated} integrated, "
+            + $"true peak {Decibels((float)meter.TruePeak).Replace("dBFS", "dBTP", StringComparison.Ordinal)}. "
+            + "Streaming services play at about -14 LUFS; a true peak above -1 dBTP may clip once encoded.";
     }
 
     /// <summary>The distance between two levels, which is a ratio rather than a level.</summary>

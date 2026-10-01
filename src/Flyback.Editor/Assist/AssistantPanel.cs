@@ -905,7 +905,7 @@ internal sealed class AssistantPanel : UserControl
     {
         var config = Configured();
         var excuse = chosenAssistant.Value is not null
-            ? (config is null ? null : Excuse(chosenAssistant.Value, config))
+            ? (config is null ? null : AssistantRun.Unready(chosenAssistant.Value, config))
             : plugins.Assistants.Count == 0
                 ? "No assistant plugin is installed. See the status bar for where plugins are looked for."
                 : "No assistant is selected. Pick one in Settings.";
@@ -1121,19 +1121,6 @@ internal sealed class AssistantPanel : UserControl
         editor.Report(said, null);
     }
 
-    private static string? Excuse(IPatchAssistant assistant, AssistantConfig config)
-    {
-        try
-        {
-            return Credentials.Elsewhere(assistant, config) ?? assistant.Unavailable(config);
-        }
-        catch (Exception ex)
-        {
-            // Answering this must not throw. One that does has said no.
-            return $"{assistant.Name} could not say whether it is ready: {ex.Message}";
-        }
-    }
-
     // --- asking -------------------------------------------------------------
 
     /// <summary>
@@ -1173,12 +1160,8 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Unresumable(SavedConversation saved, AssistantConfig config)
     {
-        if (saved.Turns >= settingsRepository.Current.TurnLimit) return "That conversation had its turns. Starting another.";
-
-        if (chosenAssistant.Value is null
-            || !string.Equals(saved.Provider, chosenAssistant.Value.Id, StringComparison.Ordinal)
-            || saved.Settings != SavedConversation.SettingsOf(config.Values))
-            return "That conversation was had with other settings, so this is a new one.";
+        if (saved.Unresumable(settingsRepository.Current.TurnLimit, chosenAssistant.Value, config.Values) is { } why)
+            return why;
 
         return conversation.WaitingMoved(editor.Current)
             ? "The modules or wires changed since it was opened, so this is a new conversation about the patch on screen."
@@ -1257,7 +1240,7 @@ internal sealed class AssistantPanel : UserControl
     private async Task AskAsync()
     {
         if (asking || chosenAssistant.Value is null) return;
-        if (Configured() is not { } config || Excuse(chosenAssistant.Value, config) is not null) return;
+        if (Configured() is not { } config || AssistantRun.Unready(chosenAssistant.Value, config) is not null) return;
 
         var wanted = instruction.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(wanted)) return;
@@ -1318,58 +1301,14 @@ internal sealed class AssistantPanel : UserControl
 
     private void Show(PatchEvent happened)
     {
-        switch (happened)
-        {
-            case PatchEvent.Said said:
-                transcript.Put(Voice.Said, said.Text);
-                log.Write("said", said.Text);
-                break;
+        var (line, kind, text) = TranscriptLine.Of(happened);
 
-            case PatchEvent.Did did:
-                transcript.Put(Voice.Note, did.Summary);
-                log.Write("did", did.Summary);
-                break;
+        transcript.Put(line.Voice, line.Text);
+        log.Write(kind, text);
 
-            case PatchEvent.Read read:
-                transcript.Put(Voice.Handbook, read.Text);
-                log.Write("read", read.Text);
-                break;
-
-            case PatchEvent.Saw saw:
-                transcript.Put(Voice.Note, saw.Caption);
-                transcript.Picture(saw.Png);
-                log.Write("saw", saw.Caption);
-                break;
-
-            // The caption and nothing else. The WAV went to the model rather
-            // than to the speakers, and a panel that started playing sound while
-            // the patch under the cursor is already playing would be two things
-            // at once — the transcript says a sound was rendered and heard,
-            // which is what somebody watching this needs to know.
-            case PatchEvent.Heard heard:
-                transcript.Put(Voice.Note, heard.Caption);
-                log.Write("heard", heard.Caption);
-                break;
-
-            case PatchEvent.Cost cost:
-            {
-                var spent = $"{cost.Input} in ({cost.CacheRead} cached), {cost.Output} out.";
-
-                transcript.Put(Voice.Aside, spent);
-                log.Write("cost", spent);
-                break;
-            }
-
-            case PatchEvent.Proposed proposed:
-                transcript.Put(Voice.Proposed, $"Proposed: {proposed.Summary}");
-                log.Write("proposed", proposed.Summary);
-                break;
-
-            case PatchEvent.Failed failed:
-                transcript.Put(Voice.Failed, failed.Message);
-                log.Write("failed", failed.Message);
-                break;
-        }
+        // A heard sound is its caption and nothing else: the WAV went to the
+        // model, and the patch under the cursor may already be playing.
+        if (happened is PatchEvent.Saw saw) transcript.Picture(saw.Png);
 
         transcript.ScrollToEnd();
     }

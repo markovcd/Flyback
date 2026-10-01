@@ -1,0 +1,174 @@
+using System.IO.Compression;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using Flyback.App.Assist;
+using Flyback.Cli.Commands;
+using Flyback.Cli.Common;
+using Flyback.Cli.Models;
+using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
+using Flyback.Plugins.Hosting;
+using Flyback.Plugins.Settings;
+using Reqnroll;
+using Shouldly;
+
+namespace Flyback.Specs.Steps;
+
+/// <summary>
+/// <c>flyback-cli ask</c> over an assistant that answers from a script, with its
+/// settings and conversations kept in a folder of the scenario's own.
+/// </summary>
+[Binding]
+public sealed class AskSteps : IDisposable
+{
+    private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-ask-specs");
+
+    private Remembering? assistant;
+    private int code;
+    private string said = string.Empty;
+
+    private Remembering Assistant => assistant.ShouldNotBeNull();
+
+    private string SettingsPath => Path("assistant.json");
+
+    private ConversationStore Store => new(Path("sessions"));
+
+    private PluginCatalog Catalog => new([], [], NodeCatalog.BuiltIn, Presets.All, [], [Assistant]);
+
+    public void Dispose() => folder.Delete(recursive: true);
+
+    [Given("an assistant that builds a gray field when asked")]
+    public void GivenAnAssistant()
+    {
+        assistant = new Remembering();
+        new AssistantSettings { Provider = Assistant.Id }.Save(SettingsPath);
+    }
+
+    [When("flyback-cli asks it about {string} for {string}")]
+    public async Task WhenAsked(string patch, string message)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+
+        var about = AskCommand.Open(Catalog, new FileInfo(Path(patch)), null, null, error, Store).ShouldNotBeNull(error.ToString());
+
+        code = await AskCommand.Run(
+            Catalog,
+            about,
+            new AskOptions(message, null, [], false, false, null, false, null),
+            output,
+            error,
+            TextReader.Null,
+            null,
+            CancellationToken.None,
+            SettingsPath,
+            Store,
+            Path("logs"));
+
+        said = output + error.ToString();
+    }
+
+    [Then("{string} shows a gray field")]
+    public void ThenAGrayField(string patch)
+    {
+        code.ShouldBe(Exit.Ok, said);
+
+        var written = PatchIO.Read(File.ReadAllText(Path(patch))).Patch;
+        var knob = written.Nodes.Where(node => node.TypeId == "value").ShouldHaveSingleItem();
+
+        written.Connections.ShouldContain(wire => wire.SourceNode == knob.Id && wire.TargetNode == written.Output.Id);
+    }
+
+    [Then("the assistant remembers being asked for {string}")]
+    public void ThenItRemembers(string earlier) => Assistant.Remembered.ShouldContain(earlier);
+
+    /// <summary>What the editor does with a bundle it opens: finds the conversation, finds it resumable, and resumes it.</summary>
+    [Then("opening {string} in the editor carries the conversation on")]
+    public void ThenTheEditorCarriesItOn(string bundle)
+    {
+        code.ShouldBe(Exit.Ok, said);
+
+        using var archive = File.OpenRead(Path(bundle));
+
+        var loaded = PatchBundle.Read(archive, NodeCatalog.BuiltIn);
+        var conversation = new AssistantConversation(() => loaded.Patch);
+
+        conversation.Open(loaded.Conversation);
+
+        var waiting = conversation.Waiting.ShouldNotBeNull();
+
+        waiting.Unresumable(AssistantSettings.DefaultTurnLimit, Assistant, SettingValues.None).ShouldBeNull();
+
+        using var run = new AssistantRun(Assistant, AssistantConfig.Unset, NodeCatalog.BuiltIn, loaded.Patch, resuming: waiting);
+
+        run.PickedUp.ShouldBeTrue();
+        run.Turns.ShouldBe(1);
+    }
+
+    private string Path(string name) => System.IO.Path.Combine(folder.FullName, name);
+
+    /// <summary>Builds a gray field through the workbench, and remembers what it was asked across a saved conversation.</summary>
+    private sealed class Remembering : IPatchAssistant
+    {
+        public List<string> Remembered { get; } = [];
+
+        public string Id => "remembering";
+
+        public string Name => "Remembering";
+
+        public int Priority => 0;
+
+        public AssistantCredential Credential => new("FLYBACK_REMEMBERING_KEY", "No key is needed.");
+
+        public Uri? Endpoint(SettingValues values) => new("https://assistant.test/");
+
+        public IReadOnlyList<SettingField> Form(SettingValues values) => [];
+
+        public AssistantSenses Senses(SettingValues values) => new(false);
+
+        public string? Unavailable(AssistantConfig config) => null;
+
+        public IPatchSession Start(PatchWorkbench workbench, AssistantConfig config) => new Session(this, workbench, []);
+
+        public IPatchSession? Resume(PatchWorkbench workbench, AssistantConfig config, string saved)
+        {
+            var history = JsonSerializer.Deserialize<List<string>>(saved) ?? [];
+
+            Remembered.AddRange(history);
+
+            return new Session(this, workbench, history);
+        }
+
+        private sealed class Session(Remembering owner, PatchWorkbench workbench, List<string> history) : IPatchSession
+        {
+            public async IAsyncEnumerable<PatchEvent> Ask(string instruction, [EnumeratorCancellation] CancellationToken cancel)
+            {
+                history.Add(instruction);
+
+                string[] calls =
+                [
+                    """{"type_id":"value","handle":"knob1","knobs":[{"port":"value","value":0.5}]}""",
+                    """{"from":"knob1","to":"output1","to_port":"color"}""",
+                    """{"summary":"a flat gray field"}""",
+                ];
+
+                string[] tools = ["add_module", "connect", "propose"];
+
+                for (var i = 0; i < tools.Length; i++)
+                {
+                    var outcome = await workbench
+                        .InvokeAsync(tools[i], JsonSerializer.Deserialize<JsonElement>(calls[i]), cancel)
+                        .ConfigureAwait(false);
+
+                    yield return new PatchEvent.Did(outcome.Text);
+                }
+
+                yield return new PatchEvent.Proposed(workbench.Snapshot(), workbench.ProposalSummary);
+            }
+
+            public string? Save() => JsonSerializer.Serialize(history);
+
+            public void Dispose() => _ = owner;
+        }
+    }
+}

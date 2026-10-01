@@ -3,10 +3,9 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// A conversation put away with the patch it is about, to be carried on the next
@@ -60,6 +59,21 @@ internal sealed record SavedConversation(
             pairs.Add(new JsonArray { key, value });
 
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(pairs.ToJsonString())));
+    }
+
+    /// <summary>
+    /// Why this conversation cannot be carried on with <paramref name="assistant"/>
+    /// set to <paramref name="values"/>, or null when it can.
+    /// </summary>
+    public string? Unresumable(int turnLimit, IPatchAssistant? assistant, SettingValues values)
+    {
+        if (Turns >= turnLimit) return "That conversation had its turns. Starting another.";
+
+        return assistant is null
+            || !string.Equals(Provider, assistant.Id, StringComparison.Ordinal)
+            || Settings != SettingsOf(values)
+            ? "That conversation was had with other settings, so this is a new one."
+            : null;
     }
 
     /// <summary>

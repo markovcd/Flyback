@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
 using Flyback.App.Controls;
+using Flyback.Plugins.Assist;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Assist;

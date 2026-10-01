@@ -3,10 +3,9 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// One conversation with an assistant, and everything around it that is not a
@@ -14,13 +13,12 @@ namespace Flyback.App.Assist;
 /// proposed, and what to do when it will not stop.
 /// </summary>
 /// <remarks>
-/// No Avalonia type appears here, on purpose — the same seam
-/// <see cref="Audio.AudioEngine"/> is, which leaves the window with nothing but
-/// controls and a loop that paints events. The patch that was open is never
+/// The editor's panel and <c>flyback-cli ask</c> both drive this, so neither holds
+/// anything but its controls or its console. The patch that was open is never
 /// touched: the workbench takes a copy, so accepting a proposal is one assignment
 /// and rejecting one costs nothing.
 /// </remarks>
-public sealed class AssistantRun : IDisposable
+internal sealed class AssistantRun : IDisposable
 {
     /// <summary>How many turns a conversation may have before another has to be started, until a setting says otherwise.</summary>
     public const int TurnLimit = AssistantSettings.DefaultTurnLimit;
@@ -477,6 +475,20 @@ public sealed class AssistantRun : IDisposable
     }
 
     private static string Excuse(Exception ex) => $"the assistant stopped: {ex.Message}";
+
+    /// <summary>Why <paramref name="assistant"/> cannot be asked with <paramref name="config"/>, or null when it can.</summary>
+    public static string? Unready(IPatchAssistant assistant, AssistantConfig config)
+    {
+        try
+        {
+            return Credentials.Elsewhere(assistant, config) ?? assistant.Unavailable(config);
+        }
+        catch (Exception ex)
+        {
+            // Answering this must not throw. One that does has said no.
+            return $"{assistant.Name} could not say whether it is ready: {ex.Message}";
+        }
+    }
 
     public void Dispose()
     {

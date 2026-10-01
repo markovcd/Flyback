@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Core;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Plugins.Assist;
 
 /// <summary>
 /// The conversations kept for patch files, in the application's own folder, one
@@ -22,7 +22,7 @@ namespace Flyback.App.Assist;
 /// </para>
 /// </remarks>
 /// <param name="folder">Somewhere other than the usual place, for the tests.</param>
-public sealed class ConversationStore(string? folder = null)
+internal sealed class ConversationStore(string? folder = null)
 {
     private readonly string root = folder ?? Folder;
 

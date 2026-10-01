@@ -10,11 +10,11 @@ public static class AssistantPost
     public const int MaxAttempts = 5;
 
     /// <summary>
-    /// The longest a refusal is waited out. A limit that resets inside this is a
-    /// hiccup; one that resets beyond it is a quota, and no amount of waiting is the
-    /// answer to a quota.
+    /// The longest a refusal is waited out: a minute, so a tokens-per-minute limit
+    /// is ridden out. One that resets beyond it is a quota, and no amount of
+    /// waiting is the answer to a quota.
     /// </summary>
-    public static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(20);
+    public static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
 
     /// <summary>Whether a refusal with this status is worth sending again.</summary>
     /// <remarks>

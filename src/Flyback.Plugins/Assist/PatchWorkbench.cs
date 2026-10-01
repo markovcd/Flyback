@@ -186,12 +186,17 @@ public sealed partial class PatchWorkbench
 
     // --- dispatch -----------------------------------------------------------
 
+    /// <summary>Each tool call as it arrives, before it runs, for a host that shows the calls themselves.</summary>
+    internal event Action<string, JsonElement>? Calling;
+
     /// <summary>
     /// Runs one tool call. Never throws, whatever it is handed — see
     /// <see cref="ToolOutcome"/> for why that is a rule rather than a courtesy.
     /// </summary>
     public async Task<ToolOutcome> InvokeAsync(string tool, JsonElement arguments, CancellationToken cancel)
     {
+        Calling?.Invoke(tool, arguments);
+
         // Propose is never refused for the count, since it is what the refusal asks for.
         if (ToolCalls >= limits.MaxToolCalls && tool != "propose")
             return ToolOutcome.Refused(
