@@ -9,8 +9,7 @@ namespace Flyback.App.Settings;
 internal sealed class SettingsSession(
     IEnumerable<ISettingsSection> sections,
     IDialog dialog,
-    Usage usage,
-    OutputSettingsUse outputSettings)
+    Usage usage)
     : IReactTo<SettingsAsked>
 {
     /// <summary>Every tab by name, in the order the window lists them.</summary>
@@ -51,12 +50,10 @@ internal sealed class SettingsSession(
 
         if (saved)
         {
-            outputSettings.Save();
             foreach (var section in sections) section.Save();
             return;
         }
 
-        outputSettings.Show();
         foreach (var section in sections) section.Show();
     }
 }

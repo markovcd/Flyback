@@ -8,11 +8,10 @@ namespace Flyback.App.Statistics;
 /// window.
 /// </summary>
 /// <remarks>
-/// A file of its own rather than a field on <see cref="Updates.UpdateSettings"/> or
-/// <see cref="OutputSettings"/>, for the reason each of those is one: this is about
-/// what Flyback says about itself, not about what it installs or what comes out of
-/// it. Not load-bearing (ADR-0034): an unreadable file means the defaults, and the
-/// default is on (ADR-0094).
+/// A section of its own rather than a field on <see cref="Updates.UpdateSettings"/> or
+/// <see cref="OutputSettings"/>: this is about what Flyback says about itself, not
+/// about what it installs or what comes out of it. Not load-bearing (ADR-0034): an
+/// unreadable section means the defaults, and the default is on (ADR-0094).
 /// </remarks>
 public sealed class UsageSettings
 {
@@ -28,15 +27,16 @@ public sealed class UsageSettings
     /// </summary>
     public bool SendUsageStatistics { get; set; } = true;
 
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "usage.json");
+    /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
+    public const string Section = "usage";
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
     public static UsageSettings Load(string path)
     {
         try
         {
-            return System.IO.File.Exists(path)
-                ? JsonSerializer.Deserialize<UsageSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
+            return SettingsFile.Read(path, Section) is { } json
+                ? JsonSerializer.Deserialize<UsageSettings>(json, Options) ?? new()
                 : new UsageSettings();
         }
         catch
@@ -48,7 +48,6 @@ public sealed class UsageSettings
     /// <summary>Throws if it cannot write, so the caller can say so.</summary>
     public void Save(string path)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? GlobalConstants.DataFolder);
-        System.IO.File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(path, Section, JsonSerializer.Serialize(this, Options));
     }
 }

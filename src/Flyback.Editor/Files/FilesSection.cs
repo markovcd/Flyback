@@ -16,10 +16,10 @@ namespace Flyback.App.Files;
 /// program opens Flyback's files (ADR-0127), and the library folder.
 /// </summary>
 /// <remarks>
-/// The startup patch and the library are kept in <c>output.json</c>; what opens
-/// the files is kept in a file of its own.
+/// The startup patch and the library are kept with the output settings; what opens
+/// the files is kept in a section of its own.
 /// </remarks>
-internal sealed class FilesSection : ISettingsSection, IOutputSlice
+internal sealed class FilesSection : ISettingsSection
 {
     private readonly ComboBox opener = new Picker
     {
@@ -70,16 +70,28 @@ internal sealed class FilesSection : ISettingsSection, IOutputSlice
 
     private readonly PresetSlot presets;
     private readonly IFilePickers pickers;
+    private readonly OutputSettingRepository settings;
+    private readonly PatchFiles files;
 
     private readonly Action<string, string?> report;
 
     /// <param name="presets">The presets the startup patch is named and picked from.</param>
-    public FilesSection(EditorFolders folders, EditorHost host, ReportLine report, PresetSlot presets, IFilePickers pickers)
+    /// <param name="files">The patch's files, whose samples and pictures are looked for in the library.</param>
+    public FilesSection(
+        EditorFolders folders,
+        EditorHost host,
+        ReportLine report,
+        PresetSlot presets,
+        IFilePickers pickers,
+        OutputSettingRepository settings,
+        PatchFiles files)
     {
-        path = folders.FileTypeSettingsPath;
+        path = folders.SettingsPath;
         system = host.FileTypes;
         this.presets = presets;
         this.pickers = pickers;
+        this.settings = settings;
+        this.files = files;
         this.report = (message, detail) => report.Say(message, detail);
 
         if (path is not null) saved = FileTypeSettings.Load(path);
@@ -114,7 +126,7 @@ internal sealed class FilesSection : ISettingsSection, IOutputSlice
             TextWrapping = TextWrapping.Wrap,
         });
 
-        Show();
+        opener.SelectedIndex = (int)saved.Opener;
     }
 
     public string Name => "Files";
@@ -123,19 +135,19 @@ internal sealed class FilesSection : ISettingsSection, IOutputSlice
 
     Control ISettingsSection.View => View;
 
-    /// <summary>Puts what was last saved back on the controls.</summary>
-    public void Show() => opener.SelectedIndex = (int)saved.Opener;
-
-    public void Show(OutputSettings current)
+    public void Start()
     {
-        ShowStartupPatch(current.DefaultPreset);
-        libraryBox.Text = current.Library;
+        Show();
+        files.UseLibrary(settings.Current.Library, reread: false);
     }
 
-    public void Read(OutputSettings into, OutputSettings before)
+    /// <summary>Puts what was last saved back on the controls.</summary>
+    public void Show()
     {
-        into.DefaultPreset = startupPatch;
-        into.Library = (libraryBox.Text ?? string.Empty).Trim();
+        opener.SelectedIndex = (int)saved.Opener;
+
+        ShowStartupPatch(settings.Current.DefaultPreset);
+        libraryBox.Text = settings.Current.Library;
     }
 
     /// <summary>
@@ -144,6 +156,14 @@ internal sealed class FilesSection : ISettingsSection, IOutputSlice
     /// </summary>
     public void Save()
     {
+        settings.Change(into =>
+        {
+            into.DefaultPreset = startupPatch;
+            into.Library = (libraryBox.Text ?? string.Empty).Trim();
+        });
+
+        files.UseLibrary(settings.Current.Library, reread: true);
+
         var before = saved.Opener;
 
         saved = new FileTypeSettings { Opener = (FileOpener)Math.Max(0, opener.SelectedIndex) };

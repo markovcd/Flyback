@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Render;
 using Flyback.Plugins.Settings;
 using Shouldly;
@@ -18,7 +19,7 @@ public class OutputSettingsFileTests : IDisposable
         Path.GetTempPath(),
         "flyback-output-settings-" + Guid.NewGuid().ToString("N"));
 
-    private string File => Path.Combine(folder, "output.json");
+    private string File => Path.Combine(folder, "settings.json");
 
     public void Dispose()
     {
@@ -43,7 +44,7 @@ public class OutputSettingsFileTests : IDisposable
     {
         new OutputSettings { FfmpegPath = "ffmpeg" }.Save(File);
 
-        using var saved = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(File));
+        using var saved = System.Text.Json.JsonDocument.Parse(SettingsFile.Read(File, OutputSettings.Section)!);
 
         foreach (var name in new[] { "width", "height", "frameRate", "jpegQuality", "videoFormat", "soundFormat", "ffmpegPath", "oversample" })
             saved.RootElement.TryGetProperty(name, out _).ShouldBeTrue(name);
@@ -56,7 +57,7 @@ public class OutputSettingsFileTests : IDisposable
     public void An_oversampling_not_on_offer_is_the_default(int typed)
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, $$"""{ "oversample": {{typed}} }""");
+        SettingsFile.Write(File, OutputSettings.Section, $$"""{ "oversample": {{typed}} }""");
 
         OutputSettings.Load(File).Oversample.ShouldBe(AudioRenderer.DefaultOversample);
     }
@@ -101,7 +102,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_full_screen_choice_this_build_does_not_have_is_the_same_monitor()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "fullScreen": 42 }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "fullScreen": 42 }""");
 
         OutputSettings.Load(File).FullScreen.ShouldBe(FullScreenOn.SameMonitor);
     }
@@ -121,7 +122,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_driver_this_build_does_not_have_is_OpenGL()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "driver": 42 }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "driver": 42 }""");
 
         OutputSettings.Load(File).Driver.ShouldBe(GraphicsDriver.OpenGl);
     }
@@ -186,7 +187,7 @@ public class OutputSettingsFileTests : IDisposable
     public void Values_out_of_range_are_brought_into_it()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "frameRate": 0, "jpegQuality": 400, "latencyMilliseconds": 60000, "countInSeconds": 600 }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "frameRate": 0, "jpegQuality": 400, "latencyMilliseconds": 60000, "countInSeconds": 600 }""");
 
         var settings = OutputSettings.Load(File);
 
@@ -220,7 +221,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_file_with_no_sound_answers_has_none()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "sound": null }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "sound": null }""");
 
         OutputSettings.Load(File).SoundOf("wasapi").ShouldBe(SettingValues.None);
     }
@@ -251,7 +252,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_format_nothing_defines_reads_as_the_one_written_here()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "videoFormat": "av1", "soundFormat": "mp4" }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "videoFormat": "av1", "soundFormat": "mp4" }""");
 
         var settings = OutputSettings.Load(File);
 
@@ -293,7 +294,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_null_startup_preset_reads_as_none_chosen()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{ "defaultPreset": null }""");
+        SettingsFile.Write(File, OutputSettings.Section, """{ "defaultPreset": null }""");
 
         OutputSettings.Load(File).DefaultPreset.ShouldBe(string.Empty);
     }
@@ -325,7 +326,7 @@ public class OutputSettingsFileTests : IDisposable
     public void A_randomize_typed_out_of_range_is_brought_into_it()
     {
         Directory.CreateDirectory(folder);
-        System.IO.File.WriteAllText(File, """{"randomize": {"amount": 7, "glideSeconds": -3}}""");
+        SettingsFile.Write(File, OutputSettings.Section, """{"randomize": {"amount": 7, "glideSeconds": -3}}""");
 
         var back = OutputSettings.Load(File).Randomize;
 

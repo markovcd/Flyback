@@ -48,10 +48,10 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     public void GivenTextSaved(string name, string text) => File.WriteAllText(Path(name), text);
 
     [Given("the editor's settings oversample the sound as they please")]
-    public void GivenNoOversampleSetting() => File.WriteAllText(Path("output.json"), "{}");
+    public void GivenNoOversampleSetting() => File.WriteAllText(Path("settings.json"), "{}");
 
     [Given("the editor's settings oversample the sound {int} times")]
-    public void GivenOversampleSetting(int factor) => File.WriteAllText(Path("output.json"), $$"""{ "oversample": {{factor}} }""");
+    public void GivenOversampleSetting(int factor) => new Flyback.App.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
 
     [When("flyback-cli renders {string} as {string} for {float} seconds")]
     public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");
@@ -62,7 +62,7 @@ public sealed class CliSteps(PatchContext context) : IDisposable
         Run([
             "render", Path(patch), "-o", Path(into),
             "--seconds", seconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            "--settings", Path("output.json"),
+            "--settings", Path("settings.json"),
             .. flags.Split(' ', StringSplitOptions.RemoveEmptyEntries),
         ]);
 

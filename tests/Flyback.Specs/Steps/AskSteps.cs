@@ -31,7 +31,7 @@ public sealed class AskSteps : IDisposable
 
     private Remembering Assistant => assistant.ShouldNotBeNull();
 
-    private string SettingsPath => Path("assistant.json");
+    private string SettingsPath => Path("settings.json");
 
     private ConversationStore Store => new(Path("sessions"));
 

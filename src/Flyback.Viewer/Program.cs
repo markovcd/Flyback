@@ -49,7 +49,7 @@ internal static class Program
             return HandToEditor(first);
 
         // Read before the command is built, so --help says what this machine is set to.
-        var settings = OutputSettings.Load(ViewerArguments.SettingsPath(args) ?? OutputSettings.File);
+        var settings = OutputSettings.Load(ViewerArguments.SettingsPath(args) ?? SettingsFile.Path);
 
         // Before a patch is read: it may name modules only a plugin defines. Loading
         // is a read; nothing here calls what would write a file.

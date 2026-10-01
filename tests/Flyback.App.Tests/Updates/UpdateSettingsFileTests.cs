@@ -9,7 +9,7 @@ public sealed class UpdateSettingsFileTests : IDisposable
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-update-settings-" + Guid.NewGuid().ToString("N"));
 
-    private string File => Path.Combine(folder, "update.json");
+    private string File => Path.Combine(folder, "settings.json");
 
     public void Dispose()
     {

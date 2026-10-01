@@ -781,7 +781,7 @@ SampleExtra.Set(b.Add(NodeCatalog.SampleTypeId), <span class="s">"hello.wav"</sp
     <p><code>Form</code> is how a backend gets settings without the application knowing what they are. It
     declares fields in the same vocabulary an assistant uses — <code>Text</code>, <code>Pick</code> and
     <code>Switch</code> — and the settings window draws them on the Sound tab, keeps the answers in
-    <code>output.json</code> under your backend's id, and hands them to <code>Create</code> at launch and
+    <code>settings.json</code> under your backend's id, and hands them to <code>Create</code> at launch and
     again on every Save that changes them, so the new device plays at once. Open nothing until
     <code>Start</code>, which is what lets Save swap devices in place. Leave <code>Form</code> out and the tab
     shows only latency. All three shipped backends use it to pick the output device.</p>

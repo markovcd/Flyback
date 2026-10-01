@@ -13,9 +13,9 @@ namespace Flyback.App;
 /// </summary>
 /// <remarks>
 /// Properties of the machine rather than of the instrument, which is why none of it
-/// is saved with a patch (ADR-0037) and all of it is saved here, beside
-/// <c>assistant.json</c>. Nothing here is load-bearing, for the same reason that
-/// file is not (ADR-0034): an unreadable file means the defaults.
+/// is saved with a patch (ADR-0037) and all of it is saved in the settings file's
+/// output section (ADR-0171). Nothing here is load-bearing (ADR-0034): an
+/// unreadable section means the defaults.
 /// </remarks>
 public sealed class OutputSettings
 {
@@ -208,7 +208,8 @@ public sealed class OutputSettings
     /// <summary>Nought is no count at all, and the longest is a count nobody stands through twice.</summary>
     public const int NoCountIn = 0, LongestCountIn = 10;
 
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
+    /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
+    public const string Section = "output";
 
     /// <summary>
     /// What a machine with no settings file yet starts on: the properties' own
@@ -239,8 +240,8 @@ public sealed class OutputSettings
     {
         try
         {
-            var settings = System.IO.File.Exists(path)
-                ? JsonSerializer.Deserialize<OutputSettings>(System.IO.File.ReadAllText(path), Options) ?? Fresh()
+            var settings = SettingsFile.Read(path, Section) is { } json
+                ? JsonSerializer.Deserialize<OutputSettings>(json, Options) ?? Fresh()
                 : Fresh();
 
             // Brought into range rather than refused, since the file is one
@@ -298,10 +299,12 @@ public sealed class OutputSettings
         }
     }
 
+    /// <summary>A copy sharing nothing with this one, so what it held can be compared after this changes.</summary>
+    public OutputSettings Copy() => JsonSerializer.Deserialize<OutputSettings>(JsonSerializer.Serialize(this, Options), Options)!;
+
     /// <summary>Throws if it cannot write, so the caller can say so.</summary>
     public void Save(string path)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? GlobalConstants.DataFolder);
-        System.IO.File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(path, Section, JsonSerializer.Serialize(this, Options));
     }
 }

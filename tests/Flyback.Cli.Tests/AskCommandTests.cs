@@ -26,7 +26,7 @@ public sealed class AskCommandTests : IDisposable
 
     private readonly Scripted assistant = new();
 
-    private string SettingsPath => System.IO.Path.Combine(folder.FullName, "assistant.json");
+    private string SettingsPath => System.IO.Path.Combine(folder.FullName, "settings.json");
 
     private ConversationStore Store => new(System.IO.Path.Combine(folder.FullName, "sessions"));
 

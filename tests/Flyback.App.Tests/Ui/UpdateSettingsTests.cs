@@ -18,7 +18,7 @@ public sealed class UpdateSettingsTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-update-settings-" + Guid.NewGuid().ToString("N"),
-        "update.json");
+        "settings.json");
 
     private const string PrivacyTab = "Privacy";
 
@@ -33,7 +33,7 @@ public sealed class UpdateSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, string? note = null, ReleaseNotes? whatsNew = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { UpdateSettingsPath = settingsPath }, Launch = new() { OpeningNote = note, WhatsNew = whatsNew } });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath }, Launch = new() { OpeningNote = note, WhatsNew = whatsNew } });
 
         window.Show();
         Settle(window);

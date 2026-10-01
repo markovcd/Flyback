@@ -17,7 +17,7 @@ namespace Flyback.App.Settings;
 /// properties of the file (ADR-0091). The video's rate and quality follow its
 /// format, since what quality means depends on the format.
 /// </remarks>
-internal sealed class RecordingSection : ISettingsSection, IOutputSlice
+internal sealed class RecordingSection : ISettingsSection
 {
     /// <summary>The frame rates a take can be recorded at: film, PAL, the usual, and the two doubles.</summary>
     private static readonly double[] FrameRates = [24, 25, 30, 50, 60];
@@ -30,6 +30,8 @@ internal sealed class RecordingSection : ISettingsSection, IOutputSlice
     private static readonly int[] CountIns = [0, 1, 2, 3, 5, 10];
 
     private readonly IFilePickers pickers;
+    private readonly OutputSettingRepository settings;
+    private readonly PatchFiles files;
 
     public string Name => "Recording";
 
@@ -110,9 +112,12 @@ internal sealed class RecordingSection : ISettingsSection, IOutputSlice
         TextWrapping = TextWrapping.Wrap,
     };
 
-    public RecordingSection(IFilePickers pickers)
+    /// <param name="files">The patch's files, whose MP3 samples are read through the ffmpeg chosen here.</param>
+    public RecordingSection(IFilePickers pickers, OutputSettingRepository settings, PatchFiles files)
     {
         this.pickers = pickers;
+        this.settings = settings;
+        this.files = files;
 
         ToolTip.SetTip(countIn,
             "How long the status bar counts down after you have named the file, before "
@@ -130,7 +135,21 @@ internal sealed class RecordingSection : ISettingsSection, IOutputSlice
     /// <summary>Looks for ffmpeg afresh, since it may have been installed, moved or taken away since.</summary>
     public void Opening() => _ = ShowFfmpegAsync();
 
-    public void Show(OutputSettings current)
+    public void Start()
+    {
+        Show();
+        files.SoundFolder.FfmpegPath = settings.Current.FfmpegPath;
+    }
+
+    public void Show() => Show(settings.Current);
+
+    public void Save()
+    {
+        settings.Change(Read);
+        files.SoundFolder.FfmpegPath = settings.Current.FfmpegPath;
+    }
+
+    private void Show(OutputSettings current)
     {
         frameRate.SelectedIndex = SettingRows.Nearest(FrameRates, current.FrameRate);
         jpegQuality.Value = current.JpegQuality;
@@ -143,14 +162,15 @@ internal sealed class RecordingSection : ISettingsSection, IOutputSlice
         ffmpegBox.Text = current.FfmpegPath;
     }
 
-    public void Read(OutputSettings into, OutputSettings before)
+    /// <summary>Writes what the controls hold into <paramref name="into"/>, keeping a quality whose box was emptied.</summary>
+    private void Read(OutputSettings into)
     {
         into.FrameRate = FrameRates[Math.Max(frameRate.SelectedIndex, 0)];
 
         // An emptied box keeps what was saved rather than becoming nought.
         into.JpegQuality = jpegQuality.Value is { } quality
             ? Math.Clamp((int)Math.Round(quality), OutputSettings.LowestQuality, OutputSettings.HighestQuality)
-            : before.JpegQuality;
+            : into.JpegQuality;
 
         // So an emptied box says what it kept, the next time it is looked at.
         jpegQuality.Value = into.JpegQuality;

@@ -39,9 +39,9 @@ public sealed class AssistantPanelTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-panel-settings-" + Guid.NewGuid().ToString("N"),
-        "assistant.json");
+        "settings.json");
 
-    private EditorFolders Kept => new() { AssistantSettingsPath = settingsPath };
+    private EditorFolders Kept => new() { SettingsPath = settingsPath };
 
     /// <summary>An editor holding one patch, which takes nothing the assistant hands it.</summary>
     private sealed class Holding(Func<Patch> current, Action<string, string?>? report = null) : IAssistantEditor

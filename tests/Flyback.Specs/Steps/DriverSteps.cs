@@ -12,7 +12,7 @@ public sealed class DriverSteps : IDisposable
     /// <summary>Where a scenario keeps its settings, so the machine's own are never touched.</summary>
     private readonly DirectoryInfo folder = Directory.CreateTempSubdirectory("flyback-driver-specs");
 
-    private string Path => System.IO.Path.Combine(folder.FullName, "output.json");
+    private string Path => System.IO.Path.Combine(folder.FullName, "settings.json");
 
     private IReadOnlyList<Win32RenderingMode> tried = [];
 

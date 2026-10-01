@@ -23,7 +23,7 @@ public sealed class FullScreenTransportTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-transport-" + Guid.NewGuid().ToString("N"),
-        "output.json");
+        "settings.json");
 
     public override void Dispose()
     {
@@ -205,7 +205,7 @@ public sealed class FullScreenTransportTests : UiTest
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
         new OutputSettings { Transport = TransportEdge.Bottom }.Save(settingsPath);
 
-        var window = Open(setup: new EditorSetup { Folders = new() { OutputSettingsPath = settingsPath } });
+        var window = Open(setup: new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
 
         Overlay(window).VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Bottom);
         All<StageKnobs>(window).Single().VerticalAlignment.ShouldBe(Avalonia.Layout.VerticalAlignment.Top);

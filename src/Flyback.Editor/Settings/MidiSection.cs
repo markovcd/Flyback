@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.App.Bars;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.App.Knobs;
@@ -13,8 +14,12 @@ namespace Flyback.App.Settings;
 /// The MIDI section of the settings window: which plugin hears an instrument, what
 /// a controller does to a knob that sits elsewhere, and how the panel knobs stand.
 /// </summary>
-internal sealed class MidiSection : ISettingsSection, IOutputSlice
+internal sealed class MidiSection : ISettingsSection
 {
+    private readonly OutputSettingRepository settings;
+    private readonly PanelKnobs knobs;
+    private readonly TransportControls transport;
+
     public string Name => "MIDI";
 
     public Control View => rows;
@@ -60,8 +65,12 @@ internal sealed class MidiSection : ISettingsSection, IOutputSlice
     private readonly NumericUpDown knobRows = GridSide("knobRows");
 
     /// <param name="knobs">The panel knobs, whose instruments the section lists.</param>
-    public MidiSection(PluginCatalog plugins, PanelKnobs knobs)
+    public MidiSection(PluginCatalog plugins, PanelKnobs knobs, OutputSettingRepository settings, TransportControls transport)
     {
+        this.settings = settings;
+        this.knobs = knobs;
+        this.transport = transport;
+
         ToolTip.SetTip(takeover,
             "When a controller's knob is not where the knob on screen is: jump straight to the controller, "
             + "or leave the knob alone until the controller passes it. Flyback's own, whichever plugin "
@@ -120,7 +129,28 @@ internal sealed class MidiSection : ISettingsSection, IOutputSlice
         rows.Children.Add(instrumentsNote);
     }
 
-    public void Show(OutputSettings current)
+    public void Start()
+    {
+        Show();
+        Apply();
+    }
+
+    public void Show() => Show(settings.Current);
+
+    public void Save()
+    {
+        settings.Change(Read);
+        Apply();
+    }
+
+    private void Apply()
+    {
+        knobs.Hub.Takeover = settings.Current.Takeover;
+        transport.FollowsInstruments = settings.Current.FollowTransport;
+        knobs.KnobGrid = settings.Current.KnobGrid;
+    }
+
+    private void Show(OutputSettings current)
     {
         takeover.SelectedIndex = current.Takeover == Takeover.PickUp ? 1 : 0;
         followTransport.IsChecked = current.FollowTransport;
@@ -130,7 +160,8 @@ internal sealed class MidiSection : ISettingsSection, IOutputSlice
         knobRows.Value = current.KnobGrid.Rows;
     }
 
-    public void Read(OutputSettings into, OutputSettings before)
+    /// <summary>Writes what the controls hold into <paramref name="into"/>, keeping a grid side whose box was emptied.</summary>
+    private void Read(OutputSettings into)
     {
         into.Takeover = takeover.SelectedIndex == 1 ? Takeover.PickUp : Takeover.Jump;
         into.FollowTransport = followTransport.IsChecked == true;
@@ -140,8 +171,8 @@ internal sealed class MidiSection : ISettingsSection, IOutputSlice
         into.KnobGrid = new KnobGrid
         {
             On = knobGridOn.IsChecked == true,
-            Columns = knobColumns.Value is { } across ? (int)Math.Round(across) : before.KnobGrid.Columns,
-            Rows = knobRows.Value is { } down ? (int)Math.Round(down) : before.KnobGrid.Rows,
+            Columns = knobColumns.Value is { } across ? (int)Math.Round(across) : into.KnobGrid.Columns,
+            Rows = knobRows.Value is { } down ? (int)Math.Round(down) : into.KnobGrid.Rows,
         };
 
         into.KnobGrid.Clamp();

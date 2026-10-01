@@ -531,8 +531,8 @@ and encodes with ffmpeg where it is found, Motion JPEG AVI where it is not
 palette is built.
 
 **What it writes**, all JSON under `%APPDATA%/Flyback`
-(`GlobalConstants.DataFolder`): `output.json`, `canvas.json`, `layout.json`,
-`update.json`, `usage.json`, and the `recovery/`, `updates/`, `sessions/`,
+(`GlobalConstants.DataFolder`): `settings.json`, one section a concern
+(`SettingsFile`, ADR-0171), `layout.json`, and the `recovery/`, `updates/`, `sessions/`,
 `groups/` and `presets/` folders. API keys go to the operating system's store,
 never to a file.
 

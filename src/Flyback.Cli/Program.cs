@@ -63,7 +63,7 @@ internal static class Program
 
         var json = new Option<bool>("--json") { Description = "Write the answer as JSON instead of prose." };
 
-        var exports = ExportDefaults.Load(ExportDefaults.PathIn(args) ?? ExportDefaults.File);
+        var exports = ExportDefaults.Load(ExportDefaults.PathIn(args) ?? SettingsFile.Path);
 
         var root = new RootCommand($"{GlobalConstants.ApplicationName} — a patchable synthesiser, from the command line.")
         {
@@ -455,7 +455,7 @@ internal static class Program
         var settings = new Option<string>("--settings")
         {
             HelpName = "path",
-            Description = "Read the defaults from another output.json than the editor's.",
+            Description = "Read the defaults from another settings.json than the editor's.",
         };
 
         var loudness = new Option<bool>("--loudness")

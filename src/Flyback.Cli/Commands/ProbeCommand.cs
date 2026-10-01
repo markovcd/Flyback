@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Flyback.Cli.Models;
 using Flyback.Cli.Common;
+using Flyback.Core;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
@@ -323,7 +324,7 @@ internal static class ProbeCommand
         if (!options.Json)
         {
             output.WriteLine();
-            output.WriteLine($"{Writing.Count(found.Count, "model")} written to {AssistantSettings.File}.");
+            output.WriteLine($"{Writing.Count(found.Count, "model")} written to {SettingsFile.Path}.");
         }
 
         return Exit.Ok;

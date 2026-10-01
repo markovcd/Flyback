@@ -34,7 +34,7 @@ internal sealed class UsageSection
     /// <param name="usage">What this run says about itself, stopped the moment the box is cleared and saved.</param>
     public UsageSection(EditorFolders folders, Usage usage, ReportLine report)
     {
-        path = folders.UsageSettingsPath;
+        path = folders.SettingsPath;
         this.usage = usage;
         this.report = (message, detail) => report.Say(message, detail);
 

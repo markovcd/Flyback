@@ -8,10 +8,10 @@ namespace Flyback.App.Canvas;
 /// window.
 /// </summary>
 /// <remarks>
-/// A file of its own rather than a field on <see cref="OutputSettings"/>, for the
-/// reason that one names: this is about the editor rather than about what comes
-/// out of the program. Not load-bearing (ADR-0034): an unreadable file means the
-/// defaults, and both defaults are what a plugin author asked for.
+/// A section of its own rather than fields on <see cref="OutputSettings"/>: this is
+/// about the editor rather than about what comes out of the program. Not
+/// load-bearing (ADR-0034): an unreadable section means the defaults, and both
+/// defaults are what a plugin author asked for.
 /// </remarks>
 public sealed class CanvasSettings
 {
@@ -57,15 +57,16 @@ public sealed class CanvasSettings
     /// <summary>Whether the patch comes round to the start of the seek bar when it reaches its end.</summary>
     public bool SeekLoop { get; set; }
 
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "canvas.json");
+    /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
+    public const string Section = "canvas";
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
     public static CanvasSettings Load(string path)
     {
         try
         {
-            var loaded = System.IO.File.Exists(path)
-                ? JsonSerializer.Deserialize<CanvasSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
+            var loaded = SettingsFile.Read(path, Section) is { } json
+                ? JsonSerializer.Deserialize<CanvasSettings>(json, Options) ?? new()
                 : new CanvasSettings();
 
             loaded.EditorFontSize = double.IsFinite(loaded.EditorFontSize)
@@ -83,7 +84,6 @@ public sealed class CanvasSettings
     /// <summary>Throws if it cannot write, so the caller can say so.</summary>
     public void Save(string path)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? GlobalConstants.DataFolder);
-        System.IO.File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(path, Section, JsonSerializer.Serialize(this, Options));
     }
 }

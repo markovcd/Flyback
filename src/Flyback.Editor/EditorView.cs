@@ -24,7 +24,7 @@ namespace Flyback.App;
 /// </summary>
 internal sealed class EditorView : Border
 {
-    private readonly OutputSettingsUse outputSettingsUse;
+    private readonly IEnumerable<ISettingsSection> settingsSections;
     private readonly IDialog dialog;
     private readonly Document document;
     private readonly PatchOpening patchOpening;
@@ -60,7 +60,7 @@ internal sealed class EditorView : Border
         TransportControls transport,
         ShellLayout shell,
         EditState editState,
-        OutputSettingsUse outputSettingsUse,
+        IEnumerable<ISettingsSection> settingsSections,
         IDialog dialog,
         WindowHolder holder,
         EditorHost editorHost)
@@ -72,7 +72,7 @@ internal sealed class EditorView : Border
         this.midi = midi;
         this.playback = playback;
         this.editorStart = editorStart;
-        this.outputSettingsUse = outputSettingsUse;
+        this.settingsSections = settingsSections;
         this.knobs = knobs;
         this.randomizer = randomizer;
         this.presets = presets;
@@ -373,7 +373,6 @@ internal sealed class EditorView : Border
     {
         // Quietly, because nobody asked for anything yet: a saved answer is
         // what the program starts in, not a change to report.
-        outputSettingsUse.Show();
-        outputSettingsUse.ApplyCurrent();
+        foreach (var section in settingsSections) section.Start();
     }
 }

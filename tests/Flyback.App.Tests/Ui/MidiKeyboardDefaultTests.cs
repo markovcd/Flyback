@@ -22,7 +22,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-keyboard-default-" + Guid.NewGuid().ToString("N"),
-        "output.json");
+        "settings.json");
 
     public override void Dispose()
     {
@@ -37,7 +37,7 @@ public sealed class MidiKeyboardDefaultTests : UiTest
     {
         new OutputSettings { Keyboard = layout }.Save(settingsPath);
 
-        var window = NewMainWindow(new EditorSetup { Folders = new() { OutputSettingsPath = settingsPath } });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
 
         window.Show();
         window.UpdateLayout();

@@ -108,7 +108,8 @@ context, decision, consequences.
 | [0080](0080-record-moves-to-the-toolbar-with-a-glyph-and-ctrl-r.md) | Record moves to the toolbar, with a glyph and Ctrl+R *(user-directed; its Output-panel `Rewind` row moved to the toolbar by [0081](0081-rewind-moves-to-the-toolbar-beside-record.md); its press given a count-in by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0081](0081-rewind-moves-to-the-toolbar-beside-record.md) | Rewind moves to the toolbar, beside Record *(user-directed; every take does it first by [0090](0090-a-take-is-counted-in-and-starts-at-zero.md))* |
 | [0164](0164-volume-is-on-the-toolbar-too.md) | Volume is on the toolbar too *(user-directed)* |
-| [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md))* |
+| [0082](0082-the-output-settings-move-to-the-settings-window.md) | The Output settings move to the settings window, and are kept *(user-directed; its next-launch latency made immediate by [0085](0085-a-sound-backend-declares-its-own-settings.md); kept in one file with every other setting by [0171](0171-every-setting-is-kept-in-one-file.md))* |
+| [0171](0171-every-setting-is-kept-in-one-file.md) | Every setting is kept in one file *(user-directed)* |
 | [0087](0087-the-assistant-moves-to-a-column-beside-the-patch.md) | The assistant moves to a column, beside the patch *(user-directed)* |
 | [0090](0090-a-take-is-counted-in-and-starts-at-zero.md) | A take is counted in, and starts at zero *(user-directed; its fixed three seconds and unconditional rewind made settings by [0091](0091-how-a-take-begins-is-two-settings.md))* |
 | [0091](0091-how-a-take-begins-is-two-settings.md) | How a take begins is two settings *(user-directed)* |
@@ -181,7 +182,7 @@ context, decision, consequences.
 | [0135](0135-a-patch-that-names-a-plugin-you-do-not-have-offers-it.md) | A patch that names a plugin you do not have offers it *(user-directed)* |
 | [0158](0158-a-plugin-loads-only-once-somebody-said-yes-and-never-holds-a-key.md) | A plugin loads only once somebody said yes, and never holds a key *(user-directed)* |
 | [0033](0033-patches-authored-by-an-agent-behind-the-plugin-boundary.md) | Patches may be authored by an agent, behind the plugin boundary *(user-directed; its all-or-nothing prose budget replaced by [0098](0098-the-briefing-has-a-budget-and-a-list-that-outranks-it.md))* |
-| [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed)* |
+| [0034](0034-settings-in-a-file-the-key-in-the-operating-system.md) | Settings in a file, the key in the operating system's store *(user-directed; the file made the one every setting shares by [0171](0171-every-setting-is-kept-in-one-file.md))* |
 | [0088](0088-a-release-installs-itself-at-the-next-start.md) | A release installs itself at the next start, if its signature says it is ours *(user-directed)* |
 | [0127](0127-the-person-chooses-what-opens-a-flyback-file.md) | The person chooses what opens a Flyback file *(user-directed)* |
 | [0120](0120-every-change-passes-the-gate-a-release-passes.md) | Every change passes the gate a release passes |

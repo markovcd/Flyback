@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.App.Audio;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
 using Flyback.Core.Render;
@@ -12,12 +13,18 @@ namespace Flyback.App.Settings;
 /// The Sound section of the settings window: whatever the sound backend declares,
 /// then how far behind the patch the speakers may run.
 /// </summary>
-internal sealed class SoundSection : ISettingsSection, IOutputSlice
+internal sealed class SoundSection : ISettingsSection
 {
     /// <summary>The latencies the speakers can be asked for, in milliseconds.</summary>
     private static readonly int[] Latencies = [5, 10, 20, 30, 50, 100, 200];
 
     private readonly PluginCatalog plugins;
+    private readonly OutputSettingRepository settings;
+    private readonly IAudioEngine audio;
+    private readonly Playback playback;
+
+    /// <summary>What lowers the oversampling when the sound keeps falling behind.</summary>
+    private readonly LiveOversample live;
 
     public string Name => "Sound";
 
@@ -62,9 +69,14 @@ internal sealed class SoundSection : ISettingsSection, IOutputSlice
         TextWrapping = TextWrapping.Wrap,
     };
 
-    public SoundSection(PluginCatalog plugins, EditorHost host)
+    public SoundSection(PluginCatalog plugins, EditorHost host, OutputSettingRepository settings, IAudioEngine audio, Playback playback, ReportLine report)
     {
         this.plugins = plugins;
+        this.settings = settings;
+        this.audio = audio;
+        this.playback = playback;
+
+        live = new(audio, () => settings.Current.StepDownOnDropouts, message => report.Say(message));
 
         ToolTip.SetTip(latency,
             "How far behind the patch the speakers may run. Lower answers a key sooner; "
@@ -103,7 +115,26 @@ internal sealed class SoundSection : ISettingsSection, IOutputSlice
         rows.Children.Add(stepDown);
     }
 
-    public void Show(OutputSettings current)
+    public void Start()
+    {
+        Show();
+        audio.Oversample = settings.Current.Oversample;
+        live.Start();
+    }
+
+    public void Show() => Show(settings.Current);
+
+    public void Save()
+    {
+        var before = settings.Change(Read);
+
+        audio.Oversample = settings.Current.Oversample;
+
+        if (settings.Current.LatencyMilliseconds != before.LatencyMilliseconds || SoundChanged(before, settings.Current))
+            playback.ReopenAudio(settings.Current);
+    }
+
+    private void Show(OutputSettings current)
     {
         latency.SelectedIndex = SettingRows.Nearest(Latencies.Select(ms => (double)ms).ToArray(), current.LatencyMilliseconds);
         oversample.SelectedIndex = Math.Max(0, AudioRenderer.Oversamples.ToList().IndexOf(current.Oversample));
@@ -113,17 +144,13 @@ internal sealed class SoundSection : ISettingsSection, IOutputSlice
             soundForm.Show(output.Form, current.SoundOf(output.Id));
     }
 
-    public void Read(OutputSettings into, OutputSettings before)
+    /// <summary>Writes what the controls hold into <paramref name="into"/>.</summary>
+    /// <remarks>Only the backend showing is written, so one not installed this launch keeps what it was set to.</remarks>
+    private void Read(OutputSettings into)
     {
         into.LatencyMilliseconds = Latencies[Math.Max(latency.SelectedIndex, 0)];
         into.Oversample = AudioRenderer.Oversamples[Math.Max(oversample.SelectedIndex, 0)];
         into.StepDownOnDropouts = stepDown.IsChecked == true;
-
-        // Every backend's, not only the one showing, so a backend that is not
-        // installed this launch keeps what it was set to. A copy, because the
-        // backend's answers are about to be written into it and what it held
-        // before is still to be compared against.
-        into.Sound = new(before.Sound, StringComparer.Ordinal);
 
         if (plugins.PreferredAudioOutput is { } output) into.RememberSound(output.Id, soundForm.Values);
     }
@@ -134,7 +161,7 @@ internal sealed class SoundSection : ISettingsSection, IOutputSlice
     /// backend reads them — so a device picked and then picked back is not a
     /// change, though the bag now holds a key it did not.
     /// </summary>
-    public bool SoundChanged(OutputSettings before, OutputSettings after)
+    private bool SoundChanged(OutputSettings before, OutputSettings after)
     {
         if (plugins.PreferredAudioOutput is not { } output) return false;
 

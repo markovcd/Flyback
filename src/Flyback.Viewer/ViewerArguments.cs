@@ -225,7 +225,7 @@ internal static class ViewerArguments
         var file = new Option<string>("--settings")
         {
             HelpName = "path",
-            Description = "Read the defaults from another output.json.",
+            Description = "Read the defaults from another settings.json.",
         };
 
         var root = new RootCommand(

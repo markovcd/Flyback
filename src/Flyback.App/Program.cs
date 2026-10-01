@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Flyback.App.Shots;
 using Flyback.App.Updates;
+using Flyback.Core;
 
 namespace Flyback.App;
 
@@ -48,7 +49,7 @@ internal static class Program
         // Before anything is loaded, because a version waiting to be installed
         // replaces the files loading would read — and this launch becomes that
         // version's, opened once it is in.
-        var updates = UpdateSettings.Load(UpdateSettings.File);
+        var updates = UpdateSettings.Load(SettingsFile.Path);
 
         if (Updater.HandOff(args, updates)) return 0;
 
@@ -67,7 +68,7 @@ internal static class Program
             shared: shared);
 
         return BuildAvaloniaApp()
-            .UseDriver(OutputSettings.Load(OutputSettings.File).Driver)
+            .UseDriver(OutputSettings.Load(SettingsFile.Path).Driver)
             .StartWithClassicDesktopLifetime(args);
     }
 

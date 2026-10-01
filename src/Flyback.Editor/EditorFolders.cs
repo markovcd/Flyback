@@ -3,10 +3,8 @@ using Flyback.App.Files;
 using Flyback.App.Gallery;
 using Flyback.App.Midi;
 using Flyback.App.Site;
-using Flyback.App.Statistics;
-using Flyback.App.Updates;
 using Flyback.App.Windows;
-using Flyback.Plugins.Assist;
+using Flyback.Core;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.App;
@@ -27,23 +25,11 @@ public sealed record EditorFolders : IPresetFolder
     /// <summary>Where the gallery's thumbnails are kept between runs. Null draws them afresh each run.</summary>
     public string? ThumbnailFolder { get; init; }
 
-    /// <summary>Where the Graphics, Recording and Sound settings are read from and saved to.</summary>
-    public string? OutputSettingsPath { get; init; }
-
-    /// <summary>Where the update switch is read from and saved to.</summary>
-    public string? UpdateSettingsPath { get; init; }
-
-    /// <summary>Where the usage switch is read from and saved to.</summary>
-    public string? UsageSettingsPath { get; init; }
-
-    /// <summary>Where the Canvas section is read from and saved to.</summary>
-    public string? CanvasSettingsPath { get; init; }
-
-    /// <summary>Where the Files section is read from and saved to.</summary>
-    public string? FileTypeSettingsPath { get; init; }
-
-    /// <summary>Where the assistant's settings are read from and saved to, with its priority list beside them.</summary>
-    public string? AssistantSettingsPath { get; init; }
+    /// <summary>
+    /// Where every setting is read from and saved to, a section a concern
+    /// (<see cref="SettingsFile"/>), with the assistant's priority list beside it.
+    /// </summary>
+    public string? SettingsPath { get; init; }
 
     /// <summary>Where conversation logs are written when logging is on. Null writes them to the user's data folder.</summary>
     public string? ConversationLogFolder { get; init; }
@@ -73,12 +59,7 @@ public sealed record EditorFolders : IPresetFolder
         InstrumentFolder = InstrumentLibrary.UserFolder,
         PresetFolder = PresetLibrary.DefaultFolder,
         ThumbnailFolder = ThumbnailStore.DefaultFolder,
-        OutputSettingsPath = OutputSettings.File,
-        UpdateSettingsPath = UpdateSettings.File,
-        UsageSettingsPath = UsageSettings.File,
-        CanvasSettingsPath = CanvasSettings.File,
-        FileTypeSettingsPath = FileTypeSettings.File,
-        AssistantSettingsPath = AssistantSettings.File,
+        SettingsPath = SettingsFile.Path,
         LayoutPath = WindowLayout.File,
         RecoveryFolder = Recovery.Folder,
         PluginFolder = PluginHost.DefaultDirectory,

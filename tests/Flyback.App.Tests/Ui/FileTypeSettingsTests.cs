@@ -18,11 +18,9 @@ public sealed class FileTypeSettingsTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-file-types-" + Guid.NewGuid().ToString("N"),
-        "file-types.json");
+        "settings.json");
 
     private readonly Recorded system = new();
-
-    private string OutputPath => Path.Combine(Path.GetDirectoryName(settingsPath)!, "output.json");
 
     private const string FilesTab = "Files";
 
@@ -46,7 +44,7 @@ public sealed class FileTypeSettingsTests : UiTest
     {
         var window = NewMainWindow(new EditorSetup
         {
-            Folders = new() { FileTypeSettingsPath = settingsPath, OutputSettingsPath = OutputPath },
+            Folders = new() { SettingsPath = settingsPath },
             Host = new() { FileTypes = system },
         });
 
@@ -166,13 +164,13 @@ public sealed class FileTypeSettingsTests : UiTest
         All<TextBox>(dialog).Single(t => t.Name == "library").Text = @"  D:\Sounds  ";
         Close(window, dialog, "Save");
 
-        OutputSettings.Load(OutputPath).Library.ShouldBe(@"D:\Sounds");
+        OutputSettings.Load(settingsPath).Library.ShouldBe(@"D:\Sounds");
     }
 
     [AvaloniaFact]
     public void A_saved_library_folder_is_looked_in_from_launch()
     {
-        new OutputSettings { Library = @"D:\Sounds" }.Save(OutputPath);
+        new OutputSettings { Library = @"D:\Sounds" }.Save(settingsPath);
 
         var window = Open();
 

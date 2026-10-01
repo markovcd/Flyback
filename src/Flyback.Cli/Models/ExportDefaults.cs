@@ -6,7 +6,7 @@ namespace Flyback.Cli.Models;
 
 /// <summary>
 /// What <c>render</c> writes when a flag is left out: the editor's preview size, its
-/// Settings → Recording and its oversampling, read from the <c>output.json</c> the editor saves.
+/// Settings → Recording and its oversampling, read from the settings file the editor saves.
 /// </summary>
 /// <remarks>
 /// Read here rather than through the editor's own settings class, which would bring
@@ -23,7 +23,8 @@ internal sealed record ExportDefaults(
     string? Ffmpeg = null,
     int Oversample = AudioRenderer.DefaultOversample)
 {
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "output.json");
+    /// <summary>The editor's output settings in <see cref="SettingsFile"/>, as the editor's own settings class names them.</summary>
+    private const string Section = "output";
 
     /// <summary>Never throws: a settings file is not worth a failed render.</summary>
     public static ExportDefaults Load(string path)
@@ -32,9 +33,9 @@ internal sealed record ExportDefaults(
 
         try
         {
-            if (!System.IO.File.Exists(path)) return defaults;
+            if (SettingsFile.Read(path, Section) is not { } json) return defaults;
 
-            using var document = JsonDocument.Parse(System.IO.File.ReadAllText(path));
+            using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
 
             int width = Int(root, "width", defaults.Width), height = Int(root, "height", defaults.Height);

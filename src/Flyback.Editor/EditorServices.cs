@@ -91,7 +91,6 @@ internal static class EditorServices
         services.AddSingleton<IPresetFolder>(setup.Folders);
         services.AddSingleton<PresetLibrary>();
         services.AddPart<OutputSettingRepository>();
-        services.AddPart<OutputSettingsUse>();
         services.AddPart<SettingsSession>();
         services.AddPart<EditorStart>();
 

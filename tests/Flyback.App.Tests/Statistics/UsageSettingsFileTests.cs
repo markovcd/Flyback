@@ -10,7 +10,7 @@ public sealed class UsageSettingsFileTests : IDisposable
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-usage-settings-" + Guid.NewGuid().ToString("N"));
 
-    private string File => Path.Combine(folder, "usage.json");
+    private string File => Path.Combine(folder, "settings.json");
 
     public void Dispose()
     {

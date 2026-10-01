@@ -25,7 +25,7 @@ public sealed class ProbeCommandTests : IDisposable
     private readonly string path = Path.Combine(
         Path.GetTempPath(),
         "flyback-probe-" + Guid.NewGuid().ToString("N"),
-        "assistant.json");
+        "settings.json");
 
     private readonly List<string> variables = [];
 

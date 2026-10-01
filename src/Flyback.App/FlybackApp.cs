@@ -6,6 +6,7 @@ using Flyback.App.Files;
 using Flyback.App.Statistics;
 using Flyback.App.Updates;
 using Flyback.App.Windows;
+using Flyback.Core;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +26,7 @@ public sealed class FlybackApp : Application
         // Before the window, because the window says what it started as as
         // soon as it has asked for a sound device (ADR-0094).
         var usage = Usage.Start(
-            UsageSettings.Load(UsageSettings.File),
+            UsageSettings.Load(SettingsFile.Path),
             new Launch(First: Startup.FirstRun, Updated: Startup.Updated, File: Startup.OpenPath is not null));
 
         // A crash is said with the little that may be said about it, and the
@@ -80,7 +81,7 @@ public sealed class FlybackApp : Application
                 if (e is not FileActivatedEventArgs { Files: [IStorageFile file, ..] }) return;
 
                 if (OperatingSystem.IsMacOS()
-                    && FileTypeSettings.Load(FileTypeSettings.File).Opener == FileOpener.Viewer
+                    && FileTypeSettings.Load(SettingsFile.Path).Opener == FileOpener.Viewer
                     && !PluginPackage.Named(file.Name)
                     && file.TryGetLocalPath() is { } path)
                 {

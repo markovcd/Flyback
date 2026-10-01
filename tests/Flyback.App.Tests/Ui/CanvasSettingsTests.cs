@@ -28,7 +28,7 @@ public sealed class CanvasSettingsTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-canvas-settings-" + Guid.NewGuid().ToString("N"),
-        "canvas.json");
+        "settings.json");
 
     private const string CanvasTab = "Canvas";
 
@@ -47,7 +47,7 @@ public sealed class CanvasSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { CanvasSettingsPath = settingsPath } });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
 
         window.Show();
         Settle(window);

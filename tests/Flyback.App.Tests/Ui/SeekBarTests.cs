@@ -24,7 +24,7 @@ public sealed class SeekBarTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-seek-" + Guid.NewGuid().ToString("N"),
-        "canvas.json");
+        "settings.json");
 
     public override void Dispose()
     {
@@ -279,7 +279,7 @@ public sealed class SeekBarTests : UiTest
     [AvaloniaFact]
     public void Looping_is_kept_for_the_next_window()
     {
-        var setup = new EditorSetup { Folders = new() { CanvasSettingsPath = settingsPath } };
+        var setup = new EditorSetup { Folders = new() { SettingsPath = settingsPath } };
         var (_, bar) = WithBar(setup);
 
         bar.Loop.IsChecked.ShouldBe(false);

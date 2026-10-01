@@ -248,17 +248,5 @@ internal sealed class KnobRandomizer : IReactTo<DocumentArrived>
     private void Show() =>
         knobs.View.ShowRoll(Wanted.Amount, Wanted.GlideSeconds, Wanted.Trigger, before.Count > 0, learning is not null);
 
-    private void Save()
-    {
-        if (folders.OutputSettingsPath is not { } path) return;
-
-        try
-        {
-            settings.Current.Save(path);
-        }
-        catch (Exception ex)
-        {
-            report.Say($"Could not save the output settings: {ex.Message}", path);
-        }
-    }
+    private void Save() => settings.Save();
 }

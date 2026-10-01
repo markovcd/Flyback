@@ -1,5 +1,6 @@
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;
+using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Assist;
@@ -81,7 +82,7 @@ internal static class AskCommand
             assistant,
             config,
             settings,
-            settingsPath ?? AssistantSettings.File,
+            settingsPath ?? SettingsFile.Path,
             plugins.Modules,
             plugins.Presets,
             about,

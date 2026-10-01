@@ -1,3 +1,4 @@
+using Flyback.Core;
 using System.Reflection;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
@@ -15,7 +16,7 @@ public sealed class AssistantSettingsTests : IDisposable
     private readonly string path = Path.Combine(
         Path.GetTempPath(),
         "flyback-settings-" + Guid.NewGuid().ToString("N"),
-        "assistant.json");
+        "settings.json");
 
     public void Dispose()
     {
@@ -60,11 +61,16 @@ public sealed class AssistantSettingsTests : IDisposable
 
         written.ShouldNotContain("\\u0022");
         written.ShouldNotContain("\\\"");
-        written.ShouldContain("\"models\": [{\"Id\":\"gemini-3.6-flash\",\"Hearing\":true}]");
+
+        using var section = System.Text.Json.JsonDocument.Parse(SettingsFile.Read(path, AssistantSettings.Section)!);
+        var gemini = section.RootElement.GetProperty("Choices").GetProperty("gemini");
+
+        gemini.GetProperty("models").ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+        gemini.GetProperty("models")[0].GetProperty("Id").GetString().ShouldBe("gemini-3.6-flash");
 
         // The ordinary value beside it is still a string, because that is what
         // it is. Only a list or an object goes in unquoted.
-        written.ShouldContain("\"model\": \"gemini-3.6-flash\"");
+        gemini.GetProperty("model").GetString().ShouldBe("gemini-3.6-flash");
     }
 
     /// <summary>
@@ -93,8 +99,9 @@ public sealed class AssistantSettingsTests : IDisposable
         var folder = Path.GetDirectoryName(path)!;
 
         Directory.CreateDirectory(folder);
-        File.WriteAllText(
+        SettingsFile.Write(
             path,
+            AssistantSettings.Section,
             """
             {
               "Provider": "gemini",
@@ -196,7 +203,7 @@ public sealed class AssistantSettingsTests : IDisposable
     public void A_file_that_makes_no_sense_here_means_the_defaults(string written)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, written);
+        File.WriteAllText(path, $$"""{ "{{AssistantSettings.Section}}": {{written}} }""");
 
         AssistantSettings.Load(path).Of("openai").ShouldBe(SettingValues.None);
     }
@@ -258,7 +265,7 @@ public sealed class AssistantSettingsTests : IDisposable
     public void A_file_written_before_there_was_a_briefing_budget_gets_the_default()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, """{ "Provider": "gemini" }""");
+        SettingsFile.Write(path, AssistantSettings.Section, """{ "Provider": "gemini" }""");
 
         AssistantSettings.Load(path).ProseBudget.ShouldBe(AssistantSettings.DefaultProseBudget);
     }

@@ -50,7 +50,7 @@ internal sealed class CanvasSection : ISettingsSection
     /// <param name="source">The text view, whose font size is this section's setting.</param>
     public CanvasSection(EditorFolders folders, NodeEditor canvas, ReportLine report, SourceView source)
     {
-        path = folders.CanvasSettingsPath;
+        path = folders.SettingsPath;
         this.canvas = canvas;
         this.report = (message, detail) => report.Say(message, detail);
 

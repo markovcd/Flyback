@@ -106,7 +106,8 @@ internal sealed class AssistantSettings
     /// </remarks>
     public Dictionary<string, Dictionary<string, string>> Choices { get; set; } = new(StringComparer.Ordinal);
 
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "assistant.json");
+    /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
+    public const string Section = "assistant";
 
     /// <summary>Where the priority list is read from for the settings at <paramref name="path"/>: beside them.</summary>
     public static string PriorityFileBeside(string path) =>
@@ -142,10 +143,10 @@ internal sealed class AssistantSettings
     {
         try
         {
-            var from = path ?? File;
+            var from = path ?? SettingsFile.Path;
 
-            var settings = System.IO.File.Exists(from)
-                ? JsonSerializer.Deserialize<AssistantSettings>(System.IO.File.ReadAllText(from), Options) ?? new()
+            var settings = SettingsFile.Read(from, Section) is { } json
+                ? JsonSerializer.Deserialize<AssistantSettings>(json, Options) ?? new()
                 : new AssistantSettings();
 
             // A file edited by hand to nought would leave a conversation that
@@ -168,9 +169,8 @@ internal sealed class AssistantSettings
     /// </summary>
     public void Save(string? path = null)
     {
-        var to = path ?? File;
+        var to = path ?? SettingsFile.Path;
 
-        Directory.CreateDirectory(Path.GetDirectoryName(to) ?? GlobalConstants.DataFolder);
-        System.IO.File.WriteAllText(to, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(to, Section, JsonSerializer.Serialize(this, Options));
     }
 }

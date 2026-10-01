@@ -336,7 +336,7 @@ internal sealed class AssistantPanel : UserControl
     private DateTime startedAt;
     private int pulse;
 
-    /// <param name="folders">Its <see cref="EditorFolders.AssistantSettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
+    /// <param name="folders">Its <see cref="EditorFolders.SettingsPath"/> is where the settings are kept. Null keeps them in memory only.</param>
     /// <param name="saved">The settings to open on in place of the ones kept, for a test.</param>
     public AssistantPanel(
         ChosenAssistant chosenAssistant,
@@ -358,7 +358,7 @@ internal sealed class AssistantPanel : UserControl
         this.runs = runs;
         this.credentials = credentials;
         this.usage = usage;
-        settingsPath = folders?.AssistantSettingsPath;
+        settingsPath = folders?.SettingsPath;
         logFolder = folders?.ConversationLogFolder;
         session = new AssistantSession(transcript, logFolder);
         this.settingsRepository = settingsRepository;

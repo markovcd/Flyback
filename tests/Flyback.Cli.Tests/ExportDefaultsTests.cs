@@ -1,3 +1,4 @@
+using Flyback.Core;
 using Flyback.Core.Render;
 using Shouldly;
 using Xunit;
@@ -11,7 +12,7 @@ public class ExportDefaultsTests : IDisposable
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-export-defaults-" + Guid.NewGuid().ToString("N"));
 
-    private string File => Path.Combine(folder, "output.json");
+    private string File => Path.Combine(folder, "settings.json");
 
     public ExportDefaultsTests() => Directory.CreateDirectory(folder);
 
@@ -32,7 +33,7 @@ public class ExportDefaultsTests : IDisposable
     [Fact]
     public void A_render_follows_the_preview_size_and_the_recording_settings()
     {
-        System.IO.File.WriteAllText(File, """
+        SettingsFile.Write(File, "output", """
             {
               "width": 1280,
               "height": 720,
@@ -55,7 +56,7 @@ public class ExportDefaultsTests : IDisposable
     [Fact]
     public void A_value_edited_out_of_range_is_brought_back_into_it()
     {
-        System.IO.File.WriteAllText(File, """{ "width": -4, "height": 720, "frameRate": 0, "jpegQuality": 400, "videoFormat": "wav" }""");
+        SettingsFile.Write(File, "output", """{ "width": -4, "height": 720, "frameRate": 0, "jpegQuality": 400, "videoFormat": "wav" }""");
 
         var defaults = ExportDefaults.Load(File);
 

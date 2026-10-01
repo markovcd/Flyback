@@ -62,12 +62,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     /// <summary>The transport row's button that starts a take, calls off its count and ends it.</summary>
     private readonly Button button;
 
-    /// <summary>
-    /// The picker the take locks, its header having committed to a frame size that
-    /// the picker must not change underneath it.
-    /// </summary>
-    private readonly ComboBox size;
-
     private readonly PreviewHost preview;
     private readonly IAudioEngine audio;
     private readonly Usage usage;
@@ -112,7 +106,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
     public TakeRecording(
         TransportRow row,
-        PictureSection picture,
         PreviewHost preview,
         IAudioEngine audio,
         Usage usage,
@@ -130,7 +123,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
 
         // A capture cannot continue after its picture disappears.
         preview.CaptureLost += Stop;
-        size = picture.Resolution;
         this.preview = preview;
         this.audio = audio;
         this.usage = usage;
@@ -539,10 +531,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         // what the button says.
         Mark();
 
-        // The header has already committed to a frame size, so the picker cannot
-        // be allowed to change it underneath the take.
-        size.IsEnabled = false;
-
         ticker = new DispatcherTimer(DispatcherPriority.Background) { Interval = StatusTick };
         ticker.Tick += (_, _) => ShowProgress();
         ticker.Start();
@@ -592,7 +580,6 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
         recordingState.SetInHand(InHand);
 
         button.Content = Glyphs.Record();
-        size.IsEnabled = true;
     }
 
     /// <summary>

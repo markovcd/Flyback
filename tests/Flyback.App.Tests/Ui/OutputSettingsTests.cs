@@ -1,4 +1,5 @@
-﻿using Avalonia;
+﻿using Flyback.Core;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
@@ -8,8 +9,10 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.App.Assist;
 using Flyback.App.Canvas;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Knobs;
+using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Windows;
 using Flyback.Core.Graph;
@@ -36,7 +39,7 @@ public class OutputSettingsTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-output-settings-" + Guid.NewGuid().ToString("N"),
-        "output.json");
+        "settings.json");
 
     public override void Dispose()
     {
@@ -56,7 +59,7 @@ public class OutputSettingsTests : UiTest
     /// </summary>
     private MainWindow Open(string? settingsPath = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { OutputSettingsPath = settingsPath } });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath } });
 
         window.Show();
         window.UpdateLayout();
@@ -320,7 +323,7 @@ public class OutputSettingsTests : UiTest
     public void A_hand_edited_knob_grid_is_brought_into_range()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        File.WriteAllText(settingsPath, """{ "knobGrid": { "on": true, "columns": 0, "rows": 500 } }""");
+        SettingsFile.Write(settingsPath, OutputSettings.Section, """{ "knobGrid": { "on": true, "columns": 0, "rows": 500 } }""");
 
         OutputSettings.Load(settingsPath).KnobGrid.ToString().ShouldBe("1x32");
     }
@@ -446,7 +449,7 @@ public class OutputSettingsTests : UiTest
     public void A_startup_patch_this_launch_does_not_offer_is_kept()
     {
         Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-        File.WriteAllText(settingsPath, "{\"defaultPreset\":\"A Plugin's Preset\"}");
+        SettingsFile.Write(settingsPath, OutputSettings.Section, "{\"defaultPreset\":\"A Plugin's Preset\"}");
 
         OutputSettings.Load(settingsPath).DefaultPreset
             .ShouldBe("A Plugin's Preset", "the file is read the way this test expects");
@@ -871,6 +874,26 @@ public class OutputSettingsTests : UiTest
     /// A row picked in the size picker before it was grayed out is not what Save
     /// takes.
     /// </summary>
+    /// <summary>A take's file has committed to a size, so the size picker is grayed out while one runs and given back when it ends.</summary>
+    [AvaloniaFact]
+    public void A_running_take_grays_out_the_size()
+    {
+        var window = Open();
+        var take = Service<RecordingState>(window);
+        var reactions = Service<Reactions>(window);
+        var dialog = OpenSettings(window);
+
+        take.SetRunning(true);
+        reactions.Raise(new TakeMarked());
+
+        Size(dialog).IsEnabled.ShouldBeFalse();
+
+        take.SetRunning(false);
+        reactions.Raise(new TakeMarked());
+
+        Size(dialog).IsEnabled.ShouldBeTrue();
+    }
+
     /// <remarks>
     /// The picker is grayed out for the length of a take, whose file has
     /// committed to a size and drops every frame that arrives at another.

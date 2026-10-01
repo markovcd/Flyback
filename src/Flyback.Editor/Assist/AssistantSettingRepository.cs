@@ -15,17 +15,17 @@ internal sealed class AssistantSettingRepository
     public AssistantSettings Current { get; }
 
     private AssistantSettings Load() =>
-        folders.AssistantSettingsPath is null
+        folders.SettingsPath is null
             ? new AssistantSettings()
-            : AssistantSettings.Load(folders.AssistantSettingsPath);
+            : AssistantSettings.Load(folders.SettingsPath);
 
     public void Save()
     {
-        if (folders.AssistantSettingsPath is not null) Current.Save(folders.AssistantSettingsPath);
+        if (folders.SettingsPath is not null) Current.Save(folders.SettingsPath);
     }
 
     /// <summary>Where the priority list is read from: beside the settings, or nowhere where they are kept in memory.</summary>
-    public string? PriorityFile => folders.AssistantSettingsPath is { } path
+    public string? PriorityFile => folders.SettingsPath is { } path
         ? AssistantSettings.PriorityFileBeside(path)
         : null;
 
@@ -34,5 +34,5 @@ internal sealed class AssistantSettingRepository
     /// file every time, so an edit to it counts from the next conversation, and
     /// from the next save as far as the canvas is concerned.
     /// </summary>
-    public ProsePolicy GetProsePolicy() => Current.Prose(folders.AssistantSettingsPath);
+    public ProsePolicy GetProsePolicy() => Current.Prose(folders.SettingsPath);
 }

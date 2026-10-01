@@ -47,10 +47,10 @@ public sealed class TransportSteps(Editor editor) : IDisposable
     [Given("the settings give the top of a full-screen picture to the knobs")]
     public void GivenKnobsOnTop()
     {
-        var path = Path.Combine(settings.FullName, "output.json");
+        var path = Path.Combine(settings.FullName, "settings.json");
 
         new OutputSettings { Transport = TransportEdge.Bottom }.Save(path);
-        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { OutputSettingsPath = path } };
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SettingsPath = path } };
     }
 
     [Then("the transport waits at the top of the picture")]

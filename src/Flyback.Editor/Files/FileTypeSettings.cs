@@ -21,15 +21,16 @@ public sealed class FileTypeSettings
     /// <summary>None by default: nothing is registered until somebody asks.</summary>
     public FileOpener Opener { get; set; }
 
-    public static string File => Path.Combine(GlobalConstants.DataFolder, "file-types.json");
+    /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
+    public const string Section = "fileTypes";
 
     /// <summary>Never throws. A settings file is not worth a failure to start.</summary>
     public static FileTypeSettings Load(string path)
     {
         try
         {
-            return System.IO.File.Exists(path)
-                ? JsonSerializer.Deserialize<FileTypeSettings>(System.IO.File.ReadAllText(path), Options) ?? new()
+            return SettingsFile.Read(path, Section) is { } json
+                ? JsonSerializer.Deserialize<FileTypeSettings>(json, Options) ?? new()
                 : new FileTypeSettings();
         }
         catch
@@ -41,7 +42,6 @@ public sealed class FileTypeSettings
     /// <summary>Throws if it cannot write, so the caller can say so.</summary>
     public void Save(string path)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? GlobalConstants.DataFolder);
-        System.IO.File.WriteAllText(path, JsonSerializer.Serialize(this, Options));
+        SettingsFile.Write(path, Section, JsonSerializer.Serialize(this, Options));
     }
 }

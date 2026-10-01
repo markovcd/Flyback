@@ -1,14 +1,19 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Flyback.App.Audio;
+using Flyback.App.Bars;
+using Flyback.App.Capture;
 using Flyback.App.Controls;
 using Flyback.App.Inspect;
+using Flyback.App.Knobs;
+using Flyback.App.Notices;
 using Flyback.Core.Render;
 
 namespace Flyback.App.Settings;
 
 /// <summary>The Picture section of the settings window: size, preview rate, renderer and full screen.</summary>
-internal sealed class PictureSection : ISettingsSection, IOutputSlice
+internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>
 {
     /// <summary>
     /// The frame rates the preview itself can be capped to, 0 standing for
@@ -34,6 +39,12 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
 
     private readonly OutputSettingRepository settings;
     private readonly IMonitors monitors;
+    private readonly PreviewHost preview;
+    private readonly ReportLine report;
+    private readonly IAudioEngine audio;
+    private readonly TransportControls transport;
+    private readonly PanelKnobs knobs;
+    private readonly RecordingState recording;
 
     public string Name => "Picture";
 
@@ -42,7 +53,7 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
     private readonly StackPanel rows = new() { Spacing = 8, Width = 280 };
 
     /// <summary>What size the picture is drawn at. A take grays it out while it runs.</summary>
-    public ComboBox Resolution { get; } = new Picker
+    private readonly ComboBox resolution = new Picker
     {
         ItemsSource = Resolutions.All.Select(r => r.Label).ToList(),
         SelectedIndex = Resolutions.Default,
@@ -88,10 +99,25 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
     private List<MonitorSpot> fullScreenMonitors = [];
 
     /// <param name="preview">The picture, whose renderer the Renderer box follows when it falls back.</param>
-    public PictureSection(OutputSettingRepository settings, IMonitors monitors, PreviewHost preview, ReportLine report, EditorHost host)
+    public PictureSection(
+        OutputSettingRepository settings,
+        IMonitors monitors,
+        PreviewHost preview,
+        ReportLine report,
+        EditorHost host,
+        IAudioEngine audio,
+        TransportControls transport,
+        PanelKnobs knobs,
+        RecordingState recording)
     {
         this.settings = settings;
         this.monitors = monitors;
+        this.preview = preview;
+        this.report = report;
+        this.audio = audio;
+        this.transport = transport;
+        this.knobs = knobs;
+        this.recording = recording;
 
         ToolTip.SetTip(previewFrameRate,
             "How often the preview redraws itself. Lower to see it near what a recording will "
@@ -106,7 +132,7 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
             "Where the transport and the seek bar wait over a full-screen picture, and the viewer's; "
             + "the knobs take the other edge.");
 
-        rows.Children.Add(InspectorRows.Field("Size", Resolution));
+        rows.Children.Add(InspectorRows.Field("Size", resolution));
         rows.Children.Add(InspectorRows.Field("Preview rate", previewFrameRate));
 
         // A page draws on WebGL alone, so it has no renderer to pick.
@@ -171,24 +197,48 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
         };
     }
 
-    public void Show(OutputSettings current)
+    public void Start()
     {
-        Resolution.SelectedIndex = SizeRow(current);
+        Show();
+        Apply(settings.Current, before: null);
+    }
+
+    public void Show() => Show(settings.Current);
+
+    public void Save()
+    {
+        var before = settings.Change(Read);
+
+        Apply(settings.Current, before);
+    }
+
+    /// <summary>The header of a take has committed to a frame size, so the size cannot change while one runs.</summary>
+    public Task On(TakeMarked notice)
+    {
+        resolution.IsEnabled = !recording.Running;
+
+        return Task.CompletedTask;
+    }
+
+    private void Show(OutputSettings current)
+    {
+        resolution.SelectedIndex = SizeRow(current);
         renderer.SelectedIndex = RendererRow(current.Gpu, current.Driver);
         transportEdge.SelectedIndex = current.Transport == TransportEdge.Bottom ? 1 : 0;
         previewFrameRate.SelectedIndex = SettingRows.Nearest(PreviewFrameRates, current.PreviewFrameRate);
     }
 
-    public void Read(OutputSettings into, OutputSettings before)
+    /// <summary>Writes what the controls hold into <paramref name="into"/>, leaving what a control cannot say as it was.</summary>
+    private void Read(OutputSettings into)
     {
         // Grayed out for the length of a take, whose file has committed to a size
         // and drops every frame that arrives at another. Graying a box does not
         // take back a row already picked in it — during the count-in, say — so
         // what it holds is not read while it is gray, and the row is put back.
-        if (!Resolution.IsEnabled) Resolution.SelectedIndex = SizeRow(before);
+        if (!resolution.IsEnabled) resolution.SelectedIndex = SizeRow(into);
 
-        var size = Resolutions.All[Math.Max(Resolution.SelectedIndex, 0)].Size;
-        var fullScreen = ReadFullScreen(before);
+        var size = Resolutions.All[Math.Max(resolution.SelectedIndex, 0)].Size;
+        var fullScreen = ReadFullScreen(into);
         var row = Math.Max(renderer.SelectedIndex, 0);
 
         into.Width = size.Width;
@@ -196,15 +246,37 @@ internal sealed class PictureSection : ISettingsSection, IOutputSlice
 
         // The CPU says nothing about which driver draws the window, so that is kept.
         into.Gpu = row != ProcessorRow;
-        into.Driver = row == ProcessorRow || !OperatingSystem.IsWindows()
-            ? before.Driver
-            : row == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl;
+
+        if (row != ProcessorRow && OperatingSystem.IsWindows())
+            into.Driver = row == 1 ? GraphicsDriver.Direct3D : GraphicsDriver.OpenGl;
 
         into.FullScreen = fullScreen.On;
         into.FullScreenMonitor = fullScreen.Monitor;
         into.Transport = transportEdge.SelectedIndex == 1 ? TransportEdge.Bottom : TransportEdge.Top;
 
         into.PreviewFrameRate = PreviewFrameRates[Math.Max(previewFrameRate.SelectedIndex, 0)];
+    }
+
+    /// <param name="before">What was in force until now, or null as the editor starts.</param>
+    private void Apply(OutputSettings now, OutputSettings? before)
+    {
+        var size = SizeOf(now);
+
+        preview.Resolution = size;
+        preview.Use(now.Gpu ? PreviewBackend.Gpu : PreviewBackend.Cpu);
+        preview.FrameRate = now.PreviewFrameRate;
+
+        // A live Scan uses Coordinates' aspect (ADR-0077), so keep it in step
+        // with the preview now that sizes are not all the same shape.
+        audio.Aspect = SynthRenderer.AspectOf(size.Width, size.Height);
+
+        if (transport.Overlay is { } overlay) TransportOverlay.Lay(now.Transport, overlay, knobs.Stage);
+        if (transport.PictureWindow is { } picture)
+            TransportOverlay.Lay(now.Transport, picture.Transport, picture.Knobs);
+
+        // One box picks both, and only the CPU takes effect at once.
+        if (before is not null && now.Driver != before.Driver)
+            report.Say($"{(now.Driver == GraphicsDriver.Direct3D ? "Direct3D" : "OpenGL")} draws from the next time Flyback starts.");
     }
 
     /// <summary>The row of <see cref="renderer"/> that says <paramref name="gpu"/> and <paramref name="driver"/>.</summary>

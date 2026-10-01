@@ -18,7 +18,7 @@ public sealed class UsageSettingsTests : UiTest
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),
         "flyback-usage-settings-" + Guid.NewGuid().ToString("N"),
-        "usage.json");
+        "settings.json");
 
     private const string PrivacyTab = "Privacy";
 
@@ -42,7 +42,7 @@ public sealed class UsageSettingsTests : UiTest
 
     private MainWindow Open(string? settingsPath = null, Usage? usage = null)
     {
-        var window = NewMainWindow(new EditorSetup { Folders = new() { UsageSettingsPath = settingsPath }, Usage = usage ?? Usage.Off });
+        var window = NewMainWindow(new EditorSetup { Folders = new() { SettingsPath = settingsPath }, Usage = usage ?? Usage.Off });
 
         window.Show();
         Settle(window);

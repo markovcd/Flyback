@@ -254,7 +254,7 @@ The app saves and opens all three. A `.fbks` is a copy rather than a document: i
 
 ## Viewer
 
-`flyback-viewer` opens a patch and plays it, picture and sound, with no editor around it. It writes nothing — no settings, layout, recovery file or statistics — and takes its defaults from the same `output.json` the editor saves, every one of them overridable on the command line.
+`flyback-viewer` opens a patch and plays it, picture and sound, with no editor around it. It writes nothing — no settings, layout, recovery file or statistics — and takes its defaults from the same `settings.json` the editor saves, every one of them overridable on the command line.
 
 ```bash
 flyback-viewer nebula.fbk

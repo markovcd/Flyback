@@ -17,6 +17,7 @@
 - A panel knob dragged onto another swaps places with it; dropped between two, it slips in there as before.
 - Settings → MIDI keeps the panel knobs in a fixed grid of columns and rows, so each stays in its controller knob's row and column at any width, in the editor, over the picture and in the desktop viewer (`--knob-grid 8x2`).
 - The settings are regrouped: Graphics is Picture, the startup patch is under Files, Updates and Usage share a Privacy tab, and Recording lists a video's rate and quality after its format.
+- Every setting is kept in one `settings.json`; settings saved by an earlier version are not read, so they start over from the defaults.
 - The knob panel randomizes: a die, Ctrl+Shift+K or a learned controller button or pad sends every knob not held somewhere new, within an amount and over a glide set on the panel, and an arrow goes back.
 
 ### Sound

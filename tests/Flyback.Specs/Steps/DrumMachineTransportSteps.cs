@@ -40,10 +40,10 @@ public sealed class DrumMachineTransportSteps(Editor editor) : IDisposable
     [Given("the settings say not to play and pause with an instrument")]
     public void GivenNotFollowing()
     {
-        var path = Path.Combine(settings.FullName, "output.json");
+        var path = Path.Combine(settings.FullName, "settings.json");
 
         new OutputSettings { FollowTransport = false }.Save(path);
-        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { OutputSettingsPath = path } };
+        editor.Setup = editor.Setup with { Folders = editor.Setup.Folders with { SettingsPath = path } };
     }
 
     [When("the drum machine presses Start")]
