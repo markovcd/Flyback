@@ -92,6 +92,15 @@ do is return an empty-handed success.
 > typing, which is what a question is for. What must still never happen is an
 > *empty* turn: the prose is the reason, so it has to reach the panel.
 
+> **Amended.** *(2026-10-01, user-directed.)* A turn that changed the patch and
+> stopped without proposing is asked once, unless it stopped on a question.
+> gpt-4o built a working patch over several turns of `write_patch`, rendered and
+> described it, and ended there: the work reached neither the file nor the
+> canvas until the person asked again. The reversal's case was the question, and
+> a question still ends the turn untouched. Otherwise the model is told once that
+> nothing it built is offered, to propose or say what is left; a second stop ends
+> the turn as before, with the note that the canvas has not changed.
+
 **What may be proposed is a patch that reaches somebody**, which is not the same
 as a patch with no complaints. `propose` gates on `IssueSeverity.Error` across
 *both* programs ([0011](0011-compile-backwards-from-output.md),

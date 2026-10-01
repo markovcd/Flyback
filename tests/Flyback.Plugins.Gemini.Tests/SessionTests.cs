@@ -73,14 +73,16 @@ public class SessionTests
     {
         var (events, sent) = await Run(
             Asking(Building),
-            Prose("You're now set to further refine the patch as needed."));
+            Prose("You're now set to further refine the patch as needed."),
+            Prose("It is ready to refine."));
 
         events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
         events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("canvas still shows"));
 
-        // Told to the person, not sent back to the model. Nothing extra is asked
-        // of a model that has already given its answer.
-        sent.Count.ShouldBe(2);
+        // Asked once to propose what it built, and told to the person when that
+        // changes nothing.
+        sent.Count.ShouldBe(3);
+        sent[2].ToJsonString().ShouldContain("did not propose it");
     }
 
     [Fact]

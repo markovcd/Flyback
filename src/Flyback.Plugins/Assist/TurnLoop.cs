@@ -41,6 +41,12 @@ public static class TurnLoop
     /// <summary>Whether <paramref name="happened"/> is a wait for a refusal rather than anything the assistant did.</summary>
     internal static bool IsWait(PatchEvent happened) => waits.TryGetValue(happened, out _);
 
+    /// <summary>What the model is told, once, when it changed the patch and stopped without offering it.</summary>
+    internal const string Unproposed =
+        "[From Flyback, not the person: you changed the patch this turn and did not propose it, so the "
+        + "person still sees what was there before. If it does what was asked, call propose now. If it "
+        + "does not, say in a line what is left, and do not call it done.]";
+
     /// <summary>The answer to a call the person stopped the turn before it ran.</summary>
     internal const string Stopped = "not run: the person stopped this turn.";
 
@@ -100,6 +106,8 @@ public static class TurnLoop
         }
 
         conversation.Add(instruction);
+
+        var nudged = false;
 
         for (var exchange = 0; exchange < MaxExchanges; exchange++)
         {
@@ -210,6 +218,16 @@ public static class TurnLoop
 
             if (reply.Calls.Count == 0)
             {
+                // A model that built something and stopped short of offering it is
+                // asked once, unless it stopped on a question, which the person
+                // answers.
+                if (workbench.Edits > 0 && !nudged && !Asks(reply.Text))
+                {
+                    nudged = true;
+                    conversation.Add(Unproposed);
+                    continue;
+                }
+
                 // It has stopped asking for things and has not proposed anything,
                 // which is an ordinary way for a turn to end: whatever it said is
                 // in the transcript, and the next thing to happen is the person
@@ -268,6 +286,10 @@ public static class TurnLoop
 
         while (told.TryRead(out var line)) yield return line;
     }
+
+    /// <summary>Whether <paramref name="said"/> ends on a question, which is for the person to answer.</summary>
+    private static bool Asks(string? said) =>
+        said?.TrimEnd(' ', '\t', '\r', '\n', '*', '_', '"', ')').EndsWith('?') == true;
 
     /// <summary>Hands one call to the workbench, with arguments that will not read refused rather than thrown.</summary>
     private static async Task<ToolOutcome> Answer(PatchWorkbench workbench, ToolCall call, CancellationToken cancel)

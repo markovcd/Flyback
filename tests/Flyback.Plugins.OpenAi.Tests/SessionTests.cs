@@ -54,14 +54,16 @@ public class SessionTests
     {
         var (events, sent) = await Run(
             Asking(Building),
-            Prose("You're now set to further refine the patch as needed."));
+            Prose("You're now set to further refine the patch as needed."),
+            Prose("It is ready to refine."));
 
         events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
         events.OfType<PatchEvent.Did>().ShouldContain(d => d.Summary.Contains("canvas still shows"));
 
-        // Told to the person, not sent back to the model. Nothing extra is asked
-        // of a model that has already given its answer.
-        sent.Count.ShouldBe(2);
+        // Asked once to propose what it built, and told to the person when that
+        // changes nothing.
+        sent.Count.ShouldBe(3);
+        sent[2].ToJsonString().ShouldContain("did not propose it");
     }
 
     /// <summary>
@@ -202,20 +204,21 @@ public class SessionTests
     }
 
     /// <summary>
-    /// The same, without even a question. Stopping with nothing to show is the
-    /// model's to do, and the transcript already carries whatever it said.
+    /// The same, without even a question. It is asked once to propose what it
+    /// built, and stopping again is its to do.
     /// </summary>
     [Fact]
-    public async Task A_model_that_will_not_propose_is_not_argued_with()
+    public async Task A_model_that_will_not_propose_is_asked_only_once()
     {
         var (events, sent) = await Run(
             Asking(Building),
-            Prose("I would rather not."));
+            Prose("I would rather not."),
+            Prose("Still no."));
 
         events.OfType<PatchEvent.Proposed>().ShouldBeEmpty();
         events.OfType<PatchEvent.Failed>().ShouldBeEmpty();
 
-        sent.Count.ShouldBe(2);
+        sent.Count.ShouldBe(3);
     }
 
     /// <summary>

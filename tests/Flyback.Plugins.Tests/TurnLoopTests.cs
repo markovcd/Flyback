@@ -84,13 +84,40 @@ public class TurnLoopTests
         conversation.Sent.ShouldBe(1, "nothing is asked after a stop");
     }
 
+    /// <summary>Asked once to propose what it built and still not proposing, the turn says the canvas has not changed.</summary>
     [Fact]
     public async Task A_turn_that_built_and_offered_nothing_says_so()
     {
         var bench = Bench();
+        var conversation = new Scripted(new ModelReply(null, Building), new ModelReply("done", []), new ModelReply("not yet: it is too dark", []));
 
-        var events = await Turn(bench, new Scripted(new ModelReply(null, Building), new ModelReply("done", [])));
+        var events = await Turn(bench, conversation);
 
+        events.OfType<PatchEvent.Did>().ShouldContain(did => did.Summary.Contains("canvas still shows"));
+        conversation.Sent.ShouldBe(3, "asked to propose once, and only once");
+    }
+
+    /// <summary>A model that built the patch and stopped without offering it is asked once, and the patch reaches the person.</summary>
+    [Fact]
+    public async Task A_turn_that_built_and_stopped_is_asked_once_to_propose_it()
+    {
+        var conversation = new Scripted(new ModelReply(null, Building), new ModelReply("It is a gray field.", []), new ModelReply(null, [Proposing]));
+
+        var events = await Turn(Bench(), conversation);
+
+        events.OfType<PatchEvent.Proposed>().ShouldHaveSingleItem();
+        conversation.Log.ShouldContain(line => line.StartsWith("add: [From Flyback") && line.Contains("propose"));
+    }
+
+    /// <summary>A question is a fair way to end a turn that built something, so it is not argued with.</summary>
+    [Fact]
+    public async Task A_turn_that_built_and_asked_a_question_is_not_asked_to_propose()
+    {
+        var conversation = new Scripted(new ModelReply(null, Building), new ModelReply("Should the gray be warmer or colder?", []));
+
+        var events = await Turn(Bench(), conversation);
+
+        conversation.Sent.ShouldBe(2);
         events.OfType<PatchEvent.Did>().ShouldContain(did => did.Summary.Contains("canvas still shows"));
     }
 
@@ -99,7 +126,7 @@ public class TurnLoopTests
     {
         var bench = Bench();
 
-        await Turn(bench, new Scripted(new ModelReply(null, Building), new ModelReply("done", [])));
+        await Turn(bench, new Scripted(new ModelReply(null, Building), new ModelReply("done", []), new ModelReply("still done", [])));
         var second = await Turn(bench, new Scripted(new ModelReply("It is gray.", [])));
 
         second.OfType<PatchEvent.Did>().ShouldBeEmpty();
