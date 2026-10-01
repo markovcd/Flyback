@@ -46,8 +46,7 @@ jobs:
       # runner's script paths; Git's is the one wanted.
       - name: Measure (Windows)
         if: runner.os == 'Windows'
-        shell: 'C:/Program Files/Git/bin/bash.exe --noprofile --norc -e -o pipefail {0}'
-        run: bash scripts/coverage.sh
+        run: & "C:Program FilesGitbinbash.exe" scripts/coverage.sh
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
