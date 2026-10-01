@@ -6,7 +6,8 @@ import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
 
 const params = new URLSearchParams(location.search);
-const looped = params.has('loop');
+/** Whether the patch's length plays round and round; the Loop button flips it. */
+let looped = params.has('loop');
 
 /** Playing a file rather than a shipped preset. */
 const preview = params.has('file');
@@ -33,7 +34,7 @@ const VOLUME_KEPT = 'flyback-viewer-volume';
 const $ = id => document.getElementById(id);
 const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
-  play: $('play'), rewind: $('rewind'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
+  play: $('play'), rewind: $('rewind'), loop: $('loop'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
   panel: $('panel'), grip: $('grip'), about: $('about'),
   clock: $('clock'), main: document.querySelector('main'), canvas: $('screen'), off: $('off'), cover: $('cover'), status: $('status'),
 };
@@ -300,6 +301,12 @@ function toggleMute() {
     if (volume) volume.gain.value = muted ? 0 : loudness;
   }
 
+  paint();
+}
+
+/** Sets whether the patch's length plays round and round. */
+function setLooped(on) {
+  looped = Boolean(on);
   paint();
 }
 
@@ -717,7 +724,8 @@ const clockText = seconds => {
 function paint() {
   const ready = info !== null;
 
-  ui.play.disabled = ui.rewind.disabled = ui.mute.disabled = ui.seek.disabled = !ready;
+  ui.play.disabled = ui.rewind.disabled = ui.loop.disabled = ui.mute.disabled = ui.seek.disabled = !ready;
+  ui.loop.setAttribute('aria-pressed', String(looped));
   ui.edit.disabled = source === null;
   if (ready && !dragging) ui.seek.value = now();
   ui.play.textContent = playing ? '⏸' : '▶';
@@ -798,6 +806,7 @@ function frame() {
 ui.play.onclick = () => (playing ? pause() : play());
 ui.cover.onclick = () => { if (info !== null) play(); };
 ui.rewind.onclick = () => { seek(0); paint(); };
+ui.loop.onclick = () => setLooped(!looped);
 ui.mute.onclick = toggleMute;
 ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
@@ -864,9 +873,10 @@ window.flyback = {
   picture: setPicture,
   status: () => ({
     ...status(),
-    name, preview, playing, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
+    name, preview, playing, looped, picture: pictureOn, awake: awake !== null, time: now(), sound: heard, soundAllowed, held, muted, volume: loudness,
     queued: soundStatus.queued ?? 0, warning, error, speakerFailure,
   }),
+  loop: setLooped,
   volume: setVolume,
   strike,
   release: () => {
