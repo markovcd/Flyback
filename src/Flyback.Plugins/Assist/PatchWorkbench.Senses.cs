@@ -203,17 +203,12 @@ public sealed partial class PatchWorkbench
 
                 var (peak, rms) = ClipLevels.Levels(samples);
 
-                if (peak < ClipLevels.SilenceFloor)
+                if (ClipLevels.Silent(samples, from > 0 ? 0 : Settling))
                 {
                     return ToolOutcome.Fine(
                         $"{Number(seconds)}s from {Number(from)}s is silence — nothing above "
-                        + "-66 dBFS came out, so there is no point playing it to you. The "
-                        + "compiler has already said whatever it can see, so look at what it "
-                        + "cannot: 'volume' on the Output sitting at zero, or an 'in' that is wired "
-                        + "but never moves — a knob, or anything else holding one value, drives a "
-                        + "phase exactly as far as nothing does. Only a signal that changes with "
-                        + "'t' makes an oscillator oscillate. A constant reaching 'left' is "
-                        + "silent too: it is pure DC, and the DC blocker removes it.");
+                        + "-66 dBFS came out but the thump of a constant settling, if that, so there "
+                        + "is no point playing it to you. " + SilenceCauses);
                 }
 
                 var wav = new MemoryStream();
@@ -230,9 +225,51 @@ public sealed partial class PatchWorkbench
             cancel);
     }
 
+    /// <summary>Why a patch that is wired and compiles cleanly is silent, which the compiler cannot see.</summary>
+    private const string SilenceCauses =
+        "The compiler has already said whatever it can see, so look at what it "
+        + "cannot: 'volume' on the Output sitting at zero, or an 'in' that is wired "
+        + "but never moves — a knob, or anything else holding one value, drives a "
+        + "phase exactly as far as nothing does. Only a signal that changes with "
+        + "'t' makes an oscillator oscillate. A constant reaching 'left' is "
+        + "silent too: it is pure DC, and the DC blocker removes it.";
+
+    /// <summary>
+    /// Whether the sound is <see cref="ClipLevels.Silent"/> for its first
+    /// <see cref="WorkbenchLimits.LatestTime"/> seconds, rendered from zero.
+    /// </summary>
+    /// <remarks>Rendered a slice at a time and stopped at the first that sounds, so a patch that plays costs one slice.</remarks>
+    private Task<bool> SilentAsync(CompileResult patch, CancellationToken cancel) => Task.Run(
+        () =>
+        {
+            var renderer = new AudioRenderer(limits.ListenRate)
+            {
+                Aspect = SynthRenderer.AspectOf(limits.FrameWidth, limits.FrameHeight),
+            };
+
+            IlCompiler.CompileOnce(patch.Program, IlParts.Whole);
+
+            var slice = new float[Samples(0.25d)];
+
+            for (var heard = 0d; heard < limits.LatestTime; heard += 0.25d)
+            {
+                cancel.ThrowIfCancellationRequested();
+
+                renderer.Render(patch.Program, slice);
+
+                if (!ClipLevels.Silent(slice, heard > 0 ? 0 : Settling)) return false;
+            }
+
+            return true;
+        },
+        cancel);
+
     /// <summary>The compiler's warnings as a sentence to end a caption with, or nothing.</summary>
     private static string Warned(CompileResult patch) =>
         patch.HasIssues ? " The compiler warned: " + string.Join(" | ", patch.Issues.Select(i => i.Message)) : string.Empty;
+
+    /// <summary>The frames at the start of a render from zero that <see cref="ClipLevels.Silent"/> leaves to settle.</summary>
+    private int Settling => (int)Math.Ceiling(limits.ListenRate * ClipLevels.Onset);
 
     private int Samples(double seconds) =>
         (int)Math.Round(limits.ListenRate * seconds) * NodeCatalog.AudioChannels;

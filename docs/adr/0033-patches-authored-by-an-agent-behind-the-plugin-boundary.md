@@ -104,6 +104,17 @@ video sink itself rather than reading it off the issues, since the issue it used
 to lean on is gone — a black rectangle is the one thing an assistant must never
 be handed for a patch that works.
 
+> **Amended.** *(2026-10-01.)* A sound that is wired but silent is refused too.
+> A model with no ear wired a Note's `hz` straight into `left`, a constant the DC
+> blocker removes, and offered it as bells: legal, reaching the Output, and
+> nothing anybody would hear. `propose` renders the sound's first eight seconds
+> from zero, stopping at the first quarter-second that sounds, and refuses one
+> where nothing above -66 dBFS swings both ways, in the words `listen` uses for
+> silence. A patch meant to start silent, an intro that comes in later, says so
+> with `starts_silent` and is offered as it stands. Refusing with an escape
+> rather than offering with a warning, because proposing ends the turn and a
+> warning after it is one no model acts on.
+
 ## Consequences
 
 **Nondeterminism enters a program that was deterministic end to end.** Every

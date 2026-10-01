@@ -200,7 +200,8 @@ internal static class Handbook
           is heard by reading it through a **Scan** into `left`.
         - A patch with nothing in `color` draws black, and one with nothing in
           `left` is silent; both are whole patches. A patch with nothing
-          reaching the Output at all is not proposed.
+          reaching the Output at all is not proposed, nor one whose wired
+          sound is silent.
         - Picture and sound are compiled apart, each paying only for the
           modules it reaches, so a noise field on the screen costs the
           speakers nothing.

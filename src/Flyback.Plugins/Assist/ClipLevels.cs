@@ -83,6 +83,41 @@ internal static class ClipLevels
             ? "n/a"
             : (20 * Math.Log10(above / below)).ToString("0.0", CultureInfo.InvariantCulture) + " dB";
 
+    /// <summary>How long a render from zero is left to settle before it is judged silent or not, in seconds.</summary>
+    /// <remarks>The oversampling filter rings for a few samples on a step from nothing.</remarks>
+    public const double Onset = 0.01d;
+
+    /// <summary>
+    /// Whether nothing in an interleaved buffer swings both ways above
+    /// <see cref="SilenceFloor"/> in either channel, after its first
+    /// <paramref name="settle"/> frames.
+    /// </summary>
+    /// <remarks>
+    /// Not the peak alone: a constant reaching the speakers is a step the DC blocker
+    /// settles as one long decay of a single sign, a thump at the start and then
+    /// nothing, and a peak would call that sound.
+    /// </remarks>
+    public static bool Silent(ReadOnlySpan<float> samples, int settle = 0)
+    {
+        for (var channel = 0; channel < NodeCatalog.AudioChannels; channel++)
+        {
+            var sign = 0;
+
+            for (var i = settle * NodeCatalog.AudioChannels + channel; i < samples.Length; i += NodeCatalog.AudioChannels)
+            {
+                if (Math.Abs(samples[i]) < SilenceFloor) continue;
+
+                var now = Math.Sign(samples[i]);
+
+                if (sign != 0 && now != sign) return false;
+
+                sign = now;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>Peak and rms of an interleaved buffer, over both channels at once.</summary>
     public static (float Peak, float Rms) Levels(ReadOnlySpan<float> samples)
     {

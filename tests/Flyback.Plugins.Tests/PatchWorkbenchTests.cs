@@ -766,6 +766,43 @@ public class PatchWorkbenchTests
     }
 
     /// <summary>
+    /// A frequency wired straight into 'left' is a constant: pure DC, which the DC
+    /// blocker removes. Wired, compiling and silent, so it is not offered as a sound.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_whose_sound_is_silent_is_not_proposed()
+    {
+        var bench = Bench(hearing: Listener.None);
+
+        await Call(bench, "add_module", """{"type_id":"audio.note","handle":"pitch1"}""");
+        await Call(bench, "connect", """{"from":"pitch1","from_port":"hz","to":"output1","to_port":"left"}""");
+
+        var offered = await Call(bench, "propose", """{"summary":"slow glassy bells"}""");
+
+        offered.Ok.ShouldBeFalse();
+        offered.Text.ShouldContain("silence");
+        offered.Text.ShouldContain("DC");
+        bench.HasProposal.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A patch may be meant to start silent, an intro that comes in later than the
+    /// workbench listens. Saying so offers it anyway.
+    /// </summary>
+    [Fact]
+    public async Task A_patch_said_to_start_silent_is_proposed_as_it_stands()
+    {
+        var bench = await Heard();
+
+        await Call(bench, "set_knobs", """{"handle":"output1","knobs":[{"port":"volume","value":0}]}""");
+
+        var offered = await Call(bench, "propose", """{"summary":"an intro","starts_silent":true}""");
+
+        offered.Ok.ShouldBeTrue(offered.Text);
+        bench.HasProposal.ShouldBeTrue();
+    }
+
+    /// <summary>
     /// An assistant reads this after every edit, so a patch built for the
     /// speakers alone must not trip the missing-screen warning — one that read
     /// that as something to fix would spend the run fixing it.
@@ -1849,6 +1886,24 @@ public class PatchWorkbenchTests
         heard.Wav.ShouldBeNull();
         heard.Text.ShouldContain("silence");
         heard.Text.ShouldContain("volume");
+    }
+
+    /// <summary>
+    /// A constant reaching 'left' thumps once as the DC blocker settles and is then
+    /// nothing, so it is silence from the very start, not a clip to play.
+    /// </summary>
+    [Fact]
+    public async Task A_constant_reaching_the_speakers_is_silence_from_the_start()
+    {
+        var bench = Bench();
+
+        await Call(bench, "add_module", """{"type_id":"audio.note","handle":"pitch1"}""");
+        await Call(bench, "connect", """{"from":"pitch1","from_port":"hz","to":"output1","to_port":"left"}""");
+
+        var heard = await Call(bench, "listen", """{"from":0,"seconds":2}""");
+
+        heard.Wav.ShouldBeNull();
+        heard.Text.ShouldContain("silence");
     }
 
     /// <summary>

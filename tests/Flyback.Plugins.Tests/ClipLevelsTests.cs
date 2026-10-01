@@ -31,6 +31,20 @@ public sealed partial class ClipLevelsTests
         Measured(Tone(0.0001f)).ShouldContain("too quiet to gate");
     }
 
+    [Fact]
+    public void A_tone_is_not_silence() => ClipLevels.Silent(Tone(0.01f)).ShouldBeFalse();
+
+    /// <summary>The DC blocker settling a constant: a decay of one sign, which is a thump and not a sound.</summary>
+    [Fact]
+    public void A_constant_settling_is_silence()
+    {
+        var samples = new float[Rate * NodeCatalog.AudioChannels];
+
+        for (var i = 0; i < samples.Length; i++) samples[i] = (float)Math.Pow(0.9993, i / 2);
+
+        ClipLevels.Silent(samples).ShouldBeTrue();
+    }
+
     private static string Measured(float[] samples)
     {
         var (peak, rms) = ClipLevels.Levels(samples);

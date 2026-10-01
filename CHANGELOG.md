@@ -18,6 +18,10 @@
 
 - The web viewer's panel of knobs is capped at a third of the window and scrolls, and its top edge is dragged (or moved with the arrow keys) to make it taller or shorter, so a patch with many knobs no longer covers the picture; the height is kept.
 
+### Fixes
+
+- The assistant no longer offers a patch whose wired sound is silent, unless it says the patch starts silent.
+
 ## 0.6.0 — 2026-10-01
 
 128 commits since 0.5.1.

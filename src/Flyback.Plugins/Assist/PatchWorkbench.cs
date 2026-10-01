@@ -884,7 +884,7 @@ public sealed partial class PatchWorkbench
         return text.ToString().TrimEnd();
     }
 
-    private ToolOutcome Propose(JsonElement arguments)
+    private async Task<ToolOutcome> ProposeAsync(JsonElement arguments, CancellationToken cancel)
     {
         if (!Text(arguments, "summary", out var summary))
             return ToolOutcome.Refused("'summary' is required: one line saying what this patch does.");
@@ -892,8 +892,10 @@ public sealed partial class PatchWorkbench
         // Both programs, because either may be the one that was built for. A
         // patch offered for its sound still has to have compiled its sound, and
         // the video pass never reaches a node only the ear does.
+        var audio = working.CompileForAudio(modules, samples);
+
         var errors = working.CompileForVideo(modules, samples, pictures).Issues
-            .Concat(working.CompileForAudio(modules, samples).Issues)
+            .Concat(audio.Issues)
             .Where(i => i.Severity == IssueSeverity.Error)
             .Select(i => i.Message)
             .Distinct()
@@ -913,6 +915,20 @@ public sealed partial class PatchWorkbench
             return ToolOutcome.Refused(
                 "nothing is wired into the Output, so nothing this patch does comes out anywhere. "
                 + "Patch something into its 'color' or its 'left' before proposing.");
+        }
+
+        // A sound that is wired was meant to be heard, and a model with no ear
+        // cannot find out that it is silent any other way.
+        var (picture, sound) = working.Reaches();
+        var startsSilent = arguments.TryGetProperty("starts_silent", out var flag) && flag.ValueKind == JsonValueKind.True;
+
+        if (sound && !startsSilent && await SilentAsync(audio, cancel).ConfigureAwait(false))
+        {
+            return ToolOutcome.Refused(
+                $"the sound is silence for its first {Number(limits.LatestTime)}s: nothing above -66 dBFS "
+                + "comes out of 'left' or 'right' but the thump of a constant settling, if that. " + SilenceCauses
+                + (picture ? "" : " Nothing reaches 'color' either, so this patch draws nothing as well.")
+                + " If it is meant to start silent and come in later, propose again with 'starts_silent' true.");
         }
 
         proposal = summary;
@@ -1324,15 +1340,16 @@ public sealed partial class PatchWorkbench
                 "Throws away every edit and goes back to the patch as it was when this started.",
                 "{}"),
 
-            Does("propose", Propose,
+            Does("propose", ProposeAsync,
                 "Offers the patch to the person, with one line saying what it does. This ends your "
                 + "turn. Nothing you have built reaches their editor until you call this. The patch "
-                + "must compile cleanly first, and something must reach the Output — its 'color', "
-                + "its 'left', or both.",
-                """
+                + "must compile cleanly first, something must reach the Output — its 'color', "
+                + "its 'left', or both — and a sound that is wired must not be silent.",
+                $$"""
                 {
                   "properties": {
-                    "summary": { "type": "string", "description": "One line: what this patch does." }
+                    "summary": { "type": "string", "description": "One line: what this patch does." },
+                    "starts_silent": { "type": "boolean", "description": "True only when the sound is meant to be silent for its first {{Number(limits.LatestTime)}}s, an intro that comes in later." }
                   },
                   "required": ["summary"]
                 }
