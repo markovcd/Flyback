@@ -11,7 +11,8 @@
 
 ### Editor
 
-- Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away; the toolbar keeps one row down to 730 pixels.
+- Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
+- The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
 
 ### Web
 

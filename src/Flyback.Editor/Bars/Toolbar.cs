@@ -213,28 +213,59 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
         // Left to right, rather than the program group docked to the far edge —
         // everything reached from the toolbar sits together at the near side instead
-        // of one end chasing the window's width. Wrapped onto more rows where the
-        // window is too narrow for one, as a phone held upright is. Unmargined
-        // itself: each group carries its own margin already, from
-        // ToolbarButtons.Group(), and a second one here would double the gaps.
-        var bar = new WrapPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        // of one end chasing the window's width. One row however narrow the window:
+        // what does not fit folds into the menu at the end. Unmargined itself: each
+        // group carries its own margin already, from ToolbarButtons.Group(), and a
+        // second one here would double the gaps.
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        var programRule = ToolbarButtons.Separator();
 
         bar.Children.Add(patchwork);
 
         if (full)
         {
-            bar.Children.Add(ToolbarButtons.Separator());
+            bar.Children.Add(programRule);
             bar.Children.Add(program);
         }
+
+        // The first to fold is the first listed: the program's own buttons, reached
+        // for once a session, before the files, and the views last.
+        Overflow = new ToolbarOverflow(
+            bar,
+            [
+                (About, "About"),
+                (Plugins, "Plugins"),
+                (Settings, "Settings"),
+                (Swap, "Swap the preview and the canvas"),
+                (Assistant, "Assistant"),
+                (Tidy, "Lay out the modules"),
+                (Save, "Save…"),
+                (Open, "Open…"),
+                (Viewer, "View it"),
+                (Code, "Show the patch as text"),
+                (Knobs, "Knob panel"),
+                (Transport, "Transport row"),
+                (Redo, "Redo"),
+                (Frame, "Bring the whole patch into view"),
+            ],
+            full ? [(program, programRule)] : []);
+
+        bar.Children.Add(Overflow.More);
 
         View = new Border
         {
             Background = new SolidColorBrush(Colors.Toolbar),
             BorderBrush = new SolidColorBrush(Colors.Edge),
             BorderThickness = new Thickness(0, 0, 0, 1),
+            ClipToBounds = true,
             Child = bar,
         };
+
+        View.SizeChanged += (_, e) => Overflow.Fit(e.NewSize.Width);
     }
+
+    /// <summary>The menu what does not fit on the bar folds into.</summary>
+    public ToolbarOverflow Overflow { get; }
 
     /// <summary>The code button follows the view, however the view was switched.</summary>
     public Task On(ViewChanged notice)
@@ -247,6 +278,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public Task On(Touched notice)
     {
         Add.IsVisible = Frame.IsVisible = true;
+        Overflow.Fit(View.Bounds.Width);
         return Task.CompletedTask;
     }
 

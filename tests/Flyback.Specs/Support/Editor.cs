@@ -256,6 +256,44 @@ public sealed class Editor(PatchContext context, HeadlessTurn turn) : IDisposabl
             .Count();
     });
 
+    /// <summary>What the toolbar's menu offers, in order, or nothing while the menu's button is hidden.</summary>
+    public IReadOnlyList<string> ToolbarMenu => ReadWindow(_ =>
+    {
+        var overflow = Service<Toolbar>().Overflow;
+
+        if (!overflow.More.IsEffectivelyVisible) return [];
+
+        var items = OpenToolbarMenu(overflow);
+
+        overflow.More.Flyout!.Hide();
+        return items.Select(item => item.Header as string ?? string.Empty).ToList();
+    });
+
+    /// <summary>Picks the item so labeled from the toolbar's menu, and lets whatever it opens come up.</summary>
+    public void PickFromToolbarMenu(string label) =>
+        DoWindow((open, _) =>
+        {
+            var item = OpenToolbarMenu(Service<Toolbar>().Overflow).SingleOrDefault(item => item.Header as string == label)
+                       ?? throw new InvalidOperationException($"the toolbar's menu has no {label}");
+
+            item.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+
+            for (var turn = 0; turn < 20 && !open.GetVisualDescendants().OfType<ModalOverlay>().Any(); turn++)
+                Dispatcher.UIThread.RunJobs();
+        });
+
+    /// <summary>Whether the settings are up over the window.</summary>
+    public bool SettingsUp => ReadWindow(open =>
+        open.GetVisualDescendants().OfType<TabControl>().Any(tabs => tabs.Name == "settingsTabs"));
+
+    private static List<MenuItem> OpenToolbarMenu(ToolbarOverflow overflow)
+    {
+        var menu = (MenuFlyout)overflow.More.Flyout!;
+
+        menu.ShowAt(overflow.More);
+        return (menu.ItemsSource ?? throw new InvalidOperationException("the toolbar's menu has nothing in it")).OfType<MenuItem>().ToList();
+    }
+
     /// <summary>The names of the transport row's shown buttons, left to right.</summary>
     public IReadOnlyList<string?> TransportButtons => ReadWindow(_ =>
         Service<TransportRow>().View.GetVisualDescendants().OfType<Button>()

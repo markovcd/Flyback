@@ -44,6 +44,23 @@ public sealed class PhoneSteps(PatchContext context, Editor editor)
     [When("the module panel's {string} button is pressed")]
     public void WhenPanelButtonPressed(string name) => editor.PressPanelButton(name);
 
+    [When("{string} is picked from the toolbar's menu")]
+    public void WhenPicked(string label) => editor.PickFromToolbarMenu(label);
+
+    [Then("the toolbar's menu offers {string}")]
+    public void ThenMenuOffers(string labels)
+    {
+        var offered = editor.ToolbarMenu;
+
+        foreach (var label in labels.Split(", ")) offered.ShouldContain(label);
+    }
+
+    [Then("the toolbar has no menu")]
+    public void ThenNoMenu() => editor.ToolbarMenu.ShouldBeEmpty();
+
+    [Then("the settings are up")]
+    public void ThenSettingsUp() => editor.SettingsUp.ShouldBeTrue();
+
     [Then("every toolbar button is on the screen")]
     public void ThenEveryToolbarButtonShows() => editor.ToolbarButtonsOffScreen.ShouldBeEmpty();
 

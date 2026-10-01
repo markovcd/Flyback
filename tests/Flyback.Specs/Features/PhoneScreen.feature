@@ -1,6 +1,7 @@
 Feature: The editor fits a window as narrow as a phone held upright
   At 390 pixels wide, a tablet or a phone held upright, on the desktop as in a page,
-  every button is within reach: the toolbar wraps onto more rows, the side button
+  every button is within reach: the toolbar keeps one row and folds what does not
+  fit into a menu at its end, the side button
   shows the preview and the inspector in the canvas's place, and what the editor
   says keeps its room on the status line.
 
@@ -9,10 +10,24 @@ Feature: The editor fits a window as narrow as a phone held upright
     And a sine beside the clock
     And the screen is a phone held upright
 
-  Scenario: Every toolbar button is on the screen, however many rows that takes
+  Scenario: The toolbar keeps one row, and what does not fit waits in its menu
     Given the patch is open in the editor
     When a finger taps bare canvas
-    Then every toolbar button is on the screen
+    Then the toolbar is one row tall
+    And every toolbar button is on the screen
+    And the toolbar's menu offers "Settings, Plugins, About"
+
+  Scenario: A button folded into the toolbar's menu does what it does on the bar
+    Given the patch is open in the editor
+    When "Settings" is picked from the toolbar's menu
+    Then the settings are up
+
+  Scenario: The editor in a page keeps its toolbar to one row too
+    Given the editor is in a page
+    And the patch is open in the editor
+    When a finger taps bare canvas
+    Then the toolbar is one row tall
+    And every toolbar button is on the screen
 
   Scenario: The side button shows the inspector in the canvas's place, and the canvas again
     Given the patch is open in the editor

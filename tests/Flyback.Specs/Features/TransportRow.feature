@@ -12,6 +12,7 @@ Feature: The patch is played from a row of its own along the foot of the window
     Given the screen is 730 pixels wide
     And the patch is open in the editor
     Then the toolbar is one row tall
+    And the toolbar has no menu
     And every transport button is on the screen and big enough for a finger
 
   Scenario: A finger slid along the seek bar takes the patch's clock with it
