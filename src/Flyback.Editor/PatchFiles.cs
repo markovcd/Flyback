@@ -451,15 +451,7 @@ internal sealed class PatchFiles
                 return true;
             }
 
-            // Said only where there is something to have lost. A patch with no
-            // collapsed groups loses nothing anybody would miss, and warning about
-            // it every time would teach people to stop reading.
-            var shut = editor.History.Patch.Groups?.Count(group => group.Collapsed) ?? 0;
-
-            report.Say(shut == 0
-                ? $"Wrote {file.Name}. It is a copy: what is open is still {Name ?? "the patch"}."
-                : $"Wrote {file.Name}, with its {shut} collapsed group(s) open — text does not keep that. "
-                  + $"What is open is still {Name ?? "the patch"}.");
+            report.Say($"Wrote {file.Name}. It is a copy: what is open is still {Name ?? "the patch"}.");
 
             // A copy saves nothing, which the caller weighs: going ahead on the
             // strength of a printing would shut the only whole patch there is.
