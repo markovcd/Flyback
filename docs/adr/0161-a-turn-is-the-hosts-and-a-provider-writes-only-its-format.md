@@ -40,6 +40,15 @@ no `Ask` of its own.
 Where a refusal says how long to wait, and how it words itself, stay each format's
 to read.
 
+> **Amended.** *(2026-10-01.)* A wait is told while it is waited. A
+> tokens-per-minute limit can hold a request for a minute, and a transcript
+> silent for that long looks hung. `AssistantPost` tells each wait to the turn
+> through an internal hook that flows with the request, so no provider passes
+> anything on and the contract is unchanged, and `TurnLoop` yields it as a
+> `Did` line ("waiting 31s for the rate limit") while the request still waits.
+> A wait of under a second is not told, and a turn that only waited before it
+> failed is not counted.
+
 **The listening brief is the host's** (`TurnLoop.Ear`): what to ask about a synth's
 clip is knowledge of Flyback, not of a provider.
 

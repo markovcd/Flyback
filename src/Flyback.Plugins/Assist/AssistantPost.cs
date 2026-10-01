@@ -16,6 +16,22 @@ public static class AssistantPost
     /// </summary>
     public static readonly TimeSpan LongestWait = TimeSpan.FromSeconds(60);
 
+    private static readonly AsyncLocal<Action<TimeSpan, int>?> waiting = new();
+
+    /// <summary>
+    /// Told each wait as it starts, with the status that asked for it, by whatever
+    /// runs the turn this request is part of.
+    /// </summary>
+    /// <remarks>Flows with the request rather than through the contract, so a provider passes nothing on.</remarks>
+    internal static Action<TimeSpan, int>? Waiting
+    {
+        get => waiting.Value;
+        set => waiting.Value = value;
+    }
+
+    /// <summary>Tells <see cref="Waiting"/> that a wait of <paramref name="wait"/> is starting.</summary>
+    internal static void Tell(TimeSpan wait, int status) => Waiting?.Invoke(wait, status);
+
     /// <summary>Whether a refusal with this status is worth sending again.</summary>
     /// <remarks>
     /// 429 is the one that matters: a rate limit on a conversation that resends a
@@ -52,12 +68,15 @@ public static class AssistantPost
 
             var wait = waitAsked(response) ?? Backoff(attempt);
 
-            // Waiting is silent: a hiccup of under a second is not worth a line in
-            // the transcript, and a quota is told at once rather than sat on.
+            // A quota is told at once rather than sat on.
             if (attempt >= MaxAttempts || !Retryable(response.Status) || wait > LongestWait)
                 throw new HttpRequestException(complaint(response.Status, response.Body));
 
-            await Task.Delay(wait < TimeSpan.Zero ? TimeSpan.Zero : wait, cancel).ConfigureAwait(false);
+            if (wait < TimeSpan.Zero) wait = TimeSpan.Zero;
+
+            Tell(wait, response.Status);
+
+            await Task.Delay(wait, cancel).ConfigureAwait(false);
         }
     }
 

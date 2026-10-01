@@ -37,6 +37,22 @@ public class AssistantPostTests
         answers.Asked.ShouldBe(2);
     }
 
+    /// <summary>A wait is told as it starts, so whoever shows the turn can say why nothing is happening.</summary>
+    [Fact]
+    public async Task A_wait_is_told_before_it_is_waited()
+    {
+        var answers = new Answers((HttpStatusCode.TooManyRequests, "slow down"), (HttpStatusCode.OK, "{}"));
+        var transport = new KeyedTransport(null, null, new AssistantCredential("", ""), answers);
+        var told = new List<(TimeSpan Wait, int Status)>();
+
+        AssistantPost.Waiting = (wait, status) => told.Add((wait, status));
+
+        await AssistantPost.Send(
+            transport, Nowhere, "{}", _ => TimeSpan.Zero, (status, _) => $"refused {status}", TestContext.Current.CancellationToken);
+
+        told.ShouldBe([(TimeSpan.Zero, 429)]);
+    }
+
     /// <summary>A limit that resets further out than anybody should sit and watch is a quota, told at once.</summary>
     [Fact]
     public async Task A_quota_is_told_rather_than_waited_on()

@@ -172,6 +172,52 @@ public class TurnLoopTests
         conversation.Sent.ShouldBe(TurnLoop.MaxExchanges);
     }
 
+    /// <summary>A send that waits out a rate limit says so while it waits, not once it is done.</summary>
+    [Fact]
+    public async Task A_wait_for_the_rate_limit_is_told_while_it_waits()
+    {
+        var limited = new TaskCompletionSource();
+        var conversation = new Scripted(new ModelReply("hello", []))
+        {
+            Workbench = Bench(),
+            Before = async () =>
+            {
+                AssistantPost.Tell(TimeSpan.FromSeconds(30.2), 429);
+                await limited.Task;
+            },
+        };
+
+        await using var turn = TurnLoop.Run(conversation, "make something", TestContext.Current.CancellationToken)
+            .GetAsyncEnumerator(TestContext.Current.CancellationToken);
+
+        (await turn.MoveNextAsync()).ShouldBeTrue();
+        turn.Current.ShouldBe(new PatchEvent.Did("waiting 31s for the rate limit"));
+        limited.Task.IsCompleted.ShouldBeFalse();
+
+        limited.SetResult();
+
+        (await turn.MoveNextAsync()).ShouldBeTrue();
+        turn.Current.ShouldBe(new PatchEvent.Said("hello"));
+    }
+
+    /// <summary>A hiccup of under a second is not worth a line.</summary>
+    [Fact]
+    public async Task A_wait_of_under_a_second_is_not_told()
+    {
+        var conversation = new Scripted(new ModelReply("hello", []))
+        {
+            Before = () =>
+            {
+                AssistantPost.Tell(TimeSpan.FromSeconds(0.5), 429);
+                return Task.CompletedTask;
+            },
+        };
+
+        var events = await Turn(Bench(), conversation);
+
+        events.ShouldBe([new PatchEvent.Said("hello")]);
+    }
+
     /// <summary>Replies in order, and keeps what it was told.</summary>
     private sealed class Scripted(params ModelReply[] replies) : IModelConversation
     {
@@ -193,13 +239,16 @@ public class TurnLoopTests
 
         public void Add(string instruction) => Log.Add("add: " + instruction);
 
-        public Task<ModelReply> Send(CancellationToken cancel)
+        /// <summary>What a send does before it answers, as a provider waiting out a refusal would.</summary>
+        public Func<Task>? Before { get; init; }
+
+        public async Task<ModelReply> Send(CancellationToken cancel)
         {
             Sent++;
 
-            return replies.Count > 0
-                ? Task.FromResult(replies.Dequeue())
-                : Task.FromException<ModelReply>(new HttpRequestException("no more replies"));
+            if (Before is { } before) await before();
+
+            return replies.Count > 0 ? replies.Dequeue() : throw new HttpRequestException("no more replies");
         }
 
         public void Add(IReadOnlyList<ToolAnswer> answers) => Answered.Add(answers);

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Threading.Channels;
 
 namespace Flyback.Plugins.Assist;
 
@@ -30,6 +31,15 @@ public static class TurnLoop
     internal const string Unoffered =
         "This turn changed the patch but did not offer it, so the canvas still shows what was "
         + "there before. Ask for it to be applied if you want to see it.";
+
+    /// <summary>The shortest wait for a refusal worth a line in the transcript.</summary>
+    internal static readonly TimeSpan ToldWait = TimeSpan.FromSeconds(1);
+
+    /// <summary>The waits told of, which are lines from the host rather than anything the assistant did.</summary>
+    private static readonly ConditionalWeakTable<PatchEvent, object> waits = [];
+
+    /// <summary>Whether <paramref name="happened"/> is a wait for a refusal rather than anything the assistant did.</summary>
+    internal static bool IsWait(PatchEvent happened) => waits.TryGetValue(happened, out _);
 
     /// <summary>The answer to a call the person stopped the turn before it ran.</summary>
     internal const string Stopped = "not run: the person stopped this turn.";
@@ -71,6 +81,10 @@ public static class TurnLoop
 
         var workbench = conversation.Workbench;
 
+        // Waits a request tells of while it is still waiting, so the transcript is
+        // not silent for the minute a rate limit can take.
+        var told = Channel.CreateUnbounded<PatchEvent>();
+
         // Whatever was offered last time is not this turn's answer. The patch
         // itself stays: a conversation carries on from what it built.
         workbench.Reopen();
@@ -89,9 +103,13 @@ public static class TurnLoop
             ModelReply? reply = null;
             string? failure = null;
 
+            var sending = Telling(() => conversation.Send(cancel), told.Writer);
+
+            await foreach (var wait in Until(sending, told.Reader).ConfigureAwait(false)) yield return wait;
+
             try
             {
-                reply = await conversation.Send(cancel).ConfigureAwait(false);
+                reply = await sending.ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -129,23 +147,37 @@ public static class TurnLoop
                     }
 
                     ToolOutcome outcome;
-                    string said;
 
                     try
                     {
                         outcome = await Answer(workbench, call, cancel).ConfigureAwait(false);
-                        said = outcome.Text;
-
-                        // Described only where the clip cannot reach this model. Where
-                        // it can, a description by another would be a second opinion
-                        // nobody asked for, paid for by a second request.
-                        if (outcome.Wav is { } borrowed && !conversation.HearsItself)
-                            said += "\n\n" + await Described(conversation, borrowed, cancel).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
                         answers.Add(new ToolAnswer(call, Stopped));
                         continue;
+                    }
+
+                    var said = outcome.Text;
+
+                    // Described only where the clip cannot reach this model. Where
+                    // it can, a description by another would be a second opinion
+                    // nobody asked for, paid for by a second request.
+                    if (outcome.Wav is { } borrowed && !conversation.HearsItself)
+                    {
+                        var describing = Telling(() => Described(conversation, borrowed, cancel), told.Writer);
+
+                        await foreach (var wait in Until(describing, told.Reader).ConfigureAwait(false)) yield return wait;
+
+                        try
+                        {
+                            said += "\n\n" + await describing.ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            answers.Add(new ToolAnswer(call, Stopped));
+                            continue;
+                        }
                     }
 
                     answers.Add(new ToolAnswer(call, said, outcome.Png, conversation.HearsItself ? outcome.Wav : null));
@@ -187,6 +219,47 @@ public static class TurnLoop
         // here. One that stopped of its own accord has already returned above.
         yield return new PatchEvent.Failed(
             $"stopped after {MaxExchanges} exchanges in one turn, which is as many as there are.");
+    }
+
+    /// <summary>
+    /// Runs <paramref name="request"/>, writing each wait it tells of that is at
+    /// least <see cref="ToldWait"/> to <paramref name="told"/> as a line.
+    /// </summary>
+    private static async Task<T> Telling<T>(Func<Task<T>> request, ChannelWriter<PatchEvent> told)
+    {
+        AssistantPost.Waiting = (wait, status) =>
+        {
+            if (wait >= ToldWait) told.TryWrite(Wait(wait, status));
+        };
+
+        return await request().ConfigureAwait(false);
+    }
+
+    /// <summary>The line a wait of <paramref name="wait"/> for a refusal with <paramref name="status"/> is told as.</summary>
+    internal static PatchEvent Wait(TimeSpan wait, int status)
+    {
+        var seconds = (int)Math.Ceiling(wait.TotalSeconds);
+
+        PatchEvent line = new PatchEvent.Did(status == 429
+            ? $"waiting {seconds}s for the rate limit"
+            : $"waiting {seconds}s: the endpoint answered {status}");
+
+        waits.Add(line, line);
+
+        return line;
+    }
+
+    /// <summary>What <paramref name="told"/> is handed until <paramref name="request"/> is done, as it arrives.</summary>
+    private static async IAsyncEnumerable<PatchEvent> Until(Task request, ChannelReader<PatchEvent> told)
+    {
+        while (!request.IsCompleted)
+        {
+            await Task.WhenAny(request, told.WaitToReadAsync().AsTask()).ConfigureAwait(false);
+
+            while (told.TryRead(out var line)) yield return line;
+        }
+
+        while (told.TryRead(out var line)) yield return line;
     }
 
     /// <summary>Hands one call to the workbench, with arguments that will not read refused rather than thrown.</summary>

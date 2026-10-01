@@ -493,6 +493,18 @@ public class AssistantRunTests
         run.Unsaid.ShouldBe("value1.value=0.25");
     }
 
+    /// <summary>A wait for a rate limit is the host talking, so a turn that waited and was then refused is not counted either.</summary>
+    [Fact]
+    public async Task A_turn_that_only_waited_before_it_failed_is_not_counted()
+    {
+        using var run = RunOf(new ScriptedAssistant(TurnLoop.Wait(TimeSpan.FromSeconds(31), 429), new PatchEvent.Failed("quota")));
+
+        var events = await Drain(run);
+
+        events.Count.ShouldBe(2);
+        run.Turns.ShouldBe(0);
+    }
+
     /// <summary>
     /// A knob the assistant set and never proposed is its own, not something
     /// changed on the canvas, so carrying the conversation on over the same

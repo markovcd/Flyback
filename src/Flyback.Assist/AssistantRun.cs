@@ -374,7 +374,7 @@ internal sealed class AssistantRun : IDisposable
         {
             await foreach (var happened in Guarded(instruction, mine.Token).ConfigureAwait(false))
             {
-                if (happened is not PatchEvent.Failed) answered = true;
+                if (happened is not PatchEvent.Failed && !TurnLoop.IsWait(happened)) answered = true;
 
                 if (happened is PatchEvent.Proposed proposed)
                 {
