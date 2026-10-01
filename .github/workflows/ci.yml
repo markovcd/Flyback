@@ -28,8 +28,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A push to main or a manual run goes to the self-hosted runner when it is
-  # online, else to GitHub's. A pull request never does: the repo is public, and
+  # A run on main goes to the self-hosted runner when it is
+  # online, else to GitHub's. Any other ref, a pull request included, never does: the repo is public, and
   # a fork's workflow would run on that machine. The runners API needs a token
   # with repo admin, which GITHUB_TOKEN is not, hence the secret; without it the
   # job falls back to GitHub's runner.
@@ -42,10 +42,10 @@ jobs:
       - id: pick
         env:
           GH_TOKEN: ${{ secrets.RUNNER_STATUS_TOKEN }}
-          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
         run: |
           runs_on='"ubuntu-latest"'
-          if [ "$EVENT" != pull_request ] && [ -n "$GH_TOKEN" ]; then
+          if [ "$REF" = refs/heads/main ] && [ -n "$GH_TOKEN" ]; then
             online=$(gh api repos/${{ github.repository }}/actions/runners/21               --jq '.status == "online" and (.busy | not)' || echo false)
             if [ "$online" = true ]; then
               runs_on='["self-hosted","Windows","X64"]'
