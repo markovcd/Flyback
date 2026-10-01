@@ -42,6 +42,8 @@ Flyback.Gpu       the GPU renderer, its OpenGL binding, a headless context
    ^              no Avalonia and no packages
 Flyback.Plugins   the plugin contract and the host that loads plugins off disk
    ^
+Flyback.Assist    the host's side of a conversation with an assistant, for the editor and the CLI
+   ^
 Flyback.Ui        what two shells draw with: preview, sound device, colors, settings
    ^
 Flyback.Editor    the editor (Avalonia), no platform in it
@@ -65,6 +67,7 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Engine` | `PatchCompiler`, `CompiledPatch`, IL, GLSL and JavaScript backends, `SynthRenderer`, `AudioRenderer`, codecs, `Language/`, `PatchIO`, the built-in `Presets` | No third-party dependencies ([0019](adr/0019-no-third-party-dependencies-in-the-engine.md)). PNG, JPEG, WAV and AVI are written by hand for that reason. |
 | `Flyback.Gpu` | `GpuFrameRenderer`, `GpuReadback`, `IGl`, `Gl`, `WebGl`, `HeadlessContext` (WGL and EGL), `HeadlessRenderer` | OpenGL through `IGl`: native function pointers the caller's context hands over, or WebGL 2 in the web viewer, so every picture on a GPU comes from one renderer ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md), [0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.Plugins` | `IFlybackPlugin`, `IPluginRegistry`, the device, MIDI, secret and assistant interfaces, `PluginHost`, `PatchWorkbench` | References Engine with `PrivateAssets="all"`, so a plugin cannot reach the engine through it. |
+| `Flyback.Assist` | `AssistantSession`, `AssistantRun`, `SavedConversation`, `ConversationStore`, `ITranscript` | The conversation the editor's column and `flyback-cli ask` both hold, kept out of the assembly a plugin is compiled against ([0169](adr/0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md)). |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
 | `Flyback.Editor` | `EditorView`, `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, the container they are composed in, usage counts, the running version and release notes | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). A library, so a browser page can host the editor as well as the desktop ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.App` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |

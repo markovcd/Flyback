@@ -8,6 +8,14 @@
         "resolved": "2.0.12",
         "contentHash": "FpW672e6qqrTd1EfKqsvUtFZaJWlTlszUR1o8tdakXhkzKbnEZVndtpfd4K3fUPCFcIs9UmcswMyYGJP1zp/rg=="
       },
+      "flyback.assist": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Engine": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.core": {
         "type": "Project"
       },

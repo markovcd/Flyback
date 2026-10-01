@@ -1,5 +1,6 @@
 using Flyback.App.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 
 namespace Flyback.App.Assist;

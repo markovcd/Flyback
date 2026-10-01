@@ -5,13 +5,14 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
 using Flyback.App.Controls;
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Colors = Flyback.App.Controls.Colors;
 
 namespace Flyback.App.Assist;
 
 /// <summary>The assistant's conversation as it is drawn, and as it is kept to be saved with the patch.</summary>
-internal sealed class TranscriptView : ScrollViewer
+internal sealed class TranscriptView : ScrollViewer, ITranscript
 {
     private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
 
@@ -149,6 +150,20 @@ internal sealed class TranscriptView : ScrollViewer
                 Add(text, Text.Muted, Text.Small);
                 break;
         }
+    }
+
+    /// <summary>
+    /// One thing said, with the frame under it where it is one the assistant
+    /// looked at. A heard sound is its caption alone: the WAV went to the model,
+    /// and the patch under the cursor may already be playing.
+    /// </summary>
+    public void Put(Spoken spoken)
+    {
+        Put(spoken.Line.Voice, spoken.Line.Text, spoken.Keep);
+
+        if (spoken.Event is PatchEvent.Saw saw) Picture(saw.Png);
+
+        ScrollToEnd();
     }
 
     /// <summary>

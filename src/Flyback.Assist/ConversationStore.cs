@@ -4,7 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Flyback.Core;
 
-namespace Flyback.Plugins.Assist;
+
+namespace Flyback.Assist;
 
 /// <summary>
 /// The conversations kept for patch files, in the application's own folder, one

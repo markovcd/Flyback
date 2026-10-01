@@ -1,4 +1,5 @@
 using Flyback.App.Assist;
+using Flyback.Assist;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;

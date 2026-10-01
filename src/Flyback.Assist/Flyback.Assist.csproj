@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The host's side of a conversation with an assistant: the run, the session the
+    editor's column and flyback-cli ask both drive, and how a conversation is saved
+    with its patch. Kept out of Flyback.Plugins, which a plugin is compiled against
+    and which holds only the contract and what the contract needs (ADR-0169).
+  -->
+  <PropertyGroup>
+    <RootNamespace>Flyback.Assist</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Flyback" />
+    <InternalsVisibleTo Include="Flyback.Editor" />
+    <InternalsVisibleTo Include="Flyback.WebEditor" />
+    <InternalsVisibleTo Include="flyback-cli" />
+    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Cli.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
+</Project>

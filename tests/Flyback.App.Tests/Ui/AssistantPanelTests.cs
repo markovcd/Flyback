@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Flyback.App.Assist;
 using Flyback.App.Notices;
+using Flyback.Assist;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;

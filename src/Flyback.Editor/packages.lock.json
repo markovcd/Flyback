@@ -295,6 +295,14 @@
           "Svg.SceneGraph": "5.2.3"
         }
       },
+      "flyback.assist": {
+        "type": "Project",
+        "dependencies": {
+          "Flyback.Core": "[0.1.0-dev, )",
+          "Flyback.Engine": "[0.1.0-dev, )",
+          "Flyback.Plugins": "[0.1.0-dev, )"
+        }
+      },
       "flyback.core": {
         "type": "Project"
       },

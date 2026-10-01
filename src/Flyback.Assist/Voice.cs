@@ -1,4 +1,4 @@
-﻿namespace Flyback.Plugins.Assist;
+namespace Flyback.Assist;
 
 /// <summary>Whose a line of the transcript is, which decides how it is drawn.</summary>
 internal enum Voice

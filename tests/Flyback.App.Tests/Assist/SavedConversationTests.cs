@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Flyback.App.Assist;
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Shouldly;

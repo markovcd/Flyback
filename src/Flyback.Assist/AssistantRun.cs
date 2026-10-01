@@ -3,9 +3,10 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.Plugins.Assist;
+namespace Flyback.Assist;
 
 /// <summary>
 /// One conversation with an assistant, and everything around it that is not a

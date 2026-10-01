@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Flyback.App.Assist;
+using Flyback.Assist;
 using Flyback.Cli.Commands;
 using Flyback.Cli.Common;
 using Flyback.Cli.Models;

@@ -2,6 +2,7 @@ using Flyback.Cli.Common;
 using Flyback.Cli.Models;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;

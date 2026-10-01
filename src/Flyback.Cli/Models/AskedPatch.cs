@@ -2,7 +2,7 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
-using Flyback.Plugins.Assist;
+using Flyback.Assist;
 
 namespace Flyback.Cli.Models;
 

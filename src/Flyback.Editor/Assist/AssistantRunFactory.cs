@@ -1,3 +1,4 @@
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 

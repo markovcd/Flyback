@@ -14,6 +14,7 @@ using Flyback.App.Notices;
 using Flyback.App.Settings;
 using Flyback.App.Statistics;
 using Flyback.Core;
+using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Colors = Flyback.App.Controls.Colors;
@@ -30,7 +31,7 @@ namespace Flyback.App.Assist;
 /// is abandoned or bad costs nothing — everything between happens on
 /// <see cref="AssistantRun"/>'s copy.
 /// </remarks>
-[SuppressMessage("Design", "CA1001", Justification = "The run ends with its conversation, in SetAside.")]
+[SuppressMessage("Design", "CA1001", Justification = "The session ends with its conversation, in SetAside.")]
 internal sealed class AssistantPanel : UserControl
 {
     private static readonly IBrush Amber = new ImmutableSolidColorBrush(Colors.Attention);
@@ -304,7 +305,8 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private const string NoProvider = "None";
 
-    private AssistantRun? run;
+    /// <summary>The conversation going, its log, and what the transcript is told of it.</summary>
+    private readonly AssistantSession session;
 
     /// <summary>
     /// Told which provider a message went to, for the run's own count of itself
@@ -312,23 +314,6 @@ internal sealed class AssistantPanel : UserControl
     /// </summary>
     private readonly Usage? usage;
     private readonly Reactions reactions;
-
-    /// <summary>
-    /// Where <see cref="run"/>'s turns go when <see cref="AssistantSettings.LogConversations"/>
-    /// asked for that. Starts closed, which writes nothing, so nothing here has
-    /// to check the setting before every line.
-    /// </summary>
-    private ConversationLog log = ConversationLog.Start(false, string.Empty);
-
-    /// <summary>
-    /// What the conversation in <see cref="run"/> was started with. A session is
-    /// built around one model at one endpoint and cannot be moved to another, so
-    /// these are what say whether it is still the right conversation to be
-    /// having — see <see cref="Restarting"/>.
-    /// </summary>
-    private AssistantConfig? runConfig;
-
-    private IPatchAssistant? runAssistant;
 
     /// <summary>Built the first time the settings window asks for it, and kept.</summary>
     private Control? section;
@@ -380,6 +365,7 @@ internal sealed class AssistantPanel : UserControl
         this.usage = usage;
         settingsPath = folders?.AssistantSettingsPath;
         logFolder = folders?.ConversationLogFolder;
+        session = new AssistantSession(transcript, logFolder);
         this.settingsRepository = settingsRepository;
         conversation.Opened += Opened;
         conversation.Saved += (_, _) => this.reactions.Raise(new ConversationChanged());
@@ -475,13 +461,7 @@ internal sealed class AssistantPanel : UserControl
         // A turn still running goes with the conversation it was part of.
         // Disposing the run stops it, and AskAsync drops whatever it still had
         // on its way.
-        run?.Dispose();
-        run = null;
-        runConfig = null;
-        runAssistant = null;
-
-        log.Dispose();
-        log = ConversationLog.Start(false, string.Empty);
+        session.End();
 
         transcript.Clear();
 
@@ -528,7 +508,7 @@ internal sealed class AssistantPanel : UserControl
             // be a whole request away. Saying so beats a button that goes dead
             // and a panel that carries on as if nothing was asked of it.
             stopping = true;
-            run?.Stop();
+            session.Run?.Stop();
             Beat();
         };
 
@@ -826,7 +806,7 @@ internal sealed class AssistantPanel : UserControl
 
         // Into the conversation already going, as well as the next one: a limit
         // raised because a conversation ran out is raised for that conversation.
-        if (run is not null) run.MaxTurns = settingsRepository.Current.TurnLimit;
+        if (session.Run is { } run) run.MaxTurns = settingsRepository.Current.TurnLimit;
 
         settingsRepository.Current.Provider = chosenAssistant.Value?.Id ?? string.Empty;
 
@@ -945,7 +925,7 @@ internal sealed class AssistantPanel : UserControl
         send.IsEnabled = asking
             || (blocked is null && !string.IsNullOrWhiteSpace(instruction.Text));
 
-        fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || run is not null || conversation.Waiting is not null);
+        fresh.IsEnabled = !asking && (transcript.Lines.Count > 0 || session.Run is not null || conversation.Waiting is not null);
 
         ToolTip.SetTip(fresh, "Start a new conversation about this patch. The one set aside stays saved "
             + "with the patch until the patch is saved again.");
@@ -972,7 +952,7 @@ internal sealed class AssistantPanel : UserControl
         beacon.Opacity = 0.25d + 0.75d * ((Math.Cos(pulse * Math.PI / 5d) + 1d) / 2d);
 
         var elapsed = DateTime.UtcNow - startedAt;
-        var bench = run?.Workbench;
+        var bench = session.Run?.Workbench;
 
         var done = bench is null || bench.ToolCalls == 0
             ? string.Empty
@@ -1139,10 +1119,8 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private string? Restarting(AssistantConfig config)
     {
-        if (run is null) return conversation.Waiting is not { } waiting ? string.Empty : Unresumable(waiting, config);
-        if (run.Exhausted) return "That conversation had its turns. Starting another.";
-        if (!ReferenceEquals(runAssistant, chosenAssistant.Value) || runConfig != config)
-            return "The settings changed, so this is a new conversation.";
+        if (session.Run is not { } run) return conversation.Waiting is not { } waiting ? string.Empty : Unresumable(waiting, config);
+        if (session.Spent(chosenAssistant.Value!, config) is { } spent) return spent;
 
         return run.Reshaped(editor.Current)
             ? "The modules or wires changed underneath, so this is a new conversation about the patch on screen."
@@ -1184,7 +1162,7 @@ internal sealed class AssistantPanel : UserControl
     {
         var because = Restarting(config);
 
-        if (because is null && run is { } going)
+        if (because is null && session.Run is { } going)
         {
             going.CatchUp(editor.Current);
             return going;
@@ -1195,46 +1173,13 @@ internal sealed class AssistantPanel : UserControl
         var resuming = because is null ? conversation.Waiting : null;
         conversation.Begin(resuming, editor.Current);
 
-        run?.Dispose();
-        run = runs.Create(with, config, resuming);
-        runConfig = config;
-        runAssistant = with;
-
-        log.Dispose();
-        log = ConversationLog.Start(settingsRepository.Current.LogConversations, with.Id, logFolder);
-
-        if (resuming is not null)
-        {
-            // Nothing is cleared: the transcript on screen is this conversation's.
-            if (!run.PickedUp)
-            {
-                transcript.Put(Voice.Note,
-                    $"{with.Name} could not pick up what was said before, so it starts again from the patch it had built.");
-            }
-
-            return run;
-        }
+        var started = runs.Create(with, config, resuming);
 
         // A conversation of its own, so what was saved with the patch is no
         // longer what saving it again should write.
-        // Said rather than silently done, and only where there was something to
-        // lose: the transcript emptying is otherwise the only sign that the
-        // thing being talked to has just been replaced.
-        if (!transcript.IsEmpty)
-        {
-            transcript.Clear();
+        session.Begin(started, with, config, settingsRepository.Current, resuming is not null, because);
 
-            if (because is { Length: > 0 }) transcript.Put(Voice.Note, because);
-        }
-
-        // Not saved with the patch: it is rebuilt for every conversation, and runs
-        // to the whole briefing budget.
-        var briefing = $"The briefing it was handed:{Environment.NewLine}{run.Workbench.Briefing}";
-
-        transcript.Put(Voice.Briefing, briefing, keep: false);
-        if (settingsRepository.Current.ShowBriefing) log.Write("briefing", briefing);
-
-        return run;
+        return started;
     }
 
     private async Task AskAsync()
@@ -1249,15 +1194,6 @@ internal sealed class AssistantPanel : UserControl
 
         usage?.Assistant(chosenAssistant.Value.Id);
 
-        transcript.Put(Voice.You, wanted);
-        log.Write("you", config.Transport is KeyedTransport keyed ? keyed.Scrubbed(wanted)! : wanted);
-
-        if (conversation.Unsaid is { } told)
-        {
-            transcript.Put(Voice.Aside, $"Told it what changed on the canvas: {told}.");
-            log.Write("told", told);
-        }
-
         instruction.Text = string.Empty;
 
         StartWorking();
@@ -1265,20 +1201,18 @@ internal sealed class AssistantPanel : UserControl
 
         try
         {
-            await foreach (var happened in conversation.Ask(wanted))
+            await foreach (var happened in session.Ask(wanted))
             {
                 // A document arrived while this ran and took the conversation
                 // with it (Open). What is still on its way is about that one.
-                if (!ReferenceEquals(conversation, run)) break;
-
-                Show(happened);
+                if (!ReferenceEquals(conversation, session.Run)) break;
 
                 // The tallies move as the workbench is driven, and an edit that
                 // lands is the strongest sign of all that this is alive.
                 Beat();
             }
 
-            if (ReferenceEquals(conversation, run))
+            if (ReferenceEquals(conversation, session.Run))
             {
                 Deliver();
                 Settle();
@@ -1299,29 +1233,15 @@ internal sealed class AssistantPanel : UserControl
         }
     }
 
-    private void Show(PatchEvent happened)
-    {
-        var (line, kind, text) = TranscriptLine.Of(happened);
-
-        transcript.Put(line.Voice, line.Text);
-        log.Write(kind, text);
-
-        // A heard sound is its caption and nothing else: the WAV went to the
-        // model, and the patch under the cursor may already be playing.
-        if (happened is PatchEvent.Saw saw) transcript.Picture(saw.Png);
-
-        transcript.ScrollToEnd();
-    }
-
     /// <summary>
     /// Takes the conversation as it stands now a turn has ended, as what saving the
     /// patch writes, and says there is something new to lose.
     /// </summary>
     private void Settle()
     {
-        if (run is null) return;
+        if (session.Run is null) return;
 
-        conversation.Settle(run.Save(transcript.Lines));
+        conversation.Settle(session.Save());
 
         reactions.Raise(new ConversationChanged());
     }
@@ -1345,7 +1265,7 @@ internal sealed class AssistantPanel : UserControl
     /// </remarks>
     private void Deliver()
     {
-        if (run?.Proposal is not { } proposed) return;
+        if (session.Run is not { Proposal: { } proposed } run) return;
 
         // A turn somebody stopped is not one to act on. What it reached is in
         // the transcript, and asking again is a keystroke.
