@@ -56,6 +56,42 @@ internal sealed class PresetStore
 
         if (Convert.ToInt32(columns.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
             Run(db, "ALTER TABLE presets ADD COLUMN published INTEGER NOT NULL DEFAULT 1");
+
+        columns.CommandText = "SELECT count(*) FROM pragma_table_info('presets') WHERE name = 'packed'";
+
+        if (Convert.ToInt32(columns.ExecuteScalar(), CultureInfo.InvariantCulture) == 0)
+            Run(db, "ALTER TABLE presets ADD COLUMN packed INTEGER NOT NULL DEFAULT 0");
+
+        PackWhatIsStoredPlain(db);
+    }
+
+    private static void PackWhatIsStoredPlain(SqliteConnection db)
+    {
+        var plain = new List<(string Id, byte[] File)>();
+
+        using (var query = db.CreateCommand())
+        {
+            query.CommandText = "SELECT id, file FROM presets WHERE packed = 0 AND lower(file_name) LIKE '%.fbk'";
+
+            using var reader = query.ExecuteReader();
+
+            while (reader.Read()) plain.Add((reader.GetString(0), (byte[])reader.GetValue(1)));
+        }
+
+        if (plain.Count == 0) return;
+
+        using var transaction = db.BeginTransaction();
+
+        foreach (var (id, file) in plain)
+        {
+            using var pack = db.CreateCommand();
+            pack.CommandText = "UPDATE presets SET file = $file, packed = 1 WHERE id = $id";
+            pack.Parameters.AddWithValue("$id", id);
+            pack.Parameters.AddWithValue("$file", Packing.Pack(file));
+            pack.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
     }
 
     public StoredPreset Add(Submission submission, DateTimeOffset at)
@@ -106,14 +142,17 @@ internal sealed class PresetStore
         else
         {
             using var replace = db.CreateCommand();
+            var (stored, packed) = Stored(submission);
+
             replace.CommandText = """
-                UPDATE presets SET author = $author, description = $description, file = $file, size = $size
+                UPDATE presets SET author = $author, description = $description, file = $file, packed = $packed, size = $size
                 WHERE id = $id
                 """;
             replace.Parameters.AddWithValue("$id", seeded);
             replace.Parameters.AddWithValue("$author", (object?)submission.Author ?? DBNull.Value);
             replace.Parameters.AddWithValue("$description", (object?)submission.Description ?? DBNull.Value);
-            replace.Parameters.AddWithValue("$file", submission.File);
+            replace.Parameters.AddWithValue("$file", stored);
+            replace.Parameters.AddWithValue("$packed", packed ? 1 : 0);
             replace.Parameters.AddWithValue("$size", submission.File.LongLength);
 
             if (replace.ExecuteNonQuery() > 0)
@@ -144,18 +183,21 @@ internal sealed class PresetStore
 
     private static void Insert(SqliteConnection db, string id, Submission submission, DateTimeOffset at)
     {
+        var (stored, packed) = Stored(submission);
+
         using (var insert = db.CreateCommand())
         {
             insert.CommandText = """
-                INSERT INTO presets (id, name, author, description, file_name, file, size, submitted_at)
-                VALUES ($id, $name, $author, $description, $file_name, $file, $size, $at)
+                INSERT INTO presets (id, name, author, description, file_name, file, packed, size, submitted_at)
+                VALUES ($id, $name, $author, $description, $file_name, $file, $packed, $size, $at)
                 """;
             insert.Parameters.AddWithValue("$id", id);
             insert.Parameters.AddWithValue("$name", submission.Name);
             insert.Parameters.AddWithValue("$author", (object?)submission.Author ?? DBNull.Value);
             insert.Parameters.AddWithValue("$description", (object?)submission.Description ?? DBNull.Value);
             insert.Parameters.AddWithValue("$file_name", submission.FileName);
-            insert.Parameters.AddWithValue("$file", submission.File);
+            insert.Parameters.AddWithValue("$file", stored);
+            insert.Parameters.AddWithValue("$packed", packed ? 1 : 0);
             insert.Parameters.AddWithValue("$size", submission.File.LongLength);
             insert.Parameters.AddWithValue("$at", at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
             insert.ExecuteNonQuery();
@@ -163,6 +205,9 @@ internal sealed class PresetStore
 
         Tag(db, id, submission.Tags);
     }
+
+    private static (byte[] File, bool Packed) Stored(Submission submission) =>
+        Packing.Packs(submission.FileName) ? (Packing.Pack(submission.File), true) : (submission.File, false);
 
     private static void Tag(SqliteConnection db, string id, IEnumerable<string> tags)
     {
@@ -242,21 +287,30 @@ internal sealed class PresetStore
         while (reader.Read()) yield return Row(reader);
     }
 
-    /// <summary>The preset's file, counted as a download where <paramref name="counted"/>.</summary>
-    public (StoredPreset Preset, byte[] File)? Download(string id, bool counted, bool unpublished = false)
+    /// <summary>The preset's file as it was submitted, counted as a download where <paramref name="counted"/>.</summary>
+    public (StoredPreset Preset, byte[] File)? Download(string id, bool counted, bool unpublished = false) =>
+        Fetch(id, counted, unpublished) is { } found
+            ? (found.Preset, found.Packed ? Packing.Unpack(found.File) : found.File)
+            : null;
+
+    /// <summary>
+    /// The preset's file as it is kept, brotli-packed where <c>Packed</c>, counted as a download
+    /// where <paramref name="counted"/>.
+    /// </summary>
+    public (StoredPreset Preset, byte[] File, bool Packed)? Fetch(string id, bool counted, bool unpublished = false)
     {
         using var db = Open();
         using var query = db.CreateCommand();
-        query.CommandText = $"SELECT {Columns}, p.file FROM presets p WHERE p.id = $id {Visible(unpublished)}";
+        query.CommandText = $"SELECT {Columns}, p.file, p.packed FROM presets p WHERE p.id = $id {Visible(unpublished)}";
         query.Parameters.AddWithValue("$id", id);
 
-        (StoredPreset Preset, byte[] File) found;
+        (StoredPreset Preset, byte[] File, bool Packed) found;
 
         using (var reader = query.ExecuteReader())
         {
             if (!reader.Read()) return null;
 
-            found = (Row(reader), (byte[])reader.GetValue(10));
+            found = (Row(reader), (byte[])reader.GetValue(10), reader.GetInt64(11) != 0);
         }
 
         if (counted)

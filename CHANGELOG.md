@@ -28,6 +28,7 @@
 
 - The web viewer's panel knobs are rotary knobs in a column beside the picture, found by name and put back all at once; on a phone they sit in a sheet under the picture, beside keys to play the patch on and what it is for.
 - The web viewer has a Loop button beside the clock, as the desktop viewer does, to play a patch's length round and round; `flyback.loop(on)` sets it for a script.
+- The preset site keeps a shared patch brotli-packed, a seventh the size, and sends it that way to a browser that takes it.
 
 ### Fixes
 

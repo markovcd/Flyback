@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
+using HeaderNames = Microsoft.Net.Http.Headers.HeaderNames;
 
 const long uploadLimit = 20 * 1024 * 1024;
 const int pageSize = 24;
@@ -261,10 +262,20 @@ api.MapGet("/presets/{id}", (HttpContext http, string id) =>
     store.Find(id, Signed(http)) is { } preset ? Results.Ok(View(preset, ratings.Of(ReportStore.Preset, id))) : Results.NotFound());
 
 // render-presets fetches with count=false, so its fetches are not downloads.
+// A packed file goes out as it is kept to a browser that takes brotli, and unpacked to anything else.
 api.MapGet("/presets/{id}/file", (HttpContext http, string id, bool? count) =>
-    store.Download(id, count != false, Signed(http)) is { } download
-        ? Results.File(download.File, "application/octet-stream", download.Preset.FileName)
-        : Results.NotFound());
+{
+    if (store.Fetch(id, count != false, Signed(http)) is not { } found) return Results.NotFound();
+
+    http.Response.Headers.Append(HeaderNames.Vary, HeaderNames.AcceptEncoding);
+
+    if (found.Packed && Precompressed.Takes(http, "br"))
+        http.Response.Headers.ContentEncoding = "br";
+    else if (found.Packed)
+        found = (found.Preset, Packing.Unpack(found.File), false);
+
+    return Results.File(found.File, "application/octet-stream", found.Preset.FileName);
+});
 
 api.MapGet("/tags", (HttpContext http) => Results.Ok(store.Tags(60, Signed(http)).Select(t => new { t.Tag, t.Count })));
 

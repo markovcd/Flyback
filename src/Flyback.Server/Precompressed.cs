@@ -61,16 +61,15 @@ internal static class Precompressed
     public static PathString Requested(HttpContext http) =>
         http.Items.TryGetValue(Asked, out var asked) && asked is PathString path ? path : http.Request.Path;
 
+    /// <summary>Whether the browser said it takes <paramref name="coding"/>.</summary>
+    public static bool Takes(HttpContext http, string coding) =>
+        http.Request.GetTypedHeaders().AcceptEncoding
+            .Any(t => t.Value.Equals(coding, StringComparison.OrdinalIgnoreCase) && (t.Quality ?? 1) > 0);
+
     private static (string Coding, string Suffix)? Pick(HttpContext http, IFileProvider files, PathString within)
     {
-        var taken = http.Request.GetTypedHeaders().AcceptEncoding;
-
         foreach (var (coding, suffix) in Copies)
-        {
-            var takes = taken.Any(t => t.Value.Equals(coding, StringComparison.OrdinalIgnoreCase) && (t.Quality ?? 1) > 0);
-
-            if (takes && files.GetFileInfo(within.Value + suffix).Exists) return (coding, suffix);
-        }
+            if (Takes(http, coding) && files.GetFileInfo(within.Value + suffix).Exists) return (coding, suffix);
 
         return null;
     }
