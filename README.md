@@ -1,4 +1,4 @@
-﻿<img src="docs/logo.svg" width="88" align="right" alt="">
+﻿<img src="promo/logo.svg" width="88" align="right" alt="">
 
 # Flyback
 
