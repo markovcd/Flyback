@@ -101,8 +101,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     public Button Measure { get; } = ToolbarButtons.Drawn("measure", Glyphs.Measure(), MeasureTip);
 
     public const string MeasureTip =
-        "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
-        + "the selected modules' or every module's. Again hides them, or measures afresh after an edit  (Ctrl+M)";
+        "Measure: see the numbers each module is producing, shown next to it on the canvas. "
+        + "Select modules to check only those. Press again to hide them, or to measure again after an edit.  (Ctrl+M)";
 
     public ToggleButton Assistant { get; } =
         ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
