@@ -4,7 +4,7 @@
 
 ## 0.7.0 — 2026-10-02
 
-110 commits since 0.6.0.
+112 commits since 0.6.0.
 
 ### Assistant
 
