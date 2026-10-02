@@ -144,7 +144,7 @@ internal sealed class TransportRow
     /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
     public Button Measure { get; }
 
-    private const string MeasureTip =
+    internal const string MeasureTip =
         "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
         + "the selected modules' or every module's. Again hides them, or measures afresh after an edit  (Ctrl+M)";
 

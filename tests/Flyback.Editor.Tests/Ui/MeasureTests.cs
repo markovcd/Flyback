@@ -205,4 +205,27 @@ public class MeasureTests : EditorTest
         Service<Flyback.Editor.Inspect.Inspector>(window).TurnPictures();
         picture.Source.ShouldBe(labels.Frame(found));
     }
+
+    [AvaloniaFact]
+    public void The_button_shows_what_pressing_it_would_do()
+    {
+        var window = Opened(out var lfo, out _);
+        var button = All<Button>(window).Single(b => b.Name == "measure");
+        var measuring = Service<Measuring>(window);
+
+        measuring.Mode.ShouldBe(MeasureMode.Ready);
+
+        Measure(window);
+
+        measuring.Mode.ShouldBe(MeasureMode.Shown);
+        ToolTip.GetTip(button).ShouldBe("Hide the measurements  (Ctrl+M)");
+
+        var editor = Editor(window);
+        editor.History.Patch.Find(lfo.Id)!.InputValues[1] = 5f;
+        editor.History.Record();
+        Settle(window);
+
+        measuring.Mode.ShouldBe(MeasureMode.Ready);
+        ToolTip.GetTip(button).ShouldBe(Flyback.Editor.Bars.TransportRow.MeasureTip);
+    }
 }

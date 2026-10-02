@@ -245,6 +245,14 @@ internal static class Glyphs
     public static Control Measure() => Stroked(
         "M1.5,5.5 L14.5,5.5 L14.5,10.5 L1.5,10.5 Z M4.5,5.5 L4.5,8 M7.5,5.5 L7.5,8.5 M10.5,5.5 L10.5,8 M13,5.5 L13,7");
 
+    /// <summary>The ruler with a cross at its corner: give up the measurement under way. Not a square, which is the transport's.</summary>
+    public static Control MeasureCancel() => Stroked(
+        "M1.5,8.5 L11.5,8.5 L11.5,13 L1.5,13 Z M4,8.5 L4,10.5 M6.5,8.5 L6.5,11 M9,8.5 L9,10.5 M10,2 L14.5,6.5 M14.5,2 L10,6.5");
+
+    /// <summary>The ruler struck through: take the measurements down.</summary>
+    public static Control MeasureHide() => Stroked(
+        "M1.5,5.5 L14.5,5.5 L14.5,10.5 L1.5,10.5 Z M4.5,5.5 L4.5,8 M7.5,5.5 L7.5,8.5 M10.5,5.5 L10.5,8 M13,5.5 L13,7 M2.5,14 L13.5,2");
+
     /// <summary>A box with an arrow leaving it: the patch taken to the viewer, in a tab of its own.</summary>
     public static Control Viewer() => Stroked("M9,2.5 L13.5,2.5 L13.5,7 M13.5,2.5 L7.5,8.5 M12,9.5 L12,13.5 L2.5,13.5 L2.5,4 L6.5,4");
 

@@ -1,4 +1,6 @@
+using Avalonia.Controls;
 using Avalonia.Threading;
+using Flyback.Editor.Bars;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
@@ -18,20 +20,72 @@ namespace Flyback.Editor;
 /// again while it runs stops it, and while its labels are fresh takes them down. Not
 /// in a page, where a pass of seconds on the one thread a page has would hang it.
 /// </remarks>
-internal sealed class Measuring(
-    NodeEditor editor,
-    Playback playback,
-    PreviewHost preview,
-    CanvasSection settings,
-    MeasureLabels labels,
-    ReportLine report,
-    Reactions reactions,
-    EditorHost host) : IReactTo<MeasureAsked>, IDisposable
+internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
 {
+    private readonly NodeEditor editor;
+    private readonly Playback playback;
+    private readonly PreviewHost preview;
+    private readonly CanvasSection settings;
+    private readonly MeasureLabels labels;
+    private readonly ReportLine report;
+    private readonly Reactions reactions;
+    private readonly EditorHost host;
+    private readonly Button button;
+
     private CancellationTokenSource? running;
+
+    public Measuring(
+        NodeEditor editor,
+        Playback playback,
+        PreviewHost preview,
+        CanvasSection settings,
+        MeasureLabels labels,
+        ReportLine report,
+        Reactions reactions,
+        EditorHost host,
+        TransportRow transport)
+    {
+        this.editor = editor;
+        this.playback = playback;
+        this.preview = preview;
+        this.settings = settings;
+        this.labels = labels;
+        this.report = report;
+        this.reactions = reactions;
+        this.host = host;
+        button = transport.Measure;
+
+        labels.Changed += ShowMode;
+    }
 
     /// <summary>Whether a measurement is under way.</summary>
     public bool Running => running is not null;
+
+    /// <summary>What pressing Measure would do now.</summary>
+    public MeasureMode Mode =>
+        running is not null ? MeasureMode.Running
+        : labels.Report is not null && !labels.Stale ? MeasureMode.Shown
+        : MeasureMode.Ready;
+
+    /// <summary>Puts on the button the glyph and the tip of what pressing it would do.</summary>
+    private void ShowMode()
+    {
+        var mode = Mode;
+
+        button.Content = mode switch
+        {
+            MeasureMode.Running => Glyphs.MeasureCancel(),
+            MeasureMode.Shown => Glyphs.MeasureHide(),
+            _ => Glyphs.Measure(),
+        };
+
+        ToolTip.SetTip(button, mode switch
+        {
+            MeasureMode.Running => "Cancel the measurement  (Ctrl+M)",
+            MeasureMode.Shown => "Hide the measurements  (Ctrl+M)",
+            _ => TransportRow.MeasureTip,
+        });
+    }
 
     /// <summary>Measures, or takes fresh labels down, or stops a run under way: one gesture for all three.</summary>
     public async Task On(MeasureAsked notice)
@@ -88,6 +142,8 @@ internal sealed class Measuring(
 
         using var stop = running = new CancellationTokenSource();
 
+        ShowMode();
+
         try
         {
             var measured = await Task.Run(
@@ -113,6 +169,7 @@ internal sealed class Measuring(
         finally
         {
             running = null;
+            ShowMode();
         }
     }
 }

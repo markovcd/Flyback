@@ -31,6 +31,9 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     /// <summary>Each color's picture, made the first time it is drawn.</summary>
     private readonly Dictionary<(Measurement Measured, int At), Bitmap> frames = [];
 
+    /// <summary>Raised when labels are pinned, taken down or go out of date.</summary>
+    public event Action? Changed;
+
     /// <summary>What was last measured, or null before anything was.</summary>
     public MeasureReport? Report { get; private set; }
 
@@ -44,6 +47,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         Stale = false;
         frames.Clear();
         repaint.Request();
+        Changed?.Invoke();
     }
 
     /// <summary>Takes every label down.</summary>
@@ -53,6 +57,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         Stale = false;
         frames.Clear();
         repaint.Request();
+        Changed?.Invoke();
     }
 
     public Task On(PatchChanged notice)
@@ -65,6 +70,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         {
             Stale = true;
             repaint.Request();
+            Changed?.Invoke();
         }
 
         return Task.CompletedTask;
