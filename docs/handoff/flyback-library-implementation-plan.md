@@ -1,115 +1,135 @@
-# Shared sounds and pictures on the preset site
+# Move Flyback.Server to Cloudflare
 
-Written on 2026-10-02, against `main` at `0c78e134`. It is on TODO.md; take it off there, and delete this file, in the commit that lands the last of it.
+Written on 2026-10-02, against `main` at `3cd4ff1e`. It is on TODO.md; take it off there, and delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
 - **Status:** Open
+- **Confirmed by reading:** `src/Flyback.Server/`, ADRs 0131, 0133, 0136, 0138, 0141, `deploy/site/`, `RenderPresetsCommand.cs`, Cloudflare's current Workers, D1 and Containers pages. Nothing here has been run.
 
-## The change from the first draft
+## Goal
 
-The first draft was a Cloudflare Worker, R2 and D1 beside a static Pages site. Flyback already has the server that draft was reinventing: `Flyback.Server`, the preset site, in a container on the NAS behind a Cloudflare Tunnel (ADR-0131, [deploy/site/cloudflare.md](../../deploy/site/cloudflare.md)). It takes presets and plugin packages, keeps them in SQLite, rate-limits a submission per address, has an admin who publishes and deletes (Cloudflare Access guards `admin.html`), and is the one host the editor is built to ask (ADR-0133's amendment fixes `PresetSite` at build time).
+No machine of the author's serves, stores or renders anything for the preset site. Today the NAS runs the container, a Cloudflare Tunnel reaches it, and a second PC renders every preset's media over an SMB share. After this, Cloudflare holds the state and serves every request, and GitHub's hosted runners do the one thing a Worker cannot: run the C# that reads a patch or a plugin package.
 
-So **shared sounds and pictures are a third kind of thing on that site.** No Worker, no R2, no D1, no presigned URLs, no second origin, no TypeScript. A second stack would mean a second hard-coded host in the editor, a CORS policy, a second admin sign-in and a second place every rule in `security.md` has to hold, for a feature the existing server does in the same shape as plugins.
+The public contract does not move. A shipped editor reads `/api/v1/presets`, `/api/v1/plugins`, `/api/v1/letters` and the reports routes at a build-time host (ADR-0133's amendment), and `saved-data.md` says contracts only grow. Every route and JSON shape the editor and the pages use today stays as it is.
 
-The price is that sound files go through the NAS and its tunnel rather than R2's edge. That is the escape hatch to keep open, not to build: the store takes the file bytes behind one small interface, so R2 can sit behind it later if bandwidth ever hurts.
+## What the server does, and where each part goes
 
-## What is shared
+| Today | After |
+|---|---|
+| ASP.NET app in a container (`Program.cs`, 358 lines, 2,600 across the server) | A Worker in TypeScript, one module per store as now |
+| SQLite file: presets, tags, plugins, ratings, reports, letters, defaults | D1, with every file moved out to R2 |
+| Preset files and plugin packages as blobs, preset files brotli-packed | R2, one object per id, stored as submitted. Packing existed to keep the database small; R2 has no such limit |
+| `/media` folder on a share | R2, served by the Worker |
+| Cloudflare Tunnel, `cloudflared`, the fallback Worker | Gone. Nothing is behind a tunnel to fall back from |
+| Admin cookie and password, Access on `admin.html` | Cloudflare Access, with the Worker checking its signed token on every admin route |
+| `submit`, `report`, `letter`, `rate`, `sign-in` rate limits per address | Same limits, in D1 (see below) |
+| `Submissions.Read`, `PluginSubmissions.Read`, `BrowserPlugins.Lacking`: the engine's own readers | Run by a GitHub Actions job, not by the Worker |
+| `flyback-cli render-presets` on another PC, writing to the share | The same command in a GitHub Actions job, uploading through the admin API |
+| `Defaults.Seed` at container start | A step of the Site workflow, calling the admin API |
+| Web viewer and editor, the `site/` pages and `wwwroot` pages served by Kestrel | Workers static assets on the same hostname |
+| Image build in `site.yml`, `deploy/site/`, `publish-dev.sh` | Deleted |
 
-Presets and plugins are on the site already, so those are out of scope. What is left, and what the engine can use:
+## The hard part: the C# readers
 
-- **Sounds.** A WAV (ADR-0052: 8 to 32 bit PCM and 32 or 64 bit float, read by `WavReader`; a stereo file is summed to mono). This covers samples, loops and wavetables alike: a wavetable is a sound file read by a Sample.
-- **Pictures.** A PNG (ADR-0059: the decoder is the engine's own).
+A submission is checked by the code the app opens files with: `PatchIO`, `PatchBundle`, `PluginPackage` (a zip, an ECDSA signature, and an assembly's metadata read without running it), and the module catalog that decides what a browser can open. That is the reason `Flyback.Server` is C# and references `Flyback.Engine` (ADR-0131: "to read a submission with the same `PatchIO` the app opens files with").
 
-Not shared: modules (a module is a plugin, ADR-0134), video (the engine takes none) and "other". A kind the engine cannot open is not a library entry.
+A Worker cannot run it: Workers are JavaScript and WebAssembly with 128 MB of memory, and the server's bundle limit alone is 128 MB unpacked. Three ways round that were considered:
 
-Naming: the glossary's **library folder** is where a patch looks for a file it names, and `ISampleLibrary` holds those files, so *library* is taken. Call these **shared sounds** and **shared pictures**, as there are *shared presets* and *shared plugins*, and add them to the glossary in the commit that lands this.
+- **Rewrite the readers in TypeScript.** Rejected. A second `PatchIO` and a second metadata reader drift from the first, and the repository's rule is that what the site says and what the app shows cannot disagree.
+- **Run the existing image in Cloudflare Containers.** Rejected. A container's disk is not kept, so every store would still be rewritten against D1 and R2, and the container would only be a slower place to run the same Worker.
+- **Compile the engine to WebAssembly and load it in the Worker** (ADR-0160 does it for browsers). Rejected for now: it is a different runtime and loader from the one that was tested, under a memory ceiling, to avoid running a job.
 
-## Decisions
+**Chosen: the Worker accepts and stores; a GitHub Actions job validates with the real C#.** It is the shape `render-presets` already has: the site lists what is waiting, a machine with Flyback on it does the work and reports back.
 
-**Content decides the kind, not the extension or MIME type.** The site reads a submission with the engine's own reader, as it reads a preset with `PatchIO` (`Submissions.Read`) and a plugin with `PluginPackage`. A file `WavReader` or the PNG decoder refuses is refused, with the reader's reason. Size, length and channel count come from the file, never from the form.
+### A submission's life
 
-**What the file cannot say comes from the form.** A preset carries its own name, author and tags (ADR-0131); a WAV carries none. The form gives name, author, description, tags and license, each cleaned and cut to a length as ADR-0132 cleans a package's text. The license is required and chosen from a short fixed list: CC0, CC BY, CC BY-SA, CC BY-NC, and "my own work, free to use". A file nobody has a right to share is the real risk of this feature, and the license is what the page and the editor show next to the download.
+1. `POST /api/v1/presets` or `/plugins`. The Worker checks only what is cheap and certain: the form, the field names, the size (20 MB, 64 MB for a package), and the first bytes (a zip's signature, or JSON for a `.fbk`). It writes the file to R2 under a fresh id, adds a D1 row with `status = 'unchecked'`, and answers **202** with the id.
+2. An `unchecked` row is listed nowhere, served to nobody and counted nowhere, for presets as for plugins. This is a change for presets, which show up at once today; see the open decisions.
+3. The Worker asks GitHub to run the **Validate** workflow (`repository_dispatch`). A scheduled run every few minutes is the fallback if the dispatch is lost.
+4. Validate lists `unchecked` rows through the admin API, downloads each, and runs a new `flyback-cli check-submission` that does exactly what `Submissions.Read` and `PluginSubmissions.Read` do now and prints one JSON document: refused with a reason, or accepted with name, author, description, tags and, for a plugin, everything the package says about itself, plus what the web pages lack (`BrowserLack`).
+5. Validate `PUT`s the result back. An accepted preset becomes `published` and joins the render queue; an accepted plugin becomes `unpublished`, as ADR-0133 has it. A refused file becomes `refused` with its reason, and the submitter, who has only the id, can read the reason at `GET /api/v1/presets/{id}`; the file is deleted from R2 after a week.
 
-**A submission arrives unpublished** (ADR-0133's rule, not ADR-0131's). A preset is data the author made; a sound is as likely as not somebody else's recording. Nothing is listed, served or counted until the admin publishes it, and the submitter is answered 202 with what the site read.
+The decompile-and-read rule holds: Validate reads a package and never runs it (`security.md`, `/review-plugin`).
 
-**Anyone may submit, rate-limited.** The first draft made upload admin-only. Here it is the same public `submit` policy presets use, since an unpublished file harms nobody and the admin is the moderation. Same-bytes twice is refused by SHA-256, as a plugin package is.
+## Data
 
-**The file goes through the server and is stored as a file.** No presigned URL, no `complete` step and no `pending` state, so there are no abandoned uploads to clean up. ADR-0131 already settled where bytes live: metadata in SQLite, files in a folder, since a blob bloats the database and cannot be streamed with seeking. The folder is `Site:Sounds` (default `/data/sounds`), beside the database and writable, unlike the read-only media share.
+D1 holds rows and nothing larger than a row can hold (its limit is 2 MB a row, and a package is up to 64 MB). R2 holds every file.
 
-- The file is named by its id on disk. The submitted name is never a path; it is cleaned and used only for `Content-Disposition`.
-- It is written under a temporary name and renamed, then the row is inserted. A crash between the two leaves an unreferenced file, which a sweep at start removes.
-- Delete removes the row, then the file.
+- Tables port as they are, with a `status` column added to presets and plugins and an `r2_key` or the id as the key. `PresetStore`'s migrate-on-open becomes numbered migrations in `migrations/`, applied by Wrangler.
+- `fold(column)` is a custom SQLite function the .NET server registers, and D1 has none. Each searchable table gets a `search` column, folded and lowercased when written, and the word search matches against it.
+- D1 binds at most 100 parameters a query and runs 1,000 queries per invocation on the paid plan (50 on free); a listing page is one query plus one for its ratings, so neither bites.
+- Rate limits are a `limits(visitor, policy, window, count)` table with an upsert per request. Cloudflare's rate-limiting binding only counts in 10- or 60-second periods, which cannot say "20 an hour". The visitor is `CF-Connecting-IP` with `Visitor.Of`'s IPv6 `/64` rule; Cloudflare sets that header, so `KnownProxies` and the forwarded-header code have no counterpart.
+- Ratings, reports and letters keep their rules.
 
-**Size.** The site's 20 MB request limit stays (about two minutes of 44.1 kHz stereo 16-bit). Raising it for these endpoints, as plugins' 64 MB is, is a later decision with a use for it.
+## The one-time move
 
-**Search is the presets' search.** The same word-by-word match over name, author, description and tags, with a tag filter, a page size and `count=false`. No FTS5 until a search shows `LIKE` is the problem.
+A command in `flyback-cli`, not a script, since the files must be unpacked (`Packing.Unpack`) and their ids kept: `flyback-cli export-site --db presets.db --out <folder>` writes each preset and package as `<id>` files plus a `rows.sql` for D1, and the media folder as it is. Wrangler's `d1 execute` and R2 uploads load them. Ids survive, so every link, rating, and kept shared preset in an editor still resolves. The command runs once and is deleted with the server.
 
-## API
+## API changes
 
-Under `/api/v1`, versioned as the rest is, and shaped as `PluginApi` is so the editor reads it the same way. A `kind` of `sound` or `picture`, in the path rather than a filter, keeps each listing and each page about one thing.
+Public routes and shapes: unchanged, with these differences a client can see: a submission answers 202 rather than 201 with the preset, and an entry carries `status`.
 
-Public:
+Admin moves under **`/api/v1/admin/...`**: sign-in and sign-out go (Access is the sign-in), `PATCH` and `DELETE` of a preset, plugin, report and letter take the new prefix, and so do the unchecked list and the result `PUT`. Access can only gate by path, and today's admin `PATCH /presets/{id}` shares a path with the public `GET`. Only `admin.html` and the preset pages call them.
 
-- `GET /sounds?q=&tag=&license=&page=`, and the same for `/pictures`. Published only, 24 to a page.
-- `GET /sounds/{id}`. One entry's metadata.
-- `GET /sounds/{id}/file`. The bytes, with range requests so a browser's `<audio>` can seek, `Content-Disposition` as the cleaned name, and `count=false` to fetch without counting a download.
-- `GET /tags`'s counterpart for each kind.
-- `POST /sounds` and `POST /pictures`. A multipart form, rate-limited, anonymous.
+`GET /api/v1/admin` stays public and says whether the caller is the admin, since every page asks it.
 
-Admin, behind the session the site already has (`Signed`), each answering 401 otherwise:
+## Who may do what
 
-- `PATCH /sounds/{id}` renames or sets `published`. `DELETE /sounds/{id}`.
-- Listing and fetching an unpublished entry take the same `unpublished` flag the other stores do.
+- **Access** guards `admin.html` and `/api/v1/admin/*`, with two policies: the author's address by one-time PIN, and a **service token** for the Validate, Render and Site workflows.
+- **The Worker verifies the token itself** (`Cf-Access-Jwt-Assertion`: signature against the team's keys, audience and expiry) on every admin route, and answers 401 without it. The deployment note's warning that an Access application with no policy "protects nothing and says nothing about it" stops being a risk, and the password as a second lock is replaced by a check that holds when Access is misconfigured.
+- Secrets are Worker secrets and GitHub Actions secrets (the service token, a fine-scoped token that can only start the Validate workflow, the release key where a plugin is signed). None is written down in the repository, and the Worker answers every request without printing any.
 
-Each entry carries `id`, `name`, `author`, `description`, `tags`, `license`, `fileName`, `size`, `sha256`, and what the file says about itself: for a sound its length, sample rate and channels; for a picture its width and height. Reports and ratings reuse `ReportStore` and `RatingStore` with a new kind, as plugins do.
+## Pages, the viewer and the editor
 
-## Where it goes
+`site/`, the server's `wwwroot` pages, the web viewer and the web editor are static files, so they become Workers static assets on the same hostname. The pages call `/api/v1` relative to their own origin and need no change for that.
 
-All new files, one type each, in `src/Flyback.Server/`, named as their plugin counterparts are:
+Cloudflare compresses at the edge, so `Precompressed.cs`, `StaticCache.cs` and the worker that makes Cloudflare cache the `.wasm` go away. A static asset may be 25 MiB at most. The editor's un-ahead-of-time `dotnet.native.wasm` is 10 MB in the Release build here; the image's ahead-of-time build is larger and **has not been measured**. If one passes the limit, the file goes to R2 behind the same route.
 
-- `SoundStore.cs`, `PictureStore.cs`, or one `SharedFileStore` taking the kind, if the two come out identical (they will, but for the metadata read; check before deciding), with `StoredSound` and `StoredPicture` records.
-- `SoundApi.cs` and `PictureApi.cs`, mapped in `Program.cs` beside `MapPlugins`.
-- `SoundSubmissions.cs`, the reader that turns bytes and a form into a checked submission or a refusal.
-- A `sounds` table and a `pictures` table in the same SQLite file, made with `CREATE TABLE IF NOT EXISTS` and migrated on open, as `PresetStore` does (`saved-data.md`).
-- Pages `sounds.html` and `pictures.html` in `src/Flyback.Server/wwwroot`, with the shared header, an `<audio controls>` or `<img>` per entry, license and size, and the report and rating controls the preset page has. The admin page lists unpublished ones.
+## Defaults and the render
 
-Not new: authentication, rate limiting, the forwarded-header check, the tunnel, the Access policy, the Pages fallback worker and the deploy. `pages.yml` already rewrites links to server pages to `PRESETS_URL`; add the two new pages to that list. `site.yml` already builds on a change under `src/`.
+**Defaults** (ADR-0138, 0141): the Site workflow, after building, signs the plugin packages with the release key and calls `PUT /api/v1/admin/defaults/{fileName}` with each file and its hash. The route keeps the rules: the same file twice changes nothing, a changed file replaces the stored one under its id, one the admin deleted stays deleted. `PresetSiteDefaultsTests` stays the check that a default opens.
 
-## Security, as `security.md` has it
+**Lacks:** which plugins the web pages cannot open depends on the viewer build, not the preset. Validate stores it per preset, and the Site workflow runs a pass that refreshes every preset's after a deploy.
 
-- **Secrets.** None are added. There is no new key, token or credential, which is the whole point of leaving R2's S3 keys out.
-- **Sizes and numbers.** The reader caps every length it reads off the file against what the input could hold; a WAV header claiming more samples than the file has is the one to test.
-- **Paths.** The id is the file's name on disk; nothing from the form or the file reaches a path.
-- **Text.** Form fields are cleaned of control and bidirectional characters and cut to length before storing, and escaped where a page prints them. Parsers refuse; they do not throw.
-- **Never loosened.** Nothing is served until published, and no check is skipped to make an upload work.
-- **Least collected.** The rate limit counts addresses as it already does; nothing about who downloaded what is kept beyond a count.
+**Render:** a scheduled job runs `flyback-cli render-presets --once` against the site with the service token, uploading each file through a new admin `PUT /api/v1/admin/presets/{id}/media/{name}` rather than writing to a folder. `--media` becomes an upload target. A hosted runner has no GPU and ffmpeg comes from the package manager. ADR-0131 gave "a render of a picture, a loop and a track is minutes of CPU" as the reason for a powerful machine. **Unmeasured, and the likeliest thing to fail:** how long Flyback.Server's current defaults take to render on a hosted runner. Hosted runners are free for a public repository and a job may run six hours; a preset that cannot finish is marked `failed`, as now.
 
 ## Tests
 
-In `tests/Flyback.Server.Tests`, as the plugin site's are (the specs project cannot host the site, so no Gherkin scenario, as ADR-0133 says):
+`Flyback.Server.Tests` goes with the server. Its cases move to the Worker's tests, run by Vitest in Cloudflare's own Workers pool, which runs a Worker against a local D1 and R2: the listing and filters, unpublished stays hidden, the 20 and 64 MB limits, an unchecked row is invisible, admin routes refuse a request with no valid token, ratings are one each, the `/64` rule, and the old database's rows load after migration.
 
-- A WAV and a PNG are accepted and arrive unpublished; neither is listed, served or found by its page until published.
-- A file that is neither, a truncated WAV, a WAV whose header promises more than it holds, and a PNG with a lying size are refused with a reason.
-- The same bytes twice are refused.
-- Without the admin session, publish, rename and delete are 401.
-- A request past the limit is refused; the sixth in an hour over the limit is 429.
-- A name with `..`, a backslash or a device name never touches a path.
-- A sound's range request returns 206 and the right slice.
-- The old database, opened by the new code, still has its presets and plugins.
+Two C# tests stay or are added: the editor's `PresetSite` and `PluginSite` clients against the contract's recorded responses, and `check-submission` against the cases the server's tests have for the readers. The gate (`docker build --target gate .`, ADR-0120) runs the Worker's tests too, so the image gains a Node stage.
 
-## Phases
+## Order of work
 
-1. **Server.** Stores, API, submission reader, tests, the two pages, admin listing, the ADR, the glossary entries, the `website` skill's site edit and one CHANGELOG bullet, all in the commits that land each step. Lands dark until the pages exist: a route nothing links is not visible.
-2. **Editor.** A `SoundSite` beside `PluginSite` on `SiteAccess`, null in a page as plugins are. A Sample module's file picker gets "Shared sounds": search, preview, download into the library folder (Settings → Files), and the module's file set to the downloaded copy. The same for a picture's module. Never a download without the person choosing one; a download is checked against `sha256` before it is kept.
-3. **Later, each on its own.** A patch that names a sound you lack offering it, as ADR-0135 does for a plugin: a patch names a path and nothing else, so this needs a hash saved with it, which is a format change and carries its upgrade step (`saved-data.md`). R2 behind the store's interface. A larger limit. Waveform previews drawn as the site's tracks are (`site-audio-tracks`).
+Each step lands on `main` and leaves `main` releasable. Nothing serves from the new Worker until the cutover; it runs on a staging route, as the fallback Worker does under the same zone.
+
+1. **Cloudflare, once.** The D1 database, the R2 bucket, the Access application and service token, a staging route. The setup is written down in `deploy/cloudflare/README.md`, replacing `deploy/site/cloudflare.md`.
+2. **The read API.** The Worker with presets, plugins, tags, ratings, reports and letters, reading migrated data, and its tests. `export-site` lands here.
+3. **Submissions.** Accept, 202, the unchecked state, `check-submission`, the Validate workflow, the admin routes and the Access check.
+4. **Pages.** The static assets, the viewer and the editor, on staging.
+5. **Render and defaults.** The upload route, the scheduled render, the defaults call.
+6. **Cutover.** Run `export-site` against the live NAS data, point `flyback.nasik2137.uk` at the Worker, check the editor's gallery and plugins window against it, and stop the container.
+7. **Removal**, in its own commit: `src/Flyback.Server`, `tests/Flyback.Server.Tests`, `site.yml`'s image build, `deploy/site/`, the fallback Worker, `publish-dev.sh`, the self-hosted pieces named in the pipeline rule that only the site used. A new ADR supersedes 0131, 0133, 0136, 0138 and 0141 where they name the NAS, the share and the container, and the glossary, the engineering guide, `README.md`, `SECURITY.md` and the `website` and `preset-site-defaults` skills are updated in the same commit. The ADR is numbered from `main` at commit time (the `adrs` skill).
+
+Shared sounds and pictures, the feature this file started as, then land as a third store on the Worker, with the decisions made earlier: WAV and PNG only, unchecked then unpublished until the admin publishes, a license from a short list, stored as an R2 object by id. They are a later item, not part of the move.
+
+## Limits that matter, as the docs state them today
+
+| | Free | Paid |
+|---|---|---|
+| Worker CPU per request | 10 ms | 30 s by default |
+| Memory | 128 MB | 128 MB |
+| Request body | 100 MB | 100 MB |
+| D1 database | 500 MB | 10 GB, fixed |
+| D1 row or blob | 2 MB | 2 MB |
+| Subrequests per invocation | 50 | 10,000 |
+
+With validation off the Worker, a request is a few milliseconds, so the free plan may be enough. Check it against real traffic before the cutover, and take the paid plan if it is not.
 
 ## Open for the user
 
-- **Server instead of Worker, R2 and D1.** Recommended, as above. Say so if the NAS's bandwidth or disk is the reason to want R2 now.
-- **Sounds arrive unpublished.** Recommended, for the copyright risk. The alternative is published at once and moderated after, as presets are.
-- **The license list.** Five entries above; add or cut.
-- **A fixed 20 MB.** Recommended until something needs more.
-
-## Kept from the first draft
-
-Private-by-default until checked, a status gate before anything is public, server-made keys, validation at the door, a rate limit on the public endpoints, the admin as the only way to delete, the editor reusing the same API as the page, and moderation before any community submission is public.
+- **The npm toolchain.** The repository takes no package it did not write for the engine, and `security.md` calls a new dependency a question. A Worker needs Wrangler, TypeScript and Vitest at build time. Recommended: development dependencies only, locked in a committed `package-lock.json`, restored with `npm ci` in the gate, and no runtime dependency in the Worker.
+- **Presets appear after a few minutes**, not at once, since they wait for Validate. The alternative is to parse the name, author and tags from the `.fbk`'s JSON in the Worker and list at once, with Validate refusing it afterward; that is a second reader of the text cleaning rules. Recommended: wait.
+- **How Validate is started.** Recommended: the Worker dispatches it, with a token that can only run workflows in this repository, plus a scheduled run as the net. The alternative is the schedule alone, with no token in Cloudflare and a delay of five minutes or more.
+- **GitHub Pages.** `pages.yml` still publishes `site/` and rewrites links to the preset site's pages. Recommended: retire it at the cutover and serve everything from the Worker; the rewrite and `PRESETS_URL` go with it.
+- **The render's runner.** Measure first. If hosted runners are too slow, the render stays on a machine of the author's and only the rest moves, which breaks the goal in one place and should be said so.

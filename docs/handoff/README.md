@@ -5,7 +5,7 @@ Write-ups too long for a line in [TODO.md](../../TODO.md): a plan, an audit, or 
 | File | What | Kind | Status |
 |---|---|---|---|
 | [decision-model.md](decision-model.md) | A decision model behind the plugin boundary | Plan | Open |
-| [flyback-library-implementation-plan.md](flyback-library-implementation-plan.md) | Shared sounds and pictures on the preset site | Plan | Open |
+| [flyback-library-implementation-plan.md](flyback-library-implementation-plan.md) | Move Flyback.Server to Cloudflare (Worker, D1, R2, Actions) | Plan | Open |
 | [formulas-into-modules.md](formulas-into-modules.md) | What the presets still write as formulas, and which modules would replace it | Audit | Open |
 | [sync-to-async.md](sync-to-async.md) | Blocking work on the UI thread, and what to do about each | Audit | Open |
 | [assistant-request-cost.md](assistant-request-cost.md) | The assistant spends requests and tokens it does not need | Issue | Open: four of eight fixed |
