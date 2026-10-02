@@ -50,7 +50,8 @@ jobs:
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ inputs.version }}
-        shell: bash
+        # Git's bash by path: on the Windows runner a bare bash is WSL's launcher.
+        shell: ${{ runner.os == 'Windows' && 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}' || 'bash' }}
         run: bash scripts/release.sh "$VERSION"
 
       - name: Create release
