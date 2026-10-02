@@ -1342,6 +1342,7 @@ public class OutputSettingsTests : EditorTest
     public async Task The_rewind_switched_off_leaves_the_clock_alone()
     {
         var window = Open(settingsPath);
+        Play(window);
         var dialog = OpenSettings(window, RecordingTab);
 
         RewindFirst(dialog).IsChecked = false;
