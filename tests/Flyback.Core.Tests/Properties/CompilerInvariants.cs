@@ -17,7 +17,7 @@ public class CompilerInvariants
         [.. Presets.All.Select(p => p.Name)];
 
     public static TheoryData<string> ModuleTypeIds =>
-        [.. NodeCatalog.All.Select(d => d.TypeId)];
+        [.. NodeCatalog.Current.All.Select(d => d.TypeId)];
 
     /// <summary>
     /// ADR-0021 recompiles the whole patch on every edit — including on every

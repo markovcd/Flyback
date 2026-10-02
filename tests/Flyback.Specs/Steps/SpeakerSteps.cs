@@ -81,9 +81,12 @@ public sealed class SpeakerSteps(PatchContext context)
         {
             context.Wire("chord", $"hz{n + 1}", "screen", "left");
 
-            context.Listen(0, 1)[0].ShouldBe(Pitch.Frequency(Note(notes[n])), 1e-2, $"note {n + 1}");
+            context.Listen(0, 1)[0].ShouldBe(Hertz(Note(notes[n])), 1e-2, $"note {n + 1}");
         }
     }
+
+    private static float Hertz(float note) =>
+        Pitch.ConcertPitch * MathF.Pow(2f, (note - Pitch.ConcertNote) / Pitch.Semitones);
 
     /// <summary>A note as it is written, "G#4", as its number.</summary>
     internal static float Note(string written)

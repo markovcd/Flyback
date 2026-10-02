@@ -114,7 +114,7 @@ public class ChordTests
             var chord = b.Add(NodeCatalog.AutoChordTypeId, (0, tonic), (1, root));
             Scaled(chord, scale);
             return chord;
-        }, 0).ShouldBe(notes.Select(n => (double)Pitch.Frequency(n)).ToArray(), 1e-3);
+        }, 0).ShouldBe(notes.Select(n => (double)Hertz.Of(n)).ToArray(), 1e-3);
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class ChordTests
             b.Wire(b.Add("value", (0, (float)note)), 0, chord, 2);
             Scaled(chord, scale);
             return chord;
-        }, 0).ShouldBe(notes.Select(n => (double)Pitch.Frequency(n)).ToArray(), 1e-3);
+        }, 0).ShouldBe(notes.Select(n => (double)Hertz.Of(n)).ToArray(), 1e-3);
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public class ChordTests
         chord.SetState(NodeCatalog.AutoChordStateKey, new JsonObject { [NodeCatalog.AutoChordScaleField] = scale });
 
     private static double[] Notes(int root, int[] above) =>
-        [.. above.Select(n => (double)Pitch.Frequency(root + n))];
+        [.. above.Select(n => (double)Hertz.Of(root + n))];
 
     /// <summary>The four outputs, each through the left speaker of a patch of its own.</summary>
     private static List<CompiledPatch> Compiled(Func<PatchBuilder, NodeInstance> build)

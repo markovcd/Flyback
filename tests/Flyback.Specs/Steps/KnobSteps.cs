@@ -14,13 +14,13 @@ public sealed class KnobSteps
     [Given("a {word} from the catalog")]
     public void GivenAModule(string name)
     {
-        var def = NodeCatalog.All.Single(d => d.Name == name);
+        var def = NodeCatalog.Current.All.Single(d => d.Name == name);
         knob = def.Inputs.Single(p => p.Name == "freq");
     }
 
     [Given("the {word} knob of a {word} from the catalog")]
     public void GivenAKnob(string socket, string name) =>
-        knob = NodeCatalog.All.Single(d => d.Name == name).Inputs.Single(p => p.Name == socket);
+        knob = NodeCatalog.Current.All.Single(d => d.Name == name).Inputs.Single(p => p.Name == socket);
 
     [Then("at {int} it reads {string}")]
     public void ThenItReads(int value, string shown) => knob.Format(value).ShouldBe(shown);

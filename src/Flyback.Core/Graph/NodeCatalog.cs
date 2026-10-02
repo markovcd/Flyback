@@ -66,9 +66,6 @@ public static partial class NodeCatalog
     /// </summary>
     public static void Install(ModuleCatalog catalog) => Current = catalog;
 
-    /// <summary>Every module in the installed catalog. Shipped plugin contract; the tests read the catalog through it.</summary>
-    public static IReadOnlyList<NodeDef> All => Current.All;
-
     public static IEnumerable<string> Categories => Current.Categories;
 
     public static NodeDef? Get(string typeId) => Current.Get(typeId);

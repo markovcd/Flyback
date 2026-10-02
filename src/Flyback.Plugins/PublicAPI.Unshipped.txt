@@ -1,2 +1,1 @@
 #nullable enable
-Flyback.Plugins.Audio.IAudioDevice.Latency.get -> System.TimeSpan

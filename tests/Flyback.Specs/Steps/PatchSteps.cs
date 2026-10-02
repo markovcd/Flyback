@@ -259,7 +259,7 @@ public sealed class PatchSteps(PatchContext context)
     /// <summary>The module the catalog shows as <paramref name="name"/>, added as "it"; hands back its first output.</summary>
     private string Called(string name)
     {
-        var def = NodeCatalog.All.Single(d => d.Name == name);
+        var def = NodeCatalog.Current.All.Single(d => d.Name == name);
         context.Add("it", def.TypeId);
         return def.Outputs[0].Name;
     }

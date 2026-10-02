@@ -689,3 +689,4 @@ virtual Flyback.Plugins.Settings.SettingField.PrintMembers(System.Text.StringBui
 ~override Flyback.Plugins.Midi.MidiPortInfo.ToString() -> string
 ~override Flyback.Plugins.Settings.SettingOption.Equals(object obj) -> bool
 ~override Flyback.Plugins.Settings.SettingOption.ToString() -> string
+Flyback.Plugins.Audio.IAudioDevice.Latency.get -> System.TimeSpan

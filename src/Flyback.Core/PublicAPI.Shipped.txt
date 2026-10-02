@@ -1098,7 +1098,6 @@ static Flyback.Core.Compile.Slot.Scalar(int register) -> Flyback.Core.Compile.Sl
 static Flyback.Core.Compile.Slot.operator !=(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
 static Flyback.Core.Compile.Slot.operator ==(Flyback.Core.Compile.Slot left, Flyback.Core.Compile.Slot right) -> bool
 static Flyback.Core.Compile.SpectrumAxis.FrequencyAt(int point, int points) -> double
-static Flyback.Core.Compile.SpectrumAxis.PointOf(double hertz, int points) -> double
 static Flyback.Core.GlobalConstants.DataFolder.get -> string!
 static Flyback.Core.Graph.ChoiceOption.operator !=(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
 static Flyback.Core.Graph.ChoiceOption.operator ==(Flyback.Core.Graph.ChoiceOption left, Flyback.Core.Graph.ChoiceOption right) -> bool
@@ -1200,7 +1199,6 @@ static Flyback.Core.Graph.ModuleSkin.Palette.operator ==(Flyback.Core.Graph.Modu
 static Flyback.Core.Graph.ModuleSkin.operator !=(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
 static Flyback.Core.Graph.ModuleSkin.operator ==(Flyback.Core.Graph.ModuleSkin? left, Flyback.Core.Graph.ModuleSkin? right) -> bool
 static Flyback.Core.Graph.NodeCatalog.Across.get -> Flyback.Core.Graph.PortNormal
-static Flyback.Core.Graph.NodeCatalog.All.get -> System.Collections.Generic.IReadOnlyList<Flyback.Core.Graph.NodeDef!>!
 static Flyback.Core.Graph.NodeCatalog.BuiltIn.get -> Flyback.Core.Graph.ModuleCatalog!
 static Flyback.Core.Graph.NodeCatalog.BuiltInProvider.get -> Flyback.Core.Graph.ModuleProvider!
 static Flyback.Core.Graph.NodeCatalog.BusOf(Flyback.Core.Graph.NodeInstance! node) -> string?
@@ -1239,7 +1237,6 @@ static Flyback.Core.Graph.PatchControl.KeyOf(System.Guid control) -> string!
 static Flyback.Core.Graph.PatchPreset.operator !=(Flyback.Core.Graph.PatchPreset? left, Flyback.Core.Graph.PatchPreset? right) -> bool
 static Flyback.Core.Graph.PatchPreset.operator ==(Flyback.Core.Graph.PatchPreset? left, Flyback.Core.Graph.PatchPreset? right) -> bool
 static Flyback.Core.Graph.Pitch.ClassName(int pitchClass) -> string!
-static Flyback.Core.Graph.Pitch.Frequency(float note) -> float
 static Flyback.Core.Graph.Pitch.Name(float note) -> string!
 static Flyback.Core.Graph.Pitch.Nearest(float note) -> float
 static Flyback.Core.Graph.Pitch.Scale(System.Collections.Generic.IEnumerable<int>? classes) -> System.Collections.Generic.List<int>!
@@ -1307,3 +1304,10 @@ virtual Flyback.Core.Graph.NodeExtra.Seed(Flyback.Core.Graph.NodeInstance! node)
 ~override Flyback.Core.Graph.Step.ToString() -> string
 ~override Flyback.Core.Graph.Swatch.Equals(object obj) -> bool
 ~override Flyback.Core.Graph.Swatch.ToString() -> string
+Flyback.Core.Graph.PatchControl.Held.get -> bool
+Flyback.Core.Graph.PatchControl.Held.set -> void
+Flyback.Core.Graph.MidiBinding.Note.get -> bool
+Flyback.Core.Graph.MidiBinding.Note.init -> void
+Flyback.Core.Graph.MidiBinding.Strikes(string! device, int channel, int note) -> bool
+Flyback.Core.Graph.MidiBinding.What.get -> string!
+Flyback.Core.Graph.Patch.SwapControls(System.Guid first, System.Guid second) -> bool

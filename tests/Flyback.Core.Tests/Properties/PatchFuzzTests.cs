@@ -21,7 +21,7 @@ public class PatchFuzzTests
     private const int Height = 18;
 
     private static readonly NodeDef[] Modules =
-        [.. NodeCatalog.All.Where(d => d.TypeId != NodeCatalog.OutputTypeId)];
+        [.. NodeCatalog.Current.All.Where(d => d.TypeId != NodeCatalog.OutputTypeId)];
 
     /// <summary>
     /// Modules are only ever wired from ones placed before them, so the graph is
@@ -116,7 +116,7 @@ public class PatchFuzzTests
             },
             iter: 2000);
 
-        var missing = NodeCatalog.All.Select(d => d.TypeId).Except(seen.Keys).ToArray();
+        var missing = NodeCatalog.Current.All.Select(d => d.TypeId).Except(seen.Keys).ToArray();
         missing.ShouldBeEmpty($"never generated: {string.Join(", ", missing)}");
     }
 

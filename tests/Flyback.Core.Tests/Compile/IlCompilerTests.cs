@@ -99,26 +99,9 @@ public class IlCompilerTests
     }
 
     [Fact]
-    public async Task Turning_it_off_puts_the_interpreter_back_and_on_brings_the_il_back()
-    {
-        using var compiler = new IlCompiler();
-        var program = Plasma(0.5f);
-
-        compiler.Submit(program, IlLane.Picture);
-        await compiler.Settled();
-
-        compiler.Enabled = false;
-        program.Il.ShouldBeNull();
-
-        compiler.Enabled = true;
-        await compiler.Settled();
-        program.Il.ShouldNotBeNull();
-    }
-
-    [Fact]
     public async Task Nothing_is_built_while_it_is_off()
     {
-        using var compiler = new IlCompiler { Enabled = false };
+        using var compiler = Interpreted();
         var program = Plasma(0.5f);
 
         compiler.Submit(program, IlLane.Sound);
@@ -176,7 +159,7 @@ public class IlCompilerTests
     [Fact]
     public void Nothing_is_compiled_on_the_spot_while_it_is_off()
     {
-        using var compiler = new IlCompiler { Enabled = false };
+        using var compiler = Interpreted();
         var program = Plasma(0.5f);
 
         compiler.Compile(program, IlLane.AuditionPicture);
@@ -292,23 +275,19 @@ public class IlCompilerTests
     }
 
     [Fact]
-    public void An_opened_program_lets_its_cue_go_when_compiling_is_turned_off()
-    {
-        using var compiler = new IlCompiler();
-
-        var start = Open(compiler, Presets.WholeBand(NodeCatalog.Current).CompileForVideo().Program);
-        compiler.Enabled = false;
-
-        start.Waiting.ShouldBeFalse();
-    }
-
-    [Fact]
     public void Nothing_waits_while_it_is_off()
     {
-        using var compiler = new IlCompiler { Enabled = false };
+        using var compiler = Interpreted();
 
         Open(compiler, Plasma(0.5f)).Waiting.ShouldBeFalse();
     }
+
+    private sealed class Off : IIlCompilerSetup
+    {
+        public bool Interpreted => true;
+    }
+
+    private static IlCompiler Interpreted() => new(new Off());
 
     /// <summary>
     /// A cue's patience, long enough that these tests read its parts and never its clock:

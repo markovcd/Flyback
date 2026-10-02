@@ -65,13 +65,6 @@ public static class Pitch
     public static float Nearest(float note) => MathF.Floor(note + 0.5f);
 
     /// <summary>
-    /// What a note number sounds like, in hertz. Shipped plugin contract; the Note module computes this
-    /// as ops, so the tests use it as the closed-form answer to compare them to.
-    /// </summary>
-    public static float Frequency(float note) =>
-        ConcertPitch * MathF.Pow(2f, (note - ConcertNote) / Semitones);
-
-    /// <summary>
     /// A note number as it is written — 57 is "A3". The octave is the scientific
     /// one, where middle C is C4, so MIDI's lowest note lands in octave -1.
     /// </summary>

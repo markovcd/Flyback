@@ -69,12 +69,15 @@ public class AnalyzerTests
         return memory;
     }
 
+    private static double PointOf(double hertz, int points) =>
+        Math.Log(hertz / SpectrumAxis.Lowest) / Math.Log(SpectrumAxis.Highest / SpectrumAxis.Lowest) * (points - 1);
+
     private static float At(float[] chart, double hertz) =>
-        chart[(int)Math.Round(SpectrumAxis.PointOf(hertz, chart.Length))];
+        chart[(int)Math.Round(PointOf(hertz, chart.Length))];
 
     /// <summary>Where across a frame of <paramref name="aspect"/> a frequency is drawn.</summary>
     private static double Column(double hertz, double aspect = 1d) =>
-        -aspect + 2d * aspect * SpectrumAxis.PointOf(hertz, Traces.Points) / (Traces.Points - 1);
+        -aspect + 2d * aspect * PointOf(hertz, Traces.Points) / (Traces.Points - 1);
 
     [Fact]
     public void An_analyzer_is_a_chart_that_taps_the_speakers()

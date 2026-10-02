@@ -1,8 +1,1 @@
 #nullable enable
-Flyback.Core.Graph.PatchControl.Held.get -> bool
-Flyback.Core.Graph.PatchControl.Held.set -> void
-Flyback.Core.Graph.MidiBinding.Note.get -> bool
-Flyback.Core.Graph.MidiBinding.Note.init -> void
-Flyback.Core.Graph.MidiBinding.Strikes(string! device, int channel, int note) -> bool
-Flyback.Core.Graph.MidiBinding.What.get -> string!
-Flyback.Core.Graph.Patch.SwapControls(System.Guid first, System.Guid second) -> bool

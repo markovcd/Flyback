@@ -97,7 +97,7 @@ public class NoteTests
     public void A_value_past_the_halfway_point_snaps_to_the_next_note_up()
     {
         Snapped((0, 57.5f)).ShouldBe(58f);
-        Hz((0, 57.9f)).ShouldBe(Pitch.Frequency(58f), 0.01f);
+        Hz((0, 57.9f)).ShouldBe(Hertz.Of(58f), 0.01f);
     }
 
     /// <summary>
@@ -156,7 +156,7 @@ public class NoteTests
     [Fact]
     public void Cents_detune_past_the_snap()
     {
-        Hz((0, A3), (2, 100f)).ShouldBe(Pitch.Frequency(58f), 0.01f);
+        Hz((0, A3), (2, 100f)).ShouldBe(Hertz.Of(58f), 0.01f);
         Hz((0, A3), (2, 50f)).ShouldBe(226.45f, 0.01f);
         Hz((0, A3), (2, -50f)).ShouldBe(213.74f, 0.01f);
 
@@ -216,8 +216,8 @@ public class NoteTests
         // The ramp starts at the bottom of its travel and climbs three semitones
         // a second from D#3, so the first note lasts a sixth of a second — half a
         // step's worth — and each one after it a third.
-        Heard(0.02f, 0.16f).ShouldBe(Pitch.Frequency(51f), 5f);
-        Heard(0.18f, 0.49f).ShouldBe(Pitch.Frequency(52f), 3f);
+        Heard(0.02f, 0.16f).ShouldBe(Hertz.Of(51f), 5f);
+        Heard(0.18f, 0.49f).ShouldBe(Hertz.Of(52f), 3f);
 
         // Two zero crossings a cycle, over the left channel.
         float Heard(float from, float to)

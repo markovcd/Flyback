@@ -48,7 +48,7 @@ public sealed class IlCompiler : IDisposable
     private Thread? worker;
 
     private TaskCompletionSource settled = Completed();
-    private bool enabled = true;
+    private readonly bool enabled;
     private bool disposed;
 
     public IlCompiler(IIlCompilerSetup? setup = null)
@@ -63,42 +63,6 @@ public sealed class IlCompiler : IDisposable
     /// interpreted, and a program of the same shape is not tried again.
     /// </summary>
     public event Action<string>? Failed;
-
-    /// <summary>
-    /// Whether programs run as IL at all. Turning it off takes the IL back off the
-    /// programs submitted last and builds nothing more; turning it on submits them
-    /// again. The app fixes this at startup (<see cref="IIlCompilerSetup"/>) and never flips it; only tests do.
-    /// </summary>
-    public bool Enabled
-    {
-        get
-        {
-            lock (gate) return enabled;
-        }
-        set
-        {
-            lock (gate)
-            {
-                if (enabled == value) return;
-                enabled = value;
-
-                for (var lane = 0; lane < Lanes; lane++)
-                {
-                    if (latest[lane] is not { } program) continue;
-
-                    if (value) Enqueue(program, lane);
-                    else
-                    {
-                        pending[lane] = false;
-                        program.Attach(null);
-                        program.Release();
-                    }
-                }
-
-                if (!value) Settle();
-            }
-        }
-    }
 
     /// <summary>
     /// Hands over the program now playing in <paramref name="lane"/>. Attached at
