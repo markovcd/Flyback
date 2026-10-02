@@ -177,6 +177,35 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_measurement_looks_at_the_picture_on_a_small_grid_unless_settings_say_otherwise()
+    {
+        var window = Opened(out _, out _);
+
+        Measure(window);
+
+        var report = Service<MeasureLabels>(window).Report!;
+
+        (report.Columns, report.Rows).ShouldBe((32, 18));
+    }
+
+    [AvaloniaFact]
+    public void Settings_say_how_finely_a_measurement_looks_at_the_picture()
+    {
+        var window = Opened(out _, out _);
+        var section = Service<CanvasSection>(window);
+
+        All<ComboBox>(section.View).Single(box => box.Name == "measurePicture").SelectedIndex =
+            (int)MeasurePictureSize.Large;
+        section.Save();
+
+        Measure(window);
+
+        var report = Service<MeasureLabels>(window).Report!;
+
+        (report.Columns, report.Rows).ShouldBe((128, 72));
+    }
+
+    [AvaloniaFact]
     public void A_measured_color_turns_between_its_start_and_end_pictures_under_its_row()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);

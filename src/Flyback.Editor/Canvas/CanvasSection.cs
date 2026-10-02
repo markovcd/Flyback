@@ -45,6 +45,13 @@ internal sealed class CanvasSection : ISettingsSection
         HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
+    private readonly ComboBox measurePicture = new Picker
+    {
+        Name = "measurePicture",
+        ItemsSource = Enum.GetNames<MeasurePictureSize>().ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+    };
+
     /// <summary>What the section was last saved as, and so what closing without Save puts it back to.</summary>
     private CanvasSettings saved = new();
 
@@ -121,6 +128,12 @@ internal sealed class CanvasSection : ISettingsSection
 
         View.Children.Add(InspectorRows.Field("Measure for", measureWindow));
 
+        ToolTip.SetTip(measurePicture,
+            "How finely Measure looks at the picture: Small is a 32 by 18 grid, Medium 64 by 36, "
+            + "Large 128 by 72. Larger shows more detail; it only takes longer.");
+
+        View.Children.Add(InspectorRows.Field("Measure picture", measurePicture));
+
         Show();
     }
 
@@ -140,6 +153,8 @@ internal sealed class CanvasSection : ISettingsSection
         pluginSkins.IsChecked = saved.PluginSkins;
         animateSkins.IsChecked = saved.AnimateSkins;
         measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
+
+        measurePicture.SelectedIndex = (int)saved.MeasurePicture;
 
         canvas.Geometry.Compact = saved.CompactModules;
         ModuleSkins.Honored = saved.PluginSkins;
@@ -161,6 +176,9 @@ internal sealed class CanvasSection : ISettingsSection
     /// <summary>How long Measure runs the patch for, as last saved.</summary>
     internal double MeasureSeconds => saved.MeasureSeconds;
 
+    /// <summary>The grid Measure draws the picture on, as last saved.</summary>
+    internal (int Columns, int Rows) MeasureGrid => CanvasSettings.MeasureGrid(saved.MeasurePicture);
+
     /// <summary>Whether the seek bar loops, kept beside the switches but set on the bar.</summary>
     internal bool SeekLoop => saved.SeekLoop;
 
@@ -181,6 +199,7 @@ internal sealed class CanvasSection : ISettingsSection
             EditorFontSize = saved.EditorFontSize,
             SeekLoop = saved.SeekLoop,
             MeasureSeconds = CanvasSettings.MeasureWindows[Math.Max(measureWindow.SelectedIndex, 0)],
+            MeasurePicture = (MeasurePictureSize)Math.Max(measurePicture.SelectedIndex, 0),
         };
 
         Show();

@@ -127,7 +127,8 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         var catalog = NodeCatalog.Current;
         var patch = PatchIO.Read(PatchIO.ToJson(editor.History.Patch, catalog), catalog).Patch;
         var chosen = editor.Selection.Ids.Count > 0 ? editor.Selection.Ids.ToArray() : null;
-        var options = new MeasureOptions(seconds, Math.Max(0d, preview.Time), chosen);
+        var (columns, rows) = settings.MeasureGrid;
+        var options = new MeasureOptions(seconds, Math.Max(0d, preview.Time), chosen, Columns: columns, Rows: rows);
         var (sounds, pictures) = playback.Files;
 
         var shown = -1;

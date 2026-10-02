@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Flyback.Core;
 using Flyback.Engine.Measure;
 using Flyback.Ui;
@@ -65,6 +66,18 @@ public sealed class CanvasSettings
     /// <summary>The windows Measure offers, shortest first.</summary>
     public static IReadOnlyList<double> MeasureWindows { get; } = [1, 2, 4, 8, 15, 30, 60];
 
+    /// <summary>The grid Measure draws the picture on.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public MeasurePictureSize MeasurePicture { get; set; } = MeasurePictureSize.Small;
+
+    /// <summary>The grid a picture size is measured on, across and down.</summary>
+    public static (int Columns, int Rows) MeasureGrid(MeasurePictureSize size) => size switch
+    {
+        MeasurePictureSize.Small => (32, 18),
+        MeasurePictureSize.Medium => (64, 36),
+        _ => (128, 72),
+    };
+
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "canvas";
 
@@ -82,6 +95,8 @@ public sealed class CanvasSettings
                 : DefaultEditorFontSize;
 
             if (!MeasureWindows.Contains(loaded.MeasureSeconds)) loaded.MeasureSeconds = MeasureOptions.DefaultSeconds;
+
+            if (!Enum.IsDefined(loaded.MeasurePicture)) loaded.MeasurePicture = MeasurePictureSize.Small;
 
             return loaded;
         }
