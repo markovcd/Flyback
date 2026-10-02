@@ -2,7 +2,7 @@
 
 Work the user has asked for and nobody has started. Take an item off when it lands on `main`.
 
-- **Move the preset site to Cloudflare.** Retire the NAS container, the tunnel and the render PC: a Worker with D1 and R2 serves the same `/api/v1`, GitHub Actions runs the C# that validates submissions and renders media, and Access guards the admin. Shared sounds and pictures come after as a third store. The design, the order, what is unmeasured and the open choices are in [docs/handoff/flyback-library-implementation-plan.md](docs/handoff/flyback-library-implementation-plan.md).
+- **Move the preset site to Cloudflare.** Retire the NAS container, the tunnel and the render PC: a Worker with D1 and R2 serves the same `/api/v1`, GitHub Actions runs the C# that validates submissions, the author's PC still renders and uploads through the admin API, and Access guards the admin. Shared sounds and pictures come after as a third store. The design, the order, what is unmeasured and the open choices are in [docs/handoff/flyback-library-implementation-plan.md](docs/handoff/flyback-library-implementation-plan.md).
 
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 

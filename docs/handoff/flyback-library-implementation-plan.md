@@ -8,7 +8,7 @@ Written on 2026-10-02, against `main` at `3cd4ff1e`. It is on TODO.md; take it o
 
 ## Goal
 
-No machine of the author's serves, stores or renders anything for the preset site. Today the NAS runs the container, a Cloudflare Tunnel reaches it, and a second PC renders every preset's media over an SMB share. After this, Cloudflare holds the state and serves every request, and GitHub's hosted runners do the one thing a Worker cannot: run the C# that reads a patch or a plugin package.
+No machine of the author's serves or stores anything for the preset site. Today the NAS runs the container, a Cloudflare Tunnel reaches it, and a second PC renders every preset's media over an SMB share. After this, Cloudflare holds the state and serves every request, GitHub's hosted runners run the C# that reads a patch or a plugin package, and the author's own PC still renders, but pushes what it makes through the admin API instead of writing to a share. It listens for nothing, and the site works with it off.
 
 The public contract does not move. A shipped editor reads `/api/v1/presets`, `/api/v1/plugins`, `/api/v1/letters` and the reports routes at a build-time host (ADR-0133's amendment), and `saved-data.md` says contracts only grow. Every route and JSON shape the editor and the pages use today stays as it is.
 
@@ -24,7 +24,7 @@ The public contract does not move. A shipped editor reads `/api/v1/presets`, `/a
 | Admin cookie and password, Access on `admin.html` | Cloudflare Access, with the Worker checking its signed token on every admin route |
 | `submit`, `report`, `letter`, `rate`, `sign-in` rate limits per address | Same limits, in D1 (see below) |
 | `Submissions.Read`, `PluginSubmissions.Read`, `BrowserPlugins.Lacking`: the engine's own readers | Run by a GitHub Actions job, not by the Worker |
-| `flyback-cli render-presets` on another PC, writing to the share | The same command in a GitHub Actions job, uploading through the admin API |
+| `flyback-cli render-presets` on another PC, writing to the share | The same command on the author's PC, making the files and uploading them through the admin API |
 | `Defaults.Seed` at container start | A step of the Site workflow, calling the admin API |
 | Web viewer and editor, the `site/` pages and `wwwroot` pages served by Kestrel | Workers static assets on the same hostname |
 | Image build in `site.yml`, `deploy/site/`, `publish-dev.sh` | Deleted |
@@ -75,7 +75,7 @@ Admin moves under **`/api/v1/admin/...`**: sign-in and sign-out go (Access is th
 
 ## Who may do what
 
-- **Access** guards `admin.html` and `/api/v1/admin/*`, with two policies: the author's address by one-time PIN, and a **service token** for the Validate, Render and Site workflows.
+- **Access** guards `admin.html` and `/api/v1/admin/*`, with two policies: the author's address by one-time PIN, and a **service token** for the Validate and Site workflows and for `render-presets` on the author's PC.
 - **The Worker verifies the token itself** (`Cf-Access-Jwt-Assertion`: signature against the team's keys, audience and expiry) on every admin route, and answers 401 without it. The deployment note's warning that an Access application with no policy "protects nothing and says nothing about it" stops being a risk, and the password as a second lock is replaced by a check that holds when Access is misconfigured.
 - Secrets are Worker secrets and GitHub Actions secrets (the service token, a fine-scoped token that can only start the Validate workflow, the release key where a plugin is signed). None is written down in the repository, and the Worker answers every request without printing any.
 
@@ -91,7 +91,15 @@ Cloudflare compresses at the edge, so `Precompressed.cs`, `StaticCache.cs` and t
 
 **Lacks:** which plugins the web pages cannot open depends on the viewer build, not the preset. Validate stores it per preset, and the Site workflow runs a pass that refreshes every preset's after a deploy.
 
-**Render:** a scheduled job runs `flyback-cli render-presets --once` against the site with the service token, uploading each file through a new admin `PUT /api/v1/admin/presets/{id}/media/{name}` rather than writing to a folder. `--media` becomes an upload target. A hosted runner has no GPU and ffmpeg comes from the package manager. ADR-0131 gave "a render of a picture, a loop and a track is minutes of CPU" as the reason for a powerful machine. **Unmeasured, and the likeliest thing to fail:** how long Flyback.Server's current defaults take to render on a hosted runner. Hosted runners are free for a public repository and a job may run six hours; a preset that cannot finish is marked `failed`, as now.
+**Render stays on the author's PC**, which has the CPU, the GPU and ffmpeg that ADR-0131 wanted, and which the site never reaches. `flyback-cli render-presets` keeps its loop and its rule that a patch which does not open whole is marked failed, and changes only where it reads and writes:
+
+- `--server` is the site's address and is all it needs to find work: it lists what is waiting at `GET /api/v1/presets?pending=true`, which stays public as now.
+- `--media <folder>` goes. The command renders into a temporary folder it owns and deletes, makes `{id}.webp`, `.webm`, `.mp3`, `.peaks.json`, then `{id}.done` or `{id}.failed` with the reason, exactly the files `MediaWriter` makes today.
+- Each file is sent to a new admin route, `PUT /api/v1/admin/presets/{id}/media/{name}`, into R2. `done` goes last, so the page never shows a half-made render, and `failed` carries its text. The route accepts only those names and refuses any other, since the name reaches an object key.
+- The service token comes from two environment variables, `FLYBACK_ACCESS_ID` and `FLYBACK_ACCESS_SECRET`, sent as Access's `CF-Access-Client-Id` and `CF-Access-Client-Secret`. The command reads them and never prints them, and with neither set it says so and stops. A token the author's machine holds can only call `/api/v1/admin/*`; revoking it in Cloudflare cuts the PC off.
+- `--once` and `--poll-minutes` stay. Deleting a preset's `{id}.done` to render it again becomes `DELETE /api/v1/admin/presets/{id}/media`, which puts it back in the queue.
+
+This lands the TODO item that says rendering should not reach into a shared folder.
 
 ## Tests
 
@@ -107,7 +115,7 @@ Each step lands on `main` and leaves `main` releasable. Nothing serves from the 
 2. **The read API.** The Worker with presets, plugins, tags, ratings, reports and letters, reading migrated data, and its tests. `export-site` lands here.
 3. **Submissions.** Accept, 202, the unchecked state, `check-submission`, the Validate workflow, the admin routes and the Access check.
 4. **Pages.** The static assets, the viewer and the editor, on staging.
-5. **Render and defaults.** The upload route, the scheduled render, the defaults call.
+5. **Render and defaults.** The media routes, `render-presets` uploading through them, and the defaults call.
 6. **Cutover.** Run `export-site` against the live NAS data, point `flyback.nasik2137.uk` at the Worker, check the editor's gallery and plugins window against it, and stop the container.
 7. **Removal**, in its own commit: `src/Flyback.Server`, `tests/Flyback.Server.Tests`, `site.yml`'s image build, `deploy/site/`, the fallback Worker, `publish-dev.sh`, the self-hosted pieces named in the pipeline rule that only the site used. A new ADR supersedes 0131, 0133, 0136, 0138 and 0141 where they name the NAS, the share and the container, and the glossary, the engineering guide, `README.md`, `SECURITY.md` and the `website` and `preset-site-defaults` skills are updated in the same commit. The ADR is numbered from `main` at commit time (the `adrs` skill).
 
@@ -132,4 +140,3 @@ With validation off the Worker, a request is a few milliseconds, so the free pla
 - **Presets appear after a few minutes**, not at once, since they wait for Validate. The alternative is to parse the name, author and tags from the `.fbk`'s JSON in the Worker and list at once, with Validate refusing it afterward; that is a second reader of the text cleaning rules. Recommended: wait.
 - **How Validate is started.** Recommended: the Worker dispatches it, with a token that can only run workflows in this repository, plus a scheduled run as the net. The alternative is the schedule alone, with no token in Cloudflare and a delay of five minutes or more.
 - **GitHub Pages.** `pages.yml` still publishes `site/` and rewrites links to the preset site's pages. Recommended: retire it at the cutover and serve everything from the Worker; the rewrite and `PRESETS_URL` go with it.
-- **The render's runner.** Measure first. If hosted runners are too slow, the render stays on a machine of the author's and only the rest moves, which breaks the goal in one place and should be said so.
