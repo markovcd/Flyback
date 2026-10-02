@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Shouldly;
 using Xunit;
@@ -10,7 +11,6 @@ public class MaximizerTests
     private const string Type = "flyback.mastering.maximizer";
 
     private const int Amount = 2;
-    private const int Style = 3;
 
     /// <summary>The limiter's lookahead, 1.5 ms, in samples.</summary>
     private const int Late = Rate * 3 / 2000;
@@ -38,32 +38,32 @@ public class MaximizerTests
     }
 
     [Theory]
-    [InlineData(1f)]
-    [InlineData(2f)]
-    [InlineData(3f)]
-    [InlineData(4f)]
-    public void Nothing_comes_out_over_the_ceiling(float style)
+    [InlineData("glue")]
+    [InlineData("punch")]
+    [InlineData("bright")]
+    [InlineData("loud")]
+    public void Nothing_comes_out_over_the_ceiling(string style)
     {
         var music = Mix(Sine(60d, 0.6f, 1), Sine(700d, 0.4f, 1), Sine(5000d, 0.2f, 1));
         var ceiling = MathF.Pow(10f, -1f / 20f);
 
         foreach (var amount in new[] { 0f, 0.5f, 1f })
-            Play(Type, music, knobs: [(Amount, amount), (Style, style)])
+            Play(Type, music, configure: In(style), knobs: [(Amount, amount)])
                 .Left.ShouldAllBe(s => MathF.Abs(s) <= ceiling + 1e-5f);
     }
 
     /// <summary>A quiet mix, so what is measured is the compression and not the ceiling.</summary>
     [Theory]
-    [InlineData(1f)]
-    [InlineData(2f)]
-    [InlineData(3f)]
-    [InlineData(4f)]
-    public void More_amount_is_louder(float style)
+    [InlineData("glue")]
+    [InlineData("punch")]
+    [InlineData("bright")]
+    [InlineData("loud")]
+    public void More_amount_is_louder(string style)
     {
         var music = Mix(Sine(60d, 0.06f, 1), Sine(700d, 0.04f, 1), Sine(5000d, 0.02f, 1));
 
         var levels = new[] { 0f, 0.5f, 1f }
-            .Select(amount => Rms(Play(Type, music, knobs: [(Amount, amount), (Style, style)]).Left))
+            .Select(amount => Rms(Play(Type, music, configure: In(style), knobs: [(Amount, amount)]).Left))
             .ToArray();
 
         levels[1].ShouldBeGreaterThan(levels[0]);
@@ -90,8 +90,8 @@ public class MaximizerTests
     {
         var top = Sine(8000d, 0.05f, 0.5);
 
-        var glue = Settled(Play(Type, top, knobs: [(Amount, 1f), (Style, 1f)]).Left);
-        var bright = Settled(Play(Type, top, knobs: [(Amount, 1f), (Style, 3f)]).Left);
+        var glue = Settled(Play(Type, top, configure: In("glue"), knobs: [(Amount, 1f)]).Left);
+        var bright = Settled(Play(Type, top, configure: In("bright"), knobs: [(Amount, 1f)]).Left);
 
         Decibels(bright / glue).ShouldBe(3d, 0.5d);
     }
@@ -122,8 +122,11 @@ public class MaximizerTests
     {
         float[] values = [-0.75f, 0f, 0.5f, 1f];
 
-        Picture(Type, values, (Amount, 1f), (Style, 4f)).ShouldBe(values);
+        Picture(Type, values, In("loud"), (Amount, 1f)).ShouldBe(values);
     }
+
+    private static Action<NodeInstance> In(string style) =>
+        node => node.SetState("style", new JsonObject { ["style"] = style });
 
     private static float[] Mix(params float[][] parts) =>
         [.. Enumerable.Range(0, parts[0].Length).Select(i => parts.Sum(p => p[i]))];

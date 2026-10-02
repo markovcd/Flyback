@@ -1,5 +1,7 @@
+using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
 
 namespace Flyback.Plugins.Mastering;
 
@@ -16,7 +18,8 @@ namespace Flyback.Plugins.Mastering;
 /// wet/dry mix, since the crossover's phase and the limiter's delay would comb-filter.
 /// </para>
 /// <para>
-/// The style is a socket because it changes only numbers, not ops (ADR-0097).
+/// The style is a setting, picked from a dropdown, and chooses its numbers when the
+/// patch compiles.
 /// </para>
 /// </remarks>
 internal static class MaximizerModule
@@ -41,7 +44,14 @@ internal static class MaximizerModule
     private const int Left = 0;
     private const int Right = 1;
     private const int Amount = 2;
-    private const int Style = 3;
+
+    public const string StyleKey = "style";
+    public const string Glue = "glue";
+    public const string Punch = "punch";
+    public const string Bright = "bright";
+    public const string Loud = "loud";
+
+    private static readonly string[] Styles = [Glue, Punch, Bright, Loud];
 
     /// <summary>
     /// Each style's numbers, glue, punch, bright and loud in that order. Times are
@@ -65,16 +75,29 @@ internal static class MaximizerModule
             {
                 Help = "How hard it works: the thresholds, the makeup and the style's tilt follow it.",
             },
-            new PortSpec("style", PortKind.Scalar, 1f, 1f, Display: PortDisplay.Integer)
-            {
-                Help = "1 glues, 2 punches, 3 brightens, 4 is loudest.",
-            },
         ],
         [new PortSpec("left") { Help = "The left side, louder and held under -1 dB." }, new PortSpec("right") { Help = "The right side, louder and held under -1 dB." }],
         Emit,
         "One knob to make a mix louder and denser: three bands compressed, then limited to -1 "
         + "dB.")
     {
+        Extras =
+        [
+            new SettingsExtra(
+                StyleKey,
+                [
+                    new ExtraField.Choice(
+                        StyleKey,
+                        "style",
+                        [
+                            new ChoiceOption(Glue, "Glue"),
+                            new ChoiceOption(Punch, "Punch"),
+                            new ChoiceOption(Bright, "Bright"),
+                            new ChoiceOption(Loud, "Loud"),
+                        ],
+                        Glue) { Help = "Glue holds it together, punch lets the hits through, bright lifts the top, loud is the most." },
+                ]),
+        ],
         Sinks = ModuleSinks.Audio,
         Skin = new ModuleSkin.Palette(CategoryAccents.Of(ModuleCategories.Shaping))
         {
@@ -82,11 +105,20 @@ internal static class MaximizerModule
         },
     };
 
+    /// <summary>A node with the given style chosen.</summary>
+    public static NodeInstance Configure(NodeInstance node, string style)
+    {
+        node.SetState(StyleKey, new JsonObject { [StyleKey] = style });
+
+        return node;
+    }
+
     private static Slot[] Emit(Emitter em, EmitContext node)
     {
         var live = em.HasMemory();
         var amount = em.Ternary(OpCode.Clamp, node[Amount], em.Constant(0f), em.Constant(1f));
-        var style = node[Style];
+        var chosen = node.Extra<ExtraState>(StyleKey)?.Chosen(StyleKey);
+        var style = Math.Max(0, Array.IndexOf(Styles, chosen));
 
         var ratio = Choose(Ratio);
         var attack = Choose(Attack);
@@ -148,15 +180,6 @@ internal static class MaximizerModule
             return em.Ternary(OpCode.Mix, x, normalized, saturation);
         }
 
-        // The style's entry in a table, for a style counted from one.
-        Slot Choose(float[] values)
-        {
-            var chosen = em.Constant(values[0]);
-
-            for (var i = 1; i < values.Length; i++)
-                chosen = Dsp.Pick(em, chosen, em.Constant(values[i]), Dsp.AtLeast(em, style, em.Constant(i + 0.5f)));
-
-            return chosen;
-        }
+        Slot Choose(float[] values) => em.Constant(values[style]);
     }
 }

@@ -25,9 +25,10 @@ internal static class MasteringBench
         float[]? y = null,
         (int X, int Y)? into = null,
         (int Left, int Right)? heard = null,
+        Action<NodeInstance>? configure = null,
         params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(type, into ?? (0, y is null ? -1 : 1), heard ?? (0, 1), NodeCatalog.OutputLeftPort, knobs);
+        var patch = Wired(type, into ?? (0, y is null ? -1 : 1), heard ?? (0, 1), NodeCatalog.OutputLeftPort, knobs, configure);
 
         var result = patch.CompileForAudio(Catalog);
         result.HasErrors.ShouldBeFalse(string.Join("; ", result.Issues.Select(i => i.Message)));
@@ -49,9 +50,13 @@ internal static class MasteringBench
     }
 
     /// <summary>What the module draws, pixel by pixel, where there is no memory at all.</summary>
-    public static float[] Picture(string type, float[] x, params (int Port, float Value)[] knobs)
+    public static float[] Picture(string type, float[] x, params (int Port, float Value)[] knobs) =>
+        Picture(type, x, null, knobs);
+
+    public static float[] Picture(
+        string type, float[] x, Action<NodeInstance>? configure, params (int Port, float Value)[] knobs)
     {
-        var patch = Wired(type, (0, -1), (0, 1), NodeCatalog.OutputColorPort, knobs);
+        var patch = Wired(type, (0, -1), (0, 1), NodeCatalog.OutputColorPort, knobs, configure);
         var program = patch.CompileForVideo(Catalog).Program;
         var registers = program.AllocateRegisters();
 
@@ -66,12 +71,14 @@ internal static class MasteringBench
     }
 
     private static Patch Wired(
-        string type, (int X, int Y) into, (int Left, int Right) heard, int port, (int Port, float Value)[] knobs)
+        string type, (int X, int Y) into, (int Left, int Right) heard, int port, (int Port, float Value)[] knobs,
+        Action<NodeInstance>? configure)
     {
         var b = new PatchBuilder(Catalog);
 
         var coord = b.Add(NodeCatalog.CoordTypeId);
         var module = b.Add(type, knobs);
+        configure?.Invoke(module);
         var sink = b.Add(NodeCatalog.OutputTypeId, (NodeCatalog.OutputVolumePort, 1f));
 
         b.Wire(coord, 0, module, into.X);

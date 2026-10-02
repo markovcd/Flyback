@@ -571,7 +571,7 @@ internal sealed class NoSenseDubPreset : PresetBench
         var equalized = b.Add("flyback.mastering.eq",
             (2, 30f), (3, 90f), (4, 1.5f), (5, 350f), (6, -2f), (7, 0.8f), (8, 9000f), (9, 2.5f));
         var wider = b.Add("flyback.mastering.width", (2, 1.2f), (3, 150f));
-        var glued = b.Add("flyback.mastering.maximizer", (2, 0.4f), (3, 1f));
+        var glued = b.Add("flyback.mastering.maximizer", (2, 0.4f));
 
         b.Wire(Formula("a * b", spaceDesk, hush), 0, equalized, 0)
          .Wire(Formula("a * b", new Read(spaceDesk, 1), hush), 0, equalized, 1)

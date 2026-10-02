@@ -26,6 +26,7 @@
 - A Clock In runs ahead by the sound device's latency, so a patch's kick lands with the drum machine's rather than just after it, and its `nudge` takes up whatever latency the device cannot report.
 - Latency can be set as low as 5 ms, and on Windows anything under 10 ms plays in the low-latency shared mode of a device that has one.
 
+- The Maximizer's style is a dropdown in the inspector instead of a socket.
 ### Web
 
 - The web viewer's panel knobs are rotary knobs in a column beside the picture, found by name and put back all at once; on a phone they sit in a sheet under the picture, beside keys to play the patch on and what it is for.

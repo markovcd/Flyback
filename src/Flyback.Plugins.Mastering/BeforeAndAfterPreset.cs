@@ -58,7 +58,7 @@ internal static class BeforeAndAfterPreset
         var tone = b.Add(EqModule.TypeId, (2, 30f), (4, 2f), (5, 400f), (6, -2f), (9, 3f));
         var glue = b.Add(
             CompressorModule.TypeId, (3, -24f), (4, 3f), (5, -2f), (6, -0.82f), (8, 4f));
-        var loud = b.Add(MaximizerModule.TypeId, (2, 0.8f), (3, 2f));
+        var loud = MaximizerModule.Configure(b.Add(MaximizerModule.TypeId, (2, 0.8f)), MaximizerModule.Punch);
 
         // The switch: one turn of a sine every thirty-two beats, squared off
         // nearly all the way. Half a turn in at the start, so the raw mix is
