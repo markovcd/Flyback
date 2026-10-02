@@ -4,6 +4,8 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 
+- **A wire that carries a voice per channel.** The color wire already carries several signals as one (red, green, blue); a polyphonic wire would carry one signal per MIDI voice the same way, so a patch plays chords through one wire rather than a copy of the chain per voice.
+
 - **`--trace <file>` on the editor and the viewer.** Writes every stall over 100 ms on the UI thread, in the picture's drawing and in the sound callback, with the step it was in (`SetPatch`, a GL call, `Recompile`, `Transport.Load`), so a freeze report is one command rather than a hand-built probe.
 - **`flyback-viewer --report`.** At the end of a run, print the frames a second it held, the slowest frame, what the sound cost, and which backend drew the picture (GPU or processor, with the GPU's refusal where it fell back), so a script or an agent can measure a patch and know what drew it without watching it.
 - **`flyback-cli info --by-group`.** List each group's picture and sound ops, and `--json` them, so finding what makes a patch heavy is one command rather than a scratch test that deletes a group at a time and recompiles. A group the Output depends on (a desk, a master) is counted by what it adds, not by everything upstream of it.
