@@ -43,12 +43,8 @@ internal sealed class TakeRecording : IReactTo<PatchCompiled>, IReactTo<RecordAs
     internal static readonly TimeSpan CountInStep = TimeSpan.FromSeconds(1);
 
     internal static readonly string RecordTip =
-        "Record what the patch is doing now, knobs and all, as it happens.  (Ctrl+R)  A video "
-        + "takes the picture off the GPU at whatever the Recording settings say, at "
-        + "whatever Size says, with the sound alongside it; a sound file takes the sound "
-        + "on its own. What happens between naming the file and the first frame — a count-in, "
-        + "and the patch going back to zero — is set in Settings → Recording. It has no fixed "
-        + "length, unlike a file `flyback-cli render` writes — it runs until you stop it.";
+        "Record what the patch is doing now, knobs and all, as a video or a sound file.  (Ctrl+R)  "
+        + "Press again to stop. Settings → Recording sets the count-in and the quality.";
 
     private const string NothingToRecord =
         "Nothing is wired into the Output, so there is nothing to record. "
