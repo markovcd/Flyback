@@ -48,6 +48,7 @@ public class TransportTests : EditorTest
         var window = Open();
         var preview = Preview(window);
 
+        Play(window);
         Click(Pause(window));
         Settle(window);
 
@@ -66,6 +67,7 @@ public class TransportTests : EditorTest
     {
         var window = Open();
 
+        Play(window);
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 
@@ -78,10 +80,24 @@ public class TransportTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_patch_opens_paused_until_play_is_pressed()
+    {
+        var window = Open();
+
+        Service<Playback>(window).Paused.ShouldBeTrue();
+
+        Click(Pause(window));
+
+        Service<Playback>(window).Paused.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
     public void The_button_says_what_a_press_does_next()
     {
         var window = Open();
         var pause = Pause(window);
+
+        Play(window);
 
         var whenPlaying = ToolTip.GetTip(pause);
         var glyph = pause.Content;
@@ -103,6 +119,7 @@ public class TransportTests : EditorTest
         var window = Open();
         var preview = Preview(window);
 
+        Play(window);
         preview.Time = 5;
         Click(Pause(window));
 
@@ -136,6 +153,7 @@ public class TransportTests : EditorTest
     {
         var window = Open();
 
+        Play(window);
         FullScreen(window);
 
         Click(Tool(window, "Pause or play"));

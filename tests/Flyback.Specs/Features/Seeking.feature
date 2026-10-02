@@ -10,6 +10,11 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     When the seek bar is clicked at 30 seconds
     Then the patch's clock is at about 30 seconds
 
+  Scenario: A patch waits for Play when it opens
+    Given a rainbow across the screen
+    And the patch is open in the editor
+    Then the patch opens paused
+
   Scenario: A paused patch moved along the seek bar stays paused there
     Given a rainbow across the screen
     And the patch is open in the editor
@@ -46,5 +51,6 @@ Feature: The patch's clock can be moved anywhere along the seek bar
     Given a rainbow across the screen
     And the patch is open in the editor
     And the seek bar loops
+    And the patch is playing
     When the patch plays on past the end of the seek bar
     Then the patch's clock is at about 0 seconds

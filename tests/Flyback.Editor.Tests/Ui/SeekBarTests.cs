@@ -94,6 +94,7 @@ public sealed class SeekBarTests : EditorTest
     {
         var window = Open();
 
+        Play(window);
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 
@@ -252,6 +253,7 @@ public sealed class SeekBarTests : EditorTest
     {
         var (window, bar) = WithBar();
 
+        Play(window);
         bar.Loop.IsChecked = true;
         Preview(window).Time = Patch.DefaultLength + 1;
         bar.Update();
@@ -267,6 +269,7 @@ public sealed class SeekBarTests : EditorTest
         var (window, bar) = WithBar();
 
         bar.Loop.IsChecked = true;
+        Play(window);
         window.KeyPressQwerty(PhysicalKey.P, RawInputModifiers.Control);
         Settle(window);
 

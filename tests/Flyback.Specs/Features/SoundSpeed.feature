@@ -7,6 +7,7 @@ Feature: The editor says how fast a patch's sound renders
     Given a 220 Hz sine is playing
     And the speakers play whatever they are handed
     And the patch is open in the editor
+    And the patch is playing
     When the speakers have played long enough to time the sound
     Then the status bar says how many times real time the sound renders at
     And the status bar counts no modules or wires

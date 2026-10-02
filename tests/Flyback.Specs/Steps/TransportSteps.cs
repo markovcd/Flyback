@@ -18,7 +18,19 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
     private const double Slack = 1;
 
     [Given("the patch is paused")]
-    public void GivenPaused() => editor.PressCtrl(PhysicalKey.P);
+    public void GivenPaused()
+    {
+        if (!editor.Paused) editor.PressCtrl(PhysicalKey.P);
+    }
+
+    [Given("the patch is playing")]
+    public void GivenPlaying()
+    {
+        if (editor.Paused) editor.PressCtrl(PhysicalKey.P);
+    }
+
+    [Then("the patch opens paused")]
+    public void ThenOpensPaused() => editor.Paused.ShouldBeTrue();
 
     [When("the seek bar is clicked at {int} seconds")]
     public void WhenSought(int seconds) => editor.Seek(seconds);

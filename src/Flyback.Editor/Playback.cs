@@ -298,6 +298,9 @@ internal sealed class Playback
 
         reactions.Raise(new PatchCompiled());
 
+        // A patch that has just opened waits on its first frame until Play is pressed.
+        if (opened) Pause();
+
         // What the ear reaches is said too. Compiling backwards from one sink
         // means the video pass never visits a module only the speakers reach —
         // and stops at the first line when there is no screen at all — so a

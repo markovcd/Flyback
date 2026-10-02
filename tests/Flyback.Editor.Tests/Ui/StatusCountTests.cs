@@ -55,6 +55,8 @@ public sealed class StatusCountTests : EditorTest
         var speakers = new Loopback();
         var window = Open(Tone(sound: true), replace: services => services.AddSingleton(new AudioSetup(speakers, new Plug(speakers))));
 
+        Play(window);
+
         var bar = Service<StatusBar>(window);
         var count = All<TextBlock>(window).Single(text => text.Name == "statusCount");
 

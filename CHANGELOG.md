@@ -18,6 +18,7 @@
 
 ### Editor
 
+- A patch opens paused on its first frame, in the desktop and web editors alike, and plays when Play is pressed.
 - A text patch reads the same whichever plugins are installed: a plugin's module no longer takes a built-in's short name, so `hsv` is still `color.hsv` with the Picture plugin loaded.
 - A text patch that does not open says which line and column, and what is wrong there.
 - Measure and Record sit at the end of the top toolbar; Measure, on Ctrl+M, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hover or the inspector gives the sound and the picture apart, and an edit greys them until the next; pressed again, it hides them, its glyph showing which, and Settings → Canvas says how long it runs. A color shows the picture it made at the playhead, on the grid it was measured on, and the inspector turns between that and the one at the end of the window.

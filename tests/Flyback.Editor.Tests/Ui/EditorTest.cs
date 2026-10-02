@@ -121,6 +121,13 @@ public class EditorTest : UiTest
         return window;
     }
 
+    /// <summary>Presses Play on a patch, which opens paused.</summary>
+    internal void Play(MainWindow window)
+    {
+        Service<Playback>(window).Resume();
+        Settle(window);
+    }
+
     /// <summary>The canvas in an editor's window.</summary>
     internal static NodeEditor Editor(MainWindow window) => All<NodeEditor>(window).Single();
 
