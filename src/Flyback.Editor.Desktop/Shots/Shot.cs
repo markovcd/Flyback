@@ -106,6 +106,8 @@ internal static class Shot
             if (playback.HasPicture) await RunUpTo(request.At, provider.GetRequiredService<PreviewHost>(), sound, playback, window);
             else playback.SeekTo(request.At);
 
+            if (request.Measure) await provider.GetRequiredService<Measuring>().MeasureAsync();
+
             provider.GetRequiredService<StatusBar>().Update();
             Settle(window);
 

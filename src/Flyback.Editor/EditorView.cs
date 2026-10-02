@@ -248,6 +248,11 @@ internal sealed class EditorView : Border
                 e.Handled = true;
                 break;
 
+            case Key.M:
+                if (!inPage) reactions.Raise(new MeasureAsked());
+                e.Handled = true;
+                break;
+
             // The panel has no room while the picture has the window; randomizing needs none.
             case Key.K:
                 if (again) randomizer.Roll();

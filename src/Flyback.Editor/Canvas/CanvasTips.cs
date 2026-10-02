@@ -19,6 +19,7 @@ internal sealed class CanvasTips(
     CanvasSelection selection,
     RemapMarks marks,
     UndescribedTags tags,
+    MeasureLabels measured,
     NodeGeometry geometry)
 {
     /// <summary>What the tooltip is up for, null while it is down.</summary>
@@ -56,6 +57,8 @@ internal sealed class CanvasTips(
     private (object? Over, string? Tip) At(Point graph)
     {
         if (tags.Hit(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
+
+        if (measured.Hit(graph) is var (measurement, report)) return (measurement, report);
 
         if (marks.At(graph) is var (wire, _)) return (wire, "Fit the ranges: put an Auto remap in this wire");
 

@@ -25,6 +25,7 @@ internal sealed class CanvasPainter(
     CanvasGestures gestures,
     SocketDial dial,
     RemapMarks marks,
+    MeasureLabels measured,
     KnobLinking linking,
     UndescribedTags tags,
     Repaint repaint,
@@ -70,6 +71,8 @@ internal sealed class CanvasPainter(
                 DrawBox(context, group, sockets, bounds);
 
             DrawConnections(context, lifted, theirs: true, peeked: false);
+
+            if (!gestures.Gesturing) measured.Draw(context);
 
             DrawPeek(context, scene, lifted);
 

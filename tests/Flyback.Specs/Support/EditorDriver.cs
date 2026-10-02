@@ -764,6 +764,27 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     public void PressCtrl(PhysicalKey key, bool shift = false) =>
         Press(key, RawInputModifiers.Control | (shift ? RawInputModifiers.Shift : RawInputModifiers.None));
 
+    /// <summary>Presses Ctrl+M and waits for the measurement to be pinned.</summary>
+    public void Measure()
+    {
+        PressCtrl(PhysicalKey.M);
+
+        Run(async () =>
+        {
+            await Until(
+                () => Service<MeasureLabels>().Report is not null && !Service<Measuring>().Running,
+                () => "the measurement to be pinned");
+
+            return true;
+        });
+    }
+
+    /// <summary>What the last measurement pinned on one output, or null where nothing is.</summary>
+    internal Flyback.Engine.Measure.Measurement? Measured(Guid node, int port) => Run(() => Service<MeasureLabels>().Of(node, port));
+
+    /// <summary>Whether the pinned measurement is out of date.</summary>
+    public bool MeasurementStale => Run(() => Service<MeasureLabels>().Stale);
+
     /// <summary>Puts text on the clipboard, as copying it anywhere else would.</summary>
     public void Clip(string text) =>
         Run(async () =>

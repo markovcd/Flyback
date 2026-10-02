@@ -1,0 +1,99 @@
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Threading;
+using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Windows;
+using Shouldly;
+
+namespace Flyback.Editor.Tests.Ui;
+
+/// <summary>
+/// Measure (Ctrl+M) runs the patch for a few seconds and pins what each output carries
+/// beside it and under its row in the inspector, until an edit makes it out of date.
+/// </summary>
+public class MeasureTests : EditorTest
+{
+    private MainWindow Opened(out NodeInstance lfo, out NodeInstance coords)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        lfo = b.Add("osc.sine", 0, 0, (1, 3f));
+        coords = b.Add("coord", 0, 400);
+        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        Editor(window).History.Open(b.Patch);
+        Settle(window);
+
+        return window;
+    }
+
+    private void Measure(MainWindow window)
+    {
+        window.KeyPress(Key.M, RawInputModifiers.Control, PhysicalKey.M, "m");
+        Pump(() => Service<MeasureLabels>(window).Report is not null && !Service<Measuring>(window).Running, window);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_M_pins_every_output_with_nothing_selected()
+    {
+        var window = Opened(out var lfo, out var coords);
+
+        Measure(window);
+
+        var labels = Service<MeasureLabels>(window);
+
+        labels.Of(lfo.Id, 0)!.Sound.Single().Hz!.Value.ShouldBe(3d, 0.05d);
+        labels.Of(coords.Id, 0)!.Picture.Single().Across.ShouldBeTrue();
+        labels.Stale.ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void With_a_module_selected_only_its_outputs_are_measured()
+    {
+        var window = Opened(out var lfo, out var coords);
+
+        Click(Editor(window), window, lfo);
+        Measure(window);
+
+        var labels = Service<MeasureLabels>(window);
+
+        labels.Of(lfo.Id, 0).ShouldNotBeNull();
+        labels.Of(coords.Id, 0).ShouldBeNull();
+    }
+
+    [AvaloniaFact]
+    public void The_inspector_shows_the_selected_modules_measurement_under_its_output()
+    {
+        var window = Opened(out var lfo, out _);
+
+        Click(Editor(window), window, lfo);
+        Measure(window);
+        Settle(window);
+
+        All<TextBlock>(window).Single(t => t.Name == "measurement").Text!.ShouldContain("3 Hz");
+    }
+
+    [AvaloniaFact]
+    public void An_edit_marks_the_measurement_out_of_date()
+    {
+        var window = Opened(out var lfo, out _);
+
+        Measure(window);
+
+        var editor = Editor(window);
+        editor.History.Patch.Find(lfo.Id)!.InputValues[1] = 5f;
+        editor.History.Record();
+        Settle(window);
+
+        Service<MeasureLabels>(window).Stale.ShouldBeTrue();
+    }
+}

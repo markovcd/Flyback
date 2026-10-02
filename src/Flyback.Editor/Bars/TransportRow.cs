@@ -58,6 +58,8 @@ internal sealed class TransportRow
         Record = Button("record", "Record", Glyphs.Record(), TakeRecording.RecordTip);
         ToolTip.SetShowOnDisabled(Record, true);
 
+        Measure = Button("measure", "Measure", Glyphs.Measure(), MeasureTip);
+
         Fit(seek.Loop);
         AutomationProperties.SetName(seek.Loop, "Loop");
         AutomationProperties.SetName(seek.Track, "Seek");
@@ -67,6 +69,7 @@ internal sealed class TransportRow
         Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
         Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
         Record.Click += (_, _) => reactions.Raise(new RecordAsked());
+        Measure.Click += (_, _) => reactions.Raise(new MeasureAsked());
 
         // Named beside each, since the glyphs that say what they are stay in the row.
         folded = new Grid
@@ -89,7 +92,7 @@ internal sealed class TransportRow
 
         row = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"),
             ColumnSpacing = 4,
             Margin = new Thickness(8, 0),
             Height = Reach,
@@ -107,7 +110,11 @@ internal sealed class TransportRow
             Place(control, column);
         }
         Place(More, 7);
-        if (!host.InPage) Place(Record, 8);
+        if (!host.InPage)
+        {
+            Place(Measure, 8);
+            Place(Record, 9);
+        }
 
         seek.Position.Margin = new Thickness(4, 0, 6, 0);
 
@@ -133,6 +140,13 @@ internal sealed class TransportRow
 
     /// <summary>Starts and stops a take (ADR-0080). Only outside a page.</summary>
     public Button Record { get; }
+
+    /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
+    public Button Measure { get; }
+
+    private const string MeasureTip =
+        "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
+        + "the selected modules' or every module's  (Ctrl+M)";
 
     /// <summary>What the row cannot fit while narrow, behind one button.</summary>
     public Button More { get; }

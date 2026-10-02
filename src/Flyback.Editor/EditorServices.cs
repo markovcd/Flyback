@@ -142,6 +142,7 @@ internal static class EditorServices
         services.AddPart<EditState>();
         services.AddPart<SiteAccess>();
         services.AddPart<Playback>();
+        services.AddPart<Measuring>();
         services.AddPart<RecordingState>();
         services.AddPart<PatchFiles>();
         services.AddPart<PatchViewing>();

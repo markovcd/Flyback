@@ -42,6 +42,35 @@ public static class MeasurementWords
         }
     }
 
+    /// <summary>
+    /// A label short enough to pin beside a socket: <c>0.25</c> when it holds still,
+    /// <c>-1..1 · 2 Hz</c> when it moves, and r, g and b for a color that holds.
+    /// </summary>
+    public static string Brief(IReadOnlyList<ComponentStats> components)
+    {
+        ArgumentNullException.ThrowIfNull(components);
+
+        if (components.Count == 3)
+        {
+            return components.All(c => c.Static)
+                ? string.Join(" ", components.Select(c => Number(c.Min)))
+                : components.Any(c => c.Across) ? "varies across" : "changing";
+        }
+
+        if (components.Count != 1) return string.Empty;
+
+        var stats = components[0];
+
+        if (stats.Static) return Number(stats.Min);
+
+        var range = $"{Number(stats.Min)}..{Number(stats.Max)}";
+
+        if (stats.Hz is { } hz) return $"{range} · {Number(hz)} Hz";
+        if (stats.StepsPerSecond is { } steps) return $"{range} · {Number(steps)} steps/s";
+
+        return stats.Across && !stats.OverTime ? $"{range} across" : range;
+    }
+
     /// <summary>Four places at most, and never "-0".</summary>
     public static string Number(double value)
     {

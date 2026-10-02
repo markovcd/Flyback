@@ -36,6 +36,7 @@ internal static class CanvasServices
         services.AddSingleton<KnobLinking>();
         services.AddPart<UndescribedTags>();
         services.AddSingleton<RemapMarks>();
+        services.AddPart<MeasureLabels>();
         services.AddSingleton<HeldModules>();
         services.AddSingleton<SocketDial>();
         services.AddSingleton<CanvasTips>();

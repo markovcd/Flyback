@@ -69,9 +69,14 @@ internal static class ShotCommand
             Description = "Write only the canvas around the modules. Shows the canvas.",
         };
 
+        var measure = new Option<bool>("--measure")
+        {
+            Description = "Measure the outputs from --at, the selected module's or every module's, and pin them before the picture is taken.",
+        };
+
         var command = new Command("shot", "Draw the editor's window with a patch open, at a chosen second, into a PNG.")
         {
-            patch, preset, output, at, size, select, canvas, crop,
+            patch, preset, output, at, size, select, canvas, crop, measure,
         };
 
         command.SetAction(result =>
@@ -110,6 +115,7 @@ internal static class ShotCommand
             if (result.GetValue(select) is { } selected) arguments.AddRange(["--select", selected]);
             if (result.GetValue(canvas)) arguments.Add("--canvas");
             if (result.GetValue(crop)) arguments.Add("--crop");
+            if (result.GetValue(measure)) arguments.Add("--measure");
 
             arguments.AddRange(file is not null ? [file.FullName] : ["--preset", named!]);
 

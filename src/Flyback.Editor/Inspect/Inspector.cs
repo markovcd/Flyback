@@ -12,6 +12,7 @@ using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
 using Flyback.Engine.Graph;
+using Flyback.Engine.Measure;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
 using Flyback.Ui.Midi;
@@ -47,6 +48,10 @@ internal sealed class Inspector
     internal const double PanelInset = 12;
 
     private readonly NodeEditor editor;
+    private readonly MeasureLabels measured;
+
+    /// <summary>The measurement lines on the panel, dimmed in place by an edit rather than rebuilt under a hand on a knob.</summary>
+    private readonly List<TextBlock> measurements = [];
     private readonly Document document;
     private readonly MidiHub midi;
     private readonly InstrumentLibrary instruments;
@@ -88,8 +93,9 @@ internal sealed class Inspector
     /// <summary>Whether a finger has touched the canvas, so the help names what a finger does.</summary>
     private bool fingers;
 
-    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorHost host)
+    public Inspector(NodeEditor editor, Document document, MidiHub midi, PanelKnobs knobs, PatchFiles files, Palette palette, IFilePickers pickers, EditorHost host, MeasureLabels measured)
     {
+        this.measured = measured;
         inPage = host.InPage;
         this.pickers = pickers;
         this.editor = editor;
@@ -110,6 +116,8 @@ internal sealed class Inspector
 
     public Task On(PatchChanged notice)
     {
+        foreach (var line in measurements) line.Opacity = StaleMeasurement;
+
         Sync();
         return Task.CompletedTask;
     }
@@ -189,6 +197,7 @@ internal sealed class Inspector
     {
         inspectorShape = InspectorShape.Of(editor);
         panel.Children.Clear();
+        measurements.Clear();
         plateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
@@ -439,7 +448,38 @@ internal sealed class Inspector
         });
 
         for (var i = 0; i < def.Outputs.Count; i++)
+        {
             panel.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
+
+            if (Measured(node, i) is { } line) panel.Children.Add(line);
+        }
+    }
+
+    private const double StaleMeasurement = 0.45;
+
+    /// <summary>What the last measurement found on one output, both halves, under its row.</summary>
+    private TextBlock? Measured(NodeInstance node, int port)
+    {
+        if (measured.Report is not { } report || measured.Of(node.Id, port) is not { } found) return null;
+
+        var lines = MeasurementWords.Half("sound", found.Sound, report.Seconds)
+            .Concat(MeasurementWords.Half("picture", found.Picture, report.Seconds));
+
+        var block = new TextBlock
+        {
+            Name = "measurement",
+            Text = string.Join(Environment.NewLine, lines),
+            FontSize = Text.Caption,
+            Foreground = Text.Muted,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(8, -4, 0, 2),
+            Opacity = measured.Stale ? StaleMeasurement : 1,
+        };
+
+        ToolTip.SetTip(block, MeasureLabels.Tip(found, report.Seconds, measured.Stale));
+        measurements.Add(block);
+
+        return block;
     }
 
     /// <summary>

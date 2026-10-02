@@ -12,8 +12,9 @@ namespace Flyback.Editor.Desktop.Shots;
 /// <param name="Select">The box or module to select, by name, or null for nothing.</param>
 /// <param name="Canvas">Whether the canvas shows, even for a patch whose text is the document.</param>
 /// <param name="Crop">Whether only the canvas around the modules is written.</param>
+/// <param name="Measure">Whether the outputs are measured from <paramref name="At"/> and pinned before the picture is taken.</param>
 internal sealed record ShotRequest(
-    string Out, string? Patch, string? Preset, double At, int Width, int Height, string? Select, bool Canvas = false, bool Crop = false)
+    string Out, string? Patch, string? Preset, double At, int Width, int Height, string? Select, bool Canvas = false, bool Crop = false, bool Measure = false)
 {
     public const string Flag = "--shot";
 
@@ -21,7 +22,7 @@ internal sealed record ShotRequest(
     public static bool Claims(string[] args) => args.Length > 0 && args[0] == Flag;
 
     /// <summary>
-    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] (--preset NAME | PATCH)</c>,
+    /// Reads <c>--shot OUT --at SECONDS --size WxH [--select NAME] [--canvas] [--crop] [--measure] (--preset NAME | PATCH)</c>,
     /// or says on <paramref name="error"/> what is wrong with it.
     /// </summary>
     public static ShotRequest? Parse(string[] args, TextWriter error)
@@ -30,7 +31,7 @@ internal sealed record ShotRequest(
 
         var output = args[1];
         string? patch = null, preset = null, select = null;
-        bool canvas = false, crop = false;
+        bool canvas = false, crop = false, measure = false;
         var at = 0d;
         var (width, height) = (0, 0);
 
@@ -41,6 +42,12 @@ internal sealed record ShotRequest(
             if (!flag.StartsWith("--", StringComparison.Ordinal))
             {
                 patch = flag;
+                continue;
+            }
+
+            if (flag == "--measure")
+            {
+                measure = true;
                 continue;
             }
 
@@ -77,7 +84,7 @@ internal sealed record ShotRequest(
         if ((patch is null) == (preset is null)) return Refuse("give a patch or --preset, and not both.");
         if (width == 0) return Refuse("give --size as WIDTHxHEIGHT.");
 
-        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop);
+        return new ShotRequest(output, patch, preset, at, width, height, select, canvas, crop, measure);
 
         ShotRequest? Refuse(string why)
         {

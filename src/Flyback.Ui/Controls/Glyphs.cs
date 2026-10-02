@@ -241,6 +241,10 @@ internal static class Glyphs
         "M2,5 L2,2 L5,2 M11,2 L14,2 L14,5 M14,11 L14,14 L11,14 M5,14 L2,14 L2,11 "
         + "M5.5,6 L10.5,6 L10.5,10 L5.5,10 Z");
 
+    /// <summary>A ruler: what every output carries, measured.</summary>
+    public static Control Measure() => Stroked(
+        "M1.5,5.5 L14.5,5.5 L14.5,10.5 L1.5,10.5 Z M4.5,5.5 L4.5,8 M7.5,5.5 L7.5,8.5 M10.5,5.5 L10.5,8 M13,5.5 L13,7");
+
     /// <summary>A box with an arrow leaving it: the patch taken to the viewer, in a tab of its own.</summary>
     public static Control Viewer() => Stroked("M9,2.5 L13.5,2.5 L13.5,7 M13.5,2.5 L7.5,8.5 M12,9.5 L12,13.5 L2.5,13.5 L2.5,4 L6.5,4");
 

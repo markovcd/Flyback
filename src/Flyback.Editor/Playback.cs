@@ -60,6 +60,9 @@ internal sealed class Playback
     /// <summary>Where the patch's pictures are read from, as the document last said.</summary>
     private IImageLibrary pictures = new ImageLibrary();
 
+    /// <summary>Where the patch's sound files and pictures are read from, as the document last said.</summary>
+    public (ISampleLibrary Sounds, IImageLibrary Pictures) Files => (sounds, pictures);
+
     /// <param name="recording">Whether a take is running, which the device may not be stopped under.</param>
     public Playback(
         NodeEditor editor,
