@@ -1,224 +1,115 @@
-# Flyback Asset Library — implementation plan
+# Shared sounds and pictures on the preset site
 
-## Goal
+Written on 2026-10-02, against `main` at `0c78e134`. It is on TODO.md; take it off there, and delete this file, in the commit that lands the last of it.
 
-Build a small asset library for Flyback, hosted independently from the static GitHub Pages site.
+- **Kind:** Plan
+- **Status:** Open
 
-- **Frontend:** existing Flyback GitHub Pages site (`https://markovcd.github.io/Flyback/`)
-- **API:** Cloudflare Worker
-- **Object storage:** Cloudflare R2
-- **Metadata/search:** Cloudflare D1
-- **Uploads:** browser uploads directly to R2 using short-lived presigned URLs
-- **Consumers:** GitHub Pages frontend initially; Flyback desktop app may use the same API later
+## The change from the first draft
 
-The GitHub Pages site remains static. No self-hosted server is required.
+The first draft was a Cloudflare Worker, R2 and D1 beside a static Pages site. Flyback already has the server that draft was reinventing: `Flyback.Server`, the preset site, in a container on the NAS behind a Cloudflare Tunnel (ADR-0131, [deploy/site/cloudflare.md](../../deploy/site/cloudflare.md)). It takes presets and plugin packages, keeps them in SQLite, rate-limits a submission per address, has an admin who publishes and deletes (Cloudflare Access guards `admin.html`), and is the one host the editor is built to ask (ADR-0133's amendment fixes `PresetSite` at build time).
 
-## Architecture
+So **shared sounds and pictures are a third kind of thing on that site.** No Worker, no R2, no D1, no presigned URLs, no second origin, no TypeScript. A second stack would mean a second hard-coded host in the editor, a CORS policy, a second admin sign-in and a second place every rule in `security.md` has to hold, for a feature the existing server does in the same shape as plugins.
 
-```text
-GitHub Pages / Flyback desktop app
-              |
-              | HTTPS
-              v
-       Cloudflare Worker
-          /         \
-         v           v
-    Cloudflare D1   Cloudflare R2
-    metadata        actual files
-```
+The price is that sound files go through the NAS and its tunnel rather than R2's edge. That is the escape hatch to keep open, not to build: the store takes the file bytes behind one small interface, so R2 can sit behind it later if bandwidth ever hurts.
 
-For uploads, the Worker authorizes the request and returns a short-lived presigned R2 PUT URL. The browser uploads the file directly to R2, avoiding routing large files through the Worker.
+## What is shared
 
-For downloads, the API looks up the asset in D1 and redirects to a short-lived presigned R2 GET URL. Keep the R2 bucket private.
+Presets and plugins are on the site already, so those are out of scope. What is left, and what the engine can use:
 
-## Initial asset types
+- **Sounds.** A WAV (ADR-0052: 8 to 32 bit PCM and 32 or 64 bit float, read by `WavReader`; a stereo file is summed to mono). This covers samples, loops and wavetables alike: a wavetable is a sound file read by a Sample.
+- **Pictures.** A PNG (ADR-0059: the decoder is the engine's own).
 
-Support arbitrary files, with categories such as:
+Not shared: modules (a module is a plugin, ADR-0134), video (the engine takes none) and "other". A kind the engine cannot open is not a library entry.
 
-- Samples / audio
-- Presets and patches
-- Modules
-- Textures and video sources
-- Wavetables
-- Other
+Naming: the glossary's **library folder** is where a patch looks for a file it names, and `ISampleLibrary` holds those files, so *library* is taken. Call these **shared sounds** and **shared pictures**, as there are *shared presets* and *shared plugins*, and add them to the glossary in the commit that lands this.
 
-Do not assume all assets are audio files. Store MIME type and size, and allow unknown MIME types.
+## Decisions
 
-## Suggested metadata schema
+**Content decides the kind, not the extension or MIME type.** The site reads a submission with the engine's own reader, as it reads a preset with `PatchIO` (`Submissions.Read`) and a plugin with `PluginPackage`. A file `WavReader` or the PNG decoder refuses is refused, with the reader's reason. Size, length and channel count come from the file, never from the form.
 
-Create a D1 table named `assets` with fields along these lines:
+**What the file cannot say comes from the form.** A preset carries its own name, author and tags (ADR-0131); a WAV carries none. The form gives name, author, description, tags and license, each cleaned and cut to a length as ADR-0132 cleans a package's text. The license is required and chosen from a short fixed list: CC0, CC BY, CC BY-SA, CC BY-NC, and "my own work, free to use". A file nobody has a right to share is the real risk of this feature, and the license is what the page and the editor show next to the download.
 
-- `id` — UUID primary key
-- `filename` — user-facing filename
-- `object_key` — unique R2 object key
-- `content_type`
-- `size`
-- `category`
-- `tags`
-- `description`
-- `author`
-- `license`
-- `license_url`
-- `version`
-- `flyback_version`
-- `module_type`
-- `sha256`
-- `created_at`
-- `status` — e.g. `pending`, `ready`, `failed`
+**A submission arrives unpublished** (ADR-0133's rule, not ADR-0131's). A preset is data the author made; a sound is as likely as not somebody else's recording. Nothing is listed, served or counted until the admin publishes it, and the submitter is answered 202 with what the site read.
 
-Consider storing tags as JSON initially; use a normalized tags table or D1 FTS5 if search requirements grow. Search should only return assets whose status is `ready`.
+**Anyone may submit, rate-limited.** The first draft made upload admin-only. Here it is the same public `submit` policy presets use, since an unpublished file harms nobody and the admin is the moderation. Same-bytes twice is refused by SHA-256, as a plugin package is.
 
-## API outline
+**The file goes through the server and is stored as a file.** No presigned URL, no `complete` step and no `pending` state, so there are no abandoned uploads to clean up. ADR-0131 already settled where bytes live: metadata in SQLite, files in a folder, since a blob bloats the database and cannot be streamed with seeking. The folder is `Site:Sounds` (default `/data/sounds`), beside the database and writable, unlike the read-only media share.
 
-Public endpoints:
+- The file is named by its id on disk. The submitted name is never a path; it is cleaned and used only for `Content-Disposition`.
+- It is written under a temporary name and renamed, then the row is inserted. A crash between the two leaves an unreferenced file, which a sweep at start removes.
+- Delete removes the row, then the file.
 
-- `GET /api/search?q=...&category=...&limit=...&cursor=...`
-  - Search filename, tags, description, author, and optionally other metadata.
-  - Validate and cap pagination parameters.
-  - Return only public, ready assets.
-- `GET /api/assets/:id`
-  - Return public metadata for one asset.
-- `GET /api/download/:id`
-  - Verify that the asset exists and is ready, then redirect to a short-lived presigned R2 GET URL.
+**Size.** The site's 20 MB request limit stays (about two minutes of 44.1 kHz stereo 16-bit). Raising it for these endpoints, as plugins' 64 MB is, is a later decision with a use for it.
 
-Administrative endpoints (must be protected; never put an admin secret in public JavaScript):
+**Search is the presets' search.** The same word-by-word match over name, author, description and tags, with a tag filter, a page size and `count=false`. No FTS5 until a search shows `LIKE` is the problem.
 
-- `POST /api/upload`
-  - Validate metadata, filename, category, MIME type, declared size and allowed extensions.
-  - Create a `pending` database record and return a short-lived presigned PUT URL.
-  - The signed upload must be bound to the expected object key and content type.
-- `POST /api/assets/:id/complete`
-  - Called after the client finishes uploading.
-  - Verify the R2 object exists and that its actual size matches the expected size; update the record to `ready` only after validation.
-  - Consider checking a SHA-256 hash for duplicate detection and integrity.
-- `DELETE /api/assets/:id`
-  - Delete the R2 object and D1 row. Admin-only.
-- Optional `PATCH /api/assets/:id`
-  - Update editable metadata. Admin-only.
+## API
 
-Do not implement public upload without a clear abuse-control strategy. Start with an admin-only upload flow.
+Under `/api/v1`, versioned as the rest is, and shaped as `PluginApi` is so the editor reads it the same way. A `kind` of `sound` or `picture`, in the path rather than a filter, keeps each listing and each page about one thing.
 
-## Security requirements
+Public:
 
-1. **Never ship secrets to GitHub Pages.** A token embedded in JavaScript can be extracted by any visitor.
-2. Keep the R2 bucket private. Use presigned URLs for controlled downloads and uploads.
-3. Store R2 S3 credentials and admin credentials as Worker secrets, never in source control.
-4. Restrict R2 credentials to the `flyback-assets` bucket and the minimum required permissions.
-5. Protect admin endpoints with Cloudflare Access or a properly implemented authentication flow (for example, GitHub OAuth). Do not treat CORS as authentication.
-6. Configure CORS on R2 to allow only the intended frontend origin and the necessary methods/headers. A presigned URL alone does not configure browser CORS.
-7. Validate all request bodies and cap request sizes. Never trust client-provided file size or MIME type without checking the stored object.
-8. Rate-limit public search and download endpoints as appropriate.
-9. Prevent path traversal and unsafe object keys. Generate object keys server-side, e.g. `category/<uuid>-<sanitized-filename>`.
-10. Use a pending/ready state so an incomplete upload is never listed as a downloadable asset.
-11. Add cleanup for abandoned pending uploads and orphaned R2 objects.
-12. Decide how to moderate community submissions before enabling public uploads.
+- `GET /sounds?q=&tag=&license=&page=`, and the same for `/pictures`. Published only, 24 to a page.
+- `GET /sounds/{id}`. One entry's metadata.
+- `GET /sounds/{id}/file`. The bytes, with range requests so a browser's `<audio>` can seek, `Content-Disposition` as the cleaned name, and `count=false` to fetch without counting a download.
+- `GET /tags`'s counterpart for each kind.
+- `POST /sounds` and `POST /pictures`. A multipart form, rate-limited, anonymous.
 
-## Upload flow
+Admin, behind the session the site already has (`Signed`), each answering 401 otherwise:
 
-1. Admin authenticates to the Worker.
-2. Frontend sends metadata to `POST /api/upload`.
-3. Worker validates the request, creates a `pending` D1 record, and returns a short-lived presigned PUT URL.
-4. Browser uploads the file directly to R2 using that URL.
-5. Frontend calls `POST /api/assets/:id/complete`.
-6. Worker verifies the object and expected size (and hash if implemented), then marks the asset `ready`.
-7. The public search API can now return the asset.
+- `PATCH /sounds/{id}` renames or sets `published`. `DELETE /sounds/{id}`.
+- Listing and fetching an unpublished entry take the same `unpublished` flag the other stores do.
 
-If the upload fails, leave the asset pending and clean it up later. Do not make the asset public before completion checks pass.
+Each entry carries `id`, `name`, `author`, `description`, `tags`, `license`, `fileName`, `size`, `sha256`, and what the file says about itself: for a sound its length, sample rate and channels; for a picture its width and height. Reports and ratings reuse `ReportStore` and `RatingStore` with a new kind, as plugins do.
 
-## Download flow
+## Where it goes
 
-1. Client requests `GET /api/download/:id`.
-2. Worker checks that the record exists and is `ready`.
-3. Worker returns a redirect to a short-lived presigned R2 GET URL.
-4. Browser or desktop app downloads the file from R2.
+All new files, one type each, in `src/Flyback.Server/`, named as their plugin counterparts are:
 
-## Search
+- `SoundStore.cs`, `PictureStore.cs`, or one `SharedFileStore` taking the kind, if the two come out identical (they will, but for the metadata read; check before deciding), with `StoredSound` and `StoredPicture` records.
+- `SoundApi.cs` and `PictureApi.cs`, mapped in `Program.cs` beside `MapPlugins`.
+- `SoundSubmissions.cs`, the reader that turns bytes and a form into a checked submission or a refusal.
+- A `sounds` table and a `pictures` table in the same SQLite file, made with `CREATE TABLE IF NOT EXISTS` and migrated on open, as `PresetStore` does (`saved-data.md`).
+- Pages `sounds.html` and `pictures.html` in `src/Flyback.Server/wwwroot`, with the shared header, an `<audio controls>` or `<img>` per entry, license and size, and the report and rating controls the preset page has. The admin page lists unpublished ones.
 
-Start with parameterized SQL and `LIKE` queries over filename, tags, description and author. Add pagination and a sensible result limit (for example, 50–100).
+Not new: authentication, rate limiting, the forwarded-header check, the tunnel, the Access policy, the Pages fallback worker and the deploy. `pages.yml` already rewrites links to server pages to `PRESETS_URL`; add the two new pages to that list. `site.yml` already builds on a change under `src/`.
 
-For more capable full-text search, investigate D1's FTS5 support and use it if appropriate. Do not concatenate raw user input into SQL.
+## Security, as `security.md` has it
 
-## Recommended repository layout
+- **Secrets.** None are added. There is no new key, token or credential, which is the whole point of leaving R2's S3 keys out.
+- **Sizes and numbers.** The reader caps every length it reads off the file against what the input could hold; a WAV header claiming more samples than the file has is the one to test.
+- **Paths.** The id is the file's name on disk; nothing from the form or the file reaches a path.
+- **Text.** Form fields are cleaned of control and bidirectional characters and cut to length before storing, and escaped where a page prints them. Parsers refuse; they do not throw.
+- **Never loosened.** Nothing is served until published, and no check is skipped to make an upload work.
+- **Least collected.** The rate limit counts addresses as it already does; nothing about who downloaded what is kept beyond a count.
 
-```text
-flyback-library/
-├── src/
-│   ├── index.ts             # Worker routes and handlers
-│   ├── auth.ts              # admin auth / authorization
-│   ├── validation.ts        # request and metadata validation
-│   └── storage.ts           # presigned URLs and R2 helpers
-├── public/
-│   └── admin/               # optional admin UI; must not contain secrets
-├── schema.sql
-├── wrangler.toml
-├── package.json
-├── tsconfig.json
-└── README.md
-```
+## Tests
 
-The public library UI can live in the existing Flyback frontend or in a separate static page. Keep the API independent so the desktop application can reuse it later.
+In `tests/Flyback.Server.Tests`, as the plugin site's are (the specs project cannot host the site, so no Gherkin scenario, as ADR-0133 says):
 
-## Cloudflare setup
+- A WAV and a PNG are accepted and arrive unpublished; neither is listed, served or found by its page until published.
+- A file that is neither, a truncated WAV, a WAV whose header promises more than it holds, and a PNG with a lying size are refused with a reason.
+- The same bytes twice are refused.
+- Without the admin session, publish, rename and delete are 401.
+- A request past the limit is refused; the sixth in an hour over the limit is 429.
+- A name with `..`, a backslash or a device name never touches a path.
+- A sound's range request returns 206 and the right slice.
+- The old database, opened by the new code, still has its presets and plugins.
 
-1. Create a Cloudflare account and enable Workers, R2 and D1.
-2. Create the R2 bucket `flyback-assets`.
-3. Create the D1 database `flyback-library`.
-4. Add the R2 and D1 bindings to `wrangler.toml`.
-5. Apply `schema.sql` to the D1 database.
-6. Create bucket-scoped R2 S3 credentials for presigned URLs.
-7. Store required credentials using `wrangler secret put`; never commit secrets.
-8. Configure R2 CORS for the actual Flyback frontend origin.
-9. Deploy with Wrangler and test the public API.
-10. Configure a custom API domain if desired.
+## Phases
 
-Use the current Cloudflare documentation and current Wrangler configuration format during implementation; do not assume older `wrangler.toml` examples remain current.
+1. **Server.** Stores, API, submission reader, tests, the two pages, admin listing, the ADR, the glossary entries, the `website` skill's site edit and one CHANGELOG bullet, all in the commits that land each step. Lands dark until the pages exist: a route nothing links is not visible.
+2. **Editor.** A `SoundSite` beside `PluginSite` on `SiteAccess`, null in a page as plugins are. A Sample module's file picker gets "Shared sounds": search, preview, download into the library folder (Settings → Files), and the module's file set to the downloaded copy. The same for a picture's module. Never a download without the person choosing one; a download is checked against `sha256` before it is kept.
+3. **Later, each on its own.** A patch that names a sound you lack offering it, as ADR-0135 does for a plugin: a patch names a path and nothing else, so this needs a hash saved with it, which is a format change and carries its upgrade step (`saved-data.md`). R2 behind the store's interface. A larger limit. Waveform previews drawn as the site's tracks are (`site-audio-tracks`).
 
-## Implementation phases
+## Open for the user
 
-### Phase 1 — secure MVP
+- **Server instead of Worker, R2 and D1.** Recommended, as above. Say so if the NAS's bandwidth or disk is the reason to want R2 now.
+- **Sounds arrive unpublished.** Recommended, for the copyright risk. The alternative is published at once and moderated after, as presets are.
+- **The license list.** Five entries above; add or cut.
+- **A fixed 20 MB.** Recommended until something needs more.
 
-- Create Worker, R2 bucket and D1 schema.
-- Implement public search, asset details and download.
-- Implement authenticated admin upload using presigned URLs.
-- Implement upload completion verification and pending/ready states.
-- Implement admin deletion.
-- Add request validation, pagination, CORS, error handling and basic rate limiting.
-- Add tests for unauthorized requests, invalid metadata, incomplete uploads and missing assets.
-- Document local development and deployment.
+## Kept from the first draft
 
-### Phase 2 — frontend
-
-- Add a searchable asset browser to Flyback's website.
-- Display filename, category, description, author, tags, size and license.
-- Add download actions and loading/error/empty states.
-- Add an admin-only upload form with tags, category, description, author and license fields.
-- Never include admin credentials in the static frontend.
-
-### Phase 3 — community library and desktop integration
-
-- Add moderation and a deliberate public-submission/authentication flow before enabling community uploads.
-- Add SHA-256 duplicate detection and integrity checks.
-- Add previews (audio waveform/player and image/video thumbnails where appropriate).
-- Add richer filtering and FTS5 search.
-- Add multipart uploads for large files if required.
-- Add versioning/compatibility metadata for Flyback presets and modules.
-- Integrate search/download into the C#/Avalonia desktop app.
-
-## Important implementation notes
-
-- The earlier minimal example is a starting concept, not production-ready code. In particular, it must not expose an `ADMIN_TOKEN` in GitHub Pages, must not publish an asset before upload verification, and must configure R2 CORS correctly.
-- Ensure the signed PUT request's headers exactly match those used by the browser (especially `Content-Type`).
-- Verify object existence and size on completion. A client-reported size is not authoritative.
-- Handle failed uploads and database/object-storage consistency. D1 and R2 do not share a single transaction.
-- Use server-generated UUIDs and object keys.
-- Make upload size limits configurable and verify the practical limits of the chosen upload approach. Use multipart upload when necessary.
-- Add automated tests and a README with deployment steps and required secrets.
-
-## Definition of done
-
-- Anyone can search and download ready public assets without logging in.
-- Only authenticated administrators can upload or delete assets.
-- Large files upload directly to R2 rather than passing through the Worker.
-- Incomplete uploads are not listed publicly.
-- No credentials or admin tokens appear in the frontend bundle or Git repository.
-- The same API can be used by the GitHub Pages frontend and the Flyback desktop app.
+Private-by-default until checked, a status gate before anything is public, server-made keys, validation at the door, a rate limit on the public endpoints, the admin as the only way to delete, the editor reusing the same API as the page, and moderation before any community submission is public.
