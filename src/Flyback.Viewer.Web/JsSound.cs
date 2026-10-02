@@ -5,7 +5,7 @@ using Flyback.Core.Compile;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Render;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// A sound's program as JavaScript, run by the page's engine on the program's own

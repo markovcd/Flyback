@@ -1,6 +1,6 @@
 using Flyback.Engine.Render;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// Whether the worker's sound keeps pace: each chunk timed against how long it plays for,

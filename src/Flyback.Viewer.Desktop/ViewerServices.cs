@@ -7,7 +7,7 @@ using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>
 /// The viewer's composition root: one run's player, its window and what they play

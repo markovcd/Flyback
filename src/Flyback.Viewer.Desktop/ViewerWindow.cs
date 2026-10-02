@@ -8,7 +8,7 @@ using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>
 /// A patch playing in a window with nothing else in it: the picture, the sound, and a

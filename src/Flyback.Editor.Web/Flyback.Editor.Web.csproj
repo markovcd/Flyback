@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <!-- The web viewer's plugins. -->
-  <Import Project="..\Flyback.Web\LinkedPlugins.props" />
+  <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
 
   <ItemGroup>
     <ProjectReference Include="@(WebPlugin)" LinkedPlugin="true" />

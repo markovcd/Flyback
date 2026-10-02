@@ -23,7 +23,7 @@
     <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Viewer\Flyback.Viewer.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Server\Flyback.Server.csproj" />
   </ItemGroup>
@@ -34,11 +34,11 @@
     as the specs install the site's plugins too and play their presets in it.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Web\Flyback.Web.csproj"
+    <ProjectReference Include="..\..\src\Flyback.Viewer.Web\Flyback.Viewer.Web.csproj"
                       ReferenceOutputAssembly="false"
                       SkipGetTargetFrameworkProperties="true"
                       AdditionalProperties="Configuration=All plugins" />
-    <AssemblyMetadata Include="WebViewer" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Web\bin\All plugins\net10.0" />
+    <AssemblyMetadata Include="WebViewer" Value="$(MSBuildThisFileDirectory)..\..\src\Flyback.Viewer.Web\bin\All plugins\net10.0" />
   </ItemGroup>
 
   <!--

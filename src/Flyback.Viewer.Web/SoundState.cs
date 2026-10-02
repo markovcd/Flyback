@@ -2,7 +2,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Engine.Compile;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// What the picture knows of the sound, carried from the worker that plays it to the

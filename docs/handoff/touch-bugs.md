@@ -22,7 +22,7 @@ item 8 wants the same.
 `src/Flyback.Editor.Web/wwwroot/speakers.js:57` resumes the AudioContext on
 `pointerdown` and `keydown` only. A touch `pointerdown` is not a user activation;
 `pointerup`/`touchend`/`click` are. Chrome resumes from the second tap, WebKit
-never. The web viewer uses `click` (`src/Flyback.Web/wwwroot/main.js:655-656`).
+never. The web viewer uses `click` (`src/Flyback.Viewer.Web/wwwroot/main.js:655-656`).
 Add `pointerup` and `touchend` to the list.
 
 Repro: open the editor on an iPhone and tap around; `flyback.sound().context.state`

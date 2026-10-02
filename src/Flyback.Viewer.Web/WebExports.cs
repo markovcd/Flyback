@@ -12,7 +12,7 @@ using Flyback.Engine.Render;
 using Flyback.Gpu;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// What the page and its sound worker call: open a patch, fill the sound queue, draw a

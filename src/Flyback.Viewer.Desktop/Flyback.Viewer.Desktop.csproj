@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>flyback-viewer</AssemblyName>
-    <RootNamespace>Flyback.Viewer</RootNamespace>
+    <RootNamespace>Flyback.Viewer.Desktop</RootNamespace>
     <ApplicationIcon>..\..\flyback.ico</ApplicationIcon>
   </PropertyGroup>
 

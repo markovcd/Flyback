@@ -4,7 +4,7 @@ using Flyback.Ui.Midi;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>What one run plays: the patch, the device it plays through, what it is played from, and how.</summary>
 internal sealed record ViewerLaunch(

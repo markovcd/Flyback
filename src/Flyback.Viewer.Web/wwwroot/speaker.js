@@ -45,7 +45,7 @@ const starting = (async () => {
   });
 
   const exports = await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName);
-  return { runtime, flyback: exports.Flyback.Web.WebExports };
+  return { runtime, flyback: exports.Flyback.Viewer.Web.WebExports };
 })();
 
 let runtime = null;

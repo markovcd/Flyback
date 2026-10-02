@@ -1,4 +1,4 @@
-﻿namespace Flyback.Viewer;
+﻿namespace Flyback.Viewer.Desktop;
 
 /// <summary>What the program tells the shell it did.</summary>
 internal static class Exit

@@ -16,7 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Viewer\Flyback.Viewer.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
   </ItemGroup>
 
   <!--

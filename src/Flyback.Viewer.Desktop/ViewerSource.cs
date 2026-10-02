@@ -4,7 +4,7 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>What a run plays: a file, a preset by name, or the one the settings start on.</summary>
 internal static class ViewerSource

@@ -1,4 +1,4 @@
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>The wall clock <c>--for</c> and <c>--loop</c> count played time against, from the start of the run.</summary>
 internal sealed class WallClock(TimeProvider time)

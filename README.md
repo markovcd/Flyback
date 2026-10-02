@@ -58,7 +58,7 @@ dotnet workload install wasm-tools
 ```bash
 dotnet publish src/Flyback.Editor.Desktop -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
-dotnet publish src/Flyback.Viewer -c Release -r win-x64 -o artifacts/win-x64
+dotnet publish src/Flyback.Viewer.Desktop -c Release -r win-x64 -o artifacts/win-x64
 ```
 
 This produces a self-contained folder with the app, the CLI and the viewer, plus the shared runtime and plugin folders:
@@ -270,10 +270,10 @@ A patch made to be played is played here too: the computer's keys are notes wher
 
 ## Web viewer
 
-`src/Flyback.Web` plays a patch in a browser: the engine and the module plugins compiled to WebAssembly, the picture drawn on WebGL 2 by the desktop's own GPU renderer. It opens a shipped preset or a `.fbk`, `.fbkb` or `.fbks` dropped on it, and plays it; nothing else. The sound runs as JavaScript written from the patch, the heaviest showcase presets with a fifth of real time to spare; a patch whose sound still cannot keep up plays its picture alone and says how slow (ADR-0160).
+`src/Flyback.Viewer.Web` plays a patch in a browser: the engine and the module plugins compiled to WebAssembly, the picture drawn on WebGL 2 by the desktop's own GPU renderer. It opens a shipped preset or a `.fbk`, `.fbkb` or `.fbks` dropped on it, and plays it; nothing else. The sound runs as JavaScript written from the patch, the heaviest showcase presets with a fifth of real time to spare; a patch whose sound still cannot keep up plays its picture alone and says how slow (ADR-0160).
 
 ```bash
-dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -o artifacts/web
+dotnet publish src/Flyback.Viewer.Web -c Release -p:RunAOTCompilation=true -o artifacts/web
 ```
 
 The preset site serves it at `/viewer/`, and each preset's page has a Play in your browser button that opens it there. On its own, serve `artifacts/web/wwwroot` from any static server and open `/viewer/`; `?preset=Nebula`, `?file=<url>` (with `&name=` where the URL does not end in the file's name, `&title=` for the name shown and `&back=` for the page to return to), `?size=1280x720`, `?loop` and `?mute` pick what opens and how. It offers no presets of its own: the presets page, on the preset site and on GitHub Pages, lists the shipped ones from the build's stills (ADR-0163) and sends one here, and the header leads back to `&back=`, or to the presets page. Space plays and pauses, left and right seek five seconds, up and down set the volume, M mutes and F goes full screen. A patch's panel knobs stand beside the picture, dragged up or right to turn and double-clicked to put back; on a phone they sit in a sheet under it, with keys on the screen for a patch played on the keyboard. A patch played on the computer keyboard takes its keys as the editor does, as a piano or in the patch's scale, with PageUp and PageDown moving the octave; its note keys win over the shortcuts. The AOT switch needs `dotnet workload install wasm-tools`; without it the page around the sound runs interpreted, at under half the speed. `window.flyback` drives the page from a script: `presets()`, `open`, `play`, `pause`, `seek`, `size(width, height)`, `volume(level)`, `knobs()`, `turn(knob, value)`, `strike(note, down)`, `release()`, `panel(pixels)`, the phone's sheet's height, `tab(name)`, its tab, `status()`, `still(seconds)`, the frame as a PNG at the patch's size, and `edit()`, Edit it: back to the web editor that sent the patch, or the patch opened in the web editor.
@@ -313,8 +313,8 @@ src/
   Flyback.Engine         compiler, text language, renderers and file formats
   Flyback.Plugins        plugin host and built-in plugin logic
   Flyback.Ui             the preview, sound device and look the app and the viewer share
-  Flyback.Viewer         the viewer: opens a patch and plays it
-  Flyback.Web            the web viewer: the same, in a browser
+  Flyback.Viewer.Desktop the viewer: opens a patch and plays it
+  Flyback.Viewer.Web     the web viewer: the same, in a browser
   Flyback.Editor.Web     the web editor: the editor in a browser
 
 tests/

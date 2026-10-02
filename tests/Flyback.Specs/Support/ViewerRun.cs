@@ -7,7 +7,7 @@ using Flyback.Ui;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
-using Flyback.Viewer;
+using Flyback.Viewer.Desktop;
 
 namespace Flyback.Specs.Support;
 

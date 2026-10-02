@@ -67,7 +67,7 @@ program.attach({
   i32: () => runtime.localHeapViewI32(),
   u8: () => runtime.localHeapViewU8(),
 });
-const web = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
+const web = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Viewer.Web.WebExports;
 
 if (values.presets) {
   console.log(web.Presets());

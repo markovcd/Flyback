@@ -10,7 +10,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>
 /// The command line, with the settings file behind every default it has.

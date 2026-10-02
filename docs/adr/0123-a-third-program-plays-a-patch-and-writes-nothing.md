@@ -12,7 +12,7 @@ sounds like, an agent especially, had neither.
 ## Decision
 
 **`flyback-viewer` opens a patch and plays it, picture and sound, and nothing else**
-(`src/Flyback.Viewer`). A program of its own rather than a mode of the editor,
+(`src/Flyback.Viewer.Desktop`). A program of its own rather than a mode of the editor,
 because what the editor keeps is exactly what a look must not leave behind.
 
 **It writes nothing.** No settings, layout, recovery file or statistics, and it

@@ -4,7 +4,7 @@ using Flyback.Engine.Compile;
 using Flyback.Engine.Render;
 using Flyback.Ui;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>
 /// How one run plays: what the settings file says, overridden by whatever the command

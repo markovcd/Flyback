@@ -3,7 +3,7 @@ using System.Reflection;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Canvas;
-using Flyback.Viewer;
+using Flyback.Viewer.Desktop;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

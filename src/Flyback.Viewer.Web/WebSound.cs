@@ -6,7 +6,7 @@ using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// One patch's sound, playing in the viewer's worker: rendered a buffer at a time for

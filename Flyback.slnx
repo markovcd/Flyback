@@ -33,9 +33,9 @@
     <Project Path="src/Flyback.Gpu/Flyback.Gpu.csproj" />
     <Project Path="src/Flyback.Plugins/Flyback.Plugins.csproj" />
     <Project Path="src/Flyback.Ui/Flyback.Ui.csproj" />
-    <Project Path="src/Flyback.Viewer/Flyback.Viewer.csproj" />
+    <Project Path="src/Flyback.Viewer.Desktop/Flyback.Viewer.Desktop.csproj" />
     <Project Path="src/Flyback.Server/Flyback.Server.csproj" />
-    <Project Path="src/Flyback.Web/Flyback.Web.csproj" />
+    <Project Path="src/Flyback.Viewer.Web/Flyback.Viewer.Web.csproj" />
     <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
   </Folder>
   <Folder Name="/src/plugins/">

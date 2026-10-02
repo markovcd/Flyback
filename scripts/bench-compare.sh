@@ -132,7 +132,7 @@ build() {
 
   case "$what" in
     benchmarks) (cd "$dir" && dotnet build tests/Flyback.Core.Benchmarks -c Release) > "$log" 2>&1 ;;
-    web) (cd "$dir" && dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation=true -o "$(web_dir "$sha")") > "$log" 2>&1 ;;
+    web) (cd "$dir" && dotnet publish src/Flyback.Viewer.Web -c Release -p:RunAOTCompilation=true -o "$(web_dir "$sha")") > "$log" 2>&1 ;;
   esac || { tail -20 "$log" >&2; echo "bench-compare: the $what of $side did not build; the whole log is $log" >&2; exit 2; }
 
   [ "$sha" != . ] && touch "$marker"

@@ -7,7 +7,7 @@ using Flyback.Ui.Controls;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
-using Flyback.Viewer;
+using Flyback.Viewer.Desktop;
 using Shouldly;
 using Xunit;
 

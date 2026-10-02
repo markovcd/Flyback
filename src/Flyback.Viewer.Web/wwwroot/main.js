@@ -77,7 +77,7 @@ const speakerReady = new Promise(resolve => {
 
 const runtime = await dotnet.create();
 runtime.setModuleImports('gl', gl);
-const flyback = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Web.WebExports;
+const flyback = (await runtime.getAssemblyExports(runtime.getConfig().mainAssemblyName)).Flyback.Viewer.Web.WebExports;
 
 let info = null;
 const noPicture = gl.attach(ui.canvas, () => runtime.localHeapViewU8());

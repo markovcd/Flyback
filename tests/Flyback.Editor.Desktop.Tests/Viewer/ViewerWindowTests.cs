@@ -14,7 +14,7 @@ using Flyback.Core.Graph;
 using Flyback.Engine.Language;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Audio;
-using Flyback.Viewer;
+using Flyback.Viewer.Desktop;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.Ui;

@@ -8,7 +8,7 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>
 /// The third program over the engine: opens a patch, plays it, and writes nothing.

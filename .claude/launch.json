@@ -22,7 +22,7 @@
     {
       "name": "web",
       "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "src/Flyback.Web"],
+      "runtimeArgs": ["run", "--project", "src/Flyback.Viewer.Web"],
       "port": 8795
     }
   ]

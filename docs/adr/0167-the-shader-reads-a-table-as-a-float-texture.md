@@ -2,7 +2,7 @@
 
 **Status:** Accepted · 2026-09-30 · *user-directed* · implemented in
 `src/Flyback.Engine/Compile/GlslEmitter.cs`, `src/Flyback.Gpu/TableTextures.cs` and
-`src/Flyback.Web/SoundState.cs`; replaces the processor fallback of
+`src/Flyback.Viewer.Web/SoundState.cs`; replaces the processor fallback of
 [0052](0052-a-patch-names-its-samples-rather-than-carrying-them.md) and
 [0053](0053-a-scope-records-what-the-speakers-played.md)
 

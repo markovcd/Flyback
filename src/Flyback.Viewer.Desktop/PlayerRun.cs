@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 /// <summary>A run with no window: its player, and everything the container built for it, let go together.</summary>
 internal sealed class PlayerRun(ServiceProvider services) : IDisposable

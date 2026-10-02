@@ -120,8 +120,8 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 
 | Say | Means | Code | Not |
 |---|---|---|---|
-| **the viewer** | `flyback-viewer`: plays a patch, picture and sound, and writes nothing. | `Flyback.Viewer`; its transport is `ViewerPlayer` | player (a Sample is the only player) |
-| **the web viewer** | The viewer in a browser: the engine compiled to WebAssembly behind a page. | `Flyback.Web`; one patch playing is `WebPlayer` | web player, web app |
+| **the viewer** | `flyback-viewer`: plays a patch, picture and sound, and writes nothing. | `Flyback.Viewer.Desktop`; its transport is `ViewerPlayer` | player (a Sample is the only player) |
+| **the web viewer** | The viewer in a browser: the engine compiled to WebAssembly behind a page. | `Flyback.Viewer.Web`; one patch playing is `WebPlayer` | web player, web app |
 | **transport** | Play, pause and rewind. | `Transport`, shared by `Playback` and `ViewerPlayer` | — |
 | **rewind** | Take the patch back to zero seconds, in the picture and the sound. | — | reset, restart |
 | **record**, **take** | Recording the patch live from the editor (Ctrl+R), and the file one recording makes. | `Takes`, `LiveRecorder` | capture, clip |

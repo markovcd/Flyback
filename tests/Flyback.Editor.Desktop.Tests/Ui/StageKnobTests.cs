@@ -11,7 +11,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
-using Flyback.Viewer;
+using Flyback.Viewer.Desktop;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

@@ -24,5 +24,5 @@ public sealed class InstallationTests
     /// </summary>
     [Fact]
     public void The_viewer_s_name_matches_what_it_is_published_as() =>
-        Installation.OtherPrograms.ShouldContain(typeof(Flyback.Viewer.Program).Assembly.GetName().Name);
+        Installation.OtherPrograms.ShouldContain(typeof(Flyback.Viewer.Desktop.Program).Assembly.GetName().Name);
 }

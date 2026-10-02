@@ -228,7 +228,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         osx-*) rm -rf ${out}; out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
       esac; \
       dotnet publish src/Flyback.Cli -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
-      dotnet publish src/Flyback.Viewer -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
+      dotnet publish src/Flyback.Viewer.Desktop -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
     done
 
 # Every preset's still, drawn once and laid beside each platform's programs, so the

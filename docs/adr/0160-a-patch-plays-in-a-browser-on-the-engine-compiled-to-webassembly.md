@@ -1,6 +1,6 @@
 # ADR-0160: A patch plays in a browser on the engine compiled to WebAssembly
 
-**Status:** Accepted · 2026-09-29 · *user-directed* · implemented in `src/Flyback.Web/`,
+**Status:** Accepted · 2026-09-29 · *user-directed* · implemented in `src/Flyback.Viewer.Web/`,
 `src/Flyback.Gpu/IGl.cs` and `src/Flyback.Engine/Compile/JsEmitter.cs`
 
 ## Context
@@ -23,7 +23,7 @@ Sense Dub and Slow weather do not.
 
 ## Decision
 
-**`Flyback.Web` is the engine, the compiler and the module plugins built for
+**`Flyback.Viewer.Web` is the engine, the compiler and the module plugins built for
 `browser-wasm`, behind a page.** The page opens a shipped preset or a patch file,
 plays it, and does nothing else: no editing and no panel, as with `flyback-viewer`
 ([0123](0123-a-third-program-plays-a-patch-and-writes-nothing.md)). It offers no

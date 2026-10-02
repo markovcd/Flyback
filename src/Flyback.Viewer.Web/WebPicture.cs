@@ -6,7 +6,7 @@ using Flyback.Engine.Graph;
 using Flyback.Engine.Render;
 using Flyback.Gpu;
 
-namespace Flyback.Web;
+namespace Flyback.Viewer.Web;
 
 /// <summary>
 /// One patch's picture, drawn on the page by the desktop's GPU renderer, from what the

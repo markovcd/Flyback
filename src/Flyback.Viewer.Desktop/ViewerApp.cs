@@ -5,7 +5,7 @@ using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 
-namespace Flyback.Viewer;
+namespace Flyback.Viewer.Desktop;
 
 public sealed class ViewerApp : Application
 {

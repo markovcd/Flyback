@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Flyback.Web</RootNamespace>
+    <RootNamespace>Flyback.Viewer.Web</RootNamespace>
 
     <!-- Where the preset site, which references this project, serves it. -->
     <StaticWebAssetBasePath>viewer</StaticWebAssetBasePath>
