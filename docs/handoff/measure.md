@@ -4,7 +4,7 @@ Planned on 2026-10-01, on `main` at `d79bd24f`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** In progress: step 1, `flyback-cli measure` on `Measurements` (`src/Flyback.Engine/Measure/`), has landed; steps 2 and 3 are open.
+- **Status:** In progress: step 1, `flyback-cli measure` on `Measurements` (`src/Flyback.Engine/Measure/`), and step 3, the workbench `measure` tool, have landed; step 2 is open.
 
 ## What is wanted
 

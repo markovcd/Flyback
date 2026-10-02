@@ -1407,6 +1407,24 @@ public sealed partial class PatchWorkbench
                 """,
                 offered: hearing is not Listener.None),
 
+            Does("measure", MeasureAsync,
+                "Runs the patch for a few seconds with nothing played in and says what each output "
+                + "carries, as numbers: its value when it holds still, otherwise its range, mean and "
+                + "how fast it moves (hertz, steps a second, or steepest slope), and whether it "
+                + "varies across the picture. Every output of the modules named, wired to anything "
+                + "or not, or of every module when none are named. The sound and the picture are "
+                + "measured apart, since memory and coordinates make them differ. Reach for it to "
+                + "check what a knob or an LFO really gives before wiring it, or why something is "
+                + "flat; it costs no picture and no clip.",
+                $$"""
+                {
+                  "properties": {
+                    "handles": { "type": "array", "items": { "type": "string" }, "description": "Modules to measure. Left out, every module." },
+                    "seconds": { "type": "number", "description": "How long to run, from 0.25 to {{Number(LongestMeasure)}}. Defaults to 2. A repeat needs a few cycles in the window to be counted." }
+                  }
+                }
+                """),
+
             Does("describe_module", catalog.DescribeModule,
                 "Everything about one module: what it is for, and each port's default, range and "
                 + "what it is for.",
@@ -1518,6 +1536,15 @@ public sealed partial class PatchWorkbench
             refusal = $"'{field}' is required and must be a module's handle.";
             return false;
         }
+
+        return Node(handle, out node, out def, out refusal);
+    }
+
+    /// <summary>The module a handle names, or why there is none.</summary>
+    private bool Node(string handle, out NodeInstance node, out NodeDef def, out string refusal)
+    {
+        node = null!;
+        def = null!;
 
         // 'out' is what the Output is called in the language, and the language is
         // what describe_patch answers in — so it is what comes back to these

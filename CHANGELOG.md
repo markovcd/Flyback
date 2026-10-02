@@ -8,6 +8,7 @@
 - The assistant's `listen` reports the clip's integrated loudness in LUFS and its true peak, so it can hit a loudness it is asked for.
 - A rate limit that resets within a minute is waited out rather than ending the turn, and the transcript says how long it is waiting.
 - A pipe into a module whose sockets are all given says to write `_` for the one it fills.
+- The assistant's `measure` says what any output carries, as numbers, wired or not, so it can check a knob or an LFO without a picture or a clip.
 - `flyback-cli ask` ends each turn with what it cost: requests, tokens in, cached and out, and time spent waiting out a rate limit.
 
 ### Command line
