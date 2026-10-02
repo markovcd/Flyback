@@ -72,20 +72,22 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     {
         if (Report is not { } report) return null;
 
-        foreach (var (measured, area) in Labels())
+        // Only the peek's own while one is up: everything else is under its scrim.
+        foreach (var (measured, area) in Shown(peeked: selection.Scene.Peek is not null))
             if (area.Contains(graph))
                 return (measured, Tip(measured, report.Seconds, Stale));
 
         return null;
     }
 
-    public void Draw(DrawingContext context)
+    /// <summary>The labels of what is drawn under a peek, or of the peek's own modules, which are drawn over it.</summary>
+    public void Draw(DrawingContext context, bool peeked)
     {
         if (Report is null) return;
 
         var ink = Stale ? Faint : Ink;
 
-        foreach (var (measured, area) in Labels())
+        foreach (var (measured, area) in Shown(peeked))
         {
             context.DrawRectangle(Ground, Ring, area, 3, 3);
 
@@ -109,14 +111,18 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         }
     }
 
-    /// <summary>Every label on the canvas and the box it is drawn in, in graph units.</summary>
-    private IEnumerable<(Measurement Measured, Rect Area)> Labels()
+    /// <summary>
+    /// Every label shown and the box it is drawn in, in graph units: beside the box's
+    /// socket for an output on a shut box's edge, and none for one inside it.
+    /// </summary>
+    internal IEnumerable<(Measurement Measured, Rect Area)> Shown(bool peeked)
     {
         var scene = selection.Scene;
 
         foreach (var measured in Report?.Measurements ?? [])
         {
-            if (history.Patch.Find(measured.Node) is not { } node || scene.InPeek(node.Id)) continue;
+            if (history.Patch.Find(measured.Node) is not { } node) continue;
+            if (scene.InPeek(node.Id) != peeked || scene.Unseen(node.Id, measured.Port)) continue;
 
             var anchor = scene.OutputAnchor(node, measured.Port);
             var text = Text(measured, Ink);

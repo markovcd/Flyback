@@ -72,7 +72,7 @@ internal sealed class CanvasPainter(
 
             DrawConnections(context, lifted, theirs: true, peeked: false);
 
-            if (!gestures.Gesturing) measured.Draw(context);
+            if (!gestures.Gesturing) measured.Draw(context, peeked: false);
 
             DrawPeek(context, scene, lifted);
 
@@ -690,6 +690,8 @@ internal sealed class CanvasPainter(
                 DrawNode(context, node, def);
 
         DrawConnections(context, lifted, theirs: true, peeked: true);
+
+        if (!gestures.Gesturing) measured.Draw(context, peeked: true);
     }
 
     /// <summary>What a Shift-drag is taking out of its group, which the ring is drawn without.</summary>

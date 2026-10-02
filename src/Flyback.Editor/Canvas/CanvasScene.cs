@@ -62,6 +62,11 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         }
     }
 
+    /// <summary>Whether an output is inside a shut box and not on its edge, so nothing on the canvas shows it.</summary>
+    public bool Unseen(Guid nodeId, int port) =>
+        ShutGroupOf(nodeId) is { } group
+        && patch.SocketsOf(group).IndexOfOutput(new GroupSocket(nodeId, port, IsOutput: true)) < 0;
+
     /// <summary>Whether this module is inside a box, and so is not drawn itself.</summary>
     public bool Shut(Guid nodeId) => ShutGroupOf(nodeId) is not null;
 

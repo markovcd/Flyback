@@ -96,4 +96,41 @@ public class MeasureTests : EditorTest
 
         Service<MeasureLabels>(window).Stale.ShouldBeTrue();
     }
+
+    [AvaloniaFact]
+    public void A_shut_box_shows_only_what_is_on_its_edge_and_a_peek_shows_the_rest()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var inner = b.Add("osc.sine", 0, 0, (1, 3f));
+        var edge = b.Add("osc.sine", 300, 0);
+        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
+        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var group = b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
+        group.Collapsed = true;
+
+        var window = NewMainWindow();
+        window.Show();
+        Settle(window);
+        Editor(window).History.Open(b.Patch);
+        Settle(window);
+
+        Editor(window).Selection.Select(null);
+        Measure(window);
+
+        var labels = Service<MeasureLabels>(window);
+        var scene = Editor(window).Selection.Scene;
+        var shown = labels.Shown(peeked: false).ToList();
+
+        shown.ShouldNotContain(label => label.Measured.Node == inner.Id);
+        var onEdge = shown.Single(label => label.Measured.Node == edge.Id);
+        onEdge.Area.Left.ShouldBeGreaterThan(scene.OutputAnchor(edge, 0).X);
+        scene.OutputAnchor(edge, 0).ShouldNotBe(NodeGeometry.OutputPort(edge, 0));
+
+        Editor(window).Selection.Peek(Editor(window).History.Patch.Groups!.Single());
+        Settle(window);
+
+        labels.Shown(peeked: true).Select(label => label.Measured.Node).ShouldBe([inner.Id, edge.Id], ignoreOrder: true);
+        labels.Shown(peeked: false).ShouldBeEmpty();
+    }
 }
