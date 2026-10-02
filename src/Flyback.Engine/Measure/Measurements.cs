@@ -60,11 +60,11 @@ public static class Measurements
 
         var soundSteps = (long)Math.Round(options.Seconds * options.SampleRate);
         var frames = Math.Max(1, (int)Math.Round(options.Seconds * options.FramesPerSecond));
-        var pixels = options.Columns * options.Rows;
-        var work = new Work(progress, soundSteps + (long)frames * pixels * (video is null ? 1 : 2));
+        var work = new Work(progress, soundSteps + (long)frames * options.Columns * options.Rows * (video is null ? 1 : 2));
 
         var sound = Sound(heard.Program, options, soundSteps, work, cancel);
-        var picture = Picture(seen.Program, video, options, frames, work, cancel);
+        var (picture, first) = Picture(seen.Program, video, options, frames, work, cancel);
+        var pixels = options.Columns * options.Rows;
 
         progress?.Report(1d);
 
@@ -82,12 +82,25 @@ public static class Measurements
                 node.Title(def),
                 def.Outputs[socket.Port].Name,
                 sound.Slice(socket.Offset, socket.Width).ToArray(),
-                picture.Slice(other.Offset, other.Width).ToArray()));
+                picture.AsSpan(other.Offset, other.Width).ToArray(),
+                other.Width == 3 ? Frame(first, other.Offset, pixels) : null));
         }
 
         var issues = heard.Issues.Concat(seen.Issues).Select(issue => issue.Message).Distinct().ToArray();
 
-        return new MeasureReport(options.From, options.Seconds, measurements, issues);
+        return new MeasureReport(options.From, options.Seconds, measurements, issues, options.Columns, options.Rows);
+    }
+
+    /// <summary>One color's pixels out of the first frame, which holds every component a pixel apart.</summary>
+    private static float[] Frame(float[] first, int offset, int pixels)
+    {
+        var rgb = new float[pixels * 3];
+
+        for (var p = 0; p < pixels; p++)
+            for (var c = 0; c < 3; c++)
+                rgb[p * 3 + c] = first[(offset + c) * pixels + p];
+
+        return rgb;
     }
 
     private static ReadOnlySpan<ComponentStats> Sound(
@@ -120,7 +133,8 @@ public static class Measurements
         return trackers.Select(tracker => tracker.Finish(options.Seconds)).ToArray();
     }
 
-    private static ReadOnlySpan<ComponentStats> Picture(
+    /// <returns>The stats, and the first frame: every component's pixels, one component after another.</returns>
+    private static (ComponentStats[] Stats, float[] First) Picture(
         CompiledPatch program,
         CompiledPatch? video,
         MeasureOptions options,
@@ -152,6 +166,7 @@ public static class Measurements
 
         var il = program.Il;
         var videoIl = video?.Il;
+        var first = new float[width * pixels];
         var frameLow = new double[width];
         var frameHigh = new double[width];
 
@@ -194,6 +209,7 @@ public static class Measurements
                     if (!double.IsFinite(value)) value = 0d;
 
                     trackers[c * pixels + p].Add(value, t);
+                    if (frame == 0) first[c * pixels + p] = (float)value;
                     frameLow[c] = Math.Min(frameLow[c], value);
                     frameHigh[c] = Math.Max(frameHigh[c], value);
                     sums[c] += value;
@@ -231,7 +247,7 @@ public static class Measurements
                 ?? new ComponentStats(overall.Item1, overall.Item2, overall.Item3, OverTime: false, across[c]);
         }
 
-        return stats;
+        return (stats, first);
     }
 
     /// <summary>Where a grid pixel's middle falls in the patch's coordinates, as the screen has them.</summary>

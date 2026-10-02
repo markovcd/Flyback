@@ -175,4 +175,25 @@ public class MeasureTests : EditorTest
 
         Service<MeasureLabels>(window).Report!.Seconds.ShouldBe(1d);
     }
+
+    [AvaloniaFact]
+    public void A_measured_color_shows_its_picture_under_its_row()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var color = b.Add("color.hsv", 0, 0);
+        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+
+        var window = NewMainWindow();
+        window.Show();
+        Settle(window);
+        Editor(window).History.Open(b.Patch);
+        Settle(window);
+
+        Click(Editor(window), window, color);
+        Measure(window);
+        Settle(window);
+
+        var picture = All<Image>(window).Single(i => i.Name == "measuredPicture");
+        picture.Source.ShouldBe(Service<MeasureLabels>(window).Frame(Service<MeasureLabels>(window).Of(color.Id, 0)!));
+    }
 }

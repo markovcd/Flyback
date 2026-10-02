@@ -52,6 +52,7 @@ internal sealed class Inspector
 
     /// <summary>The measurement lines on the panel, dimmed in place by an edit rather than rebuilt under a hand on a knob.</summary>
     private readonly List<TextBlock> measurements = [];
+    private readonly List<Image> measuredPictures = [];
     private readonly Document document;
     private readonly MidiHub midi;
     private readonly InstrumentLibrary instruments;
@@ -117,6 +118,7 @@ internal sealed class Inspector
     public Task On(PatchChanged notice)
     {
         foreach (var line in measurements) line.Opacity = StaleMeasurement;
+        foreach (var picture in measuredPictures) picture.Opacity = StaleMeasurement;
 
         Sync();
         return Task.CompletedTask;
@@ -198,6 +200,7 @@ internal sealed class Inspector
         inspectorShape = InspectorShape.Of(editor);
         panel.Children.Clear();
         measurements.Clear();
+        measuredPictures.Clear();
         plateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
@@ -452,6 +455,19 @@ internal sealed class Inspector
             panel.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
 
             if (Measured(node, i) is { } line) panel.Children.Add(line);
+
+            if (measured.Of(node.Id, i) is { } found && measured.Frame(found) is { } frame)
+            {
+                var picture = MeasureLabels.Picture(frame, 160);
+
+                picture.Name = "measuredPicture";
+                picture.HorizontalAlignment = HorizontalAlignment.Left;
+                picture.Margin = new Thickness(8, 0, 0, 4);
+                picture.Opacity = measured.Stale ? StaleMeasurement : 1;
+                ToolTip.SetTip(picture, "The picture at the start of the window, on the grid it was measured on.");
+                measuredPictures.Add(picture);
+                panel.Children.Add(picture);
+            }
         }
     }
 

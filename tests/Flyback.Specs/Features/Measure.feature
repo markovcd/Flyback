@@ -29,3 +29,9 @@ Feature: Measure pins what each output carries beside it
     And the settings say to measure for 8 seconds
     When the patch is measured
     Then the measurement covers 8 seconds
+
+  Scenario: A measured color shows the picture it made
+    Given a color that follows the picture's x, wired to nothing
+    And the patch is open in the editor
+    When the patch is measured
+    Then the color's measurement holds its picture, dark on the left and bright on the right

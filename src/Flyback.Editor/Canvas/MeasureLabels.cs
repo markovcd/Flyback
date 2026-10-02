@@ -1,4 +1,6 @@
 using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
@@ -19,12 +21,15 @@ namespace Flyback.Editor.Canvas;
 internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selection, Repaint repaint)
     : IReactTo<PatchChanged>
 {
-    private const double Gap = 9, PadX = 4, PadY = 1.5, Swatch = 8, MaxWidth = 140;
+    private const double Gap = 9, PadX = 4, PadY = 1.5, Thumb = 10, MaxWidth = 140;
 
     private static readonly IBrush Ground = new ImmutableSolidColorBrush(Colors.Canvas, 0.9);
     private static readonly IBrush Ink = new ImmutableSolidColorBrush(Colors.Value);
     private static readonly IBrush Faint = new ImmutableSolidColorBrush(Colors.Value, 0.4);
     private static readonly IPen Ring = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator));
+
+    /// <summary>Each color's picture, made the first time it is drawn.</summary>
+    private readonly Dictionary<Measurement, Bitmap> frames = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>What was last measured, or null before anything was.</summary>
     public MeasureReport? Report { get; private set; }
@@ -37,6 +42,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     {
         Report = report;
         Stale = false;
+        frames.Clear();
         repaint.Request();
     }
 
@@ -45,6 +51,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     {
         Report = null;
         Stale = false;
+        frames.Clear();
         repaint.Request();
     }
 
@@ -67,17 +74,58 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     public Measurement? Of(Guid node, int port) =>
         Report?.Measurements.FirstOrDefault(m => m.Node == node && m.Port == port);
 
-    /// <summary>The label under <paramref name="graph"/> and the full report for its tip.</summary>
-    public (Measurement Measured, string Tip)? Hit(Point graph)
+    /// <summary>The label under <paramref name="graph"/> and the full report for its tip, a color's picture above its numbers.</summary>
+    public (Measurement Measured, object Tip)? Hit(Point graph)
     {
         if (Report is not { } report) return null;
 
         // Only the peek's own while one is up: everything else is under its scrim.
         foreach (var (measured, area) in Shown(peeked: selection.Scene.Peek is not null))
-            if (area.Contains(graph))
-                return (measured, Tip(measured, report.Seconds, Stale));
+        {
+            if (!area.Contains(graph)) continue;
+
+            var said = Tip(measured, report.Seconds, Stale);
+
+            if (Frame(measured) is not { } frame) return (measured, said);
+
+            return (measured, new StackPanel
+            {
+                Spacing = 6,
+                Children =
+                {
+                    Picture(frame, 192),
+                    new TextBlock { Text = said },
+                },
+            });
+        }
 
         return null;
+    }
+
+    /// <summary>A color's picture at the start of the window, or null for a number.</summary>
+    public Bitmap? Frame(Measurement measured)
+    {
+        if (measured.Frame is not { } rgb || Report is not { Columns: > 0, Rows: > 0 } report) return null;
+
+        if (!frames.TryGetValue(measured, out var bitmap))
+            frames[measured] = bitmap = MeasureFrames.Bitmap(rgb, report.Columns, report.Rows);
+
+        return bitmap;
+    }
+
+    /// <summary>A picture drawn <paramref name="width"/> wide in its own shape, its grid's pixels kept square-edged.</summary>
+    public static Image Picture(Bitmap frame, double width)
+    {
+        var image = new Image
+        {
+            Source = frame,
+            Width = width,
+            Height = width * frame.PixelSize.Height / frame.PixelSize.Width,
+            Stretch = Stretch.Fill,
+        };
+
+        RenderOptions.SetBitmapInterpolationMode(image, BitmapInterpolationMode.None);
+        return image;
     }
 
     /// <summary>The labels of what is drawn under a peek, or of the peek's own modules, which are drawn over it.</summary>
@@ -94,16 +142,28 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
             var x = area.X + PadX;
             var half = Pinned(measured);
 
-            if (half.Count == 3)
+            if (Frame(measured) is { } frame)
+            {
+                var wide = ThumbWidth(frame);
+                var spot = new Rect(x, area.Center.Y - Thumb / 2, wide, Thumb);
+
+                using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.None }))
+                using (context.PushOpacity(Stale ? 0.4 : 1))
+                    context.DrawImage(frame, spot);
+
+                context.DrawRectangle(null, Ring, spot);
+                x += wide + PadX;
+            }
+            else if (half.Count == 3)
             {
                 var mean = Color.FromRgb(Byte(half[0].Mean), Byte(half[1].Mean), Byte(half[2].Mean));
 
                 context.DrawRectangle(
                     new ImmutableSolidColorBrush(mean, Stale ? 0.4 : 1),
                     Ring,
-                    new Rect(x, area.Center.Y - Swatch / 2, Swatch, Swatch));
+                    new Rect(x, area.Center.Y - Thumb / 2, Thumb, Thumb));
 
-                x += Swatch + PadX;
+                x += Thumb + PadX;
             }
 
             var text = Text(measured, ink);
@@ -126,7 +186,8 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
 
             var anchor = scene.OutputAnchor(node, measured.Port);
             var text = Text(measured, Ink);
-            var width = text.Width + PadX * 2 + (Pinned(measured).Count == 3 ? Swatch + PadX : 0);
+            var picture = Frame(measured) is { } frame ? ThumbWidth(frame) + PadX : Pinned(measured).Count == 3 ? Thumb + PadX : 0;
+            var width = text.Width + PadX * 2 + picture;
             var height = text.Height + PadY * 2;
 
             yield return (measured, new Rect(anchor.X + Gap, anchor.Y - height / 2, width, height));
@@ -152,6 +213,8 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
 
         return string.Join(Environment.NewLine, lines);
     }
+
+    private static double ThumbWidth(Bitmap frame) => Thumb * frame.PixelSize.Width / frame.PixelSize.Height;
 
     private static byte Byte(double v) => (byte)Math.Round(Math.Clamp(double.IsFinite(v) ? v : 0d, 0d, 1d) * 255d);
 }

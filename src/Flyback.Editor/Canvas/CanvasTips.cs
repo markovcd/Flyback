@@ -54,7 +54,7 @@ internal sealed class CanvasTips(
         ToolTip.SetTip(canvas, null);
     }
 
-    private (object? Over, string? Tip) At(Point graph)
+    private (object? Over, object? Tip) At(Point graph)
     {
         if (tags.Hit(graph) is { } tag) return (tag.Id, AssistantPanel.UndescribedNote);
 

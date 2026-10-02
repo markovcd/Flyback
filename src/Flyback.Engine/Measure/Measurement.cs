@@ -7,13 +7,18 @@ namespace Flyback.Engine.Measure;
 /// <param name="Socket">The output's name.</param>
 /// <param name="Sound">One entry for a number, three for a color, as the speakers compute it.</param>
 /// <param name="Picture">The same, as the screen computes it.</param>
+/// <param name="Frame">
+/// A color's picture at the start of the window, on the measuring grid: r, g and b a
+/// pixel, row by row from the top. Null for a number.
+/// </param>
 public sealed record Measurement(
     Guid Node,
     int Port,
     string Module,
     string Socket,
     IReadOnlyList<ComponentStats> Sound,
-    IReadOnlyList<ComponentStats> Picture)
+    IReadOnlyList<ComponentStats> Picture,
+    float[]? Frame = null)
 {
     /// <summary>
     /// Whether the two halves disagree: one moves and the other does not, the

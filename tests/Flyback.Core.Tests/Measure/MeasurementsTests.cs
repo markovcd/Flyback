@@ -141,4 +141,24 @@ public class MeasurementsTests
 
         public int GetHashCode(Measurement m) => HashCode.Combine(m.Node, m.Port);
     }
+
+    [Fact]
+    public void A_color_keeps_its_picture_at_the_start_of_the_window_and_a_number_none()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var coords = b.Add("coord");
+        var color = b.Add("color.rgb");
+        b.Wire(coords, 0, color, 0);
+
+        var report = Take(b);
+        var frame = Of(report, color).Frame.ShouldNotBeNull();
+
+        frame.Length.ShouldBe(report.Columns * report.Rows * 3);
+
+        // Red follows x: dark on the left of the top row, full on its right.
+        frame[0].ShouldBeLessThan(0f);
+        frame[(report.Columns - 1) * 3].ShouldBeGreaterThan(1f);
+        Of(report, coords).Frame.ShouldBeNull();
+    }
 }

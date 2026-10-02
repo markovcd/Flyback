@@ -15,6 +15,23 @@ public sealed class MeasureSteps(PatchContext context, EditorDriver editor)
         context.SetInput("lfo", "freq", hz);
     }
 
+    [Given("a color that follows the picture's x, wired to nothing")]
+    public void GivenAColor()
+    {
+        context.Add("coords", "coord");
+        context.Add("tint", "color.rgb");
+        context.Wire("coords", "x", "tint", "r");
+    }
+
+    [Then("the color's measurement holds its picture, dark on the left and bright on the right")]
+    public void ThenPicture()
+    {
+        var frame = editor.Measured(context.Node("tint").Id, 0).ShouldNotBeNull().Frame.ShouldNotBeNull();
+        var columns = new Flyback.Engine.Measure.MeasureOptions().Columns;
+
+        frame[0].ShouldBeLessThan(frame[(columns - 1) * 3]);
+    }
+
     [When("the patch is measured")]
     public void WhenMeasured() => editor.Measure();
 
