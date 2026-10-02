@@ -22,6 +22,12 @@ public sealed class CanvasEditingSteps(PatchContext context, EditorDriver editor
     [Given("the halving module is selected")]
     public void GivenTheHalverIsSelected() => editor.Select(context.Node("halve").Id);
 
+    [When("the halving module is picked up")]
+    public void WhenPickedUp() => editor.PickUp(context.Node("halve").Id);
+
+    [Then("a shadow falls under the halving module")]
+    public void ThenShadow() => editor.ShadowUnder(context.Node("halve").Id).ShouldBeTrue();
+
     [When("the selection is deleted")]
     public void WhenDeleted() => editor.Press(PhysicalKey.Delete);
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Editor
+
+- A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.
+
 ## 0.7.0 — 2026-10-02
 
 112 commits since 0.6.0.

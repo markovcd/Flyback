@@ -173,6 +173,54 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             open.MouseUp(end, MouseButton.Left, modifiers);
         });
 
+    /// <summary>How bright the canvas under the module was before it was picked up.</summary>
+    private int restingBrightness;
+
+    /// <summary>Presses a module by its title bar and holds the button down, as the first moment of carrying it.</summary>
+    public void PickUp(Guid node) =>
+        DoWindow((open, canvas) =>
+        {
+            var found = canvas.History.Patch.Find(node)!;
+
+            restingBrightness = BrightnessUnder(open, canvas, found);
+            open.MouseDown(OnWindow(open, canvas, new Point(found.X + NodeGeometry.Width / 2, found.Y + NodeGeometry.HeaderHeight / 2)), MouseButton.Left);
+        });
+
+    /// <summary>Whether the canvas under a module is darker than it was before the module was picked up.</summary>
+    public bool ShadowUnder(Guid node) =>
+        Run(() =>
+        {
+            Settle();
+
+            return BrightnessUnder(Window(), Canvas(), Canvas().History.Patch.Find(node)!) < restingBrightness;
+        });
+
+    /// <summary>The summed brightness of the strip of canvas just under a module, as the window drew it.</summary>
+    private static int BrightnessUnder(MainWindow open, NodeEditor canvas, NodeInstance module)
+    {
+        var bounds = canvas.Geometry.Bounds(module, NodeCatalog.BuiltIn.Require(module.TypeId));
+        var from = OnWindow(open, canvas, new Point(bounds.X + 10, bounds.Bottom + 3));
+        var to = OnWindow(open, canvas, new Point(bounds.X + 40, bounds.Bottom + 8));
+
+        using var frame = open.CaptureRenderedFrame() ?? throw new InvalidOperationException("the window rendered nothing");
+        using var locked = frame.Lock();
+
+        var bytes = new byte[locked.RowBytes * locked.Size.Height];
+        System.Runtime.InteropServices.Marshal.Copy(locked.Address, bytes, 0, bytes.Length);
+
+        var sum = 0;
+
+        for (var y = (int)from.Y; y < (int)to.Y; y++)
+        for (var x = (int)from.X; x < (int)to.X; x++)
+        {
+            var at = y * locked.RowBytes + x * 4;
+
+            sum += bytes[at] + bytes[at + 1] + bytes[at + 2];
+        }
+
+        return sum;
+    }
+
     /// <summary>Right-clicks a point of the patch, which over bare canvas or an open group opens the list of modules.</summary>
     public void RightClick(Point at) =>
         DoWindow((open, canvas) =>

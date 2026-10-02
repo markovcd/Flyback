@@ -35,7 +35,7 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         && (outline.Contains(graph) || handle.Contains(graph));
 
     /// <summary>The box this module is drawn behind, which the one being looked into is not.</summary>
-    private NodeGroup? ShutGroupOf(Guid nodeId) =>
+    public NodeGroup? ShutGroupOf(Guid nodeId) =>
         patch.CollapsedGroupOf(nodeId) is { } group && !ReferenceEquals(group, peek) ? group : null;
 
     /// <summary>

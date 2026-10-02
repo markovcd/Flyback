@@ -331,6 +331,149 @@ public class NodeEditorTests : EditorTest
         WireWidth(editor, window, OpenColumn).ShouldBeGreaterThan(resting);
     }
 
+    /// <summary>
+    /// A picked module casts a shadow on the canvas under it, read as the strip
+    /// below its bottom edge getting darker than it was at rest.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_picked_module_casts_a_shadow_under_it()
+    {
+        var patch = Crossing(out _, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        var under = Geometry.Bounds(obstacle, NodeCatalog.BuiltIn.Require(obstacle.TypeId));
+        var resting = BrightnessBelow(editor, window, under);
+
+        HoldDown(editor, window, obstacle);
+
+        BrightnessBelow(editor, window, under).ShouldBeLessThan(resting);
+    }
+
+    /// <summary>A shut box is held up the same way: shadow under it once picked.</summary>
+    [AvaloniaFact]
+    public void A_picked_box_casts_a_shadow_under_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var first = builder.Add("osc.sine", 100, 100);
+        var second = builder.Add("math.mul", 100, 300);
+
+        var group = builder.Patch.Group([first.Id, second.Id]).ShouldNotBeNull();
+        group.Collapsed = true;
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var box = editor.Selection.Scene.Boxes().Single().Bounds;
+        var resting = BrightnessBelow(editor, window, box);
+
+        var header = Screen(editor, window, box.TopLeft + new Vector(40, 8));
+        window.MouseDown(header, MouseButton.Left);
+        Settle(window);
+
+        BrightnessBelow(editor, window, box).ShouldBeLessThan(resting);
+    }
+
+    /// <summary>And rises a little: its top edge is drawn above where it sits.</summary>
+    [AvaloniaFact]
+    public void A_picked_module_is_drawn_a_little_above_where_it_sits()
+    {
+        var patch = Crossing(out _, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        var above = Screen(editor, window, new Point(obstacle.X + NodeGeometry.Width / 2, obstacle.Y - 1.5));
+        var resting = Frame(window)[(int)above.X, (int)above.Y];
+
+        HoldDown(editor, window, obstacle);
+
+        Near(Frame(window)[(int)above.X, (int)above.Y], resting, 2).ShouldBeFalse();
+    }
+
+    /// <summary>A module carried across a shut box is drawn over it, not under it.</summary>
+    [AvaloniaFact]
+    public void A_module_carried_over_a_shut_box_is_drawn_over_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var first = builder.Add("osc.sine", 100, 100);
+        var second = builder.Add("math.mul", 100, 300);
+        var carried = builder.Add("osc.saw", 500, 100);
+
+        var group = builder.Patch.Group([first.Id, second.Id]).ShouldNotBeNull();
+        group.Collapsed = true;
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var box = editor.Selection.Scene.Boxes().Single().Bounds;
+        var onto = new Vector(box.X - carried.X, box.Y + 4 - carried.Y);
+
+        // Right of the title and inside the box, where only a header band is drawn.
+        var spot = Screen(editor, window, new Point(box.X + NodeGeometry.Width - 25, box.Y + 13));
+        var under = Frame(window)[(int)spot.X, (int)spot.Y];
+
+        window.MouseDown(Screen(editor, window, Body(carried)), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, Body(carried) + onto));
+        Settle(window);
+
+        Near(Frame(window)[(int)spot.X, (int)spot.Y], under, 6).ShouldBeFalse();
+    }
+
+    /// <summary>A shut box carried across another is drawn over it, whichever of them is earlier in the patch.</summary>
+    [AvaloniaFact]
+    public void A_shut_box_carried_over_another_is_drawn_over_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var a1 = builder.Add("osc.sine", 100, 100);
+        var a2 = builder.Add("math.mul", 100, 300);
+        var b1 = builder.Add("osc.saw", 500, 100);
+        var b2 = builder.Add("math.add", 500, 300);
+
+        // Made first, so the ordinary order draws it under the other.
+        builder.Patch.Group([a1.Id, a2.Id]).ShouldNotBeNull().Collapsed = true;
+        builder.Patch.Group([b1.Id, b2.Id]).ShouldNotBeNull().Collapsed = true;
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var boxes = editor.Selection.Scene.Boxes().Select(box => box.Bounds).ToList();
+        var carried = boxes[0];
+        var other = boxes[1];
+        var onto = new Vector(other.X - carried.X, other.Y - 20 - carried.Y);
+
+        // Across the carried box's bottom edge, which lies inside the other box once it is there.
+        var edge = other.Y - 20 + carried.Height - 3;
+        var from = Screen(editor, window, new Point(other.X + 40, edge - 4));
+        var to = Screen(editor, window, new Point(other.X + 60, edge + 4));
+
+        var before = Frame(window);
+        var grabAt = carried.TopLeft + new Vector(40, 8);
+
+        window.MouseDown(Screen(editor, window, grabAt), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, grabAt + onto));
+        Settle(window);
+
+        var after = Frame(window);
+        var changed = 0;
+
+        for (var y = (int)from.Y; y < (int)to.Y; y++)
+        for (var x = (int)from.X; x < (int)to.X; x++)
+            if (!Near(after[x, y], before[x, y], 6)) changed++;
+
+        changed.ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>The summed brightness of a strip of canvas just under a module or box.</summary>
+    private static int BrightnessBelow(NodeEditor editor, Window window, Rect bounds)
+    {
+        var from = Screen(editor, window, new Point(bounds.X + 8, bounds.Bottom + 3));
+        var to = Screen(editor, window, new Point(bounds.Right - 8, bounds.Bottom + 8));
+
+        var pixels = Frame(window);
+        var sum = 0;
+
+        for (var y = (int)from.Y; y < (int)to.Y; y++)
+        for (var x = (int)from.X; x < (int)to.X; x++)
+            sum += pixels[x, y].R + pixels[x, y].G + pixels[x, y].B;
+
+        return sum;
+    }
+
     // --- reading the pixels -------------------------------------------------
 
     /// <summary>
