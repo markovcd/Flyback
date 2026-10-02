@@ -5,7 +5,7 @@ using Flyback.Ui.Controls;
 using Shouldly;
 using Flyback.Ui;
 
-namespace Flyback.Editor.Tests.Ui;
+namespace Flyback.Ui.Tests.Controls;
 
 /// <summary>Where knobs stand, wrapped to a width or held in a fixed grid.</summary>
 public class KnobArrangementTests

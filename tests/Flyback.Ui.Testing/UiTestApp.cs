@@ -7,6 +7,8 @@ namespace Flyback.Ui.Testing;
 /// <summary>Nothing but the dark Fluent theme, for a test of a control that needs no more.</summary>
 public sealed class UiTestApp : Application
 {
+    public static AppBuilder BuildAvaloniaApp() => HeadlessApp.Build<UiTestApp>();
+
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());

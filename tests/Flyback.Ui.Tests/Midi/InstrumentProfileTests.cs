@@ -4,7 +4,7 @@ using Flyback.Core.Graph.Extras;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Midi;
+namespace Flyback.Ui.Tests.Midi;
 
 /// <summary>
 /// What Flyback knows about an instrument by name, from a file: which port is it,

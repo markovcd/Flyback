@@ -3,7 +3,7 @@ using Flyback.Ui.Controls;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Ui;
+namespace Flyback.Ui.Tests.Controls;
 
 /// <summary>What the stats line says.</summary>
 public class StatsLineTests

@@ -51,6 +51,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
+    <InternalsVisibleTo Include="Flyback.Ui.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 

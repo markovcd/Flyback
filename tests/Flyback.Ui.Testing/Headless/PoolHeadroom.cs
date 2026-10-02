@@ -1,8 +1,3 @@
-using Flyback.Ui.Testing.Headless;
-using Xunit;
-
-[assembly: AssemblyFixture(typeof(PoolHeadroom))]
-
 namespace Flyback.Ui.Testing.Headless;
 
 /// <summary>
@@ -15,6 +10,7 @@ namespace Flyback.Ui.Testing.Headless;
 /// starvation injection, which stops while the machine's memory is nearly full;
 /// until it frees up, nothing needing a pool thread runs, whether it is the UI
 /// tests themselves, an assistant's continuation or ffmpeg's pipe readers.
+/// <para>An assembly that runs UI tests names it: <c>[assembly: AssemblyFixture(typeof(PoolHeadroom))]</c>.</para>
 /// </remarks>
 public sealed class PoolHeadroom
 {

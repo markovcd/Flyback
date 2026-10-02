@@ -2,7 +2,7 @@ using Flyback.Ui;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests;
+namespace Flyback.Ui.Tests;
 
 /// <summary>The status bar's clock reads minutes:seconds.hundredths.</summary>
 public class StatusClockTests

@@ -3,7 +3,7 @@ using Flyback.Ui.Audio;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Ui;
+namespace Flyback.Ui.Tests.Controls;
 
 /// <summary>
 /// Whether the Output's Volume knob says the speakers should be running — the

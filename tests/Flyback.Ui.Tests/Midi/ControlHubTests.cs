@@ -7,7 +7,7 @@ using Flyback.Ui.Midi;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Midi;
+namespace Flyback.Ui.Tests.Midi;
 
 /// <summary>
 /// The panel's knobs with a stand-in controller behind them: what a controller

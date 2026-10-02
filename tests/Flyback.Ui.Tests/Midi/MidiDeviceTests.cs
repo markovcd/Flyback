@@ -8,7 +8,7 @@ using Flyback.Ui.Midi;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Midi;
+namespace Flyback.Ui.Tests.Midi;
 
 /// <summary>
 /// The hub with hardware behind it: which devices are offered, which are actually

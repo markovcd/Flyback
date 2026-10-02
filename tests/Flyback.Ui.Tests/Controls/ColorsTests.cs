@@ -4,7 +4,7 @@ using Shouldly;
 using Xunit;
 using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.Editor.Tests.Ui;
+namespace Flyback.Ui.Tests.Controls;
 
 /// <summary>
 /// The palette. Mostly a list of values with nothing to test, except for the one

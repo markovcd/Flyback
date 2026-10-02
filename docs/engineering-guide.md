@@ -748,7 +748,8 @@ changed: saved patches name it.
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
 | `Flyback.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
-| `Flyback.Editor.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
+| `Flyback.Editor.Tests` | Editor, viewer, capture, updates | Headless Avalonia |
+| `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI | Headless Avalonia for the controls |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |

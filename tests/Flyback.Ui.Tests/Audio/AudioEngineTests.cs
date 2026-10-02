@@ -10,7 +10,7 @@ using Flyback.Plugins.Audio;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Audio;
+namespace Flyback.Ui.Tests.Audio;
 
 /// <summary>
 /// The seam between a compiled program and a sound device. What is worth pinning

@@ -28,6 +28,7 @@
          shared with the host's own assemblies and their tests, never with a plugin. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
+    <InternalsVisibleTo Include="Flyback.Ui.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Server.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />

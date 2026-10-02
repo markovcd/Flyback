@@ -5,7 +5,7 @@ using Shouldly;
 using Xunit;
 using Flyback.Ui;
 
-namespace Flyback.Editor.Tests;
+namespace Flyback.Ui.Tests;
 
 /// <summary>
 /// The file the settings window's Picture, Recording and Sound sections are kept in.

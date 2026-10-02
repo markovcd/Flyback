@@ -8,7 +8,7 @@ using Flyback.Ui.Midi;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Midi;
+namespace Flyback.Ui.Tests.Midi;
 
 /// <summary>
 /// The half of a MIDI In that lives in the shell: two rows of a typewriter read

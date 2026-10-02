@@ -11,6 +11,7 @@ using Flyback.Editor.Site;
 using Flyback.Editor.Tests.Ui;
 using Flyback.Editor.Windows;
 using Flyback.Ui.Testing;
+using Flyback.Ui.Testing.Headless;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
@@ -26,6 +27,9 @@ using Xunit.v3;
 // nothing and only puts more of them in the queue at once. This is what xunit 3
 // did, and what the timings here were measured against.
 [assembly: Parallelization(Mode = ParallelMode.Collections)]
+
+// Enough pool threads that the tests waiting on the UI thread cannot use them all up.
+[assembly: AssemblyFixture(typeof(PoolHeadroom))]
 
 namespace Flyback.Editor.Tests.Ui;
 
