@@ -3,11 +3,12 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using Flyback.Editor.Desktop.Updates;
+using Flyback.Editor.Tests.Updates;
 using Flyback.Editor.Updates;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Updates;
+namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
 /// Finding, checking and unpacking a release, against a GitHub that answers from
@@ -76,7 +77,7 @@ public sealed class UpdateDownloaderTests : IDisposable
 
         var github = new GitHub();
         github.Files[ReleaseFeed.Latest.AbsoluteUri] = Encoding.UTF8.GetBytes(
-            ReleaseFeedTests.ReleaseJson(assets: [name, "SHA256SUMS", "SHA256SUMS.sig"]));
+            ReleaseJson.Of(assets: [name, "SHA256SUMS", "SHA256SUMS.sig"]));
         github.Files[Download + name] = package;
         github.Files[Download + "SHA256SUMS"] = checksums;
         github.Files[Download + "SHA256SUMS.sig"] =

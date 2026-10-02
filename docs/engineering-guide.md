@@ -750,7 +750,7 @@ changed: saved patches name it.
 | `Flyback.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
 | `Flyback.Editor.Tests` | Editor, viewer, capture, updates | Headless Avalonia |
 | `Flyback.Viewer.Desktop.Tests` | The viewer's window and options | Headless Avalonia |
-| `Flyback.Editor.Desktop.Tests` | The desktop shell: installer, update folder, release notes | |
+| `Flyback.Editor.Desktop.Tests` | The desktop shell: installer, downloader, update folder, release notes, no static holding a thread-owned object | Headless Avalonia |
 | `Flyback.Ui.Tests` | The shared controls, the audio engine, MIDI | Headless Avalonia for the controls |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |

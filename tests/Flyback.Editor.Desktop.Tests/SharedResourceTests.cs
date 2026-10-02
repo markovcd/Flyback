@@ -1,13 +1,12 @@
 using System.Collections;
 using System.Reflection;
 using Avalonia;
-using Flyback.Editor.Desktop;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Canvas;
 using Flyback.Viewer.Desktop;
 using Shouldly;
 
-namespace Flyback.Editor.Tests.Ui;
+namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
 /// What the shell keeps in a static is shared by every window and every thread, so

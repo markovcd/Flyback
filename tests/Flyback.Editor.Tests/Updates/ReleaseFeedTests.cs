@@ -8,19 +8,6 @@ namespace Flyback.Editor.Tests.Updates;
 /// <summary>Reading GitHub's answer about the latest release, and this program's own version.</summary>
 public class ReleaseFeedTests
 {
-    internal static string ReleaseJson(string tag = "v0.4.0", bool prerelease = false, params string[] assets) =>
-        JsonSerializer.Serialize(new
-        {
-            tag_name = tag,
-            draft = false,
-            prerelease,
-            assets = assets.Select(name => new
-            {
-                name,
-                browser_download_url = $"https://github.com/markovcd/Flyback/releases/download/{tag}/{name}",
-            }),
-        });
-
     private static readonly string[] Complete =
         ["flyback-0.4.0-win-x64.zip", "flyback-0.4.0-linux-x64.zip", "SHA256SUMS", "SHA256SUMS.sig"];
 
@@ -33,7 +20,7 @@ public class ReleaseFeedTests
     [Fact]
     public void A_release_with_this_platforms_package_is_found()
     {
-        var release = Read(ReleaseJson(assets: Complete)).ShouldNotBeNull();
+        var release = Read(ReleaseJson.Of(assets: Complete)).ShouldNotBeNull();
 
         release.Version.ShouldBe(new Version(0, 4, 0));
         release.PackageName.ShouldBe("flyback-0.4.0-win-x64.zip");
@@ -44,20 +31,20 @@ public class ReleaseFeedTests
     [Fact]
     public void A_release_with_no_package_for_this_platform_is_none()
     {
-        Read(ReleaseJson(assets: Complete), rid: "osx-arm64").ShouldBeNull();
+        Read(ReleaseJson.Of(assets: Complete), rid: "osx-arm64").ShouldBeNull();
     }
 
     [Fact]
     public void A_release_with_no_signature_is_none()
     {
-        Read(ReleaseJson(assets: ["flyback-0.4.0-win-x64.zip", "SHA256SUMS"])).ShouldBeNull();
+        Read(ReleaseJson.Of(assets: ["flyback-0.4.0-win-x64.zip", "SHA256SUMS"])).ShouldBeNull();
     }
 
     [Fact]
     public void A_prerelease_or_an_odd_tag_is_none()
     {
-        Read(ReleaseJson(prerelease: true, assets: Complete)).ShouldBeNull();
-        Read(ReleaseJson(tag: "nightly", assets: Complete)).ShouldBeNull();
+        Read(ReleaseJson.Of(prerelease: true, assets: Complete)).ShouldBeNull();
+        Read(ReleaseJson.Of(tag: "nightly", assets: Complete)).ShouldBeNull();
     }
 
     [Theory]

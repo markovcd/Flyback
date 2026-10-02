@@ -8,7 +8,7 @@
 
   <!-- Drives real controls through Avalonia's headless platform: see Ui/EditorTest.cs for what a UI test costs. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Editor\Flyback.Editor.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
   </ItemGroup>

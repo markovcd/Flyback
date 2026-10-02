@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Viewer.Desktop\Flyback.Viewer.Desktop.csproj" />
+    <ProjectReference Include="..\Flyback.Ui.Testing\Flyback.Ui.Testing.csproj" />
+  </ItemGroup>
+
+  <!-- The release JSON Flyback.Editor.Tests reads releases from, and the downloader here is fed. -->
+  <ItemGroup>
+    <Compile Include="..\Flyback.Editor.Tests\Updates\ReleaseJson.cs" Link="ReleaseJson.cs" />
   </ItemGroup>
 
   <ItemGroup>
