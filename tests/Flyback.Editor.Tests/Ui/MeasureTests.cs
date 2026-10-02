@@ -260,6 +260,49 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void Holding_the_mouse_on_a_measured_picture_shows_its_end_and_letting_go_its_start()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var color = b.Add("color.hsv", 0, 0);
+        b.Add(NodeCatalog.OutputTypeId, 700, 0);
+
+        var window = NewMainWindow();
+        window.Show();
+        Settle(window);
+        Editor(window).History.Open(b.Patch);
+        Settle(window);
+
+        Click(Editor(window), window, color);
+        Measure(window);
+        Settle(window);
+
+        var labels = Service<MeasureLabels>(window);
+        var found = labels.Of(color.Id, 0)!;
+        var picture = All<Image>(window).Single(i => i.Name == "measuredPicture");
+        var inspector = Service<Flyback.Editor.Inspect.Inspector>(window);
+        var over = picture.TranslatePoint(new Point(5, 5), window)!.Value;
+
+        window.MouseMove(over);
+        picture.Source.ShouldBe(labels.Frame(found));
+
+        window.MouseDown(over, MouseButton.Left);
+        picture.Source.ShouldBe(labels.Frame(found, 1));
+
+        window.MouseUp(over, MouseButton.Left);
+        picture.Source.ShouldBe(labels.Frame(found));
+
+        // Over it, the turn waits; away from it, the turn carries on.
+        inspector.TurnPictures();
+        picture.Source.ShouldBe(labels.Frame(found));
+
+        window.MouseMove(new Point(window.Width - 2, window.Height - 2));
+        picture.Source.ShouldBe(labels.Frame(found, 1));
+
+        inspector.TurnPictures();
+        picture.Source.ShouldBe(labels.Frame(found));
+    }
+
+    [AvaloniaFact]
     public void The_button_shows_what_pressing_it_would_do()
     {
         var window = Opened(out var lfo, out _);

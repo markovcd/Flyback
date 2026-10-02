@@ -489,10 +489,16 @@ internal sealed class Inspector
         var picture = MeasureLabels.Picture(start, 160);
         var when = new TextBlock { FontSize = Text.Caption, Foreground = Text.Muted };
 
+        // While the pointer is over the picture it shows the end held down and the start otherwise;
+        // elsewhere it turns with the rest.
+        bool? held = null;
+
         void Show()
         {
-            picture.Source = showingEnd ? end : start;
-            when.Text = showingEnd
+            var atEnd = held ?? showingEnd;
+
+            picture.Source = atEnd ? end : start;
+            when.Text = atEnd
                 ? $"at the end, {MeasurementWords.Number(report.From + report.Seconds)} s"
                 : $"at the start, {MeasurementWords.Number(report.From)} s";
         }
@@ -502,6 +508,26 @@ internal sealed class Inspector
         picture.Name = "measuredPicture";
         picture.HorizontalAlignment = HorizontalAlignment.Left;
 
+        picture.PointerEntered += (_, _) => { held = false; Show(); };
+        picture.PointerExited += (_, e) => { if (e.Pointer.Captured != picture) { held = null; Show(); } };
+        picture.PointerPressed += (_, e) =>
+        {
+            e.Pointer.Capture(picture);
+            held = true;
+            Show();
+        };
+        picture.PointerReleased += (_, e) =>
+        {
+            e.Pointer.Capture(null);
+            held = picture.IsPointerOver ? false : null;
+            Show();
+        };
+        picture.PointerCaptureLost += (_, _) =>
+        {
+            held = picture.IsPointerOver ? false : null;
+            Show();
+        };
+
         var block = new StackPanel
         {
             Spacing = 2,
@@ -510,7 +536,7 @@ internal sealed class Inspector
             Children = { picture, when },
         };
 
-        ToolTip.SetTip(block, "The picture on the grid it was measured on, at the start of the window and at its end in turn.");
+        ToolTip.SetTip(block, "The picture on the grid it was measured on, at the start of the window and at its end in turn. Hold the mouse down on it to see the end.");
         measuredPictures.Add(block);
         turns += Show;
 
