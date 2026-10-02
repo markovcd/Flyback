@@ -185,7 +185,7 @@ public class MovieRendererTests
             };
 
             var written = MovieRenderer.Render(
-                path, video, audio, settings, cancellation: TestContext.Current.CancellationToken);
+                path, video, audio, settings, new SynthRenderer(), cancellation: TestContext.Current.CancellationToken);
 
             written.ShouldBe(settings.FrameCount);
 

@@ -133,7 +133,7 @@ public class IlProgramTests
         var program = Presets.FeedbackTunnel(NodeCatalog.Current).CompileForVideo().Program;
         var il = IlProgram.Compile(program, parts);
 
-        il.Parts.ShouldBe(parts);
+        il.Methods.Parts.ShouldBe(parts);
 
         var feedback = Stripes(16, 9);
         var expected = program.AllocateRegisters();

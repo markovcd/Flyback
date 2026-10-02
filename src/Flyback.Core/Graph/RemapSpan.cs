@@ -26,15 +26,4 @@ internal readonly record struct RemapSpan(float Min, float Max, float Knee = 0f,
 
     /// <summary>The value <paramref name="travel"/> of the way along, written the way the socket writes its own.</summary>
     public string Format(float travel) => new PortSpec("", Min: Min, Max: Max, Display: Display).Format(At(travel));
-
-    /// <summary>How far along <paramref name="value"/> sits, 0 to 1 inside the range, the inverse of <see cref="At"/>.</summary>
-    public float Travel(float value)
-    {
-        if (Knee <= 0f) return (value - Min) / (Max - Min);
-
-        var low = MathF.Min(Min, Max);
-        var up = MathF.Log(1f + (value - low) / Knee) / MathF.Log(1f + MathF.Abs(Max - Min) / Knee);
-
-        return Max < Min ? 1f - up : up;
-    }
 }

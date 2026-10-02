@@ -25,7 +25,7 @@ public class PreviewBackendTests : EditorTest
     private (CompiledPatch Plain, CompiledPatch Playing) Programs()
     {
         var path = Path.Combine(folder, "clip.wav");
-        WavWriter.Write(path, new float[1000], 1000, 1);
+        using (var file = File.Create(path)) WavWriter.Write(file, new float[1000], 1000, 1);
 
         var library = new SampleLibrary { Beside = folder };
 

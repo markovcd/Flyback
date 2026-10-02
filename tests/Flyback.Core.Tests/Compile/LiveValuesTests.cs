@@ -87,20 +87,6 @@ public class LiveValuesTests
         live.At(0).ShouldBe(0d);
     }
 
-    [Fact]
-    public void Clearing_it_puts_every_input_back_to_nothing()
-    {
-        var live = Keyboard();
-
-        live.Set("keyboard/gate", 1f);
-        live.Set("keyboard/pitch", -3f);
-
-        live.Clear();
-
-        live.At(0).ShouldBe(0d);
-        live.At(1).ShouldBe(0d);
-    }
-
     /// <summary>
     /// The shader is handed these as uniforms sized by the program it was built
     /// from, so a destination longer than the block has to be silent the rest of

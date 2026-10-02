@@ -86,9 +86,6 @@ internal sealed class LiveValues
                 values[i] = live;
     }
 
-    /// <summary>Nobody is playing: every input back to nothing.</summary>
-    public void Clear() => Array.Clear(values);
-
     /// <summary>
     /// Lays the block out for a backend that cannot reach in per op — the shader,
     /// which takes these as uniforms before the frame rather than reading them

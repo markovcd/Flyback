@@ -67,7 +67,7 @@ public sealed class IlCompiler : IDisposable
     /// <summary>
     /// Whether programs run as IL at all. Turning it off takes the IL back off the
     /// programs submitted last and builds nothing more; turning it on submits them
-    /// again.
+    /// again. The app fixes this at startup (<see cref="IIlCompilerSetup"/>) and never flips it; only tests do.
     /// </summary>
     public bool Enabled
     {

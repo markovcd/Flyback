@@ -14,7 +14,10 @@ public sealed class ExtraState(IReadOnlyList<ExtraField> fields, JsonNode? store
     public float Number(string key) =>
         Field(key) is ExtraField.Number field ? field.Value(stored?[key]) : 0f;
 
-    /// <summary>What a toggle field holds, or its default where nothing sensible does.</summary>
+    /// <summary>
+    /// What a toggle field holds, or its default where nothing sensible does.
+    /// Shipped plugin contract, the counterpart of <see cref="Number"/>; no built-in module declares a toggle, so only tests call it.
+    /// </summary>
     public bool Toggle(string key) =>
         Field(key) is ExtraField.Toggle field && field.Value(stored?[key]);
 

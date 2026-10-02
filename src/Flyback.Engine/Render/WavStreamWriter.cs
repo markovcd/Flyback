@@ -26,7 +26,6 @@ public sealed class WavStreamWriter : IDisposable
 
     private readonly Stream output;
     private readonly long start;
-    private readonly int channels;
 
     /// <summary>Reused across calls, since a take is thousands of these.</summary>
     private byte[] pcm = [];
@@ -44,7 +43,6 @@ public sealed class WavStreamWriter : IDisposable
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
 
         this.output = output;
-        this.channels = channels;
 
         // Measured from here rather than from zero, so this can be written into
         // a stream that already has something in it.
@@ -53,9 +51,6 @@ public sealed class WavStreamWriter : IDisposable
         WavWriter.WriteHeader(output, 0, sampleRate, channels);
     }
 
-    /// <summary>Sample frames written so far — a stereo pair counts as one.</summary>
-    public long SampleCount => dataBytes / sizeof(short) / channels;
-    
     /// <summary>Appends interleaved float samples as 16-bit PCM.</summary>
     public void WriteAudio(ReadOnlySpan<float> interleaved)
     {

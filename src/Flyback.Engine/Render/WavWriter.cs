@@ -13,12 +13,6 @@ public static class WavWriter
 {
     private const int BitsPerSample = 16;
 
-    public static void Write(string path, ReadOnlySpan<float> interleaved, int sampleRate, int channels)
-    {
-        using var file = File.Create(path);
-        Write(file, interleaved, sampleRate, channels);
-    }
-
     /// <summary>Where the RIFF size sits, for whoever has to go back and fill it in.</summary>
     internal const int RiffSizeOffset = 4;
 

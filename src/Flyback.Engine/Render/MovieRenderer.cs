@@ -32,17 +32,6 @@ public static class MovieRenderer
     /// </summary>
     /// <inheritdoc cref="Render(Stream, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, CancellationToken)"/>
     /// <param name="loudness">Fed every sample of the sound as it is written, or null to measure nothing.</param>
-    public static int Render(
-        string path,
-        CompiledPatch video,
-        CompiledPatch? audio,
-        MovieSettings settings,
-        IProgress<double>? progress = null,
-        LoudnessMeter? loudness = null,
-        CancellationToken cancellation = default) =>
-        Render(path, video, audio, settings, new SynthRenderer(), progress, loudness, cancellation);
-
-    /// <inheritdoc cref="Render(string, CompiledPatch, CompiledPatch, MovieSettings, IProgress{double}, LoudnessMeter, CancellationToken)"/>
     /// <param name="frames">What draws the picture, kept for the whole clip.</param>
     internal static int Render(
         string path,
@@ -70,6 +59,7 @@ public static class MovieRenderer
         return Render(clip, video, audio, settings, frames, progress, loudness, cancellation);
     }
 
+    /// <remarks>A stream rather than a path, which is how the tests read the AVI back without a file; the app writes through <see cref="ClipWriter.Open"/>.</remarks>
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
     /// <param name="audio">
     /// Null writes a video-only file, which is what a patch with nothing

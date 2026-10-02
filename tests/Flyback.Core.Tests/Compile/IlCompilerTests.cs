@@ -70,8 +70,8 @@ public class IlCompilerTests
         compiler.Submit(sound, IlLane.Sound);
         await compiler.Settled();
 
-        picture.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Staged);
-        sound.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Whole);
+        picture.Il.ShouldNotBeNull().Methods.Parts.ShouldBe(IlParts.Staged);
+        sound.Il.ShouldNotBeNull().Methods.Parts.ShouldBe(IlParts.Whole);
     }
 
     /// <summary>
@@ -94,8 +94,8 @@ public class IlCompilerTests
         compiler.Submit(seen, IlLane.Picture);
 
         await compiler.Settled();
-        heard.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Whole);
-        seen.Il.ShouldNotBeNull().Parts.ShouldBe(IlParts.Staged);
+        heard.Il.ShouldNotBeNull().Methods.Parts.ShouldBe(IlParts.Whole);
+        seen.Il.ShouldNotBeNull().Methods.Parts.ShouldBe(IlParts.Staged);
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public class IlCompilerTests
 
         var il = program.Il.ShouldNotBeNull();
         il.Source.ShouldBeSameAs(program);
-        il.Parts.ShouldBe(parts);
+        il.Methods.Parts.ShouldBe(parts);
     }
 
     /// <summary>A preset tried in the gallery does not take the patch's own lanes from it.</summary>

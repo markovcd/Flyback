@@ -44,9 +44,7 @@ public sealed class IlProgram
     /// <summary>The patch whose constants, clips and pictures this reads.</summary>
     public CompiledPatch Source { get; }
 
-    /// <summary>Which ways of running the program were built. The rest are handed to the interpreter.</summary>
-    public IlParts Parts => Methods.Parts;
-
+    /// <summary>The built methods, and with them which ways of running the program exist. The rest are handed to the interpreter.</summary>
     internal IlMethods Methods { get; }
 
     /// <summary>
@@ -54,7 +52,12 @@ public sealed class IlProgram
     /// returning, so the first real call — on a render or audio thread — finds
     /// machine code waiting rather than compiling it there.
     /// </summary>
-    /// <remarks>Milliseconds, not microseconds: this is the cost <see cref="IlCompiler"/> exists to keep off an edit.</remarks>
+    /// <remarks>
+    /// Milliseconds, not microseconds: this is the cost <see cref="IlCompiler"/> exists to keep off an edit.
+    /// The app lowers through <see cref="IlCompiler"/>, which builds once per shape and binds per patch;
+    /// this is the same lowering without its thread, cache or interpreter fallback, which is what the
+    /// lowering's own tests and the benchmarks need to see.
+    /// </remarks>
     /// <param name="patch">The program to lower.</param>
     /// <param name="parts">
     /// Which of <see cref="Evaluate"/> and <see cref="EvaluateStage"/> to build. A

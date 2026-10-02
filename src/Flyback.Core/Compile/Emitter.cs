@@ -118,6 +118,7 @@ public sealed class Emitter
         return PlaneSlotCount++;
     }
 
+    /// <summary>Every op as emitted, unpruned. Only tests call it, to run hand-built ops through the interpreter; compiling uses <see cref="ToProgram(Slot)"/>.</summary>
     internal Op[] ToProgram() => [.. ops];
 
     /// <summary>

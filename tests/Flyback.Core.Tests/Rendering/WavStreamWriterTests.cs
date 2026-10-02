@@ -84,17 +84,6 @@ public class WavStreamWriterTests
         memory.ToArray().ShouldBe(OneShot([]));
     }
 
-    [Fact]
-    public void Frames_are_counted_rather_than_samples()
-    {
-        using var memory = new MemoryStream();
-        using var writer = new WavStreamWriter(memory, SampleRate, Channels);
-
-        writer.WriteAudio(new float[200]);
-
-        writer.SampleCount.ShouldBe(100);
-    }
-
     /// <summary>
     /// Until it is disposed the header still claims nothing, which is the whole
     /// reason disposing matters.

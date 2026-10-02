@@ -295,6 +295,6 @@ public class PhaseAccumulatorInvariants
         state.Fits([], Rate, 2).ShouldBeTrue();
         state.Fits([], Rate, 1).ShouldBeFalse();
         state.Fits([], Rate, 3).ShouldBeFalse();
-        state.PhaseCount.ShouldBe(2);
+        state.Arrays.Phases.Length.ShouldBe(2);
     }
 }

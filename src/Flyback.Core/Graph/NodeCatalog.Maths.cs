@@ -165,7 +165,7 @@ public partial class NodeCatalog
         return [spans.Out is { } into ? At(em, along, into) : along];
     }
 
-    /// <summary><see cref="RemapSpan.Travel"/> as ops.</summary>
+    /// <summary>How far along <paramref name="span"/> <paramref name="value"/> sits, 0 to 1: the inverse of <see cref="RemapSpan.At"/>, as ops.</summary>
     private static Slot Travel(Emitter em, Slot value, RemapSpan span)
     {
         if (span.Knee <= 0f) return em.Mul(em.Add(value, -span.Min), 1f / (span.Max - span.Min));

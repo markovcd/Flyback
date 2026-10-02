@@ -255,10 +255,6 @@ public sealed class DelayState
     internal DelayArrays Arrays =>
         new(lines, positions, phases, previousInputs, running, units, planes, traces, traceHeads);
 
-    public int Count => lines.Length;
-
-    public int PhaseCount => phases.Length;
-
     public int UnitCount => units.Length;
 
     public int PlaneCount => planes.Length;

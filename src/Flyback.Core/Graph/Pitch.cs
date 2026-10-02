@@ -64,7 +64,10 @@ public static class Pitch
     /// </summary>
     public static float Nearest(float note) => MathF.Floor(note + 0.5f);
 
-    /// <summary>What a note number sounds like, in hertz.</summary>
+    /// <summary>
+    /// What a note number sounds like, in hertz. Shipped plugin contract; the Note module computes this
+    /// as ops, so the tests use it as the closed-form answer to compare them to.
+    /// </summary>
     public static float Frequency(float note) =>
         ConcertPitch * MathF.Pow(2f, (note - ConcertNote) / Semitones);
 

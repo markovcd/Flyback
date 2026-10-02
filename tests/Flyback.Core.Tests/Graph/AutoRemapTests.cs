@@ -269,13 +269,4 @@ public class AutoRemapTests
         b.Patch.CompileForVideo(Catalog).Issues.ShouldContain(i => i.NodeId == tint.Id
             && i.Message == "Sine's 'out' swings -1 to 1, past the 0 to 1 HSV's 'value' takes. An Auto remap in the wire fits it.");
     }
-
-    [Fact]
-    public void Travel_undoes_at_across_a_tapered_range()
-    {
-        var span = new RemapSpan(20f, 12_000f, 20f);
-
-        foreach (var travel in (float[])[0f, 0.2f, 0.5f, 0.9f, 1f])
-            span.Travel(span.At(travel)).ShouldBe(travel, 1e-4f);
-    }
 }

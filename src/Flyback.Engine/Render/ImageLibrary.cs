@@ -63,7 +63,7 @@ public sealed class ImageLibrary : IImageLibrary
         else known.Remove(path);
     }
 
-    /// <summary>How many files this is holding, which is what a test asks to see a cache work.</summary>
+    /// <summary>How many files this is holding, which only a test asks, to see a cache work.</summary>
     public int Count => known.Count(entry => entry.Value.Picture is not null);
 
     private (LoadedImage? Picture, PngFault Fault) Look(string path)

@@ -221,7 +221,7 @@ public class AudioRendererTests
         renderer.DelayMemoryFor(none).ShouldBeNull();
 
         var first = renderer.DelayMemoryFor(one).ShouldNotBeNull();
-        first.Count.ShouldBe(1);
+        first.Arrays.Lines.Length.ShouldBe(1);
 
         // The same shape keeps the same buffers, which is what lets a delay carry
         // on ringing while a knob is turned.
@@ -229,7 +229,7 @@ public class AudioRendererTests
 
         // A different shape must not be handed the old lines.
         renderer.DelayMemoryFor(two, first).ShouldNotBeSameAs(first);
-        renderer.DelayMemoryFor(two, first).ShouldNotBeNull().Count.ShouldBe(2);
+        renderer.DelayMemoryFor(two, first).ShouldNotBeNull().Arrays.Lines.Length.ShouldBe(2);
     }
 
     /// <summary>Memory brought by the caller is used, and produces what the renderer's own would.</summary>

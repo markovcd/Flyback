@@ -30,7 +30,7 @@ public sealed class SampleTests : IDisposable
         for (var i = 0; i < rate; i++) samples[i] = i / (float)rate;
 
         var path = Path.Combine(folder, name);
-        WavWriter.Write(path, samples, rate, 1);
+        using (var file = File.Create(path)) WavWriter.Write(file, samples, rate, 1);
 
         return path;
     }
@@ -205,7 +205,7 @@ public sealed class SampleTests : IDisposable
         for (var i = 0; i < pcm.Length; i++) pcm[i] = 1f - i / (float)pcm.Length;
 
         var path = Path.Combine(folder, name);
-        WavWriter.Write(path, pcm, rate, 1);
+        using (var file = File.Create(path)) WavWriter.Write(file, pcm, rate, 1);
 
         return path;
     }

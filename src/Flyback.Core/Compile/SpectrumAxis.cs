@@ -21,7 +21,10 @@ public static class SpectrumAxis
     public static double FrequencyAt(int point, int points) =>
         Lowest * Math.Pow(Highest / Lowest, point / (double)Math.Max(points - 1, 1));
 
-    /// <summary>Where along a buffer <paramref name="points"/> long a frequency falls, in points.</summary>
+    /// <summary>
+    /// Where along a buffer <paramref name="points"/> long a frequency falls, in points: the inverse of <see cref="FrequencyAt"/>.
+    /// Shipped plugin contract; only tests call it, to find where a tone lands in a chart.
+    /// </summary>
     public static double PointOf(double hertz, int points) =>
         Math.Log(hertz / Lowest) / Math.Log(Highest / Lowest) * (points - 1);
 }

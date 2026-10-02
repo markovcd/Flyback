@@ -82,7 +82,7 @@ public class GpuRenderTests
             for (var i = 0; i < samples.Length; i++) samples[i] = MathF.Sin(i * 0.013f);
 
             var path = Path.Combine(folder, "clip.wav");
-            WavWriter.Write(path, samples, 8000, 1);
+            using (var file = File.Create(path)) WavWriter.Write(file, samples, 8000, 1);
 
             var b = new PatchBuilder(NodeCatalog.BuiltIn);
             var player = b.Add(NodeCatalog.SampleTypeId, 0, 0);
