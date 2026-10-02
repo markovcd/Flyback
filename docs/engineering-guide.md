@@ -799,6 +799,10 @@ No `Should_`, no `Given_When_Then`, no `Test` suffix. Name the rule, not the bug
 `A_chunk_that_lies_about_its_length_costs_nothing` outlives the hunt that found
 it, and `Bug3` does not.
 
+### Nothing in `src/` exists only for tests
+
+A member that only tests call is a test of nothing real: either the app should use it or it should not be there. Where a test-only member has to stay (a shipped plugin contract, a seam that reads a result back), its doc comment says so and why. `dotnet run --project tools/TestOnlyMembers -- Flyback.slnx` lists the non-private members of `src/` that no `src/` code uses and tests do, one tab-separated row each; run it after a refactor and clear what it finds.
+
 ### An engine test
 
 Build a patch with `PatchBuilder`, compile it, evaluate it, assert on a register.
