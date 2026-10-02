@@ -26,7 +26,7 @@ public sealed class MeasureSteps(PatchContext context, EditorDriver editor)
     [Then("the color's measurement holds its picture, dark on the left and bright on the right")]
     public void ThenPicture()
     {
-        var frame = editor.Measured(context.Node("tint").Id, 0).ShouldNotBeNull().Frame.ShouldNotBeNull();
+        var frame = editor.Measured(context.Node("tint").Id, 0).ShouldNotBeNull().Frames.ShouldNotBeNull()[0];
         var columns = new Flyback.Engine.Measure.MeasureOptions().Columns;
 
         frame[0].ShouldBeLessThan(frame[(columns - 1) * 3]);

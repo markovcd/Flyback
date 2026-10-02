@@ -143,7 +143,7 @@ public class MeasurementsTests
     }
 
     [Fact]
-    public void A_color_keeps_its_picture_at_the_start_of_the_window_and_a_number_none()
+    public void A_color_keeps_its_picture_at_the_start_and_end_of_the_window_and_a_number_none()
     {
         var b = new PatchBuilder(Modules);
         b.Add(NodeCatalog.OutputTypeId);
@@ -152,13 +152,29 @@ public class MeasurementsTests
         b.Wire(coords, 0, color, 0);
 
         var report = Take(b);
-        var frame = Of(report, color).Frame.ShouldNotBeNull();
+        var frames = Of(report, color).Frames.ShouldNotBeNull();
+        frames.Count.ShouldBe(2);
 
+        var frame = frames[0];
         frame.Length.ShouldBe(report.Columns * report.Rows * 3);
 
         // Red follows x: dark on the left of the top row, full on its right.
         frame[0].ShouldBeLessThan(0f);
         frame[(report.Columns - 1) * 3].ShouldBeGreaterThan(1f);
-        Of(report, coords).Frame.ShouldBeNull();
+        Of(report, coords).Frames.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_moving_color_ends_the_window_on_another_picture()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var tone = b.Add("osc.sine", (1, 0.3f));
+        var color = b.Add("color.rgb");
+        b.Wire(tone, 0, color, 0);
+
+        var frames = Of(Take(b), color).Frames.ShouldNotBeNull();
+
+        frames[1][0].ShouldNotBe(frames[0][0]);
     }
 }

@@ -52,7 +52,7 @@ internal sealed class Inspector
 
     /// <summary>The measurement lines on the panel, dimmed in place by an edit rather than rebuilt under a hand on a knob.</summary>
     private readonly List<TextBlock> measurements = [];
-    private readonly List<Image> measuredPictures = [];
+    private readonly List<Control> measuredPictures = [];
     private readonly Document document;
     private readonly MidiHub midi;
     private readonly InstrumentLibrary instruments;
@@ -201,6 +201,10 @@ internal sealed class Inspector
         panel.Children.Clear();
         measurements.Clear();
         measuredPictures.Clear();
+        turning?.Stop();
+        turning = null;
+        turns = null;
+        showingEnd = false;
         plateHost.Content = null;
 
         // What an empty panel says depends on which canvas is under it. Naming
@@ -456,22 +460,79 @@ internal sealed class Inspector
 
             if (Measured(node, i) is { } line) panel.Children.Add(line);
 
-            if (measured.Of(node.Id, i) is { } found && measured.Frame(found) is { } frame)
-            {
-                var picture = MeasureLabels.Picture(frame, 160);
-
-                picture.Name = "measuredPicture";
-                picture.HorizontalAlignment = HorizontalAlignment.Left;
-                picture.Margin = new Thickness(8, 0, 0, 4);
-                picture.Opacity = measured.Stale ? StaleMeasurement : 1;
-                ToolTip.SetTip(picture, "The picture at the start of the window, on the grid it was measured on.");
-                measuredPictures.Add(picture);
-                panel.Children.Add(picture);
-            }
+            if (measured.Of(node.Id, i) is { } found && measured.Frame(found) is { } start)
+                panel.Children.Add(Pictured(start, measured.Frame(found, 1) ?? start));
         }
     }
 
     private const double StaleMeasurement = 0.45;
+
+    /// <summary>How long each of a color's two pictures shows before the other.</summary>
+    private static readonly TimeSpan PictureTurn = TimeSpan.FromSeconds(4);
+
+    /// <summary>Turns every measured picture on the panel between the window's start and its end.</summary>
+    private DispatcherTimer? turning;
+
+    private bool showingEnd;
+
+    /// <summary>A measured color's picture, turning between the start of the window and its end, with which it is under it.</summary>
+    private Control Pictured(Avalonia.Media.Imaging.Bitmap start, Avalonia.Media.Imaging.Bitmap end)
+    {
+        var report = measured.Report!;
+        var picture = MeasureLabels.Picture(start, 160);
+        var when = new TextBlock { FontSize = Text.Caption, Foreground = Text.Muted };
+
+        void Show()
+        {
+            picture.Source = showingEnd ? end : start;
+            when.Text = showingEnd
+                ? $"at the end, {MeasurementWords.Number(report.From + report.Seconds)} s"
+                : $"at the start, {MeasurementWords.Number(report.From)} s";
+        }
+
+        Show();
+
+        picture.Name = "measuredPicture";
+        picture.HorizontalAlignment = HorizontalAlignment.Left;
+
+        var block = new StackPanel
+        {
+            Spacing = 2,
+            Margin = new Thickness(8, 0, 0, 4),
+            Opacity = measured.Stale ? StaleMeasurement : 1,
+            Children = { picture, when },
+        };
+
+        ToolTip.SetTip(block, "The picture on the grid it was measured on, at the start of the window and at its end in turn.");
+        measuredPictures.Add(block);
+        turns += Show;
+
+        if (turning is null)
+        {
+            turning = new DispatcherTimer { Interval = PictureTurn };
+            turning.Tick += (_, _) => TurnPictures();
+            turning.Start();
+        }
+
+        return block;
+    }
+
+    /// <summary>What each picture on the panel does when <see cref="turning"/> ticks.</summary>
+    private Action? turns;
+
+    /// <summary>Shows the other of each measured color's two pictures; the timer's tick, and a test's.</summary>
+    internal void TurnPictures()
+    {
+        // A panel out of its window has nobody to turn them for.
+        if (TopLevel.GetTopLevel(panel) is null)
+        {
+            turning?.Stop();
+            return;
+        }
+
+        showingEnd = !showingEnd;
+        turns?.Invoke();
+    }
 
     /// <summary>What the last measurement found on one output, both halves, under its row.</summary>
     private TextBlock? Measured(NodeInstance node, int port)

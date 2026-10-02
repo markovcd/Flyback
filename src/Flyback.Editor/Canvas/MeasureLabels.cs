@@ -29,7 +29,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     private static readonly IPen Ring = new ImmutablePen(new ImmutableSolidColorBrush(Colors.Separator));
 
     /// <summary>Each color's picture, made the first time it is drawn.</summary>
-    private readonly Dictionary<Measurement, Bitmap> frames = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<(Measurement Measured, int At), Bitmap> frames = [];
 
     /// <summary>What was last measured, or null before anything was.</summary>
     public MeasureReport? Report { get; private set; }
@@ -102,13 +102,14 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         return null;
     }
 
-    /// <summary>A color's picture at the start of the window, or null for a number.</summary>
-    public Bitmap? Frame(Measurement measured)
+    /// <summary>A color's picture at the start of the window, or at its end with <paramref name="at"/> 1; null for a number.</summary>
+    public Bitmap? Frame(Measurement measured, int at = 0)
     {
-        if (measured.Frame is not { } rgb || Report is not { Columns: > 0, Rows: > 0 } report) return null;
+        if (measured.Frames is not { } kept || at < 0 || at >= kept.Count) return null;
+        if (Report is not { Columns: > 0, Rows: > 0 } report) return null;
 
-        if (!frames.TryGetValue(measured, out var bitmap))
-            frames[measured] = bitmap = MeasureFrames.Bitmap(rgb, report.Columns, report.Rows);
+        if (!frames.TryGetValue((measured, at), out var bitmap))
+            frames[(measured, at)] = bitmap = MeasureFrames.Bitmap(kept[at], report.Columns, report.Rows);
 
         return bitmap;
     }

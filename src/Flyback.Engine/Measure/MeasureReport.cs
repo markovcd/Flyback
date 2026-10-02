@@ -5,7 +5,7 @@ namespace Flyback.Engine.Measure;
 /// <param name="Seconds">How long it ran.</param>
 /// <param name="Measurements">One per output socket, in patch order.</param>
 /// <param name="Issues">What the compiler said about the patch while lowering it.</param>
-/// <param name="Columns">The measuring grid's width, which a <see cref="Measurement.Frame"/> is drawn at.</param>
+/// <param name="Columns">The measuring grid's width, which a <see cref="Measurement.Frames"/> is drawn at.</param>
 /// <param name="Rows">Its height.</param>
 public sealed record MeasureReport(
     double From,

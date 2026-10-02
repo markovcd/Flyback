@@ -177,7 +177,7 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
-    public void A_measured_color_shows_its_picture_under_its_row()
+    public void A_measured_color_turns_between_its_start_and_end_pictures_under_its_row()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);
         var color = b.Add("color.hsv", 0, 0);
@@ -193,7 +193,16 @@ public class MeasureTests : EditorTest
         Measure(window);
         Settle(window);
 
+        var labels = Service<MeasureLabels>(window);
+        var found = labels.Of(color.Id, 0)!;
         var picture = All<Image>(window).Single(i => i.Name == "measuredPicture");
-        picture.Source.ShouldBe(Service<MeasureLabels>(window).Frame(Service<MeasureLabels>(window).Of(color.Id, 0)!));
+
+        picture.Source.ShouldBe(labels.Frame(found));
+
+        Service<Flyback.Editor.Inspect.Inspector>(window).TurnPictures();
+        picture.Source.ShouldBe(labels.Frame(found, 1));
+
+        Service<Flyback.Editor.Inspect.Inspector>(window).TurnPictures();
+        picture.Source.ShouldBe(labels.Frame(found));
     }
 }
