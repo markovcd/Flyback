@@ -31,7 +31,10 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    # The self-hosted runner for a release from main, as ci.yml builds main: the
+    # gate that passed there is the one that runs here. The key is the secret
+    # below, held in this step's environment only and never written to a file.
+    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","Windows","X64"]') || 'ubuntu-latest' }}
     # A run is about six minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
@@ -47,6 +50,7 @@ jobs:
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ inputs.version }}
+        shell: bash
         run: bash scripts/release.sh "$VERSION"
 
       - name: Create release
