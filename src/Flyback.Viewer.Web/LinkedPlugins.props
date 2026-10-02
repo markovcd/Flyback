@@ -6,17 +6,17 @@
     keychain or a model. A page cannot load plugins from a folder, so this is all it has.
   -->
   <ItemGroup>
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
   </ItemGroup>
 
   <!-- The preset site's plugins only in All plugins: every visit downloads what is linked in. -->
   <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <WebPlugin Include="$(MSBuildThisFileDirectory)..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <WebPlugin Include="$(MSBuildThisFileDirectory)..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
   </ItemGroup>
 
 </Project>

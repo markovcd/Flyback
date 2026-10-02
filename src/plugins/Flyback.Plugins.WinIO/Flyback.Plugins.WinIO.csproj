@@ -40,7 +40,7 @@
       in from flowing down here; without it the contract would be rebuilt into
       the plugin folder, which is exactly what must not happen.
     -->
-    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />
@@ -51,7 +51,7 @@
       too. Left out, Flyback.Core is shipped inside the plugin folder — harmless
       only because the loader refuses to load a host-owned assembly from there.
     -->
-    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />

@@ -47,21 +47,21 @@
     Flyback.Plugins.Tests does: a scenario that needs one skips where it cannot work.
   -->
   <ItemGroup>
-    <PluginProject Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
-    <PluginProject Include="..\..\src\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" />
+    <PluginProject Include="..\..\src\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" />
   </ItemGroup>
 
   <ItemGroup>

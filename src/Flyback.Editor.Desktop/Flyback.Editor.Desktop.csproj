@@ -84,18 +84,18 @@
     here already names.
   -->
   <ItemGroup>
-    <PluginProject Include="..\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" Platform="win" />
-    <PluginProject Include="..\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" Platform="osx" />
-    <PluginProject Include="..\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" Platform="linux" />
-    <PluginProject Include="..\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
-    <PluginProject Include="..\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
-    <PluginProject Include="..\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
-    <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
-    <PluginProject Include="..\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
-    <PluginProject Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
-    <PluginProject Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
-    <PluginProject Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
-    <PluginProject Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" Platform="win" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" Platform="osx" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" Platform="linux" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
   </ItemGroup>
 
   <!--
@@ -104,9 +104,9 @@
     them without a trip through pack-plugin and the site's install dialog.
   -->
   <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
-    <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
-    <PluginProject Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
-    <PluginProject Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
   </ItemGroup>
 
   <!-- The editor's own packages come with Flyback.Editor; this adds the desktop platform. -->

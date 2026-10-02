@@ -30,11 +30,11 @@
       the contract references it and a transitive reference is copied local
       unless it is suppressed here too.
     -->
-    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />
-    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />

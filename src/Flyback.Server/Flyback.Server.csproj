@@ -27,13 +27,13 @@
   <Import Project="..\Flyback.Viewer.Web\LinkedPlugins.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <ProjectReference Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <ProjectReference Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
   </ItemGroup>
 
   <Target Name="NameWebPlugins" BeforeTargets="GetAssemblyAttributes">
@@ -93,9 +93,9 @@
     Not published: the image and release.sh pack each into <FolderName>.fbkp.
   -->
   <ItemGroup>
-    <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" Publish="false" />
-    <PluginProject Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" Publish="false" />
-    <PluginProject Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" Publish="false" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" Publish="false" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" Publish="false" />
+    <PluginProject Include="..\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" Publish="false" />
   </ItemGroup>
 
   <!-- Writes each as "project|FolderName", a line apiece, for the builds that pack them. -->

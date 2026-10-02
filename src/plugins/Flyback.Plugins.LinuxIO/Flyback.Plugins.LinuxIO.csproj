@@ -1,31 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <RootNamespace>Flyback.Plugins.MacIO</RootNamespace>
+    <RootNamespace>Flyback.Plugins.LinuxIO</RootNamespace>
     <!--
       Emits the .deps.json the host's AssemblyDependencyResolver reads, which is
       also what marks the entry assembly among the files in the plugin folder.
-      There are no package dependencies to resolve — the frameworks this calls
-      are part of macOS — but the dependency file is still what makes the folder
-      identifiable as a plugin.
+      There are no package dependencies to resolve — the library this calls is
+      part of the machine — but the dependency file is still what makes the
+      folder identifiable as a plugin.
     -->
     <EnableDynamicLoading>true</EnableDynamicLoading>
 
     <!-- What the install dialog and the plugins window show. -->
-    <Product>macOS sound and MIDI</Product>
+    <Product>Linux sound and MIDI</Product>
     <Authors>Flyback</Authors>
-    <Description>Sound out through the default output audio unit, and a patch played from a MIDI keyboard through the framework every Mac routes MIDI over.</Description>
+    <Description>Sound and MIDI through libasound, which is what PipeWire and PulseAudio answer to as well.</Description>
 
     <!--
-      Both halves need it: the render callback is a function pointer and the
-      buffer is a raw one, and the MIDI read callback is a function pointer with
-      a bare packet list behind it.
+      Both halves need it: the block is written to the device from a pinned
+      pointer, and the sequencer's info blocks are stack buffers with an event
+      arriving as a bare one.
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <AssemblyMetadata Include="Tags" Value="sound; midi; macos" />
+    <AssemblyMetadata Include="Tags" Value="sound; midi; linux" />
     <!-- Retaken by PluginArtShotTests. -->
     <EmbeddedResource Include="preview.webp" LogicalName="preview.webp" />
   </ItemGroup>
@@ -41,12 +41,12 @@
       in from flowing down here; without it the contract would be rebuilt into
       the plugin folder, which is exactly what must not happen.
     -->
-    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj"
+    <ProjectReference Include="../../Flyback.Plugins/Flyback.Plugins.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />
 
-    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj"
+    <ProjectReference Include="../../Flyback.Core/Flyback.Core.csproj"
                       Private="false"
                       ExcludeAssets="runtime"
                       GlobalPropertiesToRemove="OutDir" />

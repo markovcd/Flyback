@@ -61,7 +61,7 @@
     wants a plugin present declares it:
 
       <ItemGroup>
-        <PluginProject Include="..\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj"
+        <PluginProject Include="../plugins/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj"
                        FolderName="WinIO"
                        Platform="win" />
       </ItemGroup>

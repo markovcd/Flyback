@@ -20,15 +20,15 @@
     Flyback.Editor.Desktop's, and Flyback.Plugins.Tests's).
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" />
 
     <!-- Not in the box: the preset site starts with these, and their previews are retaken here like the others'. -->
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" />
 
     <!-- The worked example, whose project sets everything a package can say about a plugin. -->
     <ProjectReference Include="..\Flyback.Plugins.Sample\Flyback.Plugins.Sample.csproj" />

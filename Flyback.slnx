@@ -39,21 +39,21 @@
     <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
   </Folder>
   <Folder Name="/src/plugins/">
-    <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
-    <Project Path="src/Flyback.Plugins.Easy/Flyback.Plugins.Easy.csproj" />
-    <Project Path="src/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
-    <Project Path="src/Flyback.Plugins.Figures/Flyback.Plugins.Figures.csproj" />
-    <Project Path="src/Flyback.Plugins.Fractals/Flyback.Plugins.Fractals.csproj" />
-    <Project Path="src/Flyback.Plugins.Gemini/Flyback.Plugins.Gemini.csproj" />
-    <Project Path="src/Flyback.Plugins.Keychain/Flyback.Plugins.Keychain.csproj" />
-    <Project Path="src/Flyback.Plugins.Keyring/Flyback.Plugins.Keyring.csproj" />
-    <Project Path="src/Flyback.Plugins.LinuxIO/Flyback.Plugins.LinuxIO.csproj" />
-    <Project Path="src/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
-    <Project Path="src/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
-    <Project Path="src/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
-    <Project Path="src/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
-    <Project Path="src/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
-    <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Easy/Flyback.Plugins.Easy.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Effects/Flyback.Plugins.Effects.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Figures/Flyback.Plugins.Figures.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Fractals/Flyback.Plugins.Fractals.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Gemini/Flyback.Plugins.Gemini.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Keychain/Flyback.Plugins.Keychain.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Keyring/Flyback.Plugins.Keyring.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.LinuxIO/Flyback.Plugins.LinuxIO.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.MacIO/Flyback.Plugins.MacIO.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Mastering/Flyback.Plugins.Mastering.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.OpenAi/Flyback.Plugins.OpenAi.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Picture/Flyback.Plugins.Picture.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.Voice/Flyback.Plugins.Voice.csproj" />
+    <Project Path="src/plugins/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flyback.Ui.Testing/Flyback.Ui.Testing.csproj" />

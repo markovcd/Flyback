@@ -12,7 +12,7 @@
     and has nothing to do with how the assembly was loaded.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" />
   </ItemGroup>
 
   <ItemGroup>

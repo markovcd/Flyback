@@ -12,7 +12,7 @@
     and has nothing to do with how the assembly was loaded.
   -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" />
+    <ProjectReference Include="..\..\src\plugins\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" />
   </ItemGroup>
 
   <ItemGroup>
