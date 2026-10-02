@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor;
+using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Bars;

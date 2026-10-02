@@ -3,7 +3,8 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Render;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Render;
 using Shouldly;
 using Xunit;
 using Flyback.Cli.Commands;
@@ -106,7 +107,7 @@ public sealed class RenderPresetsTests : IDisposable
     /// <summary>A saved patch naming a module nothing here provides.</summary>
     private FileInfo PatchShortOfAPlugin()
     {
-        var load = Core.Language.PatchLanguage.Build(Sound);
+        var load = Engine.Language.PatchLanguage.Build(Sound);
         var json = JsonNode.Parse(PatchIO.ToJson(load.Patch))!;
         json["Nodes"]!.AsArray().Add(new JsonObject { ["Id"] = Guid.NewGuid().ToString(), ["TypeId"] = "effects.acid" });
 

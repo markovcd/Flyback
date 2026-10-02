@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Render;
+﻿namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Every format a clip can be written as. Two of them are this program's own and

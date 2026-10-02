@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using Flyback.Editor.Gallery;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>The site's stills, at <c>stills/</c> beside the page's own folder (ADR-0163).</summary>
 internal sealed partial class PageStills : IStillShelf

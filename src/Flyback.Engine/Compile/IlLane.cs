@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Compile;
+﻿namespace Flyback.Engine.Compile;
 
 /// <summary>Which program playing somewhere a submission stands for.</summary>
 public enum IlLane

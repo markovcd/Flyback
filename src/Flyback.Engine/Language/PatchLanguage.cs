@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// The text language, which parses to a patch and to nothing else (ADR-0065).

@@ -1,8 +1,8 @@
 using Flyback.Core.Graph;
-using Flyback.Core.Language.Ast;
-using Flyback.Core.Language.Ast.Expressions;
+using Flyback.Engine.Language.Ast;
+using Flyback.Engine.Language.Ast.Expressions;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>Binds numeric expressions to folded values or Formula-backed Expression modules.</summary>
 internal sealed class ArithmeticBinder

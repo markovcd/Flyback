@@ -1,4 +1,5 @@
 using Flyback.Core.Compile;
+using Flyback.Engine.Compile;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Properties;

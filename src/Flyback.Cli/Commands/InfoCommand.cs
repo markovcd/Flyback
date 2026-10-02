@@ -4,6 +4,8 @@ using Flyback.Cli.Models;
 using Flyback.Cli.Common;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 
 namespace Flyback.Cli.Commands;
 

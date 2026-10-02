@@ -6,7 +6,8 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

@@ -45,7 +45,7 @@ container's `ITitle`, `IFocus` and `IClose`, which the page registers as its own
 
 **The preset site serves it at `/editor/`, beside the viewer at `/viewer/`**, whose
 `gl.js` the page imports and whose worker plays its sound. The site publishes
-it beside itself unless built with `-p:WebEditor=false`.
+it beside itself unless built with `-p:EditorWeb=false`.
 
 **The landing page shows it where it shows the editor's photograph.** The hero's
 screenshot of Flyback Theme carries a button that swaps it for the page in a frame,

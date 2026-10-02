@@ -8,8 +8,9 @@ using Flyback.Editor.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
-using Flyback.Core.Render;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
+using Flyback.Engine.Render;
 using Flyback.Assist;
 using Flyback.Plugins.Hosting;
 

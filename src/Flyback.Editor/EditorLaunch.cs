@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Editor.Updates;
+using Flyback.Engine.Compile;
 
 namespace Flyback.Editor;
 

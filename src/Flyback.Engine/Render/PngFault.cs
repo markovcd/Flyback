@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Render;
+﻿namespace Flyback.Engine.Render;
 
 /// <summary>Why a picture could not be read, for the complaint that says so.</summary>
 public enum PngFault

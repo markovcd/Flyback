@@ -1,8 +1,9 @@
 using System.Diagnostics;
 using System.Globalization;
 using Flyback.Core.Compile;
+using Flyback.Core;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// An MP3, decoded by ffmpeg into a temporary float WAV and read back by

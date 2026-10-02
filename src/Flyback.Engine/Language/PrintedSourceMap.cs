@@ -1,9 +1,9 @@
 using Flyback.Core.Graph;
-using Flyback.Core.Language.Ast;
-using Flyback.Core.Language.Ast.Expressions;
-using Flyback.Core.Language.Ast.Statements;
+using Flyback.Engine.Language.Ast;
+using Flyback.Engine.Language.Ast.Expressions;
+using Flyback.Engine.Language.Ast.Statements;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>Re-reads printed source to locate the modules and editable values in it.</summary>
 internal static class PrintedSourceMap

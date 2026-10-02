@@ -1,6 +1,7 @@
 ﻿using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>A patch and the files it names, wherever they were kept.</summary>
 public readonly record struct Opened(

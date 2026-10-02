@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Reflection.Emit;
+using Flyback.Core.Compile;
+using OpCode = Flyback.Core.Compile.OpCode;
 using ReflectionOpCodes = System.Reflection.Emit.OpCodes;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Writes one stretch of a program as the IL of one method. The only thing in the

@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Where a program's memory is, as the script <see cref="JsEmitter"/> writes reads it:

@@ -1,4 +1,6 @@
-namespace Flyback.Core.Graph;
+using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// The two edits that would otherwise pull a Send and its Receives apart: putting

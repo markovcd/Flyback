@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

@@ -2,7 +2,7 @@ using System.Globalization;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>Writes individual values and carried notes, scales and parts in language syntax.</summary>
 internal static class PatchValueWriter

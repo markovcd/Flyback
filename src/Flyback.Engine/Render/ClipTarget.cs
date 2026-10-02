@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Render;
+﻿namespace Flyback.Engine.Render;
 
 /// <summary>What a clip is, before it exists.</summary>
 /// <param name="Path">Where it goes, extension and all.</param>

@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph.Extras;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// Folds Maths modules and Expressions into Expressions: each chain whose modules

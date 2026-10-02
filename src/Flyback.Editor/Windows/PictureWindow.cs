@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 

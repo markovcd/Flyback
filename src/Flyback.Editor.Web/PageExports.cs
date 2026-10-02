@@ -2,13 +2,14 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
 using Flyback.Editor;
 using Flyback.Editor.Canvas;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Gallery;
 using Flyback.Editor.Notices;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>
 /// What a script driving the page can ask of the editor without looking at it:

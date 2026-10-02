@@ -1,4 +1,7 @@
-namespace Flyback.Core.Language;
+using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
+
+namespace Flyback.Engine.Language;
 
 internal sealed class SourceMapEdits
 {

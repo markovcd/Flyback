@@ -1,6 +1,6 @@
 using Flyback.Core.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// The sound files a patch names, read once and kept.

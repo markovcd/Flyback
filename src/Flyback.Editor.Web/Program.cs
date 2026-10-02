@@ -4,7 +4,7 @@ using Avalonia.Browser;
 
 [assembly: SupportedOSPlatform("browser")]
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 internal static class Program
 {

@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
 

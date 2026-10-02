@@ -1,6 +1,7 @@
 using Flyback.Core.Compile;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Draws a patch's frames in order, keeping the history a feedback loop reads

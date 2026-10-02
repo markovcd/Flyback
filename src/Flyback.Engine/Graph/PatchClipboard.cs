@@ -1,4 +1,6 @@
-namespace Flyback.Core.Graph;
+using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// Taking part of a patch out of it, and putting part of a patch into one.

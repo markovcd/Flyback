@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Flyback.Core.Render.ClipWriters;
+namespace Flyback.Engine.Render.ClipWriters;
 
 /// <summary>
 /// A clip encoded by ffmpeg: frames go down its standard input as raw pixels and

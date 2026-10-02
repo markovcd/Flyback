@@ -1,7 +1,8 @@
 using System.Globalization;
 using System.Text;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// Source text to tokens. Hand-written, because ADR-0019 leaves the engine no
@@ -409,13 +410,13 @@ public static class Lexer
     /// Deliberately narrow: a capital A to G, an optional sharp or flat, then an
     /// octave — the octave being the part no ordinary name has. Both spellings
     /// are read although only sharps are written back
-    /// (<see cref="Graph.Pitch.ClassName"/>), since refusing <c>Bb2</c> would be
+    /// (<see cref="Flyback.Core.Graph.Pitch.ClassName"/>), since refusing <c>Bb2</c> would be
     /// refusing a note over which of its two names it was given.
     /// </remarks>
     public static double? Note(string word)
     {
         // Pitch.Name names notes out to ±1000, which is octave -85 at the bottom.
-        const int MaxOctave = 1_000 / (int)Graph.Pitch.Semitones + 2;
+        const int MaxOctave = 1_000 / (int)Pitch.Semitones + 2;
 
         if (word.Length < 2) return null;
         if (word[0] is < 'A' or > 'G') return null;
@@ -452,7 +453,7 @@ public static class Lexer
 
         // Scientific octaves, where middle C is C4 and 60 — the same numbering
         // Pitch.Name writes back.
-        return (octave + 1) * (int)Graph.Pitch.Semitones + natural;
+        return (octave + 1) * (int)Pitch.Semitones + natural;
     }
 
     /// <summary>The token some punctuation makes, or null where it makes none.</summary>

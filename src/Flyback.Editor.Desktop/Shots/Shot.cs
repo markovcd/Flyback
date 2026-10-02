@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;

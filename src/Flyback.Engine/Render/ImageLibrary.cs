@@ -1,6 +1,6 @@
 using Flyback.Core.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// The pictures a patch names, read once and kept.

@@ -5,6 +5,7 @@ using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Files;
 using Flyback.Editor.Notices;
@@ -12,7 +13,7 @@ using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui;
 

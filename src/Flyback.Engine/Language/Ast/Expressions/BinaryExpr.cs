@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Engine.Language.Ast.Expressions;
 
 /// <summary>Infix arithmetic, which is the five binary maths modules by another spelling.</summary>
 public sealed record BinaryExpr(TokenKind Operator, Expr Left, Expr Right, int Line, int Column)

@@ -1,4 +1,6 @@
-namespace Flyback.Core.Compile;
+using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// What a picture carries from one frame to the next for each cycle in the

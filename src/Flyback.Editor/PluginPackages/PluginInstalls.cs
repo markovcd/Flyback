@@ -5,6 +5,7 @@ using Flyback.Editor.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Site;
 using Flyback.Editor.Statistics;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 

@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>What <see cref="OversampleStepDown"/> made of the buffers it looked at.</summary>
 /// <param name="Lower">The factor to play at from now on, or null to leave it where it is.</param>

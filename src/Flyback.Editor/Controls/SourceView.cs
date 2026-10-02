@@ -12,7 +12,7 @@ using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 using AvaloniaEdit.Rendering;
 using Flyback.Editor.Canvas;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
@@ -10,7 +12,7 @@ using Flyback.Ui;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
 

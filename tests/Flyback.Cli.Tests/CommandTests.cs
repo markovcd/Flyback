@@ -1,5 +1,6 @@
 using System.CommandLine;
-using Flyback.Core.Render;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Render;
 using System.Text.Json;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
@@ -701,7 +702,7 @@ public class CommandTests
 
     private static Opened Written(string source)
     {
-        var built = Core.Language.PatchLanguage.Build(source);
+        var built = Engine.Language.PatchLanguage.Build(source);
         built.Ok.ShouldBeTrue(built.Report);
 
         return new Opened(built.Patch, new SampleLibrary(), new ImageLibrary());
@@ -718,7 +719,7 @@ public class CommandTests
     public void A_patch_and_its_printing_are_the_same_instrument()
     {
         var patch = Preset("Whole band");
-        var printed = Core.Language.PatchLanguage.Build(Core.Language.PatchPrinter.Print(patch)).Patch;
+        var printed = Engine.Language.PatchLanguage.Build(Engine.Language.PatchPrinter.Print(patch)).Patch;
 
         var (code, output, _) = Compare(
             new Opened(patch, new SampleLibrary(), new ImageLibrary()),
@@ -943,7 +944,7 @@ public class CommandTests
             var marked = document.RootElement.GetProperty("piped").EnumerateArray().Select(p => p.GetString()).ToArray();
 
             // A position, so a module that takes one has something to take.
-            var load = Core.Language.PatchLanguage.Build(
+            var load = Engine.Language.PatchLanguage.Build(
                 $"let source = space.rotate()\nlet stage = source |> {def.TypeId}()",
                 NodeCatalog.BuiltIn);
 

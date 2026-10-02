@@ -1,5 +1,6 @@
 using System.Reflection;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
@@ -422,7 +423,7 @@ internal static class PluginHost
         public ModuleCatalog Modules { get; private set; } = NodeCatalog.BuiltIn;
 
         /// <summary>Starts as the engine's own presets; plugins append to it.</summary>
-        private readonly List<PatchPreset> presets = [.. Flyback.Core.Graph.Presets.All];
+        private readonly List<PatchPreset> presets = [.. Flyback.Engine.Graph.Presets.All];
 
         public IReadOnlyList<PatchPreset> Presets => presets;
 
@@ -440,7 +441,7 @@ internal static class PluginHost
 
                 // A plugin's preset arrives with its Maths chains folded into
                 // Expressions, the same as the engine's.
-                presets.Add(Flyback.Core.Graph.Presets.Fused(preset));
+                presets.Add(Flyback.Engine.Graph.Presets.Fused(preset));
             }
         }
 

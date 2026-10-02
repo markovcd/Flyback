@@ -45,31 +45,31 @@
   <!--
     The web editor (ADR-0162), published under editor\ beside the site and served at
     /editor/. It links Skia into the runtime, which needs the wasm-tools workload;
-    -p:WebEditor=false builds the site without it where that is missing.
+    -p:EditorWeb=false builds the site without it where that is missing.
   -->
   <PropertyGroup>
-    <WebEditor Condition="'$(WebEditor)' == ''">true</WebEditor>
+    <EditorWeb Condition="'$(EditorWeb)' == ''">true</EditorWeb>
   </PropertyGroup>
 
   <!-- A restore of its own: a publish evaluated before the restore wrote its assets fails on a clean checkout. -->
-  <Target Name="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
-    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+  <Target Name="RestoreEditorWeb" Condition="'$(EditorWeb)' == 'true'">
+    <MSBuild Projects="..\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
              Targets="Restore"
-             Properties="Configuration=$(Configuration);WebEditorRestore=true" />
+             Properties="Configuration=$(Configuration);EditorWebRestore=true" />
   </Target>
 
-  <Target Name="PublishWebEditor" AfterTargets="Build" DependsOnTargets="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
+  <Target Name="PublishEditorWeb" AfterTargets="Build" DependsOnTargets="RestoreEditorWeb" Condition="'$(EditorWeb)' == 'true'">
     <!-- The solution's own build of it, waited for rather than raced: two builds at once share its obj. -->
-    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+    <MSBuild Projects="..\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
              Targets="Build"
              Properties="Configuration=$(Configuration)" />
-    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+    <MSBuild Projects="..\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
              Targets="Publish"
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(OutDir)editor'))\" />
   </Target>
 
-  <Target Name="PublishWebEditorBeside" AfterTargets="Publish" DependsOnTargets="RestoreWebEditor" Condition="'$(WebEditor)' == 'true'">
-    <MSBuild Projects="..\Flyback.WebEditor\Flyback.WebEditor.csproj"
+  <Target Name="PublishEditorWebBeside" AfterTargets="Publish" DependsOnTargets="RestoreEditorWeb" Condition="'$(EditorWeb)' == 'true'">
+    <MSBuild Projects="..\Flyback.Editor.Web\Flyback.Editor.Web.csproj"
              Targets="Publish"
              Properties="Configuration=$(Configuration);PublishDir=$([System.IO.Path]::GetFullPath('$(PublishDir)editor'))\" />
   </Target>

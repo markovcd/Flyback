@@ -2,6 +2,8 @@ using System.CommandLine;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Cli.Common;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using PluginRegistry = Flyback.Cli.Plugins;
 using Shouldly;

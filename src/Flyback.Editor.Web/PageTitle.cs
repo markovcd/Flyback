@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using Flyback.Editor;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>The editor's title, on the page's tab.</summary>
 internal sealed class PageTitle : ITitle

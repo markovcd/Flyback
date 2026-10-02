@@ -1,4 +1,6 @@
-namespace Flyback.Core.Language;
+using Flyback.Engine.Graph;
+
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// Which module each piece of a source file is about, and where the file writes

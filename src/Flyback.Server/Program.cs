@@ -168,7 +168,7 @@ var types = new FileExtensionContentTypeProvider();
 types.Mappings[".pdb"] = "application/octet-stream";
 types.Mappings[".br"] = "application/octet-stream";
 
-// The web editor, which every build but -p:WebEditor=false publishes beside the site.
+// The web editor, which every build but -p:EditorWeb=false publishes beside the site.
 var editor = Setting("Site:Editor", Path.Combine(AppContext.BaseDirectory, "editor", "wwwroot"));
 var editorFiles = Directory.Exists(editor) ? new PhysicalFileProvider(editor) : null;
 

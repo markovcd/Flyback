@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Compile;
+﻿namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Which GLSL the context speaks. The two differ only in their opening lines, but

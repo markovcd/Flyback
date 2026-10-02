@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using Flyback.Core.Render.ClipWriters;
+using Flyback.Engine.Render.ClipWriters;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Finding ffmpeg, and saying what was found. Nothing here encodes anything —

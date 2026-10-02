@@ -1,6 +1,7 @@
 using Flyback.Core.Graph;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
+using Flyback.Engine.Graph;
 
 namespace Flyback.Editor.Canvas;
 

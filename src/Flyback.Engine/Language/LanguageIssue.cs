@@ -1,6 +1,6 @@
 ﻿using Flyback.Core.Compile;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// Something wrong with a source file, said where it is. A value rather than an

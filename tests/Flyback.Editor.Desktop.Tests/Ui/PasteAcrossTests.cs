@@ -8,7 +8,8 @@ using Avalonia.Interactivity;
 using AvaloniaEdit;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

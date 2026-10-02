@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
+using Flyback.Core;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Evaluates a compiled audio program one sample at a time and decimates from an

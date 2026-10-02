@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Language.Ast.Expressions;
+﻿namespace Flyback.Engine.Language.Ast.Expressions;
 
 /// <summary>
 /// A signal flowing into a module. The whole of the language's shape, and the

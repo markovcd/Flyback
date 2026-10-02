@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>The methods of one shape, compiled to machine code and ready to be bound.</summary>
 /// <remarks>Null wherever a part was not asked for, which the bound program hands to the interpreter.</remarks>

@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// A patch lowered to a straight-line program. Evaluating it for a pixel means
@@ -256,7 +258,7 @@ public sealed class CompiledPatch
     /// <summary>
     /// A program whose output is all zeroes — what the compiler falls back to for
     /// a graph with no Output, meaning one assembled by hand rather than through
-    /// <see cref="Graph.Patch.EnsureOutput"/>.
+    /// <see cref="Flyback.Core.Graph.Patch.EnsureOutput"/>.
     /// </summary>
     public static CompiledPatch Constant(int width) => new(
         [.. Enumerable.Range(0, width).Select(i => new Op(OpCode.Const, i))],

@@ -1,5 +1,6 @@
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Flyback.Editor;
 using Flyback.Specs.Support;
 using Microsoft.Extensions.DependencyInjection;
@@ -111,7 +112,7 @@ public sealed class PageSteps(EditorDriver editor, PatchContext context)
 
     [When("the page hands the editor the shared preset {string} as {string}")]
     public void WhenHandedShared(string name, string fileName) =>
-        editor.OpenShared(name, fileName, System.Text.Encoding.UTF8.GetBytes(Flyback.Core.Graph.PatchIO.ToJson(context.Patch)));
+        editor.OpenShared(name, fileName, System.Text.Encoding.UTF8.GetBytes(Flyback.Engine.Graph.PatchIO.ToJson(context.Patch)));
 
     [Then("the editor says it opened {string} from the preset site")]
     public void ThenOpenedShared(string name) => editor.Reported.ShouldContain($"Opened “{name}” from the preset site.");

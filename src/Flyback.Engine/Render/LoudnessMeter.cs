@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Measures a whole rendered sound the way ITU-R BS.1770-4 does: its integrated

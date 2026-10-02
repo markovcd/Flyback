@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.JavaScript;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>The preset site serving the page, which letters and shared presets go through; null where nothing serves one.</summary>
 internal static partial class PageSite

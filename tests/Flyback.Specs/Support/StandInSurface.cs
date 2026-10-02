@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Core.Compile;
 

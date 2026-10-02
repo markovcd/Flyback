@@ -2,7 +2,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// A <see cref="CompiledPatch"/> lowered to IL: one method per stretch of the

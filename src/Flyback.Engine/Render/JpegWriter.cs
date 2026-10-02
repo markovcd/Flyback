@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Baseline JPEG encoder for BGRA8888 frames: 4:2:0 chroma, the standard

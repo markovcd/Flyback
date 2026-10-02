@@ -1,6 +1,7 @@
+using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Walks back from a sink node and lowers everything it reaches into a flat op

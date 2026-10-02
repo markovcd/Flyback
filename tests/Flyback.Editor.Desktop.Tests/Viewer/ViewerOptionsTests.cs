@@ -1,6 +1,7 @@
 using System.CommandLine;
 using Avalonia;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Viewer;
 using Shouldly;

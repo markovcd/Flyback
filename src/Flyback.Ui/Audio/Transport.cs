@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 

@@ -1,3 +1,4 @@
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 using Flyback.Plugins.Settings;
@@ -13,7 +14,7 @@ namespace Flyback.Plugins.Tests;
 public class AssistantSelectionTests
 {
     private static PluginCatalog CatalogOf(params IPatchAssistant[] assistants) =>
-        new([], [], Core.Graph.NodeCatalog.BuiltIn, Core.Graph.Presets.All, [], assistants);
+        new([], [], Core.Graph.NodeCatalog.BuiltIn, Engine.Graph.Presets.All, [], assistants);
 
     [Fact]
     public void Nothing_installed_means_nothing_to_ask()

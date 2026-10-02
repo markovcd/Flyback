@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Capture;
 using Flyback.Gpu;
 using Flyback.Core.Compile;

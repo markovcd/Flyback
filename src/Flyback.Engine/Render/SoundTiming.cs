@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>Buffers of sound timed since the engine started, and how many of them fell behind.</summary>
 /// <param name="Timed">Buffers rendered by the compiled program and timed.</param>

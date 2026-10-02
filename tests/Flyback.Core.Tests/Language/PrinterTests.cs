@@ -1,7 +1,9 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Language;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Language;

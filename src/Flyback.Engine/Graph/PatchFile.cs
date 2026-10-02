@@ -1,7 +1,9 @@
-using Flyback.Core.Language;
-using Flyback.Core.Render;
+using Flyback.Core.Graph;
+using Flyback.Core;
+using Flyback.Engine.Language;
+using Flyback.Engine.Render;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// A patch off disk and the files it names, however they were named: a folder beside

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Flyback.Core.Compile;
+using Flyback.Engine.Compile;
 using static Flyback.Gpu.GlConstants;
 
 namespace Flyback.Gpu;

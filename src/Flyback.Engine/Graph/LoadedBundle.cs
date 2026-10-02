@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>A bundle read back: the patch, the files it names, and the conversation saved with it.</summary>
 /// <param name="Files">

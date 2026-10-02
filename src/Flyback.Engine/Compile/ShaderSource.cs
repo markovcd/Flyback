@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>The four shaders a frame needs, plus what the caller must upload to them.</summary>
 /// <param name="ConstantCount">

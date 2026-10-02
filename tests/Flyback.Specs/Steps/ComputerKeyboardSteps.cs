@@ -1,5 +1,6 @@
 using System.Globalization;
 using Avalonia.Input;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Reqnroll;

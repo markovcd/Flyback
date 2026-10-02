@@ -1,4 +1,5 @@
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
@@ -10,7 +11,7 @@ namespace Flyback.Plugins.Hosting;
 internal sealed class PluginCatalog
 {
     public static PluginCatalog Empty { get; } =
-        new([], [], NodeCatalog.BuiltIn, Flyback.Core.Graph.Presets.All, []);
+        new([], [], NodeCatalog.BuiltIn, Flyback.Engine.Graph.Presets.All, []);
 
     /// <param name="problems">What went wrong on the way, one entry per plugin that could not be loaded or was refused.</param>
     /// <param name="assistants">

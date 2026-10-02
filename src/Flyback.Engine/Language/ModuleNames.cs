@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>What the text may call a module: its type id, or the short name after the last dot where only one module has it.</summary>
 internal sealed class ModuleNames

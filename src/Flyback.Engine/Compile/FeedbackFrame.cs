@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Flyback.Core.Compile;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// The previous frame, exposed to <see cref="OpCode.SampleFeedback"/>. Stored

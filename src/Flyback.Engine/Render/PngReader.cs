@@ -2,8 +2,9 @@ using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Text;
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Minimal PNG decoder, and <see cref="PngWriter"/> read backwards.

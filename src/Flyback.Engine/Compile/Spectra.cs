@@ -1,7 +1,8 @@
 using System.Buffers;
 using System.Numerics;
+using Flyback.Core.Compile;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// What an Analyzer charts: the frequency content of a stretch of what the

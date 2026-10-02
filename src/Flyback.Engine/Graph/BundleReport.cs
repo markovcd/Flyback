@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Graph;
+﻿namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// What came of packing a patch: the bundle was written whatever happened, and

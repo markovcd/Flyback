@@ -1,6 +1,8 @@
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// One instrument's voices, and which of them a note goes to: the voice already

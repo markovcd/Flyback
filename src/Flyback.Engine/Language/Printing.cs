@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Language;
+﻿namespace Flyback.Engine.Language;
 
 /// <summary>A patch as text, and where in that text each of its modules stands.</summary>
 /// <remarks>

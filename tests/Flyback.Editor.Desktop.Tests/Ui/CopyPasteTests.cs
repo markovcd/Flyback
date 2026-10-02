@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Flyback.Core.Graph;
 using Flyback.Editor.Notices;
+using Flyback.Engine.Graph;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

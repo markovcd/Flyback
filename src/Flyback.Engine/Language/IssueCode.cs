@@ -1,4 +1,6 @@
-namespace Flyback.Core.Language;
+using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// What kind of mistake a <see cref="LanguageIssue"/> is, as a word a program

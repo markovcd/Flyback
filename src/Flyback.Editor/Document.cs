@@ -1,11 +1,12 @@
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Notices;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 
 namespace Flyback.Editor;
 
@@ -1032,7 +1033,7 @@ internal sealed class Document
     /// <summary>
     /// Lays out what is showing: the modules across the canvas, or the lines down
     /// the page. The same button and key for both, and the pass behind each is the
-    /// other's counterpart (<see cref="Core.Language.SourceLayout"/> and
+    /// other's counterpart (<see cref="Engine.Language.SourceLayout"/> and
     /// <see cref="Core.Graph.PatchLayout"/>).
     /// </summary>
     /// <param name="onlySelected">

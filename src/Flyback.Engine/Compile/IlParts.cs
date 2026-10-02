@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Compile;
+﻿namespace Flyback.Engine.Compile;
 
 /// <summary>Which ways of running a program <see cref="IlProgram"/> builds as machine code.</summary>
 [Flags]

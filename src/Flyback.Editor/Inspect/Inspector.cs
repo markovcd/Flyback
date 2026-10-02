@@ -11,13 +11,14 @@ using Flyback.Editor.Assist;
 using Flyback.Editor.Bars;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;

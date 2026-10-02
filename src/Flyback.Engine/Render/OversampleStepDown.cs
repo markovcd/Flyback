@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Whether the live sound should be worked out at a lower oversampling because it keeps

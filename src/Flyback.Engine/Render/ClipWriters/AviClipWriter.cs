@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render.ClipWriters;
+namespace Flyback.Engine.Render.ClipWriters;
 
 /// <summary>
 /// The clip this program writes by itself: Motion JPEG in an AVI, as ADR-0036

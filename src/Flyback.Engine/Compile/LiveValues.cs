@@ -1,4 +1,6 @@
-namespace Flyback.Core.Compile;
+using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// What a program is being played with: one number per live input it names, read

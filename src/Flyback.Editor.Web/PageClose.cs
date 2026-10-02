@@ -1,6 +1,6 @@
 using Flyback.Editor;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>A page is closed by its tab, never by the editor, so asking does nothing.</summary>
 internal sealed class PageClose : IClose

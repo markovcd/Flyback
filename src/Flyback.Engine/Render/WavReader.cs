@@ -1,8 +1,9 @@
 using System.Buffers.Binary;
 using System.Text;
 using Flyback.Core.Compile;
+using Flyback.Core;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Minimal RIFF/WAVE decoder, the counterpart to <see cref="WavWriter"/> and

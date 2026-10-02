@@ -1,4 +1,6 @@
 using Flyback.Editor.Canvas;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;

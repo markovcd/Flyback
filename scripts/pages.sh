@@ -31,7 +31,7 @@ touch "$out/.pages"
 
 # Only the plugins the desktop ships, as Release links; the preset site's stay on the preset site.
 dotnet publish src/Flyback.Web -c Release -p:RunAOTCompilation="$aot" -p:CompressionEnabled=false -o "$build/web" -nologo -v:q
-dotnet publish src/Flyback.WebEditor -c Release -p:RunAOTCompilation="$aot" -p:CompressionEnabled=false -o "$build/editor" -nologo -v:q
+dotnet publish src/Flyback.Editor.Web -c Release -p:RunAOTCompilation="$aot" -p:CompressionEnabled=false -o "$build/editor" -nologo -v:q
 cp -r "$build/web/wwwroot/viewer" "$out/viewer"
 cp -r "$build/editor/wwwroot" "$out/editor"
 ./scripts/stills.sh "$out/stills"

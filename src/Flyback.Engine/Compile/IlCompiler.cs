@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Puts IL under programs that are already playing: a program is interpreted the

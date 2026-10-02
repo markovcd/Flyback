@@ -2,7 +2,7 @@ using System.Globalization;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// An Arrangement's block: a row of levels for each part, the parts separated by

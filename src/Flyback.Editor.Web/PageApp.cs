@@ -11,7 +11,7 @@ using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>
 /// The editor in a page (ADR-0162): the shipped plugins that make modules, nothing kept

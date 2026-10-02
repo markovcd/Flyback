@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// A program with its constants left out: two patches of one shape run the same

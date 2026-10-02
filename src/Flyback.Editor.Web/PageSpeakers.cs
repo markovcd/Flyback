@@ -1,7 +1,7 @@
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>
 /// The page's speakers as the editor's sound backend, so Volume turns the sound on;

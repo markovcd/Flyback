@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Flyback.Engine.Compile;
 
 namespace Flyback.Core.Tests.Compile;
 

@@ -1,6 +1,7 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Editor.Canvas;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 using Flyback.Ui.Controls;
 using Flyback.Ui;

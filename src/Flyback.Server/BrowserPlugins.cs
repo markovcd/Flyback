@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Server;

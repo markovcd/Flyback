@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Flyback.Engine.Compile;
 using Reqnroll;
 using Shouldly;
 using Flyback.Ui.Midi;

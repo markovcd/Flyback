@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Language;
+﻿using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Language;
 
 /// <summary>One stretch of a source file, and what should stand there instead.</summary>
 /// <remarks>

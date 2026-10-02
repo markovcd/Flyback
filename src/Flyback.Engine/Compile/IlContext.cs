@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>What an emitted method reads that is neither an argument nor a register: one patch's own values.</summary>
 internal sealed class IlContext

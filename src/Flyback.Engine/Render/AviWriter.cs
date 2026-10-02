@@ -1,7 +1,8 @@
 using System.Buffers.Binary;
 using System.Text;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Writes a RIFF AVI holding a Motion JPEG video stream and, optionally, a 16-bit

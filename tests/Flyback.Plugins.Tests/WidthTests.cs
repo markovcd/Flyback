@@ -1,5 +1,6 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 using Shouldly;
 using Xunit;
 using static Flyback.Plugins.Tests.MasteringBench;

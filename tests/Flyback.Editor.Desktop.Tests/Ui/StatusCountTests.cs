@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Audio;
 using Flyback.Editor.Bars;
 using Flyback.Core;

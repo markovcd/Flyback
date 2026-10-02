@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Shouldly;

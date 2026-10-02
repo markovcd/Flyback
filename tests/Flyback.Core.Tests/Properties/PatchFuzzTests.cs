@@ -1,9 +1,10 @@
 using System.Collections.Concurrent;
 using CsCheck;
+using Flyback.Engine.Compile;
 using Shouldly;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 
 namespace Flyback.Core.Tests.Properties;
 

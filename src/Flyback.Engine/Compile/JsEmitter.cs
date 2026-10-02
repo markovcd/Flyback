@@ -1,7 +1,9 @@
 using System.Globalization;
 using System.Text;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Turns a sound's program into JavaScript that renders it a buffer at a time, for a

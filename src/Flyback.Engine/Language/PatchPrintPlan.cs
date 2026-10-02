@@ -1,7 +1,7 @@
 using System.Globalization;
 using Flyback.Core.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>The bindings and names a writer needs before it emits patch text.</summary>
 internal sealed class PatchPrintPlan(

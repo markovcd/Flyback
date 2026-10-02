@@ -2,6 +2,8 @@ using System.Diagnostics.CodeAnalysis;
 using BenchmarkDotNet.Attributes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 
 namespace Flyback.Core.Benchmarks;
 

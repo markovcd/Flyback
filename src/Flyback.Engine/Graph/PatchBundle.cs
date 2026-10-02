@@ -1,6 +1,7 @@
 using System.IO.Compression;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// A patch and everything it names, in one file.

@@ -6,7 +6,7 @@ using Avalonia.Media;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Colors = Flyback.Ui.Controls.Colors;
 
 namespace Flyback.Editor.Inspect;

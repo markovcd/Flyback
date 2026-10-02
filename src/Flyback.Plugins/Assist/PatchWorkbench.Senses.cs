@@ -2,7 +2,8 @@ using System.Text;
 using System.Text.Json;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using static Flyback.Plugins.Assist.ToolArguments;
 
 namespace Flyback.Plugins.Assist;

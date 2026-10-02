@@ -1,8 +1,10 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Every preset a build offers and the still it drew of each, written by
@@ -32,7 +34,7 @@ public sealed record StillIndex(string Version, IReadOnlyList<StillEntry> Preset
     public bool Current => Version == ThisBuild;
 
     /// <summary>The entry for the preset called <paramref name="name"/> and offered as <paramref name="kind"/>, or null.</summary>
-    public StillEntry? Of(string name, Graph.PresetKind kind) =>
+    public StillEntry? Of(string name, PresetKind kind) =>
         Presets.FirstOrDefault(entry => entry.Name == name && entry.Kind == kind);
 
     public string Write() => JsonSerializer.Serialize(this, Options);

@@ -1,9 +1,10 @@
 using Avalonia.Headless.XUnit;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

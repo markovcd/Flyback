@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Graph;

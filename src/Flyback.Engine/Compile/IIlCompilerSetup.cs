@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Compile;
+﻿namespace Flyback.Engine.Compile;
 
 /// <summary>What a run asks of its <see cref="IlCompiler"/>.</summary>
 public interface IIlCompilerSetup

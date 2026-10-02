@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Hash-based value noise. Deterministic and stateless, so it costs nothing to

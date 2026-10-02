@@ -4,6 +4,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Engine.Graph;
 
 namespace Flyback.Ui.Controls;
 

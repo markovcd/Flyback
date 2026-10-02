@@ -1,4 +1,7 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// One Scope, as the two programs of a patch see it between them: the speakers'
@@ -21,6 +24,6 @@
 /// </param>
 /// <param name="Spectrum">
 /// Whether the buffer is filled with the window's frequency content rather than
-/// the window itself — see <see cref="Graph.NodeDef.ChartsSpectrum"/>.
+/// the window itself — see <see cref="Flyback.Core.Graph.NodeDef.ChartsSpectrum"/>.
 /// </param>
 public sealed record TapSpec(Guid Node, float Window, LoadedSample Trace, bool Spectrum = false);

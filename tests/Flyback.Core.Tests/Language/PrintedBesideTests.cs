@@ -1,5 +1,5 @@
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Language;

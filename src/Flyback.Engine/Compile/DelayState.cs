@@ -1,4 +1,8 @@
-namespace Flyback.Core.Compile;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Core;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Everything a program remembers between evaluations: the ring buffers behind
@@ -263,7 +267,7 @@ public sealed class DelayState
 
     /// <summary>
     /// The longest stretch of the past a chart may ask for, in seconds — the
-    /// window knob's own ceiling (<see cref="Graph.PortDisplay.Duration"/> tops
+    /// window knob's own ceiling (<see cref="Flyback.Core.Graph.PortDisplay.Duration"/> tops
     /// out at 10^1.5, about 31.62 s) rounded up.
     /// </summary>
     /// <remarks>

@@ -1,6 +1,8 @@
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// One instrument's worth of what a MIDI In reads: the note being held, whether

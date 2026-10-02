@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Flyback.Editor.Knobs;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Midi;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Statistics;

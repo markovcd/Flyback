@@ -1,13 +1,15 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 using Avalonia.Input;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Audio;
 using Flyback.Ui.Controls;
 using Flyback.Ui.Midi;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 
 namespace Flyback.Viewer;
 

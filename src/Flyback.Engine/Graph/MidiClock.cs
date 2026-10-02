@@ -1,6 +1,8 @@
 using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Graph;
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// One instrument's clock, followed: where its song is in beats, whether it is

@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 public sealed record CompileResult(CompiledPatch Program, IReadOnlyList<CompileIssue> Issues)
 {

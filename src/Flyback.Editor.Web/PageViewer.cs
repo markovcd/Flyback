@@ -1,7 +1,8 @@
 using System.Runtime.InteropServices.JavaScript;
 using Flyback.Editor;
+using Flyback.Engine.Graph;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>The web viewer, in a tab of its own beside the editor's, playing the patch from a blob the editor holds.</summary>
 internal sealed partial class PageViewer(ReportLine report) : IViewer

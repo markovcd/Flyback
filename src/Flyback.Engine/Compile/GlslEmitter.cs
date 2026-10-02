@@ -1,6 +1,8 @@
 using System.Text;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// Lowers a compiled patch to a fragment shader — the second backend ADR-0003

@@ -36,7 +36,7 @@
     <Project Path="src/Flyback.Viewer/Flyback.Viewer.csproj" />
     <Project Path="src/Flyback.Server/Flyback.Server.csproj" />
     <Project Path="src/Flyback.Web/Flyback.Web.csproj" />
-    <Project Path="src/Flyback.WebEditor/Flyback.WebEditor.csproj" />
+    <Project Path="src/Flyback.Editor.Web/Flyback.Editor.Web.csproj" />
   </Folder>
   <Folder Name="/src/plugins/">
     <Project Path="src/Flyback.Plugins.Dpapi/Flyback.Plugins.Dpapi.csproj" />

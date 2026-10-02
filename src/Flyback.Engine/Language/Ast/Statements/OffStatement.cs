@@ -1,6 +1,6 @@
-﻿using Flyback.Core.Language.Ast.Expressions;
+﻿using Flyback.Engine.Language.Ast.Expressions;
 
-namespace Flyback.Core.Language.Ast.Statements;
+namespace Flyback.Engine.Language.Ast.Statements;
 
 /// <summary>
 /// <c>off name</c>, which takes a module out of the signal path: what is

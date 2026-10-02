@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using Flyback.Core.Compile;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;

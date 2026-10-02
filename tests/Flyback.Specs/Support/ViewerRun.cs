@@ -2,6 +2,7 @@ using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Flyback.Engine.Graph;
 using Flyback.Ui;
 using Flyback.Ui.Controls;
 using Flyback.Core.Graph;

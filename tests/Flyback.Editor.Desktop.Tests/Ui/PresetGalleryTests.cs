@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Flyback.Editor.Gallery;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 

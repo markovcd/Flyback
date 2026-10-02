@@ -2,11 +2,12 @@ using System.Text.Json.Nodes;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Language.Ast;
-using Flyback.Core.Language.Ast.Expressions;
-using Flyback.Core.Language.Ast.Statements;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language.Ast;
+using Flyback.Engine.Language.Ast.Expressions;
+using Flyback.Engine.Language.Ast.Statements;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// A syntax tree to a <see cref="Patch"/>. Everything the language knows about

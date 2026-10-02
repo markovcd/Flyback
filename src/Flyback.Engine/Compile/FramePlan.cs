@@ -1,4 +1,6 @@
-namespace Flyback.Core.Compile;
+using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// One program's ops sorted into the three stages, so a renderer can run each

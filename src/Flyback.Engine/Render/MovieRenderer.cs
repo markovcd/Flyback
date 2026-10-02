@@ -1,8 +1,10 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render.ClipWriters;
+using Flyback.Core;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Render.ClipWriters;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Renders both sinks of a patch to one file: the video program frame by frame,
@@ -71,7 +73,7 @@ public static class MovieRenderer
     /// <param name="video">The picture's compiled program, rooted at the Output's color.</param>
     /// <param name="audio">
     /// Null writes a video-only file, which is what a patch with nothing
-    /// reaching the Output's 'left' has to say — see <see cref="Graph.Patch.Reaches"/>,
+    /// reaching the Output's 'left' has to say — see <see cref="Flyback.Core.Graph.Patch.Reaches"/>,
     /// which is how a caller decides.
     /// </param>
     /// <param name="progress">Told how far along this is, 0 to 1, once a frame. Null asks for nothing.</param>

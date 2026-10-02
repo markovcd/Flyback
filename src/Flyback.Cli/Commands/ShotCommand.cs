@@ -3,7 +3,7 @@ using System.CommandLine.Parsing;
 using System.Globalization;
 using Flyback.Cli.Common;
 using Flyback.Core;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using PluginRegistry = Flyback.Cli.Plugins;
 
 namespace Flyback.Cli.Commands;

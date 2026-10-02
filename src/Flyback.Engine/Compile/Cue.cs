@@ -1,4 +1,4 @@
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// When a patch just opened starts playing: its sound and its picture wait on one

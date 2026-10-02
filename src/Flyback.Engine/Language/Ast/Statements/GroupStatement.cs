@@ -1,4 +1,4 @@
-namespace Flyback.Core.Language.Ast.Statements;
+namespace Flyback.Engine.Language.Ast.Statements;
 
 // --- expressions ------------------------------------------------------------
 

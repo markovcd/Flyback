@@ -5,12 +5,12 @@
     the picture on a canvas of its own. Needs the wasm-tools workload, which links
     Skia and HarfBuzz into the runtime, as the whole solution does. The preset
     site publishes it beside itself and serves it at /editor/,
-    beside the web viewer whose GL calls it makes, unless built with -p:WebEditor=false.
+    beside the web viewer whose GL calls it makes, unless built with -p:EditorWeb=false.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Flyback.WebEditor</RootNamespace>
+    <RootNamespace>Flyback.Editor.Web</RootNamespace>
 
     <!-- As the web viewer: ahead-of-time compiled only when a publish asks. -->
     <RunAOTCompilation Condition="'$(RunAOTCompilation)' == ''">false</RunAOTCompilation>

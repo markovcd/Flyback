@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Render.ClipWriters;
+﻿namespace Flyback.Engine.Render.ClipWriters;
 
 /// <summary>
 /// The sound-only clip this program writes by itself: a WAV whose length is

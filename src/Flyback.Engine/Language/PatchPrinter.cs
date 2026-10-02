@@ -2,8 +2,9 @@ using System.Globalization;
 using System.Text;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
+using Flyback.Engine.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// A patch written back out as source. The lossy direction, deliberately.
@@ -329,7 +330,7 @@ public static class PatchPrinter
         /// and round for ever. Each is said once at the end instead, as the
         /// back-wire it is — see <see cref="Cycles"/>.
         /// </summary>
-        private readonly IReadOnlySet<Connection> backwards = Graph.Cycles.Backwards(patch);
+        private readonly IReadOnlySet<Connection> backwards = Flyback.Core.Graph.Cycles.Backwards(patch);
 
         /// <summary>
         /// What feeds a socket, unless what feeds it runs backwards — in which

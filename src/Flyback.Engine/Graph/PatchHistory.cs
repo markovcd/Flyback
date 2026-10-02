@@ -1,4 +1,6 @@
-namespace Flyback.Core.Graph;
+using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// What the patch looked like before each edit, so an edit can be taken back and

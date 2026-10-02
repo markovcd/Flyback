@@ -1,6 +1,7 @@
 using System.Text;
+using Flyback.Core.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// Breaks long statements across lines, so a patch written out as text reads as

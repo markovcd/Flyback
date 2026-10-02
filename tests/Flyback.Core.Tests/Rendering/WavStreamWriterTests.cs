@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 using System.IO.Pipes;
-using Flyback.Core.Render;
+using Flyback.Engine.Render;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Rendering;

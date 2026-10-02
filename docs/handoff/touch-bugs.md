@@ -19,7 +19,7 @@ item 8 wants the same.
 
 ### 4. Sound may never start on an iPhone (suspected, page only)
 
-`src/Flyback.WebEditor/wwwroot/speakers.js:57` resumes the AudioContext on
+`src/Flyback.Editor.Web/wwwroot/speakers.js:57` resumes the AudioContext on
 `pointerdown` and `keydown` only. A touch `pointerdown` is not a user activation;
 `pointerup`/`touchend`/`click` are. Chrome resumes from the second tap, WebKit
 never. The web viewer uses `click` (`src/Flyback.Web/wwwroot/main.js:655-656`).
@@ -56,7 +56,7 @@ Repro: tap `</>`.
 
 ### 9. The keyboard covers the field, and iOS sticks zoomed in (suspected, page only)
 
-`src/Flyback.WebEditor/wwwroot/index.html:5` is `width=device-width, initial-scale=1`.
+`src/Flyback.Editor.Web/wwwroot/index.html:5` is `width=device-width, initial-scale=1`.
 Chrome Android resizes only the visual viewport for the keyboard, and Avalonia sizes
 itself off `#out`, so a box in the lower half is typed into blind:
 `interactive-widget=resizes-content` fixes it. Avalonia's hidden

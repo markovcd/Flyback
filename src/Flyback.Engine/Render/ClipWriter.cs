@@ -1,6 +1,6 @@
-using Flyback.Core.Render.ClipWriters;
+using Flyback.Engine.Render.ClipWriters;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>Opens the writer a <see cref="ClipTarget"/> asks for.</summary>
 public static class ClipWriter

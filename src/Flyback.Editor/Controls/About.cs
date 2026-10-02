@@ -8,8 +8,9 @@ using Avalonia.Media;
 using Flyback.Editor.Gallery;
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
-using Flyback.Core.Render;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Language;
+using Flyback.Engine.Render;
 using Flyback.Ui.Controls;
 using Colors = Flyback.Ui.Controls.Colors;
 

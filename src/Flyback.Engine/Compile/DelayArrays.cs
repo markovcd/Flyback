@@ -1,4 +1,4 @@
-namespace Flyback.Core.Compile;
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// The arrays behind a <see cref="DelayState"/>, for a backend that runs the program

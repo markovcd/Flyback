@@ -1,4 +1,4 @@
-﻿namespace Flyback.Core.Language.Ast.Statements;
+﻿namespace Flyback.Engine.Language.Ast.Statements;
 
 /// <summary><c>let (a, b, c) = call</c>, which takes a def's several results apart.</summary>
 public sealed record LetTupleStatement(

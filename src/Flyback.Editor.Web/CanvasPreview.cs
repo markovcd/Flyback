@@ -6,11 +6,12 @@ using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Core.Compile;
 using Flyback.Gpu;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>
 /// The preview in a page: an HTML canvas placed where the preview is in the layout,

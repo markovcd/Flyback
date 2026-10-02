@@ -10,6 +10,8 @@ using Flyback.Editor.Canvas;
 using Flyback.Editor.Notices;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Graph;
 using Shouldly;
 using Colors = Flyback.Ui.Controls.Colors;
 

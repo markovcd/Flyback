@@ -4,6 +4,7 @@ using Flyback.Core;
 using Flyback.Editor.Capture;
 using Flyback.Editor.Files;
 using Flyback.Editor.Settings;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Midi;
 using Colors = Flyback.Ui.Controls.Colors;
 

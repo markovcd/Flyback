@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices.JavaScript;
 using Flyback.Editor;
 
-namespace Flyback.WebEditor;
+namespace Flyback.Editor.Web;
 
 /// <summary>Whether the page is the one being typed into.</summary>
 internal sealed partial class PageFocus : IFocus

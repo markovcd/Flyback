@@ -1,3 +1,4 @@
+using Flyback.Engine.Compile;
 using Reqnroll;
 using Shouldly;
 using Flyback.Core.Compile;

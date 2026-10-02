@@ -1,7 +1,8 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Flyback.Core.Compile;
-using Flyback.Core.Render;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 
 namespace Flyback.Gpu;
 

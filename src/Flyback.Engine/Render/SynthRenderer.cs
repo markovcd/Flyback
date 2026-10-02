@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
 using Flyback.Core.Compile;
+using Flyback.Engine.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// Evaluates a compiled patch over every pixel of a frame, in parallel across

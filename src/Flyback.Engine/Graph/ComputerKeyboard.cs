@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// The keys under your hands, read as two octaves of a piano or as three octaves

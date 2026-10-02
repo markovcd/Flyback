@@ -8,6 +8,7 @@ using Flyback.Editor.Knobs;
 using Flyback.Editor.Settings;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Shouldly;
 using Flyback.Ui;
 

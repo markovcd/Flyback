@@ -82,7 +82,7 @@ runtime.setModuleImports('page', {
 });
 
 const name = runtime.getConfig().mainAssemblyName;
-const exports = (await runtime.getAssemblyExports(name)).Flyback.WebEditor.PageExports;
+const exports = (await runtime.getAssemblyExports(name)).Flyback.Editor.Web.PageExports;
 
 /** Fetches a shared preset's file and opens it; null once open, or why it was not. */
 async function openUrl(url, fileName, title) {

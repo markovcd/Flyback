@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Flyback.Core;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Graph;
+using Flyback.Engine.Render;
 using Flyback.Plugins.Hosting;
 
 namespace Flyback.Cli.Common;

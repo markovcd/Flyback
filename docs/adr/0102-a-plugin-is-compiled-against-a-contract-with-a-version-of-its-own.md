@@ -71,10 +71,9 @@ a MIDI signal, a meter's level, a spectrum's axis) is public for a plugin's
 module too.
 
 **Core keeps its name and its namespaces.** A plugin built before the split names
-`Flyback.Core.Graph.NodeDef` in `Flyback.Core`, and that is still where it is. A
-namespace says what a type is about and an assembly says who may see it, so
-`Flyback.Core.Compile` now spans two: the emitter and the compiler are both about
-compiling, and only one is handed to a plugin.
+`Flyback.Core.Graph.NodeDef` in `Flyback.Core`, and that is still where it is. The
+engine's types took `Flyback.Engine.*` namespaces afterward, so each namespace belongs
+to one assembly.
 
 **`Flyback.Plugins` takes the engine as a private reference**, so it does not
 flow into the build of whatever references the contract. A plugin that reached

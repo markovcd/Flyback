@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>A frame's size as a person types it, bounded by what a frame may hold.</summary>
 public static class FrameSize

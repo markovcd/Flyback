@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using Flyback.Core.Compile;
 
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>
 /// A sound file, whichever kind it is: a WAV read here, or an MP3 decoded by ffmpeg.

@@ -10,6 +10,7 @@ using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using Flyback.Editor.Canvas;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Inspect;
 using Flyback.Editor.Notices;

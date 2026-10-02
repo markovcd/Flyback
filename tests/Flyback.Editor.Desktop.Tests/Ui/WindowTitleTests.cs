@@ -7,6 +7,7 @@ using Flyback.Editor.Files;
 using Flyback.Editor.Windows;
 using Flyback.Core;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Shouldly;
 using Flyback.Ui;
 

@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 using Shouldly;
 using Xunit;
 

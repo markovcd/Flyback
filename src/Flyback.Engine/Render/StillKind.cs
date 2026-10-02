@@ -1,4 +1,4 @@
-namespace Flyback.Core.Render;
+namespace Flyback.Engine.Render;
 
 /// <summary>What a preset's still is: a picture, or why there is none.</summary>
 public enum StillKind

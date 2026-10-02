@@ -7,7 +7,7 @@
       a module writes to are both about compiling; only one of them is something
       a plugin is handed.
     -->
-    <RootNamespace>Flyback.Core</RootNamespace>
+    <RootNamespace>Flyback.Engine</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -40,7 +40,7 @@
     <InternalsVisibleTo Include="flyback-viewer" />
     <InternalsVisibleTo Include="Flyback.Server" />
     <InternalsVisibleTo Include="Flyback.Web" />
-    <InternalsVisibleTo Include="Flyback.WebEditor" />
+    <InternalsVisibleTo Include="Flyback.Editor.Web" />
     <InternalsVisibleTo Include="Flyback.Core.Tests" />
     <InternalsVisibleTo Include="Flyback.Core.Benchmarks" />
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />

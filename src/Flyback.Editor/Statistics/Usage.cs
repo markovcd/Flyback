@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using Flyback.Editor.Updates;
 using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 
 namespace Flyback.Editor.Statistics;
 

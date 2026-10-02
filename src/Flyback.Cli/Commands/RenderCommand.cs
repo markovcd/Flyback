@@ -4,7 +4,8 @@ using Flyback.Cli.Common;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Render;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Gpu;
 
 namespace Flyback.Cli.Commands;

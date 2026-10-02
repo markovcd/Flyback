@@ -1,4 +1,5 @@
 using CsCheck;
+using Flyback.Engine.Compile;
 using Shouldly;
 using Flyback.Core.Compile;
 

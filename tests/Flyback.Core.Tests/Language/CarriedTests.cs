@@ -1,7 +1,7 @@
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Core.Tests.Language;

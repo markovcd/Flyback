@@ -1,4 +1,6 @@
-﻿namespace Flyback.Core.Compile;
+﻿using Flyback.Core.Compile;
+
+namespace Flyback.Engine.Compile;
 
 /// <summary>
 /// How often an op has to be run to draw a frame, which is decided by the

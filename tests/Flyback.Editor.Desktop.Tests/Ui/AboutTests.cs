@@ -6,11 +6,12 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Threading;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;

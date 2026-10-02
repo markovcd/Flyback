@@ -1,6 +1,7 @@
 ﻿using Flyback.Core.Graph;
+using Flyback.Engine.Graph;
 
-namespace Flyback.Core.Language;
+namespace Flyback.Engine.Language;
 
 /// <summary>
 /// A patch read from text, and everything wrong with the text it came from.

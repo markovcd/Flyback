@@ -1,6 +1,7 @@
 using Avalonia;
 using Flyback.Core.Compile;
-using Flyback.Core.Render;
+using Flyback.Engine.Compile;
+using Flyback.Engine.Render;
 using Flyback.Ui;
 
 namespace Flyback.Viewer;

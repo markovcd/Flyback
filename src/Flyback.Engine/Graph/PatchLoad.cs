@@ -1,4 +1,7 @@
-﻿namespace Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
+using Flyback.Core;
+
+namespace Flyback.Engine.Graph;
 
 /// <summary>
 /// A patch that was read, and whether the catalog can actually build it.

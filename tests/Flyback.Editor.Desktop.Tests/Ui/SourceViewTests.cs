@@ -8,11 +8,12 @@ using Avalonia.Threading;
 using AvaloniaEdit;
 using Flyback.Editor.Assist;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
 using Flyback.Editor.Knobs;
 using Flyback.Editor.Windows;
 using Flyback.Core.Graph;
-using Flyback.Core.Language;
+using Flyback.Engine.Language;
 using Shouldly;
 
 namespace Flyback.Editor.Desktop.Tests.Ui;
@@ -1451,7 +1452,7 @@ public class SourceViewTests : UiTest
     // --- and a knob turned in it reaches the text ---------------------------
 
     /// <summary>A patch whose first module has knobs to turn.</summary>
-    private static Patch Plasma() => Flyback.Core.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
+    private static Patch Plasma() => Flyback.Engine.Graph.Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
 
     /// <summary>Turns the first knob the panel is showing, and lets go of it.</summary>
     private static void Turn(MainWindow window, double to)

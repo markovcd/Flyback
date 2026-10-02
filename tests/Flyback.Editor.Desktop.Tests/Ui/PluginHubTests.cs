@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Flyback.Editor.Controls;
+using Flyback.Engine.Compile;
 using Flyback.Ui.Controls;
 using Flyback.Editor.PluginPackages;
 using Flyback.Editor.Desktop.Tests.PluginPackages;
