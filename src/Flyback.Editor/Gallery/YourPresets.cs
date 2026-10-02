@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// The presets somebody saved, and what the gallery may do about them: save the

@@ -1,4 +1,4 @@
-﻿namespace Flyback.App.Controls;
+﻿namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Keeps the mouse pointer where a drag began, so the drag reads motion rather than position

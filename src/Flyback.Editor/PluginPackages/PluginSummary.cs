@@ -1,8 +1,8 @@
-using Flyback.App.Audio;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Audio;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>The plugins this run loaded and failed to load, as the plugins window and a sound failure report them.</summary>
 internal static class PluginSummary

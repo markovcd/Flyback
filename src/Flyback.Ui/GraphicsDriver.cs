@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>What draws the window and the picture on Windows. Elsewhere there is only OpenGL.</summary>
 public enum GraphicsDriver

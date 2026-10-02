@@ -1,6 +1,6 @@
 ﻿using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// One kept group, as it was read back off the disk.

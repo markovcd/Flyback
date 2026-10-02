@@ -1,4 +1,4 @@
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>Where a randomized knob goes.</summary>
 internal static class KnobRoll

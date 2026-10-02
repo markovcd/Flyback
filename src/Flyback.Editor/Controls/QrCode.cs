@@ -2,8 +2,10 @@ using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// A QR code, encoded rather than kept as a picture, and drawn as squares.

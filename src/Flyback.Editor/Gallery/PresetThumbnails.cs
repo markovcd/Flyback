@@ -5,8 +5,9 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// The still each preset's tile is drawn with: the one this build's pipeline drew

@@ -1,9 +1,9 @@
-using Flyback.App.Assist;
-using Flyback.App.Canvas;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Canvas;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>Restores the document a crash left behind into this editor run.</summary>
 internal sealed class WorkRecovery(

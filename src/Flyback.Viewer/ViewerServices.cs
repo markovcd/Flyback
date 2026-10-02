@@ -1,6 +1,6 @@
-using Flyback.App.Audio;
-using Flyback.App.Controls;
-using Flyback.App.Midi;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
 using Flyback.Core.Compile;
 using Flyback.Plugins.Audio;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,6 +1,6 @@
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>Creates installers for the plugins folder and plugins loaded this run.</summary>
 internal sealed class PluginInstallerFactory(EditorFolders folders, PluginCatalog plugins)

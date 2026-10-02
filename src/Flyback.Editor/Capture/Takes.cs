@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Flyback.Core.Render;
 
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>What a take is called and which format it is written as.</summary>
 internal static class Takes

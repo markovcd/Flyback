@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Flyback.Core;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// Where one window keeps its <see cref="RecoveredWork"/>, and how a start finds

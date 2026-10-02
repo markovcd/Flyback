@@ -1,8 +1,8 @@
 using Avalonia;
-using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Editor.Statistics;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The commands that change the patch on the canvas: adding and removing modules,

@@ -96,7 +96,7 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   `Score(Instructions, levels)`, `YesNo(Instructions)`. Limits as laya-serve's: 64
   questions, 50k chars.
 - `Decision(string Model, IReadOnlyDictionary<string, Answer> Answers, DecisionUsage
-  Usage)` (not `Usage`: `Flyback.App.Statistics.Usage` exists); `Answer.Chosen(Option,
+  Usage)` (not `Usage`: `Flyback.Editor.Statistics.Usage` exists); `Answer.Chosen(Option,
   Probabilities, Confidence)`, `Answer.Scored(Score, Probabilities, Confidence)`,
   `Answer.YesNo(Probability)`.
 - `SystemOneWire`: hand-written System.Text.Json read and write of the protocol, as
@@ -109,7 +109,7 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   it through the existing `InternalsVisibleTo`): `FetchAsync(ModelFile, string folder,
   IProgress<Fetching>, ct)` into `<data folder>/models/<plugin id>/`, `.partial` then
   rename, hash through a `CryptoStream` as `UpdateDownloader.DownloadAsync` does
-  (`src/Flyback.App/Updates/UpdateDownloader.cs:128-153`), capped by `Size`, refused on
+  (`src/Flyback.Editor.Desktop/Updates/UpdateDownloader.cs:128-153`), capped by `Size`, refused on
   a hash mismatch. The SHA-256 is pinned in the plugin next to the Hugging Face
   revision, so a file changed upstream is refused rather than run. No release
   signature: the pinned hash is the signature.
@@ -124,9 +124,9 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   unshipped lines at that number and `/release` recomputes the version from the
   surface. The ADR says so in a line.
 
-### The host (Flyback.App; the CLI shares the internal pieces)
+### The host (Flyback.Editor.Desktop; the CLI shares the internal pieces)
 
-- `src/Flyback.App/Decide/`: `DecisionSettingRepository` and `ChosenDecisionModel`
+- `src/Flyback.Editor.Desktop/Decide/`: `DecisionSettingRepository` and `ChosenDecisionModel`
   (mirrors of `AssistantSettingRepository`, `ChosenAssistant`); `Decisions`, the one
   entry point a feature calls: the chosen model, its config (key through the existing
   `Credentials` with `model.Id` and the credential's variable, as
@@ -187,7 +187,7 @@ New namespace `Flyback.Plugins.Decide`, one type per file:
   401/422/429/529 as sentences. Priority below Laya, so Laya is the default when both
   are there. csproj copied from `Flyback.Plugins.OpenAi.csproj`, "No package" comment
   and all.
-- Both as `PluginProject` lines in `Flyback.App.csproj:74-87`, `Flyback.slnx:37-51`, and
+- Both as `PluginProject` lines in `Flyback.Editor.Desktop.csproj:74-87`, `Flyback.slnx:37-51`, and
   in `tests/Flyback.Plugins.Tests` and `tests/Flyback.Specs` csproj plugin lists.
 - `tests/Flyback.Plugins.FakeDecider`: `ScriptedDeciderPlugin`, `ScriptedDecider`
   (priority -100, answers from a script keyed by question id, records what it was
@@ -293,7 +293,7 @@ contract is worth more than any single use.
 A. Contract: `src/Flyback.Plugins/Decide/*` (the types above), `IPluginRegistry.cs`,
    `Hosting/PluginHost.cs`, `Hosting/PluginCatalog.cs`, `PublicAPI.Unshipped.txt`,
    `Flyback.Plugins.csproj` `InternalsVisibleTo` for the two new test projects.
-B. Host: `src/Flyback.App/Decide/*` (`ModelStore` lives in Plugins, the rest here),
+B. Host: `src/Flyback.Editor.Desktop/Decide/*` (`ModelStore` lives in Plugins, the rest here),
    `EditorFolders.cs`, `EditorServices.cs`, `Settings/SettingsSession.cs`.
 C. Uses: `Assist/AssistantPanel.cs` (+ one sentence in `Handbook.cs`),
    `Canvas/ModuleFinder.cs` + `ModulePalette.cs` + `Palette.cs` + `CatalogReference.cs`
@@ -301,7 +301,7 @@ C. Uses: `Assist/AssistantPanel.cs` (+ one sentence in `Handbook.cs`),
    `Playback.cs`.
 D. CLI: `Commands/DecideCommand.cs`, `Models/DecideOptions.cs`, `Program.cs`.
 E. Plugins: `src/Flyback.Plugins.SystemOne/*`, `src/Flyback.Plugins.Laya/*`,
-   `Flyback.App.csproj`, `Directory.Packages.props`, `Directory.Build.targets`
+   `Flyback.Editor.Desktop.csproj`, `Directory.Packages.props`, `Directory.Build.targets`
    (`Native` metadata), `Flyback.slnx`, lock files.
 F. Tests: `tests/Flyback.Plugins.FakeDecider/*`; `tests/Flyback.Plugins.Laya.Tests`
    (tokenizer, sequence, calibration against fixtures; model tests behind

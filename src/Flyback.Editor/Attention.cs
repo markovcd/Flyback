@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Marks the window as wanting a look, on whichever platform is asked.

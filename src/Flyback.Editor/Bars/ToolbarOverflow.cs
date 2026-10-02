@@ -5,9 +5,9 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.LogicalTree;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// Keeps the toolbar to one row: what does not fit folds into a menu at its end, the

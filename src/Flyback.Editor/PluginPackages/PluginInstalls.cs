@@ -1,13 +1,14 @@
 using Avalonia.Platform.Storage;
-using Flyback.App.Assist;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Site;
-using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Site;
+using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// Installing, updating and removing a plugin, from a <c>.fbkp</c> opened with

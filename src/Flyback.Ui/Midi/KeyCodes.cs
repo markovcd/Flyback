@@ -1,7 +1,7 @@
 using Avalonia.Input;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>
 /// Avalonia's keys by the names a browser gives the same physical keys, which is how

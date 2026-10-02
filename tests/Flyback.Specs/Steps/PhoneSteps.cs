@@ -1,5 +1,5 @@
 using Avalonia;
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -8,7 +8,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor on a phone's screen: what is in reach, and what a finger opens.</summary>
 [Binding]
-public sealed class PhoneSteps(PatchContext context, Editor editor)
+public sealed class PhoneSteps(PatchContext context, EditorDriver editor)
 {
     /// <summary>A common phone's screen, held upright, in the pixels a page is laid out in.</summary>
     private static readonly Size Phone = new(390, 844);

@@ -1,8 +1,9 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// The mark as a patch rather than a drawing: a beam sweeping the two ramps and

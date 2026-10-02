@@ -1,7 +1,7 @@
 using Avalonia.Media;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Every color the shell uses, in one place — the theme file.

@@ -3,7 +3,7 @@ using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>What the editor looks like, for every program that shows it and the tests that build one.</summary>
 internal static class EditorTheme

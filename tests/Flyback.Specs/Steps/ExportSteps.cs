@@ -2,7 +2,7 @@ using System.CommandLine;
 using Reqnroll;
 using Reqnroll.UnitTestProvider;
 using Shouldly;
-using Flyback.App.Audio;
+using Flyback.Ui.Audio;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;

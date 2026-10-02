@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
 using Avalonia;
-using Flyback.App;
-using Flyback.App.Audio;
+using Flyback.Ui;
+using Flyback.Ui.Audio;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;

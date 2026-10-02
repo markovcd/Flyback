@@ -7,19 +7,20 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Flyback.App.Assist;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Knobs;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Knobs;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Render;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// The panel on the right: the selected module's knobs, or the group's, or what

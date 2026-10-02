@@ -5,7 +5,7 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// The icons that are drawn rather than typed: the toolbar's, and the ones on the

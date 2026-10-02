@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.App.Controls;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>A shared preset's or plugin's stars, to read: they are given on the site, never here.</summary>
 internal static class RatingLine

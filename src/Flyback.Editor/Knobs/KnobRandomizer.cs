@@ -1,14 +1,15 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
-using Flyback.App.Canvas;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Ui;
 
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>
 /// Sends every panel knob that is not held somewhere new, gliding there, and back

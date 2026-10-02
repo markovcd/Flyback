@@ -3,9 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// A level, drawn as how full it is rather than as a thumb on a track. Avalonia

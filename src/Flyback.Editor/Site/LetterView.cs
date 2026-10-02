@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>Writing to Flyback's author, and sending it to the preset site.</summary>
 /// <remarks>

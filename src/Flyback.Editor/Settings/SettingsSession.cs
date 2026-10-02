@@ -3,12 +3,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>Shows the settings sections together and commits or restores their drafts.</summary>
 internal sealed class SettingsSession(

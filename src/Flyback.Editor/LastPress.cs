@@ -1,7 +1,7 @@
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Whether the last press in the editor was a finger, so what opens under one leaves its

@@ -1,7 +1,7 @@
-using Flyback.App.Notices;
 using Flyback.Core.Graph;
+using Flyback.Editor.Notices;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The patch the canvas shows and the steps behind it: which gestures earn a step,

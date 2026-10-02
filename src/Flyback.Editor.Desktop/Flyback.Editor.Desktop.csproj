@@ -1,0 +1,135 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      A console subsystem program, which on Windows is what makes running it
+      from a terminal behave the way running it from a shell does everywhere
+      else: the process inherits the console it was started from, the shell
+      waits for it, and anything written to stdout or stderr is read by the
+      person who typed the command. WinExe stamps the other subsystem, and
+      Windows then gives such a process no console at all — the prompt comes
+      back immediately and every diagnostic goes nowhere.
+
+      What it costs is a console of its own when the program is started from
+      Explorer, where there is none to inherit. Program.Main hands that one
+      straight back; see Terminal.
+    -->
+    <OutputType>Exe</OutputType>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Flyback</AssemblyName>
+    <RootNamespace>Flyback.Editor.Desktop</RootNamespace>
+    <ApplicationIcon>..\..\flyback.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!--
+    Publishing for a platform produces one executable that runs on a machine
+    with no .NET on it: the runtime is inside it, and so is everything the shell
+    is built from, so the machine it lands on needs no .NET installed.
+
+    A folder rather than one file, and the reason is the other programs. The
+    editor, the CLI and the viewer share an engine, a plugin host and a runtime;
+    published side by side as folders they hold one copy of all of it, and
+    published as single files they would hold three — three runtimes, in three
+    executables, because a bundle shares nothing with anything. It also puts the plugin boundary on disk for
+    free, where a plugin can be compiled against it.
+
+    Conditioned on there being a runtime identifier because carrying a runtime is
+    a thing done *for* a platform. `dotnet run` and a plain `dotnet build` have
+    no identifier and want none of it.
+  -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flyback.Core\Flyback.Core.csproj" />
+    <ProjectReference Include="..\Flyback.Engine\Flyback.Engine.csproj" />
+    <ProjectReference Include="..\Flyback.Plugins\Flyback.Plugins.csproj" />
+    <ProjectReference Include="..\Flyback.Ui\Flyback.Ui.csproj" />
+    <ProjectReference Include="..\Flyback.Editor\Flyback.Editor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The updater and the startup are internal, and the tests drive them. -->
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Specs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The changelog, so the window that opens after an update can say what the
+      release changed without asking the network. Startup reads it; ReleaseNotes
+      parses it.
+    -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="CHANGELOG.md" Link="CHANGELOG.md" />
+  </ItemGroup>
+
+  <!--
+    Not a reference: the shell must not know what a WASAPI is. This only says
+    that the plugin ships in the box, and Directory.Build.targets puts it under
+    plugins\WinIO\ in the output. Deleting one of these lines removes sound and
+    MIDI on that platform and nothing else.
+
+    Platform keeps each of these out of the other platforms' builds: they are the
+    only projects here that are for one system rather than all of them, and every
+    one of them would otherwise be shipped everywhere to answer "not supported"
+    twice over.
+
+    Sound and MIDI for a platform are one line because they are one plugin: both
+    backends inside it are supported on exactly the operating system the Platform
+    here already names.
+  -->
+  <ItemGroup>
+    <PluginProject Include="..\Flyback.Plugins.WinIO\Flyback.Plugins.WinIO.csproj" FolderName="WinIO" Platform="win" />
+    <PluginProject Include="..\Flyback.Plugins.MacIO\Flyback.Plugins.MacIO.csproj" FolderName="MacIO" Platform="osx" />
+    <PluginProject Include="..\Flyback.Plugins.LinuxIO\Flyback.Plugins.LinuxIO.csproj" FolderName="LinuxIO" Platform="linux" />
+    <PluginProject Include="..\Flyback.Plugins.Dpapi\Flyback.Plugins.Dpapi.csproj" FolderName="Dpapi" Platform="win" />
+    <PluginProject Include="..\Flyback.Plugins.Keychain\Flyback.Plugins.Keychain.csproj" FolderName="Keychain" Platform="osx" />
+    <PluginProject Include="..\Flyback.Plugins.Keyring\Flyback.Plugins.Keyring.csproj" FolderName="Keyring" Platform="linux" />
+    <PluginProject Include="..\Flyback.Plugins.OpenAi\Flyback.Plugins.OpenAi.csproj" FolderName="OpenAi" />
+    <PluginProject Include="..\Flyback.Plugins.Gemini\Flyback.Plugins.Gemini.csproj" FolderName="Gemini" />
+    <PluginProject Include="..\Flyback.Plugins.Picture\Flyback.Plugins.Picture.csproj" FolderName="Picture" />
+    <PluginProject Include="..\Flyback.Plugins.Voice\Flyback.Plugins.Voice.csproj" FolderName="Voice" />
+    <PluginProject Include="..\Flyback.Plugins.Effects\Flyback.Plugins.Effects.csproj" FolderName="Effects" />
+    <PluginProject Include="..\Flyback.Plugins.Mastering\Flyback.Plugins.Mastering.csproj" FolderName="Mastering" />
+  </ItemGroup>
+
+  <!--
+    The All plugins configuration: a developer's own machine, never Docker or a
+    release, asking for the site's plugins too (ADR-0141) so the editor loads
+    them without a trip through pack-plugin and the site's install dialog.
+  -->
+  <ItemGroup Condition="'$(Configuration)' == 'All plugins'">
+    <PluginProject Include="..\Flyback.Plugins.Figures\Flyback.Plugins.Figures.csproj" FolderName="Figures" />
+    <PluginProject Include="..\Flyback.Plugins.Fractals\Flyback.Plugins.Fractals.csproj" FolderName="Fractals" />
+    <PluginProject Include="..\Flyback.Plugins.Easy\Flyback.Plugins.Easy.csproj" FolderName="Easy" />
+  </ItemGroup>
+
+  <!-- The editor's own packages come with Flyback.Editor; this adds the desktop platform. -->
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <!-- What Shot draws the window on, with no screen. -->
+    <PackageReference Include="Avalonia.Headless" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\flyback.ico">
+      <Link>flyback.ico</Link>
+    </None>
+    <None Include="..\..\flyback.icns">
+      <Link>flyback.icns</Link>
+    </None>
+    <None Include="Info.plist" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Drawn by docs/icons/render.cs. The .icns go into a Mac bundle's Resources instead (MacBundle.targets). -->
+    <None Update="FileIcons\*.ico;FileIcons\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Turns the macOS publish output into something the Finder will launch. -->
+  <Import Project="MacBundle.targets" />
+
+</Project>

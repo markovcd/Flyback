@@ -1,7 +1,7 @@
 ﻿using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 internal sealed class ChosenAssistant
 {

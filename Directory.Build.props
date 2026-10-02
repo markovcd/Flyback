@@ -5,7 +5,7 @@
       The SDK's own default is "Debug;Release" the moment nothing says
       otherwise, and an IDE's configuration dropdown offers only what a
       project declares here. All plugins (Directory.Build.targets,
-      Flyback.App.csproj) needs the name listed to show up in one at all.
+      Flyback.Editor.Desktop.csproj) needs the name listed to show up in one at all.
     -->
     <Configurations>Debug;Release;All plugins</Configurations>
     <TargetFramework>net10.0</TargetFramework>

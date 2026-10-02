@@ -3,16 +3,16 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
-using Flyback.App.Audio;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Knobs;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
-using Flyback.App.Windows;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Windows;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// The preview taking the whole window, or a whole monitor of its own, and giving it back.

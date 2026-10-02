@@ -12,7 +12,7 @@ the rest a version
 ## Context
 
 [0024](0024-audio-device-in-the-shell.md) put the device behind `IAudioDevice`
-and implemented it once, with NAudio, inside `Flyback.App`. That was the right
+and implemented it once, with NAudio, inside `Flyback.Editor.Desktop`. That was the right
 seam and the wrong side of the boundary: the shell took a `PackageReference` on
 a Windows-only backend, so `NAudio.Wasapi.dll` shipped in the output of a program
 that [0015](0015-avalonia-for-the-ui-shell.md) chose Avalonia in order to run on
@@ -77,7 +77,7 @@ runs on one machine agree.
 
 ## Consequences
 
-`Flyback.App` no longer references any backend. Its build output contains
+`Flyback.Editor.Desktop` no longer references any backend. Its build output contains
 `Flyback.dll`, `Flyback.Core.dll`, `Flyback.Plugins.dll` and Avalonia — nothing
 platform-specific — which is what makes 0015's claim true again rather than
 aspirational. **This lifts the narrowing 0024 applied to it.** Sound on Linux is

@@ -1,7 +1,8 @@
+using Flyback.Ui;
 using System.Diagnostics;
 using System.Text;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// A desktop entry, a MIME package and an icon per kind in the user's own data

@@ -1,5 +1,5 @@
-﻿using Flyback.App.Midi;
-using Flyback.Core.Graph;
+﻿using Flyback.Core.Graph;
+using Flyback.Ui.Midi;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Midi;
 

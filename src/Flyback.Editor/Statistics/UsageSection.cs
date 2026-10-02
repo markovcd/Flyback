@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>The usage half of the settings window's Privacy section: whether Flyback counts how it is used (ADR-0094).</summary>
 /// <remarks>

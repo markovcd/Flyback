@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>Which monitor the full-screen picture goes to.</summary>
 public enum FullScreenOn

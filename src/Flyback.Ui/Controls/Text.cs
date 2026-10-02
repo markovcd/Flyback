@@ -2,7 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Every size the shell sets type at, and the one color quiet text is dimmed to —

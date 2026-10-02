@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
-using Flyback.App.Notices;
+using Flyback.Editor.Notices;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Fingers on the canvas, told to <see cref="CanvasGestures"/> as the mouse buttons it

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Avalonia.Threading;
 using Flyback.Core.Render;
 
-namespace Flyback.App.Audio;
+namespace Flyback.Ui.Audio;
 
 /// <summary>
 /// Keeps the live sound at an oversampling the machine can play: twice a second it asks

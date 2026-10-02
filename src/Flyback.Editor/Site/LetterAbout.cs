@@ -1,4 +1,4 @@
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>What goes with a letter besides what was typed, which the letter shows before it is sent.</summary>
 /// <param name="Version">This build, as the About window names it.</param>

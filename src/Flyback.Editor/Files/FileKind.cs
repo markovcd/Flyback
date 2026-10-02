@@ -1,4 +1,4 @@
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>One of the kinds of file Flyback opens, as the operating system is told about it.</summary>
 /// <param name="Extension">With its dot.</param>

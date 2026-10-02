@@ -9,7 +9,7 @@ using Avalonia.Threading;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// The screen of the synth: renders the compiled patch on a background thread and

@@ -4,12 +4,13 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Flyback.App.Controls;
-using Flyback.App.Site;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Site;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 internal sealed partial class PresetGallery
 {

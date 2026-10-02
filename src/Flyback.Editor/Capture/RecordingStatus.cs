@@ -1,4 +1,4 @@
-﻿namespace Flyback.App.Capture;
+﻿namespace Flyback.Editor.Capture;
 
 /// <summary>How a recording is going, for the status bar to read.</summary>
 internal readonly record struct RecordingStatus(

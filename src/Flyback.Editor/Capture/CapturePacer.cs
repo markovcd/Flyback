@@ -1,4 +1,4 @@
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>
 /// Decides when a frame is due. The preview drops frames to hold its clock and an

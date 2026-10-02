@@ -11,7 +11,7 @@ using SkiaSharp;
 using Svg.Skia;
 
 var here = Path.GetDirectoryName((string)AppContext.GetData("EntryPointFilePath")!)!;
-var output = Path.GetFullPath(Path.Combine(here, "..", "..", "src", "Flyback.App", "FileIcons"));
+var output = Path.GetFullPath(Path.Combine(here, "..", "..", "src", "Flyback.Editor.Desktop", "FileIcons"));
 Directory.CreateDirectory(output);
 
 // Windows picks the frame nearest the size it wants, scaling for DPI.

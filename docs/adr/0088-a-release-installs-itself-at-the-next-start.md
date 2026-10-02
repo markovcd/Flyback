@@ -40,7 +40,7 @@ release — anything whose informational version carries a commit hash — never
 **Each release carries `SHA256SUMS` and `SHA256SUMS.sig`**: `sha256sum` over the
 packages, and an ECDSA P-256 signature over that list made by `openssl dgst
 -sha256 -sign`. The private key is the repository secret `RELEASE_SIGNING_KEY`; the
-public key is `src/Flyback.App/Updates/release-key.pem`, compiled in. The workflow
+public key is `src/Flyback.Editor.Desktop/Updates/release-key.pem`, compiled in. The workflow
 refuses to start without the secret or with one that does not pair with the
 committed key, and verifies its own signature before publishing.
 
@@ -122,4 +122,4 @@ publishing two versions and letting one install the other.
 The public key is `src/Flyback.Editor/Updates/release-key.pem`, embedded in
 `Flyback.Editor` beside `ReleaseSignature`, which reads it
 ([0162](0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)).
-Installing an update stays in `Flyback.App`.
+Installing an update stays in `Flyback.Editor.Desktop`.

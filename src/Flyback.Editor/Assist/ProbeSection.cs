@@ -3,12 +3,12 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
-using Flyback.App.Controls;
-using Flyback.App.Settings;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Settings;
 using Flyback.Plugins.Assist;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>The assistant settings' probe button, what it warns and what it found.</summary>
 /// <remarks>

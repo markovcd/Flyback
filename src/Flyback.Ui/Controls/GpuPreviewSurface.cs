@@ -4,11 +4,11 @@ using Avalonia.Controls;
 using Avalonia.OpenGL;
 using Avalonia.OpenGL.Controls;
 using Avalonia.Threading;
-using Flyback.App.Capture;
+using Flyback.Ui.Capture;
 using Flyback.Core.Compile;
 using Flyback.Gpu;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// The screen of the synth, drawn by the GPU. The patch is compiled to a fragment

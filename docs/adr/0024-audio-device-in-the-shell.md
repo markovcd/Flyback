@@ -19,7 +19,7 @@ Avalonia.
 ## Decision
 
 `AudioRenderer` and `WavWriter` live in `Flyback.Core` with no dependencies.
-`Flyback.App` owns the device behind one interface:
+`Flyback.Editor.Desktop` owns the device behind one interface:
 
 ```csharp
 public delegate void AudioCallback(Span<float> interleavedStereo);
@@ -49,7 +49,7 @@ is untested, and it is the one class with nothing in it but glue.
 
 NAudio was verified to resolve from plain `net10.0` before anything was built on
 it — WASAPI output was the open question, since NAudio's Windows features often
-sit behind a `net*-windows` target framework. It does not, so `Flyback.App` keeps
+sit behind a `net*-windows` target framework. It does not, so `Flyback.Editor.Desktop` keeps
 the portable TFM [0001](0001-target-net-10.md) chose, and the fallback of a
 separate `net10.0-windows` project was not needed.
 

@@ -841,7 +841,7 @@ flyback-cli plugin deny plugins/Flyback.Plugins.Yours</code></pre>
     <p><code>--secrets</code> lets it register a secret store, which holds every assistant key typed from then
     on. <code>plugin list</code> says which folders load and why the others do not. The yes is kept in the
     data folder, never in <code>plugins/</code>. To ship a plugin in the box instead, add a line to
-    <code>Flyback.App.csproj</code> and the build lays it out for you, with the list of its files that lets it
+    <code>Flyback.Editor.Desktop.csproj</code> and the build lays it out for you, with the list of its files that lets it
     load:</p>
 
     <pre><code>&lt;<span class="k">PluginProject</span> Include=<span class="s">"..\Flyback.Plugins.Yours\Flyback.Plugins.Yours.csproj"</span>

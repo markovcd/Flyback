@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// A wire let go over empty canvas: where it landed, and which socket is still

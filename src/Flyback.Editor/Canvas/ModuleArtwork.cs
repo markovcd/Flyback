@@ -3,12 +3,12 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Svg.Skia;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using SkiaSharp;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// A decoded picture a plugin hung behind its module: what to draw, when each

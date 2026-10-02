@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Plugins.Settings;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>
 /// A plugin's settings, drawn from what the plugin says it has — an assistant's

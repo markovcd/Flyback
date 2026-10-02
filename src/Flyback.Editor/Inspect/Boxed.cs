@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// What stands between a knob and the number box showing it: the knob's value as

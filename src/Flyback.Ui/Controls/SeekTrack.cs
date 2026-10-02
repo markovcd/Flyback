@@ -5,7 +5,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// A strip from nought to <see cref="Maximum"/> seconds with a thumb at <see cref="Value"/>,

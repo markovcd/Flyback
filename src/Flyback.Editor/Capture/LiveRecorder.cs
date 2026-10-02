@@ -2,8 +2,9 @@ using System.Diagnostics;
 using Flyback.Core;
 using Flyback.Core.Render;
 using Flyback.Gpu;
+using Flyback.Ui.Capture;
 
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>
 /// A take: the frames the GPU drew and the samples the speakers got, going into a

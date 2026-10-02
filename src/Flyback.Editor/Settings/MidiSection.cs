@@ -1,14 +1,16 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Bars;
-using Flyback.App.Controls;
-using Flyback.App.Inspect;
-using Flyback.App.Knobs;
-using Flyback.App.Midi;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Knobs;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
+using Flyback.Ui;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>
 /// The MIDI section of the settings window: which plugin hears an instrument, what

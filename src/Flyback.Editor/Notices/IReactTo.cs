@@ -1,4 +1,4 @@
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>
 /// A part of the editor that reacts to a <typeparamref name="T"/> notice (ADR-0148).

@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>
 /// Whether a release was published by whoever holds Flyback's release key.

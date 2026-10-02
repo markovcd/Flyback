@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>The sizes a picture is offered at, by the name the settings and the command line share.</summary>
 public static class Resolutions

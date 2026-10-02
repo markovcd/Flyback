@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// What a restart opens when it comes back up: a patch on disk, or a preset the site

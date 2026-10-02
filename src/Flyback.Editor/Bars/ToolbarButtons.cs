@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>The toolbar's buttons, its groups and the lines between them.</summary>
 internal static class ToolbarButtons

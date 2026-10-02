@@ -1,9 +1,9 @@
 using Avalonia.Media;
-using Flyback.App.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The mark drawn faintly across a module's body: its own where the module is one

@@ -1,13 +1,14 @@
-using Flyback.App.Canvas;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Midi;
-using Flyback.App.Site;
-using Flyback.App.Windows;
 using Flyback.Core;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Site;
+using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Midi;
+using Flyback.Ui;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Where this machine keeps what the editor reads and saves.</summary>
 /// <remarks>Each one left null keeps nothing and reads nothing, which is what a test gets by default.</remarks>

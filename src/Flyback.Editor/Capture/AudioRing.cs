@@ -1,4 +1,4 @@
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>
 /// The one place a recording touches the sound callback: a fixed ring the callback

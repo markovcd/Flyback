@@ -16,7 +16,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Saving, opening, writing out as text, undoing and pasting.</summary>
 [Binding]
-public sealed class EditingSteps(PatchContext context, Session session, Editor editor)
+public sealed class EditingSteps(PatchContext context, Session session, EditorDriver editor)
 {
     private const string Stranger = "module.from.the.future";
 

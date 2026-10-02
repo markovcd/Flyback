@@ -1,4 +1,4 @@
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// Where the build's stills are, drawn by <c>flyback-cli stills</c> (ADR-0163): a folder

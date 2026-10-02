@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>
 /// The console this program was started with, if it was started with one.

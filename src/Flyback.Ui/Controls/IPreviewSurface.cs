@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Compile;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// What the shell needs of a preview, whichever renderer is behind it. Which of the

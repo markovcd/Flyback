@@ -1,6 +1,6 @@
-using Flyback.App.Notices;
+using Flyback.Editor.Notices;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Hands the viewer the patch as it stands, and pauses the editor so only one of them is heard.</summary>
 internal sealed class PatchViewing(Playback playback, PatchFiles files, IViewer viewer, ReportLine report) : IReactTo<ViewAsked>

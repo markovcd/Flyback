@@ -1,4 +1,4 @@
-﻿namespace Flyback.App.Midi;
+﻿namespace Flyback.Ui.Midi;
 
 /// <param name="Name">What the picker calls it.</param>
 /// <param name="Channel">The channel its notes and knobs are on, 1 to 16.</param>

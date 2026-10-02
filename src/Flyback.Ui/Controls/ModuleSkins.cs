@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// What the canvas is allowed to draw of a plugin's own background — the Canvas

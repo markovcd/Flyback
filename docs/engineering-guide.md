@@ -34,25 +34,25 @@ and everything else in the repository either builds that graph, runs that
 program, or shows the result.
 
 ```text
-Flyback.Core      the patch model, the module catalog, the opcodes, the Emitter
-   ^              what a plugin is compiled against; references nothing
-Flyback.Engine    the compiler, the four backends, the renderers, the language, file I/O
-   ^              free to change between releases; no third-party packages
-Flyback.Gpu       the GPU renderer, its OpenGL binding, a headless context
-   ^              no Avalonia and no packages
-Flyback.Plugins   the plugin contract and the host that loads plugins off disk
+Flyback.Core           the patch model, the module catalog, the opcodes, the Emitter
+   ^                   what a plugin is compiled against; references nothing
+Flyback.Engine         the compiler, the four backends, the renderers, the language, file I/O
+   ^                   free to change between releases; no third-party packages
+Flyback.Gpu            the GPU renderer, its OpenGL binding, a headless context
+   ^                   no Avalonia and no packages
+Flyback.Plugins        the plugin contract and the host that loads plugins off disk
    ^
-Flyback.Assist    the host's side of a conversation with an assistant, for the editor and the CLI
+Flyback.Assist         the host's side of a conversation with an assistant, for the editor and the CLI
    ^
-Flyback.Ui        what two shells draw with: preview, sound device, colors, settings
+Flyback.Ui             what two shells draw with: preview, sound device, colors, settings
    ^
-Flyback.Editor    the editor (Avalonia), no platform in it
+Flyback.Editor         the editor (Avalonia), no platform in it
    ^
-Flyback.App       the editor on the desktop      Flyback.exe
-Flyback.Viewer    plays a patch, writes nothing  flyback-viewer.exe
-Flyback.Cli       render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
-Flyback.Web       the viewer in a browser        wwwroot/           (Gpu, the module plugins referenced, no Ui)
-Flyback.WebEditor the editor in a browser        wwwroot/           (Editor under Avalonia.Browser; needs wasm-tools)
+Flyback.Editor.Desktop the editor on the desktop      Flyback.exe
+Flyback.Viewer         plays a patch, writes nothing  flyback-viewer.exe
+Flyback.Cli            render, check, print, pack     flyback-cli.exe   (Gpu, but no Ui and no Avalonia)
+Flyback.Web            the viewer in a browser        wwwroot/           (Gpu, the module plugins referenced, no Ui)
+Flyback.WebEditor      the editor in a browser        wwwroot/           (Editor under Avalonia.Browser; needs wasm-tools)
 
 Flyback.Plugins.* twelve plugins, built into plugins/<Name>/ and loaded at run time
 ```
@@ -70,16 +70,16 @@ layer between the layers: a shell calls the engine's concrete types
 | `Flyback.Assist` | `AssistantSession`, `AssistantRun`, `SavedConversation`, `ConversationStore`, `ITranscript` | The conversation the editor's column and `flyback-cli ask` both hold, kept out of the assembly a plugin is compiled against ([0169](adr/0169-the-hosts-side-of-a-conversation-is-a-project-of-its-own.md)). |
 | `Flyback.Ui` | `PreviewHost`, the CPU and GPU preview surfaces, `AudioEngine`, `Colors`, `Text`, `OutputSettings` | Exists so the viewer shares the editor's preview without referencing the editor ([0124](adr/0124-what-two-shells-draw-with-is-a-project-of-its-own.md)). |
 | `Flyback.Editor` | `EditorView`, `MainWindow`, `NodeEditor`, inspector, assistant panel, recording, the container they are composed in, usage counts, the running version and release notes | UI is C# with no XAML ([0016](adr/0016-build-the-ui-in-c-sharp-without-xaml.md)). A library, so a browser page can host the editor as well as the desktop ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
-| `Flyback.App` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
+| `Flyback.Editor.Desktop` | `Program`, `FlybackApp`, `Startup`, installing an update, the shipped plugins | The desktop program around `Flyback.Editor`. |
 | `Flyback.Viewer` | A window, a transport and an argument parser | Writes nothing to disk ([0123](adr/0123-a-third-program-plays-a-patch-and-writes-nothing.md)). |
 | `Flyback.Web` | `WebSound`, `WebPicture`, `WebExports`, `JsSound`, the page, its sound worker, and `hear.mjs` for Node | The sound as JavaScript in a worker, the interpreter where it cannot be; ahead-of-time compiled only on publish; a patch too heavy to keep up plays its picture alone ([0160](adr/0160-a-patch-plays-in-a-browser-on-the-engine-compiled-to-webassembly.md)). |
 | `Flyback.WebEditor` | `PageApp`, `CanvasPreview`, `PageSound`, `PageExports`, the page | `Flyback.Editor` under Avalonia.Browser, with the page's own preview, sound, title, focus and close registered in its container; the picture on a canvas of its own, the sound in the web viewer's worker. Served by the preset site at `/editor/`, which builds it; built with `Flyback.slnx`, which therefore needs the wasm-tools workload; the gate's image installs it ([0162](adr/0162-the-editor-runs-in-a-browser-with-the-picture-on-a-canvas-of-its-own.md)). |
 | `Flyback.Cli` | One file per command over `System.CommandLine` | The only place export lives ([0078](adr/0078-export-leaves-the-shell-for-the-cli-that-already-writes-it.md)); on the GPU where there is one, and exact to the bit with `--processor` ([0157](adr/0157-flyback-cli-render-draws-on-the-gpu.md)). |
 
-Two namespace quirks are deliberate. `Flyback.Engine` declares
-`RootNamespace=Flyback.Core`, and `Flyback.Ui` and `Flyback.Editor` declare
-`RootNamespace=Flyback.App`: each was split out of its parent, and keeping the
-namespaces meant no moved file needed an edit. Find a type by project, not by namespace.
+A project's namespace is its assembly name: `Flyback.Ui`, `Flyback.Editor`,
+`Flyback.Editor.Desktop`. The one exception is deliberate: `Flyback.Engine` declares
+`RootNamespace=Flyback.Core`, because it was split out of Core and keeping the namespace
+meant no moved file needed an edit. Find a type in `Flyback.Engine` by project, not by namespace.
 
 ---
 
@@ -418,7 +418,7 @@ minor.
 **Building.** Plugins are not project references. A host project lists
 `PluginProject` items and `Directory.Build.targets` builds each one straight into
 `plugins/<FolderName>/`, portable, with an optional `Platform` of `win`, `osx` or
-`linux` ([0028](adr/0028-publish-one-platform-at-a-time.md)). Only `Flyback.App`
+`linux` ([0028](adr/0028-publish-one-platform-at-a-time.md)). Only `Flyback.Editor.Desktop`
 and the test projects declare them, and the build writes `plugins.sha256` beside
 the folder for each. The CLI and the viewer publish into the
 app's folder and read what it laid out; declaring plugins there would clear the
@@ -473,7 +473,7 @@ desktop's window around it, keeping its size, its place and its close. There are
 no view models, and that has been decided twice.
 
 **Notices** ([0148](adr/0148-the-window-is-its-hubs-and-the-regions-around-them.md)).
-A hub says what happened by raising a notice, a record in `Flyback.App.Notices`
+A hub says what happened by raising a notice, a record in `Flyback.Editor.Notices`
 carrying what a reactor needs (`PatchChanged`, `PatchCompiled`, `SaveAsked`), and
 a part that cares declares `IReactTo<PatchCompiled>` in its class header and
 reacts in `On`. `Reactions` resolves the reactors when the notice is raised,
@@ -497,7 +497,7 @@ with its region, its controls and its settings section together: `Canvas`
 `Site`, `Assist`, `Capture`, `Files`, `PluginPackages`, `Updates`,
 `Statistics` and `Settings`. `Controls` keeps only the widgets that belong to no
 feature. The namespace follows the folder, and a folder is never named for a
-type, since inside `Flyback.App` that name would then mean the namespace. For
+type, since inside `Flyback.Editor` that name would then mean the namespace. For
 the same reason `Canvas` shadows Avalonia's control, so it is written
 `Avalonia.Controls.Canvas`.
 
@@ -749,7 +749,7 @@ changed: saved patches name it.
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
 | `Flyback.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
-| `Flyback.App.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
+| `Flyback.Editor.Desktop.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
@@ -772,7 +772,7 @@ the repository are `Assert.SkipWhen` and `Assert.SkipUnless`.
 ```
 
 ```bash
-./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests.exe -method "*WireDrop*"
+./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -method "*WireDrop*"
 ```
 
 `-list tests` lists them and `-xml results.xml` writes a time per test.
@@ -882,7 +882,7 @@ Prefer asserting on the smallest thing that holds the behavior. Much of the
 editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 `NodeEditor.Text`), and a test of one needs no window at all.
 
-The Headless xunit adapter is vendored under `tests/Flyback.App.Tests/Headless`
+The Headless xunit adapter is vendored under `tests/Flyback.Editor.Desktop.Tests/Headless`
 because the published package does not discover tests on xunit.v3 4.x. The
 assembly runs with `ParallelMode.Collections`, since every UI test queues on the
 one thread anyway. Each UI test blocks a pool thread while it waits for that
@@ -956,7 +956,7 @@ plays a patch through `flyback-viewer`'s own arguments and window, and `CliSteps
 share a fresh `PatchContext`, `Session`, `Editor` and `ViewerRun` per scenario, and the
 two windows one headless UI thread (`Headless`). A step drives
 the program the way somebody would; a scenario that composes services by hand
-is testing the wiring, and belongs in `Flyback.App.Tests`.
+is testing the wiring, and belongs in `Flyback.Editor.Desktop.Tests`.
 The project references every program and library and lays out every shipped
 plugin under `plugins\`, so a feature of the editor, the viewer, the CLI, the
 preset site or a plugin takes its scenario here like any other.
@@ -985,7 +985,7 @@ itself, and an unexplained one is a defect, fixed in a commit of its own. After 
 run, rank by duration:
 
 ```bash
-./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -xml results.xml
 ```
 
 The usual causes are waiting on a wall clock, waiting out a deadline to prove
@@ -1027,7 +1027,7 @@ ops that write nothing), and the `Emitter` if it needs a helper. `TotalityTests`
 snapshots change. It moves the plugin contract's minor.
 
 **Add a module from a plugin.** Copy `tests/Flyback.Plugins.Sample`. Type ids
-start with the provider id. Add a `PluginProject` item to `Flyback.App.csproj` and
+start with the provider id. Add a `PluginProject` item to `Flyback.Editor.Desktop.csproj` and
 to `Flyback.Plugins.Tests.csproj`. Update `site/plugins.html` if the contract
 moved.
 

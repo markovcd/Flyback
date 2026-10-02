@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
-using Flyback.App.Audio;
+using Flyback.Ui.Audio;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>Writing to the author from inside Flyback, through the preset site.</summary>
 /// <remarks>

@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// A ProgID per kind under the user's own <c>Software\Classes</c>, so nothing needs

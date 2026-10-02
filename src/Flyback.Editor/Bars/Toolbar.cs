@@ -5,14 +5,15 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Gallery;
-using Flyback.App.Notices;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
 using Flyback.Plugins.Hosting;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The bar along the top: every button on it, what each says, and the order they

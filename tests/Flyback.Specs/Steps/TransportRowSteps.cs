@@ -1,5 +1,5 @@
 using Avalonia;
-using Flyback.App.Bars;
+using Flyback.Editor.Bars;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -8,7 +8,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The row along the foot of the window that plays the patch.</summary>
 [Binding]
-public sealed class TransportRowSteps(Editor editor)
+public sealed class TransportRowSteps(EditorDriver editor)
 {
     private double canvasBefore;
 

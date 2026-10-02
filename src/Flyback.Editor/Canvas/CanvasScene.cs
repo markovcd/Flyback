@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>What the canvas shows of a patch, and what is under a point on it.</summary>
 /// <remarks>

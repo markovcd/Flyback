@@ -6,7 +6,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The knob panel's fixed grid and rearranging its knobs by hand, read off where the knobs stand.</summary>
 [Binding]
-public sealed class KnobGridSteps(Editor editor)
+public sealed class KnobGridSteps(EditorDriver editor)
 {
     [When("the knobs are kept in a grid of {int} columns and {int} rows")]
     public void WhenGridded(int columns, int rows)

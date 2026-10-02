@@ -1,13 +1,15 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Audio;
-using Flyback.App.Controls;
-using Flyback.App.Inspect;
 using Flyback.Core.Render;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Inspect;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
+using Flyback.Ui;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>
 /// The Sound section of the settings window: whatever the sound backend declares,

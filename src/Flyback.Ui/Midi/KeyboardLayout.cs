@@ -1,4 +1,4 @@
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>How the computer keyboard is laid out on a patch that has just gained its first MIDI In.</summary>
 public enum KeyboardLayout

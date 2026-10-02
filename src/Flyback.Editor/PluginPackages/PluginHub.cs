@@ -9,11 +9,12 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Flyback.App.Controls;
-using Flyback.App.Site;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Site;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// The plugins window: what is installed, and what the plugin site offers for this

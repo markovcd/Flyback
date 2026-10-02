@@ -1,10 +1,10 @@
 using Avalonia.Platform.Storage;
-using Flyback.App.Assist;
-using Flyback.App.Canvas;
-using Flyback.App.Files;
-using Flyback.App.Notices;
-using Flyback.App.PluginPackages;
-using Flyback.App.Statistics;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Files;
+using Flyback.Editor.Notices;
+using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Statistics;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -13,7 +13,7 @@ using Flyback.Core.Render;
 using Flyback.Assist;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Which file the patch is: what it is called, whether it is a bundle, what it

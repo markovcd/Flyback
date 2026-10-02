@@ -3,13 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// An Arrangement's parts: a map of every level shaded in the module's accent, a row a

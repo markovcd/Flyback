@@ -1,7 +1,7 @@
 using Flyback.Core;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The groups somebody kept, as patch files in a folder of their own.

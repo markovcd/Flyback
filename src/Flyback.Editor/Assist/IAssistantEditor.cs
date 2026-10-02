@@ -1,7 +1,7 @@
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>The editor as the assistant's column sees it: the patch it edits and where it says so.</summary>
 public interface IAssistantEditor

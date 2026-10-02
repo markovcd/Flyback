@@ -1,9 +1,9 @@
-using Flyback.App.Controls;
-using Flyback.App.Midi;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
 
-namespace Flyback.App.Audio;
+namespace Flyback.Ui.Audio;
 
 /// <summary>
 /// Play, pause, mute and rewind for a picture and a sound played together, in the

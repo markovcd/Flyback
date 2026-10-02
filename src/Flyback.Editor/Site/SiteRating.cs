@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>How a shared preset or plugin is rated on the site, which is the only place it can be rated.</summary>
 internal sealed record SiteRating(double Average, int Count)

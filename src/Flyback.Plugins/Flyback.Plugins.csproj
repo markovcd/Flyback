@@ -27,7 +27,7 @@
     <!-- The host's half, loading plugins and running an assistant, is internal and
          shared with the host's own assemblies and their tests, never with a plugin. -->
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
-    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Server.Tests" />
     <InternalsVisibleTo Include="Flyback.Plugins.Gemini.Tests" />

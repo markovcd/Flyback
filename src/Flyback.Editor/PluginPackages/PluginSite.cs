@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Flyback.App.Site;
+using Flyback.Editor.Site;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>The plugins shared on the preset site, as <c>/api/v1/plugins</c> lists them for this system.</summary>
 internal sealed class PluginSite(HttpClient http, Uri root)

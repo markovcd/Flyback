@@ -1,6 +1,6 @@
-using Flyback.App;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.Editor;
 using Flyback.Specs.Support;
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
@@ -10,7 +10,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor as a browser page holds it: <see cref="App.EditorHost.InPage"/>.</summary>
 [Binding]
-public sealed class PageSteps(Editor editor, PatchContext context)
+public sealed class PageSteps(EditorDriver editor, PatchContext context)
 {
     private readonly HandedViewer viewer = new();
 

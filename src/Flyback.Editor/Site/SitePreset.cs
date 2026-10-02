@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>A preset the site lists.</summary>
 /// <param name="FileName">What it was shared as, whose extension says whether it is a bundle.</param>

@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.App.Capture;
+using Flyback.Ui.Capture;
 using Flyback.Gpu;
 using Flyback.Core.Compile;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Holds whichever preview renderer is currently running and forwards the shell's

@@ -1,13 +1,13 @@
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.App.Knobs;
-using Flyback.App.Midi;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
+using Flyback.Editor.Knobs;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The palette, and the one gesture that opens it: a right-click on empty canvas

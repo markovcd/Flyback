@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>What the inspector says is at the other end of a module's wires.</summary>
 internal static class WireEnds

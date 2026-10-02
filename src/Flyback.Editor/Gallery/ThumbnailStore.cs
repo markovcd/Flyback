@@ -1,7 +1,7 @@
 using System.IO.Compression;
 using Flyback.Core;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// Thumbnails kept on disk between runs, a file each, named for what they were

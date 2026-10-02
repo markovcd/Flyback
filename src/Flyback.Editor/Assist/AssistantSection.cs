@@ -1,7 +1,7 @@
 using Avalonia.Controls;
-using Flyback.App.Settings;
+using Flyback.Editor.Settings;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>The Assistant section of the settings window, whose controls the assistant's panel keeps.</summary>
 internal sealed class AssistantSection(AssistantPanel panel) : ISettingsSection

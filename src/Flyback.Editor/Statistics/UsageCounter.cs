@@ -1,9 +1,9 @@
-using Flyback.App.Canvas;
-using Flyback.App.Gallery;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
+using Flyback.Ui.Midi;
 
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>What the run counts about how it was played (ADR-0094), gathered from the parts that know.</summary>
 internal sealed class UsageCounter : IReactTo<PlaybackStarted>

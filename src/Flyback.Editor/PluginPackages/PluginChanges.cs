@@ -1,7 +1,7 @@
 using System.Globalization;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 internal static class PluginChanges
 {

@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices.JavaScript;
-using Flyback.App.Gallery;
+using Flyback.Editor.Gallery;
 
 namespace Flyback.WebEditor;
 

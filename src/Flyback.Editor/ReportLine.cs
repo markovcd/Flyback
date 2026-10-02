@@ -7,10 +7,10 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
-using Flyback.App.Controls;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// The status bar's one line of prose, and the log of everything it has said.

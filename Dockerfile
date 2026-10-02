@@ -193,7 +193,7 @@ ARG VERSION
 
 # One publish per identifier, each restoring its own runtime pack. Self-contained
 # and single-file are the project's own doing rather than flags here — see
-# Flyback.App.csproj, which turns both on the moment there is an identifier to
+# Flyback.Editor.Desktop.csproj, which turns both on the moment there is an identifier to
 # build for. Not --no-build: a build for another platform is a different build
 # from the one the tests just ran against.
 #
@@ -223,7 +223,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
         osx-*) out=/out/${rid}/publish ;; \
         *)     out=/out/${rid} ;; \
       esac; \
-      dotnet publish src/Flyback.App -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
+      dotnet publish src/Flyback.Editor.Desktop -c ${CONFIGURATION} -r ${rid} -o ${out} -p:Version=${VERSION}; \
       case ${rid} in \
         osx-*) rm -rf ${out}; out=/out/${rid}/Flyback.app/Contents/MacOS ;; \
       esac; \

@@ -9,11 +9,12 @@ using Avalonia.Media.Imaging;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Flyback.Core.Graph;
-using Flyback.App.Controls;
-using Flyback.App.Site;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Site;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// Every preset as a tile — a picture, its name and what it is for — under a heading

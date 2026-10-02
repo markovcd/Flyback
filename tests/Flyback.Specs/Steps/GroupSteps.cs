@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Input;
 using Reqnroll;
 using Shouldly;
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
 
@@ -10,7 +10,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Which modules a group holds, and how that changes on the canvas.</summary>
 [Binding]
-public sealed class GroupSteps(PatchContext context, Editor editor)
+public sealed class GroupSteps(PatchContext context, EditorDriver editor)
 {
     private NodeGroup? box;
 

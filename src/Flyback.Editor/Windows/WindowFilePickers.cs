@@ -1,6 +1,6 @@
 using Avalonia.Platform.Storage;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 internal sealed class WindowFilePickers(WindowHolder holder) : IFilePickers
 {

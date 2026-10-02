@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// The plugins a patch names and this Flyback does not have, looked for on the plugin

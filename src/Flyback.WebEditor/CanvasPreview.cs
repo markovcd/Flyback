@@ -5,7 +5,8 @@ using Avalonia.Browser;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using Flyback.App.Controls;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Compile;
 using Flyback.Gpu;
 

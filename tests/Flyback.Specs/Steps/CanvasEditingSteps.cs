@@ -11,7 +11,7 @@ namespace Flyback.Specs.Steps;
 /// out and duplicating, pressed in the editor's own window.
 /// </summary>
 [Binding]
-public sealed class CanvasEditingSteps(PatchContext context, Editor editor)
+public sealed class CanvasEditingSteps(PatchContext context, EditorDriver editor)
 {
     [Given("the patch is open in the editor")]
     public void GivenOpenInTheEditor() => editor.Open();

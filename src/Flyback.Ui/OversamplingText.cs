@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>An oversampling factor as the status lines and Settings → Sound write it; 1× is none.</summary>
 internal static class OversamplingText

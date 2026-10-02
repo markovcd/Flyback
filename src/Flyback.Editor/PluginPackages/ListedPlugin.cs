@@ -1,6 +1,6 @@
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>What the plugins window shows of a plugin, wherever it came from.</summary>
 internal sealed record ListedPlugin(

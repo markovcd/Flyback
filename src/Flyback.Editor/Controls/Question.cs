@@ -2,8 +2,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// Something asked in place, with a tick and a cross docked to the right of it.

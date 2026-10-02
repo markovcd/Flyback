@@ -3,7 +3,7 @@
   <!--
     What the two windows that play a patch draw and sound with: the preview, the
     sound device, the look and the settings both read. The namespaces stay
-    Flyback.App, the way Flyback.Engine holds Flyback.Core, so a file that moved
+    Flyback.Editor.Desktop, the way Flyback.Engine holds Flyback.Core, so a file that moved
     here needed no edit to keep working (ADR-0124).
 
     Avalonia itself and nothing that belongs to only one shell: the editor's code
@@ -11,7 +11,7 @@
   -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Flyback.App</RootNamespace>
+    <RootNamespace>Flyback.Ui</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,7 +38,7 @@
     <InternalsVisibleTo Include="Flyback.Editor" />
     <InternalsVisibleTo Include="flyback-viewer" />
     <InternalsVisibleTo Include="Flyback.WebEditor" />
-    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 

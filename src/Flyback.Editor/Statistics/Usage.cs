@@ -2,10 +2,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Flyback.App.Updates;
+using Flyback.Editor.Updates;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>
 /// What a run says about itself: that it started and on what, what it played,

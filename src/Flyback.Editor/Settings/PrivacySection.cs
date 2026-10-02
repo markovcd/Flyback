@@ -1,8 +1,8 @@
 using Avalonia.Controls;
-using Flyback.App.Statistics;
-using Flyback.App.Updates;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Updates;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>The Privacy section of the settings window: what Flyback sends out, updates and usage both.</summary>
 internal sealed class PrivacySection(UpdatesSection updates, UsageSection usage) : ISettingsSection

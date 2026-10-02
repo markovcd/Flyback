@@ -1,6 +1,6 @@
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// Puts a package's build for this system into the plugins folder, as

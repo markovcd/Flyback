@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Sets the editor window's title bar text.</summary>
 internal interface ITitle

@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 using Avalonia.Input;
-using Flyback.App.Audio;
-using Flyback.App.Controls;
-using Flyback.App.Midi;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;

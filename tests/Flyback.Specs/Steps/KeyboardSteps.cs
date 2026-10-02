@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Reqnroll;
 using Shouldly;
-using Flyback.App.Midi;
+using Flyback.Ui.Midi;
 using Flyback.Core.Compile;
 using Flyback.Plugins.Midi;
 using Flyback.Specs.Support;

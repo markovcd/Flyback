@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.JavaScript;
-using Flyback.App.Audio;
-using Flyback.App.Capture;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Capture;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;

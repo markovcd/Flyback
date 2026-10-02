@@ -51,7 +51,7 @@ public sealed class CliSteps(PatchContext context) : IDisposable
     public void GivenNoOversampleSetting() => File.WriteAllText(Path("settings.json"), "{}");
 
     [Given("the editor's settings oversample the sound {int} times")]
-    public void GivenOversampleSetting(int factor) => new Flyback.App.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
+    public void GivenOversampleSetting(int factor) => new Flyback.Ui.OutputSettings { Oversample = factor }.Save(Path("settings.json"));
 
     [When("flyback-cli renders {string} as {string} for {float} seconds")]
     public void WhenRendered(string patch, string into, float seconds) => WhenRenderedWith(patch, into, seconds, "");
@@ -239,7 +239,7 @@ public sealed class CliSteps(PatchContext context) : IDisposable
         while (!File.Exists(System.IO.Path.Combine(root.FullName, "Flyback.slnx"))) root = root.Parent!;
 
         return System.IO.Path.Combine(
-            root.FullName, "src", "Flyback.App", "bin", configuration, framework,
+            root.FullName, "src", "Flyback.Editor.Desktop", "bin", configuration, framework,
             OperatingSystem.IsWindows() ? "Flyback.exe" : "Flyback");
     }
 

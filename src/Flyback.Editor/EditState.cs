@@ -1,12 +1,12 @@
 using Avalonia.Controls;
-using Flyback.App.Bars;
-using Flyback.App.Files;
-using Flyback.App.Inspect;
-using Flyback.App.Notices;
-using Flyback.App.Windows;
 using Flyback.Core;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Files;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Windows;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Keeps the toolbar buttons, the window title, and the inspector panel in step

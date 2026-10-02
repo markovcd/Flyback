@@ -47,7 +47,7 @@ owns its own fields, and says what happened rather than calling back into the
 window. `MainWindow` is what lays the regions out and asks the closing question.
 
 **A hub says what happened as a notice, and whoever cares reacts to it.** A
-notice is a record in `Flyback.App.Notices`, one file each, carrying what a
+notice is a record in `Flyback.Editor.Notices`, one file each, carrying what a
 reactor needs: `PatchChanged(Opened)`, `PatchCompiled`, `DocumentArrived(Sounds,
 Pictures)`, `TakeMarked`. A part that reacts declares it in its class header,
 `Inspector : IReactTo<SelectionChanged>`, and `Reactions` hands each notice to

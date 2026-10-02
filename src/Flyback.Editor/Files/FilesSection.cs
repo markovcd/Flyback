@@ -4,12 +4,14 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Flyback.App.Controls;
-using Flyback.App.Gallery;
-using Flyback.App.Inspect;
-using Flyback.App.Settings;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Settings;
+using Flyback.Ui;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// The Files section of the settings window: which patch the window opens on, which

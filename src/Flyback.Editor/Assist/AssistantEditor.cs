@@ -1,10 +1,11 @@
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Controls;
+using Flyback.Ui;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>The editor's side of the assistant's column.</summary>
 internal sealed class AssistantEditor(

@@ -1,4 +1,4 @@
-﻿namespace Flyback.App;
+﻿namespace Flyback.Ui;
 
 /// <summary>Where a window keeps the presets somebody saved.</summary>
 public interface IPresetFolder

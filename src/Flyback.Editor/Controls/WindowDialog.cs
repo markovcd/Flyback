@@ -1,8 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Flyback.App.Windows;
+using Flyback.Editor.Windows;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 internal sealed class WindowDialog(WindowHolder holder) : IDialog
 {

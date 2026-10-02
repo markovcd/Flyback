@@ -2,7 +2,7 @@ using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>
 /// Creates one assistant conversation from the current editor, catalog, and settings.

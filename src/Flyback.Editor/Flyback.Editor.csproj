@@ -2,12 +2,12 @@
 
   <!--
     The editor itself: its window, canvas, regions and the container they are
-    composed in (ADR-0150), with no platform in it. Flyback.App is the desktop
+    composed in (ADR-0150), with no platform in it. Flyback.Editor.Desktop is the desktop
     program around it, and a browser page can be another (ADR-0162).
   -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Flyback.App</RootNamespace>
+    <RootNamespace>Flyback.Editor</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +22,7 @@
     <!-- The programs around it start the editor, and the UI tests and scenarios drive its internal controls. -->
     <InternalsVisibleTo Include="Flyback" />
     <InternalsVisibleTo Include="Flyback.WebEditor" />
-    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 

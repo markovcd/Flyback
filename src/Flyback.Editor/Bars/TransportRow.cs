@@ -4,12 +4,12 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Capture;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The row along the foot of the window that plays the patch: pause, rewind, where the

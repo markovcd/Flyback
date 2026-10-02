@@ -1,20 +1,22 @@
 using System.Text;
 using Avalonia.Controls;
-using Flyback.App.Assist;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Files;
-using Flyback.App.Notices;
-using Flyback.App.PluginPackages;
-using Flyback.App.Site;
-using Flyback.App.Statistics;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Files;
+using Flyback.Editor.Notices;
+using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Site;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// The preset slot at the head of the toolbar, and everything the gallery it opens

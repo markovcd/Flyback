@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>A window has no viewer beside it, and no View it on its toolbar.</summary>
 internal sealed class NoViewer : IViewer

@@ -1,16 +1,18 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Flyback.App.Audio;
-using Flyback.App.Bars;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Inspect;
-using Flyback.App.Knobs;
-using Flyback.App.Notices;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Notices;
 using Flyback.Core.Render;
+using Flyback.Ui;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>The Picture section of the settings window: size, preview rate, renderer and full screen.</summary>
 internal sealed class PictureSection : ISettingsSection, IReactTo<TakeMarked>

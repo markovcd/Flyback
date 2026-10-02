@@ -1,6 +1,6 @@
 using Avalonia.Input;
 using Avalonia.Layout;
-using Flyback.App;
+using Flyback.Ui;
 using Reqnroll;
 using Shouldly;
 using Flyback.Specs.Support;
@@ -9,7 +9,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor's transport and its picture: pausing, moving the clock along the seek bar, and the picture full screen.</summary>
 [Binding]
-public sealed class TransportSteps(Editor editor) : IDisposable
+public sealed class TransportSteps(EditorDriver editor) : IDisposable
 {
     /// <summary>Where a scenario that changes the settings keeps them, so the machine's own are never touched.</summary>
     private readonly DirectoryInfo settings = Directory.CreateTempSubdirectory("flyback-transport-specs");

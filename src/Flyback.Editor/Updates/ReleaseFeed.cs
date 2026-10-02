@@ -2,7 +2,7 @@ using System.Net;
 using System.Reflection;
 using System.Text.Json;
 
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>
 /// Where releases are published: the repository's GitHub Releases, read through the

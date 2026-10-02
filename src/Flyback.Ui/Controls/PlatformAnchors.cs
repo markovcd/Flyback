@@ -1,6 +1,6 @@
 ﻿using Avalonia;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>The platform's anchors.</summary>
 internal sealed class PlatformAnchors : IPointerAnchors

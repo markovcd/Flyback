@@ -1,9 +1,9 @@
 using System.Globalization;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>How a line of text is laid out on the canvas, and cut to the room it has.</summary>
 internal static class CanvasText

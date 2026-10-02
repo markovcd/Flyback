@@ -1,6 +1,6 @@
-using Flyback.App.Assist;
 using Flyback.Assist;
 using Flyback.Core.Graph;
+using Flyback.Editor.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;

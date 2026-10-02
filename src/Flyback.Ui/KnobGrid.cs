@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>
 /// Whether the panel knobs stand in a fixed grid rather than wrapping to the width

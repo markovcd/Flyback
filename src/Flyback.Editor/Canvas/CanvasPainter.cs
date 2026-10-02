@@ -3,11 +3,11 @@ using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Everything the canvas draws: the ground and its grid, the wires, the modules, the

@@ -1,6 +1,6 @@
 using Flyback.Core.Render;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>The stills in a folder, <see cref="StillIndex.Folder"/> beside the program unless told otherwise.</summary>
 internal sealed class FolderStills(string folder) : IStillShelf

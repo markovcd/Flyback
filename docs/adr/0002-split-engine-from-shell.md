@@ -19,7 +19,7 @@ Two projects:
 
 - **`Flyback.Core`** — graph model, compiler, renderer, PNG writer. Its only
   references are the base class libraries. No UI framework, no imaging library.
-- **`Flyback.App`** — Avalonia shell. References Core.
+- **`Flyback.Editor.Desktop`** — Avalonia shell. References Core.
 
 The dependency runs one way and there is no abstraction layer between them; the
 App calls Core's concrete types directly.

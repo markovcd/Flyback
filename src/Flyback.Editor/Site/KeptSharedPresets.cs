@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Flyback.Core;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>
 /// Every shared preset opened from the site, kept with its file, its still and all the

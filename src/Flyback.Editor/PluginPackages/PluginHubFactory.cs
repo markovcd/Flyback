@@ -1,6 +1,6 @@
-using Flyback.App.Controls;
+using Flyback.Editor.Controls;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// Builds a plugins window for one opening, with the per-window dialog supplied

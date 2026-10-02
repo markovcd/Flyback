@@ -110,7 +110,7 @@ Engineering words. They appear in docs, ADRs and comments, not in the UI.
 | **randomize** | Send every panel knob not held somewhere new, gliding there; **back** returns them. A **held** knob sits it out. | `KnobRandomizer`, `PatchControl.Held` | shuffle, dice, roll, locked |
 | **text view** | The patch as text, over the canvas. | `SourceView` | code view, source view, editor |
 | **the document** | Whichever of the canvas and the text owns the patch, decided by the file that was opened. | `Document` | — |
-| **notice** | A fact one part of the editor announces, which any part may react to by declaring it. | `Flyback.App.Notices`, `IReactTo<T>`, `Reactions` | event (that is a control talking to its owner), message, signal |
+| **notice** | A fact one part of the editor announces, which any part may react to by declaring it. | `Flyback.Editor.Notices`, `IReactTo<T>`, `Reactions` | event (that is a control talking to its owner), message, signal |
 | **assistant** | The AI that edits a patch through the workbench, in a column beside it. | `IPatchAssistant`, `AssistantPanel` | agent (that is the one building Flyback), AI, copilot, bot |
 | **workbench** | Everything an assistant may do to a patch, and its limits. | `PatchWorkbench` | tools |
 | **conversation** | What was said to an assistant, saved with the patch it is about. | — | chat, thread, session |

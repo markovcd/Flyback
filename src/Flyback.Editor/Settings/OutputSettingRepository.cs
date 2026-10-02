@@ -1,6 +1,8 @@
-using Flyback.App.Controls;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Ui;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>
 /// The output settings in force, shared by the settings sections that show them, the

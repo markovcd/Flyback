@@ -1,4 +1,4 @@
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>
 /// What changed between the release an update replaced and the one it installed, as

@@ -4,9 +4,9 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.App.Audio;
+using Flyback.Ui.Audio;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// A line in the corner of a full-screen picture saying how it is being drawn: frames a

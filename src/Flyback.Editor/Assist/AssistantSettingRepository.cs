@@ -1,6 +1,6 @@
 using Flyback.Plugins.Assist;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 internal sealed class AssistantSettingRepository
 {

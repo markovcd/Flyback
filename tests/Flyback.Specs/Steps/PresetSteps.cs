@@ -5,7 +5,8 @@ using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Plugins.Hosting;
 using Flyback.Specs.Support;
-using Flyback.App;
+using Flyback.Editor.Desktop;
+using Flyback.Ui;
 
 namespace Flyback.Specs.Steps;
 

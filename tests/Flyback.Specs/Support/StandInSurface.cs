@@ -1,6 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Compile;
 
 namespace Flyback.Specs.Support;

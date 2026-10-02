@@ -1,12 +1,13 @@
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 using Flyback.Core.Language;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// The patch as text, beside the patch as a graph, and which of the two is the

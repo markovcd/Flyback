@@ -1,9 +1,9 @@
 using Reqnroll;
 using Shouldly;
-using Flyback.App;
+using Flyback.Editor;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
-using Flyback.App.Files;
+using Flyback.Editor.Files;
 
 namespace Flyback.Specs.Steps;
 
@@ -12,7 +12,7 @@ namespace Flyback.Specs.Steps;
 /// is replaced, and what it puts back after a crash.
 /// </summary>
 [Binding]
-public sealed class UnsavedWorkSteps(PatchContext context, Editor editor) : IDisposable
+public sealed class UnsavedWorkSteps(PatchContext context, EditorDriver editor) : IDisposable
 {
     private readonly DirectoryInfo recovery = Directory.CreateTempSubdirectory("flyback-recovery-specs");
 

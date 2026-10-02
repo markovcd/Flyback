@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>
 /// Where a run's events go: Aptabase, which counts events for desktop programs and

@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// A mark in the middle of a wire whose two ends have different ranges, which puts

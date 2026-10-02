@@ -1,7 +1,7 @@
 # ADR-0166: flyback-cli shot draws the editor's window with no screen
 
 **Status:** Accepted · 2026-09-29 · *user-directed* · implemented in
-`src/Flyback.App/Shots/` and `src/Flyback.Cli/Commands/ShotCommand.cs`
+`src/Flyback.Editor.Desktop/Shots/` and `src/Flyback.Cli/Commands/ShotCommand.cs`
 
 ## Context
 

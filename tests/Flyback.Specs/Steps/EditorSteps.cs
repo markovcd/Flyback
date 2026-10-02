@@ -8,7 +8,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>What the editor's panel says about the wires on a module or a box, read off the panel itself.</summary>
 [Binding]
-public sealed class EditorSteps(PatchContext context, Editor editor)
+public sealed class EditorSteps(PatchContext context, EditorDriver editor)
 {
     private IReadOnlyList<Guid> box = [];
 

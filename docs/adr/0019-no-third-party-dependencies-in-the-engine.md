@@ -57,7 +57,7 @@ directional artefacts, but also less character. For a module driven through
 `Warp` and `Kaleidoscope` that is acceptable; a `Simplex` module would be a
 second opcode if the difference ever mattered.
 
-This does not extend to the shell. `Flyback.App` takes Avalonia
+This does not extend to the shell. `Flyback.Editor.Desktop` takes Avalonia
 ([0015](0015-avalonia-for-the-ui-shell.md)) without hesitation, because writing a
 windowing and layout toolkit is not the same kind of trade at all.
 

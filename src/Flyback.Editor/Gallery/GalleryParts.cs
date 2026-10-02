@@ -1,7 +1,7 @@
 ﻿using Avalonia.Controls;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// The gallery as a dialog shows it: the box that narrows it, which stays put, and

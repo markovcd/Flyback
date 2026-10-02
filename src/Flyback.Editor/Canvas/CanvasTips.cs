@@ -1,9 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
-using Flyback.App.Assist;
+using Flyback.Editor.Assist;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// What hovering says where the canvas has no room to: a socket's help, a tag's note,

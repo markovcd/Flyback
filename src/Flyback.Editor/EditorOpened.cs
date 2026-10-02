@@ -1,9 +1,9 @@
-using Flyback.App.Controls;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Updates;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Updates;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Runs the editor's launch sequence once its window can show dialogs and resolve files.</summary>
 internal sealed class EditorOpened(

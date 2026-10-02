@@ -33,7 +33,7 @@ tests both call.
   `EditorSetup`. A test that builds one by hand hands it the same: a
   `PluginCatalog.Empty` rather than a module catalog, an `EditorSetup` rather
   than a folder. Everything is a singleton, since the container is one window's.
-- **A class below Flyback.App declares the setup it reads as an interface.**
+- **A class below Flyback.Editor.Desktop declares the setup it reads as an interface.**
   `IlCompiler` takes an `IIlCompilerSetup`, which `EditorSetup` and the viewer's
   `ViewerOptions` both implement, and a test that builds one by hand passes none.
 - **A cycle is a `Lazy<T>`.** The take and the playback, the files and the

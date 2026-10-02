@@ -1,4 +1,4 @@
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>A plugin this Flyback has, and what state it is in.</summary>
 /// <param name="Waiting">The version waiting to replace it at the next start, or null where nothing is.</param>

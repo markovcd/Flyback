@@ -5,12 +5,13 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.App.Controls;
-using Flyback.App.Settings;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Settings;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>The rows the inspector and the settings window are made of: a name in a shared gutter and the control beside it.</summary>
 /// <param name="changed">Tells the canvas the patch changed, filed under the gesture named, if any.</param>

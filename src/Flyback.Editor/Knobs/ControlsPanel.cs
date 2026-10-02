@@ -5,11 +5,12 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>
 /// The patch's knobs under the canvas, wrapping onto more rows as they run out of

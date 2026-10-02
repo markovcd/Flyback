@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Flyback.Core;
+using Flyback.Ui;
 
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>
 /// Whether Flyback looks for a new release when it starts — the Privacy section of

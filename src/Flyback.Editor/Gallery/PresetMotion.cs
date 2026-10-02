@@ -10,7 +10,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// A preset's picture playing on its tile in place of the still, for as long as

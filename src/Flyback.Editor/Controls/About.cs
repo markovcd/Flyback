@@ -5,13 +5,15 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Gallery;
+using Flyback.Editor.Gallery;
 using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 using Flyback.Core.Render;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// What the program is, who wrote it, what it may be done with, and where to send

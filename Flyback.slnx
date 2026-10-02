@@ -24,7 +24,7 @@
     </Project>
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src/Flyback.App/Flyback.App.csproj" />
+    <Project Path="src/Flyback.Editor.Desktop/Flyback.Editor.Desktop.csproj" />
     <Project Path="src/Flyback.Assist/Flyback.Assist.csproj" />
     <Project Path="src/Flyback.Editor/Flyback.Editor.csproj" />
     <Project Path="src/Flyback.Cli/Flyback.Cli.csproj" />
@@ -56,7 +56,7 @@
     <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Flyback.App.Tests/Flyback.App.Tests.csproj" />
+    <Project Path="tests/Flyback.Editor.Desktop.Tests/Flyback.Editor.Desktop.Tests.csproj" />
     <Project Path="tests/Flyback.Cli.Tests/Flyback.Cli.Tests.csproj" />
     <Project Path="tests/Flyback.Core.Benchmarks/Flyback.Core.Benchmarks.csproj" />
     <Project Path="tests/Flyback.Specs/Flyback.Specs.csproj" />

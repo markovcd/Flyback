@@ -1,4 +1,4 @@
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>
 /// One thing a run has to say about itself: a name, and numbers and names beside

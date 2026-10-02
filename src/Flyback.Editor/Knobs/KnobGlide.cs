@@ -1,4 +1,4 @@
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>Knobs on their way from where they were to where they are going, eased in and out.</summary>
 internal sealed class KnobGlide(IReadOnlyDictionary<Guid, (float From, float To)> moves, TimeSpan length)

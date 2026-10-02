@@ -1,0 +1,1016 @@
+﻿using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Platform;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Notices;
+using Flyback.Core.Compile;
+using Flyback.Core.Graph;
+using Shouldly;
+using Colors = Flyback.Ui.Controls.Colors;
+
+namespace Flyback.Editor.Desktop.Tests.Ui;
+
+/// <summary>
+/// The canvas. ADR-0017 chose one custom-drawn control over composed ones and
+/// rests that choice on a single claim: painting and hit-testing cannot drift
+/// apart, because both go through NodeGeometry. Nothing checked it until these —
+/// and a drift there is the worst kind of bug this program can have, because the
+/// socket is drawn where you see it and answers somewhere else.
+/// </summary>
+public class NodeEditorTests : UiTest
+{
+    private static NodeDef Sink => NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
+
+    /// <summary>
+    /// An editor showing a patch, laid out large enough that framing it does not
+    /// shrink the nodes to nothing.
+    /// </summary>
+    private (NodeEditor Editor, Window Window) Editing(Patch patch) => Editing(patch, 900, 700);
+
+    /// <summary>A source with one output, and the Output block to wire it into.</summary>
+    private static Patch Pair(out NodeInstance source, out NodeInstance sink)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        source = builder.Add("value", 0, 0);
+        sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
+
+        return builder.Patch;
+    }
+
+    private static void ClickAt(NodeEditor editor, Window window, Point graph)
+    {
+        var at = Screen(editor, window, graph);
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+    }
+
+    // --- the invariant ------------------------------------------------------
+
+    /// <summary>
+    /// Every input socket, on the module with the most of them. Pressing where a
+    /// socket was painted has to start a wire on that socket — press the sixth
+    /// and get the fifth, and every patch anyone builds is quietly wrong.
+    /// </summary>
+    [AvaloniaFact]
+    public void Pressing_where_a_socket_is_painted_grabs_that_socket()
+    {
+        for (var port = 0; port < Sink.Inputs.Count; port++)
+        {
+            var patch = Pair(out var source, out var sink);
+            var (editor, window) = Editing(patch);
+
+            Drag(editor, window,
+                Geometry.InputPort(sink, Sink, port),
+                NodeGeometry.OutputPort(source, 0));
+
+            var landed = patch.IncomingTo(sink.Id, port);
+
+            landed.ShouldNotBeNull($"input {port} ({Sink.Inputs[port].Name}) should have taken the wire");
+            landed.SourceNode.ShouldBe(source.Id);
+
+            for (var other = 0; other < Sink.Inputs.Count; other++)
+                if (other != port)
+                    patch.IncomingTo(sink.Id, other).ShouldBeNull($"input {other} should be untouched");
+        }
+    }
+
+    /// <summary>The same claim from the other end: an output answers where it is drawn.</summary>
+    [AvaloniaFact]
+    public void Pressing_where_an_output_is_painted_grabs_that_output()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var coords = builder.Add("coord", 0, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        // Coordinates has four outputs, so picking the third proves the index is
+        // read off the position rather than assumed to be the first.
+        Drag(editor, window,
+            NodeGeometry.OutputPort(coords, 2),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        var wire = builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort);
+
+        wire.ShouldNotBeNull();
+        wire.SourceNode.ShouldBe(coords.Id);
+        wire.SourcePort.ShouldBe(2, "the third output is the one that was pressed");
+    }
+
+    /// <summary>
+    /// Between two sockets there is node body, and pressing it drags the node. If
+    /// a socket's hit area had crept outwards this would start a wire instead.
+    /// </summary>
+    [AvaloniaFact]
+    public void Pressing_the_body_between_sockets_moves_the_node()
+    {
+        var patch = Pair(out _, out var sink);
+        var (editor, window) = Editing(patch);
+
+        var first = Geometry.InputPort(sink, Sink, 0);
+        var second = Geometry.InputPort(sink, Sink, 1);
+        var between = new Point(first.X + NodeGeometry.Width / 2, (first.Y + second.Y) / 2);
+
+        var was = sink.X;
+        Drag(editor, window, between, between + new Vector(60, 40));
+
+        sink.X.ShouldBeGreaterThan(was, "the node should have moved with the pointer");
+        patch.Connections.ShouldBeEmpty("dragging the body should not have wired anything");
+    }
+
+    /// <summary>
+    /// Outputs are laid out above inputs, so an output's position cannot depend
+    /// on how many inputs the module has. Wires would move when they must not.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_outputs_position_does_not_depend_on_the_inputs()
+    {
+        var few = NodeInstance.Create(NodeCatalog.BuiltIn.Require("value"), 0, 0);
+        var many = NodeInstance.Create(Sink, 0, 0);
+
+        NodeGeometry.OutputPort(few, 0).Y.ShouldBe(NodeGeometry.OutputPort(many, 0).Y);
+    }
+
+    // --- re-patching --------------------------------------------------------
+
+    /// <summary>
+    /// ADR-0017 calls this out as what the one-control design made cheap:
+    /// dragging a connected input picks the wire up by its far end rather than
+    /// starting a new one. Broken, every attempted re-patch deletes a wire.
+    /// </summary>
+    [AvaloniaFact]
+    public void Dragging_a_connected_input_moves_the_wire_rather_than_dropping_it()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
+            .ShouldBeNull("the wire should have left the socket it was picked up from");
+
+        var moved = patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort);
+
+        moved.ShouldNotBeNull("and landed on the one it was dropped on");
+        moved.SourceNode.ShouldBe(source.Id, "still coming from where it always came from");
+
+        patch.Connections.Count.ShouldBe(1, "moving a wire should not make a second");
+    }
+
+    /// <summary>
+    /// Dropped on nothing, the wire is gone — which is how an input is unplugged,
+    /// and is why the disconnect happens when it is picked up rather than when it
+    /// lands.
+    /// </summary>
+    [AvaloniaFact]
+    public void Dragging_a_connected_input_into_space_unplugs_it()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            new Point(sink.X + 100, sink.Y + 420));
+
+        patch.Connections.ShouldBeEmpty();
+    }
+
+    /// <summary>An input takes one wire, so a second onto it replaces the first.</summary>
+    [AvaloniaFact]
+    public void A_second_wire_into_one_input_replaces_the_first()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+        var first = builder.Add("value", 0, 0);
+        var second = builder.Add("value", 0, 260);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 0);
+
+        builder.Patch.Connect(first.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(second, 0),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort));
+
+        builder.Patch.Connections.Count.ShouldBe(1);
+        builder.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)!.SourceNode.ShouldBe(second.Id);
+    }
+
+    // --- the sink is not deletable ------------------------------------------
+
+    /// <summary>
+    /// Delete on the Output does nothing at all — including not clearing the
+    /// selection, which would take its settings panel away with it (ADR-0037).
+    /// </summary>
+    [AvaloniaFact]
+    public void Delete_does_nothing_to_the_output_and_leaves_it_selected()
+    {
+        var patch = Pair(out _, out var sink);
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(sink));
+        editor.Selection.Focused.ShouldBe(sink);
+
+        editor.Edits.DeleteSelected();
+        Settle(window);
+
+        patch.Nodes.ShouldContain(sink, "the Output cannot be removed");
+        editor.Selection.Focused.ShouldBe(sink, "and stays selected, or its panel would vanish");
+    }
+
+    [AvaloniaFact]
+    public void Delete_removes_anything_else()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(source));
+        editor.Selection.Focused.ShouldBe(source);
+
+        editor.Edits.DeleteSelected();
+        Settle(window);
+
+        patch.Nodes.ShouldNotContain(source);
+    }
+
+    // --- what a drag looks like ---------------------------------------------
+
+    /// <summary>
+    /// A source wired across the canvas to the Output, with a third module
+    /// sitting on top of the wire. The obstacle is added last, so the ordinary
+    /// painting order puts it over the wire — which is the thing dragging has to
+    /// overturn.
+    /// </summary>
+    private static Patch Crossing(out NodeInstance source, out NodeInstance obstacle)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        source = builder.Add("value", 0, 0);
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 420, 200);
+        obstacle = builder.Add("math.add", 230, 100);
+
+        builder.Wire(source, 0, sink, NodeCatalog.OutputColorPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>
+    /// Where the wire runs over open canvas rather than over a module: past the
+    /// source's right edge and short of the obstacle's left one.
+    /// </summary>
+    private const double OpenColumn = 213;
+
+    /// <summary>
+    /// Pressed and not released, which is a module mid-drag. It has not been
+    /// moved, so every wire is where it was and the only thing that can differ
+    /// between the two frames is how they are drawn.
+    /// </summary>
+    private static void HoldDown(NodeEditor editor, Window window, NodeInstance node)
+    {
+        window.MouseDown(Screen(editor, window, Body(node)), MouseButton.Left);
+        Settle(window);
+    }
+
+    [AvaloniaFact]
+    public void A_wire_is_hidden_by_a_module_it_passes_behind()
+    {
+        var patch = Crossing(out _, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        WirePixelsOver(editor, window, obstacle).ShouldBe(0);
+    }
+
+    /// <summary>
+    /// And is not, once the module it belongs to is being moved. Which wire goes
+    /// where is the whole question a drag asks, and it cannot be answered by a
+    /// wire that disappears behind the third module along.
+    /// </summary>
+    [AvaloniaFact]
+    public void Dragging_a_module_brings_its_own_wires_in_front_of_the_others()
+    {
+        var patch = Crossing(out var source, out var obstacle);
+        var (editor, window) = Editing(patch);
+
+        HoldDown(editor, window, source);
+
+        WirePixelsOver(editor, window, obstacle).ShouldBeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// Drawn heavier as well as in front, measured where nothing else is: the
+    /// same wire, unmoved, covering more of the column it crosses than it did at
+    /// rest.
+    /// </summary>
+    [AvaloniaFact]
+    public void And_draws_them_heavier_than_they_rest_at()
+    {
+        var patch = Crossing(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        var resting = WireWidth(editor, window, OpenColumn);
+        resting.ShouldBeGreaterThan(0, "the wire has to be visible at rest as well");
+
+        HoldDown(editor, window, source);
+
+        WireWidth(editor, window, OpenColumn).ShouldBeGreaterThan(resting);
+    }
+
+    // --- reading the pixels -------------------------------------------------
+
+    /// <summary>
+    /// How many pixels of wire are visible inside a module's body. Inset off its
+    /// own outline, which is drawn in a color of its own and would otherwise be
+    /// counted as part of what is on top of it.
+    /// </summary>
+    private static int WirePixelsOver(NodeEditor editor, Window window, NodeInstance node)
+    {
+        var def = NodeCatalog.BuiltIn.Require(node.TypeId);
+        var bounds = Geometry.Bounds(node, def).Deflate(6);
+
+        var topLeft = Screen(editor, window, bounds.TopLeft);
+        var bottomRight = Screen(editor, window, bounds.BottomRight);
+
+        var pixels = Frame(window);
+        var count = 0;
+
+        for (var y = (int)Math.Ceiling(topLeft.Y); y < (int)bottomRight.Y; y++)
+        for (var x = (int)Math.Ceiling(topLeft.X); x < (int)bottomRight.X; x++)
+            if (Within(pixels, x, y) && Near(pixels[x, y], Colors.ScalarPort))
+                count++;
+
+        return count;
+    }
+
+    /// <summary>
+    /// How many pixels down one column of the canvas the wire covers — its
+    /// thickness, read off the picture rather than off the pen that drew it.
+    /// </summary>
+    /// <remarks>
+    /// A column with no module on it, so everything light in it is wire: the
+    /// canvas and both weights of grid line are far darker than this, and the
+    /// wire clears it at either opacity.
+    /// </remarks>
+    private static int WireWidth(NodeEditor editor, Window window, double graphX)
+    {
+        const byte lit = 120;
+
+        var column = (int)Math.Round(Screen(editor, window, new Point(graphX, 0)).X);
+        var pixels = Frame(window);
+        var count = 0;
+
+        for (var y = 0; y < pixels.GetLength(1); y++)
+            if (Within(pixels, column, y) && pixels[column, y].R >= lit)
+                count++;
+
+        return count;
+    }
+
+    private static bool Within(Color[,] pixels, int x, int y) =>
+        x >= 0 && y >= 0 && x < pixels.GetLength(0) && y < pixels.GetLength(1);
+
+    /// <summary>
+    /// Close enough to be that color. A tolerance rather than equality because
+    /// a stroke is antialiased even down its middle, and wide enough only to
+    /// cover that — a socket label is three times this far from a wire.
+    /// </summary>
+    private static bool Near(Color pixel, Color wanted, int tolerance = 8) =>
+        Math.Abs(pixel.R - wanted.R) <= tolerance
+        && Math.Abs(pixel.G - wanted.G) <= tolerance
+        && Math.Abs(pixel.B - wanted.B) <= tolerance;
+
+    /// <summary>
+    /// What the window actually drew. Skia is under the headless platform for
+    /// this: a draw order is not a thing any property exposes, so the only place
+    /// to read it is off the frame.
+    /// </summary>
+    private static Color[,] Frame(Window window)
+    {
+        using var frame = window.CaptureRenderedFrame()
+            ?? throw new InvalidOperationException("the window rendered nothing");
+
+        using var locked = frame.Lock();
+
+        var bytes = new byte[locked.RowBytes * locked.Size.Height];
+        Marshal.Copy(locked.Address, bytes, 0, bytes.Length);
+
+        var pixels = new Color[locked.Size.Width, locked.Size.Height];
+        var bgra = locked.Format == PixelFormat.Bgra8888;
+
+        for (var y = 0; y < locked.Size.Height; y++)
+        for (var x = 0; x < locked.Size.Width; x++)
+        {
+            var at = y * locked.RowBytes + x * 4;
+
+            pixels[x, y] = bgra
+                ? Color.FromRgb(bytes[at + 2], bytes[at + 1], bytes[at + 0])
+                : Color.FromRgb(bytes[at + 0], bytes[at + 1], bytes[at + 2]);
+        }
+
+        return pixels;
+    }
+
+    // --- undo and redo ------------------------------------------------------
+
+    /// <summary>
+    /// What is on the canvas now, looked up by id. A restore hands back a fresh
+    /// set of objects, so nothing a test held before an undo means anything
+    /// after one — which is the property worth writing the lookup out for.
+    /// </summary>
+    private static NodeInstance? Now(NodeEditor editor, NodeInstance node) => editor.History.Patch.Find(node.Id);
+
+    [AvaloniaFact]
+    public void There_is_nothing_to_undo_on_a_patch_nobody_has_edited()
+    {
+        var (editor, _) = Editing(Pair(out _, out _));
+
+        editor.History.CanUndo.ShouldBeFalse();
+        editor.History.CanRedo.ShouldBeFalse();
+        editor.History.Undo().ShouldBeFalse();
+    }
+
+    [AvaloniaFact]
+    public void Undo_takes_an_added_module_back_out_and_redo_puts_it_back()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        var added = editor.Edits.AddNode("math.mixer").ShouldNotBeNull();
+        Settle(window);
+
+        editor.History.Undo().ShouldBeTrue();
+        Now(editor, added).ShouldBeNull();
+
+        editor.History.Redo().ShouldBeTrue();
+        Now(editor, added).ShouldNotBeNull();
+    }
+
+    /// <summary>
+    /// A deleted module takes its wires with it, so putting it back has to put
+    /// them back too. Nothing in the editor arranges that — the step is the
+    /// whole document, and the wires were part of it.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_brings_a_deleted_module_back_with_its_wiring()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputLeftPort);
+
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(source));
+        editor.Edits.DeleteSelected();
+        Settle(window);
+
+        editor.History.Patch.Connections.ShouldBeEmpty();
+
+        editor.History.Undo().ShouldBeTrue();
+
+        Now(editor, source).ShouldNotBeNull();
+        editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
+    }
+
+    [AvaloniaFact]
+    public void Undo_unplugs_a_wire_that_was_just_patched()
+    {
+        var patch = Pair(out var source, out var sink);
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(source, 0),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull();
+
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.Patch.Connections.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Moving a wire from one socket to another unplugs it and plugs it in
+    /// again, which is two edits and one thing somebody did. One press of undo
+    /// puts it back where it was rather than leaving it dangling halfway.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_treats_a_re_patch_as_the_one_gesture_it_was()
+    {
+        var patch = Pair(out var source, out var sink);
+        patch.Connect(source.Id, 0, sink.Id, NodeCatalog.OutputColorPort);
+
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputColorPort),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputLeftPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputLeftPort).ShouldNotBeNull("the wire moved");
+
+        editor.History.Undo().ShouldBeTrue();
+
+        editor.History.Patch.IncomingTo(sink.Id, NodeCatalog.OutputColorPort)
+            .ShouldNotBeNull("and goes back to the socket it came off, in one press");
+    }
+
+    /// <summary>
+    /// A module put down in the wrong place is an edit like any other, and the
+    /// one edit here that nothing downstream can hear — so it goes in the
+    /// history without asking anything to recompile.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_puts_a_moved_module_back_without_rebuilding_the_program()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        var recompiles = 0;
+        editor.Reactions.Add<PatchChanged>(_ => recompiles++);
+
+        var from = Body(source);
+        Drag(editor, window, from, from + new Vector(180, 120));
+
+        Now(editor, source).ShouldNotBeNull().X.ShouldBe(180, 1);
+        recompiles.ShouldBe(0, "where a module sits is not in the program");
+        editor.History.CanUndo.ShouldBeTrue();
+
+        editor.History.Undo().ShouldBeTrue();
+        Now(editor, source).ShouldNotBeNull().X.ShouldBe(0, 1);
+    }
+
+    /// <summary>
+    /// Opening something else is not an edit to what was open. Undoing back into
+    /// the patch somebody had before they loaded a file would lose them the file.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_that_arrives_from_outside_is_not_something_to_undo_into()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.Edits.AddNode("math.mixer");
+        Settle(window);
+        editor.History.CanUndo.ShouldBeTrue();
+
+        editor.History.Open(Presets.Plasma(NodeCatalog.BuiltIn));
+        Settle(window);
+
+        editor.History.CanUndo.ShouldBeFalse(
+            "and the layout a preset arrives already placed by is not an edit either — ADR-0070");
+
+        editor.History.CanRedo.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The selection is what the inspector is showing, so an undo that removes
+    /// the selected module has to let go of it — and one that does not, must
+    /// keep it, or every undo would close the panel somebody is working in.
+    /// </summary>
+    [AvaloniaFact]
+    public void Undo_keeps_the_selection_where_what_it_named_is_still_there()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        ClickAt(editor, window, Body(source));
+
+        source.InputValues[0] = 0.5f;
+        editor.History.Record();
+
+        editor.History.Undo().ShouldBeTrue();
+        editor.Selection.Focused.ShouldNotBeNull().Id.ShouldBe(source.Id);
+
+        var added = editor.Edits.AddNode("math.mixer").ShouldNotBeNull();
+        editor.Selection.Focused.ShouldNotBeNull().Id.ShouldBe(added.Id);
+
+        editor.History.Undo().ShouldBeTrue();
+        editor.Selection.Focused.ShouldBeNull("what was selected is no longer there");
+    }
+
+    /// <summary>
+    /// What the shell asks before it lets a patch go. The logic is the history's
+    /// and is tested there; what matters here is that the canvas reports it for
+    /// the edits somebody actually makes on it.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_canvas_says_whether_there_is_unsaved_work_on_it()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.History.IsModified.ShouldBeFalse("nothing has been done to it yet");
+
+        editor.Edits.AddNode("math.mixer");
+        Settle(window);
+        editor.History.IsModified.ShouldBeTrue();
+
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.IsModified.ShouldBeFalse("undone back to the patch that was opened");
+
+        editor.Edits.AddNode("math.mixer");
+        Settle(window);
+
+        editor.History.MarkSaved();
+        editor.History.IsModified.ShouldBeFalse("written out is written out");
+        editor.History.CanUndo.ShouldBeTrue("and saving is not a reason to stop being able to undo");
+
+        editor.History.Undo().ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue("undone back past what was written out");
+    }
+
+    [AvaloniaFact]
+    public void A_patch_that_arrives_from_outside_has_nothing_unsaved_in_it()
+    {
+        var (editor, window) = Editing(Pair(out _, out _));
+
+        editor.Edits.AddNode("math.mixer");
+        Settle(window);
+        editor.History.IsModified.ShouldBeTrue();
+
+        editor.History.Open(Presets.Plasma(NodeCatalog.BuiltIn));
+        Settle(window);
+
+        editor.History.IsModified.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// The assistant's whole patch, which arrives as an edit rather than as a
+    /// new document. Nothing about it is small, and that is exactly why it has
+    /// to undo: it replaces everything on the canvas at once.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_patch_applied_as_an_edit_undoes_like_any_other()
+    {
+        var patch = Pair(out var source, out _);
+        var (editor, window) = Editing(patch);
+
+        editor.History.Apply(Presets.Plasma(NodeCatalog.BuiltIn));
+        Settle(window);
+
+        Now(editor, source).ShouldBeNull("the new patch is on the canvas");
+        editor.History.CanUndo.ShouldBeTrue();
+        editor.History.IsModified.ShouldBeTrue("and none of it has been saved");
+
+        editor.History.Undo().ShouldBeTrue();
+        Now(editor, source).ShouldNotBeNull("undo puts back what was there before it");
+
+        editor.History.Redo().ShouldBeTrue();
+        Now(editor, source).ShouldBeNull("and redo brings it round again");
+    }
+
+    // --- cycles -------------------------------------------------------------
+
+    /// <summary>
+    /// An oscillator, something reading it, and the Output — everything needed to
+    /// draw a loop by wiring the second back into the first.
+    /// </summary>
+    private static Patch Loop(out NodeInstance osc, out NodeInstance gain, out NodeInstance sink)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        osc = builder.Add("osc.sine", 0, 0);
+        gain = builder.Add("math.mul", 300, 260);
+        sink = builder.Add(NodeCatalog.OutputTypeId, 620, 0);
+
+        builder.Wire(osc, 0, gain, 0).Wire(osc, 0, sink, NodeCatalog.OutputLeftPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>
+    /// Drawing a wire that runs backwards is the whole gesture, and nothing is put
+    /// on it: the wire itself carries the evaluation before, so a cycle is patched
+    /// the way a rack lets you patch one and the patch is legal as drawn.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_that_closes_a_loop_is_drawn_as_it_was_asked_for()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        // gain.out -> sine.phase, which closes sine -> gain -> sine.
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            Geometry.InputPort(osc, sine, 2));
+
+        var closing = patch.IncomingTo(osc.Id, 2);
+
+        closing.ShouldNotBeNull("the oscillator's phase should be fed");
+        closing.SourceNode.ShouldBe(gain.Id, "straight from the gain, with nothing in between");
+
+        patch.Nodes.Count.ShouldBe(3, "nothing should have been added to the canvas");
+
+        // One wire of the ring carries the previous evaluation, and it is the one
+        // leaving the oscillator — the module the Output reads — rather than
+        // whichever happened to be drawn last.
+        Cycles.Backwards(patch).ShouldHaveSingleItem().SourceNode.ShouldBe(osc.Id);
+
+        // Which is the point of all of it: the patch is legal as drawn.
+        patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// One gesture, so one press of undo — and with nothing placed alongside the
+    /// wire, taking it back leaves the canvas as it was.
+    /// </summary>
+    [AvaloniaFact]
+    public void Taking_back_that_wire_leaves_the_patch_as_it_was()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            Geometry.InputPort(osc, sine, 2));
+
+        editor.History.Undo().ShouldBeTrue();
+
+        editor.History.Patch.IncomingTo(osc.Id, 2).ShouldBeNull("the wire is gone");
+        Cycles.Backwards(editor.History.Patch).ShouldBeEmpty("and with it the loop");
+    }
+
+    /// <summary>
+    /// A module's own output dropped on its own input is the shortest loop there
+    /// is, and is drawn like any other — the canvas slings it under the box so it
+    /// is not hidden behind the module it belongs to.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_module_can_be_wired_to_itself()
+    {
+        var patch = Loop(out var osc, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(osc, 0),
+            Geometry.InputPort(osc, sine, 2));
+
+        var closing = patch.IncomingTo(osc.Id, 2);
+
+        closing.ShouldNotBeNull("the wire should have been drawn");
+        closing.SourceNode.ShouldBe(osc.Id);
+
+        Cycles.Backwards(patch).ShouldHaveSingleItem().ShouldBe(closing);
+        patch.CompileForAudio(NodeCatalog.BuiltIn).HasErrors.ShouldBeFalse();
+    }
+
+    /// <summary>
+    /// A wire that runs forwards closes nothing, and is drawn solid because what
+    /// it carries is this evaluation.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_ordinary_wire_runs_forwards()
+    {
+        var patch = Loop(out _, out var gain, out var sink);
+        var (editor, window) = Editing(patch);
+
+        Drag(editor, window,
+            NodeGeometry.OutputPort(gain, 0),
+            Geometry.InputPort(sink, Sink, NodeCatalog.OutputRightPort));
+
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
+            .ShouldNotBeNull()
+            .SourceNode.ShouldBe(gain.Id, "the wire should be exactly what was drawn");
+
+        Cycles.Backwards(patch).ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Re-drawing the wire that closes a loop leaves it one loop with one
+    /// evaluation of delay. Nothing accumulates, because there is nothing to
+    /// accumulate.
+    /// </summary>
+    [AvaloniaFact]
+    public void Drawing_the_closing_wire_again_changes_nothing()
+    {
+        var patch = Loop(out var osc, out var gain, out _);
+        var (editor, window) = Editing(patch);
+
+        var sine = NodeCatalog.BuiltIn.Require("osc.sine");
+        var phase = Geometry.InputPort(osc, sine, 2);
+
+        Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
+
+        patch.Disconnect(osc.Id, 2);
+        editor.History.Record();
+
+        Drag(editor, window, NodeGeometry.OutputPort(gain, 0), phase);
+
+        patch.Nodes.Count.ShouldBe(3);
+        Cycles.Backwards(patch).Count.ShouldBe(1, "still one loop, still one evaluation of delay");
+    }
+
+    // --- laying out ---------------------------------------------------------
+
+    /// <summary>
+    /// The layout lives in the engine and is handed the editor's own dimensions,
+    /// because the assistant's workbench wants the same routine and has no canvas
+    /// to ask. Nothing in the type system holds the two together, so this does:
+    /// a node laid out to a size it is not drawn at overlaps its neighbour, which
+    /// is the exact fault the layout was written to remove.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_layout_is_told_the_size_a_node_is_actually_drawn()
+    {
+        var metrics = Geometry.Metrics;
+
+        metrics.Width.ShouldBe(NodeGeometry.Width);
+        metrics.HeaderHeight.ShouldBe(NodeGeometry.HeaderHeight);
+        metrics.RowHeight.ShouldBe(NodeGeometry.RowHeight);
+        metrics.FooterPadding.ShouldBe(NodeGeometry.FooterPadding);
+        metrics.GroupPadding.ShouldBe(NodeGeometry.GroupPadding);
+        metrics.GroupHandleHeight.ShouldBe(NodeGeometry.GroupHandleHeight);
+
+        // And the derived measurements agree, which is what actually gets used.
+        var node = NodeInstance.Create(Sink, 0, 0);
+
+        metrics.Height(Sink).ShouldBe(Geometry.Height(Sink));
+
+        for (var port = 0; port < Sink.Inputs.Count; port++)
+            metrics.InputPort(Sink, port).ShouldBe(Geometry.InputPort(node, Sink, port).Y);
+
+        // Including a shut group's, which the layout reserves the room for and
+        // the editor draws — a box laid out to a size it is not drawn at is the
+        // same overlap as a module laid out to one.
+        var sockets = new GroupSockets(
+            [new GroupSocket(node.Id, 0, IsOutput: false), new GroupSocket(node.Id, 1, IsOutput: false)],
+            [new GroupSocket(node.Id, 0, IsOutput: true)]);
+
+        var bounds = new Rect(0, 0, NodeGeometry.Width, Geometry.GroupHeight(sockets));
+
+        metrics.GroupHeight(sockets).ShouldBe(Geometry.GroupHeight(sockets));
+
+        for (var row = 0; row < sockets.Outputs.Count; row++)
+            metrics.GroupPort(sockets, row, isOutput: true)
+                .ShouldBe(NodeGeometry.GroupOutputPort(bounds, row).Y);
+
+        for (var row = 0; row < sockets.Inputs.Count; row++)
+            metrics.GroupPort(sockets, row, isOutput: false)
+                .ShouldBe(Geometry.GroupInputPort(bounds, sockets, row).Y);
+    }
+
+    /// <summary>
+    /// Laying out is one edit. Ctrl+Z has to put every node back at once —
+    /// a button that took eleven presses to undo would be worse than no button.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_is_a_single_undo()
+    {
+        var patch = Presets.Drone(NodeCatalog.BuiltIn);
+
+        // Dragged out of place first, because a preset arrives laid out
+        // (ADR-0070) and there would otherwise be nothing for the button to do.
+        patch.Nodes[0].X += 240;
+        patch.Nodes[0].Y += 160;
+
+        var (editor, _) = Editing(patch);
+
+        var before = patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        editor.Edits.Tidy();
+        editor.History.Patch.Nodes
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            .ShouldContain(n => n.X != before[n.Id].X || n.Y != before[n.Id].Y, "something should have moved");
+
+        editor.History.Undo().ShouldBeTrue();
+
+        foreach (var node in editor.History.Patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id]);
+    }
+
+    /// <summary>
+    /// A patch too wide for the canvas with no box to shut is said rather than
+    /// shown, and nothing is moved (ADR-0092).
+    /// </summary>
+    /// <remarks>
+    /// Coordinates are held inside the canvas, so writing that drawing would fold
+    /// its far end onto the boundary and stack it, which reads as a broken layout
+    /// rather than as an oversized patch.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_wider_than_the_canvas_says_so_and_moves_nothing()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        var last = builder.Add("time", 0, 0);
+
+        // A node and the gap after it is 304 across and the canvas is 15000, so
+        // a chain of sixty is a quarter wider than there is room for.
+        for (var i = 0; i < 60; i++)
+        {
+            var next = builder.Add("math.mul", 0, 0);
+            builder.Wire(last, 0, next, 0);
+            last = next;
+        }
+
+        builder.Wire(last, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var (editor, _) = Editing(builder.Patch);
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        var before = builder.Patch.Nodes.ToDictionary(n => n.Id, n => (n.X, n.Y));
+
+        editor.Edits.Tidy();
+
+        said.ShouldContain("too big to draw");
+
+        foreach (var node in editor.History.Patch.Nodes)
+            (node.X, node.Y).ShouldBe(before[node.Id], "nothing should have moved");
+    }
+
+    /// <summary>
+    /// And one too wide only because its boxes are open has boxes shut until it
+    /// fits, named in what it says (ADR-0092).
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_too_wide_with_its_boxes_open_shuts_boxes_and_names_them()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 0, 0);
+        NodeInstance? last = null;
+
+        // Six chains of twelve, each boxed: open, every box is a ring round twelve
+        // columns of its own, and six of those in a row want twice the canvas.
+        for (var chain = 0; chain < 6; chain++)
+        {
+            var made = new List<NodeInstance>();
+
+            for (var i = 0; i < 12; i++)
+            {
+                var node = builder.Add("math.mul", 0, 0);
+
+                if (last is { } feeding) builder.Wire(feeding, 0, node, 0);
+
+                made.Add(node);
+                last = node;
+            }
+
+            builder.Group($"Chain {chain}", [.. made]);
+        }
+
+        builder.Wire(last!, 0, sink, NodeCatalog.OutputLeftPort);
+
+        foreach (var group in builder.Patch.Groups!) group.Collapsed = false;
+
+        var (editor, _) = Editing(builder.Patch);
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        editor.Edits.Tidy();
+
+        said.ShouldContain("wider than the canvas");
+        said.ShouldContain("Chain ");
+        said.ShouldContain("shut");
+
+        editor.History.Patch.Groups!.ShouldContain(group => group.Collapsed);
+    }
+
+    /// <summary>And one that fits says nothing, since a patch that laid out is a patch that laid out.</summary>
+    [AvaloniaFact]
+    public void Laying_out_a_patch_that_fits_says_nothing()
+    {
+        var (editor, _) = Editing(Presets.Drone(NodeCatalog.BuiltIn));
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        editor.Edits.Tidy();
+
+        said.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// And it is only an edit to the positions: the patch still compiles to the
+    /// same program, so the picture and the sound are exactly what they were.
+    /// </summary>
+    [AvaloniaFact]
+    public void Laying_out_leaves_the_program_alone()
+    {
+        var patch = Presets.Sequence(NodeCatalog.BuiltIn);
+        var (editor, _) = Editing(patch);
+
+        var before = patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops;
+
+        editor.Edits.Tidy();
+
+        editor.History.Patch.CompileForVideo(NodeCatalog.BuiltIn).Program.Ops.ShouldBe(before);
+    }
+}

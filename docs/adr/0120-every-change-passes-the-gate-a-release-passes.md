@@ -74,7 +74,7 @@ and an instrumented assembly reaches native code because the instrumentation put
 a P/Invoke in it. Three tests fail that way, on Linux only — the Windows
 collector attaches a profiler instead of rewriting, so a local run is green
 about it. Excluding the assemblies the tests read is what coverage.runsettings
-does, but the full list of them includes Flyback.Core and Flyback.App, which is
+does, but the full list of them includes Flyback.Core and Flyback.Editor.Desktop, which is
 most of what the figure is for. Measuring costs roughly twice the test time on
 top, for a number nothing is allowed to fail on.
 

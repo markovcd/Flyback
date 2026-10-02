@@ -3,9 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>The box a name on the inspector's plate turns into when it is double-clicked.</summary>
 internal static class NameBox

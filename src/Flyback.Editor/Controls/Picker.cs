@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// A list you point at. A <see cref="ComboBox"/> in every way but one: no keystroke

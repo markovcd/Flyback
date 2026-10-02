@@ -1,6 +1,6 @@
 ﻿using Avalonia;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>Where a drag takes its <see cref="IPointerAnchor"/> from.</summary>
 internal interface IPointerAnchors

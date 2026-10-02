@@ -3,12 +3,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// The selected block's face behind the whole panel: the band its name stands on,

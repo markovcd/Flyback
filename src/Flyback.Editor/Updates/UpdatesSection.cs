@@ -1,9 +1,10 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>The update half of the settings window's Privacy section: whether Flyback keeps itself up to date (ADR-0088).</summary>
 /// <remarks>

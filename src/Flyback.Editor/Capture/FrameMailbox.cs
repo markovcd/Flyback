@@ -1,4 +1,4 @@
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>
 /// One frame deep, newest wins. The render thread leaves a frame here and the

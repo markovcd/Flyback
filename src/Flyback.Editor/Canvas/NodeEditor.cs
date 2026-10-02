@@ -2,10 +2,10 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The canvas: one control that draws the patch and hands the pointer and the keys to

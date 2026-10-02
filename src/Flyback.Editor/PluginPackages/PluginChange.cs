@@ -1,4 +1,4 @@
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>What installing a package does to the plugin already in its folder.</summary>
 internal enum PluginChange

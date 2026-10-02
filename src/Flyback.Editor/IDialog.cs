@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// A panel over the window, to be dealt with before anything else happens.

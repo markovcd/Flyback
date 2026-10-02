@@ -1,15 +1,15 @@
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using Flyback.App.Capture;
-using Flyback.App.Midi;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
-using Flyback.App.Windows;
+using Flyback.Editor.Capture;
+using Flyback.Ui.Midi;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Windows;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// Play and pause, and the mute that goes with them, on the transport row and on the

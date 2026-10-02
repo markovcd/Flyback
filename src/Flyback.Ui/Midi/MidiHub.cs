@@ -3,7 +3,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>
 /// Everything that can play the patch, and the join between what is being played

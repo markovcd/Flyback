@@ -1,6 +1,6 @@
-using Flyback.App.Site;
+using Flyback.Editor.Site;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>A plugin the site lists.</summary>
 /// <param name="Rating">Its stars on the site, which only the site gives.</param>

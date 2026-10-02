@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>Reporting a shared preset or plugin to the preset site's admin.</summary>
 internal static class SiteReports

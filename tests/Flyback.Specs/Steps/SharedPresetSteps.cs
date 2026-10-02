@@ -1,8 +1,10 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Flyback.App;
-using Flyback.App.Site;
+using Flyback.Editor;
+using Flyback.Editor.Desktop;
+using Flyback.Ui;
+using Flyback.Editor.Site;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +15,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Presets shared on the preset site, as the editor's gallery finds and opens them.</summary>
 [Binding]
-public sealed class SharedPresetSteps(Editor editor) : IDisposable
+public sealed class SharedPresetSteps(EditorDriver editor) : IDisposable
 {
     private static readonly Uri Root = new("http://site.test/");
 

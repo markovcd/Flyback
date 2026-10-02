@@ -2,10 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
-using Flyback.App.Audio;
-using Flyback.App.Controls;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 /// <summary>
 /// The preview full screen on a monitor of its own, with the knobs and the

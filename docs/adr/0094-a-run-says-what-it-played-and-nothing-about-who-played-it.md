@@ -37,7 +37,7 @@ finer is a fact about the person.
 
 **Reports go to Aptabase,** which counts events for desktop programs, keeps no
 address and needs no account from the person running one. The application key
-`A-EU-8282660952` is in `src/Flyback.App/Statistics/aptabase-key.txt` and
+`A-EU-8282660952` is in `src/Flyback.Editor.Desktop/Statistics/aptabase-key.txt` and
 compiled in, the way the release key is
 ([0088](0088-a-release-installs-itself-at-the-next-start.md)); the key names its
 own region, and a build with no key in it sends nothing and says so on the

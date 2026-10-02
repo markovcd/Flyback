@@ -1,8 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
+using Flyback.Ui;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Which monitor a window is on, and putting it back on the one it was left on.</summary>
 internal static class MonitorPlacement

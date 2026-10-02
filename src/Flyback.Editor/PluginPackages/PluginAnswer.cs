@@ -1,4 +1,4 @@
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>What the install dialog was answered with. Closing it without an answer is <see cref="Cancel"/>.</summary>
 internal enum PluginAnswer

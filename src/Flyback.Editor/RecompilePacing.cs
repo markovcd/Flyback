@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Paces a page's recompiles to what it keeps up with: a knob dragged asks for one each

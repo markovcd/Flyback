@@ -6,7 +6,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor controls that must leave a recording's patch alone.</summary>
 [Binding]
-public sealed class RecordingSteps(Editor editor)
+public sealed class RecordingSteps(EditorDriver editor)
 {
     private bool remainedOpen;
 

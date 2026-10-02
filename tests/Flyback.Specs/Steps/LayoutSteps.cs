@@ -6,7 +6,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor's columns: what the toolbar puts away, swaps and brings back.</summary>
 [Binding]
-public sealed class LayoutSteps(Editor editor)
+public sealed class LayoutSteps(EditorDriver editor)
 {
     private double canvasWas;
     private double previewWas;

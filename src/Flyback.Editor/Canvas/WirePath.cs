@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Media;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>The shape a wire is drawn in between two sockets, forwards or round the back.</summary>
 internal static class WirePath

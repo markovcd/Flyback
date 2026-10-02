@@ -4,15 +4,17 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Site;
-using Flyback.App.Statistics;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Site;
+using Flyback.Editor.Statistics;
 using Flyback.Plugins.Hosting;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The bar along the bottom: whatever there is to say, and what the patch costs

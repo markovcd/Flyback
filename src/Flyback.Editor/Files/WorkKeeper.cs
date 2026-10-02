@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Threading;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// Unsaved work kept on disk while it is unsaved, so a crash costs a few seconds of

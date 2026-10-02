@@ -1,6 +1,6 @@
 using System.Globalization;
 using Avalonia.Input;
-using Flyback.App.Midi;
+using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Reqnroll;
 using Shouldly;

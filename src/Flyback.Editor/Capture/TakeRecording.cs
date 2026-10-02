@@ -1,18 +1,19 @@
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Flyback.App.Audio;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Files;
-using Flyback.App.Notices;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Files;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
+using Flyback.Ui.Audio;
+using Flyback.Ui.Controls;
+using Flyback.Ui;
 
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>
 /// One take, from the count-in to the closed file: recording a performance, as

@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Flyback.Core;
+using Flyback.Ui;
 
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>
 /// Whether Flyback counts how it is used — the Privacy section of the settings

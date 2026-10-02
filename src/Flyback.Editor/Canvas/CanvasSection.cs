@@ -1,10 +1,11 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
-using Flyback.App.Settings;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Settings;
+using Flyback.Ui.Controls;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The Canvas section of the settings window: how modules are laid out, and how

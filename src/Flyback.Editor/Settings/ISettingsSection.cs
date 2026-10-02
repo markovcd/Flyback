@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>One tab of the settings window (ADR-0082), and what it puts in force.</summary>
 internal interface ISettingsSection

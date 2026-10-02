@@ -1,10 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Flyback.App;
-using Flyback.App.Audio;
-using Flyback.App.Controls;
-using Flyback.App.Gallery;
+using Flyback.Editor;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Gallery;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;

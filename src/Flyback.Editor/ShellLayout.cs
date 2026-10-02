@@ -3,20 +3,21 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Assist;
-using Flyback.App.Audio;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Inspect;
-using Flyback.App.Knobs;
-using Flyback.App.Notices;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
-using Flyback.App.Windows;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Assist;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Windows;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>The editor's grid and the panels and views arranged in it.</summary>
 internal sealed class ShellLayout(

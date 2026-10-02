@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>Hands Avalonia the driver <see cref="OutputSettings.Driver"/> asks for, before it opens a window (ADR-0155).</summary>
 public static class GraphicsDrivers

@@ -1,7 +1,7 @@
 using Avalonia;
-using Flyback.App;
 using Flyback.Core.Compile;
 using Flyback.Core.Render;
+using Flyback.Ui;
 
 namespace Flyback.Viewer;
 

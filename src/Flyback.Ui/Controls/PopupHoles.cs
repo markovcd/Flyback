@@ -4,7 +4,7 @@ using Avalonia;
 using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Where popups open over a control cover it: what a native control drawn above the

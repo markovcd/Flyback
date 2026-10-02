@@ -1,0 +1,827 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Notices;
+using Flyback.Core.Graph;
+using Shouldly;
+
+namespace Flyback.Editor.Desktop.Tests.Ui;
+
+/// <summary>
+/// Drawing several modules as one box: the gesture that makes one, what the box
+/// stands in front of, and what happens to a wire that crosses it.
+/// </summary>
+/// <remarks>
+/// Nothing here is about what a patch computes, because a group changes none of
+/// it — see <see cref="NodeGroup"/>. What is worth pinning is that the canvas
+/// stops drawing and stops answering for the modules a box covers, because the
+/// bug this feature can have is a click reaching a module nobody can see.
+/// </remarks>
+public class GroupTests : UiTest
+{
+    /// <summary>
+    /// A chain with a module either side of the middle pair, so grouping the
+    /// pair gives a boundary with one wire crossing each way.
+    /// </summary>
+    private static Patch Chain(
+        out NodeInstance feed, out NodeInstance first, out NodeInstance second, out NodeInstance sink)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        feed = builder.Add("time", 0, 0);
+        first = builder.Add("osc.sine", 300, 0);
+        second = builder.Add("math.mul", 600, 0);
+        sink = builder.Add(NodeCatalog.OutputTypeId, 900, 0);
+
+        builder.Wire(feed, 0, first, 0)
+               .Wire(first, 0, second, 0)
+               .Wire(second, 0, sink, NodeCatalog.OutputLeftPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>Two pairs, far enough apart that neither box reaches the other.</summary>
+    private static Patch Pairs(
+        out NodeInstance topLeft,
+        out NodeInstance topRight,
+        out NodeInstance lowLeft,
+        out NodeInstance lowRight)
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        topLeft = builder.Add("time", 0, 0);
+        topRight = builder.Add("osc.sine", 300, 0);
+        lowLeft = builder.Add("time", 0, 300);
+        lowRight = builder.Add("osc.sine", 300, 300);
+
+        var sink = builder.Add(NodeCatalog.OutputTypeId, 700, 150);
+
+        builder.Wire(topLeft, 0, topRight, 0)
+               .Wire(topRight, 0, sink, NodeCatalog.OutputLeftPort)
+               .Wire(lowLeft, 0, lowRight, 0)
+               .Wire(lowRight, 0, sink, NodeCatalog.OutputRightPort);
+
+        return builder.Patch;
+    }
+
+    /// <summary>Draws each pair as a box. Ctrl+G making one is pinned above.</summary>
+    private static (NodeGroup Top, NodeGroup Low) TwoBoxes(
+        NodeEditor editor,
+        Window window,
+        NodeInstance topLeft,
+        NodeInstance topRight,
+        NodeInstance lowLeft,
+        NodeInstance lowRight)
+    {
+        var top = editor.History.Patch.Group([topLeft.Id, topRight.Id]).ShouldNotBeNull();
+        var low = editor.History.Patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
+
+        editor.History.Record();
+        Settle(window);
+
+        return (top, low);
+    }
+
+    /// <summary>Selects the two middle modules and presses Ctrl+G.</summary>
+    private static NodeGroup GroupTheMiddle(
+        NodeEditor editor, Window window, NodeInstance first, NodeInstance second)
+    {
+        Click(editor, window, Body(first));
+        Click(editor, window, Body(second), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        return editor.History.Patch.Groups.ShouldNotBeNull().Single();
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_g_draws_the_selected_modules_as_one_box()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        group.Members.ShouldBe([first.Id, second.Id], ignoreOrder: true);
+        group.Collapsed.ShouldBeTrue();
+
+        // The patch is untouched: the box is a way of drawing it, not an edit to it.
+        patch.Nodes.Count.ShouldBe(4);
+        patch.Connections.Count.ShouldBe(3);
+    }
+
+    /// <summary>
+    /// Ctrl+G on one module does nothing, and says so. A box round one is the
+    /// module again with a second name — every socket it could show is one that
+    /// module already has, in the same order.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_g_on_a_single_module_is_declined()
+    {
+        var patch = Chain(out _, out var first, out _, out _);
+        var (editor, window) = Editing(patch);
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        Click(editor, window, Body(first));
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        patch.Groups.ShouldBeNull();
+        said.ShouldContain("needs 2 modules");
+
+        // And the selection is left exactly as it was, so the next thing tried
+        // is tried on what was already picked.
+        editor.Selection.Nodes.ShouldBe([first]);
+    }
+
+    /// <summary>
+    /// Selecting everything and grouping it is the case where the two rules meet:
+    /// the Output is left out, and what is left still has to be enough.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_g_on_one_module_and_the_output_is_declined_too()
+    {
+        var patch = Chain(out _, out var first, out _, out var sink);
+        var (editor, window) = Editing(patch);
+
+        Click(editor, window, Body(first));
+        Click(editor, window, Body(sink), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        patch.Groups.ShouldBeNull();
+    }
+
+    /// <summary>Ctrl+G on a box that is already one keeps it.</summary>
+    /// <remarks>
+    /// Grouping forgets every member's old group first, so going ahead would
+    /// dissolve the box to make it again: the same modules, without the name and
+    /// without the sockets left on its edge. It is declined instead.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Grouping_a_box_that_is_already_one_keeps_its_name()
+    {
+        var patch = Pairs(out _, out _, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var low = patch.Group([lowLeft.Id, lowRight.Id]).ShouldNotBeNull();
+        low.Name = "Voice";
+        editor.History.Record();
+        Settle(window);
+
+        // A click on the shut box selects it, members and all.
+        Click(editor, window, BoxHeader(patch, low));
+
+        editor.Selection.Group.ShouldBe(low);
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control);
+        Settle(window);
+
+        var kept = editor.History.Patch.Groups.ShouldNotBeNull().ShouldHaveSingleItem();
+        kept.Name.ShouldBe("Voice", "the box was already a group, and grouping it again cost it its name");
+    }
+
+    /// <summary>
+    /// The bug this feature can have. A module under a box is not on the canvas,
+    /// so a press where it used to be must not reach it — otherwise it could be
+    /// dragged out from under the thing drawn over it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_module_under_a_box_cannot_be_clicked()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        GroupTheMiddle(editor, window, first, second);
+
+        // Where the second module's own body is — under the box, since the box is
+        // drawn from the top left of the two and is narrower than they are wide.
+        Click(editor, window, Body(second));
+
+        editor.Selection.Nodes.ShouldNotContain(second);
+    }
+
+    /// <summary>
+    /// A click on a shut box is the box's, whatever lies under it.
+    /// </summary>
+    /// <remarks>
+    /// A box is drawn at its members' least x and least y, which need not be
+    /// where any member is, and is painted over whatever module is there. The
+    /// press asks the boxes before the modules, which is the order they are
+    /// painted in, so the module nobody can see does not take it.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_click_on_a_shut_box_is_not_taken_by_a_module_lying_under_it()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var under = builder.Add("time", 0, 0);
+        var left = builder.Add("osc.sine", 0, 400);
+        var right = builder.Add("math.add", 400, 0);
+        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+        builder.Wire(left, 0, right, 0);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var box = editor.History.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.History.Record();
+        Settle(window);
+
+        var bounds = Geometry.GroupBounds(editor.History.Patch, box, editor.History.Patch.SocketsOf(box));
+        bounds.Contains(Body(under)).ShouldBeTrue("the box is drawn over the module this test is about");
+
+        Click(editor, window, Body(under));
+
+        editor.Selection.Nodes.Select(n => n.Id).ShouldNotContain(under.Id, "the module under the box cannot be seen");
+        editor.Selection.Group.ShouldBe(box, "the click landed on the box");
+    }
+
+    [AvaloniaFact]
+    public void Pressing_the_box_selects_what_is_inside_it()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        Click(editor, window, Body(feed));
+        editor.Selection.Nodes.ShouldBe([feed]);
+
+        Click(editor, window, BoxHeader(patch, group));
+
+        editor.Selection.Nodes.Select(n => n.Id).ShouldBe(group.Members, ignoreOrder: true);
+    }
+
+    [AvaloniaFact]
+    public void Double_clicking_the_strip_of_an_open_group_shuts_it()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Edits.ToggleBox(group);
+        Settle(window);
+
+        Click(editor, window, OpenHandle(patch, group), count: 2);
+        group.Collapsed.ShouldBeTrue();
+    }
+
+    // --- looking into a box ------------------------------------------------------
+
+    /// <summary>
+    /// A double-click looks into a box without opening it: nothing in the patch, the
+    /// file or the history changes.
+    /// </summary>
+    [AvaloniaFact]
+    public void Double_clicking_a_box_looks_inside_without_opening_it()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        var steps = 0;
+        editor.History.Recorded += (_, _) => steps++;
+
+        Click(editor, window, BoxHeader(patch, group), count: 2);
+
+        editor.Selection.Peeked.ShouldBe(group);
+        group.Collapsed.ShouldBeTrue("looking is not opening");
+        steps.ShouldBe(0, "looking into a box is not an edit");
+
+        // The modules are on the canvas, and answer a click where they stand.
+        Click(editor, window, Body(second));
+        editor.Selection.Nodes.ShouldBe([second]);
+        editor.Selection.Peeked.ShouldBe(group);
+    }
+
+    /// <summary>
+    /// The point of looking inside: on a crowded canvas the box's modules come up over
+    /// whatever was laid out next to the shut box, and a click reaches them first.
+    /// </summary>
+    [AvaloniaFact]
+    public void While_looking_into_a_box_its_modules_are_over_everything_else()
+    {
+        var builder = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var left = builder.Add("osc.sine", 0, 0);
+        var right = builder.Add("math.mul", 300, 0);
+        builder.Wire(left, 0, right, 0);
+
+        // Laid out against the shut box, and drawn over where its second module stands.
+        var neighbor = builder.Add("time", 300, 0);
+        builder.Add(NodeCatalog.OutputTypeId, 900, 400);
+
+        var (editor, window) = Editing(builder.Patch);
+
+        var group = editor.History.Patch.Group([left.Id, right.Id]).ShouldNotBeNull();
+        editor.History.Record();
+        Settle(window);
+
+        Click(editor, window, Body(right));
+        editor.Selection.Nodes.ShouldBe([neighbor], "shut, the box's modules are not on the canvas");
+
+        editor.Selection.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(right));
+        editor.Selection.Nodes.ShouldBe([right], "the module inside is over the one laid out beside the box");
+    }
+
+    [AvaloniaFact]
+    public void Escape_puts_the_box_back_with_the_whole_of_it_selected()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Selection.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(first));
+        editor.Selection.Nodes.ShouldBe([first]);
+
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        editor.Selection.Peeked.ShouldBeNull();
+        editor.Selection.Group.ShouldBe(group, "a module behind a box is selected with the rest of it or not at all");
+    }
+
+    /// <summary>A click outside puts the box back, and is still the click it was.</summary>
+    [AvaloniaFact]
+    public void A_click_outside_puts_the_box_back_and_lands_where_it_was_aimed()
+    {
+        var patch = Chain(out _, out var first, out var second, out var sink);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Selection.Peek(group);
+        Settle(window);
+
+        Click(editor, window, Body(sink));
+
+        editor.Selection.Peeked.ShouldBeNull();
+        editor.Selection.Nodes.ShouldBe([sink]);
+    }
+
+    /// <summary>
+    /// A socket outside keeps the box up, so a wire can be drawn from the rest of the
+    /// patch to a module inside.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_can_be_drawn_from_outside_into_a_box_being_looked_into()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        patch.Disconnect(first.Id, 0);
+        editor.History.Record();
+        editor.Selection.Peek(group);
+        Settle(window);
+
+        var from = NodeGeometry.OutputPort(feed, 0);
+        var to = Geometry.InputPort(first, NodeCatalog.Require(first.TypeId), 0);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, to));
+        window.MouseUp(Screen(editor, window, to), MouseButton.Left);
+        Settle(window);
+
+        patch.IncomingTo(first.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(feed.Id);
+        editor.Selection.Peeked.ShouldBe(group);
+    }
+
+    /// <summary>Only one box is looked into at a time.</summary>
+    [AvaloniaFact]
+    public void Looking_into_a_second_box_puts_the_first_back()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        Click(editor, window, BoxHeader(patch, top), count: 2);
+        editor.Selection.Peeked.ShouldBe(top);
+
+        Click(editor, window, BoxHeader(patch, low), count: 2);
+        editor.Selection.Peeked.ShouldBe(low);
+        top.Collapsed.ShouldBeTrue();
+    }
+
+    /// <summary>
+    /// A module added outside the box being looked into is not in it. The box goes
+    /// back, and the new module is on the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void Adding_a_module_outside_the_box_puts_it_back()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        editor.Selection.Peek(group);
+        Settle(window);
+
+        var added = editor.Edits.AddNode("osc.sine", Body(first) + new Vector(0, 400)).ShouldNotBeNull();
+        Settle(window);
+
+        editor.Selection.Peeked.ShouldBeNull();
+        group.Members.ShouldNotContain(added.Id);
+        editor.Selection.Nodes.ShouldBe([added]);
+    }
+
+    /// <summary>
+    /// The whole of what makes the boundary work: a socket on a box names a
+    /// module and a port, so dragging from one starts a wire on that module and
+    /// everything downstream never learns a box was involved.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_dragged_off_the_box_lands_on_the_module_the_socket_names()
+    {
+        var patch = Chain(out _, out var first, out var second, out var sink);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+        var sockets = patch.SocketsOf(group);
+
+        sockets.Outputs.ShouldBe([new GroupSocket(second.Id, 0, IsOutput: true)]);
+
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
+        var from = NodeGeometry.GroupOutputPort(bounds, 0);
+        var to = Geometry.InputPort(sink, NodeCatalog.Require(sink.TypeId), NodeCatalog.OutputRightPort);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, to));
+        window.MouseUp(Screen(editor, window, to), MouseButton.Left);
+        Settle(window);
+
+        // The new wire leaves the module inside the box, not the box.
+        patch.IncomingTo(sink.Id, NodeCatalog.OutputRightPort)
+            .ShouldNotBeNull()
+            .SourceNode.ShouldBe(second.Id);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_shift_g_puts_the_modules_back_on_the_canvas()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        GroupTheMiddle(editor, window, first, second);
+
+        window.KeyPressQwerty(PhysicalKey.G, RawInputModifiers.Control | RawInputModifiers.Shift);
+        Settle(window);
+
+        patch.Groups.ShouldBeNull();
+        patch.Nodes.Count.ShouldBe(4);
+        patch.Connections.Count.ShouldBe(3);
+
+        // And the module it covered answers a click again.
+        Click(editor, window, Body(second));
+        editor.Selection.Nodes.ShouldBe([second]);
+    }
+
+    /// <summary>
+    /// A double-click opens the one box it lands on, so several are opened by
+    /// selecting them and pressing the key.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_e_opens_every_box_the_selection_reaches()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+        said.ShouldBe("Opened 2 groups.");
+
+        // What came out stays selected, so the next gesture has both groups.
+        editor.Selection.Nodes.Select(n => n.Id)
+            .ShouldBe([topLeft.Id, topRight.Id, lowLeft.Id, lowRight.Id], ignoreOrder: true);
+    }
+
+    [AvaloniaFact]
+    public void Ctrl_shift_e_shuts_them_again()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, BoxHeader(patch, low), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control | RawInputModifiers.Shift);
+        Settle(window);
+
+        top.Collapsed.ShouldBeTrue();
+        low.Collapsed.ShouldBeTrue();
+
+        // Behind boxes again, so a press where one sits does not reach it.
+        Click(editor, window, Body(topRight));
+        editor.Selection.Nodes.ShouldNotContain(topRight);
+    }
+
+    /// <summary>
+    /// Why this is two gestures and not a toggle: over one of each, a toggle has
+    /// no answer that leaves both agreeing.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_e_on_a_mixed_selection_opens_the_box_and_leaves_the_open_one_open()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (top, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        var said = string.Empty;
+        editor.Reactions.Add<CanvasSaid>(notice => said = notice.Message);
+
+        editor.Edits.ToggleBox(low);
+        Settle(window);
+
+        Click(editor, window, BoxHeader(patch, top));
+        Click(editor, window, Body(lowLeft), RawInputModifiers.Control);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control);
+        Settle(window);
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+
+        // One moved, and the count leaves out the group already open.
+        said.ShouldBe("Opened one group.");
+    }
+
+    /// <summary>
+    /// Shutting a box around one selected member does not leave a module nobody
+    /// can see selected.
+    /// </summary>
+    /// <remarks>
+    /// A box is drawn selected only when every member is, so a shut one is
+    /// selected whole or not at all: one member left selected inside it would
+    /// answer Delete from under a box drawn plain.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Shutting_a_box_around_one_selected_member_leaves_nothing_hidden_selected()
+    {
+        var patch = Pairs(out var topLeft, out var topRight, out var lowLeft, out var lowRight);
+        var (editor, window) = Editing(patch);
+
+        var (_, low) = TwoBoxes(editor, window, topLeft, topRight, lowLeft, lowRight);
+
+        editor.Edits.ToggleBox(low);
+        Settle(window);
+        low.Collapsed.ShouldBeFalse("the box is open, so its members can be clicked");
+
+        Click(editor, window, Body(lowLeft));
+        editor.Selection.Nodes.Select(n => n.Id).ShouldBe([lowLeft.Id]);
+
+        window.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.Control | RawInputModifiers.Shift);
+        Settle(window);
+
+        low.Collapsed.ShouldBeTrue("Ctrl+Shift+E shut the box");
+
+        var selected = editor.Selection.Nodes.Select(n => n.Id).ToHashSet();
+
+        // Either answer is a whole one: the box, or nothing. One hidden member
+        // is neither.
+        (selected.Count == 0 || selected.SetEquals(low.Members)).ShouldBeTrue(
+            "what is selected is the box or nothing, not one module inside it");
+    }
+
+    /// <summary>
+    /// Dragging a box moves what is inside it, which is the whole of how a box
+    /// moves: it has no position of its own, so it goes where its modules go.
+    /// </summary>
+    [AvaloniaFact]
+    public void Dragging_the_box_moves_the_modules_under_it()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        var wasFirst = new Point(first.X, first.Y);
+        var wasSecond = new Point(second.X, second.Y);
+
+        var from = BoxHeader(patch, group);
+        var to = from + new Vector(120, 60);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, to));
+        window.MouseUp(Screen(editor, window, to), MouseButton.Left);
+        Settle(window);
+
+        // Both of them, by the same amount — the box is not a thing that can be
+        // dragged out of shape.
+        (first.X - wasFirst.X).ShouldBe(120, 0.5);
+        (first.Y - wasFirst.Y).ShouldBe(60, 0.5);
+        (second.X - wasSecond.X).ShouldBe(120, 0.5);
+        (second.Y - wasSecond.Y).ShouldBe(60, 0.5);
+    }
+
+    /// <summary>
+    /// A wire being dragged off a box has to leave from the socket it was
+    /// grabbed at. The far end of a pending wire is a port that may be behind a
+    /// box, and drawing it at the module's own position puts it somewhere the
+    /// module is not — under the box, or off wherever the modules happen to sit.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_being_dragged_off_a_box_leaves_from_the_box()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+        var sockets = patch.SocketsOf(group);
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
+
+        var socket = NodeGeometry.GroupOutputPort(bounds, 0);
+
+        window.MouseDown(Screen(editor, window, socket), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, socket + new Vector(80, 80)));
+        Settle(window);
+
+        // The wire is drawn from where it was grabbed, not from where the module
+        // behind the socket would have put it.
+        editor.Gestures.PendingWireFrom.ShouldNotBeNull().ShouldBe(socket);
+
+        window.MouseUp(Screen(editor, window, socket + new Vector(80, 80)), MouseButton.Left);
+        Settle(window);
+    }
+
+    /// <summary>
+    /// A socket outlives the wire that put it there, so unplugging leaves the box
+    /// exactly the size and shape it was — and leaves somewhere to plug back
+    /// into, which is what makes the next test possible at all.
+    /// </summary>
+    [AvaloniaFact]
+    public void Unplugging_does_not_take_the_socket_off_the_box()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+        var before = patch.SocketsOf(group);
+
+        before.Inputs.ShouldNotBeEmpty();
+
+        patch.Disconnect(first.Id, 0);
+        editor.History.Record();
+        Settle(window);
+
+        patch.SocketsOf(group).Inputs.ShouldBe(before.Inputs);
+        patch.SocketsOf(group).Outputs.ShouldBe(before.Outputs);
+    }
+
+    /// <summary>
+    /// And so a wire can be plugged into a shut box, which it could not be while
+    /// a socket existed only for as long as something was in it.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_wire_can_be_dropped_onto_an_empty_socket_of_a_shut_box()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        patch.Disconnect(first.Id, 0);
+        editor.History.Record();
+        Settle(window);
+
+        var sockets = patch.SocketsOf(group);
+        var bounds = Geometry.GroupBounds(patch, group, sockets);
+
+        var from = NodeGeometry.OutputPort(feed, 0);
+        var to = Geometry.GroupInputPort(bounds, sockets, 0);
+
+        window.MouseDown(Screen(editor, window, from), MouseButton.Left);
+        window.MouseMove(Screen(editor, window, to));
+        window.MouseUp(Screen(editor, window, to), MouseButton.Left);
+        Settle(window);
+
+        // Landed on the module the socket names, not on the box.
+        patch.IncomingTo(first.Id, 0).ShouldNotBeNull().SourceNode.ShouldBe(feed.Id);
+    }
+
+    /// <summary>
+    /// Grouping is an edit like any other, so one press of Ctrl+Z takes it back
+    /// — which works because history writes the patch out and groups are in it.
+    /// </summary>
+    [AvaloniaFact]
+    public void One_undo_takes_a_group_back()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        GroupTheMiddle(editor, window, first, second);
+
+        editor.History.Undo().ShouldBeTrue();
+        Settle(window);
+
+        editor.History.Patch.Groups.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// A box, and the strip above an open group, take the cursor a module takes.
+    /// </summary>
+    /// <remarks>
+    /// They are taken hold of exactly as a module is — pressing either selects
+    /// what is inside and the drag that follows is the ordinary one — so a
+    /// pointer that went on saying "nothing here" over them was the picture
+    /// disagreeing with the gesture. Compared against what a module gives rather
+    /// than against a named cursor, because what matters is that the two agree.
+    /// </remarks>
+    [AvaloniaFact]
+    public void A_box_and_the_strip_above_an_open_one_take_the_cursor_a_module_does()
+    {
+        var patch = Chain(out var feed, out var first, out var second, out _);
+        var (editor, window) = Editing(patch);
+
+        var group = GroupTheMiddle(editor, window, first, second);
+
+        Hover(editor, window, Body(feed));
+        var onModule = editor.Cursor.ShouldNotBeNull();
+
+        Hover(editor, window, new Point(feed.X + 40, feed.Y + 320));
+        editor.Cursor.ShouldNotBeSameAs(onModule, "bare canvas is not something to pick up");
+
+        Hover(editor, window, BoxHeader(patch, group));
+        editor.Cursor.ShouldBeSameAs(onModule);
+
+        editor.Edits.ToggleBox(group);
+        Settle(window);
+
+        Hover(editor, window, OpenHandle(patch, group));
+        editor.Cursor.ShouldBeSameAs(onModule);
+    }
+
+    private static void Hover(NodeEditor editor, Window window, Point graph)
+    {
+        window.MouseMove(Screen(editor, window, graph));
+        Settle(window);
+    }
+
+    private static Point BoxHeader(Patch patch, NodeGroup group)
+    {
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
+
+        return new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
+    }
+
+    /// <summary>
+    /// The strip above an open group, which is what shuts it again.
+    /// </summary>
+    /// <remarks>
+    /// The two numbers are the editor's own padding and strip height, which are
+    /// private to it. Aimed at the middle of the strip rather than at an edge, so
+    /// this goes on landing if either is tuned by a few pixels.
+    /// </remarks>
+    private static Point OpenHandle(Patch patch, NodeGroup group)
+    {
+        var x = double.MaxValue;
+        var y = double.MaxValue;
+
+        foreach (var id in group.Members)
+            if (patch.Find(id) is { } node)
+            {
+                x = Math.Min(x, node.X);
+                y = Math.Min(y, node.Y);
+            }
+
+        const double padding = 24;
+        const double strip = 20;
+
+        return new Point(x - padding + NodeGeometry.Width / 2, y - padding - strip / 2);
+    }
+}

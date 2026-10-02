@@ -11,10 +11,12 @@ using AvaloniaEdit.Document;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 using AvaloniaEdit.Rendering;
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 using Flyback.Core.Language;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// The patch as text, and the one gesture that turns it into the patch.
@@ -692,7 +694,7 @@ internal sealed class SourceView : UserControl
         try
         {
             using var stream = typeof(SourceView).Assembly
-                .GetManifestResourceStream("Flyback.App.Controls.Flyback.xshd");
+                .GetManifestResourceStream("Flyback.Editor.Controls.Flyback.xshd");
 
             if (stream is null) return null;
 

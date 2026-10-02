@@ -1,4 +1,4 @@
-﻿namespace Flyback.App.Controls;
+﻿namespace Flyback.Ui.Controls;
 
 /// <summary>Which renderer is drawing the preview.</summary>
 public enum PreviewBackend

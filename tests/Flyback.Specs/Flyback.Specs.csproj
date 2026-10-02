@@ -22,7 +22,7 @@
     <ProjectReference Include="..\..\src\Flyback.Engine\Flyback.Engine.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Plugins\Flyback.Plugins.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Ui\Flyback.Ui.csproj" />
-    <ProjectReference Include="..\..\src\Flyback.App\Flyback.App.csproj" />
+    <ProjectReference Include="..\..\src\Flyback.Editor.Desktop\Flyback.Editor.Desktop.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Viewer\Flyback.Viewer.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Cli\Flyback.Cli.csproj" />
     <ProjectReference Include="..\..\src\Flyback.Server\Flyback.Server.csproj" />

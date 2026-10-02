@@ -1,4 +1,4 @@
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>How a run began — each a yes or a no, and none of them about who began it.</summary>
 /// <param name="First">No settings folder existed: the first start on this machine, which is the nearest thing to an install that can be counted without keeping an id.</param>

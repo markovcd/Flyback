@@ -1,4 +1,4 @@
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>A preview drawn by the GPU: an OpenGL control on the desktop, a canvas of its own in a page.</summary>
 public interface IGpuPreview : IPreviewSurface

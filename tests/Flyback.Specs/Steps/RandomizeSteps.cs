@@ -7,7 +7,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Randomizing the knob panel in the editor, through its shortcut and its buttons.</summary>
 [Binding]
-public sealed class RandomizeSteps(Editor editor)
+public sealed class RandomizeSteps(EditorDriver editor)
 {
     [When("the knob panel is randomized")]
     public void WhenRandomized()

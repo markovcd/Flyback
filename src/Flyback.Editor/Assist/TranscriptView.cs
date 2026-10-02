@@ -4,12 +4,12 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Media.Imaging;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Assist;
 using Flyback.Plugins.Assist;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>The assistant's conversation as it is drawn, and as it is kept to be saved with the patch.</summary>
 internal sealed class TranscriptView : ScrollViewer, ITranscript

@@ -1,6 +1,6 @@
 ---
 name: tests
-description: Use when running Flyback.App.Tests, diagnosing a slow or newly-slow test, or shipping a feature - ranking a run by duration and treating an unexplained outlier as a defect, running narrow test classes while iterating versus the full suite once per commit, and writing the Gherkin scenario a feature ships with.
+description: Use when running Flyback.Editor.Desktop.Tests, diagnosing a slow or newly-slow test, or shipping a feature - ranking a run by duration and treating an unexplained outlier as a defect, running narrow test classes while iterating versus the full suite once per commit, and writing the Gherkin scenario a feature ships with.
 ---
 
 # Tests
@@ -11,14 +11,14 @@ A test run that passes still has something to say. After running the suite, rank
 the tests by how long each took and look at the top of the list:
 
 ```bash
-./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -xml results.xml
 ```
 
 The runner takes `-xml` directly, and the file has a `time` on every `<test>`.
 `dotnet test` prints a duration per assembly and per failure, which is not the
 same thing and will not show you a passing test that costs thirty seconds.
 
-The shape to compare against: about 6900 tests in Flyback.App.Tests, a median of
+The shape to compare against: about 6900 tests in Flyback.Editor.Desktop.Tests, a median of
 under a millisecond, and a slowest test of a few seconds. Against that, anything
 past a second is an outlier worth explaining, and the fifteen slowest are a third
 of the whole run.
@@ -60,7 +60,7 @@ it.
 While iterating, run only the test classes a change touches:
 
 ```bash
-./tests/Flyback.App.Tests/bin/Release/net10.0/Flyback.App.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
+./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests -class "*PresetLibraryTests" -class "*EditorServicesTests"
 ```
 
 Build only the test project those classes live in, not the whole solution. Run

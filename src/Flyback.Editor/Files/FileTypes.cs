@@ -1,9 +1,9 @@
 using Flyback.Plugins.Hosting;
-using Flyback.App.Updates;
+using Flyback.Editor.Updates;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// Tells the operating system which of Flyback's programs opens its files, for the

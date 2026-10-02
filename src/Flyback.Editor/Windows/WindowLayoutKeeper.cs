@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 /// <summary>
 /// Leaving the window as it was left: its size, state and monitor read from a file

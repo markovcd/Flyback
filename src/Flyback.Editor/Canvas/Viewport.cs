@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Where the canvas is looking: its zoom and pan, the size of the control it fills,

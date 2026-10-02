@@ -16,9 +16,7 @@ audio engine, `Colors`, `Text`, `Glyphs` and the module skins, `OutputSettings`,
 `PresetLibrary`, the frame and audio sink interfaces, and `Terminal`. Avalonia
 itself and nothing else; AvaloniaEdit and Svg belong to the editor and stay there.
 
-**The namespaces did not change.** They are still `Flyback.App`, `Flyback.App.Controls`
-and the rest, the way `Flyback.Engine` holds `Flyback.Core` ([0002](0002-split-engine-from-shell.md)),
-so no file that used them was edited to keep working.
+**The namespaces are the project's own:** `Flyback.Ui`, `Flyback.Ui.Controls` and the rest.
 
 **Internals are shared with `InternalsVisibleTo`** for the editor, the viewer and the
 tests, rather than promoting everything to public. What was public stays public.

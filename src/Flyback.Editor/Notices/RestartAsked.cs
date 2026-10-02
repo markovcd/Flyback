@@ -1,4 +1,4 @@
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>
 /// A plugin just installed wants Flyback started again, opening <paramref name="Reopen"/>

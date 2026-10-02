@@ -4,7 +4,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// How far through its length the patch is, as a line the width of the window. Drawn

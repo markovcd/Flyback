@@ -3,12 +3,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Bars;
-using Flyback.App.Controls;
+using Flyback.Editor.Bars;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Ui;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>
 /// The end of the knob panel that randomizes it: the die, the way back, and how far

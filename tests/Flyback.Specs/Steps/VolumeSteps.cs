@@ -6,7 +6,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The Output's Volume, turned from the toolbar.</summary>
 [Binding]
-public sealed class VolumeSteps(PatchContext context, Editor editor)
+public sealed class VolumeSteps(PatchContext context, EditorDriver editor)
 {
     [Given("a level of {float} is wired into the Output's Volume")]
     public void GivenAWiredVolume(float level)

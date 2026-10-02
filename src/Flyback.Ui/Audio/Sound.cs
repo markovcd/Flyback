@@ -2,7 +2,7 @@ using Flyback.Core.Graph;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Audio;
+namespace Flyback.Ui.Audio;
 
 /// <summary>Opening a sound device and deciding whether a patch wants one, for every shell.</summary>
 internal static class Sound

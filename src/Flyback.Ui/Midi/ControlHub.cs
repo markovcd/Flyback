@@ -2,7 +2,7 @@ using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Midi;
 
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>
 /// Where the panel's knobs are right now, and the join between turning one — on

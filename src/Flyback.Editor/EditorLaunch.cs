@@ -1,7 +1,7 @@
-using Flyback.App.Updates;
 using Flyback.Core.Compile;
+using Flyback.Editor.Updates;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>What this launch was asked to do, and what it has to say once the window opens.</summary>
 public sealed record EditorLaunch : IIlCompilerSetup

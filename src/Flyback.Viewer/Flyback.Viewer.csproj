@@ -4,7 +4,7 @@
     <!--
       A console subsystem program, for the reason the shell is one: started from a
       terminal it inherits the terminal, so stderr is read by whoever typed the
-      command and the prompt waits. See Flyback.App.csproj.
+      command and the prompt waits. See Flyback.Editor.Desktop.csproj.
     -->
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -50,7 +50,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Flyback.App.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 

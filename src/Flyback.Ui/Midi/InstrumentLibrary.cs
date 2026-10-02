@@ -2,7 +2,7 @@
 using Flyback.Core;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>
 /// The profiles Flyback knows: the ones it ships, and the ones in the user's

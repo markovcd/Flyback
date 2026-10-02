@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>The time as the status bar, a take's progress and the stats over a picture show it.</summary>
 internal static class StatusClock

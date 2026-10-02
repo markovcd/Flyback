@@ -1,5 +1,5 @@
 using Avalonia;
-using Flyback.App;
+using Flyback.Ui;
 using Reqnroll;
 using Shouldly;
 

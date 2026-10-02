@@ -22,7 +22,7 @@ not answer, and a spike measured them in Chromium on builds compiled ahead of ti
 - **Where the picture draws.** `GpuPreviewSurface` is an `OpenGlControlBase`, which
   Avalonia.Browser gives no context: it waits, gives up and falls back.
 
-The editor was also a program rather than a library: `Flyback.App` is an executable
+The editor was also a program rather than a library: `Flyback.Editor.Desktop` is an executable
 on `Avalonia.Desktop`, and a page can reference one only by turning off the SDK's
 check that it should not.
 
@@ -75,8 +75,8 @@ shader reads a chart as a texture ([0167](0167-the-shader-reads-a-table-as-a-flo
 **The editor is a library, `Flyback.Editor`.** Its window, canvas, regions, the
 container that composes them, and what they read (usage, release notes, the running
 version and the key a release is checked with) move there. The namespaces stay
-`Flyback.App.*`, as they did for `Flyback.Ui` ([0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md)).
-`Flyback.App` is the desktop program around it: `Program`, `FlybackApp`, `Startup`,
+`Flyback.Editor.Desktop.*`, as they did for `Flyback.Ui` ([0124](0124-what-two-shells-draw-with-is-a-project-of-its-own.md)).
+`Flyback.Editor.Desktop` is the desktop program around it: `Program`, `FlybackApp`, `Startup`,
 installing an update, and the plugins shipped in its folder. A browser page is
 another program around the same library, and registers its own services in the
 container where the desktop's cannot work: the preview, the sound, settings and

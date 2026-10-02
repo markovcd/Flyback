@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Flyback.App.Updates;
+namespace Flyback.Editor.Updates;
 
 /// <summary>
 /// Where a copy of Flyback lives: the folder a release unpacks to, or on macOS the

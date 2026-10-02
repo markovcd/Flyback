@@ -1,4 +1,4 @@
-﻿namespace Flyback.App.Updates;
+﻿namespace Flyback.Editor.Updates;
 
 /// <summary>A published release, as much of it as installing one needs.</summary>
 /// <param name="Version">What the release's tag names, as major.minor.patch.</param>

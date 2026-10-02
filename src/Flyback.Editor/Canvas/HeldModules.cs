@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Flipping a module for as long as the right button is down on it: off if it is on,

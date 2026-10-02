@@ -2,7 +2,7 @@
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// A knob drawn as nothing but a ring, its travel and a pointer, on no face at all:

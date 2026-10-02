@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using Flyback.App.Capture;
+using Flyback.Ui.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 
-namespace Flyback.App.Audio;
+namespace Flyback.Ui.Audio;
 
 /// <summary>
 /// Joins the compiled audio program to a sound device, and is the clock the video

@@ -1,4 +1,4 @@
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>
 /// The things a run is counted doing, each said at the end as how many times — in

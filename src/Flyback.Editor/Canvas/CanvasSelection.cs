@@ -1,8 +1,8 @@
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Which modules are selected, which of them the inspector is about, and the shut

@@ -1,4 +1,4 @@
-namespace Flyback.App.Midi;
+namespace Flyback.Ui.Midi;
 
 /// <summary>What a hardware controller does to a knob that sits somewhere else.</summary>
 public enum Takeover

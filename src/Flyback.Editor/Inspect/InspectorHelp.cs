@@ -1,4 +1,6 @@
-namespace Flyback.App.Inspect;
+
+
+namespace Flyback.Editor.Inspect;
 
 /// <summary>What the inspector says with nothing selected, on each kind of canvas.</summary>
 internal static class InspectorHelp

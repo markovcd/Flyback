@@ -1,4 +1,4 @@
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>What draws the picture, named the way the status bar and the stats line say it.</summary>
 public static class GraphicsApi

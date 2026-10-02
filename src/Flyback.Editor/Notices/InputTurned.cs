@@ -1,6 +1,6 @@
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>An input's value was turned on the canvas.</summary>
 internal sealed record InputTurned(SocketPick Pick);

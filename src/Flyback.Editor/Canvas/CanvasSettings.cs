@@ -1,7 +1,8 @@
 using System.Text.Json;
 using Flyback.Core;
+using Flyback.Ui;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// How the patch canvas draws what is on it — the Canvas section of the settings

@@ -1,8 +1,8 @@
-using Flyback.App.Audio;
 using Flyback.Core;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Settings;
 using Flyback.Specs.Support;
+using Flyback.Ui.Audio;
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
@@ -11,7 +11,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>The editor's status bar and toolbar Volume, with speakers the scenario plays by pulling buffers from them.</summary>
 [Binding]
-public sealed class StatusBarSteps(Editor editor) : IDisposable
+public sealed class StatusBarSteps(EditorDriver editor) : IDisposable
 {
     private readonly Loopback speakers = new();
 

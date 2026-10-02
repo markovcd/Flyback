@@ -22,7 +22,7 @@ Tokens are the one thing the project spends money on, and a donation goes on tha
 ## Quick start
 
 ```bash
-dotnet run --project src/Flyback.App -c Release
+dotnet run --project src/Flyback.Editor.Desktop -c Release
 ```
 
 ## Features
@@ -56,7 +56,7 @@ dotnet workload install wasm-tools
 ```
 
 ```bash
-dotnet publish src/Flyback.App -c Release -r win-x64 -o artifacts/win-x64
+dotnet publish src/Flyback.Editor.Desktop -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Cli -c Release -r win-x64 -o artifacts/win-x64
 dotnet publish src/Flyback.Viewer -c Release -r win-x64 -o artifacts/win-x64
 ```
@@ -306,24 +306,24 @@ The project is split roughly as:
 
 ```text
 src/
-  Flyback.App       the editor on the desktop
-  Flyback.Editor    the editor itself: its window, canvas and regions
-  Flyback.Cli       command line tool
-  Flyback.Core      patch model, module API and the built-in modules
-  Flyback.Engine    compiler, text language, renderers and file formats
-  Flyback.Plugins   plugin host and built-in plugin logic
-  Flyback.Ui        the preview, sound device and look the app and the viewer share
-  Flyback.Viewer    the viewer: opens a patch and plays it
-  Flyback.Web       the web viewer: the same, in a browser
-  Flyback.WebEditor the web editor: the editor in a browser
+  Flyback.Editor.Desktop the editor on the desktop
+  Flyback.Editor         the editor itself: its window, canvas and regions
+  Flyback.Cli            command line tool
+  Flyback.Core           patch model, module API and the built-in modules
+  Flyback.Engine         compiler, text language, renderers and file formats
+  Flyback.Plugins        plugin host and built-in plugin logic
+  Flyback.Ui             the preview, sound device and look the app and the viewer share
+  Flyback.Viewer         the viewer: opens a patch and plays it
+  Flyback.Web            the web viewer: the same, in a browser
+  Flyback.WebEditor      the web editor: the editor in a browser
 
 tests/
-  Flyback.Core.Tests      core engine tests
-  Flyback.Specs           feature requirements as Gherkin scenarios
-  Flyback.Core.Benchmarks engine benchmarks
-  Flyback.App.Tests       app and UI tests
-  Flyback.Cli.Tests       command line tests
-  Flyback.Plugins.Tests   plugin and runtime behavior tests
+  Flyback.Core.Tests            core engine tests
+  Flyback.Specs                 feature requirements as Gherkin scenarios
+  Flyback.Core.Benchmarks       engine benchmarks
+  Flyback.Editor.Desktop.Tests  app and UI tests
+  Flyback.Cli.Tests             command line tests
+  Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
   Flyback.Plugins.Gemini.Tests  generateContent session tests
 ```

@@ -3,11 +3,11 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Flyback.App.Controls;
+using Flyback.Ui.Controls;
 using Flyback.Plugins.Hosting;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>
 /// The dialog a <c>.fbkp</c> opens: what the plugin is, what it can do, what it

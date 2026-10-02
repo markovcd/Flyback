@@ -1,21 +1,22 @@
 using System.Diagnostics;
-using Flyback.App.Assist;
-using Flyback.App.Audio;
-using Flyback.App.Canvas;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
+using Flyback.Editor.Assist;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Capture;
+using Flyback.Ui.Controls;
 using Avalonia.Threading;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
-using Flyback.App.PluginPackages;
-using Flyback.App.Statistics;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Notices;
+using Flyback.Editor.PluginPackages;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// The instrument itself: turning an edited patch back into two programs, the sound
@@ -149,7 +150,7 @@ internal sealed class Playback
     public bool CanSound => Sound.Output is not null && !blocked;
 
     /// <summary>Whether the speakers would be heard: there is a device, and the Output's Volume is up.</summary>
-    public bool Audible => CanSound && Audio.Sound.VolumeIsUp(editor.History.Patch);
+    public bool Audible => CanSound && Flyback.Ui.Audio.Sound.VolumeIsUp(editor.History.Patch);
 
     public bool Paused => transport.Paused;
 
@@ -183,7 +184,7 @@ internal sealed class Playback
     /// </remarks>
     public void ReopenAudio(OutputSettings settings)
     {
-        var next = Audio.Sound.Open(plugins, settings);
+        var next = Flyback.Ui.Audio.Sound.Open(plugins, settings);
 
         if (next.Failure is { } failure)
         {

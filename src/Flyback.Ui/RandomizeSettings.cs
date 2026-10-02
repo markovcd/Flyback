@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>How the knob panel's randomize moves the knobs, and the controller that fires it.</summary>
 public sealed class RandomizeSettings

@@ -1,9 +1,9 @@
 using Avalonia.Input.Platform;
-using Flyback.App.Statistics;
 using Flyback.Core.Graph;
 using Flyback.Core.Language;
+using Flyback.Editor.Statistics;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Copy, cut and paste of modules, through the system clipboard as the JSON a patch

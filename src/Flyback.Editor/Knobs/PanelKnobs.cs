@@ -1,14 +1,15 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Threading;
-using Flyback.App.Audio;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
+using Flyback.Ui.Audio;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Ui;
 
-namespace Flyback.App.Knobs;
+namespace Flyback.Editor.Knobs;
 
 /// <summary>
 /// The panel knobs: adding and turning them, linking sockets to them on the canvas,

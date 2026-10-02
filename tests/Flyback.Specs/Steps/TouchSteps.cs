@@ -1,6 +1,6 @@
 using Avalonia;
-using Flyback.App.Canvas;
 using Flyback.Core.Graph;
+using Flyback.Editor.Canvas;
 using Flyback.Specs.Support;
 using Reqnroll;
 using Shouldly;
@@ -9,7 +9,7 @@ namespace Flyback.Specs.Steps;
 
 /// <summary>Fingers on the canvas: what one, two and a held one do.</summary>
 [Binding]
-public sealed class TouchSteps(PatchContext context, Editor editor)
+public sealed class TouchSteps(PatchContext context, EditorDriver editor)
 {
     private double zoomWas;
     private Point panWas;

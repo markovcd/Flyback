@@ -1,10 +1,11 @@
 using Avalonia.Threading;
-using Flyback.App.Audio;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Audio;
+using Flyback.Ui;
 
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// Trying a preset from the gallery before picking it: a pointer that rests on a

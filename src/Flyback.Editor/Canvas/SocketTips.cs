@@ -2,7 +2,7 @@ using System.Globalization;
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// What a socket's tooltip says on a compact module (<see cref="NodeGeometry.Compact"/>):

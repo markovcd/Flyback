@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Globalization;
-using Flyback.App.Updates;
+using Flyback.Editor.Updates;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// Starting this copy of Flyback again once the running one has gone, which is what

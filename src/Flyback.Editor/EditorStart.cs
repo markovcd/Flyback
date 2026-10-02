@@ -1,15 +1,15 @@
 using Avalonia.Controls;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Knobs;
-using Flyback.App.Midi;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
-using Flyback.App.Windows;
 using Flyback.Core.Graph;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
+using Flyback.Editor.Windows;
 using Flyback.Plugins.Hosting;
+using Flyback.Ui.Midi;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>Starts the editor run once its window is ready to be shown.</summary>
 internal sealed class EditorStart(

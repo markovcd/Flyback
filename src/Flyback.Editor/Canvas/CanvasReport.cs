@@ -1,6 +1,6 @@
-using Flyback.App.Notices;
+using Flyback.Editor.Notices;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// What the canvas has to say about something it was asked to do: a paste of

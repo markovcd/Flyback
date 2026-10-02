@@ -1,4 +1,4 @@
-namespace Flyback.App.Gallery;
+namespace Flyback.Editor.Gallery;
 
 /// <summary>
 /// What a preset's tile shows in the place of a picture, or the picture itself.

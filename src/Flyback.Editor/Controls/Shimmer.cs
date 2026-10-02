@@ -4,8 +4,10 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Editor.Controls;
 
 /// <summary>
 /// A word with a light sweeping through it, shown while something is being waited
@@ -33,7 +35,7 @@ internal sealed class Shimmer : TextBlock
     public Shimmer(string text)
     {
         Text = text;
-        FontSize = Controls.Text.Body;
+        FontSize = Flyback.Ui.Controls.Text.Body;
         VerticalAlignment = VerticalAlignment.Center;
         IsVisible = false;
 

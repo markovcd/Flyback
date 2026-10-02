@@ -1,13 +1,13 @@
 using Avalonia.Controls;
 using Avalonia.Media;
-using Flyback.App.Capture;
-using Flyback.App.Files;
-using Flyback.App.Midi;
-using Flyback.App.Settings;
 using Flyback.Core;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Files;
+using Flyback.Editor.Settings;
+using Flyback.Ui.Midi;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 /// <summary>
 /// The editor's window on the desktop: it holds the <see cref="EditorView"/> its container

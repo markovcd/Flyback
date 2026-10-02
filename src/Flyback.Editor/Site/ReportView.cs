@@ -2,10 +2,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Controls;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>Asks what is wrong with a shared preset or plugin, and reports it to the preset site's admin.</summary>
 internal static class ReportView

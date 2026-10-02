@@ -1,11 +1,11 @@
 using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json.Nodes;
-using Flyback.App;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Notices;
+using Flyback.Editor;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Notices;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Flyback.WebEditor;

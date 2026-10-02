@@ -1,6 +1,6 @@
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>A shared preset kept on this machine, as the site last described it.</summary>
 /// <param name="Root">The site it came from.</param>

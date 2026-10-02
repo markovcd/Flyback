@@ -1,4 +1,4 @@
-namespace Flyback.App.PluginPackages;
+namespace Flyback.Editor.PluginPackages;
 
 /// <summary>What this run of Flyback found besides the plugins it lists.</summary>
 /// <param name="Folder">Where plugins are looked for.</param>

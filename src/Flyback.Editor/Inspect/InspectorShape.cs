@@ -1,8 +1,8 @@
 using System.Text;
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>What the inspector's rows are, as against what is in them, as one string to compare.</summary>
 internal static class InspectorShape

@@ -23,7 +23,7 @@ ARG VERSION=""
 # restore without it has none.
 COPY .editorconfig Directory.Build.props Directory.Build.targets Directory.Packages.props global.json ./
 COPY scripts/stills.sh scripts/
-# What Flyback.App takes from the root, since stills.sh publishes it.
+# What Flyback.Editor.Desktop takes from the root, since stills.sh publishes it.
 COPY CHANGELOG.md flyback.ico flyback.icns ./
 COPY site site
 # All of src/, since the plugins the site starts with are whatever

@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
-using Flyback.App.Assist;
-using Flyback.App.Notices;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The mark on a module the assistant is not told about: a small dotted tag at the

@@ -3,7 +3,7 @@ using System.Runtime.ExceptionServices;
 using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>
 /// Hands each notice to the parts that react to it, in <see cref="IReactTo{T}.Priority"/>

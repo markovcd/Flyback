@@ -3,15 +3,16 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Flyback.App.Assist;
-using Flyback.App.Canvas;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
+using Flyback.Editor.Assist;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
 using Flyback.Core;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>
 /// What closing or replacing the patch would lose, and the question every route out

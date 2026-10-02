@@ -8,19 +8,20 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Threading;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Inspect;
-using Flyback.App.Notices;
-using Flyback.App.Settings;
-using Flyback.App.Statistics;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Statistics;
 using Flyback.Core;
 using Flyback.Assist;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
-using Colors = Flyback.App.Controls.Colors;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App.Assist;
+namespace Flyback.Editor.Assist;
 
 /// <summary>
 /// Where you describe a patch and watch one get built.

@@ -1,4 +1,4 @@
-namespace Flyback.App;
+namespace Flyback.Ui;
 
 /// <summary>Which edge of a full-screen picture the transport waits at; the knobs take the other.</summary>
 public enum TransportEdge

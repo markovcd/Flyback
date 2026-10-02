@@ -4,12 +4,12 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The Output's Volume on the transport row, turned as its knob on the panel is: an edit,

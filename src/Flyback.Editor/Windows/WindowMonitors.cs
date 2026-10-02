@@ -1,6 +1,6 @@
 using Avalonia.Platform;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 internal sealed class WindowMonitors(WindowHolder holder) : IMonitors
 {

@@ -1,11 +1,11 @@
 using Avalonia.Platform.Storage;
-using Flyback.App.Capture;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.PluginPackages;
+using Flyback.Editor.Capture;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.PluginPackages;
 using Flyback.Plugins.Hosting;
 
-namespace Flyback.App.Files;
+namespace Flyback.Editor.Files;
 
 /// <summary>Coordinates the routes that open or install a file (ADR-0148).</summary>
 internal sealed class PatchOpening(

@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Where every part of a node sits. The editor draws itself rather than

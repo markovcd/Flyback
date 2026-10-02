@@ -1,6 +1,6 @@
 using Flyback.Plugins;
 
-namespace Flyback.App.Settings;
+namespace Flyback.Editor.Settings;
 
 /// <summary>What more than one settings section works out the same way.</summary>
 internal static class SettingRows

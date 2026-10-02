@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using Flyback.Core.Render;
 
-namespace Flyback.App.Capture;
+namespace Flyback.Editor.Capture;
 
 /// <summary>What a recording is, before it exists.</summary>
 /// <param name="Path">Where it goes. The extension already agrees with <paramref name="Format"/>.</param>

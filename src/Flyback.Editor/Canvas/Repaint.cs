@@ -1,4 +1,4 @@
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// Asks for the canvas to be drawn again, from any part of it that changed what it

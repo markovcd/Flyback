@@ -17,7 +17,7 @@ contract change; 2 wants its own.
 
 ### 1. Assistant key lookups start a process per keystroke
 
-`AssistantPanel.Refresh()` (`src/Flyback.App/Assist/AssistantPanel.cs:901`) runs
+`AssistantPanel.Refresh()` (`src/Flyback.Editor.Desktop/Assist/AssistantPanel.cs:901`) runs
 from the constructor and on every `form.Changed` (line 410). It reaches
 `ISecretStore.Recall` about four times, uncached: `credentials.Transport` from
 `Configured()` (line 893), `SourceOf` (1035) and `HasEntered` twice (1045, 1071),
@@ -35,7 +35,7 @@ bump, and the cache removes the calls rather than moving them.
 
 ### 2. A sample is decoded inside the compile
 
-`Playback.Recompile` (`src/Flyback.App/Playback.cs:241`) compiles on the UI thread
+`Playback.Recompile` (`src/Flyback.Editor.Desktop/Playback.cs:241`) compiles on the UI thread
 by design (engineering guide §6, ADR-0018). The first compile that names a sample
 reaches `SampleLibrary.Look` (`src/Flyback.Engine/Render/SampleLibrary.cs:112`),
 which reads a WAV whole (up to `WavReader.MostSamples`, ten minutes) or runs ffmpeg
@@ -49,7 +49,7 @@ Core's shipped contract and stay synchronous.
 
 ### 3. Plugin install unpacks on the UI thread
 
-`PluginInstalls` (`src/Flyback.App/PluginPackages/PluginInstalls.cs:181`) calls
+`PluginInstalls` (`src/Flyback.Editor.Desktop/PluginPackages/PluginInstalls.cs:181`) calls
 `installer.Stage(package, platform)` on the UI thread: it unpacks up to
 `PackageLimits.Unpacked` (512 MB) and `PluginFiles.Of` hashes every file.
 `PluginPackage.ReadAsync` ends in a synchronous `Read(memory.ToArray(), limits)`
@@ -59,16 +59,16 @@ Stage in `Task.Run`.
 
 ### 4. Saving a bundle zips on the UI thread
 
-`PatchFiles.SaveBundleAsync` (`src/Flyback.App/PatchFiles.cs:320`) is async only
+`PatchFiles.SaveBundleAsync` (`src/Flyback.Editor.Desktop/PatchFiles.cs:320`) is async only
 for the final copy: `PatchBundle.Write` reads every carried file through `Bytes`
-and deflates it first. `PresetSlot.Keep` (`src/Flyback.App/Gallery/PresetSlot.cs`)
+and deflates it first. `PresetSlot.Keep` (`src/Flyback.Editor.Desktop/Gallery/PresetSlot.cs`)
 → `PresetLibrary.Save` does the same, then `WriteAllBytes` and `Reload`. The patch
 is an immutable snapshot by then, so the Write goes in `Task.Run`; the
 conversation is taken (`ConversationToSave()`) before it, on the UI thread.
 
 ### 5. Linux file types wait on two processes
 
-The Settings Save click → `FilesSection.Save` (`src/Flyback.App/Files/FilesSection.cs:93`)
+The Settings Save click → `FilesSection.Save` (`src/Flyback.Editor.Desktop/Files/FilesSection.cs:93`)
 → `LinuxFileTypes.Apply` → `Run` (`LinuxFileTypes.cs:119-127`) runs
 `update-mime-database` and `update-desktop-database`, each with
 `WaitForExit(10_000)`: usually under a second, twenty at worst. This one is a real

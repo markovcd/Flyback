@@ -1,10 +1,10 @@
-using Flyback.App.Capture;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
 using Flyback.Core.Render;
 using Flyback.Plugins.Audio;
+using Flyback.Ui.Capture;
 
-namespace Flyback.App.Audio;
+namespace Flyback.Ui.Audio;
 
 /// <summary>
 /// The sound of a patch being edited: its program, the device it plays through, and

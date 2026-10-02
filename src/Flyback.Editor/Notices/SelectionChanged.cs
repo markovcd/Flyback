@@ -1,4 +1,4 @@
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>A different set of modules is selected, or the focus moved within it.</summary>
 internal sealed record SelectionChanged;

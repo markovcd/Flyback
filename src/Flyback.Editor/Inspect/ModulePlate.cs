@@ -3,11 +3,11 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Styling;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Inspect;
+namespace Flyback.Editor.Inspect;
 
 /// <summary>
 /// What stands at the head of the inspector: the block's name and what kind of

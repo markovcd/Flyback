@@ -1,10 +1,10 @@
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>The canvas and every service it is made of, for one container (ADR-0150).</summary>
 internal static class CanvasServices

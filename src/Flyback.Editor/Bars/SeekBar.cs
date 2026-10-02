@@ -4,13 +4,14 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Notices;
-using Flyback.App.Statistics;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Statistics;
 using Flyback.Core.Graph;
+using Flyback.Ui;
 
-namespace Flyback.App.Bars;
+namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The patch's clock on the transport row: where it is, and a thumb to drag it

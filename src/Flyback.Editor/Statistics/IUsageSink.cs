@@ -1,4 +1,4 @@
-namespace Flyback.App.Statistics;
+namespace Flyback.Editor.Statistics;
 
 /// <summary>Where events go.</summary>
 /// <remarks>

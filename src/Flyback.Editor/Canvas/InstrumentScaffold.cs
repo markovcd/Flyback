@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
-using Flyback.App.Midi;
+using Flyback.Ui.Midi;
 using Flyback.Core.Graph;
 using Flyback.Core.Graph.Extras;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// An instrument as a fragment ready to add to a patch: a Clock In where it

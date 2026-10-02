@@ -37,7 +37,7 @@ nothing else — no GL, no platform, no state. It lives in Core so that what the
 GPU is asked to run is covered by Core's tests;
 [0019](0019-no-third-party-dependencies-in-the-engine.md) is untouched, because a
 string builder is not a dependency. Every GL call lives in
-`Flyback.App/Controls/GpuFrameRenderer.cs`, against the `Avalonia.OpenGL` that
+`Flyback.Editor.Desktop/Controls/GpuFrameRenderer.cs`, against the `Avalonia.OpenGL` that
 the Avalonia package already carries. No new package.
 
 **Registers become `float rN` declarations, not an indexed array.**

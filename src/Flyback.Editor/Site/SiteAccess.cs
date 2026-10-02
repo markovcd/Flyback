@@ -1,6 +1,6 @@
-using Flyback.App.PluginPackages;
+using Flyback.Editor.PluginPackages;
 
-namespace Flyback.App.Site;
+namespace Flyback.Editor.Site;
 
 /// <summary>
 /// Where the preset site is and what it is asked with: shared presets, shared plugins

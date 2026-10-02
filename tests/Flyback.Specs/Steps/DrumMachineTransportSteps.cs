@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Reqnroll;
 using Shouldly;
-using Flyback.App;
+using Flyback.Ui;
 using Flyback.Plugins.Midi;
 using Flyback.Specs.Support;
 
@@ -16,7 +16,7 @@ namespace Flyback.Specs.Steps;
 /// question is what the transport does, not what a driver makes of a cable.
 /// </remarks>
 [Binding]
-public sealed class DrumMachineTransportSteps(Editor editor) : IDisposable
+public sealed class DrumMachineTransportSteps(EditorDriver editor) : IDisposable
 {
     /// <summary>How near the top a patch played from the top has to be when it is looked at.</summary>
     private const double Slack = 1;

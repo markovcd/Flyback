@@ -2,13 +2,13 @@ using Reqnroll;
 using Shouldly;
 using Flyback.Core.Graph;
 using Flyback.Specs.Support;
-using Flyback.App.Canvas;
+using Flyback.Editor.Canvas;
 
 namespace Flyback.Specs.Steps;
 
 /// <summary>How the canvas draws a module: its rows, its size and what hovering it says.</summary>
 [Binding]
-public sealed class CanvasSteps(PatchContext context, Editor editor)
+public sealed class CanvasSteps(PatchContext context, EditorDriver editor)
 {
     private static NodeDef Filter => NodeCatalog.Require(NodeCatalog.FilterTypeId);
 

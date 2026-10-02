@@ -2,20 +2,21 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using Flyback.App.Bars;
-using Flyback.App.Canvas;
-using Flyback.App.Controls;
-using Flyback.App.Files;
-using Flyback.App.Gallery;
-using Flyback.App.Inspect;
-using Flyback.App.Knobs;
-using Flyback.App.Midi;
-using Flyback.App.Notices;
-using Flyback.App.Settings;
-using Flyback.App.Windows;
-using Colors = Flyback.App.Controls.Colors;
+using Flyback.Editor.Bars;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Controls;
+using Flyback.Editor.Files;
+using Flyback.Editor.Gallery;
+using Flyback.Editor.Inspect;
+using Flyback.Editor.Knobs;
+using Flyback.Editor.Notices;
+using Flyback.Editor.Settings;
+using Flyback.Editor.Windows;
+using Flyback.Ui.Controls;
+using Flyback.Ui.Midi;
+using Colors = Flyback.Ui.Controls.Colors;
 
-namespace Flyback.App;
+namespace Flyback.Editor;
 
 /// <summary>
 /// The editor as one control: the regions its container composes (ADR-0150), laid out,

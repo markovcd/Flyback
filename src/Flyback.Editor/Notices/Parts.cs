@@ -1,7 +1,7 @@
-using Flyback.App.Settings;
+using Flyback.Editor.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Flyback.App.Notices;
+namespace Flyback.Editor.Notices;
 
 /// <summary>Registers a part of the editor with the reactions its class declares (ADR-0150).</summary>
 internal static class Parts

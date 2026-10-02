@@ -1,7 +1,7 @@
 using Avalonia;
 using Flyback.Core.Graph;
 
-namespace Flyback.App.Canvas;
+namespace Flyback.Editor.Canvas;
 
 /// <summary>
 /// The mode in which clicking a socket on the canvas links it to the panel knob being

@@ -17,6 +17,6 @@ configuration="${CONFIGURATION:-Release}"
 draw="$(mktemp -d)"
 trap 'rm -rf "$draw"' EXIT
 
-dotnet publish src/Flyback.App -c "$configuration" -o "$draw" -nologo -v:q
+dotnet publish src/Flyback.Editor.Desktop -c "$configuration" -o "$draw" -nologo -v:q
 dotnet publish src/Flyback.Cli -c "$configuration" -o "$draw" -nologo -v:q
 dotnet "$draw/flyback-cli.dll" stills --out "$out"

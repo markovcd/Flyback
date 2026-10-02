@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace Flyback.App.Windows;
+namespace Flyback.Editor.Windows;
 
 /// <summary>
 /// The window or page the editor is in, which exists to break a cycle in the dependency graph.

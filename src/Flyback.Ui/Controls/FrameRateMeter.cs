@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Flyback.App.Controls;
+namespace Flyback.Ui.Controls;
 
 /// <summary>
 /// Counts the frames a preview actually puts on screen and says how many that

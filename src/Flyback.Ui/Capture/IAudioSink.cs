@@ -1,4 +1,4 @@
-namespace Flyback.App.Capture;
+namespace Flyback.Ui.Capture;
 
 /// <summary>
 /// Somebody who wants the samples the speakers are getting. The engine knows
