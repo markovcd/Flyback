@@ -748,7 +748,7 @@ changed: saved patches name it.
 |---|---|---|
 | `Flyback.Core.Tests` | Model, compiler, backends, language, renderers | The only user of Verify (snapshots) and CsCheck (properties) |
 | `Flyback.Specs` | Every feature's requirement as Gherkin scenarios | Reqnroll; no C# test methods; references every project and plugin |
-| `Flyback.Editor.Desktop.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
+| `Flyback.Editor.Tests` | Editor, viewer, audio engine, capture, updates | Headless Avalonia |
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
@@ -771,7 +771,7 @@ the repository are `Assert.SkipWhen` and `Assert.SkipUnless`.
 ```
 
 ```bash
-./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -method "*WireDrop*"
+./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -method "*WireDrop*"
 ```
 
 `-list tests` lists them and `-xml results.xml` writes a time per test.
@@ -881,7 +881,7 @@ Prefer asserting on the smallest thing that holds the behavior. Much of the
 editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 `NodeEditor.Text`), and a test of one needs no window at all.
 
-The Headless xunit adapter is vendored under `tests/Flyback.Editor.Desktop.Tests/Headless`
+The Headless xunit adapter is vendored under `tests/Flyback.Editor.Tests/Headless`
 because the published package does not discover tests on xunit.v3 4.x. The
 assembly runs with `ParallelMode.Collections`, since every UI test queues on the
 one thread anyway. Each UI test blocks a pool thread while it waits for that
@@ -955,7 +955,7 @@ plays a patch through `flyback-viewer`'s own arguments and window, and `CliSteps
 share a fresh `PatchContext`, `Session`, `Editor` and `ViewerRun` per scenario, and the
 two windows one headless UI thread (`Headless`). A step drives
 the program the way somebody would; a scenario that composes services by hand
-is testing the wiring, and belongs in `Flyback.Editor.Desktop.Tests`.
+is testing the wiring, and belongs in `Flyback.Editor.Tests`.
 The project references every program and library and lays out every shipped
 plugin under `plugins\`, so a feature of the editor, the viewer, the CLI, the
 preset site or a plugin takes its scenario here like any other.
@@ -984,7 +984,7 @@ itself, and an unexplained one is a defect, fixed in a commit of its own. After 
 run, rank by duration:
 
 ```bash
-./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -xml results.xml
 ```
 
 The usual causes are waiting on a wall clock, waiting out a deadline to prove

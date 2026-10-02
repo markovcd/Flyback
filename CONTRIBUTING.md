@@ -51,7 +51,7 @@ tests/
   Flyback.Core.Tests            core engine tests
   Flyback.Specs                 feature requirements as Gherkin scenarios
   Flyback.Core.Benchmarks       engine benchmarks
-  Flyback.Editor.Desktop.Tests  app and UI tests
+  Flyback.Editor.Tests  app and UI tests
   Flyback.Cli.Tests             command line tests
   Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests
@@ -61,7 +61,7 @@ tests/
 A passing run still has something to say. Rank it by duration and look at the top of the list:
 
 ```bash
-./tests/Flyback.Editor.Desktop.Tests/bin/Release/net10.0/Flyback.Editor.Desktop.Tests.exe -xml results.xml
+./tests/Flyback.Editor.Tests/bin/Release/net10.0/Flyback.Editor.Tests.exe -xml results.xml
 ```
 
 The median test takes under a millisecond, so anything past a second is an outlier that has to explain itself. Almost always it waits on a wall clock, waits out a deadline to prove a negative, leaves something running that every later test is charged for, or redoes work the class could do once. Treat an unexplained outlier as a defect and fix it in a commit of its own. Some tests are honestly slow — rendering frames takes as long as it takes — and those say so in a comment.

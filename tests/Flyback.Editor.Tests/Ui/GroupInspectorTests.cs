@@ -1,0 +1,483 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
+using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Flyback.Core.Graph;
+using Shouldly;
+using Xunit;
+using Flyback.Editor.Canvas;
+using Flyback.Editor.Windows;
+
+namespace Flyback.Editor.Tests.Ui;
+
+/// <summary>
+/// What the panel shows when the selection is a group: its name, its edge, and
+/// what can be done to it.
+/// </summary>
+/// <remarks>
+/// A selection that is exactly a group is about the group. Pressing a box selects
+/// the modules inside it, so without this the panel would show whichever of them
+/// the focus happened to land on — a set of knobs belonging to one module,
+/// presented as though it were what was clicked.
+/// </remarks>
+public class GroupInspectorTests : UiTest
+{
+    private MainWindow Open(out NodeGroup group)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var time = b.Add("time", 40, 200);
+        var osc = b.Add("osc.sine", 300, 60);
+        var product = b.Add("math.mul", 560, 160);
+        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+
+        b.Wire(time, 0, osc, 1)
+         .Wire(osc, 0, product, 0)
+         .Wire(product, 0, screen, NodeCatalog.OutputLeftPort);
+
+        var window = NewMainWindow();
+
+        window.Show();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = Editor(window);
+        editor.History.Open(b.Patch);
+        Settle(window);
+
+        var sine = editor.History.Patch.Find(osc.Id)!;
+        var mul = editor.History.Patch.Find(product.Id)!;
+
+        group = editor.History.Patch.Group([sine.Id, mul.Id])!;
+        editor.History.Record();
+
+        SelectBox(window, editor.History.Patch, group);
+        return window;
+    }
+
+    private static void SelectBox(MainWindow window, Patch patch, NodeGroup group, bool adding = false)
+    {
+        var editor = Editor(window);
+        var bounds = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
+        var header = new Point(bounds.Center.X, bounds.Y + NodeGeometry.HeaderHeight / 2);
+
+        var at = editor.TranslatePoint(editor.GraphToScreen.Transform(header), window)
+            ?? throw new InvalidOperationException("the editor is not in this window");
+
+        var held = adding ? RawInputModifiers.Control : RawInputModifiers.None;
+
+        window.MouseDown(at, MouseButton.Left, held);
+        window.MouseUp(at, MouseButton.Left, held);
+        Settle(window);
+    }
+
+    private static TextBlock Title(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        All<TextBlock>(window).First(t => t.FontSize == 17);
+
+    private static TextBox? Box(MainWindow window) =>
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        All<TextBox>(window).FirstOrDefault(t => t.FontSize == 17);
+
+    private static string[] Lines(MainWindow window) =>
+        [.. All<TextBlock>(window).Select(t => t.Text ?? string.Empty)];
+
+    /// <summary>
+    /// The panel's buttons are glyphs, so a test asks for one by name and reads
+    /// what it does off its tip — which is where the words went.
+    /// </summary>
+    private static string[] Buttons(MainWindow window) =>
+        [.. All<Button>(window).Select(b => b.Name ?? string.Empty)];
+
+    private static Button Button(MainWindow window, string name) =>
+        All<Button>(window).First(b => b.Name == name);
+
+    private static string Tip(MainWindow window, string name) =>
+        ToolTip.GetTip(Button(window, name)) as string ?? string.Empty;
+
+    private static StackPanel Panel(MainWindow window) =>
+        All<StackPanel>(window).Single(p => p.Name == "inspector");
+
+    private static TextBlock Lined(MainWindow window, string text) =>
+        All<TextBlock>(window).First(t => t.Text == text);
+
+    private static TextBlock Description(MainWindow window) =>
+        All<TextBlock>(window).First(t => t.Text?.StartsWith("Several modules drawn as one") == true);
+
+    /// <summary>How far down the window the middle of a control is.</summary>
+    private static double Middle(MainWindow window, Visual control) =>
+        control.TranslatePoint(new Point(0, control.Bounds.Height / 2), window)?.Y
+        ?? throw new InvalidOperationException("the control is not in this window");
+
+    [AvaloniaFact]
+    public void Putting_a_socket_on_the_edge_takes_its_button_away_at_once()
+    {
+        var window = Open(out var group);
+        var editor = Editor(window);
+        var mul = group.Members[1];
+
+        editor.Edits.ToggleBox(group);
+        editor.Selection.Select(mul);
+        Settle(window);
+
+        // Multiply's 'b' is its only unwired input; its 'out' crosses the edge.
+        var before = All<Button>(window).Count(b => b.Name == "exposeSocket");
+        before.ShouldBe(1);
+
+        Button(window, "exposeSocket").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Avalonia.Controls.Button.ClickEvent));
+        Settle(window);
+
+        group.Exposed.ShouldContain(new GroupSocket(mul, 1, IsOutput: false));
+        All<Button>(window).Count(b => b.Name == "exposeSocket").ShouldBe(0);
+    }
+
+    [AvaloniaFact]
+    public void The_panel_is_about_the_group_rather_than_a_module_inside_it()
+    {
+        var window = Open(out _);
+
+        // Not "Sine" or "Multiply", which is what pressing the box selects.
+        Title(window).Text.ShouldBe("2 modules");
+        Lines(window).ShouldContain("Group");
+    }
+
+    /// <summary>
+    /// The edge, named the same way the box draws it: the module and port inside
+    /// that each socket stands for.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_panel_lists_the_ports_where_wires_cross_the_edge()
+    {
+        var window = Open(out _);
+        var lines = Lines(window);
+
+        lines.ShouldContain("In");
+        lines.ShouldContain("Sine.freq");
+
+        lines.ShouldContain("Out");
+        lines.ShouldContain("Multiply.out");
+
+        // And nothing about what is inside: the wire from Sine to Multiply
+        // crosses nothing, so it is not on the edge.
+        lines.ShouldNotContain("Sine.out");
+        lines.ShouldNotContain("Multiply.a");
+    }
+
+    /// <summary>A socket's row reads as the module's own row for that port does.</summary>
+    [AvaloniaFact]
+    public void A_patched_socket_names_the_far_end_of_its_wire()
+    {
+        var window = Open(out _);
+        var lines = Lines(window);
+
+        lines.ShouldContain("◀ patched from Time.t");
+        lines.ShouldContain(l => l.StartsWith("▶ patched to ") && l.EndsWith(".left"));
+    }
+
+    /// <summary>The caption names the socket inside, and the row says what feeds it.</summary>
+    [AvaloniaFact]
+    public void An_expression_socket_is_captioned_by_its_own_name()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var time = b.Add("time", 40, 200);
+        var sum = b.Add(NodeCatalog.ExpressionTypeId, 300, 60);
+        var osc = b.Add("osc.sine", 560, 160);
+        var screen = b.Add(NodeCatalog.OutputTypeId, 900, 200);
+
+        b.Wire(time, 0, sum, 0)
+         .Wire(sum, 0, osc, 1)
+         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort);
+
+        var window = NewMainWindow();
+
+        window.Show();
+        Settle(window);
+
+        var editor = Editor(window);
+        editor.History.Open(b.Patch);
+        Settle(window);
+
+        var group = editor.History.Patch.Group([sum.Id, osc.Id])!;
+        editor.History.Record();
+        SelectBox(window, editor.History.Patch, group);
+
+        var lines = Lines(window);
+
+        lines.ShouldContain("Expression.a");
+        lines.ShouldContain("◀ patched from Time.t");
+        lines.ShouldNotContain("Time.t");
+    }
+
+    [AvaloniaFact]
+    public void A_socket_row_carries_the_help_its_module_row_does()
+    {
+        var window = Open(out _);
+        var freq = NodeCatalog.Require(NodeCatalog.SineTypeId).Inputs[1];
+
+        All<Control>(Panel(window))
+            .ShouldContain(c => ToolTip.GetTip(c) as string == freq.Help && c.GetVisualDescendants()
+                .OfType<TextBlock>().Any(t => t.Text == "Sine.freq"));
+    }
+
+    /// <summary>
+    /// Unplugged, a socket stays on the edge and its row becomes the slider the
+    /// module's panel has for it, turning the module inside.
+    /// </summary>
+    [AvaloniaFact]
+    public void An_unpatched_socket_is_the_modules_own_slider()
+    {
+        var window = Open(out var group);
+        var editor = Editor(window);
+        var sine = editor.History.Patch.Find(group.Members[0])!;
+
+        editor.History.Patch.Disconnect(sine.Id, 1);
+        editor.History.Record();
+        Settle(window);
+
+        Lines(window).ShouldNotContain("◀ patched from Time.t");
+
+        All<Slider>(Panel(window)).ShouldHaveSingleItem();
+
+        All<NumericUpDown>(Panel(window)).Single().Value = 3;
+        Settle(window);
+
+        sine.InputValues[1].ShouldBe(3f);
+    }
+
+    [AvaloniaFact]
+    public void The_panel_offers_opening_ungrouping_and_deleting()
+    {
+        var window = Open(out _);
+        var buttons = Buttons(window);
+
+        buttons.ShouldContain("open-group");
+        buttons.ShouldContain("ungroup");
+        buttons.ShouldContain("delete-group");
+
+        // The count the caption used to carry, now in the only place a glyph
+        // can say anything.
+        Tip(window, "delete-group").ShouldContain("2 modules");
+    }
+
+    /// <summary>
+    /// Under the name and above everything that describes what is selected: the
+    /// buttons are the first thing on the panel that can be pressed.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_buttons_are_at_the_top_of_the_panel()
+    {
+        var window = Open(out _);
+        var row = Middle(window, Button(window, "delete-group"));
+
+        row.ShouldBeGreaterThan(Middle(window, Lined(window, "Group")), "under the name");
+        row.ShouldBeLessThan(Middle(window, Description(window)), "and above the description");
+        row.ShouldBeLessThan(Middle(window, Lined(window, "In")));
+    }
+
+    /// <summary>
+    /// Each of them is a drawn icon, and the tip is the only place it says what
+    /// it does — a button without one is a button nobody can identify.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData("switch-group")]
+    [InlineData("open-group")]
+    [InlineData("keep-group")]
+    [InlineData("ungroup")]
+    [InlineData("delete-group")]
+    public void Every_button_on_the_panel_is_an_icon_that_says_what_it_does(string name)
+    {
+        var window = Open(out var group);
+
+        group.Rename("Voice");
+        Editor(window).History.Record();
+        Settle(window);
+
+        var icon = Button(window, name).Content.ShouldBeOfType<Avalonia.Controls.Shapes.Path>();
+
+        icon.Data.ShouldNotBeNull();
+
+        // Taken from the button rather than set here, so that hovering, pressing
+        // and gray-out all reach it.
+        icon.Stroke.ShouldNotBeNull("the stroke follows the button's own foreground");
+
+        Tip(window, name).Length.ShouldBeGreaterThan(8);
+    }
+
+    /// <summary>
+    /// The button says which way it goes, so it has to be rebuilt when the group
+    /// opens — which is not a selection change and would otherwise go unheard.
+    /// </summary>
+    [AvaloniaFact]
+    public void Opening_the_group_turns_the_button_round()
+    {
+        var window = Open(out var group);
+
+        Press(window, "open-group");
+
+        group.Collapsed.ShouldBeFalse();
+        Buttons(window).ShouldContain("close-group");
+    }
+
+    [AvaloniaFact]
+    public void Double_clicking_the_name_turns_it_into_a_box()
+    {
+        var window = Open(out _);
+
+        DoubleClickTitle(window);
+
+        // Empty rather than filled in with "2 modules": the box holds the name
+        // the group has, and it has none.
+        var box = Box(window).ShouldNotBeNull("the title should have become a box");
+        box.Text.ShouldBeNullOrEmpty();
+        box.PlaceholderText.ShouldBe("2 modules");
+    }
+
+    [AvaloniaFact]
+    public void What_is_typed_becomes_the_name_on_the_panel_and_on_the_canvas()
+    {
+        var window = Open(out var group);
+
+        DoubleClickTitle(window);
+
+        var box = Box(window).ShouldNotBeNull();
+        box.Text = "Voice";
+        Settle(window);
+
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Settle(window);
+
+        group.Name.ShouldBe("Voice");
+        group.Title().ShouldBe("Voice");
+        Title(window).Text.ShouldBe("Voice");
+    }
+
+    [AvaloniaFact]
+    public void Emptying_the_box_takes_the_name_off_again()
+    {
+        var window = Open(out var group);
+
+        group.Rename("Voice");
+
+        DoubleClickTitle(window);
+
+        var box = Box(window).ShouldNotBeNull();
+        box.Text = "   ";
+        Settle(window);
+
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Settle(window);
+
+        group.Name.ShouldBeNull();
+        Title(window).Text.ShouldBe("2 modules");
+    }
+
+    [AvaloniaFact]
+    public void Escape_leaves_the_name_alone()
+    {
+        var window = Open(out var group);
+
+        DoubleClickTitle(window);
+
+        var box = Box(window).ShouldNotBeNull();
+        box.Text = "Voice";
+        Settle(window);
+
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        Settle(window);
+
+        group.Name.ShouldBeNull();
+    }
+
+    /// <summary>
+    /// The panel for a selection that reaches into groups without being one of
+    /// them, which the group panel cannot answer.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_selection_over_two_boxes_offers_opening_both()
+    {
+        var window = Both(out var top, out var low);
+
+        Buttons(window).ShouldContain("open-groups");
+        Tip(window, "open-groups").ShouldContain("2 boxes");
+
+        // A module's panel puts the row where the group's does: under the name,
+        // ahead of everything the module is made of.
+        Middle(window, Button(window, "open-groups"))
+            .ShouldBeLessThan(Middle(window, All<Slider>(Panel(window)).First()));
+
+        Press(window, "open-groups");
+
+        top.Collapsed.ShouldBeFalse();
+        low.Collapsed.ShouldBeFalse();
+
+        // Opening is not a selection change, so the panel has to be rebuilt on it.
+        Buttons(window).ShouldContain("close-groups");
+    }
+
+    /// <summary>Two pairs, each drawn as a box, with both boxes selected.</summary>
+    private MainWindow Both(out NodeGroup top, out NodeGroup low)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var clock = b.Add("time", 40, 40);
+        var osc = b.Add("osc.sine", 300, 40);
+        var second = b.Add("time", 40, 320);
+        var other = b.Add("osc.sine", 300, 320);
+        var screen = b.Add(NodeCatalog.OutputTypeId, 700, 180);
+
+        b.Wire(clock, 0, osc, 0)
+         .Wire(osc, 0, screen, NodeCatalog.OutputLeftPort)
+         .Wire(second, 0, other, 0)
+         .Wire(other, 0, screen, NodeCatalog.OutputRightPort);
+
+        var window = NewMainWindow();
+
+        window.Show();
+        window.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var editor = Editor(window);
+        editor.History.Open(b.Patch);
+        Settle(window);
+
+        top = editor.History.Patch.Group([clock.Id, osc.Id])!;
+        low = editor.History.Patch.Group([second.Id, other.Id])!;
+
+        editor.History.Record();
+        Settle(window);
+
+        SelectBox(window, editor.History.Patch, top);
+        SelectBox(window, editor.History.Patch, low, adding: true);
+
+        return window;
+    }
+
+    private static void Press(MainWindow window, string name)
+    {
+        var button = Button(window, name);
+        var at = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)
+            ?? throw new InvalidOperationException("the button is not in this window");
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+    }
+
+    private static void DoubleClickTitle(MainWindow window)
+    {
+        var title = Title(window);
+
+        var at = title.TranslatePoint(new Point(title.Bounds.Width / 2, title.Bounds.Height / 2), window)
+            ?? throw new InvalidOperationException("the title is not in this window");
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+    }
+}

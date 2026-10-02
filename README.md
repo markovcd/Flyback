@@ -321,7 +321,7 @@ tests/
   Flyback.Core.Tests            core engine tests
   Flyback.Specs                 feature requirements as Gherkin scenarios
   Flyback.Core.Benchmarks       engine benchmarks
-  Flyback.Editor.Desktop.Tests  app and UI tests
+  Flyback.Editor.Tests  app and UI tests
   Flyback.Cli.Tests             command line tests
   Flyback.Plugins.Tests         plugin and runtime behavior tests
   Flyback.Plugins.OpenAi.Tests  chat-completions session tests

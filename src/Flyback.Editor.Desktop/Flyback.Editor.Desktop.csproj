@@ -52,7 +52,7 @@
 
   <ItemGroup>
     <!-- The updater and the startup are internal, and the tests drive them. -->
-    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 

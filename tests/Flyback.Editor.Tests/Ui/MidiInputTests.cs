@@ -1,0 +1,582 @@
+﻿using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Headless;
+using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Flyback.Editor.Canvas;
+using Flyback.Ui.Controls;
+using Flyback.Editor.Windows;
+using Flyback.Core.Graph;
+using Flyback.Core.Graph.Extras;
+using Shouldly;
+using Xunit;
+
+namespace Flyback.Editor.Tests.Ui;
+
+/// <summary>
+/// The MIDI In as it is actually used: picked in the panel, played from the letters,
+/// and — the part with the most to go wrong — not played from the letters when they
+/// are meant for something else.
+/// </summary>
+/// <remarks>
+/// What only a window can answer is whether a keystroke reaches the instrument or
+/// the editor, because that is about focus and about which program is running, and
+/// neither exists below this layer.
+/// </remarks>
+public class MidiInputTests : UiTest
+{
+
+    /// <summary>A MIDI In whose pitch reaches the picture, and the Output it feeds.</summary>
+    private static (Patch Patch, NodeInstance Midi) Board(bool wired = true)
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+
+        var output = b.Add(NodeCatalog.OutputTypeId, 700, 40);
+        var midi = b.Add(NodeCatalog.MidiTypeId, 200, 40);
+
+        if (wired) b.Wire(midi, 0, output, NodeCatalog.OutputColorPort);
+
+        return (b.Patch, midi);
+    }
+
+    private static void Select(MainWindow window, NodeInstance node)
+    {
+        var editor = All<NodeEditor>(window).Single();
+        var at = editor.TranslatePoint(
+            editor.GraphToScreen.Transform(
+                new Point(
+                    node.X + NodeGeometry.Width / 2,
+                    node.Y + NodeGeometry.HeaderHeight / 2)),
+            window)!.Value;
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+    }
+
+    /// <summary>What the picture is currently reading, by name.</summary>
+    private static IReadOnlyList<string> Drawn(MainWindow window) =>
+        All<PreviewHost>(window).Single().Program.LiveInputs;
+
+    [AvaloniaFact]
+    public void The_module_is_in_the_catalog_under_Sources()
+    {
+        var def = NodeCatalog.BuiltIn.Require(NodeCatalog.MidiTypeId);
+
+        def.Category.ShouldBe(ModuleCategories.Sources);
+        def.Inputs.ShouldBeEmpty();
+        def.Outputs.Select(port => port.Name).ShouldBe(["pitch", "gate", "velocity", "trigger"]);
+    }
+
+    /// <summary>
+    /// The panel offers a list rather than a number or a switch, which is the
+    /// third field shape and the reason it exists.
+    /// </summary>
+    [AvaloniaFact]
+    public void The_panel_offers_a_list_of_instruments_to_pick_from()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+
+        Select(window, midi);
+
+        var picker = All<ComboBox>(window)
+            .FirstOrDefault(box => box.ItemsSource?.Cast<object>().Any(o => o is ChoiceOption) == true);
+
+        picker.ShouldNotBeNull();
+
+        picker.ItemsSource!.Cast<ChoiceOption>()
+            .ShouldContain(option => option.Id == MidiSources.Keyboard);
+
+        // And it opens on what the module is actually listening to rather than on
+        // nothing, which is what a fresh instance carries.
+        ((ChoiceOption)picker.SelectedItem!).Id.ShouldBe(MidiSources.Keyboard);
+    }
+
+    /// <summary>
+    /// A keyboard plugged in while this panel was already on screen. The list is
+    /// asked again as it opens, because the alternative is telling somebody to
+    /// click on another module and back — which nobody would guess.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_device_plugged_in_after_the_panel_was_drawn_is_there_when_the_list_opens()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+
+        Select(window, midi);
+
+        var picker = All<ComboBox>(window)
+            .First(box => box.ItemsSource?.Cast<object>().Any(o => o is ChoiceOption) == true);
+
+        picker.ItemsSource!.Cast<ChoiceOption>().ShouldNotContain(option => option.Id == "midi:arrived-late");
+
+        try
+        {
+            MidiSources.Install(() =>
+            [
+                new MidiSource(MidiSources.Keyboard, "Computer keyboard"),
+                new MidiSource("midi:arrived-late", "Arrived Late"),
+            ]);
+
+            picker.IsDropDownOpen = true;
+            Settle(window);
+
+            picker.ItemsSource!.Cast<ChoiceOption>().ShouldContain(option => option.Id == "midi:arrived-late");
+
+            // And the module is still listening to what it was listening to.
+            ((ChoiceOption)picker.SelectedItem!).Id.ShouldBe(MidiSources.Keyboard);
+        }
+        finally
+        {
+            // Back to the machine with nothing plugged in, which is what every
+            // other test here assumes and what the next window would install
+            // anyway.
+            MidiSources.Install(() => [new MidiSource(MidiSources.Keyboard, "Computer keyboard")]);
+        }
+    }
+
+    [AvaloniaFact]
+    public void A_patch_holding_one_is_compiled_to_read_the_keyboard()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+
+        Drawn(window).ShouldContain(key => key.StartsWith("keyboard/auto/", StringComparison.Ordinal)
+            && key.EndsWith("/pitch", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Wired to nothing it is read by neither program, so it is not listening and
+    /// the letters go on meaning what they meant to the editor.
+    /// </summary>
+    [AvaloniaFact]
+    public void One_wired_to_nothing_asks_for_nothing()
+    {
+        var (patch, _) = Board(wired: false);
+        var window = Open(patch);
+
+        Drawn(window).ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// A letter plays a note, and having played one is taken — so it does not also
+    /// mean whatever it meant to the canvas.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_plays_a_note_while_something_is_listening()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(48d);
+        Held(preview, MidiSignal.Gate).ShouldBe(1d);
+
+        window.KeyReleaseQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// The same letter, on a patch nothing is listening with. Nothing is played,
+    /// and nothing about the editor changes.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_plays_nothing_when_no_module_is_listening()
+    {
+        var (patch, _) = Board(wired: false);
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        preview.Live.Count.ShouldBe(0);
+    }
+
+    /// <summary>
+    /// A note held while the patch is edited must still be held after it. Every
+    /// edit recompiles, and every recompile makes new blocks.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_note_survives_the_recompile_an_edit_causes()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var editor = All<NodeEditor>(window).Single();
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        // Any edit at all: what matters is that the patch is compiled again.
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X += 10;
+        editor.History.Record("moved");
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(1d);
+        Held(preview, MidiSignal.Pitch).ShouldBe(48d);
+    }
+
+    /// <summary>
+    /// The shortcuts that land on letters the layout also plays: Z, Y and L are undo,
+    /// redo and lay out, C, X, V and A are the clipboard and select-all, and every
+    /// one of them is a note. Holding Ctrl is what tells the two apart.
+    /// </summary>
+    /// <remarks>
+    /// Checked by playing nothing rather than by watching the shortcut work: the gate
+    /// is the whole of the evidence, since a keystroke taken as a note would leave it
+    /// open and the shortcut marked handled.
+    /// </remarks>
+    [AvaloniaTheory]
+    [InlineData(PhysicalKey.Z)]
+    [InlineData(PhysicalKey.Y)]
+    [InlineData(PhysicalKey.L)]
+    [InlineData(PhysicalKey.C)]
+    [InlineData(PhysicalKey.X)]
+    [InlineData(PhysicalKey.V)]
+    [InlineData(PhysicalKey.A)]
+    [InlineData(PhysicalKey.F)]
+    public void A_shortcut_on_a_letter_is_still_a_shortcut(PhysicalKey key)
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(key, RawInputModifiers.Control);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// Framing moved off a bare letter and under Ctrl with the rest of the
+    /// editor's gestures, so that every bare letter belongs to the instrument.
+    /// </summary>
+    /// <remarks>
+    /// A gesture that works only until somebody adds a key to the layout is
+    /// worse than one that reads by the same rule as its neighbours.
+    /// </remarks>
+    [AvaloniaFact]
+    public void Ctrl_F_frames_the_patch_and_F_alone_no_longer_does()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var editor = All<NodeEditor>(window).Single();
+
+        // The canvas focused, so that its own key handling is reached at all.
+        // Opening a patch frames it, so one is dragged a long way off first —
+        // otherwise there is nothing for framing to do and a gesture that did
+        // nothing would look exactly like one that worked.
+        editor.Focus();
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X += 2400;
+        editor.History.Record("moved a long way");
+        Settle(window);
+
+        var stale = editor.GraphToScreen.Transform(new Point(0, 0));
+
+        // The letter on its own is a note now, and leaves the view alone.
+        window.KeyPressQwerty(PhysicalKey.F, RawInputModifiers.None);
+        Settle(window);
+
+        editor.GraphToScreen.Transform(new Point(0, 0))
+            .ShouldBe(stale, "F alone should no longer frame anything");
+
+        window.KeyPressQwerty(PhysicalKey.F, RawInputModifiers.Control);
+        Settle(window);
+
+        editor.GraphToScreen.Transform(new Point(0, 0))
+            .ShouldNotBe(stale, "Ctrl+F should have framed the patch");
+    }
+
+    /// <summary>
+    /// Undo in particular, all the way through: Ctrl+Z on a letter that is also a
+    /// note has to take an edit back rather than sound one.
+    /// </summary>
+    [AvaloniaFact]
+    public void Ctrl_Z_undoes_while_the_patch_is_being_played()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var editor = All<NodeEditor>(window).Single();
+
+        var moved = editor.History.Patch.Nodes.First(n => n.Id == midi.Id);
+        var was = moved.X;
+
+        moved.X += 120;
+        editor.History.Record("moved");
+        Settle(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
+        Settle(window);
+
+        editor.History.Patch.Nodes.First(n => n.Id == midi.Id).X.ShouldBe(was);
+        Held(All<PreviewHost>(window).Single(), MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// Shift is not a command modifier. No gesture in the shell is Shift and a
+    /// letter, so a capital Z is still a Z and still plays — which also keeps
+    /// Ctrl+Shift+Z reaching redo, since that one carries Ctrl as well.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_capital_letter_still_plays()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Shift);
+        Settle(window);
+
+        Held(All<PreviewHost>(window).Single(), MidiSignal.Gate).ShouldBe(1d);
+    }
+
+    /// <summary>
+    /// A modifier taken hold of while a note is sounding must not strand it. The
+    /// release is the one keystroke that carries no guards at all, for exactly
+    /// this: every guard in front of it is a way for a note to be missed, and a
+    /// missed release lasts the rest of the session.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_note_let_go_under_a_modifier_still_stops()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+        Held(preview, MidiSignal.Gate).ShouldBe(1d);
+
+        window.KeyReleaseQwerty(PhysicalKey.Z, RawInputModifiers.Control);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// The one that would be found by shipping it. A text box does not mark an
+    /// ordinary key press handled — what it acts on is the text input that
+    /// follows — so without a check for what has the focus, renaming a module
+    /// would play a tune and every letter of the name would be a note nobody
+    /// could stop.
+    /// </summary>
+    [AvaloniaFact]
+    public void Typing_a_name_does_not_play_it()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        Select(window, midi);
+
+        // Double-clicking the panel's heading turns it into a box with the focus
+        // in it, which is the only text box a module's own panel offers.
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        var title = All<TextBlock>(window).First(t => t.FontSize == 17);
+        var at = title.TranslatePoint(
+            new Point(title.Bounds.Width / 2, title.Bounds.Height / 2), window)!.Value;
+
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        window.MouseDown(at, MouseButton.Left);
+        window.MouseUp(at, MouseButton.Left);
+        Settle(window);
+
+        // ReSharper disable once CompareOfFloatsByEqualityOperator
+        All<TextBox>(window).FirstOrDefault(t => t.FontSize == 17)
+            .ShouldNotBeNull("the heading should have become a box");
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    private static ToggleButton CodeButton(MainWindow window) =>
+        All<ToggleButton>(window).Single(b => b.Name == "code");
+
+    private static Button ApplyButton(MainWindow window) =>
+        All<Button>(window).Single(b => b.Name == "apply");
+
+    /// <summary>
+    /// Shows the text view over a canvas-owned patch. It opens on a printing of
+    /// what is already wired, so what applies from here is the same instrument
+    /// the caller built.
+    /// </summary>
+    private static void ShowCode(MainWindow window)
+    {
+        CodeButton(window).IsChecked = true;
+        Settle(window);
+    }
+
+    /// <summary>Applies the printing on screen, which is how the text becomes the document.</summary>
+    private static void ApplyCode(MainWindow window)
+    {
+        ApplyButton(window).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+    }
+
+    /// <summary>
+    /// Letters are notes on the canvas and words in the code, and the text view
+    /// is what decides between them. Applying the printing makes the text the
+    /// document (ADR-0068), and from there a Z is spelling rather than a pitch —
+    /// AvalonEdit is not a <see cref="TextBox"/>, so nothing but the mode itself
+    /// can tell the two apart.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_plays_nothing_once_the_code_is_the_document()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        ShowCode(window);
+        ApplyCode(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(0d);
+    }
+
+    /// <summary>
+    /// A printing is a reading rather than a document — the canvas still owns
+    /// the patch until somebody applies it — so glancing at the code this way
+    /// leaves the keys under the hand meaning what they always meant.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_letter_still_plays_while_the_code_view_only_shows_a_printing()
+    {
+        var (patch, _) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        ShowCode(window);
+
+        window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Gate).ShouldBe(1d);
+    }
+
+    /// <summary>The picker for how the computer keyboard is laid out, where the panel has one.</summary>
+    private static ComboBox? Layout(MainWindow window) =>
+        All<ComboBox>(window).FirstOrDefault(box =>
+            box.ItemsSource?.Cast<object>().OfType<ChoiceOption>().Any(option => option.Id == "scale") == true);
+
+    /// <summary>
+    /// The layout is the patch's, edited from the module that plays it: picking
+    /// Scale lays the keys out at once, starting on C major, and the home row
+    /// plays its notes one to a key.
+    /// </summary>
+    [AvaloniaFact]
+    public void Picking_scale_on_a_MIDI_In_lays_the_keyboard_out_for_the_patch()
+    {
+        var (patch, midi) = Board();
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        Select(window, midi);
+
+        var layout = Layout(window);
+        layout.ShouldNotBeNull();
+        Offering(window, "dorian").ShouldBeNull();
+
+        layout.SelectedIndex = 1;
+        Settle(window);
+
+        All<NodeEditor>(window).Single().History.Patch.Keyboard.ShouldBe(KeyboardScale.Major);
+
+        window.KeyPressQwerty(PhysicalKey.S, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(50d);
+    }
+
+    /// <summary>
+    /// The scale is picked from an Auto Chord's list and started on a tonic, and
+    /// the home row then runs up it from the tonic.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_tonic_and_a_scale_are_picked_from_lists()
+    {
+        var (patch, midi) = Board();
+        patch.Keyboard = KeyboardScale.Major;
+
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        Select(window, midi);
+
+        Pick(Offering(window, "D#")!, "D");
+        Pick(Offering(window, "dorian")!, "dorian");
+
+        All<NodeEditor>(window).Single().History.Patch.Keyboard.ShouldBe(new KeyboardScale(2, "dorian"));
+
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(53d);
+
+        void Pick(ComboBox box, string id)
+        {
+            box.SelectedItem = box.ItemsSource!.Cast<ChoiceOption>().Single(option => option.Id == id);
+            Settle(window);
+        }
+    }
+
+    /// <summary>The picker in the panel that offers <paramref name="id"/>.</summary>
+    private static ComboBox? Offering(MainWindow window, string id) =>
+        All<ComboBox>(window).FirstOrDefault(box =>
+            box.ItemsSource?.Cast<object>().OfType<ChoiceOption>().Any(option => option.Id == id) == true);
+
+    /// <summary>A patch saved on a scale opens on one, before anything is selected.</summary>
+    [AvaloniaFact]
+    public void A_patch_that_carries_a_scale_plays_it()
+    {
+        var (patch, _) = Board();
+        patch.Keyboard = new KeyboardScale(9, "aeolian");
+
+        var window = Open(patch);
+        var preview = All<PreviewHost>(window).Single();
+
+        window.KeyPressQwerty(PhysicalKey.D, RawInputModifiers.None);
+        Settle(window);
+
+        Held(preview, MidiSignal.Pitch).ShouldBe(60d);
+    }
+
+    /// <summary>A module listening to a device has nothing to do with the keys.</summary>
+    [AvaloniaFact]
+    public void A_MIDI_In_on_a_device_does_not_offer_the_layout()
+    {
+        var (patch, midi) = Board();
+        midi.SetState(MidiExtra.StateKey, new System.Text.Json.Nodes.JsonObject
+        {
+            [MidiExtra.DeviceField] = "some-device",
+        });
+
+        var window = Open(patch);
+
+        Select(window, midi);
+
+        Layout(window).ShouldBeNull();
+    }
+
+    private static double Held(PreviewHost preview, string signal)
+    {
+        var block = preview.Live;
+        var key = block.Keys.FirstOrDefault(candidate =>
+            candidate.StartsWith(MidiSources.Keyboard + "/auto/", StringComparison.Ordinal)
+            && candidate.EndsWith("/" + signal, StringComparison.Ordinal));
+
+        return key is null ? 0d : block.At(block.Keys.ToList().IndexOf(key));
+    }
+}

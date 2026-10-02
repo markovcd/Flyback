@@ -56,7 +56,7 @@
     <Project Path="src/Flyback.Plugins.WinIO/Flyback.Plugins.WinIO.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Flyback.Editor.Desktop.Tests/Flyback.Editor.Desktop.Tests.csproj" />
+    <Project Path="tests/Flyback.Editor.Tests/Flyback.Editor.Tests.csproj" />
     <Project Path="tests/Flyback.Cli.Tests/Flyback.Cli.Tests.csproj" />
     <Project Path="tests/Flyback.Core.Benchmarks/Flyback.Core.Benchmarks.csproj" />
     <Project Path="tests/Flyback.Specs/Flyback.Specs.csproj" />

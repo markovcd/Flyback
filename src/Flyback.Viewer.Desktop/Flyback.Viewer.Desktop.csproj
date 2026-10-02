@@ -50,7 +50,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />
   </ItemGroup>
 
