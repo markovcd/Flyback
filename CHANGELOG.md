@@ -26,8 +26,7 @@
 - A text patch reads the same whichever plugins are installed: a plugin's module no longer takes a built-in's short name, so `hsv` is still `color.hsv` with the Picture plugin loaded.
 - A text patch that does not open says which line and column, and what is wrong there.
 - Measure, on Ctrl+M at the end of the top toolbar, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hovering or the inspector, on a module or a group, gives the sound and the picture apart, and an edit greys them until the next.
-- A measured color shows the picture it made at the playhead; the inspector turns to the one at the end of the window, and holding the mouse on it shows the end. Settings → Canvas sets how long Measure runs and whether its picture grid is small, medium or large.
-- Measure shows a number that varies across the picture as a gray picture too, clamped to 0..1 as the screen draws it, on the canvas, the inspector and a group's panel.
+- A measured color, or a number that varies across the screen, shows the picture it made at the playhead; the inspector turns to the one at the end of the window, and holding the mouse on it shows the end. Settings → Canvas sets how long Measure runs and whether its picture grid is small, medium or large.
 - Record sits beside Measure at the end of the top toolbar.
 - Pause, rewind, the seek bar, length, loop and Volume have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
 - A touch screen has buttons for what keys did alone: select all and paste on the toolbar, copy, cut and laying out only the selection on the inspector, and A+ and A− for the code view's text size.
