@@ -1,15 +1,15 @@
 Feature: The patch is played from a row of its own along the foot of the window
-  Pause, rewind, the seek bar, the length, loop, Volume and record stand in one row
+  Pause, rewind, the seek bar, the length, loop and Volume stand in one row
   along the foot of the window, every button in it big enough for a finger, and the
   seek bar as wide as the window leaves it. The toolbar keeps one row in a window
-  730 pixels wide. The row can be put away for its height, and a line still shows
+  830 pixels wide. The row can be put away for its height, and a line still shows
   where the patch is.
 
   Background:
     Given a rainbow across the screen
 
-  Scenario: The toolbar keeps one row in a window 730 pixels wide
-    Given the screen is 730 pixels wide
+  Scenario: The toolbar keeps one row in a window 830 pixels wide
+    Given the screen is 830 pixels wide
     And the patch is open in the editor
     Then the toolbar is one row tall
     And the toolbar has no menu

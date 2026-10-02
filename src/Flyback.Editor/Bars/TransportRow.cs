@@ -13,7 +13,7 @@ namespace Flyback.Editor.Bars;
 
 /// <summary>
 /// The row along the foot of the window that plays the patch: pause, rewind, where the
-/// clock is, the seek bar the width of the window, the length, loop, Volume and record.
+/// clock is, the seek bar the width of the window, the length, loop and Volume.
 /// Every target in it is <see cref="Reach"/> square, for a finger as much as a mouse.
 /// </summary>
 /// <remarks>
@@ -46,19 +46,13 @@ internal sealed class TransportRow
 
     private bool narrow;
 
-    public TransportRow(SeekBar seek, VolumeSlider volume, Reactions reactions, EditorHost host)
+    public TransportRow(SeekBar seek, VolumeSlider volume, Reactions reactions)
     {
         Seek = seek;
         Volume = volume;
 
         Pause = Button("pause", "Pause", Glyphs.Pause(), PauseTip);
         Rewind = Button("rewind", "Rewind", Glyphs.Rewind(), RewindTip);
-
-        // What the record tip says is decided per patch by TakeRecording.Mark.
-        Record = Button("record", "Record", Glyphs.Record(), TakeRecording.RecordTip);
-        ToolTip.SetShowOnDisabled(Record, true);
-
-        Measure = Button("measure", "Measure", Glyphs.Measure(), MeasureTip);
 
         Fit(seek.Loop);
         AutomationProperties.SetName(seek.Loop, "Loop");
@@ -68,8 +62,6 @@ internal sealed class TransportRow
 
         Pause.Click += (_, _) => reactions.Raise(new PauseAsked());
         Rewind.Click += (_, _) => reactions.Raise(new RewindAsked());
-        Record.Click += (_, _) => reactions.Raise(new RecordAsked());
-        Measure.Click += (_, _) => reactions.Raise(new MeasureAsked());
 
         // Named beside each, since the glyphs that say what they are stay in the row.
         folded = new Grid
@@ -92,7 +84,7 @@ internal sealed class TransportRow
 
         row = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("Auto,Auto,Auto,*,Auto,Auto,Auto,Auto"),
             ColumnSpacing = 4,
             Margin = new Thickness(8, 0),
             Height = Reach,
@@ -110,11 +102,6 @@ internal sealed class TransportRow
             Place(control, column);
         }
         Place(More, 7);
-        if (!host.InPage)
-        {
-            Place(Measure, 8);
-            Place(Record, 9);
-        }
 
         seek.Position.Margin = new Thickness(4, 0, 6, 0);
 
@@ -137,16 +124,6 @@ internal sealed class TransportRow
     public Button Pause { get; }
 
     public Button Rewind { get; }
-
-    /// <summary>Starts and stops a take (ADR-0080). Only outside a page.</summary>
-    public Button Record { get; }
-
-    /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
-    public Button Measure { get; }
-
-    internal const string MeasureTip =
-        "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
-        + "the selected modules' or every module's. Again hides them, or measures afresh after an edit  (Ctrl+M)";
 
     /// <summary>What the row cannot fit while narrow, behind one button.</summary>
     public Button More { get; }

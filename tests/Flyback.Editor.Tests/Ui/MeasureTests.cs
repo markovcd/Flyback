@@ -226,6 +226,6 @@ public class MeasureTests : EditorTest
         Settle(window);
 
         measuring.Mode.ShouldBe(MeasureMode.Ready);
-        ToolTip.GetTip(button).ShouldBe(Flyback.Editor.Bars.TransportRow.MeasureTip);
+        ToolTip.GetTip(button).ShouldBe(Flyback.Editor.Bars.Toolbar.MeasureTip);
     }
 }

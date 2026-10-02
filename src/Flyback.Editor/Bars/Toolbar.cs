@@ -92,7 +92,17 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
     /// <summary>Shows the transport row along the foot of the window, or gives its height to the canvas.</summary>
     public ToggleButton Transport { get; } =
-        ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop, Volume and record.");
+        ToolbarButtons.Toggle("transport", Glyphs.Transport(), "Show the row that plays the patch: pause, the seek bar, its length, loop and Volume.");
+
+    /// <summary>Starts and stops a take (ADR-0080). What its tip says is decided per patch by TakeRecording.Mark. Only outside a page.</summary>
+    public Button Record { get; } = ToolbarButtons.Drawn("record", Glyphs.Record(), TakeRecording.RecordTip);
+
+    /// <summary>Runs the patch for a few seconds from the playhead and pins what each output carries. Only outside a page.</summary>
+    public Button Measure { get; } = ToolbarButtons.Drawn("measure", Glyphs.Measure(), MeasureTip);
+
+    public const string MeasureTip =
+        "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
+        + "the selected modules' or every module's. Again hides them, or measures afresh after an edit  (Ctrl+M)";
 
     public ToggleButton Assistant { get; } =
         ToolbarButtons.Toggle("assistant", Glyphs.Spark(), "Describe a patch and have one built.");
@@ -134,6 +144,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Transport.IsChecked = true;
         Transport.IsCheckedChanged += (_, _) => reactions.Raise(new TransportAsked(Transport.IsChecked == true));
         Assistant.IsCheckedChanged += (_, _) => reactions.Raise(new AssistantAsked(Assistant.IsChecked == true));
+        Record.Click += (_, _) => reactions.Raise(new RecordAsked());
+        Measure.Click += (_, _) => reactions.Raise(new MeasureAsked());
         Settings.Click += (_, _) => reactions.Raise(new SettingsAsked());
         Plugins.Click += (_, _) => reactions.Raise(new PluginsAsked());
         About.Click += async (_, _) => await dialog.Show("About", Controls.About.View());
@@ -147,6 +159,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         ToolTip.SetShowOnDisabled(Tidy, true);
         ToolTip.SetShowOnDisabled(Swap, true);
         ToolTip.SetShowOnDisabled(Side, true);
+        ToolTip.SetShowOnDisabled(Record, true);
 
         // A Click says which button was pressed and nothing about what was held
         // down while it was, so that is read on the way in. The key offers both
@@ -203,6 +216,13 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         patchwork.Children.Add(Side);
         patchwork.Children.Add(Transport);
 
+        if (full)
+        {
+            patchwork.Children.Add(ToolbarButtons.Separator());
+            patchwork.Children.Add(Measure);
+            patchwork.Children.Add(Record);
+        }
+
         // The other end of the bar, because none of these is about the patch:
         // they are the program itself, and a thing reached for once a session
         // does not belong in the path of the things reached for constantly.
@@ -247,6 +267,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
                 (Knobs, "Knob panel"),
                 (Transport, "Transport row"),
                 (Redo, "Redo"),
+                (Measure, "Measure"),
+                (Record, "Record"),
                 (Frame, "Bring the whole patch into view"),
             ],
             full ? [(program, programRule)] : []);

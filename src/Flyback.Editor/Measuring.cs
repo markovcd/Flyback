@@ -43,7 +43,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         ReportLine report,
         Reactions reactions,
         EditorHost host,
-        TransportRow transport)
+        Toolbar toolbar)
     {
         this.editor = editor;
         this.playback = playback;
@@ -53,7 +53,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         this.report = report;
         this.reactions = reactions;
         this.host = host;
-        button = transport.Measure;
+        button = toolbar.Measure;
 
         labels.Changed += ShowMode;
     }
@@ -83,7 +83,7 @@ internal sealed class Measuring : IReactTo<MeasureAsked>, IDisposable
         {
             MeasureMode.Running => "Cancel the measurement  (Ctrl+M)",
             MeasureMode.Shown => "Hide the measurements  (Ctrl+M)",
-            _ => TransportRow.MeasureTip,
+            _ => Toolbar.MeasureTip,
         });
     }
 
