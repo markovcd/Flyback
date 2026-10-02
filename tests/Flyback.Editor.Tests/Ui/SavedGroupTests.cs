@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// but a folder on the disk — a folder these tests point somewhere harmless,
 /// because the usual one is where a person's own groups are.
 /// </remarks>
-public class SavedGroupTests : UiTest
+public class SavedGroupTests : EditorTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(),

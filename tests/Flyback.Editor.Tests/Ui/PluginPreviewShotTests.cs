@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Run by hand, with SHOT_DIR naming somewhere to write to; skipped otherwise.
 /// Each PNG becomes the plugin's <c>preview.webp</c> at quality 88.
 /// </remarks>
-public class PluginPreviewShotTests : UiTest
+public class PluginPreviewShotTests : EditorTest
 {
     private static string? Where => Environment.GetEnvironmentVariable("SHOT_DIR");
 

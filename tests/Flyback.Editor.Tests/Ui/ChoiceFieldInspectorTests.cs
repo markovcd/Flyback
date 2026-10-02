@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// A field that is one of a list is a list on the panel, and every pick from it
 /// is kept — Ink's mode is the one the engine ships.
 /// </summary>
-public class ChoiceFieldInspectorTests : UiTest
+public class ChoiceFieldInspectorTests : EditorTest
 {
     private MainWindow Open(out NodeInstance ink)
     {

@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// the gallery around it waits a second for the pointer to settle and prepares
 /// sound first, neither of which this is about.
 /// </summary>
-public class PresetMotionTests : UiTest
+public class PresetMotionTests : EditorTest
 {
     private static Patch Plasma() => Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn);
 

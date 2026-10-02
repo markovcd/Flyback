@@ -7,7 +7,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>What a patch is short of, offered rather than installed.</summary>
-public sealed class MissingPluginsViewTests : UiTest
+public sealed class MissingPluginsViewTests : EditorTest
 {
     private static SitePlugin Listed(string id, string name, string author = "") => new(
         id,

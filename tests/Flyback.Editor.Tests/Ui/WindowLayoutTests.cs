@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The window leaves as it was left: size, maximized state, the panels and the
 /// views, and never a position (ADR-0121).
 /// </summary>
-public sealed class WindowLayoutTests : UiTest
+public sealed class WindowLayoutTests : EditorTest
 {
     private readonly string layoutPath = Path.Combine(
         Path.GetTempPath(),

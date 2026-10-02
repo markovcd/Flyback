@@ -18,7 +18,7 @@ using Xunit;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>The presets shared on the preset site, listed in the gallery after everything on this machine.</summary>
-public sealed class SitePresetTests : UiTest
+public sealed class SitePresetTests : EditorTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 

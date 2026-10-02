@@ -45,6 +45,7 @@ updates:
       testing:
         patterns:
           - xunit.v3
+          - xunit.v3.*
           - Shouldly
           - Verify.*
           - Reqnroll.*

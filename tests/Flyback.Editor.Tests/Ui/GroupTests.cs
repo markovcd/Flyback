@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// stops drawing and stops answering for the modules a box covers, because the
 /// bug this feature can have is a click reaching a module nobody can see.
 /// </remarks>
-public class GroupTests : UiTest
+public class GroupTests : EditorTest
 {
     /// <summary>
     /// A chain with a module either side of the middle pair, so grouping the

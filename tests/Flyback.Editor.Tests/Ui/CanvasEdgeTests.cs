@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// only visible in the pixels. Skia is under the headless platform for these,
 /// the same as the tests of draw order in <see cref="NodeEditorTests"/>.
 /// </remarks>
-public class CanvasEdgeTests : UiTest
+public class CanvasEdgeTests : EditorTest
 {
     private const double Wide = 900;
     private const double Tall = 700;

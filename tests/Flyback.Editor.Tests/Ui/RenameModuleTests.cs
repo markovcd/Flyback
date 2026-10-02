@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// drawn straight from <see cref="NodeInstance.Title"/>, and reading text back out
 /// of a rendered frame would be a test of the font.
 /// </remarks>
-public class RenameModuleTests : UiTest
+public class RenameModuleTests : EditorTest
 {
     private MainWindow Open(out NodeInstance sine)
     {

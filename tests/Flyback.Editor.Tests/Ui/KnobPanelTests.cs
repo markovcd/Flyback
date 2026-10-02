@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The knob panel as it is used: adding a knob, linking sockets to it by clicking
 /// them, and turning it without an edit or a recompile.
 /// </summary>
-public class KnobPanelTests : UiTest
+public class KnobPanelTests : EditorTest
 {
 
     private static ControlsPanel Panel(MainWindow window) => All<ControlsPanel>(window).Single();

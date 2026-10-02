@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// this is about the row the preview stands in giving its share back — the way
 /// <c>ShowAssistant</c> already does for the assistant.
 /// </remarks>
-public class PreviewVisibilityTests : UiTest
+public class PreviewVisibilityTests : EditorTest
 {
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();

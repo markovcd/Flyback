@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// format — and that pasting something which is not a patch at all is answered
 /// with a sentence rather than an exception.
 /// </remarks>
-public class CopyPasteTests : UiTest
+public class CopyPasteTests : EditorTest
 {
     private static Patch Chain(out NodeInstance time, out NodeInstance osc, out NodeInstance sink)
     {

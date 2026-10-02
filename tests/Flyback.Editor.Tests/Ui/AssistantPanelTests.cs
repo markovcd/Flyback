@@ -28,7 +28,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// that reacts to what a provider can do cannot be looked at in front of none.
 /// Driving an actual run is the plugin tests' job.
 /// </remarks>
-public sealed class AssistantPanelTests : UiTest
+public sealed class AssistantPanelTests : EditorTest
 {
     /// <summary>What the button shows when pressing it would ask.</summary>
     private const string Send = "⏎";

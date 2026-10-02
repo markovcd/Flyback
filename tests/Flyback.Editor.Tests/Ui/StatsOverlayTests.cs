@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// F3 or <c>--stats</c> asks for it, over the editor's full-screen picture and the
 /// viewer's, and nowhere else.
 /// </summary>
-public class StatsOverlayTests : UiTest
+public class StatsOverlayTests : EditorTest
 {
     private static ViewerOptions Options() => new() { Gpu = false, Size = new PixelSize(320, 180) };
 

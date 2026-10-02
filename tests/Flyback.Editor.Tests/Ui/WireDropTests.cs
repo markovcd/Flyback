@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// and takes luma from a color — so the question is only which one was meant, and
 /// the answer is the port the module is about before the port that matches.
 /// </remarks>
-public class WireDropTests : UiTest
+public class WireDropTests : EditorTest
 {
     private MainWindow Open()
     {

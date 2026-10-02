@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// headless platform does not put up, and the name is written down in one place for
 /// all three.
 /// </remarks>
-public sealed class WindowTitleTests : UiTest
+public sealed class WindowTitleTests : EditorTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 

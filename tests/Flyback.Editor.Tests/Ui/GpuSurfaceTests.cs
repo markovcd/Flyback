@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// A host with no OpenGL control, a page, hands the preview a GPU surface of its own
 /// (ADR-0162), and the preview treats it as it treats the desktop's.
 /// </summary>
-public class GpuSurfaceTests : UiTest
+public class GpuSurfaceTests : EditorTest
 {
     [AvaloniaFact]
     public void The_preview_draws_on_the_surface_it_was_given()

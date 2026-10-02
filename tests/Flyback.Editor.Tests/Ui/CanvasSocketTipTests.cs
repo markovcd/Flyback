@@ -10,7 +10,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>Hovering a socket on the canvas says what it is for, in the panel's words.</summary>
-public class CanvasSocketTipTests : UiTest
+public class CanvasSocketTipTests : EditorTest
 {
     private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
 

@@ -15,7 +15,7 @@ using Xunit;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>A shared preset opened once opens again while the preset site does not answer.</summary>
-public sealed class KeptSharedPresetTests : UiTest
+public sealed class KeptSharedPresetTests : EditorTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 

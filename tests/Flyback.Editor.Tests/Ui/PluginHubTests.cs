@@ -18,7 +18,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>The plugins window: what is installed and what the site offers, under one search.</summary>
-public sealed class PluginHubTests : UiTest
+public sealed class PluginHubTests : EditorTest
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-hub-" + Guid.NewGuid().ToString("N"));
 

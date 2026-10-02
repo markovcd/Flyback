@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// volume control overlapping the button beside it — are both invisible to any
 /// test that only asks what the control contains.
 /// </summary>
-public class StepListTests : UiTest
+public class StepListTests : EditorTest
 {
     private static (StepList List, NodeInstance Node) Build(string typeId = "seq.notes")
     {

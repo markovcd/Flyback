@@ -36,7 +36,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// parent. Opening it twice is the sequence that throws if the window ever stops
 /// being taken apart first.
 /// </remarks>
-public class OutputSettingsTests : UiTest
+public class OutputSettingsTests : EditorTest
 {
     /// <summary>Where a window under test keeps its settings, so none land in the machine's own.</summary>
     private readonly string settingsPath = Path.Combine(

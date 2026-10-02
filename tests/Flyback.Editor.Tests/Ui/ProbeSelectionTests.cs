@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// the file changes while one is up, and nothing about the sound does either —
 /// the speakers root at the Output whatever the screen has been asked for.
 /// </remarks>
-public class ProbeSelectionTests : UiTest
+public class ProbeSelectionTests : EditorTest
 {
 
     private static CompiledPatch Showing(MainWindow window) => All<PreviewHost>(window).Single().Program;

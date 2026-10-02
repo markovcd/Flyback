@@ -9,7 +9,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>What the editor's own gestures add to the end of a run's report (ADR-0103).</summary>
-public class UsageCountingTests : UiTest
+public class UsageCountingTests : EditorTest
 {
     [AvaloniaFact]
     public void The_features_a_run_reached_for_are_counted_at_its_end()

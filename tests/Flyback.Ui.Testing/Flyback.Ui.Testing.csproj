@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <!--
+    What a test of an Avalonia control needs, shared by the test projects that
+    have one: the headless platform with Skia under it, the font the program
+    ships, and a base class that opens windows and settles layout. Skia is what
+    lets a test see pixels rather than throw: the default headless drawing
+    backend does no rasterizing, and a test that cannot see what it drew passed
+    while the number boxes in the step list rendered empty.
+
+    No test lives here, so it takes the extensibility package and not xunit.v3,
+    which makes a project one the test runner is pointed at.
+  -->
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.extensibility.core" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <!--
+    Headless/ is Avalonia.Headless.XUnit's own source (MIT, from
+    src/Headless/Avalonia.Headless.XUnit in AvaloniaUI/Avalonia), compiled here
+    instead of referenced as a package. The shipped assembly is built against
+    xunit.v3 3.2.2 and its discoverer throws MissingMethodException on 4.x,
+    which loses every UI test at discovery; built from source it is compiled
+    against whatever xunit the project uses.
+
+    Kept as close to upstream as it can be, so a newer Avalonia can be diffed
+    against it: what changed is the xunit 4 extensibility API it sits on — the
+    scheduling values ISelfExecutingXunitTestCase.Run now carries, threaded down
+    to the runner contexts, and a discoverer override whose signature moved. The
+    four AvaloniaTestFramework* files are left out, being the assembly-attribute
+    route that [AvaloniaFact] does not take.
+
+    Delete the folder and reference the package again once Avalonia ships one
+    built against xunit.v3 4.
+  -->
+  <ItemGroup>
+    <Compile Update="Headless\*.cs" Visible="true" />
+  </ItemGroup>
+
+</Project>

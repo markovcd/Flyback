@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// A knob holds the pointer still while it turns, so a knob at the foot of the screen turns
 /// all the way on the room there is.
 /// </summary>
-public class KnobHoldTests : UiTest
+public class KnobHoldTests : EditorTest
 {
     /// <summary>Stands in for the platform, whose warp arrives back as a move to where the drag began.</summary>
     private sealed class Anchor(bool holds) : IPointerAnchor

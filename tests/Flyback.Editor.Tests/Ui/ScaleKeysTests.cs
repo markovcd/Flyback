@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// and every assertion about "twelve buttons that toggle" would pass on a row of
 /// twelve.
 /// </remarks>
-public class ScaleKeysTests : UiTest
+public class ScaleKeysTests : EditorTest
 {
     private static readonly int[] Major = [0, 2, 4, 5, 7, 9, 11];
 

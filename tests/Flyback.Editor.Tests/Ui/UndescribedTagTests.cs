@@ -16,7 +16,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// A module the assistant is not told about says so: a tag on its header that
 /// explains itself when hovered, and the same words at the foot of the inspector.
 /// </summary>
-public class UndescribedTagTests : UiTest
+public class UndescribedTagTests : EditorTest
 {
     private (MainWindow Window, NodeInstance Sine, NodeInstance Clock) Open()
     {

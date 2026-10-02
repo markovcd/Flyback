@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Either way only the modules, their wires and their groups cross. What a patch
 /// says about itself — its panel, its credits, its length — stays behind.
 /// </remarks>
-public class PasteAcrossTests : UiTest
+public class PasteAcrossTests : EditorTest
 {
     /// <summary>Two modules in a group, and everything a patch says about itself.</summary>
     private const string Grouped = """

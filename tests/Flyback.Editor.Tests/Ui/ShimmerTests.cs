@@ -5,7 +5,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>The toolbar's "Compiling…": said only for a wait long enough to notice, and gone when it ends.</summary>
-public class ShimmerTests : UiTest
+public class ShimmerTests : EditorTest
 {
     [AvaloniaFact]
     public void A_short_wait_is_never_shown()

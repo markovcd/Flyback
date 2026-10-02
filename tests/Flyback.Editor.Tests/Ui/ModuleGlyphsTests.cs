@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// mark, a mark keyed to a module that is not there, and two modules drawn the
 /// same.
 /// </summary>
-public class ModuleGlyphsTests : UiTest
+public class ModuleGlyphsTests : EditorTest
 {
     /// <summary>
     /// The same promise <see cref="ColorsTests"/> makes about the accents: a

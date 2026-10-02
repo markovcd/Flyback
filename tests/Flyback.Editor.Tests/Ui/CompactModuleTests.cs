@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Compact modules: an input and an output share each row, and an unwired input's
 /// value is in its tooltip rather than on the row. The switch is each window's own.
 /// </summary>
-public class CompactModuleTests : UiTest
+public class CompactModuleTests : EditorTest
 {
     private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
 

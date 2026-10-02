@@ -16,7 +16,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// has no touch input, so the fingers are handed to <see cref="Fingers"/> directly,
 /// in the canvas's own coordinates.
 /// </summary>
-public class FingersTests : UiTest
+public class FingersTests : EditorTest
 {
     private static Patch Pair(out NodeInstance clock, out NodeInstance sine)
     {

@@ -11,7 +11,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// module be dragged to see the patch more clearly, even though nothing dragged
 /// there is written back into the text.
 /// </summary>
-public class LockedCanvasDragTests : UiTest
+public class LockedCanvasDragTests : EditorTest
 {
     private static Patch Pair(out NodeInstance source, out NodeInstance sink)
     {

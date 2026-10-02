@@ -10,7 +10,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Writing to the author from the status bar: what goes up is what was typed and
 /// what the letter printed, and nothing else (ADR-0136).
 /// </summary>
-public sealed class LetterTests : UiTest
+public sealed class LetterTests : EditorTest
 {
     private static readonly LetterAbout About = new(
         "1.4.0+abc1234", "Microsoft Windows 10.0.26200", "WinIO, Picture; sound: WASAPI");

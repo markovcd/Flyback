@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The other half of holding a module inside the canvas: a bound on where things may
 /// be put is worth little beside a view that can wander somewhere none of them are.
 /// </remarks>
-public class PanBoundsTests : UiTest
+public class PanBoundsTests : EditorTest
 {
     private const double Wide = 1200;
     private const double Tall = 800;

@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// about the band doing what it should, and half is about the two buttons that
 /// must not do it too.
 /// </remarks>
-public class MarqueeSelectTests : UiTest
+public class MarqueeSelectTests : EditorTest
 {
     /// <summary>
     /// A row of three, spaced so a band can take any one, any two, or all of

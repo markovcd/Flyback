@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// larger selection, which cannot be answered when the button goes down — so it is
 /// answered on the way up, and half of what is below is about that.
 /// </remarks>
-public class MultiSelectTests : UiTest
+public class MultiSelectTests : EditorTest
 {
     /// <summary>Three modules well apart, so that a click lands on exactly one of them.</summary>
     private static Patch Three(out NodeInstance a, out NodeInstance b, out NodeInstance c)

@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// and, for the one fact nobody can verify by reading it, that nothing is shown
 /// where there is nothing to show.
 /// </summary>
-public class AboutTests : UiTest
+public class AboutTests : EditorTest
 {
     private Window Showing()
     {

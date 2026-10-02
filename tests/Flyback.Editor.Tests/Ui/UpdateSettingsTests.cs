@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The update switch on the settings window's Privacy tab, and the line the window opens with after
 /// an update was installed (ADR-0088).
 /// </summary>
-public sealed class UpdateSettingsTests : UiTest
+public sealed class UpdateSettingsTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

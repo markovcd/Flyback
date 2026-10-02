@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The toolbar's swap: the picture in the wide column and the canvas where the
 /// picture was, for as long as there is a picture.
 /// </summary>
-public class SwapPreviewTests : UiTest
+public class SwapPreviewTests : EditorTest
 {
 
     private static ToggleButton Swap(MainWindow window) =>

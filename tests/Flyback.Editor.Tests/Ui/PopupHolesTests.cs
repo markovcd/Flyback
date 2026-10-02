@@ -11,7 +11,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The holes a page's picture canvas cuts for the popups over it, found with a tooltip
 /// in the window's own layers, where a page puts every popup.
 /// </summary>
-public class PopupHolesTests : UiTest
+public class PopupHolesTests : EditorTest
 {
     [AvaloniaFact]
     public void A_tooltip_over_a_control_is_one_hole_its_size_where_it_lies()

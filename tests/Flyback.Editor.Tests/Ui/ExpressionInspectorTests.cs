@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// An Expression's formula is a line on the panel to type into, and what is kept
 /// there is both what the module computes and what it is called.
 /// </summary>
-public class ExpressionInspectorTests : UiTest
+public class ExpressionInspectorTests : EditorTest
 {
     private MainWindow Open(out NodeInstance expression, string? written = null)
     {

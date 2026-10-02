@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// the editor, because that is about focus and about which program is running, and
 /// neither exists below this layer.
 /// </remarks>
-public class MidiInputTests : UiTest
+public class MidiInputTests : EditorTest
 {
 
     /// <summary>A MIDI In whose pitch reaches the picture, and the Output it feeds.</summary>

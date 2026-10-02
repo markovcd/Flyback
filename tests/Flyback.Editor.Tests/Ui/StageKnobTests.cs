@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The patch's knobs over a full-window picture, in the editor and in the viewer:
 /// there to be played, shown and hidden on request, and absent where the patch has none.
 /// </summary>
-public class StageKnobTests : UiTest
+public class StageKnobTests : EditorTest
 {
     /// <summary>A Value module coloring the picture, following a knob named Glow unless there is none.</summary>
     private static (Patch Patch, PatchControl? Knob) Board(bool knob = true)

@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Randomizing the knob panel: the die, Ctrl+Shift+K, a knob held out of it, and
 /// the way back.
 /// </summary>
-public class KnobRandomizeTests : UiTest
+public class KnobRandomizeTests : EditorTest
 {
     private static ControlsPanel Panel(MainWindow window) => All<ControlsPanel>(window).Single();
 

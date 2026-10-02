@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// did not throw — the same reason <see cref="QrCodeTests"/> decodes what it
 /// drew instead of trusting the encoder.
 /// </remarks>
-public class ModuleStateShotTests : UiTest
+public class ModuleStateShotTests : EditorTest
 {
     private const double Across = 300, Down = 60;
     private const double Wide = 900, Tall = 500;

@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// rather than what is in them. The same check keeps a slider being dragged from
 /// being torn down under the hand holding it, which is the last test here.
 /// </remarks>
-public class InspectorWiringTests : UiTest
+public class InspectorWiringTests : EditorTest
 {
 
     /// <summary>

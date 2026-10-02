@@ -30,7 +30,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// press one. The other half is that it is a panel rather than a window, so nothing
 /// about being modal comes from the platform.
 /// </remarks>
-public sealed class UnsavedDialogTests : UiTest
+public sealed class UnsavedDialogTests : EditorTest
 {
     /// <summary>Where the tests that write a file write it.</summary>
     private readonly string folder = Path.Combine(

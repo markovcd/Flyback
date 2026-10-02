@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// only the view can. And it stops each module separately: clamped one at a time, a
 /// group holds together until it meets the edge and then flattens against it.
 /// </remarks>
-public class DragBoundsTests : UiTest
+public class DragBoundsTests : EditorTest
 {
     /// <summary>
     /// The furthest a module's corner may go: the edge of the canvas, less the

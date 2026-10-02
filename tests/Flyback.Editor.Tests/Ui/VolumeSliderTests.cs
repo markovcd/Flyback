@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The Output's Volume on the toolbar: it shows what the Output holds, a drag along it
 /// is one edit, and it is left alone while a wire or a panel knob drives Volume.
 /// </summary>
-public sealed class VolumeSliderTests : UiTest
+public sealed class VolumeSliderTests : EditorTest
 {
     private static Slider Slider(MainWindow window) => All<Slider>(window).Single(s => s.Name == "volume");
 

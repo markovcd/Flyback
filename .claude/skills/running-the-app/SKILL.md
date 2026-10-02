@@ -5,7 +5,7 @@ description: Use when launching the real Flyback editor window (not the viewer) 
 
 # Running the app yourself
 
-This covers launching the real Flyback window (full Avalonia, not a headless `UiTest`) to check something or to take a screenshot.
+This covers launching the real Flyback window (full Avalonia, not a headless `EditorTest`) to check something or to take a screenshot.
 
 If all that needs looking at is a patch's picture or sound, use `flyback-viewer` instead (the `looking-at-a-patch` skill): it is quicker and there is no editor window to guard.
 

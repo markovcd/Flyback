@@ -13,7 +13,7 @@ using Xunit;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>The grid an Arrangement's parts are edited in.</summary>
-public class PartGridTests : UiTest
+public class PartGridTests : EditorTest
 {
     private Window Showing(out NodeInstance node, out List<string?> changes)
     {

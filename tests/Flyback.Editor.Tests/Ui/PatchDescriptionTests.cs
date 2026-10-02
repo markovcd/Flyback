@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// With nothing selected the panel shows what the patch is for, and a double-click
 /// there edits it the way one on a module's name renames the module.
 /// </summary>
-public class PatchDescriptionTests : UiTest
+public class PatchDescriptionTests : EditorTest
 {
     private MainWindow Open()
     {

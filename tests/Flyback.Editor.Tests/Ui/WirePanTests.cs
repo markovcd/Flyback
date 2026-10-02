@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// on hold rather than dropped, and picks back up exactly where it left off
 /// once the button comes back up. A module in hand is held the same way.
 /// </summary>
-public class WirePanTests : UiTest
+public class WirePanTests : EditorTest
 {
     private const double Wide = 1200;
     private const double Tall = 800;

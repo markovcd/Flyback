@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The toolbar keeps one row: what does not fit folds into the menu at its end, the
 /// program's own buttons first, and comes back as the window widens.
 /// </summary>
-public sealed class ToolbarOverflowTests : UiTest
+public sealed class ToolbarOverflowTests : EditorTest
 {
     private string?[] Folded(MainWindow window) =>
         Service<Toolbar>(window).Overflow.Folded.Select(control => control.Name).ToArray();

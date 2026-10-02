@@ -41,7 +41,7 @@ one of these:
   thirty until the deadline was made an argument.
 - **It leaves something running.** Work a test starts and does not stop is
   charged to every test after it, so the cost shows up spread across the run
-  rather than on the test that caused it (see `UiTest`, which closes the windows
+  rather than on the test that caused it (see `EditorTest`, which closes the windows
   a test opened).
 - **It redoes shared work.** Something built once per test that could be built
   once for the class.

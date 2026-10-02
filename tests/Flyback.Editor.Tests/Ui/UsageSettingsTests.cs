@@ -13,7 +13,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The usage switch on the settings window's Privacy tab: the switch, and that clearing it stops the
 /// run it is cleared in rather than only the next one (ADR-0094).
 /// </summary>
-public sealed class UsageSettingsTests : UiTest
+public sealed class UsageSettingsTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

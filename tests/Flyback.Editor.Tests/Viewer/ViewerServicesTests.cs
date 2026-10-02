@@ -16,7 +16,7 @@ namespace Flyback.Editor.Tests.Viewer;
 /// a surface is made only for a picture there is a window to show, and a run with
 /// no window plays without one.
 /// </summary>
-public class ViewerServicesTests : UiTest
+public class ViewerServicesTests : EditorTest
 {
     private static ViewerLaunch Launch(ViewerOptions options) => new(
         new Opened(Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn), new SampleLibrary(), new ImageLibrary()),

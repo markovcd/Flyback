@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// A headless test never has a working GPU, so what is checked is which backend the
 /// host was asked for against which it settles on.
 /// </remarks>
-public class PreviewBackendTests : UiTest
+public class PreviewBackendTests : EditorTest
 {
     private readonly string folder = Directory.CreateTempSubdirectory("flyback-preview").FullName;
 

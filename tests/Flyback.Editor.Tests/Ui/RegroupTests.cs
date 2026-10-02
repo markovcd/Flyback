@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Moving modules into and out of a group after it is made: a Shift-drag, a module
 /// picked from the palette over a ring, and Ctrl+G over a group and loose modules.
 /// </summary>
-public class RegroupTests : UiTest
+public class RegroupTests : EditorTest
 {
     /// <summary>An open group of three in a row, and a Time and the Output beneath it.</summary>
     private static Patch Row(out NodeGroup group, out NodeInstance first, out NodeInstance middle, out NodeInstance loose)

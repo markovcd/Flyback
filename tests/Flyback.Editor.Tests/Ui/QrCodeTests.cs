@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// bits — was checked once by decoding a rendering of it with a reader that has
 /// nothing to do with this code.
 /// </remarks>
-public class QrCodeTests : UiTest
+public class QrCodeTests : EditorTest
 {
     [AvaloniaFact]
     public void A_code_reads_back_as_the_text_it_was_made_from()

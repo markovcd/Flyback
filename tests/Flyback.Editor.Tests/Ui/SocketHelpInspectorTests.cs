@@ -13,7 +13,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The panel heads a module with its description, gives each socket its help as
 /// the tip on its row, and lists the outputs after everything that can be set.
 /// </summary>
-public class SocketHelpInspectorTests : UiTest
+public class SocketHelpInspectorTests : EditorTest
 {
     private static readonly NodeDef Filter = NodeCatalog.BuiltIn.Require(NodeCatalog.FilterTypeId);
 

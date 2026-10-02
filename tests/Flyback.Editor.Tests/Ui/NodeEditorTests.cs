@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// and a drift there is the worst kind of bug this program can have, because the
 /// socket is drawn where you see it and answers somewhere else.
 /// </summary>
-public class NodeEditorTests : UiTest
+public class NodeEditorTests : EditorTest
 {
     private static NodeDef Sink => NodeCatalog.BuiltIn.Require(NodeCatalog.OutputTypeId);
 

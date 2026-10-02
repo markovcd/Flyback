@@ -13,7 +13,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// <summary>
 /// Play and pause in the editor, on the toolbar and over the full-screen preview.
 /// </summary>
-public class TransportTests : UiTest
+public class TransportTests : EditorTest
 {
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();

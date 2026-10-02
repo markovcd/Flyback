@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The transport over the full-screen picture: one bar behind one set of dots, in the
 /// toolbar's order, at the top unless the settings give the top to the knobs.
 /// </summary>
-public sealed class FullScreenTransportTests : UiTest
+public sealed class FullScreenTransportTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

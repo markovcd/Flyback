@@ -145,7 +145,7 @@ FROM gate AS measured
 ARG CONFIGURATION
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    for project in $(grep -l xunit.v3 tests/*/*.csproj); do \
+    for project in $(grep -l 'Include="xunit.v3"' tests/*/*.csproj); do \
       dotnet test --project "$project" -c ${CONFIGURATION} --no-build \
         --results-directory "TestResults/$(basename "$project" .csproj)" \
         --coverage --coverage-settings coverage.runsettings --coverage-output-format cobertura \

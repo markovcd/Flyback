@@ -15,7 +15,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>The status bar's count of what the patch costs, the picture and the sound each, the sound's oversampling and how fast it renders.</summary>
-public sealed class StatusCountTests : UiTest
+public sealed class StatusCountTests : EditorTest
 {
     /// <summary>Written on a timer, which a headless run cannot be relied on to tick, so the test writes it.</summary>
     private static bool Until(Func<bool> done, double seconds = 10)

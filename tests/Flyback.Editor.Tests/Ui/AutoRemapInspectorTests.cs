@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// wire, and outlines the pair left as plain numbers where that end has no range;
 /// a wire between two different ranges has a mark that puts one in.
 /// </summary>
-public class AutoRemapInspectorTests : UiTest
+public class AutoRemapInspectorTests : EditorTest
 {
 
     private static Point OnWindow(MainWindow window, Point graph)

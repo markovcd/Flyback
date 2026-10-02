@@ -14,7 +14,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The gallery reporting which tile the pointer is on, which is the whole of what
 /// it says about auditioning: what the window then does with that is its own.
 /// </summary>
-public class PresetGalleryTests : UiTest
+public class PresetGalleryTests : EditorTest
 {
     private (Window Window, Control Tiles, List<PointedTile?> Reported) Gallery()
     {

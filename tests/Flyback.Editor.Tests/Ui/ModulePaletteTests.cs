@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// picked lands where the click was — so what is checked here is that gesture,
 /// and that panning still belongs to the middle button alone.
 /// </remarks>
-public class ModulePaletteTests : UiTest
+public class ModulePaletteTests : EditorTest
 {
 
     /// <summary>The palette, wherever it currently is — it is not in the window's own tree once shown in a flyout.</summary>

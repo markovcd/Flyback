@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// so with an ellipsis instead of being sheared off at the edge, and that what
 /// it has said is still reachable after it has moved on.
 /// </summary>
-public class ReportLineTests : UiTest
+public class ReportLineTests : EditorTest
 {
     /// <summary>More messages than are kept, so the popup is as full as it ever gets.</summary>
     private const int Enough = 8;

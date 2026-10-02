@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// returned is a throw on the second opening — a bug nobody meets until the second
 /// time they look at a setting.
 /// </remarks>
-public class DialogTests : UiTest
+public class DialogTests : EditorTest
 {
 
     /// <summary>Presses a toolbar button and waits for what it puts up.</summary>

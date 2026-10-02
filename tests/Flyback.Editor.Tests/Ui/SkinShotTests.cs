@@ -25,7 +25,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// is what keeps that true: the shots are retaken from the same code the app
 /// paints with.
 /// </remarks>
-public class SkinShotTests : UiTest
+public class SkinShotTests : EditorTest
 {
     /// <summary>
     /// ADR-0118 counts a picture's transparency as the node gray behind it. That

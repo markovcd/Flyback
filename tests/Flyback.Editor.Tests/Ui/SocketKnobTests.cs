@@ -16,7 +16,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Holding the right button on an unpatched input and dragging
 /// up and down turns that input's value.
 /// </summary>
-public class SocketKnobTests : UiTest
+public class SocketKnobTests : EditorTest
 {
     private static Patch Chain(out NodeInstance clock, out NodeInstance osc)
     {

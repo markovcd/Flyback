@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// it is off, and the Output left alone since the graph has nowhere to put a
 /// patch without one.
 /// </remarks>
-public class SwitchOffTests : UiTest
+public class SwitchOffTests : EditorTest
 {
     private static Patch Chain(out NodeInstance clock, out NodeInstance osc, out NodeInstance sink)
     {

@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The Files tab of the settings window: which program opens Flyback's files, told
 /// to the operating system on Save and on nothing else (ADR-0127).
 /// </summary>
-public sealed class FileTypeSettingsTests : UiTest
+public sealed class FileTypeSettingsTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

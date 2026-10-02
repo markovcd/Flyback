@@ -1,9 +1,9 @@
-using Flyback.Editor.Tests.Headless;
+using Flyback.Ui.Testing.Headless;
 using Xunit;
 
 [assembly: AssemblyFixture(typeof(PoolHeadroom))]
 
-namespace Flyback.Editor.Tests.Headless;
+namespace Flyback.Ui.Testing.Headless;
 
 /// <summary>
 /// Enough pool threads that xunit's own cannot use them all up.

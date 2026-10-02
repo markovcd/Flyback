@@ -15,7 +15,7 @@ using Shouldly;
 namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>A <c>.fbkp</c> dropped on the window, which asks before it installs anything.</summary>
-public sealed class PluginInstallTests : UiTest
+public sealed class PluginInstallTests : EditorTest
 {
     private readonly string folder = Path.Combine(Path.GetTempPath(), "flyback-install-" + Guid.NewGuid().ToString("N"));
 

@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// move. The release that follows must then complete nothing, or the abort would
 /// only have been a pause.
 /// </remarks>
-public class AbortGestureTests : UiTest
+public class AbortGestureTests : EditorTest
 {
     private const string Sine = "osc.sine";
     private const string Add = "math.add";

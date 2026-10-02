@@ -17,7 +17,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Each PNG becomes the plugin's <c>preview.webp</c> at quality 88. Sixteen by nine
 /// and bold, because the plugins window shows it at 128 by 72.
 /// </remarks>
-public class PluginArtShotTests : UiTest
+public class PluginArtShotTests : EditorTest
 {
     private static string? Where => Environment.GetEnvironmentVariable("SHOT_DIR");
 

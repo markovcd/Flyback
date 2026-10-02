@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// spans the patch's own length, typed beside it as an edit; and at its end the patch
 /// stops, or comes round to zero where it loops.
 /// </summary>
-public sealed class SeekBarTests : UiTest
+public sealed class SeekBarTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

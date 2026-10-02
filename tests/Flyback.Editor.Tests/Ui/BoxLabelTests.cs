@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// What a shut box and a module's header say around an Expression: one line
 /// each, cut where it is too long, and a box's socket named for the socket inside.
 /// </summary>
-public class BoxLabelTests : UiTest
+public class BoxLabelTests : EditorTest
 {
     private const string Long = "(1 - smoothstep(0.019, 0.021, abs(b - 0.925))) * step(a, (c + d * (1 / 13)) * 2.8 - 1.4)";
 

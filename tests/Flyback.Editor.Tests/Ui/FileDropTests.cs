@@ -26,7 +26,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// <see cref="MainWindow"/> actually listens for, which is what lets a route
 /// every other file-opening test has to leave to the picker be exercised here.
 /// </remarks>
-public sealed class FileDropTests : UiTest
+public sealed class FileDropTests : EditorTest
 {
     private const string Program = GlobalConstants.ApplicationName;
 

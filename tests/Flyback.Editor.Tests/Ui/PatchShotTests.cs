@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// what keeps that true: the pictures are retaken from the code the app paints
 /// with, so a module that gains a glyph gains it here too.
 /// </remarks>
-public class PatchShotTests : UiTest
+public class PatchShotTests : EditorTest
 {
     private static string? Where => Environment.GetEnvironmentVariable("SHOT_DIR");
 

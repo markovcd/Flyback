@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// and a drag is holding pieces of the one that was there: the module under the
 /// pointer, or the far end of the wire being drawn.
 /// </remarks>
-public class MidDragTests : UiTest
+public class MidDragTests : EditorTest
 {
     private const string Sine = "osc.sine";
     private const string Add = "math.add";

@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// changes some of them leaves the window answering for a file nobody has open,
 /// and the answer it gives is a wrong sound rather than an error.
 /// </remarks>
-public class DocumentIdentityTests : UiTest
+public class DocumentIdentityTests : EditorTest
 {
 
     private static ComboBox PresetList(MainWindow window) => All<ComboBox>(window)

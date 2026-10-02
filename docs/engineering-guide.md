@@ -684,7 +684,7 @@ that only a person watching the screen can check is not finished.
   answering with a throwaway test gets a command or a flag instead.
 - **Answers a script can read.** Exit codes mean one thing each (`Exit`), a
   report has `--json`, and stdout carries only the answer.
-- **The editor headless.** A UI feature is reachable from a `UiTest` and, where
+- **The editor headless.** A UI feature is reachable from a `EditorTest` and, where
   it has a look, from `PatchShotTests`. Screen coordinates and `SendKeys` are the
   last resort (`running-the-app.md`), not the test.
 - **The editor without a window.** What a gesture or a key does lives in a service
@@ -752,6 +752,7 @@ changed: saved patches name it.
 | `Flyback.Cli.Tests` | Commands run in-process | |
 | `Flyback.Plugins.Tests` | The host, every shipped module and preset | Loads real plugins off disk |
 | `Flyback.Plugins.OpenAi.Tests`, `.Gemini.Tests` | Wire translation and sessions | Reference the plugin directly: translation is pure |
+| `Flyback.Ui.Testing` | The headless harness: `UiTest`, the Avalonia xunit adapter | Not a test project |
 | `Flyback.Core.Benchmarks` | BenchmarkDotNet | Not a test project |
 | `Flyback.Plugins.Sample`, `.FakeAssistant` | Plugins the tests load | Not test projects |
 
@@ -840,14 +841,14 @@ many failures, collect them and assert once with the first few in the message.
 
 ### A UI test
 
-Derive from `UiTest` and mark **every** method `[AvaloniaFact]` or
+Derive from `EditorTest` and mark **every** method `[AvaloniaFact]` or
 `[AvaloniaTheory]`, whether it touches a control or not. A plain `[Fact]` in a
-`UiTest` class runs on a pool thread, and disposing from there reaches the
+`EditorTest` class runs on a pool thread, and disposing from there reaches the
 dispatcher from the wrong thread. It throws only when work happens to be queued,
 so it shows up as some other test failing later.
 
 ```csharp
-public class BoxLabelTests : UiTest
+public class BoxLabelTests : EditorTest
 {
     [AvaloniaFact]
     public void A_long_socket_label_keeps_its_port()
@@ -860,14 +861,14 @@ public class BoxLabelTests : UiTest
 }
 ```
 
-`UiTest` gives you `Show(control)`, `NewMainWindow(setup, replace)`,
+`EditorTest` gives you `Show(control)`, `NewMainWindow(setup, replace)`,
 `NewCanvas(width, height, replace)`, `Owned(window)`, `Settle(window)`,
 `All<T>(visual)` and `Pick(combo, name)`. Open windows through it. The window and
 the canvas come out of the editor's container, and `replace` registers a test's
 own service in place of one of them: `Site(handler)` for the preset site, or a
 pointer anchor that holds nothing. A test about one service can take it from
 `new ServiceCollection().AddCanvas()` without a window. Headless gives the whole assembly one UI thread, so a window left open keeps
-its preview, timers and engine on that thread for every test after it; `UiTest`
+its preview, timers and engine on that thread for every test after it; `EditorTest`
 closes what it opened, newest first, and closes a `MainWindow` without asking
 about unsaved work.
 
@@ -881,8 +882,10 @@ Prefer asserting on the smallest thing that holds the behavior. Much of the
 editor's logic is reachable as `internal static` methods (`NodeEditor.Fit`,
 `NodeEditor.Text`), and a test of one needs no window at all.
 
-The Headless xunit adapter is vendored under `tests/Flyback.Editor.Tests/Headless`
-because the published package does not discover tests on xunit.v3 4.x. The
+`Flyback.Ui.Testing` holds what any headless UI test needs (`UiTest`: `Show`, `Settle`,
+`Pump`, and windows closed with the test); `EditorTest` adds the editor's canvas and
+container on top of it. The Headless xunit adapter is vendored under
+`tests/Flyback.Ui.Testing/Headless` because the published package does not discover tests on xunit.v3 4.x. The
 assembly runs with `ParallelMode.Collections`, since every UI test queues on the
 one thread anyway. Each UI test blocks a pool thread while it waits for that
 thread, so `PoolHeadroom` raises the pool's minimum well past xunit's slot count;

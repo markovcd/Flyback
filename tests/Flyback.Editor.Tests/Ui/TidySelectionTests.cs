@@ -18,7 +18,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// layout button. The rest of the patch stays exactly where it is, which is the
 /// whole reason to press the narrower of the two (ADR-0110).
 /// </summary>
-public class TidySelectionTests : UiTest
+public class TidySelectionTests : EditorTest
 {
     /// <summary>
     /// Two chains far apart, each tangled enough that laying it out moves it, and

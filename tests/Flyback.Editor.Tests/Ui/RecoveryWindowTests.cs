@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The question at startup is behind a dialog; what is pinned here is what
 /// answering Restore does, which is the part that could lose the work a second time.
 /// </remarks>
-public class RecoveryWindowTests : UiTest
+public class RecoveryWindowTests : EditorTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(), "flyback-recovery-window-" + Guid.NewGuid().ToString("N"));

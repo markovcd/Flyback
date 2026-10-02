@@ -96,7 +96,7 @@ Flyback to close, mark yours with the red caption, drive only the process you
 started, close it when done.
 
 Most of the time the headless Avalonia is faster and surer.
-`tests/Flyback.Editor.Tests/Ui/UiTest.cs` is a real Avalonia with Skia that builds a
+`tests/Flyback.Editor.Tests/Ui/EditorTest.cs` is a real Avalonia with Skia that builds a
 whole `MainWindow`; `FileDropTests` shows how to raise the events a window
 actually listens for.
 

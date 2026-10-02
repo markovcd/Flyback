@@ -12,7 +12,7 @@ namespace Flyback.Editor.Tests.Notices;
 /// would make a reaction flaky is refused outright: a notice raised while the editor
 /// is being built, one raised off the UI thread, and one raised after the window is gone.
 /// </summary>
-public class ReactionsTests : UiTest
+public class ReactionsTests : EditorTest
 {
     private sealed record Ping;
 

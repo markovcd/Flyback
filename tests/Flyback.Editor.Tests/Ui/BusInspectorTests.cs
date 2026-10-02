@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// <summary>
 /// A Send's bus typed over in its panel: the Receives on it go where it goes, as one edit.
 /// </summary>
-public class BusInspectorTests : UiTest
+public class BusInspectorTests : EditorTest
 {
     private MainWindow Open(out NodeInstance send, out NodeInstance receive)
     {

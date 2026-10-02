@@ -25,7 +25,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// they are separate — the arrow arrives as a key press and the letter as text input
 /// — which is how this was found.
 /// </remarks>
-public class PickerTests : UiTest
+public class PickerTests : EditorTest
 {
 
     /// <summary>The toolbar's list of patches to start from.</summary>

@@ -19,7 +19,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The patch on the canvas saved as a preset from the gallery, which then lists it
 /// under a heading of its own after every preset the program offers.
 /// </summary>
-public class SavedPresetTests : UiTest
+public class SavedPresetTests : EditorTest
 {
     private readonly string folder = Path.Combine(
         Path.GetTempPath(),

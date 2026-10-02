@@ -20,7 +20,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// wanted it, and that opening still asks about work it would lose — which is the
 /// whole reason the key goes through the same call the button does.
 /// </remarks>
-public class DocumentKeysTests : UiTest
+public class DocumentKeysTests : EditorTest
 {
 
     /// <summary>Whether the window dealt with the keystroke itself.</summary>

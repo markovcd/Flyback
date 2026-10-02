@@ -16,7 +16,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// real user. What <see cref="ModuleGlyphsTests"/> promises the engine's own
 /// marks, this promises Picture's, Voice's, Effects's and Mastering's.
 /// </summary>
-public class PluginGlyphsTests : UiTest
+public class PluginGlyphsTests : EditorTest
 {
     /// <summary>
     /// Every module the four shipped plugins register, gathered without touching

@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// registers can be built, one window's services are one of each, and a test can
 /// swap any of them for its own.
 /// </summary>
-public class EditorServicesTests : UiTest
+public class EditorServicesTests : EditorTest
 {
     [AvaloniaFact]
     public void Every_service_the_editor_registers_can_be_built()

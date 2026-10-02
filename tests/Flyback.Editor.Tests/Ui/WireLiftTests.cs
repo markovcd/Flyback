@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// where an input does not, because dragging from an output already means "start
 /// another".
 /// </remarks>
-public class WireLiftTests : UiTest
+public class WireLiftTests : EditorTest
 {
     private const string Sine = "osc.sine";
     private const string Saw = "osc.saw";

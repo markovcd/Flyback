@@ -24,7 +24,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// start, which is the whole point of the second one — somebody clearing it is
 /// asking for the thing in front of them to stop moving.
 /// </remarks>
-public sealed class CanvasSettingsTests : UiTest
+public sealed class CanvasSettingsTests : EditorTest
 {
     private readonly string settingsPath = Path.Combine(
         Path.GetTempPath(),

@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// Headless has one screen, so the window is sent to that one directly: which
 /// monitor is picked is <see cref="Flyback.Editor.Tests.MonitorPickTests"/>'s business.
 /// </remarks>
-public class FullScreenElsewhereTests : UiTest
+public class FullScreenElsewhereTests : EditorTest
 {
 
     private static PreviewHost Preview(MainWindow window) =>

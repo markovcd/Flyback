@@ -21,7 +21,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// a screenshot and expensive in a running program — so the parent it hangs off
 /// is checked as carefully as what is on screen.
 /// </remarks>
-public class FullScreenPreviewTests : UiTest
+public class FullScreenPreviewTests : EditorTest
 {
 
     private static PreviewHost Preview(MainWindow window) => All<PreviewHost>(window).Single();

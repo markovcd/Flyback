@@ -23,7 +23,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// the focus happened to land on — a set of knobs belonging to one module,
 /// presented as though it were what was clicked.
 /// </remarks>
-public class GroupInspectorTests : UiTest
+public class GroupInspectorTests : EditorTest
 {
     private MainWindow Open(out NodeGroup group)
     {

@@ -22,7 +22,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The presets are offered as a gallery of tiles: in kind order, a heading over each
 /// run of one, each tile carrying the preset's own name, description and picture.
 /// </summary>
-public class PresetListTests : UiTest
+public class PresetListTests : EditorTest
 {
 
     /// <summary>What holds which preset is on the canvas.</summary>

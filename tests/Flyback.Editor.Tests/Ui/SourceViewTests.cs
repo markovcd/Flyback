@@ -29,7 +29,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// it. The window opens on a preset, so everything here starts from the canvas
 /// owning the patch.
 /// </remarks>
-public class SourceViewTests : UiTest
+public class SourceViewTests : EditorTest
 {
 
     private static ToggleButton CodeButton(MainWindow window) =>

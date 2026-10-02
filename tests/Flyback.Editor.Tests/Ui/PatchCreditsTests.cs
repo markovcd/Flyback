@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// With nothing selected the panel shows who made the patch and its tags under
 /// the description, and a double-click on either edits it.
 /// </summary>
-public class PatchCreditsTests : UiTest
+public class PatchCreditsTests : EditorTest
 {
     private MainWindow Open()
     {

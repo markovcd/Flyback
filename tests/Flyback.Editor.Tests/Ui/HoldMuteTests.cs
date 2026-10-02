@@ -15,7 +15,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// the button comes up. Pressed on a module that is part of the selection, the
 /// whole selection flips together.
 /// </summary>
-public class HoldMuteTests : UiTest
+public class HoldMuteTests : EditorTest
 {
     private static Patch Chain(out NodeInstance clock, out NodeInstance osc, out NodeInstance sink)
     {

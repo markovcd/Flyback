@@ -13,7 +13,7 @@ namespace Flyback.Editor.Tests.Ui;
 /// The toolbar's side button: the preview and the inspector put away, their width
 /// the canvas's, and back at the width they had.
 /// </summary>
-public class SideColumnTests : UiTest
+public class SideColumnTests : EditorTest
 {
     private static ToggleButton Button(MainWindow window, string name) =>
         All<ToggleButton>(window).Single(b => b.Name == name);
