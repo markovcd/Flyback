@@ -482,7 +482,12 @@ internal sealed class PatchFiles
 
             if (!load.Ok)
             {
-                report.Say($"Not opened. {file.Name} does not read.", load.Report);
+                report.Say(
+                    [
+                        $"Not opened. {file.Name} does not read.",
+                        .. load.Issues.Select(issue => $"{file.Name}:{issue}"),
+                    ],
+                    load.Report);
                 return;
             }
 

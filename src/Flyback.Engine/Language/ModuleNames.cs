@@ -2,7 +2,10 @@ using Flyback.Core.Graph;
 
 namespace Flyback.Engine.Language;
 
-/// <summary>What the text may call a module: its type id, or the short name after the last dot where only one module has it.</summary>
+/// <summary>
+/// What the text may call a module: its type id, or the short name after the last dot where only one module has it.
+/// A plugin's module never takes a short name from a built-in one, so a text reads the same whichever plugins are loaded.
+/// </summary>
 internal sealed class ModuleNames
 {
     private readonly ModuleCatalog modules;
@@ -13,13 +16,30 @@ internal sealed class ModuleNames
     {
         this.modules = modules;
 
-        foreach (var def in modules.All)
+        foreach (var def in modules.All.OrderBy(d => IsBuiltIn(d) ? 0 : 1))
         {
-            var dot = def.TypeId.LastIndexOf('.');
-            var plain = dot < 0 ? def.TypeId : def.TypeId[(dot + 1)..];
+            var plain = ShortName(def);
 
-            if (!byShortName.TryAdd(plain, def)) ambiguous.Add(plain);
+            if (byShortName.TryGetValue(plain, out var held))
+            {
+                if (!IsBuiltIn(def) && IsBuiltIn(held)) continue;
+
+                ambiguous.Add(plain);
+            }
+            else
+            {
+                byShortName.Add(plain, def);
+            }
         }
+    }
+
+    private bool IsBuiltIn(NodeDef def) => modules.ProviderOf(def.TypeId) == NodeCatalog.BuiltInProvider;
+
+    private static string ShortName(NodeDef def)
+    {
+        var dot = def.TypeId.LastIndexOf('.');
+
+        return dot < 0 ? def.TypeId : def.TypeId[(dot + 1)..];
     }
 
     /// <summary>Whether a name is a module's, ambiguous or not.</summary>
@@ -39,6 +59,7 @@ internal sealed class ModuleNames
         {
             var both = modules.All
                 .Where(d => d.TypeId.EndsWith('.' + name) || d.TypeId == name)
+                .Where(d => IsBuiltIn(d) || !modules.All.Any(o => IsBuiltIn(o) && ShortName(o).Equals(name, StringComparison.OrdinalIgnoreCase)))
                 .Select(d => d.TypeId)
                 .Order(StringComparer.Ordinal);
 

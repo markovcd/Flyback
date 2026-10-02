@@ -265,6 +265,24 @@ public sealed class FileDropTests : EditorTest
         window.Title.ShouldBe(title);
     }
 
+    /// <summary>A text patch that does not read is refused with each complaint and where it is.</summary>
+    [AvaloniaFact]
+    public void A_text_patch_that_does_not_read_says_what_and_where()
+    {
+        Directory.CreateDirectory(folder);
+
+        var path = Path.Combine(folder, "broken.fbks");
+        File.WriteAllText(path, "sine(freq: 220) |> out.left\nkaleidoscop() |> out.color");
+
+        var window = Open();
+
+        Drop(window, Carrying(RealStorageFile(path)));
+        WaitForReport(window, "Not opened. broken.fbks does not read.");
+
+        All<ReportLine>(window).Single().History
+            .ShouldContain(said => said.StartsWith("broken.fbks:2:1: ", StringComparison.Ordinal) && said.Contains("kaleidoscop"));
+    }
+
     /// <summary>
     /// A file dropped while Settings is up is refused — it does not replace the
     /// document behind the dialog.

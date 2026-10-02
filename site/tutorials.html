@@ -407,9 +407,10 @@ out.volume = 0.6</code></pre>
     <div class="note">
       <span class="tag">Two modules, one short name</span>
       <p>A module's short name is the last part of its type id, so <code>osc.sine</code> is <code>sine</code>.
-      When two installed modules share a short name, the text has to use the full id. With the Picture plugin
-      installed, <code>hsv</code> could be either <code>color.hsv</code> or <code>flyback.picture.hsv</code>, so
-      write <code>color.hsv</code>. The <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">language
+      When two of the built-in modules share one, such as <code>mix</code>, the text has to use the full id. A
+      plugin's module never takes a built-in module's short name, so installing the Picture plugin does not change
+      what <code>hsv</code> means: it stays <code>color.hsv</code>, and the plugin's is
+      <code>flyback.picture.hsv</code> in full. The <a href="https://github.com/markovcd/Flyback/blob/main/docs/language.md">language
       reference</a> covers the rest, including a transcription of every preset.</p>
     </div>
   </section>

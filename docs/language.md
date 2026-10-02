@@ -239,13 +239,11 @@ already has.
 It also means **the catalog is the language**: a plugin's modules are usable
 the moment it loads, and there is no alias table to keep in step.
 
-**Ambiguity is an error, resolved by writing the type id in full.** Across all
-ninety modules in the box there are exactly two collisions:
-
-| Short name | Candidates |
-|---|---|
-| `hsv` | `color.hsv`, `flyback.picture.hsv` |
-| `mix` | `math.mix`, `color.mix` |
+**Ambiguity is an error, resolved by writing the type id in full.** Across the built-in
+modules there is one collision, `mix` (`math.mix`, `color.mix`). A plugin's module never
+takes a built-in's short name, so a text reads the same whichever plugins are loaded:
+`hsv` is `color.hsv` even with the Picture plugin installed, whose own is
+`flyback.picture.hsv` in full.
 
 One more is legal but ugly: `midi.in` shortens to `in`, which reads badly beside
 the port of that name. Write `midi.in` in full.
