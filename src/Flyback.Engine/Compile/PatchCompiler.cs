@@ -53,6 +53,38 @@ public static class PatchCompiler
         bool played = false) =>
         Compile(patch, NodeCatalog.Screen, modules, probe, samples, pictures, played);
 
+    /// <summary>
+    /// Compiles one program rooted at every output of <paramref name="measured"/>,
+    /// with no Output in it, so an output nothing is wired to is lowered too.
+    /// </summary>
+    /// <param name="patch"></param>
+    /// <param name="measured">The modules whose outputs to read, or null for every module.</param>
+    /// <param name="sound">The speakers' half when true, where an Image is black; the screen's otherwise.</param>
+    /// <param name="modules"></param>
+    /// <param name="samples"></param>
+    /// <param name="pictures"></param>
+    public static MeasureProgram CompileForMeasure(
+        this Patch patch,
+        IReadOnlyCollection<Guid>? measured,
+        bool sound,
+        ModuleCatalog? modules = null,
+        ISampleLibrary? samples = null,
+        IImageLibrary? pictures = null)
+    {
+        var sockets = new List<MeasuredSocket>();
+        var roots = measured ?? [.. patch.Nodes.Select(node => node.Id)];
+
+        var compiled = Compile(
+            patch,
+            sound ? NodeCatalog.Speakers : NodeCatalog.Screen,
+            modules,
+            samples: samples,
+            pictures: pictures,
+            measured: (roots, sockets));
+
+        return new MeasureProgram(compiled.Program, sockets, compiled.Issues);
+    }
+
     /// <param name="patch">The graph to lower.</param>
     /// <param name="sink">Which of the Output's results this program reads.</param>
     /// <param name="modules">
@@ -72,6 +104,11 @@ public static class PatchCompiler
     /// linked socket read its knob live; otherwise where the knob rests is baked in,
     /// which is right for a file and for a renderer handed no live block.
     /// </param>
+    /// <param name="measured">
+    /// Modules to root at in place of the Output, every output of each, and the
+    /// list that is told where each landed. <paramref name="sink"/> then only says
+    /// which half's files the walk reads.
+    /// </param>
     private static CompileResult Compile(
         Patch patch,
         NodeCatalog.SinkKind sink,
@@ -79,7 +116,8 @@ public static class PatchCompiler
         Guid? probe = null,
         ISampleLibrary? samples = null,
         IImageLibrary? pictures = null,
-        bool played = false)
+        bool played = false,
+        (IReadOnlyCollection<Guid> Roots, List<MeasuredSocket> Sockets)? measured = null)
     {
         var catalog = modules ?? NodeCatalog.Current;
         var width = sink.Width;
@@ -123,11 +161,17 @@ public static class PatchCompiler
         // a Scope, because a trace is a record of evaluations in order and the
         // picture's are neither in order nor the sound. A chart rooted at a
         // Probe is a picture like any other.
-        var plays = probe is null && sink.Name == NodeCatalog.Speakers.Name;
+        var plays = probe is null && measured is null && sink.Name == NodeCatalog.Speakers.Name;
+
+        // Whether this walk lowers modules as the speakers have them, which a
+        // measurement of the sound does without tapping a Scope.
+        var hears = plays || (measured is not null && sink.Name == NodeCatalog.Speakers.Name);
+
+        var emitter = new Emitter { Length = patch.Lasts };
 
         var root = probed ?? patch.FirstOf(NodeCatalog.OutputTypeId);
 
-        if (root is null)
+        if (root is null && measured is null)
         {
             // Every patch is supposed to carry one, so reaching here means a
             // graph assembled by hand rather than through Patch.EnsureOutput.
@@ -146,7 +190,7 @@ public static class PatchCompiler
         //
         // Said only when nothing reaches it. A patch wired for the eye and not
         // the ear is as deliberate as one wired the other way (ADR-0022).
-        if (!patch.Connections.Any(c => c.TargetNode == root.Id))
+        if (root is not null && measured is null && !patch.Connections.Any(c => c.TargetNode == root.Id))
         {
             issues.Add(new CompileIssue(
                 root.Id,
@@ -157,8 +201,6 @@ public static class PatchCompiler
                       + "Patch the output you want to look at into its 'in'.",
                 IssueSeverity.Warning));
         }
-
-        var emitter = new Emitter { Length = patch.Lasts };
 
         // Each node as lowered so far, with the x, y and t it read. A sweep reuses
         // one only where the domain it pushed left those registers alone: a clock
@@ -183,11 +225,13 @@ public static class PatchCompiler
         var carried = new Dictionary<(Guid Node, int Port), int>();
         var loops = new Queue<(Connection Wire, int Slot)>();
 
+        if (measured is { } measuring) return Measured(measuring.Roots, measuring.Sockets);
+
         // Only this program's share of the sink's results; everything upstream of
         // the other half is never resolved. A probe is not a sink, so it
         // contributes its first output and nothing else — and a module with no
         // outputs contributes silence rather than throwing.
-        var outputs = Resolve(root);
+        var outputs = Resolve(root!);
 
         Slot[] result;
         if (probe is null) result = outputs[sink.Results];
@@ -217,49 +261,85 @@ public static class PatchCompiler
             }
         }
 
-        // Now close whatever loops that walk found. Every read is emitted before
-        // the first write, and that ordering is the whole of a cycle's latency: a
-        // value handed to a plane cannot be seen until the next evaluation.
-        //
-        // Drained as a queue, because a breaker's own input may reach a breaker
-        // the walk never touched, whose write has to land after every read too.
-        var fills = new List<(int Slot, Slot Value)>();
+        return Finished(() => emitter.PackChannels(result, width));
 
-        while (loops.Count > 0)
+        // Closes whatever loops the walk found, then packs the result.
+        CompileResult Finished(Func<Slot> pack)
         {
-            var (wire, slot) = loops.Dequeue();
+            // Now close whatever loops that walk found. Every read is emitted before
+            // the first write, and that ordering is the whole of a cycle's latency: a
+            // value handed to a plane cannot be seen until the next evaluation.
+            //
+            // Drained as a queue, because a breaker's own input may reach a breaker
+            // the walk never touched, whose write has to land after every read too.
+            var fills = new List<(int Slot, Slot Value)>();
 
-            // Resolved here rather than where the read was, which is the whole of
-            // the trick: by now the walk has left the loop, so following the wire
-            // backwards cannot arrive at itself. It may well arrive at another
-            // loop, which is why this is a queue.
-            fills.Add((
-                slot,
-                patch.Find(wire.SourceNode) is { } from
-                    ? Pick(Resolve(from), wire.SourcePort)
-                    : emitter.Constant(0f)));
+            while (loops.Count > 0)
+            {
+                var (wire, slot) = loops.Dequeue();
+
+                // Resolved here rather than where the read was, which is the whole of
+                // the trick: by now the walk has left the loop, so following the wire
+                // backwards cannot arrive at itself. It may well arrive at another
+                // loop, which is why this is a queue.
+                fills.Add((
+                    slot,
+                    patch.Find(wire.SourceNode) is { } from
+                        ? Pick(Resolve(from), wire.SourcePort)
+                        : emitter.Constant(0f)));
+            }
+
+            // Every write after every read, including the reads the resolving above
+            // went on emitting. Written in one pass at the end rather than as each
+            // value is worked out, so that a second loop reading the first loop's
+            // plane still reads what the previous evaluation left there.
+            foreach (var (slot, carries) in fills) emitter.PlaneWrite(slot, carries);
+
+            var value = pack();
+
+            return new CompileResult(
+                new CompiledPatch(
+                    emitter.ToProgram(value),
+                    emitter.RegisterCount,
+                    value.Base,
+                    value.Width,
+                    emitter.Tables,
+                    taps,
+                    emitter.LiveInputs,
+                    emitter.Pictures,
+                    emitter.Owners),
+                issues);
         }
 
-        // Every write after every read, including the reads the resolving above
-        // went on emitting. Written in one pass at the end rather than as each
-        // value is worked out, so that a second loop reading the first loop's
-        // plane still reads what the previous evaluation left there.
-        foreach (var (slot, carries) in fills) emitter.PlaneWrite(slot, carries);
+        // Every output of every root, side by side. A module switched off is out
+        // of the patch, and has nothing of its own to measure.
+        CompileResult Measured(IReadOnlyCollection<Guid> roots, List<MeasuredSocket> sockets)
+        {
+            var gathered = new List<Slot>();
+            var offset = 0;
 
-        var value = emitter.PackChannels(result, width);
+            foreach (var node in patch.Nodes)
+            {
+                if (node.Off || !roots.Contains(node.Id)) continue;
+                if (catalog.Get(node.TypeId) is not { Outputs.Count: > 0 } def) continue;
 
-        return new CompileResult(
-            new CompiledPatch(
-                emitter.ToProgram(value),
-                emitter.RegisterCount,
-                value.Base,
-                width,
-                emitter.Tables,
-                taps,
-                emitter.LiveInputs,
-                emitter.Pictures,
-                emitter.Owners),
-            issues);
+                var lowered = Resolve(node);
+
+                for (var port = 0; port < def.Outputs.Count; port++)
+                {
+                    var spec = def.Outputs[port];
+                    var slot = Pick(lowered, port);
+
+                    if (spec.Kind != PortKind.Any) slot = emitter.Coerce(slot, spec.Width);
+
+                    sockets.Add(new MeasuredSocket(node.Id, port, offset, slot.Width));
+                    gathered.Add(slot);
+                    offset += slot.Width;
+                }
+            }
+
+            return Finished(() => emitter.Gather(gathered));
+        }
 
         Slot[] Resolve(NodeInstance node)
         {
@@ -300,7 +380,7 @@ public static class PatchCompiler
             // staying data like every other module (ADR-0008). Everything patched
             // into that half is still never visited, which is where the cost is.
             // Nothing to split when the root is a probe.
-            var (firstPort, portCount) = probe is null && node.Id == root.Id
+            var (firstPort, portCount) = probe is null && measured is null && node.Id == root!.Id
                 ? sink.Inputs.GetOffsetAndLength(inputs.Length)
                 : (0, inputs.Length);
 
@@ -466,7 +546,7 @@ public static class PatchCompiler
             // audio program is a color nothing can hear, so the speakers' walk is
             // handed nothing to read a file with and the module lowers to black.
             var env = new ExtraEnv(
-                node.Title(def), samples, issues.Add, plays ? null : pictures);
+                node.Title(def), samples, issues.Add, hears ? null : pictures);
 
             foreach (var extra in def.Extras) ctx = extra.Fold(ctx, node, env);
 
@@ -486,7 +566,7 @@ public static class PatchCompiler
             // same question — see NodeDef.ChartsSignal. A module that measures
             // what it taps wants no buffer here and no refill, and asking about
             // the tap would have given it both.
-            if (!def.ChartsSignal || plays || def.Inputs.Count == 0) return null;
+            if (!def.ChartsSignal || hears || def.Inputs.Count == 0) return null;
 
             var buffer = Traces.Buffer();
             taps.Add(new TapSpec(node.Id, WindowOf(node, def), buffer, def.ChartsSpectrum));

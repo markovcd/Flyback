@@ -70,6 +70,7 @@ meant.
 | **sink** | The screen or the speakers, from the compiler's side. An engineering word; the UI never says it. | — | output, destination |
 | **preview** | The live picture in the editor's window. | `PreviewHost`, `IPreviewSurface` | viewer, monitor, canvas |
 | **Scope**, **Analyzer** | The two meters: what the speakers played over time, and its spectrum. | type ids `ScopeTypeId`, `AnalyzerTypeId` | oscilloscope, spectrum view |
+| **Measure**, **measurement** | Running the patch offline for a few seconds and saying what each output carried; one output's value or range and rate is a measurement. | `Measurements`, `Measurement` | debug, watch, reading (a knob's display), survey |
 | **Probe**, **Scan** | A module that reads a signal across a domain it substitutes, and a Probe read backwards, which is how a picture is heard. | `ProbeTypeId`, `ScanTypeId` | — |
 | **voice** | One of the notes MIDI plays at once. | `MidiVoice` | channel, note |
 | **live value** | A panel knob, a MIDI voice or a meter reading, which the program reads without being rebuilt. | `LiveValues` | parameter |

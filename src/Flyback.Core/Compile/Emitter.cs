@@ -686,6 +686,25 @@ public sealed class Emitter
         return new Slot(first, width);
     }
 
+    /// <summary>
+    /// Copies <paramref name="values"/> into one contiguous block, each at its own
+    /// width, so a renderer reading the result reads every one of them.
+    /// </summary>
+    internal Slot Gather(IReadOnlyList<Slot> values)
+    {
+        var width = 0;
+        foreach (var value in values) width += value.Width;
+
+        var first = Allocate(width);
+        var at = first;
+
+        foreach (var value in values)
+            for (var i = 0; i < value.Width; i++)
+                Add(new Op(OpCode.Copy, at++, value.Base + i));
+
+        return new Slot(first, width);
+    }
+
     /// <summary>Packs three scalars into a color occupying consecutive registers.</summary>
     public Slot Combine(Slot r, Slot g, Slot b)
     {

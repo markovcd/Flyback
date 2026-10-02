@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Text.Json.Nodes;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Reqnroll;
@@ -114,6 +115,23 @@ public sealed class CliSteps(PatchContext context) : IDisposable
         }
 
         File.WriteAllBytes(Path(PackageName), memory.ToArray());
+    }
+
+    [When("flyback-cli measures {string}")]
+    public void WhenMeasured(string name) => Run("measure", Path(name), "--seconds", "3", "--json");
+
+    [Then("it says {string} swings from {int} to {int}, {int} times a second")]
+    public void ThenSwings(string socket, int low, int high, int hz)
+    {
+        var dot = socket.LastIndexOf('.');
+        var json = said[..said.LastIndexOf('}')] + "}";
+
+        var sound = JsonNode.Parse(json)!["measurements"]!.AsArray()
+            .Single(m => (string?)m!["module"] == socket[..dot] && (string?)m["socket"] == socket[(dot + 1)..])!["sound"]![0]!;
+
+        ((double)sound["min"]!).ShouldBe(low, 1e-3);
+        ((double)sound["max"]!).ShouldBe(high, 1e-3);
+        ((double)sound["hz"]!).ShouldBe(hz, 0.01);
     }
 
     [When("flyback-cli describes the preset {string}")]

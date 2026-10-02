@@ -10,6 +10,10 @@
 - A pipe into a module whose sockets are all given says to write `_` for the one it fills.
 - `flyback-cli ask` ends each turn with what it cost: requests, tokens in, cached and out, and time spent waiting out a rate limit.
 
+### Command line
+
+- `flyback-cli measure` runs a patch offline for a few seconds and says what every output carried, wired or not, to the speakers and to the screen: its value, or its range and how fast it moves.
+
 ### Editor
 
 - Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.

@@ -4,7 +4,7 @@ Planned on 2026-10-01, on `main` at `d79bd24f`. It is on TODO.md; take it off th
 delete this file, in the commit that lands the last of it.
 
 - **Kind:** Plan
-- **Status:** Open, parked
+- **Status:** In progress: step 1, `flyback-cli measure` on `Measurements` (`src/Flyback.Engine/Measure/`), has landed; steps 2 and 3 are open.
 
 ## What is wanted
 
@@ -84,7 +84,8 @@ selection costs nothing to support.
 ## Limit
 
 An offline pass cannot see what is played: MIDI notes and a panel knob turned during the window
-are not in it, so an envelope a key fires never fires. Drive the patch from inside it (a
+are not in it, so an envelope a key fires never fires. Nor is anything filled in from outside the
+program: a Meter reads nought and a Scope's chart is empty. Drive the patch from inside it (a
 Sequencer, a clock) to measure that. A later pass that records the next N seconds of live
 playing and reports after is possible; ship the offline one first.
 

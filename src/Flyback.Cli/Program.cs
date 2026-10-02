@@ -9,6 +9,7 @@ using Flyback.Core;
 using Flyback.Core.Graph;
 using Flyback.Engine.Graph;
 using Flyback.Engine.Language;
+using Flyback.Engine.Measure;
 using Flyback.Engine.Render;
 using Flyback.Plugins.Assist;
 using Flyback.Plugins.Hosting;
@@ -80,6 +81,7 @@ internal static class Program
             Modules(plugins, json),
             Compare(plugins, json),
             Probe(plugins, json),
+            Measure(plugins, json),
             Ask(plugins, json),
             ViewerCommand.Build(),
             ShotCommand.Build(plugins),
@@ -865,7 +867,7 @@ internal static class Program
                 shipped.Name,
                 (shipped.Opened.Samples as BundleFiles)?.Bytes,
                 into,
-                plugins.Catalog.Modules,
+                NodeCatalog.Current,
                 error,
                 writer);
         });
@@ -998,6 +1000,96 @@ internal static class Program
             result.GetRequiredValue(output),
             result.InvocationConfiguration.Output,
             result.InvocationConfiguration.Error));
+
+        return command;
+    }
+
+    /// <summary>Runs a patch offline and says what every output carried.</summary>
+    private static Command Measure(PluginRegistry plugins, Option<bool> json)
+    {
+        var patch = new Argument<string>("patch")
+        {
+            Description = "The patch to measure: a document, a bundle, or one written as text. "
+                + "Left out with --preset, whose outputs then follow at once.",
+            Arity = ArgumentArity.ZeroOrOne,
+        };
+
+        var outputs = new Argument<string[]>("outputs")
+        {
+            Description = "Which outputs: a module for all of its outputs, or module.output for one. "
+                + "Two modules with one title are numbered in patch order: 'Oscillator 2'. Left out, every output.",
+            Arity = ArgumentArity.ZeroOrMore,
+        };
+
+        var preset = new Option<string>("--preset")
+        {
+            Description = "A shipped preset, by name, in place of a file.",
+        };
+
+        var seconds = new Option<double>("--seconds")
+        {
+            Description = "How long to run the patch.",
+            DefaultValueFactory = _ => MeasureOptions.DefaultSeconds,
+        };
+
+        var from = new Option<double>("--from")
+        {
+            Description = "Where on the patch's clock to start, in seconds. Memory starts empty there.",
+        };
+
+        var command = new Command(
+            "measure",
+            "Run a patch offline and say what every output carries, to the speakers and to the screen: "
+            + "its value, or its range and how fast it changes.")
+        {
+            patch, outputs, preset, seconds, from, json,
+        };
+
+        command.SetAction((result, cancellation) =>
+        {
+            plugins.Ready();
+
+            var output = result.InvocationConfiguration.Output;
+            var error = result.InvocationConfiguration.Error;
+            var first = result.GetValue(patch);
+            var named = result.GetValue(outputs) ?? [];
+            var shipped = result.GetValue(preset);
+
+            Opened? opened;
+
+            if (shipped is not null)
+            {
+                // The first word was an output, there being no file to name.
+                if (first is not null) named = [first, .. named];
+
+                opened = ShippedPresets.Open(plugins.Catalog, shipped, error)?.Opened;
+            }
+            else if (first is not null)
+            {
+                opened = Patches.Open(new FileInfo(first), error);
+            }
+            else
+            {
+                error.WriteLine($"{GlobalConstants.ApplicationName}: say what to measure: a patch, or --preset and its name.");
+
+                return Task.FromResult(Exit.Failed);
+            }
+
+            if (opened is not { } found) return Task.FromResult(Exit.Failed);
+
+            return Task.FromResult(MeasureCommand.Run(
+                found.Patch,
+                named,
+                new MeasureOptions(result.GetValue(seconds), result.GetValue(from)),
+                result.GetValue(json),
+                NodeCatalog.Current,
+                output,
+                error,
+                found.Samples,
+                found.Pictures,
+                result.GetValue(json) ? null : Progress("measuring"),
+                cancellation));
+        });
 
         return command;
     }
@@ -1180,7 +1272,7 @@ internal static class Program
     /// to stderr so that it never lands in a redirected file, and carriage
     /// returned so that it is one line rather than a thousand.
     /// </summary>
-    private static IProgress<double>? Progress()
+    private static IProgress<double>? Progress(string doing = "rendering")
     {
         if (Console.IsErrorRedirected) return null;
 

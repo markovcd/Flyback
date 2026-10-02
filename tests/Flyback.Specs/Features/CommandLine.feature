@@ -18,6 +18,16 @@ Feature: The command line says whether a patch works, and whether two are the sa
     Then the command says the patch has problems
     And it points at line 2
 
+  Scenario: Measuring a patch says what an output nothing is wired to carries
+    Given the text saved as "lfo.fbks":
+      """
+      let lfo = sine(freq: 2)
+      rings() |> out.color
+      """
+    When flyback-cli measures "lfo.fbks"
+    Then the command succeeds
+    And it says "lfo.out" swings from -1 to 1, 2 times a second
+
   Scenario: A shipped preset is described by its name, with no file saved first
     When flyback-cli describes the preset "Plasma"
     Then the command succeeds

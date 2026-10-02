@@ -157,6 +157,7 @@ flyback-cli check --preset "Mycelium" --json
 flyback-cli compare nebula.fbk nebula-ported.fbk --seconds 30
 flyback-cli info nebula.fbk
 flyback-cli info --preset "Plasma"
+flyback-cli measure nebula.fbk LFO Mixer.out --seconds 10
 flyback-cli modules
 flyback-cli modules adsr
 flyback-cli pack nebula.fbk -o nebula.fbkb
@@ -179,11 +180,12 @@ flyback-cli viewer nebula.fbk
 
 ### Commands
 
-`render`, `check`, `info`, `print`, `pack`, `save` and `shot` read a patch file, or a shipped or plugin preset named with `--preset` in its place; `--presets` lists the names, as a JSON array under `--json`, and a name nobody shipped is refused with the list.
+`render`, `check`, `info`, `measure`, `print`, `pack`, `save` and `shot` read a patch file, or a shipped or plugin preset named with `--preset` in its place; `--presets` lists the names, as a JSON array under `--json`, and a name nobody shipped is refused with the list.
 
 - `render`: renders a still, a clip or a sound file from a patch. The extension picks the format — `.png`, `.avi`, `.mp4`, `.webm`, `.mov`, `.wav`, `.mp3`, `.m4a`, `.flac` — and everything but `.png`, `.avi` and `.wav` is encoded by ffmpeg, taken from `PATH` unless `--ffmpeg` names one. `--format` overrides the extension, and `--loudness` prints how loud the sound came out: integrated loudness in LUFS and true peak in dBTP, measured as ITU-R BS.1770 does. The picture is drawn on the GPU through a headless OpenGL context (EGL on Linux, WGL on Windows) where there is one, and on the processor where there is not; `--processor` asks for the processor, whose picture is exact to the bit, and `--gpu` fails rather than fall back. On the processor the patch runs compiled; `--interpreted` keeps it on the interpreter, which writes the same bytes more slowly.
 - `check`: compiles the patch and reports issues; for a text patch, `--json` gives each complaint's line, column and a stable `code`
 - `info`: shows module and wire counts and compile cost; `--preset` describes a shipped preset by name, and `--presets` lists them
+- `measure`: runs the patch offline for `--seconds` from `--from` with nothing played in, and says what each output carried, to the speakers and to the screen apart: its value when it holds still, otherwise its range, mean and how fast it moves (the hertz it repeats at, the steps a second it jumps at, or its steepest slope), and whether it varies across the picture. Every output of every module, wired or not, unless modules or `module.output`s are named; two modules sharing a title are numbered in patch order, `Oscillator 2`
 - `pack`: packs a patch together with the files it references; `--preset` packs a shipped preset with the files it carries
 - `pack-plugin`: builds a plugin into a `.fbkp`, signed with the key `--key` names
 - `plugin-key`: makes the key a plugin's packages are signed with, which every update must be signed with too
@@ -203,7 +205,7 @@ flyback-cli viewer nebula.fbk
 - `1`: patch errors
 - `2`: the job could not run
 
-`--strict` makes a warning fail as well. `check`, `compare`, `info`, `pack`, `modules`,
+`--strict` makes a warning fail as well. `check`, `compare`, `info`, `measure`, `pack`, `modules`,
 `probe` and `ask` each take `--json`, which writes the same answer as a document instead of
 as prose.
 
