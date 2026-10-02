@@ -202,7 +202,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
     }
 
     private static FormattedText Text(Measurement measured, IBrush ink) =>
-        CanvasText.Text(MeasurementWords.Brief(Pinned(measured)), CanvasText.RowSize, ink, MaxWidth, true);
+        CanvasText.Text(MeasurementWords.Brief(Pinned(measured), measured.Frames is not null), CanvasText.RowSize, ink, MaxWidth, true);
 
     private static IReadOnlyList<ComponentStats> Pinned(Measurement measured) =>
         measured.Picture.Any(c => c.Across) ? measured.Picture : measured.Sound;
@@ -213,7 +213,7 @@ internal sealed class MeasureLabels(CanvasHistory history, CanvasSelection selec
         var lines = new List<string> { $"{measured.Module}.{measured.Socket}" };
 
         lines.AddRange(MeasurementWords.Half("sound", measured.Sound, seconds));
-        lines.AddRange(MeasurementWords.Half("picture", measured.Picture, seconds));
+        lines.AddRange(MeasurementWords.Half("picture", measured.Picture, seconds, measured.Frames is not null));
 
         if (measured.Differs) lines.Add("The sound and the picture differ.");
         if (stale) lines.Add("Out of date: the patch has changed since. Measure again (Ctrl+M).");

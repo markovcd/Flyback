@@ -276,6 +276,23 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_picture_on_the_panel_says_the_number_varies_across_it_without_words()
+    {
+        var window = Opened(out _, out var coords);
+
+        Click(Editor(window), window, coords);
+        Measure(window);
+        Settle(window);
+
+        All<Image>(window).ShouldContain(i => i.Name == "measuredPicture");
+
+        var shown = All<TextBlock>(window).Where(t => t.Name == "measurement").Select(t => t.Text!).ToList();
+
+        shown.ShouldNotBeEmpty();
+        shown.ShouldAllBe(text => !text.Contains("varies across"));
+    }
+
+    [AvaloniaFact]
     public void Holding_the_mouse_on_a_measured_picture_shows_its_end_and_letting_go_its_start()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);

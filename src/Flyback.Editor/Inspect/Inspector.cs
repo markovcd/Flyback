@@ -573,7 +573,7 @@ internal sealed class Inspector
         if (measured.Report is not { } report || measured.Of(node.Id, port) is not { } found) return null;
 
         var lines = MeasurementWords.Half("sound", found.Sound, report.Seconds)
-            .Concat(MeasurementWords.Half("picture", found.Picture, report.Seconds));
+            .Concat(MeasurementWords.Half("picture", found.Picture, report.Seconds, found.Frames is not null));
 
         var block = new TextBlock
         {
