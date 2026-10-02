@@ -31,10 +31,11 @@ permissions:
 
 jobs:
   release:
-    # The self-hosted runner for a release from main, as ci.yml builds main: the
-    # gate that passed there is the one that runs here. The key is the secret
-    # below, held in this step's environment only and never written to a file.
-    runs-on: ${{ github.ref == 'refs/heads/main' && fromJSON('["self-hosted","Windows","X64"]') || 'ubuntu-latest' }}
+    # Only from main, and only on the self-hosted runner, where ci.yml builds
+    # main: the gate that passed there is the one that runs here. The key is the
+    # secret below, held in this step's environment and never written to a file.
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Windows, X64]
     # A run is about six minutes; the default of six hours is what a hang costs.
     timeout-minutes: 30
     steps:
@@ -50,8 +51,9 @@ jobs:
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
           VERSION: ${{ inputs.version }}
-        # Git's bash by path: on the Windows runner a bare bash is WSL's launcher.
-        shell: ${{ runner.os == 'Windows' && 'C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}' || 'bash' }}
+        # Git's bash by path: a bare bash on this runner is WSL's launcher, and the
+        # runner splits the shell on spaces, hence the 8.3 name.
+        shell: C:\PROGRA~1\Git\bin\bash.exe --noprofile --norc -e -o pipefail {0}
         run: bash scripts/release.sh "$VERSION"
 
       - name: Create release
