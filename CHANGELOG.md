@@ -13,6 +13,7 @@
 
 ### Command line
 
+- `flyback-cli check` says which plugins it ran with, in `--json` too.
 - `flyback-cli measure` runs a patch offline for a few seconds and says what every output carried, wired or not, to the speakers and to the screen: its value, or its range and how fast it moves.
 
 ### Editor

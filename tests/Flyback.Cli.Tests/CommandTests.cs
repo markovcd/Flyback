@@ -53,6 +53,17 @@ public class CommandTests
     // --- check ---------------------------------------------------------------
 
     [Fact]
+    public void A_check_says_which_plugins_it_ran_with()
+    {
+        var (_, text, _) = Run((o, e) => CheckCommand.Run(Preset("Plasma"), "plasma.fbk", false, o, e));
+        var (_, json, _) = Run((o, e) => CheckCommand.Run(Preset("Plasma"), "plasma.fbk", true, o, e));
+
+        text.ShouldContain("plugins: ");
+        System.Text.Json.JsonDocument.Parse(json).RootElement.TryGetProperty("plugins", out var plugins).ShouldBeTrue(json);
+        plugins.ValueKind.ShouldBe(System.Text.Json.JsonValueKind.Array);
+    }
+
+    [Fact]
     public void A_patch_with_nothing_wrong_with_it_says_so_and_succeeds()
     {
         var (code, output, _) = Run((o, e) => CheckCommand.Run(Preset("Plasma"), "plasma.fbk", false, o, e));

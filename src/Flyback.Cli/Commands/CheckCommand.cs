@@ -53,12 +53,13 @@ internal static class CheckCommand
         if (json)
         {
             output.WriteLine(JsonSerializer.Serialize(
-                new { patch = name, errors, warnings = complaints.Length - errors, issues = complaints },
+                new { patch = name, plugins = Loaded(), errors, warnings = complaints.Length - errors, issues = complaints },
                 Writing.Json));
         }
         else
         {
             Write(name, complaints, errors, output);
+            output.WriteLine(Loading());
         }
 
         // Warnings are things worth saying about a patch somebody meant, so only
@@ -81,7 +82,7 @@ internal static class CheckCommand
             var errors = complaints.Count(c => c.Severity == "error");
 
             output.WriteLine(JsonSerializer.Serialize(
-                new { patch = name, errors, warnings = complaints.Length - errors, issues = complaints },
+                new { patch = name, plugins = Loaded(), errors, warnings = complaints.Length - errors, issues = complaints },
                 Writing.Json));
         }
         else
@@ -89,10 +90,22 @@ internal static class CheckCommand
             error.WriteLine($"{GlobalConstants.ApplicationName}: {name}: this patch does not read.");
 
             foreach (var issue in issues) error.WriteLine($"    {name}:{issue}");
+
+            error.WriteLine(Loading());
         }
 
         return Exit.Problems;
     }
+
+    /// <summary>The plugins this run had loaded, which decide what a module's short name means.</summary>
+    private static string[] Loaded() => [.. NodeCatalog.Current.Providers
+        .Where(p => p != NodeCatalog.BuiltInProvider)
+        .Select(p => p.Id)
+        .Order(StringComparer.Ordinal)];
+
+    private static string Loading() => Loaded() is [_, ..] ids
+        ? $"plugins: {string.Join(", ", ids)}."
+        : "plugins: none.";
 
     private static Complaint Complained(LanguageIssue issue) =>
         new(issue.IsError ? "error" : "warning", null, issue.Message, issue.Line, issue.Column, issue.Code);

@@ -166,7 +166,8 @@ dialect. A person who wants the dense form still writes it.
 | `let sine = …` | legal — §4 means modules are full ids, so there is no collision |
 
 `check --json` reports text that does not build with its line, column and
-code (§9).
+code (§9), and the plugins the run had loaded, since a plugin's module names are
+how a text is read.
 
 ## 7. A patch says what it needs
 
