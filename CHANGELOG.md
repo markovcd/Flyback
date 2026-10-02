@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.7.0 — 2026-10-02
+
+108 commits since 0.6.0.
+
 ### Assistant
 
 - `flyback-cli ask` talks to the assistant from a terminal or a script, as the editor's column does, and writes the answer back into the patch file with the conversation, so the next `ask` or the editor carries it on.
@@ -21,7 +25,9 @@
 - A patch opens paused on its first frame, in the desktop and web editors alike, and plays when Play is pressed.
 - A text patch reads the same whichever plugins are installed: a plugin's module no longer takes a built-in's short name, so `hsv` is still `color.hsv` with the Picture plugin loaded.
 - A text patch that does not open says which line and column, and what is wrong there.
-- Measure and Record sit at the end of the top toolbar; Measure, on Ctrl+M, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hover or the inspector, on a module or a group, gives the sound and the picture apart, and an edit greys them until the next; pressed again, it hides them, its glyph showing which, and Settings → Canvas says how long it runs and whether the picture is measured on a small, medium or large grid (small by default). A color shows the picture it made at the playhead, on the grid it was measured on, and the inspector turns between that and the one at the end of the window, and holding the mouse on it shows the end.
+- Measure, on Ctrl+M at the end of the top toolbar, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hovering or the inspector, on a module or a group, gives the sound and the picture apart, and an edit greys them until the next.
+- A measured color shows the picture it made at the playhead; the inspector turns to the one at the end of the window, and holding the mouse on it shows the end. Settings → Canvas sets how long Measure runs and whether its picture grid is small, medium or large.
+- Record sits beside Measure at the end of the top toolbar.
 - Pause, rewind, the seek bar, length, loop and Volume have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
 - A touch screen has buttons for what keys did alone: select all and paste on the toolbar, copy, cut and laying out only the selection on the inspector, and A+ and A− for the code view's text size.
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
@@ -36,8 +42,8 @@
 - A drum machine or sequencer the patch listens to plays it from the top on Start, pauses it on Stop and plays on on Continue; Settings → MIDI turns it off.
 - A Clock In runs ahead by the sound device's latency, so a patch's kick lands with the drum machine's rather than just after it, and its `nudge` takes up whatever latency the device cannot report.
 - Latency can be set as low as 5 ms, and on Windows anything under 10 ms plays in the low-latency shared mode of a device that has one.
-
 - The Maximizer's style is a dropdown in the inspector instead of a socket.
+
 ### Web
 
 - The web viewer's panel knobs are rotary knobs in a column beside the picture, found by name and put back all at once; on a phone they sit in a sheet under the picture, beside keys to play the patch on and what it is for.
