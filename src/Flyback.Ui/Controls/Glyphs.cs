@@ -233,6 +233,30 @@ internal static class Glyphs
         "M2.5,2.5 L9.5,2.5 L9.5,9.5 L2.5,9.5 Z "
         + "M6.5,12 L6.5,13.5 L13.5,13.5 L13.5,6.5 L12,6.5");
 
+    /// <summary>A sheet with an arrow leaving it: a copy sent to the clipboard.</summary>
+    public static Control Copy() => Stroked(
+        "M2.5,5.5 L2.5,13.5 L10.5,13.5 L10.5,9.5 "
+        + "M6.5,9.5 L13.5,2.5 M9,2.5 L13.5,2.5 L13.5,7");
+
+    /// <summary>Scissors: what is taken off the canvas and onto the clipboard.</summary>
+    public static Control Cut() => Stroked(
+        "M3.5,11 A1.5,1.5 0 1 1 3.5,14 A1.5,1.5 0 1 1 3.5,11 Z "
+        + "M8.5,11 A1.5,1.5 0 1 1 8.5,14 A1.5,1.5 0 1 1 8.5,11 Z "
+        + "M4.2,11.2 L11,2.5 M7.8,11.2 L1,2.5");
+
+    /// <summary>A clipboard with an arrow going into it: the clipboard's modules added to the canvas.</summary>
+    public static Control Paste() => Stroked(
+        "M5.5,3.5 L3,3.5 L3,14 L13,14 L13,3.5 L10.5,3.5 "
+        + "M5.5,2 L10.5,2 L10.5,5 L5.5,5 Z "
+        + "M8,7 L8,12 M6,10 L8,12 L10,10");
+
+    /// <summary>A dashed box with a module inside: every module picked out.</summary>
+    public static Control SelectAll() => Stroked(
+        "M2.5,2.5 L5,2.5 M7,2.5 L9,2.5 M11,2.5 L13.5,2.5 L13.5,5 M13.5,7 L13.5,9 "
+        + "M13.5,11 L13.5,13.5 L11,13.5 M9,13.5 L7,13.5 M5,13.5 L2.5,13.5 L2.5,11 "
+        + "M2.5,9 L2.5,7 M2.5,5 L2.5,2.5 "
+        + "M5.5,5.5 L10.5,5.5 L10.5,10.5 L5.5,10.5 Z");
+
     /// <summary>A plus: something new on the canvas.</summary>
     public static Control Add() => Stroked("M8,2.5 L8,13.5 M2.5,8 L13.5,8");
 

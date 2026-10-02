@@ -207,12 +207,16 @@ internal sealed class SourceView : UserControl
 
         hand.Click += (_, _) => HandBackRequested?.Invoke(this, EventArgs.Empty);
 
-        var bottom = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto") };
+        var bottom = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
+
+        var sizes = SizeButtons();
 
         Grid.SetColumn(footer, 0);
-        Grid.SetColumn(hand, 1);
-        Grid.SetColumn(apply, 2);
+        Grid.SetColumn(sizes, 1);
+        Grid.SetColumn(hand, 2);
+        Grid.SetColumn(apply, 3);
         bottom.Children.Add(footer);
+        bottom.Children.Add(sizes);
         bottom.Children.Add(hand);
         bottom.Children.Add(apply);
 
@@ -273,6 +277,38 @@ internal sealed class SourceView : UserControl
 
         e.Handled = true;
         EvaluateRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Smaller and larger, for a hand with no wheel and no Ctrl.</summary>
+    private StackPanel SizeButtons()
+    {
+        var row = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+            Margin = new Thickness(0, 5, 8, 5),
+        };
+
+        row.Children.Add(SizeButton("text-smaller", "A−", "Make the text smaller  (Ctrl+−)", -1));
+        row.Children.Add(SizeButton("text-larger", "A+", "Make the text larger  (Ctrl++)", 1));
+
+        return row;
+
+        Button SizeButton(string name, string label, string tip, double step)
+        {
+            var button = new Button
+            {
+                Name = name,
+                Content = label,
+                FontSize = Text.Small,
+                Padding = new Thickness(8, 4),
+            };
+
+            ToolTip.SetTip(button, tip);
+            button.Click += (_, _) => EditorFontSize += step;
+
+            return button;
+        }
     }
 
     /// <summary>Ctrl+scroll over the text steps its size by a point.</summary>

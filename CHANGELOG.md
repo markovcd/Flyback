@@ -22,6 +22,7 @@
 - A text patch that does not open says which line and column, and what is wrong there.
 - Measure and Record sit at the end of the top toolbar; Measure, on Ctrl+M, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hover or the inspector gives the sound and the picture apart, and an edit greys them until the next; pressed again, it hides them, its glyph showing which, and Settings → Canvas says how long it runs. A color shows the picture it made at the playhead, on the grid it was measured on, and the inspector turns between that and the one at the end of the window.
 - Pause, rewind, the seek bar, length, loop and Volume have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
+- A touch screen has buttons for what keys did alone: select all and paste on the toolbar, copy, cut and laying out only the selection on the inspector, and A+ and A− for the code view's text size.
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
 - A panel knob dragged onto another swaps places with it; dropped between two, it slips in there as before.
 - Settings → MIDI keeps the panel knobs in a fixed grid of columns and rows, so each stays in its controller knob's row and column at any width, in the editor, over the picture and in the desktop viewer (`--knob-grid 8x2`).

@@ -18,7 +18,13 @@ namespace Flyback.Editor.Canvas;
 /// selection, the view, the edits, the gestures and the painting. What is left here is
 /// what only a control can be: its size, its keys, and where its pointer goes.
 /// </remarks>
-internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<ModuleAsked>, IReactTo<FrameAsked>
+internal sealed class NodeEditor
+    : Control,
+        IReactTo<PatchChanged>,
+        IReactTo<ModuleAsked>,
+        IReactTo<FrameAsked>,
+        IReactTo<PasteAsked>,
+        IReactTo<SelectAllAsked>
 {
     private readonly CanvasPainter painter;
     private readonly Usage usage;
@@ -84,6 +90,18 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<Mod
     public Task On(FrameAsked notice)
     {
         FrameAll();
+        return Task.CompletedTask;
+    }
+
+    public Task On(PasteAsked notice)
+    {
+        Paste();
+        return Task.CompletedTask;
+    }
+
+    public Task On(SelectAllAsked notice)
+    {
+        Selection.SelectAll();
         return Task.CompletedTask;
     }
 
@@ -200,9 +218,9 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<Mod
             // Copy, select-all and framing only look, so a locked canvas keeps them.
             Action? command = e.Key switch
             {
-                Key.C => () => UseClipboard(Clipboard.CopyAsync),
-                Key.X when editable => () => UseClipboard(Clipboard.CutAsync),
-                Key.V when editable => () => UseClipboard(Clipboard.PasteAsync),
+                Key.C => Copy,
+                Key.X when editable => Cut,
+                Key.V when editable => Paste,
 
                 // Duplicate leaves the clipboard alone, so what was copied earlier survives.
                 Key.D when editable => Edits.DuplicateSelection,
@@ -255,6 +273,21 @@ internal sealed class NodeEditor : Control, IReactTo<PatchChanged>, IReactTo<Mod
         base.OnKeyUp(e);
 
         if (e.Key is Key.LeftShift or Key.RightShift) Gestures.ModifiersChanged(e.KeyModifiers & ~KeyModifiers.Shift);
+    }
+
+    /// <summary>Puts the selected modules on the clipboard, as Ctrl+C does.</summary>
+    internal void Copy() => UseClipboard(Clipboard.CopyAsync);
+
+    /// <summary>Copies the selection and deletes it, as Ctrl+X does.</summary>
+    internal void Cut()
+    {
+        if (Gestures.Editable) UseClipboard(Clipboard.CutAsync);
+    }
+
+    /// <summary>Adds what the clipboard holds, as Ctrl+V does.</summary>
+    internal void Paste()
+    {
+        if (Gestures.Editable) UseClipboard(Clipboard.PasteAsync);
     }
 
     /// <summary>

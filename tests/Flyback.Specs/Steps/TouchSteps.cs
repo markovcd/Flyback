@@ -100,6 +100,31 @@ public sealed class TouchSteps(PatchContext context, EditorDriver editor)
         editor.Touch((from, to));
     }
 
+    [When("a finger taps the clock")]
+    public void WhenTheClockIsTapped()
+    {
+        var clock = context.Node("clock");
+
+        editor.TapFinger(new Point(clock.X + NodeGeometry.Width / 2, clock.Y + NodeGeometry.HeaderHeight / 2));
+    }
+
+    [When("the {string} button is pressed")]
+    public void WhenAButtonIsPressed(string label) =>
+        editor.PressPanelButton(label switch
+        {
+            "Copy" => "copy-modules",
+            "Paste" => "paste",
+            "Select all" => "select-all",
+            _ => throw new ArgumentException($"No button is called {label}.", nameof(label)),
+        });
+
+    [Then("there are two clocks")]
+    public void ThenThereAreTwoClocks() =>
+        context.Patch.Nodes.Count(node => node.TypeId == context.Node("clock").TypeId).ShouldBe(2);
+
+    [Then("every module is selected")]
+    public void ThenEveryModuleIsSelected() => editor.Selected.Count.ShouldBe(context.Patch.Nodes.Count);
+
     [Then("the list's filter box waits to be tapped")]
     public void ThenTheFilterWaits() => editor.ListTakesKeys.ShouldBeFalse();
 

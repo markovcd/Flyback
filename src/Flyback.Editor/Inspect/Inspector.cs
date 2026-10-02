@@ -408,6 +408,7 @@ internal sealed class Inspector
             editor.Edits.DeleteSelected);
 
         plate.Under.Children.Insert(above, actions);
+        if (SelectionRow() is { } taking) plate.Under.Children.Insert(above + 1, taking);
 
         Undescribed();
 
@@ -667,6 +668,42 @@ internal sealed class Inspector
     };
 
     /// <summary>
+    /// What the selection can be taken somewhere with: the clipboard's copy and cut, and
+    /// laying out the selection alone. Each is a key or a held Ctrl for a hand that has one.
+    /// </summary>
+    private StackPanel? SelectionRow()
+    {
+        var row = ActionRow();
+        row.Margin = new Thickness(0, 0, 0, 6);
+
+        var copying = editor.Selection.Nodes.Count(n => !NodeCatalog.IsSink(n.TypeId));
+        var these = copying > 1 ? $"these {copying} modules" : "this module";
+
+        if (copying > 0)
+        {
+            Act("copy-modules", Glyphs.Copy(), $"Copy {these} to the clipboard  (Ctrl+C)", editor.Copy);
+            Act("cut-modules", Glyphs.Cut(), $"Cut {these}, leaving them on the clipboard  (Ctrl+X)", editor.Cut);
+        }
+
+        if (editor.Selection.Count > 1)
+            Act(
+                "tidy-selection",
+                Glyphs.Tidy(),
+                $"Lay out only these {editor.Selection.Count} modules, leaving the rest where they are  (Ctrl+Shift+L)",
+                () => editor.Reactions.Raise(new TidyAsked(OnlySelected: true)));
+
+        return row.Children.Count == 0 ? null : row;
+
+        void Act(string name, Control icon, string tip, Action gesture)
+        {
+            var button = ToolbarButtons.Drawn(name, icon, tip);
+
+            button.Click += (_, _) => gesture();
+            row.Children.Add(button);
+        }
+    }
+
+    /// <summary>
     /// What a group shows: its name, its edge, and what can be done to it.
     /// </summary>
     /// <remarks>
@@ -795,6 +832,7 @@ internal sealed class Inspector
             editor.Edits.DeleteSelected);
 
         plate.Under.Children.Insert(above, actions);
+        if (SelectionRow() is { } taking) plate.Under.Children.Insert(above + 1, taking);
 
         // One heading and a row per socket, each named for the module and socket
         // inside that it stands for.

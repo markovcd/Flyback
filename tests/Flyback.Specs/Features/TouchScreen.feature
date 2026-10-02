@@ -42,6 +42,19 @@ Feature: A hand on a touch screen patches without a mouse or keys
     And the module panel says "Open and Save are on the toolbar."
     And the module panel does not say "Ctrl+O"
 
+  Scenario: A finger copies and pastes a module with buttons, with no keys
+    Given the patch is open in the editor
+    When a finger taps the clock
+    And the "Copy" button is pressed
+    And the "Paste" button is pressed
+    Then there are two clocks
+
+  Scenario: A finger selects every module with a button
+    Given a sine beside the clock
+    And the patch is open in the editor
+    When the "Select all" button is pressed
+    Then every module is selected
+
   Scenario: A finger picks a module out from between its sockets with the view all the way out
     Given a sine beside the clock
     And the patch is open in the editor

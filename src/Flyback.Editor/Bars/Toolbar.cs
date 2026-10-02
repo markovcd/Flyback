@@ -27,7 +27,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
     /// <summary>What the layout button does to the canvas, which is what it says by default.</summary>
     public const string TidyTip =
         "Lay the modules out so the patch reads left to right  (Ctrl+L). "
-        + "Ctrl+click lays out only what is selected, leaving the rest where it is  (Ctrl+Shift+L)";
+        + "Ctrl+click lays out only what is selected, leaving the rest where it is  (Ctrl+Shift+L); "
+        + "so does the button beside a selection";
 
     /// <summary>What the swap button says while it can be pressed.</summary>
     public const string SwapTip =
@@ -72,6 +73,12 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
     /// <summary>Framing the whole patch, the other thing a hand has no key for. Shown with <see cref="Add"/>.</summary>
     public Button Frame { get; } = ToolbarButtons.Drawn("frame", Glyphs.Frame(), "Bring the whole patch into view  (Ctrl+F)");
+
+    /// <summary>Picking every module out, the key a hand with no Ctrl lacks. Shown with <see cref="Add"/>.</summary>
+    public Button SelectAll { get; } = ToolbarButtons.Drawn("select-all", Glyphs.SelectAll(), "Select every module  (Ctrl+A)");
+
+    /// <summary>Adding what the clipboard holds. Shown with <see cref="Add"/>; Copy and Cut are on the inspector, beside the selection they take.</summary>
+    public Button Paste { get; } = ToolbarButtons.Drawn("paste", Glyphs.Paste(), "Paste the modules on the clipboard into the middle of the view  (Ctrl+V)");
 
     /// <summary>Plays the patch as it stands in the viewer, in a tab of its own. Only in a page.</summary>
     public Button Viewer { get; } = ToolbarButtons.Drawn("view-it", Glyphs.Viewer(), "View it: play this patch in the viewer, in a tab of its own. The editor pauses behind it.");
@@ -135,6 +142,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         Redo.Click += (_, _) => reactions.Raise(new RedoAsked());
         Add.Click += (_, _) => reactions.Raise(new ModuleAsked());
         Frame.Click += (_, _) => reactions.Raise(new FrameAsked());
+        SelectAll.Click += (_, _) => reactions.Raise(new SelectAllAsked());
+        Paste.Click += (_, _) => reactions.Raise(new PasteAsked());
         Viewer.Click += (_, _) => reactions.Raise(new ViewAsked());
         Code.IsCheckedChanged += (_, _) => reactions.Raise(new CodeAsked(Code.IsChecked == true));
         Knobs.IsCheckedChanged += (_, _) => reactions.Raise(new KnobsAsked(Knobs.IsChecked == true));
@@ -200,11 +209,13 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
         }
 
         // First among the edits, where a hand looks for them; a mouse has the canvas for both.
-        Add.IsVisible = Frame.IsVisible = false;
+        Add.IsVisible = Frame.IsVisible = SelectAll.IsVisible = Paste.IsVisible = false;
 
         patchwork.Children.Add(ToolbarButtons.Separator());
         patchwork.Children.Add(Add);
         patchwork.Children.Add(Frame);
+        patchwork.Children.Add(SelectAll);
+        patchwork.Children.Add(Paste);
         patchwork.Children.Add(Undo);
         patchwork.Children.Add(Redo);
         patchwork.Children.Add(Tidy);
@@ -269,6 +280,8 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
                 (Redo, "Redo"),
                 (Measure, "Measure"),
                 (Record, "Record"),
+                (SelectAll, "Select every module"),
+                (Paste, "Paste"),
                 (Frame, "Bring the whole patch into view"),
             ],
             full ? [(program, programRule)] : []);
@@ -300,7 +313,7 @@ internal sealed class Toolbar : IReactTo<ViewChanged>, IReactTo<TakeMarked>, IRe
 
     public Task On(Touched notice)
     {
-        Add.IsVisible = Frame.IsVisible = true;
+        Add.IsVisible = Frame.IsVisible = SelectAll.IsVisible = Paste.IsVisible = true;
         Overflow.Fit(View.Bounds.Width);
         return Task.CompletedTask;
     }

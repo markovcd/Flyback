@@ -10,7 +10,7 @@ delete this file, in the commit that lands the last item.
 A touch screen is a Windows tablet as much as a phone in the web editor, and most of
 these hold for both; the two marked **page only** are the browser's.
 
-Items 1, 2, 3, 7, 10, 19 and 20 are fixed and gone from here; the rest keep the numbers
+Items 1, 2, 3, 5, 7, 10, 19 and 20 are fixed and gone from here; the rest keep the numbers
 they were first listed under. Whether the last press was a finger is `LastPress.ByFinger`,
 which the module list and the preset gallery read to leave their text box to be tapped;
 item 8 wants the same.
@@ -27,16 +27,6 @@ Add `pointerup` and `touchend` to the list.
 
 Repro: open the editor on an iPhone and tap around; `flyback.sound().context.state`
 stays `"suspended"`.
-
-### 5. Keys with no button (confirmed)
-
-Copy, cut, paste and select-all are keys only (`NodeEditor.cs:203-209`); only
-duplicate got a button. Escape is the only way out of a lifted wire, a band or a
-carry (`NodeEditor.cs:186`), and the only way to cancel a rename
-(`Inspect/NameBox.cs:90-104`, `ControlsPanel.cs:439-448`, `InspectorRows.cs:141-152`;
-losing the focus keeps the new name). The code view's text size is Ctrl+wheel or
-Ctrl+/- only (`Controls/SourceView.cs:148`, `:288-305`). Tidy's "only selected"
-reads Ctrl at the press (`Toolbar.cs:176`).
 
 ### 6. A MIDI In preset can't be played (confirmed)
 
