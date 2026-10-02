@@ -782,6 +782,21 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
     /// <summary>What the last measurement pinned on one output, or null where nothing is.</summary>
     internal Flyback.Engine.Measure.Measurement? Measured(Guid node, int port) => Run(() => Service<MeasureLabels>().Of(node, port));
 
+    /// <summary>Sets Settings → Canvas → Measure for, and saves it.</summary>
+    public void MeasureFor(double seconds) =>
+        Run(() =>
+        {
+            var section = Service<CanvasSection>();
+
+            section.View.GetVisualDescendants().OfType<ComboBox>().Single(box => box.Name == "measureWindow").SelectedIndex =
+                CanvasSettings.MeasureWindows.ToList().IndexOf(seconds);
+            section.Save();
+            return true;
+        });
+
+    /// <summary>How long the pinned measurement ran for.</summary>
+    public double? MeasuredSeconds => Run(() => Service<MeasureLabels>().Report?.Seconds);
+
     /// <summary>Whether the pinned measurement is out of date.</summary>
     public bool MeasurementStale => Run(() => Service<MeasureLabels>().Stale);
 

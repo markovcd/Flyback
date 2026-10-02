@@ -146,7 +146,7 @@ internal sealed class TransportRow
 
     private const string MeasureTip =
         "Measure: run the patch for a few seconds from the playhead and pin what each output carries beside it, "
-        + "the selected modules' or every module's  (Ctrl+M)";
+        + "the selected modules' or every module's. Again hides them, or measures afresh after an edit  (Ctrl+M)";
 
     /// <summary>What the row cannot fit while narrow, behind one button.</summary>
     public Button More { get; }

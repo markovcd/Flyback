@@ -15,13 +15,14 @@ namespace Flyback.Editor;
 /// <remarks>
 /// On a copy of the patch and off the UI thread, so editing carries on while it runs;
 /// an edit made meanwhile leaves the result out of date the moment it lands. Asking
-/// again while it runs stops it. Not in a page, where a pass of seconds on the one
-/// thread a page has would hang it.
+/// again while it runs stops it, and while its labels are fresh takes them down. Not
+/// in a page, where a pass of seconds on the one thread a page has would hang it.
 /// </remarks>
 internal sealed class Measuring(
     NodeEditor editor,
     Playback playback,
     PreviewHost preview,
+    CanvasSection settings,
     MeasureLabels labels,
     ReportLine report,
     Reactions reactions,
@@ -32,14 +33,35 @@ internal sealed class Measuring(
     /// <summary>Whether a measurement is under way.</summary>
     public bool Running => running is not null;
 
-    public async Task On(MeasureAsked notice) => await MeasureAsync();
+    /// <summary>Measures, or takes fresh labels down, or stops a run under way: one gesture for all three.</summary>
+    public async Task On(MeasureAsked notice)
+    {
+        if (running is null && labels.Report is not null && !labels.Stale)
+        {
+            Hide();
+            return;
+        }
+
+        await MeasureAsync();
+    }
+
+    /// <summary>Takes every measurement down, off the canvas and the inspector.</summary>
+    public void Hide()
+    {
+        labels.Clear();
+        reactions.Raise(new PanelStale());
+        report.Say("Measurements hidden. Measure again to pin them.");
+    }
 
     /// <summary>Stops a measurement still running when the window goes.</summary>
     public void Dispose() => running?.Cancel();
 
     /// <summary>Measures, pins the result and hands it back; null where it was stopped, refused or stops one running.</summary>
-    public async Task<MeasureReport?> MeasureAsync(double seconds = MeasureOptions.DefaultSeconds)
+    /// <param name="window">How long to run, or null for the window Settings → Canvas gives.</param>
+    public async Task<MeasureReport?> MeasureAsync(double? window = null)
     {
+        var seconds = window ?? settings.MeasureSeconds;
+
         if (host.InPage) return null;
 
         if (running is { } busy)

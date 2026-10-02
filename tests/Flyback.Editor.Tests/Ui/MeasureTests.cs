@@ -133,4 +133,46 @@ public class MeasureTests : EditorTest
         labels.Shown(peeked: true).Select(label => label.Measured.Node).ShouldBe([inner.Id, edge.Id], ignoreOrder: true);
         labels.Shown(peeked: false).ShouldBeEmpty();
     }
+
+    [AvaloniaFact]
+    public void Measuring_again_hides_fresh_labels_and_measures_afresh_after_an_edit()
+    {
+        var window = Opened(out var lfo, out _);
+        var labels = Service<MeasureLabels>(window);
+
+        Measure(window);
+
+        window.KeyPress(Key.M, RawInputModifiers.Control, PhysicalKey.M, "m");
+        Settle(window);
+
+        labels.Report.ShouldBeNull();
+        All<TextBlock>(window).ShouldNotContain(t => t.Name == "measurement");
+
+        Measure(window);
+
+        var editor = Editor(window);
+        editor.History.Patch.Find(lfo.Id)!.InputValues[1] = 5f;
+        editor.History.Record();
+        Settle(window);
+
+        Measure(window);
+
+        labels.Stale.ShouldBeFalse();
+        labels.Of(lfo.Id, 0)!.Sound.Single().Hz!.Value.ShouldBe(5d, 0.05d);
+    }
+
+    [AvaloniaFact]
+    public void Settings_say_how_long_a_measurement_runs()
+    {
+        var window = Opened(out _, out _);
+        var section = Service<CanvasSection>(window);
+
+        All<ComboBox>(section.View).Single(box => box.Name == "measureWindow").SelectedIndex =
+            CanvasSettings.MeasureWindows.ToList().IndexOf(1);
+        section.Save();
+
+        Measure(window);
+
+        Service<MeasureLabels>(window).Report!.Seconds.ShouldBe(1d);
+    }
 }

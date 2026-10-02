@@ -20,7 +20,7 @@
 
 - A text patch reads the same whichever plugins are installed: a plugin's module no longer takes a built-in's short name, so `hsv` is still `color.hsv` with the Picture plugin loaded.
 - A text patch that does not open says which line and column, and what is wrong there.
-- Measure, beside Record and on Ctrl+M, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hover or the inspector gives the sound and the picture apart, and an edit greys them until the next.
+- Measure, beside Record and on Ctrl+M, runs the patch for a few seconds from the playhead and pins what each output carries beside its socket, for the selected modules or every one; hover or the inspector gives the sound and the picture apart, and an edit greys them until the next; pressed again, it hides them, and Settings → Canvas says how long it runs.
 - Pause, rewind, the seek bar, length, loop, Volume and record have a row of their own along the foot of the window, with finger-sized buttons, the time beside a window-wide seek bar and a toolbar button to put it away.
 - The toolbar keeps one row however narrow the window, with what does not fit in a menu at its end.
 - A panel knob dragged onto another swaps places with it; dropped between two, it slips in there as before.

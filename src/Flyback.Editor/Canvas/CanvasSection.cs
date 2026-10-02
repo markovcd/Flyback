@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Flyback.Editor.Controls;
+using Flyback.Editor.Inspect;
 using Flyback.Editor.Settings;
 using Flyback.Ui.Controls;
 
@@ -35,6 +36,13 @@ internal sealed class CanvasSection : ISettingsSection
         Content = "Play animated module backgrounds",
         FontSize = Text.Body,
         VerticalAlignment = VerticalAlignment.Center,
+    };
+
+    private readonly ComboBox measureWindow = new Picker
+    {
+        Name = "measureWindow",
+        ItemsSource = CanvasSettings.MeasureWindows.Select(seconds => $"{seconds} s").ToList(),
+        HorizontalAlignment = HorizontalAlignment.Stretch,
     };
 
     /// <summary>What the section was last saved as, and so what closing without Save puts it back to.</summary>
@@ -107,6 +115,12 @@ internal sealed class CanvasSection : ISettingsSection
             TextWrapping = TextWrapping.Wrap,
         });
 
+        ToolTip.SetTip(measureWindow,
+            "How long Measure runs the patch for, from the playhead. Longer catches a slow LFO's turns "
+            + "and a delay filling; it only takes longer.");
+
+        View.Children.Add(InspectorRows.Field("Measure for", measureWindow));
+
         Show();
     }
 
@@ -125,6 +139,7 @@ internal sealed class CanvasSection : ISettingsSection
         compactModules.IsChecked = saved.CompactModules;
         pluginSkins.IsChecked = saved.PluginSkins;
         animateSkins.IsChecked = saved.AnimateSkins;
+        measureWindow.SelectedIndex = Math.Max(0, CanvasSettings.MeasureWindows.ToList().IndexOf(saved.MeasureSeconds));
 
         canvas.Geometry.Compact = saved.CompactModules;
         ModuleSkins.Honored = saved.PluginSkins;
@@ -142,6 +157,9 @@ internal sealed class CanvasSection : ISettingsSection
         saved.EditorFontSize = size;
         Write();
     }
+
+    /// <summary>How long Measure runs the patch for, as last saved.</summary>
+    internal double MeasureSeconds => saved.MeasureSeconds;
 
     /// <summary>Whether the seek bar loops, kept beside the switches but set on the bar.</summary>
     internal bool SeekLoop => saved.SeekLoop;
@@ -162,6 +180,7 @@ internal sealed class CanvasSection : ISettingsSection
             AnimateSkins = animateSkins.IsChecked == true,
             EditorFontSize = saved.EditorFontSize,
             SeekLoop = saved.SeekLoop,
+            MeasureSeconds = CanvasSettings.MeasureWindows[Math.Max(measureWindow.SelectedIndex, 0)],
         };
 
         Show();

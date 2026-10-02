@@ -15,3 +15,17 @@ Feature: Measure pins what each output carries beside it
     When the patch is measured
     And the LFO is turned to 5 times a second
     Then the measurement is marked out of date
+
+  Scenario: Measuring again takes up-to-date labels down
+    Given an LFO turning 2 times a second, wired to nothing
+    And the patch is open in the editor
+    When the patch is measured
+    And Measure is pressed again
+    Then nothing is pinned
+
+  Scenario: Settings say how long Measure runs
+    Given an LFO turning 2 times a second, wired to nothing
+    And the patch is open in the editor
+    And the settings say to measure for 8 seconds
+    When the patch is measured
+    Then the measurement covers 8 seconds

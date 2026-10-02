@@ -36,6 +36,18 @@ public sealed class MeasureSteps(PatchContext context, EditorDriver editor)
         sound.Hz!.Value.ShouldBe(hz, 0.01);
     }
 
+    [When("Measure is pressed again")]
+    public void WhenPressedAgain() => editor.PressCtrl(Avalonia.Input.PhysicalKey.M);
+
+    [Then("nothing is pinned")]
+    public void ThenNothingPinned() => editor.Measured(context.Node("lfo").Id, 0).ShouldBeNull();
+
+    [Given("the settings say to measure for {int} seconds")]
+    public void GivenWindow(int seconds) => editor.MeasureFor(seconds);
+
+    [Then("the measurement covers {int} seconds")]
+    public void ThenCovers(int seconds) => editor.MeasuredSeconds.ShouldBe(seconds);
+
     [Then("the measurement is marked out of date")]
     public void ThenStale() => editor.MeasurementStale.ShouldBeTrue();
 }

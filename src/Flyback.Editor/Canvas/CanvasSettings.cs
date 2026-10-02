@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Flyback.Core;
+using Flyback.Engine.Measure;
 using Flyback.Ui;
 
 namespace Flyback.Editor.Canvas;
@@ -58,6 +59,12 @@ public sealed class CanvasSettings
     /// <summary>Whether the patch comes round to the start of the seek bar when it reaches its end.</summary>
     public bool SeekLoop { get; set; }
 
+    /// <summary>How long Measure runs the patch for, in seconds.</summary>
+    public double MeasureSeconds { get; set; } = MeasureOptions.DefaultSeconds;
+
+    /// <summary>The windows Measure offers, shortest first.</summary>
+    public static IReadOnlyList<double> MeasureWindows { get; } = [1, 2, 4, 8, 15, 30, 60];
+
     /// <summary>Where these settings are kept in <see cref="SettingsFile"/>.</summary>
     public const string Section = "canvas";
 
@@ -73,6 +80,8 @@ public sealed class CanvasSettings
             loaded.EditorFontSize = double.IsFinite(loaded.EditorFontSize)
                 ? Math.Clamp(loaded.EditorFontSize, MinEditorFontSize, MaxEditorFontSize)
                 : DefaultEditorFontSize;
+
+            if (!MeasureWindows.Contains(loaded.MeasureSeconds)) loaded.MeasureSeconds = MeasureOptions.DefaultSeconds;
 
             return loaded;
         }
