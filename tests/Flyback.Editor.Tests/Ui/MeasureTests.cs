@@ -83,6 +83,30 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void The_inspector_shows_a_groups_measurement_under_each_output_on_its_edge()
+    {
+        var b = new PatchBuilder(NodeCatalog.BuiltIn);
+        var inner = b.Add("osc.sine", 0, 0, (1, 3f));
+        var edge = b.Add("osc.sine", 300, 0, (1, 5f));
+        var sink = b.Add(NodeCatalog.OutputTypeId, 800, 0);
+        b.Wire(inner, 0, edge, 1).Wire(edge, 0, sink, NodeCatalog.OutputLeftPort);
+
+        var group = b.Patch.Group([inner.Id, edge.Id]).ShouldNotBeNull();
+
+        var window = NewMainWindow();
+        window.Show();
+        Settle(window);
+        Editor(window).History.Open(b.Patch);
+        Settle(window);
+
+        Editor(window).Selection.SelectGroup(Editor(window).History.Patch.Groups!.Single());
+        Measure(window);
+        Settle(window);
+
+        All<TextBlock>(window).Where(t => t.Name == "measurement").ShouldNotBeEmpty();
+    }
+
+    [AvaloniaFact]
     public void An_edit_marks_the_measurement_out_of_date()
     {
         var window = Opened(out var lfo, out _);

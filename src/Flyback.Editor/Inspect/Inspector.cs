@@ -459,11 +459,17 @@ internal sealed class Inspector
         {
             panel.Children.Add(Edged(Helped(BuildOutputRow(node, def.Outputs[i].Name, i), def.Outputs[i].Help), node, i, output: true));
 
-            if (Measured(node, i) is { } line) panel.Children.Add(line);
-
-            if (measured.Of(node.Id, i) is { } found && measured.Frame(found) is { } start)
-                panel.Children.Add(Pictured(start, measured.Frame(found, 1) ?? start));
+            foreach (var shown in MeasuredUnder(node, i)) panel.Children.Add(shown);
         }
+    }
+
+    /// <summary>What the last measurement found on one output: its numbers and, for a color, its picture.</summary>
+    private IEnumerable<Control> MeasuredUnder(NodeInstance node, int port)
+    {
+        if (Measured(node, port) is { } line) yield return line;
+
+        if (measured.Of(node.Id, port) is { } found && measured.Frame(found) is { } start)
+            yield return Pictured(start, measured.Frame(found, 1) ?? start);
     }
 
     private const double StaleMeasurement = 0.45;
@@ -899,7 +905,14 @@ internal sealed class Inspector
             }
 
             row.Children.Add(body);
-            return Helped(row, spec.Help);
+
+            var helped = Helped(row, spec.Help);
+
+            if (!socket.IsOutput || MeasuredUnder(node, socket.Port).ToList() is not { Count: > 0 } under) return helped;
+
+            var stack = new StackPanel { Children = { helped } };
+            stack.Children.AddRange(under);
+            return stack;
         }
 
         Button Act(string name, Control icon, string tip, Action gesture)
