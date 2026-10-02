@@ -9,7 +9,8 @@ namespace Flyback.Engine.Measure;
 /// <param name="Picture">The same, as the screen computes it.</param>
 /// <param name="Frames">
 /// A color's picture at the start of the window and at its end, on the measuring grid:
-/// r, g and b a pixel, row by row from the top. Null for a number.
+/// r, g and b a pixel, row by row from the top. A number that varies across the picture
+/// has its value as gray, as the screen would draw it. Null for any other number.
 /// </param>
 public sealed record Measurement(
     Guid Node,

@@ -260,6 +260,22 @@ public class MeasureTests : EditorTest
     }
 
     [AvaloniaFact]
+    public void A_number_that_varies_across_the_picture_has_one_in_gray_and_a_number_that_holds_has_none()
+    {
+        var window = Opened(out var lfo, out var coords);
+
+        Measure(window);
+
+        var labels = Service<MeasureLabels>(window);
+        var across = labels.Of(coords.Id, 0)!;
+
+        across.Frames.ShouldNotBeNull().Count.ShouldBe(2);
+        across.Frames![0].Chunk(3).ShouldAllBe(pixel => pixel[0] == pixel[1] && pixel[1] == pixel[2]);
+        labels.Frame(across).ShouldNotBeNull();
+        labels.Frame(labels.Of(lfo.Id, 0)!).ShouldBeNull();
+    }
+
+    [AvaloniaFact]
     public void Holding_the_mouse_on_a_measured_picture_shows_its_end_and_letting_go_its_start()
     {
         var b = new PatchBuilder(NodeCatalog.BuiltIn);

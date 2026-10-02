@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Editor
+
+- Measure shows a number that varies across the picture as a gray picture too, clamped to 0..1 as the screen draws it, on the canvas, the inspector and a group's panel.
+
 ## 0.7.0 — 2026-10-02
 
 108 commits since 0.6.0.

@@ -83,12 +83,31 @@ public static class Measurements
                 def.Outputs[socket.Port].Name,
                 sound.Slice(socket.Offset, socket.Width).ToArray(),
                 picture.AsSpan(other.Offset, other.Width).ToArray(),
-                other.Width == 3 ? [Frame(first, other.Offset, pixels), Frame(last, other.Offset, pixels)] : null));
+                Pictured(picture, first, last, other, pixels)));
         }
 
         var issues = heard.Issues.Concat(seen.Issues).Select(issue => issue.Message).Distinct().ToArray();
 
         return new MeasureReport(options.From, options.Seconds, measurements, issues, options.Columns, options.Rows);
+    }
+
+    /// <summary>A color's two frames, or a number's as gray where it varies across the picture; null for a number that does not.</summary>
+    private static float[][]? Pictured(ComponentStats[] picture, float[] first, float[] last, MeasuredSocket socket, int pixels)
+    {
+        if (socket.Width == 3) return [Frame(first, socket.Offset, pixels), Frame(last, socket.Offset, pixels)];
+        if (socket.Width != 1 || !picture[socket.Offset].Across) return null;
+
+        return [Gray(first, socket.Offset, pixels), Gray(last, socket.Offset, pixels)];
+    }
+
+    private static float[] Gray(float[] frame, int offset, int pixels)
+    {
+        var rgb = new float[pixels * 3];
+
+        for (var p = 0; p < pixels; p++)
+            rgb[p * 3] = rgb[p * 3 + 1] = rgb[p * 3 + 2] = frame[offset * pixels + p];
+
+        return rgb;
     }
 
     /// <summary>One color's pixels out of a kept frame, which holds every component a pixel apart.</summary>

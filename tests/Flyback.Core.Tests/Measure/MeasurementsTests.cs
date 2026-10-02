@@ -143,7 +143,7 @@ public class MeasurementsTests
     }
 
     [Fact]
-    public void A_color_keeps_its_picture_at_the_start_and_end_of_the_window_and_a_number_none()
+    public void A_color_keeps_its_picture_at_the_start_and_end_of_the_window()
     {
         var b = new PatchBuilder(Modules);
         b.Add(NodeCatalog.OutputTypeId);
@@ -161,7 +161,26 @@ public class MeasurementsTests
         // Red follows x: dark on the left of the top row, full on its right.
         frame[0].ShouldBeLessThan(0f);
         frame[(report.Columns - 1) * 3].ShouldBeGreaterThan(1f);
-        Of(report, coords).Frames.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_number_keeps_a_gray_picture_where_it_varies_across_the_screen_and_none_where_it_holds()
+    {
+        var b = new PatchBuilder(Modules);
+        b.Add(NodeCatalog.OutputTypeId);
+        var coords = b.Add("coord");
+        var tone = b.Add("osc.sine", (1, 0.3f));
+
+        var report = Take(b);
+        var frames = Of(report, coords).Frames.ShouldNotBeNull();
+
+        frames.Count.ShouldBe(2);
+        frames[0].Length.ShouldBe(report.Columns * report.Rows * 3);
+        frames[0].Chunk(3).ShouldAllBe(pixel => pixel[0] == pixel[1] && pixel[1] == pixel[2]);
+        frames[0][0].ShouldBeLessThan(0f);
+        frames[0][(report.Columns - 1) * 3].ShouldBeGreaterThan(1f);
+
+        Of(report, tone).Frames.ShouldBeNull();
     }
 
     [Fact]
