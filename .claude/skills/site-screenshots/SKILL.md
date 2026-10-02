@@ -5,15 +5,16 @@ description: Use when a UI or preset change makes a screenshot in site/assets/sh
 
 # Recapturing site screenshots
 
-## A stale full-window shot is listed, not retaken on the spot
+## Retake it now if no real window is needed; otherwise list it
 
-A change that makes a full-window shot stale does not stop to drive the real window. It adds the shot to [stale.md](stale.md) beside this skill, in the change's own commit: the file, where the site uses it, what no longer matches, and the date. The site's prose is still fixed in that commit; only the picture waits.
+A change that makes a shot stale sorts it by how the shot is taken:
 
-Each time a shot is added, look at the whole list. Once it holds **four or more shots**, or any shot the front page leads with (the hero, nebula.webp), propose to the user spinning a second session to retake the lot, with the background-task chip carrying the list as its prompt. That session works through this skill's recipe, takes each retaken shot off the list, and lands them on `main` in one commit.
+- **No real window**: a headless test (`PatchShotTests`, `SkinShotTests`, the plugin previews), `flyback-cli shot`, or `flyback-cli render`. Retake it straight away, in the change's own commit, crops and all.
+- **The real window on the user's desktop**: the maximized 1600x863 shots, anything showing a title bar, a popup, a dropdown or a dialog. Do not launch it. Add the shot to [stale.md](stale.md) beside this skill, in the change's own commit: the file, where the site uses it, what no longer matches, and the date. The site's prose is still fixed in that commit; only the picture waits.
 
-**Why:** the user does not want a UI change stalled on a minutes-long window-driving capture, and one session retaking several shots costs about what one shot does.
+Each time a shot is listed, look at the whole list. Once it holds **four or more shots**, or any shot the front page leads with (the hero, nebula.webp), propose to the user spinning a second session to retake the lot, with the background-task chip carrying the list as its prompt. That session works through this skill's recipe, takes each retaken shot off the list, and lands them on `main` in one commit.
 
-The canvas-only shots below are a test run, not a window, so those are still retaken in the change's own commit.
+**Why:** the user does not want a UI change stalled on a minutes-long capture that drives a window on their desktop, but a shot that needs none costs a command and should not go stale at all.
 
 ## The canvas-only shots come from a test, not a window
 
@@ -37,9 +38,9 @@ flyback-cli shot --preset "Flyback Theme" -o theme.png --at 30.3 --size 1440x900
 
 Run it from a folder holding the CLI, the editor and the plugins together (a publish, or the editor's build output with `flyback-cli`'s build copied in). A shot has no title bar, says CPU on the status bar, and shows no popup, dropdown or dialog; a picture that needs any of those comes from the real window, by the recipe below.
 
-flyback-theme.webp and plasma.webp (1440x900) are that command as it stands, Plasma at `--at 55.7` with nothing selected. The rest are 1440x900 shots cropped to one part of the window (toolbar to row 66, canvas to 935 across, right column from 941, status bar from the bottom's last 28 rows): beat-canvas and echoes-canvas are each tutorial's `data-finished` listing with `--canvas`, cropped to the canvas and knob panel (beat at `--size 1440x820`, echoes at `1440x720`, so the patch fills it); plasma-code is index.html's '# The same patch, as text.' listing, cropped above the inspector; plasma-inspector is `--preset Plasma --select Sine`, the right column; tutorial-text is t5.fbks `--at 4.4 --select slow`, everything between toolbar and status bar; knob-panel is Slow weather's panel row; whole-band and euclid-kit are their bundles with every group shut, `--crop`. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks` and shot with `--at 8 --crop`, which shows the canvas rather than the text and keeps only the modules with 24 px around them.
+flyback-theme.webp and plasma.webp (1440x900) are that command as it stands, Plasma at `--at 55.7` with nothing selected. The rest are 1440x900 shots cropped to one part of the window (toolbar to row 66, canvas to 935 across, right column from 941, status bar from the bottom's last 28 rows): beat-canvas and echoes-canvas are each tutorial's `data-finished` listing with `--canvas`, cropped to the canvas and knob panel (beat at `--size 1440x820`, echoes at `1440x720`, so the patch fills it); plasma-code is index.html's '# The same patch, as text.' listing, cropped above the inspector; plasma-inspector is `--preset Plasma --select Sine`, the right column; tutorial-text is t5.fbks `--at 4.4 --select slow`, everything between toolbar and status bar; knob-panel is Slow weather's panel row at `--at 8`, cropped to (8, 712)-(698, 829) to take in the knobs, the die, the arrow and amount and glide; whole-band and euclid-kit are their bundles with every group shut, `--crop`. tutorial-canvas.webp is the tutorial's section-6 text saved as `t5.fbks` and shot with `--at 8 --crop`, which shows the canvas rather than the text and keeps only the modules with 24 px around them.
 
-The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, the other plasma-*.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. A stale one goes on the list above rather than being retaken in the UI change's commit.
+The full-window shots in `site/assets/shots` (nebula.webp, whole-band.webp, euclid-kit.webp, the other plasma-*.webp; 1600x863) are the maximized app with a saved preset opened from the command line (`Flyback.exe nebula.fbk`), patch framed, caught at a chosen `t`. `flyback-cli pack --preset <name> -o <name>.fbkb` writes the preset out; for the shots that show shut boxes (whole-band, euclid-kit), set every `Group.Collapsed` in the bundle's `patch.fbk`, since a bundle is a zip. These need the real window, so a stale one goes on the list above.
 
 A preset with sound plays through the user's speakers while it is captured, for the few seconds the recipe takes. Capture it anyway; muting the system is a system setting and off limits.
 
