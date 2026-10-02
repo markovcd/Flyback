@@ -6,7 +6,7 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 
 - **Replace the presets' repeated formulas with modules.** A Window (on between two points, soft or hard edged) and a Dice (a stable random for a whole number), then port the presets onto them. Which formulas, how many, where, and what was ruled out are in [docs/handoff/formulas-into-modules.md](docs/handoff/formulas-into-modules.md).
 
-- **A wire that carries a voice per channel.** The color wire already carries several signals as one (red, green, blue); a polyphonic wire would carry one signal per MIDI voice the same way, so a patch plays chords through one wire rather than a copy of the chain per voice.
+- **A wire that carries a voice per channel.** The color wire already carries several signals as one (red, green, blue); a polyphonic wire would carry one signal per MIDI voice the same way, so a patch plays chords through one wire rather than a copy of the chain per voice. The shape, the places it cannot go and what is unread are in [docs/handoff/polyphonic-wire.md](docs/handoff/polyphonic-wire.md).
 
 - **`--trace <file>` on the editor and the viewer.** Writes every stall over 100 ms on the UI thread, in the picture's drawing and in the sound callback, with the step it was in (`SetPatch`, a GL call, `Recompile`, `Transport.Load`), so a freeze report is one command rather than a hand-built probe.
 - **`flyback-viewer --report`.** At the end of a run, print the frames a second it held, the slowest frame, what the sound cost, and which backend drew the picture (GPU or processor, with the GPU's refusal where it fell back), so a script or an agent can measure a patch and know what drew it without watching it.
