@@ -2,7 +2,7 @@ using Flyback.Editor.Desktop.Updates;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Updates;
+namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
 /// Putting a new version over an installed copy: what is replaced, what is left

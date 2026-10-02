@@ -3,7 +3,7 @@ using Flyback.Editor.Updates;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Updates;
+namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
 /// What an update says changed, read from the changelog the new version was built with.

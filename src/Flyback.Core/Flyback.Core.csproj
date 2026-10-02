@@ -31,6 +31,8 @@
     <InternalsVisibleTo Include="Flyback.Plugins.Tests" />
     <InternalsVisibleTo Include="Flyback.Editor.Tests" />
     <InternalsVisibleTo Include="Flyback.Ui.Tests" />
+    <InternalsVisibleTo Include="Flyback.Viewer.Desktop.Tests" />
+    <InternalsVisibleTo Include="Flyback.Editor.Desktop.Tests" />
     <InternalsVisibleTo Include="Flyback.Cli.Tests" />
     <InternalsVisibleTo Include="Flyback.Server.Tests" />
     <InternalsVisibleTo Include="Flyback.Specs" />

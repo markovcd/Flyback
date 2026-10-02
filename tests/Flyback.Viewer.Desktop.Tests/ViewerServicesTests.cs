@@ -1,22 +1,22 @@
+using Flyback.Ui.Testing;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Tests.Ui;
 using Flyback.Core.Graph;
 using Flyback.Engine.Render;
 using Flyback.Viewer.Desktop;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 
-namespace Flyback.Editor.Tests.Viewer;
+namespace Flyback.Viewer.Desktop.Tests;
 
 /// <summary>
 /// The container a viewer run is composed in: everything it registers can be built,
 /// a surface is made only for a picture there is a window to show, and a run with
 /// no window plays without one.
 /// </summary>
-public class ViewerServicesTests : EditorTest
+public class ViewerServicesTests : UiTest
 {
     private static ViewerLaunch Launch(ViewerOptions options) => new(
         new Opened(Presets.All.Single(p => p.Name == "Plasma").Build(NodeCatalog.BuiltIn), new SampleLibrary(), new ImageLibrary()),

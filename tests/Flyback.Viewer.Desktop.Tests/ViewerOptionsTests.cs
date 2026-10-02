@@ -8,7 +8,7 @@ using Shouldly;
 using Xunit;
 using Flyback.Ui;
 
-namespace Flyback.Editor.Tests.Viewer;
+namespace Flyback.Viewer.Desktop.Tests;
 
 /// <summary>
 /// What a command line comes to once the settings file is behind it: every flag, the

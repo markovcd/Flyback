@@ -59,6 +59,8 @@
     <Project Path="tests/Flyback.Ui.Testing/Flyback.Ui.Testing.csproj" />
     <Project Path="tests/Flyback.Editor.Tests/Flyback.Editor.Tests.csproj" />
     <Project Path="tests/Flyback.Ui.Tests/Flyback.Ui.Tests.csproj" />
+    <Project Path="tests/Flyback.Viewer.Desktop.Tests/Flyback.Viewer.Desktop.Tests.csproj" />
+    <Project Path="tests/Flyback.Editor.Desktop.Tests/Flyback.Editor.Desktop.Tests.csproj" />
     <Project Path="tests/Flyback.Cli.Tests/Flyback.Cli.Tests.csproj" />
     <Project Path="tests/Flyback.Core.Benchmarks/Flyback.Core.Benchmarks.csproj" />
     <Project Path="tests/Flyback.Specs/Flyback.Specs.csproj" />

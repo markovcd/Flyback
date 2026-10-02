@@ -52,6 +52,8 @@ tests/
   Flyback.Specs                 feature requirements as Gherkin scenarios
   Flyback.Core.Benchmarks       engine benchmarks
   Flyback.Editor.Tests          editor tests, headless Avalonia
+  Flyback.Viewer.Desktop.Tests  viewer window tests
+  Flyback.Editor.Desktop.Tests  desktop shell tests
   Flyback.Ui.Tests              shared control, audio and MIDI tests
   Flyback.Ui.Testing            the headless test harness (not a test project)
   Flyback.Cli.Tests             command line tests

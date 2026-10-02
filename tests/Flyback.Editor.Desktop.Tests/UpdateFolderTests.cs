@@ -3,7 +3,7 @@ using Flyback.Editor.Updates;
 using Shouldly;
 using Xunit;
 
-namespace Flyback.Editor.Tests.Updates;
+namespace Flyback.Editor.Desktop.Tests;
 
 /// <summary>
 /// What waits between a download and an install, and the decisions a start makes

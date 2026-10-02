@@ -1,3 +1,4 @@
+using Flyback.Ui.Testing;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -7,7 +8,6 @@ using Avalonia.VisualTree;
 using Flyback.Engine.Compile;
 using Flyback.Engine.Graph;
 using Flyback.Ui.Controls;
-using Flyback.Editor.Tests.Ui;
 using Flyback.Core;
 using Flyback.Core.Compile;
 using Flyback.Core.Graph;
@@ -19,13 +19,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Flyback.Ui;
 
-namespace Flyback.Editor.Tests.Viewer;
+namespace Flyback.Viewer.Desktop.Tests;
 
 /// <summary>
 /// The player in a window, driven headless: what it opens with, what the transport
 /// does, and how the toolbar finds the pointer.
 /// </summary>
-public class ViewerWindowTests : EditorTest
+public class ViewerWindowTests : UiTest
 {
     /// <summary>A sound card the test drives: a buffer is made when the test asks for one.</summary>
     private sealed class Loopback : IAudioDevice
