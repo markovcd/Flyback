@@ -15,6 +15,21 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [When("the viewer plays it with {string}")]
     public void WhenPlayedWith(string flags) => viewer.Play(flags.Split(' '));
 
+    [When("the viewer's picture is tapped")]
+    public void WhenTapped() => viewer.TapPicture();
+
+    [When("the viewer's picture is double-clicked")]
+    public void WhenDoubleClicked() => viewer.TapPicture(2);
+
+    [Then("the viewer is paused")]
+    public void ThenPaused() => viewer.Paused.ShouldBe(true);
+
+    [Then("the viewer is playing")]
+    public void ThenPlaying() => viewer.Paused.ShouldBe(false);
+
+    [Then("the viewer has the whole screen")]
+    public void ThenFullScreen() => viewer.FullScreen.ShouldBeTrue();
+
     [When("F3 is pressed over the viewer's picture")]
     public void WhenF3() => viewer.Press(PhysicalKey.F3);
 

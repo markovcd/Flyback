@@ -85,14 +85,7 @@ internal sealed class ViewerWindow : Window
         // again, or Escape, puts it back. The editor does the same with its own
         // preview, but that one zeroes grid tracks around a control that must not be reparented, and this
         // window has no tracks — so nothing is shared with it.
-        if (pictured)
-        {
-            previewBox.DoubleTapped += (_, e) =>
-            {
-                ToggleFullScreen();
-                e.Handled = true;
-            };
-        }
+        if (pictured) PictureTaps.Attach(previewBox, TogglePause, ToggleFullScreen);
 
         if (toolbar)
         {

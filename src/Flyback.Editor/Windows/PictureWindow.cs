@@ -56,11 +56,7 @@ internal sealed class PictureWindow : Avalonia.Controls.Window
 
         Content = picture;
 
-        DoubleTapped += (_, e) =>
-        {
-            Close();
-            e.Handled = true;
-        };
+        PictureTaps.Attach(this, () => PauseRequested?.Invoke(this, EventArgs.Empty), Close);
 
         KeyDown += (_, e) =>
         {

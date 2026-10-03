@@ -778,6 +778,17 @@ public sealed class EditorDriver(PatchContext context, HeadlessTurn turn) : IDis
             open.MouseUp(at, MouseButton.Left);
         });
 
+    /// <summary>Taps the picture once, as a click or a finger does.</summary>
+    public void TapPicture() =>
+        DoWindow((open, _) =>
+        {
+            var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
+            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+
+            open.MouseDown(at, MouseButton.Left);
+            open.MouseUp(at, MouseButton.Left);
+        });
+
     /// <summary>What the line in the full-screen picture's corner says, or null while it is not showing.</summary>
     public string? Stats => ReadWindow(open =>
         open.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats

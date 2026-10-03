@@ -29,6 +29,15 @@ public sealed class TransportSteps(EditorDriver editor) : IDisposable
         if (editor.Paused) editor.PressCtrl(PhysicalKey.P);
     }
 
+    [When("the picture is tapped")]
+    public void WhenPictureTapped() => editor.TapPicture();
+
+    [Then("the patch is paused")]
+    public void ThenPaused() => editor.Paused.ShouldBeTrue();
+
+    [Then("the patch is playing")]
+    public void ThenPlaying() => editor.Paused.ShouldBeFalse();
+
     [Then("the patch opens paused")]
     public void ThenOpensPaused() => editor.Paused.ShouldBeTrue();
 

@@ -344,11 +344,10 @@ internal sealed class ShellLayout(
     {
         previewBox = fullScreen.PreviewBox = new Border { Background = Brushes.Black, Child = preview, Focusable = true };
         KeyboardNavigation.SetIsTabStop(previewBox, false);
-        previewBox.DoubleTapped += (_, e) =>
+        PictureTaps.Attach(previewBox, transport.TogglePause, () =>
         {
             if (!host.InPage) fullScreen.Toggle();
-            e.Handled = true;
-        };
+        });
         Grid.SetColumn(previewBox, column);
         Grid.SetRow(previewBox, 0);
         previewRow = grid.RowDefinitions[0];

@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -61,6 +63,32 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
             open.KeyReleaseQwerty(key, RawInputModifiers.None);
             Settle();
         });
+
+    /// <summary>Taps the picture once, or twice for a double-click.</summary>
+    public void TapPicture(int times = 1) =>
+        Run(() =>
+        {
+            var open = window ?? throw new InvalidOperationException("the viewer is not playing");
+            var preview = open.GetVisualDescendants().OfType<PreviewHost>().Single();
+            var at = preview.TranslatePoint(new Point(preview.Bounds.Width / 2, preview.Bounds.Height / 2), open)!.Value;
+
+            for (var tap = 0; tap < times; tap++)
+            {
+                open.MouseDown(at, MouseButton.Left);
+                open.MouseUp(at, MouseButton.Left);
+            }
+
+            Settle();
+        });
+
+    /// <summary>Whether the viewer is paused, or null where it has no transport showing.</summary>
+    public bool? Paused => Run(() =>
+        window!.GetVisualDescendants().OfType<TransportOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } transport
+            ? transport.Paused
+            : (bool?)null);
+
+    /// <summary>Whether the viewer's window has the whole screen.</summary>
+    public bool FullScreen => Run(() => window!.WindowState == WindowState.FullScreen);
 
     /// <summary>What the line in the picture's corner says, or null while it is not showing.</summary>
     public string? Stats => Run(() =>

@@ -5,6 +5,7 @@
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
 import { takeAudio } from './session.js';
+import { onTap } from './tap.js';
 
 const params = new URLSearchParams(location.search);
 /** Whether the patch's length plays round and round; the Loop button flips it. */
@@ -1061,6 +1062,8 @@ ui.mute.onclick = toggleMute;
 ui.volume.oninput = () => setVolume(Number(ui.volume.value));
 ui.fullscreen.onclick = toggleFullscreen;
 ui.edit.onclick = edit;
+// A double click is two taps, which leave the patch as it was.
+onTap(ui.canvas, () => { if (info !== null) (playing ? pause() : play()); });
 ui.canvas.ondblclick = toggleFullscreen;
 ui.size.onchange = () => (ui.size.value === OFF ? setPicture(false) : resize(...ui.size.value.split('x').map(Number)));
 
