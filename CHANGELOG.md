@@ -8,6 +8,7 @@
 - A wire running back past a shut box goes round the box, not round the modules inside it.
 - In the editor and the viewer, on the desktop and in a browser, a click or tap on the picture plays and pauses.
 - On a phone, a patch's sound in the web editor and viewer stops other music and is not muted by the ringer switch (Safari; other browsers play as before).
+- On Android, the web viewer's sound plays through an audio element, so other playback stops.
 
 ## 0.7.0 — 2026-10-02
 

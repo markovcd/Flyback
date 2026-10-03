@@ -4,7 +4,7 @@
 
 import { dotnet } from './_framework/dotnet.js';
 import * as gl from './gl.js';
-import { takeAudio } from './session.js';
+import { takeAudio, throughElement } from './session.js';
 import { onTap } from './tap.js';
 
 const params = new URLSearchParams(location.search);
@@ -118,6 +118,9 @@ let loudness = (() => {
 let context = null;
 let queue = null;
 let volume = null;
+
+/** The <audio> element the sound plays through where the page must take audio focus, else null. */
+let element = null;
 let generation = 0;
 let played = 0;
 let reportedAt = 0;
@@ -192,7 +195,9 @@ async function startSound() {
 
     queue = new AudioWorkletNode(context, 'flyback-queue', { numberOfInputs: 0, outputChannelCount: [2] });
     volume = new GainNode(context, { gain: muted ? 0 : loudness });
-    queue.connect(volume).connect(context.destination);
+    queue.connect(volume);
+    element = throughElement(context, volume);
+    if (element === null) volume.connect(context.destination);
     queue.port.onmessage = report;
 
     // The worker feeds the speaker straight, so a busy page never keeps the sound waiting.
@@ -203,7 +208,10 @@ async function startSound() {
 
   await Promise.race([context.resume(), new Promise(resolve => setTimeout(resolve, 250))]);
 
-  return context.state === 'running';
+  const running = context.state === 'running';
+  if (running) element?.play().catch(() => {});
+
+  return running;
 }
 
 /** Both halves to <seconds>, the speaker's queue emptied and counted again from there. */
@@ -258,6 +266,7 @@ function pause() {
   // The queue stays where it is, so play carries on from the very next sample.
   speaker.postMessage({ run: false });
   if (heard) context.suspend();
+  element?.pause();
   keepAwake();
   paint();
 }
