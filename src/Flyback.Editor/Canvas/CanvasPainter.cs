@@ -420,8 +420,8 @@ internal sealed class CanvasPainter(
             if (from.X > to.X)
             {
                 var run = WirePath.ReturnRun(
-                    geometry.Bounds(source, sourceDef),
-                    geometry.Bounds(target, targetDef));
+                    scene.RouteBounds(source, sourceDef),
+                    scene.RouteBounds(target, targetDef));
 
                 WirePath.DrawReturn(context, from, to, run, pen);
                 continue;

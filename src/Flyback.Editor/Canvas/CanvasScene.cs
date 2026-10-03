@@ -135,6 +135,23 @@ internal readonly struct CanvasScene(Patch patch, NodeGeometry geometry, NodeGro
         return NodeGeometry.OutputPort(node, port);
     }
 
+    /// <summary>
+    /// The rectangle a wire round the back of this module clears: the box of a
+    /// group that is shut in the patch, peeked or not, and the module itself
+    /// otherwise.
+    /// </summary>
+    public Rect RouteBounds(NodeInstance node, NodeDef def)
+    {
+        if (patch.CollapsedGroupOf(node.Id) is { } group)
+        {
+            var bounds = geometry.GroupBounds(patch, group, patch.SocketsOf(group));
+
+            if (bounds.Width > 0) return bounds;
+        }
+
+        return geometry.Bounds(node, def);
+    }
+
     /// <inheritdoc cref="OutputAnchor"/>
     public Point InputAnchor(NodeInstance node, NodeDef def, int port)
     {

@@ -690,7 +690,7 @@ internal sealed class CanvasGestures
 
         // The pointer is a module of no size.
         var holding = history.Patch.Find(wireNode) is { } node && NodeCatalog.Get(node.TypeId) is { } def
-            ? geometry.Bounds(node, def)
+            ? selection.Scene.RouteBounds(node, def)
             : new Rect(anchor, anchor);
 
         WirePath.DrawReturn(context, from, to, WirePath.ReturnRun(holding, new Rect(wireEnd, wireEnd)), pen);

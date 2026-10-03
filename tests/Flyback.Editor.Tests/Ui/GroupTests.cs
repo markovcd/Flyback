@@ -44,6 +44,30 @@ public class GroupTests : EditorTest
         return builder.Patch;
     }
 
+    /// <summary>
+    /// A wire running back past a module in a shut box clears the box, which is
+    /// what is on the canvas, and it does so while the box is peeked too. Only
+    /// an open group leaves the module's own rectangle to clear.
+    /// </summary>
+    [AvaloniaFact]
+    public void A_return_wire_clears_the_box_while_it_is_shut_or_peeked_and_the_module_once_it_is_open()
+    {
+        var patch = Chain(out _, out var first, out var second, out _);
+        var group = patch.Group([first.Id, second.Id]).ShouldNotBeNull();
+        var def = NodeCatalog.Require(first.TypeId);
+        var module = Geometry.Bounds(first, def);
+
+        group.Collapsed = true;
+        var box = Geometry.GroupBounds(patch, group, patch.SocketsOf(group));
+
+        box.ShouldNotBe(module);
+        new CanvasScene(patch, Geometry).RouteBounds(first, def).ShouldBe(box);
+        new CanvasScene(patch, Geometry, group).RouteBounds(first, def).ShouldBe(box);
+
+        group.Collapsed = false;
+        new CanvasScene(patch, Geometry).RouteBounds(first, def).ShouldBe(module);
+    }
+
     /// <summary>Two pairs, far enough apart that neither box reaches the other.</summary>
     private static Patch Pairs(
         out NodeInstance topLeft,

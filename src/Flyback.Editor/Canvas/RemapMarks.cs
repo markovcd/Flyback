@@ -120,7 +120,7 @@ internal sealed class RemapMarks(CanvasHistory history, CanvasSelection selectio
             {
                 yield return (wire, new Point(
                     (from.X + to.X) / 2,
-                    WirePath.ReturnRun(geometry.Bounds(source, sourceDef), geometry.Bounds(target, targetDef))));
+                    WirePath.ReturnRun(scene.RouteBounds(source, sourceDef), scene.RouteBounds(target, targetDef))));
                 continue;
             }
 

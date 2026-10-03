@@ -5,6 +5,7 @@
 ### Editor
 
 - A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.
+- A wire running back past a shut box goes round the box, not round the modules inside it.
 
 ## 0.7.0 — 2026-10-02
 
