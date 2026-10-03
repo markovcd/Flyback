@@ -35,7 +35,7 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
         heading = new TextBlock
         {
             Name = "patch-name",
-            Text = files.Name ?? Unnamed,
+            Text = Heading(),
             FontSize = Text.Caption,
             FontWeight = FontWeight.SemiBold,
             LetterSpacing = 1,
@@ -49,8 +49,11 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
     /// <summary>Redraws the name after the file it was saved to or opened from changed.</summary>
     internal void Rename()
     {
-        if (heading is not null) heading.Text = files.Name ?? Unnamed;
+        if (heading is not null) heading.Text = Heading();
     }
+
+    /// <summary>The name in capitals, as drawn; the file keeps its own case.</summary>
+    private string Heading() => (files.Name ?? Unnamed).ToUpperInvariant();
 
     private Patch Patch => editor.History.Patch;
 

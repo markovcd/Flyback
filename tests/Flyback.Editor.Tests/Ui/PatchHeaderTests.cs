@@ -19,17 +19,17 @@ public class PatchHeaderTests : EditorTest
         Service<PatchFiles>(window).Became(null, beside: null);
         Settle(window);
 
-        Heading(window).ShouldBe("Patch");
+        Heading(window).ShouldBe("PATCH");
     }
 
     [AvaloniaFact]
-    public void A_patch_from_a_file_is_headed_with_the_files_name()
+    public void A_patch_from_a_file_is_headed_with_the_files_name_in_capitals()
     {
         var window = Open(new PatchBuilder(NodeCatalog.BuiltIn).Patch);
 
         Service<PatchFiles>(window).Became("nebula", beside: null);
         Settle(window);
 
-        Heading(window).ShouldBe("nebula");
+        Heading(window).ShouldBe("NEBULA");
     }
 }
