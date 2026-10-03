@@ -38,6 +38,8 @@ internal sealed class Inspector
         IReactTo<InputLetGo>,
         IReactTo<PanelStale>,
         IReactTo<UndescribedChanged>,
+        IReactTo<DocumentArrived>,
+        IReactTo<DocumentSaved>,
         IReactTo<Touched>
 {
     private readonly IFilePickers pickers;
@@ -54,6 +56,7 @@ internal sealed class Inspector
     private readonly List<TextBlock> measurements = [];
     private readonly List<Control> measuredPictures = [];
     private readonly Document document;
+    private readonly PatchHeader header;
     private readonly MidiHub midi;
     private readonly InstrumentLibrary instruments;
     private readonly SampleLibrary soundFolder;
@@ -104,6 +107,7 @@ internal sealed class Inspector
         this.pickers = pickers;
         this.editor = editor;
         this.document = document;
+        header = new PatchHeader(editor, document, files);
         this.midi = midi;
         instruments = knobs.Instruments;
         soundFolder = files.SoundFolder;
@@ -136,6 +140,18 @@ internal sealed class Inspector
     public Task On(PanelStale notice)
     {
         Build();
+        return Task.CompletedTask;
+    }
+
+    public Task On(DocumentArrived notice)
+    {
+        header.Rename();
+        return Task.CompletedTask;
+    }
+
+    public Task On(DocumentSaved notice)
+    {
+        header.Rename();
         return Task.CompletedTask;
     }
 
@@ -219,9 +235,7 @@ internal sealed class Inspector
             wash.Clear();
             plateHost.Content = null;
 
-            panel.Children.Add(BuildPatchDescription());
-            panel.Children.Add(BuildPatchAuthor());
-            panel.Children.Add(BuildPatchTags());
+            foreach (var part in header.Build()) panel.Children.Add(part);
 
             if (document.IsAdrift || editor.History.Locked)
             {
@@ -1046,128 +1060,6 @@ internal sealed class Inspector
         };
 
         return title;
-    }
-
-    /// <summary>
-    /// What the patch is for, at the top of an empty panel, which a double-click
-    /// turns into a box to write it in.
-    /// </summary>
-    /// <remarks>
-    /// Editable on a locked canvas too: it is written back into the text, as the
-    /// keyboard's layout is. Not while the text has moved on from the patch, when
-    /// the line it would land on may not be the one playing.
-    /// </remarks>
-    private Control BuildPatchDescription() => BuildPatchLine(
-        "patch-description",
-        editor.History.Patch.Description,
-        editor.History.Patch.Description,
-        "Double-click to say what this patch is for.",
-        "What is this patch for?",
-        Patch.DescriptionLimit,
-        typed => editor.History.Patch.Describe(typed),
-        () => editor.History.Patch.Description,
-        BuildPatchDescription,
-        new Thickness(0, 0, 0, 6),
-        Text.Heading);
-
-    /// <summary>Who made the patch, under its description, edited the same way.</summary>
-    private Control BuildPatchAuthor() => BuildPatchLine(
-        "patch-author",
-        editor.History.Patch.Author is { } author ? "by " + author : null,
-        editor.History.Patch.Author,
-        "Double-click to say who made it.",
-        "Who made this patch?",
-        Patch.AuthorLimit,
-        typed => editor.History.Patch.Credit(typed),
-        () => editor.History.Patch.Author,
-        BuildPatchAuthor,
-        new Thickness(0, 0, 0, 6));
-
-    /// <summary>
-    /// The patch's tags, under its author, edited as one line of words apart by
-    /// spaces or commas.
-    /// </summary>
-    private Control BuildPatchTags() => BuildPatchLine(
-        "patch-tags",
-        editor.History.Patch.Tags is { } tags ? string.Join(", ", tags) : null,
-        editor.History.Patch.Tags is { } held ? string.Join(' ', held) : null,
-        "Double-click to tag it.",
-        "drone slow ambient",
-        Patch.TagCount * (Patch.TagLimit + 2),
-        typed => editor.History.Patch.Tag(typed?.Replace(',', ' ').Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)),
-        () => editor.History.Patch.Tags is { } now ? string.Join(' ', now) : null,
-        BuildPatchTags,
-        new Thickness(0, 0, 0, 14));
-
-    /// <summary>
-    /// One thing said about the whole patch, which a double-click turns into a box
-    /// to write it in.
-    /// </summary>
-    /// <param name="shown">What the panel shows, and null where nothing is said.</param>
-    /// <param name="held">What the box opens holding.</param>
-    /// <param name="asking">What the panel shows in its place where nothing is said.</param>
-    private Control BuildPatchLine(
-        string name,
-        string? shown,
-        string? held,
-        string asking,
-        string fallback,
-        int limit,
-        Action<string?> set,
-        Func<string?> current,
-        Func<Control> rebuild,
-        Thickness margin,
-        double size = Text.Body)
-    {
-        var ink = new SolidColorBrush(Colors.Label);
-
-        var line = new TextBlock
-        {
-            Name = name,
-            Text = shown ?? asking,
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = size,
-            FontStyle = shown is null ? FontStyle.Italic : FontStyle.Normal,
-            Foreground = shown is null ? Text.Muted : ink,
-            Background = Brushes.Transparent,
-            Margin = margin,
-        };
-
-        if (document.IsAdrift)
-        {
-            line.IsVisible = shown is not null;
-            return line;
-        }
-
-        if (shown is not null) ToolTip.SetTip(line, "Double-click to change it. Empty the box to take it away.");
-
-        line.Cursor = NameBox.Renaming;
-
-        line.DoubleTapped += (_, e) =>
-        {
-            e.Handled = true;
-
-            NameBox.Open(
-                line,
-                ink,
-                held,
-                fallback,
-                limit,
-                set,
-                current,
-                rebuild,
-                () =>
-                {
-                    // Finished as it closes: Enter takes the box away before any
-                    // key comes up in the panel to say so.
-                    document.Relaid();
-                    editor.History.Record();
-                    document.HandCameOff();
-                },
-                prose: true);
-        };
-
-        return line;
     }
 
     /// <summary>

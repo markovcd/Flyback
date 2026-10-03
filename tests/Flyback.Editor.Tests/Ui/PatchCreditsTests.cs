@@ -13,7 +13,8 @@ namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>
 /// With nothing selected the panel shows who made the patch and its tags under
-/// the description, and a double-click on either edits it.
+/// the description. A double-click on the credit edits it, and a click on a tag
+/// chip or the one to add another edits the tags.
 /// </summary>
 public class PatchCreditsTests : EditorTest
 {
@@ -55,13 +56,30 @@ public class PatchCreditsTests : EditorTest
         Settle(window);
     }
 
+    private static void TypeTags(MainWindow window, string text)
+    {
+        All<Button>(window).Single(b => b.Name == "patch-tag-add").RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        Settle(window);
+
+        var box = Box(window).ShouldNotBeNull("the tags should have become a box");
+        box.Text = text;
+        box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Settle(window);
+    }
+
+    private static string[] Chips(MainWindow window) =>
+        All<WrapPanel>(window).Single(p => p.Name == "patch-tags").Children
+            .OfType<Button>().Where(b => b.Name is null)
+            .Select(b => ((TextBlock)((StackPanel)b.Content!).Children[0]).Text!).ToArray();
+
     [AvaloniaFact]
     public void An_uncredited_patch_asks_who_made_it_and_for_tags()
     {
         var window = Open();
 
         Line(window, "patch-author").Text.ShouldBe("Double-click to say who made it.");
-        Line(window, "patch-tags").Text.ShouldBe("Double-click to tag it.");
+        Chips(window).ShouldBeEmpty();
+        All<Button>(window).ShouldContain(b => b.Name == "patch-tag-add");
     }
 
     [AvaloniaFact]
@@ -80,10 +98,10 @@ public class PatchCreditsTests : EditorTest
     {
         var window = Open();
 
-        Type(window, "patch-tags", "Drone, slow  ambient,drone");
+        TypeTags(window, "Drone, slow  ambient,drone");
 
         Editor(window).History.Patch.Tags.ShouldBe(["drone", "slow", "ambient"]);
-        Line(window, "patch-tags").Text.ShouldBe("drone, slow, ambient");
+        Chips(window).ShouldBe(["drone", "slow", "ambient"]);
     }
 
     [AvaloniaFact]
@@ -91,7 +109,7 @@ public class PatchCreditsTests : EditorTest
     {
         var window = Open();
 
-        Type(window, "patch-tags", "drone");
+        TypeTags(window, "drone");
         Editor(window).History.Undo().ShouldBeTrue();
         Settle(window);
 
@@ -118,7 +136,7 @@ public class PatchCreditsTests : EditorTest
         Settle(window);
 
         Type(window, "patch-author", "Ada");
-        Type(window, "patch-tags", "drone slow");
+        TypeTags(window, "drone slow");
 
         text.Text.ShouldStartWith("description \"A hum.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\n");
         Editor(window).History.Patch.Author.ShouldBe("Ada");

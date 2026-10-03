@@ -257,6 +257,10 @@ internal static class Glyphs
         + "M2.5,9 L2.5,7 M2.5,5 L2.5,2.5 "
         + "M5.5,5.5 L10.5,5.5 L10.5,10.5 L5.5,10.5 Z");
 
+    /// <summary>A head and shoulders: a person.</summary>
+    public static Control Person(double size = Box, IBrush? ink = null) =>
+        Stroked("M8,2.5 A2.5,2.5 0 1 1 8,7.5 A2.5,2.5 0 1 1 8,2.5 Z M3,13.5 A5,4.5 0 0 1 13,13.5", size, ink);
+
     /// <summary>A plus: something new on the canvas.</summary>
     public static Control Add() => Stroked("M8,2.5 L8,13.5 M2.5,8 L13.5,8");
 
