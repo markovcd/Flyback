@@ -22,3 +22,4 @@ Work the user has asked for and nobody has started. Take an item off when it lan
 - **A live-patching mode.** A desktop-only editor mode where the picture fills the screen and the patch is edited over it, as either the canvas or the text view, for playing a patch live in front of people.
 - Make rendering site presets better (cli command) - it shouldn't access directly via shared folder but some form of admin api
 - Make rendering stills for site and page cached, so pipeline takes shorter
+- add audio input, add midi file playback, add sample recording, add midi recording (from highest to lowest priority)
