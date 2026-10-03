@@ -37,6 +37,8 @@ internal sealed class CanvasPainter(
     /// <summary>How wide a module's title may be drawn, leaving room for its tag.</summary>
     internal static double HeaderWidth(Rect bounds, bool tagged) => bounds.Width - 16 - (tagged ? UndescribedTags.TagRoom : 0);
 
+    private readonly CanvasLift lift = new(gestures, selection);
+
     private Patch Patch => history.Patch;
 
     public void Render(DrawingContext context)
@@ -64,20 +66,20 @@ internal sealed class CanvasPainter(
             if (!gestures.Gesturing) marks.Draw(context);
 
             foreach (var node in Patch.Nodes)
-                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && !Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && !lift.Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
             // A box being carried is drawn last of them, so it passes over the others.
             foreach (var (group, sockets, bounds) in scene.Boxes())
-                if (!Raised(group)) DrawBox(context, group, sockets, bounds);
+                if (!lift.Raised(group)) DrawBox(context, group, sockets, bounds);
 
             foreach (var (group, sockets, bounds) in scene.Boxes())
-                if (Raised(group)) DrawBox(context, group, sockets, bounds);
+                if (lift.Raised(group)) DrawBox(context, group, sockets, bounds);
 
             // Held up over the boxes as well, so one carried across a shut box
             // is not hidden by it.
             foreach (var node in Patch.Nodes)
-                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
+                if (!scene.Shut(node.Id) && !scene.InPeek(node.Id) && lift.Raised(node.Id) && NodeCatalog.Get(node.TypeId) is { } def)
                     DrawNode(context, node, def);
 
             DrawConnections(context, lifted, theirs: true, peeked: false);
@@ -122,7 +124,7 @@ internal sealed class CanvasPainter(
     /// it. Faint enough to read as out of the patch at any zoom, and not so faint
     /// that what it is wired to cannot be followed.
     /// </summary>
-    private const double OffOpacity = 0.38;
+    internal const double OffOpacity = 0.38;
 
     /// <summary>The line through the name of a module that is switched off.</summary>
     private static readonly IPen OffStrike = new ImmutablePen(HeaderTextBrush, 1.5);
@@ -379,8 +381,8 @@ internal sealed class CanvasPainter(
             if (connection.SourcePort >= sourceDef.Outputs.Count) continue;
             if (connection.TargetPort >= targetDef.Inputs.Count) continue;
 
-            var from = Held(source.Id, scene.OutputAnchor(source, connection.SourcePort));
-            var to = Held(target.Id, scene.InputAnchor(target, targetDef, connection.TargetPort));
+            var from = lift.Held(source.Id, scene.OutputAnchor(source, connection.SourcePort));
+            var to = lift.Held(target.Id, scene.InputAnchor(target, targetDef, connection.TargetPort));
             // A wire swinging past the range its socket takes is drawn in the
             // accent, which is where the status bar's warning about it points.
             var color = AutoRemap.Overflow(Patch, connection) is null
@@ -453,60 +455,8 @@ internal sealed class CanvasPainter(
     /// </remarks>
     private void DrawNode(DrawingContext context, NodeInstance node, NodeDef def)
     {
-        if (!Raised(node.Id))
-        {
-            DrawFace(context, node, def);
-            return;
-        }
-
-        DrawRaised(context, geometry.Bounds(node, def), node.Off, () => DrawFace(context, node, def));
-    }
-
-    /// <summary>Whether a module is held up off the canvas: picked itself, or standing behind a box that is.</summary>
-    private bool Raised(Guid id) =>
-        gestures.Carrying
-        && (selection.Scene.ShutGroupOf(id) is { } box ? Raised(box) : selection.Contains(id));
-
-    /// <summary>Whether a box is held up off the canvas: all of what is inside it is picked.</summary>
-    private bool Raised(NodeGroup box) =>
-        gestures.Carrying && box.Members.Count > 0 && box.Members.All(selection.Contains);
-
-    /// <summary>Where a picked module's wire ends are drawn: with the socket, which moves with what it is on.</summary>
-    private Point Held(Guid id, Point anchor) => Raised(id) ? anchor + RaisedBy : anchor;
-
-    /// <summary>Casts the shadow of something held up, and draws it up and left of where it sits.</summary>
-    private static void DrawRaised(DrawingContext context, Rect bounds, bool off, Action draw)
-    {
-        context.DrawRectangle(
-            null, null, new RoundedRect(bounds, NodeGeometry.CornerRadius), off ? OffRaisedShadow : RaisedShadow);
-
-        using (context.PushTransform(Matrix.CreateTranslation(RaisedBy))) draw();
-    }
-
-    /// <summary>How far a picked module is drawn up and left of where it sits.</summary>
-    private static readonly Vector RaisedBy = new(-2, -3);
-
-    private static readonly BoxShadows RaisedShadow = Shadow(0.42);
-
-    private static readonly BoxShadows OffRaisedShadow = Shadow(0.42 * OffOpacity);
-
-    private static BoxShadows Shadow(double strength) => new(new BoxShadow
-    {
-        OffsetX = 1,
-        OffsetY = 5,
-        Blur = 12,
-        Color = Color.FromArgb((byte)Math.Round(255 * strength), 0, 0, 0),
-    });
-
-    private void DrawFace(DrawingContext context, NodeInstance node, NodeDef def)
-    {
-        if (!node.Off)
-        {
+        using (CanvasLift.Hold(context, geometry.Bounds(node, def), node.Off, lift.Raised(node.Id)))
             DrawModule(context, node, def);
-            return;
-        }
-
-        using (context.PushOpacity(OffOpacity)) DrawModule(context, node, def);
     }
 
     /// <summary>
@@ -817,25 +767,8 @@ internal sealed class CanvasPainter(
     {
         var off = selection.Scene.SwitchedOff(group);
 
-        if (Raised(group))
-        {
-            DrawRaised(context, bounds, off, () => DrawBoxDimmed(context, group, sockets, bounds, off));
-            return;
-        }
-
-        DrawBoxDimmed(context, group, sockets, bounds, off);
-    }
-
-    private void DrawBoxDimmed(DrawingContext context, NodeGroup group, GroupSockets sockets, Rect bounds, bool off)
-    {
-        if (!off)
-        {
-            DrawBoxFace(context, group, sockets, bounds, off: false);
-            return;
-        }
-
-        using (context.PushOpacity(OffOpacity))
-            DrawBoxFace(context, group, sockets, bounds, off: true);
+        using (CanvasLift.Hold(context, bounds, off, lift.Raised(group)))
+            DrawBoxFace(context, group, sockets, bounds, off);
     }
 
     private void DrawBoxFace(
