@@ -4,6 +4,7 @@
 
 ### Editor
 
+- The web viewer shows who made a patch under its title, and an author row with their initial and the patch's tags above its description.
 - The status bar and the full-screen stats line no longer count picture and sound ops.
 - The web viewer no longer says the sound's oversampling or how many times real time it renders at, and the notices that its sound keeps falling behind, is too slow to keep up or is turned on anyway go to the browser's console, not the page.
 - A module or shut box is lifted off the canvas while it is carried: it shifts a little up and left, casts a soft shadow, and passes over everything else.

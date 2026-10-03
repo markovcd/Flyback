@@ -37,7 +37,7 @@ const $ = id => document.getElementById(id);
 const ui = {
   file: $('file'), size: $('size'), back: $('back'), edit: $('edit'),
   play: $('play'), rewind: $('rewind'), loop: $('loop'), seek: $('seek'), mute: $('mute'), volume: $('volume'), fullscreen: $('fullscreen'),
-  panel: $('panel'), grip: $('grip'), about: $('about'), keyboard: $('keyboard'), notes: $('notes'), notesHome: $('notes-home'),
+  panel: $('panel'), grip: $('grip'), about: $('about'), credit: $('credit'), byline: $('byline'), initial: $('initial'), author: $('author'), tags: $('tags'), keyboard: $('keyboard'), notes: $('notes'), notesHome: $('notes-home'),
   sheet: $('sheet'), sizer: $('sizer'), find: $('find'), resetAll: $('reset-all'), none: $('none'),
   keybed: $('keybed'), keysSaid: $('keys-said'), octave: $('octave'), octaveDown: $('octave-down'), octaveUp: $('octave-up'),
   title: $('title'), clock: $('clock'), length: $('length'),
@@ -656,6 +656,23 @@ function shiftKeys(octaves) {
   paint();
 }
 
+/** Who made the patch, and what it is tagged, by the title and above its description. */
+function showCredit(author, tags) {
+  const name = author?.trim() ?? '';
+
+  ui.byline.textContent = name ? `by ${name}` : '';
+  ui.byline.hidden = !name;
+
+  ui.initial.textContent = name ? [...name][0].toUpperCase() : '';
+  ui.author.textContent = name;
+  ui.tags.replaceChildren(...tags.map(tag => Object.assign(document.createElement('li'), { textContent: tag })));
+
+  // A tagged patch with no author still shows its tags.
+  ui.credit.querySelector('.author').hidden = !name;
+  ui.tags.hidden = tags.length === 0;
+  ui.credit.hidden = !name && tags.length === 0;
+}
+
 /** The tab open on a phone's sheet, kept while the patch changes where it still has that tab. */
 let tab = null;
 
@@ -778,6 +795,7 @@ async function open(opening, label, at = 0, keepKnobs = false) {
 
   ui.about.textContent = info?.description ?? '';
   ui.about.hidden = !info?.description;
+  showCredit(info?.author, info?.tags ?? []);
   buildPanel(error === null, keepKnobs);
   buildSheet();
 

@@ -39,6 +39,8 @@ public static partial class WebExports
 
     /// <summary>What the open patch says it is for, and its panel's knobs.</summary>
     private static string? description;
+    private static string? author;
+    private static IReadOnlyList<string> tags = [];
     private static IReadOnlyList<PatchControl> knobs = [];
 
     /// <summary>Whether anything is wired into the open patch's sound.</summary>
@@ -191,6 +193,8 @@ public static partial class WebExports
             sound = next;
             picture = null;
             description = load.Patch.Description;
+            author = load.Patch.Author;
+            tags = load.Patch.Tags ?? [];
             knobs = [.. load.Patch.Controls ?? []];
             hasSound = load.Patch.Reaches().Sound;
 
@@ -273,6 +277,8 @@ public static partial class WebExports
         sound = null;
         picture = null;
         description = null;
+        author = null;
+        tags = [];
         knobs = [];
         hasSound = false;
 
@@ -284,6 +290,8 @@ public static partial class WebExports
             else picture = new WebPicture(opened, width, height);
 
             description = opened.Patch.Description;
+            author = opened.Patch.Author;
+            tags = opened.Patch.Tags ?? [];
             knobs = [.. opened.Patch.Controls ?? []];
             hasSound = opened.Patch.Reaches().Sound;
             Typing.Scale = opened.Patch.Keyboard;
@@ -496,6 +504,8 @@ public static partial class WebExports
         if (status["open"]!.GetValue<bool>())
         {
             status["description"] = description;
+            status["author"] = author;
+            status["tags"] = new JsonArray([.. tags.Select(t => JsonValue.Create(t))]);
             status["hasSound"] = hasSound;
         }
 

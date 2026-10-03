@@ -11,7 +11,10 @@
   <header>
     <a class="brand" href="../" title="Flyback"><img src="../assets/logo.svg" alt="Flyback"></a>
     <a id="back" class="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></a>
-    <h1 id="title"></h1>
+    <div class="heading">
+      <h1 id="title"></h1>
+      <span id="byline" hidden></span>
+    </div>
     <button id="edit" disabled hidden title="Open this patch in the editor">Edit it</button>
     <label class="file" hidden>Open file<input id="file" type="file" accept=".fbk,.fbkb,.fbks"></label>
     <div id="sizer" class="sizer">
@@ -40,6 +43,16 @@
       </nav>
       <div id="notes-home" class="notes-home">
         <div id="notes">
+          <div id="credit" hidden>
+            <div class="author">
+              <span id="initial" aria-hidden="true"></span>
+              <div>
+                <span class="who">Author</span>
+                <span id="author"></span>
+              </div>
+            </div>
+            <ul id="tags" aria-label="Tags"></ul>
+          </div>
           <p id="about" hidden></p>
           <p id="keyboard" hidden></p>
         </div>
