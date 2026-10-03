@@ -13,8 +13,8 @@ namespace Flyback.Editor.Tests.Ui;
 
 /// <summary>
 /// With nothing selected the panel shows who made the patch and its tags under
-/// the description. A double-click on the credit edits it, and a click on a tag
-/// chip or the one to add another edits the tags.
+/// the description. The credit is a button to say who, then a card with a pencil
+/// and a cross; tags are chips with a cross, and a dashed one to add another.
 /// </summary>
 public class PatchCreditsTests : EditorTest
 {
@@ -31,27 +31,27 @@ public class PatchCreditsTests : EditorTest
         return window;
     }
 
-    private static TextBlock Line(MainWindow window, string name) =>
-        All<TextBlock>(window).Single(t => t.Name == name);
+    private static Button Named(MainWindow window, string name) =>
+        All<Button>(window).Single(b => b.Name == name);
 
-    private static TextBox? Box(MainWindow window) =>
-        All<TextBox>(window).FirstOrDefault(t => t.Classes.Contains(ModulePlate.NameBoxClass));
-
-    private static void Type(MainWindow window, string name, string text)
+    private static void Click(MainWindow window, string name)
     {
-        var line = Line(window, name);
-
-        var at = line.TranslatePoint(new Point(10, line.Bounds.Height / 2), window)
-            ?? throw new InvalidOperationException($"{name} is not in this window");
-
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
-        window.MouseDown(at, MouseButton.Left);
-        window.MouseUp(at, MouseButton.Left);
+        Named(window, name).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
         Settle(window);
+    }
 
-        var box = Box(window).ShouldNotBeNull($"{name} should have become a box");
-        box.Text = text;
+    private static string? Credit(MainWindow window) =>
+        All<TextBlock>(window).SingleOrDefault(t => t.Name == "patch-author")?.Text;
+
+    private static TextBox AuthorBox(MainWindow window) =>
+        All<TextBox>(window).Single(t => t.Name == "patch-author-box");
+
+    private static void Say(MainWindow window, string author)
+    {
+        Click(window, "patch-author-add");
+
+        var box = AuthorBox(window);
+        box.Text = author;
         box.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
         Settle(window);
     }
@@ -87,7 +87,8 @@ public class PatchCreditsTests : EditorTest
     {
         var window = Open();
 
-        Line(window, "patch-author").Text.ShouldBe("Double-click to say who made it.");
+        Credit(window).ShouldBeNull();
+        All<Button>(window).ShouldContain(b => b.Name == "patch-author-add");
         Chips(window).ShouldBeEmpty();
         All<Button>(window).ShouldContain(b => b.Name == "patch-tag-add");
     }
@@ -97,10 +98,12 @@ public class PatchCreditsTests : EditorTest
     {
         var window = Open();
 
-        Type(window, "patch-author", "Ada");
+        Say(window, "Ada");
 
         Editor(window).History.Patch.Author.ShouldBe("Ada");
-        Line(window, "patch-author").Text.ShouldBe("by Ada");
+        Credit(window).ShouldBe("Ada");
+        All<TextBlock>(window).ShouldContain(t => t.Text == "A");
+        All<TextBlock>(window).ShouldContain(t => t.Text == "Made by");
     }
 
     [AvaloniaFact]
@@ -145,7 +148,7 @@ public class PatchCreditsTests : EditorTest
         Editor(window).Selection.Select(null);
         Settle(window);
 
-        Type(window, "patch-author", "Ada");
+        Say(window, "Ada");
         TypeTags(window, "drone, slow");
 
         text.Text.ShouldStartWith("description \"A hum.\"\nauthor \"Ada\"\ntags \"drone\" \"slow\"\n\n");
@@ -213,6 +216,61 @@ public class PatchCreditsTests : EditorTest
         box.Bounds.Height.ShouldBe(size.Height);
         box.Bounds.Width.ShouldBeGreaterThanOrEqualTo(size.Width);
         ((Avalonia.Media.ISolidColorBrush)box.Background!).Color.ShouldBe(((Avalonia.Media.ISolidColorBrush)drone.Background!).Color);
+    }
+
+    [AvaloniaFact]
+    public void The_pencil_changes_who_made_it()
+    {
+        var window = Open();
+
+        Say(window, "Ada");
+        Click(window, "patch-author-edit");
+
+        AuthorBox(window).Text.ShouldBe("Ada");
+        AuthorBox(window).Text = "Grace";
+        AuthorBox(window).RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Settle(window);
+
+        Editor(window).History.Patch.Author.ShouldBe("Grace");
+        Credit(window).ShouldBe("Grace");
+    }
+
+    [AvaloniaFact]
+    public void The_cross_takes_the_credit_away_and_undo_puts_it_back()
+    {
+        var window = Open();
+
+        Say(window, "Ada");
+        Click(window, "patch-author-remove");
+
+        Editor(window).History.Patch.Author.ShouldBeNull();
+        All<Button>(window).ShouldContain(b => b.Name == "patch-author-add");
+
+        Editor(window).History.Undo().ShouldBeTrue();
+        Settle(window);
+
+        Editor(window).History.Patch.Author.ShouldBe("Ada");
+    }
+
+    [AvaloniaFact]
+    public void Emptying_the_box_or_pressing_Escape_leaves_who_made_it_as_it_was()
+    {
+        var window = Open();
+
+        Say(window, "Ada");
+
+        Click(window, "patch-author-edit");
+        AuthorBox(window).Text = "";
+        AuthorBox(window).RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter });
+        Settle(window);
+        Editor(window).History.Patch.Author.ShouldBe("Ada");
+
+        Click(window, "patch-author-edit");
+        AuthorBox(window).Text = "Grace";
+        AuthorBox(window).RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Escape });
+        Settle(window);
+        Editor(window).History.Patch.Author.ShouldBe("Ada");
+        Credit(window).ShouldBe("Ada");
     }
 
     [AvaloniaFact]

@@ -261,6 +261,10 @@ internal static class Glyphs
     public static Control Person(double size = Box, IBrush? ink = null) =>
         Stroked("M8,2.5 A2.5,2.5 0 1 1 8,7.5 A2.5,2.5 0 1 1 8,2.5 Z M3,13.5 A5,4.5 0 0 1 13,13.5", size, ink);
 
+    /// <summary>A pencil: change what is there.</summary>
+    public static Control Pencil(double size = Box, IBrush? ink = null) =>
+        Stroked("M10.5,2.8 L13.2,5.5 L5.3,13.4 L2.5,13.5 L2.6,10.7 Z M9,4.3 L11.7,7", size, ink);
+
     /// <summary>A plus: something new on the canvas.</summary>
     public static Control Add() => Stroked("M8,2.5 L8,13.5 M2.5,8 L13.5,8");
 

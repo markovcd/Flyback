@@ -65,44 +65,197 @@ internal sealed class PatchHeader(NodeEditor editor, Document document, PatchFil
         new Thickness(0, 0, 0, 6),
         Text.Heading);
 
-    /// <summary>Who made the patch, as a dashed button with a person on it.</summary>
+    /// <summary>
+    /// Who made the patch: a dashed button to say, a card once it is said, and a box
+    /// while it is being typed.
+    /// </summary>
     private Control Author()
     {
-        var text = AuthorText();
+        if (Patch.Author is not { } author)
+            return document.IsAdrift ? new Border { IsVisible = false } : AskingWho();
 
-        var glyph = Glyphs.Person(14, Text.Muted);
-        glyph.VerticalAlignment = VerticalAlignment.Center;
-        glyph.Margin = new Thickness(0, 0, 8, 0);
-        DockPanel.SetDock(glyph, Dock.Left);
-
-        var framed = Dashed(
-            new DockPanel { Margin = new Thickness(12, 0), Children = { glyph, text } },
-            radius: 10);
-
-        framed.MinWidth = 230;
-        framed.MinHeight = 38;
-        framed.HorizontalAlignment = HorizontalAlignment.Left;
-        framed.IsVisible = !document.IsAdrift || Patch.Author is not null;
-
-        return framed;
+        return Credited(author);
     }
 
-    private TextBlock AuthorText()
+    private Control AskingWho()
     {
-        var line = Line(
-            "patch-author",
-            Patch.Author is { } author ? "by " + author : null,
-            Patch.Author,
-            "Double-click to say who made it.",
-            "Who made this patch?",
-            Patch.AuthorLimit,
-            typed => Patch.Credit(typed),
-            () => Patch.Author,
-            AuthorText,
-            new Thickness(0));
+        var ask = new Button
+        {
+            Name = "patch-author-add",
+            Content = Glyphs.Line(
+                Glyphs.Person(16, Text.Muted),
+                new TextBlock
+                {
+                    Text = "Double-click to say who made it.",
+                    FontSize = Text.Emphasis,
+                    FontStyle = FontStyle.Italic,
+                    Foreground = Text.Muted,
+                    VerticalAlignment = VerticalAlignment.Center,
+                }),
+            Padding = new Thickness(12, 0, 14, 0),
+            MinHeight = 44,
+            CornerRadius = new CornerRadius(10),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+        };
 
-        line.VerticalAlignment = VerticalAlignment.Center;
-        return line;
+        var slot = Dashed(ask, radius: 10);
+        slot.HorizontalAlignment = HorizontalAlignment.Left;
+        ask.Click += (_, _) => Asking(slot, held: null);
+
+        return slot;
+    }
+
+    private Control Credited(string author)
+    {
+        var avatar = new Border
+        {
+            Width = 32,
+            Height = 32,
+            CornerRadius = new CornerRadius(16),
+            Background = new SolidColorBrush(Colors.Blend(Colors.Panel, Colors.Source, 0.25)),
+            VerticalAlignment = VerticalAlignment.Center,
+            Child = new TextBlock
+            {
+                Text = author.Trim().Length > 0 ? char.ToUpperInvariant(author.Trim()[0]).ToString() : "?",
+                FontSize = Text.Emphasis,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Colors.Source),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        };
+
+        var words = new StackPanel { Spacing = 1, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0) };
+        words.Children.Add(Text.Quiet("Made by"));
+
+        words.Children.Add(new TextBlock
+        {
+            Name = "patch-author",
+            Text = author,
+            FontSize = Text.Heading,
+            FontWeight = FontWeight.Medium,
+            Foreground = new SolidColorBrush(Colors.Label),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+        });
+
+        var line = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto") };
+        line.Children.Add(avatar);
+        Grid.SetColumn(words, 1);
+        line.Children.Add(words);
+
+        var card = new Border
+        {
+            MinHeight = 56,
+            Padding = new Thickness(12, 8, 8, 8),
+            CornerRadius = new CornerRadius(12),
+            Background = new SolidColorBrush(Colors.Toolbar),
+            BorderBrush = new SolidColorBrush(Colors.Separator),
+            BorderThickness = new Thickness(1),
+            Child = line,
+        };
+
+        if (document.IsAdrift) return card;
+
+        var edit = Tool("patch-author-edit", "Edit author", Glyphs.Pencil(14, Text.Muted));
+        var remove = Tool("patch-author-remove", "Remove author", Glyphs.Cross(14, Text.Muted));
+        Grid.SetColumn(edit, 2);
+        Grid.SetColumn(remove, 3);
+        line.Children.Add(edit);
+        line.Children.Add(remove);
+
+        edit.Click += (_, _) => Asking(card, held: author);
+
+        remove.Click += (_, _) =>
+        {
+            Patch.Credit(null);
+            Finished();
+            Replace(card, Author());
+        };
+
+        return card;
+    }
+
+    private static Button Tool(string name, string tip, Control glyph)
+    {
+        var tool = new Button
+        {
+            Name = name,
+            Content = glyph,
+            Width = 32,
+            Height = 32,
+            Padding = new Thickness(0),
+            CornerRadius = new CornerRadius(8),
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+
+        ToolTip.SetTip(tool, tip);
+        return tool;
+    }
+
+    /// <summary>
+    /// Swaps <paramref name="shown"/> for a box. Enter or leaving it keeps what was
+    /// typed, Esc drops it, and nothing typed leaves who it was.
+    /// </summary>
+    private void Asking(Control shown, string? held)
+    {
+        var fill = new SolidColorBrush(Colors.Toolbar);
+
+        var box = new TextBox
+        {
+            Name = "patch-author-box",
+            Text = held ?? "",
+            PlaceholderText = "Who made it?",
+            MaxLength = Patch.AuthorLimit,
+            MinHeight = 0,
+            Height = 44,
+            Padding = new Thickness(14, 0),
+            CornerRadius = new CornerRadius(10),
+            FontSize = Text.Heading,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Background = fill,
+        };
+
+        box.Resources["TextControlBackground"] = fill;
+        box.Resources["TextControlBackgroundPointerOver"] = fill;
+        box.Resources["TextControlBackgroundFocused"] = fill;
+
+        var closed = false;
+
+        void Close(bool keep)
+        {
+            if (closed) return;
+            closed = true;
+
+            var before = Patch.Author;
+            if (keep && !string.IsNullOrWhiteSpace(box.Text)) Patch.Credit(box.Text);
+            if (Patch.Author != before) Finished();
+
+            Replace(box, Author());
+        }
+
+        box.KeyDown += (_, e) =>
+        {
+            if (e.Key is not (Key.Enter or Key.Escape)) return;
+
+            e.Handled = true;
+            Close(keep: e.Key == Key.Enter);
+        };
+
+        box.LostFocus += (_, _) => Close(keep: true);
+
+        Replace(shown, box);
+        box.Focus();
+        box.SelectAll();
+    }
+
+    private static void Replace(Control old, Control replacement)
+    {
+        if (old.Parent is Panel host && host.Children.IndexOf(old) is var at and >= 0) host.Children[at] = replacement;
     }
 
     /// <summary>
