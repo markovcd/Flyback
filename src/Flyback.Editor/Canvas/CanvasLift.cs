@@ -38,7 +38,7 @@ internal sealed class CanvasLift(CanvasGestures gestures, CanvasSelection select
 
     /// <summary>Whether a box is held up: all of what is inside it is picked.</summary>
     public bool Raised(NodeGroup box) =>
-        gestures.Carrying && box.Members.Count > 0 && box.Members.All(selection.Contains);
+        gestures.Carrying && selection.Holds(box);
 
     /// <summary>Where a wire end on a module is drawn: with the socket, which moves with what it is on.</summary>
     public Point Held(Guid id, Point anchor) => Raised(id) ? anchor + Offset : anchor;

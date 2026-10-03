@@ -493,6 +493,31 @@ internal sealed class CanvasPainter(
     /// </summary>
     private const double ValueFade = 0.35, NormalFade = 0.55;
 
+    /// <summary>The line round a module or a box: plain, or the selection's, at full strength for the one the inspector shows.</summary>
+    private static IPen BorderFor(bool selected, bool focused) =>
+        !selected ? NodeSkin.Edge : focused ? SelectionPen : SelectionPenSecondary;
+
+    /// <summary>The band a module's or a box's title is on.</summary>
+    private static Rect HeaderOf(Rect bounds) => new(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
+
+    /// <summary>The band's shape: square at the bottom so it reads as a title bar.</summary>
+    private static RoundedRect HeaderShape(Rect header) =>
+        new(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0);
+
+    private static Point TitleAt(Rect bounds) => new(bounds.X + 9, bounds.Y + 5);
+
+    /// <summary>Writes a title, struck through with <paramref name="strike"/> where one is given.</summary>
+    private static void DrawTitle(DrawingContext context, FormattedText title, Point at, IPen? strike)
+    {
+        context.DrawText(title, at);
+
+        if (strike is not null)
+            context.DrawLine(
+                strike,
+                new Point(at.X, at.Y + title.Height / 2),
+                new Point(at.X + title.Width, at.Y + title.Height / 2));
+    }
+
     private void DrawModule(DrawingContext context, NodeInstance node, NodeDef def)
     {
         var bounds = geometry.Bounds(node, def);
@@ -514,7 +539,7 @@ internal sealed class CanvasPainter(
             : plain;
 
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
-        var border = !isSelected ? NodeSkin.Edge : selection.Focus == node.Id ? SelectionPen : SelectionPenSecondary;
+        var border = BorderFor(isSelected, selection.Focus == node.Id);
 
         if (backdrop.Picture is { } picture)
         {
@@ -543,29 +568,20 @@ internal sealed class CanvasPainter(
         // Header band, square at the bottom so it reads as a title bar. A picture
         // runs under it instead: it is the background, and the band is the one
         // part of the block that is not.
-        var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
+        var header = HeaderOf(bounds);
 
         if (backdrop.Picture is null)
-            context.DrawRectangle(
-                NodeSkin.Header(accent, floor, isSelected),
-                null,
-                new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+            context.DrawRectangle(NodeSkin.Header(accent, floor, isSelected), null, HeaderShape(header));
 
         NodeSkin.Relief(context, header);
 
-        var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
+        var titleAt = TitleAt(bounds);
 
         var titleBrush = Ink(titleAt.Y + TitleInk / 2, TitleInk, fade: 0, HeaderTextBrush);
 
         var title = CanvasText.Text(Heading(node, def), HeaderSize, titleBrush, HeaderWidth(bounds, tags.Tagged(def)), true);
 
-        context.DrawText(title, titleAt);
-
-        if (node.Off)
-            context.DrawLine(
-                follow ? new Pen(titleBrush, 1.5) : OffStrike,
-                new Point(titleAt.X, titleAt.Y + title.Height / 2),
-                new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
+        DrawTitle(context, title, titleAt, node.Off ? follow ? new Pen(titleBrush, 1.5) : OffStrike : null);
 
         if (tags.Tagged(def)) UndescribedTags.Draw(context, bounds, follow ? titleBrush : null);
 
@@ -712,7 +728,7 @@ internal sealed class CanvasPainter(
         // Selected when its modules are, which is the rule a shut box uses —
         // and it is the same gesture that selects them, since pressing the
         // strip takes the group.
-        var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
+        var isSelected = selection.Holds(group);
 
         var label = CanvasText.Text(group.Title(), CanvasText.RowSize, CanvasText.LabelBrush, outline.Width - TabPadding * 2, true);
 
@@ -776,7 +792,7 @@ internal sealed class CanvasPainter(
     {
         // Selected when its modules are, because pressing the box is what selects
         // them — there is nothing else it could mean for a box to be picked.
-        var isSelected = group.Members.Count > 0 && group.Members.All(selection.Contains);
+        var isSelected = selection.Holds(group);
 
         // A box has no focus of its own — a module does — but the inspector's
         // subject can be one of a shut box's hidden members, the same way
@@ -786,37 +802,21 @@ internal sealed class CanvasPainter(
 
         var body = new RoundedRect(bounds, NodeGeometry.CornerRadius);
 
-        context.DrawRectangle(
-            NodeSkin.Box(isSelected),
-            !isSelected ? NodeSkin.Edge : isFocused ? SelectionPen : SelectionPenSecondary,
-            body);
+        context.DrawRectangle(NodeSkin.Box(isSelected), BorderFor(isSelected, isFocused), body);
 
         NodeSkin.DrawMark(context, body, ModuleGlyphs.Group, NodeSkin.BoxMark);
 
-        var header = new Rect(bounds.X, bounds.Y, bounds.Width, NodeGeometry.HeaderHeight);
-        context.DrawRectangle(
-            NodeSkin.BoxHeaderOf(isSelected),
-            null,
-            new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+        var header = HeaderOf(bounds);
 
-        if (DropsInto(group))
-            context.DrawRectangle(
-                DropHeader,
-                null,
-                new RoundedRect(header, NodeGeometry.CornerRadius, NodeGeometry.CornerRadius, 0, 0));
+        context.DrawRectangle(NodeSkin.BoxHeaderOf(isSelected), null, HeaderShape(header));
+
+        if (DropsInto(group)) context.DrawRectangle(DropHeader, null, HeaderShape(header));
 
         NodeSkin.Relief(context, header);
 
         var title = CanvasText.Text(group.Title(), HeaderSize, HeaderTextBrush, bounds.Width - 16, true);
-        var titleAt = new Point(bounds.X + 9, bounds.Y + 5);
 
-        context.DrawText(title, titleAt);
-
-        if (off)
-            context.DrawLine(
-                OffStrike,
-                new Point(titleAt.X, titleAt.Y + title.Height / 2),
-                new Point(titleAt.X + title.Width, titleAt.Y + title.Height / 2));
+        DrawTitle(context, title, TitleAt(bounds), off ? OffStrike : null);
 
         for (var i = 0; i < sockets.Outputs.Count; i++)
             DrawBoxSocket(context, sockets.Outputs[i], NodeGeometry.GroupOutputPort(bounds, i), bounds);

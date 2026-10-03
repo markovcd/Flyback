@@ -70,6 +70,9 @@ internal sealed class CanvasSelection
 
     public bool Contains(Guid id) => ids.Contains(id);
 
+    /// <summary>Whether a group is selected: all of what is inside it is, and it is not empty.</summary>
+    public bool Holds(NodeGroup group) => group.Members.Count > 0 && group.Members.All(Contains);
+
     /// <summary>The group the selection is exactly, null where it is anything else.</summary>
     public NodeGroup? Group
     {
