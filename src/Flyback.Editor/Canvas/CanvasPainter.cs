@@ -595,7 +595,7 @@ internal sealed class CanvasPainter(
             var room = geometry.Compact ? HalfRow(bounds) : bounds.Width - 24;
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), room, true);
 
-            context.DrawText(label, new Point(bounds.Right - 14 - label.Width, center.Y - label.Height / 2));
+            context.DrawText(label, LabelAt(bounds, center, label, output: true));
             NodeSkin.DrawPort(context, center, port.Kind);
         }
 
@@ -611,12 +611,12 @@ internal sealed class CanvasPainter(
                 continue;
             }
 
-            var linked = DrawLinkedRow(context, node, port, i, bounds, center, connected, follow, Ink);
+            DrawLinkWash(context, node, port, i, bounds, center, connected);
 
             var label = CanvasText.Text(port.Name, CanvasText.RowSize, Ink(center.Y, RowInk, 0, CanvasText.LabelBrush), bounds.Width * 0.55, true);
-            context.DrawText(label, new Point(bounds.X + 14, center.Y - label.Height / 2));
+            context.DrawText(label, LabelAt(bounds, center, label, output: false));
 
-            if (!linked && !connected) DrawResting(context, node, port, i, bounds, center, formula, spans, Ink);
+            if (!connected) DrawInputValue(context, node, port, i, bounds, center, follow, formula, spans, Ink);
 
             NodeSkin.DrawPort(context, center, port.Kind);
         }
@@ -845,11 +845,7 @@ internal sealed class CanvasPainter(
         var width = BoxLabelRoom(bounds, resting, geometry.Compact);
         var text = CanvasText.Text(CanvasText.Fit(label, width), CanvasText.RowSize, CanvasText.LabelBrush, width, true);
 
-        context.DrawText(
-            text,
-            socket.IsOutput
-                ? new Point(bounds.Right - 14 - text.Width, center.Y - text.Height / 2)
-                : new Point(bounds.X + 14, center.Y - text.Height / 2));
+        context.DrawText(text, LabelAt(bounds, center, text, socket.IsOutput));
 
         NodeSkin.DrawPort(context, center, spec.Kind);
     }
@@ -859,13 +855,15 @@ internal sealed class CanvasPainter(
     {
         static IBrush Plain(double center, double height, double fade, IBrush plain) => plain;
 
-        if (DrawLinkedValue(context, node, spec, port, bounds, center, follow: false, Plain)) return true;
-
         var formula = NodeCatalog.FormulaOf(node);
         var spans = node.TypeId == NodeCatalog.AutoRemapTypeId ? AutoRemap.Of(Patch, node) : null;
 
-        return DrawResting(context, node, spec, port, bounds, center, formula, spans, Plain);
+        return DrawInputValue(context, node, spec, port, bounds, center, follow: false, formula, spans, Plain);
     }
+
+    /// <summary>Where a socket's name is drawn: inside the module, against the side its socket is on.</summary>
+    private static Point LabelAt(Rect bounds, Point center, FormattedText label, bool output) =>
+        new(output ? bounds.Right - 14 - label.Width : bounds.X + 14, center.Y - label.Height / 2);
 
     /// <summary>How much of a box's width its sockets and their margins take from a label.</summary>
     private const double SocketLabelRoom = 26;
@@ -944,7 +942,7 @@ internal sealed class CanvasPainter(
 
         var brush = ink(center.Y, RowInk, 0, CanvasText.LabelBrush);
         var label = CanvasText.Text(port.Name, CanvasText.RowSize, brush, HalfRow(bounds), true);
-        var at = new Point(bounds.X + 14, center.Y - label.Height / 2);
+        var at = LabelAt(bounds, center, label, output: false);
 
         context.DrawText(label, at);
 
@@ -958,8 +956,8 @@ internal sealed class CanvasPainter(
 
 
     /// <summary>
-    /// Tints a row while linking, and draws a linked socket's value in the knob's
-    /// color. Returns whether it drew the value, so the ordinary one is not drawn too.
+    /// What an unwired input is set to, at the right of its row: the value of the knob it
+    /// follows, and otherwise what it rests at. Whether anything was drawn.
     /// </summary>
     /// <param name="follow">Whether the module is asking for its text colored from its background.</param>
     /// <param name="ink">
@@ -968,14 +966,11 @@ internal sealed class CanvasPainter(
     /// background may not read against, so it gives way to the row's ink when the
     /// module asks for one.
     /// </param>
-    private bool DrawLinkedRow(
+    private bool DrawInputValue(
         DrawingContext context, NodeInstance node, PortSpec port, int index, Rect bounds, Point center,
-        bool connected, bool follow, Func<double, double, double, IBrush, IBrush> ink)
-    {
-        DrawLinkWash(context, node, port, index, bounds, center, connected);
-
-        return !connected && DrawLinkedValue(context, node, port, index, bounds, center, follow, ink);
-    }
+        bool follow, string? formula, RemapSpans? spans, Func<double, double, double, IBrush, IBrush> ink) =>
+        DrawLinkedValue(context, node, port, index, bounds, center, follow, ink)
+        || DrawResting(context, node, port, index, bounds, center, formula, spans, ink);
 
     /// <summary>Tints an input's row while linking: its half of a shared row on a compact module.</summary>
     private void DrawLinkWash(
