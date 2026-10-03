@@ -100,6 +100,8 @@ public class GpuSurfaceTests : EditorTest
 
         public double FrameMilliseconds => 0;
 
+        public double SlowestFrameMilliseconds => 0;
+
         public long Frames => 0;
 
         public double FrameRate { get; set; }

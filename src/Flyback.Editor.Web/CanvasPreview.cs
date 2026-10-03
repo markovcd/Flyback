@@ -84,6 +84,8 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
 
     public double FrameMilliseconds { get; private set; }
 
+    public double SlowestFrameMilliseconds => meter.Slowest;
+
     public double FrameRate
     {
         get;
@@ -293,7 +295,7 @@ internal sealed partial class CanvasPreview : NativeControlHost, IGpuPreview
         }
 
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
-        meter.Mark();
+        meter.Mark(FrameMilliseconds);
 
         Say(null);
     }

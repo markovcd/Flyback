@@ -92,6 +92,8 @@ public sealed class PreviewSurface : Control, IPreviewSurface
     /// <summary>Cost of the last frame, which sets how long the next tick rests.</summary>
     public double FrameMilliseconds { get; private set; }
 
+    public double SlowestFrameMilliseconds => meter.Slowest;
+
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the dispatcher allows.</summary>
     public double FrameRate
     {
@@ -256,7 +258,7 @@ public sealed class PreviewSurface : Control, IPreviewSurface
 
         Blit(buffer, stride, size);
         InvalidateVisual();
-        meter.Mark();
+        meter.Mark(FrameMilliseconds);
     }
 
     /// <summary>Copies the finished frame into the bitmap. Cheap enough to keep on the UI thread.</summary>

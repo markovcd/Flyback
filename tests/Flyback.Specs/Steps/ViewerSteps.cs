@@ -21,6 +21,19 @@ public sealed class ViewerSteps(ViewerRun viewer)
     [When("the viewer's picture is double-clicked")]
     public void WhenDoubleClicked() => viewer.TapPicture(2);
 
+    [Then("the viewer's report says the picture was drawn by {string}")]
+    public void ThenReportRenderer(string renderer) => viewer.Report.ShouldContain($"picture: {renderer}");
+
+    [Then("the viewer's report gives the frames a second and the slowest frame")]
+    public void ThenReportFrames()
+    {
+        viewer.Report.ShouldContain(line => line.StartsWith("fps: "));
+        viewer.Report.ShouldContain(line => line.StartsWith("slowest-frame-ms: "));
+    }
+
+    [Then("the viewer's report says there is no sound")]
+    public void ThenReportNoSound() => viewer.Report.ShouldContain("sound: none");
+
     [Then("the viewer is paused")]
     public void ThenPaused() => viewer.Paused.ShouldBe(true);
 

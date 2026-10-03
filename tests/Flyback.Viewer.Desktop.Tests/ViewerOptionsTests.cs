@@ -133,6 +133,7 @@ public class ViewerOptionsTests
             "--background",
             "--no-overlay",
             "--stats",
+            "--report",
             "--transport", "top",
             "--knob-grid", "off",
             "--title", "hello",
@@ -158,6 +159,7 @@ public class ViewerOptionsTests
         options.Background.ShouldBeTrue();
         options.NoOverlay.ShouldBeTrue();
         options.Stats.ShouldBeTrue();
+        options.Report.ShouldBeTrue();
         options.Transport.ShouldBe(TransportEdge.Top);
         options.KnobGrid.On.ShouldBeFalse();
         options.Title.ShouldBe("hello");

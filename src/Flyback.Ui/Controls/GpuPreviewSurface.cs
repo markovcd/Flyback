@@ -116,6 +116,8 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
     /// <summary>What the processor spent handing the last frame to the graphics card, which is not the card's own time.</summary>
     public double FrameMilliseconds { get; private set; }
 
+    public double SlowestFrameMilliseconds => meter.Slowest;
+
     /// <summary>
     /// How often the preview redraws itself, or 0 to run as fast as the
     /// dispatcher allows. Only <see cref="timer"/>'s own interval, which is
@@ -432,7 +434,7 @@ public sealed class GpuPreviewSurface : OpenGlControlBase, IGpuPreview
         }
 
         FrameMilliseconds = (frameClock.Elapsed - started).TotalMilliseconds;
-        meter.Mark();
+        meter.Mark(FrameMilliseconds);
 
         running = true;
     }

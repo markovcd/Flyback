@@ -58,6 +58,17 @@ public class ViewerServicesTests : UiTest
     }
 
     [AvaloniaFact]
+    public void A_player_on_its_own_reports_no_picture()
+    {
+        using var run = ViewerServices.Player(Launch(Options()));
+
+        var report = run.Player.Report();
+
+        report.Renderer.ShouldBeNull();
+        report.Frames.ShouldBe(0);
+    }
+
+    [AvaloniaFact]
     public void A_player_on_its_own_plays_without_a_surface()
     {
         using var run = ViewerServices.Player(Launch(Options()));

@@ -87,6 +87,9 @@ internal sealed record ViewerOptions : IIlCompilerSetup
     /// <summary>Open with the line saying how the picture is drawn in its corner, which F3 shows and puts away.</summary>
     public bool Stats { get; init; }
 
+    /// <summary>Say how the run went when it ends: frames a second, the slowest frame, the sound's cost and what drew the picture.</summary>
+    public bool Report { get; init; }
+
     public string? Title { get; init; }
 
     /// <summary>Keep the window above the others.</summary>

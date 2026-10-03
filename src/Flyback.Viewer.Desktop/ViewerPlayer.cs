@@ -46,6 +46,7 @@ internal sealed class ViewerPlayer : IDisposable
     private double played;
     private double sinceLoop;
     private bool finished;
+    private bool reported;
 
     /// <param name="preview">The picture's surface, or null where there is no picture to draw.</param>
     /// <param name="audio">The sound engine, on the run's device or a silent one where it has none, compiling with <paramref name="compiler"/>.</param>
@@ -305,10 +306,31 @@ internal sealed class ViewerPlayer : IDisposable
         }
     }
 
+    /// <summary>What the run measured so far.</summary>
+    internal ViewerReport Report() =>
+        new(
+            played,
+            preview?.Renderer,
+            preview?.GpuRefusal,
+            preview?.Frames ?? 0,
+            preview?.SlowestFrameMilliseconds ?? 0,
+            Sounding,
+            audio.Oversample,
+            audio.Speed,
+            audio.Timing);
+
     /// <summary>Stops playing. The container disposes the engine, the compiler and MIDI after it.</summary>
     public void Dispose()
     {
         ticker?.Stop();
+
+        if (options.Report && !reported)
+        {
+            reported = true;
+
+            foreach (var line in Report().Lines()) Console.Out.WriteLine(line);
+        }
+
         audio.Stop();
     }
 }

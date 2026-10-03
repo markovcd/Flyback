@@ -90,6 +90,9 @@ public sealed class ViewerRun(PatchContext context, HeadlessTurn turn) : IDispos
     /// <summary>Whether the viewer's window has the whole screen.</summary>
     public bool FullScreen => Run(() => window!.WindowState == WindowState.FullScreen);
 
+    /// <summary>What <c>--report</c> would print now, a line each.</summary>
+    public IReadOnlyList<string> Report => Run(() => window!.Player.Report().Lines().ToList());
+
     /// <summary>What the line in the picture's corner says, or null while it is not showing.</summary>
     public string? Stats => Run(() =>
         window!.GetVisualDescendants().OfType<StatsOverlay>().SingleOrDefault() is { IsEffectivelyVisible: true } stats

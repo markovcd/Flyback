@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `flyback-viewer --report` prints, when the run ends, the frames a second it held, the slowest frame, what the sound cost, and what drew the picture.
+
 ## 0.7.1 — 2026-10-03
 
 28 commits since 0.7.0.

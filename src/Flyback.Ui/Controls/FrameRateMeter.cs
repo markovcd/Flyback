@@ -28,6 +28,7 @@ internal sealed class FrameRateMeter
     private int frames;
     private double rate;
     private long drawn;
+    private double slowest;
 
     /// <summary>Every frame marked since the meter was made.</summary>
     public long Drawn => Interlocked.Read(ref drawn);
@@ -50,14 +51,24 @@ internal sealed class FrameRateMeter
         }
     }
 
-    /// <summary>One frame has reached the screen.</summary>
-    public void Mark()
+    /// <summary>The longest a frame took to draw, in milliseconds, since the meter was made.</summary>
+    public double Slowest
+    {
+        get
+        {
+            lock (gate) return slowest;
+        }
+    }
+
+    /// <summary>One frame has reached the screen, having taken <paramref name="milliseconds"/> to draw.</summary>
+    public void Mark(double milliseconds)
     {
         Interlocked.Increment(ref drawn);
 
         lock (gate)
         {
             frames++;
+            slowest = Math.Max(slowest, milliseconds);
 
             var now = clock.Elapsed;
             var open = now - windowStart;

@@ -23,6 +23,7 @@ flyback-viewer --preset "Whole band" --hidden --for 10
 
 - **Sound only:** `--hidden --for <seconds>` opens no window, so nothing lands on the user's screen. `--mute` keeps the clock and drops the speakers, which is the flag for a look that should not be heard.
 - **Picture:** `--background` opens the window without taking focus, `--mute` silences it, and `--for <seconds>` closes it. Size the picture with `--size 720p` (or `WxH`) and start later with `--from <seconds>`.
+- **Measuring:** `--report` prints `name: value` lines when the run ends: `fps`, `slowest-frame-ms`, `sound-speed`, `sound-late-buffers`, the `picture` renderer and a `gpu-refused` reason where the GPU gave way. `--hidden --for 10 --report` measures the sound alone.
 - **A still frame:** use `flyback-cli render -o shot.png --at <seconds>`, which is quick. The viewer writes no frames.
 - **Anything about the editor itself** (the canvas, the inspector, the panel, a shortcut) still needs the real window, by the `running-the-app` skill. The viewer shows what a patch does, not how it is edited.
 - A patch that plays sound plays through the user's speakers the moment the viewer opens. Pass `--mute` unless the sound is what is being checked.

@@ -74,6 +74,12 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
 
     public double FrameMilliseconds => active.FrameMilliseconds;
 
+    /// <summary>The longest a frame took to draw on the renderer now running, in milliseconds.</summary>
+    public double SlowestFrameMilliseconds => active.SlowestFrameMilliseconds;
+
+    /// <summary>Why the GPU was given up, in the words it said, or null while it has not been.</summary>
+    public string? GpuRefusal { get; private set; }
+
     /// <summary>How often the preview redraws itself, or 0 to run as fast as the renderer allows.</summary>
     public double FrameRate
     {
@@ -216,6 +222,7 @@ public sealed class PreviewHost : Decorator, IPreviewSurface
     private void OnGpuFailed(string message)
     {
         GpuAvailable = false;
+        GpuRefusal = message;
 
         // The surface says what went wrong where the picture was.
         if (!processorStandsIn)

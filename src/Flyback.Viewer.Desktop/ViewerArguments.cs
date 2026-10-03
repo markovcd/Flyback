@@ -210,6 +210,11 @@ internal static class ViewerArguments
             Description = "Say in the corner of the picture how it is drawn: frames a second, a frame's cost, the oversampling. F3 shows it and puts it away.",
         };
 
+        var report = new Option<bool>("--report")
+        {
+            Description = "When the run ends, print what it held: frames a second, the slowest frame, what the sound cost, and what drew the picture.",
+        };
+
         var title = new Option<string>("--title")
         {
             HelpName = "text",
@@ -238,7 +243,7 @@ internal static class ViewerArguments
             size, fps, gpu, cpu, noVideo, window, maximized, fullScreen,
             noAudio, volume, mute, latency, oversample,
             from, paused, duration, loop,
-            background, hidden, noOverlay, transport, knobGrid, stats, title, top, interpreted, file,
+            background, hidden, noOverlay, transport, knobGrid, stats, report, title, top, interpreted, file,
         };
 
         root.SetAction(result =>
@@ -280,6 +285,7 @@ internal static class ViewerArguments
                 Transport = result.GetValue(transport) == "bottom" ? TransportEdge.Bottom : TransportEdge.Top,
                 KnobGrid = KnobGrid.Read(result.GetValue(knobGrid)!) ?? new KnobGrid(),
                 Stats = result.GetValue(stats),
+                Report = result.GetValue(report),
                 Title = result.GetValue(title),
                 Top = result.GetValue(top),
                 Interpreted = result.GetValue(interpreted),
